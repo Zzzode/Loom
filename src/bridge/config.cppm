@@ -1,20 +1,20 @@
 module;
 
+#include <cctype>
 #include <cstddef>
 #include <cstdint>
 #include <cstdlib>
-#include <cctype>
 
 export module loom.bridge.config;
 
 import std;
 
-
 export namespace loom::bridge {
 
 namespace detail {
 
-[[nodiscard]] auto read_text_file(std::string_view path) -> std::expected<std::string, std::string> {
+[[nodiscard]] auto read_text_file(std::string_view path)
+    -> std::expected<std::string, std::string> {
     std::ifstream input{std::filesystem::path(std::string(path))};
     if (!input.is_open()) {
         return std::unexpected("Unable to open bridge config file: " + std::string(path));
@@ -24,7 +24,8 @@ namespace detail {
     return buffer.str();
 }
 
-[[nodiscard]] auto json_string(std::string_view json, std::string_view key) -> std::optional<std::string> {
+[[nodiscard]] auto json_string(std::string_view json, std::string_view key)
+    -> std::optional<std::string> {
     auto marker = '"' + std::string(key) + '"';
     auto pos = json.find(marker);
     if (pos == std::string_view::npos) return std::nullopt;
@@ -39,12 +40,24 @@ namespace detail {
         char c = json[i];
         if (escaping) {
             switch (c) {
-                case 'n': out.push_back('\n'); break;
-                case 'r': out.push_back('\r'); break;
-                case 't': out.push_back('\t'); break;
-                case '"': out.push_back('"'); break;
-                case '\\': out.push_back('\\'); break;
-                default: out.push_back(c); break;
+            case 'n':
+                out.push_back('\n');
+                break;
+            case 'r':
+                out.push_back('\r');
+                break;
+            case 't':
+                out.push_back('\t');
+                break;
+            case '"':
+                out.push_back('"');
+                break;
+            case '\\':
+                out.push_back('\\');
+                break;
+            default:
+                out.push_back(c);
+                break;
             }
             escaping = false;
         } else if (c == '\\') {
@@ -58,20 +71,26 @@ namespace detail {
     return std::nullopt;
 }
 
-[[nodiscard]] auto json_number(std::string_view json, std::string_view key) -> std::optional<int64_t> {
+[[nodiscard]] auto json_number(std::string_view json, std::string_view key)
+    -> std::optional<int64_t> {
     auto marker = '"' + std::string(key) + '"';
     auto pos = json.find(marker);
     if (pos == std::string_view::npos) return std::nullopt;
     pos = json.find(':', pos + marker.size());
     if (pos == std::string_view::npos) return std::nullopt;
     ++pos;
-    while (pos < json.size() && std::isspace(static_cast<unsigned char>(json[pos]))) ++pos;
+    while (pos < json.size() && std::isspace(static_cast<unsigned char>(json[pos])))
+        ++pos;
     auto end = pos;
     if (end < json.size() && (json[end] == '-' || json[end] == '+')) ++end;
-    while (end < json.size() && std::isdigit(static_cast<unsigned char>(json[end]))) ++end;
+    while (end < json.size() && std::isdigit(static_cast<unsigned char>(json[end])))
+        ++end;
     if (end == pos) return std::nullopt;
-    try { return std::stoll(std::string(json.substr(pos, end - pos))); }
-    catch (...) { return std::nullopt; }
+    try {
+        return std::stoll(std::string(json.substr(pos, end - pos)));
+    } catch (...) {
+        return std::nullopt;
+    }
 }
 
 [[nodiscard]] auto json_bool(std::string_view json, std::string_view key) -> std::optional<bool> {
@@ -81,14 +100,14 @@ namespace detail {
     pos = json.find(':', pos + marker.size());
     if (pos == std::string_view::npos) return std::nullopt;
     ++pos;
-    while (pos < json.size() && std::isspace(static_cast<unsigned char>(json[pos]))) ++pos;
+    while (pos < json.size() && std::isspace(static_cast<unsigned char>(json[pos])))
+        ++pos;
     if (json.substr(pos, 4) == "true") return true;
     if (json.substr(pos, 5) == "false") return false;
     return std::nullopt;
 }
 
-} // namespace detail
-
+}  // namespace detail
 
 enum class TransportType { websocket, stdio, http_polling };
 enum class SpawnMode { single_session, same_dir, worktree };
@@ -98,12 +117,12 @@ namespace detail {
 [[nodiscard]] auto parse_transport(std::string_view value) -> std::optional<TransportType> {
     if (value == "websocket" || value == "ws") return TransportType::websocket;
     if (value == "stdio") return TransportType::stdio;
-    if (value == "http_polling" || value == "http-polling" || value == "polling") return TransportType::http_polling;
+    if (value == "http_polling" || value == "http-polling" || value == "polling")
+        return TransportType::http_polling;
     return std::nullopt;
 }
 
-} // namespace detail
-
+}  // namespace detail
 
 struct BridgeConfig {
     TransportType transport{TransportType::websocket};
@@ -132,13 +151,11 @@ struct BridgeConfig {
     std::optional<std::chrono::milliseconds> session_timeout_ms = std::nullopt;
 };
 
-
 struct BridgeEndpoint {
     std::string url;
     TransportType transport;
     bool requires_auth{false};
 };
-
 
 struct PollConfig {
     std::chrono::milliseconds interval{1000};
@@ -149,26 +166,22 @@ struct PollConfig {
     std::chrono::milliseconds max_interval{5000};
 };
 
-
 class BridgeConfigLoader {
     BridgeConfig config_;
     PollConfig poll_config_;
-    
-public:
 
+public:
     [[nodiscard]] auto load() -> std::expected<BridgeConfig, std::string> {
 
         if (auto* port = std::getenv("LOOM_BRIDGE_PORT"))
             config_.port = static_cast<uint16_t>(std::stoi(port));
-        if (auto* host = std::getenv("LOOM_BRIDGE_HOST"))
-            config_.host = host;
-        if (auto* token = std::getenv("LOOM_BRIDGE_TOKEN"))
-            config_.auth_token = token;
+        if (auto* host = std::getenv("LOOM_BRIDGE_HOST")) config_.host = host;
+        if (auto* token = std::getenv("LOOM_BRIDGE_TOKEN")) config_.auth_token = token;
         return config_;
     }
-    
 
-    [[nodiscard]] auto load_from_file(std::string_view path) -> std::expected<BridgeConfig, std::string> {
+    [[nodiscard]] auto load_from_file(std::string_view path)
+        -> std::expected<BridgeConfig, std::string> {
         auto content = detail::read_text_file(path);
         if (!content) return std::unexpected(content.error());
 
@@ -180,7 +193,8 @@ public:
         }
         if (auto value = detail::json_string(json, "host")) config_.host = *value;
         if (auto value = detail::json_number(json, "port")) {
-            if (*value <= 0 || *value > 65535) return std::unexpected("Bridge port is out of range");
+            if (*value <= 0 || *value > 65535)
+                return std::unexpected("Bridge port is out of range");
             config_.port = static_cast<uint16_t>(*value);
         }
         if (auto value = detail::json_string(json, "path")) config_.path = *value;
@@ -198,14 +212,15 @@ public:
         if (auto value = detail::json_bool(json, "auto_connect")) config_.auto_connect = *value;
         return config_;
     }
-    
+
     [[nodiscard]] auto get_config() const -> const BridgeConfig& { return config_; }
+
     [[nodiscard]] auto get_poll_config() const -> const PollConfig& { return poll_config_; }
-    
+
     void set_config(BridgeConfig config) { config_ = std::move(config); }
+
     void set_poll_config(PollConfig config) { poll_config_ = config; }
 };
-
 
 // ---- Bridge Auth Configuration ----
 
@@ -235,4 +250,4 @@ public:
     return {};
 }
 
-} // namespace loom::bridge
+}  // namespace loom::bridge

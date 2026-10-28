@@ -107,22 +107,21 @@ struct TruncatedPasteResult {
     std::string truncated_text;       ///< head + [...Truncated text #N +M lines...] + tail
     std::string placeholder_content;  ///< the truncated middle text (empty if not truncated)
 };
-[[nodiscard]] inline TruncatedPasteResult maybe_truncate_paste(
-    std::string_view text, int paste_id) {
+
+[[nodiscard]] inline TruncatedPasteResult maybe_truncate_paste(std::string_view text,
+                                                               int paste_id) {
     constexpr std::size_t kTruncationThreshold = 10000;
-    constexpr std::size_t kPreviewLength       = 1000;
+    constexpr std::size_t kPreviewLength = 1000;
     if (text.size() <= kTruncationThreshold) {
         return TruncatedPasteResult{std::string(text), ""};
     }
     const std::size_t start_len = kPreviewLength / 2;  // 500
-    const std::size_t end_len   = kPreviewLength / 2;  // 500
+    const std::size_t end_len = kPreviewLength / 2;    // 500
     const std::string head(text.substr(0, start_len));
     const std::string tail(text.substr(text.size() - end_len));
-    const std::string middle(
-        text.substr(start_len, text.size() - start_len - end_len));
+    const std::string middle(text.substr(start_len, text.size() - start_len - end_len));
     const int elided_lines = get_pasted_text_ref_num_lines(middle);
-    const std::string placeholder_ref =
-        format_truncated_text_ref(paste_id, elided_lines);
+    const std::string placeholder_ref = format_truncated_text_ref(paste_id, elided_lines);
     std::string out;
     out.reserve(start_len + end_len + placeholder_ref.size());
     out += head;

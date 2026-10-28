@@ -12,14 +12,14 @@
 /// SseClient::FeedParser() public entry point through the higher-level
 /// QueryEngine wrapper so the full callback chain is exercised.
 #include <cassert>
+#include <chrono>
 #include <cstdio>
+#include <functional>
+#include <memory>
+#include <optional>
 #include <string>
 #include <string_view>
-#include <memory>
 #include <vector>
-#include <functional>
-#include <chrono>
-#include <optional>
 
 // ---------------------------------------------------------------------------
 // We cannot import C++23 named modules from a plain .cpp translation unit
@@ -34,17 +34,17 @@
 // ---------------------------------------------------------------------------
 
 static inline std::string_view trim(std::string_view s) {
-    while (!s.empty() && (s.front()==' '||s.front()=='\t'||s.front()=='\r')) s.remove_prefix(1);
-    while (!s.empty() && (s.back() ==' '||s.back() =='\t'||s.back() =='\r')) s.remove_suffix(1);
+    while (!s.empty() && (s.front() == ' ' || s.front() == '\t' || s.front() == '\r'))
+        s.remove_prefix(1);
+    while (!s.empty() && (s.back() == ' ' || s.back() == '\t' || s.back() == '\r'))
+        s.remove_suffix(1);
     return s;
 }
 
 /// Reference SSE event splitter (mirrors loom.services.api.sse::SseClient::FeedParser).
 /// Returns number of complete events parsed; also fills *out_delta_accum and
 /// *out_delta_count if non-null.
-static int ParseSseRef(std::string_view bytes,
-                       std::string* out_delta_accum,
-                       int*         out_delta_count,
+static int ParseSseRef(std::string_view bytes, std::string* out_delta_accum, int* out_delta_count,
                        std::string* out_stop_reason) {
     int events = 0;
     int deltas = 0;
@@ -120,7 +120,9 @@ static int ParseSseRef(std::string_view bytes,
 // ---------------------------------------------------------------------------
 constexpr const char* FAKE_SSE =
     "event: message_start\n"
-    "data: {\"type\":\"message_start\",\"message\":{\"id\":\"msg_1\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[],\"model\":\"test-model\"}}\n"
+    "data: "
+    "{\"type\":\"message_start\",\"message\":{\"id\":\"msg_1\",\"type\":\"message\",\"role\":"
+    "\"assistant\",\"content\":[],\"model\":\"test-model\"}}\n"
     "\n"
     "event: content_block_start\n"
     "data: {\"index\":0,\"content_block\":{\"type\":\"text\",\"text\":\"\"}}\n"
@@ -135,7 +137,9 @@ constexpr const char* FAKE_SSE =
     "data: {\"index\":0}\n"
     "\n"
     "event: message_delta\n"
-    "data: {\"delta\":{\"stop_reason\":\"end_turn\",\"stop_sequence\":null},\"usage\":{\"output_tokens\":2}}\n"
+    "data: "
+    "{\"delta\":{\"stop_reason\":\"end_turn\",\"stop_sequence\":null},\"usage\":{\"output_tokens\":"
+    "2}}\n"
     "\n"
     "event: message_stop\n"
     "data: {\"type\":\"message_stop\",\"anthropic\":{\"...\":true}}\n"
@@ -145,9 +149,9 @@ int main() {
     using namespace std;
 
     string accum;
-    int    deltas = 0;
+    int deltas = 0;
     string stop_reason;
-    int    events = ParseSseRef(FAKE_SSE, &accum, &deltas, &stop_reason);
+    int events = ParseSseRef(FAKE_SSE, &accum, &deltas, &stop_reason);
 
     printf("[E2E-1] events_parsed       = %d (expected 7)\n", events);
     printf("[E2E-1] text_delta_calls   = %d (expected 2)\n", deltas);
@@ -156,7 +160,7 @@ int main() {
 
     assert(events == 7);
     assert(deltas == 2);
-    assert(accum  == "Hello world!");
+    assert(accum == "Hello world!");
     assert(stop_reason == "end_turn");
 
     // --- Second case: verify that multi-byte UTF-8 survives the parser ---
@@ -164,23 +168,27 @@ int main() {
         "event: content_block_delta\n"
         "data: {\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"你好 🌍 ©\"}}\n"
         "\n";
-    string u8; int u8n=0; string u8s;
+    string u8;
+    int u8n = 0;
+    string u8s;
     (void)ParseSseRef(UTF8_SSE, &u8, &u8n, &u8s);
     printf("[E2E-1] utf8_roundtrip     = '%s' (n=%d)\n", u8.c_str(), u8n);
     assert(u8n == 1);
-    assert(u8  == "你好 🌍 ©");
+    assert(u8 == "你好 🌍 ©");
 
     // --- Third case: partial / cross-boundary chunking must still parse OK ---
-    string s1 = string(FAKE_SSE, 120);  // chunk 1 — mid-event
-    string s2 = string(FAKE_SSE + 120); // chunk 2 — rest
-    string a1,a2; int d1=0,d2=0; string st1,st2;
+    string s1 = string(FAKE_SSE, 120);   // chunk 1 — mid-event
+    string s2 = string(FAKE_SSE + 120);  // chunk 2 — rest
+    string a1, a2;
+    int d1 = 0, d2 = 0;
+    string st1, st2;
     int ev1 = ParseSseRef(s1, &a1, &d1, &st1);
     int ev2 = ParseSseRef(s2, &a2, &d2, &st2);
     // Concatenation of partial results across boundary requires the caller
     // to buffer; here we just sanity-check that each chunk parsed *some*
     // events without crashing.  Full cross-boundary coverage is exercised in
     // test_services.cpp.
-    printf("[E2E-1] partial_chunk_ev   = %d + %d = %d\n", ev1, ev2, ev1+ev2);
+    printf("[E2E-1] partial_chunk_ev   = %d + %d = %d\n", ev1, ev2, ev1 + ev2);
     assert(ev1 + ev2 >= 1);
 
     printf("\n✅ E2E-1 (SSE Mock) ALL ASSERTIONS PASSED\n");

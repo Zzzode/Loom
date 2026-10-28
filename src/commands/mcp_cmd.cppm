@@ -6,8 +6,8 @@
 /// provides data-prep pure functions and text-based fallback output.
 module;
 
-#include <cstdint>
 #include <cstddef>
+#include <cstdint>
 #include <cstdlib>
 
 export module loom.commands.mcp_cmd;
@@ -41,8 +41,8 @@ using namespace loom::core;
 /// Row for the MCP server list table.
 struct McpServerListRow {
     std::string name;
-    std::string type;        // "stdio" | "sse" | "http"
-    std::string status;      // human-readable connection status
+    std::string type;    // "stdio" | "sse" | "http"
+    std::string status;  // human-readable connection status
     std::size_t tools = 0;
     std::size_t resources = 0;
     std::size_t prompts = 0;
@@ -71,14 +71,14 @@ struct McpPromptRow {
 
 /// Subcommand for /mcp
 enum class McpAction : std::uint8_t {
-    List,        // List all configured MCP servers
-    Add,         // Add a new MCP server configuration
-    Remove,      // Remove an MCP server configuration
-    Show,        // Show a server's capabilities
-    Restart,     // Restart a server connection
-    Enable,      // Clear the "disabled" flag (takes effect on next start; D5)
-    Disable,     // Set the "disabled" flag (takes effect on next start; D5)
-    Reconnect,   // Force reconnect a server
+    List,       // List all configured MCP servers
+    Add,        // Add a new MCP server configuration
+    Remove,     // Remove an MCP server configuration
+    Show,       // Show a server's capabilities
+    Restart,    // Restart a server connection
+    Enable,     // Clear the "disabled" flag (takes effect on next start; D5)
+    Disable,    // Set the "disabled" flag (takes effect on next start; D5)
+    Reconnect,  // Force reconnect a server
     // XAA subcommands (top-level: /mcp xaa setup|login|show|clear)
     XaaSetup,
     XaaLogin,
@@ -90,8 +90,8 @@ enum class McpAction : std::uint8_t {
 /// loom.services.mcp.connection_manager and loom.orchestration.tools.mcp).
 struct McpServerStatus {
     std::string name;
-    std::string status_text;       // human-readable status label
-    bool enabled = true;           // whether the server should auto-connect
+    std::string status_text;  // human-readable status label
+    bool enabled = true;      // whether the server should auto-connect
 };
 
 /// XAA IdP connection state (mirrors the settings.xaaIdp + keychain state).
@@ -113,22 +113,25 @@ public:
         return CommandDefinition{
             .name = "mcp",
             .description = "Manage Model Context Protocol (MCP) server connections",
-            .args = {
-                CommandArg{
-                    .name = "action",
-                    .description = "Subcommand: manage | list | add | remove | show | restart | enable | disable | reconnect | xaa",
-                    .type = ArgType::Choice,
-                    .required = false,
-                    .choices = {"manage", "list", "add", "remove", "show", "restart",
-                                "enable", "disable", "reconnect", "xaa"},
+            .args =
+                {
+                    CommandArg{
+                        .name = "action",
+                        .description = "Subcommand: manage | list | add | remove | show | restart "
+                                       "| enable | disable | reconnect | xaa",
+                        .type = ArgType::Choice,
+                        .required = false,
+                        .choices = {"manage", "list", "add", "remove", "show", "restart", "enable",
+                                    "disable", "reconnect", "xaa"},
+                    },
+                    CommandArg{
+                        .name = "server_or_xaa_action",
+                        .description =
+                            "Server name or, for /mcp xaa, one of: setup | login | show | clear",
+                        .type = ArgType::Text,
+                        .required = false,
+                    },
                 },
-                CommandArg{
-                    .name = "server_or_xaa_action",
-                    .description = "Server name or, for /mcp xaa, one of: setup | login | show | clear",
-                    .type = ArgType::Text,
-                    .required = false,
-                },
-            },
             .category = "tools",
             .aliases = {},
             .hidden = false,
@@ -146,25 +149,24 @@ public:
         if (ctx.args.size() >= 2) second = ctx.args[1];
         auto action = parse_action(ctx.args[0], second);
         if (!action) {
-            return std::unexpected(Error::make(
-                ErrorCode::InvalidRequest,
-                std::format("Unknown MCP action: '{}'. Use: manage, list, add, remove, show, restart, enable, disable, reconnect, xaa",
-                           ctx.args[0])
-            ));
+            return std::unexpected(
+                Error::make(ErrorCode::InvalidRequest,
+                            std::format("Unknown MCP action: '{}'. Use: manage, list, add, remove, "
+                                        "show, restart, enable, disable, reconnect, xaa",
+                                        ctx.args[0])));
         }
 
         // Xaa subcommands
         if (*action == McpAction::XaaSetup || *action == McpAction::XaaLogin ||
-            *action == McpAction::XaaShow  || *action == McpAction::XaaClear) {
+            *action == McpAction::XaaShow || *action == McpAction::XaaClear) {
             return validate_xaa_subcommand(ctx);
         }
 
         // Non-xaa actions that require a server name
         if (*action != McpAction::List && ctx.args.size() < 2) {
-            return std::unexpected(Error::make(
-                ErrorCode::InvalidRequest,
-                std::format("/mcp {} requires a server name", ctx.args[0])
-            ));
+            return std::unexpected(
+                Error::make(ErrorCode::InvalidRequest,
+                            std::format("/mcp {} requires a server name", ctx.args[0])));
         }
         return {};
     }
@@ -183,26 +185,38 @@ public:
         }
 
         switch (action) {
-            case McpAction::List:      return execute_list();
-            case McpAction::Add:       return execute_add(ctx.args);
-            case McpAction::Remove:    return execute_remove(ctx.args);
-            case McpAction::Show:      return execute_show(ctx.args[1]);
-            case McpAction::Restart:   return execute_restart(ctx.args[1]);
-            case McpAction::Enable:    return execute_enable(ctx.args);
-            case McpAction::Disable:   return execute_disable(ctx.args);
-            case McpAction::Reconnect: return execute_reconnect(ctx.args[1]);
-            case McpAction::XaaSetup:  return execute_xaa_setup(ctx);
-            case McpAction::XaaLogin:  return execute_xaa_login(ctx);
-            case McpAction::XaaShow:   return execute_xaa_show(ctx);
-            case McpAction::XaaClear:  return execute_xaa_clear(ctx);
+        case McpAction::List:
+            return execute_list();
+        case McpAction::Add:
+            return execute_add(ctx.args);
+        case McpAction::Remove:
+            return execute_remove(ctx.args);
+        case McpAction::Show:
+            return execute_show(ctx.args[1]);
+        case McpAction::Restart:
+            return execute_restart(ctx.args[1]);
+        case McpAction::Enable:
+            return execute_enable(ctx.args);
+        case McpAction::Disable:
+            return execute_disable(ctx.args);
+        case McpAction::Reconnect:
+            return execute_reconnect(ctx.args[1]);
+        case McpAction::XaaSetup:
+            return execute_xaa_setup(ctx);
+        case McpAction::XaaLogin:
+            return execute_xaa_login(ctx);
+        case McpAction::XaaShow:
+            return execute_xaa_show(ctx);
+        case McpAction::XaaClear:
+            return execute_xaa_clear(ctx);
         }
         return CommandResult::fail("Unknown MCP action");
     }
 
     [[nodiscard]] std::vector<std::string> complete(std::string_view partial) {
         static constexpr std::array actions = {
-            "manage", "list", "add", "remove", "show", "restart",
-            "enable", "disable", "reconnect", "xaa",
+            "manage",  "list",   "add",     "remove",    "show",
+            "restart", "enable", "disable", "reconnect", "xaa",
         };
         std::vector<std::string> suggestions;
         for (auto act : actions) {
@@ -212,7 +226,8 @@ public:
         }
         if (partial == "xaa" || partial.starts_with("xaa ")) {
             static constexpr std::array xaa_subs = {"setup", "login", "show", "clear"};
-            for (auto s : xaa_subs) suggestions.emplace_back(s);
+            for (auto s : xaa_subs)
+                suggestions.emplace_back(s);
         }
         // Also suggest known server names
         auto rows = list_server_rows();
@@ -256,8 +271,7 @@ private:
         }
         auto synced = loom::tools::sync_native_mcp_servers(std::move(servers));
         if (!synced) {
-            return std::unexpected(Error::make(
-                ErrorCode::InternalError, synced.error()));
+            return std::unexpected(Error::make(ErrorCode::InternalError, synced.error()));
         }
         return {};
     }
@@ -276,23 +290,22 @@ private:
     extract_scope_arg(std::span<const std::string> args, std::size_t start);
 
     /// Parse action string to enum. Recognizes /mcp xaa <sub> by peeking args[1].
-    [[nodiscard]] static std::optional<McpAction> parse_action(
-        std::string_view action,
-        std::optional<std::string_view> second_token = std::nullopt
-    ) {
+    [[nodiscard]] static std::optional<McpAction>
+    parse_action(std::string_view action,
+                 std::optional<std::string_view> second_token = std::nullopt) {
         if (action == "list" || action == "ls") return McpAction::List;
-        if (action == "add")                   return McpAction::Add;
+        if (action == "add") return McpAction::Add;
         if (action == "remove" || action == "rm") return McpAction::Remove;
         if (action == "show" || action == "info") return McpAction::Show;
-        if (action == "restart")               return McpAction::Restart;
-        if (action == "enable")                return McpAction::Enable;
-        if (action == "disable")               return McpAction::Disable;
-        if (action == "reconnect")             return McpAction::Reconnect;
+        if (action == "restart") return McpAction::Restart;
+        if (action == "enable") return McpAction::Enable;
+        if (action == "disable") return McpAction::Disable;
+        if (action == "reconnect") return McpAction::Reconnect;
         if (action == "xaa") {
             auto sub = second_token.value_or("show");
             if (sub == "setup") return McpAction::XaaSetup;
             if (sub == "login") return McpAction::XaaLogin;
-            if (sub == "show")  return McpAction::XaaShow;
+            if (sub == "show") return McpAction::XaaShow;
             if (sub == "clear") return McpAction::XaaClear;
             return std::nullopt;
         }
@@ -304,14 +317,13 @@ private:
     }
 
     [[nodiscard]] static bool is_remote_transport(std::string_view transport) {
-        return transport == "sse" || transport == "http" ||
-               transport == "streamable-http" || transport == "streamableHttp";
+        return transport == "sse" || transport == "http" || transport == "streamable-http" ||
+               transport == "streamableHttp";
     }
 
     [[nodiscard]] static bool looks_like_url(std::string_view value) {
         return value.starts_with("http://") || value.starts_with("https://") ||
-               value.starts_with("localhost") ||
-               value.ends_with("/sse") || value.ends_with("/mcp");
+               value.starts_with("localhost") || value.ends_with("/sse") || value.ends_with("/mcp");
     }
 
     static void normalize_transport(McpServerConfig& config) {
@@ -343,9 +355,7 @@ private:
     parse_env_assignment(std::string_view value) {
         const auto eq = value.find('=');
         if (eq == std::string_view::npos || eq == 0) return std::nullopt;
-        return std::pair{
-            std::string(value.substr(0, eq)),
-            std::string(value.substr(eq + 1))};
+        return std::pair{std::string(value.substr(0, eq)), std::string(value.substr(eq + 1))};
     }
 
     [[nodiscard]] static Result<int> parse_port(std::string_view value) {
@@ -353,15 +363,13 @@ private:
         for (char ch : value) {
             if (ch < '0' || ch > '9') {
                 return std::unexpected(Error::make(
-                    ErrorCode::InvalidRequest,
-                    std::format("Invalid callback port: {}", value)));
+                    ErrorCode::InvalidRequest, std::format("Invalid callback port: {}", value)));
             }
             port = port * 10 + (ch - '0');
         }
         if (port <= 0 || port > 65535) {
-            return std::unexpected(Error::make(
-                ErrorCode::InvalidRequest,
-                std::format("Invalid callback port: {}", value)));
+            return std::unexpected(Error::make(ErrorCode::InvalidRequest,
+                                               std::format("Invalid callback port: {}", value)));
         }
         return port;
     }
@@ -397,8 +405,8 @@ private:
     }
 
     /// Collect rows for the tools table of a single server.
-    [[nodiscard]] static std::vector<McpToolRow> list_tool_rows(
-        const loom::tools::NativeMcpStatus& status) {
+    [[nodiscard]] static std::vector<McpToolRow>
+    list_tool_rows(const loom::tools::NativeMcpStatus& status) {
         std::vector<McpToolRow> rows;
         rows.reserve(status.tools.size());
         for (const auto& t : status.tools) {
@@ -408,27 +416,24 @@ private:
     }
 
     /// Collect rows for the resources table of a single server.
-    [[nodiscard]] static std::vector<McpResourceRow> list_resource_rows(
-        const loom::tools::NativeMcpStatus& status) {
+    [[nodiscard]] static std::vector<McpResourceRow>
+    list_resource_rows(const loom::tools::NativeMcpStatus& status) {
         std::vector<McpResourceRow> rows;
         rows.reserve(status.resources.size());
         for (const auto& r : status.resources) {
-            rows.push_back(McpResourceRow{
-                .uri = r.uri, .name = r.name, .mime_type = r.mime_type});
+            rows.push_back(McpResourceRow{.uri = r.uri, .name = r.name, .mime_type = r.mime_type});
         }
         return rows;
     }
 
     /// Collect rows for the prompts table of a single server.
-    [[nodiscard]] static std::vector<McpPromptRow> list_prompt_rows(
-        const loom::tools::NativeMcpStatus& status) {
+    [[nodiscard]] static std::vector<McpPromptRow>
+    list_prompt_rows(const loom::tools::NativeMcpStatus& status) {
         std::vector<McpPromptRow> rows;
         rows.reserve(status.prompts.size());
         for (const auto& p : status.prompts) {
             rows.push_back(McpPromptRow{
-                .name = p.name,
-                .description = p.description,
-                .arg_count = p.arguments.size()});
+                .name = p.name, .description = p.description, .arg_count = p.arguments.size()});
         }
         return rows;
     }
@@ -470,18 +475,15 @@ private:
             return CommandResult::success(
                 "No MCP servers configured.\n"
                 "Use `/mcp add <name> <command> [args...]` or "
-                "`/mcp add --transport http <name> <url>` to add a server."
-            );
+                "`/mcp add --transport http <name> <url>` to add a server.");
         }
         std::string output = "MCP Servers:\n\n";
-        output += std::format("  {:<22} {:<8} {:<16} {:<7} {:<6} {:<7}\n",
-                              "Name", "Type", "Status", "Enabled", "Tools", "Prompts");
+        output += std::format("  {:<22} {:<8} {:<16} {:<7} {:<6} {:<7}\n", "Name", "Type", "Status",
+                              "Enabled", "Tools", "Prompts");
         output += std::string(76, '-') + "\n";
         for (const auto& r : rows) {
-            output += std::format("  {:<22} {:<8} {:<16} {:<7} {:<6} {:<7}\n",
-                r.name, r.type, r.status,
-                r.enabled ? "yes" : "no",
-                r.tools, r.prompts);
+            output += std::format("  {:<22} {:<8} {:<16} {:<7} {:<6} {:<7}\n", r.name, r.type,
+                                  r.status, r.enabled ? "yes" : "no", r.tools, r.prompts);
         }
         return CommandResult::success(std::move(output));
     }
@@ -501,8 +503,7 @@ private:
             return CommandResult::fail(
                 "Usage: /mcp add <name> <commandOrUrl> [args...]\n"
                 "  Options: --scope -s, --transport -t, --env -e, --header -H,\n"
-                "           --client-id, --client-secret, --callback-port, --xaa"
-            );
+                "           --client-id, --client-secret, --callback-port, --xaa");
         }
         if (auto loaded = ensure_config_loaded(); !loaded) {
             return std::unexpected(loaded.error());
@@ -555,16 +556,14 @@ private:
             // (e.g. phantom "user" in stdio args, hard failure on remote
             // --url/-H). Boolean flags and bare positionals consume only the
             // single tail increment.
-            auto consume_value = [&](std::string_view flag)
-                -> Result<std::string> {
-                    if (index + 1 >= args.size()) {
-                        return std::unexpected(Error::make(
-                            ErrorCode::InvalidRequest,
-                            std::format("{} requires a value", flag)));
-                    }
-                    ++index;
-                    return args[index];
-                };
+            auto consume_value = [&](std::string_view flag) -> Result<std::string> {
+                if (index + 1 >= args.size()) {
+                    return std::unexpected(Error::make(ErrorCode::InvalidRequest,
+                                                       std::format("{} requires a value", flag)));
+                }
+                ++index;
+                return args[index];
+            };
 
             if (tok == "--scope" || tok == "-s") {
                 auto v = consume_value(tok);
@@ -589,21 +588,25 @@ private:
                 auto v = consume_value(tok);
                 if (!v) return std::unexpected(v.error());
                 auto kv = parse_env_assignment(*v);
-                if (!kv) return CommandResult::fail(
-                    std::format("--env requires KEY=value (got: {})", *v));
+                if (!kv)
+                    return CommandResult::fail(
+                        std::format("--env requires KEY=value (got: {})", *v));
                 config.env[kv->first] = kv->second;
             } else if (tok == "-H" || tok == "--header") {
                 auto v = consume_value(tok);
                 if (!v) return std::unexpected(v.error());
                 auto kv = parse_header_colon(*v);
-                if (!kv) return CommandResult::fail(
-                    std::format("--header requires \"Key: Value\" (got: {})", *v));
+                if (!kv)
+                    return CommandResult::fail(
+                        std::format("--header requires \"Key: Value\" (got: {})", *v));
                 config.headers[kv->first] = kv->second;
             } else if (tok == "--client-id") {
                 auto v = consume_value(tok);
                 if (!v) return std::unexpected(v.error());
-                if (config.transport == "stdio") warned_remote_flags_for_stdio = true;
-                else ensure_oauth(config).client_id = *v;
+                if (config.transport == "stdio")
+                    warned_remote_flags_for_stdio = true;
+                else
+                    ensure_oauth(config).client_id = *v;
             } else if (tok == "--client-secret") {
                 request_client_secret = true;
                 if (config.transport == "stdio") warned_remote_flags_for_stdio = true;
@@ -612,12 +615,16 @@ private:
                 if (!v) return std::unexpected(v.error());
                 auto p = parse_port(*v);
                 if (!p) return std::unexpected(p.error());
-                if (config.transport == "stdio") warned_remote_flags_for_stdio = true;
-                else ensure_oauth(config).callback_port = *p;
+                if (config.transport == "stdio")
+                    warned_remote_flags_for_stdio = true;
+                else
+                    ensure_oauth(config).callback_port = *p;
             } else if (tok == "--xaa") {
                 request_xaa = true;
-                if (config.transport == "stdio") warned_remote_flags_for_stdio = true;
-                else ensure_oauth(config).xaa = true;
+                if (config.transport == "stdio")
+                    warned_remote_flags_for_stdio = true;
+                else
+                    ensure_oauth(config).xaa = true;
             } else if (tok == "--headers-helper") {
                 auto v = consume_value(tok);
                 if (!v) return std::unexpected(v.error());
@@ -638,7 +645,8 @@ private:
         }
 
         if (config.transport == "stdio") {
-            for (auto& a : cmd_args) config.args.push_back(std::move(a));
+            for (auto& a : cmd_args)
+                config.args.push_back(std::move(a));
         }
         normalize_transport(config);
 
@@ -650,10 +658,8 @@ private:
                     "Error: --xaa requires LOOM_ENABLE_XAA=1 in your environment");
             }
             std::vector<std::string> missing;
-            if (!config.oauth || !config.oauth->client_id)
-                missing.push_back("--client-id");
-            if (!request_client_secret)
-                missing.push_back("--client-secret");
+            if (!config.oauth || !config.oauth->client_id) missing.push_back("--client-id");
+            if (!request_client_secret) missing.push_back("--client-secret");
             auto xaa_cfg = read_xaa_idp_status();
             if (!xaa_cfg.configured)
                 missing.push_back("'loom mcp xaa setup' (settings.xaaIdp not configured)");
@@ -668,8 +674,7 @@ private:
         }
 
         // ---- stdio URL-misuse warning ----
-        if (!transport_explicit && config.transport == "stdio" &&
-            looks_like_url(config.command)) {
+        if (!transport_explicit && config.transport == "stdio" && looks_like_url(config.command)) {
             warned_url_misdetect = true;
         }
 
@@ -677,8 +682,7 @@ private:
         if (config.transport == "stdio" && config.command.empty()) {
             return CommandResult::fail("stdio MCP servers require a command");
         }
-        if (is_remote_transport(config.transport) &&
-            (!config.url || config.url->empty())) {
+        if (is_remote_transport(config.transport) && (!config.url || config.url->empty())) {
             return CommandResult::fail(
                 "remote MCP servers require a URL (positional or via --url)");
         }
@@ -695,8 +699,7 @@ private:
                     // Use the XAA IdP issuer as the storage key
                     auto xaa_cfg = read_xaa_idp_status();
                     if (xaa_cfg.configured) {
-                        loom::services::mcp::save_idp_client_secret(
-                            xaa_cfg.issuer, secret_env);
+                        loom::services::mcp::save_idp_client_secret(xaa_cfg.issuer, secret_env);
                     }
                 }
             }
@@ -709,8 +712,7 @@ private:
             return CommandResult::fail(
                 std::format("Invalid scope '{}'. Use local | user | project", scope));
         }
-        if (auto upserted = config_manager_.upsert_mcp_server(*target_scope, config);
-            !upserted) {
+        if (auto upserted = config_manager_.upsert_mcp_server(*target_scope, config); !upserted) {
             return std::unexpected(upserted.error());
         }
         if (auto synced = reload_and_sync(); !synced) {
@@ -725,19 +727,17 @@ private:
                    "be ignored for stdio.\n";
         }
         if (warned_url_misdetect) {
-            out += std::format(
-                "\nWarning: The command \"{}\" looks like a URL, but is being "
-                "interpreted as a stdio server as --transport was not specified.\n"
-                "  If HTTP:  use /mcp add --transport http {} {}\n"
-                "  If SSE:   use /mcp add --transport sse {} {}\n",
-                command_or_url, name, command_or_url, name, command_or_url);
+            out += std::format("\nWarning: The command \"{}\" looks like a URL, but is being "
+                               "interpreted as a stdio server as --transport was not specified.\n"
+                               "  If HTTP:  use /mcp add --transport http {} {}\n"
+                               "  If SSE:   use /mcp add --transport sse {} {}\n",
+                               command_or_url, name, command_or_url, name, command_or_url);
         }
+        out +=
+            std::format("Added {} MCP server '{}' to {} config.\n", config.transport, name, scope);
         out += std::format(
-            "Added {} MCP server '{}' to {} config.\n",
-            config.transport, name, scope);
-        out += std::format(
-            "Saved MCP server '{}'. Use `/mcp show {}` to inspect the native configuration.",
-            name, name);
+            "Saved MCP server '{}'. Use `/mcp show {}` to inspect the native configuration.", name,
+            name);
         return CommandResult::success(std::move(out));
     }
 
@@ -777,10 +777,17 @@ private:
             if (!entry.source) continue;
             switch (entry.status) {
                 using enum loom::core::McpMutationStatus;
-                case Modified:        touched.push_back(entry.source->path); break;
-                case WriteFailed:     failed.push_back(entry.source->path); break;
-                case SkippedReadOnly: skipped.push_back(entry.source->path); break;
-                default: break;
+            case Modified:
+                touched.push_back(entry.source->path);
+                break;
+            case WriteFailed:
+                failed.push_back(entry.source->path);
+                break;
+            case SkippedReadOnly:
+                skipped.push_back(entry.source->path);
+                break;
+            default:
+                break;
             }
         }
 
@@ -796,31 +803,28 @@ private:
         // Not found anywhere.
         if (touched.empty() && failed.empty() && skipped.empty()) {
             if (!scope_label.empty()) {
-                return CommandResult::fail(std::format(
-                    "MCP server '{}' not found in the '{}' scope", name, scope_label));
+                return CommandResult::fail(
+                    std::format("MCP server '{}' not found in the '{}' scope", name, scope_label));
             }
-            return CommandResult::fail(
-                std::format("MCP server '{}' not found", name));
+            return CommandResult::fail(std::format("MCP server '{}' not found", name));
         }
 
         // All entries are read-only fallback.
         if (touched.empty() && failed.empty() && !skipped.empty()) {
-            return CommandResult::fail(std::format(
-                "MCP server '{}' is in a read-only fallback config ({}). "
-                "Use 'mcp add --scope user' to create a writable shadow, "
-                "then remove it.",
-                name, join_paths(skipped)));
+            return CommandResult::fail(
+                std::format("MCP server '{}' is in a read-only fallback config ({}). "
+                            "Use 'mcp add --scope user' to create a writable shadow, "
+                            "then remove it.",
+                            name, join_paths(skipped)));
         }
 
         // Zero writes succeeded with write failures.
         if (touched.empty() && !failed.empty()) {
-            std::string msg = std::format(
-                "MCP server '{}' was found but could not be removed; "
-                "failed to write: {}",
-                name, join_paths(failed));
+            std::string msg = std::format("MCP server '{}' was found but could not be removed; "
+                                          "failed to write: {}",
+                                          name, join_paths(failed));
             if (!skipped.empty()) {
-                msg += std::format(
-                    "\nSkipped (read-only fallback): {}", join_paths(skipped));
+                msg += std::format("\nSkipped (read-only fallback): {}", join_paths(skipped));
             }
             return CommandResult::fail(std::move(msg));
         }
@@ -834,19 +838,16 @@ private:
 
         std::string out;
         if (!touched.empty()) {
-            out = std::format(
-                "Removed MCP server '{}' from: {}", name, join_paths(touched));
+            out = std::format("Removed MCP server '{}' from: {}", name, join_paths(touched));
         }
         if (!failed.empty()) {
             if (!out.empty()) out += "\n";
-            out += std::format(
-                "Warning: the name remains in these files (could not write): {}",
-                join_paths(failed));
+            out += std::format("Warning: the name remains in these files (could not write): {}",
+                               join_paths(failed));
         }
         if (!skipped.empty()) {
             if (!out.empty()) out += "\n";
-            out += std::format(
-                "Skipped (read-only fallback): {}", join_paths(skipped));
+            out += std::format("Skipped (read-only fallback): {}", join_paths(skipped));
         }
         return CommandResult::success(std::move(out));
     }
@@ -857,19 +858,17 @@ private:
             return std::unexpected(synced.error());
         }
         const auto& configured = config_manager_.settings().mcp_servers;
-        auto cfg_it = std::ranges::find_if(configured,
-            [name](const auto& s) { return s.name == name; });
+        auto cfg_it =
+            std::ranges::find_if(configured, [name](const auto& s) { return s.name == name; });
         if (cfg_it == configured.end()) {
-            return CommandResult::fail(
-                std::format("MCP server '{}' not configured", name));
+            return CommandResult::fail(std::format("MCP server '{}' not configured", name));
         }
         const auto& cfg = *cfg_it;
         std::string out = std::format("MCP Server: {}\n", cfg.name);
         auto status = loom::tools::native_mcp_status(name);
-        out += std::format("Status: {}\n",
-            status ? status->status : std::string("not started"));
-        out += std::format("Type: {}\n",
-            cfg.transport.empty() ? std::string("stdio") : cfg.transport);
+        out += std::format("Status: {}\n", status ? status->status : std::string("not started"));
+        out +=
+            std::format("Type: {}\n", cfg.transport.empty() ? std::string("stdio") : cfg.transport);
 
         if (is_remote_transport(cfg.transport)) {
             out += std::format("URL: {}\n", cfg.url.value_or(std::string{}));
@@ -878,16 +877,13 @@ private:
                 for (const auto& [k, v] : cfg.headers)
                     out += std::format("  {}: {}\n", k, v);
             }
-            if (cfg.headers_helper)
-                out += std::format("Headers helper: {}\n", *cfg.headers_helper);
+            if (cfg.headers_helper) out += std::format("Headers helper: {}\n", *cfg.headers_helper);
             if (cfg.oauth) {
                 std::vector<std::string> parts;
-                if (cfg.oauth->auth_server_metadata_url)
-                    parts.push_back("metadata-url configured");
+                if (cfg.oauth->auth_server_metadata_url) parts.push_back("metadata-url configured");
                 if (cfg.oauth->client_id) parts.push_back("client-id configured");
                 if (cfg.oauth->callback_port)
-                    parts.push_back(std::format("callback-port {}",
-                        *cfg.oauth->callback_port));
+                    parts.push_back(std::format("callback-port {}", *cfg.oauth->callback_port));
                 if (cfg.oauth->xaa) parts.push_back("xaa");
                 if (!parts.empty()) {
                     out += "OAuth: ";
@@ -900,15 +896,14 @@ private:
             }
         } else {
             out += std::format("Command: {}", cfg.command);
-            for (const auto& a : cfg.args) out += std::format(" {}", a);
+            for (const auto& a : cfg.args)
+                out += std::format(" {}", a);
             out += "\n";
         }
         out += "\n";
 
-        if (status && status->error)
-            out += std::format("Last error: {}\n\n", *status->error);
-        if (status && status->server_info)
-            out += std::format("Server: {}\n", *status->server_info);
+        if (status && status->error) out += std::format("Last error: {}\n\n", *status->error);
+        if (status && status->server_info) out += std::format("Server: {}\n", *status->server_info);
         if (status && status->capabilities)
             out += std::format("Capabilities: {}\n\n", *status->capabilities);
 
@@ -919,7 +914,7 @@ private:
         }
 
         auto tool_rows = list_tool_rows(*status);
-        auto res_rows  = list_resource_rows(*status);
+        auto res_rows = list_resource_rows(*status);
         auto prom_rows = list_prompt_rows(*status);
 
         out += std::format("Tools ({}):\n", tool_rows.size());
@@ -932,8 +927,7 @@ private:
 
         out += std::format("\nPrompts ({}):\n", prom_rows.size());
         for (const auto& r : prom_rows)
-            out += std::format("  - {}: {} ({} args)\n",
-                r.name, r.description, r.arg_count);
+            out += std::format("  - {}: {} ({} args)\n", r.name, r.description, r.arg_count);
 
         return CommandResult::success(std::move(out));
     }
@@ -944,18 +938,16 @@ private:
             return std::unexpected(synced.error());
         }
         const auto& servers = config_manager_.settings().mcp_servers;
-        if (std::ranges::find_if(servers, [name](const auto& s){ return s.name==name; })
-            == servers.end()) {
-            return CommandResult::fail(
-                std::format("MCP server '{}' not configured", name));
+        if (std::ranges::find_if(servers, [name](const auto& s) { return s.name == name; }) ==
+            servers.end()) {
+            return CommandResult::fail(std::format("MCP server '{}' not configured", name));
         }
         auto restarted = loom::tools::restart_native_mcp_server(name);
         if (!restarted) return CommandResult::fail(restarted.error());
-        return CommandResult::success(std::format(
-            "MCP server '{}' restarted: {} (tools={}, resources={}, prompts={})",
-            name, restarted->status,
-            restarted->tools.size(), restarted->resources.size(),
-            restarted->prompts.size()));
+        return CommandResult::success(
+            std::format("MCP server '{}' restarted: {} (tools={}, resources={}, prompts={})", name,
+                        restarted->status, restarted->tools.size(), restarted->resources.size(),
+                        restarted->prompts.size()));
     }
 
     // ---- enable / disable / reconnect --------------------------------------
@@ -967,37 +959,32 @@ private:
     /// touched. "all" resolves each owner and patches each distinct file
     /// once; file-level failures aggregate. Body lives in the mcp_cmd.cpp
     /// module implementation unit (inline-def ratchet).
-    [[nodiscard]] Result<CommandResult>
-    execute_set_disabled(std::span<const std::string> args, bool disabled);
+    [[nodiscard]] Result<CommandResult> execute_set_disabled(std::span<const std::string> args,
+                                                             bool disabled);
 
     /// Enable a server (clear the "disabled" flag; applies on next start).
-    [[nodiscard]] Result<CommandResult>
-    execute_enable(std::span<const std::string> args) {
+    [[nodiscard]] Result<CommandResult> execute_enable(std::span<const std::string> args) {
         return execute_set_disabled(args, /*disabled=*/false);
     }
 
     /// Disable a server (set the "disabled" flag; applies on next start).
-    [[nodiscard]] Result<CommandResult>
-    execute_disable(std::span<const std::string> args) {
+    [[nodiscard]] Result<CommandResult> execute_disable(std::span<const std::string> args) {
         return execute_set_disabled(args, /*disabled=*/true);
     }
 
     /// Reconnect: drop and re-establish the connection for a named server.
     [[nodiscard]] Result<CommandResult> execute_reconnect(std::string_view name) {
-        if (auto synced = sync_native_runtime(); !synced)
-            return std::unexpected(synced.error());
+        if (auto synced = sync_native_runtime(); !synced) return std::unexpected(synced.error());
 
         const auto& servers = config_manager_.settings().mcp_servers;
-        if (std::ranges::find_if(servers, [name](const auto& s){ return s.name==name; })
-            == servers.end()) {
-            return CommandResult::fail(
-                std::format("MCP server '{}' not configured", name));
+        if (std::ranges::find_if(servers, [name](const auto& s) { return s.name == name; }) ==
+            servers.end()) {
+            return CommandResult::fail(std::format("MCP server '{}' not configured", name));
         }
         auto r = loom::tools::restart_native_mcp_server(name);
         if (!r) return CommandResult::fail(r.error());
-        return CommandResult::success(std::format(
-            "MCP server '{}' reconnected: {} (tools={})",
-            name, r->status, r->tools.size()));
+        return CommandResult::success(std::format("MCP server '{}' reconnected: {} (tools={})",
+                                                  name, r->status, r->tools.size()));
     }
 
     // ---- /mcp xaa subcommands ----------------------------------------------
@@ -1009,15 +996,15 @@ private:
         if (sub != "setup" && sub != "login" && sub != "show" && sub != "clear") {
             return std::unexpected(Error::make(
                 ErrorCode::InvalidRequest,
-                std::format("Unknown xaa subcommand '{}'. Use: setup | login | show | clear", sub)));
+                std::format("Unknown xaa subcommand '{}'. Use: setup | login | show | clear",
+                            sub)));
         }
         return {};
     }
 
     /// /mcp xaa setup — write settings.xaaIdp and optionally stash client secret.
     [[nodiscard]] Result<CommandResult> execute_xaa_setup(const CommandContext& ctx) {
-        if (auto loaded = ensure_config_loaded(); !loaded)
-            return std::unexpected(loaded.error());
+        if (auto loaded = ensure_config_loaded(); !loaded) return std::unexpected(loaded.error());
 
         std::optional<std::string> issuer;
         std::optional<std::string> client_id;
@@ -1029,20 +1016,23 @@ private:
             auto next = [&]() -> Result<std::string> {
                 if (i + 1 >= ctx.args.size())
                     return std::unexpected(Error::make(ErrorCode::InvalidRequest,
-                        std::format("{} requires a value", tok)));
+                                                       std::format("{} requires a value", tok)));
                 ++i;  // onto the value; the for-header ++i skips past it
                 return ctx.args[i];
             };
             if (tok == "--issuer") {
-                auto v = next(); if (!v) return std::unexpected(v.error());
+                auto v = next();
+                if (!v) return std::unexpected(v.error());
                 issuer = std::move(*v);
             } else if (tok == "--client-id") {
-                auto v = next(); if (!v) return std::unexpected(v.error());
+                auto v = next();
+                if (!v) return std::unexpected(v.error());
                 client_id = std::move(*v);
             } else if (tok == "--client-secret") {
                 want_secret = true;
             } else if (tok == "--callback-port") {
-                auto v = next(); if (!v) return std::unexpected(v.error());
+                auto v = next();
+                if (!v) return std::unexpected(v.error());
                 auto p = parse_port(*v);
                 if (!p) return std::unexpected(p.error());
                 callback_port = *p;
@@ -1052,23 +1042,22 @@ private:
             }
         }
 
-        if (!issuer) return CommandResult::fail(
-            "Error: --issuer is required (IdP issuer URL for OIDC discovery)");
-        if (!client_id) return CommandResult::fail(
-            "Error: --client-id is required (Loom's client_id at the IdP)");
+        if (!issuer)
+            return CommandResult::fail(
+                "Error: --issuer is required (IdP issuer URL for OIDC discovery)");
+        if (!client_id)
+            return CommandResult::fail(
+                "Error: --client-id is required (Loom's client_id at the IdP)");
 
         bool looks_like_url =
-            issuer->starts_with("https://") ||
-            issuer->starts_with("http://localhost") ||
-            issuer->starts_with("http://127.0.0.1") ||
-            issuer->starts_with("http://[::1]");
+            issuer->starts_with("https://") || issuer->starts_with("http://localhost") ||
+            issuer->starts_with("http://127.0.0.1") || issuer->starts_with("http://[::1]");
         if (!looks_like_url) {
             return CommandResult::fail(
                 std::format("Error: --issuer must be a valid https:// URL (got: {})", *issuer));
         }
         if (issuer->starts_with("http://") &&
-            !(issuer->starts_with("http://localhost") ||
-              issuer->starts_with("http://127.0.0.1") ||
+            !(issuer->starts_with("http://localhost") || issuer->starts_with("http://127.0.0.1") ||
               issuer->starts_with("http://[::1]"))) {
             return CommandResult::fail(
                 std::format("Error: --issuer must use https:// (got: {})", *issuer));
@@ -1076,8 +1065,7 @@ private:
 
         std::optional<std::string> secret;
         if (want_secret) {
-            if (const char* s = std::getenv("MCP_XAA_IDP_CLIENT_SECRET");
-                s && s[0] != '\0') {
+            if (const char* s = std::getenv("MCP_XAA_IDP_CLIENT_SECRET"); s && s[0] != '\0') {
                 secret = std::string(s);
             } else {
                 return CommandResult::fail(
@@ -1107,8 +1095,7 @@ private:
             // Save client_secret to file-based secure storage
             loom::services::mcp::save_idp_client_secret(*issuer, *secret);
         }
-        return CommandResult::success(
-            std::format("XAA IdP connection configured for {}", *issuer));
+        return CommandResult::success(std::format("XAA IdP connection configured for {}", *issuer));
     }
 
     /// /mcp xaa login — acquire or inject an id_token for silent auth.
@@ -1123,7 +1110,10 @@ private:
         std::optional<std::string> inject_token;
         for (std::size_t i = 2; i < ctx.args.size(); ++i) {
             const auto& tok = ctx.args[i];
-            if (tok == "--force") { force = true; continue; }
+            if (tok == "--force") {
+                force = true;
+                continue;
+            }
             if (tok == "--id-token") {
                 if (i + 1 >= ctx.args.size())
                     return CommandResult::fail("--id-token requires a JWT value");
@@ -1131,21 +1121,18 @@ private:
                 inject_token = ctx.args[i];
                 continue;
             }
-            return CommandResult::fail(
-                std::format("Unexpected flag for /mcp xaa login: {}", tok));
+            return CommandResult::fail(std::format("Unexpected flag for /mcp xaa login: {}", tok));
         }
 
         if (inject_token) {
             // Cache the injected id_token to file-based secure storage.
             // save_idp_id_token_from_jwt parses the JWT exp claim for real TTL.
-            auto expires_at_ms = loom::services::mcp::save_idp_id_token_from_jwt(
-                status.issuer, *inject_token);
+            auto expires_at_ms =
+                loom::services::mcp::save_idp_id_token_from_jwt(status.issuer, *inject_token);
             cached_xaa_status_.reset();
-            std::uint64_t approx_exp = static_cast<std::uint64_t>(
-                expires_at_ms / 1000);
-            return CommandResult::success(std::format(
-                "id_token cached for {} (expires {})",
-                status.issuer, approx_exp));
+            std::uint64_t approx_exp = static_cast<std::uint64_t>(expires_at_ms / 1000);
+            return CommandResult::success(
+                std::format("id_token cached for {} (expires {})", status.issuer, approx_exp));
         }
 
         if (force) {
@@ -1166,11 +1153,10 @@ private:
         // does the int -> uint16_t narrowing through validated_callback_port()
         // and IGNORES an out-of-range value (random port as today) rather than
         // wrapping it (65536 -> 0, 70000 -> 4464 are wrong ports, not errors).
-        auto result = loom::services::mcp::perform_xaa_login(
-            status.issuer, status.client_id, std::nullopt, status.callback_port);
+        auto result = loom::services::mcp::perform_xaa_login(status.issuer, status.client_id,
+                                                             std::nullopt, status.callback_port);
         if (!result) {
-            return CommandResult::fail(
-                std::format("IdP login failed: {}", result.error()));
+            return CommandResult::fail(std::format("IdP login failed: {}", result.error()));
         }
         return CommandResult::success(
             "Logged in. MCP servers with --xaa will now authenticate silently.");
@@ -1185,21 +1171,17 @@ private:
         std::string out;
         out += std::format("Issuer:        {}\n", s.issuer);
         out += std::format("Client ID:     {}\n", s.client_id);
-        if (s.callback_port)
-            out += std::format("Callback port: {}\n", *s.callback_port);
+        if (s.callback_port) out += std::format("Callback port: {}\n", *s.callback_port);
         out += std::format("Client secret: {}\n",
-            s.has_client_secret ? "(stored in keychain)" : "(not set — PKCE-only)");
-        out += std::format("Logged in:     {}\n",
-            s.has_id_token
-                ? "yes (id_token cached)"
-                : "no — run 'loom mcp xaa login'");
+                           s.has_client_secret ? "(stored in keychain)" : "(not set — PKCE-only)");
+        out += std::format("Logged in:     {}\n", s.has_id_token ? "yes (id_token cached)"
+                                                                 : "no — run 'loom mcp xaa login'");
         return CommandResult::success(std::move(out));
     }
 
     /// /mcp xaa clear — drop settings.xaaIdp + clear keychain slots.
     [[nodiscard]] Result<CommandResult> execute_xaa_clear(const CommandContext& /*ctx*/) {
-        if (auto loaded = ensure_config_loaded(); !loaded)
-            return std::unexpected(loaded.error());
+        if (auto loaded = ensure_config_loaded(); !loaded) return std::unexpected(loaded.error());
 
         auto old = read_xaa_idp_status();
         std::string old_issuer = std::move(old.issuer);
@@ -1222,4 +1204,4 @@ private:
     }
 };
 
-} // namespace loom::commands
+}  // namespace loom::commands

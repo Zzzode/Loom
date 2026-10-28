@@ -15,13 +15,13 @@ import loom.fs.atomic_replace;
 
 export namespace loom::tools::team_create {
 
-using loom::core::Tool;
-using loom::core::ToolInput;
-using loom::core::ToolResult;
-using loom::core::ToolDefinition;
-using loom::core::ToolPermission;
 using loom::core::InputSchema;
 using loom::core::SchemaProperty;
+using loom::core::Tool;
+using loom::core::ToolDefinition;
+using loom::core::ToolInput;
+using loom::core::ToolPermission;
+using loom::core::ToolResult;
 
 /// Team member information at creation time
 struct TeamMemberInfo {
@@ -47,9 +47,9 @@ struct TeamFile {
 
 /// Input parameters for TeamCreateTool
 struct TeamCreateInput {
-    std::string team_name;                    // Required: name for the new team
-    std::optional<std::string> description;   // Optional: team description/purpose
-    std::optional<std::string> agent_type;    // Optional: type/role of the team lead
+    std::string team_name;                   // Required: name for the new team
+    std::optional<std::string> description;  // Optional: team description/purpose
+    std::optional<std::string> agent_type;   // Optional: type/role of the team lead
 
     static std::expected<TeamCreateInput, std::string> from_json(std::string_view json);
 };
@@ -73,37 +73,38 @@ public:
         return ToolDefinition{
             .name = std::string(kName),
             .description = std::string(kDescription),
-            .input_schema = InputSchema{
-                .properties = {
-                    SchemaProperty{
-                        .name = "team_name",
-                        .type = "string",
-                        .description = "Name for the new team to create",
-                        .required = true,
-                        .default_value = std::nullopt,
-                        .enum_values = std::nullopt,
-                    },
-                    SchemaProperty{
-                        .name = "description",
-                        .type = "string",
-                        .description = "Team description/purpose",
-                        .required = false,
-                        .default_value = std::nullopt,
-                        .enum_values = std::nullopt,
-                    },
-                    SchemaProperty{
-                        .name = "agent_type",
-                        .type = "string",
-                        .description = "Type/role of the team lead (e.g., researcher, test-runner)",
-                        .required = false,
-                        .default_value = std::nullopt,
-                        .enum_values = std::nullopt,
-                    },
-                }
-            },
+            .input_schema =
+                InputSchema{
+                    .properties =
+                        {
+                            SchemaProperty{
+                                .name = "team_name",
+                                .type = "string",
+                                .description = "Name for the new team to create",
+                                .required = true,
+                                .default_value = std::nullopt,
+                                .enum_values = std::nullopt,
+                            },
+                            SchemaProperty{
+                                .name = "description",
+                                .type = "string",
+                                .description = "Team description/purpose",
+                                .required = false,
+                                .default_value = std::nullopt,
+                                .enum_values = std::nullopt,
+                            },
+                            SchemaProperty{
+                                .name = "agent_type",
+                                .type = "string",
+                                .description =
+                                    "Type/role of the team lead (e.g., researcher, test-runner)",
+                                .required = false,
+                                .default_value = std::nullopt,
+                                .enum_values = std::nullopt,
+                            },
+                        }},
             .permission = ToolPermission::Write,
-            .category = "team"
-        };
+            .category = "team"};
     }
 
     [[nodiscard]] auto execute(const ToolInput& input) -> loom::utils::Result<ToolResult>;
@@ -127,27 +128,26 @@ public:
 
 namespace detail {
 
-[[nodiscard]] std::optional<std::string> json_string_field(
-    loom::utils::json::JsonVal object,
-    std::string_view key
-) {
+[[nodiscard]] std::optional<std::string> json_string_field(loom::utils::json::JsonVal object,
+                                                           std::string_view key) {
     auto value = object.get(key);
     if (!value.is_str()) return std::nullopt;
     auto text = std::string(value.as_str());
     return text.empty() ? std::nullopt : std::optional<std::string>{std::move(text)};
 }
 
-} // namespace detail
+}  // namespace detail
 
 std::expected<TeamCreateInput, std::string> TeamCreateInput::from_json(std::string_view json) {
     auto parsed = loom::utils::json::parse(json);
-    if (!parsed || !parsed->root().is_obj()) return std::unexpected("team_create input must be a JSON object");
+    if (!parsed || !parsed->root().is_obj())
+        return std::unexpected("team_create input must be a JSON object");
 
     auto root = parsed->root();
     TeamCreateInput input{
         .team_name = detail::json_string_field(root, "team_name")
-            .or_else([&] { return detail::json_string_field(root, "name"); })
-            .value_or(""),
+                         .or_else([&] { return detail::json_string_field(root, "name"); })
+                         .value_or(""),
         .description = detail::json_string_field(root, "description"),
         .agent_type = detail::json_string_field(root, "agent_type"),
     };
@@ -166,18 +166,20 @@ loom::utils::Result<ToolResult> TeamCreateTool::execute(const ToolInput& input) 
     // outer TeamCreateTool is already permission-gated by its caller — so the
     // inner delegation uses an allow-all checker rather than fail-closed
     // denial for the Write-level "team_create" runtime tool.
-    loom::tools::register_runtime_tools(registry, loom::tools::RuntimeToolOptions{
-        .parent_permission_mode = std::nullopt,
-        .permission_check = loom::tools::agent::AgentLivePermissionCheckFn{[](
-            std::string_view, std::string_view, std::string_view) {
-            return loom::tools::agent::AgentLivePermissionCheck{
-                .allowed = true,
-                .updated_input_json = std::nullopt,
-                .message = std::nullopt,
-            };
-        }},
-        .permission_hook_valid_for_background = false,
-    });
+    loom::tools::register_runtime_tools(
+        registry, loom::tools::RuntimeToolOptions{
+                      .parent_permission_mode = std::nullopt,
+                      .permission_check =
+                          loom::tools::agent::AgentLivePermissionCheckFn{
+                              [](std::string_view, std::string_view, std::string_view) {
+                                  return loom::tools::agent::AgentLivePermissionCheck{
+                                      .allowed = true,
+                                      .updated_input_json = std::nullopt,
+                                      .message = std::nullopt,
+                                  };
+                              }},
+                      .permission_hook_valid_for_background = false,
+                  });
     auto delegated = registry.execute("team_create", input);
     if (!delegated) return ToolResult::error(delegated.error().format());
     return std::move(*delegated);
@@ -204,25 +206,24 @@ std::string TeamCreateTool::generate_unique_team_name(const std::string& provide
     return std::format("{}-{}", base, std::chrono::steady_clock::now().time_since_epoch().count());
 }
 
-std::expected<std::string, std::string> TeamCreateTool::write_team_file(
-    const std::string& team_name,
-    const TeamFile& file
-) {
+std::expected<std::string, std::string>
+TeamCreateTool::write_team_file(const std::string& team_name, const TeamFile& file) {
     namespace fs = std::filesystem;
     std::error_code ec;
-    auto path = loom::tools::team_runtime_dir() / (loom::tools::safe_team_filename(team_name) + ".json");
+    auto path =
+        loom::tools::team_runtime_dir() / (loom::tools::safe_team_filename(team_name) + ".json");
     fs::create_directories(path.parent_path(), ec);
-    if (ec) return std::unexpected(std::format("failed to create team directory: {}", ec.message()));
+    if (ec)
+        return std::unexpected(std::format("failed to create team directory: {}", ec.message()));
 
     // c16: identical bytes to the old truncating ofstream, landed through
     // the atomic symlink/FIFO-safe replace (this flat <name>.json record is
     // the team_create wrapper's own shape; loom::utils::write_team_file is
     // the separate <team>/config.json canonical writer).
     std::ostringstream out;
-    out << R"({"name":")" << loom::tools::team_json_escape(file.name)
-        << R"(","lead_agent_id":")" << loom::tools::team_json_escape(file.lead_agent_id)
-        << R"(","lead_session_id":")" << loom::tools::team_json_escape(file.lead_session_id)
-        << R"(","members":[)";
+    out << R"({"name":")" << loom::tools::team_json_escape(file.name) << R"(","lead_agent_id":")"
+        << loom::tools::team_json_escape(file.lead_agent_id) << R"(","lead_session_id":")"
+        << loom::tools::team_json_escape(file.lead_session_id) << R"(","members":[)";
     for (std::size_t i = 0; i < file.members.size(); ++i) {
         const auto& member = file.members[i];
         if (i != 0) out << ',';
@@ -231,25 +232,24 @@ std::expected<std::string, std::string> TeamCreateTool::write_team_file(
             << R"(","agent_type":")" << loom::tools::team_json_escape(member.agent_type)
             << R"(","model":")" << loom::tools::team_json_escape(member.model)
             << R"(","tmux_pane_id":")" << loom::tools::team_json_escape(member.tmux_pane_id)
-            << R"(","cwd":")" << loom::tools::team_json_escape(member.cwd)
-            << R"("})";
+            << R"(","cwd":")" << loom::tools::team_json_escape(member.cwd) << R"("})";
     }
     out << "]}";
     auto replaced = loom::utils::atomic_replace_file(path, out.str());
     if (!replaced) {
-        return std::unexpected(std::format("failed to write team file: {}: {}",
-                                           path.string(), replaced.error()));
+        return std::unexpected(
+            std::format("failed to write team file: {}: {}", path.string(), replaced.error()));
     }
     return path.string();
 }
 
 void TeamCreateTool::register_for_cleanup(const std::string&) {}
 
-} // namespace loom::tools::team_create
+}  // namespace loom::tools::team_create
 
 export namespace loom::tools {
-    using loom::tools::team_create::TeamCreateInput;
-    using loom::tools::team_create::TeamCreateOutput;
-    using loom::tools::team_create::TeamFile;
-    using loom::tools::team_create::TeamMemberInfo;
-}
+using loom::tools::team_create::TeamCreateInput;
+using loom::tools::team_create::TeamCreateOutput;
+using loom::tools::team_create::TeamFile;
+using loom::tools::team_create::TeamMemberInfo;
+}  // namespace loom::tools

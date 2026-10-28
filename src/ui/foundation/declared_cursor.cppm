@@ -16,7 +16,6 @@
 /// skip the call rather than actively clearing.
 module;
 
-
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/dom/node.hpp>
 #include <ftxui/dom/requirement.hpp>
@@ -72,10 +71,17 @@ public:
         if (!loom::ui::design::theme::current_theme().a11y.reduced_motion) return;
         auto cursor = screen.cursor();
         switch (cursor.shape) {
-            case Screen::Cursor::BlockBlinking: cursor.shape = Screen::Cursor::Block; break;
-            case Screen::Cursor::UnderlineBlinking: cursor.shape = Screen::Cursor::Underline; break;
-            case Screen::Cursor::BarBlinking: cursor.shape = Screen::Cursor::Bar; break;
-            default: return;
+        case Screen::Cursor::BlockBlinking:
+            cursor.shape = Screen::Cursor::Block;
+            break;
+        case Screen::Cursor::UnderlineBlinking:
+            cursor.shape = Screen::Cursor::Underline;
+            break;
+        case Screen::Cursor::BarBlinking:
+            cursor.shape = Screen::Cursor::Bar;
+            break;
+        default:
+            return;
         }
         screen.SetCursor(cursor);
     }
@@ -89,10 +95,7 @@ public:
 // position into an absolute screen coordinate and applies it.
 class DeclaredCursorNode : public Node {
 public:
-    DeclaredCursorNode(Element child,
-                       bool active,
-                       int rel_x,
-                       int rel_y,
+    DeclaredCursorNode(Element child, bool active, int rel_x, int rel_y,
                        Screen::Cursor::Shape shape)
         : Node(unpack(std::move(child)))
         , active_(active)
@@ -115,12 +118,10 @@ public:
         if (active_) {
             // Clamp to box bounds so a stale declaration can't send the
             // cursor off-screen (e.g. after a resize before the next frame).
-            const int abs_x = std::clamp(box_.x_min + rel_x_,
-                                         box_.x_min,
-                                         std::max(box_.x_min, box_.x_max));
-            const int abs_y = std::clamp(box_.y_min + rel_y_,
-                                         box_.y_min,
-                                         std::max(box_.y_min, box_.y_max));
+            const int abs_x =
+                std::clamp(box_.x_min + rel_x_, box_.x_min, std::max(box_.x_min, box_.x_max));
+            const int abs_y =
+                std::clamp(box_.y_min + rel_y_, box_.y_min, std::max(box_.y_min, box_.y_max));
             screen.SetCursor(Screen::Cursor{abs_x, abs_y, shape_});
         }
     }
@@ -149,14 +150,12 @@ private:
 /// @param shape   Terminal cursor shape to use when active.
 ///
 /// @ingroup dom
-[[nodiscard]] inline Decorator declared_cursor(
-    bool active,
-    int rel_x,
-    int rel_y,
-    Screen::Cursor::Shape shape = Screen::Cursor::BarBlinking) {
+[[nodiscard]] inline Decorator
+declared_cursor(bool active, int rel_x, int rel_y,
+                Screen::Cursor::Shape shape = Screen::Cursor::BarBlinking) {
     return [=](Element child) -> Element {
-        return std::make_shared<detail::DeclaredCursorNode>(
-            std::move(child), active, rel_x, rel_y, shape);
+        return std::make_shared<detail::DeclaredCursorNode>(std::move(child), active, rel_x, rel_y,
+                                                            shape);
     };
 }
 
@@ -164,10 +163,9 @@ private:
 ///
 /// When the cursor box is already known (e.g. captured via `reflect` on a
 /// cursor glyph), this variant uses that box's top-left as the target.
-[[nodiscard]] inline Decorator declared_cursor(bool active,
-                                               const Box& cursor_box,
-                                               Screen::Cursor::Shape shape =
-                                                   Screen::Cursor::BarBlinking) {
+[[nodiscard]] inline Decorator
+declared_cursor(bool active, const Box& cursor_box,
+                Screen::Cursor::Shape shape = Screen::Cursor::BarBlinking) {
     return declared_cursor(active, cursor_box.x_min, cursor_box.y_min, shape);
 }
 

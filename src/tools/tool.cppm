@@ -3,8 +3,8 @@
 /// Defines the Tool concept, registry, permission model, and execution types.
 module;
 
-#include <cstdint>
 #include <cstddef>
+#include <cstdint>
 
 export module loom.tools.tool;
 
@@ -22,19 +22,23 @@ export namespace loom::core {
 
 /// Permission level required to execute a tool
 enum class ToolPermission : std::uint8_t {
-    ReadOnly,   // Only reads data (file read, glob, grep)
-    Write,      // Modifies files on disk
-    Execute,    // Runs arbitrary commands (bash)
-    Network,    // Makes network requests
+    ReadOnly,  // Only reads data (file read, glob, grep)
+    Write,     // Modifies files on disk
+    Execute,   // Runs arbitrary commands (bash)
+    Network,   // Makes network requests
 };
 
 /// Convert permission enum to human-readable string
 [[nodiscard]] constexpr std::string_view permission_to_string(ToolPermission perm) noexcept {
     switch (perm) {
-        case ToolPermission::ReadOnly: return "read_only";
-        case ToolPermission::Write:    return "write";
-        case ToolPermission::Execute:  return "execute";
-        case ToolPermission::Network:  return "network";
+    case ToolPermission::ReadOnly:
+        return "read_only";
+    case ToolPermission::Write:
+        return "write";
+    case ToolPermission::Execute:
+        return "execute";
+    case ToolPermission::Network:
+        return "network";
     }
     return "unknown";
 }
@@ -62,11 +66,12 @@ enum class ToolPermission : std::uint8_t {
 /// Describes a single property in the tool's JSON input schema
 struct SchemaProperty {
     std::string name;
-    std::string type;                        // "string", "number", "boolean", "array", "object"
+    std::string type;  // "string", "number", "boolean", "array", "object"
     std::string description;
     bool required = false;
     std::optional<std::string> default_value = std::nullopt;
-    std::optional<std::vector<std::string>> enum_values = std::nullopt;  // For enum-typed properties
+    std::optional<std::vector<std::string>> enum_values =
+        std::nullopt;  // For enum-typed properties
 };
 
 /// Full JSON schema describing a tool's expected input
@@ -75,9 +80,9 @@ struct InputSchema {
 
     /// Get all required property names
     [[nodiscard]] auto required_properties() const {
-        return properties
-            | std::views::filter([](const SchemaProperty& p) { return p.required; })
-            | std::views::transform([](const SchemaProperty& p) -> const std::string& { return p.name; });
+        return properties | std::views::filter([](const SchemaProperty& p) { return p.required; }) |
+               std::views::transform(
+                   [](const SchemaProperty& p) -> const std::string& { return p.name; });
     }
 
     /// Serialize schema to JSON string (simplified representation)
@@ -87,8 +92,8 @@ struct InputSchema {
         for (const auto& prop : properties) {
             if (!first) result += ",";
             first = false;
-            result += std::format(R"("{}":{{  "type":"{}","description":"{}"}})",
-                                  prop.name, prop.type, prop.description);
+            result += std::format(R"("{}":{{  "type":"{}","description":"{}"}})", prop.name,
+                                  prop.type, prop.description);
         }
         result += R"(},"required":[)";
         first = true;
@@ -109,14 +114,16 @@ struct InputSchema {
 
 /// Static metadata describing a tool available to the model
 struct ToolDefinition {
-    std::string name;                    // Unique tool identifier (e.g., "Read", "Write")
-    std::string description;             // Human-readable description shown to model
-    InputSchema input_schema;            // JSON schema for tool parameters
-    ToolPermission permission;           // Required permission level
-    bool is_hidden = false;              // Hidden tools are not shown in listings
-    std::optional<std::string> category = std::nullopt; // Grouping category (e.g., "filesystem", "search")
-    std::size_t max_result_size_chars = 100'000; // TS maxResultSizeChars default for result persistence
-    bool max_result_size_unbounded = false;      // TS maxResultSizeChars: Infinity
+    std::string name;           // Unique tool identifier (e.g., "Read", "Write")
+    std::string description;    // Human-readable description shown to model
+    InputSchema input_schema;   // JSON schema for tool parameters
+    ToolPermission permission;  // Required permission level
+    bool is_hidden = false;     // Hidden tools are not shown in listings
+    std::optional<std::string> category =
+        std::nullopt;  // Grouping category (e.g., "filesystem", "search")
+    std::size_t max_result_size_chars =
+        100'000;                             // TS maxResultSizeChars default for result persistence
+    bool max_result_size_unbounded = false;  // TS maxResultSizeChars: Infinity
 };
 
 // ============================================================
@@ -158,14 +165,14 @@ public:
 };
 
 /// Concrete wrapper adapting any Tool concept implementor to ITool interface
-template <Tool T>
-class ToolWrapper final : public ITool {
+template <Tool T> class ToolWrapper final : public ITool {
     T tool_;
     ToolDefinition def_;
 
 public:
     explicit ToolWrapper(T tool)
-        : tool_(std::move(tool)), def_(T::definition()) {}
+        : tool_(std::move(tool))
+        , def_(T::definition()) {}
 
     [[nodiscard]] const ToolDefinition& definition() const override { return def_; }
 
@@ -188,6 +195,7 @@ class ToolRegistry {
 
 public:
     ToolRegistry() = default;
+
     ~ToolRegistry() { shutdown(); }
 
     // Bound tools and background executions borrow this registry's address.
@@ -235,8 +243,7 @@ public:
     }
 
     /// Register a tool by constructing it in-place
-    template <Tool T, typename... Args>
-    void register_tool(Args&&... args) {
+    template <Tool T, typename... Args> void register_tool(Args&&... args) {
         auto wrapper = std::make_unique<ToolWrapper<T>>(T{std::forward<Args>(args)...});
         auto name = wrapper->definition().name;
         tools_.emplace(std::move(name), std::move(wrapper));
@@ -267,17 +274,14 @@ public:
                 return missing_tool_handler_(name, input);
             }
             return std::unexpected(Error::make(
-                ErrorCode::ToolNotFound,
-                std::format("Tool '{}' not found in registry", name)
-            ));
+                ErrorCode::ToolNotFound, std::format("Tool '{}' not found in registry", name)));
         }
 
         // Check permission before execution
         if (!tool->check_permission(input)) {
-            return std::unexpected(Error::make(
-                ErrorCode::ToolPermissionDenied,
-                std::format("Permission denied for tool '{}'", name)
-            ));
+            return std::unexpected(
+                Error::make(ErrorCode::ToolPermissionDenied,
+                            std::format("Permission denied for tool '{}'", name)));
         }
 
         return tool->execute(input);
@@ -322,8 +326,8 @@ public:
     /// wrapper is.  This fallback bridges the gap: if a tool is not found,
     /// we try to route it to a connected MCP server that exposes a tool
     /// with the same name.
-    using MissingToolHandler = std::function<Result<ToolResult>(
-        std::string_view tool_name, const ToolInput& input)>;
+    using MissingToolHandler =
+        std::function<Result<ToolResult>(std::string_view tool_name, const ToolInput& input)>;
 
     void set_missing_tool_handler(MissingToolHandler handler) {
         missing_tool_handler_ = std::move(handler);
@@ -339,4 +343,4 @@ private:
     bool shutdown_finished_ = false;
 };
 
-} // namespace loom::core
+}  // namespace loom::core

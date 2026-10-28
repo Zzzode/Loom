@@ -4,10 +4,11 @@
 #pragma clang diagnostic ignored "-Wmissing-designated-field-initializers"
 
 #include <gtest/gtest.h>
+#include <httplib.h>
+
 #include <cstddef>
 #include <cstdlib>
 #include <cstring>
-#include <httplib.h>
 #ifndef _WIN32
 #include <fcntl.h>
 #include <sys/file.h>
@@ -35,7 +36,7 @@ import loom.tools.web_browser;
 import loom.orchestration.tools.mcp;
 import loom.commands.mcp.core_settings_loader;
 import loom.orchestration.runtime_backends;
-import loom.tools.runtime_backends.port;  // RFC-0001 B15: set_/clear_skill_loader_executor slot API
+import loom.tools.runtime_backends.port; // RFC-0001 B15: set_/clear_skill_loader_executor slot API
 import loom.tools.image_codec.port;
 import loom.tools.worktree;
 import loom.orchestration.agent;
@@ -64,7 +65,7 @@ import loom.teams.team_helpers;
 import loom.hooks.tool_permissions;
 import loom.services.api.client;
 import loom.services.mcp.types;
-import loom.services.mcp.connection_manager;  // RFC-0001 B6: svc_mcp::McpServerSnapshot
+import loom.services.mcp.connection_manager; // RFC-0001 B6: svc_mcp::McpServerSnapshot
 import loom.tools.repl;
 import loom.tools.skill;
 import loom.orchestration.agent.utils;
@@ -75,7 +76,9 @@ namespace fs = std::filesystem;
 // The agent helpers exercised by the existing tests live in
 // loom::tools::agent::utils after the agent_tool split; re-expose them through
 // the loom::tools::agent namespace so the historical call sites still resolve.
-namespace loom::tools::agent { using namespace utils; }
+namespace loom::tools::agent {
+using namespace utils;
+}
 
 namespace {
 
@@ -83,7 +86,8 @@ struct EnvironmentGuard {
     std::string name;
     std::optional<std::string> previous;
 
-    EnvironmentGuard(std::string key, const std::string& value) : name(std::move(key)) {
+    EnvironmentGuard(std::string key, const std::string& value)
+        : name(std::move(key)) {
         if (const char* existing = std::getenv(name.c_str())) {
             previous = existing;
         }
@@ -99,7 +103,7 @@ struct EnvironmentGuard {
     }
 };
 
-} // namespace
+}  // namespace
 
 // ============================================================
 // QueryEngine <-> wire-backend seam, end to end.
@@ -150,8 +154,7 @@ TEST(WireSeam, DefaultsToTheMessagesWire) {
     // Messages API shape: top-level system (when set) and a nested tool type.
     EXPECT_TRUE(root.get("model").valid());
     EXPECT_TRUE(root.get("max_tokens").is_num());
-    EXPECT_EQ(std::string(root.get("tools").at(0).get("type").as_str()),
-              "function");
+    EXPECT_EQ(std::string(root.get("tools").at(0).get("type").as_str()), "function");
 }
 
 TEST(WireSeam, OpenAiWireProducesAChatCompletionsBody) {
@@ -193,8 +196,7 @@ TEST(WireSeam, OpenAiWireRoutesTheSystemPromptIntoAMessage) {
     // generated context blocks, so only the head is ours to assert on.
     const std::string content{first.get("content").as_str()};
     EXPECT_EQ(content.rfind("be terse", 0), 0u)
-        << "system prompt should lead with the custom prompt; got: "
-        << content.substr(0, 40);
+        << "system prompt should lead with the custom prompt; got: " << content.substr(0, 40);
 }
 
 TEST(WireSeam, EnvVarSelectsTheWireWhenConfigDoesNot) {
@@ -208,8 +210,7 @@ TEST(WireSeam, EnvVarSelectsTheWireWhenConfigDoesNot) {
     const auto doc = parse(engine.build_request_body_for_testing());
     ASSERT_TRUE(doc.has_value());
     ASSERT_TRUE(doc->root().get("messages").is_arr());
-    EXPECT_EQ(std::string(doc->root().get("messages").at(0).get("role").as_str()),
-              "system")
+    EXPECT_EQ(std::string(doc->root().get("messages").at(0).get("role").as_str()), "system")
         << "LOOM_WIRE_API should have selected the OpenAI backend";
 }
 
@@ -226,8 +227,7 @@ TEST(WireSeam, EnvVarNameSelectsTheWire) {
     const auto doc = parse(engine.build_request_body_for_testing());
     ASSERT_TRUE(doc.has_value());
     ASSERT_TRUE(doc->root().get("messages").is_arr());
-    EXPECT_EQ(std::string(doc->root().get("messages").at(0).get("role").as_str()),
-              "system")
+    EXPECT_EQ(std::string(doc->root().get("messages").at(0).get("role").as_str()), "system")
         << "LOOM_WIRE_API should select the OpenAI backend";
 }
 

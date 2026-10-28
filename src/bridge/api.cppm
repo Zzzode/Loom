@@ -70,10 +70,12 @@ class BridgeFatalError : public std::runtime_error {
 public:
     int status_code;
     std::optional<std::string> error_type;
-    
-    BridgeFatalError(const std::string& msg, int status, 
+
+    BridgeFatalError(const std::string& msg, int status,
                      std::optional<std::string> err_type = std::nullopt)
-        : std::runtime_error(msg), status_code(status), error_type(std::move(err_type)) {}
+        : std::runtime_error(msg)
+        , status_code(status)
+        , error_type(std::move(err_type)) {}
 };
 
 /// Validate a bridge ID for safety
@@ -95,8 +97,9 @@ class BridgeApiClient {
     static constexpr int EMPTY_POLL_LOG_INTERVAL = 100;
 
 public:
-    explicit BridgeApiClient(BridgeApiConfig config) 
-        : config_(std::move(config)), consecutive_empty_polls_(0) {}
+    explicit BridgeApiClient(BridgeApiConfig config)
+        : config_(std::move(config))
+        , consecutive_empty_polls_(0) {}
 
     void set_debug_logger(std::function<void(const std::string&)> logger) {
         debug_logger_ = std::move(logger);
@@ -104,33 +107,28 @@ public:
 
     /// Register a bridge environment
     Result<EnvironmentRegistration> register_environment(const BridgeConfig& bridge_config) {
-        log_debug(std::format("[bridge:api] POST /v1/environments/bridge bridgeId={}", 
-                            std::format("{}:{}{}", bridge_config.host, bridge_config.port, bridge_config.path)));
-        
-        auto body = std::format(
-            R"({{"host":"{}","port":{},"path":"{}","transport":"{}"}})",
-            bridge_config.host,
-            bridge_config.port,
-            bridge_config.path,
-            transport_to_string(bridge_config.transport));
+        log_debug(std::format(
+            "[bridge:api] POST /v1/environments/bridge bridgeId={}",
+            std::format("{}:{}{}", bridge_config.host, bridge_config.port, bridge_config.path)));
+
+        auto body = std::format(R"({{"host":"{}","port":{},"path":"{}","transport":"{}"}})",
+                                bridge_config.host, bridge_config.port, bridge_config.path,
+                                transport_to_string(bridge_config.transport));
         auto response = post("/v1/environments/bridge", body, config_.access_token);
         if (!response) return std::unexpected(response.error());
 
         auto parsed = parse_environment_registration(response->body);
         if (!parsed) return std::unexpected(parsed.error());
-        log_debug(std::format(
-            "[bridge:api] POST /v1/environments/bridge -> {} environment_id={}",
-            response->status,
-            parsed->environment_id));
+        log_debug(std::format("[bridge:api] POST /v1/environments/bridge -> {} environment_id={}",
+                              response->status, parsed->environment_id));
         return *parsed;
     }
 
     /// Poll for work
-    Result<std::optional<WorkResponse>> poll_for_work(
-        const std::string& environment_id,
-        const std::string& environment_secret,
-        std::optional<int64_t> reclaim_older_than_ms = std::nullopt) {
-        
+    Result<std::optional<WorkResponse>>
+    poll_for_work(const std::string& environment_id, const std::string& environment_secret,
+                  std::optional<int64_t> reclaim_older_than_ms = std::nullopt) {
+
         if (!is_safe_bridge_id(environment_id)) {
             return std::unexpected(Error::make(ErrorCode::InvalidInput, "Invalid environment ID"));
         }
@@ -138,61 +136,56 @@ public:
         auto prev_empty = consecutive_empty_polls_;
         consecutive_empty_polls_ = 0;
 
-        auto path = std::format("/v1/environments/{}/work/poll{}",
-            environment_id,
-            reclaim_older_than_ms ? std::format("?reclaim_older_than_ms={}", *reclaim_older_than_ms) : "");
+        auto path = std::format(
+            "/v1/environments/{}/work/poll{}", environment_id,
+            reclaim_older_than_ms ? std::format("?reclaim_older_than_ms={}", *reclaim_older_than_ms)
+                                  : "");
         auto response = get(path, environment_secret);
         if (!response) return std::unexpected(response.error());
 
         auto work = parse_work_response(response->body);
         if (!work) return std::unexpected(work.error());
         if (*work) {
-            log_debug(std::format(
-                "[bridge:api] GET .../work/poll -> {} workId={} type={}",
-                response->status,
-                (*work)->id,
-                (*work)->data_type.value_or("")));
+            log_debug(std::format("[bridge:api] GET .../work/poll -> {} workId={} type={}",
+                                  response->status, (*work)->id, (*work)->data_type.value_or("")));
             return *work;
         }
 
         if (prev_empty == 0 || prev_empty % EMPTY_POLL_LOG_INTERVAL == 0) {
-            log_debug(std::format("[bridge:api] GET .../work/poll -> 200 (no work, {} consecutive empty polls)", 
-                                prev_empty + 1));
+            log_debug(std::format(
+                "[bridge:api] GET .../work/poll -> 200 (no work, {} consecutive empty polls)",
+                prev_empty + 1));
         }
         consecutive_empty_polls_ = prev_empty + 1;
         return std::nullopt;
     }
 
     /// Acknowledge work received
-    VoidResult acknowledge_work(const std::string& environment_id, 
-                               const std::string& work_id,
-                               const std::string& session_token) {
+    VoidResult acknowledge_work(const std::string& environment_id, const std::string& work_id,
+                                const std::string& session_token) {
         if (!is_safe_bridge_id(environment_id) || !is_safe_bridge_id(work_id)) {
             return std::unexpected(Error::make(ErrorCode::InvalidInput, "Invalid ID"));
         }
-        
+
         log_debug(std::format("[bridge:api] POST .../work/{}/ack", work_id));
-        auto response = post(
-            std::format("/v1/environments/{}/work/{}/ack", environment_id, work_id),
-            "{}",
-            session_token);
+        auto response =
+            post(std::format("/v1/environments/{}/work/{}/ack", environment_id, work_id), "{}",
+                 session_token);
         if (!response) return std::unexpected(response.error());
         return {};
     }
 
     /// Stop work
-    VoidResult stop_work(const std::string& environment_id, 
-                        const std::string& work_id,
-                        bool force = false) {
+    VoidResult stop_work(const std::string& environment_id, const std::string& work_id,
+                         bool force = false) {
         if (!is_safe_bridge_id(environment_id) || !is_safe_bridge_id(work_id)) {
             return std::unexpected(Error::make(ErrorCode::InvalidInput, "Invalid ID"));
         }
-        
+
         log_debug(std::format("[bridge:api] POST .../work/{}/stop force={}", work_id, force));
-        auto response = post(
-            std::format("/v1/environments/{}/work/{}/stop", environment_id, work_id),
-            std::format(R"({{"force":{}}})", force ? "true" : "false"),
-            config_.access_token);
+        auto response =
+            post(std::format("/v1/environments/{}/work/{}/stop", environment_id, work_id),
+                 std::format(R"({{"force":{}}})", force ? "true" : "false"), config_.access_token);
         if (!response) return std::unexpected(response.error());
         return {};
     }
@@ -202,11 +195,10 @@ public:
         if (!is_safe_bridge_id(environment_id)) {
             return std::unexpected(Error::make(ErrorCode::InvalidInput, "Invalid environment ID"));
         }
-        
+
         log_debug(std::format("[bridge:api] DELETE /v1/environments/bridge/{}", environment_id));
-        auto response = delete_request(
-            std::format("/v1/environments/bridge/{}", environment_id),
-            config_.access_token);
+        auto response = delete_request(std::format("/v1/environments/bridge/{}", environment_id),
+                                       config_.access_token);
         if (!response) return std::unexpected(response.error());
         return {};
     }
@@ -216,30 +208,29 @@ public:
         if (!is_safe_bridge_id(session_id)) {
             return std::unexpected(Error::make(ErrorCode::InvalidInput, "Invalid session ID"));
         }
-        
+
         log_debug(std::format("[bridge:api] POST /v1/sessions/{}/archive", session_id));
-        auto response = post(std::format("/v1/sessions/{}/archive", session_id), "{}", config_.access_token);
+        auto response =
+            post(std::format("/v1/sessions/{}/archive", session_id), "{}", config_.access_token);
         if (!response) return std::unexpected(response.error());
         return {};
     }
 
     /// Send one raw session event through the bridge session events API.
-    VoidResult send_session_event(const std::string& session_id,
-                                  std::string_view event_json,
+    VoidResult send_session_event(const std::string& session_id, std::string_view event_json,
                                   const std::string& session_token) {
         if (!is_safe_bridge_id(session_id)) {
             return std::unexpected(Error::make(ErrorCode::InvalidInput, "Invalid session ID"));
         }
         auto event = loom::utils::json::parse(event_json);
         if (!event || !event->root().is_obj()) {
-            return std::unexpected(Error::make(ErrorCode::InvalidInput, "Bridge session event must be a JSON object"));
+            return std::unexpected(
+                Error::make(ErrorCode::InvalidInput, "Bridge session event must be a JSON object"));
         }
 
         log_debug(std::format("[bridge:api] POST /v1/sessions/{}/events", session_id));
-        auto response = post(
-            std::format("/v1/sessions/{}/events", session_id),
-            std::format(R"({{"events":[{}]}})", event_json),
-            session_token);
+        auto response = post(std::format("/v1/sessions/{}/events", session_id),
+                             std::format(R"({{"events":[{}]}})", event_json), session_token);
         if (!response) return std::unexpected(response.error());
         return {};
     }
@@ -252,17 +243,18 @@ public:
             return std::unexpected(Error::make(ErrorCode::InvalidInput, "request_id is required"));
         }
         if (event.subtype == "success") {
-            auto response_payload = event.response_json.empty() ? std::string("{}") : event.response_json;
+            auto response_payload =
+                event.response_json.empty() ? std::string("{}") : event.response_json;
             auto response = loom::utils::json::parse(response_payload);
             if (!response) {
-                return std::unexpected(Error::make(ErrorCode::InvalidInput, "permission response payload must be valid JSON"));
+                return std::unexpected(Error::make(
+                    ErrorCode::InvalidInput, "permission response payload must be valid JSON"));
             }
             return send_session_event(
                 session_id,
                 std::format(
                     R"({{"type":"control_response","response":{{"subtype":"success","request_id":"{}","response":{}}}}})",
-                    json_escape(event.request_id),
-                    response_payload),
+                    json_escape(event.request_id), response_payload),
                 session_token);
         }
 
@@ -270,25 +262,23 @@ public:
             session_id,
             std::format(
                 R"({{"type":"control_response","response":{{"subtype":"{}","request_id":"{}","error":"{}"}}}})",
-                json_escape(event.subtype),
-                json_escape(event.request_id),
+                json_escape(event.subtype), json_escape(event.request_id),
                 json_escape(event.error.value_or("Bridge permission response failed"))),
             session_token);
     }
 
     /// Reconnect session
-    VoidResult reconnect_session(const std::string& environment_id, 
-                                const std::string& session_id) {
+    VoidResult reconnect_session(const std::string& environment_id, const std::string& session_id) {
         if (!is_safe_bridge_id(environment_id) || !is_safe_bridge_id(session_id)) {
             return std::unexpected(Error::make(ErrorCode::InvalidInput, "Invalid ID"));
         }
-        
-        log_debug(std::format("[bridge:api] POST /v1/environments/{}/bridge/reconnect session_id={}", 
-                            environment_id, session_id));
-        auto response = post(
-            std::format("/v1/environments/{}/bridge/reconnect", environment_id),
-            std::format(R"({{"session_id":"{}"}})", json_escape(session_id)),
-            config_.access_token);
+
+        log_debug(
+            std::format("[bridge:api] POST /v1/environments/{}/bridge/reconnect session_id={}",
+                        environment_id, session_id));
+        auto response = post(std::format("/v1/environments/{}/bridge/reconnect", environment_id),
+                             std::format(R"({{"session_id":"{}"}})", json_escape(session_id)),
+                             config_.access_token);
         if (!response) return std::unexpected(response.error());
         return {};
     }
@@ -300,12 +290,11 @@ public:
         if (!is_safe_bridge_id(environment_id) || !is_safe_bridge_id(work_id)) {
             return std::unexpected(Error::make(ErrorCode::InvalidInput, "Invalid ID"));
         }
-        
+
         log_debug(std::format("[bridge:api] POST .../work/{}/heartbeat", work_id));
-        auto response = post(
-            std::format("/v1/environments/{}/work/{}/heartbeat", environment_id, work_id),
-            "{}",
-            session_token);
+        auto response =
+            post(std::format("/v1/environments/{}/work/{}/heartbeat", environment_id, work_id),
+                 "{}", session_token);
         if (!response) return std::unexpected(response.error());
         auto parsed = parse_heartbeat_response(response->body);
         if (!parsed) return std::unexpected(parsed.error());
@@ -320,10 +309,12 @@ public:
         }
 
         auto url = strip_trailing_slashes(std::string(session_url)) + "/worker/register";
-        log_debug(std::format("[bridge:api] POST {}/worker/register", redact_session_url(session_url)));
+        log_debug(
+            std::format("[bridge:api] POST {}/worker/register", redact_session_url(session_url)));
         auto response = http_.post(url, "{}", get_headers(session_token));
         if (!response) {
-            return std::unexpected(Error::make(ErrorCode::ConnectionFailed, response.error().message));
+            return std::unexpected(
+                Error::make(ErrorCode::ConnectionFailed, response.error().message));
         }
         if (!response->is_ok()) {
             return std::unexpected(error_for_http_status(response->status));
@@ -342,15 +333,18 @@ private:
 
     [[nodiscard]] auto endpoint(std::string_view path) const -> std::string {
         auto base = config_.base_url.empty() ? std::string("http://localhost") : config_.base_url;
-        while (!base.empty() && base.back() == '/') base.pop_back();
+        while (!base.empty() && base.back() == '/')
+            base.pop_back();
         if (path.empty() || path.front() != '/') return base + '/' + std::string(path);
         return base + std::string(path);
     }
 
-    [[nodiscard]] auto get(std::string_view path, const std::string& token) -> Result<loom::utils::HttpResponse> {
+    [[nodiscard]] auto get(std::string_view path, const std::string& token)
+        -> Result<loom::utils::HttpResponse> {
         auto response = http_.get(endpoint(path), get_headers(token));
         if (!response) {
-            return std::unexpected(Error::make(ErrorCode::ConnectionFailed, response.error().message));
+            return std::unexpected(
+                Error::make(ErrorCode::ConnectionFailed, response.error().message));
         }
         if (!response->is_ok()) {
             return std::unexpected(error_for_http_status(response->status));
@@ -358,10 +352,12 @@ private:
         return *response;
     }
 
-    [[nodiscard]] auto delete_request(std::string_view path, const std::string& token) -> Result<loom::utils::HttpResponse> {
+    [[nodiscard]] auto delete_request(std::string_view path, const std::string& token)
+        -> Result<loom::utils::HttpResponse> {
         auto response = http_.delete_request(endpoint(path), get_headers(token));
         if (!response) {
-            return std::unexpected(Error::make(ErrorCode::ConnectionFailed, response.error().message));
+            return std::unexpected(
+                Error::make(ErrorCode::ConnectionFailed, response.error().message));
         }
         if (!response->is_ok()) {
             return std::unexpected(error_for_http_status(response->status));
@@ -369,10 +365,8 @@ private:
         return *response;
     }
 
-    [[nodiscard]] static std::optional<std::string> string_field(
-        loom::utils::json::JsonVal root,
-        std::initializer_list<std::string_view> keys
-    ) {
+    [[nodiscard]] static std::optional<std::string>
+    string_field(loom::utils::json::JsonVal root, std::initializer_list<std::string_view> keys) {
         for (auto key : keys) {
             auto value = root.get(key);
             if (value.is_str()) return std::string(value.as_str());
@@ -380,10 +374,8 @@ private:
         return std::nullopt;
     }
 
-    [[nodiscard]] static std::optional<int> int_field(
-        loom::utils::json::JsonVal root,
-        std::initializer_list<std::string_view> keys
-    ) {
+    [[nodiscard]] static std::optional<int>
+    int_field(loom::utils::json::JsonVal root, std::initializer_list<std::string_view> keys) {
         for (auto key : keys) {
             auto value = root.get(key);
             if (value.is_num()) return static_cast<int>(value.as_int());
@@ -391,10 +383,8 @@ private:
         return std::nullopt;
     }
 
-    [[nodiscard]] static std::optional<int64_t> int64_field(
-        loom::utils::json::JsonVal root,
-        std::initializer_list<std::string_view> keys
-    ) {
+    [[nodiscard]] static std::optional<int64_t>
+    int64_field(loom::utils::json::JsonVal root, std::initializer_list<std::string_view> keys) {
         for (auto key : keys) {
             auto value = root.get(key);
             if (value.is_num()) return value.as_int();
@@ -410,10 +400,8 @@ private:
         return std::nullopt;
     }
 
-    [[nodiscard]] static std::optional<bool> bool_field(
-        loom::utils::json::JsonVal root,
-        std::initializer_list<std::string_view> keys
-    ) {
+    [[nodiscard]] static std::optional<bool>
+    bool_field(loom::utils::json::JsonVal root, std::initializer_list<std::string_view> keys) {
         for (auto key : keys) {
             auto value = root.get(key);
             if (value.is_bool()) return value.as_bool();
@@ -421,14 +409,17 @@ private:
         return std::nullopt;
     }
 
-    [[nodiscard]] static Result<EnvironmentRegistration> parse_environment_registration(std::string_view body) {
+    [[nodiscard]] static Result<EnvironmentRegistration>
+    parse_environment_registration(std::string_view body) {
         auto parsed = loom::utils::json::parse(body);
         if (!parsed || !parsed->root().is_obj()) {
-            return std::unexpected(Error::make(ErrorCode::InvalidRequest, "Bridge registration response is not valid JSON"));
+            return std::unexpected(Error::make(ErrorCode::InvalidRequest,
+                                               "Bridge registration response is not valid JSON"));
         }
         auto root = parsed->root();
         auto environment_id = string_field(root, {"environment_id", "environmentId", "id"});
-        auto environment_secret = string_field(root, {"environment_secret", "environmentSecret", "secret"});
+        auto environment_secret =
+            string_field(root, {"environment_secret", "environmentSecret", "secret"});
         if (!environment_id || !environment_secret) {
             return std::unexpected(Error::make(
                 ErrorCode::InvalidRequest,
@@ -440,21 +431,26 @@ private:
         };
     }
 
-    [[nodiscard]] static Result<std::optional<WorkResponse>> parse_work_response(std::string_view body) {
+    [[nodiscard]] static Result<std::optional<WorkResponse>>
+    parse_work_response(std::string_view body) {
         auto trimmed = std::string(body);
-        while (!trimmed.empty() && std::isspace(static_cast<unsigned char>(trimmed.back()))) trimmed.pop_back();
+        while (!trimmed.empty() && std::isspace(static_cast<unsigned char>(trimmed.back())))
+            trimmed.pop_back();
         auto first = trimmed.begin();
-        while (first != trimmed.end() && std::isspace(static_cast<unsigned char>(*first))) ++first;
+        while (first != trimmed.end() && std::isspace(static_cast<unsigned char>(*first)))
+            ++first;
         trimmed.erase(trimmed.begin(), first);
         if (trimmed.empty() || trimmed == "null") return std::optional<WorkResponse>{};
 
         auto parsed = loom::utils::json::parse(trimmed);
         if (!parsed || !parsed->root().is_obj()) {
-            return std::unexpected(Error::make(ErrorCode::InvalidRequest, "Bridge poll response is not valid work JSON"));
+            return std::unexpected(Error::make(ErrorCode::InvalidRequest,
+                                               "Bridge poll response is not valid work JSON"));
         }
         auto root = parsed->root();
         auto id = string_field(root, {"id", "work_id", "workId"});
-        auto secret = string_field(root, {"secret", "session_token", "sessionToken", "worker_jwt", "workerJwt"});
+        auto secret = string_field(
+            root, {"secret", "session_token", "sessionToken", "worker_jwt", "workerJwt"});
         auto data = root.get("data");
         std::optional<std::string> data_type;
         std::optional<std::string> data_id;
@@ -463,11 +459,12 @@ private:
             data_id = string_field(data, {"id", "session_id", "sessionId", "data_id", "dataId"});
         }
         if (!data_type) data_type = string_field(root, {"data_type", "dataType", "type"});
-        if (!data_id) data_id = string_field(root, {"data_id", "dataId", "session_id", "sessionId"});
+        if (!data_id)
+            data_id = string_field(root, {"data_id", "dataId", "session_id", "sessionId"});
         if (!id || !secret) {
-            return std::unexpected(Error::make(
-                ErrorCode::InvalidRequest,
-                "Bridge poll response is missing work id or session token"));
+            return std::unexpected(
+                Error::make(ErrorCode::InvalidRequest,
+                            "Bridge poll response is missing work id or session token"));
         }
         return std::optional<WorkResponse>{WorkResponse{
             .id = *id,
@@ -480,15 +477,16 @@ private:
     [[nodiscard]] static Result<HeartbeatResponse> parse_heartbeat_response(std::string_view body) {
         auto parsed = loom::utils::json::parse(body);
         if (!parsed || !parsed->root().is_obj()) {
-            return std::unexpected(Error::make(ErrorCode::InvalidRequest, "Bridge heartbeat response is not valid JSON"));
+            return std::unexpected(Error::make(ErrorCode::InvalidRequest,
+                                               "Bridge heartbeat response is not valid JSON"));
         }
         auto root = parsed->root();
         auto lease_extended = bool_field(root, {"lease_extended", "leaseExtended"});
         auto state = string_field(root, {"state"});
         if (!lease_extended || !state) {
-            return std::unexpected(Error::make(
-                ErrorCode::InvalidRequest,
-                "Bridge heartbeat response is missing lease_extended or state"));
+            return std::unexpected(
+                Error::make(ErrorCode::InvalidRequest,
+                            "Bridge heartbeat response is missing lease_extended or state"));
         }
         return HeartbeatResponse{
             .lease_extended = *lease_extended,
@@ -498,25 +496,30 @@ private:
         };
     }
 
-    [[nodiscard]] static Result<WorkerRegistration> parse_worker_registration(std::string_view body) {
+    [[nodiscard]] static Result<WorkerRegistration>
+    parse_worker_registration(std::string_view body) {
         auto parsed = loom::utils::json::parse(body);
         if (!parsed || !parsed->root().is_obj()) {
-            return std::unexpected(Error::make(ErrorCode::InvalidRequest, "Bridge worker registration response is not valid JSON"));
+            return std::unexpected(
+                Error::make(ErrorCode::InvalidRequest,
+                            "Bridge worker registration response is not valid JSON"));
         }
         auto root = parsed->root();
         auto worker_epoch = int64_field(root, {"worker_epoch", "workerEpoch"});
         if (!worker_epoch) {
-            return std::unexpected(Error::make(
-                ErrorCode::InvalidRequest,
-                "Bridge worker registration response is missing worker_epoch"));
+            return std::unexpected(
+                Error::make(ErrorCode::InvalidRequest,
+                            "Bridge worker registration response is missing worker_epoch"));
         }
         return WorkerRegistration{.worker_epoch = *worker_epoch};
     }
 
-    [[nodiscard]] auto post(std::string_view path, std::string_view body, const std::string& token) -> Result<loom::utils::HttpResponse> {
+    [[nodiscard]] auto post(std::string_view path, std::string_view body, const std::string& token)
+        -> Result<loom::utils::HttpResponse> {
         auto response = http_.post(endpoint(path), body, get_headers(token));
         if (!response) {
-            return std::unexpected(Error::make(ErrorCode::ConnectionFailed, response.error().message));
+            return std::unexpected(
+                Error::make(ErrorCode::ConnectionFailed, response.error().message));
         }
         if (!response->is_ok()) {
             return std::unexpected(error_for_http_status(response->status));
@@ -526,29 +529,31 @@ private:
 
     [[nodiscard]] static Error error_for_http_status(int status) {
         if (status == 401 || status == 403) {
-            return Error::make(
-                ErrorCode::AuthenticationFailed,
-                std::format("Bridge API authentication failed (HTTP {})", status));
+            return Error::make(ErrorCode::AuthenticationFailed,
+                               std::format("Bridge API authentication failed (HTTP {})", status));
         }
         if (status == 429) {
             return Error::make(ErrorCode::RateLimited, "Bridge API returned HTTP 429");
         }
-        return Error::make(
-            ErrorCode::InvalidRequest,
-            std::format("Bridge API returned HTTP {}", status));
+        return Error::make(ErrorCode::InvalidRequest,
+                           std::format("Bridge API returned HTTP {}", status));
     }
 
     [[nodiscard]] static auto transport_to_string(TransportType transport) -> std::string_view {
         switch (transport) {
-            case TransportType::websocket: return "websocket";
-            case TransportType::stdio: return "stdio";
-            case TransportType::http_polling: return "http_polling";
+        case TransportType::websocket:
+            return "websocket";
+        case TransportType::stdio:
+            return "stdio";
+        case TransportType::http_polling:
+            return "http_polling";
         }
         return "websocket";
     }
 
     [[nodiscard]] static std::string strip_trailing_slashes(std::string value) {
-        while (!value.empty() && value.back() == '/') value.pop_back();
+        while (!value.empty() && value.back() == '/')
+            value.pop_back();
         return value;
     }
 
@@ -568,12 +573,24 @@ private:
         out.reserve(value.size() + 8);
         for (char c : value) {
             switch (c) {
-                case '"': out += "\\\""; break;
-                case '\\': out += "\\\\"; break;
-                case '\n': out += "\\n"; break;
-                case '\r': out += "\\r"; break;
-                case '\t': out += "\\t"; break;
-                default: out.push_back(c); break;
+            case '"':
+                out += "\\\"";
+                break;
+            case '\\':
+                out += "\\\\";
+                break;
+            case '\n':
+                out += "\\n";
+                break;
+            case '\r':
+                out += "\\r";
+                break;
+            case '\t':
+                out += "\\t";
+                break;
+            default:
+                out.push_back(c);
+                break;
             }
         }
         return out;
@@ -586,8 +603,7 @@ private:
             {"Content-Type", "application/json"},
             {"anthropic-version", "2023-06-01"},
             {"anthropic-beta", "environments-2025-11-01"},
-            {"x-environment-runner-version", config_.runner_version}
-        };
+            {"x-environment-runner-version", config_.runner_version}};
         if (config_.trusted_device_token) {
             headers["X-Trusted-Device-Token"] = *config_.trusted_device_token;
         }
@@ -595,4 +611,4 @@ private:
     }
 };
 
-} // namespace loom::bridge
+}  // namespace loom::bridge

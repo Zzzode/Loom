@@ -4,8 +4,9 @@
 /// Verifies that resolve_native_backend() correctly resolves wl-copy/xclip
 /// via PATH+X_OK lookup, and that xsel is excluded.
 
-#include <cstdlib>
 #include <gtest/gtest.h>
+
+#include <cstdlib>
 
 import std;
 import loom.platform.clipboard;
@@ -37,7 +38,8 @@ struct EnvUnsetGuard {
     std::string name;
     std::optional<std::string> previous;
 
-    explicit EnvUnsetGuard(std::string key) : name(std::move(key)) {
+    explicit EnvUnsetGuard(std::string key)
+        : name(std::move(key)) {
         if (const char* existing = std::getenv(name.c_str())) {
             previous = existing;
         }
@@ -76,10 +78,10 @@ struct FakeBin {
             f << "#!/bin/sh\nexit 0\n";
         }
         std::filesystem::permissions(path,
-            std::filesystem::perms::owner_all |
-            std::filesystem::perms::group_read |
-            std::filesystem::perms::others_read,
-            std::filesystem::perm_options::replace);
+                                     std::filesystem::perms::owner_all |
+                                         std::filesystem::perms::group_read |
+                                         std::filesystem::perms::others_read,
+                                     std::filesystem::perm_options::replace);
     }
 };
 
@@ -126,8 +128,7 @@ TEST(ClipboardBackends, X11UsesXclip) {
     ASSERT_TRUE(backend.has_value());
     EXPECT_EQ(backend->argv[0], "xclip");
     // xclip must target CLIPBOARD, not PRIMARY.
-    auto it = std::find(backend->argv.begin(), backend->argv.end(),
-                        "-selection");
+    auto it = std::find(backend->argv.begin(), backend->argv.end(), "-selection");
     ASSERT_NE(it, backend->argv.end());
     EXPECT_EQ(*(it + 1), "clipboard");
 }

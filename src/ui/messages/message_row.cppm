@@ -15,11 +15,11 @@
 /// =========================================================================
 module;
 
-#include <ctime>
-
-#include <ftxui/dom/elements.hpp>
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
+#include <ftxui/dom/elements.hpp>
+
+#include <ctime>
 
 export module loom.ui.messages.message_row;
 
@@ -45,7 +45,7 @@ import loom.ui.messages.message_bash_io;
 import loom.ui.messages.message_channel;
 import loom.ui.messages.message_image;
 import loom.ui.messages.message_task_assignment;
-import loom.ui.messages.message_tool_result;   // exports ToolResultOptions
+import loom.ui.messages.message_tool_result; // exports ToolResultOptions
 import loom.ui.messages.user_message;
 import loom.ui.messages.assistant_message;
 import loom.ui.messages.error_message;
@@ -83,7 +83,7 @@ enum class MessageShape {
     UserCommand,
     UserBashInput,
     UserBashOutput,
-    UserLocalCommandOutput,    // UI5: dedicated local_command_output_message
+    UserLocalCommandOutput,  // UI5: dedicated local_command_output_message
     UserLocalJsxOutput,
     UserTeammate,
     UserChannel,
@@ -94,19 +94,19 @@ enum class MessageShape {
     UserResourceUpdate,
     UserImage,
     UserToolResult,
-    UserAttachments,           // UI5: attachment_message (card grid)
+    UserAttachments,  // UI5: attachment_message (card grid)
 
     // --- Assistant family ---
     AssistantText,
-    AssistantToolUse,          // UI5 responsibility (tool_use_message)
-    AssistantThinking,         // UI5 responsibility (thinking_message plain)
-    AssistantRedactedThinking, // UI5 responsibility (thinking_message redacted mode)
-    AssistantGroupedTools,     // UI5 responsibility (tool_use_message::Grouped)
+    AssistantToolUse,           // UI5 responsibility (tool_use_message)
+    AssistantThinking,          // UI5 responsibility (thinking_message plain)
+    AssistantRedactedThinking,  // UI5 responsibility (thinking_message redacted mode)
+    AssistantGroupedTools,      // UI5 responsibility (tool_use_message::Grouped)
 
     // --- System family ---
     SystemText,
-    SystemAPIError,            // UI5: api_error_message (severity borders + pills)
-    SystemCollapsedContent,    // UI5: collapsed_content_message (Read/Search aggregate)
+    SystemAPIError,          // UI5: api_error_message (severity borders + pills)
+    SystemCollapsedContent,  // UI5: collapsed_content_message (Read/Search aggregate)
     SystemRateLimit,
     SystemPlanApproval,
     SystemHookProgress,
@@ -118,37 +118,68 @@ enum class MessageShape {
 
 inline auto MessageShapeToString(MessageShape s) -> std::string_view {
     switch (s) {
-        case MessageShape::UserText:                 return "user.text";
-        case MessageShape::UserCommand:              return "user.command";
-        case MessageShape::UserBashInput:            return "user.bash_input";
-        case MessageShape::UserBashOutput:           return "user.bash_output";
-        case MessageShape::UserLocalCommandOutput:   return "user.local_command_output";
-        case MessageShape::UserLocalJsxOutput:       return "user.local_jsx_output";
-        case MessageShape::UserTeammate:             return "user.teammate";
-        case MessageShape::UserChannel:              return "user.channel";
-        case MessageShape::UserAgentNotification:    return "user.agent_notification";
-        case MessageShape::UserMemoryInput:          return "user.memory_input";
-        case MessageShape::UserPlan:                 return "user.plan";
-        case MessageShape::UserPrompt:               return "user.prompt";
-        case MessageShape::UserResourceUpdate:       return "user.resource_update";
-        case MessageShape::UserImage:                return "user.image";
-        case MessageShape::UserToolResult:           return "user.tool_result";
-        case MessageShape::UserAttachments:          return "user.attachments";
-        case MessageShape::AssistantText:            return "assistant.text";
-        case MessageShape::AssistantToolUse:         return "assistant.tool_use";
-        case MessageShape::AssistantGroupedTools:    return "assistant.grouped_tools";
-        case MessageShape::AssistantThinking:        return "assistant.thinking";
-        case MessageShape::AssistantRedactedThinking: return "assistant.redacted_thinking";
-        case MessageShape::SystemText:               return "system.text";
-        case MessageShape::SystemAPIError:           return "system.api_error";
-        case MessageShape::SystemCollapsedContent:   return "system.collapsed_content";
-        case MessageShape::SystemRateLimit:          return "system.rate_limit";
-        case MessageShape::SystemPlanApproval:       return "system.plan_approval";
-        case MessageShape::SystemHookProgress:       return "system.hook_progress";
-        case MessageShape::SystemShutdown:           return "system.shutdown";
-        case MessageShape::SystemCompactBoundary:    return "system.compact_boundary";
-        case MessageShape::SystemAdvisor:            return "system.advisor";
-        case MessageShape::SystemTaskAssignment:     return "system.task_assignment";
+    case MessageShape::UserText:
+        return "user.text";
+    case MessageShape::UserCommand:
+        return "user.command";
+    case MessageShape::UserBashInput:
+        return "user.bash_input";
+    case MessageShape::UserBashOutput:
+        return "user.bash_output";
+    case MessageShape::UserLocalCommandOutput:
+        return "user.local_command_output";
+    case MessageShape::UserLocalJsxOutput:
+        return "user.local_jsx_output";
+    case MessageShape::UserTeammate:
+        return "user.teammate";
+    case MessageShape::UserChannel:
+        return "user.channel";
+    case MessageShape::UserAgentNotification:
+        return "user.agent_notification";
+    case MessageShape::UserMemoryInput:
+        return "user.memory_input";
+    case MessageShape::UserPlan:
+        return "user.plan";
+    case MessageShape::UserPrompt:
+        return "user.prompt";
+    case MessageShape::UserResourceUpdate:
+        return "user.resource_update";
+    case MessageShape::UserImage:
+        return "user.image";
+    case MessageShape::UserToolResult:
+        return "user.tool_result";
+    case MessageShape::UserAttachments:
+        return "user.attachments";
+    case MessageShape::AssistantText:
+        return "assistant.text";
+    case MessageShape::AssistantToolUse:
+        return "assistant.tool_use";
+    case MessageShape::AssistantGroupedTools:
+        return "assistant.grouped_tools";
+    case MessageShape::AssistantThinking:
+        return "assistant.thinking";
+    case MessageShape::AssistantRedactedThinking:
+        return "assistant.redacted_thinking";
+    case MessageShape::SystemText:
+        return "system.text";
+    case MessageShape::SystemAPIError:
+        return "system.api_error";
+    case MessageShape::SystemCollapsedContent:
+        return "system.collapsed_content";
+    case MessageShape::SystemRateLimit:
+        return "system.rate_limit";
+    case MessageShape::SystemPlanApproval:
+        return "system.plan_approval";
+    case MessageShape::SystemHookProgress:
+        return "system.hook_progress";
+    case MessageShape::SystemShutdown:
+        return "system.shutdown";
+    case MessageShape::SystemCompactBoundary:
+        return "system.compact_boundary";
+    case MessageShape::SystemAdvisor:
+        return "system.advisor";
+    case MessageShape::SystemTaskAssignment:
+        return "system.task_assignment";
     }
     return "unknown";
 }
@@ -165,32 +196,28 @@ struct UI5HandledTag {};
 /// and can return a graceful diagnostic for a mismatched payload.
 using MessageRowPayload = std::variant<
     // User
-    UserTextMessageData,
-    user_command::UserCommandData,
-    BashIOEntry,                          // bash input / output
-    UserMessageData,                      // teammate / prompt / plan / etc.
-    image::ImageMessageData,                     // image attachment
-    ToolResultOptions,                    // user-facing tool result
-    local_cmd::LocalCommandOptions,       // UI5: UserLocalCommandOutput
-    attachment_message::AttachmentGridOptions, // UI5: UserAttachments
+    UserTextMessageData, user_command::UserCommandData,
+    BashIOEntry,                                // bash input / output
+    UserMessageData,                            // teammate / prompt / plan / etc.
+    image::ImageMessageData,                    // image attachment
+    ToolResultOptions,                          // user-facing tool result
+    local_cmd::LocalCommandOptions,             // UI5: UserLocalCommandOutput
+    attachment_message::AttachmentGridOptions,  // UI5: UserAttachments
 
     // Assistant
     AssistantTextMessageData,
-    tool_use_message::ToolUseRenderOptions,   // UI5: AssistantToolUse
-    tool_use_message::GroupedToolsOptions,    // UI5: AssistantGroupedTools
-    thinking_message::ThinkingMessageOptions, // UI5: AssistantThinking (+ Redacted)
+    tool_use_message::ToolUseRenderOptions,    // UI5: AssistantToolUse
+    tool_use_message::GroupedToolsOptions,     // UI5: AssistantGroupedTools
+    thinking_message::ThinkingMessageOptions,  // UI5: AssistantThinking (+ Redacted)
 
     // System
     SystemTextMessageData,
-    ErrorMessageData,                     // API error (basic struct)
-    api_error_message::APIErrorOptions,   // UI5: SystemAPIError (rich card)
-    collapsed_content::CollapsedContentOptions, // UI5: SystemCollapsedContent
-    RateLimitInfo,
-    PlanApprovalOptions,
-    std::vector<HookProgressEntry>,       // hook progress list
-    shutdown::ShutdownMessageData,
-    AdvisorMessage
->;
+    ErrorMessageData,                            // API error (basic struct)
+    api_error_message::APIErrorOptions,          // UI5: SystemAPIError (rich card)
+    collapsed_content::CollapsedContentOptions,  // UI5: SystemCollapsedContent
+    RateLimitInfo, PlanApprovalOptions,
+    std::vector<HookProgressEntry>,  // hook progress list
+    shutdown::ShutdownMessageData, AdvisorMessage>;
 
 // =========================================================================
 // 4) Dispatch: RenderMessageRowByType
@@ -199,20 +226,20 @@ using MessageRowPayload = std::variant<
 /// Callbacks the engine injects (all optional).  UI4 types hook into these;
 /// UI5-owned sub-types pass callbacks through via a secondary dispatch.
 struct MessageRowCallbacks {
-    std::function<void(std::string_view text)>       on_copy;
-    std::function<void()>                            on_click;
-    std::function<void()>                            on_retry;          // RL
-    std::function<void()>                            on_clear_session;  // P2 api-error-retry
-    std::function<void()>                            on_rate_limit_opts; // RL
-    std::function<void()>                            on_regenerate;     // Asst
-    std::function<void(bool expanded)>               on_toggle;         // System
-    std::function<void()>                            on_resume;         // Shutdown
-    std::function<void()>                            on_new_session;    // Shutdown
-    std::function<void()>                            on_approve;        // Plan
-    std::function<void(std::vector<PlanStep>)>       on_modify;         // Plan
-    std::function<void(std::string_view reason)>     on_reject;         // Plan
-    std::function<void()>                            on_dismiss;        // Advisor / Hook
-    std::function<void()>                            on_action;         // Advisor
+    std::function<void(std::string_view text)> on_copy;
+    std::function<void()> on_click;
+    std::function<void()> on_retry;                          // RL
+    std::function<void()> on_clear_session;                  // P2 api-error-retry
+    std::function<void()> on_rate_limit_opts;                // RL
+    std::function<void()> on_regenerate;                     // Asst
+    std::function<void(bool expanded)> on_toggle;            // System
+    std::function<void()> on_resume;                         // Shutdown
+    std::function<void()> on_new_session;                    // Shutdown
+    std::function<void()> on_approve;                        // Plan
+    std::function<void(std::vector<PlanStep>)> on_modify;    // Plan
+    std::function<void(std::string_view reason)> on_reject;  // Plan
+    std::function<void()> on_dismiss;                        // Advisor / Hook
+    std::function<void()> on_action;                         // Advisor
 };
 
 /// Result of dispatch: a Component tree ready for insertion into the screen.
@@ -221,9 +248,7 @@ struct MessageRowCallbacks {
 ///
 /// P2-2b: the 228-line body lives in message_row_dispatch.cpp (impl unit)
 /// so the BMI no longer carries the dispatch logic.
-[[nodiscard]] Component RenderMessageRowByType(
-    MessageShape shape,
-    MessageRowPayload payload,
-    MessageRowCallbacks callbacks = {});
+[[nodiscard]] Component RenderMessageRowByType(MessageShape shape, MessageRowPayload payload,
+                                               MessageRowCallbacks callbacks = {});
 
-} // namespace loom::ui::messages
+}  // namespace loom::ui::messages

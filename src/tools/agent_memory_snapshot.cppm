@@ -11,7 +11,6 @@
 /// refreshed or the user is prompted (prompt-update).
 module;
 
-
 export module loom.tools.agent_memory_snapshot;
 
 import std;
@@ -22,9 +21,9 @@ import loom.serdes.json;
 export namespace loom::tools::agent_memory_snapshot {
 
 namespace fs = std::filesystem;
-using loom::tools::agent_memory::Scope;
 using loom::tools::agent_memory::agent_memory_dir;
 using loom::tools::agent_memory::sanitize_agent_type_for_path;
+using loom::tools::agent_memory::Scope;
 
 // ---------------------------------------------------------------------------
 // Filenames / directory layout
@@ -32,33 +31,29 @@ using loom::tools::agent_memory::sanitize_agent_type_for_path;
 
 inline constexpr std::string_view SNAPSHOT_BASE = "agent-memory-snapshots";
 inline constexpr std::string_view SNAPSHOT_JSON = "snapshot.json";
-inline constexpr std::string_view SYNCED_JSON   = ".snapshot-synced.json";
+inline constexpr std::string_view SYNCED_JSON = ".snapshot-synced.json";
 
 // ---------------------------------------------------------------------------
 // Path helpers
 // ---------------------------------------------------------------------------
 
 /// `<cwd>/.loom/agent-memory-snapshots/<agentType>/`
-[[nodiscard]] inline fs::path snapshot_dir_for_agent(
-    std::string_view agent_type,
-    const std::optional<fs::path>& working_dir = std::nullopt
-) {
+[[nodiscard]] inline fs::path
+snapshot_dir_for_agent(std::string_view agent_type,
+                       const std::optional<fs::path>& working_dir = std::nullopt) {
     const auto cwd = working_dir ? *working_dir : fs::current_path();
     return cwd / ".loom" / SNAPSHOT_BASE / sanitize_agent_type_for_path(agent_type);
 }
 
-[[nodiscard]] inline fs::path snapshot_json_path(
-    std::string_view agent_type,
-    const std::optional<fs::path>& working_dir = std::nullopt
-) {
+[[nodiscard]] inline fs::path
+snapshot_json_path(std::string_view agent_type,
+                   const std::optional<fs::path>& working_dir = std::nullopt) {
     return snapshot_dir_for_agent(agent_type, working_dir) / SNAPSHOT_JSON;
 }
 
-[[nodiscard]] inline fs::path synced_json_path(
-    std::string_view agent_type,
-    Scope scope,
-    const std::optional<fs::path>& working_dir = std::nullopt
-) {
+[[nodiscard]] inline fs::path
+synced_json_path(std::string_view agent_type, Scope scope,
+                 const std::optional<fs::path>& working_dir = std::nullopt) {
     return agent_memory_dir(agent_type, scope, working_dir) / SYNCED_JSON;
 }
 
@@ -70,10 +65,8 @@ inline constexpr std::string_view SYNCED_JSON   = ".snapshot-synced.json";
 /// from a tiny JSON object of the form `{"updatedAt":"..."}`.  The TS code
 /// uses Zod schemas; here we use an intentionally loose string search so that
 /// a malformed file simply returns nullopt instead of crashing.
-[[nodiscard]] inline std::optional<std::string> read_iso_timestamp(
-    const fs::path& json_file,
-    std::string_view field_name
-) {
+[[nodiscard]] inline std::optional<std::string> read_iso_timestamp(const fs::path& json_file,
+                                                                   std::string_view field_name) {
     std::error_code ec;
     if (!fs::is_regular_file(json_file, ec)) return std::nullopt;
 
@@ -95,11 +88,8 @@ inline constexpr std::string_view SYNCED_JSON   = ".snapshot-synced.json";
 
 /// Write a tiny JSON object `{"<field>":"<value>"}` to a path.  Used for both
 /// `snapshot.json` (by other writers) and `.snapshot-synced.json` (below).
-inline void write_simple_json(
-    const fs::path& path,
-    std::string_view field_name,
-    std::string_view value
-) {
+inline void write_simple_json(const fs::path& path, std::string_view field_name,
+                              std::string_view value) {
     std::error_code ec;
     fs::create_directories(path.parent_path(), ec);
     std::ofstream ofs(path, std::ios::binary | std::ios::trunc);
@@ -113,13 +103,10 @@ inline void write_simple_json(
 
 /// Copy all `*.md` files (and any other files except `snapshot.json`) from the
 /// snapshot directory into the agent's local memory directory.
-inline void copy_snapshot_to_local(
-    std::string_view agent_type,
-    Scope scope,
-    const std::optional<fs::path>& working_dir = std::nullopt
-) {
+inline void copy_snapshot_to_local(std::string_view agent_type, Scope scope,
+                                   const std::optional<fs::path>& working_dir = std::nullopt) {
     const auto snapshot_mem_dir = snapshot_dir_for_agent(agent_type, working_dir);
-    const auto local_mem_dir    = agent_memory_dir(agent_type, scope, working_dir);
+    const auto local_mem_dir = agent_memory_dir(agent_type, scope, working_dir);
 
     std::error_code ec;
     fs::create_directories(local_mem_dir, ec);
@@ -131,35 +118,23 @@ inline void copy_snapshot_to_local(
         if (!entry.is_regular_file(ec)) continue;
         const auto filename = entry.path().filename();
         if (filename == SNAPSHOT_JSON) continue;
-        fs::copy_file(
-            entry.path(),
-            local_mem_dir / filename,
-            fs::copy_options::overwrite_existing,
-            ec
-        );
+        fs::copy_file(entry.path(), local_mem_dir / filename, fs::copy_options::overwrite_existing,
+                      ec);
     }
 }
 
 /// Save the `.snapshot-synced.json` metadata for a given agent + scope.
-inline void save_synced_meta(
-    std::string_view agent_type,
-    Scope scope,
-    std::string_view snapshot_timestamp,
-    const std::optional<fs::path>& working_dir = std::nullopt
-) {
-    write_simple_json(
-        synced_json_path(agent_type, scope, working_dir),
-        "syncedFrom",
-        snapshot_timestamp
-    );
+inline void save_synced_meta(std::string_view agent_type, Scope scope,
+                             std::string_view snapshot_timestamp,
+                             const std::optional<fs::path>& working_dir = std::nullopt) {
+    write_simple_json(synced_json_path(agent_type, scope, working_dir), "syncedFrom",
+                      snapshot_timestamp);
 }
 
 /// Return true if the agent's local memory directory contains any `*.md` files.
-[[nodiscard]] inline bool has_local_memory_files(
-    std::string_view agent_type,
-    Scope scope,
-    const std::optional<fs::path>& working_dir = std::nullopt
-) {
+[[nodiscard]] inline bool
+has_local_memory_files(std::string_view agent_type, Scope scope,
+                       const std::optional<fs::path>& working_dir = std::nullopt) {
     const auto local_mem_dir = agent_memory_dir(agent_type, scope, working_dir);
     std::error_code ec;
     if (!fs::is_directory(local_mem_dir, ec)) return false;
@@ -174,10 +149,7 @@ inline void save_synced_meta(
 
 /// Compare two ISO-8601-ish timestamps lexicographically (the format produced
 /// by `toISOString` sorts correctly as a string).
-[[nodiscard]] inline bool iso_newer_than(
-    std::string_view a,
-    std::string_view b
-) {
+[[nodiscard]] inline bool iso_newer_than(std::string_view a, std::string_view b) {
     return a > b;
 }
 
@@ -198,23 +170,19 @@ struct SnapshotCheckResult {
 };
 
 /// Check if a snapshot exists and whether it is newer than the last sync.
-[[nodiscard]] inline SnapshotCheckResult check_agent_memory_snapshot(
-    std::string_view agent_type,
-    Scope scope,
-    const std::optional<fs::path>& working_dir = std::nullopt
-) {
-    const auto snapshot_ts = read_iso_timestamp(
-        snapshot_json_path(agent_type, working_dir), "updatedAt"
-    );
+[[nodiscard]] inline SnapshotCheckResult
+check_agent_memory_snapshot(std::string_view agent_type, Scope scope,
+                            const std::optional<fs::path>& working_dir = std::nullopt) {
+    const auto snapshot_ts =
+        read_iso_timestamp(snapshot_json_path(agent_type, working_dir), "updatedAt");
     if (!snapshot_ts) return {SnapshotAction::None, std::nullopt};
 
     if (!has_local_memory_files(agent_type, scope, working_dir)) {
         return {SnapshotAction::Initialize, snapshot_ts};
     }
 
-    const auto synced_ts = read_iso_timestamp(
-        synced_json_path(agent_type, scope, working_dir), "syncedFrom"
-    );
+    const auto synced_ts =
+        read_iso_timestamp(synced_json_path(agent_type, scope, working_dir), "syncedFrom");
     if (!synced_ts || iso_newer_than(*snapshot_ts, *synced_ts)) {
         return {SnapshotAction::PromptUpdate, snapshot_ts};
     }
@@ -222,24 +190,18 @@ struct SnapshotCheckResult {
 }
 
 /// Initialize local agent memory from a snapshot (first-time setup).
-inline void initialize_from_snapshot(
-    std::string_view agent_type,
-    Scope scope,
-    std::string_view snapshot_timestamp,
-    const std::optional<fs::path>& working_dir = std::nullopt
-) {
+inline void initialize_from_snapshot(std::string_view agent_type, Scope scope,
+                                     std::string_view snapshot_timestamp,
+                                     const std::optional<fs::path>& working_dir = std::nullopt) {
     copy_snapshot_to_local(agent_type, scope, working_dir);
     save_synced_meta(agent_type, scope, snapshot_timestamp, working_dir);
 }
 
 /// Replace local agent memory with the snapshot.
 /// First removes existing `*.md` files to avoid orphaned entries.
-inline void replace_from_snapshot(
-    std::string_view agent_type,
-    Scope scope,
-    std::string_view snapshot_timestamp,
-    const std::optional<fs::path>& working_dir = std::nullopt
-) {
+inline void replace_from_snapshot(std::string_view agent_type, Scope scope,
+                                  std::string_view snapshot_timestamp,
+                                  const std::optional<fs::path>& working_dir = std::nullopt) {
     const auto local_mem_dir = agent_memory_dir(agent_type, scope, working_dir);
     std::error_code ec;
     if (fs::is_directory(local_mem_dir, ec)) {
@@ -255,13 +217,10 @@ inline void replace_from_snapshot(
 }
 
 /// Mark the current snapshot as synced without changing local memory.
-inline void mark_snapshot_synced(
-    std::string_view agent_type,
-    Scope scope,
-    std::string_view snapshot_timestamp,
-    const std::optional<fs::path>& working_dir = std::nullopt
-) {
+inline void mark_snapshot_synced(std::string_view agent_type, Scope scope,
+                                 std::string_view snapshot_timestamp,
+                                 const std::optional<fs::path>& working_dir = std::nullopt) {
     save_synced_meta(agent_type, scope, snapshot_timestamp, working_dir);
 }
 
-} // namespace loom::tools::agent_memory_snapshot
+}  // namespace loom::tools::agent_memory_snapshot

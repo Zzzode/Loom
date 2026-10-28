@@ -26,16 +26,23 @@ using namespace loom::tools::files::impl;
 namespace fs = std::filesystem;
 
 static int g_fail = 0;
-#define FAIL(...) do { \
-    ++g_fail; \
-    std::fprintf(stderr, "FAIL %s:%d ", __FILE__, __LINE__); \
-    std::fprintf(stderr, __VA_ARGS__); \
-    std::fprintf(stderr, "\n"); \
-} while(0)
-#define CHECK(expr, ...) do { \
-    if (!(expr)) { FAIL(__VA_ARGS__); } \
-    else { std::printf("  OK: "); std::printf(__VA_ARGS__); std::printf("\n"); } \
-} while (0)
+#define FAIL(...)                                                                                  \
+    do {                                                                                           \
+        ++g_fail;                                                                                  \
+        std::fprintf(stderr, "FAIL %s:%d ", __FILE__, __LINE__);                                   \
+        std::fprintf(stderr, __VA_ARGS__);                                                         \
+        std::fprintf(stderr, "\n");                                                                \
+    } while (0)
+#define CHECK(expr, ...)                                                                           \
+    do {                                                                                           \
+        if (!(expr)) {                                                                             \
+            FAIL(__VA_ARGS__);                                                                     \
+        } else {                                                                                   \
+            std::printf("  OK: ");                                                                 \
+            std::printf(__VA_ARGS__);                                                              \
+            std::printf("\n");                                                                     \
+        }                                                                                          \
+    } while (0)
 
 int main() {
     std::puts("=== Phase 3-B/C E2E: Bash x Files ===");
@@ -45,57 +52,75 @@ int main() {
     std::error_code ec;
     fs::remove_all(scratch, ec);
     fs::create_directories(scratch / "data", ec);
-    if (ec) { FAIL("create scratch: %s", ec.message().c_str()); return 1; }
+    if (ec) {
+        FAIL("create scratch: %s", ec.message().c_str());
+        return 1;
+    }
 
     auto write_str = [&](const fs::path& p, std::string_view c) {
         WriteOptions o;
-        o.path    = p.string();
+        o.path = p.string();
         o.content = std::string{c};
-        o.mode    = WriteMode::Overwrite;
+        o.mode = WriteMode::Overwrite;
         return WriteFile(std::move(o));
     };
 
-    const std::string data1 =
-        "# sample dataset A\n"
-        "RECORD id=101 user=alice score=88\n"
-        "RECORD id=102 user=bob   score=75\n"
-        "RECORD id=103 user=carol score=92\n";
-    const std::string data2 =
-        "# sample dataset B\n"
-        "RECORD id=201 user=dave score=60\n"
-        "RECORD id=202 user=erin score=80\n";
-    const std::string data3 =
-        "# sample dataset C\n"
-        "RECORD id=301 user=frank score=95\n";
-    auto w1 = write_str(scratch / "data" / "a.txt", data1); CHECK(w1.ok, "write a.txt");
-    auto w2 = write_str(scratch / "data" / "b.txt", data2); CHECK(w2.ok, "write b.txt");
-    auto w3 = write_str(scratch / "data" / "c.txt", data3); CHECK(w3.ok, "write c.txt");
+    const std::string data1 = "# sample dataset A\n"
+                              "RECORD id=101 user=alice score=88\n"
+                              "RECORD id=102 user=bob   score=75\n"
+                              "RECORD id=103 user=carol score=92\n";
+    const std::string data2 = "# sample dataset B\n"
+                              "RECORD id=201 user=dave score=60\n"
+                              "RECORD id=202 user=erin score=80\n";
+    const std::string data3 = "# sample dataset C\n"
+                              "RECORD id=301 user=frank score=95\n";
+    auto w1 = write_str(scratch / "data" / "a.txt", data1);
+    CHECK(w1.ok, "write a.txt");
+    auto w2 = write_str(scratch / "data" / "b.txt", data2);
+    CHECK(w2.ok, "write b.txt");
+    auto w3 = write_str(scratch / "data" / "c.txt", data3);
+    CHECK(w3.ok, "write c.txt");
 
     // 2. Shell script aggregates inputs into report.txt.
     const fs::path script_path = scratch / "aggregate.sh";
     const fs::path report_path = scratch / "report.txt";
     const fs::path checksums_path = scratch / "checksums.txt";
-    std::string script =
-        "#!/bin/sh\n"
-        "set -eu\n"
-        "echo '=== AGGREGATED REPORT PHASE3 ===' > " + report_path.string() + "\n"
-        "echo 'DATASETS: A B C' >> " + report_path.string() + "\n"
-        "for f in " + (scratch / "data").string() + "/*.txt; do\n"
-        "  base=$(basename \"$f\")\n"
-        "  lines=$(grep -c '^RECORD' \"$f\" || true)\n"
-        "  echo \"[$base] records=$lines\" >> " + report_path.string() + "\n"
-        "  cksum \"$f\"\n"
-        "done > " + checksums_path.string() + " 2>&1\n"
-        "total=$(awk -F: '/^RECORD/ {c++} END {print c+0}' " + (scratch / "data").string() + "/*.txt)\n"
-        "echo \"TOTAL_RECORDS=$total\" >> " + report_path.string() + "\n"
-        "echo '=== END REPORT ===' >> " + report_path.string() + "\n"
-        "echo 'e2e-done stdout'\n"
-        "echo 'e2e-warn stderr' 1>&2\n";
+    std::string script = "#!/bin/sh\n"
+                         "set -eu\n"
+                         "echo '=== AGGREGATED REPORT PHASE3 ===' > " +
+                         report_path.string() +
+                         "\n"
+                         "echo 'DATASETS: A B C' >> " +
+                         report_path.string() +
+                         "\n"
+                         "for f in " +
+                         (scratch / "data").string() +
+                         "/*.txt; do\n"
+                         "  base=$(basename \"$f\")\n"
+                         "  lines=$(grep -c '^RECORD' \"$f\" || true)\n"
+                         "  echo \"[$base] records=$lines\" >> " +
+                         report_path.string() +
+                         "\n"
+                         "  cksum \"$f\"\n"
+                         "done > " +
+                         checksums_path.string() +
+                         " 2>&1\n"
+                         "total=$(awk -F: '/^RECORD/ {c++} END {print c+0}' " +
+                         (scratch / "data").string() +
+                         "/*.txt)\n"
+                         "echo \"TOTAL_RECORDS=$total\" >> " +
+                         report_path.string() +
+                         "\n"
+                         "echo '=== END REPORT ===' >> " +
+                         report_path.string() +
+                         "\n"
+                         "echo 'e2e-done stdout'\n"
+                         "echo 'e2e-warn stderr' 1>&2\n";
     {
         WriteOptions o;
-        o.path    = script_path.string();
+        o.path = script_path.string();
         o.content = script;
-        o.mode    = WriteMode::Overwrite;
+        o.mode = WriteMode::Overwrite;
         o.mode_bits = 0755;
         auto r = WriteFile(std::move(o));
         CHECK(r.ok, "write aggregate.sh");
@@ -104,9 +129,9 @@ int main() {
     // 3. Bash run.
     {
         BashOptions o;
-        o.command         = "/bin/sh " + script_path.string();
-        o.timeout_sec     = 10;
-        o.allow_fail      = false;
+        o.command = "/bin/sh " + script_path.string();
+        o.timeout_sec = 10;
+        o.allow_fail = false;
         o.combine_streams = false;
         auto r = ExecuteBash(std::move(o));
         CHECK(r.exit_code == 0, "bash exit=0 got=%d (%s)", r.exit_code, r.error_reason.c_str());
@@ -120,7 +145,8 @@ int main() {
     // 4. Read report + assertions.
     std::string report;
     {
-        ReadOptions o; o.path = report_path.string();
+        ReadOptions o;
+        o.path = report_path.string();
         auto rr = ReadFile(o);
         CHECK(rr.ok, "read report.txt ok: %s", rr.error.c_str());
         CHECK(rr.lines_read >= 6, "report has enough lines got=%d", rr.lines_read);
@@ -139,7 +165,7 @@ int main() {
     // 5. EditFile.
     {
         EditOptions o;
-        o.path       = report_path.string();
+        o.path = report_path.string();
         o.old_string = "TOTAL_RECORDS=6";
         o.new_string = "TOTAL_RECORDS=6  # verified-by-e2e";
         auto er = EditFile(o);
@@ -147,17 +173,17 @@ int main() {
               er.replacements, er.error.c_str());
     }
     {
-        ReadOptions o; o.path = report_path.string();
+        ReadOptions o;
+        o.path = report_path.string();
         auto rr = ReadFile(o);
-        CHECK(contains(rr.content, "TOTAL_RECORDS=6  # verified-by-e2e"),
-              "edit was persisted");
+        CHECK(contains(rr.content, "TOTAL_RECORDS=6  # verified-by-e2e"), "edit was persisted");
     }
 
     // 6. Glob *.txt (data dir only, pattern *.txt -> a/b/c).
     {
         GlobOptions o;
-        o.pattern     = "*.txt";
-        o.base_dir    = (scratch / "data").string();
+        o.pattern = "*.txt";
+        o.base_dir = (scratch / "data").string();
         o.max_results = 100;
         auto gr = Glob(o);
         CHECK(gr.error.empty(), "glob error empty: %s", gr.error.c_str());
@@ -166,8 +192,8 @@ int main() {
     // Whole scratch root *.txt (a/b/c + report + checksums) = 5.
     {
         GlobOptions o;
-        o.pattern     = "*.txt";
-        o.base_dir    = scratch.string();
+        o.pattern = "*.txt";
+        o.base_dir = scratch.string();
         o.max_results = 100;
         auto gr = Glob(o);
         CHECK(gr.matches.size() == 5, "glob *.txt recursive => 5 got=%zu", gr.matches.size());
@@ -176,10 +202,10 @@ int main() {
     // 7. Grep literal RECORD across scratch data dir.
     {
         GrepOptions o;
-        o.path          = (scratch / "data").string();
-        o.pattern       = "RECORD";
+        o.path = (scratch / "data").string();
+        o.pattern = "RECORD";
         o.fixed_strings = true;
-        o.max_results   = 100;
+        o.max_results = 100;
         auto gr = Grep(o);
         CHECK(gr.files_scanned == 3, "grep scanned 3 files got=%d", gr.files_scanned);
         CHECK(gr.matches.size() == 6, "grep RECORD count=6 got=%zu", gr.matches.size());
@@ -187,7 +213,7 @@ int main() {
         int bad = 0;
         for (auto& m : gr.matches) {
             if (m.line_no <= 0) ++bad;
-            if (m.file.size() < 4 || m.file.substr(m.file.size()-4) != ".txt") ++bad;
+            if (m.file.size() < 4 || m.file.substr(m.file.size() - 4) != ".txt") ++bad;
         }
         CHECK(bad == 0, "all grep matches valid got bad=%d", bad);
     }
@@ -195,11 +221,11 @@ int main() {
     // Extra: Grep with regex pattern matching id=XXX numeric values.
     {
         GrepOptions o;
-        o.path          = (scratch / "data").string();
-        o.pattern       = "id=[0-9]+ user=[a-z]+";
+        o.path = (scratch / "data").string();
+        o.pattern = "id=[0-9]+ user=[a-z]+";
         o.fixed_strings = false;
         o.case_sensitive = true;
-        o.max_results    = 100;
+        o.max_results = 100;
         auto gr = Grep(o);
         CHECK(gr.matches.size() == 6, "grep regex id=... => 6 got=%zu", gr.matches.size());
     }

@@ -4,10 +4,10 @@
 /// message rows, tool displays, permission prompts, diffs, etc.
 module;
 
-#include <cstdint>
-
-#include <ftxui/dom/elements.hpp>
 #include <ftxui/component/component.hpp>
+#include <ftxui/dom/elements.hpp>
+
+#include <cstdint>
 
 export module loom.ui.widgets.components;
 
@@ -30,7 +30,7 @@ export namespace loom::ui {
 /// Data representing a tool invocation for display
 struct ToolUseDisplayData {
     std::string tool_name;
-    std::string input_summary;      // Brief description of tool input
+    std::string input_summary;                  // Brief description of tool input
     std::optional<std::string> output_preview;  // Truncated output
     bool is_running = false;
     bool is_error = false;
@@ -41,15 +41,16 @@ struct ToolUseDisplayData {
 [[nodiscard]] inline ftxui::Element render_tool_use(const ToolUseDisplayData& data) {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
     // Tool name header with status indicator
-    auto status_icon = data.is_running ? std::string(loom::ui::design::figures::kRefreshArrow) : (data.is_error ? std::string(loom::ui::design::figures::kCross) : std::string(loom::ui::design::figures::kTick));
-    auto status_color = data.is_running ? pal.warning
-                        : (data.is_error ? pal.danger : pal.success);
+    auto status_icon = data.is_running
+                           ? std::string(loom::ui::design::figures::kRefreshArrow)
+                           : (data.is_error ? std::string(loom::ui::design::figures::kCross)
+                                            : std::string(loom::ui::design::figures::kTick));
+    auto status_color = data.is_running ? pal.warning : (data.is_error ? pal.danger : pal.success);
 
     auto header = ftxui::hbox({
         ftxui::text(status_icon) | ftxui::color(status_color),
         ftxui::text(" " + data.tool_name) | ftxui::bold | ftxui::color(pal.primary),
-        ftxui::text(std::format(" ({}ms)", data.duration.count()))
-            | ftxui::color(pal.muted),
+        ftxui::text(std::format(" ({}ms)", data.duration.count())) | ftxui::color(pal.muted),
     });
 
     // Input summary
@@ -69,8 +70,7 @@ struct ToolUseDisplayData {
         elements.push_back(output_line);
     }
 
-    return ftxui::vbox(elements) | ftxui::borderLight
-           | ftxui::color(pal.muted);
+    return ftxui::vbox(elements) | ftxui::borderLight | ftxui::color(pal.muted);
 }
 
 // ============================================================
@@ -79,10 +79,10 @@ struct ToolUseDisplayData {
 
 /// Permission prompt options
 enum class PermissionChoice : std::uint8_t {
-    Allow,          // Allow this invocation only
-    AllowAlways,    // Allow this tool always
-    Deny,           // Deny this invocation
-    DenyAlways,     // Deny this tool always
+    Allow,        // Allow this invocation only
+    AllowAlways,  // Allow this tool always
+    Deny,         // Deny this invocation
+    DenyAlways,   // Deny this tool always
 };
 
 /// Data for rendering a permission prompt
@@ -94,17 +94,16 @@ struct PermissionPromptData {
 };
 
 /// Render a permission prompt element
-[[nodiscard]] inline ftxui::Element render_permission_prompt(
-    const PermissionPromptData& data) {
+[[nodiscard]] inline ftxui::Element render_permission_prompt(const PermissionPromptData& data) {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
     auto title = ftxui::hbox({
-        ftxui::text(std::string(loom::ui::design::figures::kWarning) + " Permission Required: ") | ftxui::color(pal.warning) | ftxui::bold,
+        ftxui::text(std::string(loom::ui::design::figures::kWarning) + " Permission Required: ") |
+            ftxui::color(pal.warning) | ftxui::bold,
         ftxui::text(data.tool_name) | ftxui::color(pal.primary),
     });
 
     auto desc = ftxui::text("  " + data.description) | ftxui::dim;
-    auto input = ftxui::text("  Input: " + data.input_preview)
-                 | ftxui::color(pal.muted);
+    auto input = ftxui::text("  Input: " + data.input_preview) | ftxui::color(pal.muted);
 
     std::vector<ftxui::Element> elements = {title, desc, input};
 
@@ -112,21 +111,20 @@ struct PermissionPromptData {
     if (!data.affected_paths.empty()) {
         elements.push_back(ftxui::text("  Affected:") | ftxui::bold);
         for (const auto& path : data.affected_paths | std::views::take(5)) {
-            elements.push_back(ftxui::text("    " + path)
-                               | ftxui::color(pal.info));
+            elements.push_back(ftxui::text("    " + path) | ftxui::color(pal.info));
         }
         if (data.affected_paths.size() > 5) {
-            elements.push_back(ftxui::text(std::format("    ... and {} more",
-                               data.affected_paths.size() - 5)) | ftxui::dim);
+            elements.push_back(
+                ftxui::text(std::format("    ... and {} more", data.affected_paths.size() - 5)) |
+                ftxui::dim);
         }
     }
 
     // Action hint
-    elements.push_back(ftxui::text("  [y]es / [n]o / [a]lways / [d]eny always")
-                       | ftxui::color(pal.warning));
+    elements.push_back(ftxui::text("  [y]es / [n]o / [a]lways / [d]eny always") |
+                       ftxui::color(pal.warning));
 
-    return ftxui::vbox(elements) | ftxui::borderDouble
-           | ftxui::bgcolor(pal.warning_tint_bg);
+    return ftxui::vbox(elements) | ftxui::borderDouble | ftxui::bgcolor(pal.warning_tint_bg);
 }
 
 // ============================================================
@@ -141,10 +139,9 @@ struct SearchResult {
 };
 
 /// Render a search box with results dropdown
-[[nodiscard]] inline ftxui::Element render_search_box(
-    const std::string& query,
-    const std::vector<SearchResult>& results,
-    std::int32_t selected_index) {
+[[nodiscard]] inline ftxui::Element render_search_box(const std::string& query,
+                                                      const std::vector<SearchResult>& results,
+                                                      std::int32_t selected_index) {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
 
     auto input_line = ftxui::hbox({
@@ -179,10 +176,10 @@ struct SearchResult {
 
 /// Type of diff line
 enum class DiffLineKind : std::uint8_t {
-    Context,    // Unchanged line
-    Added,      // Added line (green)
-    Removed,    // Removed line (red)
-    Header,     // @@ hunk header @@
+    Context,  // Unchanged line
+    Added,    // Added line (green)
+    Removed,  // Removed line (red)
+    Header,   // @@ hunk header @@
 };
 
 /// Single line in a diff view
@@ -194,38 +191,35 @@ struct DiffLine {
 };
 
 /// Render a unified diff view with colored additions/deletions
-[[nodiscard]] inline ftxui::Element render_diff_view(
-    const std::string& file_path,
-    const std::vector<DiffLine>& lines) {
+[[nodiscard]] inline ftxui::Element render_diff_view(const std::string& file_path,
+                                                     const std::vector<DiffLine>& lines) {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
 
-    auto header = ftxui::text("  " + file_path) | ftxui::bold
-                  | ftxui::color(pal.text);
+    auto header = ftxui::text("  " + file_path) | ftxui::bold | ftxui::color(pal.text);
 
     std::vector<ftxui::Element> diff_lines;
     for (const auto& line : lines) {
         ftxui::Color line_color;
         std::string prefix;
         switch (line.kind) {
-            case DiffLineKind::Added:
-                line_color = pal.success;
-                prefix = "+";
-                break;
-            case DiffLineKind::Removed:
-                line_color = pal.danger;
-                prefix = "-";
-                break;
-            case DiffLineKind::Header:
-                line_color = pal.info;
-                prefix = "@";
-                break;
-            default:
-                line_color = pal.muted;
-                prefix = " ";
-                break;
+        case DiffLineKind::Added:
+            line_color = pal.success;
+            prefix = "+";
+            break;
+        case DiffLineKind::Removed:
+            line_color = pal.danger;
+            prefix = "-";
+            break;
+        case DiffLineKind::Header:
+            line_color = pal.info;
+            prefix = "@";
+            break;
+        default:
+            line_color = pal.muted;
+            prefix = " ";
+            break;
         }
-        diff_lines.push_back(
-            ftxui::text(prefix + " " + line.content) | ftxui::color(line_color));
+        diff_lines.push_back(ftxui::text(prefix + " " + line.content) | ftxui::color(line_color));
     }
 
     std::vector<ftxui::Element> all = {header, ftxui::separator()};
@@ -238,15 +232,14 @@ struct DiffLine {
 // ============================================================
 
 /// Render a progress bar with percentage and optional label
-[[nodiscard]] inline ftxui::Element render_progress_bar(
-    double progress, const std::string& label = "") {
+[[nodiscard]] inline ftxui::Element render_progress_bar(double progress,
+                                                        const std::string& label = "") {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
     // Clamp progress to [0, 1]
     auto clamped = std::clamp(progress, 0.0, 1.0);
 
     auto bar = ftxui::gauge(clamped) | ftxui::color(pal.info);
-    auto pct = ftxui::text(std::format(" {:3.0f}%", clamped * 100))
-               | ftxui::color(pal.text);
+    auto pct = ftxui::text(std::format(" {:3.0f}%", clamped * 100)) | ftxui::color(pal.text);
 
     if (label.empty()) {
         return ftxui::hbox({bar | ftxui::flex, pct});
@@ -261,7 +254,10 @@ struct DiffLine {
 
 /// Notification severity level
 enum class NotificationLevel : std::uint8_t {
-    Info, Success, Warning, Error,
+    Info,
+    Success,
+    Warning,
+    Error,
 };
 
 /// Notification data
@@ -279,10 +275,22 @@ struct NotificationData {
     ftxui::Color border_color;
     std::string icon;
     switch (data.level) {
-        case NotificationLevel::Info:    icon = std::string(loom::ui::design::figures::kInfo); border_color = pal.info; break;
-        case NotificationLevel::Success: icon = std::string(loom::ui::design::figures::kTick); border_color = pal.success; break;
-        case NotificationLevel::Warning: icon = std::string(loom::ui::design::figures::kWarning); border_color = pal.warning; break;
-        case NotificationLevel::Error:   icon = std::string(loom::ui::design::figures::kCross); border_color = pal.danger; break;
+    case NotificationLevel::Info:
+        icon = std::string(loom::ui::design::figures::kInfo);
+        border_color = pal.info;
+        break;
+    case NotificationLevel::Success:
+        icon = std::string(loom::ui::design::figures::kTick);
+        border_color = pal.success;
+        break;
+    case NotificationLevel::Warning:
+        icon = std::string(loom::ui::design::figures::kWarning);
+        border_color = pal.warning;
+        break;
+    case NotificationLevel::Error:
+        icon = std::string(loom::ui::design::figures::kCross);
+        border_color = pal.danger;
+        break;
     }
 
     auto title_el = ftxui::hbox({
@@ -292,11 +300,12 @@ struct NotificationData {
 
     if (data.body) {
         return ftxui::vbox({
-            title_el,
-            ftxui::text("  " + *data.body) | ftxui::dim,
-        }) | ftxui::borderLight | ftxui::color(border_color);
+                   title_el,
+                   ftxui::text("  " + *data.body) | ftxui::dim,
+               }) |
+               ftxui::borderLight | ftxui::color(border_color);
     }
     return title_el | ftxui::borderLight | ftxui::color(border_color);
 }
 
-} // namespace loom::ui
+}  // namespace loom::ui

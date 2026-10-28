@@ -12,8 +12,7 @@ import std;
 
 namespace loom::utils::swarm_helpers {
 
-std::size_t WorkerPermissionGrants::shard_index_for(
-    std::string_view canonical_path) {
+std::size_t WorkerPermissionGrants::shard_index_for(std::string_view canonical_path) {
     constexpr std::uint64_t kFnvOffsetBasis = 1469598103934665603ULL;
     constexpr std::uint64_t kFnvPrime = 1099511628211ULL;
     std::uint64_t hash = kFnvOffsetBasis;

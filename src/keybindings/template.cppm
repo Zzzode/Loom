@@ -23,8 +23,7 @@ inline constexpr std::string_view keybindings_schema_url =
     "https://www.schemastore.org/loom-keybindings.json";
 
 /// Documentation URL for keybindings reference
-inline constexpr std::string_view keybindings_docs_url =
-    "";  // no documentation site is shipped
+inline constexpr std::string_view keybindings_docs_url = "";  // no documentation site is shipped
 
 /// Normalize a key string for comparison (lowercase, strip whitespace)
 [[nodiscard]] inline std::string normalize_key_for_comparison(std::string_view key) {
@@ -40,9 +39,8 @@ inline constexpr std::string_view keybindings_docs_url =
 
 /// Filter out reserved shortcuts that cannot be rebound.
 /// These would cause /doctor to warn, so we exclude them from the template.
-[[nodiscard]] inline std::vector<Keybinding> filter_reserved_shortcuts(
-    const std::vector<Keybinding>& bindings
-) {
+[[nodiscard]] inline std::vector<Keybinding>
+filter_reserved_shortcuts(const std::vector<Keybinding>& bindings) {
     const auto& reserved = reserved_shortcuts();
 
     std::vector<Keybinding> filtered;
@@ -80,12 +78,24 @@ inline constexpr std::string_view keybindings_docs_url =
     result.reserve(str.size() + 2);
     for (char c : str) {
         switch (c) {
-            case '"':  result += "\\\""; break;
-            case '\\': result += "\\\\"; break;
-            case '\n': result += "\\n"; break;
-            case '\r': result += "\\r"; break;
-            case '\t': result += "\\t"; break;
-            default:   result += c; break;
+        case '"':
+            result += "\\\"";
+            break;
+        case '\\':
+            result += "\\\\";
+            break;
+        case '\n':
+            result += "\\n";
+            break;
+        case '\r':
+            result += "\\r";
+            break;
+        case '\t':
+            result += "\\t";
+            break;
+        default:
+            result += c;
+            break;
         }
     }
     return result;
@@ -119,8 +129,8 @@ inline constexpr std::string_view keybindings_docs_url =
             if (chord.modifiers.meta) key_str += "cmd+";
             key_str += chord.key;
 
-            out << "        \"" << json_escape(key_str) << "\": \""
-                << json_escape(binding.command) << "\"";
+            out << "        \"" << json_escape(key_str) << "\": \"" << json_escape(binding.command)
+                << "\"";
             if (k + 1 < binding.keys.size()) out << ",";
             out << "\n";
         }
@@ -137,4 +147,4 @@ inline constexpr std::string_view keybindings_docs_url =
     return out.str();
 }
 
-} // namespace loom::keybindings
+}  // namespace loom::keybindings

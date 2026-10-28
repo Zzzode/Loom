@@ -406,12 +406,11 @@ When adding to permission or hook arrays, **merge with existing**, don't replace
 /// to loom.config.config::ConfigManager and loom.config.feature_flags.
 [[nodiscard]] inline SkillDefinition make_bundled_update_config_skill() {
     std::string full_content;
-    full_content.reserve(
-        std::string_view(UPDATE_CONFIG_PROMPT_TEMPLATE).size() +
-        std::string_view(SETTINGS_EXAMPLES_DOCS).size() +
-        std::string_view(HOOKS_DOCS).size() +
-        std::string_view(HOOK_VERIFICATION_FLOW).size() +
-        500 // for examples section, workflow, and common mistakes
+    full_content.reserve(std::string_view(UPDATE_CONFIG_PROMPT_TEMPLATE).size() +
+                         std::string_view(SETTINGS_EXAMPLES_DOCS).size() +
+                         std::string_view(HOOKS_DOCS).size() +
+                         std::string_view(HOOK_VERIFICATION_FLOW).size() +
+                         500  // for examples section, workflow, and common mistakes
     );
 
     full_content += std::string(UPDATE_CONFIG_PROMPT_TEMPLATE);
@@ -461,27 +460,27 @@ If a hook isn't running:
 
     return SkillDefinition{
         .name = "update-config",
-        .description =
-            "Configure the harness via settings.json. Automated behaviors "
-            "(\"from now on when X\", \"before/after X\") require hooks in "
-            "settings.json — memory/preferences cannot execute code. Also use "
-            "for: permissions, env vars, hook troubleshooting, plugin/MCP config. "
-            "Use the Config tool for simple settings (theme, model, verbose).",
-        .trigger_patterns = {
-            R"(update.*config)",
-            R"(change.*(?:setting|configuration))",
-            R"(modify.*(?:config|settings))",
-            R"(set.*(?:option|preference|config))",
-            R"(configure\s+\w+)",
-            R"(allow\s+(?:permission|command|tool))",
-            R"(add\s+(?:a\s+)?hook)",
-            R"(set\s+env(?:ironment)?\s+var)",
-            R"(settings\.json)",
-            R"(from\s+now\s+on\s+when)",
-            R"(before\s+(?:each|every)\s+\w+)",
-            R"(after\s+(?:each|every|writing|editing))",
-            R"(whenever\s+(?:i\s+)?(?:you|loom|it)\s+)",
-        },
+        .description = "Configure the harness via settings.json. Automated behaviors "
+                       "(\"from now on when X\", \"before/after X\") require hooks in "
+                       "settings.json — memory/preferences cannot execute code. Also use "
+                       "for: permissions, env vars, hook troubleshooting, plugin/MCP config. "
+                       "Use the Config tool for simple settings (theme, model, verbose).",
+        .trigger_patterns =
+            {
+                R"(update.*config)",
+                R"(change.*(?:setting|configuration))",
+                R"(modify.*(?:config|settings))",
+                R"(set.*(?:option|preference|config))",
+                R"(configure\s+\w+)",
+                R"(allow\s+(?:permission|command|tool))",
+                R"(add\s+(?:a\s+)?hook)",
+                R"(set\s+env(?:ironment)?\s+var)",
+                R"(settings\.json)",
+                R"(from\s+now\s+on\s+when)",
+                R"(before\s+(?:each|every)\s+\w+)",
+                R"(after\s+(?:each|every|writing|editing))",
+                R"(whenever\s+(?:i\s+)?(?:you|loom|it)\s+)",
+            },
         .content = std::move(full_content),
         .is_builtin = true,
         .author = std::nullopt,
@@ -494,11 +493,9 @@ If a hook isn't running:
 // ============================================================
 
 /// Get the correct settings path for a scope. Delegate to settings.cppm.
-[[nodiscard]] inline std::filesystem::path resolve_settings_path(
-    loom::config::SettingsScope scope,
-    const std::filesystem::path& home_dir,
-    const std::filesystem::path& project_root
-) {
+[[nodiscard]] inline std::filesystem::path
+resolve_settings_path(loom::config::SettingsScope scope, const std::filesystem::path& home_dir,
+                      const std::filesystem::path& project_root) {
     return loom::config::get_settings_path(scope, home_dir, project_root);
 }
 
@@ -519,4 +516,4 @@ inline bool set_feature_flag(std::string_view name, bool enabled) {
     return loom::core::flags::global_flags().enabled_summary();
 }
 
-} // namespace loom::skills::bundled
+}  // namespace loom::skills::bundled

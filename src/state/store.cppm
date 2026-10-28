@@ -193,15 +193,17 @@ struct Action {
     std::any payload;
 
     /// Construct action with no payload
-    explicit Action(ActionType t) : type(t) {}
+    explicit Action(ActionType t)
+        : type(t) {}
 
     /// Construct action with typed payload
     template <typename T>
-    Action(ActionType t, T&& data) : type(t), payload(std::forward<T>(data)) {}
+    Action(ActionType t, T&& data)
+        : type(t)
+        , payload(std::forward<T>(data)) {}
 
     /// Extract payload as a specific type (returns nullopt if wrong type)
-    template <typename T>
-    [[nodiscard]] std::optional<T> get_payload() const {
+    template <typename T> [[nodiscard]] std::optional<T> get_payload() const {
         if (auto* p = std::any_cast<T>(&payload)) {
             return *p;
         }
@@ -209,8 +211,7 @@ struct Action {
     }
 
     /// Check if payload holds a specific type
-    template <typename T>
-    [[nodiscard]] bool has_payload() const {
+    template <typename T> [[nodiscard]] bool has_payload() const {
         return payload.type() == typeid(T);
     }
 };
@@ -229,672 +230,676 @@ concept Reducer = std::invocable<F, const State&, const Action&> &&
     AppState next = state;
 
     switch (action.type) {
-        // ========================================
-        // Message actions
-        // ========================================
-        case ActionType::AddMessage: {
-            if (auto msg = action.get_payload<loom::core::Message>()) {
-                return with_message(state, std::move(*msg));
-            }
-            break;
+    // ========================================
+    // Message actions
+    // ========================================
+    case ActionType::AddMessage: {
+        if (auto msg = action.get_payload<loom::core::Message>()) {
+            return with_message(state, std::move(*msg));
         }
-        case ActionType::ClearMessages: {
-            next.messages.clear();
-            break;
-        }
-        case ActionType::UpdateLastMessage: {
-            if (auto msg = action.get_payload<loom::core::Message>(); msg && !next.messages.empty()) {
-                next.messages.back() = std::move(*msg);
-                next.last_activity = std::chrono::system_clock::now();
-            }
-            break;
-        }
-
-        // ========================================
-        // Loading/streaming
-        // ========================================
-        case ActionType::SetLoading: {
-            if (auto val = action.get_payload<bool>()) {
-                return with_loading(state, *val);
-            }
-            break;
-        }
-        case ActionType::SetStreaming: {
-            if (auto val = action.get_payload<bool>()) {
-                next.is_streaming = *val;
-            }
-            break;
-        }
-
-        // ========================================
-        // Error handling
-        // ========================================
-        case ActionType::SetError: {
-            if (auto msg = action.get_payload<std::string>()) {
-                return with_error(state, std::move(*msg));
-            }
-            break;
-        }
-        case ActionType::ClearError: {
-            return clear_error(state);
-        }
-
-        // ========================================
-        // Token usage
-        // ========================================
-        case ActionType::UpdateUsage: {
-            if (auto usage = action.get_payload<loom::core::TokenUsage>()) {
-                return with_usage(state, *usage);
-            }
-            break;
-        }
-
-        // ========================================
-        // Model management
-        // ========================================
-        case ActionType::SwitchModel: {
-            if (auto model = action.get_payload<ModelConfig>()) {
-                return with_model(state, std::move(*model));
-            }
-            break;
-        }
-        case ActionType::SetMainLoopModel: {
-            if (auto model = action.get_payload<std::optional<std::string>>()) {
-                next.main_loop_model = std::move(*model);
-            }
-            break;
-        }
-
-        // ========================================
-        // Permission actions
-        // ========================================
-        case ActionType::GrantPermission: {
-            if (auto tool = action.get_payload<std::string>()) {
-                next.tool_permission_context.allowed_tools.insert(*tool);
-                next.tool_permission_context.denied_tools.erase(*tool);
-            }
-            break;
-        }
-        case ActionType::RevokePermission: {
-            if (auto tool = action.get_payload<std::string>()) {
-                next.tool_permission_context.denied_tools.insert(*tool);
-                next.tool_permission_context.allowed_tools.erase(*tool);
-            }
-            break;
-        }
-        case ActionType::SetPermissionMode: {
-            if (auto mode = action.get_payload<PermissionMode>()) {
-                return with_permission_mode(state, *mode);
-            }
-            break;
-        }
-
-        // ========================================
-        // UI state
-        // ========================================
-        case ActionType::ToggleCompactMode: {
-            next.compact_mode = !next.compact_mode;
-            break;
-        }
-        case ActionType::ToggleThinking: {
-            next.show_thinking = !next.show_thinking;
-            break;
-        }
-        case ActionType::SetSlashCommand: {
-            if (auto command = action.get_payload<std::optional<std::string>>()) {
-                next.active_slash_command = std::move(*command);
-            }
-            break;
-        }
-        case ActionType::AddNotification: {
-            if (auto notification = action.get_payload<std::string>()) {
-                next.notifications.push_back(std::move(*notification));
-            }
-            break;
-        }
-        case ActionType::DismissNotification: {
-            if (auto notification = action.get_payload<std::string>()) {
-                std::erase(next.notifications, *notification);
-            }
-            break;
-        }
-        case ActionType::SetStatusLineText: {
-            if (auto text = action.get_payload<std::optional<std::string>>()) {
-                next.status_line_text = std::move(*text);
-            }
-            break;
-        }
-        case ActionType::SetVerbose: {
-            if (auto val = action.get_payload<bool>()) {
-                return with_verbose(state, *val);
-            }
-            break;
-        }
-        case ActionType::SetExpandedView: {
-            if (auto view = action.get_payload<ExpandedView>()) {
-                return with_expanded_view(state, *view);
-            }
-            break;
-        }
-        case ActionType::SetFastMode: {
-            if (auto val = action.get_payload<bool>()) {
-                next.fast_mode = *val;
-            }
-            break;
-        }
-        case ActionType::SetFooterSelection: {
-            if (auto selection = action.get_payload<std::optional<FooterItem>>()) {
-                next.footer_selection = *selection;
-            }
-            break;
-        }
-        case ActionType::SetSpinnerTip: {
-            if (auto tip = action.get_payload<std::optional<std::string>>()) {
-                next.spinner_tip = std::move(*tip);
-            }
-            break;
-        }
-        case ActionType::SetBriefOnly: {
-            if (auto val = action.get_payload<bool>()) {
-                next.is_brief_only = *val;
-            }
-            break;
-        }
-        case ActionType::SetShowTeammatePreview: {
-            if (auto val = action.get_payload<bool>()) {
-                next.show_teammate_message_preview = *val;
-            }
-            break;
-        }
-        case ActionType::SetSelectedAgentIndex: {
-            if (auto index = action.get_payload<std::int32_t>()) {
-                next.selected_ip_agent_index = *index;
-            }
-            break;
-        }
-        case ActionType::SetCoordinatorTaskIndex: {
-            if (auto index = action.get_payload<std::int32_t>()) {
-                next.coordinator_task_index = *index;
-            }
-            break;
-        }
-        case ActionType::SetViewSelectionMode: {
-            if (auto mode = action.get_payload<std::string>()) {
-                next.view_selection_mode = std::move(*mode);
-            }
-            break;
-        }
-
-        // ========================================
-        // Session lifecycle
-        // ========================================
-        case ActionType::ResetSession: {
-            next = get_default_app_state();
-            // Keep some configuration from previous state
-            next.current_model = state.current_model;
-            next.available_models = state.available_models;
-            next.tool_permission_context = state.tool_permission_context;
-            next.working_directory = state.working_directory;
-            next.allowed_directories = state.allowed_directories;
-            next.settings = state.settings;
-            break;
-        }
-        case ActionType::UpdateActivity: {
+        break;
+    }
+    case ActionType::ClearMessages: {
+        next.messages.clear();
+        break;
+    }
+    case ActionType::UpdateLastMessage: {
+        if (auto msg = action.get_payload<loom::core::Message>(); msg && !next.messages.empty()) {
+            next.messages.back() = std::move(*msg);
             next.last_activity = std::chrono::system_clock::now();
-            break;
         }
-        case ActionType::SetWorkingDirectory: {
-            if (auto dir = action.get_payload<std::string>()) {
-                next.working_directory = std::move(*dir);
-            }
-            break;
+        break;
+    }
+
+    // ========================================
+    // Loading/streaming
+    // ========================================
+    case ActionType::SetLoading: {
+        if (auto val = action.get_payload<bool>()) {
+            return with_loading(state, *val);
         }
-        case ActionType::AddAllowedDirectory: {
-            if (auto dir = action.get_payload<std::string>()) {
-                // Avoid duplicates
-                const auto& new_dir = *dir;
-                bool found = false;
-                for (const auto& d : next.allowed_directories) {
-                    if (d == new_dir) { found = true; break; }
+        break;
+    }
+    case ActionType::SetStreaming: {
+        if (auto val = action.get_payload<bool>()) {
+            next.is_streaming = *val;
+        }
+        break;
+    }
+
+    // ========================================
+    // Error handling
+    // ========================================
+    case ActionType::SetError: {
+        if (auto msg = action.get_payload<std::string>()) {
+            return with_error(state, std::move(*msg));
+        }
+        break;
+    }
+    case ActionType::ClearError: {
+        return clear_error(state);
+    }
+
+    // ========================================
+    // Token usage
+    // ========================================
+    case ActionType::UpdateUsage: {
+        if (auto usage = action.get_payload<loom::core::TokenUsage>()) {
+            return with_usage(state, *usage);
+        }
+        break;
+    }
+
+    // ========================================
+    // Model management
+    // ========================================
+    case ActionType::SwitchModel: {
+        if (auto model = action.get_payload<ModelConfig>()) {
+            return with_model(state, std::move(*model));
+        }
+        break;
+    }
+    case ActionType::SetMainLoopModel: {
+        if (auto model = action.get_payload<std::optional<std::string>>()) {
+            next.main_loop_model = std::move(*model);
+        }
+        break;
+    }
+
+    // ========================================
+    // Permission actions
+    // ========================================
+    case ActionType::GrantPermission: {
+        if (auto tool = action.get_payload<std::string>()) {
+            next.tool_permission_context.allowed_tools.insert(*tool);
+            next.tool_permission_context.denied_tools.erase(*tool);
+        }
+        break;
+    }
+    case ActionType::RevokePermission: {
+        if (auto tool = action.get_payload<std::string>()) {
+            next.tool_permission_context.denied_tools.insert(*tool);
+            next.tool_permission_context.allowed_tools.erase(*tool);
+        }
+        break;
+    }
+    case ActionType::SetPermissionMode: {
+        if (auto mode = action.get_payload<PermissionMode>()) {
+            return with_permission_mode(state, *mode);
+        }
+        break;
+    }
+
+    // ========================================
+    // UI state
+    // ========================================
+    case ActionType::ToggleCompactMode: {
+        next.compact_mode = !next.compact_mode;
+        break;
+    }
+    case ActionType::ToggleThinking: {
+        next.show_thinking = !next.show_thinking;
+        break;
+    }
+    case ActionType::SetSlashCommand: {
+        if (auto command = action.get_payload<std::optional<std::string>>()) {
+            next.active_slash_command = std::move(*command);
+        }
+        break;
+    }
+    case ActionType::AddNotification: {
+        if (auto notification = action.get_payload<std::string>()) {
+            next.notifications.push_back(std::move(*notification));
+        }
+        break;
+    }
+    case ActionType::DismissNotification: {
+        if (auto notification = action.get_payload<std::string>()) {
+            std::erase(next.notifications, *notification);
+        }
+        break;
+    }
+    case ActionType::SetStatusLineText: {
+        if (auto text = action.get_payload<std::optional<std::string>>()) {
+            next.status_line_text = std::move(*text);
+        }
+        break;
+    }
+    case ActionType::SetVerbose: {
+        if (auto val = action.get_payload<bool>()) {
+            return with_verbose(state, *val);
+        }
+        break;
+    }
+    case ActionType::SetExpandedView: {
+        if (auto view = action.get_payload<ExpandedView>()) {
+            return with_expanded_view(state, *view);
+        }
+        break;
+    }
+    case ActionType::SetFastMode: {
+        if (auto val = action.get_payload<bool>()) {
+            next.fast_mode = *val;
+        }
+        break;
+    }
+    case ActionType::SetFooterSelection: {
+        if (auto selection = action.get_payload<std::optional<FooterItem>>()) {
+            next.footer_selection = *selection;
+        }
+        break;
+    }
+    case ActionType::SetSpinnerTip: {
+        if (auto tip = action.get_payload<std::optional<std::string>>()) {
+            next.spinner_tip = std::move(*tip);
+        }
+        break;
+    }
+    case ActionType::SetBriefOnly: {
+        if (auto val = action.get_payload<bool>()) {
+            next.is_brief_only = *val;
+        }
+        break;
+    }
+    case ActionType::SetShowTeammatePreview: {
+        if (auto val = action.get_payload<bool>()) {
+            next.show_teammate_message_preview = *val;
+        }
+        break;
+    }
+    case ActionType::SetSelectedAgentIndex: {
+        if (auto index = action.get_payload<std::int32_t>()) {
+            next.selected_ip_agent_index = *index;
+        }
+        break;
+    }
+    case ActionType::SetCoordinatorTaskIndex: {
+        if (auto index = action.get_payload<std::int32_t>()) {
+            next.coordinator_task_index = *index;
+        }
+        break;
+    }
+    case ActionType::SetViewSelectionMode: {
+        if (auto mode = action.get_payload<std::string>()) {
+            next.view_selection_mode = std::move(*mode);
+        }
+        break;
+    }
+
+    // ========================================
+    // Session lifecycle
+    // ========================================
+    case ActionType::ResetSession: {
+        next = get_default_app_state();
+        // Keep some configuration from previous state
+        next.current_model = state.current_model;
+        next.available_models = state.available_models;
+        next.tool_permission_context = state.tool_permission_context;
+        next.working_directory = state.working_directory;
+        next.allowed_directories = state.allowed_directories;
+        next.settings = state.settings;
+        break;
+    }
+    case ActionType::UpdateActivity: {
+        next.last_activity = std::chrono::system_clock::now();
+        break;
+    }
+    case ActionType::SetWorkingDirectory: {
+        if (auto dir = action.get_payload<std::string>()) {
+            next.working_directory = std::move(*dir);
+        }
+        break;
+    }
+    case ActionType::AddAllowedDirectory: {
+        if (auto dir = action.get_payload<std::string>()) {
+            // Avoid duplicates
+            const auto& new_dir = *dir;
+            bool found = false;
+            for (const auto& d : next.allowed_directories) {
+                if (d == new_dir) {
+                    found = true;
+                    break;
                 }
-                if (!found) {
-                    next.allowed_directories.push_back(new_dir);
-                }
             }
-            break;
+            if (!found) {
+                next.allowed_directories.push_back(new_dir);
+            }
         }
+        break;
+    }
 
-        // ========================================
-        // Settings
-        // ========================================
-        case ActionType::UpdateSettings: {
-            if (auto settings = action.get_payload<Settings>()) {
-                next.settings = std::move(*settings);
-            }
-            break;
+    // ========================================
+    // Settings
+    // ========================================
+    case ActionType::UpdateSettings: {
+        if (auto settings = action.get_payload<Settings>()) {
+            next.settings = std::move(*settings);
         }
-        case ActionType::SetSettingsModel: {
-            if (auto model = action.get_payload<std::string>()) {
-                next.settings.model = std::move(*model);
-            }
-            break;
+        break;
+    }
+    case ActionType::SetSettingsModel: {
+        if (auto model = action.get_payload<std::string>()) {
+            next.settings.model = std::move(*model);
         }
-        case ActionType::SetSettingsTheme: {
-            if (auto theme = action.get_payload<std::string>()) {
-                next.settings.theme = std::move(*theme);
-            }
-            break;
+        break;
+    }
+    case ActionType::SetSettingsTheme: {
+        if (auto theme = action.get_payload<std::string>()) {
+            next.settings.theme = std::move(*theme);
         }
-        case ActionType::SetSettingsVerbose: {
-            if (auto val = action.get_payload<bool>()) {
-                next.settings.verbose = *val;
-            }
-            break;
+        break;
+    }
+    case ActionType::SetSettingsVerbose: {
+        if (auto val = action.get_payload<bool>()) {
+            next.settings.verbose = *val;
         }
-        case ActionType::SetOutputStyle: {
-            if (auto style = action.get_payload<std::string>()) {
-                next.settings.output_style = std::move(*style);
-            }
-            break;
+        break;
+    }
+    case ActionType::SetOutputStyle: {
+        if (auto style = action.get_payload<std::string>()) {
+            next.settings.output_style = std::move(*style);
         }
-        case ActionType::SetDisableAllHooks: {
-            if (auto val = action.get_payload<bool>()) {
-                next.settings.disable_all_hooks = *val;
-            }
-            break;
+        break;
+    }
+    case ActionType::SetDisableAllHooks: {
+        if (auto val = action.get_payload<bool>()) {
+            next.settings.disable_all_hooks = *val;
         }
-        case ActionType::SetStatusLineEnabled: {
-            if (auto val = action.get_payload<bool>()) {
-                next.settings.status_line.enabled = *val;
-            }
-            break;
+        break;
+    }
+    case ActionType::SetStatusLineEnabled: {
+        if (auto val = action.get_payload<bool>()) {
+            next.settings.status_line.enabled = *val;
         }
-        case ActionType::SetStatusLineCommand: {
-            if (auto cmd = action.get_payload<std::string>()) {
-                next.settings.status_line.command = std::move(*cmd);
-            }
-            break;
+        break;
+    }
+    case ActionType::SetStatusLineCommand: {
+        if (auto cmd = action.get_payload<std::string>()) {
+            next.settings.status_line.command = std::move(*cmd);
         }
-        case ActionType::SetStatusLinePadding: {
-            if (auto val = action.get_payload<int>()) {
-                next.settings.status_line.padding = *val;
-            }
-            break;
+        break;
+    }
+    case ActionType::SetStatusLinePadding: {
+        if (auto val = action.get_payload<int>()) {
+            next.settings.status_line.padding = *val;
         }
-        case ActionType::SetThinkingEnabled: {
-            if (auto val = action.get_payload<bool>()) {
-                next.thinking_enabled = *val;
-            }
-            break;
+        break;
+    }
+    case ActionType::SetThinkingEnabled: {
+        if (auto val = action.get_payload<bool>()) {
+            next.thinking_enabled = *val;
         }
-        case ActionType::SetPromptSuggestionEnabled: {
-            if (auto val = action.get_payload<bool>()) {
-                next.prompt_suggestion_enabled = *val;
-            }
-            break;
+        break;
+    }
+    case ActionType::SetPromptSuggestionEnabled: {
+        if (auto val = action.get_payload<bool>()) {
+            next.prompt_suggestion_enabled = *val;
         }
+        break;
+    }
 
-        // ========================================
-        // Bridge
-        // ========================================
-        case ActionType::SetBridgeEnabled: {
-            if (auto val = action.get_payload<bool>()) next.repl_bridge_enabled = *val;
-            break;
+    // ========================================
+    // Bridge
+    // ========================================
+    case ActionType::SetBridgeEnabled: {
+        if (auto val = action.get_payload<bool>()) next.repl_bridge_enabled = *val;
+        break;
+    }
+    case ActionType::SetBridgeExplicit: {
+        if (auto val = action.get_payload<bool>()) next.repl_bridge_explicit = *val;
+        break;
+    }
+    case ActionType::SetBridgeOutboundOnly: {
+        if (auto val = action.get_payload<bool>()) next.repl_bridge_outbound_only = *val;
+        break;
+    }
+    case ActionType::SetBridgeConnected: {
+        if (auto val = action.get_payload<bool>()) next.repl_bridge_connected = *val;
+        break;
+    }
+    case ActionType::SetBridgeSessionActive: {
+        if (auto val = action.get_payload<bool>()) next.repl_bridge_session_active = *val;
+        break;
+    }
+    case ActionType::SetBridgeReconnecting: {
+        if (auto val = action.get_payload<bool>()) next.repl_bridge_reconnecting = *val;
+        break;
+    }
+    case ActionType::SetBridgeConnectUrl: {
+        if (auto url = action.get_payload<std::optional<std::string>>()) {
+            next.repl_bridge_connect_url = std::move(*url);
         }
-        case ActionType::SetBridgeExplicit: {
-            if (auto val = action.get_payload<bool>()) next.repl_bridge_explicit = *val;
-            break;
+        break;
+    }
+    case ActionType::SetBridgeSessionUrl: {
+        if (auto url = action.get_payload<std::optional<std::string>>()) {
+            next.repl_bridge_session_url = std::move(*url);
         }
-        case ActionType::SetBridgeOutboundOnly: {
-            if (auto val = action.get_payload<bool>()) next.repl_bridge_outbound_only = *val;
-            break;
+        break;
+    }
+    case ActionType::SetBridgeEnvironmentId: {
+        if (auto id = action.get_payload<std::optional<std::string>>()) {
+            next.repl_bridge_environment_id = std::move(*id);
         }
-        case ActionType::SetBridgeConnected: {
-            if (auto val = action.get_payload<bool>()) next.repl_bridge_connected = *val;
-            break;
+        break;
+    }
+    case ActionType::SetBridgeSessionId: {
+        if (auto id = action.get_payload<std::optional<std::string>>()) {
+            next.repl_bridge_session_id = std::move(*id);
         }
-        case ActionType::SetBridgeSessionActive: {
-            if (auto val = action.get_payload<bool>()) next.repl_bridge_session_active = *val;
-            break;
+        break;
+    }
+    case ActionType::SetBridgeError: {
+        if (auto error = action.get_payload<std::optional<std::string>>()) {
+            next.repl_bridge_error = std::move(*error);
         }
-        case ActionType::SetBridgeReconnecting: {
-            if (auto val = action.get_payload<bool>()) next.repl_bridge_reconnecting = *val;
-            break;
+        break;
+    }
+    case ActionType::SetBridgeInitialName: {
+        if (auto name = action.get_payload<std::optional<std::string>>()) {
+            next.repl_bridge_initial_name = std::move(*name);
         }
-        case ActionType::SetBridgeConnectUrl: {
-            if (auto url = action.get_payload<std::optional<std::string>>()) {
-                next.repl_bridge_connect_url = std::move(*url);
-            }
-            break;
-        }
-        case ActionType::SetBridgeSessionUrl: {
-            if (auto url = action.get_payload<std::optional<std::string>>()) {
-                next.repl_bridge_session_url = std::move(*url);
-            }
-            break;
-        }
-        case ActionType::SetBridgeEnvironmentId: {
-            if (auto id = action.get_payload<std::optional<std::string>>()) {
-                next.repl_bridge_environment_id = std::move(*id);
-            }
-            break;
-        }
-        case ActionType::SetBridgeSessionId: {
-            if (auto id = action.get_payload<std::optional<std::string>>()) {
-                next.repl_bridge_session_id = std::move(*id);
-            }
-            break;
-        }
-        case ActionType::SetBridgeError: {
-            if (auto error = action.get_payload<std::optional<std::string>>()) {
-                next.repl_bridge_error = std::move(*error);
-            }
-            break;
-        }
-        case ActionType::SetBridgeInitialName: {
-            if (auto name = action.get_payload<std::optional<std::string>>()) {
-                next.repl_bridge_initial_name = std::move(*name);
-            }
-            break;
-        }
-        case ActionType::SetShowRemoteCallout: {
-            if (auto val = action.get_payload<bool>()) next.show_remote_callout = *val;
-            break;
-        }
+        break;
+    }
+    case ActionType::SetShowRemoteCallout: {
+        if (auto val = action.get_payload<bool>()) next.show_remote_callout = *val;
+        break;
+    }
 
-        // ========================================
-        // Remote
-        // ========================================
-        case ActionType::SetRemoteSessionUrl: {
-            if (auto url = action.get_payload<std::optional<std::string>>()) {
-                next.remote_session_url = std::move(*url);
-            }
-            break;
+    // ========================================
+    // Remote
+    // ========================================
+    case ActionType::SetRemoteSessionUrl: {
+        if (auto url = action.get_payload<std::optional<std::string>>()) {
+            next.remote_session_url = std::move(*url);
         }
-        case ActionType::SetRemoteConnectionStatus: {
-            if (auto status = action.get_payload<RemoteConnectionStatus>()) {
-                next.remote_connection_status = *status;
-            }
-            break;
+        break;
+    }
+    case ActionType::SetRemoteConnectionStatus: {
+        if (auto status = action.get_payload<RemoteConnectionStatus>()) {
+            next.remote_connection_status = *status;
         }
-        case ActionType::SetRemoteBackgroundTaskCount: {
-            if (auto count = action.get_payload<std::uint32_t>()) {
-                next.remote_background_task_count = *count;
-            }
-            break;
+        break;
+    }
+    case ActionType::SetRemoteBackgroundTaskCount: {
+        if (auto count = action.get_payload<std::uint32_t>()) {
+            next.remote_background_task_count = *count;
         }
+        break;
+    }
 
-        // ========================================
-        // Tasks and agents
-        // ========================================
-        case ActionType::AddTask:
-        case ActionType::UpdateTask: {
-            if (auto task = action.get_payload<TaskState>()) {
-                next.tasks[task->id] = std::move(*task);
-            }
-            break;
+    // ========================================
+    // Tasks and agents
+    // ========================================
+    case ActionType::AddTask:
+    case ActionType::UpdateTask: {
+        if (auto task = action.get_payload<TaskState>()) {
+            next.tasks[task->id] = std::move(*task);
         }
-        case ActionType::RemoveTask: {
-            if (auto id = action.get_payload<std::string>()) {
-                next.tasks.erase(*id);
-                if (next.foregrounded_task_id == *id) next.foregrounded_task_id = std::nullopt;
-                if (next.viewing_agent_task_id == *id) next.viewing_agent_task_id = std::nullopt;
-            }
-            break;
+        break;
+    }
+    case ActionType::RemoveTask: {
+        if (auto id = action.get_payload<std::string>()) {
+            next.tasks.erase(*id);
+            if (next.foregrounded_task_id == *id) next.foregrounded_task_id = std::nullopt;
+            if (next.viewing_agent_task_id == *id) next.viewing_agent_task_id = std::nullopt;
         }
-        case ActionType::SetForegroundedTaskId: {
-            if (auto id = action.get_payload<std::optional<std::string>>()) {
-                next.foregrounded_task_id = std::move(*id);
-            }
-            break;
+        break;
+    }
+    case ActionType::SetForegroundedTaskId: {
+        if (auto id = action.get_payload<std::optional<std::string>>()) {
+            next.foregrounded_task_id = std::move(*id);
         }
-        case ActionType::SetViewingAgentTaskId: {
-            if (auto id = action.get_payload<std::optional<std::string>>()) {
-                next.viewing_agent_task_id = std::move(*id);
-            }
-            break;
+        break;
+    }
+    case ActionType::SetViewingAgentTaskId: {
+        if (auto id = action.get_payload<std::optional<std::string>>()) {
+            next.viewing_agent_task_id = std::move(*id);
         }
-        case ActionType::RegisterAgentName: {
-            if (auto entry = action.get_payload<std::pair<std::string, std::string>>()) {
-                next.agent_name_registry[std::move(entry->first)] = std::move(entry->second);
-            }
-            break;
+        break;
+    }
+    case ActionType::RegisterAgentName: {
+        if (auto entry = action.get_payload<std::pair<std::string, std::string>>()) {
+            next.agent_name_registry[std::move(entry->first)] = std::move(entry->second);
         }
-        case ActionType::SetAgent: {
-            if (auto agent = action.get_payload<std::optional<std::string>>()) {
-                next.agent = std::move(*agent);
-            }
-            break;
+        break;
+    }
+    case ActionType::SetAgent: {
+        if (auto agent = action.get_payload<std::optional<std::string>>()) {
+            next.agent = std::move(*agent);
         }
-        case ActionType::SetKairosEnabled: {
-            if (auto val = action.get_payload<bool>()) {
-                next.kairos_enabled = *val;
-            }
-            break;
+        break;
+    }
+    case ActionType::SetKairosEnabled: {
+        if (auto val = action.get_payload<bool>()) {
+            next.kairos_enabled = *val;
         }
+        break;
+    }
 
-        // ========================================
-        // Companion
-        // ========================================
-        case ActionType::SetCompanionReaction: {
-            if (auto reaction = action.get_payload<std::optional<std::string>>()) {
-                next.companion_reaction = std::move(*reaction);
-            }
-            break;
+    // ========================================
+    // Companion
+    // ========================================
+    case ActionType::SetCompanionReaction: {
+        if (auto reaction = action.get_payload<std::optional<std::string>>()) {
+            next.companion_reaction = std::move(*reaction);
         }
-        case ActionType::SetCompanionPetTime: {
-            if (auto time = action.get_payload<std::optional<std::chrono::system_clock::time_point>>()) {
-                next.companion_pet_at = *time;
-            }
-            break;
+        break;
+    }
+    case ActionType::SetCompanionPetTime: {
+        if (auto time =
+                action.get_payload<std::optional<std::chrono::system_clock::time_point>>()) {
+            next.companion_pet_at = *time;
         }
+        break;
+    }
 
-        // ========================================
-        // MCP and plugins
-        // ========================================
-        case ActionType::UpdateMcpState: {
-            if (auto mcp = action.get_payload<MCPState>()) {
-                next.mcp = std::move(*mcp);
-            }
-            break;
+    // ========================================
+    // MCP and plugins
+    // ========================================
+    case ActionType::UpdateMcpState: {
+        if (auto mcp = action.get_payload<MCPState>()) {
+            next.mcp = std::move(*mcp);
         }
-        case ActionType::IncrementMcpReconnectKey: {
-            ++next.mcp.plugin_reconnect_key;
-            break;
+        break;
+    }
+    case ActionType::IncrementMcpReconnectKey: {
+        ++next.mcp.plugin_reconnect_key;
+        break;
+    }
+    case ActionType::UpdatePluginsState: {
+        if (auto plugins = action.get_payload<AppState::PluginsState>()) {
+            next.plugins = std::move(*plugins);
         }
-        case ActionType::UpdatePluginsState: {
-            if (auto plugins = action.get_payload<AppState::PluginsState>()) {
-                next.plugins = std::move(*plugins);
-            }
-            break;
+        break;
+    }
+    case ActionType::SetPluginsNeedRefresh: {
+        if (auto val = action.get_payload<bool>()) {
+            next.plugins.needs_refresh = *val;
         }
-        case ActionType::SetPluginsNeedRefresh: {
-            if (auto val = action.get_payload<bool>()) {
-                next.plugins.needs_refresh = *val;
-            }
-            break;
-        }
+        break;
+    }
 
-        // ========================================
-        // Speculation and skill improvement
-        // ========================================
-        case ActionType::SetSpeculationState: {
-            if (auto speculation = action.get_payload<SpeculationState>()) {
-                next.speculation = std::move(*speculation);
-            }
-            break;
+    // ========================================
+    // Speculation and skill improvement
+    // ========================================
+    case ActionType::SetSpeculationState: {
+        if (auto speculation = action.get_payload<SpeculationState>()) {
+            next.speculation = std::move(*speculation);
         }
-        case ActionType::SetSpeculationTimeSaved: {
-            if (auto time_saved = action.get_payload<std::int64_t>()) {
-                next.speculation_session_time_saved_ms = *time_saved;
-            }
-            break;
+        break;
+    }
+    case ActionType::SetSpeculationTimeSaved: {
+        if (auto time_saved = action.get_payload<std::int64_t>()) {
+            next.speculation_session_time_saved_ms = *time_saved;
         }
-        case ActionType::SetSkillSuggestion: {
-            if (auto suggestion = action.get_payload<std::optional<AppState::SkillImprovementState::Suggestion>>()) {
-                next.skill_improvement.suggestion = std::move(*suggestion);
-            }
-            break;
+        break;
+    }
+    case ActionType::SetSkillSuggestion: {
+        if (auto suggestion =
+                action.get_payload<std::optional<AppState::SkillImprovementState::Suggestion>>()) {
+            next.skill_improvement.suggestion = std::move(*suggestion);
         }
+        break;
+    }
 
-        // ========================================
-        // Initial message, overlays, advisor, Ultraplan
-        // ========================================
-        case ActionType::SetInitialMessage: {
-            if (auto message = action.get_payload<AppState::InitialMessage>()) {
-                next.initial_message = std::move(*message);
-            }
-            break;
+    // ========================================
+    // Initial message, overlays, advisor, Ultraplan
+    // ========================================
+    case ActionType::SetInitialMessage: {
+        if (auto message = action.get_payload<AppState::InitialMessage>()) {
+            next.initial_message = std::move(*message);
         }
-        case ActionType::ClearInitialMessage: {
-            next.initial_message = std::nullopt;
-            break;
+        break;
+    }
+    case ActionType::ClearInitialMessage: {
+        next.initial_message = std::nullopt;
+        break;
+    }
+    case ActionType::SetEffortValue: {
+        if (auto value = action.get_payload<std::optional<std::string>>()) {
+            next.effort_value = std::move(*value);
         }
-        case ActionType::SetEffortValue: {
-            if (auto value = action.get_payload<std::optional<std::string>>()) {
-                next.effort_value = std::move(*value);
-            }
-            break;
+        break;
+    }
+    case ActionType::AddActiveOverlay: {
+        if (auto overlay = action.get_payload<std::string>()) {
+            next.active_overlays.insert(std::move(*overlay));
         }
-        case ActionType::AddActiveOverlay: {
-            if (auto overlay = action.get_payload<std::string>()) {
-                next.active_overlays.insert(std::move(*overlay));
-            }
-            break;
+        break;
+    }
+    case ActionType::RemoveActiveOverlay: {
+        if (auto overlay = action.get_payload<std::string>()) {
+            next.active_overlays.erase(*overlay);
         }
-        case ActionType::RemoveActiveOverlay: {
-            if (auto overlay = action.get_payload<std::string>()) {
-                next.active_overlays.erase(*overlay);
-            }
-            break;
+        break;
+    }
+    case ActionType::ClearActiveOverlays: {
+        next.active_overlays.clear();
+        break;
+    }
+    case ActionType::SetAdvisorModel: {
+        if (auto model = action.get_payload<std::optional<std::string>>()) {
+            next.advisor_model = std::move(*model);
         }
-        case ActionType::ClearActiveOverlays: {
-            next.active_overlays.clear();
-            break;
+        break;
+    }
+    case ActionType::SetUltraplanLaunching: {
+        if (auto val = action.get_payload<bool>()) next.ultraplan_launching = *val;
+        break;
+    }
+    case ActionType::SetUltraplanSessionUrl: {
+        if (auto url = action.get_payload<std::optional<std::string>>()) {
+            next.ultraplan_session_url = std::move(*url);
         }
-        case ActionType::SetAdvisorModel: {
-            if (auto model = action.get_payload<std::optional<std::string>>()) {
-                next.advisor_model = std::move(*model);
-            }
-            break;
+        break;
+    }
+    case ActionType::SetUltraplanPendingChoice: {
+        if (auto choice = action.get_payload<std::optional<AppState::UltraplanPendingChoice>>()) {
+            next.ultraplan_pending_choice = std::move(*choice);
         }
-        case ActionType::SetUltraplanLaunching: {
-            if (auto val = action.get_payload<bool>()) next.ultraplan_launching = *val;
-            break;
+        break;
+    }
+    case ActionType::SetUltraplanLaunchPending: {
+        if (auto pending = action.get_payload<std::optional<AppState::UltraplanLaunchPending>>()) {
+            next.ultraplan_launch_pending = std::move(*pending);
         }
-        case ActionType::SetUltraplanSessionUrl: {
-            if (auto url = action.get_payload<std::optional<std::string>>()) {
-                next.ultraplan_session_url = std::move(*url);
-            }
-            break;
-        }
-        case ActionType::SetUltraplanPendingChoice: {
-            if (auto choice = action.get_payload<std::optional<AppState::UltraplanPendingChoice>>()) {
-                next.ultraplan_pending_choice = std::move(*choice);
-            }
-            break;
-        }
-        case ActionType::SetUltraplanLaunchPending: {
-            if (auto pending = action.get_payload<std::optional<AppState::UltraplanLaunchPending>>()) {
-                next.ultraplan_launch_pending = std::move(*pending);
-            }
-            break;
-        }
-        case ActionType::SetUltraplanMode: {
-            if (auto val = action.get_payload<bool>()) next.is_ultraplan_mode = *val;
-            break;
-        }
+        break;
+    }
+    case ActionType::SetUltraplanMode: {
+        if (auto val = action.get_payload<bool>()) next.is_ultraplan_mode = *val;
+        break;
+    }
 
-        // ========================================
-        // Worker sandbox, prompt suggestion, inbox
-        // ========================================
-        case ActionType::AddSandboxPermissionRequest: {
-            if (auto request = action.get_payload<AppState::WorkerSandboxPermissions::PermissionRequest>()) {
-                next.worker_sandbox_permissions.queue.push_back(std::move(*request));
-            }
-            break;
+    // ========================================
+    // Worker sandbox, prompt suggestion, inbox
+    // ========================================
+    case ActionType::AddSandboxPermissionRequest: {
+        if (auto request =
+                action.get_payload<AppState::WorkerSandboxPermissions::PermissionRequest>()) {
+            next.worker_sandbox_permissions.queue.push_back(std::move(*request));
         }
-        case ActionType::RemoveSandboxPermissionRequest: {
-            if (auto id = action.get_payload<std::string>()) {
-                std::erase_if(next.worker_sandbox_permissions.queue, [&](const auto& request) {
-                    return request.request_id == *id;
-                });
-            }
-            break;
+        break;
+    }
+    case ActionType::RemoveSandboxPermissionRequest: {
+        if (auto id = action.get_payload<std::string>()) {
+            std::erase_if(next.worker_sandbox_permissions.queue,
+                          [&](const auto& request) { return request.request_id == *id; });
         }
-        case ActionType::SetSelectedSandboxPermissionIndex: {
-            if (auto index = action.get_payload<std::size_t>()) {
-                next.worker_sandbox_permissions.selected_index = *index;
-            }
-            break;
+        break;
+    }
+    case ActionType::SetSelectedSandboxPermissionIndex: {
+        if (auto index = action.get_payload<std::size_t>()) {
+            next.worker_sandbox_permissions.selected_index = *index;
         }
-        case ActionType::SetPendingWorkerRequest: {
-            if (auto request = action.get_payload<std::optional<AppState::PendingWorkerRequest>>()) {
-                next.pending_worker_request = std::move(*request);
-            }
-            break;
+        break;
+    }
+    case ActionType::SetPendingWorkerRequest: {
+        if (auto request = action.get_payload<std::optional<AppState::PendingWorkerRequest>>()) {
+            next.pending_worker_request = std::move(*request);
         }
-        case ActionType::SetPendingSandboxRequest: {
-            if (auto request = action.get_payload<std::optional<AppState::PendingSandboxRequest>>()) {
-                next.pending_sandbox_request = std::move(*request);
-            }
-            break;
+        break;
+    }
+    case ActionType::SetPendingSandboxRequest: {
+        if (auto request = action.get_payload<std::optional<AppState::PendingSandboxRequest>>()) {
+            next.pending_sandbox_request = std::move(*request);
         }
-        case ActionType::SetPromptSuggestion: {
-            if (auto suggestion = action.get_payload<AppState::PromptSuggestionState>()) {
-                next.prompt_suggestion = std::move(*suggestion);
-            }
-            break;
+        break;
+    }
+    case ActionType::SetPromptSuggestion: {
+        if (auto suggestion = action.get_payload<AppState::PromptSuggestionState>()) {
+            next.prompt_suggestion = std::move(*suggestion);
         }
-        case ActionType::ClearPromptSuggestion: {
-            next.prompt_suggestion = AppState::PromptSuggestionState{};
-            break;
+        break;
+    }
+    case ActionType::ClearPromptSuggestion: {
+        next.prompt_suggestion = AppState::PromptSuggestionState{};
+        break;
+    }
+    case ActionType::AddInboxMessage: {
+        if (auto message = action.get_payload<AppState::InboxState::InboxMessage>()) {
+            next.inbox.messages.push_back(std::move(*message));
         }
-        case ActionType::AddInboxMessage: {
-            if (auto message = action.get_payload<AppState::InboxState::InboxMessage>()) {
-                next.inbox.messages.push_back(std::move(*message));
-            }
-            break;
+        break;
+    }
+    case ActionType::RemoveInboxMessage: {
+        if (auto id = action.get_payload<std::string>()) {
+            std::erase_if(next.inbox.messages,
+                          [&](const auto& message) { return message.id == *id; });
         }
-        case ActionType::RemoveInboxMessage: {
-            if (auto id = action.get_payload<std::string>()) {
-                std::erase_if(next.inbox.messages, [&](const auto& message) {
-                    return message.id == *id;
-                });
-            }
-            break;
-        }
-        case ActionType::ClearInboxMessages: {
-            next.inbox.messages.clear();
-            break;
-        }
+        break;
+    }
+    case ActionType::ClearInboxMessages: {
+        next.inbox.messages.clear();
+        break;
+    }
 
-        // ========================================
-        // Batch actions
-        // ========================================
-        case ActionType::Batch: {
-            if (auto actions = action.get_payload<std::vector<Action>>()) {
-                AppState batch_state = state;
-                for (const auto& batch_action : *actions) {
-                    batch_state = app_reducer(batch_state, batch_action);
-                }
-                return batch_state;
+    // ========================================
+    // Batch actions
+    // ========================================
+    case ActionType::Batch: {
+        if (auto actions = action.get_payload<std::vector<Action>>()) {
+            AppState batch_state = state;
+            for (const auto& batch_action : *actions) {
+                batch_state = app_reducer(batch_state, batch_action);
             }
-            break;
+            return batch_state;
         }
+        break;
+    }
 
-        // Tool and persistence actions require behavior outside pure AppState,
-        // so the reducer deliberately leaves them as no-ops until those effects
-        // have explicit payload and service semantics.
-        case ActionType::EnableTool:
-        case ActionType::DisableTool:
-        case ActionType::SaveState:
-        case ActionType::LoadState:
-        case ActionType::ClearSavedState:
-            break;
+    // Tool and persistence actions require behavior outside pure AppState,
+    // so the reducer deliberately leaves them as no-ops until those effects
+    // have explicit payload and service semantics.
+    case ActionType::EnableTool:
+    case ActionType::DisableTool:
+    case ActionType::SaveState:
+    case ActionType::LoadState:
+    case ActionType::ClearSavedState:
+        break;
 
-        default:
-            break;
+    default:
+        break;
     }
 
     return next;
@@ -925,13 +930,11 @@ using Middleware = std::function<DispatchFn(DispatchFn next)>;
 /// the StatePersistence manager. This middleware therefore exists only for
 /// API parity and deliberately performs no work; if per-action persistence
 /// hooks are ever needed, dispatch them here.
-[[nodiscard]] inline Middleware persistence_middleware(
-    std::shared_ptr<persistence::StatePersistence> /*persistence*/
+[[nodiscard]] inline Middleware
+persistence_middleware(std::shared_ptr<persistence::StatePersistence> /*persistence*/
 ) {
     return [](DispatchFn next) -> DispatchFn {
-        return [next = std::move(next)](const Action& action) {
-            next(action);
-        };
+        return [next = std::move(next)](const Action& action) { next(action); };
     };
 }
 
@@ -948,8 +951,7 @@ using Thunk = std::function<void(DispatchFn dispatch, GetStateFn get_state)>;
 // ============================================================
 
 /// Enhanced Redux-like state store with middleware pipeline and subscriptions
-template <typename State, Reducer<State> ReducerFn>
-class Store {
+template <typename State, Reducer<State> ReducerFn> class Store {
     State state_;
     ReducerFn reducer_;
     mutable std::shared_mutex mutex_;
@@ -984,15 +986,13 @@ class Store {
 
 public:
     /// Construct store with initial state and reducer
-    explicit Store(
-        State initial,
-        ReducerFn reducer,
-        std::shared_ptr<on_change::StateChangeRegistry> registry = nullptr,
-        std::shared_ptr<persistence::StatePersistence> persistence = nullptr
-    ) : state_(std::move(initial)),
-        reducer_(std::move(reducer)),
-        change_registry_(std::move(registry)),
-        persistence_(std::move(persistence)) {
+    explicit Store(State initial, ReducerFn reducer,
+                   std::shared_ptr<on_change::StateChangeRegistry> registry = nullptr,
+                   std::shared_ptr<persistence::StatePersistence> persistence = nullptr)
+        : state_(std::move(initial))
+        , reducer_(std::move(reducer))
+        , change_registry_(std::move(registry))
+        , persistence_(std::move(persistence)) {
         rebuild_dispatch_chain();
     }
 
@@ -1003,9 +1003,7 @@ public:
     }
 
     /// Dispatch a synchronous action through the middleware chain
-    void dispatch(const Action& action) {
-        dispatch_chain_(action);
-    }
+    void dispatch(const Action& action) { dispatch_chain_(action); }
 
     /// Dispatch a thunk (async action)
     void dispatch_thunk(Thunk thunk) {
@@ -1127,13 +1125,12 @@ public:
     /// Manually save the current state
     [[nodiscard]] loom::core::VoidResult save_state() {
         if (!persistence_) {
-            return {}; // No persistence configured
+            return {};  // No persistence configured
         }
         auto saved = persistence_->save_state(get_state());
         if (!saved) {
-            return std::unexpected(loom::core::Error::make(
-                loom::core::ErrorCode::InternalError,
-                saved.error().format()));
+            return std::unexpected(loom::core::Error::make(loom::core::ErrorCode::InternalError,
+                                                           saved.error().format()));
         }
         return {};
     }
@@ -1141,13 +1138,12 @@ public:
     /// Load state from persistence
     [[nodiscard]] std::expected<bool, loom::core::Error> load_state() {
         if (!persistence_) {
-            return false; // No persistence configured
+            return false;  // No persistence configured
         }
         auto loaded = persistence_->load_state();
         if (!loaded) {
-            return std::unexpected(loom::core::Error::make(
-                loom::core::ErrorCode::InternalError,
-                loaded.error().format()));
+            return std::unexpected(loom::core::Error::make(loom::core::ErrorCode::InternalError,
+                                                           loaded.error().format()));
         }
         // Update state with loaded value
         State prev;
@@ -1245,25 +1241,19 @@ private:
 using AppStore = Store<AppState, decltype(&app_reducer)>;
 
 /// Factory function to create the application store with full setup
-[[nodiscard]] inline std::unique_ptr<AppStore> create_app_store(
-    AppState initial = get_default_app_state()
-) {
+[[nodiscard]] inline std::unique_ptr<AppStore>
+create_app_store(AppState initial = get_default_app_state()) {
     // Create change registry and set up default handlers
     auto registry = std::make_shared<on_change::StateChangeRegistry>();
     on_change::setup_default_handlers(*registry);
 
     // Create persistence manager
-    auto persistence = std::make_shared<persistence::StatePersistence>(
-        persistence::get_default_state_file_path()
-    );
+    auto persistence =
+        std::make_shared<persistence::StatePersistence>(persistence::get_default_state_file_path());
 
     // Create store with all integrations
-    auto store = std::make_unique<AppStore>(
-        std::move(initial),
-        &app_reducer,
-        registry,
-        persistence
-    );
+    auto store =
+        std::make_unique<AppStore>(std::move(initial), &app_reducer, registry, persistence);
 
     // Add logging middleware (optional, can be conditional)
     store->add_middleware(logging_middleware());
@@ -1271,4 +1261,4 @@ using AppStore = Store<AppState, decltype(&app_reducer)>;
     return store;
 }
 
-} // namespace loom::state
+}  // namespace loom::state

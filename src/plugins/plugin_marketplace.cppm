@@ -7,8 +7,8 @@
 module;
 
 #include <cstdio>
-#include <ctime>
 #include <cstdlib>
+#include <ctime>
 
 export module loom.plugins.plugin_marketplace;
 
@@ -25,7 +25,7 @@ export namespace loom::utils::plugin_marketplace {
 // ─────────────────────────────────────────────────────────────────────────────
 
 struct GitHubMarketplaceSource {
-    std::string repo;   // "owner/repo"
+    std::string repo;  // "owner/repo"
     std::optional<std::string> ref;
 };
 
@@ -35,7 +35,7 @@ struct GitMarketplaceSource {
 };
 
 struct UrlMarketplaceSource {
-    std::string url;    // JSON URL
+    std::string url;  // JSON URL
 };
 
 struct DirectoryMarketplaceSource {
@@ -46,13 +46,9 @@ struct FileMarketplaceSource {
     std::string path;
 };
 
-using MarketplaceSource = std::variant<
-    GitHubMarketplaceSource,
-    GitMarketplaceSource,
-    UrlMarketplaceSource,
-    DirectoryMarketplaceSource,
-    FileMarketplaceSource
->;
+using MarketplaceSource =
+    std::variant<GitHubMarketplaceSource, GitMarketplaceSource, UrlMarketplaceSource,
+                 DirectoryMarketplaceSource, FileMarketplaceSource>;
 
 struct PluginMarketplaceEntry {
     std::string name;
@@ -97,13 +93,12 @@ using KnownMarketplacesFile = std::map<std::string, KnownMarketplace>;
 [[nodiscard]] KnownMarketplacesFile load_known_marketplaces_config_safe();
 
 /// Save known marketplaces configuration
-[[nodiscard]] std::expected<void, std::string> save_known_marketplaces_config(const KnownMarketplacesFile& config);
+[[nodiscard]] std::expected<void, std::string>
+save_known_marketplaces_config(const KnownMarketplacesFile& config);
 
 /// Add a marketplace source to known_marketplaces.json
-[[nodiscard]] std::expected<void, std::string> add_marketplace_source(
-    std::string_view name,
-    const MarketplaceSource& source
-);
+[[nodiscard]] std::expected<void, std::string>
+add_marketplace_source(std::string_view name, const MarketplaceSource& source);
 
 /// Remove a marketplace from known_marketplaces.json and clean up
 [[nodiscard]] std::expected<void, std::string> remove_marketplace(std::string_view name);
@@ -117,16 +112,19 @@ struct PluginLookupResult {
 [[nodiscard]] std::optional<PluginLookupResult> get_plugin_by_id(std::string_view plugin_id);
 
 /// Look up a plugin by ID using only cached marketplace data (no network)
-[[nodiscard]] std::optional<PluginLookupResult> get_plugin_by_id_cache_only(std::string_view plugin_id);
+[[nodiscard]] std::optional<PluginLookupResult>
+get_plugin_by_id_cache_only(std::string_view plugin_id);
 
 /// Get a cached marketplace by name (no network fetch)
 [[nodiscard]] std::optional<PluginMarketplace> get_marketplace_cache_only(std::string_view name);
 
 /// Fetch and cache a marketplace from its source
-[[nodiscard]] std::expected<PluginMarketplace, std::string> fetch_marketplace(std::string_view name);
+[[nodiscard]] std::expected<PluginMarketplace, std::string>
+fetch_marketplace(std::string_view name);
 
 /// Get all available plugins across all marketplaces
-[[nodiscard]] std::vector<std::pair<std::string, PluginMarketplaceEntry>> get_all_available_plugins();
+[[nodiscard]] std::vector<std::pair<std::string, PluginMarketplaceEntry>>
+get_all_available_plugins();
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Marketplace Helpers (from marketplaceHelpers)
@@ -199,9 +197,8 @@ struct ParsedMarketplaceInput {
 
 /// Parse user input into a marketplace name and source
 /// Accepts: GitHub "owner/repo", URLs, local paths, "name=source" format
-[[nodiscard]] std::expected<ParsedMarketplaceInput, std::string> parse_marketplace_input(
-    std::string_view input
-);
+[[nodiscard]] std::expected<ParsedMarketplaceInput, std::string>
+parse_marketplace_input(std::string_view input);
 
 /// Validate a marketplace name
 [[nodiscard]] std::expected<void, std::string> validate_marketplace_name(std::string_view name);
@@ -253,8 +250,12 @@ inline std::filesystem::path get_marketplaces_cache_dir() {
 inline std::string read_file_str(const std::filesystem::path& p, std::error_code& ec) {
     std::string out;
     std::ifstream in(p, std::ios::binary);
-    if (!in) { ec = std::make_error_code(std::errc::no_such_file_or_directory); return {}; }
-    std::ostringstream ss; ss << in.rdbuf();
+    if (!in) {
+        ec = std::make_error_code(std::errc::no_such_file_or_directory);
+        return {};
+    }
+    std::ostringstream ss;
+    ss << in.rdbuf();
     return ss.str();
 }
 
@@ -278,8 +279,8 @@ inline std::string source_tag(const MarketplaceSource& s) {
 }
 
 inline bool source_is_local(const MarketplaceSource& s) {
-    return std::holds_alternative<DirectoryMarketplaceSource>(s)
-        || std::holds_alternative<FileMarketplaceSource>(s);
+    return std::holds_alternative<DirectoryMarketplaceSource>(s) ||
+           std::holds_alternative<FileMarketplaceSource>(s);
 }
 
 inline std::optional<std::string> local_source_path(const MarketplaceSource& s) {
@@ -290,7 +291,10 @@ inline std::optional<std::string> local_source_path(const MarketplaceSource& s) 
 
 // Build the git URL + cache path for github/git sources (cacheMarketplaceFromGit
 // parity — SSH detection / sparse paths deferred; HTTPS-only for github).
-struct GitResolve { std::string url; std::optional<std::string> ref; };
+struct GitResolve {
+    std::string url;
+    std::optional<std::string> ref;
+};
 
 inline std::optional<GitResolve> resolve_git_url(const MarketplaceSource& s) {
     if (auto gh = std::get_if<GitHubMarketplaceSource>(&s)) {
@@ -300,7 +304,9 @@ inline std::optional<GitResolve> resolve_git_url(const MarketplaceSource& s) {
         return r;
     }
     if (auto g = std::get_if<GitMarketplaceSource>(&s)) {
-        GitResolve r; r.url = g->url; r.ref = g->ref;
+        GitResolve r;
+        r.url = g->url;
+        r.ref = g->ref;
         return r;
     }
     return std::nullopt;
@@ -310,24 +316,32 @@ inline std::optional<GitResolve> resolve_git_url(const MarketplaceSource& s) {
 inline std::string cache_name_for_source(const MarketplaceSource& s) {
     auto tag = source_tag(s);
     std::string key;
-    if (auto gh = std::get_if<GitHubMarketplaceSource>(&s)) key = gh->repo;
-    else if (auto g = std::get_if<GitMarketplaceSource>(&s)) key = g->url;
-    else if (auto u = std::get_if<UrlMarketplaceSource>(&s)) key = u->url;
-    else if (auto d = std::get_if<DirectoryMarketplaceSource>(&s)) key = d->path;
-    else if (auto f = std::get_if<FileMarketplaceSource>(&s)) key = f->path;
+    if (auto gh = std::get_if<GitHubMarketplaceSource>(&s))
+        key = gh->repo;
+    else if (auto g = std::get_if<GitMarketplaceSource>(&s))
+        key = g->url;
+    else if (auto u = std::get_if<UrlMarketplaceSource>(&s))
+        key = u->url;
+    else if (auto d = std::get_if<DirectoryMarketplaceSource>(&s))
+        key = d->path;
+    else if (auto f = std::get_if<FileMarketplaceSource>(&s))
+        key = f->path;
     // Replace path/url separators so the cache name is a single segment.
-    std::replace_if(key.begin(), key.end(),
-        [](char c) { return c == '/' || c == '\\' || c == ':' || c == '?'
-                          || c == '&' || c == '=' || c == ' '; }, '_');
+    std::replace_if(
+        key.begin(), key.end(),
+        [](char c) {
+            return c == '/' || c == '\\' || c == ':' || c == '?' || c == '&' || c == '=' ||
+                   c == ' ';
+        },
+        '_');
     return tag + "_" + key;
 }
 
 // shallow git clone (--depth 1) into cachePath; on success returns {}, else
 // a descriptive error. Mirrors gitClone()/cacheMarketplaceFromGit() in TS.
-inline std::expected<void, std::string>
-git_clone_shallow(const std::string& url,
-                  const std::filesystem::path& cache_path,
-                  const std::optional<std::string>& ref) {
+inline std::expected<void, std::string> git_clone_shallow(const std::string& url,
+                                                          const std::filesystem::path& cache_path,
+                                                          const std::optional<std::string>& ref) {
     std::ostringstream cmd;
     cmd << "git -c core.sshCommand='ssh -o BatchMode=yes -o StrictHostKeyChecking=yes'"
         << " clone --depth 1 --recurse-submodules --shallow-submodules";
@@ -335,38 +349,33 @@ git_clone_shallow(const std::string& url,
     cmd << " -- " << url << " " << cache_path.string();
     int status = loom::utils::exec_sync_status(cmd.str());
     if (status != 0) {
-        return std::unexpected(
-            "Failed to clone marketplace repository (git exit code "
-            + std::to_string(status) + "): " + url);
+        return std::unexpected("Failed to clone marketplace repository (git exit code " +
+                               std::to_string(status) + "): " + url);
     }
     return {};
 }
 
 // git pull inside cachePath (refresh path). Mirrors gitPull() happy path.
-inline std::expected<void, std::string>
-git_pull(const std::filesystem::path& cache_path) {
+inline std::expected<void, std::string> git_pull(const std::filesystem::path& cache_path) {
     std::ostringstream cmd;
     cmd << "git -C " << cache_path.string()
         << " -c core.sshCommand='ssh -o BatchMode=yes -o StrictHostKeyChecking=yes'"
         << " pull --ff-only";
     int status = loom::utils::exec_sync_status(cmd.str());
     if (status != 0) {
-        return std::unexpected(
-            "git pull failed (exit code " + std::to_string(status) + ")");
+        return std::unexpected("git pull failed (exit code " + std::to_string(status) + ")");
     }
     return {};
 }
 
 // Download a URL marketplace.json into cachePath using curl (HTTPS only).
 // cacheMarketplaceFromUrl() parity — axios is replaced with the system curl.
-inline std::expected<std::string, std::string>
-download_url(const std::string& url) {
+inline std::expected<std::string, std::string> download_url(const std::string& url) {
     std::ostringstream cmd;
-    cmd << "curl -fsSL --max-time 30 -H 'User-Agent: Loom-Code-Plugin-Manager' "
-        << url;
+    cmd << "curl -fsSL --max-time 30 -H 'User-Agent: Loom-Code-Plugin-Manager' " << url;
     auto out = loom::utils::exec_sync(cmd.str());
-    if (!out) return std::unexpected("Failed to download marketplace from " + url
-                                     + ": " + out.error());
+    if (!out)
+        return std::unexpected("Failed to download marketplace from " + url + ": " + out.error());
     return *out;
 }
 
@@ -382,13 +391,12 @@ read_marketplace_json(const std::filesystem::path& p) {
     }
     auto parsed = loom::utils::json::parse(contents);
     if (!parsed) {
-        return std::unexpected("Invalid marketplace JSON (" + p.string()
-                               + "): " + parsed.error().message());
+        return std::unexpected("Invalid marketplace JSON (" + p.string() +
+                               "): " + parsed.error().message());
     }
     auto root = parsed->root();
     if (!root.valid() || !root.is_obj()) {
-        return std::unexpected("Marketplace manifest must be a JSON object: "
-                               + p.string());
+        return std::unexpected("Marketplace manifest must be a JSON object: " + p.string());
     }
     return std::move(*parsed);
 }
@@ -396,9 +404,8 @@ read_marketplace_json(const std::filesystem::path& p) {
 // For git-sourced directories the manifest lives at
 // <install>/.claude-plugin/marketplace.json; for url/file/dir sources the
 // installLocation IS the manifest. Mirrors readCachedMarketplace().
-inline std::filesystem::path
-resolve_manifest_path(const std::filesystem::path& install_location,
-                      const MarketplaceSource& source) {
+inline std::filesystem::path resolve_manifest_path(const std::filesystem::path& install_location,
+                                                   const MarketplaceSource& source) {
     if (resolve_git_url(source)) {
         return install_location / ".claude-plugin" / "marketplace.json";
     }
@@ -442,7 +449,7 @@ to_marketplace(const loom::utils::json::JsonDoc& doc) {
             if (auto n = entry.get("name"); n.valid() && n.is_str()) {
                 pe.name = std::string(n.as_str());
             } else {
-                return; // skip entries without a name
+                return;  // skip entries without a name
             }
             if (auto d = entry.get("description"); d.valid() && d.is_str())
                 pe.description = std::string(d.as_str());
@@ -457,7 +464,7 @@ to_marketplace(const loom::utils::json::JsonDoc& doc) {
     return m;
 }
 
-} // namespace detail
+}  // namespace detail
 
 inline std::filesystem::path get_known_marketplaces_config_path() {
     return detail::get_known_marketplaces_config_path();
@@ -465,8 +472,7 @@ inline std::filesystem::path get_known_marketplaces_config_path() {
 
 // loadKnownMarketplacesConfig() parity: read + JSON-parse known_marketplaces.json.
 // Returns {} when the file is absent (fresh install); surfaces parse errors.
-inline std::expected<KnownMarketplacesFile, std::string>
-load_known_marketplaces_config() {
+inline std::expected<KnownMarketplacesFile, std::string> load_known_marketplaces_config() {
     const auto cfg = detail::get_known_marketplaces_config_path();
     std::error_code ec;
     if (!std::filesystem::exists(cfg, ec)) {
@@ -474,26 +480,23 @@ load_known_marketplaces_config() {
     }
     auto contents = detail::read_file_str(cfg, ec);
     if (ec) {
-        return std::unexpected("Failed to read marketplace configuration: "
-                               + cfg.string());
+        return std::unexpected("Failed to read marketplace configuration: " + cfg.string());
     }
     auto parsed = loom::utils::json::parse(contents);
     if (!parsed) {
-        return std::unexpected("Marketplace configuration file is corrupted: "
-                               + parsed.error().message());
+        return std::unexpected("Marketplace configuration file is corrupted: " +
+                               parsed.error().message());
     }
     auto root = parsed->root();
     KnownMarketplacesFile out;
     if (root.valid() && root.is_obj()) {
-        root.iter_obj([&](loom::utils::json::JsonVal key,
-                          loom::utils::json::JsonVal val) {
+        root.iter_obj([&](loom::utils::json::JsonVal key, loom::utils::json::JsonVal val) {
             if (!val.is_obj()) return;
             KnownMarketplace km;
             auto src = val.get("source");
             if (src.valid() && src.is_obj()) {
                 auto tag = src.get("source");
-                std::string t = (tag.valid() && tag.is_str())
-                    ? std::string(tag.as_str()) : "";
+                std::string t = (tag.valid() && tag.is_str()) ? std::string(tag.as_str()) : "";
                 if (t == "github") {
                     GitHubMarketplaceSource g;
                     if (auto r = src.get("repo"); r.valid() && r.is_str())
@@ -582,8 +585,7 @@ save_known_marketplaces_config(const KnownMarketplacesFile& config) {
     std::string body = doc.to_string();
     std::ofstream out(cfg, std::ios::binary);
     if (!out) {
-        return std::unexpected("Failed to write marketplace configuration: "
-                               + cfg.string());
+        return std::unexpected("Failed to write marketplace configuration: " + cfg.string());
     }
     out << body;
     return {};
@@ -593,15 +595,14 @@ save_known_marketplaces_config(const KnownMarketplacesFile& config) {
 // PluginMarketplace. Mirrors loadAndCacheMarketplace() / cacheMarketplaceFromGit()
 // / cacheMarketplaceFromUrl() happy paths. Sparse-checkout, SSH probing, and
 // custom headers are deferred; github uses HTTPS only.
-inline std::expected<PluginMarketplace, std::string>
-fetch_marketplace(std::string_view name) {
+inline std::expected<PluginMarketplace, std::string> fetch_marketplace(std::string_view name) {
     auto config = load_known_marketplaces_config();
     if (!config) return std::unexpected(config.error());
 
     auto it = config->find(std::string(name));
     if (it == config->end()) {
-        return std::unexpected("Marketplace '" + std::string(name)
-            + "' not found in configuration");
+        return std::unexpected("Marketplace '" + std::string(name) +
+                               "' not found in configuration");
     }
     const auto& source = it->second.source;
 
@@ -613,8 +614,8 @@ fetch_marketplace(std::string_view name) {
         std::filesystem::path cache_path = detail::get_marketplaces_cache_dir() / std::string(name);
         // Try incremental pull first; on failure, rm + fresh clone.
         std::error_code exists_ec;
-        if (std::filesystem::exists(cache_path, exists_ec)
-            && std::filesystem::is_directory(cache_path, exists_ec)) {
+        if (std::filesystem::exists(cache_path, exists_ec) &&
+            std::filesystem::is_directory(cache_path, exists_ec)) {
             if (detail::git_pull(cache_path)) {
                 // fall through to parse
             } else {
@@ -637,8 +638,8 @@ fetch_marketplace(std::string_view name) {
         auto body = detail::download_url(u->url);
         if (!body) return std::unexpected(body.error());
         auto parsed = loom::utils::json::parse(*body);
-        if (!parsed) return std::unexpected("Invalid marketplace JSON: "
-                                            + parsed.error().message());
+        if (!parsed)
+            return std::unexpected("Invalid marketplace JSON: " + parsed.error().message());
         std::filesystem::path cache_path =
             detail::get_marketplaces_cache_dir() / (std::string(name) + ".json");
         std::ofstream f(cache_path, std::ios::binary);
@@ -666,14 +667,15 @@ fetch_marketplace(std::string_view name) {
 // materialize its name, then persist it into known_marketplaces.json. Enterprise
 // policy enforcement and settings-layer writes are deferred (treated as
 // allowed) — see H1 note above.
-inline std::expected<void, std::string>
-add_marketplace_source(std::string_view name, const MarketplaceSource& source) {
+inline std::expected<void, std::string> add_marketplace_source(std::string_view name,
+                                                               const MarketplaceSource& source) {
     auto config = load_known_marketplaces_config();
     if (!config) return std::unexpected(config.error());
 
     // Source-idempotency: skip clone if an identical source is already known.
     for (const auto& [existing_name, existing] : *config) {
-        if (existing_name == name && detail::source_tag(existing.source) == detail::source_tag(source)) {
+        if (existing_name == name &&
+            detail::source_tag(existing.source) == detail::source_tag(source)) {
             return {};
         }
     }
@@ -717,8 +719,7 @@ add_marketplace_source(std::string_view name, const MarketplaceSource& source) {
 
 // removeMarketplaceSource() parity: drop the config entry and rm the cache dir
 // + JSON cache. Seed-managed detection and settings cleanup are deferred.
-inline std::expected<void, std::string>
-remove_marketplace(std::string_view name) {
+inline std::expected<void, std::string> remove_marketplace(std::string_view name) {
     auto config = load_known_marketplaces_config();
     if (!config) return std::unexpected(config.error());
 
@@ -732,17 +733,15 @@ remove_marketplace(std::string_view name) {
 
     // Clean up both directory and JSON cache forms.
     std::error_code ec;
-    std::filesystem::remove_all(
-        detail::get_marketplaces_cache_dir() / std::string(name), ec);
-    std::filesystem::remove(
-        detail::get_marketplaces_cache_dir() / (std::string(name) + ".json"), ec);
+    std::filesystem::remove_all(detail::get_marketplaces_cache_dir() / std::string(name), ec);
+    std::filesystem::remove(detail::get_marketplaces_cache_dir() / (std::string(name) + ".json"),
+                            ec);
     return {};
 }
 
 // getMarketplaceCacheOnly() parity: read the cached marketplace for `name`
 // without touching the network. Returns std::nullopt if missing/corrupted.
-inline std::optional<PluginMarketplace>
-get_marketplace_cache_only(std::string_view name) {
+inline std::optional<PluginMarketplace> get_marketplace_cache_only(std::string_view name) {
     auto config = load_known_marketplaces_config_safe();
     auto it = config.find(std::string(name));
     if (it == config.end() || !it->second.cache_path) return std::nullopt;
@@ -761,4 +760,4 @@ get_marketplace_cache_only(std::string_view name) {
     return m ? std::make_optional(*m) : std::nullopt;
 }
 
-} // namespace loom::utils::plugin_marketplace
+}  // namespace loom::utils::plugin_marketplace

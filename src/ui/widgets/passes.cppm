@@ -4,13 +4,13 @@
 /// Mirrors the "Passes" sidebar panel and the /passes command output.
 module;
 
-#include <cmath>
-#include <cstdint>
-
-#include <ftxui/dom/elements.hpp>
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/event.hpp>
+#include <ftxui/dom/elements.hpp>
+
+#include <cmath>
+#include <cstdint>
 
 export module loom.ui.widgets.passes;
 
@@ -61,25 +61,23 @@ struct PassesViewState {
 }
 
 /// Clip pass history to the most recent `max` entries.
-[[nodiscard]] inline std::vector<std::string> clip_history(
-    const std::vector<std::string>& history, std::size_t max = 10) {
+[[nodiscard]] inline std::vector<std::string> clip_history(const std::vector<std::string>& history,
+                                                           std::size_t max = 10) {
     if (history.size() <= max) return history;
-    return std::vector<std::string>(history.end() - static_cast<long long>(max),
-                                    history.end());
+    return std::vector<std::string>(history.end() - static_cast<long long>(max), history.end());
 }
 
 /// Clamp total passes into the safe [1, ...] range for division.
 [[nodiscard]] inline double progress_pct(const PassesViewState& s) {
     if (s.total_passes <= 0) return 0.0;
-    double ratio = static_cast<double>(std::max(s.current_pass, 0)) /
-                   static_cast<double>(s.total_passes);
+    double ratio =
+        static_cast<double>(std::max(s.current_pass, 0)) / static_cast<double>(s.total_passes);
     return std::clamp(ratio, 0.0, 1.0);
 }
 
 /// Build the animated thinking prefix — braille spinner if enabled,
 /// otherwise "⋯ " unicode midline ellipsis.
-[[nodiscard]] inline Element thinking_prefix(bool is_thinking,
-                                             const Theme& theme,
+[[nodiscard]] inline Element thinking_prefix(bool is_thinking, const Theme& theme,
                                              std::uint64_t frame = 0) {
     if (!is_thinking) return text("  ");
     return hbox({
@@ -93,8 +91,9 @@ struct PassesViewState {
 class PassesPanelBase : public ftxui::ComponentBase {
 public:
     PassesPanelBase(PassesViewState state, std::optional<Theme> theme = std::nullopt)
-        : state_(std::move(state)), theme_(std::move(theme)),
-          start_(std::chrono::steady_clock::now()) {}
+        : state_(std::move(state))
+        , theme_(std::move(theme))
+        , start_(std::chrono::steady_clock::now()) {}
 
     Element Render() override {
         using namespace ftxui;
@@ -103,24 +102,22 @@ public:
 
         // ── Header badge ─────────────────────────────────────────────
         auto badge = hbox({
-            text(" "),
-            text("QUERY PROGRESS") | bold | underlined | inverted,
-            text(" "),
-        }) | bgcolor(theme.palette->primary)
-           | color(theme.palette->inverse_text)
-           | size(WIDTH, EQUAL, 30);
+                         text(" "),
+                         text("QUERY PROGRESS") | bold | underlined | inverted,
+                         text(" "),
+                     }) |
+                     bgcolor(theme.palette->primary) | color(theme.palette->inverse_text) |
+                     size(WIDTH, EQUAL, 30);
 
-        auto header = hbox({ badge | xflex });
+        auto header = hbox({badge | xflex});
 
         // ── Progress gauge ───────────────────────────────────────────
         double pct = progress_pct(s);
         auto gauge_bar = gauge(pct) | color(theme.color_for(Role::Primary));
-        auto pct_text = text(std::format(" {:3.0f}%", pct * 100.0))
-                        | color(theme.palette->muted);
-        auto pass_of = text(std::format("  Pass {} of {}",
-                                        std::max(s.current_pass, 0),
-                                        std::max(s.total_passes, 0)))
-                       | color(theme.palette->subtle) | bold;
+        auto pct_text = text(std::format(" {:3.0f}%", pct * 100.0)) | color(theme.palette->muted);
+        auto pass_of = text(std::format("  Pass {} of {}", std::max(s.current_pass, 0),
+                                        std::max(s.total_passes, 0))) |
+                       color(theme.palette->subtle) | bold;
         auto progress_row = hbox({
             gauge_bar | xflex,
             pct_text,
@@ -133,16 +130,15 @@ public:
         std::string name = s.pass_name.empty() ? "(unnamed pass)" : s.pass_name;
         auto title = text(name) | bold | color(theme.palette->primary);
         std::string desc_text = s.pass_description.empty()
-            ? std::string("No description available.")
-            : s.pass_description;
-        auto desc = paragraphAlignLeft(desc_text)
-                    | color(theme.palette->muted) | dim;
+                                    ? std::string("No description available.")
+                                    : s.pass_description;
+        auto desc = paragraphAlignLeft(desc_text) | color(theme.palette->muted) | dim;
 
         auto current_box = vbox({
             text(""),
             vbox({
-                hbox({ thinking, title }),
-                hbox({ text("   "), desc | xflex }),
+                hbox({thinking, title}),
+                hbox({text("   "), desc | xflex}),
             }) | borderStyled(theme.color_for(Role::Info)),
             text(""),
         });
@@ -151,25 +147,24 @@ public:
         auto recent = clip_history(s.pass_history, 10);
         Elements history_rows;
         history_rows.reserve(recent.size());
-        int idx = static_cast<int>(s.pass_history.size() > recent.size()
-                                       ? s.pass_history.size() - recent.size()
-                                       : 0);
+        int idx = static_cast<int>(
+            s.pass_history.size() > recent.size() ? s.pass_history.size() - recent.size() : 0);
         for (const auto& entry : recent) {
             ++idx;
-            history_rows.push_back(hbox({
-                text(" ") | size(WIDTH, EQUAL, 1),
-                text("•") | color(theme.palette->subtle),
-                text(" "),
-                text(std::format("[{:>3}]", idx)) | color(theme.palette->muted) | dim,
-                text(" "),
-                text(entry) | color(theme.palette->subtle) | dim,
-            }) | xflex);
+            history_rows.push_back(
+                hbox({
+                    text(" ") | size(WIDTH, EQUAL, 1),
+                    text("•") | color(theme.palette->subtle),
+                    text(" "),
+                    text(std::format("[{:>3}]", idx)) | color(theme.palette->muted) | dim,
+                    text(" "),
+                    text(entry) | color(theme.palette->subtle) | dim,
+                }) |
+                xflex);
         }
         if (history_rows.empty()) {
             history_rows.push_back(
-                hbox({ text("  (no pass history yet)") | dim
-                                              | color(theme.palette->muted) })
-            );
+                hbox({text("  (no pass history yet)") | dim | color(theme.palette->muted)}));
         }
 
         auto history_title = hbox({
@@ -202,16 +197,17 @@ public:
 
         // ── Assemble ─────────────────────────────────────────────────
         return vbox({
-            header,
-            separatorEmpty(),
-            progress_row,
-            separatorEmpty(),
-            current_box,
-            separatorEmpty(),
-            history_box,
-            separator(),
-            footer,
-        }) | borderRounded | color(theme.palette->chrome);
+                   header,
+                   separatorEmpty(),
+                   progress_row,
+                   separatorEmpty(),
+                   current_box,
+                   separatorEmpty(),
+                   history_box,
+                   separator(),
+                   footer,
+               }) |
+               borderRounded | color(theme.palette->chrome);
     }
 
     /// Replace the stored state snapshot in-place.
@@ -221,8 +217,7 @@ private:
     /// Compute a spinner frame counter from wall-clock time.
     [[nodiscard]] std::uint64_t frame_counter() const {
         auto now = std::chrono::steady_clock::now();
-        auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(
-                      now - start_).count();
+        auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(now - start_).count();
         return static_cast<std::uint64_t>(ms) / 80u;
     }
 
@@ -234,17 +229,15 @@ private:
 // ─── Public Constructors ─────────────────────────────────────────────────────
 
 /// Build the passes panel from a runtime snapshot using the current theme.
-[[nodiscard]] inline auto BuildPassesPanel(const PassesViewState& s)
-    -> ftxui::Component {
+[[nodiscard]] inline auto BuildPassesPanel(const PassesViewState& s) -> ftxui::Component {
     return ftxui::Make<PassesPanelBase>(s);
 }
 
 /// Theme-explicit overload — useful in tests and design previews that do
 /// not rely on the thread-local theme provider.
-[[nodiscard]] inline auto BuildPassesPanel(const PassesViewState& s,
-                                           const Theme& theme)
+[[nodiscard]] inline auto BuildPassesPanel(const PassesViewState& s, const Theme& theme)
     -> ftxui::Component {
     return ftxui::Make<PassesPanelBase>(s, theme);
 }
 
-} // namespace loom::ui::components::passes
+}  // namespace loom::ui::components::passes

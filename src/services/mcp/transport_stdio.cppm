@@ -21,17 +21,18 @@
 /// without bringing in any other C++ modules.
 module;
 
-#include <cerrno>
-#include <csignal>
-#include <cstdint>
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
+
+#include <cerrno>
+#include <csignal>
 #include <cstddef>
+#include <cstdint>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 
 export module loom.services.mcp.stdio;
 
@@ -72,22 +73,22 @@ struct StdioServerSpec {
 ///     as the raw JSON string in `result_json`.
 struct JsonRpcMessage {
     /// Request id.  -1 means "no id" (i.e. a notification or malformed msg).
-    std::int64_t                    id = -1;
+    std::int64_t id = -1;
     /// Request method name.  Empty for plain responses/errors.
-    std::string                     method;
+    std::string method;
     /// `params` key serialized back to JSON.  Empty if the message had no
     /// params key or if it was null.
-    std::string                     params_json;
+    std::string params_json;
     /// Scalar result (filled for int64/double/bool/string results).
     std::variant<std::monostate, std::string, std::int64_t, double, bool> result;
     /// Raw JSON of `result` when it's a complex object/array.  Falls back to
     /// the same value as the scalar when scalar is set.
-    std::string                     result_json;
+    std::string result_json;
     /// Populated when the incoming message has an `error` object.
-    std::optional<std::string>      error_message;
-    std::optional<int>              error_code;
+    std::optional<std::string> error_message;
+    std::optional<int> error_code;
     /// True if parsing succeeded and the message looks like valid JSON-RPC.
-    bool                            is_valid = false;
+    bool is_valid = false;
 };
 
 /// Stdio-based bidirectional transport.
@@ -115,8 +116,12 @@ public:
 
     /// Move semantics.  Not generally useful but makes the class Regular-ish.
     StdioTransport(StdioTransport&& o) noexcept { MoveFrom(std::move(o)); }
+
     StdioTransport& operator=(StdioTransport&& o) noexcept {
-        if (this != &o) { Stop(); MoveFrom(std::move(o)); }
+        if (this != &o) {
+            Stop();
+            MoveFrom(std::move(o));
+        }
         return *this;
     }
 
@@ -158,7 +163,9 @@ public:
     void Stop();
 
     /// Returns true after Start() succeeded and before Stop() has begun.
-    [[nodiscard]] bool IsRunning() const noexcept { return running_.load(std::memory_order_acquire); }
+    [[nodiscard]] bool IsRunning() const noexcept {
+        return running_.load(std::memory_order_acquire);
+    }
 
     /// Access the pid.  Only meaningful between Start() success and Stop().
     [[nodiscard]] pid_t ChildPid() const noexcept { return child_pid_; }
@@ -167,9 +174,12 @@ private:
     // ---- Helpers ----------------------------------------------------------
 
     void MoveFrom(StdioTransport&& o) noexcept {
-        write_fd_ = o.write_fd_;     o.write_fd_ = -1;
-        read_fd_  = o.read_fd_;      o.read_fd_  = -1;
-        child_pid_ = o.child_pid_;   o.child_pid_ = -1;
+        write_fd_ = o.write_fd_;
+        o.write_fd_ = -1;
+        read_fd_ = o.read_fd_;
+        o.read_fd_ = -1;
+        child_pid_ = o.child_pid_;
+        o.child_pid_ = -1;
         running_.store(o.running_.load());
         o.running_.store(false);
         reader_thread_ = std::move(o.reader_thread_);
@@ -183,13 +193,13 @@ private:
 
     // ---- State ------------------------------------------------------------
 
-    int  write_fd_  = -1;   // parent → child stdin
-    int  read_fd_   = -1;   // child stdout → parent
+    int write_fd_ = -1;  // parent → child stdin
+    int read_fd_ = -1;   // child stdout → parent
     pid_t child_pid_ = -1;
     std::atomic<bool> running_{false};
-    std::thread     reader_thread_;
-    std::thread     watchdog_thread_;
-    std::mutex      write_mutex_;
+    std::thread reader_thread_;
+    std::thread watchdog_thread_;
+    std::mutex write_mutex_;
     /// Last activity timestamp (monotonic ms) updated by ReaderLoop.
     /// Written by reader thread; read by watchdog thread.
     std::atomic<std::uint64_t> last_rx_ms_{0};
@@ -209,18 +219,21 @@ inline bool StdioTransport::Start(const StdioServerSpec& spec) {
 
     auto fail = [&]() {
         for (int* fdp : {&child_stdin[0], &child_stdin[1], &child_stdout[0], &child_stdout[1]})
-            if (*fdp >= 0) { ::close(*fdp); *fdp = -1; }
+            if (*fdp >= 0) {
+                ::close(*fdp);
+                *fdp = -1;
+            }
         return false;
     };
 
-    if (::pipe(child_stdin)  != 0) return fail();
+    if (::pipe(child_stdin) != 0) return fail();
     if (::pipe(child_stdout) != 0) return fail();
 
 #if defined(__linux__) && defined(O_CLOEXEC)
     // Best-effort cloexec — not strictly required because we close unused
     // ends in the child anyway before exec, but keeps things tidy.
-    ::fcntl(child_stdin[0],  F_SETFD, FD_CLOEXEC);
-    ::fcntl(child_stdin[1],  F_SETFD, FD_CLOEXEC);
+    ::fcntl(child_stdin[0], F_SETFD, FD_CLOEXEC);
+    ::fcntl(child_stdin[1], F_SETFD, FD_CLOEXEC);
     ::fcntl(child_stdout[0], F_SETFD, FD_CLOEXEC);
     ::fcntl(child_stdout[1], F_SETFD, FD_CLOEXEC);
 #endif
@@ -231,7 +244,7 @@ inline bool StdioTransport::Start(const StdioServerSpec& spec) {
     if (pid == 0) {
         // ─── Child process ─────────────────────────────────────────────────
         // Wire stdin to the read end of child_stdin.
-        if (::dup2(child_stdin[0], STDIN_FILENO)  < 0) ::_exit(126);
+        if (::dup2(child_stdin[0], STDIN_FILENO) < 0) ::_exit(126);
         // Wire stdout to the write end of child_stdout.
         if (::dup2(child_stdout[1], STDOUT_FILENO) < 0) ::_exit(126);
 
@@ -261,15 +274,15 @@ inline bool StdioTransport::Start(const StdioServerSpec& spec) {
         std::vector<char*> argv;
         argv.reserve(spec.args.size() + 2);
         argv.push_back(const_cast<char*>(spec.command.c_str()));
-        for (const auto& a : spec.args) argv.push_back(const_cast<char*>(a.c_str()));
+        for (const auto& a : spec.args)
+            argv.push_back(const_cast<char*>(a.c_str()));
         argv.push_back(nullptr);
 
         ::execvp(spec.command.c_str(), argv.data());
 
         // Exec failed — write a one-line diagnostic to stderr before dying.
         char buf[256];
-        int n = std::snprintf(buf, sizeof(buf),
-                              "StdioTransport: execvp(%s) failed: %s\n",
+        int n = std::snprintf(buf, sizeof(buf), "StdioTransport: execvp(%s) failed: %s\n",
                               spec.command.c_str(), std::strerror(errno));
         ::write(STDERR_FILENO, buf, static_cast<std::size_t>(n));
         ::_exit(127);
@@ -277,18 +290,18 @@ inline bool StdioTransport::Start(const StdioServerSpec& spec) {
 
     // ─── Parent process ──────────────────────────────────────────────────
     ::close(child_stdin[0]);   // parent will not read from the child's stdin
-    ::close(child_stdout[1]); // parent will not write to the child's stdout
+    ::close(child_stdout[1]);  // parent will not write to the child's stdout
 
-    write_fd_  = child_stdin[1];
-    read_fd_   = child_stdout[0];
+    write_fd_ = child_stdin[1];
+    read_fd_ = child_stdout[0];
     child_pid_ = pid;
     running_.store(true, std::memory_order_release);
 
     // Reset activity timestamp.
-    last_rx_ms_.store(
-        std::chrono::duration_cast<std::chrono::milliseconds>(
-            std::chrono::steady_clock::now().time_since_epoch()
-        ).count(), std::memory_order_release);
+    last_rx_ms_.store(std::chrono::duration_cast<std::chrono::milliseconds>(
+                          std::chrono::steady_clock::now().time_since_epoch())
+                          .count(),
+                      std::memory_order_release);
 
     // Kick off the reader thread.
     reader_thread_ = std::thread([this, spec_copy = spec] { ReaderLoop(spec_copy); });
@@ -385,14 +398,14 @@ inline void StdioTransport::ReaderLoop(const StdioServerSpec& /*spec*/) {
     std::string line_buf;
     line_buf.reserve(1024);
     std::array<char, 8192> scratch{};
-    int   exit_code = 0;
+    int exit_code = 0;
     std::string error_reason;
 
     const auto update_ts = [this] {
-        last_rx_ms_.store(
-            std::chrono::duration_cast<std::chrono::milliseconds>(
-                std::chrono::steady_clock::now().time_since_epoch()
-            ).count(), std::memory_order_release);
+        last_rx_ms_.store(std::chrono::duration_cast<std::chrono::milliseconds>(
+                              std::chrono::steady_clock::now().time_since_epoch())
+                              .count(),
+                          std::memory_order_release);
     };
 
     update_ts();
@@ -400,8 +413,8 @@ inline void StdioTransport::ReaderLoop(const StdioServerSpec& /*spec*/) {
     auto dispatch_line = [&](std::string_view line) {
         // Strip trailing '\r' if present (some servers emit CRLF).
         if (!line.empty() && line.back() == '\r') line.remove_suffix(1);
-        if (line.empty()) return;   // blank lines are silent
-        if (line.front() == ':') return;   // SSE-style comment lines
+        if (line.empty()) return;         // blank lines are silent
+        if (line.front() == ':') return;  // SSE-style comment lines
 
         JsonRpcMessage msg;
         // Parse via the canonical loom.serdes.json wrapper (RAII; no manual free).
@@ -507,8 +520,7 @@ inline void StdioTransport::ReaderLoop(const StdioServerSpec& /*spec*/) {
                 }
             }
             if (start < static_cast<std::size_t>(n)) {
-                line_buf.append(scratch.data() + start,
-                                static_cast<std::size_t>(n) - start);
+                line_buf.append(scratch.data() + start, static_cast<std::size_t>(n) - start);
             }
             continue;
         }
@@ -539,9 +551,12 @@ inline void StdioTransport::ReaderLoop(const StdioServerSpec& /*spec*/) {
         // If we already reaped in Stop(), waitpid returns ECHILD — harmless.
         const pid_t w = ::waitpid(child_pid_, &status, 0);
         if (w > 0) {
-            if (WIFEXITED(status))      exit_code = WEXITSTATUS(status);
-            else if (WIFSIGNALED(status)) exit_code = -WTERMSIG(status);
-            else                        exit_code = -1;
+            if (WIFEXITED(status))
+                exit_code = WEXITSTATUS(status);
+            else if (WIFSIGNALED(status))
+                exit_code = -WTERMSIG(status);
+            else
+                exit_code = -1;
             child_pid_ = -1;
         } else if (errno == ECHILD) {
             // Already reaped by Stop() — that's fine.
@@ -568,8 +583,8 @@ inline void StdioTransport::WatchdogLoop(int timeout_ms) {
         std::this_thread::sleep_for(milliseconds(slice));
         if (!running_.load()) break;
 
-        const auto now = duration_cast<milliseconds>(
-            steady_clock::now().time_since_epoch()).count();
+        const auto now =
+            duration_cast<milliseconds>(steady_clock::now().time_since_epoch()).count();
         const auto last = last_rx_ms_.load(std::memory_order_acquire);
         if (now - last > static_cast<std::uint64_t>(timeout_ms)) {
             if (child_pid_ > 0 && running_.load()) {
@@ -582,8 +597,7 @@ inline void StdioTransport::WatchdogLoop(int timeout_ms) {
                 running_.store(false, std::memory_order_release);
                 if (on_exit) {
                     const int code = -ETIMEDOUT;
-                    on_exit(code, "watchdog: no output for " +
-                                  std::to_string(timeout_ms) + "ms");
+                    on_exit(code, "watchdog: no output for " + std::to_string(timeout_ms) + "ms");
                 }
             }
             return;
@@ -596,8 +610,7 @@ inline void StdioTransport::WatchdogLoop(int timeout_ms) {
 // ---------------------------------------------------------------------------
 
 /// Build an initialize-request JSON string suitable for SendJsonRpc().
-inline std::string BuildInitializeRequest(std::int64_t id,
-                                          std::string_view client_name,
+inline std::string BuildInitializeRequest(std::int64_t id, std::string_view client_name,
                                           std::string_view client_version) {
     json::JsonMutDoc doc;
     json::JsonMutVal root = doc.object();
@@ -646,11 +659,8 @@ inline std::string BuildToolsListRequest(std::int64_t id) {
 inline StdioServerSpec MockEchoSpec() {
     StdioServerSpec s;
     s.command = "/bin/sh";
-    s.args = {
-        "-c",
-        "while IFS= read -r line; do printf '%s\\n' \"$line\"; done"
-    };
+    s.args = {"-c", "while IFS= read -r line; do printf '%s\\n' \"$line\"; done"};
     return s;
 }
 
-} // namespace loom::services::mcp::stdio
+}  // namespace loom::services::mcp::stdio

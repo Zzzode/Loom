@@ -33,8 +33,7 @@ void PasteCoordinator::Stop() {
     workers_.clear();
 }
 
-void PasteCoordinator::SpawnPasteWorker(int id,
-                                        std::function<void()> post_render,
+void PasteCoordinator::SpawnPasteWorker(int id, std::function<void()> post_render,
                                         bool no_real_paste_worker) {
     if (stopped_) return;
     std::erase_if(workers_, [](const Worker& worker) {
@@ -85,20 +84,17 @@ void PasteCoordinator::SpawnPasteWorker(int id,
         // Build the loom::core::ImageBlock on the worker thread (base64 encode can
         // be non-trivial for large screenshots).
         const std::size_t raw_bytes = png->size();
-        auto t = std::chrono::system_clock::to_time_t(
-            std::chrono::system_clock::now());
+        auto t = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
         std::tm tm_buf{};
         localtime_r(&t, &tm_buf);
         char fname[48];
-        std::strftime(fname, sizeof(fname),
-                      "clipboard %Y%m%d-%H%M%S.png", &tm_buf);
+        std::strftime(fname, sizeof(fname), "clipboard %Y%m%d-%H%M%S.png", &tm_buf);
         loom::core::ImageBlock ib;
         ib.media_type = "image/png";
-        ib.data = loom::utils::crypto::base64_encode(
-            png->data(), png->size());
+        ib.data = loom::utils::crypto::base64_encode(png->data(), png->size());
         ib.size_bytes = raw_bytes;
-        ib.file_name  = std::string(fname);
-        ib.source     = loom::core::ImageBlockSource::Clipboard;
+        ib.file_name = std::string(fname);
+        ib.source = loom::core::ImageBlockSource::Clipboard;
 
         {
             std::lock_guard lk(paste_mutex_);

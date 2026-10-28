@@ -5,17 +5,18 @@
 module;
 
 #include <unistd.h>
+
 #include <cerrno>
-#include <cstdlib>
 #include <cstdint>
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
 
 #if !defined(_WIN32)
-#  include <sys/socket.h>
-#  include <netdb.h>
-#  include <fcntl.h>
-#  include <poll.h>
+#include <fcntl.h>
+#include <netdb.h>
+#include <poll.h>
+#include <sys/socket.h>
 #endif
 
 export module loom.commands.doctor;
@@ -33,19 +34,23 @@ using namespace loom::core;
 
 /// Status of a single diagnostic check
 enum class CheckStatus : std::uint8_t {
-    Pass,       // Check passed successfully
-    Warn,       // Check passed with warnings
-    Fail,       // Check failed
-    Skip,       // Check was skipped
+    Pass,  // Check passed successfully
+    Warn,  // Check passed with warnings
+    Fail,  // Check failed
+    Skip,  // Check was skipped
 };
 
 /// Convert check status to display icon
 [[nodiscard]] constexpr std::string_view status_icon(CheckStatus status) noexcept {
     switch (status) {
-        case CheckStatus::Pass: return "[OK]";
-        case CheckStatus::Warn: return "[!!]";
-        case CheckStatus::Fail: return "[XX]";
-        case CheckStatus::Skip: return "[--]";
+    case CheckStatus::Pass:
+        return "[OK]";
+    case CheckStatus::Warn:
+        return "[!!]";
+    case CheckStatus::Fail:
+        return "[XX]";
+    case CheckStatus::Skip:
+        return "[--]";
     }
     return "[??]";
 }
@@ -67,41 +72,41 @@ public:
         return CommandDefinition{
             .name = "doctor",
             .description = "Run system diagnostics and check environment health",
-            .args = {
-                CommandArg{.name = "--verbose", .description = "Show detailed diagnostic info",
-                           .type = ArgType::None, .required = false},
-                CommandArg{.name = "--fix", .description = "Attempt to fix common issues",
-                           .type = ArgType::None, .required = false},
-                CommandArg{.name = "--interactive", .description = "Open doctor screen (default when no args)",
-                           .type = ArgType::None, .required = false},
-            },
+            .args =
+                {
+                    CommandArg{.name = "--verbose",
+                               .description = "Show detailed diagnostic info",
+                               .type = ArgType::None,
+                               .required = false},
+                    CommandArg{.name = "--fix",
+                               .description = "Attempt to fix common issues",
+                               .type = ArgType::None,
+                               .required = false},
+                    CommandArg{.name = "--interactive",
+                               .description = "Open doctor screen (default when no args)",
+                               .type = ArgType::None,
+                               .required = false},
+                },
             .category = "session",
             .aliases = {"diag"},
             .hidden = false,
         };
     }
 
-    [[nodiscard]] VoidResult validate(const CommandContext& /*ctx*/) {
-        return {};
-    }
+    [[nodiscard]] VoidResult validate(const CommandContext& /*ctx*/) { return {}; }
 
     [[nodiscard]] Result<CommandResult> execute(const CommandContext& ctx) {
-        bool verbose = std::ranges::any_of(ctx.args, [](const auto& a) {
-            return a == "--verbose" || a == "-v";
-        });
-        bool fix = std::ranges::any_of(ctx.args, [](const auto& a) {
-            return a == "--fix";
-        });
-        bool interactive = ctx.args.empty() ||
-            std::ranges::any_of(ctx.args, [](const auto& a) {
-                return a == "--interactive" || a == "-i";
-            });
+        bool verbose = std::ranges::any_of(
+            ctx.args, [](const auto& a) { return a == "--verbose" || a == "-v"; });
+        bool fix = std::ranges::any_of(ctx.args, [](const auto& a) { return a == "--fix"; });
+        bool interactive = ctx.args.empty() || std::ranges::any_of(ctx.args, [](const auto& a) {
+                               return a == "--interactive" || a == "-i";
+                           });
 
         // When called with no args or --interactive, trigger the interactive
         // doctor screen/dialog instead of text output.
         if (interactive && !fix && !verbose) {
-            return CommandResult{
-                true, "Opening doctor...", "UI:doctor", CommandStatus::Succeeded};
+            return CommandResult{true, "Opening doctor...", "UI:doctor", CommandStatus::Succeeded};
         }
 
         // Load config so check_api_key() and friends see file-sourced values.
@@ -171,8 +176,8 @@ private:
         if (const char* base = std::getenv("LOOM_BASE_URL"); base && *base) {
             std::string_view url(base);
             auto scheme_end = url.find("://");
-            auto remainder = (scheme_end != std::string_view::npos)
-                ? url.substr(scheme_end + 3) : url;
+            auto remainder =
+                (scheme_end != std::string_view::npos) ? url.substr(scheme_end + 3) : url;
             auto slash = remainder.find('/');
             host = std::string(remainder.substr(0, slash));
         }
@@ -193,8 +198,7 @@ private:
                 .name = "API Connectivity",
                 .status = CheckStatus::Pass,
                 .message = std::format("Reached {}:{} in {} ms", host, kPort, *probe),
-                .detail = std::format(
-                    "https://{} (TCP connect OK, RTT {} ms)", host, *probe),
+                .detail = std::format("https://{} (TCP connect OK, RTT {} ms)", host, *probe),
             };
         }
         // Fail-closed: surface the real error instead of a hardcoded Pass.
@@ -214,10 +218,12 @@ private:
     [[nodiscard]] static std::expected<int, std::string>
     tcp_connect_rtt_ms(std::string_view host, int port, int timeout_ms) {
 #if defined(_WIN32)
-        (void)host; (void)port; (void)timeout_ms;
+        (void)host;
+        (void)port;
+        (void)timeout_ms;
         return std::unexpected(std::string{"TCP probe not supported on this platform"});
 #else
-        struct addrinfo hints {};
+        struct addrinfo hints{};
         hints.ai_family = AF_UNSPEC;
         hints.ai_socktype = SOCK_STREAM;
         std::string host_str(host);
@@ -232,7 +238,10 @@ private:
         struct addrinfo* chosen = nullptr;
         for (struct addrinfo* p = res; p != nullptr; p = p->ai_next) {
             fd = socket(p->ai_family, p->ai_socktype, p->ai_protocol);
-            if (fd >= 0) { chosen = p; break; }
+            if (fd >= 0) {
+                chosen = p;
+                break;
+            }
         }
         if (fd < 0 || chosen == nullptr) {
             freeaddrinfo(res);
@@ -248,7 +257,7 @@ private:
         if (rc == 0) {
             connected = true;
         } else if (errno == EINPROGRESS) {
-            struct pollfd pfd {};
+            struct pollfd pfd{};
             pfd.fd = fd;
             pfd.events = POLLOUT;
             int pr = ::poll(&pfd, 1, timeout_ms);
@@ -269,7 +278,8 @@ private:
             err = std::string{"connect failed: "} + std::strerror(errno);
         }
         auto rtt = static_cast<int>(std::chrono::duration_cast<std::chrono::milliseconds>(
-                                        std::chrono::steady_clock::now() - t0).count());
+                                        std::chrono::steady_clock::now() - t0)
+                                        .count());
         ::close(fd);
         freeaddrinfo(res);
         if (!connected) return std::unexpected(err);
@@ -296,7 +306,7 @@ private:
                 .name = "Git",
                 .status = CheckStatus::Warn,
                 .message = std::format("Git available ({}), but not in a repository",
-                    version.substr(0, version.find('\n'))),
+                                       version.substr(0, version.find('\n'))),
                 .detail = "Some features require a git repository",
             };
         }
@@ -357,8 +367,10 @@ private:
         auto cwd = std::filesystem::current_path();
         auto perms = std::filesystem::status(cwd).permissions();
 
-        bool can_read = (perms & std::filesystem::perms::owner_read) != std::filesystem::perms::none;
-        bool can_write = (perms & std::filesystem::perms::owner_write) != std::filesystem::perms::none;
+        bool can_read =
+            (perms & std::filesystem::perms::owner_read) != std::filesystem::perms::none;
+        bool can_write =
+            (perms & std::filesystem::perms::owner_write) != std::filesystem::perms::none;
 
         if (!can_read) {
             return DiagnosticCheck{
@@ -441,16 +453,15 @@ private:
     }
 
     /// Format all diagnostic results for display
-    [[nodiscard]] static std::string format_results(
-        const std::vector<DiagnosticCheck>& results, bool verbose
-    ) {
+    [[nodiscard]] static std::string format_results(const std::vector<DiagnosticCheck>& results,
+                                                    bool verbose) {
         std::string output = "System Diagnostics:\n\n";
 
         std::uint32_t pass_count = 0, warn_count = 0, fail_count = 0;
 
         for (const auto& check : results) {
-            output += std::format("  {} {}: {}\n",
-                status_icon(check.status), check.name, check.message);
+            output +=
+                std::format("  {} {}: {}\n", status_icon(check.status), check.name, check.message);
 
             if (verbose && check.detail) {
                 output += std::format("       {}\n", *check.detail);
@@ -460,15 +471,22 @@ private:
             }
 
             switch (check.status) {
-                case CheckStatus::Pass: ++pass_count; break;
-                case CheckStatus::Warn: ++warn_count; break;
-                case CheckStatus::Fail: ++fail_count; break;
-                case CheckStatus::Skip: break;
+            case CheckStatus::Pass:
+                ++pass_count;
+                break;
+            case CheckStatus::Warn:
+                ++warn_count;
+                break;
+            case CheckStatus::Fail:
+                ++fail_count;
+                break;
+            case CheckStatus::Skip:
+                break;
             }
         }
 
-        output += std::format("\n  Summary: {} passed, {} warnings, {} failed\n",
-            pass_count, warn_count, fail_count);
+        output += std::format("\n  Summary: {} passed, {} warnings, {} failed\n", pass_count,
+                              warn_count, fail_count);
 
         if (fail_count > 0) {
             output += "  Status: Some checks failed. Please address the issues above.\n";
@@ -496,4 +514,4 @@ private:
     }
 };
 
-} // namespace loom::commands
+}  // namespace loom::commands

@@ -3,7 +3,6 @@
 /// Toggles fast mode.
 module;
 
-
 export module loom.commands.fast;
 
 import std;
@@ -27,20 +26,21 @@ public:
         return CommandDefinition{
             .name = "fast",
             .description = "Toggle fast mode",
-            .args = {
-                CommandArg{.name = "state", .description = "Explicitly set state: on or off",
-                           .type = ArgType::Choice, .required = false,
-                           .choices = {"on", "off"}},
-            },
+            .args =
+                {
+                    CommandArg{.name = "state",
+                               .description = "Explicitly set state: on or off",
+                               .type = ArgType::Choice,
+                               .required = false,
+                               .choices = {"on", "off"}},
+                },
             .category = "mode",
             .aliases = {},
             .hidden = false,
         };
     }
 
-    [[nodiscard]] VoidResult validate(const CommandContext&) {
-        return {};
-    }
+    [[nodiscard]] VoidResult validate(const CommandContext&) { return {}; }
 
     [[nodiscard]] Result<CommandResult> execute(const CommandContext& ctx) {
         // Fallback for when AppState bridge is not available.
@@ -93,17 +93,17 @@ public:
 
     [[nodiscard]] std::vector<std::string> complete(std::string_view partial) {
         std::vector<std::string> suggestions;
-        
+
         static constexpr std::array states = {"on", "off"};
-        
+
         for (const auto& state : states) {
             if (std::string_view(state).starts_with(partial)) {
                 suggestions.emplace_back(state);
             }
         }
-        
+
         return suggestions;
     }
 };
 
-} // namespace loom::commands
+}  // namespace loom::commands

@@ -49,11 +49,11 @@ namespace detail {
         if (colon != std::string_view::npos) {
             // Skip whitespace and find digits
             std::size_t i = colon + 1;
-            while (i < input_json.size() &&
-                   (input_json[i] == ' ' || input_json[i] == '\t')) ++i;
+            while (i < input_json.size() && (input_json[i] == ' ' || input_json[i] == '\t'))
+                ++i;
             std::size_t start = i;
-            while (i < input_json.size() &&
-                   std::isdigit(static_cast<unsigned char>(input_json[i]))) ++i;
+            while (i < input_json.size() && std::isdigit(static_cast<unsigned char>(input_json[i])))
+                ++i;
             if (i > start) {
                 offset_str = std::string(input_json.substr(start, i - start));
             }
@@ -64,11 +64,11 @@ namespace detail {
         auto colon = input_json.find(':', lim_pos);
         if (colon != std::string_view::npos) {
             std::size_t i = colon + 1;
-            while (i < input_json.size() &&
-                   (input_json[i] == ' ' || input_json[i] == '\t')) ++i;
+            while (i < input_json.size() && (input_json[i] == ' ' || input_json[i] == '\t'))
+                ++i;
             std::size_t start = i;
-            while (i < input_json.size() &&
-                   std::isdigit(static_cast<unsigned char>(input_json[i]))) ++i;
+            while (i < input_json.size() && std::isdigit(static_cast<unsigned char>(input_json[i])))
+                ++i;
             if (i > start) {
                 limit_str = std::string(input_json.substr(start, i - start));
             }
@@ -91,8 +91,7 @@ namespace detail {
 }
 
 /// Display path with middle ellipsis.
-[[nodiscard]] inline std::string display_path(std::string_view path,
-                                               std::size_t max_len = 60) {
+[[nodiscard]] inline std::string display_path(std::string_view path, std::size_t max_len = 60) {
     if (path.size() <= max_len) return std::string(path);
     auto last_slash = path.rfind('/');
     if (last_slash == std::string_view::npos) last_slash = path.rfind('\\');
@@ -104,8 +103,7 @@ namespace detail {
         return std::string(path.substr(0, max_len - 1)) + "\xE2\x80\xA6";
     }
     std::size_t head_len = max_len - 3 - filename.size() - 2;
-    return std::string(path.substr(0, head_len)) + "\xE2\x80\xA6/" +
-           std::string(filename);
+    return std::string(path.substr(0, head_len)) + "\xE2\x80\xA6/" + std::string(filename);
 }
 
 }  // namespace detail
@@ -117,9 +115,7 @@ namespace detail {
 [[nodiscard]] inline ToolUIFunctions make_file_read_ui() {
     ToolUIFunctions fns;
 
-    fns.user_facing_name = [](std::string_view) {
-        return std::string{"Read"};
-    };
+    fns.user_facing_name = [](std::string_view) { return std::string{"Read"}; };
 
     fns.message = [](std::string_view input_json) {
         std::string path = detail::extract_file_path(input_json);
@@ -134,12 +130,9 @@ namespace detail {
         return display;
     };
 
-    fns.tag = [](std::string_view) -> std::optional<std::string> {
-        return std::nullopt;
-    };
+    fns.tag = [](std::string_view) -> std::optional<std::string> { return std::nullopt; };
 
-    fns.progress = [](std::string_view input_json,
-                       std::string_view /*partial*/) {
+    fns.progress = [](std::string_view input_json, std::string_view /*partial*/) {
         std::string path = detail::extract_file_path(input_json);
         if (!path.empty()) {
             return "Reading " + detail::display_path(path, 50) + "\342\200\246";  // …
@@ -161,10 +154,8 @@ namespace detail {
     // "Read image (42KB)". Never the content itself. The model-facing
     // serialization sends content + CYBER_RISK_MITIGATION_REMINDER + line
     // prefixes; UI shows none of it. Nothing to index.
-    fns.extract_search_text = [](
-        std::string_view /*output_text*/,
-        std::string_view /*error_text*/) -> std::optional<std::string>
-    {
+    fns.extract_search_text = [](std::string_view /*output_text*/,
+                                 std::string_view /*error_text*/) -> std::optional<std::string> {
         return std::string{};
     };
 
@@ -173,12 +164,9 @@ namespace detail {
 
 /// Register FileRead tool UI in the global registry.
 inline void register_file_read_ui() {
-    global_tool_ui_registry().register_tool_ui(
-        "read_file", make_file_read_ui());
-    global_tool_ui_registry().register_tool_ui(
-        "Read", make_file_read_ui());
-    global_tool_ui_registry().register_tool_ui(
-        "FileRead", make_file_read_ui());
+    global_tool_ui_registry().register_tool_ui("read_file", make_file_read_ui());
+    global_tool_ui_registry().register_tool_ui("Read", make_file_read_ui());
+    global_tool_ui_registry().register_tool_ui("FileRead", make_file_read_ui());
 }
 
 }  // namespace loom::ui::tools::file_read_ui

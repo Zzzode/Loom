@@ -31,13 +31,13 @@ using ftxui::Color;
 /// A highlight annotation for a range of the input text.
 /// Uses flat character offsets (start/end) into the full text buffer.
 struct TextHighlight {
-    std::size_t start = 0;       ///< Inclusive character offset
-    std::size_t end = 0;         ///< Exclusive character offset
-    std::optional<Color> color;  ///< Foreground color (undefined = default)
-    bool dim = false;            ///< Render dimmed
-    bool inverse = false;        ///< Invert fg/bg (cursor chip)
+    std::size_t start = 0;               ///< Inclusive character offset
+    std::size_t end = 0;                 ///< Exclusive character offset
+    std::optional<Color> color;          ///< Foreground color (undefined = default)
+    bool dim = false;                    ///< Render dimmed
+    bool inverse = false;                ///< Invert fg/bg (cursor chip)
     std::optional<Color> shimmer_color;  ///< Animated sweep
-    std::int32_t priority = 0;   ///< Higher = wins overlap resolution
+    std::int32_t priority = 0;           ///< Higher = wins overlap resolution
 };
 
 /// A contiguous segment of text with an optional highlight.
@@ -58,22 +58,20 @@ struct TextSegment {
 /// 1. Sort highlights by (start ascending, priority descending)
 /// 2. Walk sorted highlights, skip any that overlap an already-claimed range
 /// 3. Produce TextSegment[] covering the full text
-[[nodiscard]] inline std::vector<TextSegment> segment_text_by_highlights(
-    std::string_view text,
-    const std::vector<TextHighlight>& highlights) {
+[[nodiscard]] inline std::vector<TextSegment>
+segment_text_by_highlights(std::string_view text, const std::vector<TextHighlight>& highlights) {
 
     if (highlights.empty()) {
-        return { TextSegment{ std::string(text), 0, std::nullopt } };
+        return {TextSegment{std::string(text), 0, std::nullopt}};
     }
 
     // Sort by start position, then by priority descending so that
     // higher-priority highlights at the same position win.
     std::vector<TextHighlight> sorted = highlights;
-    std::sort(sorted.begin(), sorted.end(),
-        [](const TextHighlight& a, const TextHighlight& b) {
-            if (a.start != b.start) return a.start < b.start;
-            return a.priority > b.priority;
-        });
+    std::sort(sorted.begin(), sorted.end(), [](const TextHighlight& a, const TextHighlight& b) {
+        if (a.start != b.start) return a.start < b.start;
+        return a.priority > b.priority;
+    });
 
     // Resolve overlaps: keep a highlight only if its range does not overlap
     // any already-claimed range.
@@ -108,31 +106,21 @@ struct TextSegment {
     for (const auto& hl : resolved) {
         // Text before this highlight
         if (hl.start > pos) {
-            segments.push_back(TextSegment{
-                std::string(text.substr(pos, hl.start - pos)),
-                pos,
-                std::nullopt
-            });
+            segments.push_back(
+                TextSegment{std::string(text.substr(pos, hl.start - pos)), pos, std::nullopt});
         }
         // The highlighted range
         if (hl.end > hl.start && hl.start < text.size()) {
             std::size_t seg_end = std::min(hl.end, text.size());
-            segments.push_back(TextSegment{
-                std::string(text.substr(hl.start, seg_end - hl.start)),
-                hl.start,
-                hl
-            });
+            segments.push_back(
+                TextSegment{std::string(text.substr(hl.start, seg_end - hl.start)), hl.start, hl});
         }
         pos = hl.end;
     }
 
     // Trailing text after last highlight
     if (pos < text.size()) {
-        segments.push_back(TextSegment{
-            std::string(text.substr(pos)),
-            pos,
-            std::nullopt
-        });
+        segments.push_back(TextSegment{std::string(text.substr(pos)), pos, std::nullopt});
     }
 
     return segments;
@@ -145,10 +133,9 @@ struct TextSegment {
 /// Filter highlights that contain the cursor position so the character
 /// under the cursor is never styled (except dim highlights, which always
 /// show).
-[[nodiscard]] inline std::vector<TextHighlight> filter_highlights_at_cursor(
-    const std::vector<TextHighlight>& highlights,
-    std::size_t cursor_offset,
-    bool show_cursor = true) {
+[[nodiscard]] inline std::vector<TextHighlight>
+filter_highlights_at_cursor(const std::vector<TextHighlight>& highlights, std::size_t cursor_offset,
+                            bool show_cursor = true) {
 
     if (!show_cursor) return highlights;
 
@@ -168,10 +155,9 @@ struct TextSegment {
 /// Adjust highlight offsets for a viewport window (when the input text is
 /// scrolled horizontally).  Highlights outside the window are dropped;
 /// those inside have their start/end rebased to viewport-relative offsets.
-[[nodiscard]] inline std::vector<TextHighlight> adjust_highlights_for_viewport(
-    const std::vector<TextHighlight>& highlights,
-    std::size_t viewport_char_offset,
-    std::size_t viewport_char_end) {
+[[nodiscard]] inline std::vector<TextHighlight>
+adjust_highlights_for_viewport(const std::vector<TextHighlight>& highlights,
+                               std::size_t viewport_char_offset, std::size_t viewport_char_end) {
 
     if (viewport_char_offset == 0) return highlights;
 
@@ -183,9 +169,7 @@ struct TextSegment {
             continue;
         }
         TextHighlight adj = h;
-        adj.start = (h.start > viewport_char_offset)
-            ? h.start - viewport_char_offset
-            : 0;
+        adj.start = (h.start > viewport_char_offset) ? h.start - viewport_char_offset : 0;
         adj.end = h.end - viewport_char_offset;
         adjusted.push_back(adj);
     }
@@ -199,14 +183,14 @@ struct TextSegment {
 /// Priority values used by the combined highlights builder.
 /// Higher values win overlap resolution.
 namespace highlight_priority {
-    inline constexpr std::int32_t SlashCommand    = 5;   // /command blue
-    inline constexpr std::int32_t TokenBudget     = 5;   // token budget blue
-    inline constexpr std::int32_t SlackChannel    = 5;   // #channel blue
-    inline constexpr std::int32_t Mention         = 5;   // @name teammate color
-    inline constexpr std::int32_t ImageChip       = 8;   // [Image #N] inverse cursor
-    inline constexpr std::int32_t RainbowShimmer  = 10;  // think/ultraplan/buddy per-char
-    inline constexpr std::int32_t BtwTrigger      = 15;  // btw yellow
-    inline constexpr std::int32_t HistorySearch   = 20;  // history nav match
-} // namespace highlight_priority
+inline constexpr std::int32_t SlashCommand = 5;     // /command blue
+inline constexpr std::int32_t TokenBudget = 5;      // token budget blue
+inline constexpr std::int32_t SlackChannel = 5;     // #channel blue
+inline constexpr std::int32_t Mention = 5;          // @name teammate color
+inline constexpr std::int32_t ImageChip = 8;        // [Image #N] inverse cursor
+inline constexpr std::int32_t RainbowShimmer = 10;  // think/ultraplan/buddy per-char
+inline constexpr std::int32_t BtwTrigger = 15;      // btw yellow
+inline constexpr std::int32_t HistorySearch = 20;   // history nav match
+}  // namespace highlight_priority
 
-} // namespace loom::utils
+}  // namespace loom::utils

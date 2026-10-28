@@ -71,8 +71,9 @@ void QueryEngine::clear_conversation() {
 
 [[nodiscard]] loom::utils::VoidResult QueryEngine::compact_conversation(std::string_view trigger) {
     auto result = compact_context_impl(trigger, QueryOptions{});
-    if (!result) return std::unexpected(loom::utils::Error(
-        loom::utils::ErrorCode::resource_exhausted, result.error().message));
+    if (!result)
+        return std::unexpected(
+            loom::utils::Error(loom::utils::ErrorCode::resource_exhausted, result.error().message));
     return {};
 }
 
@@ -151,19 +152,21 @@ void QueryEngine::append_message(Message msg, bool human_request) {
     }
     {
         std::lock_guard lock(conversation_mutex_);
-        if (const auto* system = std::get_if<SystemMessage>(&msg); system && system->snip_metadata) {
+        if (const auto* system = std::get_if<SystemMessage>(&msg);
+            system && system->snip_metadata) {
             const auto& removed = system->snip_metadata->removed_uuids;
             if (std::ranges::any_of(conversation_, [&](const auto& previous) {
                     return std::ranges::contains(removed, message_id_value(previous));
-                })) reset_context_observation_locked();
+                }))
+                reset_context_observation_locked();
         }
         if (human_request) {
             if (const auto* user = std::get_if<UserMessage>(&msg);
                 user && !std::holds_alternative<TaskEvent>(user->origin)) {
                 const bool only_results = !user->content.empty() &&
-                    std::ranges::all_of(user->content, [](const auto& block) {
-                        return std::holds_alternative<ToolResultBlock>(block);
-                    });
+                                          std::ranges::all_of(user->content, [](const auto& block) {
+                                              return std::holds_alternative<ToolResultBlock>(block);
+                                          });
                 if (!only_results) {
                     context_request_anchor_id_ = user->id.value;
                     request_anchor_id = user->id.value;
@@ -189,8 +192,7 @@ void QueryEngine::append_message(Message msg, bool human_request) {
     // not part of the engine critical section). SystemMessage serializes
     // empty and is skipped.
     if (do_persist) {
-        (void)loom::session::append_message(
-            *sessions_dir_, session_id_.str(), persist_json);
+        (void)loom::session::append_message(*sessions_dir_, session_id_.str(), persist_json);
     }
     if (request_anchor_id && sessions_dir_) {
         std::lock_guard lock(conversation_mutex_);
@@ -200,8 +202,8 @@ void QueryEngine::append_message(Message msg, bool human_request) {
     }
 }
 
-[[nodiscard]] UserMessage QueryEngine::make_user_message(std::string_view text,
-                                             std::optional<std::string_view> uuid) const {
+[[nodiscard]] UserMessage
+QueryEngine::make_user_message(std::string_view text, std::optional<std::string_view> uuid) const {
     UserMessage msg{};
     if (uuid) {
         msg.id.value = std::string(*uuid);
@@ -214,8 +216,8 @@ void QueryEngine::append_message(Message msg, bool human_request) {
 }
 
 [[nodiscard]] std::string QueryEngine::read_session_summary(std::string_view cwd) const {
-    const auto path = loom::memdir::get_session_memory_path(
-        std::filesystem::path(cwd), session_id_.str());
+    const auto path =
+        loom::memdir::get_session_memory_path(std::filesystem::path(cwd), session_id_.str());
     std::error_code ec;
     if (!std::filesystem::exists(path, ec)) return {};
     std::ifstream ifs(path);
@@ -226,31 +228,33 @@ void QueryEngine::append_message(Message msg, bool human_request) {
     return last == std::string::npos ? content : content.substr(last);
 }
 
-void QueryEngine::append_session_summary(std::string_view cwd,
-                                         std::string_view summary) const {
-    const auto dir = loom::memdir::get_session_memory_dir(
-        std::filesystem::path(cwd), session_id_.str());
+void QueryEngine::append_session_summary(std::string_view cwd, std::string_view summary) const {
+    const auto dir =
+        loom::memdir::get_session_memory_dir(std::filesystem::path(cwd), session_id_.str());
     std::error_code ec;
     std::filesystem::create_directories(dir, ec);
     const auto path = dir / "summary.md";
     std::ofstream ofs(path, std::ios::app);
     if (!ofs) return;
     const auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(
-        std::chrono::system_clock::now().time_since_epoch()).count();
+                            std::chrono::system_clock::now().time_since_epoch())
+                            .count();
     ofs << "\n\n## Compaction " << millis << "\n\n" << summary << '\n';
 }
 
-[[nodiscard]] std::string QueryEngine::transcript_to_text(
-    const std::vector<Message>& messages, std::size_t max_chars) {
+[[nodiscard]] std::string QueryEngine::transcript_to_text(const std::vector<Message>& messages,
+                                                          std::size_t max_chars) {
     std::string out;
     for (const auto& m : messages) {
         std::string role;
         std::vector<ContentBlock> empty_blocks;
         const std::vector<ContentBlock>* blocks = &empty_blocks;
         if (const auto* u = std::get_if<UserMessage>(&m)) {
-            role = "user"; blocks = &u->content;
+            role = "user";
+            blocks = &u->content;
         } else if (const auto* a = std::get_if<AssistantMessage>(&m)) {
-            role = "assistant"; blocks = &a->content;
+            role = "assistant";
+            blocks = &a->content;
         }
         for (const auto& b : *blocks) {
             const auto* tb = std::get_if<TextBlock>(&b);
@@ -270,16 +274,14 @@ void QueryEngine::append_session_summary(std::string_view cwd,
 void QueryEngine::maybe_run_memory_extraction() {
     namespace em = loom::services::extract_memories;
     if (!memory_extraction_enabled_) return;
-    if (messages_since_last_extraction_ < em::kExtractionMinNewMessages * 2)
-        return;
+    if (messages_since_last_extraction_ < em::kExtractionMinNewMessages * 2) return;
     // Process-wide single-flight via the engine-owned flag. The thread is
     // a member jthread joined at destruction, so captured state outlives it.
     bool expected = false;
     if (!memory_extraction_inflight_.compare_exchange_strong(expected, true))
         return;  // an extraction is already running
 
-    const auto cwd = config_.cwd.value_or(
-        std::filesystem::current_path().string());
+    const auto cwd = config_.cwd.value_or(std::filesystem::current_path().string());
     auto mem_dir_opt = loom::memdir::get_auto_mem_path(std::filesystem::path(cwd));
     if (!mem_dir_opt) {
         memory_extraction_inflight_.store(false);
@@ -309,25 +311,23 @@ void QueryEngine::maybe_run_memory_extraction() {
     // captured registry pointer is always valid for the sub-agent's life.
     ToolRegistry* registry = tool_registry_;
     memory_extraction_thread_ = std::jthread(
-        [this, registry, sub_config = std::move(sub_config),
-         prompt = std::move(prompt)]() mutable {
-        struct Guard {
-            std::atomic<bool>& flag;
-            ~Guard() { flag.store(false); }
-        } guard{memory_extraction_inflight_};
-        try {
-            QueryEngine sub(std::move(sub_config), *registry);
-            sub.memory_extraction_enabled_ = false;  // no recursion
-            auto res = sub.query(prompt);
-            if (!res) {
-                loom::utils::debug("memory.extract",
-                    "extraction sub-agent failed: {}", res.error().message);
+        [this, registry, sub_config = std::move(sub_config), prompt = std::move(prompt)]() mutable {
+            struct Guard {
+                std::atomic<bool>& flag;
+                ~Guard() { flag.store(false); }
+            } guard{memory_extraction_inflight_};
+            try {
+                QueryEngine sub(std::move(sub_config), *registry);
+                sub.memory_extraction_enabled_ = false;  // no recursion
+                auto res = sub.query(prompt);
+                if (!res) {
+                    loom::utils::debug("memory.extract", "extraction sub-agent failed: {}",
+                                       res.error().message);
+                }
+            } catch (const std::exception& e) {
+                loom::utils::debug("memory.extract", "extraction sub-agent threw: {}", e.what());
             }
-        } catch (const std::exception& e) {
-            loom::utils::debug("memory.extract",
-                "extraction sub-agent threw: {}", e.what());
-        }
-    });
+        });
 }
 
-} // namespace loom::core
+}  // namespace loom::core

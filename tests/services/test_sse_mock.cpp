@@ -1,9 +1,10 @@
 /// @file test_sse_mock.cpp
 /// @brief Phase 3-E2E: Real HTTP Mock Server + SseClient E2E tests
 
-#include <cstdlib>
 #include <gtest/gtest.h>
 #include <httplib.h>
+
+#include <cstdlib>
 
 import std;
 import loom.services.api.sse;
@@ -55,8 +56,8 @@ void WriteMessagesSseResponse(const httplib::Request&, httplib::Response& res) {
 // RAII: start server on background thread; stop+join on destruction.
 struct MockServerRAII {
     httplib::Server svr;
-    std::thread    th;
-    int            port = -1;
+    std::thread th;
+    int port = -1;
 
     explicit MockServerRAII(httplib::Server::Handler handler) {
         svr.Post("/v1/messages", std::move(handler));
@@ -72,6 +73,7 @@ struct MockServerRAII {
         // macOS localhost loopback sometimes needs extra time to enter accept loop.
         std::this_thread::sleep_for(std::chrono::milliseconds(50));
     }
+
     ~MockServerRAII() {
         if (port >= 0) {
             svr.stop();
@@ -86,22 +88,23 @@ struct MockServerRAII {
 // TEST 1: Dry-run (empty api_key) → zero network, instant on_final
 // ===========================================================================
 TEST(SseClientE2E, DryRunDoesNotGoToNetwork) {
-    SseClient client(ApiConfig{.base_url = "http://127.0.0.1:1/",
-                               .api_key = "",
-                               .model_id = "x"});
+    SseClient client(ApiConfig{.base_url = "http://127.0.0.1:1/", .api_key = "", .model_id = "x"});
     std::vector<TextMessage> msgs = {{Role::User, "ping"}};
 
-    int  final_http   = -1;
-    bool final_fired  = false;
-    int  delta_calls  = 0;
+    int final_http = -1;
+    bool final_fired = false;
+    int delta_calls = 0;
     bool abort_polled = false;
 
     StreamingCallbacks cbs;
     cbs.on_text_delta = [&](std::string_view) { ++delta_calls; };
-    cbs.should_abort  = [&]() { abort_polled = true; return false; };
-    cbs.on_final = [&](int http, std::string_view stop,
-                       std::string_view accum, std::string_view err) {
-        final_http  = http;
+    cbs.should_abort = [&]() {
+        abort_polled = true;
+        return false;
+    };
+    cbs.on_final = [&](int http, std::string_view stop, std::string_view accum,
+                       std::string_view err) {
+        final_http = http;
         final_fired = true;
         EXPECT_EQ(stop, "dry_run");
         EXPECT_EQ(accum, "");
@@ -125,7 +128,7 @@ TEST(SseClientE2E, LocalhostMockStreamingCallbacks) {
 
     ApiConfig cfg;
     cfg.base_url = std::string("http://127.0.0.1:") + std::to_string(mock.port) + "/v1";
-    cfg.api_key  = "sk-fake-key";
+    cfg.api_key = "sk-fake-key";
     cfg.model_id = "test-model";
     SseClient client(std::move(cfg));
 
@@ -134,22 +137,22 @@ TEST(SseClientE2E, LocalhostMockStreamingCallbacks) {
     msgs.push_back({Role::Assistant, "ok"});
     msgs.push_back({Role::User, "say hello"});
 
-    std::vector<std::string>   deltas;
-    std::vector<SseEventType>  events;
-    int                        final_http = -1;
-    std::string                stop_reason;
-    std::string                accum_text;
-    std::string                err_reason;
+    std::vector<std::string> deltas;
+    std::vector<SseEventType> events;
+    int final_http = -1;
+    std::string stop_reason;
+    std::string accum_text;
+    std::string err_reason;
 
     StreamingCallbacks cbs;
-    cbs.on_sse_event  = [&](SseEventType t, std::string_view) { events.push_back(t); };
+    cbs.on_sse_event = [&](SseEventType t, std::string_view) { events.push_back(t); };
     cbs.on_text_delta = [&](std::string_view d) { deltas.emplace_back(d); };
-    cbs.on_final = [&](int http, std::string_view stop,
-                       std::string_view accum, std::string_view err) {
-        final_http  = http;
+    cbs.on_final = [&](int http, std::string_view stop, std::string_view accum,
+                       std::string_view err) {
+        final_http = http;
         stop_reason = std::string(stop);
-        accum_text  = std::string(accum);
-        err_reason  = std::string(err);
+        accum_text = std::string(accum);
+        err_reason = std::string(err);
     };
 
     int rc = client.PostMessagesStream("you are helpful", msgs, std::move(cbs));
@@ -159,10 +162,10 @@ TEST(SseClientE2E, LocalhostMockStreamingCallbacks) {
     EXPECT_EQ(final_http, 200);
     EXPECT_EQ(err_reason, "");
     EXPECT_FALSE(accum_text.empty());
-    EXPECT_NE(accum_text.find("Hello "),     std::string::npos);
+    EXPECT_NE(accum_text.find("Hello "), std::string::npos);
     EXPECT_NE(accum_text.find("beautiful "), std::string::npos);
     EXPECT_NE(accum_text.find("wonderful "), std::string::npos);
-    EXPECT_NE(accum_text.find("world!?"),   std::string::npos);
+    EXPECT_NE(accum_text.find("world!?"), std::string::npos);
     EXPECT_EQ(stop_reason, "end_turn");
     // Sanity counts: parser must have seen at least the first message_start,
     // the first content_block_start, and ≥1 delta.
@@ -179,16 +182,19 @@ TEST(SseClientE2E, LocalhostMockDispatchStyleCallbacks) {
 
     std::vector<std::string> event_names;
     std::vector<std::string> data_samples;
-    bool        done       = false;
-    int         err_http   = 0;
+    bool done = false;
+    int err_http = 0;
     std::string err_reason;
 
     SseCallbacks cbs;
     cbs.on_event = [&](std::string_view ev) { event_names.emplace_back(ev); };
-    cbs.on_data  = [&](std::string_view d) {
+    cbs.on_data = [&](std::string_view d) {
         if (data_samples.size() < 4) data_samples.emplace_back(d);
     };
-    cbs.on_error    = [&](int http, std::string r) { err_http = http; err_reason = std::move(r); };
+    cbs.on_error = [&](int http, std::string r) {
+        err_http = http;
+        err_reason = std::move(r);
+    };
     cbs.on_complete = [&] { done = true; };
 
     std::vector<Message> msgs = {Message{.role = "user", .text_content = "hello"}};
@@ -203,19 +209,23 @@ TEST(SseClientE2E, LocalhostMockDispatchStyleCallbacks) {
 
     // Every mandatory Messages API SSE event type must appear somewhere.
     auto has = [&](const char* n) {
-        for (const auto& s : event_names) if (s == n) return true;
+        for (const auto& s : event_names)
+            if (s == n) return true;
         return false;
     };
-    EXPECT_TRUE(has("message_start"))       << "missing message_start";
+    EXPECT_TRUE(has("message_start")) << "missing message_start";
     EXPECT_TRUE(has("content_block_start")) << "missing content_block_start";
     EXPECT_TRUE(has("content_block_delta")) << "missing content_block_delta";
-    EXPECT_TRUE(has("content_block_stop"))  << "missing content_block_stop";
-    EXPECT_TRUE(has("message_delta"))       << "missing message_delta";
-    EXPECT_TRUE(has("message_stop"))        << "missing message_stop";
+    EXPECT_TRUE(has("content_block_stop")) << "missing content_block_stop";
+    EXPECT_TRUE(has("message_delta")) << "missing message_delta";
+    EXPECT_TRUE(has("message_stop")) << "missing message_stop";
 
     bool found_msg1 = false;
     for (const auto& s : data_samples) {
-        if (s.find("msg_1") != std::string::npos) { found_msg1 = true; break; }
+        if (s.find("msg_1") != std::string::npos) {
+            found_msg1 = true;
+            break;
+        }
     }
     EXPECT_TRUE(found_msg1);
 }
@@ -226,18 +236,20 @@ TEST(SseClientE2E, LocalhostMockDispatchStyleCallbacks) {
 TEST(SseClientE2E, MockHttp429TriggersError) {
     MockServerRAII mock([](const httplib::Request&, httplib::Response& r) {
         r.status = 429;
-        r.set_content(
-            "{\"type\":\"error\",\"error\":{\"type\":\"rate_limit_error\","
-            "\"message\":\"Requests are rate-limited.\"}}",
-            "application/json");
+        r.set_content("{\"type\":\"error\",\"error\":{\"type\":\"rate_limit_error\","
+                      "\"message\":\"Requests are rate-limited.\"}}",
+                      "application/json");
     });
     ASSERT_GE(mock.port, 0);
 
     SseCallbacks cbs;
-    int         err_http   = 0;
+    int err_http = 0;
     std::string err_reason;
-    bool        complete   = false;
-    cbs.on_error    = [&](int http, std::string r) { err_http = http; err_reason = std::move(r); };
+    bool complete = false;
+    cbs.on_error = [&](int http, std::string r) {
+        err_http = http;
+        err_reason = std::move(r);
+    };
     cbs.on_complete = [&] { complete = true; };
 
     const std::string base_url =
@@ -250,8 +262,7 @@ TEST(SseClientE2E, MockHttp429TriggersError) {
     EXPECT_FALSE(complete);
     // A non-SSE body (application/json) may or may not surface the inner JSON
     // message here; the authoritative signal is the HTTP status.
-    EXPECT_TRUE(err_reason.empty() ||
-                err_reason.find("rate-limited") != std::string::npos ||
+    EXPECT_TRUE(err_reason.empty() || err_reason.find("rate-limited") != std::string::npos ||
                 err_reason.find("HTTP 429") != std::string::npos);
 }
 
@@ -264,7 +275,9 @@ TEST(SseParser, CrossChunkEventSplit) {
 
     std::vector<std::pair<SseEventType, std::string>> events;
     std::string accum;
-    cbs.on_sse_event  = [&](SseEventType t, std::string_view d) { events.emplace_back(t, std::string(d)); };
+    cbs.on_sse_event = [&](SseEventType t, std::string_view d) {
+        events.emplace_back(t, std::string(d));
+    };
     cbs.on_text_delta = [&](std::string_view d) { accum.append(d); };
 
     // Split inside the JSON payload: "Hel" + "lo " within the `text` field.
@@ -307,6 +320,7 @@ std::string sse_fixture_path(const char* name) {
 struct CaBundleGuard {
     std::string previous;
     bool had_previous = false;
+
     explicit CaBundleGuard(const std::string& path) {
         if (const char* v = std::getenv("LOOM_CA_BUNDLE"); v) {
             previous = v;
@@ -314,9 +328,12 @@ struct CaBundleGuard {
         }
         setenv("LOOM_CA_BUNDLE", path.c_str(), 1);
     }
+
     ~CaBundleGuard() {
-        if (had_previous) setenv("LOOM_CA_BUNDLE", previous.c_str(), 1);
-        else unsetenv("LOOM_CA_BUNDLE");
+        if (had_previous)
+            setenv("LOOM_CA_BUNDLE", previous.c_str(), 1);
+        else
+            unsetenv("LOOM_CA_BUNDLE");
     }
 };
 
@@ -357,8 +374,7 @@ TEST(SseTransportTls, HttpsEndpointCompletesHandshakeAndStreamsEvents) {
     transport.on_event([&](const loom::cli::SSEEvent& e) { received.push_back(e); });
     transport.on_error([&](std::string_view e) { errors.push_back(std::string(e)); });
 
-    const std::string url =
-        "https://127.0.0.1:" + std::to_string(port) + "/stream";
+    const std::string url = "https://127.0.0.1:" + std::to_string(port) + "/stream";
     auto connected = transport.connect(url);
     ASSERT_TRUE(connected.has_value()) << connected.error();
 
@@ -370,9 +386,8 @@ TEST(SseTransportTls, HttpsEndpointCompletesHandshakeAndStreamsEvents) {
     svr.stop();
     th.join();
 
-    ASSERT_FALSE(received.empty())
-        << "no SSE event over TLS; errors: "
-        << (errors.empty() ? std::string{"(none)"} : errors.front());
+    ASSERT_FALSE(received.empty()) << "no SSE event over TLS; errors: "
+                                   << (errors.empty() ? std::string{"(none)"} : errors.front());
     EXPECT_EQ(received.front().event, "hello");
     EXPECT_NE(received.front().data.find("\"n\":1"), std::string::npos);
 
@@ -424,8 +439,7 @@ TEST(SseTransportTls, HttpsWithUntrustedCertificateIsRejected) {
     transport.on_event([&](const loom::cli::SSEEvent& e) { received.push_back(e); });
     transport.on_error([&](std::string_view e) { errors.push_back(std::string(e)); });
 
-    const std::string url =
-        "https://127.0.0.1:" + std::to_string(port) + "/stream";
+    const std::string url = "https://127.0.0.1:" + std::to_string(port) + "/stream";
     auto connected = transport.connect(url);
     ASSERT_TRUE(connected.has_value()) << connected.error();
 

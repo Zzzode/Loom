@@ -17,6 +17,7 @@ export namespace loom::core {
 
 /// Strong ID for worker agents
 struct WorkerIdTag {};
+
 using WorkerId = StrongId<WorkerIdTag>;
 
-} // namespace loom::core
+}  // namespace loom::core

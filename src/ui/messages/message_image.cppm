@@ -20,13 +20,13 @@
 // ────────────────────────────────────────────────────────────────────────
 module;
 
-#include <cstdint>
-
-#include <ftxui/dom/elements.hpp>
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/event.hpp>
+#include <ftxui/dom/elements.hpp>
+
 #include <cstddef>
+#include <cstdint>
 
 export module loom.ui.messages.message_image;
 
@@ -44,8 +44,8 @@ export namespace loom::ui::messages::image {
 
 using namespace ftxui;
 namespace fs = std::filesystem;
-using loom::utils::image_store::StoredImage;
 using loom::utils::supports_hyperlinks;
+using loom::utils::image_store::StoredImage;
 
 // ============================================================
 // Types
@@ -62,18 +62,17 @@ enum class ImageSource : std::uint8_t {
 
 /// Data for an image message
 struct ImageMessageData {
-    std::string source;              // Path, URL, identifier, or image_store id
+    std::string source;  // Path, URL, identifier, or image_store id
     ImageSource source_type = ImageSource::File;
     std::optional<std::string> alt_text;
     std::optional<size_t> width;
     std::optional<size_t> height;
     std::optional<size_t> file_size;
-    std::string media_type;          // e.g., "image/png"
-    std::string file_name;           // Display filename (for list preview)
+    std::string media_type;               // e.g., "image/png"
+    std::string file_name;                // Display filename (for list preview)
     std::optional<std::string> image_id;  // Image store id, if applicable
-    bool add_margin = false;         // True when image starts a new user turn
-    std::chrono::system_clock::time_point timestamp =
-        std::chrono::system_clock::now();
+    bool add_margin = false;              // True when image starts a new user turn
+    std::chrono::system_clock::time_point timestamp = std::chrono::system_clock::now();
 };
 
 // ============================================================
@@ -90,11 +89,16 @@ struct ImageMessageData {
 /// Source type icon
 [[nodiscard]] inline const char* source_icon(ImageSource s) {
     switch (s) {
-        case ImageSource::File:      return "file";
-        case ImageSource::URL:       return "url";
-        case ImageSource::Base64:    return "base64";
-        case ImageSource::Clipboard: return "clipboard";
-        case ImageSource::StoreId:   return "stored";
+    case ImageSource::File:
+        return "file";
+    case ImageSource::URL:
+        return "url";
+    case ImageSource::Base64:
+        return "base64";
+    case ImageSource::Clipboard:
+        return "clipboard";
+    case ImageSource::StoreId:
+        return "stored";
     }
     return "stored";
 }
@@ -108,7 +112,7 @@ inline void resolve_from_store(ImageMessageData& data) {
     if (!img) return;
 
     const StoredImage& s = *img;
-    if (!data.width)  data.width  = s.width;
+    if (!data.width) data.width = s.width;
     if (!data.height) data.height = s.height;
     if (!data.file_size) data.file_size = s.size_bytes;
     if (data.media_type.empty()) data.media_type = s.mime_type;
@@ -150,8 +154,7 @@ inline void resolve_from_store(ImageMessageData& data) {
         }
         if (data.width && data.height) {
             if (!meta_suffix.empty()) meta_suffix += " · ";
-            meta_suffix += std::to_string(*data.width) + "\xC3\x97" +
-                           std::to_string(*data.height);
+            meta_suffix += std::to_string(*data.width) + "\xC3\x97" + std::to_string(*data.height);
         }
         if (data.file_size) {
             if (!meta_suffix.empty()) meta_suffix += " · ";
@@ -160,23 +163,30 @@ inline void resolve_from_store(ImageMessageData& data) {
     }
 
     Element label_el;
-    if ((data.source_type == ImageSource::File ||
-         data.source_type == ImageSource::StoreId) &&
+    if ((data.source_type == ImageSource::File || data.source_type == ImageSource::StoreId) &&
         !data.source.empty() && supports_hyperlinks()) {
         // Clickable Link when supported
         std::string file_url = "file://" + data.source;
         label_el = hbox({
-            text((std::string(loom::ui::design::figures::kSquare) + " ")) | color(loom::ui::design::theme::current_theme().palette->text),
-            text(label) | bold | color(loom::ui::design::theme::current_theme().palette->suggestion) | hyperlink(file_url),
-            meta_suffix.empty() ? text("")
-                : text("  " + meta_suffix) | dim | color(loom::ui::design::theme::current_theme().palette->muted),
+            text((std::string(loom::ui::design::figures::kSquare) + " ")) |
+                color(loom::ui::design::theme::current_theme().palette->text),
+            text(label) | bold |
+                color(loom::ui::design::theme::current_theme().palette->suggestion) |
+                hyperlink(file_url),
+            meta_suffix.empty()
+                ? text("")
+                : text("  " + meta_suffix) | dim |
+                      color(loom::ui::design::theme::current_theme().palette->muted),
         });
     } else {
         label_el = hbox({
-            text((std::string(loom::ui::design::figures::kSquare) + " ")) | color(loom::ui::design::theme::current_theme().palette->text),
+            text((std::string(loom::ui::design::figures::kSquare) + " ")) |
+                color(loom::ui::design::theme::current_theme().palette->text),
             text(label) | bold | color(loom::ui::design::theme::current_theme().palette->text),
-            meta_suffix.empty() ? text("")
-                : text("  " + meta_suffix) | dim | color(loom::ui::design::theme::current_theme().palette->muted),
+            meta_suffix.empty()
+                ? text("")
+                : text("  " + meta_suffix) | dim |
+                      color(loom::ui::design::theme::current_theme().palette->muted),
         });
     }
 
@@ -204,14 +214,13 @@ inline void resolve_from_store(ImageMessageData& data) {
         }
         if (!display_source.empty()) {
             std::string file_url = "file://" + data.source;
-            card_parts.push_back(
-                hbox({
-                    text("  ") | dim,
-                    text(std::string(source_icon(data.source_type)) + " ") | dim,
-                    text(display_source) | color(loom::ui::design::theme::current_theme().palette->suggestion) |
-                        (supports_hyperlinks() ? hyperlink(file_url) : nothing),
-                })
-            );
+            card_parts.push_back(hbox({
+                text("  ") | dim,
+                text(std::string(source_icon(data.source_type)) + " ") | dim,
+                text(display_source) |
+                    color(loom::ui::design::theme::current_theme().palette->suggestion) |
+                    (supports_hyperlinks() ? hyperlink(file_url) : nothing),
+            }));
         }
     }
 
@@ -229,16 +238,15 @@ inline void resolve_from_store(ImageMessageData& data) {
 // ============================================================
 
 class ImageMessageComponent : public ComponentBase {
-  public:
+public:
     using OnClickFn = std::function<void()>;
-    using OnCopyFn  = std::function<void(std::string_view)>;
+    using OnCopyFn = std::function<void(std::string_view)>;
 
-    explicit ImageMessageComponent(ImageMessageData data,
-                                   OnClickFn on_click = nullptr,
-                                   OnCopyFn  on_copy  = nullptr)
-        : data_(std::move(data)),
-          on_click_(std::move(on_click)),
-          on_copy_(std::move(on_copy)) {}
+    explicit ImageMessageComponent(ImageMessageData data, OnClickFn on_click = nullptr,
+                                   OnCopyFn on_copy = nullptr)
+        : data_(std::move(data))
+        , on_click_(std::move(on_click))
+        , on_copy_(std::move(on_copy)) {}
 
     Element Render() override {
         auto body = render(data_);
@@ -246,8 +254,10 @@ class ImageMessageComponent : public ComponentBase {
         // Right-side header: timestamp + role tag
         auto header_right = hbox({
             text(" ") | size(WIDTH, EQUAL, 1),
-            text(render_timestamp(data_.timestamp)) | dim | color(loom::ui::design::theme::current_theme().palette->muted),
-            text((" " + std::string(loom::ui::design::figures::kPointer) + " You")) | color(loom::ui::design::theme::current_theme().palette->brief_label_you),
+            text(render_timestamp(data_.timestamp)) | dim |
+                color(loom::ui::design::theme::current_theme().palette->muted),
+            text((" " + std::string(loom::ui::design::figures::kPointer) + " You")) |
+                color(loom::ui::design::theme::current_theme().palette->brief_label_you),
         });
 
         // User message is right-aligned
@@ -259,9 +269,12 @@ class ImageMessageComponent : public ComponentBase {
             hbox({
                 filler(),
                 vbox({
-                    std::move(body)
-                        | (hovered_ ? bgcolor(loom::ui::design::theme::current_theme().palette->message_actions_background) : nothing)
-                        | borderLight | color(loom::ui::design::theme::current_theme().palette->brief_label_you),
+                    std::move(body) |
+                        (hovered_ ? bgcolor(loom::ui::design::theme::current_theme()
+                                                .palette->message_actions_background)
+                                  : nothing) |
+                        borderLight |
+                        color(loom::ui::design::theme::current_theme().palette->brief_label_you),
                 }) | flex_shrink,
             }),
         });
@@ -296,31 +309,29 @@ class ImageMessageComponent : public ComponentBase {
         return ComponentBase::OnEvent(event);
     }
 
-  private:
+private:
     ImageMessageData data_;
     OnClickFn on_click_;
-    OnCopyFn  on_copy_;
+    OnCopyFn on_copy_;
     bool hovered_ = false;
 };
 
 /// Factory function to create an interactive image message component.
-[[nodiscard]] inline Component MakeImageMessage(
-    ImageMessageData data,
-    ImageMessageComponent::OnClickFn on_click = nullptr,
-    ImageMessageComponent::OnCopyFn  on_copy  = nullptr) {
+[[nodiscard]] inline Component MakeImageMessage(ImageMessageData data,
+                                                ImageMessageComponent::OnClickFn on_click = nullptr,
+                                                ImageMessageComponent::OnCopyFn on_copy = nullptr) {
 
     // Resolve store metadata before rendering
     resolve_from_store(data);
-    return Make<ImageMessageComponent>(std::move(data),
-                                        std::move(on_click),
-                                        std::move(on_copy));
+    return Make<ImageMessageComponent>(std::move(data), std::move(on_click), std::move(on_copy));
 }
 
 /// Convenience: render a stateless image message bubble (for previews).
 [[nodiscard]] inline Element RenderImageBubble(const ImageMessageData& data) {
     ImageMessageData d = data;
     resolve_from_store(d);
-    return render(d) | borderLight | color(loom::ui::design::theme::current_theme().palette->brief_label_you);
+    return render(d) | borderLight |
+           color(loom::ui::design::theme::current_theme().palette->brief_label_you);
 }
 
-} // namespace loom::ui::messages::image
+}  // namespace loom::ui::messages::image

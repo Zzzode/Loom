@@ -11,7 +11,6 @@
 ///           faithful tool-use message renderer.
 module;
 
-
 export module loom.ui.tools.registry;
 
 import std;
@@ -37,8 +36,8 @@ struct ToolUIFunctions {
     std::function<std::optional<std::string>(std::string_view input_json)> tag;
 
     /// render_tool_use_progress_message?(input, partial_result?) — progress line.
-    std::function<std::string(std::string_view input_json,
-                              std::string_view partial_result)> progress;
+    std::function<std::string(std::string_view input_json, std::string_view partial_result)>
+        progress;
 
     /// render_tool_use_queued_message?(input) — text shown when queued.
     std::function<std::string(std::string_view input_json)> queued;
@@ -54,9 +53,9 @@ struct ToolUIFunctions {
     /// Arguments:
     ///   output_text   — flattened output string (ToolResultOptions.output)
     ///   error_text    — error message if any (ToolResultOptions.error_message)
-    std::function<std::optional<std::string>(
-        std::string_view output_text,
-        std::string_view error_text)> extract_search_text;
+    std::function<std::optional<std::string>(std::string_view output_text,
+                                             std::string_view error_text)>
+        extract_search_text;
 };
 
 // ============================================================
@@ -70,7 +69,7 @@ struct ToolUIFunctions {
 ///
 /// The registry is not thread-safe; register all tools at startup.
 class ToolUIRegistry {
-  public:
+public:
     /// Register UI functions for a tool.
     /// Replaces any existing entry for the same name.
     void register_tool_ui(std::string name, ToolUIFunctions fns) {
@@ -99,7 +98,7 @@ class ToolUIRegistry {
         return entries_.contains(std::string{name});
     }
 
-  private:
+private:
     std::unordered_map<std::string, ToolUIFunctions> entries_;
 };
 

@@ -13,8 +13,8 @@ namespace fs = std::filesystem;
 // A parsed gitignore pattern
 struct GitignorePattern {
     std::string pattern;
-    bool negated = false;    // Pattern starts with !
-    bool dir_only = false;   // Pattern ends with /
+    bool negated = false;   // Pattern starts with !
+    bool dir_only = false;  // Pattern ends with /
 };
 
 // Parse a single gitignore line into a pattern (or nullopt for comments/empty)
@@ -80,7 +80,7 @@ public:
         if (!file.is_open()) return;
 
         std::string content((std::istreambuf_iterator<char>(file)),
-                           std::istreambuf_iterator<char>());
+                            std::istreambuf_iterator<char>());
 
         fs::path base_dir = gitignore_file.parent_path();
         add_patterns(content, base_dir);
@@ -115,7 +115,7 @@ public:
 private:
     // Simple glob pattern matching
     bool matches_pattern(const std::string& path, const std::string& pattern,
-                        const fs::path& base_dir) const {
+                         const fs::path& base_dir) const {
         // If pattern contains no slash, match against filename component
         if (pattern.find('/') == std::string::npos) {
             // Match against just the filename
@@ -142,11 +142,12 @@ private:
 
         while (t < text.size()) {
             if (p < pattern.size() && (pattern[p] == text[t] || pattern[p] == '?')) {
-                ++t; ++p;
+                ++t;
+                ++p;
             } else if (p < pattern.size() && pattern[p] == '*') {
                 // Check for ** (matches path separators)
                 if (p + 1 < pattern.size() && pattern[p + 1] == '*') {
-                    ++p; // Skip second *
+                    ++p;  // Skip second *
                 }
                 star_p = p++;
                 star_t = t;
@@ -158,7 +159,8 @@ private:
             }
         }
 
-        while (p < pattern.size() && pattern[p] == '*') ++p;
+        while (p < pattern.size() && pattern[p] == '*')
+            ++p;
         return p == pattern.size();
     }
 
@@ -171,4 +173,4 @@ private:
     std::vector<PatternEntry> entries_;
 };
 
-} // namespace loom::utils
+}  // namespace loom::utils

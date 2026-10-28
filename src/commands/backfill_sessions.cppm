@@ -10,8 +10,14 @@ import loom.services.assistant_session_history;
 export namespace loom::commands::backfill_sessions {
 namespace fs = std::filesystem;
 
-struct CommandResponse { bool ok{true}; std::string message; };
-[[nodiscard]] inline auto name() -> std::string_view { return "backfill_sessions"; }
+struct CommandResponse {
+    bool ok{true};
+    std::string message;
+};
+
+[[nodiscard]] inline auto name() -> std::string_view {
+    return "backfill_sessions";
+}
 
 struct LocalSessionMeta {
     std::string id;
@@ -46,11 +52,16 @@ struct LocalSessionMeta {
         if (eq == std::string::npos) continue;
         const auto key = std::string_view(line).substr(0, eq);
         const auto value = std::string_view(line).substr(eq + 1);
-        if (key == "id") meta.id = std::string(value);
-        else if (key == "title") meta.title = std::string(value);
-        else if (key == "cwd") meta.cwd = std::string(value);
-        else if (key == "message_count") meta.message_count = parse_u64(value);
-        else if (key == "updated_at") meta.updated_at_epoch = parse_u64(value);
+        if (key == "id")
+            meta.id = std::string(value);
+        else if (key == "title")
+            meta.title = std::string(value);
+        else if (key == "cwd")
+            meta.cwd = std::string(value);
+        else if (key == "message_count")
+            meta.message_count = parse_u64(value);
+        else if (key == "updated_at")
+            meta.updated_at_epoch = parse_u64(value);
     }
 
     if (meta.id.empty()) return std::nullopt;
@@ -82,7 +93,8 @@ struct LocalSessionMeta {
         try {
             limit = static_cast<std::size_t>(std::stoull(std::string(scope)));
         } catch (...) {
-            return {.ok = false, .message = "backfill-sessions expects an optional numeric limit or 'all'"};
+            return {.ok = false,
+                    .message = "backfill-sessions expects an optional numeric limit or 'all'"};
         }
     }
 
@@ -102,7 +114,8 @@ struct LocalSessionMeta {
             .title = session.title.empty() ? session.id : session.title,
             .timestamp = std::to_string(session.updated_at_epoch),
             .message_count = static_cast<std::uint64_t>(session.message_count),
-            .project_path = session.cwd.empty() ? std::nullopt : std::optional<std::string>{session.cwd},
+            .project_path =
+                session.cwd.empty() ? std::nullopt : std::optional<std::string>{session.cwd},
         };
         if (loom::services::assistant::save_session_entry(entry, "")) {
             ++added;
@@ -110,8 +123,10 @@ struct LocalSessionMeta {
         }
     }
 
-    return {.ok = true, .message = std::format(
-        "Session history backfill complete: scanned {}, added {}, history path {}",
-        sessions.size(), added, loom::services::assistant::default_history_path().string())};
+    return {.ok = true,
+            .message = std::format(
+                "Session history backfill complete: scanned {}, added {}, history path {}",
+                sessions.size(), added,
+                loom::services::assistant::default_history_path().string())};
 }
-}
+}  // namespace loom::commands::backfill_sessions

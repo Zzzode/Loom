@@ -21,21 +21,15 @@ export namespace loom::state::on_change {
 
 /// Check if a value has changed between two states
 template <typename Getter>
-[[nodiscard]] inline bool has_changed(
-    const AppState& prev,
-    const AppState& next,
-    Getter get_value
-) noexcept {
+[[nodiscard]] inline bool has_changed(const AppState& prev, const AppState& next,
+                                      Getter get_value) noexcept {
     return get_value(prev) != get_value(next);
 }
 
 /// Check if an optional value has changed
 template <typename Getter>
-[[nodiscard]] inline bool optional_has_changed(
-    const AppState& prev,
-    const AppState& next,
-    Getter get_value
-) noexcept {
+[[nodiscard]] inline bool optional_has_changed(const AppState& prev, const AppState& next,
+                                               Getter get_value) noexcept {
     const auto& prev_val = get_value(prev);
     const auto& next_val = get_value(next);
     if (prev_val.has_value() != next_val.has_value()) {
@@ -55,10 +49,8 @@ template <typename Getter>
 using StateChangeCallback = std::function<void(const AppState& prev, const AppState& next)>;
 
 /// Type for conditional state change callbacks
-using ConditionalCallback = std::pair<
-    std::function<bool(const AppState& prev, const AppState& next)>,
-    StateChangeCallback
->;
+using ConditionalCallback =
+    std::pair<std::function<bool(const AppState& prev, const AppState& next)>, StateChangeCallback>;
 
 // ============================================================
 // State Change Handler Registry
@@ -73,17 +65,14 @@ public:
     /// Register a callback that always runs on any state change
     void register_callback(StateChangeCallback callback) {
         std::unique_lock lock(mutex_);
-        callbacks_.push_back({
-            [](const AppState&, const AppState&) { return true; },
-            std::move(callback)
-        });
+        callbacks_.push_back(
+            {[](const AppState&, const AppState&) { return true; }, std::move(callback)});
     }
 
     /// Register a conditional callback that runs only when the condition is true
-    void register_conditional_callback(
-        std::function<bool(const AppState&, const AppState&)> condition,
-        StateChangeCallback callback
-    ) {
+    void
+    register_conditional_callback(std::function<bool(const AppState&, const AppState&)> condition,
+                                  StateChangeCallback callback) {
         std::unique_lock lock(mutex_);
         callbacks_.push_back({std::move(condition), std::move(callback)});
     }
@@ -119,7 +108,8 @@ public:
 }
 
 /// Check if compact mode has changed
-[[nodiscard]] inline bool compact_mode_changed(const AppState& prev, const AppState& next) noexcept {
+[[nodiscard]] inline bool compact_mode_changed(const AppState& prev,
+                                               const AppState& next) noexcept {
     return has_changed(prev, next, &selectors::is_compact_mode);
 }
 
@@ -129,32 +119,38 @@ public:
 }
 
 /// Check if expanded view has changed
-[[nodiscard]] inline bool expanded_view_changed(const AppState& prev, const AppState& next) noexcept {
+[[nodiscard]] inline bool expanded_view_changed(const AppState& prev,
+                                                const AppState& next) noexcept {
     return has_changed(prev, next, &selectors::get_expanded_view);
 }
 
 /// Check if permission mode has changed
-[[nodiscard]] inline bool permission_mode_changed(const AppState& prev, const AppState& next) noexcept {
+[[nodiscard]] inline bool permission_mode_changed(const AppState& prev,
+                                                  const AppState& next) noexcept {
     return has_changed(prev, next, &selectors::get_permission_mode);
 }
 
 /// Check if remote connection status has changed
-[[nodiscard]] inline bool remote_connection_changed(const AppState& prev, const AppState& next) noexcept {
+[[nodiscard]] inline bool remote_connection_changed(const AppState& prev,
+                                                    const AppState& next) noexcept {
     return has_changed(prev, next, &selectors::get_remote_connection_status);
 }
 
 /// Check if repl bridge enabled has changed
-[[nodiscard]] inline bool repl_bridge_enabled_changed(const AppState& prev, const AppState& next) noexcept {
+[[nodiscard]] inline bool repl_bridge_enabled_changed(const AppState& prev,
+                                                      const AppState& next) noexcept {
     return has_changed(prev, next, &selectors::is_repl_bridge_enabled);
 }
 
 /// Check if repl bridge connected has changed
-[[nodiscard]] inline bool repl_bridge_connected_changed(const AppState& prev, const AppState& next) noexcept {
+[[nodiscard]] inline bool repl_bridge_connected_changed(const AppState& prev,
+                                                        const AppState& next) noexcept {
     return has_changed(prev, next, &selectors::is_repl_bridge_connected);
 }
 
 /// Check if main loop model has changed
-[[nodiscard]] inline bool main_loop_model_changed(const AppState& prev, const AppState& next) noexcept {
+[[nodiscard]] inline bool main_loop_model_changed(const AppState& prev,
+                                                  const AppState& next) noexcept {
     return optional_has_changed(prev, next, &selectors::get_main_loop_model);
 }
 
@@ -174,12 +170,14 @@ public:
 }
 
 /// Check if ultraplan mode has changed
-[[nodiscard]] inline bool ultraplan_mode_changed(const AppState& prev, const AppState& next) noexcept {
+[[nodiscard]] inline bool ultraplan_mode_changed(const AppState& prev,
+                                                 const AppState& next) noexcept {
     return has_changed(prev, next, &selectors::is_ultraplan_mode);
 }
 
 /// Check if mcp plugin reconnect key has changed
-[[nodiscard]] inline bool mcp_reconnect_key_changed(const AppState& prev, const AppState& next) noexcept {
+[[nodiscard]] inline bool mcp_reconnect_key_changed(const AppState& prev,
+                                                    const AppState& next) noexcept {
     return has_changed(prev, next, &selectors::get_mcp_plugin_reconnect_key);
 }
 
@@ -235,46 +233,26 @@ inline void on_mcp_reconnect_key_changed(const AppState&, const AppState&) {
 /// Set up default handlers in a registry
 inline void setup_default_handlers(StateChangeRegistry& registry) {
     // Permission mode changes
-    registry.register_conditional_callback(
-        &permission_mode_changed,
-        &on_permission_mode_changed
-    );
+    registry.register_conditional_callback(&permission_mode_changed, &on_permission_mode_changed);
 
     // Main loop model changes
-    registry.register_conditional_callback(
-        &main_loop_model_changed,
-        &on_main_loop_model_changed
-    );
+    registry.register_conditional_callback(&main_loop_model_changed, &on_main_loop_model_changed);
 
     // Verbose mode changes
-    registry.register_conditional_callback(
-        &verbose_changed,
-        &on_verbose_mode_changed
-    );
+    registry.register_conditional_callback(&verbose_changed, &on_verbose_mode_changed);
 
     // Expanded view changes
-    registry.register_conditional_callback(
-        &expanded_view_changed,
-        &on_expanded_view_changed
-    );
+    registry.register_conditional_callback(&expanded_view_changed, &on_expanded_view_changed);
 
     // Messages changes
-    registry.register_conditional_callback(
-        &messages_changed,
-        &on_messages_changed
-    );
+    registry.register_conditional_callback(&messages_changed, &on_messages_changed);
 
     // Tasks changes
-    registry.register_conditional_callback(
-        &tasks_changed,
-        &on_tasks_changed
-    );
+    registry.register_conditional_callback(&tasks_changed, &on_tasks_changed);
 
     // MCP reconnect key changes
-    registry.register_conditional_callback(
-        &mcp_reconnect_key_changed,
-        &on_mcp_reconnect_key_changed
-    );
+    registry.register_conditional_callback(&mcp_reconnect_key_changed,
+                                           &on_mcp_reconnect_key_changed);
 }
 
 // ============================================================
@@ -293,4 +271,4 @@ inline void initialize_global_registry() {
     setup_default_handlers(registry);
 }
 
-} // namespace loom::state::on_change
+}  // namespace loom::state::on_change

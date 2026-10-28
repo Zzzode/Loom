@@ -85,24 +85,25 @@ public:
         return CommandDefinition{
             .name = "plugin",
             .description = "Manage Loom plugins (install, enable, validate, marketplaces)",
-            .args = {
-                CommandArg{
-                    .name = "subcommand",
-                    .description =
-                        "help | install | uninstall | enable | disable | manage | "
-                        "list | validate | marketplace | info",
-                    .type = ArgType::Choice,
-                    .required = false,
-                    .choices = {"help",    "install", "uninstall", "enable", "disable",
-                                "manage",  "list",    "info",      "validate", "marketplace"},
+            .args =
+                {
+                    CommandArg{
+                        .name = "subcommand",
+                        .description = "help | install | uninstall | enable | disable | manage | "
+                                       "list | validate | marketplace | info",
+                        .type = ArgType::Choice,
+                        .required = false,
+                        .choices = {"help", "install", "uninstall", "enable", "disable", "manage",
+                                    "list", "info", "validate", "marketplace"},
+                    },
+                    CommandArg{
+                        .name = "target",
+                        .description =
+                            "Plugin name, plugin@marketplace, marketplace URL, validate path",
+                        .type = ArgType::Text,
+                        .required = false,
+                    },
                 },
-                CommandArg{
-                    .name = "target",
-                    .description = "Plugin name, plugin@marketplace, marketplace URL, validate path",
-                    .type = ArgType::Text,
-                    .required = false,
-                },
-            },
             .category = "tools",
             .aliases = {"plugins", "marketplace"},
             .hidden = false,
@@ -115,20 +116,22 @@ public:
         if (ctx.args.empty()) return {};
 
         static constexpr std::array<std::string_view, 11> valid = {
-            "help", "--help", "-h",
-            "install", "i",
-            "manage", "list", "info",
-            "uninstall", "enable", "disable",
+            "help", "--help", "-h",        "install", "i",       "manage",
+            "list", "info",   "uninstall", "enable",  "disable",
             // "validate" and "marketplace" are handled inline because they
             // carry sub-actions.  We accept them here to keep the gate loose.
         };
         static constexpr std::array<std::string_view, 4> also_valid = {
-            "validate", "marketplace", "market", "m",
+            "validate",
+            "marketplace",
+            "market",
+            "m",
         };
 
         const auto action = [&] {
             std::string s{ctx.args[0]};
-            for (char& c : s) c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+            for (char& c : s)
+                c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
             return s;
         }();
 
@@ -139,8 +142,7 @@ public:
 
         return std::unexpected(Error::make(
             ErrorCode::InvalidRequest,
-            std::format("Unknown /plugin subcommand: '{}'. Try /plugin help.", ctx.args[0])
-        ));
+            std::format("Unknown /plugin subcommand: '{}'. Try /plugin help.", ctx.args[0])));
     }
 
     // ── execute ───────────────────────────────────────────────────────────
@@ -149,55 +151,53 @@ public:
         // sees the full argument string.
         const std::string raw = join_args(ctx.args);
         const ParsedArgs cmd = parse_plugin_args(
-            raw.empty() ? std::optional<std::string_view>{}
-                        : std::optional<std::string_view>{raw}
-        );
+            raw.empty() ? std::optional<std::string_view>{} : std::optional<std::string_view>{raw});
 
         switch (cmd.type) {
-            case SubcommandType::Help:
-                return CommandResult::success(std::string{k_plugin_help_text});
+        case SubcommandType::Help:
+            return CommandResult::success(std::string{k_plugin_help_text});
 
-            case SubcommandType::Menu:
-                // Bare `/plugin` (or any unrecognized subcommand) routes
-                // directly to the Discover tab with NO intermediate text.
-                // We return empty text + the spawn metadata so the REPL
-                // opens the dialog straight onto the Discover tab.
-                return CommandResult{
-                    true,
-                    std::string{},
-                    std::string{"UI:plugins:discover-plugins"},
-                    CommandStatus::Succeeded,
-                };
+        case SubcommandType::Menu:
+            // Bare `/plugin` (or any unrecognized subcommand) routes
+            // directly to the Discover tab with NO intermediate text.
+            // We return empty text + the spawn metadata so the REPL
+            // opens the dialog straight onto the Discover tab.
+            return CommandResult{
+                true,
+                std::string{},
+                std::string{"UI:plugins:discover-plugins"},
+                CommandStatus::Succeeded,
+            };
 
-            case SubcommandType::Install:
-                return cmd_install(cmd);
+        case SubcommandType::Install:
+            return cmd_install(cmd);
 
-            case SubcommandType::Manage:
-                // `/plugin manage` routes directly to the Installed
-                // (manage-plugins) tab with NO textual list printed first.
-                // Return only the spawn metadata; the dialog renders the
-                // installed plugins.
-                return CommandResult{
-                    true,
-                    std::string{},
-                    std::string{"UI:plugins:manage-plugins"},
-                    CommandStatus::Succeeded,
-                };
+        case SubcommandType::Manage:
+            // `/plugin manage` routes directly to the Installed
+            // (manage-plugins) tab with NO textual list printed first.
+            // Return only the spawn metadata; the dialog renders the
+            // installed plugins.
+            return CommandResult{
+                true,
+                std::string{},
+                std::string{"UI:plugins:manage-plugins"},
+                CommandStatus::Succeeded,
+            };
 
-            case SubcommandType::Uninstall:
-                return cmd_uninstall(cmd);
+        case SubcommandType::Uninstall:
+            return cmd_uninstall(cmd);
 
-            case SubcommandType::Enable:
-                return cmd_set_enabled(cmd, true);
+        case SubcommandType::Enable:
+            return cmd_set_enabled(cmd, true);
 
-            case SubcommandType::Disable:
-                return cmd_set_enabled(cmd, false);
+        case SubcommandType::Disable:
+            return cmd_set_enabled(cmd, false);
 
-            case SubcommandType::Validate:
-                return cmd_validate(cmd);
+        case SubcommandType::Validate:
+            return cmd_validate(cmd);
 
-            case SubcommandType::Marketplace:
-                return cmd_marketplace(cmd);
+        case SubcommandType::Marketplace:
+            return cmd_marketplace(cmd);
         }
         return CommandResult{
             true,
@@ -211,8 +211,8 @@ public:
     [[nodiscard]] std::vector<std::string> complete(std::string_view partial) {
         std::vector<std::string> suggestions;
         // Subcommand names
-        for (auto s : {"help", "install", "i", "uninstall", "enable", "disable",
-                        "manage", "list", "info", "validate", "marketplace", "market"}) {
+        for (auto s : {"help", "install", "i", "uninstall", "enable", "disable", "manage", "list",
+                       "info", "validate", "marketplace", "market"}) {
             if (std::string_view(s).starts_with(partial)) {
                 suggestions.emplace_back(s);
             }
@@ -257,9 +257,8 @@ private:
         if (cmd.marketplace && !cmd.plugin_name) {
             auto plan = classify_marketplace_input(*cmd.marketplace);
             if (!plan.ok) {
-                return CommandResult::fail(
-                    "Could not determine marketplace source: " + plan.error_message
-                );
+                return CommandResult::fail("Could not determine marketplace source: " +
+                                           plan.error_message);
             }
             return CommandResult{
                 true,
@@ -270,35 +269,28 @@ private:
         }
 
         // Case 3: plugin name (and optionally marketplace) — try direct install
-        const std::string plugin_id =
-            cmd.marketplace
-                ? (*cmd.plugin_name + '@' + *cmd.marketplace)
-                : std::string{*cmd.plugin_name};
+        const std::string plugin_id = cmd.marketplace ? (*cmd.plugin_name + '@' + *cmd.marketplace)
+                                                      : std::string{*cmd.plugin_name};
 
         try {
             loom::utils::plugins::PluginInstallOptions opts;
             // Don't force unless we know it's already installed (handled below).
             auto r = loom::utils::plugins::install_plugin(plugin_id, opts);
             if (!r) {
-                return CommandResult::fail(
-                    "Install failed for '" + plugin_id + "': " + r.error()
-                );
+                return CommandResult::fail("Install failed for '" + plugin_id + "': " + r.error());
             }
             std::ostringstream os;
-            os << "Installed '" << r->plugin_id << "' v"
-               << r->installed_version.major << '.'
-               << r->installed_version.minor << '.'
-               << r->installed_version.patch
-               << " in " << r->duration.count() << "ms.";
+            os << "Installed '" << r->plugin_id << "' v" << r->installed_version.major << '.'
+               << r->installed_version.minor << '.' << r->installed_version.patch << " in "
+               << r->duration.count() << "ms.";
             if (!r->warnings.empty()) {
                 os << "\nWarnings:";
-                for (const auto& w : r->warnings) os << "\n  • " << w;
+                for (const auto& w : r->warnings)
+                    os << "\n  • " << w;
             }
             return CommandResult::success(os.str());
         } catch (const std::exception& e) {
-            return CommandResult::fail(
-                "Install failed for '" + plugin_id + "': " + e.what()
-            );
+            return CommandResult::fail("Install failed for '" + plugin_id + "': " + e.what());
         }
     }
 
@@ -314,24 +306,20 @@ private:
         }
         auto r = loom::utils::plugin_manager::remove_installed_plugin(*cmd.target_plugin);
         if (!r) {
-            return CommandResult::fail(
-                "Plugin '" + *cmd.target_plugin + "' is not installed."
-            );
+            return CommandResult::fail("Plugin '" + *cmd.target_plugin + "' is not installed.");
         }
         return CommandResult::success("Plugin '" + *cmd.target_plugin + "' uninstalled.");
     }
 
     // ── enable / disable ─────────────────────────────────────────────────
-    [[nodiscard]] Result<CommandResult> cmd_set_enabled(const ParsedArgs& cmd,
-                                                         bool enable) const {
+    [[nodiscard]] Result<CommandResult> cmd_set_enabled(const ParsedArgs& cmd, bool enable) const {
         if (!cmd.target_plugin) {
             const std::string view =
-                enable ? "manage-plugins?action=enable"
-                       : "manage-plugins?action=disable";
+                enable ? "manage-plugins?action=enable" : "manage-plugins?action=disable";
             return CommandResult{
                 true,
-                std::string{"Pick a plugin to "} + (enable ? "enable" : "disable")
-                    + ".\nUI:plugins:" + view,
+                std::string{"Pick a plugin to "} + (enable ? "enable" : "disable") +
+                    ".\nUI:plugins:" + view,
                 "UI:plugins:" + view,
                 CommandStatus::Succeeded,
             };
@@ -351,20 +339,15 @@ private:
             // lifecycle layer.  We use plugin_lifecycle for this op.
             auto r = loom::utils::plugins::set_plugin_enabled(id, enable);
             if (!r) {
-                return CommandResult::fail(
-                    std::string{enable ? "Enable" : "Disable"}
-                        + " failed for '" + id + "': " + r.error()
-                );
+                return CommandResult::fail(std::string{enable ? "Enable" : "Disable"} +
+                                           " failed for '" + id + "': " + r.error());
             }
         } catch (const std::exception& e) {
-            return CommandResult::fail(
-                std::string{enable ? "Enable" : "Disable"}
-                    + " failed for '" + id + "': " + e.what()
-            );
+            return CommandResult::fail(std::string{enable ? "Enable" : "Disable"} +
+                                       " failed for '" + id + "': " + e.what());
         }
-        return CommandResult::success(
-            "Plugin '" + id + "' " + (enable ? "enabled" : "disabled") + "."
-        );
+        return CommandResult::success("Plugin '" + id + "' " + (enable ? "enabled" : "disabled") +
+                                      ".");
     }
 
     // ── validate ─────────────────────────────────────────────────────────
@@ -388,133 +371,120 @@ private:
         namespace pm = loom::utils::plugin_marketplace;
 
         switch (cmd.market_action) {
-            case MarketplaceAction::None:
-                // Bare "marketplace" with no sub-action → open the
-                // Marketplaces tab directly via metadata, no intermediate
-                // text. Matches the Manage/Install pattern.
+        case MarketplaceAction::None:
+            // Bare "marketplace" with no sub-action → open the
+            // Marketplaces tab directly via metadata, no intermediate
+            // text. Matches the Manage/Install pattern.
+            return CommandResult{
+                true,
+                std::string{},
+                std::string{"UI:plugins:manage-marketplaces"},
+                CommandStatus::Succeeded,
+            };
+
+        case MarketplaceAction::List: {
+            auto cfg = pm::load_known_marketplaces_config_safe();
+            if (cfg.empty()) {
+                return CommandResult::success("No marketplaces configured.\n"
+                                              "Add one with /plugin marketplace add <source>.");
+            }
+            std::ostringstream os;
+            os << "Configured marketplaces (" << cfg.size() << "):\n\n";
+            for (const auto& [name, info] : cfg) {
+                os << "  • " << name;
+                if (info.last_updated) os << "  (updated: " << *info.last_updated << ')';
+                os << '\n';
+            }
+            os << "\nTip: /plugin marketplace <add|remove|update> <name>\n"
+               << "     Open interactive UI: UI:plugins:manage-marketplaces";
+            return CommandResult::success(os.str());
+        }
+
+        case MarketplaceAction::Add: {
+            if (cmd.market_target.empty()) {
                 return CommandResult{
                     true,
-                    std::string{},
-                    std::string{"UI:plugins:manage-marketplaces"},
+                    "Enter a marketplace source to add.\n"
+                    "UI:plugins:add-marketplace",
+                    std::string{"UI:plugins:add-marketplace"},
                     CommandStatus::Succeeded,
                 };
-
-            case MarketplaceAction::List: {
-                auto cfg = pm::load_known_marketplaces_config_safe();
-                if (cfg.empty()) {
-                    return CommandResult::success(
-                        "No marketplaces configured.\n"
-                        "Add one with /plugin marketplace add <source>."
-                    );
-                }
-                std::ostringstream os;
-                os << "Configured marketplaces (" << cfg.size() << "):\n\n";
-                for (const auto& [name, info] : cfg) {
-                    os << "  • " << name;
-                    if (info.last_updated) os << "  (updated: " << *info.last_updated << ')';
-                    os << '\n';
-                }
-                os << "\nTip: /plugin marketplace <add|remove|update> <name>\n"
-                   << "     Open interactive UI: UI:plugins:manage-marketplaces";
-                return CommandResult::success(os.str());
             }
-
-            case MarketplaceAction::Add: {
-                if (cmd.market_target.empty()) {
-                    return CommandResult{
-                        true,
-                        "Enter a marketplace source to add.\n"
-                        "UI:plugins:add-marketplace",
-                        std::string{"UI:plugins:add-marketplace"},
-                        CommandStatus::Succeeded,
-                    };
-                }
-                auto plan = classify_marketplace_input(cmd.market_target);
-                if (!plan.ok) {
-                    return CommandResult::fail(plan.error_message);
-                }
-                // Build a MarketplaceSource variant and pass to plugin_marketplace.
-                pm::MarketplaceSource src;
-                if (plan.source_kind == "github") {
-                    pm::GitHubMarketplaceSource gh;
-                    gh.repo = plan.source_detail;
-                    src = gh;
-                } else if (plan.source_kind == "git") {
-                    pm::GitMarketplaceSource g;
-                    g.url = plan.source_detail;
-                    src = g;
-                } else if (plan.source_kind == "url") {
-                    pm::UrlMarketplaceSource u;
-                    u.url = plan.source_detail;
-                    src = u;
-                } else if (plan.source_kind == "file") {
-                    pm::FileMarketplaceSource f;
-                    f.path = plan.source_detail;
-                    src = f;
-                } else { // directory
-                    pm::DirectoryMarketplaceSource d;
-                    d.path = plan.source_detail;
-                    src = d;
-                }
-                auto r = pm::add_marketplace_source(plan.normalized_name, src);
-                if (!r) {
-                    return CommandResult::fail(
-                        "Failed to add marketplace '" + plan.normalized_name
-                            + "': " + r.error()
-                    );
-                }
-                return CommandResult::success(
-                    "Successfully added marketplace: " + plan.normalized_name
-                        + "  (" + plan.source_kind + ')'
-                );
+            auto plan = classify_marketplace_input(cmd.market_target);
+            if (!plan.ok) {
+                return CommandResult::fail(plan.error_message);
             }
-
-            case MarketplaceAction::Remove: {
-                if (cmd.market_target.empty()) {
-                    return CommandResult{
-                        true,
-                        "Pick a marketplace to remove.\n"
-                        "UI:plugins:manage-marketplaces?action=remove",
-                        std::string{"UI:plugins:manage-marketplaces?action=remove"},
-                        CommandStatus::Succeeded,
-                    };
-                }
-                auto r = pm::remove_marketplace(cmd.market_target);
-                if (!r) {
-                    return CommandResult::fail(
-                        "Failed to remove marketplace '" + cmd.market_target
-                            + "': " + r.error()
-                    );
-                }
-                return CommandResult::success(
-                    "Marketplace '" + cmd.market_target + "' removed."
-                );
+            // Build a MarketplaceSource variant and pass to plugin_marketplace.
+            pm::MarketplaceSource src;
+            if (plan.source_kind == "github") {
+                pm::GitHubMarketplaceSource gh;
+                gh.repo = plan.source_detail;
+                src = gh;
+            } else if (plan.source_kind == "git") {
+                pm::GitMarketplaceSource g;
+                g.url = plan.source_detail;
+                src = g;
+            } else if (plan.source_kind == "url") {
+                pm::UrlMarketplaceSource u;
+                u.url = plan.source_detail;
+                src = u;
+            } else if (plan.source_kind == "file") {
+                pm::FileMarketplaceSource f;
+                f.path = plan.source_detail;
+                src = f;
+            } else {  // directory
+                pm::DirectoryMarketplaceSource d;
+                d.path = plan.source_detail;
+                src = d;
             }
-
-            case MarketplaceAction::Update: {
-                if (cmd.market_target.empty()) {
-                    // Update all — trigger TUI (user can see progress)
-                    return CommandResult{
-                        true,
-                        "Updating all marketplaces…\n"
-                        "UI:plugins:manage-marketplaces?action=update",
-                        std::string{"UI:plugins:manage-marketplaces?action=update"},
-                        CommandStatus::Succeeded,
-                    };
-                }
-                // Individual fetch via plugin_marketplace.
-                auto r = pm::fetch_marketplace(cmd.market_target);
-                if (!r) {
-                    return CommandResult::fail(
-                        "Update failed for '" + cmd.market_target
-                            + "': " + r.error()
-                    );
-                }
-                return CommandResult::success(
-                    "Updated marketplace '" + cmd.market_target
-                        + "' — " + std::to_string(r->plugins.size()) + " plugins available."
-                );
+            auto r = pm::add_marketplace_source(plan.normalized_name, src);
+            if (!r) {
+                return CommandResult::fail("Failed to add marketplace '" + plan.normalized_name +
+                                           "': " + r.error());
             }
+            return CommandResult::success("Successfully added marketplace: " +
+                                          plan.normalized_name + "  (" + plan.source_kind + ')');
+        }
+
+        case MarketplaceAction::Remove: {
+            if (cmd.market_target.empty()) {
+                return CommandResult{
+                    true,
+                    "Pick a marketplace to remove.\n"
+                    "UI:plugins:manage-marketplaces?action=remove",
+                    std::string{"UI:plugins:manage-marketplaces?action=remove"},
+                    CommandStatus::Succeeded,
+                };
+            }
+            auto r = pm::remove_marketplace(cmd.market_target);
+            if (!r) {
+                return CommandResult::fail("Failed to remove marketplace '" + cmd.market_target +
+                                           "': " + r.error());
+            }
+            return CommandResult::success("Marketplace '" + cmd.market_target + "' removed.");
+        }
+
+        case MarketplaceAction::Update: {
+            if (cmd.market_target.empty()) {
+                // Update all — trigger TUI (user can see progress)
+                return CommandResult{
+                    true,
+                    "Updating all marketplaces…\n"
+                    "UI:plugins:manage-marketplaces?action=update",
+                    std::string{"UI:plugins:manage-marketplaces?action=update"},
+                    CommandStatus::Succeeded,
+                };
+            }
+            // Individual fetch via plugin_marketplace.
+            auto r = pm::fetch_marketplace(cmd.market_target);
+            if (!r) {
+                return CommandResult::fail("Update failed for '" + cmd.market_target +
+                                           "': " + r.error());
+            }
+            return CommandResult::success("Updated marketplace '" + cmd.market_target + "' — " +
+                                          std::to_string(r->plugins.size()) +
+                                          " plugins available.");
+        }
         }
         return CommandResult::fail("Unknown marketplace action.");
     }
@@ -541,9 +511,8 @@ private:
         return std::filesystem::temp_directory_path() / "loom" / "plugins";
     }
 
-    [[nodiscard]] static std::optional<std::string> extract_json_string(
-        std::string_view json, std::string_view key
-    ) {
+    [[nodiscard]] static std::optional<std::string> extract_json_string(std::string_view json,
+                                                                        std::string_view key) {
         const auto marker = std::string{"\""} + std::string(key) + "\":\"";
         auto pos = json.find(marker);
         if (pos == std::string_view::npos) return std::nullopt;
@@ -572,30 +541,30 @@ private:
             if (name.starts_with(".")) continue;
 
             PluginInfo info{
-                .name        = name,
-                .version     = "unknown",
-                .author      = "unknown",
+                .name = name,
+                .version = "unknown",
+                .author = "unknown",
                 .description = "Installed plugin",
-                .enabled     = !fs::exists(entry.path() / ".disabled", ec),
-                .installed   = true,
+                .enabled = !fs::exists(entry.path() / ".disabled", ec),
+                .installed = true,
             };
 
             const auto manifest = entry.path() / "manifest.json";
             if (fs::exists(manifest, ec)) {
                 std::ifstream in(manifest);
                 std::string buf((std::istreambuf_iterator<char>(in)),
-                                 std::istreambuf_iterator<char>());
-                if (auto v = extract_json_string(buf, "version"))     info.version     = *v;
-                if (auto a = extract_json_string(buf, "author"))      info.author      = *a;
+                                std::istreambuf_iterator<char>());
+                if (auto v = extract_json_string(buf, "version")) info.version = *v;
+                if (auto a = extract_json_string(buf, "author")) info.author = *a;
                 if (auto d = extract_json_string(buf, "description")) info.description = *d;
             }
 
             plugins.push_back(std::move(info));
         }
         std::ranges::sort(plugins,
-            [](const PluginInfo& a, const PluginInfo& b){ return a.name < b.name; });
+                          [](const PluginInfo& a, const PluginInfo& b) { return a.name < b.name; });
         return plugins;
     }
 };
 
-} // namespace loom::commands
+}  // namespace loom::commands

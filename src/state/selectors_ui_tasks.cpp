@@ -4,8 +4,8 @@
 // name-registry selectors, plus the task-view / multi-agent composites.
 module;
 
-#include <cstdint>
 #include <cstddef>
+#include <cstdint>
 
 module loom.state.selectors;
 
@@ -77,7 +77,8 @@ namespace loom::state::selectors {
 }
 
 /// Get the foregrounded task ID
-[[nodiscard]] std::optional<std::string_view> get_foregrounded_task_id(const AppState& state) noexcept {
+[[nodiscard]] std::optional<std::string_view>
+get_foregrounded_task_id(const AppState& state) noexcept {
     if (state.foregrounded_task_id) {
         return *state.foregrounded_task_id;
     }
@@ -90,7 +91,8 @@ namespace loom::state::selectors {
 }
 
 /// Get the viewing agent task ID
-[[nodiscard]] std::optional<std::string_view> get_viewing_agent_task_id(const AppState& state) noexcept {
+[[nodiscard]] std::optional<std::string_view>
+get_viewing_agent_task_id(const AppState& state) noexcept {
     if (state.viewing_agent_task_id) {
         return *state.viewing_agent_task_id;
     }
@@ -113,7 +115,8 @@ namespace loom::state::selectors {
 }
 
 /// Get an agent ID by name
-[[nodiscard]] std::optional<std::string_view> get_agent_id_by_name(const AppState& state, std::string_view name) noexcept {
+[[nodiscard]] std::optional<std::string_view> get_agent_id_by_name(const AppState& state,
+                                                                   std::string_view name) noexcept {
     auto it = state.agent_name_registry.find(std::string(name));
     if (it != state.agent_name_registry.end()) {
         return it->second;
@@ -127,15 +130,14 @@ namespace loom::state::selectors {
 
 /// Check if any task-related view is active
 [[nodiscard]] bool is_any_task_view_active(const AppState& state) noexcept {
-    return is_tasks_view_expanded(state) || 
-           state.foregrounded_task_id.has_value() ||
+    return is_tasks_view_expanded(state) || state.foregrounded_task_id.has_value() ||
            state.viewing_agent_task_id.has_value();
 }
 
 /// Check if we're in a multi-agent mode
 [[nodiscard]] bool is_multi_agent_mode(const AppState& state) noexcept {
-    return state.view_selection_mode == "selecting-agent" || 
+    return state.view_selection_mode == "selecting-agent" ||
            state.view_selection_mode == "viewing-agent";
 }
 
-} // namespace loom::state::selectors
+}  // namespace loom::state::selectors

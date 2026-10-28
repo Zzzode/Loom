@@ -46,10 +46,11 @@ bool PermissionCoordinator::wait_permission_response(RequestToken token) {
 }
 
 bool PermissionCoordinator::resolve_permission(RequestToken token, bool allowed,
-                                                std::string_view always_allow_tool) {
+                                               std::string_view always_allow_tool) {
     std::lock_guard lock(permission_mutex_);
     if (stopping_.load() || token == 0 || token != permission_active_ ||
-        permission_response_.has_value()) return false;
+        permission_response_.has_value())
+        return false;
     if (allowed && !always_allow_tool.empty()) {
         always_allowed_tools_.insert(std::string(always_allow_tool));
     }
@@ -93,7 +94,8 @@ bool PermissionCoordinator::wait_elicitation_response(RequestToken token) {
 bool PermissionCoordinator::resolve_elicitation(RequestToken token, bool approved) {
     std::lock_guard lock(elicitation_mutex_);
     if (stopping_.load() || token == 0 || token != elicitation_active_ ||
-        elicitation_response_.has_value()) return false;
+        elicitation_response_.has_value())
+        return false;
     elicitation_response_ = approved;
     elicitation_cv_.notify_all();
     return true;
@@ -110,11 +112,17 @@ void PermissionCoordinator::finish_elicitation_request(RequestToken token) {
 void PermissionCoordinator::abort_all() {
     stopping_.store(true);
     // Take each slot lock so an entering wait cannot miss the shutdown wake.
-    { std::lock_guard lock(permission_mutex_); }
+    {
+        std::lock_guard lock(permission_mutex_);
+    }
     permission_cv_.notify_all();
-    { std::lock_guard lock(elicitation_mutex_); }
+    {
+        std::lock_guard lock(elicitation_mutex_);
+    }
     elicitation_cv_.notify_all();
-    { std::lock_guard lock(ask_user_mutex_); }
+    {
+        std::lock_guard lock(ask_user_mutex_);
+    }
     ask_user_cv_.notify_all();
 }
 
@@ -125,9 +133,7 @@ void PermissionCoordinator::reset_ask_user_response() {
 
 std::optional<std::string> PermissionCoordinator::wait_ask_user_response() {
     std::unique_lock lock(ask_user_mutex_);
-    ask_user_cv_.wait(lock, [this] {
-        return stopping_.load() || ask_user_response_.has_value();
-    });
+    ask_user_cv_.wait(lock, [this] { return stopping_.load() || ask_user_response_.has_value(); });
     if (stopping_.load()) return std::nullopt;
     auto result = *ask_user_response_;
     ask_user_response_.reset();

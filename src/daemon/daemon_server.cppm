@@ -3,19 +3,20 @@
 /// session spawning, work queue polling, and graceful shutdown.
 module;
 
-#include <cstdint>
-#include <cstdlib>
-#include <csignal>
-#include <cerrno>
-#include <cctype>
-#include <sys/socket.h>
-#include <sys/wait.h>
-#include <netinet/in.h>
-#include <unistd.h>
 #include <arpa/inet.h>
 #include <fcntl.h>
+#include <netinet/in.h>
 #include <poll.h>
+#include <sys/socket.h>
+#include <sys/wait.h>
+#include <unistd.h>
+
+#include <cctype>
+#include <cerrno>
+#include <csignal>
 #include <cstddef>
+#include <cstdint>
+#include <cstdlib>
 
 extern "C" char** environ;
 
@@ -34,19 +35,19 @@ export namespace loom::daemon {
 // ============================================================
 
 struct DaemonConfig {
-    uint16_t port = 0;                              // 0 = auto-assign
-    std::filesystem::path pid_file;                 // PID file path
-    std::filesystem::path port_file;                // Port file path
-    std::chrono::seconds poll_interval{30};         // Work queue poll interval
-    std::chrono::seconds heartbeat_interval{60};    // Health check interval
-    int max_sessions = 4;                           // Max concurrent sessions
-    std::string work_api_url;                       // CCR API base URL
-    std::string bridge_environment_id;              // Backend-issued bridge environment ID
-    std::string bridge_environment_secret;          // Backend-issued bridge environment secret
-    std::string bridge_access_token;                // OAuth token for stop/deregister operations
+    uint16_t port = 0;                            // 0 = auto-assign
+    std::filesystem::path pid_file;               // PID file path
+    std::filesystem::path port_file;              // Port file path
+    std::chrono::seconds poll_interval{30};       // Work queue poll interval
+    std::chrono::seconds heartbeat_interval{60};  // Health check interval
+    int max_sessions = 4;                         // Max concurrent sessions
+    std::string work_api_url;                     // CCR API base URL
+    std::string bridge_environment_id;            // Backend-issued bridge environment ID
+    std::string bridge_environment_secret;        // Backend-issued bridge environment secret
+    std::string bridge_access_token;              // OAuth token for stop/deregister operations
     std::string bridge_runner_version{"loom-daemon"};
     std::optional<std::string> trusted_device_token;
-    std::string session_binary{"loom"};          // Headless child executable
+    std::string session_binary{"loom"};  // Headless child executable
 };
 
 // ============================================================
@@ -116,7 +117,8 @@ class DaemonServer {
 public:
     DaemonServer() = default;
 
-    explicit DaemonServer(DaemonConfig config) : config_(std::move(config)) {
+    explicit DaemonServer(DaemonConfig config)
+        : config_(std::move(config)) {
         if (config_.pid_file.empty()) {
             config_.pid_file = default_pid_path();
         }
@@ -255,7 +257,8 @@ public:
     }
 
     /// Override process spawning, mainly for tests and alternate runners.
-    void set_session_spawner(std::function<std::expected<std::string, std::string>(std::string_view)> spawner) {
+    void set_session_spawner(
+        std::function<std::expected<std::string, std::string>(std::string_view)> spawner) {
         session_spawner_ = std::move(spawner);
     }
 
@@ -284,9 +287,8 @@ public:
         int fd = -1;
         {
             std::lock_guard lock(sessions_mutex_);
-            auto it = std::ranges::find_if(sessions_, [&](const DaemonSession& session) {
-                return session.id == session_id;
-            });
+            auto it = std::ranges::find_if(
+                sessions_, [&](const DaemonSession& session) { return session.id == session_id; });
             if (it == sessions_.end()) return std::unexpected("Session not found");
             if (it->status != "running") return std::unexpected("Session is not running");
             if (it->stdin_fd < 0) return std::unexpected("Session stdin is closed");
@@ -312,9 +314,8 @@ public:
         int fd = -1;
         {
             std::lock_guard lock(sessions_mutex_);
-            auto it = std::ranges::find_if(sessions_, [&](const DaemonSession& session) {
-                return session.id == session_id;
-            });
+            auto it = std::ranges::find_if(
+                sessions_, [&](const DaemonSession& session) { return session.id == session_id; });
             if (it == sessions_.end()) return std::unexpected("Session not found");
             fd = it->stdin_fd;
             it->stdin_fd = -1;
@@ -356,9 +357,8 @@ public:
     /// Return child stdout NDJSON/text lines captured by the daemon.
     [[nodiscard]] std::vector<std::string> session_stdout_lines(std::string_view session_id) const {
         std::lock_guard lock(sessions_mutex_);
-        auto it = std::ranges::find_if(sessions_, [&](const DaemonSession& session) {
-            return session.id == session_id;
-        });
+        auto it = std::ranges::find_if(
+            sessions_, [&](const DaemonSession& session) { return session.id == session_id; });
         if (it == sessions_.end()) return {};
         return it->stdout_lines;
     }
@@ -369,9 +369,8 @@ public:
         std::optional<DaemonSession> finished;
         {
             std::lock_guard lock(sessions_mutex_);
-            auto it = std::ranges::find_if(sessions_, [&](const DaemonSession& session) {
-                return session.id == session_id;
-            });
+            auto it = std::ranges::find_if(
+                sessions_, [&](const DaemonSession& session) { return session.id == session_id; });
             if (it == sessions_.end()) return std::unexpected("Session not found");
             it->status = status.empty() ? std::string("completed") : std::string(status);
             if (!it->completion_reported) {
@@ -388,11 +387,10 @@ public:
         return spawn_session_with_bridge_context(task_id, nullptr, nullptr);
     }
 
-    auto spawn_session_with_bridge_context(
-        std::string_view task_id,
-        const loom::bridge::WorkResponse* work,
-        const loom::bridge::DecodedWorkSecret* secret
-    ) -> std::expected<std::string, std::string> {
+    auto spawn_session_with_bridge_context(std::string_view task_id,
+                                           const loom::bridge::WorkResponse* work,
+                                           const loom::bridge::DecodedWorkSecret* secret)
+        -> std::expected<std::string, std::string> {
         std::lock_guard lock(sessions_mutex_);
 
         if (static_cast<int>(sessions_.size()) >= config_.max_sessions) {
@@ -402,12 +400,11 @@ public:
         auto session_id = generate_session_id();
         const auto remote_session_id = work ? work->data_id : std::nullopt;
         const auto child_api_base_url = secret ? bridge_child_api_base_url(*secret) : std::string{};
-        auto sdk_url = secret
-            ? bridge_child_sdk_url(*secret, remote_session_id, child_api_base_url)
-            : std::nullopt;
-        auto worker_epoch = secret
-            ? register_bridge_worker_if_needed(*secret, sdk_url)
-            : std::expected<std::optional<int64_t>, std::string>{std::optional<int64_t>{}};
+        auto sdk_url = secret ? bridge_child_sdk_url(*secret, remote_session_id, child_api_base_url)
+                              : std::nullopt;
+        auto worker_epoch =
+            secret ? register_bridge_worker_if_needed(*secret, sdk_url)
+                   : std::expected<std::optional<int64_t>, std::string>{std::optional<int64_t>{}};
         if (!worker_epoch) return std::unexpected(worker_epoch.error());
 
         int stdin_pipe[2]{-1, -1};
@@ -423,13 +420,8 @@ public:
 
         // Build argv and envp BEFORE fork() — all allocation in parent
         std::vector<std::string> args{
-            config_.session_binary,
-            "--headless",
-            "--input-format",
-            "stream-json",
-            "--output-format",
-            "stream-json",
-            "--replay-user-messages",
+            config_.session_binary, "--headless",  "--input-format",         "stream-json",
+            "--output-format",      "stream-json", "--replay-user-messages",
         };
         if (auto sdk_url_val = sdk_url; sdk_url_val && !sdk_url_val->empty()) {
             args.push_back("--sdk-url");
@@ -440,17 +432,18 @@ public:
 
         std::vector<char*> argv;
         argv.reserve(args.size() + 1);
-        for (auto& arg : args) argv.push_back(arg.data());
+        for (auto& arg : args)
+            argv.push_back(arg.data());
         argv.push_back(nullptr);
 
         std::vector<std::string> child_env_storage;
         std::vector<char*> child_envp;
         if (secret) {
-            child_env_storage = build_child_environment(
-                *secret, remote_session_id, task_id,
-                child_api_base_url, *worker_epoch);
+            child_env_storage = build_child_environment(*secret, remote_session_id, task_id,
+                                                        child_api_base_url, *worker_epoch);
             child_envp.reserve(child_env_storage.size() + 1);
-            for (auto& s : child_env_storage) child_envp.push_back(s.data());
+            for (auto& s : child_env_storage)
+                child_envp.push_back(s.data());
             child_envp.push_back(nullptr);
         }
 
@@ -473,10 +466,10 @@ public:
             ::close(stdout_pipe[1]);
             // Close inherited server/client sockets so they don't leak
             // into the child. Only keep fds 0, 1, 2.
-            for (int fd = 3; fd < 1024; ++fd) ::close(fd);
-            execve(argv[0], argv.data(),
-                   child_envp.empty() ? environ : child_envp.data());
-            _exit(1); // exec failed
+            for (int fd = 3; fd < 1024; ++fd)
+                ::close(fd);
+            execve(argv[0], argv.data(), child_envp.empty() ? environ : child_envp.data());
+            _exit(1);  // exec failed
         }
 
         ::close(stdin_pipe[0]);
@@ -512,8 +505,8 @@ public:
                 int status = 0;
                 pid_t result = waitpid(session.pid, &status, WNOHANG);
                 if (result > 0) {
-                    session.status = WIFEXITED(status) && WEXITSTATUS(status) == 0
-                        ? "completed" : "failed";
+                    session.status =
+                        WIFEXITED(status) && WEXITSTATUS(status) == 0 ? "completed" : "failed";
                 } else if (result < 0) {
                     session.status = "failed";
                 }
@@ -581,11 +574,10 @@ private:
         }
         std::lock_guard lock(stdout_readers_mutex_);
         auto key = std::string(session_id);
-        stdout_reader_threads_.insert_or_assign(
-            key,
-            std::jthread([this, key, fd](std::stop_token stop) {
-                read_child_stdout_loop(stop, key, fd);
-            }));
+        stdout_reader_threads_.insert_or_assign(key,
+                                                std::jthread([this, key, fd](std::stop_token stop) {
+                                                    read_child_stdout_loop(stop, key, fd);
+                                                }));
     }
 
     void read_child_stdout_loop(std::stop_token stop, std::string session_id, int fd) {
@@ -626,9 +618,8 @@ private:
 
     void record_session_stdout_line(std::string_view session_id, std::string line) {
         std::lock_guard lock(sessions_mutex_);
-        auto it = std::ranges::find_if(sessions_, [&](const DaemonSession& session) {
-            return session.id == session_id;
-        });
+        auto it = std::ranges::find_if(
+            sessions_, [&](const DaemonSession& session) { return session.id == session_id; });
         if (it == sessions_.end()) return;
         it->stdout_lines.push_back(std::move(line));
         if (it->stdout_lines.size() > 1024) {
@@ -638,9 +629,8 @@ private:
 
     void mark_session_stdout_closed(std::string_view session_id) {
         std::lock_guard lock(sessions_mutex_);
-        auto it = std::ranges::find_if(sessions_, [&](const DaemonSession& session) {
-            return session.id == session_id;
-        });
+        auto it = std::ranges::find_if(
+            sessions_, [&](const DaemonSession& session) { return session.id == session_id; });
         if (it == sessions_.end()) return;
         it->stdout_closed = true;
     }
@@ -652,7 +642,7 @@ private:
             pfd.fd = server_fd_;
             pfd.events = POLLIN;
 
-            int ret = ::poll(&pfd, 1, 1000); // 1s timeout
+            int ret = ::poll(&pfd, 1, 1000);  // 1s timeout
             if (ret < 0) {
                 if (errno == EINTR) continue;
                 break;
@@ -661,9 +651,9 @@ private:
 
             struct sockaddr_in client_addr{};
             socklen_t client_len = sizeof(client_addr);
-            int client_fd = ::accept(server_fd_,
-                reinterpret_cast<struct sockaddr*>(&client_addr), &client_len);
-            
+            int client_fd =
+                ::accept(server_fd_, reinterpret_cast<struct sockaddr*>(&client_addr), &client_len);
+
             if (client_fd < 0) continue;
 
             // macOS: accept() on non-blocking listener returns non-blocking
@@ -780,14 +770,13 @@ private:
     RpcResponse handle_sessions_request(const RpcRequest& req) {
         reap_sessions();
         std::lock_guard lock(sessions_mutex_);
-        
+
         std::string json = "[";
         for (size_t i = 0; i < sessions_.size(); ++i) {
             if (i > 0) json += ',';
-            json += std::format(
-                R"({{"id":"{}","pid":{},"status":"{}","task_id":"{}"}})",
-                sessions_[i].id, sessions_[i].pid,
-                sessions_[i].status, sessions_[i].task_id);
+            json += std::format(R"({{"id":"{}","pid":{},"status":"{}","task_id":"{}"}})",
+                                sessions_[i].id, sessions_[i].pid, sessions_[i].status,
+                                sessions_[i].task_id);
         }
         json += ']';
         return RpcResponse{req.id, json, std::nullopt};
@@ -811,8 +800,8 @@ private:
 
         auto result = spawn_session(task_id);
         if (result) {
-            return RpcResponse{req.id, 
-                std::format(R"({{"session_id":"{}"}})", *result), std::nullopt};
+            return RpcResponse{req.id, std::format(R"({{"session_id":"{}"}})", *result),
+                               std::nullopt};
         }
         return RpcResponse{req.id, "", result.error()};
     }
@@ -822,14 +811,30 @@ private:
         out.reserve(value.size() + 8);
         for (char ch : value) {
             switch (ch) {
-                case '\\': out += R"(\\)"; break;
-                case '"': out += R"(\")"; break;
-                case '\b': out += R"(\b)"; break;
-                case '\f': out += R"(\f)"; break;
-                case '\n': out += R"(\n)"; break;
-                case '\r': out += R"(\r)"; break;
-                case '\t': out += R"(\t)"; break;
-                default: out.push_back(ch); break;
+            case '\\':
+                out += R"(\\)";
+                break;
+            case '"':
+                out += R"(\")";
+                break;
+            case '\b':
+                out += R"(\b)";
+                break;
+            case '\f':
+                out += R"(\f)";
+                break;
+            case '\n':
+                out += R"(\n)";
+                break;
+            case '\r':
+                out += R"(\r)";
+                break;
+            case '\t':
+                out += R"(\t)";
+                break;
+            default:
+                out.push_back(ch);
+                break;
             }
         }
         return out;
@@ -951,8 +956,7 @@ private:
 
     /// Poll the CCR API for available work items
     auto poll_for_work() -> std::expected<std::optional<std::string>, std::string> {
-        if (config_.work_api_url.empty() ||
-            config_.bridge_environment_id.empty() ||
+        if (config_.work_api_url.empty() || config_.bridge_environment_id.empty() ||
             config_.bridge_environment_secret.empty()) {
             return std::optional<std::string>{};
         }
@@ -964,7 +968,8 @@ private:
             .trusted_device_token = config_.trusted_device_token,
         });
 
-        auto work = client.poll_for_work(config_.bridge_environment_id, config_.bridge_environment_secret);
+        auto work =
+            client.poll_for_work(config_.bridge_environment_id, config_.bridge_environment_secret);
         if (!work) return std::unexpected(work.error().format());
         if (!*work) return std::optional<std::string>{};
 
@@ -981,10 +986,8 @@ private:
             return std::unexpected(decoded_secret.error());
         }
 
-        auto ack = client.acknowledge_work(
-            config_.bridge_environment_id,
-            item.id,
-            decoded_secret->session_ingress_token);
+        auto ack = client.acknowledge_work(config_.bridge_environment_id, item.id,
+                                           decoded_secret->session_ingress_token);
         if (!ack) {
             return std::unexpected(ack.error().format());
         }
@@ -1022,7 +1025,8 @@ private:
             for (const auto& session : sessions_) {
                 if (session.status != "running") continue;
                 if (session.task_id.empty()) continue;
-                if (!session.session_ingress_token || session.session_ingress_token->empty()) continue;
+                if (!session.session_ingress_token || session.session_ingress_token->empty())
+                    continue;
                 targets.push_back(HeartbeatTarget{
                     .session_id = session.id,
                     .work_id = session.task_id,
@@ -1043,10 +1047,8 @@ private:
         std::size_t succeeded = 0;
         std::optional<std::string> first_error;
         for (const auto& target : targets) {
-            auto heartbeat = client.heartbeat_work(
-                config_.bridge_environment_id,
-                target.work_id,
-                target.session_token);
+            auto heartbeat = client.heartbeat_work(config_.bridge_environment_id, target.work_id,
+                                                   target.session_token);
             if (heartbeat) {
                 ++succeeded;
                 update_session_heartbeat_success(target.session_id, *heartbeat);
@@ -1061,14 +1063,11 @@ private:
         return succeeded;
     }
 
-    void update_session_heartbeat_success(
-        std::string_view session_id,
-        const loom::bridge::HeartbeatResponse& heartbeat
-    ) {
+    void update_session_heartbeat_success(std::string_view session_id,
+                                          const loom::bridge::HeartbeatResponse& heartbeat) {
         std::lock_guard lock(sessions_mutex_);
-        auto it = std::ranges::find_if(sessions_, [&](const DaemonSession& session) {
-            return session.id == session_id;
-        });
+        auto it = std::ranges::find_if(
+            sessions_, [&](const DaemonSession& session) { return session.id == session_id; });
         if (it == sessions_.end()) return;
         it->last_heartbeat_at = std::chrono::system_clock::now();
         it->last_heartbeat_state = heartbeat.state;
@@ -1079,9 +1078,8 @@ private:
 
     void update_session_heartbeat_failure(std::string_view session_id, std::string error) {
         std::lock_guard lock(sessions_mutex_);
-        auto it = std::ranges::find_if(sessions_, [&](const DaemonSession& session) {
-            return session.id == session_id;
-        });
+        auto it = std::ranges::find_if(
+            sessions_, [&](const DaemonSession& session) { return session.id == session_id; });
         if (it == sessions_.end()) return;
         it->last_heartbeat_error = std::move(error);
         ++it->heartbeat_failures;
@@ -1097,7 +1095,8 @@ private:
         ++backoff_state_.consecutive_poll_failures;
         backoff_state_.last_poll_error = std::string(error);
         backoff_state_.auth_failed = is_auth_failure(error);
-        backoff_state_.current_poll_backoff = calculate_poll_backoff(backoff_state_.consecutive_poll_failures);
+        backoff_state_.current_poll_backoff =
+            calculate_poll_backoff(backoff_state_.consecutive_poll_failures);
     }
 
     [[nodiscard]] std::chrono::seconds calculate_poll_backoff(int failures) const {
@@ -1113,16 +1112,15 @@ private:
 
     [[nodiscard]] static bool is_auth_failure(std::string_view error) {
         return error.find("[E200]") != std::string_view::npos ||
-            error.find("HTTP 401") != std::string_view::npos ||
-            error.find("HTTP 403") != std::string_view::npos ||
-            error.find("authentication") != std::string_view::npos ||
-            error.find("Authentication") != std::string_view::npos;
+               error.find("HTTP 401") != std::string_view::npos ||
+               error.find("HTTP 403") != std::string_view::npos ||
+               error.find("authentication") != std::string_view::npos ||
+               error.find("Authentication") != std::string_view::npos;
     }
 
-    auto spawn_session_for_work(
-        const loom::bridge::WorkResponse& work,
-        const loom::bridge::DecodedWorkSecret& secret
-    ) -> std::expected<std::string, std::string> {
+    auto spawn_session_for_work(const loom::bridge::WorkResponse& work,
+                                const loom::bridge::DecodedWorkSecret& secret)
+        -> std::expected<std::string, std::string> {
         if (!session_spawner_) return spawn_session_with_bridge_context(work.id, &work, &secret);
 
         const auto child_api_base_url = bridge_child_api_base_url(secret);
@@ -1151,9 +1149,8 @@ private:
 
     void record_remote_event_success(std::string_view session_id, std::string_view type) {
         std::lock_guard lock(sessions_mutex_);
-        auto it = std::ranges::find_if(sessions_, [&](const DaemonSession& session) {
-            return session.id == session_id;
-        });
+        auto it = std::ranges::find_if(
+            sessions_, [&](const DaemonSession& session) { return session.id == session_id; });
         if (it == sessions_.end()) return;
         ++it->delivered_remote_events;
         it->last_delivered_remote_event_type = std::string(type);
@@ -1162,19 +1159,16 @@ private:
 
     void record_remote_event_failure(std::string_view session_id, std::string error) {
         std::lock_guard lock(sessions_mutex_);
-        auto it = std::ranges::find_if(sessions_, [&](const DaemonSession& session) {
-            return session.id == session_id;
-        });
+        auto it = std::ranges::find_if(
+            sessions_, [&](const DaemonSession& session) { return session.id == session_id; });
         if (it == sessions_.end()) return;
         it->last_remote_event_error = std::move(error);
     }
 
-    static void apply_bridge_work_metadata(
-        DaemonSession& session,
-        const loom::bridge::WorkResponse& work,
-        const loom::bridge::DecodedWorkSecret& secret,
-        const std::optional<int64_t>& worker_epoch = std::nullopt
-    ) {
+    static void
+    apply_bridge_work_metadata(DaemonSession& session, const loom::bridge::WorkResponse& work,
+                               const loom::bridge::DecodedWorkSecret& secret,
+                               const std::optional<int64_t>& worker_epoch = std::nullopt) {
         session.remote_session_id = work.data_id;
         session.session_ingress_token = secret.session_ingress_token;
         session.session_api_base_url = secret.api_base_url;
@@ -1190,7 +1184,8 @@ private:
     }
 
     static std::string strip_trailing_slashes(std::string value) {
-        while (!value.empty() && value.back() == '/') value.pop_back();
+        while (!value.empty() && value.back() == '/')
+            value.pop_back();
         return value;
     }
 
@@ -1200,7 +1195,7 @@ private:
             return static_cast<char>(std::tolower(ch));
         });
         return lower.find("localhost") != std::string::npos ||
-            lower.find("127.0.0.1") != std::string::npos;
+               lower.find("127.0.0.1") != std::string::npos;
     }
 
     static std::string api_base_url_host(std::string base_url) {
@@ -1210,26 +1205,23 @@ private:
         return base_url;
     }
 
-    static std::optional<std::string> bridge_child_sdk_url(
-        const loom::bridge::DecodedWorkSecret& secret,
-        const std::optional<std::string>& remote_session_id,
-        std::string_view api_base_url
-    ) {
+    static std::optional<std::string>
+    bridge_child_sdk_url(const loom::bridge::DecodedWorkSecret& secret,
+                         const std::optional<std::string>& remote_session_id,
+                         std::string_view api_base_url) {
         if (!remote_session_id || remote_session_id->empty()) return std::nullopt;
         if (api_base_url.empty()) return std::nullopt;
         if (secret.use_code_sessions.value_or(false)) {
-            return strip_trailing_slashes(std::string(api_base_url)) + "/v1/code/sessions/" + *remote_session_id;
+            return strip_trailing_slashes(std::string(api_base_url)) + "/v1/code/sessions/" +
+                   *remote_session_id;
         }
 
         const bool is_local = api_base_url_is_local(api_base_url);
         const auto protocol = is_local ? std::string_view("ws") : std::string_view("wss");
         const auto version = is_local ? std::string_view("v2") : std::string_view("v1");
-        return std::format(
-            "{}://{}/{}/session_ingress/ws/{}",
-            protocol,
-            api_base_url_host(std::string(api_base_url)),
-            version,
-            *remote_session_id);
+        return std::format("{}://{}/{}/session_ingress/ws/{}", protocol,
+                           api_base_url_host(std::string(api_base_url)), version,
+                           *remote_session_id);
     }
 
     std::string bridge_child_api_base_url(const loom::bridge::DecodedWorkSecret& secret) const {
@@ -1239,10 +1231,9 @@ private:
         return strip_trailing_slashes(secret.api_base_url);
     }
 
-    auto register_bridge_worker_if_needed(
-        const loom::bridge::DecodedWorkSecret& secret,
-        const std::optional<std::string>& sdk_url
-    ) -> std::expected<std::optional<int64_t>, std::string> {
+    auto register_bridge_worker_if_needed(const loom::bridge::DecodedWorkSecret& secret,
+                                          const std::optional<std::string>& sdk_url)
+        -> std::expected<std::optional<int64_t>, std::string> {
         if (!secret.use_code_sessions.value_or(false)) return std::optional<int64_t>{};
         if (!sdk_url || sdk_url->empty()) return std::optional<int64_t>{};
         if (config_.work_api_url.empty()) return std::optional<int64_t>{};
@@ -1269,23 +1260,20 @@ private:
         return true;
     }
 
-    static auto build_child_environment(
-        const loom::bridge::DecodedWorkSecret& secret,
-        const std::optional<std::string>& remote_session_id,
-        std::string_view work_id,
-        std::string_view api_base_url,
-        const std::optional<int64_t>& worker_epoch
-    ) -> std::vector<std::string> {
+    static auto build_child_environment(const loom::bridge::DecodedWorkSecret& secret,
+                                        const std::optional<std::string>& remote_session_id,
+                                        std::string_view work_id, std::string_view api_base_url,
+                                        const std::optional<int64_t>& worker_epoch)
+        -> std::vector<std::string> {
         std::vector<std::string> env;
         if (environ) {
-            for (char** e = environ; *e; ++e) env.emplace_back(*e);
+            for (char** e = environ; *e; ++e)
+                env.emplace_back(*e);
         }
         auto set = [&](std::string_view key, std::string_view value) {
             if (key.empty() || value.empty() || !is_valid_env_name(key)) return;
             auto prefix = std::string(key) + "=";
-            std::erase_if(env, [&](const std::string& e) {
-                return e.starts_with(prefix);
-            });
+            std::erase_if(env, [&](const std::string& e) { return e.starts_with(prefix); });
             env.push_back(std::string(key) + "=" + std::string(value));
         };
         set("LOOM_SESSION_ACCESS_TOKEN", secret.session_ingress_token);
@@ -1430,20 +1418,19 @@ private:
             return text.size();
         }
         auto end = start;
-        while (end < text.size() && text[end] != ',' && text[end] != '}') ++end;
+        while (end < text.size() && text[end] != ',' && text[end] != '}')
+            ++end;
         return end;
     }
 
     /// Serialize a JSON-RPC response
     static std::string serialize_rpc_response(const RpcResponse& resp) {
         if (resp.error.has_value()) {
-            return std::format(
-                R"({{"jsonrpc":"2.0","id":"{}","error":{{"message":"{}"}}}})",
-                resp.id, *resp.error);
+            return std::format(R"({{"jsonrpc":"2.0","id":"{}","error":{{"message":"{}"}}}})",
+                               resp.id, *resp.error);
         }
-        return std::format(
-            R"({{"jsonrpc":"2.0","id":"{}","result":{}}})",
-            resp.id, resp.result.empty() ? "null" : resp.result);
+        return std::format(R"({{"jsonrpc":"2.0","id":"{}","result":{}}})", resp.id,
+                           resp.result.empty() ? "null" : resp.result);
     }
 
     /// Check if another daemon is running
@@ -1505,7 +1492,7 @@ private:
 
     // Configuration
     DaemonConfig config_;
-    
+
     // Server socket
     int server_fd_ = -1;
     uint16_t port_ = 0;
@@ -1537,4 +1524,4 @@ private:
     std::function<std::expected<std::string, std::string>(std::string_view)> session_spawner_;
 };
 
-} // namespace loom::daemon
+}  // namespace loom::daemon

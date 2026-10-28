@@ -3,12 +3,12 @@
 ///        path-safety checks, template expansion, context-modifier cascading.
 module;
 
-#include <cstdlib>
-#include <cstring>
 #include <cctype>
+#include <cstddef>
 #include <cstdint>
 #include <cstdio>
-#include <cstddef>
+#include <cstdlib>
+#include <cstring>
 
 export module loom.tools.skill;
 
@@ -28,8 +28,7 @@ namespace json = loom::utils::json;
 
 /// Properties that are safe to expose through the `frontmatter_safe` output.
 inline constexpr std::array<std::string_view, 9> SAFE_SKILL_PROPERTIES = {
-    "name", "version", "description", "author", "tags",
-    "license", "icon", "homepage", "changelog",
+    "name", "version", "description", "author", "tags", "license", "icon", "homepage", "changelog",
 };
 
 // ==========================================================================
@@ -74,11 +73,13 @@ namespace skill_detail {
 
 [[nodiscard]] std::string trim(std::string_view s) {
     auto start = s.begin();
-    while (start != s.end() && std::isspace(static_cast<unsigned char>(*start))) ++start;
+    while (start != s.end() && std::isspace(static_cast<unsigned char>(*start)))
+        ++start;
     auto end = s.end();
     if (start == end) return {};
     --end;
-    while (end != start && std::isspace(static_cast<unsigned char>(*end))) --end;
+    while (end != start && std::isspace(static_cast<unsigned char>(*end)))
+        --end;
     ++end;
     return std::string(start, end);
 }
@@ -139,7 +140,8 @@ namespace skill_detail {
     try {
         size_t pos = 0;
         double v = std::stod(t, &pos);
-        while (pos < t.size() && std::isspace(static_cast<unsigned char>(t[pos]))) ++pos;
+        while (pos < t.size() && std::isspace(static_cast<unsigned char>(t[pos])))
+            ++pos;
         if (pos != t.size()) return std::nullopt;
         return v;
     } catch (...) {
@@ -162,21 +164,35 @@ namespace skill_detail {
     out.reserve(input.size());
     for (char ch : input) {
         switch (ch) {
-            case '"':  out += R"(\")"; break;
-            case '\\': out += R"(\\)"; break;
-            case '\n': out += R"(\n)"; break;
-            case '\r': out += R"(\r)"; break;
-            case '\t': out += R"(\t)"; break;
-            case '\b': out += R"(\b)"; break;
-            case '\f': out += R"(\f)"; break;
-            default:
-                if (static_cast<unsigned char>(ch) < 0x20) {
-                    char buf[8];
-                    std::snprintf(buf, sizeof(buf), "\\u%04x", ch);
-                    out += buf;
-                } else {
-                    out += ch;
-                }
+        case '"':
+            out += R"(\")";
+            break;
+        case '\\':
+            out += R"(\\)";
+            break;
+        case '\n':
+            out += R"(\n)";
+            break;
+        case '\r':
+            out += R"(\r)";
+            break;
+        case '\t':
+            out += R"(\t)";
+            break;
+        case '\b':
+            out += R"(\b)";
+            break;
+        case '\f':
+            out += R"(\f)";
+            break;
+        default:
+            if (static_cast<unsigned char>(ch) < 0x20) {
+                char buf[8];
+                std::snprintf(buf, sizeof(buf), "\\u%04x", ch);
+                out += buf;
+            } else {
+                out += ch;
+            }
         }
     }
     return out;
@@ -196,7 +212,8 @@ namespace skill_detail {
     return out;
 }
 
-[[nodiscard]] std::string serialize_string_map(const std::unordered_map<std::string, std::string>& m) {
+[[nodiscard]] std::string
+serialize_string_map(const std::unordered_map<std::string, std::string>& m) {
     std::string out = "{";
     bool first = true;
     for (const auto& [k, v] : m) {
@@ -208,7 +225,8 @@ namespace skill_detail {
     return out;
 }
 
-} // namespace skill_detail
+}  // namespace skill_detail
+
 using namespace skill_detail;
 
 // ==========================================================================
@@ -252,17 +270,18 @@ using namespace skill_detail;
         auto canon_root = fs::weakly_canonical(root, ec);
         if (ec) continue;
         if (canon_root.empty()) continue;
-        if (!fs::exists(canon_root, ec)) { ec.clear(); continue; }
+        if (!fs::exists(canon_root, ec)) {
+            ec.clear();
+            continue;
+        }
         if (is_contained_by(candidate, canon_root)) return true;
     }
     return false;
 }
 
 /// Resolve a user-supplied skill_path to a canonical, contained path.
-[[nodiscard]] std::expected<fs::path, std::string> resolve_safe_skill_path(
-    std::string_view raw_path,
-    const std::vector<fs::path>& roots)
-{
+[[nodiscard]] std::expected<fs::path, std::string>
+resolve_safe_skill_path(std::string_view raw_path, const std::vector<fs::path>& roots) {
     if (raw_path.empty()) return std::unexpected("skill_path is empty");
 
     // Reject obvious traversal patterns early (fail-fast heuristic).
@@ -302,7 +321,8 @@ using namespace skill_detail;
     if (ec) return std::unexpected("cannot canonicalize skill path: " + ec.message());
 
     if (!is_inside_allowed_root(canon, roots)) {
-        return std::unexpected("unsafe path traversal detected: skill path escapes allowed skill roots");
+        return std::unexpected(
+            "unsafe path traversal detected: skill path escapes allowed skill roots");
     }
     return canon;
 }
@@ -311,7 +331,8 @@ using namespace skill_detail;
 // Frontmatter parser (simple YAML-like subset)
 // ==========================================================================
 
-[[nodiscard]] std::pair<SkillFrontmatter, std::string> parse_skill_content(std::string_view content) {
+[[nodiscard]] std::pair<SkillFrontmatter, std::string>
+parse_skill_content(std::string_view content) {
     SkillFrontmatter fm;
 
     if (content.empty()) return {fm, {}};
@@ -333,7 +354,8 @@ using namespace skill_detail;
 
     // Find the opening `---` (first non-empty line).
     std::size_t start = 0;
-    while (start < lines.size() && trim(lines[start]).empty()) ++start;
+    while (start < lines.size() && trim(lines[start]).empty())
+        ++start;
     if (start >= lines.size() || trim(lines[start]) != "---") {
         // No frontmatter.
         return {fm, std::string(content)};
@@ -342,7 +364,10 @@ using namespace skill_detail;
     // Find the closing `---`.
     std::size_t closer = std::string_view::npos;
     for (std::size_t i = opener + 1; i < lines.size(); ++i) {
-        if (trim(lines[i]) == "---") { closer = i; break; }
+        if (trim(lines[i]) == "---") {
+            closer = i;
+            break;
+        }
     }
     if (closer == std::string_view::npos) {
         // No closing fence: treat as no frontmatter.
@@ -365,18 +390,20 @@ using namespace skill_detail;
             ++line_idx;
         }
     }
-    std::string body = body_start < content.size()
-                           ? std::string(content.substr(body_start))
-                           : std::string{};
+    std::string body =
+        body_start < content.size() ? std::string(content.substr(body_start)) : std::string{};
 
     // Assign scalar helper.
     std::string current_list_key;
     std::vector<std::string> current_list;
     auto flush_list = [&]() {
         if (current_list_key.empty()) return;
-        if (current_list_key == "tags") fm.tags = current_list;
-        else if (current_list_key == "allowed_tools") fm.allowed_tools = current_list;
-        else fm.raw_keys[current_list_key] = serialize_string_array(current_list);
+        if (current_list_key == "tags")
+            fm.tags = current_list;
+        else if (current_list_key == "allowed_tools")
+            fm.allowed_tools = current_list;
+        else
+            fm.raw_keys[current_list_key] = serialize_string_array(current_list);
         current_list_key.clear();
         current_list.clear();
     };
@@ -384,25 +411,82 @@ using namespace skill_detail;
         const std::string k(key);
         const std::string val = strip_quotes(value_raw);
 
-        if (k == "name")        { fm.name = val; return; }
-        if (k == "version")     { fm.version = val; return; }
-        if (k == "description") { fm.description = val; return; }
-        if (k == "author")      { fm.author = val; return; }
-        if (k == "license")     { fm.license = val; return; }
-        if (k == "icon")        { fm.icon = val; return; }
-        if (k == "homepage")    { fm.homepage = val; return; }
-        if (k == "changelog")   { fm.changelog = val; return; }
-        if (k == "fork_reason") { fm.fork_reason = val; return; }
-        if (k == "model")       { fm.model = val; return; }
-        if (k == "tags")        { fm.tags = parse_list_value(value_raw); return; }
-        if (k == "allowed_tools") { fm.allowed_tools = parse_list_value(value_raw); return; }
-        if (k == "effort")          { if (auto v = parse_int(val)) fm.effort = *v; return; }
-        if (k == "thinking_budget") { if (auto v = parse_int(val)) fm.thinking_budget = *v; return; }
-        if (k == "max_tokens")      { if (auto v = parse_int(val)) fm.max_tokens = *v; return; }
-        if (k == "temperature")     { if (auto v = parse_double(val)) fm.temperature = *v; return; }
-        if (k == "fork")            { if (auto v = parse_bool(val)) fm.fork = *v; return; }
-        if (k == "safe")            { if (auto v = parse_bool(val)) fm.safe = *v; return; }
-        if (k == "should_use_sandbox") { if (auto v = parse_bool(val)) fm.should_use_sandbox = *v; return; }
+        if (k == "name") {
+            fm.name = val;
+            return;
+        }
+        if (k == "version") {
+            fm.version = val;
+            return;
+        }
+        if (k == "description") {
+            fm.description = val;
+            return;
+        }
+        if (k == "author") {
+            fm.author = val;
+            return;
+        }
+        if (k == "license") {
+            fm.license = val;
+            return;
+        }
+        if (k == "icon") {
+            fm.icon = val;
+            return;
+        }
+        if (k == "homepage") {
+            fm.homepage = val;
+            return;
+        }
+        if (k == "changelog") {
+            fm.changelog = val;
+            return;
+        }
+        if (k == "fork_reason") {
+            fm.fork_reason = val;
+            return;
+        }
+        if (k == "model") {
+            fm.model = val;
+            return;
+        }
+        if (k == "tags") {
+            fm.tags = parse_list_value(value_raw);
+            return;
+        }
+        if (k == "allowed_tools") {
+            fm.allowed_tools = parse_list_value(value_raw);
+            return;
+        }
+        if (k == "effort") {
+            if (auto v = parse_int(val)) fm.effort = *v;
+            return;
+        }
+        if (k == "thinking_budget") {
+            if (auto v = parse_int(val)) fm.thinking_budget = *v;
+            return;
+        }
+        if (k == "max_tokens") {
+            if (auto v = parse_int(val)) fm.max_tokens = *v;
+            return;
+        }
+        if (k == "temperature") {
+            if (auto v = parse_double(val)) fm.temperature = *v;
+            return;
+        }
+        if (k == "fork") {
+            if (auto v = parse_bool(val)) fm.fork = *v;
+            return;
+        }
+        if (k == "safe") {
+            if (auto v = parse_bool(val)) fm.safe = *v;
+            return;
+        }
+        if (k == "should_use_sandbox") {
+            if (auto v = parse_bool(val)) fm.should_use_sandbox = *v;
+            return;
+        }
         if (k == "context_modifiers") {
             fm.raw_keys[k] = val.empty() ? std::string("{object}") : val;
             return;
@@ -413,13 +497,17 @@ using namespace skill_detail;
     for (std::size_t i = opener + 1; i < closer; ++i) {
         std::string_view l = lines[i];
         auto tl = trim(l);
-        if (tl.empty()) { flush_list(); continue; }
+        if (tl.empty()) {
+            flush_list();
+            continue;
+        }
 
         // List item: starts with "  - " (or more indent + dash + space).
         // Detect a leading dash as list continuation.
         {
             std::size_t nsp = 0;
-            while (nsp < l.size() && l[nsp] == ' ') ++nsp;
+            while (nsp < l.size() && l[nsp] == ' ')
+                ++nsp;
             if (nsp > 0 && nsp < l.size() && l[nsp] == '-') {
                 auto after = l.substr(nsp + 1);
                 // Require a space after dash to be a list item.
@@ -437,15 +525,15 @@ using namespace skill_detail;
         // NOTE: trim() returns std::string; we materialize it into std::string
         // to avoid a dangling string_view from the temporary.
         std::size_t nsp = 0;
-        while (nsp < l.size() && l[nsp] == ' ') ++nsp;
+        while (nsp < l.size() && l[nsp] == ' ')
+            ++nsp;
         std::string_view stripped = l.substr(nsp);
         auto colon = stripped.find(':');
         if (colon == std::string_view::npos) continue;
         std::string key = trim(stripped.substr(0, colon));
         if (key.empty()) continue;
-        std::string_view value = colon + 1 < stripped.size()
-                                     ? stripped.substr(colon + 1)
-                                     : std::string_view{};
+        std::string_view value =
+            colon + 1 < stripped.size() ? stripped.substr(colon + 1) : std::string_view{};
 
         flush_list();
 
@@ -460,9 +548,12 @@ using namespace skill_detail;
         // Bracketed inline list.
         if (tv.front() == '[') {
             auto list = parse_list_value(tv);
-            if (key == "tags") fm.tags = std::move(list);
-            else if (key == "allowed_tools") fm.allowed_tools = std::move(list);
-            else fm.raw_keys[key] = serialize_string_array(list);
+            if (key == "tags")
+                fm.tags = std::move(list);
+            else if (key == "allowed_tools")
+                fm.allowed_tools = std::move(list);
+            else
+                fm.raw_keys[key] = serialize_string_array(list);
             continue;
         }
 
@@ -537,11 +628,16 @@ struct SkillToolInput {
         std::string sv(a.as_str());
         std::transform(sv.begin(), sv.end(), sv.begin(),
                        [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
-        if (sv == "install")      out.action = SkillToolInput::Action::Install;
-        else if (sv == "update")  out.action = SkillToolInput::Action::Update;
-        else if (sv == "list")    out.action = SkillToolInput::Action::List;
-        else if (sv == "search")  out.action = SkillToolInput::Action::Search;
-        else                      out.action = SkillToolInput::Action::Execute;
+        if (sv == "install")
+            out.action = SkillToolInput::Action::Install;
+        else if (sv == "update")
+            out.action = SkillToolInput::Action::Update;
+        else if (sv == "list")
+            out.action = SkillToolInput::Action::List;
+        else if (sv == "search")
+            out.action = SkillToolInput::Action::Search;
+        else
+            out.action = SkillToolInput::Action::Execute;
     }
 
     if (auto sp = root.get("skill_path"); sp.is_str()) {
@@ -556,10 +652,14 @@ struct SkillToolInput {
         args.iter_obj([&](json::JsonVal k, json::JsonVal v) {
             if (!k.is_str()) return;
             std::string key(k.as_str());
-            if (v.is_str())         out.arguments[key] = std::string(v.as_str());
-            else if (v.is_num())    out.arguments[key] = std::to_string(v.as_int());
-            else if (v.is_bool())   out.arguments[key] = v.as_bool() ? "true" : "false";
-            else                    out.arguments[key] = json::to_string(v);
+            if (v.is_str())
+                out.arguments[key] = std::string(v.as_str());
+            else if (v.is_num())
+                out.arguments[key] = std::to_string(v.as_int());
+            else if (v.is_bool())
+                out.arguments[key] = v.as_bool() ? "true" : "false";
+            else
+                out.arguments[key] = json::to_string(v);
         });
     }
 
@@ -567,9 +667,12 @@ struct SkillToolInput {
         cm.iter_obj([&](json::JsonVal k, json::JsonVal v) {
             if (!k.is_str()) return;
             std::string key(k.as_str());
-            if (v.is_str())       out.context_modifiers[key] = std::string(v.as_str());
-            else if (v.is_num())  out.context_modifiers[key] = std::to_string(v.as_int());
-            else if (v.is_bool()) out.context_modifiers[key] = v.as_bool() ? "true" : "false";
+            if (v.is_str())
+                out.context_modifiers[key] = std::string(v.as_str());
+            else if (v.is_num())
+                out.context_modifiers[key] = std::to_string(v.as_int());
+            else if (v.is_bool())
+                out.context_modifiers[key] = v.as_bool() ? "true" : "false";
         });
     }
 
@@ -578,8 +681,7 @@ struct SkillToolInput {
     else if (auto fk = root.get("fork"); fk.is_bool())
         out.fork_model = fk.as_bool();
 
-    if (auto sid = root.get("session_id"); sid.is_str())
-        out.session_id = std::string(sid.as_str());
+    if (auto sid = root.get("session_id"); sid.is_str()) out.session_id = std::string(sid.as_str());
 
     if (auto btl = root.get("budget_token_limit"); btl.is_num())
         out.budget_token_limit = static_cast<int>(btl.as_int());
@@ -593,11 +695,9 @@ struct SkillToolInput {
         });
     }
 
-    if (auto md = root.get("model"); md.is_str())
-        out.model = std::string(md.as_str());
+    if (auto md = root.get("model"); md.is_str()) out.model = std::string(md.as_str());
 
-    if (auto ef = root.get("effort"); ef.is_num())
-        out.effort = static_cast<int>(ef.as_int());
+    if (auto ef = root.get("effort"); ef.is_num()) out.effort = static_cast<int>(ef.as_int());
 
     return out;
 }
@@ -623,8 +723,7 @@ struct SkillToolInput {
     auto roots = skill_root_dirs();
     for (const auto& root : roots) {
         if (!fs::exists(root, ec) || !fs::is_directory(root, ec)) continue;
-        for (auto it = fs::directory_iterator(root, ec);
-             !ec && it != fs::directory_iterator();
+        for (auto it = fs::directory_iterator(root, ec); !ec && it != fs::directory_iterator();
              it.increment(ec)) {
             if (!it->is_directory()) continue;
             auto skill_md = it->path() / "SKILL.md";
@@ -680,8 +779,7 @@ struct SkillToolInput {
 /// Simple (non-looping) skill execution. Performs validation + setup +
 /// returns the skill body plus execution plan for the caller to run.
 [[nodiscard]] std::expected<std::string, std::string>
-execute_skill_tool_simple(std::string_view input_json)
-{
+execute_skill_tool_simple(std::string_view input_json) {
     auto input = parse_input(input_json);
     if (!input) return std::unexpected(input.error());
 
@@ -701,7 +799,8 @@ execute_skill_tool_simple(std::string_view input_json)
         std::string action_name =
             input->action == SkillToolInput::Action::Install ? "install" : "update";
         std::string msg =
-            "The '" + action_name + "' action requires a skill source (local directory, "
+            "The '" + action_name +
+            "' action requires a skill source (local directory, "
             "git URL, or marketplace), which is not available in this build. To add a "
             "skill, place its SKILL.md under a skill root (e.g. "
             "~/.loom/skills/<name>/SKILL.md) and use the 'list' or 'execute' action.";
@@ -747,9 +846,9 @@ execute_skill_tool_simple(std::string_view input_json)
 
     // --- Context modifier cascading ---------------------------------------
 
-    std::string resolved_model = input->model ? *input->model
+    std::string resolved_model = input->model        ? *input->model
                                  : frontmatter.model ? *frontmatter.model
-                                 : std::string{};
+                                                     : std::string{};
 
     int resolved_effort = 0;
     {
@@ -765,14 +864,13 @@ execute_skill_tool_simple(std::string_view input_json)
             // (The simple parser doesn't nest; nested fields under
             // context_modifiers are captured individually by key.)
             auto it2 = input->context_modifiers.find("effort");
-            (void)it2; // handled above
+            (void)it2;  // handled above
         }
     }
     if (resolved_effort > 0) resolved_effort = std::clamp(resolved_effort, 1, 5);
 
-    std::vector<std::string> resolved_allowed_tools = input->allowed_tools.empty()
-                                                          ? frontmatter.allowed_tools
-                                                          : input->allowed_tools;
+    std::vector<std::string> resolved_allowed_tools =
+        input->allowed_tools.empty() ? frontmatter.allowed_tools : input->allowed_tools;
 
     bool resolved_sandbox = input->should_use_sandbox.value_or(frontmatter.should_use_sandbox);
     const bool fork_required = frontmatter.fork || input->fork_model;
@@ -789,8 +887,7 @@ execute_skill_tool_simple(std::string_view input_json)
         steps.append(doc.string("Run skill workflow"));
         root.add("steps", steps);
 
-        if (!resolved_model.empty())
-            root.add("model_override", doc.string(resolved_model));
+        if (!resolved_model.empty()) root.add("model_override", doc.string(resolved_model));
         if (resolved_effort > 0)
             root.add("effort", doc.number(static_cast<int64_t>(resolved_effort)));
 
@@ -820,7 +917,7 @@ execute_skill_tool_simple(std::string_view input_json)
         json::JsonMutVal sd = doc.object();
         std::string nm = frontmatter.name.value_or(resolved->stem().string());
         sd.add("name", doc.string(nm));
-        if (frontmatter.version)     sd.add("version", doc.string(*frontmatter.version));
+        if (frontmatter.version) sd.add("version", doc.string(*frontmatter.version));
         if (frontmatter.description) sd.add("description", doc.string(*frontmatter.description));
         root.add("skill", sd);
     }
@@ -828,22 +925,22 @@ execute_skill_tool_simple(std::string_view input_json)
     // execution_plan (parse the pre-built plan text and embed as typed object)
     {
         auto pp = json::parse(plan_json);
-        if (pp && pp->root().is_obj())
-            root.add("execution_plan", doc.copy_val(pp->root()));
+        if (pp && pp->root().is_obj()) root.add("execution_plan", doc.copy_val(pp->root()));
     }
 
     // expanded_args
     {
         json::JsonMutVal ea = doc.object();
-        for (const auto& [k, v] : input->arguments) ea.add(k, doc.string(v));
+        for (const auto& [k, v] : input->arguments)
+            ea.add(k, doc.string(v));
         root.add("expanded_args", ea);
     }
 
     // frontmatter_safe — filtered to SAFE_SKILL_PROPERTIES only
     {
         json::JsonMutVal sf = doc.object();
-        static const std::unordered_set<std::string_view> safe_set(
-            SAFE_SKILL_PROPERTIES.begin(), SAFE_SKILL_PROPERTIES.end());
+        static const std::unordered_set<std::string_view> safe_set(SAFE_SKILL_PROPERTIES.begin(),
+                                                                   SAFE_SKILL_PROPERTIES.end());
         if (safe_set.count("name") && frontmatter.name)
             sf.add("name", doc.string(*frontmatter.name));
         if (safe_set.count("version") && frontmatter.version)
@@ -862,7 +959,8 @@ execute_skill_tool_simple(std::string_view input_json)
             sf.add("changelog", doc.string(*frontmatter.changelog));
         if (!frontmatter.tags.empty()) {
             json::JsonMutVal tags = doc.array();
-            for (const auto& t : frontmatter.tags) tags.append(doc.string(t));
+            for (const auto& t : frontmatter.tags)
+                tags.append(doc.string(t));
             sf.add("tags", tags);
         }
         root.add("frontmatter_safe", sf);
@@ -872,9 +970,10 @@ execute_skill_tool_simple(std::string_view input_json)
 
     if (resolved_sandbox) root.add("should_use_sandbox", doc.boolean(true));
     if (input->budget_token_limit)
-        root.add("budget_token_limit", doc.number(static_cast<int64_t>(*input->budget_token_limit)));
+        root.add("budget_token_limit",
+                 doc.number(static_cast<int64_t>(*input->budget_token_limit)));
 
     return doc.to_string();
 }
 
-} // namespace loom::tools::skill
+}  // namespace loom::tools::skill

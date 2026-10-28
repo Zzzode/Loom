@@ -31,9 +31,9 @@ export namespace loom::utils::file_edit {
 // Quote normalization constants
 // ===========================================================================
 
-inline constexpr std::string_view LEFT_SINGLE_CURLY_QUOTE  = "\xE2\x80\x98";
+inline constexpr std::string_view LEFT_SINGLE_CURLY_QUOTE = "\xE2\x80\x98";
 inline constexpr std::string_view RIGHT_SINGLE_CURLY_QUOTE = "\xE2\x80\x99";
-inline constexpr std::string_view LEFT_DOUBLE_CURLY_QUOTE  = "\xE2\x80\x9C";
+inline constexpr std::string_view LEFT_DOUBLE_CURLY_QUOTE = "\xE2\x80\x9C";
 inline constexpr std::string_view RIGHT_DOUBLE_CURLY_QUOTE = "\xE2\x80\x9D";
 
 // ===========================================================================
@@ -68,9 +68,9 @@ struct PatchHunk {
             pos += to.size();
         }
     };
-    replace_all_utf8(LEFT_SINGLE_CURLY_QUOTE,  "'");
+    replace_all_utf8(LEFT_SINGLE_CURLY_QUOTE, "'");
     replace_all_utf8(RIGHT_SINGLE_CURLY_QUOTE, "'");
-    replace_all_utf8(LEFT_DOUBLE_CURLY_QUOTE,  "\"");
+    replace_all_utf8(LEFT_DOUBLE_CURLY_QUOTE, "\"");
     replace_all_utf8(RIGHT_DOUBLE_CURLY_QUOTE, "\"");
     return result;
 }
@@ -83,13 +83,14 @@ struct PatchHunk {
     while (start <= str.size()) {
         size_t end = start;
         char ending = 0;
-        while (end < str.size() && str[end] != '\n' && str[end] != '\r') ++end;
+        while (end < str.size() && str[end] != '\n' && str[end] != '\r')
+            ++end;
 
         if (end < str.size()) {
             if (str[end] == '\r' && end + 1 < str.size() && str[end + 1] == '\n') {
-                ending = 2; // CRLF
+                ending = 2;  // CRLF
             } else {
-                ending = 1; // CR or LF
+                ending = 1;  // CR or LF
             }
         }
 
@@ -97,8 +98,10 @@ struct PatchHunk {
         size_t last = end;
         while (last > start) {
             char c = str[last - 1];
-            if (c == ' ' || c == '\t' || c == '\r') --last;
-            else break;
+            if (c == ' ' || c == '\t' || c == '\r')
+                --last;
+            else
+                break;
         }
         result.append(str.data() + start, last - start);
 
@@ -115,15 +118,13 @@ struct PatchHunk {
     return result;
 }
 
-[[nodiscard]] inline std::optional<std::string> find_actual_string(
-    std::string_view file_content,
-    std::string_view search_string)
-{
+[[nodiscard]] inline std::optional<std::string> find_actual_string(std::string_view file_content,
+                                                                   std::string_view search_string) {
     if (file_content.find(search_string) != std::string_view::npos) {
         return std::string(search_string);
     }
     std::string normalized_search = normalize_quotes(search_string);
-    std::string normalized_file   = normalize_quotes(file_content);
+    std::string normalized_file = normalize_quotes(file_content);
     size_t pos = normalized_file.find(normalized_search);
     if (pos != std::string::npos) {
         return std::string(file_content.substr(pos, search_string.size()));
@@ -136,8 +137,7 @@ struct PatchHunk {
 // prev in { space, tab, newline, CR, (, [, {, em-dash, en-dash }  => opening.
 // ===========================================================================
 
-inline bool starts_multi_byte_seq_at(std::string_view s, size_t i,
-                                     std::string_view seq) {
+inline bool starts_multi_byte_seq_at(std::string_view s, size_t i, std::string_view seq) {
     if (i + seq.size() > s.size()) return false;
     return s.substr(i, seq.size()) == seq;
 }
@@ -147,8 +147,8 @@ inline bool is_opening_context(std::string_view text, size_t char_byte_index) {
     if (char_byte_index == 0) return true;
 
     // Walk back: if prev is a multi-byte UTF-8 opener for em/en dash, match it.
-    constexpr std::string_view EM_DASH = "\xE2\x80\x94"; // U+2014
-    constexpr std::string_view EN_DASH = "\xE2\x80\x93"; // U+2013
+    constexpr std::string_view EM_DASH = "\xE2\x80\x94";  // U+2014
+    constexpr std::string_view EN_DASH = "\xE2\x80\x93";  // U+2013
     const size_t prev_end = char_byte_index;
 
     // 3-byte UTF-8 check (em/en dash are both 3 bytes)
@@ -159,18 +159,17 @@ inline bool is_opening_context(std::string_view text, size_t char_byte_index) {
 
     // Single-byte check
     char prev = text[char_byte_index - 1];
-    return prev == ' '  || prev == '\t' || prev == '\n' || prev == '\r' ||
-           prev == '('  || prev == '['  || prev == '{';
+    return prev == ' ' || prev == '\t' || prev == '\n' || prev == '\r' || prev == '(' ||
+           prev == '[' || prev == '{';
 }
 
 [[nodiscard]] inline std::string apply_curly_double_quotes(std::string_view str) {
     std::string result;
     result.reserve(str.size() * 2);
-    for (size_t i = 0; i < str.size(); ) {
+    for (size_t i = 0; i < str.size();) {
         if (str[i] == '"') {
-            result += is_opening_context(str, i)
-                ? LEFT_DOUBLE_CURLY_QUOTE
-                : RIGHT_DOUBLE_CURLY_QUOTE;
+            result +=
+                is_opening_context(str, i) ? LEFT_DOUBLE_CURLY_QUOTE : RIGHT_DOUBLE_CURLY_QUOTE;
             ++i;
         } else {
             result += str[i++];
@@ -184,25 +183,21 @@ inline bool is_opening_context(std::string_view text, size_t char_byte_index) {
 // engine doesn't support it at runtime, which matches the pragmatic
 // behaviour of detecting contractions in e.g. "don't", "it's".
 inline bool is_unicode_letter(char prev, char next) {
-    auto is_ascii_letter = [](char c) {
-        return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
-    };
+    auto is_ascii_letter = [](char c) { return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'); };
     return is_ascii_letter(prev) && is_ascii_letter(next);
 }
 
 [[nodiscard]] inline std::string apply_curly_single_quotes(std::string_view str) {
     std::string result;
     result.reserve(str.size() * 2);
-    for (size_t i = 0; i < str.size(); ) {
+    for (size_t i = 0; i < str.size();) {
         if (str[i] == '\'') {
             // Contraction heuristic: apostrophe between two letters
-            if (i > 0 && i + 1 < str.size() &&
-                is_unicode_letter(str[i - 1], str[i + 1])) {
+            if (i > 0 && i + 1 < str.size() && is_unicode_letter(str[i - 1], str[i + 1])) {
                 result += RIGHT_SINGLE_CURLY_QUOTE;
             } else {
-                result += is_opening_context(str, i)
-                    ? LEFT_SINGLE_CURLY_QUOTE
-                    : RIGHT_SINGLE_CURLY_QUOTE;
+                result +=
+                    is_opening_context(str, i) ? LEFT_SINGLE_CURLY_QUOTE : RIGHT_SINGLE_CURLY_QUOTE;
             }
             ++i;
         } else {
@@ -212,20 +207,18 @@ inline bool is_unicode_letter(char prev, char next) {
     return result;
 }
 
-[[nodiscard]] inline std::string preserve_quote_style(
-    std::string_view old_string,
-    std::string_view actual_old_string,
-    std::string_view new_string)
-{
+[[nodiscard]] inline std::string preserve_quote_style(std::string_view old_string,
+                                                      std::string_view actual_old_string,
+                                                      std::string_view new_string) {
     if (old_string == actual_old_string) return std::string(new_string);
 
     auto contains_any = [](std::string_view s, std::string_view a, std::string_view b) {
         return s.find(a) != std::string_view::npos || s.find(b) != std::string_view::npos;
     };
-    const bool has_double = contains_any(actual_old_string,
-        LEFT_DOUBLE_CURLY_QUOTE, RIGHT_DOUBLE_CURLY_QUOTE);
-    const bool has_single = contains_any(actual_old_string,
-        LEFT_SINGLE_CURLY_QUOTE, RIGHT_SINGLE_CURLY_QUOTE);
+    const bool has_double =
+        contains_any(actual_old_string, LEFT_DOUBLE_CURLY_QUOTE, RIGHT_DOUBLE_CURLY_QUOTE);
+    const bool has_single =
+        contains_any(actual_old_string, LEFT_SINGLE_CURLY_QUOTE, RIGHT_SINGLE_CURLY_QUOTE);
 
     if (!has_double && !has_single) return std::string(new_string);
 
@@ -242,18 +235,14 @@ inline bool is_unicode_letter(char prev, char next) {
 //   2. Otherwise first/replace_all.
 // ===========================================================================
 
-[[nodiscard]] inline std::string apply_edit(
-    std::string_view original_content,
-    std::string_view old_string,
-    std::string_view new_string,
-    bool replace_all = false)
-{
+[[nodiscard]] inline std::string apply_edit(std::string_view original_content,
+                                            std::string_view old_string,
+                                            std::string_view new_string, bool replace_all = false) {
     // Old-string empty -> pure insert / new file semantics.
     if (old_string.empty()) return std::string(new_string);
 
     const bool strip_trailing_newline =
-        new_string.empty() &&
-        !old_string.ends_with('\n') &&
+        new_string.empty() && !old_string.ends_with('\n') &&
         original_content.find(std::string(old_string) + "\n") != std::string_view::npos;
 
     if (strip_trailing_newline) {
@@ -323,7 +312,11 @@ inline std::vector<std::string> split_lines(std::string_view text) {
 
 /// Raw diff operation produced by Myers.
 enum Op { Equal, Insert, Remove };
-struct RawOp { Op op; size_t index; };
+
+struct RawOp {
+    Op op;
+    size_t index;
+};
 
 /// Myers O(ND) diff between two line vectors.
 inline std::vector<RawOp> myers_diff(const std::vector<std::string>& a,
@@ -338,7 +331,7 @@ inline std::vector<RawOp> myers_diff(const std::vector<std::string>& a,
 
     int found_d = -1;
     for (int D = 0; D <= MAX && found_d < 0; ++D) {
-        trace.push_back(v); // snapshot
+        trace.push_back(v);  // snapshot
         for (int k = -D; k <= D && found_d < 0; k += 2) {
             int x;
             if (k == -D || (k != D && v[MAX + k - 1] < v[MAX + k + 1])) {
@@ -347,14 +340,17 @@ inline std::vector<RawOp> myers_diff(const std::vector<std::string>& a,
                 x = v[MAX + k - 1] + 1;
             }
             int y = x - k;
-            while (x < N && y < M && a[x] == b[y]) { ++x; ++y; }
+            while (x < N && y < M && a[x] == b[y]) {
+                ++x;
+                ++y;
+            }
             v[MAX + k] = x;
             if (x >= N && y >= M) found_d = D;
         }
     }
 
     // Backtrack to build edit script
-    std::vector<std::pair<int, int>> path; // (x, y) coordinates
+    std::vector<std::pair<int, int>> path;  // (x, y) coordinates
     path.emplace_back(N, M);
     for (int D = found_d; D > 0; --D) {
         const auto& snap = trace[D];
@@ -371,7 +367,8 @@ inline std::vector<RawOp> myers_diff(const std::vector<std::string>& a,
         int prev_y = prev_x - prev_k;
         // Walk diagonals
         while (x > prev_x && y > prev_y && a[x - 1] == b[y - 1]) {
-            --x; --y;
+            --x;
+            --y;
             path.emplace_back(x, y);
         }
         path.emplace_back(prev_x, prev_y);
@@ -381,8 +378,8 @@ inline std::vector<RawOp> myers_diff(const std::vector<std::string>& a,
     // Emit RawOp sequence with Equal runs preserved
     std::vector<RawOp> ops;
     for (size_t i = 1; i < path.size(); ++i) {
-        int x0 = path[i - 1].first,  y0 = path[i - 1].second;
-        int x1 = path[i].first,      y1 = path[i].second;
+        int x0 = path[i - 1].first, y0 = path[i - 1].second;
+        int x1 = path[i].first, y1 = path[i].second;
         // Non-diagonal first
         if (x1 - x0 > y1 - y0) {
             ops.push_back({Remove, static_cast<size_t>(x0)});
@@ -394,7 +391,8 @@ inline std::vector<RawOp> myers_diff(const std::vector<std::string>& a,
         // Then equal diagonal
         while (x0 < x1 && y0 < y1) {
             ops.push_back({Equal, static_cast<size_t>(x0)});
-            ++x0; ++y0;
+            ++x0;
+            ++y0;
         }
     }
     return ops;
@@ -407,7 +405,8 @@ inline std::vector<std::string> convert_leading_tabs_to_spaces(std::string_view 
     auto lines = split_lines(s);
     for (auto& line : lines) {
         size_t i = 0;
-        while (i < line.size() && line[i] == '\t') ++i;
+        while (i < line.size() && line[i] == '\t')
+            ++i;
         if (i > 0) {
             line = std::string(i * 4, ' ') + line.substr(i);
         }
@@ -415,16 +414,14 @@ inline std::vector<std::string> convert_leading_tabs_to_spaces(std::string_view 
     return lines;
 }
 
-} // namespace patch_detail
+}  // namespace patch_detail
 
 /// Compute structured hunks from two file contents (= TS getPatchFromContents
 /// after tab expansion). `context` lines of context are preserved around
 /// each hunk, matching the `diff` npm package default.
-inline std::vector<PatchHunk> compute_structured_patch(
-    std::string_view old_content,
-    std::string_view new_content,
-    int context = 3)
-{
+inline std::vector<PatchHunk> compute_structured_patch(std::string_view old_content,
+                                                       std::string_view new_content,
+                                                       int context = 3) {
     using namespace patch_detail;
     auto a = convert_leading_tabs_to_spaces(old_content);
     auto b = convert_leading_tabs_to_spaces(new_content);
@@ -437,27 +434,65 @@ inline std::vector<PatchHunk> compute_structured_patch(
     if (ops.empty()) return hunks;
 
     // (1) Collect run-length encoded ops
-    struct Run { Op op; size_t a_start; size_t a_end; size_t b_start; size_t b_end; };
+    struct Run {
+        Op op;
+        size_t a_start;
+        size_t a_end;
+        size_t b_start;
+        size_t b_end;
+    };
+
     std::vector<Run> runs;
     {
         Op cur_op = ops.front().op;
         size_t a_s = 0, a_e = 0, b_s = 0, b_e = 0;
-        if (cur_op == Equal)  { a_s = a_e = ops.front().index; b_s = b_e = ops.front().index; a_e++; b_e++; }
-        if (cur_op == Insert) { b_s = b_e = ops.front().index; b_e++; a_s = a_e = 0; }
-        if (cur_op == Remove) { a_s = a_e = ops.front().index; a_e++; b_s = b_e = 0; }
+        if (cur_op == Equal) {
+            a_s = a_e = ops.front().index;
+            b_s = b_e = ops.front().index;
+            a_e++;
+            b_e++;
+        }
+        if (cur_op == Insert) {
+            b_s = b_e = ops.front().index;
+            b_e++;
+            a_s = a_e = 0;
+        }
+        if (cur_op == Remove) {
+            a_s = a_e = ops.front().index;
+            a_e++;
+            b_s = b_e = 0;
+        }
         for (size_t k = 1; k < ops.size(); ++k) {
             const auto& op = ops[k];
             if (op.op == cur_op) {
-                if (cur_op == Equal)  { a_e++; b_e++; }
-                if (cur_op == Insert) { b_e++; }
-                if (cur_op == Remove) { a_e++; }
+                if (cur_op == Equal) {
+                    a_e++;
+                    b_e++;
+                }
+                if (cur_op == Insert) {
+                    b_e++;
+                }
+                if (cur_op == Remove) {
+                    a_e++;
+                }
                 continue;
             }
             runs.push_back({cur_op, a_s, a_e, b_s, b_e});
             cur_op = op.op;
-            if (cur_op == Equal)  { a_s = a_e = op.index; b_s = b_e = op.index; a_e++; b_e++; }
-            if (cur_op == Insert) { b_s = b_e = op.index; b_e++; }
-            if (cur_op == Remove) { a_s = a_e = op.index; a_e++; }
+            if (cur_op == Equal) {
+                a_s = a_e = op.index;
+                b_s = b_e = op.index;
+                a_e++;
+                b_e++;
+            }
+            if (cur_op == Insert) {
+                b_s = b_e = op.index;
+                b_e++;
+            }
+            if (cur_op == Remove) {
+                a_s = a_e = op.index;
+                a_e++;
+            }
         }
         runs.push_back({cur_op, a_s, a_e, b_s, b_e});
     }
@@ -465,20 +500,30 @@ inline std::vector<PatchHunk> compute_structured_patch(
     // (2) Break into hunks. A hunk is a maximal run of non-Equal runs, with
     //     Equal runs on either end truncated to `context` lines.
     const int twice_ctx = 2 * context;
-    for (size_t i = 0; i < runs.size(); ) {
-        if (runs[i].op == Equal) { ++i; continue; }
+    for (size_t i = 0; i < runs.size();) {
+        if (runs[i].op == Equal) {
+            ++i;
+            continue;
+        }
 
         size_t hunk_start = i;
         // Find last non-Equal run that is within hunk distance
         size_t hunk_end = i;
         size_t j = i + 1;
         while (j < runs.size()) {
-            if (runs[j].op != Equal) { hunk_end = j; ++j; continue; }
+            if (runs[j].op != Equal) {
+                hunk_end = j;
+                ++j;
+                continue;
+            }
             size_t eq_len = runs[j].a_end - runs[j].a_start;
             if (static_cast<int>(eq_len) > twice_ctx) break;
             ++j;
-            if (j < runs.size() && runs[j].op != Equal) { hunk_end = j - 1; /* keep eq */ ++j; }
-            else break;
+            if (j < runs.size() && runs[j].op != Equal) {
+                hunk_end = j - 1; /* keep eq */
+                ++j;
+            } else
+                break;
         }
 
         // Pre-Equal context (the Equal run just before hunk_start, if any)
@@ -490,7 +535,7 @@ inline std::vector<PatchHunk> compute_structured_patch(
             size_t from = eq.a_end - keep;
             for (size_t k = from; k < eq.a_end; ++k)
                 hunk.lines.push_back(" " + a[k]);
-            --hunk_start; // include this (truncated) Equal run
+            --hunk_start;  // include this (truncated) Equal run
         }
 
         // Core non-Equal runs and interleaved short Equal runs
@@ -502,7 +547,7 @@ inline std::vector<PatchHunk> compute_structured_patch(
             } else if (r.op == Remove) {
                 for (size_t p = r.a_start; p < r.a_end; ++p)
                     hunk.lines.push_back("-" + a[p]);
-            } else { // Insert
+            } else {  // Insert
                 for (size_t p = r.b_start; p < r.b_end; ++p)
                     hunk.lines.push_back("+" + b[p]);
             }
@@ -538,7 +583,11 @@ inline std::vector<PatchHunk> compute_structured_patch(
         {
             int oc = 0, nc = 0;
             for (const auto& line : hunk.lines) {
-                if (line.empty()) { oc++; nc++; continue; }
+                if (line.empty()) {
+                    oc++;
+                    nc++;
+                    continue;
+                }
                 char c = line[0];
                 if (c == ' ' || c == '-') oc++;
                 if (c == ' ' || c == '+') nc++;
@@ -561,8 +610,10 @@ inline std::vector<PatchHunk> compute_structured_patch(
             // Count leading context lines and subtract that many.
             int leading_ctx = 0;
             for (const auto& line : hunk.lines) {
-                if (!line.empty() && line[0] == ' ') leading_ctx++;
-                else break;
+                if (!line.empty() && line[0] == ' ')
+                    leading_ctx++;
+                else
+                    break;
             }
             if (!o_start) o_start = 0;
             if (!n_start) n_start = 0;
@@ -594,16 +645,14 @@ struct PatchForEditsResult {
     std::string updated_file;
 };
 
-inline std::expected<PatchForEditsResult, std::string> get_patch_for_edits(
-    std::string_view file_path,
-    std::string_view file_contents,
-    const std::vector<FileEdit>& edits)
-{
+inline std::expected<PatchForEditsResult, std::string>
+get_patch_for_edits(std::string_view file_path, std::string_view file_contents,
+                    const std::vector<FileEdit>& edits) {
     (void)file_path;
 
     // Empty-file special case
-    if (file_contents.empty() && edits.size() == 1 &&
-        edits.front().old_string.empty() && edits.front().new_string.empty()) {
+    if (file_contents.empty() && edits.size() == 1 && edits.front().old_string.empty() &&
+        edits.front().new_string.empty()) {
         auto patch = compute_structured_patch(file_contents, "");
         return PatchForEditsResult{std::move(patch), ""};
     }
@@ -620,64 +669,56 @@ inline std::expected<PatchForEditsResult, std::string> get_patch_for_edits(
         if (!old_to_check.empty()) {
             for (const auto& prev_new : applied_new_strings) {
                 if (prev_new.find(old_to_check) != std::string::npos) {
-                    return std::unexpected(std::string(
-                        "Cannot edit file: old_string is a substring of a "
-                        "new_string from a previous edit."));
+                    return std::unexpected(
+                        std::string("Cannot edit file: old_string is a substring of a "
+                                    "new_string from a previous edit."));
                 }
             }
         }
 
         std::string previous = updated;
         updated = edit.old_string.empty()
-            ? edit.new_string
-            : apply_edit(updated, edit.old_string,
-                         edit.new_string, edit.replace_all);
+                      ? edit.new_string
+                      : apply_edit(updated, edit.old_string, edit.new_string, edit.replace_all);
 
         if (updated == previous) {
-            return std::unexpected(std::string(
-                "String not found in file. Failed to apply edit."));
+            return std::unexpected(std::string("String not found in file. Failed to apply edit."));
         }
         applied_new_strings.push_back(edit.new_string);
     }
 
     if (updated == file_contents) {
-        return std::unexpected(std::string(
-            "Original and edited file match exactly. Failed to apply edit."));
+        return std::unexpected(
+            std::string("Original and edited file match exactly. Failed to apply edit."));
     }
 
     auto patch = compute_structured_patch(file_contents, updated);
     return PatchForEditsResult{std::move(patch), std::move(updated)};
 }
 
-inline std::expected<PatchForEditsResult, std::string> get_patch_for_edit(
-    std::string_view file_path,
-    std::string_view file_contents,
-    std::string_view old_string,
-    std::string_view new_string,
-    bool replace_all = false)
-{
-    return get_patch_for_edits(file_path, file_contents, {
-        FileEdit{
-            .old_string = std::string(old_string),
-            .new_string = std::string(new_string),
-            .replace_all = replace_all
-        }
-    });
+inline std::expected<PatchForEditsResult, std::string>
+get_patch_for_edit(std::string_view file_path, std::string_view file_contents,
+                   std::string_view old_string, std::string_view new_string,
+                   bool replace_all = false) {
+    return get_patch_for_edits(file_path, file_contents,
+                               {FileEdit{.old_string = std::string(old_string),
+                                         .new_string = std::string(new_string),
+                                         .replace_all = replace_all}});
 }
 
 // ===========================================================================
 // Line-number formatting helper (= TS utils/file addLineNumbers).
 // ===========================================================================
 
-[[nodiscard]] inline std::string add_line_numbers(
-    std::string_view content,
-    int start_line = 1)
-{
+[[nodiscard]] inline std::string add_line_numbers(std::string_view content, int start_line = 1) {
     auto lines = patch_detail::split_lines(content);
     // Compute width
     int end_line = start_line + static_cast<int>(lines.size()) - 1;
     int width = 1;
-    while (end_line >= 10) { end_line /= 10; ++width; }
+    while (end_line >= 10) {
+        end_line /= 10;
+        ++width;
+    }
 
     std::ostringstream oss;
     int num = start_line;
@@ -692,6 +733,7 @@ struct AddLineNumbersParam {
     std::string content;
     int start_line = 1;
 };
+
 inline std::string add_line_numbers(const AddLineNumbersParam& p) {
     return add_line_numbers(p.content, p.start_line);
 }
@@ -700,18 +742,23 @@ inline std::string add_line_numbers(const AddLineNumbersParam& p) {
 // Patch → Edits (reverse direction)
 // ===========================================================================
 
-inline std::vector<FileEdit> get_edits_for_patch(
-    const std::vector<PatchHunk>& hunks)
-{
+inline std::vector<FileEdit> get_edits_for_patch(const std::vector<PatchHunk>& hunks) {
     std::vector<FileEdit> result;
     for (const auto& hunk : hunks) {
         std::vector<std::string> ctx, old_v, new_v;
         for (const auto& line : hunk.lines) {
-            if (line.empty()) { ctx.push_back(""); old_v.push_back(""); new_v.push_back(""); continue; }
+            if (line.empty()) {
+                ctx.push_back("");
+                old_v.push_back("");
+                new_v.push_back("");
+                continue;
+            }
             char tag = line[0];
             std::string rest = line.size() > 1 ? line.substr(1) : "";
             if (tag == ' ') {
-                ctx.push_back(rest); old_v.push_back(rest); new_v.push_back(rest);
+                ctx.push_back(rest);
+                old_v.push_back(rest);
+                new_v.push_back(rest);
             } else if (tag == '-') {
                 old_v.push_back(rest);
             } else if (tag == '+') {
@@ -719,8 +766,8 @@ inline std::vector<FileEdit> get_edits_for_patch(
             }
         }
         result.push_back(FileEdit{
-            .old_string  = loom::utils::join(old_v, "\n"),
-            .new_string  = loom::utils::join(new_v, "\n"),
+            .old_string = loom::utils::join(old_v, "\n"),
+            .new_string = loom::utils::join(new_v, "\n"),
             .replace_all = false,
         });
     }
@@ -738,24 +785,24 @@ struct Desanitization {
 
 // Desanitization table.
 inline constexpr Desanitization kDesanitizations[] = {
-    {"<fnr>",           "<function_results>"},
-    {"<n>",             "<name>"},
-    {"</n>",            "</name>"},
-    {"<o>",             "<output>"},
-    {"</o>",            "</output>"},
-    {"<e>",             "<error>"},
-    {"</e>",            "</error>"},
-    {"<s>",             "<system>"},
-    {"</s>",            "</system>"},
-    {"<r>",             "<result>"},
-    {"</r>",            "</result>"},
-    {"< META_START >",  "<META_START>"},
-    {"< META_END >",    "<META_END>"},
-    {"< EOT >",         "<EOT>"},
-    {"< META >",        "<META>"},
-    {"< SOS >",         "<SOS>"},
-    {"\n\nH:",          "\n\nHuman:"},
-    {"\n\nA:",          "\n\nAssistant:"},
+    {"<fnr>", "<function_results>"},
+    {"<n>", "<name>"},
+    {"</n>", "</name>"},
+    {"<o>", "<output>"},
+    {"</o>", "</output>"},
+    {"<e>", "<error>"},
+    {"</e>", "</error>"},
+    {"<s>", "<system>"},
+    {"</s>", "</system>"},
+    {"<r>", "<result>"},
+    {"</r>", "</result>"},
+    {"< META_START >", "<META_START>"},
+    {"< META_END >", "<META_END>"},
+    {"< EOT >", "<EOT>"},
+    {"< META >", "<META>"},
+    {"< SOS >", "<SOS>"},
+    {"\n\nH:", "\n\nHuman:"},
+    {"\n\nA:", "\n\nAssistant:"},
 };
 
 struct AppliedReplacement {
@@ -792,19 +839,22 @@ struct NormalizedFileEditInput {
 ///   3. On ENOENT, fall back to original input (matches TS "no TOCTOU
 ///      pre-check" strategy).
 inline NormalizedFileEditInput normalize_file_edit_input(
-    const std::filesystem::path& file_path,
-    const std::vector<FileEdit>& edits,
+    const std::filesystem::path& file_path, const std::vector<FileEdit>& edits,
     FileReadCache* cache = nullptr  // optional — callers can pass nullptr for testing
 ) {
     NormalizedFileEditInput out{file_path, {}};
-    if (edits.empty()) { out.edits = edits; return out; }
+    if (edits.empty()) {
+        out.edits = edits;
+        return out;
+    }
 
     const bool is_markdown = [&] {
         auto ext = file_path.extension().string();
         // lowercase-compare
         std::string lower;
         lower.reserve(ext.size());
-        for (char c : ext) lower.push_back(static_cast<char>(std::tolower(static_cast<unsigned char>(c))));
+        for (char c : ext)
+            lower.push_back(static_cast<char>(std::tolower(static_cast<unsigned char>(c))));
         return lower == ".md" || lower == ".mdx";
     }();
 
@@ -830,14 +880,12 @@ inline NormalizedFileEditInput normalize_file_edit_input(
 
     out.edits.reserve(edits.size());
     for (const auto& e : edits) {
-        std::string new_s = is_markdown
-            ? e.new_string
-            : strip_trailing_whitespace(e.new_string);
+        std::string new_s = is_markdown ? e.new_string : strip_trailing_whitespace(e.new_string);
 
         if (file_content && file_content->find(e.old_string) != std::string::npos) {
             out.edits.push_back(FileEdit{
-                .old_string  = e.old_string,
-                .new_string  = std::move(new_s),
+                .old_string = e.old_string,
+                .new_string = std::move(new_s),
                 .replace_all = e.replace_all,
             });
             continue;
@@ -845,15 +893,14 @@ inline NormalizedFileEditInput normalize_file_edit_input(
 
         if (file_content) {
             auto de = desanitize_match_string(e.old_string);
-            if (!de.applied.empty() &&
-                file_content->find(de.result) != std::string::npos) {
+            if (!de.applied.empty() && file_content->find(de.result) != std::string::npos) {
                 std::string de_new = new_s;
                 for (const auto& rep : de.applied) {
                     de_new = loom::utils::replace_all(std::move(de_new), rep.from, rep.to);
                 }
                 out.edits.push_back(FileEdit{
-                    .old_string  = std::move(de.result),
-                    .new_string  = std::move(de_new),
+                    .old_string = std::move(de.result),
+                    .new_string = std::move(de_new),
                     .replace_all = e.replace_all,
                 });
                 continue;
@@ -861,8 +908,8 @@ inline NormalizedFileEditInput normalize_file_edit_input(
         }
 
         out.edits.push_back(FileEdit{
-            .old_string  = e.old_string,
-            .new_string  = std::move(new_s),
+            .old_string = e.old_string,
+            .new_string = std::move(new_s),
             .replace_all = e.replace_all,
         });
     }
@@ -876,20 +923,20 @@ inline NormalizedFileEditInput normalize_file_edit_input(
 
 /// Are two edit sets equivalent when applied to the same original content?
 /// Mirrors TS areFileEditsEquivalent() — applies both and compares outputs.
-inline bool are_file_edits_equivalent(
-    const std::vector<FileEdit>& edits1,
-    const std::vector<FileEdit>& edits2,
-    std::string_view original_content)
-{
+inline bool are_file_edits_equivalent(const std::vector<FileEdit>& edits1,
+                                      const std::vector<FileEdit>& edits2,
+                                      std::string_view original_content) {
     // Fast path — literal equality
     if (edits1.size() == edits2.size()) {
         bool all_eq = true;
         for (size_t i = 0; i < edits1.size(); ++i) {
             const auto& a = edits1[i];
             const auto& b = edits2[i];
-            if (a.old_string  != b.old_string  ||
-                a.new_string  != b.new_string  ||
-                a.replace_all != b.replace_all) { all_eq = false; break; }
+            if (a.old_string != b.old_string || a.new_string != b.new_string ||
+                a.replace_all != b.replace_all) {
+                all_eq = false;
+                break;
+            }
         }
         if (all_eq) return true;
     }
@@ -903,11 +950,9 @@ inline bool are_file_edits_equivalent(
 }
 
 /// Full inputs-equivalent wrapper (different files ⇒ never equivalent).
-inline bool are_file_edits_inputs_equivalent(
-    const NormalizedFileEditInput& a,
-    const NormalizedFileEditInput& b,
-    FileReadCache* cache = nullptr)
-{
+inline bool are_file_edits_inputs_equivalent(const NormalizedFileEditInput& a,
+                                             const NormalizedFileEditInput& b,
+                                             FileReadCache* cache = nullptr) {
     if (a.file_path != b.file_path) return false;
 
     // Fast path — literal equality of edits
@@ -916,9 +961,11 @@ inline bool are_file_edits_inputs_equivalent(
         for (size_t i = 0; i < a.edits.size(); ++i) {
             const auto& x = a.edits[i];
             const auto& y = b.edits[i];
-            if (x.old_string  != y.old_string  ||
-                x.new_string  != y.new_string  ||
-                x.replace_all != y.replace_all) { all_eq = false; break; }
+            if (x.old_string != y.old_string || x.new_string != y.new_string ||
+                x.replace_all != y.replace_all) {
+                all_eq = false;
+                break;
+            }
         }
         if (all_eq) return true;
     }
@@ -930,11 +977,13 @@ inline bool are_file_edits_inputs_equivalent(
         } else {
             std::ifstream f(a.file_path, std::ios::binary);
             if (f) {
-                std::ostringstream ss; ss << f.rdbuf();
+                std::ostringstream ss;
+                ss << f.rdbuf();
                 content = ss.str();
             }
         }
-    } catch (...) { /* ENOENT-like → use empty content */ }
+    } catch (...) { /* ENOENT-like → use empty content */
+    }
 
     return are_file_edits_equivalent(a.edits, b.edits, content);
 }
@@ -959,8 +1008,10 @@ inline ReadForEditResult read_file_for_edit(const std::filesystem::path& p) {
     try {
         std::ifstream f(p, std::ios::binary);
         if (!f) {
-            return {.content = "", .file_exists = false,
-                    .encoding = "utf-8", .line_endings = LineEndingType::LF};
+            return {.content = "",
+                    .file_exists = false,
+                    .encoding = "utf-8",
+                    .line_endings = LineEndingType::LF};
         }
         std::ostringstream ss;
         ss << f.rdbuf();
@@ -972,8 +1023,7 @@ inline ReadForEditResult read_file_for_edit(const std::filesystem::path& p) {
         // demand; for simplicity in the C++ port we treat unrecognised
         // BOMs as binary and fall back to UTF-8 (callers validate).
         std::string enc = "utf-8";
-        if (raw.size() >= 2 &&
-            static_cast<unsigned char>(raw[0]) == 0xff &&
+        if (raw.size() >= 2 && static_cast<unsigned char>(raw[0]) == 0xff &&
             static_cast<unsigned char>(raw[1]) == 0xfe) {
             enc = "utf-16le";
         }
@@ -981,14 +1031,17 @@ inline ReadForEditResult read_file_for_edit(const std::filesystem::path& p) {
         // Normalise all line endings to '\n' for downstream processing;
         // the CRLF/LF detection is preserved so write-back can restore.
         LineEndingType let = LineEndingType::LF;
-        if (raw.find("\r\n") != std::string::npos) let = LineEndingType::CRLF;
-        else if (raw.find('\r') != std::string::npos) let = LineEndingType::CR;
+        if (raw.find("\r\n") != std::string::npos)
+            let = LineEndingType::CRLF;
+        else if (raw.find('\r') != std::string::npos)
+            let = LineEndingType::CR;
 
         std::string norm;
         norm.reserve(raw.size());
         for (size_t i = 0; i < raw.size(); ++i) {
             if (raw[i] == '\r' && i + 1 < raw.size() && raw[i + 1] == '\n') {
-                norm += '\n'; ++i;
+                norm += '\n';
+                ++i;
             } else if (raw[i] == '\r') {
                 norm += '\n';
             } else {
@@ -996,12 +1049,16 @@ inline ReadForEditResult read_file_for_edit(const std::filesystem::path& p) {
             }
         }
 
-        return {.content = std::move(norm), .file_exists = true,
-                .encoding = std::move(enc), .line_endings = let};
+        return {.content = std::move(norm),
+                .file_exists = true,
+                .encoding = std::move(enc),
+                .line_endings = let};
     } catch (const std::ios_base::failure&) {
-        return {.content = "", .file_exists = false,
-                .encoding = "utf-8", .line_endings = LineEndingType::LF};
+        return {.content = "",
+                .file_exists = false,
+                .encoding = "utf-8",
+                .line_endings = LineEndingType::LF};
     }
 }
 
-} // namespace loom::utils::file_edit
+}  // namespace loom::utils::file_edit

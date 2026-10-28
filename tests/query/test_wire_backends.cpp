@@ -49,8 +49,8 @@ loom::core::UserMessage make_user(std::string text) {
     return msg;
 }
 
-loom::core::AssistantMessage make_assistant_with_tool_use(
-    std::string tool_id, std::string tool_name, std::string input_json) {
+loom::core::AssistantMessage
+make_assistant_with_tool_use(std::string tool_id, std::string tool_name, std::string input_json) {
     loom::core::AssistantMessage msg{};
     msg.id.value = "a1";
     msg.timestamp = std::chrono::system_clock::now();
@@ -104,8 +104,7 @@ TEST(WireProtocol, ApiNamesRoundTrip) {
 // ===========================================================================
 
 TEST(OpenAiWireBackend, BuildsChatCompletionsRequest) {
-    wire::OpenAiWireBackend backend("http://localhost:8080",
-                                    {{"Authorization", "Bearer sk-test"}});
+    wire::OpenAiWireBackend backend("http://localhost:8080", {{"Authorization", "Bearer sk-test"}});
 
     wire::RequestInput input;
     input.model = "qwen2.5";
@@ -204,8 +203,7 @@ TEST(OpenAiWireBackend, ComputerUseStaysAnOrdinaryFunctionTool) {
     EXPECT_EQ(std::string(tool.get("type").as_str()), "function");
     EXPECT_NE(std::string(tool.get("type").as_str()), "computer_20241022");
     ASSERT_TRUE(tool.get("function").is_obj());
-    EXPECT_EQ(std::string(tool.get("function").get("name").as_str()),
-              "computer_use");
+    EXPECT_EQ(std::string(tool.get("function").get("name").as_str()), "computer_use");
 }
 
 TEST(OpenAiWireBackend, ToolResultsBecomeRoleToolMessages) {
@@ -247,8 +245,7 @@ TEST(OpenAiWireBackend, ToolResultsBecomeRoleToolMessages) {
             if (tc.is_arr() && tc.size() > 0) {
                 saw_assistant_tool_calls = true;
                 EXPECT_EQ(std::string(tc.at(0).get("id").as_str()), "toolu_1");
-                EXPECT_EQ(std::string(tc.at(0).get("function").get("name").as_str()),
-                          "Read");
+                EXPECT_EQ(std::string(tc.at(0).get("function").get("name").as_str()), "Read");
             }
         } else if (role == "tool") {
             saw_tool_role = true;
@@ -257,8 +254,8 @@ TEST(OpenAiWireBackend, ToolResultsBecomeRoleToolMessages) {
     }
     EXPECT_TRUE(saw_assistant_tool_calls)
         << "assistant tool_use not mapped to tool_calls: " << prepared->body;
-    EXPECT_TRUE(saw_tool_role)
-        << "tool_result not mapped to a role:tool message: " << prepared->body;
+    EXPECT_TRUE(saw_tool_role) << "tool_result not mapped to a role:tool message: "
+                               << prepared->body;
 }
 
 // ===========================================================================
@@ -334,8 +331,7 @@ TEST(OpenAiWireBackend, MalformedResponseIsAnError) {
 
 TEST(OpenAiWireBackend, DecodesContentDelta) {
     wire::OpenAiWireBackend backend("http://h");
-    const std::string frame =
-        R"({"choices":[{"delta":{"content":"Hello"},"index":0}]})";
+    const std::string frame = R"({"choices":[{"delta":{"content":"Hello"},"index":0}]})";
     auto deltas = backend.parse_stream_event("", frame);
     ASSERT_FALSE(deltas.empty());
     EXPECT_EQ(deltas.front().kind, StreamDelta::Kind::TextDelta);
@@ -360,8 +356,7 @@ TEST(OpenAiWireBackend, DecodesToolCallStartThenArgumentFragments) {
     EXPECT_TRUE(saw_start);
 
     // Later chunks carry only argument fragments.
-    auto frag = backend.parse_stream_event(
-        "", R"({"choices":[{"delta":{"tool_calls":[{"index":0,
+    auto frag = backend.parse_stream_event("", R"({"choices":[{"delta":{"tool_calls":[{"index":0,
              "function":{"arguments":"{\"cmd\":"}}]}}]})");
     bool saw_frag = false;
     for (const auto& d : frag) {
@@ -421,8 +416,7 @@ TEST(MessagesWireBackend, BuildsMessagesRequest) {
 
     auto prepared = backend.prepare(input);
     ASSERT_TRUE(prepared.has_value()) << prepared.error();
-    EXPECT_NE(prepared->url.find("/v1/messages"), std::string::npos)
-        << prepared->url;
+    EXPECT_NE(prepared->url.find("/v1/messages"), std::string::npos) << prepared->url;
 
     auto doc = parse_or_fail(prepared->body);
     const auto root = doc.root();
@@ -515,8 +509,7 @@ TEST(MessagesWireBackend, ParsesMessageResponse) {
 TEST(MessagesWireBackend, DecodesContentBlockDelta) {
     wire::MessagesWireBackend backend("https://api.example.com");
     auto deltas = backend.parse_stream_event(
-        "content_block_delta",
-        R"({"index":0,"delta":{"type":"text_delta","text":"Hello"}})");
+        "content_block_delta", R"({"index":0,"delta":{"type":"text_delta","text":"Hello"}})");
     ASSERT_FALSE(deltas.empty());
     bool saw_text = false;
     for (const auto& d : deltas) {
@@ -531,8 +524,7 @@ TEST(MessagesWireBackend, DecodesContentBlockDelta) {
 TEST(MessagesWireBackend, DecodesMessageDeltaStopReason) {
     wire::MessagesWireBackend backend("https://api.example.com");
     auto deltas = backend.parse_stream_event(
-        "message_delta",
-        R"({"delta":{"stop_reason":"end_turn"},"usage":{"output_tokens":7}})");
+        "message_delta", R"({"delta":{"stop_reason":"end_turn"},"usage":{"output_tokens":7}})");
     bool saw_stop = false;
     for (const auto& d : deltas) {
         if (d.kind == StreamDelta::Kind::MessageStop) {
@@ -551,15 +543,15 @@ TEST(MessagesWireBackend, PingIsIgnoredNotAnError) {
     }
 }
 
-
 TEST(WireProtocol, TaskOriginRemainsLocalWhileBothBackendsPreserveModelContextExactly) {
-    const std::string context = "<task_notification><task_id>wire-task</task_id><status>completed</status><result>MODEL_RESULT</result></task_notification>";
+    const std::string context = "<task_notification><task_id>wire-task</task_id><status>completed</"
+                                "status><result>MODEL_RESULT</result></task_notification>";
     auto user = make_user(context);
-    user.origin = loom::core::TaskEvent{
-        .task_id = "wire-task", .parent_session_id = "OWNER_MUST_STAY_LOCAL",
-        .kind = loom::core::TaskEventKind::TeamAgent,
-        .status = loom::core::TaskEventStatus::Failed,
-        .display_name = "UI_LABEL_MUST_STAY_LOCAL"};
+    user.origin = loom::core::TaskEvent{.task_id = "wire-task",
+                                        .parent_session_id = "OWNER_MUST_STAY_LOCAL",
+                                        .kind = loom::core::TaskEventKind::TeamAgent,
+                                        .status = loom::core::TaskEventStatus::Failed,
+                                        .display_name = "UI_LABEL_MUST_STAY_LOCAL"};
     auto verify = [&](auto& backend) {
         wire::RequestInput input;
         input.model = "wire-model";
@@ -575,7 +567,8 @@ TEST(WireProtocol, TaskOriginRemainsLocalWhileBothBackendsPreserveModelContextEx
         EXPECT_EQ(typed->body.find("OWNER_MUST_STAY_LOCAL"), std::string::npos);
         EXPECT_EQ(typed->body.find("UI_LABEL_MUST_STAY_LOCAL"), std::string::npos);
         auto content = message.get("content");
-        const auto text = content.is_str() ? std::string(content.as_str()) : content.at(0).get_string("text");
+        const auto text =
+            content.is_str() ? std::string(content.as_str()) : content.at(0).get_string("text");
         EXPECT_EQ(text, context);
         auto& ordinary = std::get<loom::core::UserMessage>(input.messages[0]);
         ordinary.origin = loom::core::HumanInput{};
@@ -592,7 +585,6 @@ TEST(WireProtocol, TaskOriginRemainsLocalWhileBothBackendsPreserveModelContextEx
     verify(messages);
     verify(openai);
 }
-
 
 TEST(OpenAiWireBackend, AutomaticOutputOmitsProviderLimit) {
     wire::OpenAiWireBackend backend("http://localhost:8080");

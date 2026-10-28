@@ -20,17 +20,17 @@
 //                           ProcessCompletedPastes, project_agent_definition_card
 module;
 
-#include <cstring>
-#include <cctype>
-#include <cstdio>
-#include <cstdlib>
-#include <ctime>
-
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/event.hpp>
 #include <ftxui/component/mouse.hpp>
 #include <ftxui/dom/elements.hpp>
+
+#include <cctype>
 #include <cstdint>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <ctime>
 
 module loom.ui.app.app;
 
@@ -53,8 +53,8 @@ namespace loom::ui {
 namespace agent_runtime = loom::tools::agent_runtime;
 namespace agent_cards = loom::ui::agents::cards;
 // Defined in app_extra_methods.cpp (same module); redeclared for module linkage.
-agent_cards::AgentCardData project_agent_definition_card(
-    const agent_runtime::AgentDefinition& agent);
+agent_cards::AgentCardData
+project_agent_definition_card(const agent_runtime::AgentDefinition& agent);
 
 namespace repl = loom::ui::repl_screen;
 
@@ -62,56 +62,65 @@ namespace {
 // Compare projection inputs exactly; hashes alone could hide a changed row.
 bool same_projection_block(const ContentBlock& a, const ContentBlock& b) {
     if (a.index() != b.index()) return false;
-    return std::visit([&b](const auto& x) {
-        using T = std::decay_t<decltype(x)>;
-        const auto& y = std::get<T>(b);
-        if constexpr (std::is_same_v<T, TextBlock>) return x.text == y.text;
-        else if constexpr (std::is_same_v<T, ThinkingBlock>)
-            return x.thinking == y.thinking && x.signature == y.signature;
-        else if constexpr (std::is_same_v<T, ToolUseBlock>)
-            return x.id == y.id && x.name == y.name && x.input_json == y.input_json;
-        else if constexpr (std::is_same_v<T, ToolResultBlock>) {
-            if (x.tool_use_id != y.tool_use_id || x.is_error != y.is_error ||
-                x.content.index() != y.content.index()) return false;
-            if (auto text = std::get_if<std::string>(&x.content))
-                return *text == std::get<std::string>(y.content);
-            const auto& xi = std::get<std::vector<ToolResultContentItem>>(x.content);
-            const auto& yi = std::get<std::vector<ToolResultContentItem>>(y.content);
-            return xi.size() == yi.size() && std::equal(xi.begin(), xi.end(), yi.begin(),
-                [](const auto& l, const auto& r) {
-                    return l.type == r.type && l.text == r.text &&
-                           l.media_type == r.media_type && l.data == r.data;
-                });
-        } else if constexpr (std::is_same_v<T, ImageBlock>)
-            return x.media_type == y.media_type && x.data == y.data &&
-                   x.width == y.width && x.height == y.height &&
-                   x.size_bytes == y.size_bytes && x.file_name == y.file_name &&
-                   x.source_path == y.source_path && x.source == y.source;
-        else return x.media_type == y.media_type && x.data == y.data;
-    }, a);
+    return std::visit(
+        [&b](const auto& x) {
+            using T = std::decay_t<decltype(x)>;
+            const auto& y = std::get<T>(b);
+            if constexpr (std::is_same_v<T, TextBlock>)
+                return x.text == y.text;
+            else if constexpr (std::is_same_v<T, ThinkingBlock>)
+                return x.thinking == y.thinking && x.signature == y.signature;
+            else if constexpr (std::is_same_v<T, ToolUseBlock>)
+                return x.id == y.id && x.name == y.name && x.input_json == y.input_json;
+            else if constexpr (std::is_same_v<T, ToolResultBlock>) {
+                if (x.tool_use_id != y.tool_use_id || x.is_error != y.is_error ||
+                    x.content.index() != y.content.index())
+                    return false;
+                if (auto text = std::get_if<std::string>(&x.content))
+                    return *text == std::get<std::string>(y.content);
+                const auto& xi = std::get<std::vector<ToolResultContentItem>>(x.content);
+                const auto& yi = std::get<std::vector<ToolResultContentItem>>(y.content);
+                return xi.size() == yi.size() &&
+                       std::equal(xi.begin(), xi.end(), yi.begin(),
+                                  [](const auto& l, const auto& r) {
+                                      return l.type == r.type && l.text == r.text &&
+                                             l.media_type == r.media_type && l.data == r.data;
+                                  });
+            } else if constexpr (std::is_same_v<T, ImageBlock>)
+                return x.media_type == y.media_type && x.data == y.data && x.width == y.width &&
+                       x.height == y.height && x.size_bytes == y.size_bytes &&
+                       x.file_name == y.file_name && x.source_path == y.source_path &&
+                       x.source == y.source;
+            else
+                return x.media_type == y.media_type && x.data == y.data;
+        },
+        a);
 }
 
 bool same_projection_message(const Message& a, const Message& b) {
     if (a.index() != b.index()) return false;
-    return std::visit([&b](const auto& x) {
-        using T = std::decay_t<decltype(x)>;
-        const auto& y = std::get<T>(b);
-        if (x.id != y.id || x.timestamp != y.timestamp ||
-            x.content.size() != y.content.size() ||
-            !std::equal(x.content.begin(), x.content.end(), y.content.begin(),
-                        same_projection_block)) return false;
-        if constexpr (std::is_same_v<T, UserMessage>) return x.origin == y.origin;
-        if constexpr (std::is_same_v<T, ToolUseMessage>)
-            return x.tool_name == y.tool_name && x.tool_input_json == y.tool_input_json;
-        if constexpr (std::is_same_v<T, ToolResultMessage>)
-            return x.tool_use_id == y.tool_use_id && x.tool_name == y.tool_name &&
-                   x.is_error == y.is_error;
-        if constexpr (std::is_same_v<T, AssistantMessage>)
-            return x.stop_reason == y.stop_reason && x.model == y.model;
-        return true;
-    }, a);
+    return std::visit(
+        [&b](const auto& x) {
+            using T = std::decay_t<decltype(x)>;
+            const auto& y = std::get<T>(b);
+            if (x.id != y.id || x.timestamp != y.timestamp ||
+                x.content.size() != y.content.size() ||
+                !std::equal(x.content.begin(), x.content.end(), y.content.begin(),
+                            same_projection_block))
+                return false;
+            if constexpr (std::is_same_v<T, UserMessage>) return x.origin == y.origin;
+            if constexpr (std::is_same_v<T, ToolUseMessage>)
+                return x.tool_name == y.tool_name && x.tool_input_json == y.tool_input_json;
+            if constexpr (std::is_same_v<T, ToolResultMessage>)
+                return x.tool_use_id == y.tool_use_id && x.tool_name == y.tool_name &&
+                       x.is_error == y.is_error;
+            if constexpr (std::is_same_v<T, AssistantMessage>)
+                return x.stop_reason == y.stop_reason && x.model == y.model;
+            return true;
+        },
+        a);
 }
-} // namespace
+}  // namespace
 
 // ── Virtual/override methods (moved out of class body to fix vtable crash) ──
 // These were previously defined inline in AppAdapter's class body.  Moving
@@ -139,7 +148,10 @@ AppAdapter::~AppAdapter() {
 
     // Unsubscribe from dynamic skill discovery callbacks.
     if (skills_changed_unsubscribe_) {
-        try { skills_changed_unsubscribe_(); } catch (...) {}
+        try {
+            skills_changed_unsubscribe_();
+        } catch (...) {
+        }
     }
 }
 
@@ -191,8 +203,8 @@ bool AppAdapter::is_streaming_thinking_visible() const {
     for (const auto& [idx, stp] : streaming_thinking_) {
         if (!stp.complete) return true;
         if (stp.streaming_ended_at &&
-            std::chrono::duration_cast<std::chrono::seconds>(
-                now - *stp.streaming_ended_at).count() < 3)
+            std::chrono::duration_cast<std::chrono::seconds>(now - *stp.streaming_ended_at)
+                    .count() < 3)
             return true;
     }
     return false;
@@ -226,15 +238,13 @@ Element AppAdapter::Render() {
     // thread for input_text safety).
     DrainPendingAtMentionInserts();
 
-    welcome_animation_active_.store(
-        screen_state_->messages_store.messages.empty() &&
-        !query_running_.load() &&
-        !repl::IsToolAnimating(screen_state_->task_view_store));
+    welcome_animation_active_.store(screen_state_->messages_store.messages.empty() &&
+                                    !query_running_.load() &&
+                                    !repl::IsToolAnimating(screen_state_->task_view_store));
     const bool qr = query_running_.load();
-    loom::utils::debug("app.render",
-        "Render: query_running={}, messages={}, spinner_mode={}",
-        qr, screen_state_->messages_store.messages.size(),
-        static_cast<int>(screen_state_->task_view_store.spinner_mode));
+    loom::utils::debug("app.render", "Render: query_running={}, messages={}, spinner_mode={}", qr,
+                       screen_state_->messages_store.messages.size(),
+                       static_cast<int>(screen_state_->task_view_store.spinner_mode));
 
     if (qr) {
         std::lock_guard lk(result_mutex_);
@@ -249,10 +259,12 @@ Element AppAdapter::Render() {
         // Message 24-char prefix shared by all derived sub-rows.
         auto make_uuid24 = [](std::uint64_t msg_idx, const std::string& seed) {
             std::uint64_t h = 1469598103934665603ULL;
-            for (char c : seed) { h ^= static_cast<std::uint64_t>(c); h *= 1099511628211ULL; }
+            for (char c : seed) {
+                h ^= static_cast<std::uint64_t>(c);
+                h *= 1099511628211ULL;
+            }
             char buf[32];
-            std::snprintf(buf, sizeof(buf), "msg_%012llx%08llx",
-                          (unsigned long long)msg_idx,
+            std::snprintf(buf, sizeof(buf), "msg_%012llx%08llx", (unsigned long long)msg_idx,
                           (unsigned long long)(h & 0xFFFFFFFFULL));
             return std::string(buf, 24);
         };
@@ -261,7 +273,8 @@ Element AppAdapter::Render() {
             auto messages = static_cast<loom::core::QueryEngine*>(engine_raw())->get_conversation();
             messages = ApplyMessageCollapsePipeline(std::move(messages));
             new_messages.clear();
-            new_messages.reserve(messages.size() + streaming_tools_.size() + streaming_thinking_.size() + 1);
+            new_messages.reserve(messages.size() + streaming_tools_.size() +
+                                 streaming_thinking_.size() + 1);
             tick_msg_idx = 0;
             std::size_t source_index = 0;
 
@@ -276,16 +289,18 @@ Element AppAdapter::Render() {
                 }
                 const auto& projected = committed_projection_cache_[source_index++].rows;
                 std::string seed_preview;
-                std::visit([&](const auto& m) {
-                    if constexpr (requires{ m.content; }) {
-                        for (const auto& blk : m.content) {
-                            if (const auto* tb = std::get_if<TextBlock>(&blk)) {
-                                seed_preview += tb->text.substr(0, 64);
-                                break;
+                std::visit(
+                    [&](const auto& m) {
+                        if constexpr (requires { m.content; }) {
+                            for (const auto& blk : m.content) {
+                                if (const auto* tb = std::get_if<TextBlock>(&blk)) {
+                                    seed_preview += tb->text.substr(0, 64);
+                                    break;
+                                }
                             }
                         }
-                    }
-                }, msg);
+                    },
+                    msg);
                 const std::string u24 = make_uuid24(tick_msg_idx, seed_preview);
                 for (const auto& cached_row : projected) {
                     auto e = cached_row;
@@ -315,8 +330,8 @@ Element AppAdapter::Render() {
             // AppendLocalMessagesToScreenState, but into the local vector).
             {
                 static std::uint64_t s_local_seq = 0;
-                for (auto it = local_command_messages_.begin();
-                     it != local_command_messages_.end(); ++it) {
+                for (auto it = local_command_messages_.begin(); it != local_command_messages_.end();
+                     ++it) {
                     if (it->id.empty()) {
                         char buf[32];
                         std::snprintf(buf, sizeof(buf), "loc_%016llx",
@@ -324,8 +339,7 @@ Element AppAdapter::Render() {
                         it->id = std::string(buf, 24);
                     }
                 }
-                new_messages.insert(new_messages.end(),
-                                    local_command_messages_.begin(),
+                new_messages.insert(new_messages.end(), local_command_messages_.begin(),
                                     local_command_messages_.end());
             }
             // Restore chronological order (see SyncState). Applied BEFORE the
@@ -361,9 +375,9 @@ Element AppAdapter::Render() {
             if (found == committed_calls.end()) continue;
             auto& row = *found->second;
             row.tool_status = tool.exec_done ? (tool.is_error ? "error" : "success")
-                : (tool.exec_started ? "running" : "pending");
-            row.tool_start_time = tool.streaming_started_at.value_or(
-                std::chrono::steady_clock::time_point{});
+                                             : (tool.exec_started ? "running" : "pending");
+            row.tool_start_time =
+                tool.streaming_started_at.value_or(std::chrono::steady_clock::time_point{});
         }
 
         // ── Faithful live-path: project in-flight content blocks ──
@@ -375,9 +389,8 @@ Element AppAdapter::Render() {
         // matching faithful Element renderer (thinking / tool-use / text).
         // This way tool-use rows and thinking rows appear progressively
         // during streaming, not just after the full message completes.
-        bool has_in_flight = !streaming_text_.empty() ||
-                             !streaming_tools_.empty() ||
-                             !streaming_thinking_.empty();
+        bool has_in_flight =
+            !streaming_text_.empty() || !streaming_tools_.empty() || !streaming_thinking_.empty();
 
         // ContentBlockStop only finishes streaming a block. The committed
         // replacement arrives later through the engine's on_commit callback.
@@ -387,13 +400,12 @@ Element AppAdapter::Render() {
         // projection path alive.
         {
             auto now = clock::steady_now();
-            std::erase_if(streaming_thinking_,
-                [&now](const auto& p) {
-                    return p.second.complete &&
-                           p.second.streaming_ended_at &&
-                           std::chrono::duration_cast<std::chrono::seconds>(
-                               now - *p.second.streaming_ended_at).count() >= 3;
-                });
+            std::erase_if(streaming_thinking_, [&now](const auto& p) {
+                return p.second.complete && p.second.streaming_ended_at &&
+                       std::chrono::duration_cast<std::chrono::seconds>(
+                           now - *p.second.streaming_ended_at)
+                               .count() >= 3;
+            });
         }
 
         // Re-arm only the next thinking grace transition after an expired one.
@@ -402,17 +414,18 @@ Element AppAdapter::Render() {
             (void)index;
             if (!thinking.complete || !thinking.streaming_ended_at) continue;
             const auto due = std::chrono::duration_cast<std::chrono::milliseconds>(
-                thinking.streaming_ended_at->time_since_epoch()).count() + 3000;
+                                 thinking.streaming_ended_at->time_since_epoch())
+                                 .count() +
+                             3000;
             if (next_collapse == 0 || due < next_collapse) next_collapse = due;
         }
         thinking_collapse_deadline_ms_.store(next_collapse);
 
         if (has_in_flight) {
-            bool all_tools_complete = streaming_message_committed_ &&
-                !streaming_tools_.empty() &&
-                std::ranges::all_of(streaming_tools_, [](const auto& p) {
-                    return p.second.complete;
-                });
+            bool all_tools_complete = streaming_message_committed_ && !streaming_tools_.empty() &&
+                                      std::ranges::all_of(streaming_tools_, [](const auto& p) {
+                                          return p.second.complete;
+                                      });
             // The streaming thinking tail stays visible for 3s after
             // completion (matching the collapse grace).  Keep projecting
             // in-flight blocks when thinking is still within the grace
@@ -430,11 +443,11 @@ Element AppAdapter::Render() {
         }
 
         loom::utils::debug("app.render",
-            "  streaming-path: committed_msgs={}, in_flight={} "
-            "(text_len={}, tools={}, thinking={})",
-            screen_state_->messages_store.messages.size(), has_in_flight,
-            streaming_text_.size(), streaming_tools_.size(),
-            streaming_thinking_.size());
+                           "  streaming-path: committed_msgs={}, in_flight={} "
+                           "(text_len={}, tools={}, thinking={})",
+                           screen_state_->messages_store.messages.size(), has_in_flight,
+                           streaming_text_.size(), streaming_tools_.size(),
+                           streaming_thinking_.size());
 
         if (has_in_flight) {
             // Gather block indices (keys of all streaming maps) to sort.
@@ -467,8 +480,7 @@ Element AppAdapter::Render() {
             // source AssistantMessage → share a single 24-char uuid prefix so
             // the UnseenDivider still lands even when e.g. the first
             // block is a ThinkingBlock (CC-724).
-            const std::string streaming_uuid24 =
-                make_uuid24(tick_msg_idx, "streaming");
+            const std::string streaming_uuid24 = make_uuid24(tick_msg_idx, "streaming");
             for (std::uint32_t idx : block_indices) {
                 // Thinking block
                 auto thk = streaming_thinking_.find(idx);
@@ -485,14 +497,15 @@ Element AppAdapter::Render() {
                     {
                         auto now = clock::steady_now();
                         bool within_grace = thk->second.streaming_ended_at &&
-                            std::chrono::duration_cast<std::chrono::seconds>(
-                                now - *thk->second.streaming_ended_at).count() < 3;
+                                            std::chrono::duration_cast<std::chrono::seconds>(
+                                                now - *thk->second.streaming_ended_at)
+                                                    .count() < 3;
                         e.thinking_active = !thk->second.complete || within_grace;
                         // Compute thinking duration for the collapsed label.
                         if (thk->second.streaming_started_at) {
                             auto end = thk->second.streaming_ended_at.value_or(now);
-                            e.thinking_duration = std::chrono::duration_cast<
-                                std::chrono::milliseconds>(
+                            e.thinking_duration =
+                                std::chrono::duration_cast<std::chrono::milliseconds>(
                                     end - *thk->second.streaming_started_at);
                             // Wall-clock start for the chain compressor's
                             // live elapsed timer (ticks in real time while
@@ -516,7 +529,8 @@ Element AppAdapter::Render() {
                     // avoid a duplicate green-dot row in the transcript.
                     if (tlu->second.exec_done) continue;
                     if (!tlu->second.tool_use_id.empty() &&
-                        committed_calls.contains(tlu->second.tool_use_id)) continue;
+                        committed_calls.contains(tlu->second.tool_use_id))
+                        continue;
 
                     repl::MessageDisplayEntry e;
                     e.role = "assistant";
@@ -536,8 +550,7 @@ Element AppAdapter::Render() {
                     // complete (set by ContentBlockStop when input_json
                     // finishes streaming — happens before execution).
                     if (tlu->second.exec_done) {
-                        e.tool_status = tlu->second.is_error
-                            ? "error" : "success";
+                        e.tool_status = tlu->second.is_error ? "error" : "success";
                     } else {
                         e.tool_status = tlu->second.exec_started ? "running" : "pending";
                     }
@@ -549,8 +562,7 @@ Element AppAdapter::Render() {
                     // the output and defeat the "separate result card"
                     // UX (AssistantToolUseMessage +
                     // UserToolSuccessMessage).
-                    if (!tlu->second.exec_done &&
-                        !tlu->second.result_preview.empty())
+                    if (!tlu->second.exec_done && !tlu->second.result_preview.empty())
                         e.tool_result_preview = tlu->second.result_preview;
                     e.is_error = tlu->second.is_error;
                     e.timestamp = now;
@@ -618,9 +630,11 @@ Element AppAdapter::Render() {
     auto visible = VisibleConversationComponent();
     auto el = visible->Render() | dc::cursor_reset();
     const auto chain_due = screen_state_->messages_store.render_input.chain_update_due;
-    chain_label_deadline_ms_.store(screen_.load() && query_running_.load() && chain_due
-        ? std::chrono::duration_cast<std::chrono::milliseconds>(chain_due->time_since_epoch()).count()
-        : 0);
+    chain_label_deadline_ms_.store(
+        screen_.load() && query_running_.load() && chain_due
+            ? std::chrono::duration_cast<std::chrono::milliseconds>(chain_due->time_since_epoch())
+                  .count()
+            : 0);
     // Drag-to-select: paint the linear selection's background after
     // the normal render pass.  SelectionHighlightNode (defined in
     // app_text_selection.cpp) follows FTXUI's own `inverted` decorator
@@ -631,10 +645,13 @@ Element AppAdapter::Render() {
 
 bool AppAdapter::OnEvent(Event event) {
     const bool status_control = HandleProgramStatusControl(event);
+
     struct FlushStatus {
         AppAdapter* app;
+
         ~FlushStatus() { app->RefreshProgramStatus(); }
     } flush_status{this};
+
     DrainUiActions();
     ProjectRuntimeAgentsToScreenState();
     ConsumePendingResult();
@@ -662,8 +679,8 @@ bool AppAdapter::OnEvent(Event event) {
     // Clear an active selection on any key press (mouse press is handled
     // in HandleTextSelectionMouse).  Event::Custom is excluded to avoid
     // a loop with PostRenderEvent.
-    if ((text_selection_.active || text_selection_.potential) &&
-        !event.is_mouse() && event != Event::Custom) {
+    if ((text_selection_.active || text_selection_.potential) && !event.is_mouse() &&
+        event != Event::Custom) {
         ClearTextSelection();
         PostRenderEvent();
     }
@@ -685,8 +702,7 @@ bool AppAdapter::OnEvent(Event event) {
         // Event-driven pane-observer wake: the background capture pass flags
         // this atomic (never touches screen state off-thread). Gated so the
         // 50ms PostRenderEvent animation traffic does no settings.json I/O.
-        if (pane_snapshot_dirty_.exchange(false,
-                                          std::memory_order_acq_rel)) {
+        if (pane_snapshot_dirty_.exchange(false, std::memory_order_acq_rel)) {
             ProjectLiveTeammatesToScreenState();
         }
         // Leader-side teammate permission requests reuse the existing
@@ -751,13 +767,12 @@ bool AppAdapter::OnEvent(Event event) {
     // returns before delegating to repl_component_ (below), so the dialog
     // never sees the keystroke.
     const bool any_dialog_open =
-        screen_state_->dialog_store.dialog_queue.has_standalone()
-        || screen_state_->dialog_store.dialog_queue.has_modal()
-        || screen_state_->dialog_store.dialog_queue.has_overlay()
+        screen_state_->dialog_store.dialog_queue.has_standalone() ||
+        screen_state_->dialog_store.dialog_queue.has_modal() ||
+        screen_state_->dialog_store.dialog_queue.has_overlay()
         // Settings owns a held component outside the dialog queue.
         || screen_state_->mode == loom::ui::repl_screen::ReplMode::SettingsView;
-    if (event == Event::Character('\x13') && !query_running_.load()
-        && !any_dialog_open) {
+    if (event == Event::Character('\x13') && !query_running_.load() && !any_dialog_open) {
         namespace repl = loom::ui::repl_screen;
         const auto& input = screen_state_->input_text;
 
@@ -801,8 +816,7 @@ bool AppAdapter::OnEvent(Event event) {
                     ref_texts[r.id] = it->second;
                 }
             }
-            repl::StashCurrentPrompt(screen_state_,
-                std::move(ref_images), std::move(ref_texts));
+            repl::StashCurrentPrompt(screen_state_, std::move(ref_images), std::move(ref_texts));
             // Clear input.
             repl::set_prompt_input_text(screen_state_, {}, 0);
             // Clear pasted contents that were only referenced by the
@@ -838,15 +852,13 @@ bool AppAdapter::OnEvent(Event event) {
         // Left-button release = "click".  Using release (not press)
         // lets the user cancel by dragging the cursor off the link
         // before releasing — standard web/desktop link behavior.
-        if (mouse.button == Mouse::Left &&
-            mouse.motion == Mouse::Released) {
+        if (mouse.button == Mouse::Left && mouse.motion == Mouse::Released) {
             if (auto* screen = screen_.load(std::memory_order_acquire)) {
                 const int x = mouse.x;
                 const int y = mouse.y;
                 // Bounds check — screen dims may change between render
                 // and event delivery (terminal resize race).
-                if (x >= 0 && x < screen->dimx() &&
-                    y >= 0 && y < screen->dimy()) {
+                if (x >= 0 && x < screen->dimx() && y >= 0 && y < screen->dimy()) {
                     const uint8_t link_id = screen->PixelAt(x, y).hyperlink;
                     if (link_id != 0) {
                         // id 0 = no hyperlink (Screen default).
@@ -885,19 +897,22 @@ bool AppAdapter::OnEvent(Event event) {
         if (!paste_.pasted_contents().empty() || !paste_.pasted_text_contents().empty()) {
             const auto refs = loom::utils::parse_references(screen_state_->input_text);
             std::unordered_set<int> referenced_ids;
-            for (const auto& r : refs) referenced_ids.insert(r.id);
+            for (const auto& r : refs)
+                referenced_ids.insert(r.id);
             if (pending_paste_submission_) {
-                for (const auto& r : loom::utils::parse_references(
-                         pending_paste_submission_->text)) referenced_ids.insert(r.id);
+                for (const auto& r : loom::utils::parse_references(pending_paste_submission_->text))
+                    referenced_ids.insert(r.id);
             }
-            for (auto it = paste_.pasted_contents().begin(); it != paste_.pasted_contents().end(); ) {
+            for (auto it = paste_.pasted_contents().begin();
+                 it != paste_.pasted_contents().end();) {
                 if (!referenced_ids.contains(it->first)) {
                     it = paste_.pasted_contents().erase(it);
                 } else {
                     ++it;
                 }
             }
-            for (auto it = paste_.pasted_text_contents().begin(); it != paste_.pasted_text_contents().end(); ) {
+            for (auto it = paste_.pasted_text_contents().begin();
+                 it != paste_.pasted_text_contents().end();) {
                 if (!referenced_ids.contains(it->first)) {
                     it = paste_.pasted_text_contents().erase(it);
                 } else {

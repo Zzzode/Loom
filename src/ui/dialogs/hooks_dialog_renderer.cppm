@@ -9,7 +9,6 @@
 ///           which has its own source-location budget.
 module;
 
-
 export module loom.ui.dialogs.hooks_renderer;
 
 import std;
@@ -20,7 +19,6 @@ export namespace loom::ui::dialogs::hooks_renderer {
 
 /// Register the HooksConfig dialog renderer into a registry.
 /// Implementation lives in hooks_dialog_renderer_impl.cpp.
-void register_hooks_renderer(
-    loom::ui::dialogs::system::DialogRendererRegistry& registry);
+void register_hooks_renderer(loom::ui::dialogs::system::DialogRendererRegistry& registry);
 
-} // namespace loom::ui::dialogs::hooks_renderer
+}  // namespace loom::ui::dialogs::hooks_renderer

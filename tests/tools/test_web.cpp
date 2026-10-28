@@ -4,10 +4,11 @@
 #pragma clang diagnostic ignored "-Wmissing-designated-field-initializers"
 
 #include <gtest/gtest.h>
+#include <httplib.h>
+
 #include <cstddef>
 #include <cstdlib>
 #include <cstring>
-#include <httplib.h>
 #ifndef _WIN32
 #include <fcntl.h>
 #include <sys/file.h>
@@ -35,7 +36,7 @@ import loom.tools.web_browser;
 import loom.orchestration.tools.mcp;
 import loom.commands.mcp.core_settings_loader;
 import loom.orchestration.runtime_backends;
-import loom.tools.runtime_backends.port;  // RFC-0001 B15: set_/clear_skill_loader_executor slot API
+import loom.tools.runtime_backends.port; // RFC-0001 B15: set_/clear_skill_loader_executor slot API
 import loom.tools.image_codec.port;
 import loom.tools.worktree;
 import loom.orchestration.agent;
@@ -64,7 +65,7 @@ import loom.teams.team_helpers;
 import loom.hooks.tool_permissions;
 import loom.services.api.client;
 import loom.services.mcp.types;
-import loom.services.mcp.connection_manager;  // RFC-0001 B6: svc_mcp::McpServerSnapshot
+import loom.services.mcp.connection_manager; // RFC-0001 B6: svc_mcp::McpServerSnapshot
 import loom.tools.repl;
 import loom.tools.skill;
 import loom.orchestration.agent.utils;
@@ -75,7 +76,9 @@ namespace fs = std::filesystem;
 // The agent helpers exercised by the existing tests live in
 // loom::tools::agent::utils after the agent_tool split; re-expose them through
 // the loom::tools::agent namespace so the historical call sites still resolve.
-namespace loom::tools::agent { using namespace utils; }
+namespace loom::tools::agent {
+using namespace utils;
+}
 
 namespace {
 
@@ -84,8 +87,7 @@ namespace {
 // does not block them. Production paths must supply a real checker (or accept
 // fail-closed denial for write/execute/network tools).
 loom::tools::agent::AgentLivePermissionCheckFn test_allow_all_check() {
-    auto allow = []([[maybe_unused]] std::string_view,
-                    [[maybe_unused]] std::string_view,
+    auto allow = []([[maybe_unused]] std::string_view, [[maybe_unused]] std::string_view,
                     [[maybe_unused]] std::string_view) {
         return loom::tools::agent::AgentLivePermissionCheck{.allowed = true};
     };
@@ -96,7 +98,8 @@ struct EnvironmentGuard {
     std::string name;
     std::optional<std::string> previous;
 
-    EnvironmentGuard(std::string key, const std::string& value) : name(std::move(key)) {
+    EnvironmentGuard(std::string key, const std::string& value)
+        : name(std::move(key)) {
         if (const char* existing = std::getenv(name.c_str())) {
             previous = existing;
         }
@@ -116,7 +119,8 @@ struct EnvironmentUnsetGuard {
     std::string name;
     std::optional<std::string> previous;
 
-    explicit EnvironmentUnsetGuard(std::string key) : name(std::move(key)) {
+    explicit EnvironmentUnsetGuard(std::string key)
+        : name(std::move(key)) {
         if (const char* existing = std::getenv(name.c_str())) {
             previous = existing;
         }
@@ -132,19 +136,18 @@ struct EnvironmentUnsetGuard {
     }
 };
 
-} // namespace
-
+}  // namespace
 
 TEST(Tools, WebBrowserToolUsesScreenshotBackend) {
     bool called = false;
-    loom::tools::WebBrowserTool tool([&](
-        const loom::tools::BrowserRequest& request,
-        const loom::tools::PageState& state) -> std::expected<std::string, loom::tools::BrowserError> {
-        called = true;
-        EXPECT_EQ(request.action, loom::tools::BrowserAction::Screenshot);
-        EXPECT_TRUE(state.url().empty());
-        return std::string("iVBORw0KGgo=");
-    });
+    loom::tools::WebBrowserTool tool(
+        [&](const loom::tools::BrowserRequest& request, const loom::tools::PageState& state)
+            -> std::expected<std::string, loom::tools::BrowserError> {
+            called = true;
+            EXPECT_EQ(request.action, loom::tools::BrowserAction::Screenshot);
+            EXPECT_TRUE(state.url().empty());
+            return std::string("iVBORw0KGgo=");
+        });
 
     auto result = tool.execute(loom::tools::BrowserRequest{
         .action = loom::tools::BrowserAction::Screenshot,
@@ -184,8 +187,8 @@ TEST(Tools, WebBrowserToolUsesAutomationBackendForClickAndFillForm) {
     std::vector<loom::tools::BrowserRequest> requests;
     loom::tools::WebBrowserTool tool(
         {},
-        [&](const loom::tools::BrowserRequest& request,
-            const loom::tools::PageState&) -> std::expected<loom::tools::BrowserResult, loom::tools::BrowserError> {
+        [&](const loom::tools::BrowserRequest& request, const loom::tools::PageState&)
+            -> std::expected<loom::tools::BrowserResult, loom::tools::BrowserError> {
             requests.push_back(request);
             return loom::tools::BrowserResult{
                 .content = std::format("automated {}", loom::tools::action_name(request.action)),
@@ -220,11 +223,11 @@ TEST(Tools, WebBrowserToolUsesAutomationBackendForClickAndFillForm) {
 TEST(Tools, RuntimeWebBrowserUsesAutomationCommandBackend) {
     EnvironmentGuard automation_guard(
         "LOOM_BROWSER_AUTOMATION_CMD",
-        "printf '%s' '{\"content\":\"clicked via command\"}' # {request}"
-    );
+        "printf '%s' '{\"content\":\"clicked via command\"}' # {request}");
 
     loom::core::ToolRegistry registry;
-    loom::tools::register_runtime_tools(registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
+    loom::tools::register_runtime_tools(
+        registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
     auto result = registry.execute("web_browser", loom::core::ToolInput::from_json(R"({
       "action": "click",
       "selector": "#submit"
@@ -239,13 +242,14 @@ TEST(Tools, RuntimeWebBrowserUsesAutomationCommandBackend) {
 TEST(Tools, RuntimeWebBrowserKeepsPageStateAcrossCalls) {
     EnvironmentUnsetGuard clear_automation_guard("LOOM_BROWSER_AUTOMATION_CMD");
     loom::core::ToolRegistry registry;
-    loom::tools::register_runtime_tools(registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
+    loom::tools::register_runtime_tools(
+        registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
 
     {
         EnvironmentGuard automation_guard(
             "LOOM_BROWSER_AUTOMATION_CMD",
-            "printf '%s' '{\"content\":\"navigated\",\"title\":\"Runtime Browser State\",\"url\":\"https://example.test\"}' # {request}"
-        );
+            "printf '%s' '{\"content\":\"navigated\",\"title\":\"Runtime Browser "
+            "State\",\"url\":\"https://example.test\"}' # {request}");
         auto navigate = registry.execute("web_browser", loom::core::ToolInput::from_json(R"({
           "action": "navigate",
           "url": "https://example.test"
@@ -264,19 +268,23 @@ TEST(Tools, RuntimeWebBrowserKeepsPageStateAcrossCalls) {
 }
 
 TEST(Tools, WebFetchParsesEscapedUrlFromJson) {
-    auto parsed = loom::tools::web_fetch::detail::parse_url(R"({"url":"https://example.com/a?x=\"quoted\"&y=1"})");
+    auto parsed = loom::tools::web_fetch::detail::parse_url(
+        R"({"url":"https://example.com/a?x=\"quoted\"&y=1"})");
 
     ASSERT_TRUE(parsed.has_value()) << parsed.error();
     EXPECT_EQ(*parsed, R"(https://example.com/a?x="quoted"&y=1)");
-    EXPECT_FALSE(loom::tools::web_fetch::detail::parse_url(R"({"description":"contains url"})").has_value());
+    EXPECT_FALSE(
+        loom::tools::web_fetch::detail::parse_url(R"({"description":"contains url"})").has_value());
 }
 
 TEST(Tools, WebSearchParsesEscapedQueryFromJson) {
-    auto parsed = loom::tools::web_search::detail::parse_query(R"({"query":"C++ \"modules\" migration"})");
+    auto parsed =
+        loom::tools::web_search::detail::parse_query(R"({"query":"C++ \"modules\" migration"})");
 
     ASSERT_TRUE(parsed.has_value()) << parsed.error();
     EXPECT_EQ(*parsed, R"(C++ "modules" migration)");
-    EXPECT_FALSE(loom::tools::web_search::detail::parse_query(R"({"description":"contains query"})").has_value());
+    EXPECT_FALSE(loom::tools::web_search::detail::parse_query(R"({"description":"contains query"})")
+                     .has_value());
 }
 
 TEST(Tools, WebSearchFormatsDuckDuckGoHtmlResults) {

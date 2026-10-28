@@ -1,11 +1,13 @@
 /// @file test_misc_utils.cpp
 ///
 /// Split out of the former test_utils.cpp kitchen-sink (169 tests, 53 suites).
-/// This file covers the remaining utility suites (plugins, git, shell, clipboard, GitHub, and more) suites.
+/// This file covers the remaining utility suites (plugins, git, shell, clipboard, GitHub, and more)
+/// suites.
 
 #include <gtest/gtest.h>
-#include <cstdlib>
 #include <httplib.h>
+
+#include <cstdlib>
 
 import std;
 import loom.text.string;
@@ -66,7 +68,8 @@ import loom.memdir.memdir;
 
 class ScopedEnvVar {
 public:
-    explicit ScopedEnvVar(const char* name) : name_(name) {
+    explicit ScopedEnvVar(const char* name)
+        : name_(name) {
         if (const char* value = std::getenv(name)) {
             previous_ = std::string(value);
         }
@@ -80,13 +83,9 @@ public:
         }
     }
 
-    void set(const char* value) const {
-        setenv(name_.c_str(), value, 1);
-    }
+    void set(const char* value) const { setenv(name_.c_str(), value, 1); }
 
-    void unset() const {
-        unsetenv(name_.c_str());
-    }
+    void unset() const { unsetenv(name_.c_str()); }
 
 private:
     std::string name_;
@@ -95,7 +94,8 @@ private:
 
 class CurrentPathGuard {
 public:
-    explicit CurrentPathGuard(const std::filesystem::path& next) : previous_(std::filesystem::current_path()) {
+    explicit CurrentPathGuard(const std::filesystem::path& next)
+        : previous_(std::filesystem::current_path()) {
         std::filesystem::current_path(next);
     }
 
@@ -154,40 +154,47 @@ public:
               "name": "The Octocat",
               "email": "octocat@example.test",
               "avatar_url": "https://avatars.example.test/octocat.png"
-            })", "application/json");
+            })",
+                            "application/json");
         });
-        server_.Get(R"(/repos/([^/]+)/([^/]+)/issues/([0-9]+)/comments)", [&](const httplib::Request& req, httplib::Response& res) {
-            ++issue_comment_requests;
-            capture_headers(req);
-            if (paginate_comments.load()) {
-                const auto page = req.has_param("page") ? req.get_param_value("page") : "1";
-                if (page == "2") {
-                    res.set_content(R"([
+        server_.Get(
+            R"(/repos/([^/]+)/([^/]+)/issues/([0-9]+)/comments)",
+            [&](const httplib::Request& req, httplib::Response& res) {
+                ++issue_comment_requests;
+                capture_headers(req);
+                if (paginate_comments.load()) {
+                    const auto page = req.has_param("page") ? req.get_param_value("page") : "1";
+                    if (page == "2") {
+                        res.set_content(R"([
                       {
                         "id": 102,
                         "body": "issue conversation comment page two",
                         "user": {"login": "reviewer-page-two"}
                       }
-                    ])", "application/json");
-                    return;
+                    ])",
+                                        "application/json");
+                        return;
+                    }
+                    res.set_header("Link", "<" + base_url() + req.path + "?page=2>; rel=\"next\"");
                 }
-                res.set_header("Link", "<" + base_url() + req.path + "?page=2>; rel=\"next\"");
-            }
-            res.set_content(R"([
+                res.set_content(R"([
               {
                 "id": 101,
                 "body": "issue conversation comment",
                 "user": {"login": "reviewer-a"}
               }
-            ])", "application/json");
-        });
-        server_.Get(R"(/repos/([^/]+)/([^/]+)/pulls/([0-9]+)/comments)", [&](const httplib::Request& req, httplib::Response& res) {
-            ++review_comment_requests;
-            capture_headers(req);
-            if (paginate_comments.load()) {
-                const auto page = req.has_param("page") ? req.get_param_value("page") : "1";
-                if (page == "2") {
-                    res.set_content(R"([
+            ])",
+                                "application/json");
+            });
+        server_.Get(
+            R"(/repos/([^/]+)/([^/]+)/pulls/([0-9]+)/comments)",
+            [&](const httplib::Request& req, httplib::Response& res) {
+                ++review_comment_requests;
+                capture_headers(req);
+                if (paginate_comments.load()) {
+                    const auto page = req.has_param("page") ? req.get_param_value("page") : "1";
+                    if (page == "2") {
+                        res.set_content(R"([
                       {
                         "id": 203,
                         "body": "inline review comment page two",
@@ -195,12 +202,13 @@ public:
                         "line": 7,
                         "user": {"login": "reviewer-page-two"}
                       }
-                    ])", "application/json");
-                    return;
+                    ])",
+                                        "application/json");
+                        return;
+                    }
+                    res.set_header("Link", "<" + base_url() + req.path + "?page=2>; rel=\"next\"");
                 }
-                res.set_header("Link", "<" + base_url() + req.path + "?page=2>; rel=\"next\"");
-            }
-            res.set_content(R"([
+                res.set_content(R"([
               {
                 "id": 202,
                 "body": "inline review comment",
@@ -208,14 +216,13 @@ public:
                 "line": 42,
                 "user": {"login": "reviewer-b"}
               }
-            ])", "application/json");
-        });
+            ])",
+                                "application/json");
+            });
 
         port_ = server_.bind_to_any_port("127.0.0.1");
         if (port_ > 0) {
-            worker_ = std::jthread([this](std::stop_token) {
-                server_.listen_after_bind();
-            });
+            worker_ = std::jthread([this](std::stop_token) { server_.listen_after_bind(); });
         }
     }
 
@@ -224,9 +231,7 @@ public:
         if (worker_.joinable()) worker_.join();
     }
 
-    [[nodiscard]] bool ready() const {
-        return port_ > 0;
-    }
+    [[nodiscard]] bool ready() const { return port_ > 0; }
 
     [[nodiscard]] std::string base_url() const {
         return "http://127.0.0.1:" + std::to_string(port_);
@@ -309,9 +314,8 @@ TEST(ArrayUtilsCompat, CountUniqAndIntersperseMatchTypeScriptHelpers) {
     EXPECT_EQ(loom::utils::uniq(nums), (std::vector<int>{1, 2, 3, 4}));
 
     std::vector<std::string> labels = {"a", "b", "c"};
-    auto interspersed = loom::utils::intersperse(labels, [](std::size_t index) {
-        return std::string("|") + std::to_string(index);
-    });
+    auto interspersed = loom::utils::intersperse(
+        labels, [](std::size_t index) { return std::string("|") + std::to_string(index); });
     EXPECT_EQ(interspersed, (std::vector<std::string>{"a", "|1", "b", "|2", "c"}));
 }
 
@@ -324,7 +328,8 @@ TEST(SetUtilsCompat, DifferenceIntersectsEveryAndUnionMatchTypeScriptHelpers) {
     EXPECT_FALSE(loom::utils::intersects(std::set<std::string>{}, b));
     EXPECT_TRUE(loom::utils::every(std::set<std::string>{"alpha", "gamma"}, a));
     EXPECT_FALSE(loom::utils::every(a, b));
-    EXPECT_EQ(loom::utils::union_sets(a, b), (std::set<std::string>{"alpha", "beta", "delta", "gamma"}));
+    EXPECT_EQ(loom::utils::union_sets(a, b),
+              (std::set<std::string>{"alpha", "beta", "delta", "gamma"}));
 }
 
 TEST(Memdir, TeamMemoryCanBeEnabledAtRuntime) {
@@ -377,14 +382,18 @@ TEST(FpsTracker, ComputesRoundedAverageAndLowOnePercentFps) {
 
 TEST(PrivacyLevel, ResolvesMostRestrictiveTrafficAndTelemetrySignals) {
     using loom::utils::privacy::EnvLike;
-    EXPECT_EQ(loom::utils::privacy::get_privacy_level(EnvLike{}), loom::utils::privacy::PrivacyLevel::Default);
-    EXPECT_EQ(loom::utils::privacy::get_privacy_level({{"DISABLE_TELEMETRY", "1"}}), loom::utils::privacy::PrivacyLevel::NoTelemetry);
-    EXPECT_EQ(loom::utils::privacy::get_privacy_level({{"LOOM_DISABLE_NONESSENTIAL_TRAFFIC", "0"}}), loom::utils::privacy::PrivacyLevel::EssentialTraffic);
+    EXPECT_EQ(loom::utils::privacy::get_privacy_level(EnvLike{}),
+              loom::utils::privacy::PrivacyLevel::Default);
+    EXPECT_EQ(loom::utils::privacy::get_privacy_level({{"DISABLE_TELEMETRY", "1"}}),
+              loom::utils::privacy::PrivacyLevel::NoTelemetry);
+    EXPECT_EQ(loom::utils::privacy::get_privacy_level({{"LOOM_DISABLE_NONESSENTIAL_TRAFFIC", "0"}}),
+              loom::utils::privacy::PrivacyLevel::EssentialTraffic);
     EXPECT_TRUE(loom::utils::privacy::is_telemetry_disabled({{"DISABLE_TELEMETRY", "true"}}));
-    EXPECT_TRUE(loom::utils::privacy::is_essential_traffic_only({{"LOOM_DISABLE_NONESSENTIAL_TRAFFIC", "true"}}));
-    EXPECT_EQ(
-        loom::utils::privacy::get_essential_traffic_only_reason({{"LOOM_DISABLE_NONESSENTIAL_TRAFFIC", "true"}}),
-        std::optional<std::string>{"LOOM_DISABLE_NONESSENTIAL_TRAFFIC"});
+    EXPECT_TRUE(loom::utils::privacy::is_essential_traffic_only(
+        {{"LOOM_DISABLE_NONESSENTIAL_TRAFFIC", "true"}}));
+    EXPECT_EQ(loom::utils::privacy::get_essential_traffic_only_reason(
+                  {{"LOOM_DISABLE_NONESSENTIAL_TRAFFIC", "true"}}),
+              std::optional<std::string>{"LOOM_DISABLE_NONESSENTIAL_TRAFFIC"});
 }
 
 TEST(ScriptToolEnabled, MirrorsScriptAndBashToolEnvironmentChecks) {
@@ -445,19 +454,16 @@ TEST(ProxyUtils, MirrorsTypeScriptEnvironmentPriorityAndNoProxyRules) {
 }
 
 TEST(GitHubUtils, ParsesCommonGitHubRemoteUrlForms) {
-    EXPECT_EQ(
-        loom::utils::github_detail::parse_repo_full_name("git@github.com:openai/codex.git"),
-        std::optional<std::string>{"openai/codex"}
-    );
+    EXPECT_EQ(loom::utils::github_detail::parse_repo_full_name("git@github.com:openai/codex.git"),
+              std::optional<std::string>{"openai/codex"});
     EXPECT_EQ(
         loom::utils::github_detail::parse_repo_full_name("https://github.com/openai/codex.git\n"),
-        std::optional<std::string>{"openai/codex"}
-    );
-    EXPECT_EQ(
-        loom::utils::github_detail::parse_repo_full_name("ssh://git@github.com/openai/codex"),
-        std::optional<std::string>{"openai/codex"}
-    );
-    EXPECT_FALSE(loom::utils::github_detail::parse_repo_full_name("https://gitlab.com/openai/codex.git").has_value());
+        std::optional<std::string>{"openai/codex"});
+    EXPECT_EQ(loom::utils::github_detail::parse_repo_full_name("ssh://git@github.com/openai/codex"),
+              std::optional<std::string>{"openai/codex"});
+    EXPECT_FALSE(
+        loom::utils::github_detail::parse_repo_full_name("https://gitlab.com/openai/codex.git")
+            .has_value());
 }
 
 TEST(GitHubUtils, FetchesAuthenticatedUserFromGitHubApi) {
@@ -539,7 +545,8 @@ TEST(GitHubUtils, DetectRepoReadsLocalGitHubRemoteAndDefaultBranch) {
         CurrentPathGuard cwd(root);
         ASSERT_EQ(std::system("git init -q"), 0);
         ASSERT_EQ(std::system("git remote add origin git@github.com:openai/codex.git"), 0);
-        ASSERT_EQ(std::system("git symbolic-ref refs/remotes/origin/HEAD refs/remotes/origin/trunk"), 0);
+        ASSERT_EQ(
+            std::system("git symbolic-ref refs/remotes/origin/HEAD refs/remotes/origin/trunk"), 0);
 
         auto repo = loom::utils::GitHubUtils::detect_repo();
         ASSERT_TRUE(repo.has_value());
@@ -628,14 +635,20 @@ TEST(GitHubUtils, PaginatesIssueAndReviewCommentsForDetectedRepo) {
 }
 
 TEST(PromptCategory, BuildsAgentAndReplQuerySources) {
-    EXPECT_EQ(loom::utils::prompt_category::get_query_source_for_agent("reviewer", true), "agent:builtin:reviewer");
-    EXPECT_EQ(loom::utils::prompt_category::get_query_source_for_agent(std::nullopt, true), "agent:default");
-    EXPECT_EQ(loom::utils::prompt_category::get_query_source_for_agent("anything", false), "agent:custom");
+    EXPECT_EQ(loom::utils::prompt_category::get_query_source_for_agent("reviewer", true),
+              "agent:builtin:reviewer");
+    EXPECT_EQ(loom::utils::prompt_category::get_query_source_for_agent(std::nullopt, true),
+              "agent:default");
+    EXPECT_EQ(loom::utils::prompt_category::get_query_source_for_agent("anything", false),
+              "agent:custom");
 
     const std::set<std::string> builtin_styles = {"default", "explanatory", "learning"};
-    EXPECT_EQ(loom::utils::prompt_category::get_query_source_for_repl("default", builtin_styles), "repl_main_thread");
-    EXPECT_EQ(loom::utils::prompt_category::get_query_source_for_repl("learning", builtin_styles), "repl_main_thread:outputStyle:learning");
-    EXPECT_EQ(loom::utils::prompt_category::get_query_source_for_repl("my-style", builtin_styles), "repl_main_thread:outputStyle:custom");
+    EXPECT_EQ(loom::utils::prompt_category::get_query_source_for_repl("default", builtin_styles),
+              "repl_main_thread");
+    EXPECT_EQ(loom::utils::prompt_category::get_query_source_for_repl("learning", builtin_styles),
+              "repl_main_thread:outputStyle:learning");
+    EXPECT_EQ(loom::utils::prompt_category::get_query_source_for_repl("my-style", builtin_styles),
+              "repl_main_thread:outputStyle:custom");
 }
 
 TEST(ErrorUtils, CreateBasicError) {
@@ -660,8 +673,7 @@ TEST(ErrorUtils, ExpectedWithValue) {
 }
 
 TEST(ErrorUtils, ExpectedWithError) {
-    auto result = loom::utils::error::expected<int>(
-        loom::utils::error::make("computation failed"));
+    auto result = loom::utils::error::expected<int>(loom::utils::error::make("computation failed"));
     EXPECT_FALSE(result.has_value());
     EXPECT_EQ(result.error().message(), "computation failed");
 }
@@ -691,7 +703,6 @@ TEST(CircularBuffer, FullStateOverwrites) {
     buf.push_back(3);
     EXPECT_TRUE(buf.full());
 
-
     buf.push_back(4);
     EXPECT_EQ(buf.size(), 3u);
     EXPECT_EQ(buf.front(), 2);
@@ -707,7 +718,8 @@ TEST(CircularBuffer, EmptyState) {
 
 TEST(CircularBuffer, Iteration) {
     loom::utils::CircularBuffer<int, 8> buf;
-    for (int i = 0; i < 5; ++i) buf.push_back(i);
+    for (int i = 0; i < 5; ++i)
+        buf.push_back(i);
 
     std::vector<int> collected;
     for (auto val : buf) {
@@ -773,11 +785,16 @@ TEST(PluginIdentifier, ParsesBuildsAndMapsScopes) {
     EXPECT_TRUE(loom::utils::plugin_identifier::is_official_marketplace_name("LOOM-MARKETPLACE"));
     EXPECT_FALSE(loom::utils::plugin_identifier::is_official_marketplace_name("third-party"));
 
-    auto source = loom::utils::plugin_identifier::scope_to_setting_source(loom::utils::plugin_identifier::PluginScope::Project);
+    auto source = loom::utils::plugin_identifier::scope_to_setting_source(
+        loom::utils::plugin_identifier::PluginScope::Project);
     ASSERT_TRUE(source.has_value()) << source.error();
     EXPECT_EQ(source.value(), loom::utils::settings_sources::SettingSource::ProjectSettings);
-    EXPECT_FALSE(loom::utils::plugin_identifier::scope_to_setting_source(loom::utils::plugin_identifier::PluginScope::Managed).has_value());
-    EXPECT_EQ(loom::utils::plugin_identifier::setting_source_to_scope(loom::utils::settings_sources::SettingSource::LocalSettings), loom::utils::plugin_identifier::PluginScope::Local);
+    EXPECT_FALSE(loom::utils::plugin_identifier::scope_to_setting_source(
+                     loom::utils::plugin_identifier::PluginScope::Managed)
+                     .has_value());
+    EXPECT_EQ(loom::utils::plugin_identifier::setting_source_to_scope(
+                  loom::utils::settings_sources::SettingSource::LocalSettings),
+              loom::utils::plugin_identifier::PluginScope::Local);
 }
 
 TEST(PluginLoader, CreatePluginFromPathLoadsManifestAndComponentPaths) {
@@ -814,12 +831,8 @@ TEST(PluginLoader, CreatePluginFromPathLoadsManifestAndComponentPaths) {
         style << "Be concise\n";
     }
 
-    auto loaded = loom::utils::plugin_loader::create_plugin_from_path(
-        root,
-        "fixture-plugin@inline",
-        true,
-        "fallback-plugin"
-    );
+    auto loaded = loom::utils::plugin_loader::create_plugin_from_path(root, "fixture-plugin@inline",
+                                                                      true, "fallback-plugin");
 
     ASSERT_TRUE(loaded.has_value()) << loaded.error();
     const auto& plugin = loaded->first;
@@ -921,18 +934,22 @@ TEST(PluginLoader, CachePluginClonesGitUrlAndLoadsManifest) {
 
     {
         std::ofstream manifest(repo / ".claude-plugin" / "plugin.json");
-        manifest << R"JSON({"name":"git-cache-plugin","version":"1.0.0","commands":["commands/run.md"]})JSON";
+        manifest
+            << R"JSON({"name":"git-cache-plugin","version":"1.0.0","commands":["commands/run.md"]})JSON";
     }
     {
         std::ofstream command(repo / "commands" / "run.md");
         command << "Run from git\n";
     }
 
-    run_shell_ok_for_test("git init --template= --initial-branch main " + shell_quote_for_test(repo) + " >/dev/null");
-    run_shell_ok_for_test("git -C " + shell_quote_for_test(repo) + " config user.email test@example.invalid");
+    run_shell_ok_for_test("git init --template= --initial-branch main " +
+                          shell_quote_for_test(repo) + " >/dev/null");
+    run_shell_ok_for_test("git -C " + shell_quote_for_test(repo) +
+                          " config user.email test@example.invalid");
     run_shell_ok_for_test("git -C " + shell_quote_for_test(repo) + " config user.name Test");
     run_shell_ok_for_test("git -C " + shell_quote_for_test(repo) + " add .");
-    run_shell_ok_for_test("git -C " + shell_quote_for_test(repo) + " commit --no-verify -m init >/dev/null");
+    run_shell_ok_for_test("git -C " + shell_quote_for_test(repo) +
+                          " commit --no-verify -m init >/dev/null");
 
     loom::utils::plugin_loader::PluginSource source =
         loom::utils::plugin_loader::GitUrlSource{.url = "file://" + repo.string()};
@@ -944,7 +961,8 @@ TEST(PluginLoader, CachePluginClonesGitUrlAndLoadsManifest) {
     EXPECT_TRUE(fs::exists(cached->path / ".claude-plugin" / "plugin.json"));
     EXPECT_TRUE(fs::exists(cached->path / "commands" / "run.md"));
 
-    auto loaded = loom::utils::plugin_loader::create_plugin_from_path(cached->path, "git-cache-plugin@test", true, "fallback");
+    auto loaded = loom::utils::plugin_loader::create_plugin_from_path(
+        cached->path, "git-cache-plugin@test", true, "fallback");
     ASSERT_TRUE(loaded.has_value()) << loaded.error();
     EXPECT_EQ(loaded->first.name, "git-cache-plugin");
     ASSERT_TRUE(loaded->first.commands_paths.has_value());
@@ -969,24 +987,27 @@ TEST(PluginLoader, CachePluginExtractsGitSubdirAndRecordsSha) {
 
     {
         std::ofstream manifest(plugin_dir / ".claude-plugin" / "plugin.json");
-        manifest << R"JSON({"name":"subdir-cache-plugin","version":"2.0.0","commands":["commands/sub.md"]})JSON";
+        manifest
+            << R"JSON({"name":"subdir-cache-plugin","version":"2.0.0","commands":["commands/sub.md"]})JSON";
     }
     {
         std::ofstream command(plugin_dir / "commands" / "sub.md");
         command << "Run from subdir\n";
     }
 
-    run_shell_ok_for_test("git init --template= --initial-branch main " + shell_quote_for_test(repo) + " >/dev/null");
-    run_shell_ok_for_test("git -C " + shell_quote_for_test(repo) + " config user.email test@example.invalid");
+    run_shell_ok_for_test("git init --template= --initial-branch main " +
+                          shell_quote_for_test(repo) + " >/dev/null");
+    run_shell_ok_for_test("git -C " + shell_quote_for_test(repo) +
+                          " config user.email test@example.invalid");
     run_shell_ok_for_test("git -C " + shell_quote_for_test(repo) + " config user.name Test");
     run_shell_ok_for_test("git -C " + shell_quote_for_test(repo) + " add .");
-    run_shell_ok_for_test("git -C " + shell_quote_for_test(repo) + " commit --no-verify -m init >/dev/null");
+    run_shell_ok_for_test("git -C " + shell_quote_for_test(repo) +
+                          " commit --no-verify -m init >/dev/null");
 
-    loom::utils::plugin_loader::PluginSource source =
-        loom::utils::plugin_loader::GitSubdirSource{
-            .url = "file://" + repo.string(),
-            .path = "packages/plugin",
-        };
+    loom::utils::plugin_loader::PluginSource source = loom::utils::plugin_loader::GitSubdirSource{
+        .url = "file://" + repo.string(),
+        .path = "packages/plugin",
+    };
     auto cached = loom::utils::plugin_loader::cache_plugin(source);
 
     ASSERT_TRUE(cached.has_value()) << cached.error();
@@ -1020,7 +1041,8 @@ TEST(PluginLoader, CachePluginInstallsNpmPackageFromLocalSpec) {
     }
     {
         std::ofstream manifest(package_dir / "plugin.json");
-        manifest << R"JSON({"name":"npm-cache-plugin","version":"1.0.0","commands":["commands/npm.md"]})JSON";
+        manifest
+            << R"JSON({"name":"npm-cache-plugin","version":"1.0.0","commands":["commands/npm.md"]})JSON";
     }
     {
         std::ofstream command(package_dir / "commands" / "npm.md");
@@ -1051,10 +1073,7 @@ TEST(PluginLoader, ProbesSeedCacheExactAndAnyVersion) {
     seed_env.set(seed.string().c_str());
 
     const auto seeded_path = loom::utils::plugin_loader::get_versioned_cache_path_in(
-        seed,
-        "seed-plugin@market",
-        "1.2.3"
-    );
+        seed, "seed-plugin@market", "1.2.3");
     fs::create_directories(seeded_path);
     {
         std::ofstream marker(seeded_path / "marker.txt");
@@ -1069,7 +1088,8 @@ TEST(PluginLoader, ProbesSeedCacheExactAndAnyVersion) {
     ASSERT_TRUE(any.has_value());
     EXPECT_EQ(*any, seeded_path);
 
-    auto copied = loom::utils::plugin_loader::copy_plugin_to_versioned_cache(root, "seed-plugin@market", "1.2.3");
+    auto copied = loom::utils::plugin_loader::copy_plugin_to_versioned_cache(
+        root, "seed-plugin@market", "1.2.3");
     ASSERT_TRUE(copied.has_value()) << copied.error();
     EXPECT_EQ(*copied, seeded_path);
 
@@ -1094,31 +1114,27 @@ TEST(PluginDependencyResolver, ResolvesClosureAndReportsDependencyErrors) {
             if (it == graph.end()) return std::nullopt;
             return it->second;
         },
-        {"theme@main"}
-    );
+        {"theme@main"});
 
     ASSERT_TRUE(result.ok) << result.message;
     EXPECT_EQ(result.closure, (std::vector<std::string>{"shared@main", "core@main", "app@main"}));
 
     auto cross = loom::utils::plugin_dependency_resolver::resolve_dependency_closure(
-        "app@main",
-        [&](const std::string& id) -> std::optional<DependencyLookupResult> {
+        "app@main", [&](const std::string& id) -> std::optional<DependencyLookupResult> {
             if (id == "app@main") return DependencyLookupResult{{"dep@other"}};
             if (id == "dep@other") return DependencyLookupResult{{}};
             return std::nullopt;
-        }
-    );
+        });
     EXPECT_FALSE(cross.ok);
-    EXPECT_EQ(cross.reason, loom::utils::plugin_dependency_resolver::ResolutionFailure::CrossMarketplace);
+    EXPECT_EQ(cross.reason,
+              loom::utils::plugin_dependency_resolver::ResolutionFailure::CrossMarketplace);
 
     auto cycle = loom::utils::plugin_dependency_resolver::resolve_dependency_closure(
-        "a@main",
-        [&](const std::string& id) -> std::optional<DependencyLookupResult> {
+        "a@main", [&](const std::string& id) -> std::optional<DependencyLookupResult> {
             if (id == "a@main") return DependencyLookupResult{{"b"}};
             if (id == "b@main") return DependencyLookupResult{{"a"}};
             return std::nullopt;
-        }
-    );
+        });
     EXPECT_FALSE(cycle.ok);
     EXPECT_EQ(cycle.reason, loom::utils::plugin_dependency_resolver::ResolutionFailure::Cycle);
 
@@ -1132,31 +1148,42 @@ TEST(PluginDependencyResolver, ResolvesClosureAndReportsDependencyErrors) {
     ASSERT_EQ(demotion.errors.size(), 2u);
     EXPECT_EQ(demotion.errors[0].dependency, "b@main");
     EXPECT_EQ(demotion.errors[0].reason, "not-enabled");
-    EXPECT_EQ(loom::utils::plugin_dependency_resolver::find_reverse_dependents("a@main", plugins), (std::vector<std::string>{"c"}));
-    EXPECT_EQ(loom::utils::plugin_dependency_resolver::format_dependency_count_suffix({"a"}), " (+ 1 dependency)");
-    EXPECT_EQ(loom::utils::plugin_dependency_resolver::format_dependency_count_suffix({"a", "b"}), " (+ 2 dependencies)");
-    EXPECT_EQ(loom::utils::plugin_dependency_resolver::format_reverse_dependents_suffix({"a", "b"}), " — warning: required by a, b");
+    EXPECT_EQ(loom::utils::plugin_dependency_resolver::find_reverse_dependents("a@main", plugins),
+              (std::vector<std::string>{"c"}));
+    EXPECT_EQ(loom::utils::plugin_dependency_resolver::format_dependency_count_suffix({"a"}),
+              " (+ 1 dependency)");
+    EXPECT_EQ(loom::utils::plugin_dependency_resolver::format_dependency_count_suffix({"a", "b"}),
+              " (+ 2 dependencies)");
+    EXPECT_EQ(loom::utils::plugin_dependency_resolver::format_reverse_dependents_suffix({"a", "b"}),
+              " — warning: required by a, b");
 }
 
 TEST(PluginMarketplaceRules, AppliesOfficialNameAndAutoUpdateRules) {
     using loom::utils::plugin_marketplace_rules::MarketplaceSource;
     using loom::utils::plugin_marketplace_rules::MarketplaceSourceType;
 
-    EXPECT_TRUE(loom::utils::plugin_marketplace_rules::is_marketplace_auto_update("loom-marketplace", std::nullopt));
-    EXPECT_FALSE(loom::utils::plugin_marketplace_rules::is_marketplace_auto_update("knowledge-work-plugins", std::nullopt));
-    EXPECT_TRUE(loom::utils::plugin_marketplace_rules::is_marketplace_auto_update("third-party", true));
-    EXPECT_FALSE(loom::utils::plugin_marketplace_rules::is_marketplace_auto_update("loom-marketplace", false));
+    EXPECT_TRUE(loom::utils::plugin_marketplace_rules::is_marketplace_auto_update(
+        "loom-marketplace", std::nullopt));
+    EXPECT_FALSE(loom::utils::plugin_marketplace_rules::is_marketplace_auto_update(
+        "knowledge-work-plugins", std::nullopt));
+    EXPECT_TRUE(
+        loom::utils::plugin_marketplace_rules::is_marketplace_auto_update("third-party", true));
+    EXPECT_FALSE(loom::utils::plugin_marketplace_rules::is_marketplace_auto_update(
+        "loom-marketplace", false));
 
-    EXPECT_FALSE(loom::utils::plugin_marketplace_rules::is_blocked_official_name("loom-marketplace"));
+    EXPECT_FALSE(
+        loom::utils::plugin_marketplace_rules::is_blocked_official_name("loom-marketplace"));
     EXPECT_TRUE(loom::utils::plugin_marketplace_rules::is_blocked_official_name("loom-official"));
-    EXPECT_TRUE(loom::utils::plugin_marketplace_rules::is_blocked_official_name("loom-marketplace-new"));
-    EXPECT_TRUE(loom::utils::plugin_marketplace_rules::is_blocked_official_name("clаude")); // contains Cyrillic a
+    EXPECT_TRUE(
+        loom::utils::plugin_marketplace_rules::is_blocked_official_name("loom-marketplace-new"));
+    EXPECT_TRUE(loom::utils::plugin_marketplace_rules::is_blocked_official_name(
+        "clаude"));  // contains Cyrillic a
 
     // Official names are reserved — validate_official_name_source returns an error.
     auto invalid = loom::utils::plugin_marketplace_rules::validate_official_name_source(
-        "loom-marketplace",
-        MarketplaceSource{.type = MarketplaceSourceType::Github, .repo = "other/plugins", .url = ""}
-    );
+        "loom-marketplace", MarketplaceSource{.type = MarketplaceSourceType::Github,
+                                              .repo = "other/plugins",
+                                              .url = ""});
     ASSERT_TRUE(invalid.has_value());
     EXPECT_NE(invalid->find("reserved for official marketplaces"), std::string::npos);
 }
@@ -1176,13 +1203,10 @@ TEST(ShellProviders, BashEvalCommandEscapesSingleQuotes) {
     auto result = provider->build_exec_command(
         "printf '%s\\n' \"it's ok\"",
         loom::utils::shell_providers::BuildExecOptions{
-            .id = "quote-test",
-            .sandbox_tmp_dir = std::nullopt,
-            .use_sandbox = false});
+            .id = "quote-test", .sandbox_tmp_dir = std::nullopt, .use_sandbox = false});
 
-    EXPECT_NE(
-        result.command_string.find("eval 'printf '\\''%s\\n'\\'' \"it'\\''s ok\"'"),
-        std::string::npos);
+    EXPECT_NE(result.command_string.find("eval 'printf '\\''%s\\n'\\'' \"it'\\''s ok\"'"),
+              std::string::npos);
 }
 
 TEST(ShellProviders, BashProviderSourcesSnapshotAndInjectsSandboxTmpdir) {
@@ -1197,12 +1221,11 @@ TEST(ShellProviders, BashProviderSourcesSnapshotAndInjectsSandboxTmpdir) {
     auto result = provider->build_exec_command(
         "printf '%s' \"$TMPDIR\"",
         loom::utils::shell_providers::BuildExecOptions{
-            .id = "snapshot-test",
-            .sandbox_tmp_dir = sandbox.string(),
-            .use_sandbox = true});
+            .id = "snapshot-test", .sandbox_tmp_dir = sandbox.string(), .use_sandbox = true});
 
     EXPECT_EQ(result.cwd_file_path, (sandbox / "cwd-snapshot-test").string());
-    EXPECT_NE(result.command_string.find("export TMPDIR='" + sandbox.string() + "'"), std::string::npos);
+    EXPECT_NE(result.command_string.find("export TMPDIR='" + sandbox.string() + "'"),
+              std::string::npos);
     EXPECT_NE(result.command_string.find("source "), std::string::npos);
 
     auto args = provider->get_spawn_args(result.command_string);
@@ -1224,12 +1247,12 @@ TEST(ShellProviders, PowershellProviderTracksCwdInSandboxAndQuotesPath) {
     auto result = provider->build_exec_command(
         "Write-Output ok",
         loom::utils::shell_providers::BuildExecOptions{
-            .id = "ps-test",
-            .sandbox_tmp_dir = "/tmp/cc repl's sandbox",
-            .use_sandbox = true});
+            .id = "ps-test", .sandbox_tmp_dir = "/tmp/cc repl's sandbox", .use_sandbox = true});
 
     EXPECT_EQ(result.cwd_file_path, "/tmp/cc repl's sandbox/cwd-ps-test");
-    EXPECT_NE(result.command_string.find("Out-File -FilePath '/tmp/cc repl''s sandbox/cwd-ps-test'"), std::string::npos);
+    EXPECT_NE(
+        result.command_string.find("Out-File -FilePath '/tmp/cc repl''s sandbox/cwd-ps-test'"),
+        std::string::npos);
     auto args = provider->get_spawn_args(result.command_string);
     ASSERT_EQ(args.size(), 4u);
     EXPECT_EQ(args[0], "-NoProfile");
@@ -1242,19 +1265,30 @@ TEST(ShellProviders, PowershellProviderTracksCwdInSandboxAndQuotesPath) {
 }
 
 TEST(PluginVersioning, ExtractsVersionedPathsAndDerivesPureVersions) {
-    EXPECT_EQ(loom::utils::plugin_versioning::get_version_from_path("/Users/me/.loom/plugins/cache/main/plugin/1.2.3"), "1.2.3");
-    EXPECT_FALSE(loom::utils::plugin_versioning::get_version_from_path("/Users/me/.loom/plugins/main/plugin").has_value());
+    EXPECT_EQ(loom::utils::plugin_versioning::get_version_from_path(
+                  "/Users/me/.loom/plugins/cache/main/plugin/1.2.3"),
+              "1.2.3");
+    EXPECT_FALSE(
+        loom::utils::plugin_versioning::get_version_from_path("/Users/me/.loom/plugins/main/plugin")
+            .has_value());
     EXPECT_TRUE(loom::utils::plugin_versioning::is_versioned_path("/plugins/cache/main/plugin/v1"));
     EXPECT_FALSE(loom::utils::plugin_versioning::is_versioned_path("/plugins/main/plugin/v1"));
 
-    EXPECT_EQ(loom::utils::plugin_versioning::derive_plugin_version("1.0.0", "2.0.0", "abcdef1234567890"), "1.0.0");
-    EXPECT_EQ(loom::utils::plugin_versioning::derive_plugin_version(std::nullopt, "2.0.0", "abcdef1234567890"), "2.0.0");
-    EXPECT_EQ(loom::utils::plugin_versioning::derive_plugin_version(std::nullopt, std::nullopt, "abcdef1234567890"), "abcdef123456");
     EXPECT_EQ(
-        loom::utils::plugin_versioning::derive_plugin_version(std::nullopt, std::nullopt, "abcdef1234567890", "git-subdir", R"(.\a\)"),
-        "abcdef123456-ca978112"
-    );
-    EXPECT_EQ(loom::utils::plugin_versioning::derive_plugin_version(std::nullopt, std::nullopt, std::nullopt), "unknown");
+        loom::utils::plugin_versioning::derive_plugin_version("1.0.0", "2.0.0", "abcdef1234567890"),
+        "1.0.0");
+    EXPECT_EQ(loom::utils::plugin_versioning::derive_plugin_version(std::nullopt, "2.0.0",
+                                                                    "abcdef1234567890"),
+              "2.0.0");
+    EXPECT_EQ(loom::utils::plugin_versioning::derive_plugin_version(std::nullopt, std::nullopt,
+                                                                    "abcdef1234567890"),
+              "abcdef123456");
+    EXPECT_EQ(loom::utils::plugin_versioning::derive_plugin_version(
+                  std::nullopt, std::nullopt, "abcdef1234567890", "git-subdir", R"(.\a\)"),
+              "abcdef123456-ca978112");
+    EXPECT_EQ(loom::utils::plugin_versioning::derive_plugin_version(std::nullopt, std::nullopt,
+                                                                    std::nullopt),
+              "unknown");
 }
 
 TEST(QueryGuard, EnforcesDispatchingRunningGenerationTransitions) {
@@ -1301,7 +1335,8 @@ TEST(AgentId, FormatsAndParsesAgentAndRequestIds) {
     EXPECT_EQ(parsed->team_name, "my-project@nested");
     EXPECT_FALSE(parse_agent_id("missing-separator").has_value());
 
-    EXPECT_EQ(generate_request_id("shutdown", "researcher@team", 1702500000000LL), "shutdown-1702500000000@researcher@team");
+    EXPECT_EQ(generate_request_id("shutdown", "researcher@team", 1702500000000LL),
+              "shutdown-1702500000000@researcher@team");
     auto request = parse_request_id("plan-approval-1702500000000@researcher@team");
     ASSERT_TRUE(request.has_value());
     EXPECT_EQ(request->request_type, "plan-approval");
@@ -1315,12 +1350,17 @@ TEST(AutoModeDenials, RespectsFeatureFlagAndKeepsMostRecentTwenty) {
     using namespace loom::utils::auto_mode_denials;
 
     AutoModeDenialStore disabled;
-    disabled.record({.tool_name = "Bash", .display = "rm -rf /", .reason = "danger", .timestamp = 1}, false);
+    disabled.record(
+        {.tool_name = "Bash", .display = "rm -rf /", .reason = "danger", .timestamp = 1}, false);
     EXPECT_TRUE(disabled.get().empty());
 
     AutoModeDenialStore store;
     for (int i = 0; i < 25; ++i) {
-        store.record({.tool_name = "Bash", .display = "cmd" + std::to_string(i), .reason = "r", .timestamp = i}, true);
+        store.record({.tool_name = "Bash",
+                      .display = "cmd" + std::to_string(i),
+                      .reason = "r",
+                      .timestamp = i},
+                     true);
     }
     auto denials = store.get();
     ASSERT_EQ(denials.size(), 20u);
@@ -1333,9 +1373,9 @@ TEST(ActivityManager, DeduplicatesCliActivityAndRecordsUserWithinTimeout) {
 
     long long now = 1000;
     std::vector<ActiveTimeRecord> records;
-    ActivityManager manager([&] { return now; }, [&](double seconds, ActivityType type) {
-        records.push_back({seconds, type});
-    });
+    ActivityManager manager(
+        [&] { return now; },
+        [&](double seconds, ActivityType type) { records.push_back({seconds, type}); });
 
     manager.record_user_activity();
     now += 3000;
@@ -1376,7 +1416,8 @@ TEST(EnvUtilsCompat, ParsesTruthyFalsyOptionsAndEnvVars) {
     EXPECT_TRUE(loom::utils::is_env_defined_falsy(false));
     EXPECT_FALSE(loom::utils::is_env_defined_falsy(std::nullopt));
 
-    EXPECT_TRUE(loom::utils::has_node_option("--max-old-space-size=4096 --trace-warnings", "--trace-warnings"));
+    EXPECT_TRUE(loom::utils::has_node_option("--max-old-space-size=4096 --trace-warnings",
+                                             "--trace-warnings"));
     EXPECT_FALSE(loom::utils::has_node_option("--trace-warnings-extra", "--trace-warnings"));
     EXPECT_TRUE(loom::utils::is_bare_mode("0", {"cc", "--bare"}));
     EXPECT_TRUE(loom::utils::is_bare_mode("true", {"cc"}));
@@ -1406,7 +1447,8 @@ TEST(CachePaths, SanitizesStableProjectAndMcpLogPaths) {
     EXPECT_EQ(sanitized.substr(0, 200), std::string(200, 'a'));
     EXPECT_NE(sanitized.find('-'), std::string::npos);
 
-    CachePathSet paths = build_cache_paths("/var/cache/loom-cli", "/Users/me/project", "server:name");
+    CachePathSet paths =
+        build_cache_paths("/var/cache/loom-cli", "/Users/me/project", "server:name");
     EXPECT_EQ(paths.base_logs, "/var/cache/loom-cli/-Users-me-project");
     EXPECT_EQ(paths.errors, "/var/cache/loom-cli/-Users-me-project/errors");
     EXPECT_EQ(paths.messages, "/var/cache/loom-cli/-Users-me-project/messages");
@@ -1437,12 +1479,11 @@ TEST(BinaryCheck, TrimsCommandsCachesResultsAndClearsCache) {
 TEST(LoomHints, ExtractsWholeLineHintsStripsThemAndKeepsSourceCommand) {
     using namespace loom::utils::loom_hints;
 
-    const std::string output =
-        "before\n"
-        "  <loom-hint v=1 type=plugin value=eslint@marketplace />\n"
-        "quoted <loom-hint v=1 type=plugin value=ignored /> text\n"
-        "\t<loom-hint v=2 type=plugin value=future@marketplace />\n"
-        "after";
+    const std::string output = "before\n"
+                               "  <loom-hint v=1 type=plugin value=eslint@marketplace />\n"
+                               "quoted <loom-hint v=1 type=plugin value=ignored /> text\n"
+                               "\t<loom-hint v=2 type=plugin value=future@marketplace />\n"
+                               "after";
 
     auto result = extract_loom_hints(output, "  npx eslint .");
 
@@ -1451,15 +1492,15 @@ TEST(LoomHints, ExtractsWholeLineHintsStripsThemAndKeepsSourceCommand) {
     EXPECT_EQ(result.hints[0].type, "plugin");
     EXPECT_EQ(result.hints[0].value, "eslint@marketplace");
     EXPECT_EQ(result.hints[0].source_command, "npx");
-    EXPECT_EQ(result.stripped, "before\n\nquoted <loom-hint v=1 type=plugin value=ignored /> text\n\nafter");
+    EXPECT_EQ(result.stripped,
+              "before\n\nquoted <loom-hint v=1 type=plugin value=ignored /> text\n\nafter");
 
     auto no_hint = extract_loom_hints("plain output", "cmd");
     EXPECT_TRUE(no_hint.hints.empty());
     EXPECT_EQ(no_hint.stripped, "plain output");
 
     auto huge_version = extract_loom_hints(
-        "<loom-hint v=999999999999999999999999999999 type=plugin value=x@marketplace />",
-        "tool");
+        "<loom-hint v=999999999999999999999999999999 type=plugin value=x@marketplace />", "tool");
     EXPECT_TRUE(huge_version.hints.empty());
     EXPECT_EQ(huge_version.stripped, "");
 }
@@ -1471,15 +1512,18 @@ TEST(LoomHints, PendingHintStoreIsSingleSlotAndOncePerSession) {
     int notifications = 0;
     auto unsubscribe = store.subscribe([&] { ++notifications; });
 
-    store.set_pending_hint({.v = 1, .type = "plugin", .value = "a@marketplace", .source_command = "a"});
+    store.set_pending_hint(
+        {.v = 1, .type = "plugin", .value = "a@marketplace", .source_command = "a"});
     ASSERT_TRUE(store.get_pending_hint_snapshot().has_value());
     EXPECT_EQ(store.get_pending_hint_snapshot()->value, "a@marketplace");
-    store.set_pending_hint({.v = 1, .type = "plugin", .value = "b@marketplace", .source_command = "b"});
+    store.set_pending_hint(
+        {.v = 1, .type = "plugin", .value = "b@marketplace", .source_command = "b"});
     EXPECT_EQ(store.get_pending_hint_snapshot()->value, "b@marketplace");
     store.clear_pending_hint();
     EXPECT_FALSE(store.get_pending_hint_snapshot().has_value());
     store.mark_shown_this_session();
-    store.set_pending_hint({.v = 1, .type = "plugin", .value = "c@marketplace", .source_command = "c"});
+    store.set_pending_hint(
+        {.v = 1, .type = "plugin", .value = "c@marketplace", .source_command = "c"});
     EXPECT_FALSE(store.get_pending_hint_snapshot().has_value());
     EXPECT_TRUE(store.has_shown_hint_this_session());
     unsubscribe();
@@ -1521,8 +1565,16 @@ TEST(CommitAttribution, TracksChangedRegionCreationDeletionAndBulkChanges) {
     EXPECT_EQ(state.file_states.at("src/a.ts").content_hash, "");
 
     std::vector<FileChange> changes = {
-        {.path = "src/new.ts", .type = FileChangeType::Modified, .old_content = "abcdef", .new_content = "abcXYZdef", .mtime = 13.0},
-        {.path = "src/old.ts", .type = FileChangeType::Deleted, .old_content = "gone", .new_content = "", .mtime = 14.0},
+        {.path = "src/new.ts",
+         .type = FileChangeType::Modified,
+         .old_content = "abcdef",
+         .new_content = "abcXYZdef",
+         .mtime = 13.0},
+        {.path = "src/old.ts",
+         .type = FileChangeType::Deleted,
+         .old_content = "gone",
+         .new_content = "",
+         .mtime = 14.0},
     };
     state = track_bulk_file_changes(state, changes);
     EXPECT_EQ(state.file_states.at("src/new.ts").loom_contribution, 9u);
@@ -1539,7 +1591,8 @@ TEST(MessagePredicates, HumanTurnsExcludeMetaAndToolResults) {
     using namespace loom::utils::message_predicates;
 
     EXPECT_TRUE(is_human_turn({.type = "user", .is_meta = false, .has_tool_use_result = false}));
-    EXPECT_FALSE(is_human_turn({.type = "assistant", .is_meta = false, .has_tool_use_result = false}));
+    EXPECT_FALSE(
+        is_human_turn({.type = "assistant", .is_meta = false, .has_tool_use_result = false}));
     EXPECT_FALSE(is_human_turn({.type = "user", .is_meta = true, .has_tool_use_result = false}));
     EXPECT_FALSE(is_human_turn({.type = "user", .is_meta = false, .has_tool_use_result = true}));
 }
@@ -1568,7 +1621,8 @@ TEST(ContentArray, InsertsBlockAfterToolResultsOrBeforeLastBlock) {
     EXPECT_EQ(mixed[1].type, "cache");
     EXPECT_EQ(mixed[2].text, "tail");
 
-    std::vector<ContentBlock> no_results = {{.type = "text", .text = "a"}, {.type = "text", .text = "b"}};
+    std::vector<ContentBlock> no_results = {{.type = "text", .text = "a"},
+                                            {.type = "text", .text = "b"}};
     insert_block_after_tool_results(no_results, {.type = "cache", .text = "directive"});
     ASSERT_EQ(no_results.size(), 3u);
     EXPECT_EQ(no_results[1].type, "cache");
@@ -1579,9 +1633,10 @@ TEST(ObjectGroupBy, GroupsItemsBySelectorAndPassesIndex) {
     using namespace loom::utils::object_group_by;
 
     std::vector<std::string> items = {"apple", "ape", "banana", "berry"};
-    auto grouped = object_group_by<std::string, std::string>(items, [](const std::string& item, std::size_t index) {
-        return std::string(1, item[0]) + std::to_string(index % 2);
-    });
+    auto grouped = object_group_by<std::string, std::string>(
+        items, [](const std::string& item, std::size_t index) {
+            return std::string(1, item[0]) + std::to_string(index % 2);
+        });
 
     EXPECT_EQ(grouped["a0"], (std::vector<std::string>{"apple"}));
     EXPECT_EQ(grouped["a1"], (std::vector<std::string>{"ape"}));
@@ -1620,13 +1675,13 @@ namespace {
 /// Locate a source file by walking up from the CWD looking for <root>/rel.
 /// Returns nullopt if not found, so callers can skip rather than misread.
 [[nodiscard]] std::optional<std::filesystem::path>
-find_source_file(std::initializer_list<std::string_view> rel,
-                 int max_levels = 6) {
+find_source_file(std::initializer_list<std::string_view> rel, int max_levels = 6) {
     namespace fs = std::filesystem;
     fs::path dir = fs::current_path();
     for (int i = 0; i < max_levels; ++i) {
         fs::path candidate = dir;
-        for (auto part : rel) candidate /= part;
+        for (auto part : rel)
+            candidate /= part;
         if (fs::is_regular_file(candidate)) return candidate;
         if (dir == dir.parent_path()) break;  // filesystem root
         dir = dir.parent_path();
@@ -1640,9 +1695,7 @@ TEST(ClipboardImage, OsascriptScriptsAreSyntacticallyValidOnMacOS) {
     // has_image() is noexcept — it must not crash, and on macOS must not produce a
     // script that exit()s 0 or 1 cleanly (never throws or aborts). The call is always safe on all
     // platforms; we only the boolean outcome varies with the live clipboard state.
-    EXPECT_NO_THROW({
-      (void)loom::utils::clipboard::has_image();
-    });
+    EXPECT_NO_THROW({ (void)loom::utils::clipboard::has_image(); });
 
     // read_image_png() returns nullopt when no image is present (the 99.9%
     // CI / dev-loop scenario). The key invariant we actually want to pin here is that
@@ -1654,17 +1707,17 @@ TEST(ClipboardImage, OsascriptScriptsAreSyntacticallyValidOnMacOS) {
     // former means "no image"; so read_image_png() returns nullopt in both paths
     // and neither path throws. Just verify no crash / abort.
     EXPECT_NO_THROW({
-      auto png = loom::utils::clipboard::read_image_png();
-      // If (by luck) a developer happens to have an image in their clipboard
-      // while this test runs, we additionally verify the bytes look like PNG.
-      if (png.has_value()) {
-          EXPECT_GE(png->size(), 8u);
-          // PNG magic bytes: 89 50 4E 47 0D 0A 1A 0A.
-          EXPECT_EQ((*png)[0], 0x89);
-          EXPECT_EQ((*png)[1], 0x50);  // 'P'
-          EXPECT_EQ((*png)[2], 0x4E);  // 'N'
-          EXPECT_EQ((*png)[3], 0x47);  // 'G'
-      }
+        auto png = loom::utils::clipboard::read_image_png();
+        // If (by luck) a developer happens to have an image in their clipboard
+        // while this test runs, we additionally verify the bytes look like PNG.
+        if (png.has_value()) {
+            EXPECT_GE(png->size(), 8u);
+            // PNG magic bytes: 89 50 4E 47 0D 0A 1A 0A.
+            EXPECT_EQ((*png)[0], 0x89);
+            EXPECT_EQ((*png)[1], 0x50);  // 'P'
+            EXPECT_EQ((*png)[2], 0x4E);  // 'N'
+            EXPECT_EQ((*png)[3], 0x47);  // 'G'
+        }
     });
 }
 
@@ -1688,15 +1741,13 @@ TEST(ClipboardImage, OsascriptScriptsAreSyntacticallyValidOnMacOS) {
 TEST(ClipboardImage, OsascriptUsesSetsidToDetachFromTty_RawModeGuard) {
     const auto found = find_source_file({"src", "utils", "clipboard.cppm"});
     if (!found) {
-        GTEST_SKIP() << "clipboard.cppm source not found from "
-                     << std::filesystem::current_path()
+        GTEST_SKIP() << "clipboard.cppm source not found from " << std::filesystem::current_path()
                      << " — skipping source-level raw-mode guard.";
     }
     const std::filesystem::path src = *found;
     std::ifstream f(src);
     ASSERT_TRUE(f.good()) << "cannot open " << src;
-    std::string content((std::istreambuf_iterator<char>(f)),
-                        std::istreambuf_iterator<char>());
+    std::string content((std::istreambuf_iterator<char>(f)), std::istreambuf_iterator<char>());
 
     // setsid() is the load-bearing call — it detaches the osascript chain
     // from loom's controlling terminal.
@@ -1741,15 +1792,13 @@ TEST(ClipboardImage, OsascriptUsesSetsidToDetachFromTty_RawModeGuard) {
 TEST(ClipboardImage, RunAppClearsVlnext_MacOSLineDisciplineGuard) {
     const auto found = find_source_file({"src", "ui", "app.cppm"});
     if (!found) {
-        GTEST_SKIP() << "app.cppm source not found from "
-                     << std::filesystem::current_path()
+        GTEST_SKIP() << "app.cppm source not found from " << std::filesystem::current_path()
                      << " — skipping VLNEXT source-level guard.";
     }
     const std::filesystem::path src = *found;
     std::ifstream f(src);
     ASSERT_TRUE(f.good()) << "cannot open " << src;
-    std::string content((std::istreambuf_iterator<char>(f)),
-                        std::istreambuf_iterator<char>());
+    std::string content((std::istreambuf_iterator<char>(f)), std::istreambuf_iterator<char>());
 
     // The load-bearing line: c_cc[VLNEXT] = 0 disables literal-next so Ctrl+V
     // bytes are no longer collapsed in pairs by the line discipline.
@@ -1782,14 +1831,12 @@ TEST(ClipboardImage, RunAppClearsVlnext_MacOSLineDisciplineGuard) {
 TEST(ClipboardImage, HtmlClipboardDataUrlFallback_SourceGuard) {
     const auto found = find_source_file({"src", "utils", "clipboard.cppm"});
     if (!found) {
-        GTEST_SKIP() << "clipboard.cppm source not found from "
-                     << std::filesystem::current_path();
+        GTEST_SKIP() << "clipboard.cppm source not found from " << std::filesystem::current_path();
     }
     const std::filesystem::path src = *found;
     std::ifstream f(src);
     ASSERT_TRUE(f.good()) << "cannot open " << src;
-    std::string content((std::istreambuf_iterator<char>(f)),
-                        std::istreambuf_iterator<char>());
+    std::string content((std::istreambuf_iterator<char>(f)), std::istreambuf_iterator<char>());
 
     // 1. The HTML extraction helper must exist.
     EXPECT_NE(content.find("extract_png_from_html_clipboard"), std::string::npos)
@@ -1805,8 +1852,7 @@ TEST(ClipboardImage, HtmlClipboardDataUrlFallback_SourceGuard) {
 
     // 3. read_image_png() must call the fallback when PNGf fails
     //    (not just 'return std::nullopt' after run_detached fails).
-    EXPECT_NE(content.find("return extract_png_from_html_clipboard()"),
-              std::string::npos)
+    EXPECT_NE(content.find("return extract_png_from_html_clipboard()"), std::string::npos)
         << "read_image_png() must call extract_png_from_html_clipboard() as "
         << "fallback when PNGf osascript fails — clipboard may hold HTML "
         << "with embedded image instead of raw PNG.";

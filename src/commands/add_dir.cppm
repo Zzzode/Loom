@@ -32,10 +32,17 @@ public:
         return CommandDefinition{
             .name = "add-dir",
             .description = "Add a working directory",
-            .args = {
-                CommandArg{.name = "<path>", .description = "Directory path to add", .type = ArgType::FilePath, .required = false},
-                CommandArg{.name = "--remember", .description = "Save to local settings", .type = ArgType::None, .required = false},
-            },
+            .args =
+                {
+                    CommandArg{.name = "<path>",
+                               .description = "Directory path to add",
+                               .type = ArgType::FilePath,
+                               .required = false},
+                    CommandArg{.name = "--remember",
+                               .description = "Save to local settings",
+                               .type = ArgType::None,
+                               .required = false},
+                },
             .category = "workspace",
             .argument_hint = "<path> [--remember]",
         };
@@ -48,8 +55,8 @@ public:
         }
         // Validate that the path argument is non-empty
         if (opts.path->empty()) {
-            return std::unexpected(Error::make(ErrorCode::InvalidRequest,
-                "Path argument must not be empty"));
+            return std::unexpected(
+                Error::make(ErrorCode::InvalidRequest, "Path argument must not be empty"));
         }
         return {};
     }
@@ -83,8 +90,9 @@ public:
         fs::path resolved = fs::weakly_canonical(absolute, ec);
         if (ec || resolved.empty()) {
             resolved = fs::absolute(absolute, ec);
-            if (ec) return CommandResult::fail(
-                std::format("Failed to resolve path '{}': {}", *opts.path, ec.message()));
+            if (ec)
+                return CommandResult::fail(
+                    std::format("Failed to resolve path '{}': {}", *opts.path, ec.message()));
         }
 
         // ---- Step 3: Validate existence and directory ----
@@ -114,10 +122,10 @@ public:
         }
 
         if (already_allowed) {
-            return CommandResult::success(std::format(
-                "Directory already allowed: {}\n"
-                "Use /permissions to manage all permission rules.",
-                resolved_str));
+            return CommandResult::success(
+                std::format("Directory already allowed: {}\n"
+                            "Use /permissions to manage all permission rules.",
+                            resolved_str));
         }
 
         // ---- Step 5: Store in AppState ----
@@ -126,11 +134,10 @@ public:
 
         // ---- Build detailed success message ----
         std::string display_path = loom::utils::path::get_display_path(resolved);
-        std::string message = std::format(
-            "Added allowed directory\n"
-            "  Resolved path: {}\n"
-            "  Display name:  {}\n",
-            resolved_str, display_path);
+        std::string message = std::format("Added allowed directory\n"
+                                          "  Resolved path: {}\n"
+                                          "  Display name:  {}\n",
+                                          resolved_str, display_path);
 
         if (opts.remember) {
             message += "  Saved to session settings (--remember)\n";
@@ -179,4 +186,4 @@ private:
     }
 };
 
-} // namespace loom::commands
+}  // namespace loom::commands

@@ -18,17 +18,18 @@ struct McpOAuthConfig {
 };
 
 struct McpServerConfig {
-    std::string name;                              // Server identifier
-    std::string command;                           // Launch command
-    std::vector<std::string> args;                 // Command arguments
-    std::unordered_map<std::string, std::string> env;  // Environment variables
-    std::string transport = "stdio";               // stdio, sse, or http
-    std::optional<std::string> url = std::nullopt;  // Remote MCP endpoint
-    std::unordered_map<std::string, std::string> headers = {}; // Static HTTP headers
-    std::optional<std::string> headers_helper = std::nullopt; // Command that emits dynamic headers JSON
-    std::optional<McpOAuthConfig> oauth = std::nullopt; // Remote OAuth/XAA settings
-    std::optional<bool> disabled = std::nullopt;    // Optional explicit enable/disable
-    std::string config_scope{"project"};               // Where this config is stored: local/user/project
+    std::string name;                                           // Server identifier
+    std::string command;                                        // Launch command
+    std::vector<std::string> args;                              // Command arguments
+    std::unordered_map<std::string, std::string> env;           // Environment variables
+    std::string transport = "stdio";                            // stdio, sse, or http
+    std::optional<std::string> url = std::nullopt;              // Remote MCP endpoint
+    std::unordered_map<std::string, std::string> headers = {};  // Static HTTP headers
+    std::optional<std::string> headers_helper =
+        std::nullopt;                                    // Command that emits dynamic headers JSON
+    std::optional<McpOAuthConfig> oauth = std::nullopt;  // Remote OAuth/XAA settings
+    std::optional<bool> disabled = std::nullopt;         // Optional explicit enable/disable
+    std::string config_scope{"project"};  // Where this config is stored: local/user/project
 };
 
-} // namespace loom::core
+}  // namespace loom::core

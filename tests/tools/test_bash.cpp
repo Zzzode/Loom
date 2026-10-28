@@ -4,10 +4,11 @@
 #pragma clang diagnostic ignored "-Wmissing-designated-field-initializers"
 
 #include <gtest/gtest.h>
+#include <httplib.h>
+
 #include <cstddef>
 #include <cstdlib>
 #include <cstring>
-#include <httplib.h>
 #ifndef _WIN32
 #include <fcntl.h>
 #include <sys/file.h>
@@ -35,7 +36,7 @@ import loom.tools.web_browser;
 import loom.orchestration.tools.mcp;
 import loom.commands.mcp.core_settings_loader;
 import loom.orchestration.runtime_backends;
-import loom.tools.runtime_backends.port;  // RFC-0001 B15: set_/clear_skill_loader_executor slot API
+import loom.tools.runtime_backends.port; // RFC-0001 B15: set_/clear_skill_loader_executor slot API
 import loom.tools.image_codec.port;
 import loom.tools.worktree;
 import loom.orchestration.agent;
@@ -64,7 +65,7 @@ import loom.teams.team_helpers;
 import loom.hooks.tool_permissions;
 import loom.services.api.client;
 import loom.services.mcp.types;
-import loom.services.mcp.connection_manager;  // RFC-0001 B6: svc_mcp::McpServerSnapshot
+import loom.services.mcp.connection_manager; // RFC-0001 B6: svc_mcp::McpServerSnapshot
 import loom.tools.repl;
 import loom.tools.skill;
 import loom.orchestration.agent.utils;
@@ -75,7 +76,9 @@ namespace fs = std::filesystem;
 // The agent helpers exercised by the existing tests live in
 // loom::tools::agent::utils after the agent_tool split; re-expose them through
 // the loom::tools::agent namespace so the historical call sites still resolve.
-namespace loom::tools::agent { using namespace utils; }
+namespace loom::tools::agent {
+using namespace utils;
+}
 
 namespace {
 
@@ -84,8 +87,7 @@ namespace {
 // does not block them. Production paths must supply a real checker (or accept
 // fail-closed denial for write/execute/network tools).
 loom::tools::agent::AgentLivePermissionCheckFn test_allow_all_check() {
-    auto allow = []([[maybe_unused]] std::string_view,
-                    [[maybe_unused]] std::string_view,
+    auto allow = []([[maybe_unused]] std::string_view, [[maybe_unused]] std::string_view,
                     [[maybe_unused]] std::string_view) {
         return loom::tools::agent::AgentLivePermissionCheck{.allowed = true};
     };
@@ -101,20 +103,19 @@ std::optional<std::string> extract_background_task_id(std::string_view text) {
     const auto value_start = start + marker.size();
     const auto value_end = text.find_first_of("\r\n", value_start);
     return std::string(text.substr(value_start, value_end == std::string_view::npos
-        ? std::string_view::npos
-        : value_end - value_start));
+                                                    ? std::string_view::npos
+                                                    : value_end - value_start));
 }
 
-} // namespace
-
+}  // namespace
 
 TEST(Tools, BashSecurityDetectsObfuscatedCommands) {
     // Regression test: detection must survive case changes, whitespace
     // padding, empty-quote fragmentation, and backslash escapes. Previously
     // pure command.find(pattern) let all of these through.
-    using loom::tools::is_destructive_command;
-    using loom::tools::detect_privilege_escalation;
     using loom::tools::check_command_security;
+    using loom::tools::detect_privilege_escalation;
+    using loom::tools::is_destructive_command;
 
     // Case variants of destructive commands.
     EXPECT_TRUE(is_destructive_command("RM -RF /tmp"));
@@ -206,7 +207,8 @@ TEST(Tools, BashToolStartsBackgroundCommands) {
     fs::create_directories(root);
 
     loom::tools::BashTool tool;
-    auto input = std::format(R"({{"command":"printf start; sleep 0.1; printf done > background.txt; printf done","cwd":"{}","run_in_background":true}})",
+    auto input = std::format(
+        R"({{"command":"printf start; sleep 0.1; printf done > background.txt; printf done","cwd":"{}","run_in_background":true}})",
         root.string());
     auto result = tool.execute(loom::core::ToolInput::from_json(input));
 
@@ -226,11 +228,12 @@ TEST(Tools, BashToolStartsBackgroundCommands) {
     EXPECT_TRUE(fs::exists(output_path));
 
     loom::core::ToolRegistry registry;
-    loom::tools::register_runtime_tools(registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
+    loom::tools::register_runtime_tools(
+        registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
     std::string task_output;
     for (int attempt = 0; attempt < 20; ++attempt) {
-        auto output = registry.execute("task_output", loom::core::ToolInput::from_json(
-            std::format(R"({{"task_id":"{}"}})", *task_id)));
+        auto output = registry.execute("task_output", loom::core::ToolInput::from_json(std::format(
+                                                          R"({{"task_id":"{}"}})", *task_id)));
         ASSERT_TRUE(output.has_value());
         ASSERT_FALSE(output->content.empty());
         task_output = output->content.front().text;
@@ -306,13 +309,15 @@ static bool danger_has_pattern(const loom::tools::bash_validation::DangerClassif
 // Guard them so the suite stays GREEN in both builds without weakening any
 // assertion (every check still runs verbatim when tree-sitter is compiled in).
 #if !LOOM_HAS_TREE_SITTER
-#define CC_SKIP_UNLESS_TREE_SITTER()                                        \
-    do {                                                                    \
-        GTEST_SKIP() << "BashDanger AST-only pattern; tree-sitter disabled";\
-        return;                                                             \
+#define CC_SKIP_UNLESS_TREE_SITTER()                                                               \
+    do {                                                                                           \
+        GTEST_SKIP() << "BashDanger AST-only pattern; tree-sitter disabled";                       \
+        return;                                                                                    \
     } while (0)
 #else
-#define CC_SKIP_UNLESS_TREE_SITTER() do { } while (0)
+#define CC_SKIP_UNLESS_TREE_SITTER()                                                               \
+    do {                                                                                           \
+    } while (0)
 #endif
 
 TEST(BashDanger, SimpleEchoIsNotDangerous) {
@@ -369,15 +374,14 @@ TEST(BashDanger, PipeToShellWgetVariant) {
 TEST(BashDanger, PipeToShellNotGrepFlagged) {
     CC_SKIP_UNLESS_TREE_SITTER();
     // "cat file | grep" is not a curl/wget -> shell pattern.
-    auto r = loom::tools::bash_validation::classify_dangerous_command(
-        "cat file.txt | grep pattern");
+    auto r =
+        loom::tools::bash_validation::classify_dangerous_command("cat file.txt | grep pattern");
     EXPECT_FALSE(danger_has_pattern(r, "pipe_to_shell"));
 }
 
 TEST(BashDanger, RecursiveRmRootIsCritical) {
     CC_SKIP_UNLESS_TREE_SITTER();
-    auto r = loom::tools::bash_validation::classify_dangerous_command(
-        "rm -rf /etc");
+    auto r = loom::tools::bash_validation::classify_dangerous_command("rm -rf /etc");
     EXPECT_TRUE(r.is_dangerous);
     EXPECT_TRUE(danger_has_pattern(r, "recursive_rm_root"));
 }
@@ -389,8 +393,7 @@ TEST(BashDanger, RecursiveRmTmpIsNotRoot) {
     // /tmp/test starts with / but the regex anchors require specific paths.
     // Actually the regex matches "^(/" which matches anything starting with /
     // — so this will fire.  Let's test a relative path instead.
-    auto r = loom::tools::bash_validation::classify_dangerous_command(
-        "rm -rf ./build");
+    auto r = loom::tools::bash_validation::classify_dangerous_command("rm -rf ./build");
     EXPECT_FALSE(danger_has_pattern(r, "recursive_rm_root"));
 }
 
@@ -403,31 +406,28 @@ TEST(BashDanger, EnvInjectionRiskFlagged) {
 
 TEST(BashDanger, UnsafeChmod777Flagged) {
     CC_SKIP_UNLESS_TREE_SITTER();
-    auto r = loom::tools::bash_validation::classify_dangerous_command(
-        "chmod 777 /etc/passwd");
+    auto r = loom::tools::bash_validation::classify_dangerous_command("chmod 777 /etc/passwd");
     EXPECT_TRUE(r.is_dangerous);
     EXPECT_TRUE(danger_has_pattern(r, "unsafe_chmod"));
 }
 
 TEST(BashDanger, ChmodSafeModeNotFlagged) {
     CC_SKIP_UNLESS_TREE_SITTER();
-    auto r = loom::tools::bash_validation::classify_dangerous_command(
-        "chmod 644 /etc/passwd");
+    auto r = loom::tools::bash_validation::classify_dangerous_command("chmod 644 /etc/passwd");
     EXPECT_FALSE(danger_has_pattern(r, "unsafe_chmod"));
 }
 
 TEST(BashDanger, PipedRmIsFlagged) {
     CC_SKIP_UNLESS_TREE_SITTER();
-    auto r = loom::tools::bash_validation::classify_dangerous_command(
-        "find . -name '*.tmp' | xargs rm");
+    auto r =
+        loom::tools::bash_validation::classify_dangerous_command("find . -name '*.tmp' | xargs rm");
     EXPECT_TRUE(r.is_dangerous);
     EXPECT_TRUE(danger_has_pattern(r, "piped_rm"));
 }
 
 TEST(BashDanger, DangerousSubshellFlagged) {
     CC_SKIP_UNLESS_TREE_SITTER();
-    auto r = loom::tools::bash_validation::classify_dangerous_command(
-        "echo $(rm -rf /tmp/test)");
+    auto r = loom::tools::bash_validation::classify_dangerous_command("echo $(rm -rf /tmp/test)");
     EXPECT_TRUE(r.is_dangerous);
     EXPECT_TRUE(danger_has_pattern(r, "dangerous_subshell"));
 }
@@ -449,8 +449,7 @@ TEST(BashDanger, HeredocDestructiveFlagged) {
 
 TEST(BashDanger, ForkBombDetected) {
     CC_SKIP_UNLESS_TREE_SITTER();
-    auto r = loom::tools::bash_validation::classify_dangerous_command(
-        ":(){ :|:& }; :");
+    auto r = loom::tools::bash_validation::classify_dangerous_command(":(){ :|:& }; :");
     EXPECT_TRUE(r.is_dangerous);
     EXPECT_TRUE(danger_has_pattern(r, "fork_bomb_detected"));
 }
@@ -471,8 +470,7 @@ TEST(BashDanger, SyntaxErrorFallsBackGracefully) {
     // error-tolerant and may or may not produce ERROR nodes for a given broken
     // input; the important thing is that classify_dangerous_command returns
     // without throwing.
-    auto r = loom::tools::bash_validation::classify_dangerous_command(
-        "if (( (( [[");
+    auto r = loom::tools::bash_validation::classify_dangerous_command("if (( (( [[");
     // The function always returns — no throw, no crash.
     // Either parse_error is true (regex fallback) or false (AST succeeded with
     // error recovery).  Both are valid; we just assert it didn't crash.

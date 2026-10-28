@@ -2,7 +2,6 @@ module;
 
 #include <unistd.h>
 
-
 export module loom.bridge.flush_gate;
 
 import std;
@@ -36,15 +35,11 @@ public:
         if (open_.load()) return true;
 
         std::unique_lock lock(mutex_);
-        return cv_.wait_for(lock, timeout, [this] {
-            return open_.load();
-        });
+        return cv_.wait_for(lock, timeout, [this] { return open_.load(); });
     }
 
     // Check if the gate is currently open (non-blocking)
-    bool is_open() const {
-        return open_.load();
-    }
+    bool is_open() const { return open_.load(); }
 
 private:
     std::atomic<bool> open_{true};
@@ -52,4 +47,4 @@ private:
     std::condition_variable cv_;
 };
 
-} // namespace loom::bridge
+}  // namespace loom::bridge

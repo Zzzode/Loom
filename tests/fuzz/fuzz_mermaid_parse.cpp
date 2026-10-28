@@ -9,6 +9,7 @@ module;
 
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/screen/screen.hpp>
+
 #include <cstddef>
 #include <cstdint>
 #include <string_view>
@@ -45,12 +46,12 @@ void render_headless(std::string_view source, bool ascii) {
     // Two fixed screens exercise the MermaidNode width flip (240 and the 40-col
     // narrow profile); dimensions never derive from fuzzer input.
     for (const int width : {kMaxWidth, 40}) {
-        auto screen = ftxui::Screen::Create(
-            ftxui::Dimension::Fixed(width), ftxui::Dimension::Fixed(64));
+        auto screen =
+            ftxui::Screen::Create(ftxui::Dimension::Fixed(width), ftxui::Dimension::Fixed(64));
         ftxui::Render(screen, *element);
     }
 }
-} // namespace
+}  // namespace
 
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, std::size_t size) {
     // Mirrors the public render_mermaid source gate; layouts take string_view
@@ -64,11 +65,16 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, std::size_t size) {
     }
 
     auto run_layouts = [&](bool ascii) {
-        Work w1; if (auto rows = sequence_layout(source, w1))
-            for (const auto& row : *rows) if (row.empty()) return;
-        Work w2; if (auto rows = charts_layout(source, w2))
-            for (const auto& row : *rows) if (row.size() > kMaxWidth) return;
-        Work w3; static_cast<void>(gitgraph_layout(source, w3, ascii));
+        Work w1;
+        if (auto rows = sequence_layout(source, w1))
+            for (const auto& row : *rows)
+                if (row.empty()) return;
+        Work w2;
+        if (auto rows = charts_layout(source, w2))
+            for (const auto& row : *rows)
+                if (row.size() > kMaxWidth) return;
+        Work w3;
+        static_cast<void>(gitgraph_layout(source, w3, ascii));
         for (bool class_envelope : {false, true})
             for (bool requirement_input : {false, true}) {
                 Work w4;

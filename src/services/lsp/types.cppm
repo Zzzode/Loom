@@ -27,4 +27,4 @@ struct LspClientConfig {
     ScopedLspServerConfig config;
 };
 
-} // namespace loom::services::lsp
+}  // namespace loom::services::lsp

@@ -47,11 +47,16 @@ namespace {
 /// TrustChoice (1:1 — the leaf enum mirrors td::TrustChoice).
 fdp::TrustChoice to_neutral_trust_choice(td::TrustChoice choice) {
     switch (choice) {
-        case td::TrustChoice::AllowOnce:    return fdp::TrustChoice::AllowOnce;
-        case td::TrustChoice::AlwaysAllow:  return fdp::TrustChoice::AlwaysAllow;
-        case td::TrustChoice::ViewFile:     return fdp::TrustChoice::ViewFile;
-        case td::TrustChoice::EnableAnyway: return fdp::TrustChoice::EnableAnyway;
-        case td::TrustChoice::Cancel:       return fdp::TrustChoice::Cancel;
+    case td::TrustChoice::AllowOnce:
+        return fdp::TrustChoice::AllowOnce;
+    case td::TrustChoice::AlwaysAllow:
+        return fdp::TrustChoice::AlwaysAllow;
+    case td::TrustChoice::ViewFile:
+        return fdp::TrustChoice::ViewFile;
+    case td::TrustChoice::EnableAnyway:
+        return fdp::TrustChoice::EnableAnyway;
+    case td::TrustChoice::Cancel:
+        return fdp::TrustChoice::Cancel;
     }
     return fdp::TrustChoice::Cancel;
 }
@@ -61,8 +66,7 @@ fdp::TrustChoice to_neutral_trust_choice(td::TrustChoice choice) {
 /// confined to this composition-root TU.
 fdp::DialogFactory make_wizard_factory() {
     return [](std::shared_ptr<void> erased) -> ftxui::Component {
-        auto request =
-            std::static_pointer_cast<fdp::FeatureWizardRequest>(erased);
+        auto request = std::static_pointer_cast<fdp::FeatureWizardRequest>(erased);
         if (!request) return nullptr;
         return fwa::MakeFeatureWizard(*request);
     };
@@ -72,8 +76,7 @@ fdp::DialogFactory make_wizard_factory() {
 /// into a full td::TrustDialogProps and map the choice back.
 fdp::DialogFactory make_trust_factory() {
     return [](std::shared_ptr<void> erased) -> ftxui::Component {
-        auto request =
-            std::static_pointer_cast<fdp::FeatureTrustRequest>(erased);
+        auto request = std::static_pointer_cast<fdp::FeatureTrustRequest>(erased);
         if (!request) return nullptr;
         td::TrustDialogProps props;
         props.on_done = [cb = std::move(request->on_done)](td::TrustChoice choice) {
@@ -90,12 +93,9 @@ fdp::DialogFactory make_trust_factory() {
 }  // namespace
 
 void register_feature_dialog_factories() {
-    fdp::register_dialog_factory(fdp::ViewKind::AgentWizard,
-                                 make_wizard_factory());
-    fdp::register_dialog_factory(fdp::ViewKind::PluginInstall,
-                                 make_wizard_factory());
-    fdp::register_dialog_factory(fdp::ViewKind::PluginTrust,
-                                 make_trust_factory());
+    fdp::register_dialog_factory(fdp::ViewKind::AgentWizard, make_wizard_factory());
+    fdp::register_dialog_factory(fdp::ViewKind::PluginInstall, make_wizard_factory());
+    fdp::register_dialog_factory(fdp::ViewKind::PluginTrust, make_trust_factory());
 }
 
 }  // namespace loom::ui::app_dialogs

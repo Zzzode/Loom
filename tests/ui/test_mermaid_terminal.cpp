@@ -1,9 +1,10 @@
 // RFC 0030 Phase C: execute imported public inputs through Loom, not the
 // upstream renderers. An output report is deliberately not a passing oracle.
-#include <gtest/gtest.h>
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/screen/screen.hpp>
 #include <ftxui/screen/string.hpp>
+#include <gtest/gtest.h>
+
 #include <filesystem>
 #include <fstream>
 #include <iterator>
@@ -19,9 +20,10 @@ namespace fs = std::filesystem;
 namespace json = loom::utils::json;
 using json::JsonVal;
 const fs::path kRoot = fs::path(LOOM_TESTS_DIR) / "fixtures/mermaid_terminal";
-constexpr std::array<std::string_view, 5> kVendors{
-    "beautiful_mermaid", "mermaid_ascii", "termaid", "mmdflux", "merman"};
-constexpr std::string_view kInventorySha256 = "d1d7d6541f605a0c7ceb8ca6f65fb25eadf5e7df92be55171bd6207671e51cc3";
+constexpr std::array<std::string_view, 5> kVendors{"beautiful_mermaid", "mermaid_ascii", "termaid",
+                                                   "mmdflux", "merman"};
+constexpr std::string_view kInventorySha256 =
+    "d1d7d6541f605a0c7ceb8ca6f65fb25eadf5e7df92be55171bd6207671e51cc3";
 
 std::string read(const fs::path& path) {
     std::ifstream stream(path, std::ios::binary);
@@ -97,17 +99,20 @@ void validate_inventory(const fs::path& root, std::string_view lock_bytes) {
 }
 
 std::string capture(ftxui::Element element, int width, int height) {
-    auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(width),
-                                      ftxui::Dimension::Fixed(height));
+    auto screen =
+        ftxui::Screen::Create(ftxui::Dimension::Fixed(width), ftxui::Dimension::Fixed(height));
     ftxui::Render(screen, std::move(element));
     std::string result;
     for (int y = 0; y < screen.dimy(); ++y) {
         std::string line;
-        for (int x = 0; x < screen.dimx(); ++x) line += screen.PixelAt(x, y).character;
-        while (!line.empty() && line.back() == ' ') line.pop_back();
+        for (int x = 0; x < screen.dimx(); ++x)
+            line += screen.PixelAt(x, y).character;
+        while (!line.empty() && line.back() == ' ')
+            line.pop_back();
         result += line + '\n';
     }
-    while (!result.empty() && result.back() == '\n') result.pop_back();
+    while (!result.empty() && result.back() == '\n')
+        result.pop_back();
     return result;
 }
 
@@ -174,8 +179,10 @@ void observe(Observation& row) {
     // Blank spacer columns are part of the public intrinsic layout extent.
     // Trimming captured ink cannot establish whether that full extent fits.
     const int layout_width = diagram->requirement().min_x;
-    const int input_lines = static_cast<int>(std::count(row.source.begin(), row.source.end(), '\n'));
-    const int height = std::min(4096, std::max({32, input_lines + 12, diagram->requirement().min_y + 8}));
+    const int input_lines =
+        static_cast<int>(std::count(row.source.begin(), row.source.end(), '\n'));
+    const int height =
+        std::min(4096, std::max({32, input_lines + 12, diagram->requirement().min_y + 8}));
     const auto wide = capture(diagram, 240, height);
     const auto plain = capture(source, 240, height);
     const auto narrow = capture(diagram, 40, height);
@@ -186,14 +193,17 @@ void observe(Observation& row) {
     std::istringstream lines(wide);
     for (std::string line; std::getline(lines, line);)
         visible_width = std::max(visible_width, ftxui::string_width(line));
-    row.narrow_source_expected = row.status == "source_fallback" || std::max(visible_width, layout_width) > 40;
+    row.narrow_source_expected =
+        row.status == "source_fallback" || std::max(visible_width, layout_width) > 40;
     row.narrow_status = narrow == plain_narrow ? "source_fallback" : "unverified_drawing";
     if ((narrow == plain_narrow) != row.narrow_source_expected)
-        row.errors.emplace_back("Narrow output disagrees with the independently measured wide extent/source control");
+        row.errors.emplace_back(
+            "Narrow output disagrees with the independently measured wide extent/source control");
     if (wide.find("AFTER_IMPORTED_MERMAID") == std::string::npos ||
         narrow.find("AFTER_IMPORTED_MERMAID") == std::string::npos)
         row.errors.emplace_back("Following Markdown was clipped or lost");
-    if (wide != restored) row.errors.emplace_back("Same-node resize did not restore identical cells");
+    if (wide != restored)
+        row.errors.emplace_back("Same-node resize did not restore identical cells");
     if (!row.errors.empty()) row.status = "error";
 }
 
@@ -202,7 +212,9 @@ void report(const std::vector<Observation>& rows) {
     auto root = doc.object();
     root.set("schema", 1);
     root.set("kind", "imported_terminal_suite_baseline");
-    root.set("qualification", "Unverified drawing is not semantic conformance. Source fallback is an unmet positive drawing obligation. This baseline does not certify the assertion port.");
+    root.set("qualification",
+             "Unverified drawing is not semantic conformance. Source fallback is an unmet positive "
+             "drawing obligation. This baseline does not certify the assertion port.");
     root.set("unique_inputs", static_cast<std::int64_t>(rows.size()));
     auto cases = root.make_arr();
     std::map<std::string, std::map<std::string, int>> counts;
@@ -214,14 +226,16 @@ void report(const std::vector<Observation>& rows) {
         item.set("narrow_outcome", row.narrow_status);
         item.set("narrow_source_expected", row.narrow_source_expected);
         auto provenance = root.make_arr();
-        for (const auto& id : row.sources) provenance.append(root.make_str(id));
+        for (const auto& id : row.sources)
+            provenance.append(root.make_str(id));
         item.add("upstream_case_ids", provenance);
         auto classifications = root.make_arr();
         for (const auto& value : row.declared_classes)
             classifications.append(root.make_str(value));
         item.add("upstream_declared_classifications", classifications);
         auto errors = root.make_arr();
-        for (const auto& error : row.errors) errors.append(root.make_str(error));
+        for (const auto& error : row.errors)
+            errors.append(root.make_str(error));
         item.add("errors", errors);
         cases.append(item);
         ++counts[row.family][row.status];
@@ -231,7 +245,8 @@ void report(const std::vector<Observation>& rows) {
     for (const auto& [family, statuses] : counts) {
         auto item = root.make_obj();
         item.set("family", family);
-        for (const auto& [status, count] : statuses) item.set(status, count);
+        for (const auto& [status, count] : statuses)
+            item.set(status, count);
         totals.append(item);
     }
     root.add("families", totals);
@@ -294,12 +309,20 @@ TEST(MermaidTerminal, InventoryOracleRejectsMutation) {
     EXPECT_FALSE(relative_asset("../removed-case.json"));
     EXPECT_FALSE(relative_asset("/tmp/foreign-case"));
     EXPECT_FALSE(relative_asset("vendor/../case"));
-    const auto temporary = fs::temp_directory_path() /
-        ("loom-mermaid-inventory-" + std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
+    const auto temporary =
+        fs::temp_directory_path() /
+        ("loom-mermaid-inventory-" +
+         std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
+
     struct Cleanup {
         fs::path path;
-        ~Cleanup() { std::error_code error; fs::remove_all(path, error); }
+
+        ~Cleanup() {
+            std::error_code error;
+            fs::remove_all(path, error);
+        }
     } cleanup{temporary};
+
     fs::create_directories(temporary);
     for (const auto vendor : kVendors)
         fs::copy(kRoot / vendor, temporary / vendor, fs::copy_options::recursive);
@@ -331,7 +354,8 @@ TEST(MermaidTerminal, InventoryOracleRejectsMutation) {
     EXPECT_THROW(validate_inventory(temporary, bytes), std::runtime_error);
     fs::remove(unlisted);
     ASSERT_NO_THROW(validate_inventory(temporary, bytes));
-    const auto asset = temporary / "beautiful_mermaid/upstream/src/__tests__/testdata/unicode/single_node.txt";
+    const auto asset =
+        temporary / "beautiful_mermaid/upstream/src/__tests__/testdata/unicode/single_node.txt";
     const auto asset_bytes = read(asset);
     {
         std::ofstream changed(asset, std::ios::binary | std::ios::app);
@@ -345,7 +369,8 @@ TEST(MermaidTerminal, InventoryOracleRejectsMutation) {
     ASSERT_NO_THROW(validate_inventory(temporary, bytes));
     fs::remove(asset);
     EXPECT_THROW(validate_inventory(temporary, bytes), std::runtime_error);
-    fs::create_symlink(kRoot / "beautiful_mermaid/upstream/src/__tests__/testdata/unicode/single_node.txt", asset);
+    fs::create_symlink(
+        kRoot / "beautiful_mermaid/upstream/src/__tests__/testdata/unicode/single_node.txt", asset);
     EXPECT_THROW(validate_inventory(temporary, bytes), std::runtime_error);
 }
 
@@ -361,10 +386,9 @@ constexpr std::string_view kAscii = "flowchart LR\nA[Start] -->|go| B[End]";
 constexpr std::string_view kRejected = "flowchart TD\n";
 
 std::string variant(int n) {
-    return "flowchart TD\nA[Alpha" + std::to_string(n) +
-           "] --> B[Beta" + std::to_string(n) + "]";
+    return "flowchart TD\nA[Alpha" + std::to_string(n) + "] --> B[Beta" + std::to_string(n) + "]";
 }
-} // namespace e6b
+}  // namespace e6b
 
 using loom::ui::mermaid::LayoutRowsCache;
 
@@ -422,8 +446,8 @@ TEST(MermaidRowsCache, NegativeResultCachedAndReproducesFallback) {
 
     LayoutRowsCache cache(16, 1u << 20);
     const auto first = cache.get_or_layout(e6b::kRejected, false);
-    ASSERT_TRUE(first.has_value());        // engaged...
-    EXPECT_TRUE(first->empty());          // ...empty rejection sentinel
+    ASSERT_TRUE(first.has_value());  // engaged...
+    EXPECT_TRUE(first->empty());     // ...empty rejection sentinel
     EXPECT_EQ(cache.size(), 1u);
     const auto second = cache.get_or_layout(e6b::kRejected, false);
     ASSERT_TRUE(second.has_value());
@@ -508,26 +532,36 @@ TEST(MermaidRowsCache, ClearDropsEntriesAndCounters) {
 }
 
 TEST(MermaidRowsCache, CopiesAndAssignmentOwnIndependentRowsAndLruState) {
-    LayoutRowsCache original(2,1u<<20);
-    const auto good=original.get_or_layout(e6b::kNodeTD,false);
-    const auto rejected=original.get_or_layout(e6b::kRejected,false);
-    ASSERT_TRUE(good&& !good->empty());ASSERT_TRUE(rejected&&rejected->empty());
-    auto copied=original;
-    LayoutRowsCache assigned(1,1);assigned=original;
-    for(auto* cache:{&copied,&assigned}) {
-        EXPECT_EQ(cache->get_or_layout(e6b::kNodeTD,false),good);
-        EXPECT_EQ(cache->get_or_layout(e6b::kRejected,false),rejected);
-        EXPECT_EQ(cache->entry_capacity(),2u);EXPECT_EQ(cache->byte_size(),original.byte_size());
+    LayoutRowsCache original(2, 1u << 20);
+    const auto good = original.get_or_layout(e6b::kNodeTD, false);
+    const auto rejected = original.get_or_layout(e6b::kRejected, false);
+    ASSERT_TRUE(good && !good->empty());
+    ASSERT_TRUE(rejected && rejected->empty());
+    auto copied = original;
+    LayoutRowsCache assigned(1, 1);
+    assigned = original;
+    for (auto* cache : {&copied, &assigned}) {
+        EXPECT_EQ(cache->get_or_layout(e6b::kNodeTD, false), good);
+        EXPECT_EQ(cache->get_or_layout(e6b::kRejected, false), rejected);
+        EXPECT_EQ(cache->entry_capacity(), 2u);
+        EXPECT_EQ(cache->byte_size(), original.byte_size());
     }
-    const auto retained=original.byte_size();original.clear();
-    EXPECT_EQ(original.size(),0u);EXPECT_GT(copied.byte_size(),0u);EXPECT_EQ(assigned.byte_size(),retained);
-    EXPECT_EQ(copied.get_or_layout(e6b::kNodeTD,false),good);
-    EXPECT_FALSE(copied.get_or_layout(e6b::variant(77),false)->empty());
-    EXPECT_EQ(assigned.get_or_layout(e6b::kRejected,false),rejected);
-    const auto& same=assigned;assigned=same;EXPECT_EQ(assigned.size(),2u);
-    auto art=copied.render(e6b::kNodeTD,false,ftxui::text("fallback"));ASSERT_TRUE(art);
-    auto baseline=loom::ui::mermaid::render_mermaid(e6b::kNodeTD,ftxui::text("fallback"));ASSERT_TRUE(baseline);
-    EXPECT_EQ(capture(*art,240,40),capture(*baseline,240,40));
+    const auto retained = original.byte_size();
+    original.clear();
+    EXPECT_EQ(original.size(), 0u);
+    EXPECT_GT(copied.byte_size(), 0u);
+    EXPECT_EQ(assigned.byte_size(), retained);
+    EXPECT_EQ(copied.get_or_layout(e6b::kNodeTD, false), good);
+    EXPECT_FALSE(copied.get_or_layout(e6b::variant(77), false)->empty());
+    EXPECT_EQ(assigned.get_or_layout(e6b::kRejected, false), rejected);
+    const auto& same = assigned;
+    assigned = same;
+    EXPECT_EQ(assigned.size(), 2u);
+    auto art = copied.render(e6b::kNodeTD, false, ftxui::text("fallback"));
+    ASSERT_TRUE(art);
+    auto baseline = loom::ui::mermaid::render_mermaid(e6b::kNodeTD, ftxui::text("fallback"));
+    ASSERT_TRUE(baseline);
+    EXPECT_EQ(capture(*art, 240, 40), capture(*baseline, 240, 40));
 }
 
 TEST(MermaidRowsCache, Width240And40ShareRowsWithFreshNodeGeometry) {
@@ -536,20 +570,17 @@ TEST(MermaidRowsCache, Width240And40ShareRowsWithFreshNodeGeometry) {
     ASSERT_TRUE(rows.has_value() && !rows->empty());
 
     auto render_diagram = [&] {
-        return cache.render(
-            e6b::kChainLR, false,
-            loom::ui::render_markdown(fenced(std::string(e6b::kChainLR), "text")));
+        return cache.render(e6b::kChainLR, false,
+                            loom::ui::render_markdown(fenced(std::string(e6b::kChainLR), "text")));
     };
     constexpr int kHeight = 40;
     auto d1 = render_diagram();
     ASSERT_TRUE(d1.has_value());
     const auto wide = capture(*d1, 240, kHeight);
-    const auto plain_wide =
-        capture(loom::ui::render_markdown(fenced(std::string(e6b::kChainLR), "text")),
-                240, kHeight);
+    const auto plain_wide = capture(
+        loom::ui::render_markdown(fenced(std::string(e6b::kChainLR), "text")), 240, kHeight);
     const auto plain_narrow =
-        capture(loom::ui::render_markdown(fenced(std::string(e6b::kChainLR), "text")),
-                40, kHeight);
+        capture(loom::ui::render_markdown(fenced(std::string(e6b::kChainLR), "text")), 40, kHeight);
     // The chain draws at 240 but is wider than 40.
     ASSERT_NE(wide, plain_wide);
     ASSERT_NE(wide, plain_narrow);
@@ -581,14 +612,20 @@ TEST(MermaidRowsCache, MarkdownCallSiteConservesCells) {
     EXPECT_EQ(cache.misses(), 1u);
     EXPECT_EQ(cache.hits(), 1u);
 }
-} // namespace
+}  // namespace
 
 // RFC 0030: original nonliteral Beautiful Mermaid Flow assertions.
 #include "mermaid_flow400_authority.hpp"
 
 namespace terminal_flow_expressions {
 namespace f = loom::test::mermaid_flow;
-struct SourceFunction { std::string_view id; int kind; std::size_t expressions; };
+
+struct SourceFunction {
+    std::string_view id;
+    int kind;
+    std::size_t expressions;
+};
+
 constexpr std::array<SourceFunction, 4> kFunctions{{
     {"beautiful_mermaid_e4a085e0bd0b6697", 0, 3},
     {"beautiful_mermaid_cc0fb78b963c854d", 1, 5},
@@ -603,7 +640,8 @@ std::vector<std::string> body_rows(const f::Grid& grid, f::OracleWork& work) {
     result.reserve(static_cast<std::size_t>(end));
     for (int y = 0; y < end; ++y) {
         work.product(static_cast<std::size_t>(grid.width), 8u);
-        for (int x = 0; x < grid.width; ++x) work.product(grid.at({x, y}).size(), 4u);
+        for (int x = 0; x < grid.width; ++x)
+            work.product(grid.at({x, y}).size(), 4u);
         result.push_back(grid.row(y));
     }
     return result;
@@ -611,8 +649,7 @@ std::vector<std::string> body_rows(const f::Grid& grid, f::OracleWork& work) {
 
 // Direct translations of the twelve original expressions, with the following
 // Markdown excluded from the source renderer's output role.
-std::vector<bool> predicates(const std::vector<std::string>& rows, int kind,
-                             f::OracleWork& work) {
+std::vector<bool> predicates(const std::vector<std::string>& rows, int kind, f::OracleWork& work) {
     work.spend(1024u);
     auto first = [&](std::string_view text, bool exclude_rules = false) {
         for (std::size_t y = 0; y < rows.size(); ++y) {
@@ -641,39 +678,43 @@ bool all_true(const std::vector<bool>& values) {
     return std::ranges::all_of(values, [](bool value) { return value; });
 }
 
-void write_frames(const SourceFunction& function,
-                  const std::array<const f::Grid*, 5>& frames, f::OracleWork& work) {
+void write_frames(const SourceFunction& function, const std::array<const f::Grid*, 5>& frames,
+                  f::OracleWork& work) {
     json::JsonMutDoc doc;
     auto root = doc.object();
     root.set("schema", "beautiful_flow_expression12_actual_frames/v1");
     root.set("id", function.id);
-    root.set("qualification", "Actual frames acquired before source Model decode; no compatibility conclusion.");
+    root.set("qualification",
+             "Actual frames acquired before source Model decode; no compatibility conclusion.");
     auto array = root.make_arr();
-    constexpr std::array<std::string_view, 5> names{
-        "wide", "ordinary_wide", "narrow", "ordinary_narrow", "restored"};
+    constexpr std::array<std::string_view, 5> names{"wide", "ordinary_wide", "narrow",
+                                                    "ordinary_narrow", "restored"};
     for (std::size_t n = 0; n < frames.size(); ++n) {
         const auto& frame = *frames[n];
         work.spend(2048u);
         work.product(frame.cells.size(), 48u);
-        for (const auto& cell : frame.cells) work.product(cell.size(), 16u);
+        for (const auto& cell : frame.cells)
+            work.product(cell.size(), 16u);
         auto item = root.make_obj();
         item.set("name", names[n]);
         item.set("width", frame.width);
         item.set("height", frame.height);
         auto rows = root.make_arr();
-        for (int y = 0; y < frame.height; ++y) rows.append(root.make_str(frame.row(y)));
+        for (int y = 0; y < frame.height; ++y)
+            rows.append(root.make_str(frame.row(y)));
         item.add("rows", rows);
         array.append(item);
     }
     root.add("frames", array);
     doc.set_root(root);
     const auto path = fs::path(LOOM_MERMAID_REPORT_DIR) /
-        ("mermaid-expression12-" + std::string(function.id) + "-frames.json");
+                      ("mermaid-expression12-" + std::string(function.id) + "-frames.json");
     std::ofstream output(path, std::ios::binary);
     f::flow400_require(static_cast<bool>(output) &&
-        static_cast<bool>(output << doc.to_pretty_string() << '\n'), "Cannot publish expression frames");
+                           static_cast<bool>(output << doc.to_pretty_string() << '\n'),
+                       "Cannot publish expression frames");
 }
-} // namespace terminal_flow_expressions
+}  // namespace terminal_flow_expressions
 
 TEST(MermaidTerminal, BeautifulFlowOriginalNonliteralExpressions) {
     namespace e = terminal_flow_expressions;
@@ -700,7 +741,10 @@ TEST(MermaidTerminal, BeautifulFlowOriginalNonliteralExpressions) {
         std::size_t found = 0;
         doc->root().get("cases").iter([&](JsonVal candidate) {
             work.spend(256u);
-            if (candidate.get_string("id") == function.id) { row = candidate; ++found; }
+            if (candidate.get_string("id") == function.id) {
+                row = candidate;
+                ++found;
+            }
         });
         ASSERT_EQ(found, 1u);
         const auto source = row.get_string("input");
@@ -732,7 +776,8 @@ TEST(MermaidTerminal, BeautifulFlowOriginalNonliteralExpressions) {
         ASSERT_TRUE(e::all_true(good));
         expressions += good.size();
         work.product(rows.size(), 3u * sizeof(std::string) + 16u);
-        for (const auto& line : rows) work.product(line.size() + 1u, 8u);
+        for (const auto& line : rows)
+            work.product(line.size() + 1u, 8u);
         auto wrong = rows;
         auto locate = [&](std::string_view value) {
             for (std::size_t n = 0; n < wrong.size(); ++n) {
@@ -741,18 +786,22 @@ TEST(MermaidTerminal, BeautifulFlowOriginalNonliteralExpressions) {
             }
             throw std::runtime_error("Missing good-first source predicate witness");
         };
-        if (function.kind == 0) std::swap(wrong[locate("Line1")], wrong[locate("Line2")]);
-        else if (function.kind == 1) std::swap(wrong[locate("B")], wrong[locate("C")]);
+        if (function.kind == 0)
+            std::swap(wrong[locate("Line1")], wrong[locate("Line2")]);
+        else if (function.kind == 1)
+            std::swap(wrong[locate("B")], wrong[locate("C")]);
         else if (function.kind == 2) {
             auto& line = wrong[locate("Two")];
             line.replace(line.find("Two"), 3u, "   ");
         } else {
-            for (auto& line : wrong) for (const auto glyph : {"┌", "─", "│"}) {
-                for (std::size_t at = line.find(glyph); at != std::string::npos; at = line.find(glyph)) {
-                    work.product(line.size() + 1u, 8u);
-                    line.replace(at, std::string_view(glyph).size(), " ");
+            for (auto& line : wrong)
+                for (const auto glyph : {"┌", "─", "│"}) {
+                    for (std::size_t at = line.find(glyph); at != std::string::npos;
+                         at = line.find(glyph)) {
+                        work.product(line.size() + 1u, 8u);
+                        line.replace(at, std::string_view(glyph).size(), " ");
+                    }
                 }
-            }
         }
         ASSERT_FALSE(e::all_true(e::predicates(wrong, function.kind, work)));
         ++rejected;

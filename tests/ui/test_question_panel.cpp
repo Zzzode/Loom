@@ -1,10 +1,10 @@
 // Native editing, lifetime, composition, and routing contracts for question panels.
-#include <gtest/gtest.h>
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/event.hpp>
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/screen/screen.hpp>
 #include <ftxui/screen/string.hpp>
+#include <gtest/gtest.h>
 
 import std;
 import loom.ui.dialogs.system;
@@ -33,30 +33,34 @@ protected:
         };
         payload = std::move(question);
         context.theme = {loom::ui::design::theme::ThemeVariant::Light,
-                        &loom::ui::design::tokens::palette::light()};
+                         &loom::ui::design::tokens::palette::light()};
         context.term_cols = 80;
         context.term_rows = 24;
     }
-    dsys::PromptDialogPayload& Question() {
-        return std::get<dsys::PromptDialogPayload>(payload);
-    }
+
+    dsys::PromptDialogPayload& Question() { return std::get<dsys::PromptDialogPayload>(payload); }
+
     bool Send(const Event& event) { return registry.handle_event(payload, event); }
+
     ftxui::Element Element(int width = 80) {
         context.term_cols = width;
         return registry.render(payload, context);
     }
+
     std::string Draw(int width = 80, int height = 16) {
-        auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(width),
-                                             ftxui::Dimension::Fixed(height));
+        auto screen =
+            ftxui::Screen::Create(ftxui::Dimension::Fixed(width), ftxui::Dimension::Fixed(height));
         ftxui::Render(screen, Element(width));
         cursor = screen.cursor();
         std::string result;
         for (int y = 0; y < height; ++y) {
-            for (int x = 0; x < width; ++x) result += screen.PixelAt(x, y).character;
+            for (int x = 0; x < width; ++x)
+                result += screen.PixelAt(x, y).character;
             result += '\n';
         }
         return result;
     }
+
     dsys::DialogRendererRegistry registry;
     dsys::DialogPayloadVariant payload;
     dsys::DialogRenderContext context;
@@ -166,9 +170,8 @@ TEST_F(QuestionPanel, UnicodeNavigationAndDeletionOperateOnGlyphs) {
 TEST_F(QuestionPanel, DefaultAndBatchedTextShareSingleLineNormalization) {
     Question().default_value = "甲\r\n乙\t🙂\x01";
     EXPECT_TRUE(Send(Event::End));
-    EXPECT_TRUE(Send(Event::Character(std::string{"\rX\nY\tZ"} +
-                                    "\xe2\x80\xa8" + "A" + "\xe2\x80\xa9" +
-                                    "B\x02\x7f")));
+    EXPECT_TRUE(Send(Event::Character(std::string{"\rX\nY\tZ"} + "\xe2\x80\xa8" + "A" +
+                                      "\xe2\x80\xa9" + "B\x02\x7f")));
     EXPECT_TRUE(Send(Event::Return));
     ASSERT_EQ(answers.size(), 1U);
     EXPECT_EQ(answers.front(), std::optional<std::string>{"甲 乙 🙂 X Y Z A B"});
@@ -176,10 +179,9 @@ TEST_F(QuestionPanel, DefaultAndBatchedTextShareSingleLineNormalization) {
 
 TEST_F(QuestionPanel, EditingBoundariesStayLocalAndGlobalControlKeysPassThrough) {
     (void)Draw();
-    for (const auto& event : {Event::Tab, Event::TabReverse, Event::ArrowUp,
-                              Event::ArrowDown, Event::Home, Event::End,
-                              Event::ArrowLeft, Event::ArrowRight,
-                              Event::Backspace, Event::Delete}) {
+    for (const auto& event :
+         {Event::Tab, Event::TabReverse, Event::ArrowUp, Event::ArrowDown, Event::Home, Event::End,
+          Event::ArrowLeft, Event::ArrowRight, Event::Backspace, Event::Delete}) {
         EXPECT_TRUE(Send(event)) << event.input();
     }
     for (char control : {'\x03', '\x04', '\x0c'}) {
@@ -216,8 +218,7 @@ TEST_F(QuestionPanel, ReturnedDomKeepsEditorAliveAfterPayloadIsDestroyed) {
     ASSERT_FALSE(lifetime.expired());
     payload = dsys::CostThresholdPayload{};
     EXPECT_FALSE(lifetime.expired());
-    auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(80),
-                                         ftxui::Dimension::Fixed(16));
+    auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(80), ftxui::Dimension::Fixed(16));
     ftxui::Render(screen, element);
     EXPECT_NE(screen.ToString().find("retained DOM"), std::string::npos);
     element.reset();
@@ -229,21 +230,22 @@ TEST_F(QuestionPanel, OverlayClearsUnderlyingDividersOnlyWithinItsOwnBounds) {
         SCOPED_TRACE(width);
         context.term_cols = width - 4;
         ftxui::Elements rows;
-        for (int row = 0; row < 16; ++row) rows.push_back(ftxui::separator());
+        for (int row = 0; row < 16; ++row)
+            rows.push_back(ftxui::separator());
         auto underlay = ftxui::vbox(std::move(rows));
-        auto panel = registry.render(payload, context) |
-            ftxui::size(ftxui::WIDTH, ftxui::EQUAL, width - 4);
-        auto margin = ftxui::filler() |
-            ftxui::size(ftxui::WIDTH, ftxui::EQUAL, 2);
-        auto overlay = ftxui::hbox({margin, panel,
-            ftxui::filler() | ftxui::size(ftxui::WIDTH, ftxui::EQUAL, 2)});
-        auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(width),
-                                             ftxui::Dimension::Fixed(16));
+        auto panel =
+            registry.render(payload, context) | ftxui::size(ftxui::WIDTH, ftxui::EQUAL, width - 4);
+        auto margin = ftxui::filler() | ftxui::size(ftxui::WIDTH, ftxui::EQUAL, 2);
+        auto overlay = ftxui::hbox(
+            {margin, panel, ftxui::filler() | ftxui::size(ftxui::WIDTH, ftxui::EQUAL, 2)});
+        auto screen =
+            ftxui::Screen::Create(ftxui::Dimension::Fixed(width), ftxui::Dimension::Fixed(16));
         ftxui::Render(screen, ftxui::dbox({underlay, overlay}));
         bool found_question = false;
         for (int y = 0; y < 16; ++y) {
             std::string row;
-            for (int x = 0; x < width; ++x) row += screen.PixelAt(x, y).character;
+            for (int x = 0; x < width; ++x)
+                row += screen.PixelAt(x, y).character;
             if (row.find("Which framework should I use?") != std::string::npos) {
                 found_question = true;
                 EXPECT_EQ(screen.PixelAt(0, y).character, "─");
@@ -290,8 +292,7 @@ TEST_F(QuestionPanel, NativeCursorMarksTheEndOfTheFocusedAnswerAtEveryWidth) {
             if (start != std::string::npos) {
                 found = true;
                 EXPECT_EQ(cursor.shape, ftxui::Screen::Cursor::BarBlinking);
-                EXPECT_EQ(cursor.x, ftxui::string_width(
-                    row.substr(0, start + answer.size())));
+                EXPECT_EQ(cursor.x, ftxui::string_width(row.substr(0, start + answer.size())));
                 EXPECT_EQ(cursor.y, y);
                 EXPECT_GE(cursor.x, 3);
                 EXPECT_LT(cursor.x, width - 3);
@@ -317,7 +318,8 @@ TEST_F(QuestionPanel, LongAnswerScrollsHorizontallyAndSurvivesResize) {
         EXPECT_LT(cursor.y, 16);
         std::istringstream rows(rendered);
         std::string cursor_row;
-        for (int y = 0; y <= cursor.y; ++y) std::getline(rows, cursor_row);
+        for (int y = 0; y <= cursor.y; ++y)
+            std::getline(rows, cursor_row);
         EXPECT_NE(cursor_row.find("VISIBLE-TAIL"), std::string::npos);
     }
     EXPECT_TRUE(Send(Event::Return));

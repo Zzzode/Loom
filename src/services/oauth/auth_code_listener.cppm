@@ -1,10 +1,11 @@
 module;
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <unistd.h>
+
+#include <cstddef>
 #include <cstdint>
 #include <cstring>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <unistd.h>
-#include <cstddef>
 
 export module loom.services.oauth.auth_code_listener;
 
@@ -21,7 +22,8 @@ struct AuthCodeCallback {
 // Lightweight alternative that binds a socket and extracts the auth code.
 class AuthCodeListener {
 public:
-    explicit AuthCodeListener(uint16_t port = 0) : port_(port) {}
+    explicit AuthCodeListener(uint16_t port = 0)
+        : port_(port) {}
 
     ~AuthCodeListener() { stop(); }
 
@@ -169,21 +171,22 @@ private:
         return out;
     }
 
-    [[nodiscard]] static std::optional<std::string> extract_param(
-        std::string_view request, std::string_view key) {
+    [[nodiscard]] static std::optional<std::string> extract_param(std::string_view request,
+                                                                  std::string_view key) {
         auto query_start = request.find('?');
         if (query_start == std::string_view::npos) return std::nullopt;
         auto query_end = request.find(' ', query_start);
-        auto query = request.substr(
-            query_start + 1,
-            query_end == std::string_view::npos ? std::string_view::npos : query_end - query_start - 1);
+        auto query = request.substr(query_start + 1, query_end == std::string_view::npos
+                                                         ? std::string_view::npos
+                                                         : query_end - query_start - 1);
 
         std::string pattern(key);
         pattern.push_back('=');
         size_t pos = 0;
         while (pos < query.size()) {
             auto next = query.find('&', pos);
-            auto part = query.substr(pos, next == std::string_view::npos ? std::string_view::npos : next - pos);
+            auto part = query.substr(pos, next == std::string_view::npos ? std::string_view::npos
+                                                                         : next - pos);
             if (part.starts_with(pattern)) {
                 return url_decode(part.substr(pattern.size()));
             }
@@ -198,4 +201,4 @@ private:
     bool running_{false};
 };
 
-} // namespace loom::services::oauth
+}  // namespace loom::services::oauth

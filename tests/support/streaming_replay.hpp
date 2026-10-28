@@ -26,9 +26,9 @@
 #pragma once
 
 // ── Textual standard-library includes ──────────────────────────────────
+#include <chrono>
 #include <cstddef>
 #include <cstdint>
-#include <chrono>
 #include <expected>
 #include <filesystem>
 #include <format>
@@ -101,8 +101,7 @@ struct ReplayStep {
 class FixtureParseError : public std::runtime_error {
 public:
     FixtureParseError(std::size_t line, std::string_view msg)
-        : std::runtime_error(
-              std::format("fixture line {}: {}", line, msg)) {}
+        : std::runtime_error(std::format("fixture line {}: {}", line, msg)) {}
 };
 
 // ============================================================
@@ -115,8 +114,8 @@ namespace detail {
 ///
 /// Supports the block types from RFC 0003 §6.1:
 ///   text, thinking, tool_use, tool_result, image, document.
-[[nodiscard]] inline loom::core::ContentBlock parse_content_block(
-    const loom::utils::json::JsonVal& block, std::size_t line_no) {
+[[nodiscard]] inline loom::core::ContentBlock
+parse_content_block(const loom::utils::json::JsonVal& block, std::size_t line_no) {
     const auto type = block.get_string("type");
 
     if (type == "text") {
@@ -139,10 +138,8 @@ namespace detail {
     }
     if (type == "tool_result") {
         loom::core::ToolResultBlock trb;
-        trb.tool_use_id = loom::core::ToolUseId{
-            .value = block.get_string("tool_use_id")};
-        if (const auto ie = block.get("is_error");
-            ie.valid() && ie.is_bool())
+        trb.tool_use_id = loom::core::ToolUseId{.value = block.get_string("tool_use_id")};
+        if (const auto ie = block.get("is_error"); ie.valid() && ie.is_bool())
             trb.is_error = ie.as_bool();
         // Content is either a plain string or an array of content items
         // (text / image), mirroring the ToolResultBlock variant.
@@ -155,32 +152,24 @@ namespace detail {
             for (std::size_t i = 0; i < content.size(); ++i) {
                 const auto item = content.at(i);
                 if (!item.is_obj()) {
-                    throw FixtureParseError(
-                        line_no,
-                        "tool_result: content item is not an object");
+                    throw FixtureParseError(line_no, "tool_result: content item is not an object");
                 }
                 loom::core::ToolResultContentItem ci;
                 ci.type = item.get_string("type");
                 if (ci.type != "text" && ci.type != "image") {
                     throw FixtureParseError(
                         line_no,
-                        std::format(
-                            "tool_result: unknown content item type '{}'",
-                            ci.type));
+                        std::format("tool_result: unknown content item type '{}'", ci.type));
                 }
-                if (const auto t = item.get("text"); t.is_str())
-                    ci.text = std::string(t.as_str());
+                if (const auto t = item.get("text"); t.is_str()) ci.text = std::string(t.as_str());
                 if (const auto mt = item.get("media_type"); mt.is_str())
                     ci.media_type = std::string(mt.as_str());
-                if (const auto d = item.get("data"); d.is_str())
-                    ci.data = std::string(d.as_str());
+                if (const auto d = item.get("data"); d.is_str()) ci.data = std::string(d.as_str());
                 items.push_back(std::move(ci));
             }
             trb.content = std::move(items);
         } else {
-            throw FixtureParseError(
-                line_no,
-                "tool_result: 'content' must be a string or an array");
+            throw FixtureParseError(line_no, "tool_result: 'content' must be a string or an array");
         }
         return trb;
     }
@@ -201,23 +190,20 @@ namespace detail {
         };
     }
 
-    throw FixtureParseError(
-        line_no, std::format("unknown content block type '{}'", type));
+    throw FixtureParseError(line_no, std::format("unknown content block type '{}'", type));
 }
 
 /// Parse a core::StreamEvent from a JSON object.
 ///
 /// The `type` field has already been read and confirmed to be a
 /// streaming event type (not a pseudo-event).
-[[nodiscard]] inline loom::core::StreamEvent parse_stream_event(
-    const loom::utils::json::JsonVal& root,
-    std::string_view type,
-    std::size_t line_no) {
+[[nodiscard]] inline loom::core::StreamEvent
+parse_stream_event(const loom::utils::json::JsonVal& root, std::string_view type,
+                   std::size_t line_no) {
 
     if (type == "stream_start") {
         return loom::core::StreamStart{
-            .message_id = loom::core::MessageId{
-                .value = root.get_string("message_id")},
+            .message_id = loom::core::MessageId{.value = root.get_string("message_id")},
             .model = root.get_string("model"),
         };
     }
@@ -225,9 +211,8 @@ namespace detail {
     if (type == "content_block_start") {
         const auto block_val = root.get("block");
         if (!block_val.is_obj()) {
-            throw FixtureParseError(
-                line_no,
-                "content_block_start: 'block' is missing or not an object");
+            throw FixtureParseError(line_no,
+                                    "content_block_start: 'block' is missing or not an object");
         }
         return loom::core::ContentBlockStart{
             .index = static_cast<std::uint32_t>(root.get_int("index")),
@@ -278,18 +263,12 @@ namespace detail {
         if (const auto sr = root.get("stop_reason"); sr.is_str())
             se.stop_reason = std::string(sr.as_str());
         if (const auto usage = root.get("usage"); usage.is_obj()) {
-            se.usage.input_tokens =
-                static_cast<std::uint32_t>(usage.get_int("input_tokens"));
-            se.usage.output_tokens =
-                static_cast<std::uint32_t>(usage.get_int("output_tokens"));
-            if (const auto cc = usage.get("cache_creation_tokens");
-                cc.valid() && cc.is_num())
-                se.usage.cache_creation_tokens =
-                    static_cast<std::uint32_t>(cc.as_int());
-            if (const auto cr = usage.get("cache_read_tokens");
-                cr.valid() && cr.is_num())
-                se.usage.cache_read_tokens =
-                    static_cast<std::uint32_t>(cr.as_int());
+            se.usage.input_tokens = static_cast<std::uint32_t>(usage.get_int("input_tokens"));
+            se.usage.output_tokens = static_cast<std::uint32_t>(usage.get_int("output_tokens"));
+            if (const auto cc = usage.get("cache_creation_tokens"); cc.valid() && cc.is_num())
+                se.usage.cache_creation_tokens = static_cast<std::uint32_t>(cc.as_int());
+            if (const auto cr = usage.get("cache_read_tokens"); cr.valid() && cr.is_num())
+                se.usage.cache_read_tokens = static_cast<std::uint32_t>(cr.as_int());
         }
         return se;
     }
@@ -301,13 +280,12 @@ namespace detail {
         };
     }
 
-    throw FixtureParseError(
-        line_no, std::format("unknown stream event type '{}'", type));
+    throw FixtureParseError(line_no, std::format("unknown stream event type '{}'", type));
 }
 
 /// Parse a single JSONL line into a ReplayStep.
-[[nodiscard]] inline ReplayStep parse_step(
-    const loom::utils::json::JsonVal& root, std::size_t line_no) {
+[[nodiscard]] inline ReplayStep parse_step(const loom::utils::json::JsonVal& root,
+                                           std::size_t line_no) {
 
     const auto type = root.get_string("type");
 
@@ -316,54 +294,44 @@ namespace detail {
     if (type == "__commit__") {
         const auto msg_val = root.get("message");
         if (!msg_val.is_obj()) {
-            throw FixtureParseError(
-                line_no, "__commit__: 'message' is missing or not an object");
+            throw FixtureParseError(line_no, "__commit__: 'message' is missing or not an object");
         }
 
         // Role discriminator: "assistant" (default, for backward
         // compatibility with fixtures that omit it) or "tool".
         const auto role_val = msg_val.get("role");
-        const std::string_view role = role_val.is_str()
-                                          ? role_val.as_str()
-                                          : std::string_view{"assistant"};
+        const std::string_view role =
+            role_val.is_str() ? role_val.as_str() : std::string_view{"assistant"};
 
         if (role == "tool") {
             loom::core::ToolResultMessage msg;
             if (const auto id = msg_val.get("tool_use_id"); id.is_str())
-                msg.tool_use_id = loom::core::ToolUseId{
-                    .value = std::string(id.as_str())};
+                msg.tool_use_id = loom::core::ToolUseId{.value = std::string(id.as_str())};
             if (const auto name = msg_val.get("tool_name"); name.is_str())
                 msg.tool_name = std::string(name.as_str());
-            if (const auto ie = msg_val.get("is_error");
-                ie.valid() && ie.is_bool())
+            if (const auto ie = msg_val.get("is_error"); ie.valid() && ie.is_bool())
                 msg.is_error = ie.as_bool();
-            if (const auto content = msg_val.get("content");
-                content.is_arr()) {
+            if (const auto content = msg_val.get("content"); content.is_arr()) {
                 for (std::size_t i = 0; i < content.size(); ++i) {
                     auto block = parse_content_block(content.at(i), line_no);
-                    if (const auto* trb = std::get_if<
-                            loom::core::ToolResultBlock>(&block)) {
+                    if (const auto* trb = std::get_if<loom::core::ToolResultBlock>(&block)) {
                         // A ToolResultBlock is the API/history wire shape;
                         // the engine's ToolResultMessage stores
                         // TextBlock/ImageBlock directly (see
                         // query_engine_tools.cpp). Flatten it so the
                         // committed message renders identically to an
                         // engine-produced one.
-                        if (msg.tool_use_id.empty() &&
-                            !trb->tool_use_id.empty())
+                        if (msg.tool_use_id.empty() && !trb->tool_use_id.empty())
                             msg.tool_use_id = trb->tool_use_id;
                         if (trb->is_error) msg.is_error = true;
-                        if (const auto* s =
-                                std::get_if<std::string>(&trb->content)) {
-                            msg.content.push_back(
-                                loom::core::TextBlock{*s});
+                        if (const auto* s = std::get_if<std::string>(&trb->content)) {
+                            msg.content.push_back(loom::core::TextBlock{*s});
                         } else {
-                            for (const auto& item : std::get<std::vector<
-                                     loom::core::ToolResultContentItem>>(
+                            for (const auto& item :
+                                 std::get<std::vector<loom::core::ToolResultContentItem>>(
                                      trb->content)) {
                                 if (item.type == "text") {
-                                    msg.content.push_back(
-                                        loom::core::TextBlock{item.text});
+                                    msg.content.push_back(loom::core::TextBlock{item.text});
                                 } else if (item.type == "image") {
                                     loom::core::ImageBlock ib;
                                     ib.media_type = item.media_type;
@@ -390,8 +358,7 @@ namespace detail {
             msg.origin = loom::core::read_user_message_origin(msg_val);
             if (const auto content = msg_val.get("content"); content.is_arr()) {
                 for (std::size_t i = 0; i < content.size(); ++i) {
-                    msg.content.push_back(
-                        parse_content_block(content.at(i), line_no));
+                    msg.content.push_back(parse_content_block(content.at(i), line_no));
                 }
             }
             return ReplayStep{
@@ -403,20 +370,16 @@ namespace detail {
         }
 
         if (role != "assistant") {
-            throw FixtureParseError(
-                line_no,
-                std::format("__commit__: unknown role '{}'", role));
+            throw FixtureParseError(line_no, std::format("__commit__: unknown role '{}'", role));
         }
 
         loom::core::AssistantMessage msg;
-        if (const auto m = msg_val.get("model"); m.is_str())
-            msg.model = std::string(m.as_str());
+        if (const auto m = msg_val.get("model"); m.is_str()) msg.model = std::string(m.as_str());
         if (const auto sr = msg_val.get("stop_reason"); sr.is_str())
             msg.stop_reason = std::string(sr.as_str());
         if (const auto content = msg_val.get("content"); content.is_arr()) {
             for (std::size_t i = 0; i < content.size(); ++i) {
-                msg.content.push_back(
-                    parse_content_block(content.at(i), line_no));
+                msg.content.push_back(parse_content_block(content.at(i), line_no));
             }
         }
         return ReplayStep{
@@ -471,18 +434,15 @@ namespace detail {
 ///
 /// @throws FixtureParseError on file-not-found or parse error, with the
 ///         line number and JSON context in the message.
-[[nodiscard]] inline std::vector<ReplayStep> load_fixture(
-    std::string_view fixture_name) {
+[[nodiscard]] inline std::vector<ReplayStep> load_fixture(std::string_view fixture_name) {
 
-    const auto path = fs::path(LOOM_TESTS_DIR) / "fixtures" /
-                      "streaming_sessions" /
+    const auto path = fs::path(LOOM_TESTS_DIR) / "fixtures" / "streaming_sessions" /
                       (std::string(fixture_name) + ".jsonl");
 
     std::ifstream file(path);
     if (!file) {
         throw FixtureParseError(
-            0, std::format("cannot open fixture '{}' at {}",
-                           fixture_name, path.string()));
+            0, std::format("cannot open fixture '{}' at {}", fixture_name, path.string()));
     }
 
     std::vector<ReplayStep> steps;
@@ -493,26 +453,21 @@ namespace detail {
         ++line_no;
 
         // Strip trailing \r (CRLF line endings).
-        if (!line.empty() && line.back() == '\r')
-            line.pop_back();
+        if (!line.empty() && line.back() == '\r') line.pop_back();
 
         // Skip blank lines and comments.
         const auto first_non_ws = line.find_first_not_of(" \t");
-        if (first_non_ws == std::string::npos ||
-            line[first_non_ws] == '#')
-            continue;
+        if (first_non_ws == std::string::npos || line[first_non_ws] == '#') continue;
 
         auto parsed = loom::utils::json::parse(line);
         if (!parsed) {
-            throw FixtureParseError(
-                line_no,
-                std::format("JSON parse error: {}", parsed.error().message()));
+            throw FixtureParseError(line_no,
+                                    std::format("JSON parse error: {}", parsed.error().message()));
         }
 
         const auto root = parsed->root();
         if (!root.is_obj()) {
-            throw FixtureParseError(
-                line_no, "line is not a JSON object");
+            throw FixtureParseError(line_no, "line is not a JSON object");
         }
 
         steps.push_back(detail::parse_step(root, line_no));
@@ -542,17 +497,16 @@ namespace detail {
 ///       });
 class StreamReplayHarness {
 public:
-    StreamReplayHarness(loom::ui::AppAdapter& app,
-                        loom::core::QueryEngine& engine)
-        : app_(app), engine_(engine) {}
+    StreamReplayHarness(loom::ui::AppAdapter& app, loom::core::QueryEngine& engine)
+        : app_(app)
+        , engine_(engine) {}
 
     /// Render the app to a normalized screen string.
     ///
     /// Lets a test re-render after play() returns — e.g. a grace-expiry
     /// test that advances the clock via set_steady_now_for_testing() and
     /// then checks the collapsed thinking label (RFC 0003 §8.3, INV-07).
-    [[nodiscard]] std::string render_now(int width = 120,
-                                         int height = 40) const {
+    [[nodiscard]] std::string render_now(int width = 120, int height = 40) const {
         return capture_screen(width, height);
     }
 
@@ -566,14 +520,10 @@ public:
     ///   clock after play() returns.
     ///
     /// @return map of checkpoint_name → normalized screen text.
-    [[nodiscard]] std::map<std::string, std::string> play(
-        std::span<const ReplayStep> steps,
-        int width = 120,
-        int height = 40,
-        std::optional<std::chrono::steady_clock::time_point>
-            initial_steady_now = std::nullopt) {
-        return play_with_invariants(steps, nullptr, width, height,
-                                    initial_steady_now);
+    [[nodiscard]] std::map<std::string, std::string>
+    play(std::span<const ReplayStep> steps, int width = 120, int height = 40,
+         std::optional<std::chrono::steady_clock::time_point> initial_steady_now = std::nullopt) {
+        return play_with_invariants(steps, nullptr, width, height, initial_steady_now);
     }
 
     /// Play all steps, calling `invariant_check` after every step.
@@ -585,11 +535,9 @@ public:
     /// @return map of checkpoint_name → normalized screen text.
     [[nodiscard]] std::map<std::string, std::string> play_with_invariants(
         std::span<const ReplayStep> steps,
-        std::function<void(std::string_view, std::size_t)> invariant_check,
-        int width = 120,
+        std::function<void(std::string_view, std::size_t)> invariant_check, int width = 120,
         int height = 40,
-        std::optional<std::chrono::steady_clock::time_point>
-            initial_steady_now = std::nullopt) {
+        std::optional<std::chrono::steady_clock::time_point> initial_steady_now = std::nullopt) {
 
         // Clear the process-global thinking-stream grace map so that
         // was_recently_streaming() does not leak state across fixtures
@@ -615,44 +563,39 @@ public:
             const auto& step = steps[i];
 
             switch (step.kind) {
-                case ReplayStepKind::Event:
-                    // Set query_running_ before the first event, simulating
-                    // HandleSubmit (RFC 0003 §5.2).
-                    if (!query_running) {
-                        loom::ui::test_seams(&app_)
-                            .set_query_running_for_testing(true);
-                        query_running = true;
-                    }
-                    loom::ui::test_seams(&app_)
-                        .inject_stream_event_for_testing(*step.event);
-                    break;
+            case ReplayStepKind::Event:
+                // Set query_running_ before the first event, simulating
+                // HandleSubmit (RFC 0003 §5.2).
+                if (!query_running) {
+                    loom::ui::test_seams(&app_).set_query_running_for_testing(true);
+                    query_running = true;
+                }
+                loom::ui::test_seams(&app_).inject_stream_event_for_testing(*step.event);
+                break;
 
-                case ReplayStepKind::Commit:
-                    // Simulate the engine appending a committed message
-                    // (Path B: streaming ↔ committed interaction).
-                    engine_.append_message_for_testing(*step.message);
-                    // A live query's on_commit callback invalidates projection.
-                    loom::ui::test_seams(&app_)
-                        .notify_conversation_changed_for_testing();
-                    break;
+            case ReplayStepKind::Commit:
+                // Simulate the engine appending a committed message
+                // (Path B: streaming ↔ committed interaction).
+                engine_.append_message_for_testing(*step.message);
+                // A live query's on_commit callback invalidates projection.
+                loom::ui::test_seams(&app_).notify_conversation_changed_for_testing();
+                break;
 
-                case ReplayStepKind::EndQuery:
-                    // Simulate the query thread finishing. The next
-                    // Render() takes the idle path (ConsumePendingResult →
-                    // SyncState), clearing streaming state.
-                    loom::ui::test_seams(&app_)
-                        .set_query_running_for_testing(false);
-                    query_running = false;
-                    break;
+            case ReplayStepKind::EndQuery:
+                // Simulate the query thread finishing. The next
+                // Render() takes the idle path (ConsumePendingResult →
+                // SyncState), clearing streaming state.
+                loom::ui::test_seams(&app_).set_query_running_for_testing(false);
+                query_running = false;
+                break;
 
-                case ReplayStepKind::Checkpoint:
-                    // Captured below.
-                    break;
+            case ReplayStepKind::Checkpoint:
+                // Captured below.
+                break;
             }
 
             // Capture the screen for checkpoints and invariant checks.
-            if (step.kind == ReplayStepKind::Checkpoint ||
-                static_cast<bool>(invariant_check)) {
+            if (step.kind == ReplayStepKind::Checkpoint || static_cast<bool>(invariant_check)) {
                 const std::string screen = capture_screen(width, height);
                 if (step.kind == ReplayStepKind::Checkpoint) {
                     snapshots[step.checkpoint_name] = screen;
@@ -673,9 +616,8 @@ private:
     /// Render the app to a fixed-size screen and return the normalized
     /// plain-text representation.
     [[nodiscard]] std::string capture_screen(int width, int height) const {
-        auto screen = ftxui::Screen::Create(
-            ftxui::Dimension::Fixed(width),
-            ftxui::Dimension::Fixed(height));
+        auto screen =
+            ftxui::Screen::Create(ftxui::Dimension::Fixed(width), ftxui::Dimension::Fixed(height));
         ftxui::Render(screen, app_.Render());
         return normalize_screen(screen.ToString());
     }

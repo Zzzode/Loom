@@ -1,13 +1,14 @@
 module;
+#include <netdb.h>
+#include <openssl/err.h>
+#include <openssl/ssl.h>
+#include <sys/select.h>
+#include <sys/socket.h>
+#include <unistd.h>
+
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
-#include <sys/select.h>
-#include <sys/socket.h>
-#include <netdb.h>
-#include <unistd.h>
-#include <openssl/err.h>
-#include <openssl/ssl.h>
 
 export module loom.cli.websocket_transport;
 
@@ -19,13 +20,12 @@ export namespace loom::cli {
 class WebSocketTransport {
 public:
     WebSocketTransport() = default;
+
     ~WebSocketTransport() { close(); }
 
     // Establish WebSocket connection to the given URL
-    std::expected<void, std::string> connect(
-        std::string_view url,
-        std::optional<std::string_view> bearer_token = std::nullopt
-    ) {
+    std::expected<void, std::string>
+    connect(std::string_view url, std::optional<std::string_view> bearer_token = std::nullopt) {
         if (connected_.load()) {
             return std::unexpected("Already connected");
         }
@@ -63,9 +63,7 @@ public:
         connected_.store(true);
 
         // Start message reading thread
-        reader_thread_ = std::jthread([this](std::stop_token stop) {
-            run_read_loop(stop);
-        });
+        reader_thread_ = std::jthread([this](std::stop_token stop) { run_read_loop(stop); });
 
         return {};
     }
@@ -132,13 +130,12 @@ public:
 
         // Clear pending messages
         std::lock_guard lock(send_mutex_);
-        while (!send_queue_.empty()) send_queue_.pop();
+        while (!send_queue_.empty())
+            send_queue_.pop();
     }
 
     // Check if the WebSocket is currently connected
-    bool is_connected() const {
-        return connected_.load();
-    }
+    bool is_connected() const { return connected_.load(); }
 
 private:
     struct UrlParts {
@@ -179,14 +176,16 @@ private:
         return parts;
     }
 
-    [[nodiscard]] static std::expected<int, std::string> connect_tcp(const std::string& host, std::uint16_t port) {
+    [[nodiscard]] static std::expected<int, std::string> connect_tcp(const std::string& host,
+                                                                     std::uint16_t port) {
         addrinfo hints{};
         hints.ai_family = AF_UNSPEC;
         hints.ai_socktype = SOCK_STREAM;
         addrinfo* results = nullptr;
         auto port_text = std::to_string(port);
         int gai = ::getaddrinfo(host.c_str(), port_text.c_str(), &hints, &results);
-        if (gai != 0) return std::unexpected(std::string("DNS lookup failed: ") + gai_strerror(gai));
+        if (gai != 0)
+            return std::unexpected(std::string("DNS lookup failed: ") + gai_strerror(gai));
 
         int fd = -1;
         for (auto* ai = results; ai != nullptr; ai = ai->ai_next) {
@@ -209,8 +208,8 @@ private:
         return std::format("{}: {}", prefix, buffer.data());
     }
 
-    [[nodiscard]] static std::expected<std::pair<SSL_CTX*, SSL*>, std::string> connect_tls(
-        int fd, const std::string& host) {
+    [[nodiscard]] static std::expected<std::pair<SSL_CTX*, SSL*>, std::string>
+    connect_tls(int fd, const std::string& host) {
         static std::once_flag init_flag;
         std::call_once(init_flag, [] {
             SSL_library_init();
@@ -250,9 +249,8 @@ private:
 
     [[nodiscard]] static bool send_all(int fd, SSL* ssl, std::string_view data) {
         while (!data.empty()) {
-            int n = ssl == nullptr
-                ? static_cast<int>(::send(fd, data.data(), data.size(), 0))
-                : SSL_write(ssl, data.data(), static_cast<int>(data.size()));
+            int n = ssl == nullptr ? static_cast<int>(::send(fd, data.data(), data.size(), 0))
+                                   : SSL_write(ssl, data.data(), static_cast<int>(data.size()));
             if (n <= 0) {
                 if (ssl != nullptr) {
                     int err = SSL_get_error(ssl, n);
@@ -265,11 +263,11 @@ private:
         return true;
     }
 
-    [[nodiscard]] static std::expected<void, std::string> read_exact(int fd, SSL* ssl, char* data, std::size_t size) {
+    [[nodiscard]] static std::expected<void, std::string> read_exact(int fd, SSL* ssl, char* data,
+                                                                     std::size_t size) {
         while (size > 0) {
-            int n = ssl == nullptr
-                ? static_cast<int>(::recv(fd, data, size, 0))
-                : SSL_read(ssl, data, static_cast<int>(size));
+            int n = ssl == nullptr ? static_cast<int>(::recv(fd, data, size, 0))
+                                   : SSL_read(ssl, data, static_cast<int>(size));
             if (n <= 0) {
                 if (ssl != nullptr) {
                     int err = SSL_get_error(ssl, n);
@@ -283,13 +281,13 @@ private:
         return {};
     }
 
-    [[nodiscard]] static std::expected<std::string, std::string> read_http_headers(int fd, SSL* ssl) {
+    [[nodiscard]] static std::expected<std::string, std::string> read_http_headers(int fd,
+                                                                                   SSL* ssl) {
         std::string response;
         std::array<char, 1024> buffer{};
         while (response.find("\r\n\r\n") == std::string::npos) {
-            int n = ssl == nullptr
-                ? static_cast<int>(::recv(fd, buffer.data(), buffer.size(), 0))
-                : SSL_read(ssl, buffer.data(), static_cast<int>(buffer.size()));
+            int n = ssl == nullptr ? static_cast<int>(::recv(fd, buffer.data(), buffer.size(), 0))
+                                   : SSL_read(ssl, buffer.data(), static_cast<int>(buffer.size()));
             if (n <= 0) {
                 if (ssl != nullptr) {
                     int err = SSL_get_error(ssl, n);
@@ -298,7 +296,8 @@ private:
                 return std::unexpected("Connection closed before WebSocket handshake completed");
             }
             response.append(buffer.data(), static_cast<std::size_t>(n));
-            if (response.size() > 64 * 1024) return std::unexpected("WebSocket handshake response is too large");
+            if (response.size() > 64 * 1024)
+                return std::unexpected("WebSocket handshake response is too large");
         }
         return response;
     }
@@ -306,8 +305,10 @@ private:
     [[nodiscard]] static std::string handshake_key() {
         std::array<unsigned char, 16> bytes{};
         std::random_device rd;
-        for (auto& b : bytes) b = static_cast<unsigned char>(rd());
-        static constexpr char alphabet[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+        for (auto& b : bytes)
+            b = static_cast<unsigned char>(rd());
+        static constexpr char alphabet[] =
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
         std::string out;
         int val = 0;
         int valb = -6;
@@ -320,7 +321,8 @@ private:
             }
         }
         if (valb > -6) out.push_back(alphabet[((val << 8) >> (valb + 8)) & 0x3F]);
-        while (out.size() % 4) out.push_back('=');
+        while (out.size() % 4)
+            out.push_back('=');
         return out;
     }
 
@@ -328,29 +330,28 @@ private:
         auto line_end = response.find("\r\n");
         if (line_end == std::string_view::npos) line_end = response.find('\n');
         auto line = line_end == std::string_view::npos ? response : response.substr(0, line_end);
-        while (!line.empty() && line.back() == '\r') line.remove_suffix(1);
+        while (!line.empty() && line.back() == '\r')
+            line.remove_suffix(1);
         return std::string(line);
     }
 
-    [[nodiscard]] static std::expected<void, std::string> perform_handshake(
-        int fd,
-        SSL* ssl,
-        const UrlParts& parts,
-        std::optional<std::string_view> bearer_token
-    ) {
+    [[nodiscard]] static std::expected<void, std::string>
+    perform_handshake(int fd, SSL* ssl, const UrlParts& parts,
+                      std::optional<std::string_view> bearer_token) {
         auto key = handshake_key();
-        auto request =
-            "GET " + parts.path + " HTTP/1.1\r\n" +
-            "Host: " + parts.host + ":" + std::to_string(parts.port) + "\r\n" +
-            "Connection: Upgrade\r\n"
-            "Upgrade: websocket\r\n"
-            "Sec-WebSocket-Version: 13\r\n"
-            "Sec-WebSocket-Key: " + key + "\r\n";
+        auto request = "GET " + parts.path + " HTTP/1.1\r\n" + "Host: " + parts.host + ":" +
+                       std::to_string(parts.port) + "\r\n" +
+                       "Connection: Upgrade\r\n"
+                       "Upgrade: websocket\r\n"
+                       "Sec-WebSocket-Version: 13\r\n"
+                       "Sec-WebSocket-Key: " +
+                       key + "\r\n";
         if (bearer_token && !bearer_token->empty()) {
             request += "Authorization: Bearer " + std::string(*bearer_token) + "\r\n";
         }
         request += "\r\n";
-        if (!send_all(fd, ssl, request)) return std::unexpected("Failed to send WebSocket handshake");
+        if (!send_all(fd, ssl, request))
+            return std::unexpected("Failed to send WebSocket handshake");
         auto response = read_http_headers(fd, ssl);
         if (!response) return std::unexpected(response.error());
         if (response->find(" 101 ") == std::string::npos &&
@@ -368,7 +369,8 @@ private:
         return {};
     }
 
-    [[nodiscard]] static std::expected<void, std::string> send_frame(int fd, SSL* ssl, std::uint8_t opcode, std::string_view payload) {
+    [[nodiscard]] static std::expected<void, std::string>
+    send_frame(int fd, SSL* ssl, std::uint8_t opcode, std::string_view payload) {
         std::string frame;
         frame.push_back(static_cast<char>(0x80 | opcode));
         auto len = payload.size();
@@ -386,8 +388,10 @@ private:
         }
         std::array<unsigned char, 4> mask{};
         std::random_device rd;
-        for (auto& b : mask) b = static_cast<unsigned char>(rd());
-        for (auto b : mask) frame.push_back(static_cast<char>(b));
+        for (auto& b : mask)
+            b = static_cast<unsigned char>(rd());
+        for (auto b : mask)
+            frame.push_back(static_cast<char>(b));
         for (std::size_t i = 0; i < payload.size(); ++i) {
             frame.push_back(static_cast<char>(payload[i] ^ mask[i % 4]));
         }
@@ -395,7 +399,8 @@ private:
         return {};
     }
 
-    [[nodiscard]] static std::expected<void, std::string> send_close_frame(int fd, SSL* ssl, int code) {
+    [[nodiscard]] static std::expected<void, std::string> send_close_frame(int fd, SSL* ssl,
+                                                                           int code) {
         std::string payload;
         payload.push_back(static_cast<char>((code >> 8) & 0xFF));
         payload.push_back(static_cast<char>(code & 0xFF));
@@ -426,7 +431,8 @@ private:
             auto result = read_exact(fd, ssl, reinterpret_cast<char*>(ext), 8);
             if (!result) return std::unexpected(result.error());
             len = 0;
-            for (unsigned char b : ext) len = (len << 8) | b;
+            for (unsigned char b : ext)
+                len = (len << 8) | b;
         }
         if (len > 16 * 1024 * 1024) return std::unexpected("WebSocket frame exceeds 16MiB limit");
 
@@ -538,4 +544,4 @@ private:
     std::jthread reader_thread_;
 };
 
-} // namespace loom::cli
+}  // namespace loom::cli

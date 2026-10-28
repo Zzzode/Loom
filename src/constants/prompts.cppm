@@ -3,8 +3,9 @@
 // Note: The full dynamic prompt assembly logic (getSystemPrompt, computeEnvInfo, etc.)
 // is complex and runtime-dependent; only the static constants are migrated here.
 module;
-#include <cstdlib>
 #include <sys/utsname.h>
+
+#include <cstdlib>
 
 export module loom.constants.prompts;
 
@@ -29,7 +30,8 @@ inline constexpr std::string_view default_agent_prompt =
     "Given the user's message, you should use the tools available to complete the task. "
     "Complete the task fully\u2014don't gold-plate, but don't leave it half-done. "
     "When you complete the task, respond with a concise report covering what was done "
-    "and any key findings \u2014 the caller will relay this to the user, so it only needs the essentials.";
+    "and any key findings \u2014 the caller will relay this to the user, so it only needs the "
+    "essentials.";
 
 // Cyber risk instruction (imported from cyber_risk module, duplicated here for convenience)
 inline constexpr std::string_view cyber_risk_instruction =
@@ -59,7 +61,8 @@ struct SystemPromptOptions {
     return ec ? std::string("unknown") : cwd.string();
 }
 
-[[nodiscard]] inline bool is_git_repository(std::filesystem::path start = std::filesystem::current_path()) {
+[[nodiscard]] inline bool
+is_git_repository(std::filesystem::path start = std::filesystem::current_path()) {
     std::error_code ec;
     while (!start.empty()) {
         if (std::filesystem::exists(start / ".git", ec)) {
@@ -85,7 +88,7 @@ struct SystemPromptOptions {
 }
 
 [[nodiscard]] inline std::string get_uname_sr() {
-    struct utsname info {};
+    struct utsname info{};
     if (uname(&info) == 0) {
         return std::string(info.sysname) + " " + info.release;
     }
@@ -103,7 +106,8 @@ struct SystemPromptOptions {
     }
     if (get_platform_name() == "win32") {
         return "Shell: " + shell_name +
-            " (use Unix shell syntax, not Windows — e.g., /dev/null not NUL, forward slashes in paths)";
+               " (use Unix shell syntax, not Windows — e.g., /dev/null not NUL, forward slashes in "
+               "paths)";
     }
     return "Shell: " + shell_name;
 }
@@ -112,7 +116,8 @@ struct SystemPromptOptions {
     return "You are powered by the model " + std::string(model_id) + ".";
 }
 
-[[nodiscard]] inline std::vector<std::string> prepend_bullets(const std::vector<std::string>& items) {
+[[nodiscard]] inline std::vector<std::string>
+prepend_bullets(const std::vector<std::string>& items) {
     std::vector<std::string> result;
     result.reserve(items.size());
     for (const auto& item : items) {
@@ -130,12 +135,13 @@ struct SystemPromptOptions {
     return out.str();
 }
 
-[[nodiscard]] inline std::string compute_simple_env_info(
-    std::string_view model_id,
-    const std::vector<std::string>& additional_working_directories = {}) {
+[[nodiscard]] inline std::string
+compute_simple_env_info(std::string_view model_id,
+                        const std::vector<std::string>& additional_working_directories = {}) {
     std::vector<std::string> items;
     items.push_back("Primary working directory: " + get_cwd());
-    items.push_back(std::string("Is a git repository: ") + (is_git_repository() ? "true" : "false"));
+    items.push_back(std::string("Is a git repository: ") +
+                    (is_git_repository() ? "true" : "false"));
     if (!additional_working_directories.empty()) {
         items.push_back("Additional working directories:");
         for (const auto& dir : additional_working_directories) {
@@ -147,13 +153,13 @@ struct SystemPromptOptions {
     items.push_back("OS Version: " + get_uname_sr());
     items.push_back(model_description(model_id));
 
-    items.push_back("Loom is available as a CLI in the terminal, desktop app (Mac/Windows), and IDE extensions (VS Code, JetBrains).");
-    items.push_back("Fast mode for Loom uses the same model with faster output. It does NOT switch to a different model. It can be toggled with /fast.");
+    items.push_back("Loom is available as a CLI in the terminal, desktop app (Mac/Windows), and "
+                    "IDE extensions (VS Code, JetBrains).");
+    items.push_back("Fast mode for Loom uses the same model with faster output. It does NOT switch "
+                    "to a different model. It can be toggled with /fast.");
 
-    std::vector<std::string> lines{
-        "# Environment",
-        "You have been invoked in the following environment: "
-    };
+    std::vector<std::string> lines{"# Environment",
+                                   "You have been invoked in the following environment: "};
     auto bullets = prepend_bullets(items);
     lines.insert(lines.end(), bullets.begin(), bullets.end());
     return join_lines(lines);
@@ -164,37 +170,41 @@ struct SystemPromptOptions {
 }
 
 [[nodiscard]] inline std::string get_simple_system_section() {
-    return "# System\nYou are an interactive CLI tool that helps users with software engineering tasks. Use the instructions and tools available in this session to complete the user's request.";
+    return "# System\nYou are an interactive CLI tool that helps users with software engineering "
+           "tasks. Use the instructions and tools available in this session to complete the user's "
+           "request.";
 }
 
-[[nodiscard]] inline std::string get_using_your_tools_section(const std::vector<std::string>& enabled_tools) {
+[[nodiscard]] inline std::string
+get_using_your_tools_section(const std::vector<std::string>& enabled_tools) {
     if (enabled_tools.empty()) {
         return "# Using your tools\nUse the available tools when they help complete the task.";
     }
-    std::vector<std::string> lines{
-        "# Using your tools",
-        "You have access to these tools:"
-    };
+    std::vector<std::string> lines{"# Using your tools", "You have access to these tools:"};
     auto bullets = prepend_bullets(enabled_tools);
     lines.insert(lines.end(), bullets.begin(), bullets.end());
     return join_lines(lines);
 }
 
 [[nodiscard]] inline std::string get_simple_tone_and_style_section() {
-    return join_lines({
-        "# Tone and style",
-        "- Only use emojis if the user explicitly requests it. Avoid using emojis in all communication unless asked.",
-        "- Your responses should be short and concise.",
-        "- When referencing specific functions or pieces of code include the pattern file_path:line_number to allow the user to easily navigate to the source code location.",
-        "- Do not use a colon before tool calls. Text like \"Let me read the file:\" followed by a read tool call should just be \"Let me read the file.\" with a period."
-    });
+    return join_lines(
+        {"# Tone and style",
+         "- Only use emojis if the user explicitly requests it. Avoid using emojis in all "
+         "communication unless asked.",
+         "- Your responses should be short and concise.",
+         "- When referencing specific functions or pieces of code include the pattern "
+         "file_path:line_number to allow the user to easily navigate to the source code location.",
+         "- Do not use a colon before tool calls. Text like \"Let me read the file:\" followed by "
+         "a read tool call should just be \"Let me read the file.\" with a period."});
 }
 
 [[nodiscard]] inline std::string get_output_efficiency_section() {
-    return "# Output efficiency\nIMPORTANT: Go straight to the point. Try the simplest approach first without going in circles. Keep your text output brief and direct.";
+    return "# Output efficiency\nIMPORTANT: Go straight to the point. Try the simplest approach "
+           "first without going in circles. Keep your text output brief and direct.";
 }
 
-[[nodiscard]] inline std::vector<std::string> get_system_prompt(const SystemPromptOptions& options) {
+[[nodiscard]] inline std::vector<std::string>
+get_system_prompt(const SystemPromptOptions& options) {
     if (options.simple) {
         return {"You are Loom, a personal AI coding assistant.\n\nCWD: " + get_cwd()};
     }
@@ -202,8 +212,10 @@ struct SystemPromptOptions {
     std::vector<std::string> sections{
         get_simple_intro_section(),
         get_simple_system_section(),
-        "# Doing tasks\nComplete requested software engineering tasks carefully and verify the result when possible.",
-        "# Actions\nBe proactive when the next step is clear, but ask for clarification when requirements are ambiguous.",
+        "# Doing tasks\nComplete requested software engineering tasks carefully and verify the "
+        "result when possible.",
+        "# Actions\nBe proactive when the next step is clear, but ask for clarification when "
+        "requirements are ambiguous.",
         get_using_your_tools_section(options.enabled_tools),
         get_simple_tone_and_style_section(),
         get_output_efficiency_section(),
@@ -213,10 +225,12 @@ struct SystemPromptOptions {
         sections.emplace_back(system_prompt_dynamic_boundary);
     }
 
-    sections.push_back("# Session guidance\nRespect the user's current working directory and repository state.");
-    sections.push_back(compute_simple_env_info(options.model, options.additional_working_directories));
+    sections.push_back(
+        "# Session guidance\nRespect the user's current working directory and repository state.");
+    sections.push_back(
+        compute_simple_env_info(options.model, options.additional_working_directories));
     sections.push_back(std::string(summarize_tool_results_section));
     return sections;
 }
 
-} // namespace loom::constants::prompts
+}  // namespace loom::constants::prompts

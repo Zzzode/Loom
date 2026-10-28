@@ -19,24 +19,27 @@ namespace {
 inline constexpr std::string_view kForkBoilerplateTag = "fork-boilerplate";
 inline constexpr std::string_view kForkDirectivePrefix = "Your directive: ";
 
-} // namespace
+}  // namespace
 
 [[nodiscard]] std::string trim(std::string_view value) {
     auto begin = value.begin();
     auto end = value.end();
-    while (begin != end && std::isspace(static_cast<unsigned char>(*begin))) ++begin;
-    while (begin != end && std::isspace(static_cast<unsigned char>(*(end - 1)))) --end;
+    while (begin != end && std::isspace(static_cast<unsigned char>(*begin)))
+        ++begin;
+    while (begin != end && std::isspace(static_cast<unsigned char>(*(end - 1))))
+        --end;
     return std::string(begin, end);
 }
+
 [[nodiscard]] std::string unquote(std::string value) {
     value = trim(value);
-    if (value.size() >= 2 &&
-        ((value.front() == '"' && value.back() == '"') ||
-         (value.front() == '\'' && value.back() == '\''))) {
+    if (value.size() >= 2 && ((value.front() == '"' && value.back() == '"') ||
+                              (value.front() == '\'' && value.back() == '\''))) {
         return value.substr(1, value.size() - 2);
     }
     return value;
 }
+
 [[nodiscard]] std::vector<std::string> split_list_value(std::string_view value) {
     std::string text = trim(value);
     if (text.size() >= 2 && text.front() == '[' && text.back() == ']') {
@@ -52,6 +55,7 @@ inline constexpr std::string_view kForkDirectivePrefix = "Your directive: ";
     if (values.empty() && !text.empty()) values.push_back(unquote(text));
     return values;
 }
+
 [[nodiscard]] std::optional<int> parse_positive_int(std::string_view value) {
     auto text = trim(value);
     if (text.empty()) return std::nullopt;
@@ -62,6 +66,7 @@ inline constexpr std::string_view kForkDirectivePrefix = "Your directive: ";
     }
     return parsed > 0 ? std::optional<int>{parsed} : std::nullopt;
 }
+
 [[nodiscard]] std::string canonicalize_agent_type(std::string_view value) {
     auto trimmed = trim(value);
     std::string canonical;
@@ -75,34 +80,41 @@ inline constexpr std::string_view kForkDirectivePrefix = "Your directive: ";
     }
     return canonical;
 }
+
 [[nodiscard]] bool parse_bool_field(std::string_view value, bool fallback) {
     auto text = canonicalize_agent_type(value);
     if (text == "true" || text == "1" || text == "yes") return true;
     if (text == "false" || text == "0" || text == "no") return false;
     return fallback;
 }
+
 [[nodiscard]] bool valid_agent_effort(std::string_view value) {
     auto text = canonicalize_agent_type(value);
     if (text == "low" || text == "medium" || text == "high" || text == "max") return true;
     if (text.empty()) return false;
-    return std::ranges::all_of(text, [](char ch) {
-        return std::isdigit(static_cast<unsigned char>(ch));
-    });
+    return std::ranges::all_of(
+        text, [](char ch) { return std::isdigit(static_cast<unsigned char>(ch)); });
 }
+
 [[nodiscard]] bool valid_agent_isolation(std::string_view value) {
     return value == "worktree";
 }
+
 [[nodiscard]] std::string valid_agent_isolation_options() {
     return "worktree";
 }
+
 [[nodiscard]] std::string canonical_hook_event_name(std::string_view event) {
     auto canonical = canonicalize_agent_type(event);
     if (canonical == "pretooluse" || canonical == "pre-tool-use") return "PreToolUse";
     if (canonical == "posttooluse" || canonical == "post-tool-use") return "PostToolUse";
-    if (canonical == "posttoolusefailure" || canonical == "post-tool-use-failure") return "PostToolUseFailure";
-    if (canonical == "permissiondenied" || canonical == "permission-denied") return "PermissionDenied";
+    if (canonical == "posttoolusefailure" || canonical == "post-tool-use-failure")
+        return "PostToolUseFailure";
+    if (canonical == "permissiondenied" || canonical == "permission-denied")
+        return "PermissionDenied";
     if (canonical == "notification") return "Notification";
-    if (canonical == "userpromptsubmit" || canonical == "user-prompt-submit") return "UserPromptSubmit";
+    if (canonical == "userpromptsubmit" || canonical == "user-prompt-submit")
+        return "UserPromptSubmit";
     if (canonical == "sessionstart" || canonical == "session-start") return "SessionStart";
     if (canonical == "sessionend" || canonical == "session-end") return "SessionEnd";
     if (canonical == "stop") return "SubagentStop";
@@ -111,13 +123,14 @@ inline constexpr std::string_view kForkDirectivePrefix = "Your directive: ";
     if (canonical == "precompact" || canonical == "pre-compact") return "PreCompact";
     if (canonical == "postcompact" || canonical == "post-compact") return "PostCompact";
     if (canonical == "elicitation") return "Elicitation";
-    if (canonical == "elicitationresult" || canonical == "elicitation-result") return "ElicitationResult";
+    if (canonical == "elicitationresult" || canonical == "elicitation-result")
+        return "ElicitationResult";
     return std::string(event);
 }
-[[nodiscard]] std::optional<std::string> find_canonical_agent_type_match(
-    std::string_view requested_type,
-    const std::vector<AgentDefinition>& agents
-) {
+
+[[nodiscard]] std::optional<std::string>
+find_canonical_agent_type_match(std::string_view requested_type,
+                                const std::vector<AgentDefinition>& agents) {
     const auto canonical_requested = canonicalize_agent_type(requested_type);
     for (const auto& agent : agents) {
         if (canonicalize_agent_type(agent.agent_type) == canonical_requested) {
@@ -126,10 +139,10 @@ inline constexpr std::string_view kForkDirectivePrefix = "Your directive: ";
     }
     return std::nullopt;
 }
-[[nodiscard]] std::optional<std::string> resolve_requested_agent_type(
-    std::string_view requested_type,
-    const std::vector<AgentDefinition>& agents
-) {
+
+[[nodiscard]] std::optional<std::string>
+resolve_requested_agent_type(std::string_view requested_type,
+                             const std::vector<AgentDefinition>& agents) {
     const auto requested = trim(requested_type);
     // migrated edge case: empty/whitespace-only input returns nullopt
     if (requested.empty()) return std::nullopt;
@@ -147,10 +160,9 @@ inline constexpr std::string_view kForkDirectivePrefix = "Your directive: ";
     // migrated edge case: no compatible match returns nullopt (caller surfaces error)
     return std::nullopt;
 }
-[[nodiscard]] std::expected<AgentDefinition, ResolutionError> resolve_agent_type(
-    std::string_view id,
-    const std::vector<AgentDefinition>& agents
-) {
+
+[[nodiscard]] std::expected<AgentDefinition, ResolutionError>
+resolve_agent_type(std::string_view id, const std::vector<AgentDefinition>& agents) {
     const auto requested = trim(id);
     if (requested.empty()) return std::unexpected(ResolutionError::EmptyRequestedType);
 
@@ -164,9 +176,8 @@ inline constexpr std::string_view kForkDirectivePrefix = "Your directive: ";
     }
     return std::unexpected(ResolutionError::NoCompatibleMatch);
 }
-[[nodiscard]] std::string format_agent_type_list(
-    const std::vector<AgentDefinition>& agents
-) {
+
+[[nodiscard]] std::string format_agent_type_list(const std::vector<AgentDefinition>& agents) {
     std::string output;
     for (const auto& agent : agents) {
         if (!output.empty()) output += ", ";
@@ -174,11 +185,13 @@ inline constexpr std::string_view kForkDirectivePrefix = "Your directive: ";
     }
     return output;
 }
+
 [[nodiscard]] bool is_sdk_entrypoint() {
     const char* entrypoint = std::getenv("LOOM_ENTRYPOINT");
     const std::string_view entry = entrypoint ? std::string_view(entrypoint) : std::string_view{};
     return entry == "sdk-ts" || entry == "sdk-py" || entry == "sdk-cli";
 }
+
 [[nodiscard]] bool is_fork_subagent_enabled() {
     if (env_truthy("FORK_SUBAGENT")) {
         if (env_truthy("LOOM_COORDINATOR_MODE")) return false;
@@ -187,6 +200,7 @@ inline constexpr std::string_view kForkDirectivePrefix = "Your directive: ";
     }
     return false;
 }
+
 [[nodiscard]] std::string build_fork_child_message(std::string_view directive) {
     return std::format(
         R"(<{}>
@@ -215,15 +229,11 @@ Output format (plain text labels, not markdown headers):
 </{}>
 
 {}{})",
-        kForkBoilerplateTag,
-        kForkBoilerplateTag,
-        kForkDirectivePrefix,
-        directive);
+        kForkBoilerplateTag, kForkBoilerplateTag, kForkDirectivePrefix, directive);
 }
-[[nodiscard]] std::string build_worktree_fork_notice(
-    std::string_view parent_cwd,
-    std::string_view worktree_cwd
-) {
+
+[[nodiscard]] std::string build_worktree_fork_notice(std::string_view parent_cwd,
+                                                     std::string_view worktree_cwd) {
     return std::format(
         "You've inherited the conversation context above from a parent agent working in {}. "
         "You are operating in an isolated git worktree at {} — same repository, same relative "
@@ -231,26 +241,43 @@ Output format (plain text labels, not markdown headers):
         "parent's working directory; translate them to your worktree root. Re-read files "
         "before editing if the parent may have modified them since they appear in the context. "
         "Your changes stay in this worktree and will not affect the parent's files.",
-        parent_cwd,
-        worktree_cwd);
+        parent_cwd, worktree_cwd);
 }
+
 [[nodiscard]] std::string json_escape(std::string_view value) {
     std::string out;
     out.reserve(value.size() + 8);
     for (char ch : value) {
         switch (ch) {
-            case '\\': out += R"(\\)"; break;
-            case '"': out += R"(\")"; break;
-            case '\b': out += R"(\b)"; break;
-            case '\f': out += R"(\f)"; break;
-            case '\n': out += R"(\n)"; break;
-            case '\r': out += R"(\r)"; break;
-            case '\t': out += R"(\t)"; break;
-            default: out.push_back(ch); break;
+        case '\\':
+            out += R"(\\)";
+            break;
+        case '"':
+            out += R"(\")";
+            break;
+        case '\b':
+            out += R"(\b)";
+            break;
+        case '\f':
+            out += R"(\f)";
+            break;
+        case '\n':
+            out += R"(\n)";
+            break;
+        case '\r':
+            out += R"(\r)";
+            break;
+        case '\t':
+            out += R"(\t)";
+            break;
+        default:
+            out.push_back(ch);
+            break;
         }
     }
     return out;
 }
+
 [[nodiscard]] std::string safe_agent_filename(std::string_view agent_id) {
     std::string out;
     out.reserve(agent_id.size());
@@ -263,34 +290,49 @@ Output format (plain text labels, not markdown headers):
     }
     return out.empty() ? "agent" : out;
 }
+
 [[nodiscard]] std::string xml_escape(std::string_view text) {
     std::string out;
     out.reserve(text.size());
     for (char ch : text) {
         switch (ch) {
-            case '&': out += "&amp;"; break;
-            case '<': out += "&lt;"; break;
-            case '>': out += "&gt;"; break;
-            case '"': out += "&quot;"; break;
-            case '\'': out += "&apos;"; break;
-            default: out.push_back(ch); break;
+        case '&':
+            out += "&amp;";
+            break;
+        case '<':
+            out += "&lt;";
+            break;
+        case '>':
+            out += "&gt;";
+            break;
+        case '"':
+            out += "&quot;";
+            break;
+        case '\'':
+            out += "&apos;";
+            break;
+        default:
+            out.push_back(ch);
+            break;
         }
     }
     return out;
 }
-[[nodiscard]] std::pair<std::string_view, std::string_view> split_transcript_role(
-    std::string_view entry
-) {
+
+[[nodiscard]] std::pair<std::string_view, std::string_view>
+split_transcript_role(std::string_view entry) {
     const auto sep = entry.find(": ");
     if (sep == std::string_view::npos || sep == 0) return {"system", entry};
     auto role = entry.substr(0, sep);
-    if (role != "user" && role != "assistant" && role != "system" && role != "tool" && role != "hook") {
+    if (role != "user" && role != "assistant" && role != "system" && role != "tool" &&
+        role != "hook") {
         return {"system", entry};
     }
     return {role, entry.substr(sep + 2)};
 }
+
 [[nodiscard]] std::string sidechain_message_role(std::string_view role) {
     if (role == "user" || role == "assistant" || role == "system") return std::string(role);
     return "system";
 }
-} // namespace loom::tools::agent_runtime
+}  // namespace loom::tools::agent_runtime

@@ -13,7 +13,6 @@ import loom.serdes.json;
 
 // All ser/de function definitions (moved from the interface)
 
-
 namespace loom::server::control {
 
 [[nodiscard]] std::string SlashCommand_to_json(const SlashCommand& v) {
@@ -27,7 +26,8 @@ namespace loom::server::control {
     return doc.to_string();
 }
 
-[[nodiscard]] std::expected<SlashCommand, std::string> SlashCommand_from_json(std::string_view raw) {
+[[nodiscard]] std::expected<SlashCommand, std::string>
+SlashCommand_from_json(std::string_view raw) {
     using namespace loom::utils::json;
     auto parsed = parse(raw);
     if (!parsed) return std::unexpected(parsed.error().message());
@@ -74,7 +74,8 @@ namespace loom::server::control {
     if (v.supports_effort.has_value()) o.add("supports_effort", doc.boolean(*v.supports_effort));
     if (v.supported_effort_levels.has_value()) {
         auto arr = doc.array();
-        for (const auto& s : *v.supported_effort_levels) arr.append(doc.string(s));
+        for (const auto& s : *v.supported_effort_levels)
+            arr.append(doc.string(s));
         o.add("supported_effort_levels", std::move(arr));
     }
     if (v.supports_adaptive_thinking.has_value())
@@ -102,10 +103,13 @@ namespace loom::server::control {
         auto arr = o.get("supported_effort_levels");
         if (!arr.is_arr()) return std::nullopt;
         std::vector<std::string> out;
-        arr.iter([&](JsonVal el) { if (el.is_str()) out.emplace_back(el.as_str()); });
+        arr.iter([&](JsonVal el) {
+            if (el.is_str()) out.emplace_back(el.as_str());
+        });
         return out;
     }();
-    v.supports_adaptive_thinking = detail_serde::read_optional_bool(o, "supports_adaptive_thinking");
+    v.supports_adaptive_thinking =
+        detail_serde::read_optional_bool(o, "supports_adaptive_thinking");
     v.supports_fast_mode = detail_serde::read_optional_bool(o, "supports_fast_mode");
     v.supports_auto_mode = detail_serde::read_optional_bool(o, "supports_auto_mode");
     return v;
@@ -117,7 +121,8 @@ namespace loom::server::control {
     auto o = doc.object();
     if (v.email.has_value()) o.add("email", doc.string(*v.email));
     if (v.organization.has_value()) o.add("organization", doc.string(*v.organization));
-    if (v.subscription_type.has_value()) o.add("subscription_type", doc.string(*v.subscription_type));
+    if (v.subscription_type.has_value())
+        o.add("subscription_type", doc.string(*v.subscription_type));
     if (v.token_source.has_value()) o.add("token_source", doc.string(*v.token_source));
     if (v.api_key_source.has_value()) o.add("api_key_source", doc.string(*v.api_key_source));
     if (v.api_provider.has_value()) o.add("api_provider", doc.string(*v.api_provider));
@@ -148,7 +153,8 @@ namespace loom::server::control {
     o.add("inputTokens", doc.number(static_cast<int64_t>(v.input_tokens)));
     o.add("outputTokens", doc.number(static_cast<int64_t>(v.output_tokens)));
     o.add("cacheReadInputTokens", doc.number(static_cast<int64_t>(v.cache_read_input_tokens)));
-    o.add("cacheCreationInputTokens", doc.number(static_cast<int64_t>(v.cache_creation_input_tokens)));
+    o.add("cacheCreationInputTokens",
+          doc.number(static_cast<int64_t>(v.cache_creation_input_tokens)));
     o.add("webSearchRequests", doc.number(static_cast<int64_t>(v.web_search_requests)));
     o.add("costUSD", doc.number(v.cost_usd));
     o.add("contextWindow", doc.number(static_cast<int64_t>(v.context_window)));
@@ -188,7 +194,8 @@ namespace loom::server::control {
                 auto mo = doc.object();
                 if (m.matcher.has_value()) mo.add("matcher", doc.string(*m.matcher));
                 auto ids = doc.array();
-                for (const auto& id : m.hook_callback_ids) ids.append(doc.string(id));
+                for (const auto& id : m.hook_callback_ids)
+                    ids.append(doc.string(id));
                 mo.add("hook_callback_ids", std::move(ids));
                 if (m.timeout.has_value()) mo.add("timeout", doc.number(*m.timeout));
                 arr.append(std::move(mo));
@@ -199,7 +206,8 @@ namespace loom::server::control {
     }
     if (v.sdk_mcp_servers.has_value()) {
         auto arr = doc.array();
-        for (const auto& s : *v.sdk_mcp_servers) arr.append(doc.string(s));
+        for (const auto& s : *v.sdk_mcp_servers)
+            arr.append(doc.string(s));
         o.add("sdk_mcp_servers", std::move(arr));
     }
     if (v.system_prompt.has_value()) o.add("system_prompt", doc.string(*v.system_prompt));
@@ -258,9 +266,8 @@ ControlPermissionRequest_from_json(loom::utils::json::JsonVal inner) {
     return v;
 }
 
-[[nodiscard]] std::string ControlSetPermissionModeRequest_to_json(
-    const ControlSetPermissionModeRequest& v
-) {
+[[nodiscard]] std::string
+ControlSetPermissionModeRequest_to_json(const ControlSetPermissionModeRequest& v) {
     using namespace loom::utils::json;
     JsonMutDoc doc;
     auto o = doc.object();
@@ -299,9 +306,8 @@ ControlSetModelRequest_from_json(loom::utils::json::JsonVal inner) {
     return v;
 }
 
-[[nodiscard]] std::string ControlSetMaxThinkingTokensRequest_to_json(
-    const ControlSetMaxThinkingTokensRequest& v
-) {
+[[nodiscard]] std::string
+ControlSetMaxThinkingTokensRequest_to_json(const ControlSetMaxThinkingTokensRequest& v) {
     using namespace loom::utils::json;
     JsonMutDoc doc;
     auto o = doc.object();
@@ -334,12 +340,14 @@ ControlSetMaxThinkingTokensRequest_from_json(loom::utils::json::JsonVal inner) {
     o.add("command", doc.string(v.command));
     if (v.args) {
         auto arr = doc.array();
-        for (const auto& a : *v.args) arr.append(doc.string(a));
+        for (const auto& a : *v.args)
+            arr.append(doc.string(a));
         o.add("args", std::move(arr));
     }
     if (v.env) {
         auto e = doc.object();
-        for (const auto& [k, val] : *v.env) e.add(k.c_str(), doc.string(val));
+        for (const auto& [k, val] : *v.env)
+            e.add(k.c_str(), doc.string(val));
         o.add("env", std::move(e));
     }
     doc.set_root(std::move(o));
@@ -353,7 +361,9 @@ McpStdioServerConfig_from_json(loom::utils::json::JsonVal o) {
     v.command = detail_serde::read_string(o, "command");
     if (auto arr = o.get("args"); arr.is_arr()) {
         std::vector<std::string> args;
-        arr.iter([&](JsonVal el) { if (el.is_str()) args.emplace_back(el.as_str()); });
+        arr.iter([&](JsonVal el) {
+            if (el.is_str()) args.emplace_back(el.as_str());
+        });
         v.args = std::move(args);
     }
     if (auto m = o.get("env"); m.is_obj()) {
@@ -375,7 +385,8 @@ McpStdioServerConfig_from_json(loom::utils::json::JsonVal o) {
     o.add("url", doc.string(v.url));
     if (v.headers) {
         auto h = doc.object();
-        for (const auto& [k, val] : *v.headers) h.add(k.c_str(), doc.string(val));
+        for (const auto& [k, val] : *v.headers)
+            h.add(k.c_str(), doc.string(val));
         o.add("headers", std::move(h));
     }
     doc.set_root(std::move(o));
@@ -406,7 +417,8 @@ McpSSEServerConfig_from_json(loom::utils::json::JsonVal o) {
     o.add("url", doc.string(v.url));
     if (v.headers) {
         auto h = doc.object();
-        for (const auto& [k, val] : *v.headers) h.add(k.c_str(), doc.string(val));
+        for (const auto& [k, val] : *v.headers)
+            h.add(k.c_str(), doc.string(val));
         o.add("headers", std::move(h));
     }
     doc.set_root(std::move(o));
@@ -510,8 +522,7 @@ ControlInitializeRequest_from_json(loom::utils::json::JsonVal inner) {
                 HookCallbackMatcher m;
                 m.matcher = detail_serde::read_optional_string(el, "matcher");
                 m.hook_callback_ids = detail_serde::read_string_vec(el, "hook_callback_ids");
-                if (auto t = detail_serde::read_optional_double(el, "timeout"))
-                    m.timeout = *t;
+                if (auto t = detail_serde::read_optional_double(el, "timeout")) m.timeout = *t;
                 matchers.push_back(std::move(m));
             });
             out[std::string(key.as_str())] = std::move(matchers);
@@ -520,7 +531,9 @@ ControlInitializeRequest_from_json(loom::utils::json::JsonVal inner) {
     }
     if (auto arr = inner.get("sdk_mcp_servers"); arr.is_arr()) {
         std::vector<std::string> servers;
-        arr.iter([&](JsonVal el) { if (el.is_str()) servers.emplace_back(el.as_str()); });
+        arr.iter([&](JsonVal el) {
+            if (el.is_str()) servers.emplace_back(el.as_str());
+        });
         v.sdk_mcp_servers = std::move(servers);
     }
     v.system_prompt = detail_serde::read_optional_string(inner, "system_prompt");
@@ -531,21 +544,16 @@ ControlInitializeRequest_from_json(loom::utils::json::JsonVal inner) {
     return v;
 }
 
-[[nodiscard]] std::string ControlMcpStatusRequest_to_json(
-    const ControlMcpStatusRequest&
-) {
+[[nodiscard]] std::string ControlMcpStatusRequest_to_json(const ControlMcpStatusRequest&) {
     return R"({"subtype":"mcp_status"})";
 }
 
-[[nodiscard]] std::string ControlGetContextUsageRequest_to_json(
-    const ControlGetContextUsageRequest&
-) {
+[[nodiscard]] std::string
+ControlGetContextUsageRequest_to_json(const ControlGetContextUsageRequest&) {
     return R"({"subtype":"get_context_usage"})";
 }
 
-[[nodiscard]] std::string ControlRewindFilesRequest_to_json(
-    const ControlRewindFilesRequest& v
-) {
+[[nodiscard]] std::string ControlRewindFilesRequest_to_json(const ControlRewindFilesRequest& v) {
     using namespace loom::utils::json;
     JsonMutDoc doc;
     auto o = doc.object();
@@ -564,9 +572,8 @@ ControlRewindFilesRequest_from_json(loom::utils::json::JsonVal inner) {
     return v;
 }
 
-[[nodiscard]] std::string ControlCancelAsyncMessageRequest_to_json(
-    const ControlCancelAsyncMessageRequest& v
-) {
+[[nodiscard]] std::string
+ControlCancelAsyncMessageRequest_to_json(const ControlCancelAsyncMessageRequest& v) {
     using namespace loom::utils::json;
     JsonMutDoc doc;
     auto o = doc.object();
@@ -583,9 +590,8 @@ ControlCancelAsyncMessageRequest_from_json(loom::utils::json::JsonVal inner) {
     return v;
 }
 
-[[nodiscard]] std::string ControlSeedReadStateRequest_to_json(
-    const ControlSeedReadStateRequest& v
-) {
+[[nodiscard]] std::string
+ControlSeedReadStateRequest_to_json(const ControlSeedReadStateRequest& v) {
     using namespace loom::utils::json;
     JsonMutDoc doc;
     auto o = doc.object();
@@ -612,7 +618,8 @@ ControlSeedReadStateRequest_from_json(loom::utils::json::JsonVal inner) {
     o.add("callback_id", doc.string(v.callback_id));
     o.add("tool_use_id", doc.string(v.tool_use_id));
     auto input = doc.object();
-    for (const auto& [k, val] : v.input) input.add(k.c_str(), doc.string(val));
+    for (const auto& [k, val] : v.input)
+        input.add(k.c_str(), doc.string(val));
     o.add("input", std::move(input));
     doc.set_root(std::move(o));
     return doc.to_string();
@@ -633,9 +640,7 @@ HookCallbackRequest_from_json(loom::utils::json::JsonVal inner) {
     return v;
 }
 
-[[nodiscard]] std::string ControlMcpMessageRequest_to_json(
-    const ControlMcpMessageRequest& v
-) {
+[[nodiscard]] std::string ControlMcpMessageRequest_to_json(const ControlMcpMessageRequest& v) {
     using namespace loom::utils::json;
     JsonMutDoc doc;
     auto o = doc.object();
@@ -654,9 +659,8 @@ ControlMcpMessageRequest_from_json(loom::utils::json::JsonVal inner) {
     return v;
 }
 
-[[nodiscard]] std::string ControlMcpSetServersRequest_to_json(
-    const ControlMcpSetServersRequest& v
-) {
+[[nodiscard]] std::string
+ControlMcpSetServersRequest_to_json(const ControlMcpSetServersRequest& v) {
     using namespace loom::utils::json;
     JsonMutDoc doc;
     auto o = doc.object();
@@ -683,15 +687,11 @@ ControlMcpSetServersRequest_from_json(loom::utils::json::JsonVal inner) {
     return v;
 }
 
-[[nodiscard]] std::string ControlReloadPluginsRequest_to_json(
-    const ControlReloadPluginsRequest&
-) {
+[[nodiscard]] std::string ControlReloadPluginsRequest_to_json(const ControlReloadPluginsRequest&) {
     return R"({"subtype":"reload_plugins"})";
 }
 
-[[nodiscard]] std::string ControlMcpReconnectRequest_to_json(
-    const ControlMcpReconnectRequest& v
-) {
+[[nodiscard]] std::string ControlMcpReconnectRequest_to_json(const ControlMcpReconnectRequest& v) {
     using namespace loom::utils::json;
     JsonMutDoc doc;
     auto o = doc.object();
@@ -708,9 +708,7 @@ ControlMcpReconnectRequest_from_json(loom::utils::json::JsonVal inner) {
     return v;
 }
 
-[[nodiscard]] std::string ControlMcpToggleRequest_to_json(
-    const ControlMcpToggleRequest& v
-) {
+[[nodiscard]] std::string ControlMcpToggleRequest_to_json(const ControlMcpToggleRequest& v) {
     using namespace loom::utils::json;
     JsonMutDoc doc;
     auto o = doc.object();
@@ -729,9 +727,7 @@ ControlMcpToggleRequest_from_json(loom::utils::json::JsonVal inner) {
     return v;
 }
 
-[[nodiscard]] std::string ControlStopTaskRequest_to_json(
-    const ControlStopTaskRequest& v
-) {
+[[nodiscard]] std::string ControlStopTaskRequest_to_json(const ControlStopTaskRequest& v) {
     using namespace loom::utils::json;
     JsonMutDoc doc;
     auto o = doc.object();
@@ -748,15 +744,15 @@ ControlStopTaskRequest_from_json(loom::utils::json::JsonVal inner) {
     return v;
 }
 
-[[nodiscard]] std::string ControlApplyFlagSettingsRequest_to_json(
-    const ControlApplyFlagSettingsRequest& v
-) {
+[[nodiscard]] std::string
+ControlApplyFlagSettingsRequest_to_json(const ControlApplyFlagSettingsRequest& v) {
     using namespace loom::utils::json;
     JsonMutDoc doc;
     auto o = doc.object();
     o.add("subtype", doc.string("apply_flag_settings"));
     auto settings = doc.object();
-    for (const auto& [k, val] : v.settings) settings.add(k.c_str(), doc.string(val));
+    for (const auto& [k, val] : v.settings)
+        settings.add(k.c_str(), doc.string(val));
     o.add("settings", std::move(settings));
     doc.set_root(std::move(o));
     return doc.to_string();
@@ -775,15 +771,11 @@ ControlApplyFlagSettingsRequest_from_json(loom::utils::json::JsonVal inner) {
     return v;
 }
 
-[[nodiscard]] std::string ControlGetSettingsRequest_to_json(
-    const ControlGetSettingsRequest&
-) {
+[[nodiscard]] std::string ControlGetSettingsRequest_to_json(const ControlGetSettingsRequest&) {
     return R"({"subtype":"get_settings"})";
 }
 
-[[nodiscard]] std::string ControlElicitationRequest_to_json(
-    const ControlElicitationRequest& v
-) {
+[[nodiscard]] std::string ControlElicitationRequest_to_json(const ControlElicitationRequest& v) {
     using namespace loom::utils::json;
     JsonMutDoc doc;
     auto o = doc.object();
@@ -795,7 +787,8 @@ ControlApplyFlagSettingsRequest_from_json(loom::utils::json::JsonVal inner) {
     if (v.elicitation_id) o.add("elicitation_id", doc.string(*v.elicitation_id));
     if (v.requested_schema) {
         auto rs = doc.object();
-        for (const auto& [k, val] : *v.requested_schema) rs.add(k.c_str(), doc.string(val));
+        for (const auto& [k, val] : *v.requested_schema)
+            rs.add(k.c_str(), doc.string(val));
         o.add("requested_schema", std::move(rs));
     }
     doc.set_root(std::move(o));
@@ -814,8 +807,7 @@ ControlElicitationRequest_from_json(loom::utils::json::JsonVal inner) {
     if (auto m = inner.get("requested_schema"); m.is_obj()) {
         std::unordered_map<std::string, std::string> rs;
         m.iter_obj([&](JsonVal k, JsonVal val) {
-            if (k.is_str() && val.is_str())
-                rs[std::string(k.as_str())] = std::string(val.as_str());
+            if (k.is_str() && val.is_str()) rs[std::string(k.as_str())] = std::string(val.as_str());
         });
         v.requested_schema = std::move(rs);
     }
@@ -884,10 +876,8 @@ ControlElicitationRequest_from_json(loom::utils::json::JsonVal inner) {
         inner);
 }
 
-[[nodiscard]] ControlRequestInner parse_control_request_inner(
-    std::string_view subtype,
-    loom::utils::json::JsonVal inner
-) {
+[[nodiscard]] ControlRequestInner parse_control_request_inner(std::string_view subtype,
+                                                              loom::utils::json::JsonVal inner) {
     if (subtype == "initialize") {
         auto r = ControlInitializeRequest_from_json(inner);
         if (r) return std::move(*r);
@@ -977,34 +967,35 @@ ControlElicitationRequest_from_json(loom::utils::json::JsonVal inner) {
     return ControlRawRequest{std::string(subtype), inner.to_string()};
 }
 
-[[nodiscard]] std::string ControlInitializeResponse_to_json(
-    const ControlInitializeResponse& v
-) {
+[[nodiscard]] std::string ControlInitializeResponse_to_json(const ControlInitializeResponse& v) {
     using namespace loom::utils::json;
     JsonMutDoc doc;
     auto o = doc.object();
     // commands: always emitted (even when empty)
     auto cmds = doc.array();
-    for (const auto& c : v.commands) cmds.append(doc.raw_json(SlashCommand_to_json(c)));
+    for (const auto& c : v.commands)
+        cmds.append(doc.raw_json(SlashCommand_to_json(c)));
     o.add("commands", std::move(cmds));
     // agents: emitted only when non-empty
     if (!v.agents.empty()) {
         auto agents = doc.array();
-        for (const auto& a : v.agents) agents.append(doc.raw_json(AgentInfo_to_json(a)));
+        for (const auto& a : v.agents)
+            agents.append(doc.raw_json(AgentInfo_to_json(a)));
         o.add("agents", std::move(agents));
     }
     o.add("output_style", doc.string(v.output_style));
     auto styles = doc.array();
-    for (const auto& s : v.available_output_styles) styles.append(doc.string(s));
+    for (const auto& s : v.available_output_styles)
+        styles.append(doc.string(s));
     o.add("available_output_styles", std::move(styles));
     // models: always emitted (even when empty)
     auto models = doc.array();
-    for (const auto& m : v.models) models.append(doc.raw_json(ModelInfo_to_json(m)));
+    for (const auto& m : v.models)
+        models.append(doc.raw_json(ModelInfo_to_json(m)));
     o.add("models", std::move(models));
     // account: always emitted (even when empty)
     o.add("account", doc.raw_json(AccountInfo_to_json(v.account)));
-    if (v.pid.has_value())
-        o.add("pid", doc.number(static_cast<int64_t>(*v.pid)));
+    if (v.pid.has_value()) o.add("pid", doc.number(static_cast<int64_t>(*v.pid)));
     if (v.fast_mode_state.has_value())
         o.add("fast_mode_state",
               doc.string(std::string(detail_serde::fast_mode_state_to_str(*v.fast_mode_state))));
@@ -1053,8 +1044,7 @@ ControlInitializeResponse_from_json(loom::utils::json::JsonVal inner) {
     }
     if (auto p = detail_serde::read_optional_int(inner, "pid")) v.pid = static_cast<int>(*p);
     if (auto fms = inner.get("fast_mode_state"); fms.is_str()) {
-        if (auto s = detail_serde::fast_mode_state_from_str(fms.as_str()))
-            v.fast_mode_state = *s;
+        if (auto s = detail_serde::fast_mode_state_from_str(fms.as_str())) v.fast_mode_state = *s;
     }
     return v;
 }
@@ -1133,9 +1123,8 @@ ControlErrorResponse_from_json(std::string_view raw) {
     return doc.to_string();
 }
 
-[[nodiscard]] std::expected<ControlRequest, std::string> ControlRequest_from_json(
-    std::string_view raw
-) {
+[[nodiscard]] std::expected<ControlRequest, std::string>
+ControlRequest_from_json(std::string_view raw) {
     using namespace loom::utils::json;
     auto parsed = parse(raw);
     if (!parsed) return std::unexpected(parsed.error().message());
@@ -1158,8 +1147,7 @@ ControlErrorResponse_from_json(std::string_view raw) {
 namespace detail_serde {
 
 [[nodiscard]] std::string control_response_inner_to_json(
-    const std::variant<ControlSuccessResponse, ControlErrorResponse>& inner
-) {
+    const std::variant<ControlSuccessResponse, ControlErrorResponse>& inner) {
     return std::visit(
         []<typename T>(const T& alt) -> std::string {
             if constexpr (std::is_same_v<T, ControlSuccessResponse>)
@@ -1170,7 +1158,7 @@ namespace detail_serde {
         inner);
 }
 
-} // namespace detail_serde
+}  // namespace detail_serde
 
 [[nodiscard]] std::string ControlResponse_to_json(const ControlResponse& v) {
     using namespace loom::utils::json;
@@ -1186,9 +1174,8 @@ namespace detail_serde {
     return doc.to_string();
 }
 
-[[nodiscard]] std::expected<ControlResponse, std::string> ControlResponse_from_json(
-    std::string_view raw
-) {
+[[nodiscard]] std::expected<ControlResponse, std::string>
+ControlResponse_from_json(std::string_view raw) {
     using namespace loom::utils::json;
     auto parsed = parse(raw);
     if (!parsed) return std::unexpected(parsed.error().message());
@@ -1218,26 +1205,24 @@ namespace detail_serde {
 
 namespace detail_serde {
 
-[[nodiscard]] std::string string_map_to_json(
-    const std::unordered_map<std::string, std::string>& m
-) {
+[[nodiscard]] std::string
+string_map_to_json(const std::unordered_map<std::string, std::string>& m) {
     using namespace loom::utils::json;
     JsonMutDoc doc;
     auto o = doc.object();
-    for (const auto& [k, v] : m) o.add(k.c_str(), doc.string(v));
+    for (const auto& [k, v] : m)
+        o.add(k.c_str(), doc.string(v));
     doc.set_root(std::move(o));
     return doc.to_string();
 }
 
-[[nodiscard]] std::unordered_map<std::string, std::string> string_map_from_json(
-    loom::utils::json::JsonVal o
-) {
+[[nodiscard]] std::unordered_map<std::string, std::string>
+string_map_from_json(loom::utils::json::JsonVal o) {
     using namespace loom::utils::json;
     std::unordered_map<std::string, std::string> out;
     if (o.is_obj()) {
         o.iter_obj([&](JsonVal k, JsonVal v) {
-            if (k.is_str() && v.is_str())
-                out[std::string(k.as_str())] = std::string(v.as_str());
+            if (k.is_str() && v.is_str()) out[std::string(k.as_str())] = std::string(v.as_str());
         });
     }
     return out;
@@ -1255,8 +1240,7 @@ sdk_assistant_message_error_from_str(std::string_view s) {
     return std::nullopt;
 }
 
-[[nodiscard]] std::optional<ResultErrorSubtype>
-result_error_subtype_from_str(std::string_view s) {
+[[nodiscard]] std::optional<ResultErrorSubtype> result_error_subtype_from_str(std::string_view s) {
     if (s == "error_during_execution") return ResultErrorSubtype::ErrorDuringExecution;
     if (s == "error_max_turns") return ResultErrorSubtype::ErrorMaxTurns;
     if (s == "error_max_budget_usd") return ResultErrorSubtype::ErrorMaxBudgetUsd;
@@ -1265,7 +1249,7 @@ result_error_subtype_from_str(std::string_view s) {
     return std::nullopt;
 }
 
-} // namespace detail_serde
+}  // namespace detail_serde
 
 [[nodiscard]] std::string SDKPermissionDenial_to_json(const SDKPermissionDenial& v) {
     using namespace loom::utils::json;
@@ -1293,8 +1277,7 @@ SDKPermissionDenial_from_json(loom::utils::json::JsonVal o) {
     auto o = doc.object();
     o.add("type", doc.string("user"));
     o.add("message", doc.raw_json(detail_serde::string_map_to_json(v.message)));
-    if (v.parent_tool_use_id)
-        o.add("parent_tool_use_id", doc.string(*v.parent_tool_use_id));
+    if (v.parent_tool_use_id) o.add("parent_tool_use_id", doc.string(*v.parent_tool_use_id));
     if (v.is_synthetic) o.add("is_synthetic", doc.boolean(*v.is_synthetic));
     if (v.priority) o.add("priority", doc.string(*v.priority));
     if (v.timestamp) o.add("timestamp", doc.string(*v.timestamp));
@@ -1331,8 +1314,7 @@ SDKUserMessage_from_json(std::string_view raw) {
     o.add("type", doc.string("user"));
     o.add("replay", doc.boolean(true));
     o.add("message", doc.raw_json(detail_serde::string_map_to_json(v.message)));
-    if (v.parent_tool_use_id)
-        o.add("parent_tool_use_id", doc.string(*v.parent_tool_use_id));
+    if (v.parent_tool_use_id) o.add("parent_tool_use_id", doc.string(*v.parent_tool_use_id));
     if (v.is_synthetic) o.add("is_synthetic", doc.boolean(*v.is_synthetic));
     o.add("uuid", doc.string(v.uuid));
     o.add("session_id", doc.string(v.session_id));
@@ -1364,8 +1346,7 @@ SDKUserMessageReplay_from_json(std::string_view raw) {
     auto o = doc.object();
     o.add("type", doc.string("assistant"));
     o.add("message", doc.raw_json(detail_serde::string_map_to_json(v.message)));
-    if (v.parent_tool_use_id)
-        o.add("parent_tool_use_id", doc.string(*v.parent_tool_use_id));
+    if (v.parent_tool_use_id) o.add("parent_tool_use_id", doc.string(*v.parent_tool_use_id));
     if (v.error)
         o.add("error",
               doc.string(std::string(detail_serde::sdk_assistant_message_error_to_str(*v.error))));
@@ -1406,8 +1387,10 @@ SDKAssistantMessage_from_json(std::string_view raw) {
     o.add("num_turns", doc.number(static_cast<int64_t>(v.num_turns)));
     o.add("result", doc.string(v.result));
     // stop_reason is required-nullable — always emit.
-    if (v.stop_reason) o.add("stop_reason", doc.string(*v.stop_reason));
-    else o.add("stop_reason", doc.null());
+    if (v.stop_reason)
+        o.add("stop_reason", doc.string(*v.stop_reason));
+    else
+        o.add("stop_reason", doc.null());
     o.add("total_cost_usd", doc.number(v.total_cost_usd));
     o.add("usage", doc.raw_json(v.usage_json));
     auto mu = doc.object();
@@ -1420,8 +1403,7 @@ SDKAssistantMessage_from_json(std::string_view raw) {
     for (const auto& d : v.permission_denials)
         pd.append(doc.raw_json(SDKPermissionDenial_to_json(d)));
     o.add("permission_denials", std::move(pd));
-    if (v.structured_output)
-        o.add("structured_output", doc.raw_json(*v.structured_output));
+    if (v.structured_output) o.add("structured_output", doc.raw_json(*v.structured_output));
     if (v.fast_mode_state)
         o.add("fast_mode_state",
               doc.string(std::string(detail_serde::fast_mode_state_to_str(*v.fast_mode_state))));
@@ -1456,11 +1438,9 @@ SDKResultSuccess_from_json(loom::utils::json::JsonVal o) {
             if (d) v.permission_denials.push_back(std::move(*d));
         });
     }
-    if (auto so = o.get("structured_output"); so.valid())
-        v.structured_output = so.to_string();
+    if (auto so = o.get("structured_output"); so.valid()) v.structured_output = so.to_string();
     if (auto fms = o.get("fast_mode_state"); fms.is_str()) {
-        if (auto s = detail_serde::fast_mode_state_from_str(fms.as_str()))
-            v.fast_mode_state = *s;
+        if (auto s = detail_serde::fast_mode_state_from_str(fms.as_str())) v.fast_mode_state = *s;
     }
     v.uuid = detail_serde::read_string(o, "uuid");
     v.session_id = detail_serde::read_string(o, "session_id");
@@ -1479,15 +1459,16 @@ SDKResultSuccess_from_json(std::string_view raw) {
     JsonMutDoc doc;
     auto o = doc.object();
     o.add("type", doc.string("result"));
-    o.add("subtype",
-          doc.string(std::string(detail_serde::result_error_subtype_to_str(v.subtype))));
+    o.add("subtype", doc.string(std::string(detail_serde::result_error_subtype_to_str(v.subtype))));
     o.add("duration_ms", doc.number(v.duration_ms));
     o.add("duration_api_ms", doc.number(v.duration_api_ms));
     o.add("is_error", doc.boolean(v.is_error));
     o.add("num_turns", doc.number(static_cast<int64_t>(v.num_turns)));
     // stop_reason is required-nullable — always emit.
-    if (v.stop_reason) o.add("stop_reason", doc.string(*v.stop_reason));
-    else o.add("stop_reason", doc.null());
+    if (v.stop_reason)
+        o.add("stop_reason", doc.string(*v.stop_reason));
+    else
+        o.add("stop_reason", doc.null());
     o.add("total_cost_usd", doc.number(v.total_cost_usd));
     o.add("usage", doc.raw_json(v.usage_json));
     auto mu = doc.object();
@@ -1501,7 +1482,8 @@ SDKResultSuccess_from_json(std::string_view raw) {
         pd.append(doc.raw_json(SDKPermissionDenial_to_json(d)));
     o.add("permission_denials", std::move(pd));
     auto errs = doc.array();
-    for (const auto& e : v.errors) errs.append(doc.string(e));
+    for (const auto& e : v.errors)
+        errs.append(doc.string(e));
     o.add("errors", std::move(errs));
     if (v.fast_mode_state)
         o.add("fast_mode_state",
@@ -1517,8 +1499,7 @@ SDKResultError_from_json(loom::utils::json::JsonVal o) {
     using namespace loom::utils::json;
     SDKResultError v;
     if (auto st = o.get("subtype"); st.is_str()) {
-        if (auto s = detail_serde::result_error_subtype_from_str(st.as_str()))
-            v.subtype = *s;
+        if (auto s = detail_serde::result_error_subtype_from_str(st.as_str())) v.subtype = *s;
     }
     if (auto d = o.get("duration_ms"); d.is_num()) v.duration_ms = d.as_double();
     if (auto d = o.get("duration_api_ms"); d.is_num()) v.duration_api_ms = d.as_double();
@@ -1546,8 +1527,7 @@ SDKResultError_from_json(loom::utils::json::JsonVal o) {
         });
     }
     if (auto fms = o.get("fast_mode_state"); fms.is_str()) {
-        if (auto s = detail_serde::fast_mode_state_from_str(fms.as_str()))
-            v.fast_mode_state = *s;
+        if (auto s = detail_serde::fast_mode_state_from_str(fms.as_str())) v.fast_mode_state = *s;
     }
     v.uuid = detail_serde::read_string(o, "uuid");
     v.session_id = detail_serde::read_string(o, "session_id");
@@ -1575,12 +1555,14 @@ SDKResultError_from_json(std::string_view raw) {
               doc.string(std::string(detail_serde::permission_mode_to_str(*v.permission_mode))));
     if (v.tools) {
         auto arr = doc.array();
-        for (const auto& t : *v.tools) arr.append(doc.string(t));
+        for (const auto& t : *v.tools)
+            arr.append(doc.string(t));
         o.add("tools", std::move(arr));
     }
     if (v.agents) {
         auto arr = doc.array();
-        for (const auto& a : *v.agents) arr.append(doc.string(a));
+        for (const auto& a : *v.agents)
+            arr.append(doc.string(a));
         o.add("agents", std::move(arr));
     }
     if (v.cwd) o.add("cwd", doc.string(*v.cwd));
@@ -1597,8 +1579,7 @@ SDKSystemMessage_from_json(loom::utils::json::JsonVal o) {
     v.session_id = detail_serde::read_string(o, "session_id");
     v.model = detail_serde::read_optional_string(o, "model");
     if (auto pm = detail_serde::read_optional_string(o, "permission_mode")) {
-        if (auto m = detail_serde::permission_mode_from_str(*pm))
-            v.permission_mode = *m;
+        if (auto m = detail_serde::permission_mode_from_str(*pm)) v.permission_mode = *m;
     }
     v.tools = [&]() -> std::optional<std::vector<std::string>> {
         auto arr = o.get("tools");
@@ -1630,16 +1611,13 @@ SDKSystemMessage_from_json(std::string_view raw) {
     return SDKSystemMessage_from_json(parsed->root());
 }
 
-[[nodiscard]] std::string SDKPartialAssistantMessage_to_json(
-    const SDKPartialAssistantMessage& v
-) {
+[[nodiscard]] std::string SDKPartialAssistantMessage_to_json(const SDKPartialAssistantMessage& v) {
     using namespace loom::utils::json;
     JsonMutDoc doc;
     auto o = doc.object();
     o.add("type", doc.string("stream_event"));
     o.add("event", doc.raw_json(v.event_json.empty() ? "{}" : v.event_json));
-    if (v.parent_tool_use_id)
-        o.add("parent_tool_use_id", doc.string(*v.parent_tool_use_id));
+    if (v.parent_tool_use_id) o.add("parent_tool_use_id", doc.string(*v.parent_tool_use_id));
     o.add("uuid", doc.string(v.uuid));
     o.add("session_id", doc.string(v.session_id));
     doc.set_root(std::move(o));
@@ -1663,9 +1641,7 @@ SDKPartialAssistantMessage_from_json(std::string_view raw) {
     return SDKPartialAssistantMessage_from_json(parsed->root());
 }
 
-[[nodiscard]] std::string SDKCompactBoundaryMessage_to_json(
-    const SDKCompactBoundaryMessage& v
-) {
+[[nodiscard]] std::string SDKCompactBoundaryMessage_to_json(const SDKCompactBoundaryMessage& v) {
     using namespace loom::utils::json;
     JsonMutDoc doc;
     auto o = doc.object();
@@ -1690,8 +1666,7 @@ SDKPartialAssistantMessage_from_json(std::string_view raw) {
 SDKCompactBoundaryMessage_from_json(loom::utils::json::JsonVal o) {
     SDKCompactBoundaryMessage v;
     v.trigger = detail_serde::read_string(o, "trigger");
-    if (auto pt = o.get("pre_tokens"); pt.is_num())
-        v.pre_tokens = static_cast<int>(pt.as_int());
+    if (auto pt = o.get("pre_tokens"); pt.is_num()) v.pre_tokens = static_cast<int>(pt.as_int());
     if (auto ps = o.get("preserved_segment"); ps.is_obj()) {
         SDKCompactBoundaryMessage::PreservedSegment seg;
         seg.head_uuid = detail_serde::read_string(ps, "head_uuid");
@@ -1732,8 +1707,7 @@ SDKStatusMessage_from_json(loom::utils::json::JsonVal o) {
     SDKStatusMessage v;
     v.status = detail_serde::read_optional_string(o, "status");
     if (auto pm = detail_serde::read_optional_string(o, "permission_mode")) {
-        if (auto m = detail_serde::permission_mode_from_str(*pm))
-            v.permission_mode = *m;
+        if (auto m = detail_serde::permission_mode_from_str(*pm)) v.permission_mode = *m;
     }
     v.uuid = detail_serde::read_string(o, "uuid");
     v.session_id = detail_serde::read_string(o, "session_id");
@@ -1747,17 +1721,14 @@ SDKStatusMessage_from_json(std::string_view raw) {
     return SDKStatusMessage_from_json(parsed->root());
 }
 
-[[nodiscard]] std::string SDKToolProgressMessage_to_json(
-    const SDKToolProgressMessage& v
-) {
+[[nodiscard]] std::string SDKToolProgressMessage_to_json(const SDKToolProgressMessage& v) {
     using namespace loom::utils::json;
     JsonMutDoc doc;
     auto o = doc.object();
     o.add("type", doc.string("tool_progress"));
     o.add("tool_use_id", doc.string(v.tool_use_id));
     o.add("tool_name", doc.string(v.tool_name));
-    if (v.parent_tool_use_id)
-        o.add("parent_tool_use_id", doc.string(*v.parent_tool_use_id));
+    if (v.parent_tool_use_id) o.add("parent_tool_use_id", doc.string(*v.parent_tool_use_id));
     o.add("elapsed_time_seconds", doc.number(v.elapsed_time_seconds));
     if (v.task_id) o.add("task_id", doc.string(*v.task_id));
     o.add("uuid", doc.string(v.uuid));
@@ -1772,8 +1743,7 @@ SDKToolProgressMessage_from_json(loom::utils::json::JsonVal o) {
     v.tool_use_id = detail_serde::read_string(o, "tool_use_id");
     v.tool_name = detail_serde::read_string(o, "tool_name");
     v.parent_tool_use_id = detail_serde::read_optional_string(o, "parent_tool_use_id");
-    if (auto e = o.get("elapsed_time_seconds"); e.is_num())
-        v.elapsed_time_seconds = e.as_double();
+    if (auto e = o.get("elapsed_time_seconds"); e.is_num()) v.elapsed_time_seconds = e.as_double();
     v.task_id = detail_serde::read_optional_string(o, "task_id");
     v.uuid = detail_serde::read_string(o, "uuid");
     v.session_id = detail_serde::read_string(o, "session_id");
@@ -1787,9 +1757,7 @@ SDKToolProgressMessage_from_json(std::string_view raw) {
     return SDKToolProgressMessage_from_json(parsed->root());
 }
 
-[[nodiscard]] std::string SDKPostTurnSummaryMessage_to_json(
-    const SDKPostTurnSummaryMessage& v
-) {
+[[nodiscard]] std::string SDKPostTurnSummaryMessage_to_json(const SDKPostTurnSummaryMessage& v) {
     using namespace loom::utils::json;
     JsonMutDoc doc;
     auto o = doc.object();
@@ -1805,7 +1773,8 @@ SDKToolProgressMessage_from_json(std::string_view raw) {
     o.add("needs_action", doc.string(v.needs_action));
     if (!v.artifact_urls.empty()) {
         auto arr = doc.array();
-        for (const auto& u : v.artifact_urls) arr.append(doc.string(u));
+        for (const auto& u : v.artifact_urls)
+            arr.append(doc.string(u));
         o.add("artifact_urls", std::move(arr));
     }
     o.add("uuid", doc.string(v.uuid));
@@ -1842,9 +1811,7 @@ SDKPostTurnSummaryMessage_from_json(std::string_view raw) {
     return SDKPostTurnSummaryMessage_from_json(parsed->root());
 }
 
-[[nodiscard]] std::string SDKStreamlinedTextMessage_to_json(
-    const SDKStreamlinedTextMessage& v
-) {
+[[nodiscard]] std::string SDKStreamlinedTextMessage_to_json(const SDKStreamlinedTextMessage& v) {
     using namespace loom::utils::json;
     JsonMutDoc doc;
     auto o = doc.object();
@@ -1872,9 +1839,8 @@ SDKStreamlinedTextMessage_from_json(std::string_view raw) {
     return SDKStreamlinedTextMessage_from_json(parsed->root());
 }
 
-[[nodiscard]] std::string SDKStreamlinedToolUseSummaryMessage_to_json(
-    const SDKStreamlinedToolUseSummaryMessage& v
-) {
+[[nodiscard]] std::string
+SDKStreamlinedToolUseSummaryMessage_to_json(const SDKStreamlinedToolUseSummaryMessage& v) {
     using namespace loom::utils::json;
     JsonMutDoc doc;
     auto o = doc.object();
@@ -1929,8 +1895,7 @@ SDKStreamlinedToolUseSummaryMessage_from_json(std::string_view raw) {
         v);
 }
 
-[[nodiscard]] std::expected<SDKMessage, std::string>
-SDKMessage_from_json(std::string_view raw) {
+[[nodiscard]] std::expected<SDKMessage, std::string> SDKMessage_from_json(std::string_view raw) {
     using namespace loom::utils::json;
     auto parsed = parse(raw);
     if (!parsed) return std::unexpected(parsed.error().message());
@@ -2031,9 +1996,8 @@ KeepAliveMessage_from_json(std::string_view raw) {
     return KeepAliveMessage{};
 }
 
-[[nodiscard]] std::string UpdateEnvironmentVariablesMessage_to_json(
-    const UpdateEnvironmentVariablesMessage& v
-) {
+[[nodiscard]] std::string
+UpdateEnvironmentVariablesMessage_to_json(const UpdateEnvironmentVariablesMessage& v) {
     using namespace loom::utils::json;
     JsonMutDoc doc;
     auto o = doc.object();
@@ -2186,5 +2150,4 @@ StdinMessage_from_json(std::string_view raw) {
     return std::unexpected("StdinMessage: unknown type: " + t);
 }
 
-
-} // namespace loom::server::control
+}  // namespace loom::server::control

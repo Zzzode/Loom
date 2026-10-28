@@ -1,13 +1,12 @@
 // ScheduleCronTool - Cron-based periodic task scheduling and management
 module;
+#include <cctype>
 #include <cstddef>
 #include <cstdlib>
-#include <cctype>
 
 export module loom.tools.cron;
 
 import std;
-
 
 export namespace loom::tools {
 
@@ -25,15 +24,24 @@ enum class CronAction {
 
 constexpr auto cron_action_name(CronAction a) -> std::string_view {
     switch (a) {
-        case CronAction::Create:  return "create";
-        case CronAction::Update:  return "update";
-        case CronAction::Pause:   return "pause";
-        case CronAction::Resume:  return "resume";
-        case CronAction::Delete:  return "delete";
-        case CronAction::List:    return "list";
-        case CronAction::Get:     return "get";
-        case CronAction::Trigger: return "trigger";
-        default:                  return "unknown";
+    case CronAction::Create:
+        return "create";
+    case CronAction::Update:
+        return "update";
+    case CronAction::Pause:
+        return "pause";
+    case CronAction::Resume:
+        return "resume";
+    case CronAction::Delete:
+        return "delete";
+    case CronAction::List:
+        return "list";
+    case CronAction::Get:
+        return "get";
+    case CronAction::Trigger:
+        return "trigger";
+    default:
+        return "unknown";
     }
 }
 
@@ -54,18 +62,30 @@ enum class CronError {
 
 constexpr auto format_error(CronError err) -> std::string_view {
     switch (err) {
-        case CronError::InvalidAction:     return "Invalid cron action";
-        case CronError::InvalidExpression:  return "Invalid cron expression (5-field format required)";
-        case CronError::TaskNotFound:       return "Scheduled task not found";
-        case CronError::TaskAlreadyExists:  return "Task with this name already exists";
-        case CronError::NameEmpty:          return "Task name is empty";
-        case CronError::MessageEmpty:       return "Task message/content is empty";
-        case CronError::TooManyTasks:       return "Maximum task limit (10) reached";
-        case CronError::IntervalTooSmall:   return "Minimum interval is 5 minutes";
-        case CronError::TimezoneInvalid:    return "Invalid timezone identifier";
-        case CronError::TaskPaused:         return "Task is currently paused";
-        case CronError::PersistenceFailed:  return "Failed to persist task state";
-        default:                            return "Unknown cron error";
+    case CronError::InvalidAction:
+        return "Invalid cron action";
+    case CronError::InvalidExpression:
+        return "Invalid cron expression (5-field format required)";
+    case CronError::TaskNotFound:
+        return "Scheduled task not found";
+    case CronError::TaskAlreadyExists:
+        return "Task with this name already exists";
+    case CronError::NameEmpty:
+        return "Task name is empty";
+    case CronError::MessageEmpty:
+        return "Task message/content is empty";
+    case CronError::TooManyTasks:
+        return "Maximum task limit (10) reached";
+    case CronError::IntervalTooSmall:
+        return "Minimum interval is 5 minutes";
+    case CronError::TimezoneInvalid:
+        return "Invalid timezone identifier";
+    case CronError::TaskPaused:
+        return "Task is currently paused";
+    case CronError::PersistenceFailed:
+        return "Failed to persist task state";
+    default:
+        return "Unknown cron error";
     }
 }
 
@@ -133,7 +153,8 @@ private:
             return step > 0 && step <= max_val;
         }
         // Simple numeric check
-        if (std::all_of(field.begin(), field.end(), [](unsigned char c) { return std::isdigit(c); })) {
+        if (std::all_of(field.begin(), field.end(),
+                        [](unsigned char c) { return std::isdigit(c); })) {
             int val = std::atoi(field.c_str());
             return val >= min_val && val <= max_val;
         }
@@ -152,9 +173,9 @@ enum class CronTaskState {
 struct CronTask {
     std::string id;
     std::string name;
-    std::string message;            // Task content to execute
+    std::string message;  // Task content to execute
     CronExpression expression;
-    std::string timezone;           // IANA timezone (e.g., "Asia/Shanghai")
+    std::string timezone;  // IANA timezone (e.g., "Asia/Shanghai")
     CronTaskState state{CronTaskState::Active};
     std::chrono::system_clock::time_point created_at;
     std::optional<std::chrono::system_clock::time_point> last_run;
@@ -178,26 +199,23 @@ public:
     static constexpr size_t kMaxTasks = 10;
 
     auto create(std::string name, std::string message, CronExpression expr, std::string timezone)
-        -> std::expected<CronTask*, CronError>
-    {
+        -> std::expected<CronTask*, CronError> {
         if (name.empty()) return std::unexpected(CronError::NameEmpty);
         if (message.empty()) return std::unexpected(CronError::MessageEmpty);
         if (tasks_.size() >= kMaxTasks) return std::unexpected(CronError::TooManyTasks);
         if (!expr.meets_minimum_interval()) return std::unexpected(CronError::IntervalTooSmall);
 
         auto id = generate_id();
-        CronTask task{
-            .id = id,
-            .name = std::move(name),
-            .message = std::move(message),
-            .expression = std::move(expr),
-            .timezone = std::move(timezone),
-            .state = CronTaskState::Active,
-            .created_at = std::chrono::system_clock::now(),
-            .last_run = std::nullopt,
-            .next_run = std::nullopt,
-            .run_count = 0
-        };
+        CronTask task{.id = id,
+                      .name = std::move(name),
+                      .message = std::move(message),
+                      .expression = std::move(expr),
+                      .timezone = std::move(timezone),
+                      .state = CronTaskState::Active,
+                      .created_at = std::chrono::system_clock::now(),
+                      .last_run = std::nullopt,
+                      .next_run = std::nullopt,
+                      .run_count = 0};
         auto [it, _] = tasks_.emplace(id, std::move(task));
         return &it->second;
     }
@@ -249,9 +267,7 @@ private:
     std::unordered_map<std::string, CronTask> tasks_;
     size_t next_id_{0};
 
-    auto generate_id() -> std::string {
-        return std::format("cron_{}", next_id_++);
-    }
+    auto generate_id() -> std::string { return std::format("cron_{}", next_id_++); }
 };
 
 // Global cron store singleton
@@ -264,68 +280,68 @@ inline CronStore& global_cron_store() {
 class ScheduleCronTool {
 public:
     static constexpr std::string_view name = "schedule_cron";
-    static constexpr std::string_view description = "Create and manage cron-based periodic scheduled tasks";
+    static constexpr std::string_view description =
+        "Create and manage cron-based periodic scheduled tasks";
 
     auto execute(CronRequest request) -> std::expected<std::string, CronError> {
         switch (request.action) {
-            case CronAction::Create: {
-                if (!request.name) return std::unexpected(CronError::NameEmpty);
-                if (!request.message) return std::unexpected(CronError::MessageEmpty);
-                if (!request.cron_expression) return std::unexpected(CronError::InvalidExpression);
+        case CronAction::Create: {
+            if (!request.name) return std::unexpected(CronError::NameEmpty);
+            if (!request.message) return std::unexpected(CronError::MessageEmpty);
+            if (!request.cron_expression) return std::unexpected(CronError::InvalidExpression);
 
-                auto expr = CronExpression::parse(*request.cron_expression);
-                if (!expr) return std::unexpected(expr.error());
+            auto expr = CronExpression::parse(*request.cron_expression);
+            if (!expr) return std::unexpected(expr.error());
 
-                auto tz = request.timezone.value_or("UTC");
-                auto task = global_cron_store().create(*request.name, *request.message,
-                                                       std::move(*expr), std::move(tz));
-                if (!task) return std::unexpected(task.error());
-                return std::format("Created task '{}' (id: {})", (*task)->name, (*task)->id);
+            auto tz = request.timezone.value_or("UTC");
+            auto task = global_cron_store().create(*request.name, *request.message,
+                                                   std::move(*expr), std::move(tz));
+            if (!task) return std::unexpected(task.error());
+            return std::format("Created task '{}' (id: {})", (*task)->name, (*task)->id);
+        }
+        case CronAction::Pause: {
+            if (!request.task_id) return std::unexpected(CronError::TaskNotFound);
+            auto result = global_cron_store().pause(*request.task_id);
+            if (!result) return std::unexpected(result.error());
+            return std::format("Paused task '{}'", *request.task_id);
+        }
+        case CronAction::Resume: {
+            if (!request.task_id) return std::unexpected(CronError::TaskNotFound);
+            auto result = global_cron_store().resume(*request.task_id);
+            if (!result) return std::unexpected(result.error());
+            return std::format("Resumed task '{}'", *request.task_id);
+        }
+        case CronAction::Delete: {
+            if (!request.task_id) return std::unexpected(CronError::TaskNotFound);
+            auto result = global_cron_store().remove(*request.task_id);
+            if (!result) return std::unexpected(result.error());
+            return std::format("Deleted task '{}'", *request.task_id);
+        }
+        case CronAction::Trigger: {
+            if (!request.task_id) return std::unexpected(CronError::TaskNotFound);
+            auto result = global_cron_store().trigger(*request.task_id);
+            if (!result) return std::unexpected(result.error());
+            return std::format("Triggered task '{}'", *request.task_id);
+        }
+        case CronAction::Get: {
+            if (!request.task_id) return std::unexpected(CronError::TaskNotFound);
+            auto task = global_cron_store().get(*request.task_id);
+            if (!task) return std::unexpected(task.error());
+            return std::format("Task '{}': {} [{}]", (*task)->name, (*task)->expression.raw,
+                               (*task)->state == CronTaskState::Active ? "active" : "paused");
+        }
+        case CronAction::List: {
+            auto tasks = global_cron_store().list();
+            std::string output = std::format("Scheduled tasks ({}):\n", tasks.size());
+            for (const auto* task : tasks) {
+                output += std::format("  - {} ({}): {} [{}]\n", task->name, task->id,
+                                      task->expression.raw,
+                                      task->state == CronTaskState::Active ? "active" : "paused");
             }
-            case CronAction::Pause: {
-                if (!request.task_id) return std::unexpected(CronError::TaskNotFound);
-                auto result = global_cron_store().pause(*request.task_id);
-                if (!result) return std::unexpected(result.error());
-                return std::format("Paused task '{}'", *request.task_id);
-            }
-            case CronAction::Resume: {
-                if (!request.task_id) return std::unexpected(CronError::TaskNotFound);
-                auto result = global_cron_store().resume(*request.task_id);
-                if (!result) return std::unexpected(result.error());
-                return std::format("Resumed task '{}'", *request.task_id);
-            }
-            case CronAction::Delete: {
-                if (!request.task_id) return std::unexpected(CronError::TaskNotFound);
-                auto result = global_cron_store().remove(*request.task_id);
-                if (!result) return std::unexpected(result.error());
-                return std::format("Deleted task '{}'", *request.task_id);
-            }
-            case CronAction::Trigger: {
-                if (!request.task_id) return std::unexpected(CronError::TaskNotFound);
-                auto result = global_cron_store().trigger(*request.task_id);
-                if (!result) return std::unexpected(result.error());
-                return std::format("Triggered task '{}'", *request.task_id);
-            }
-            case CronAction::Get: {
-                if (!request.task_id) return std::unexpected(CronError::TaskNotFound);
-                auto task = global_cron_store().get(*request.task_id);
-                if (!task) return std::unexpected(task.error());
-                return std::format("Task '{}': {} [{}]",
-                    (*task)->name, (*task)->expression.raw,
-                    (*task)->state == CronTaskState::Active ? "active" : "paused");
-            }
-            case CronAction::List: {
-                auto tasks = global_cron_store().list();
-                std::string output = std::format("Scheduled tasks ({}):\n", tasks.size());
-                for (const auto* task : tasks) {
-                    output += std::format("  - {} ({}): {} [{}]\n",
-                        task->name, task->id, task->expression.raw,
-                        task->state == CronTaskState::Active ? "active" : "paused");
-                }
-                return output;
-            }
-            default:
-                return std::unexpected(CronError::InvalidAction);
+            return output;
+        }
+        default:
+            return std::unexpected(CronError::InvalidAction);
         }
     }
 
@@ -345,8 +361,9 @@ public:
     }},
     "required": ["action"]
   }}
-}})json", name, description);
+}})json",
+                           name, description);
     }
 };
 
-} // namespace loom::tools
+}  // namespace loom::tools

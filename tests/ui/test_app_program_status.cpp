@@ -1,8 +1,9 @@
 // App ingress/output boundaries exercised through real components and workers.
-#include <gtest/gtest.h>
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/event.hpp>
 #include <ftxui/component/mouse.hpp>
+#include <gtest/gtest.h>
+
 #include "test_ui_helpers.h"
 
 import std;
@@ -23,13 +24,14 @@ class AppProgramStatus : public ::testing::Test {
 protected:
     void SetUp() override {
         storage = std::filesystem::temp_directory_path() /
-            ("loom-status-" + std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
+                  ("loom-status-" +
+                   std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
         loom::core::QueryEngineConfig config;
         config.cwd = std::filesystem::temp_directory_path().string();
         config.context_window.auto_compact = false;
         engine = std::make_unique<loom::core::QueryEngine>(std::move(config), tools);
         app = ftxui::Make<ui::AppAdapter>(engine.get(), nullptr, &commands, storage,
-                                        [this] { exited = true; });
+                                          [this] { exited = true; });
         ui::test_seams(app).start_program_status_for_testing([this](std::string_view bytes) {
             reports.emplace_back(bytes);
             return true;
@@ -38,17 +40,21 @@ protected:
         app->OnEvent(ftxui::Event::Special("\x1b]7501;?\x1b\\"));
         ASSERT_EQ(reports.size(), 2U);
     }
+
     void TearDown() override {
         app.reset();
         engine.reset();
         std::error_code ignored;
         std::filesystem::remove_all(storage, ignored);
     }
+
     void Complete(bool error) {
         ui::test_seams(app).enqueue_program_status_completion_for_testing(error);
         app->OnEvent(ftxui::Event::Custom);
     }
+
     std::string Last() const { return reports.back(); }
+
     loom::core::ToolRegistry tools;
     loom::commands::AppCommandRegistry commands;
     std::unique_ptr<loom::core::QueryEngine> engine;
@@ -57,7 +63,7 @@ protected:
     std::vector<std::string> reports;
     bool exited = false;
 };
-}
+}  // namespace
 
 TEST_F(AppProgramStatus, RenderMayConsumeCompletionButNeverEmits) {
     const auto count = reports.size();
@@ -84,8 +90,8 @@ TEST_F(AppProgramStatus, ControlFocusAndMotionDoNotAcknowledgeButTypingDoes) {
     for (const auto button : {ftxui::Mouse::Left, ftxui::Mouse::Right}) {
         motion.button = button;
         motion.motion = ftxui::Mouse::Pressed;
-        app->OnEvent(ftxui::Event::Mouse(button == ftxui::Mouse::Left ?
-            "\x1b[<32;1;1M" : "\x1b[<34;1;1M", motion));
+        app->OnEvent(ftxui::Event::Mouse(
+            button == ftxui::Mouse::Left ? "\x1b[<32;1;1M" : "\x1b[<34;1;1M", motion));
     }
     EXPECT_EQ(reports.size(), count);
     app->OnEvent(ftxui::Event::Character('x'));
@@ -104,7 +110,8 @@ TEST_F(AppProgramStatus, ControlFocusAndMotionDoNotAcknowledgeButTypingDoes) {
 
 TEST_F(AppProgramStatus, ExitTypingAcknowledgesButReturnPreservesNewOutcome) {
     Complete(false);
-    for (const char ch : std::string_view("/exit")) app->OnEvent(ftxui::Event::Character(ch));
+    for (const char ch : std::string_view("/exit"))
+        app->OnEvent(ftxui::Event::Character(ch));
     EXPECT_NE(Last().find("state=idle"), std::string::npos);
     ASSERT_EQ(ui::test_seams(app).input_text_for_testing(), "/exit");
     Complete(true);
@@ -122,28 +129,36 @@ TEST_F(AppProgramStatus, HiddenPermissionResolutionRestoresRetainedForegroundErr
     std::promise<bool> answer;
     auto answered = answer.get_future();
     std::thread worker([&] {
-        answer.set_value(permission("Write", R"({"file_path":"/tmp/status-only","content":"unused"})"));
+        answer.set_value(
+            permission("Write", R"({"file_path":"/tmp/status-only","content":"unused"})"));
     });
+
     struct StopBeforeJoin {
         std::shared_ptr<ui::AppAdapter>& app;
         std::thread& worker;
+
         ~StopBeforeJoin() {
             (void)ui::test_seams(app).stop_background_workers_for_testing();
             worker.join();
         }
     } cleanup{app, worker};
+
     std::string permission_id;
-    ASSERT_TRUE(wait_until([&] {
-        (void)app->Render();
-        const auto state = ui::test_seams(app).screen_state_for_testing();
-        const auto overlay = state->dialog_store.dialog_queue.peek_overlay();
-        if (!overlay) return false;
-        const auto* request = std::get_if<loom::ui::dialogs::system::ToolPermissionPayload>(&overlay->get());
-        if (!request || request->tool_name != "Write" ||
-            request->description.find("/tmp/status-only") == std::string::npos) return false;
-        permission_id = request->id;
-        return true;
-    }, 2s));
+    ASSERT_TRUE(wait_until(
+        [&] {
+            (void)app->Render();
+            const auto state = ui::test_seams(app).screen_state_for_testing();
+            const auto overlay = state->dialog_store.dialog_queue.peek_overlay();
+            if (!overlay) return false;
+            const auto* request =
+                std::get_if<loom::ui::dialogs::system::ToolPermissionPayload>(&overlay->get());
+            if (!request || request->tool_name != "Write" ||
+                request->description.find("/tmp/status-only") == std::string::npos)
+                return false;
+            permission_id = request->id;
+            return true;
+        },
+        2s));
     app->OnEvent(ftxui::Event::Custom);
     EXPECT_NE(Last().find("state=blocked"), std::string::npos);
     EXPECT_NE(Last().find("kind=permission"), std::string::npos);
@@ -158,10 +173,13 @@ TEST_F(AppProgramStatus, HiddenPermissionResolutionRestoresRetainedForegroundErr
     app->OnEvent(ftxui::Event::Custom);
     const auto state = ui::test_seams(app).screen_state_for_testing();
     const auto overlay = state->dialog_store.dialog_queue.peek_overlay();
-    EXPECT_TRUE(!overlay || std::visit([&](const auto& request) {
-        if constexpr (requires { request.id; }) return request.id != permission_id;
-        return true;
-    }, overlay->get()));
+    EXPECT_TRUE(!overlay || std::visit(
+                                [&](const auto& request) {
+                                    if constexpr (requires { request.id; })
+                                        return request.id != permission_id;
+                                    return true;
+                                },
+                                overlay->get()));
     EXPECT_NE(Last().find("state=error"), std::string::npos);
 }
 

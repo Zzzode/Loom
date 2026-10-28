@@ -24,7 +24,7 @@ namespace loom::commands {
     return std::format("{:.2f} MB ({} KB)", kb / 1024.0, kb);
 }
 
-} // namespace loom::commands
+}  // namespace loom::commands
 
 export namespace loom::commands {
 
@@ -46,9 +46,7 @@ public:
         };
     }
 
-    [[nodiscard]] static VoidResult validate(const CommandContext&) {
-        return {};
-    }
+    [[nodiscard]] static VoidResult validate(const CommandContext&) { return {}; }
 
     [[nodiscard]] static Result<CommandResult> execute(const CommandContext&) {
         std::string report = "Memory diagnostics (native C++ build):\n";
@@ -77,9 +75,7 @@ public:
         return CommandResult::success(std::move(report));
     }
 
-    [[nodiscard]] static std::vector<std::string> complete(std::string_view) {
-        return {};
-    }
+    [[nodiscard]] static std::vector<std::string> complete(std::string_view) { return {}; }
 };
 
-} // namespace loom::commands
+}  // namespace loom::commands

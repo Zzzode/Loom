@@ -9,7 +9,8 @@
 // recompiles one object instead of the importer fan-out.
 module;
 
-#include <sys/types.h> // pid_t member in StdioTransport layout
+#include <sys/types.h>  // pid_t member in StdioTransport layout
+
 #include <cstddef>
 #include <cstdint>
 
@@ -22,7 +23,8 @@ import loom.services.mcp.types;
 export namespace loom::services::mcp {
 
 // Callback types
-using RequestCallback = std::function<void(const std::string& response, std::optional<McpClientError> error)>;
+using RequestCallback =
+    std::function<void(const std::string& response, std::optional<McpClientError> error)>;
 using NotificationCallback = std::function<void(const JsonRpcNotification& notification)>;
 using RootsHandler = std::function<std::vector<Root>()>;
 
@@ -103,9 +105,7 @@ public:
     [[nodiscard]] McpResult<void> send(std::string_view message) override;
     [[nodiscard]] McpResult<std::string> receive() override;
 
-    [[nodiscard]] bool is_connected() const override {
-        return connected_.load();
-    }
+    [[nodiscard]] bool is_connected() const override { return connected_.load(); }
 
     void close() override;
 
@@ -113,14 +113,20 @@ public:
 
 private:
     // URL components
-    struct UrlParts { bool https; std::string host; uint16_t port; std::string path; };
+    struct UrlParts {
+        bool https;
+        std::string host;
+        uint16_t port;
+        std::string path;
+    };
 
     static std::optional<UrlParts> parse_url_parts(std::string_view sv);
     bool parse_url(const std::string& url);
     [[nodiscard]] std::optional<UrlParts> resolve_post_endpoint(std::string_view endpoint) const;
     [[nodiscard]] std::optional<UrlParts> wait_for_post_target();
     static bool send_all(int fd, std::string_view data);
-    [[nodiscard]] McpResult<void> send_post_request(const UrlParts& target, const std::string& body);
+    [[nodiscard]] McpResult<void> send_post_request(const UrlParts& target,
+                                                    const std::string& body);
     [[nodiscard]] McpResult<void> read_http_success_headers(int fd);
     int tcp_connect(const UrlParts& parts);
     void connection_loop(std::stop_token stop);
@@ -128,8 +134,8 @@ private:
     bool send_sse_request(int fd);
     [[nodiscard]] McpResult<void> read_headers(int fd);
     void stream_events(int fd, std::stop_token& stop);
-    static void parse_field(const std::string& line, std::string& event,
-                            std::string& data, std::string& id);
+    static void parse_field(const std::string& line, std::string& event, std::string& data,
+                            std::string& id);
     void sleep_with_backoff(std::stop_token& stop, std::chrono::milliseconds delay);
 
     std::string url_;
@@ -160,7 +166,8 @@ private:
 
 class StreamableHttpTransport : public IMcpTransport {
 public:
-    explicit StreamableHttpTransport(std::string url, std::map<std::string, std::string> headers = {});
+    explicit StreamableHttpTransport(std::string url,
+                                     std::map<std::string, std::string> headers = {});
 
     // Out-of-line destructor (client_http_transport.cpp); see StdioTransport.
     ~StreamableHttpTransport() override;
@@ -169,9 +176,7 @@ public:
     [[nodiscard]] McpResult<void> send(std::string_view message) override;
     [[nodiscard]] McpResult<std::string> receive() override;
 
-    [[nodiscard]] bool is_connected() const override {
-        return connected_.load();
-    }
+    [[nodiscard]] bool is_connected() const override { return connected_.load(); }
 
     void close() override;
 
@@ -194,13 +199,14 @@ private:
     static std::string trim(std::string_view value);
     static bool send_all(int fd, std::string_view data);
     [[nodiscard]] McpResult<HttpResponse> send_post_request(const std::string& body);
-    [[nodiscard]] McpResult<HttpResponse> send_post_request_with_http_client(const std::string& body);
+    [[nodiscard]] McpResult<HttpResponse>
+    send_post_request_with_http_client(const std::string& body);
     [[nodiscard]] static std::optional<HttpResponse> read_http_response(int fd);
     int tcp_connect(const UrlParts& parts);
     void enqueue_response(const HttpResponse& response);
     void enqueue_sse_body(std::string_view body);
-    static void parse_sse_field(const std::string& line, std::string& event,
-                                std::string& data, std::string& id);
+    static void parse_sse_field(const std::string& line, std::string& event, std::string& data,
+                                std::string& id);
     void enqueue_message(std::string message);
 
     std::string url_;
@@ -244,22 +250,19 @@ public:
     ~McpClient();
 
     // Connect to server using stdio transport
-    [[nodiscard]] McpResult<void> connect_stdio(
-        std::string command, std::vector<std::string> args,
-        std::map<std::string, std::string> env = {});
+    [[nodiscard]] McpResult<void> connect_stdio(std::string command, std::vector<std::string> args,
+                                                std::map<std::string, std::string> env = {});
 
     // Connect to server using SSE transport
-    [[nodiscard]] McpResult<void> connect_sse(
-        std::string url, std::map<std::string, std::string> headers = {});
+    [[nodiscard]] McpResult<void> connect_sse(std::string url,
+                                              std::map<std::string, std::string> headers = {});
 
     // Connect to server using streamable HTTP transport
-    [[nodiscard]] McpResult<void> connect_streamable_http(
-        std::string url, std::map<std::string, std::string> headers = {});
+    [[nodiscard]] McpResult<void>
+    connect_streamable_http(std::string url, std::map<std::string, std::string> headers = {});
 
     // Set roots handler for listRoots requests
-    void set_roots_handler(RootsHandler handler) {
-        roots_handler_ = std::move(handler);
-    }
+    void set_roots_handler(RootsHandler handler) { roots_handler_ = std::move(handler); }
 
     // Set notification callback
     void set_notification_callback(NotificationCallback callback) {
@@ -282,20 +285,27 @@ public:
     [[nodiscard]] McpResult<ListPromptsResult> list_prompts();
 
     // Get a specific prompt with arguments
-    [[nodiscard]] McpResult<PromptGetResult> get_prompt(
-        std::string_view name,
-        const std::map<std::string, std::string>& arguments = {});
+    [[nodiscard]] McpResult<PromptGetResult>
+    get_prompt(std::string_view name, const std::map<std::string, std::string>& arguments = {});
 
     // Graceful shutdown
     void shutdown();
 
     // State accessors
     [[nodiscard]] ServerState state() const { return state_; }
+
     [[nodiscard]] bool is_ready() const { return state_ == ServerState::Ready; }
+
     [[nodiscard]] const ServerCapabilities& server_capabilities() const { return server_caps_; }
+
     [[nodiscard]] const ServerInfo& server_info() const { return server_info_; }
+
     [[nodiscard]] const std::vector<McpTool>& cached_tools() const { return cached_tools_; }
-    [[nodiscard]] const std::vector<McpResource>& cached_resources() const { return cached_resources_; }
+
+    [[nodiscard]] const std::vector<McpResource>& cached_resources() const {
+        return cached_resources_;
+    }
+
     [[nodiscard]] const std::vector<McpPrompt>& cached_prompts() const { return cached_prompts_; }
 
 private:
@@ -303,14 +313,12 @@ private:
     [[nodiscard]] McpResult<void> initialize();
 
     // Send a JSON-RPC request and wait for response (synchronous)
-    [[nodiscard]] McpResult<std::string> send_request_sync(
-        std::string_view method, std::optional<std::string> params);
+    [[nodiscard]] McpResult<std::string> send_request_sync(std::string_view method,
+                                                           std::optional<std::string> params);
 
     // Send a JSON-RPC request asynchronously
-    void send_request_async(
-        std::string_view method,
-        std::optional<std::string> params,
-        RequestCallback callback);
+    void send_request_async(std::string_view method, std::optional<std::string> params,
+                            RequestCallback callback);
 
     // Send a JSON-RPC notification (no response expected)
     void send_notification(std::string_view method, std::optional<std::string> params);
@@ -353,4 +361,4 @@ private:
     NotificationCallback notification_callback_;
 };
 
-} // namespace loom::services::mcp
+}  // namespace loom::services::mcp

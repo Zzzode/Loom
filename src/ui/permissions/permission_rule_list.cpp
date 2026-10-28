@@ -6,19 +6,19 @@
 // in the interface).
 module;
 
-#include <cctype>
-#include <cstdlib>
-#include <cstddef>
-#include <cstdint>
-
+#include <ftxui/component/component.hpp>
+#include <ftxui/component/component_base.hpp>
+#include <ftxui/component/event.hpp>
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/dom/node.hpp>
 #include <ftxui/dom/requirement.hpp>
 #include <ftxui/screen/box.hpp>
 #include <ftxui/screen/screen.hpp>
-#include <ftxui/component/component.hpp>
-#include <ftxui/component/component_base.hpp>
-#include <ftxui/component/event.hpp>
+
+#include <cctype>
+#include <cstddef>
+#include <cstdint>
+#include <cstdlib>
 
 module loom.ui.permissions.rule_list;
 
@@ -38,14 +38,14 @@ namespace loom::ui::permissions::rule_list::detail {
 [[nodiscard]] std::array<RuleGroup, 8> DefaultGroups() {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
     return std::array<RuleGroup, 8>{{
-        {"g1", "Recent",     "1", std::string{loom::ui::design::figures::kRefreshArrow}, pal.info},
-        {"g2", "Allowed",    "2", std::string{loom::ui::design::figures::kTick}, pal.success},
-        {"g3", "Ask",        "3", "?", pal.warning},
-        {"g4", "Denied",     "4", std::string{loom::ui::design::figures::kCross}, pal.danger},
-        {"g5", "Workspace",  "5", std::string{loom::ui::design::figures::kFlagIcon}, pal.info},
-        {"g6", "Custom A",   "6", "A", pal.primary},
-        {"g7", "Custom B",   "7", "B", pal.primary},
-        {"g8", "Custom C",   "8", "C", pal.primary},
+        {"g1", "Recent", "1", std::string{loom::ui::design::figures::kRefreshArrow}, pal.info},
+        {"g2", "Allowed", "2", std::string{loom::ui::design::figures::kTick}, pal.success},
+        {"g3", "Ask", "3", "?", pal.warning},
+        {"g4", "Denied", "4", std::string{loom::ui::design::figures::kCross}, pal.danger},
+        {"g5", "Workspace", "5", std::string{loom::ui::design::figures::kFlagIcon}, pal.info},
+        {"g6", "Custom A", "6", "A", pal.primary},
+        {"g7", "Custom B", "7", "B", pal.primary},
+        {"g8", "Custom C", "8", "C", pal.primary},
     }};
 }
 
@@ -64,10 +64,14 @@ namespace loom::ui::permissions::rule_list::detail {
 [[nodiscard]] Color ActionColor(PermissionAction a) {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
     switch (a) {
-        case PermissionAction::Allow:   return pal.success;
-        case PermissionAction::Deny:    return pal.danger;
-        case PermissionAction::Ask:     return pal.warning;
-        case PermissionAction::AskOnce: return pal.warning;
+    case PermissionAction::Allow:
+        return pal.success;
+    case PermissionAction::Deny:
+        return pal.danger;
+    case PermissionAction::Ask:
+        return pal.warning;
+    case PermissionAction::AskOnce:
+        return pal.warning;
     }
     return pal.muted;
 }
@@ -84,9 +88,8 @@ void RefreshFiltered(RuleListState& st) {
         if (st.filters.enabled_only && r.enabled != *st.filters.enabled_only) continue;
         if (st.filters.use_action_filter && r.action != st.filters.action_filter) continue;
         if (!query.empty()) {
-            std::string hay = std::format("{} {} {} {}",
-                r.tool_pattern, r.path_pattern.value_or(""),
-                r.description, r.source);
+            std::string hay = std::format("{} {} {} {}", r.tool_pattern,
+                                          r.path_pattern.value_or(""), r.description, r.source);
             std::transform(hay.begin(), hay.end(), hay.begin(),
                            [](unsigned char c) { return std::tolower(c); });
             if (hay.find(query) == std::string::npos) continue;
@@ -95,11 +98,10 @@ void RefreshFiltered(RuleListState& st) {
     }
     if (!st.filtered.empty())
         st.rule_cursor = std::min(st.rule_cursor, st.filtered.size() - 1);
-    else st.rule_cursor = 0;
-    std::erase_if(st.selected_indexes,
-                  [&](std::size_t s) { return s >= st.filtered.size(); });
-    if (st.anchor_index && *st.anchor_index >= st.filtered.size())
-        st.anchor_index.reset();
+    else
+        st.rule_cursor = 0;
+    std::erase_if(st.selected_indexes, [&](std::size_t s) { return s >= st.filtered.size(); });
+    if (st.anchor_index && *st.anchor_index >= st.filtered.size()) st.anchor_index.reset();
 }
 
 [[nodiscard]] auto GroupCounts(const RuleListState& st) {
@@ -111,12 +113,13 @@ void RefreshFiltered(RuleListState& st) {
         auto it = out.find(r.group_id);
         if (it == out.end()) continue;
         auto& [e, t] = it->second;
-        ++t; if (r.enabled) ++e;
+        ++t;
+        if (r.enabled) ++e;
     }
     return out;
 }
 
-} // namespace loom::ui::permissions::rule_list::detail
+}  // namespace loom::ui::permissions::rule_list::detail
 
 namespace loom::ui::permissions::rule_list::render {
 
@@ -126,7 +129,8 @@ namespace loom::ui::permissions::rule_list::render {
     Elements rows;
     rows.push_back(hbox({
         text("  Groups ") | bold | color(pal.info),
-        filler(), text("(g1..g8) ") | color(pal.muted),
+        filler(),
+        text("(g1..g8) ") | color(pal.muted),
     }));
     rows.push_back(pc::ThinDivider());
 
@@ -140,117 +144,107 @@ namespace loom::ui::permissions::rule_list::render {
             return std::make_pair(std::size_t{0}, std::size_t{0});
         }();
         const bool active = st.filters.group_id == g.id;
-        const bool focus  = (st.focus == FocusZone::Groups &&
-                            gi == st.active_group_idx);
+        const bool focus = (st.focus == FocusZone::Groups && gi == st.active_group_idx);
 
         std::string left_pad = focus ? (std::string{loom::ui::design::figures::kPlay} + " ") : "  ";
-        auto badge = text(std::format(" {}/{} ", en, tot))
-                   | color(pal.muted)
-                   | bgcolor(pal.message_actions_background);
+        auto badge = text(std::format(" {}/{} ", en, tot)) | color(pal.muted) |
+                     bgcolor(pal.message_actions_background);
 
         Elements cells = {
             text(left_pad),
             text(g.icon) | color(g.accent),
             text(" "),
-            text(std::format("[{}] {}", g.hotkey, g.label))
-                | (active ? (bold | color(g.accent)) : color(pal.text)),
+            text(std::format("[{}] {}", g.hotkey, g.label)) |
+                (active ? (bold | color(g.accent)) : color(pal.text)),
             filler(),
             std::move(badge),
         };
-        auto row = hbox(std::move(cells))
-                 | size(WIDTH, EQUAL, detail::kLeftColWidth - 2);
-        if (focus)  row = row | inverted | ftxui::focus;
+        auto row = hbox(std::move(cells)) | size(WIDTH, EQUAL, detail::kLeftColWidth - 2);
+        if (focus) row = row | inverted | ftxui::focus;
         if (active) row = row | bgcolor(pal.perm_rule_bg_hover);
         rows.push_back(std::move(row));
     }
 
     rows.push_back(pc::ThinDivider());
-    rows.push_back(
-        hbox({
-            text(" [Tab] ") | color(pal.info),
-            text("next zone") | color(pal.muted),
-        })
-    );
+    rows.push_back(hbox({
+        text(" [Tab] ") | color(pal.info),
+        text("next zone") | color(pal.muted),
+    }));
 
     auto body = vbox(std::move(rows)) | yflex_grow | yframe;
-    return window(
-        text((" " + std::string{loom::ui::design::figures::kReferenceMark} + " ")) | bold | color(pal.info),
-        body | xflex
-    ) | color(pal.info) | size(WIDTH, EQUAL, detail::kLeftColWidth);
+    return window(text((" " + std::string{loom::ui::design::figures::kReferenceMark} + " ")) |
+                      bold | color(pal.info),
+                  body | xflex) |
+           color(pal.info) | size(WIDTH, EQUAL, detail::kLeftColWidth);
 }
 
 Element RulesHeader() {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
     constexpr int kIdx = 5;
-    constexpr int kSt  = 5;
+    constexpr int kSt = 5;
     constexpr int kTool = 20;
     constexpr int kAct = 10;
     constexpr int kStra = 8;
     constexpr int kSc = 9;
     constexpr int kPrio = 5;
     return hbox({
-        text("  # ") | bold | size(WIDTH, EQUAL, kIdx),
-        text(" On ") | bold | size(WIDTH, EQUAL, kSt),
-        text(" Tool / pattern ") | bold | size(WIDTH, EQUAL, kTool),
-        text(" Action ") | bold | size(WIDTH, EQUAL, kAct),
-        text(" Strategy ") | bold | size(WIDTH, EQUAL, kStra),
-        text(" Scope ") | bold | size(WIDTH, EQUAL, kSc),
-        text(" Pri ") | bold | size(WIDTH, EQUAL, kPrio),
-        text(" Source ") | bold | xflex_grow,
-    }) | bgcolor(pal.perm_rule_bg_selected);
+               text("  # ") | bold | size(WIDTH, EQUAL, kIdx),
+               text(" On ") | bold | size(WIDTH, EQUAL, kSt),
+               text(" Tool / pattern ") | bold | size(WIDTH, EQUAL, kTool),
+               text(" Action ") | bold | size(WIDTH, EQUAL, kAct),
+               text(" Strategy ") | bold | size(WIDTH, EQUAL, kStra),
+               text(" Scope ") | bold | size(WIDTH, EQUAL, kSc),
+               text(" Pri ") | bold | size(WIDTH, EQUAL, kPrio),
+               text(" Source ") | bold | xflex_grow,
+           }) |
+           bgcolor(pal.perm_rule_bg_selected);
 }
 
-[[nodiscard]] Element RuleRow(const RuleEntry& r, std::size_t row_num,
-                                     bool hovered, bool selected, bool editing) {
+[[nodiscard]] Element RuleRow(const RuleEntry& r, std::size_t row_num, bool hovered, bool selected,
+                              bool editing) {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
     constexpr int kIdx = 5;
-    constexpr int kSt  = 5;
+    constexpr int kSt = 5;
     constexpr int kTool = 20;
     constexpr int kAct = 10;
     constexpr int kStra = 8;
     constexpr int kSc = 9;
     constexpr int kPrio = 5;
 
-    Element check   = selected
-        ? text(" [✓]") | color(pal.success) | bold
-        : text("    ") ;
+    Element check = selected ? text(" [✓]") | color(pal.success) | bold : text("    ");
 
-    Element status = r.enabled
-        ? text("  ✓ ") | color(pal.success)
-        : text("  ✕ ") | color(pal.danger);
+    Element status =
+        r.enabled ? text("  ✓ ") | color(pal.success) : text("  ✕ ") | color(pal.danger);
 
-    Element tool = pc::PathLabel(
-        std::format("{}{}{}",
-                    r.tool_pattern,
-                    r.path_pattern ? " ∣ " : "",
-                    r.path_pattern.value_or("")),
-        kTool - 4);
+    Element tool = pc::PathLabel(std::format("{}{}{}", r.tool_pattern, r.path_pattern ? " ∣ " : "",
+                                             r.path_pattern.value_or("")),
+                                 kTool - 4);
     if (!r.path_pattern && !r.description.empty())
-        tool = hbox({tool, text("  ‹") | dim,
-                     pc::PathLabel(r.description, 10) | color(pal.muted),
+        tool = hbox({tool, text("  ‹") | dim, pc::PathLabel(r.description, 10) | color(pal.muted),
                      text("›") | dim});
 
-    Element action = text(std::string{detail::ActionName(r.action)})
-                   | color(detail::ActionColor(r.action))
-                   | bold;
+    Element action = text(std::string{detail::ActionName(r.action)}) |
+                     color(detail::ActionColor(r.action)) | bold;
 
     Element strategy = text(std::string{detail::StrategyName(r.strategy)}) | color(pal.muted);
-    Element scope    = text(std::string{detail::ScopeName(r.scope)}) | color(pal.muted);
+    Element scope = text(std::string{detail::ScopeName(r.scope)}) | color(pal.muted);
     Element priority = text(std::format(" {:>2} ", r.priority)) | color(pal.muted);
 
     Element source = [&]() {
         const auto& pal = *loom::ui::design::theme::current_theme().palette;
         std::string_view s = r.source.empty() ? "—" : std::string_view{r.source};
         Color c = loom::ui::design::theme::current_theme().palette->muted;
-        if (s == "Bundled") c = pal.success;
-        else if (s == "User") c = pal.warning;
-        else if (s == "CustomPath") c = pal.danger;
+        if (s == "Bundled")
+            c = pal.success;
+        else if (s == "User")
+            c = pal.warning;
+        else if (s == "CustomPath")
+            c = pal.danger;
         return text(std::format(" {} ", s)) | color(c);
     }();
 
     Elements cells = {
-        text(std::format(" {:>2} ", row_num))
-            | color(pal.muted) | size(WIDTH, EQUAL, kIdx),
+        text(std::format(" {:>2} ", row_num)) | color(pal.muted) | size(WIDTH, EQUAL, kIdx),
         std::move(check) | size(WIDTH, EQUAL, kSt),
         std::move(tool) | size(WIDTH, EQUAL, kTool),
         std::move(action) | size(WIDTH, EQUAL, kAct),
@@ -261,9 +255,9 @@ Element RulesHeader() {
     };
     auto row = hbox(std::move(cells));
     if (!r.enabled) row = row | color(pal.muted);
-    if (editing)   row = row | color(pal.info);
-    if (selected)  row = row | bgcolor(pal.perm_rule_bg_info);
-    if (hovered)   row = row | inverted | focus;
+    if (editing) row = row | color(pal.info);
+    if (selected) row = row | bgcolor(pal.perm_rule_bg_info);
+    if (hovered) row = row | inverted | focus;
     return row;
 }
 
@@ -278,8 +272,7 @@ Element RulesHeader() {
     else if (st.rule_cursor >= st.vscroll_offset + std::size_t(visible))
         st.vscroll_offset = st.rule_cursor - std::size_t(visible - 1);
     const std::size_t begin = st.vscroll_offset;
-    const std::size_t end   = std::min(begin + std::size_t(visible +
-                                          detail::kVScrollBuffer), total);
+    const std::size_t end = std::min(begin + std::size_t(visible + detail::kVScrollBuffer), total);
 
     Elements header_parts = {
         RulesHeader(),
@@ -291,17 +284,14 @@ Element RulesHeader() {
         for (int i = 0; i < visible; ++i) {
             const auto& pal = *loom::ui::design::theme::current_theme().palette;
             if (i == visible / 2) {
-                empty_els.push_back(
-                    hbox({
-                        filler(),
-                        text(st.search_buf.empty()
-                                 ? "  (no rules — press [n] to add)  "
-                                 : std::format("  (no matches for '{}')  ",
-                                               st.search_buf))
-                            | color(pal.warning),
-                        filler(),
-                    })
-                );
+                empty_els.push_back(hbox({
+                    filler(),
+                    text(st.search_buf.empty()
+                             ? "  (no rules — press [n] to add)  "
+                             : std::format("  (no matches for '{}')  ", st.search_buf)) |
+                        color(pal.warning),
+                    filler(),
+                }));
             } else {
                 empty_els.push_back(text(""));
             }
@@ -311,16 +301,11 @@ Element RulesHeader() {
         Elements rows = std::move(header_parts);
         rows.reserve(visible + 4);
         for (std::size_t di = begin; di < end; ++di) {
-            const bool hovered = (di == st.rule_cursor &&
-                                  st.focus == FocusZone::Rules);
-            const bool selected =
-                std::find(st.selected_indexes.begin(),
-                          st.selected_indexes.end(), di)
-                != st.selected_indexes.end();
-            const bool editing =
-                st.editing_idx && *st.editing_idx == di;
-            rows.push_back(RuleRow(st.input.rules[idx[di]], di + 1,
-                                   hovered, selected, editing));
+            const bool hovered = (di == st.rule_cursor && st.focus == FocusZone::Rules);
+            const bool selected = std::find(st.selected_indexes.begin(), st.selected_indexes.end(),
+                                            di) != st.selected_indexes.end();
+            const bool editing = st.editing_idx && *st.editing_idx == di;
+            rows.push_back(RuleRow(st.input.rules[idx[di]], di + 1, hovered, selected, editing));
         }
         // Pad to fixed visible height
         const std::size_t rendered = end - begin;
@@ -334,27 +319,25 @@ Element RulesHeader() {
     auto batch_chip = [&]() -> Element {
         const auto& pal = *loom::ui::design::theme::current_theme().palette;
         if (st.selected_indexes.empty()) return text("");
-        return text(std::format(" ◈{} selected ",
-                                st.selected_indexes.size()))
-             | color(pal.inverse_text) | bgcolor(pal.info) | bold;
+        return text(std::format(" ◈{} selected ", st.selected_indexes.size())) |
+               color(pal.inverse_text) | bgcolor(pal.info) | bold;
     }();
-    auto search_chip = !st.search_buf.empty()
-        ? text(std::format(" {} '{}' ", loom::ui::design::figures::kInfo, st.search_buf))
-            | color(pal.info)
-        : text("");
+    auto search_chip =
+        !st.search_buf.empty()
+            ? text(std::format(" {} '{}' ", loom::ui::design::figures::kInfo, st.search_buf)) |
+                  color(pal.info)
+            : text("");
 
     Elements footer_parts = {
-        text(st.focus == FocusZone::Rules ? " ▣ Rules" : " ▢ Rules")
-            | color(st.focus == FocusZone::Rules
-                        ? pal.info : pal.muted),
+        text(st.focus == FocusZone::Rules ? " ▣ Rules" : " ▢ Rules") |
+            color(st.focus == FocusZone::Rules ? pal.info : pal.muted),
         text(std::format(" {} / {} ", st.rule_cursor + 1, total)) | color(pal.muted),
         std::move(search_chip),
         filler(),
         std::move(batch_chip),
     };
     if (!st.status_bar_msg.empty()) {
-        footer_parts.push_back(text(std::format(" • {}", st.status_bar_msg))
-                                   | color(pal.warning));
+        footer_parts.push_back(text(std::format(" • {}", st.status_bar_msg)) | color(pal.warning));
     }
     auto footer = hbox(std::move(footer_parts));
 
@@ -363,27 +346,21 @@ Element RulesHeader() {
         Elements top;
         // Search row
         if (st.search_focused) {
-            top.push_back(
-                hbox({
-                    text((" " + std::string{loom::ui::design::figures::kInfo} + " ")) | color(pal.info),
-                    text(st.search_buf.empty()
-                             ? std::string{" (type to filter, Esc cancel) "}
-                             : st.search_buf + "▊")
-                        | color(pal.info) | bold,
-                    filler(),
-                    text(std::format(" {:>3} results ", total)) | color(pal.muted),
-                })
-            );
+            top.push_back(hbox({
+                text((" " + std::string{loom::ui::design::figures::kInfo} + " ")) | color(pal.info),
+                text(st.search_buf.empty() ? std::string{" (type to filter, Esc cancel) "}
+                                           : st.search_buf + "▊") |
+                    color(pal.info) | bold,
+                filler(),
+                text(std::format(" {:>3} results ", total)) | color(pal.muted),
+            }));
         } else {
-            top.push_back(
-                hbox({
-                    text(" Rule list ") | bold | color(pal.info),
-                    filler(),
-                    text(std::format(" {:>3} rules total ",
-                                     st.input.rules.size())) | color(pal.muted),
-                    text("  [/] filter  [n] new  [space] sel  [a] all ") | color(pal.muted),
-                })
-            );
+            top.push_back(hbox({
+                text(" Rule list ") | bold | color(pal.info),
+                filler(),
+                text(std::format(" {:>3} rules total ", st.input.rules.size())) | color(pal.muted),
+                text("  [/] filter  [n] new  [space] sel  [a] all ") | color(pal.muted),
+            }));
         }
         top.push_back(pc::ThinDivider());
         return vbox(std::move(top));
@@ -395,10 +372,11 @@ Element RulesHeader() {
         pc::ThinDivider(),
         footer,
     });
-    return window(
-        text((" " + std::string{loom::ui::design::figures::kQuestionMarkPrefix} + " Permission Rules ")) | bold | color(pal.info),
-        full | xflex_grow
-    ) | color(pal.info);
+    return window(text((" " + std::string{loom::ui::design::figures::kQuestionMarkPrefix} +
+                        " Permission Rules ")) |
+                      bold | color(pal.info),
+                  full | xflex_grow) |
+           color(pal.info);
 }
 
 [[nodiscard]] Element MiniStrategyPicker(const EditorState& ed) {
@@ -413,18 +391,19 @@ Element RulesHeader() {
 
 [[nodiscard]] Element MiniActionPicker(const EditorState& ed) {
     return MiniPicker(ed.action_idx,
-        detail::ActionColor(static_cast<PermissionAction>(ed.action_idx)),
-        detail::kActionNames);
+                      detail::ActionColor(static_cast<PermissionAction>(ed.action_idx)),
+                      detail::kActionNames);
 }
 
-[[nodiscard]] Element EffectivePreview(const RuleEntry* r,
-                                              const std::vector<HitSample>& samples,
-                                              RuleListState& st) {
+[[nodiscard]] Element EffectivePreview(const RuleEntry* r, const std::vector<HitSample>& samples,
+                                       RuleListState& st) {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
     Elements rows;
     rows.push_back(hbox({
         text(" Effective Preview ") | bold | color(pal.primary),
-        filler(), text((" " + std::string{loom::ui::design::figures::kInfo} + " firewall ")) | color(pal.muted),
+        filler(),
+        text((" " + std::string{loom::ui::design::figures::kInfo} + " firewall ")) |
+            color(pal.muted),
     }));
     rows.push_back(pc::ThinDivider());
     if (!r) {
@@ -436,40 +415,35 @@ Element RulesHeader() {
     for (int i = 0; i < shown; ++i) {
         const auto& pal = *loom::ui::design::theme::current_theme().palette;
         const auto& s = samples[i];
-        const bool matched_path = !r->path_pattern ||
-            eng::match_path_pattern(s.test_path, *r->path_pattern,
-                                    r->strategy);
+        const bool matched_path =
+            !r->path_pattern || eng::match_path_pattern(s.test_path, *r->path_pattern, r->strategy);
         const bool matched_tool =
-            eng::match_path_pattern(s.test_tool, r->tool_pattern,
-                                    r->strategy);
+            eng::match_path_pattern(s.test_tool, r->tool_pattern, r->strategy);
         const bool hit = matched_path && matched_tool && r->enabled;
 
-        std::string note = s.note.empty()
-            ? std::format(" #{} tool={}", i + 1, s.test_tool) : s.note;
-        Element outcome = hit
-            ? text(std::format(" ◉ HIT → {} ",
-                               detail::ActionName(r->action)))
-                | color(detail::ActionColor(r->action)) | bold
-            : text(" ○ miss ") | color(pal.muted);
+        std::string note =
+            s.note.empty() ? std::format(" #{} tool={}", i + 1, s.test_tool) : s.note;
+        Element outcome = hit ? text(std::format(" ◉ HIT → {} ", detail::ActionName(r->action))) |
+                                    color(detail::ActionColor(r->action)) | bold
+                              : text(" ○ miss ") | color(pal.muted);
 
-        std::string auth_tag = st.cbs.on_hit_test
-            ? st.cbs.on_hit_test(s, hit) : "";
+        std::string auth_tag = st.cbs.on_hit_test ? st.cbs.on_hit_test(s, hit) : "";
         rows.push_back(vbox({
             hbox({
                 text(std::format(" {} ", i + 1)) | color(pal.muted),
                 pc::PathLabel(s.test_path, 28),
-                filler(), std::move(outcome),
+                filler(),
+                std::move(outcome),
             }),
             hbox({
-                text("    ") | dim, text(note) | color(pal.muted),
+                text("    ") | dim,
+                text(note) | color(pal.muted),
                 auth_tag.empty() ? text("")
-                    : hbox({text("  ") | dim,
-                            text(auth_tag) | color(pal.info)}),
+                                 : hbox({text("  ") | dim, text(auth_tag) | color(pal.info)}),
             }),
         }));
     }
-    return vbox(std::move(rows))
-         | size(WIDTH, EQUAL, detail::kRightColWidth - 2) | xflex_grow;
+    return vbox(std::move(rows)) | size(WIDTH, EQUAL, detail::kRightColWidth - 2) | xflex_grow;
 }
 
 [[nodiscard]] Element EditorColumn(RuleListState& st) {
@@ -484,9 +458,8 @@ Element RulesHeader() {
     for (std::size_t gi = 0; gi < st.input.groups.size(); ++gi) {
         const auto& g = st.input.groups[gi];
         const bool sel = std::size_t(st.editor.group_idx) == gi;
-        auto e = text(std::format("{}", g.icon))
-               | (sel ? (bold | color(g.accent) | inverted)
-                      : color(g.accent) | dim);
+        auto e = text(std::format("{}", g.icon)) |
+                 (sel ? (bold | color(g.accent) | inverted) : color(g.accent) | dim);
         group_els.push_back(std::move(e));
         if (gi + 1 < st.input.groups.size()) group_els.push_back(text("·"));
     }
@@ -496,43 +469,37 @@ Element RulesHeader() {
         const auto& p = st.editor.pattern_buf;
         return hbox({
             text("pattern: ") | color(pal.muted),
-            text(p.empty() ? std::string{"(type with [e] + Tab)"} : p)
-                | color(pal.warning) | bold,
+            text(p.empty() ? std::string{"(type with [e] + Tab)"} : p) | color(pal.warning) | bold,
         });
     }();
 
     auto tools_line = [&]() {
-        if (st.editor.selected_tools.empty())
-            return text("tools:   (all)  ") | color(pal.muted);
+        if (st.editor.selected_tools.empty()) return text("tools:   (all)  ") | color(pal.muted);
         Elements cells = {text("tools:   ") | color(pal.muted)};
         for (std::size_t i = 0; i < st.editor.selected_tools.size(); ++i) {
             const auto& pal = *loom::ui::design::theme::current_theme().palette;
             const auto& t = st.editor.selected_tools[i];
-            cells.push_back(
-                hbox({
-                    text("[") | dim,
-                    text(t.substr(0, 4)) | color(pal.primary),
-                    text("]") | dim,
-                })
-            );
+            cells.push_back(hbox({
+                text("[") | dim,
+                text(t.substr(0, 4)) | color(pal.primary),
+                text("]") | dim,
+            }));
         }
         return hbox(std::move(cells));
     }();
 
     // 3-line description editor (word-wrapped)
-    auto desc_lines = SoftWrap(st.editor.description_buf,
-                               detail::kDescriptionCols);
+    auto desc_lines = SoftWrap(st.editor.description_buf, detail::kDescriptionCols);
     Elements desc_row;
     desc_row.push_back(text("desc:    ") | color(pal.muted));
     Elements desc_body;
     for (auto& l : desc_lines) {
-        if (l.empty()) l = " " ;
+        if (l.empty()) l = " ";
         desc_body.push_back(text("   " + l) | color(pal.muted));
     }
     auto desc_block =
-        hbox({text("desc: ") | color(pal.muted),
-              vbox(std::move(desc_body)) | xflex_grow})
-        | size(WIDTH, EQUAL, detail::kRightColWidth - 6);
+        hbox({text("desc: ") | color(pal.muted), vbox(std::move(desc_body)) | xflex_grow}) |
+        size(WIDTH, EQUAL, detail::kRightColWidth - 6);
 
     auto head = hbox({
         text(" Rule Editor ") | bold | color(pal.info),
@@ -543,88 +510,67 @@ Element RulesHeader() {
     Elements body_rows;
     body_rows.push_back(head);
     body_rows.push_back(pc::ThinDivider());
-    body_rows.push_back(
-        hbox({
-            text("group: ") | color(pal.muted),
-            hbox(std::move(group_els)),
-            filler(),
-            editing
-                ? pc::RiskPill(static_cast<pc::RiskLevel>(
-                      editing->action == PermissionAction::Allow     ? 0
-                    : editing->action == PermissionAction::Ask       ? 1
-                    : editing->action == PermissionAction::Deny      ? 2
-                                                                      : 3))
+    body_rows.push_back(hbox({
+        text("group: ") | color(pal.muted),
+        hbox(std::move(group_els)),
+        filler(),
+        editing ? pc::RiskPill(
+                      static_cast<pc::RiskLevel>(editing->action == PermissionAction::Allow  ? 0
+                                                 : editing->action == PermissionAction::Ask  ? 1
+                                                 : editing->action == PermissionAction::Deny ? 2
+                                                                                             : 3))
                 : text(""),
-        })
-    );
+    }));
     body_rows.push_back(std::move(pattern_line));
     body_rows.push_back(std::move(tools_line));
-    body_rows.push_back(
-        hbox({text("strat: ") | color(pal.muted), MiniStrategyPicker(st.editor)})
-    );
-    body_rows.push_back(
-        hbox({text("scope: ") | color(pal.muted), MiniScopePicker(st.editor)})
-    );
-    body_rows.push_back(
-        hbox({text("action:") | color(pal.muted), MiniActionPicker(st.editor)})
-    );
+    body_rows.push_back(hbox({text("strat: ") | color(pal.muted), MiniStrategyPicker(st.editor)}));
+    body_rows.push_back(hbox({text("scope: ") | color(pal.muted), MiniScopePicker(st.editor)}));
+    body_rows.push_back(hbox({text("action:") | color(pal.muted), MiniActionPicker(st.editor)}));
     body_rows.push_back(std::move(desc_block));
     body_rows.push_back(pc::ThinDivider());
     body_rows.push_back(EffectivePreview(editing, st.hit_samples, st));
 
     body_rows.push_back(pc::ThinDivider());
-    body_rows.push_back(
-        hbox({
-            text(" [Ctrl+s] save ") | color(pal.info),
-            text(" [Esc] abandon ") | color(pal.muted),
-            filler(),
-            text(editing ? std::format(" id {} ", editing->id)
-                                    .substr(0, 16) : std::string{" (new) "})
-                | color(pal.muted),
-        })
-    );
+    body_rows.push_back(hbox({
+        text(" [Ctrl+s] save ") | color(pal.info),
+        text(" [Esc] abandon ") | color(pal.muted),
+        filler(),
+        text(editing ? std::format(" id {} ", editing->id).substr(0, 16) : std::string{" (new) "}) |
+            color(pal.muted),
+    }));
 
     auto body = vbox(std::move(body_rows)) | yflex_grow | yframe;
-    return window(
-        text(" ✎ Editor ") | bold | color(pal.info),
-        body | xflex_grow
-    ) | color(pal.info) | size(WIDTH, EQUAL, detail::kRightColWidth);
+    return window(text(" ✎ Editor ") | bold | color(pal.info), body | xflex_grow) |
+           color(pal.info) | size(WIDTH, EQUAL, detail::kRightColWidth);
 }
 
 [[nodiscard]] Element Toolbar(RuleListState& st) {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
-    static constexpr std::array<std::string_view, 4> kLabels = {
-        "+ New rule", "⤴ Import", "⤵ Export", "⎺ JSON diff"
-    };
-    const std::array<Color, 4> kColors = {
-        pal.success, pal.info, pal.info, pal.primary
-    };
+    static constexpr std::array<std::string_view, 4> kLabels = {"+ New rule", "⤴ Import",
+                                                                "⤵ Export", "⎺ JSON diff"};
+    const std::array<Color, 4> kColors = {pal.success, pal.info, pal.info, pal.primary};
     Elements cells;
     cells.push_back(text(" "));
     for (int i = 0; i < 4; ++i) {
-        const bool hovered = (st.focus == FocusZone::Toolbar &&
-                              st.toolbar_cursor == i);
-        auto chip = text(std::format(" {} ", kLabels[i]))
-                  | color(kColors[i]);
-        if (hovered) chip = chip | bold | inverted;
-        else         chip = chip | color(pal.muted);
+        const bool hovered = (st.focus == FocusZone::Toolbar && st.toolbar_cursor == i);
+        auto chip = text(std::format(" {} ", kLabels[i])) | color(kColors[i]);
+        if (hovered)
+            chip = chip | bold | inverted;
+        else
+            chip = chip | color(pal.muted);
         cells.push_back(std::move(chip));
         if (i < 3) cells.push_back(text("   "));
     }
     cells.push_back(filler());
-    cells.push_back(
-        text(" [n/i/e/d] trigger • [Tab] cycle focus ") | color(pal.muted)
-    );
-    return hbox(std::move(cells))
-         | bgcolor(pal.background)
-         | borderDashed | color(pal.muted);
+    cells.push_back(text(" [n/i/e/d] trigger • [Tab] cycle focus ") | color(pal.muted));
+    return hbox(std::move(cells)) | bgcolor(pal.background) | borderDashed | color(pal.muted);
 }
 
 [[nodiscard]] Element ImportOverlay(RuleListState& st) {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
     std::string hint = st.import_buf.empty()
-        ? std::string{"  (paste JSON, Ctrl+v / [Enter] submit, Esc cancel)  "}
-        : st.import_buf;
+                           ? std::string{"  (paste JSON, Ctrl+v / [Enter] submit, Esc cancel)  "}
+                           : st.import_buf;
     if (hint.size() > 70) hint = hint.substr(0, 67) + "...";
     return dbox({
         text("") | clear_under,
@@ -633,18 +579,17 @@ Element RulesHeader() {
             vbox({
                 text(" Paste a JSON array of rule objects ") | color(pal.muted),
                 pc::ThinDivider(),
-                text(std::string{" "} + hint + std::string{"▊"})
-                    | color(pal.warning) | bold,
+                text(std::string{" "} + hint + std::string{"▊"}) | color(pal.warning) | bold,
                 pc::ThinDivider(),
                 hbox({
                     text(" [Enter] import ") | color(pal.info),
                     text(" [Esc] cancel ") | color(pal.muted),
                     filler(),
-                    text(std::format(" {} bytes typed ",
-                                     st.import_buf.size())) | color(pal.muted),
+                    text(std::format(" {} bytes typed ", st.import_buf.size())) | color(pal.muted),
                 }),
-            }) | size(WIDTH, EQUAL, 80) | size(HEIGHT, EQUAL, 8)
-        ) | color(pal.info),
+            }) | size(WIDTH, EQUAL, 80) |
+                size(HEIGHT, EQUAL, 8)) |
+            color(pal.info),
     });
 }
 
@@ -654,26 +599,26 @@ Element RulesHeader() {
     std::istringstream iss_new(st.diff_new);
     std::vector<std::string> old_lines, new_lines;
     std::string line;
-    while (std::getline(iss_old, line)) old_lines.push_back(line);
-    while (std::getline(iss_new, line)) new_lines.push_back(line);
+    while (std::getline(iss_old, line))
+        old_lines.push_back(line);
+    while (std::getline(iss_new, line))
+        new_lines.push_back(line);
 
     sd::StructuredPatchHunk hunk;
-    hunk.old_start = 1; hunk.old_lines = (int)old_lines.size();
-    hunk.new_start = 1; hunk.new_lines = (int)new_lines.size();
+    hunk.old_start = 1;
+    hunk.old_lines = (int)old_lines.size();
+    hunk.new_start = 1;
+    hunk.new_lines = (int)new_lines.size();
     hunk.header = "@@ rules JSON before/after import @@";
     for (std::size_t i = 0; i < old_lines.size(); ++i) {
         using L = sd::StructuredDiffLine::Type;
-        hunk.lines.push_back(sd::StructuredDiffLine{
-            L::Removed, old_lines[i],
-            (int)i + 1, std::nullopt, {}
-        });
+        hunk.lines.push_back(
+            sd::StructuredDiffLine{L::Removed, old_lines[i], (int)i + 1, std::nullopt, {}});
     }
     for (std::size_t i = 0; i < new_lines.size(); ++i) {
         using L = sd::StructuredDiffLine::Type;
-        hunk.lines.push_back(sd::StructuredDiffLine{
-            L::Added, new_lines[i],
-            std::nullopt, (int)i + 1, {}
-        });
+        hunk.lines.push_back(
+            sd::StructuredDiffLine{L::Added, new_lines[i], std::nullopt, (int)i + 1, {}});
     }
 
     sd::DiffDetailViewProps dp;
@@ -689,43 +634,45 @@ Element RulesHeader() {
 
     return dbox({
         text("") | clear_under,
-        window(
-            text(" ⎺ Rules JSON Diff — [Esc] close ")
-                | bold | color(pal.primary),
-            vbox({
-                diff_el | yflex_grow | yframe | size(HEIGHT, GREATER_THAN, 20),
-            }) | size(WIDTH, GREATER_THAN, 80)
-        ) | color(pal.primary),
+        window(text(" ⎺ Rules JSON Diff — [Esc] close ") | bold | color(pal.primary),
+               vbox({
+                   diff_el | yflex_grow | yframe | size(HEIGHT, GREATER_THAN, 20),
+               }) | size(WIDTH, GREATER_THAN, 80)) |
+            color(pal.primary),
     });
 }
 
-} // namespace loom::ui::permissions::rule_list::render
+}  // namespace loom::ui::permissions::rule_list::render
 
 namespace loom::ui::permissions::rule_list {
 
 [[nodiscard]] Element RenderRuleList(std::shared_ptr<RuleListState> st) {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
     auto top = hbox({
-        text((" " + std::string{loom::ui::design::figures::kQuestionMarkPrefix} + " Permission Rule List ")) | bold | color(pal.primary),
+        text((" " + std::string{loom::ui::design::figures::kQuestionMarkPrefix} +
+              " Permission Rule List ")) |
+            bold | color(pal.primary),
         filler(),
         text(" [Esc] close ") | color(pal.muted),
     });
 
     auto three_col = hbox({
-        render::GroupsColumn(*st),
-        text(" "),
-        render::RulesColumn(*st) | xflex_grow,
-        text(" "),
-        render::EditorColumn(*st),
-    }) | yflex_grow;
+                         render::GroupsColumn(*st),
+                         text(" "),
+                         render::RulesColumn(*st) | xflex_grow,
+                         text(" "),
+                         render::EditorColumn(*st),
+                     }) |
+                     yflex_grow;
 
     Element main = vbox({
-        top,
-        pc::ThinDivider(),
-        three_col | yflex_grow,
-        pc::ThinDivider(),
-        render::Toolbar(*st),
-    }) | yflex_grow;
+                       top,
+                       pc::ThinDivider(),
+                       three_col | yflex_grow,
+                       pc::ThinDivider(),
+                       render::Toolbar(*st),
+                   }) |
+                   yflex_grow;
 
     if (st->focus == FocusZone::ImportModal)
         main = dbox({main, render::ImportOverlay(*st)});
@@ -735,26 +682,22 @@ namespace loom::ui::permissions::rule_list {
     return main;
 }
 
-[[nodiscard]] Component MakePermissionRuleList(
-    RuleListInput input, RuleListCallbacks cbs)
-{
+[[nodiscard]] Component MakePermissionRuleList(RuleListInput input, RuleListCallbacks cbs) {
     auto st = std::make_shared<RuleListState>();
     st->input = std::move(input);
-    st->cbs   = std::move(cbs);
+    st->cbs = std::move(cbs);
 
     const bool default_groups = st->input.groups.empty();
     if (default_groups) {
         auto def = detail::DefaultGroups();
         st->input.groups.assign(def.begin(), def.end());
     }
-    if (st->active_group_idx >= st->input.groups.size())
-        st->active_group_idx = 0;
+    if (st->active_group_idx >= st->input.groups.size()) st->active_group_idx = 0;
 
     if (st->input.hit_samples.empty()) {
         st->hit_samples.reserve(3);
-        static constexpr std::array<const char*, 3> kTools = {
-            "FileReadTool", "BashTool", "FileWriteTool"
-        };
+        static constexpr std::array<const char*, 3> kTools = {"FileReadTool", "BashTool",
+                                                              "FileWriteTool"};
         for (int i = 0; i < 3; ++i) {
             st->hit_samples.push_back(HitSample{
                 detail::kDefaultSamples[i],
@@ -770,72 +713,68 @@ namespace loom::ui::permissions::rule_list {
     st->search_buf = st->input.search_query;
     {
         std::ostringstream oss;
-        oss << std::format("// {} rules (before)\n",
-                           st->input.rules.size());
+        oss << std::format("// {} rules (before)\n", st->input.rules.size());
         for (const auto& r : st->input.rules) {
-            oss << std::format(
-                "id={} tool={} path={} strategy={} action={} scope={}\n",
-                r.id, r.tool_pattern,
-                r.path_pattern.value_or("(none)"),
-                detail::StrategyName(r.strategy),
-                detail::ActionName(r.action),
-                detail::ScopeName(r.scope));
+            oss << std::format("id={} tool={} path={} strategy={} action={} scope={}\n", r.id,
+                               r.tool_pattern, r.path_pattern.value_or("(none)"),
+                               detail::StrategyName(r.strategy), detail::ActionName(r.action),
+                               detail::ScopeName(r.scope));
         }
         st->diff_old = oss.str();
-        st->diff_new = st->diff_old;   // no diff initially
+        st->diff_new = st->diff_old;  // no diff initially
     }
 
     detail::RefreshFiltered(*st);
 
     return Renderer([st, default_groups] {
-        if (default_groups) {
-            const auto defaults = detail::DefaultGroups();
-            for (std::size_t i = 0; i < defaults.size(); ++i)
-                st->input.groups[i].accent = defaults[i].accent;
-        }
-        return RenderRuleList(st);
-    })
-         | CatchEvent([st](Event e) -> bool {
-        // Global focus cycle (Tab / Shift+Tab)
-        if (e == Event::Tab) {
-            ev::CycleFocusForward(*st);
-            return true;
-        }
-        if (e == Event::TabReverse) {
-            ev::CycleFocusBack(*st);
-            return true;
-        }
+               if (default_groups) {
+                   const auto defaults = detail::DefaultGroups();
+                   for (std::size_t i = 0; i < defaults.size(); ++i)
+                       st->input.groups[i].accent = defaults[i].accent;
+               }
+               return RenderRuleList(st);
+           }) |
+           CatchEvent([st](Event e) -> bool {
+               // Global focus cycle (Tab / Shift+Tab)
+               if (e == Event::Tab) {
+                   ev::CycleFocusForward(*st);
+                   return true;
+               }
+               if (e == Event::TabReverse) {
+                   ev::CycleFocusBack(*st);
+                   return true;
+               }
 
-        // Zone-specific handlers
-        switch (st->focus) {
-            case FocusZone::ImportModal:
-                if (ev::HandleImportModal(*st, e)) return true;
-                break;
-            case FocusZone::DiffModal:
-                if (ev::HandleDiffModal(*st, e)) return true;
-                break;
-            case FocusZone::Groups:
-                if (ev::HandleGroups(*st, e)) return true;
-                break;
-            case FocusZone::Rules:
-                if (ev::HandleRules(*st, e)) return true;
-                break;
-            case FocusZone::Editor:
-                if (ev::HandleEditor(*st, e)) return true;
-                break;
-            case FocusZone::Toolbar:
-                if (ev::HandleToolbar(*st, e)) return true;
-                break;
-        }
+               // Zone-specific handlers
+               switch (st->focus) {
+               case FocusZone::ImportModal:
+                   if (ev::HandleImportModal(*st, e)) return true;
+                   break;
+               case FocusZone::DiffModal:
+                   if (ev::HandleDiffModal(*st, e)) return true;
+                   break;
+               case FocusZone::Groups:
+                   if (ev::HandleGroups(*st, e)) return true;
+                   break;
+               case FocusZone::Rules:
+                   if (ev::HandleRules(*st, e)) return true;
+                   break;
+               case FocusZone::Editor:
+                   if (ev::HandleEditor(*st, e)) return true;
+                   break;
+               case FocusZone::Toolbar:
+                   if (ev::HandleToolbar(*st, e)) return true;
+                   break;
+               }
 
-        // Global Esc → close only when inside a safe zone
-        if (e == Event::Character('q')) {
-            // Leave focus as-is; caller controls lifetime via unmount
-            return true;
-        }
+               // Global Esc → close only when inside a safe zone
+               if (e == Event::Character('q')) {
+                   // Leave focus as-is; caller controls lifetime via unmount
+                   return true;
+               }
 
-        return false;
-    });
+               return false;
+           });
 }
 
 [[nodiscard]] Element CompEl(Component c) {
@@ -844,21 +783,18 @@ namespace loom::ui::permissions::rule_list {
     // (Button, with its box_) stays alive for the returned Element's lifetime.
     // See compel_detail::ComponentHolderNode for why this is required.
     Element el = c->Render();
-    return std::make_shared<compel_detail::ComponentHolderNode>(
-        std::move(c), std::move(el));
+    return std::make_shared<compel_detail::ComponentHolderNode>(std::move(c), std::move(el));
 }
 
-[[nodiscard]] Component BuildRecentDenialsTab(
-    RecentDenialsState state,
-    std::function<void(int idx)> on_allow_once,
-    std::function<void(int idx)> on_always_allow)
-{
-    using ui_tabs_detail::TimeAgo;
+[[nodiscard]] Component BuildRecentDenialsTab(RecentDenialsState state,
+                                              std::function<void(int idx)> on_allow_once,
+                                              std::function<void(int idx)> on_always_allow) {
     using ui_tabs_detail::DenialMatches;
+    using ui_tabs_detail::TimeAgo;
 
     // Shared state cells.
     auto filter_buf = std::make_shared<std::string>();
-    auto cursor     = std::make_shared<int>(0);
+    auto cursor = std::make_shared<int>(0);
     auto filter_active = std::make_shared<bool>(false);
 
     auto data_fn = [state]() -> std::vector<peng::DenialEntry> {
@@ -871,199 +807,193 @@ namespace loom::ui::permissions::rule_list {
         std::vector<peng::DenialEntry> out;
         out.reserve(all.size());
         for (auto& d : all) {
-            if (DenialMatches(d, *filter_buf))
-                out.push_back(std::move(d));
+            if (DenialMatches(d, *filter_buf)) out.push_back(std::move(d));
         }
         return out;
     };
 
-    return Renderer([cursor, filter_buf, filtered_fn, on_allow_once, on_always_allow, filter_active, data_fn] {
-        const auto& pal = *loom::ui::design::theme::current_theme().palette;
-        auto rows = filtered_fn();
-        const int n = static_cast<int>(rows.size());
-        if (*cursor >= n) *cursor = std::max(0, n - 1);
+    return Renderer([cursor, filter_buf, filtered_fn, on_allow_once, on_always_allow, filter_active,
+                     data_fn] {
+               const auto& pal = *loom::ui::design::theme::current_theme().palette;
+               auto rows = filtered_fn();
+               const int n = static_cast<int>(rows.size());
+               if (*cursor >= n) *cursor = std::max(0, n - 1);
 
-        Elements lines;
-        // Header row
-        lines.push_back(hbox({
-            text(" Recent Denials ") | bold | color(pal.danger),
-            text(std::format(" {} ", n))
-                | bold | color(pal.inverse_text) | bgcolor(pal.danger),
-            filler(),
-            text("[j/k] scroll  [a] allow once  [A] always allow  [/] filter")
-                | color(pal.muted),
-        }));
-        lines.push_back(pc::ThinDivider());
+               Elements lines;
+               // Header row
+               lines.push_back(hbox({
+                   text(" Recent Denials ") | bold | color(pal.danger),
+                   text(std::format(" {} ", n)) | bold | color(pal.inverse_text) |
+                       bgcolor(pal.danger),
+                   filler(),
+                   text("[j/k] scroll  [a] allow once  [A] always allow  [/] filter") |
+                       color(pal.muted),
+               }));
+               lines.push_back(pc::ThinDivider());
 
-        // Optional filter row
-        if (!filter_buf->empty() || true) {
-            lines.push_back(hbox({
-                text(" Filter: ") | color(pal.info),
-                text(filter_buf->empty()
-                         ? std::string{"(type / then a query to filter)"}
-                         : *filter_buf + std::string{"| "})
-                    | color(filter_buf->empty()
-                                ? pal.muted : pal.info),
-            }));
-            lines.push_back(pc::ThinDivider());
-        }
+               // Optional filter row
+               if (!filter_buf->empty() || true) {
+                   lines.push_back(hbox({
+                       text(" Filter: ") | color(pal.info),
+                       text(filter_buf->empty() ? std::string{"(type / then a query to filter)"}
+                                                : *filter_buf + std::string{"| "}) |
+                           color(filter_buf->empty() ? pal.muted : pal.info),
+                   }));
+                   lines.push_back(pc::ThinDivider());
+               }
 
-        // Column header
-        lines.push_back(hbox({
-            text(" When ") | bold | color(pal.muted) | size(WIDTH, EQUAL, 10),
-            text(" Tool ") | bold | color(pal.muted) | size(WIDTH, EQUAL, 16),
-            text(" Path / Target ") | bold | color(pal.muted) | xflex_grow,
-            text(" Reason ") | bold | color(pal.muted) | size(WIDTH, EQUAL, 20),
-            text(" Actions ") | bold | color(pal.muted) | size(WIDTH, EQUAL, 22),
-        }));
-        lines.push_back(separator() | dim);
+               // Column header
+               lines.push_back(hbox({
+                   text(" When ") | bold | color(pal.muted) | size(WIDTH, EQUAL, 10),
+                   text(" Tool ") | bold | color(pal.muted) | size(WIDTH, EQUAL, 16),
+                   text(" Path / Target ") | bold | color(pal.muted) | xflex_grow,
+                   text(" Reason ") | bold | color(pal.muted) | size(WIDTH, EQUAL, 20),
+                   text(" Actions ") | bold | color(pal.muted) | size(WIDTH, EQUAL, 22),
+               }));
+               lines.push_back(separator() | dim);
 
-        // Data rows or empty state
-        if (rows.empty()) {
-            for (int i = 0; i < 5; ++i) {
-                const auto& pal = *loom::ui::design::theme::current_theme().palette;
-                if (i == 2) {
-                    lines.push_back(hbox({
-                        filler(),
-                        text(" No permission denials yet ")
-                            | color(pal.success) | center,
-                        filler(),
-                    }));
-                } else {
-                    lines.push_back(text(""));
-                }
-            }
-        } else {
-            for (int i = 0; i < n; ++i) {
-                const auto& pal = *loom::ui::design::theme::current_theme().palette;
-                const auto& d = rows[i];
-                const bool sel = (i == *cursor);
-                Element prefix = sel
-                    ? text("> ") | color(pal.warning)
-                    : text("  ");
-                Element when = text(" " + TimeAgo(d.ts_ms) + " ")
-                    | size(WIDTH, EQUAL, 10)
-                    | (d.resolved ? dim : color(pal.info));
-                Element tool = text(" " + d.tool_name + " ")
-                    | size(WIDTH, EQUAL, 16)
-                    | (sel ? bold : nothing);
-                Element path = pc::PathLabel(
-                    d.path.empty() ? d.action : d.path, 40)
-                    | xflex_grow
-                    | (d.resolved ? dim : nothing);
-                Element reason = pc::PathLabel(d.deny_reason, 18)
-                    | size(WIDTH, EQUAL, 20)
-                    | color(pal.danger)
-                    | (d.resolved ? dim : nothing);
+               // Data rows or empty state
+               if (rows.empty()) {
+                   for (int i = 0; i < 5; ++i) {
+                       const auto& pal = *loom::ui::design::theme::current_theme().palette;
+                       if (i == 2) {
+                           lines.push_back(hbox({
+                               filler(),
+                               text(" No permission denials yet ") | color(pal.success) | center,
+                               filler(),
+                           }));
+                       } else {
+                           lines.push_back(text(""));
+                       }
+                   }
+               } else {
+                   for (int i = 0; i < n; ++i) {
+                       const auto& pal = *loom::ui::design::theme::current_theme().palette;
+                       const auto& d = rows[i];
+                       const bool sel = (i == *cursor);
+                       Element prefix = sel ? text("> ") | color(pal.warning) : text("  ");
+                       Element when = text(" " + TimeAgo(d.ts_ms) + " ") | size(WIDTH, EQUAL, 10) |
+                                      (d.resolved ? dim : color(pal.info));
+                       Element tool = text(" " + d.tool_name + " ") | size(WIDTH, EQUAL, 16) |
+                                      (sel ? bold : nothing);
+                       Element path = pc::PathLabel(d.path.empty() ? d.action : d.path, 40) |
+                                      xflex_grow | (d.resolved ? dim : nothing);
+                       Element reason = pc::PathLabel(d.deny_reason, 18) | size(WIDTH, EQUAL, 20) |
+                                        color(pal.danger) | (d.resolved ? dim : nothing);
 
-                Element btns = hbox({
-                    CompEl(Button(" Allow once ", [on_allow_once, i] {
-                               if (on_allow_once) on_allow_once(i);
-                           }) | color(pal.info) | size(WIDTH, EQUAL, 12)),
-                    text(" "),
-                    CompEl(Button(" Always allow ", [on_always_allow, i] {
-                               if (on_always_allow) on_always_allow(i);
-                           }) | color(pal.success) | size(WIDTH, EQUAL, 14)),
-                }) | size(WIDTH, EQUAL, 22);
+                       Element btns = hbox({
+                                          CompEl(Button(" Allow once ",
+                                                        [on_allow_once, i] {
+                                                            if (on_allow_once) on_allow_once(i);
+                                                        }) |
+                                                 color(pal.info) | size(WIDTH, EQUAL, 12)),
+                                          text(" "),
+                                          CompEl(Button(" Always allow ",
+                                                        [on_always_allow, i] {
+                                                            if (on_always_allow) on_always_allow(i);
+                                                        }) |
+                                                 color(pal.success) | size(WIDTH, EQUAL, 14)),
+                                      }) |
+                                      size(WIDTH, EQUAL, 22);
 
-                Element row = hbox({
-                    std::move(prefix),
-                    std::move(when),
-                    std::move(tool),
-                    std::move(path),
-                    std::move(reason),
-                    std::move(btns),
-                });
-                if (sel) row = row | bgcolor(pal.perm_rule_bg_active);
-                if (d.resolved) row = row | dim;
-                lines.push_back(std::move(row));
-                if (i + 1 < n) lines.push_back(separator() | dim);
-            }
-        }
+                       Element row = hbox({
+                           std::move(prefix),
+                           std::move(when),
+                           std::move(tool),
+                           std::move(path),
+                           std::move(reason),
+                           std::move(btns),
+                       });
+                       if (sel) row = row | bgcolor(pal.perm_rule_bg_active);
+                       if (d.resolved) row = row | dim;
+                       lines.push_back(std::move(row));
+                       if (i + 1 < n) lines.push_back(separator() | dim);
+                   }
+               }
 
-        lines.push_back(pc::ThinDivider());
-        lines.push_back(hbox({
-            text(std::format(" {} total / {} filtered ",
-                             data_fn().size(), n)) | color(pal.muted),
-            filler(),
-            text(filter_buf->empty()
-                     ? std::string{}
-                     : std::format(" filter: '{}' ", *filter_buf))
-                | color(pal.info),
-        }));
-        return vbox(std::move(lines)) | yflex_grow | yframe;
-    }) | CatchEvent([cursor, filter_buf, filter_active](Event e) mutable {
-        // Filter mode (/) uses the '/' key to enter filter mode, after which
-        // printable chars update the filter.  Backspace, Esc still work in
-        // and out of filter mode.
-        if (e == Event::Character('/')) {
-            *filter_active = true;
-            filter_buf->clear();
-            return true;
-        }
-        if (e == Event::Escape) {
-            if (*filter_active) {
-                *filter_active = false;
-                filter_buf->clear();
-            }
-            return true;
-        }
-        if (*filter_active) {
-            if (e == Event::Backspace || e.input() == "\x7f") {
-                if (!filter_buf->empty()) filter_buf->pop_back();
-                return true;
-            }
-            if (e.is_character()) {
-                const char ch = e.character().front();
-                if (std::isprint(static_cast<unsigned char>(ch))) {
-                    *filter_buf += ch;
-                    return true;
-                }
-            }
-            return false;
-        }
-        // Scroll / cursor navigation.
-        if (e == Event::ArrowDown || e == Event::Character('j')) {
-            ++(*cursor); return true;
-        }
-        if (e == Event::ArrowUp   || e == Event::Character('k')) {
-            if (*cursor > 0) --(*cursor);
-            return true;
-        }
-        if (e == Event::Home || e == Event::Character('g')) {
-            *cursor = 0; return true;
-        }
-        if (e == Event::End  || e == Event::Character('G')) {
-            *cursor = 99999; return true; // renderer clamps
-        }
-        return false;
-    });
+               lines.push_back(pc::ThinDivider());
+               lines.push_back(hbox({
+                   text(std::format(" {} total / {} filtered ", data_fn().size(), n)) |
+                       color(pal.muted),
+                   filler(),
+                   text(filter_buf->empty() ? std::string{}
+                                            : std::format(" filter: '{}' ", *filter_buf)) |
+                       color(pal.info),
+               }));
+               return vbox(std::move(lines)) | yflex_grow | yframe;
+           }) |
+           CatchEvent([cursor, filter_buf, filter_active](Event e) mutable {
+               // Filter mode (/) uses the '/' key to enter filter mode, after which
+               // printable chars update the filter.  Backspace, Esc still work in
+               // and out of filter mode.
+               if (e == Event::Character('/')) {
+                   *filter_active = true;
+                   filter_buf->clear();
+                   return true;
+               }
+               if (e == Event::Escape) {
+                   if (*filter_active) {
+                       *filter_active = false;
+                       filter_buf->clear();
+                   }
+                   return true;
+               }
+               if (*filter_active) {
+                   if (e == Event::Backspace || e.input() == "\x7f") {
+                       if (!filter_buf->empty()) filter_buf->pop_back();
+                       return true;
+                   }
+                   if (e.is_character()) {
+                       const char ch = e.character().front();
+                       if (std::isprint(static_cast<unsigned char>(ch))) {
+                           *filter_buf += ch;
+                           return true;
+                       }
+                   }
+                   return false;
+               }
+               // Scroll / cursor navigation.
+               if (e == Event::ArrowDown || e == Event::Character('j')) {
+                   ++(*cursor);
+                   return true;
+               }
+               if (e == Event::ArrowUp || e == Event::Character('k')) {
+                   if (*cursor > 0) --(*cursor);
+                   return true;
+               }
+               if (e == Event::Home || e == Event::Character('g')) {
+                   *cursor = 0;
+                   return true;
+               }
+               if (e == Event::End || e == Event::Character('G')) {
+                   *cursor = 99999;
+                   return true;  // renderer clamps
+               }
+               return false;
+           });
 }
 
-[[nodiscard]] Component BuildWorkspaceTab(
-    WorkspaceState state,
-    std::function<void(const fs::path&, peng::WorkspaceEntry::Policy)> on_add,
-    std::function<void(const fs::path&)> on_remove)
-{
+[[nodiscard]] Component
+BuildWorkspaceTab(WorkspaceState state,
+                  std::function<void(const fs::path&, peng::WorkspaceEntry::Policy)> on_add,
+                  std::function<void(const fs::path&)> on_remove) {
     using ui_tabs_detail::WorkspacePolicyBadge;
     auto cursor = std::make_shared<int>(0);
 
     // Modal state cells shared with BuildAddWorkspaceDirectoryModal and
     // BuildRemoveWorkspaceDirectoryConfirm (both in-scope via Renderer below).
-    auto add_modal_open   = std::make_shared<bool>(false);
-    auto rem_modal_open   = std::make_shared<bool>(false);
-    auto add_result       = std::make_shared<std::expected<void, std::string>>(std::in_place);
-    auto pending_remove   = std::make_shared<std::optional<peng::WorkspaceEntry>>();
+    auto add_modal_open = std::make_shared<bool>(false);
+    auto rem_modal_open = std::make_shared<bool>(false);
+    auto add_result = std::make_shared<std::expected<void, std::string>>(std::in_place);
+    auto pending_remove = std::make_shared<std::optional<peng::WorkspaceEntry>>();
 
     auto list_fn = [state]() -> std::vector<peng::WorkspaceEntry> {
         if (state.entries.has_value()) return *state.entries;
         return peng::workspace_directories();
     };
 
-    auto do_add = [add_modal_open, add_result, on_add](
-        fs::path p,
-        peng::WorkspaceEntry::Policy pol)
-    {
+    auto do_add = [add_modal_open, add_result, on_add](fs::path p,
+                                                       peng::WorkspaceEntry::Policy pol) {
         *add_modal_open = false;
         if (on_add) {
             on_add(std::move(p), pol);
@@ -1078,8 +1008,10 @@ namespace loom::ui::permissions::rule_list {
         bool removed = true;
         if (yes && pending_remove->has_value()) {
             const auto p = (*pending_remove)->path;
-            if (on_remove) on_remove(p);
-            else removed = peng::remove_workspace_dir(p);
+            if (on_remove)
+                on_remove(p);
+            else
+                removed = peng::remove_workspace_dir(p);
         }
         if (!removed) {
             return;
@@ -1088,140 +1020,140 @@ namespace loom::ui::permissions::rule_list {
         *rem_modal_open = false;
     };
 
-    return Renderer([cursor, list_fn, add_modal_open, rem_modal_open,
-                     add_result, pending_remove, on_remove,
-                     do_add, do_remove] {
-        const auto& pal = *loom::ui::design::theme::current_theme().palette;
-        auto rows = list_fn();
-        const int n = static_cast<int>(rows.size());
-        if (*cursor >= n) *cursor = std::max(0, n - 1);
+    return Renderer([cursor, list_fn, add_modal_open, rem_modal_open, add_result, pending_remove,
+                     on_remove, do_add, do_remove] {
+               const auto& pal = *loom::ui::design::theme::current_theme().palette;
+               auto rows = list_fn();
+               const int n = static_cast<int>(rows.size());
+               if (*cursor >= n) *cursor = std::max(0, n - 1);
 
-        Elements lines;
-        lines.push_back(hbox({
-            text(" Workspaces ") | bold | color(pal.info),
-            text(std::format(" {} ", n)) | color(pal.muted),
-            filler(),
-            CompEl(Button(" + Add directory ", [add_modal_open] {
-                *add_modal_open = true;
-            }) | color(pal.success) | bold),
-        }));
-        lines.push_back(pc::ThinDivider());
+               Elements lines;
+               lines.push_back(hbox({
+                   text(" Workspaces ") | bold | color(pal.info),
+                   text(std::format(" {} ", n)) | color(pal.muted),
+                   filler(),
+                   CompEl(
+                       Button(" + Add directory ", [add_modal_open] { *add_modal_open = true; }) |
+                       color(pal.success) | bold),
+               }));
+               lines.push_back(pc::ThinDivider());
 
-        // Columns: policy / path / default-badge / remove button
-        lines.push_back(hbox({
-            text(" Policy ") | bold | color(pal.muted) | size(WIDTH, EQUAL, 12),
-            text(" Path ")   | bold | color(pal.muted) | xflex_grow,
-            text(" ")        | bold | dim | size(WIDTH, EQUAL, 10),
-            text(" Action ") | bold | color(pal.muted) | size(WIDTH, EQUAL, 12),
-        }));
-        lines.push_back(separator() | dim);
+               // Columns: policy / path / default-badge / remove button
+               lines.push_back(hbox({
+                   text(" Policy ") | bold | color(pal.muted) | size(WIDTH, EQUAL, 12),
+                   text(" Path ") | bold | color(pal.muted) | xflex_grow,
+                   text(" ") | bold | dim | size(WIDTH, EQUAL, 10),
+                   text(" Action ") | bold | color(pal.muted) | size(WIDTH, EQUAL, 12),
+               }));
+               lines.push_back(separator() | dim);
 
-        if (rows.empty()) {
-            for (int i = 0; i < 4; ++i) {
-                const auto& pal = *loom::ui::design::theme::current_theme().palette;
-                if (i == 1) {
-                    lines.push_back(hbox({
-                        filler(),
-                        text(" No workspace directories yet — click [+ Add] ")
-                            | color(pal.warning),
-                        filler(),
-                    }));
-                } else lines.push_back(text(""));
-            }
-        } else {
-            for (int i = 0; i < n; ++i) {
-                const auto& pal = *loom::ui::design::theme::current_theme().palette;
-                const auto& w = rows[i];
-                const bool sel = (i == *cursor);
-                Element prefix = sel ? text("> ") | color(pal.warning)
-                                     : text("  ");
-                Element badge = WorkspacePolicyBadge(w.policy, w.is_default)
-                              | size(WIDTH, EQUAL, 12);
-                Element path_el = pc::PathLabel(
-                    w.path.string(), 60) | xflex_grow;
-                Element def_el = w.is_default
-                    ? text(" DEFAULT ") | color(pal.muted)
-                                       | size(WIDTH, EQUAL, 10)
-                    : text("") | size(WIDTH, EQUAL, 10);
+               if (rows.empty()) {
+                   for (int i = 0; i < 4; ++i) {
+                       const auto& pal = *loom::ui::design::theme::current_theme().palette;
+                       if (i == 1) {
+                           lines.push_back(hbox({
+                               filler(),
+                               text(" No workspace directories yet — click [+ Add] ") |
+                                   color(pal.warning),
+                               filler(),
+                           }));
+                       } else
+                           lines.push_back(text(""));
+                   }
+               } else {
+                   for (int i = 0; i < n; ++i) {
+                       const auto& pal = *loom::ui::design::theme::current_theme().palette;
+                       const auto& w = rows[i];
+                       const bool sel = (i == *cursor);
+                       Element prefix = sel ? text("> ") | color(pal.warning) : text("  ");
+                       Element badge =
+                           WorkspacePolicyBadge(w.policy, w.is_default) | size(WIDTH, EQUAL, 12);
+                       Element path_el = pc::PathLabel(w.path.string(), 60) | xflex_grow;
+                       Element def_el = w.is_default ? text(" DEFAULT ") | color(pal.muted) |
+                                                           size(WIDTH, EQUAL, 10)
+                                                     : text("") | size(WIDTH, EQUAL, 10);
 
-                auto rem_lambda = [rem_modal_open, pending_remove, w_copy = w] {
-                    *pending_remove = w_copy;
-                    *rem_modal_open = true;
-                };
-                auto btn = Button(" Remove ", std::move(rem_lambda))
-                         | color(pal.danger)
-                         | size(WIDTH, EQUAL, 12);
-                if (w.is_default) btn = btn | dim; // disabled visual
+                       auto rem_lambda = [rem_modal_open, pending_remove, w_copy = w] {
+                           *pending_remove = w_copy;
+                           *rem_modal_open = true;
+                       };
+                       auto btn = Button(" Remove ", std::move(rem_lambda)) | color(pal.danger) |
+                                  size(WIDTH, EQUAL, 12);
+                       if (w.is_default) btn = btn | dim;  // disabled visual
 
-                Element row = hbox({
-                    std::move(prefix),
-                    std::move(badge),
-                    std::move(path_el),
-                    std::move(def_el),
-                    CompEl(std::move(btn)),
-                });
-                if (sel) row = row | bgcolor(pal.perm_rule_bg_accent);
-                lines.push_back(std::move(row));
-                if (i + 1 < n) lines.push_back(separator() | dim);
-            }
-        }
+                       Element row = hbox({
+                           std::move(prefix),
+                           std::move(badge),
+                           std::move(path_el),
+                           std::move(def_el),
+                           CompEl(std::move(btn)),
+                       });
+                       if (sel) row = row | bgcolor(pal.perm_rule_bg_accent);
+                       lines.push_back(std::move(row));
+                       if (i + 1 < n) lines.push_back(separator() | dim);
+                   }
+               }
 
-        lines.push_back(pc::ThinDivider());
-        lines.push_back(hbox({
-            text(" [j/k] navigate  [+] add  [x] remove ") | color(pal.muted),
-            filler(),
-            text(" Default entries cannot be removed ") | color(pal.muted),
-        }));
+               lines.push_back(pc::ThinDivider());
+               lines.push_back(hbox({
+                   text(" [j/k] navigate  [+] add  [x] remove ") | color(pal.muted),
+                   filler(),
+                   text(" Default entries cannot be removed ") | color(pal.muted),
+               }));
 
-        Element body = vbox(std::move(lines)) | yflex_grow | yframe;
+               Element body = vbox(std::move(lines)) | yflex_grow | yframe;
 
-        // Overlay modals on top using dbox
-        if (*add_modal_open) {
-            auto modal = BuildAddWorkspaceDirectoryModal(
-                *add_modal_open, add_result, do_add,
-                [add_modal_open] { *add_modal_open = false; });
-            body = dbox({body, modal->Render()});
-        }
-        if (*rem_modal_open && pending_remove->has_value()) {
-            auto modal = BuildRemoveWorkspaceDirectoryConfirm(
-                *rem_modal_open, **pending_remove,
-                [do_remove] { do_remove(true); },
-                [do_remove] { do_remove(false); });
-            body = dbox({body, modal->Render()});
-        }
+               // Overlay modals on top using dbox
+               if (*add_modal_open) {
+                   auto modal = BuildAddWorkspaceDirectoryModal(
+                       *add_modal_open, add_result, do_add,
+                       [add_modal_open] { *add_modal_open = false; });
+                   body = dbox({body, modal->Render()});
+               }
+               if (*rem_modal_open && pending_remove->has_value()) {
+                   auto modal = BuildRemoveWorkspaceDirectoryConfirm(
+                       *rem_modal_open, **pending_remove, [do_remove] { do_remove(true); },
+                       [do_remove] { do_remove(false); });
+                   body = dbox({body, modal->Render()});
+               }
 
-        return body;
-    }) | CatchEvent([cursor, list_fn, add_modal_open, rem_modal_open](Event e) {
-        if (e == Event::ArrowDown || e == Event::Character('j')) {
-            ++(*cursor); return true;
-        }
-        if (e == Event::ArrowUp || e == Event::Character('k')) {
-            if (*cursor > 0) --(*cursor);
-            return true;
-        }
-        if (e == Event::Character('+') || e == Event::Character('n')) {
-            *add_modal_open = true; return true;
-        }
-        if (e == Event::Character('x') || e == Event::Delete) {
-            *rem_modal_open = true; return true;
-        }
-        return false;
-    });
+               return body;
+           }) |
+           CatchEvent([cursor, list_fn, add_modal_open, rem_modal_open](Event e) {
+               if (e == Event::ArrowDown || e == Event::Character('j')) {
+                   ++(*cursor);
+                   return true;
+               }
+               if (e == Event::ArrowUp || e == Event::Character('k')) {
+                   if (*cursor > 0) --(*cursor);
+                   return true;
+               }
+               if (e == Event::Character('+') || e == Event::Character('n')) {
+                   *add_modal_open = true;
+                   return true;
+               }
+               if (e == Event::Character('x') || e == Event::Delete) {
+                   *rem_modal_open = true;
+                   return true;
+               }
+               return false;
+           });
 }
 
-[[nodiscard]] Component BuildAddWorkspaceDirectoryModal(
-    bool& open,
-    std::shared_ptr<std::expected<void, std::string>> result_ref,
-    std::function<void(fs::path, peng::WorkspaceEntry::Policy)> on_ok,
-    std::function<void()> on_cancel)
-{
+[[nodiscard]] Component
+BuildAddWorkspaceDirectoryModal(bool& open,
+                                std::shared_ptr<std::expected<void, std::string>> result_ref,
+                                std::function<void(fs::path, peng::WorkspaceEntry::Policy)> on_ok,
+                                std::function<void()> on_cancel) {
     using ui_tabs_detail::DialogFrame;
 
     // Form state cells shared across renders.
-    auto path_buf   = std::make_shared<std::string>();
-    auto policy_idx = std::make_shared<int>(0); // 0=Allow 1=Deny 2=Default
+    auto path_buf = std::make_shared<std::string>();
+    auto policy_idx = std::make_shared<int>(0);  // 0=Allow 1=Deny 2=Default
     static constexpr std::array<const char*, 3> kPolicies = {
-        "Allow", "Deny", "Default",
+        "Allow",
+        "Deny",
+        "Default",
     };
 
     // Detect duplicate paths in the current workspace list.
@@ -1239,8 +1171,7 @@ namespace loom::ui::permissions::rule_list {
 
     auto submit = [&open, path_buf, policy_idx, on_ok, result_ref, is_duplicate]() {
         if (path_buf->empty()) {
-            *result_ref = std::unexpected(
-                std::string{"directory path is required"});
+            *result_ref = std::unexpected(std::string{"directory path is required"});
             return;
         }
         const auto dup = is_duplicate();
@@ -1250,115 +1181,125 @@ namespace loom::ui::permissions::rule_list {
         }
         auto pol = peng::WorkspaceEntry::Policy::Allow;
         switch (*policy_idx) {
-            case 0: pol = peng::WorkspaceEntry::Policy::Allow; break;
-            case 1: pol = peng::WorkspaceEntry::Policy::Deny;  break;
-            case 2: pol = peng::WorkspaceEntry::Policy::Default; break;
+        case 0:
+            pol = peng::WorkspaceEntry::Policy::Allow;
+            break;
+        case 1:
+            pol = peng::WorkspaceEntry::Policy::Deny;
+            break;
+        case 2:
+            pol = peng::WorkspaceEntry::Policy::Default;
+            break;
         }
         if (on_ok) on_ok(fs::path{*path_buf}, pol);
         *result_ref = {};
         open = false;
     };
 
-    return Renderer([&open, path_buf, policy_idx, on_cancel, submit,
-                     is_duplicate, result_ref] {
-        const auto& pal = *loom::ui::design::theme::current_theme().palette;
-        const auto dup_msg = is_duplicate();
-        Element dup_line = dup_msg.has_value()
-            ? text(" ! " + *dup_msg) | color(pal.danger) | bold
-            : text("");
+    return Renderer([&open, path_buf, policy_idx, on_cancel, submit, is_duplicate, result_ref] {
+               const auto& pal = *loom::ui::design::theme::current_theme().palette;
+               const auto dup_msg = is_duplicate();
+               Element dup_line = dup_msg.has_value()
+                                      ? text(" ! " + *dup_msg) | color(pal.danger) | bold
+                                      : text("");
 
-        Element err_line = (!result_ref->has_value() && !dup_msg.has_value())
-            ? text(" ! " + result_ref->error()) | color(pal.danger) | bold
-            : text("");
+               Element err_line = (!result_ref->has_value() && !dup_msg.has_value())
+                                      ? text(" ! " + result_ref->error()) | color(pal.danger) | bold
+                                      : text("");
 
-        // Render policy radiobox labels
-        Elements rb;
-        for (std::size_t i = 0; i < kPolicies.size(); ++i) {
-            const auto& pal = *loom::ui::design::theme::current_theme().palette;
-            const bool sel = (*policy_idx == static_cast<int>(i));
-            Color c = (i == 0) ? loom::ui::design::theme::current_theme().palette->success
-                    : (i == 1) ? pal.danger   : pal.muted;
-            rb.push_back(
-                text(std::format(" {} ", kPolicies[i]))
-                | (sel ? (color(c) | inverted | bold) : color(pal.muted))
-            );
-            if (i + 1 < kPolicies.size()) rb.push_back(text("  "));
-        }
+               // Render policy radiobox labels
+               Elements rb;
+               for (std::size_t i = 0; i < kPolicies.size(); ++i) {
+                   const auto& pal = *loom::ui::design::theme::current_theme().palette;
+                   const bool sel = (*policy_idx == static_cast<int>(i));
+                   Color c = (i == 0)   ? loom::ui::design::theme::current_theme().palette->success
+                             : (i == 1) ? pal.danger
+                                        : pal.muted;
+                   rb.push_back(text(std::format(" {} ", kPolicies[i])) |
+                                (sel ? (color(c) | inverted | bold) : color(pal.muted)));
+                   if (i + 1 < kPolicies.size()) rb.push_back(text("  "));
+               }
 
-        Element body = vbox({
-            hbox({
-                text(" Directory: ") | color(pal.muted),
-                text(path_buf->empty()
-                         ? std::string{"(type or use [Browse] to pick CWD)"}
-                         : *path_buf)
-                    | color(pal.warning) | bold,
-                filler(),
-                CompEl(Button(" Browse ", [path_buf] {
-                    // Insert CWD via getenv("PWD") or filesystem.
-                    const char* pwd = std::getenv("PWD");
-                    std::string cwd;
-                    if (pwd && *pwd) cwd = pwd;
-                    else {
-                        std::error_code ec;
-                        cwd = fs::current_path(ec).string();
-                    }
-                    *path_buf = std::move(cwd);
-                }) | color(pal.info)),
-            }),
-            hbox({
-                text(" Policy:    ") | color(pal.muted),
-                hbox(std::move(rb)),
-            }),
-            separator() | dim,
-            std::move(dup_line),
-            std::move(err_line),
-        });
+               Element body = vbox({
+                   hbox({
+                       text(" Directory: ") | color(pal.muted),
+                       text(path_buf->empty() ? std::string{"(type or use [Browse] to pick CWD)"}
+                                              : *path_buf) |
+                           color(pal.warning) | bold,
+                       filler(),
+                       CompEl(Button(" Browse ",
+                                     [path_buf] {
+                                         // Insert CWD via getenv("PWD") or filesystem.
+                                         const char* pwd = std::getenv("PWD");
+                                         std::string cwd;
+                                         if (pwd && *pwd)
+                                             cwd = pwd;
+                                         else {
+                                             std::error_code ec;
+                                             cwd = fs::current_path(ec).string();
+                                         }
+                                         *path_buf = std::move(cwd);
+                                     }) |
+                              color(pal.info)),
+                   }),
+                   hbox({
+                       text(" Policy:    ") | color(pal.muted),
+                       hbox(std::move(rb)),
+                   }),
+                   separator() | dim,
+                   std::move(dup_line),
+                   std::move(err_line),
+               });
 
-        Element footer = hbox({
-            CompEl(Button(" OK ", submit) | color(pal.success) | bold),
-            text("   "),
-            CompEl(Button(" Cancel ", [&open, on_cancel] {
-                open = false;
-                if (on_cancel) on_cancel();
-            }) | color(pal.muted)),
-            filler(),
-            text(" [Enter] OK  [Esc] cancel  [Tab] cycle policy ") | color(pal.muted),
-        });
+               Element footer = hbox({
+                   CompEl(Button(" OK ", submit) | color(pal.success) | bold),
+                   text("   "),
+                   CompEl(Button(" Cancel ",
+                                 [&open, on_cancel] {
+                                     open = false;
+                                     if (on_cancel) on_cancel();
+                                 }) |
+                          color(pal.muted)),
+                   filler(),
+                   text(" [Enter] OK  [Esc] cancel  [Tab] cycle policy ") | color(pal.muted),
+               });
 
-        return DialogFrame(" Add Workspace Directory ", pal.success,
-                           std::move(body), std::move(footer));
-    }) | CatchEvent([&open, path_buf, policy_idx, submit, on_cancel](Event e) {
-        if (e == Event::Escape) {
-            open = false;
-            if (on_cancel) on_cancel();
-            return true;
-        }
-        if (e == Event::Return) { submit(); return true; }
-        if (e == Event::Tab) {
-            *policy_idx = (*policy_idx + 1) % 3;
-            return true;
-        }
-        if (e == Event::Backspace || e.input() == "\x7f") {
-            if (!path_buf->empty()) path_buf->pop_back();
-            return true;
-        }
-        if (e.is_character()) {
-            const char ch = e.character().front();
-            if (std::isprint(static_cast<unsigned char>(ch))) {
-                *path_buf += ch;
-                return true;
-            }
-        }
-        return false;
-    });
+               return DialogFrame(" Add Workspace Directory ", pal.success, std::move(body),
+                                  std::move(footer));
+           }) |
+           CatchEvent([&open, path_buf, policy_idx, submit, on_cancel](Event e) {
+               if (e == Event::Escape) {
+                   open = false;
+                   if (on_cancel) on_cancel();
+                   return true;
+               }
+               if (e == Event::Return) {
+                   submit();
+                   return true;
+               }
+               if (e == Event::Tab) {
+                   *policy_idx = (*policy_idx + 1) % 3;
+                   return true;
+               }
+               if (e == Event::Backspace || e.input() == "\x7f") {
+                   if (!path_buf->empty()) path_buf->pop_back();
+                   return true;
+               }
+               if (e.is_character()) {
+                   const char ch = e.character().front();
+                   if (std::isprint(static_cast<unsigned char>(ch))) {
+                       *path_buf += ch;
+                       return true;
+                   }
+               }
+               return false;
+           });
 }
 
-[[nodiscard]] Component BuildRemoveWorkspaceDirectoryConfirm(
-    bool& open,
-    const peng::WorkspaceEntry& entry,
-    std::function<void()> on_yes,
-    std::function<void()> on_no)
-{
+[[nodiscard]] Component BuildRemoveWorkspaceDirectoryConfirm(bool& open,
+                                                             const peng::WorkspaceEntry& entry,
+                                                             std::function<void()> on_yes,
+                                                             std::function<void()> on_no) {
     using ui_tabs_detail::DialogFrame;
 
     auto disabled = entry.is_default;
@@ -1374,95 +1315,92 @@ namespace loom::ui::permissions::rule_list {
     };
 
     return Renderer([entry, disabled, do_yes, do_no] {
-        const auto& pal = *loom::ui::design::theme::current_theme().palette;
-        Elements body_lines;
-        body_lines.push_back(paragraph(
-            std::format("Remove workspace rule for {}?", entry.path.string())));
-        body_lines.push_back(text(""));
-        body_lines.push_back(
-            text(" Actual directory WON'T be deleted.  Only the permission rule.")
-            | color(pal.muted));
-        if (disabled) {
-            body_lines.push_back(text(""));
-            body_lines.push_back(
-                text(" ! Default workspace cannot be removed. ")
-                | color(pal.warning) | bold);
-        }
+               const auto& pal = *loom::ui::design::theme::current_theme().palette;
+               Elements body_lines;
+               body_lines.push_back(
+                   paragraph(std::format("Remove workspace rule for {}?", entry.path.string())));
+               body_lines.push_back(text(""));
+               body_lines.push_back(
+                   text(" Actual directory WON'T be deleted.  Only the permission rule.") |
+                   color(pal.muted));
+               if (disabled) {
+                   body_lines.push_back(text(""));
+                   body_lines.push_back(text(" ! Default workspace cannot be removed. ") |
+                                        color(pal.warning) | bold);
+               }
 
-        Element body = vbox(std::move(body_lines));
-        auto yes_comp = Button(" Yes, remove rule ", do_yes)
-                       | color(pal.danger) | bold;
-        if (disabled) yes_comp = yes_comp | dim;
-        Element footer = hbox({
-            CompEl(std::move(yes_comp)),
-            text("   "),
-            CompEl(Button(" No, keep rule ", do_no) | color(pal.info)),
-            filler(),
-            text(" [y] yes  [n/Esc] no ") | color(pal.muted),
-        });
-        return DialogFrame(" Remove Workspace Rule ", pal.danger,
-                           std::move(body), std::move(footer));
-    }) | CatchEvent([disabled, do_yes, do_no](Event e) {
-        if (e == Event::Escape || e == Event::Character('n')
-                               || e == Event::Character('N')) {
-            do_no(); return true;
-        }
-        if (e == Event::Character('y') || e == Event::Character('Y')) {
-            if (!disabled) do_yes();
-            return true;
-        }
-        return false;
-    });
+               Element body = vbox(std::move(body_lines));
+               auto yes_comp = Button(" Yes, remove rule ", do_yes) | color(pal.danger) | bold;
+               if (disabled) yes_comp = yes_comp | dim;
+               Element footer = hbox({
+                   CompEl(std::move(yes_comp)),
+                   text("   "),
+                   CompEl(Button(" No, keep rule ", do_no) | color(pal.info)),
+                   filler(),
+                   text(" [y] yes  [n/Esc] no ") | color(pal.muted),
+               });
+               return DialogFrame(" Remove Workspace Rule ", pal.danger, std::move(body),
+                                  std::move(footer));
+           }) |
+           CatchEvent([disabled, do_yes, do_no](Event e) {
+               if (e == Event::Escape || e == Event::Character('n') || e == Event::Character('N')) {
+                   do_no();
+                   return true;
+               }
+               if (e == Event::Character('y') || e == Event::Character('Y')) {
+                   if (!disabled) do_yes();
+                   return true;
+               }
+               return false;
+           });
 }
 
-[[nodiscard]] Component BuildPermissionRuleInputForm(
-    RuleEntry rule,
-    RuleFormErrorsRef errors,
-    std::function<void(const RuleEntry&, FormDecision)> on_submit,
-    std::function<void()> on_cancel)
-{
+[[nodiscard]] Component
+BuildPermissionRuleInputForm(RuleEntry rule, RuleFormErrorsRef errors,
+                             std::function<void(const RuleEntry&, FormDecision)> on_submit,
+                             std::function<void()> on_cancel) {
     // Per-form mutable state.
-    auto tool_p = std::make_shared<std::string>(rule.tool_pattern.empty()
-                                                 ? std::string{"*"}
-                                                 : rule.tool_pattern);
+    auto tool_p = std::make_shared<std::string>(rule.tool_pattern.empty() ? std::string{"*"}
+                                                                          : rule.tool_pattern);
     auto path_p = std::make_shared<std::string>(rule.path_pattern.value_or(""));
-    auto desc   = std::make_shared<std::string>(rule.description);
-    auto dec    = std::make_shared<int>(1); // AlwaysAllow default
-    auto field_cursor = std::make_shared<int>(0); // 0=tool 1=path 2=description
+    auto desc = std::make_shared<std::string>(rule.description);
+    auto dec = std::make_shared<int>(1);           // AlwaysAllow default
+    auto field_cursor = std::make_shared<int>(0);  // 0=tool 1=path 2=description
 
     std::function<void()> submit = [tool_p, path_p, desc, dec, errors, on_submit,
-                   original = rule]() mutable {
+                                    original = rule]() mutable {
         // Clear previous errors.
         errors->tool_pattern.clear();
         errors->path_pattern.clear();
         errors->description.clear();
         errors->submit.clear();
 
-        if (tool_p->empty())
-            errors->tool_pattern = "tool pattern is required";
-        if (path_p->empty())
-            errors->path_pattern = "path pattern is required (use ** for all)";
-        if (!errors->tool_pattern.empty() || !errors->path_pattern.empty())
-            return;
+        if (tool_p->empty()) errors->tool_pattern = "tool pattern is required";
+        if (path_p->empty()) errors->path_pattern = "path pattern is required (use ** for all)";
+        if (!errors->tool_pattern.empty() || !errors->path_pattern.empty()) return;
 
         RuleEntry r = original;
         r.tool_pattern = *tool_p;
         r.path_pattern = *path_p;
-        r.description  = *desc;
+        r.description = *desc;
 
         const auto d = static_cast<FormDecision>(*dec);
         switch (d) {
-            case FormDecision::AllowOnce:
-                r.action = eng::PermissionAction::AskOnce; break;
-            case FormDecision::AlwaysAllow:
-                r.action = eng::PermissionAction::Allow; break;
-            case FormDecision::Deny:
-            case FormDecision::AlwaysDeny:
-                r.action = eng::PermissionAction::Deny; break;
-            case FormDecision::Abort:
-                r.action = eng::PermissionAction::Ask; break;
+        case FormDecision::AllowOnce:
+            r.action = eng::PermissionAction::AskOnce;
+            break;
+        case FormDecision::AlwaysAllow:
+            r.action = eng::PermissionAction::Allow;
+            break;
+        case FormDecision::Deny:
+        case FormDecision::AlwaysDeny:
+            r.action = eng::PermissionAction::Deny;
+            break;
+        case FormDecision::Abort:
+            r.action = eng::PermissionAction::Ask;
+            break;
         }
-        if (d == FormDecision::AlwaysDeny) r.priority = 999; // take precedence
+        if (d == FormDecision::AlwaysDeny) r.priority = 999;  // take precedence
 
         if (on_submit) on_submit(r, d);
     };
@@ -1470,185 +1408,192 @@ namespace loom::ui::permissions::rule_list {
     using ui_tabs_detail::DecisionBadge;
 
     return Renderer([tool_p, path_p, desc, dec, errors, submit, on_cancel] {
-        const auto& pal = *loom::ui::design::theme::current_theme().palette;
-        // Live preview of the rule JSON-like snippet.
-        const auto d = static_cast<FormDecision>(*dec);
-        const char* decision_s = kDecisionLabels[static_cast<std::size_t>(*dec)];
-        const Color dec_color =
-            (d == FormDecision::AllowOnce || d == FormDecision::AlwaysAllow)
-                ? pal.success
-            : (d == FormDecision::Deny || d == FormDecision::AlwaysDeny)
-                ? pal.danger
-                : pal.warning;
-        Element preview = vbox({
-            hbox({
-                text(" Preview: ") | color(pal.muted),
-                text("{") | dim,
-            }),
-            text(std::format("   tool:   \"{}\"", *tool_p))
-                | color(pal.info),
-            text(std::format("   path:   \"{}\"",
-                             path_p->empty() ? std::string{"**"} : *path_p))
-                | color(pal.info),
-            text(std::format("   action: {}", decision_s))
-                | color(dec_color),
-            text(std::format("   desc:   \"{}\"",
-                             desc->empty() ? std::string{""} : *desc))
-                | color(pal.muted),
-            text("}") | dim,
-        }) | bgcolor(pal.perm_rule_bg) | borderLight;
+               const auto& pal = *loom::ui::design::theme::current_theme().palette;
+               // Live preview of the rule JSON-like snippet.
+               const auto d = static_cast<FormDecision>(*dec);
+               const char* decision_s = kDecisionLabels[static_cast<std::size_t>(*dec)];
+               const Color dec_color =
+                   (d == FormDecision::AllowOnce || d == FormDecision::AlwaysAllow) ? pal.success
+                   : (d == FormDecision::Deny || d == FormDecision::AlwaysDeny)     ? pal.danger
+                                                                                    : pal.warning;
+               Element preview =
+                   vbox({
+                       hbox({
+                           text(" Preview: ") | color(pal.muted),
+                           text("{") | dim,
+                       }),
+                       text(std::format("   tool:   \"{}\"", *tool_p)) | color(pal.info),
+                       text(std::format("   path:   \"{}\"",
+                                        path_p->empty() ? std::string{"**"} : *path_p)) |
+                           color(pal.info),
+                       text(std::format("   action: {}", decision_s)) | color(dec_color),
+                       text(std::format("   desc:   \"{}\"",
+                                        desc->empty() ? std::string{""} : *desc)) |
+                           color(pal.muted),
+                       text("}") | dim,
+                   }) |
+                   bgcolor(pal.perm_rule_bg) | borderLight;
 
-        // Per-field error lines (red inline).
-        auto err_tool = errors->tool_pattern.empty()
-            ? text("")
-            : text(" ! " + errors->tool_pattern) | color(pal.danger) | bold;
-        auto err_path = errors->path_pattern.empty()
-            ? text("")
-            : text(" ! " + errors->path_pattern) | color(pal.danger) | bold;
-        auto err_sub  = errors->submit.empty()
-            ? text("")
-            : text(" ! " + errors->submit) | color(pal.danger) | bold;
+               // Per-field error lines (red inline).
+               auto err_tool = errors->tool_pattern.empty()
+                                   ? text("")
+                                   : text(" ! " + errors->tool_pattern) | color(pal.danger) | bold;
+               auto err_path = errors->path_pattern.empty()
+                                   ? text("")
+                                   : text(" ! " + errors->path_pattern) | color(pal.danger) | bold;
+               auto err_sub = errors->submit.empty()
+                                  ? text("")
+                                  : text(" ! " + errors->submit) | color(pal.danger) | bold;
 
-        // Decision radio group visual.
-        Elements rb;
-        for (std::size_t i = 0; i < kDecisionLabels.size(); ++i) {
-            const auto& pal = *loom::ui::design::theme::current_theme().palette;
-            const bool sel = (*dec == static_cast<int>(i));
-            Color c =
-                (i == 0 || i == 1) ? pal.success :
-                (i == 2 || i == 3) ? pal.danger   : pal.warning;
-            rb.push_back(text(std::format(" {} ", kDecisionLabels[i]))
-                | (sel ? (color(c) | inverted | bold) : color(pal.muted)));
-            if (i + 1 < kDecisionLabels.size()) rb.push_back(text("  "));
-        }
+               // Decision radio group visual.
+               Elements rb;
+               for (std::size_t i = 0; i < kDecisionLabels.size(); ++i) {
+                   const auto& pal = *loom::ui::design::theme::current_theme().palette;
+                   const bool sel = (*dec == static_cast<int>(i));
+                   Color c = (i == 0 || i == 1)   ? pal.success
+                             : (i == 2 || i == 3) ? pal.danger
+                                                  : pal.warning;
+                   rb.push_back(text(std::format(" {} ", kDecisionLabels[i])) |
+                                (sel ? (color(c) | inverted | bold) : color(pal.muted)));
+                   if (i + 1 < kDecisionLabels.size()) rb.push_back(text("  "));
+               }
 
-        Elements form_lines = {
-            hbox({
-                text(" Create Rule ") | bold | color(pal.success),
-                filler(),
-                text(" Fill in the fields, then [Submit]. ") | color(pal.muted),
-            }),
-            pc::ThinDivider(),
+               Elements form_lines = {
+                   hbox({
+                       text(" Create Rule ") | bold | color(pal.success),
+                       filler(),
+                       text(" Fill in the fields, then [Submit]. ") | color(pal.muted),
+                   }),
+                   pc::ThinDivider(),
 
-            // Tool pattern
-            hbox({
-                text(" Tool pattern: ") | color(pal.muted) | size(WIDTH, EQUAL, 18),
-                text(tool_p->empty()
-                         ? std::string{"(e.g. bash, file_*)"}
-                         : *tool_p)
-                    | color(pal.warning) | bold,
-            }),
-            std::move(err_tool),
+                   // Tool pattern
+                   hbox({
+                       text(" Tool pattern: ") | color(pal.muted) | size(WIDTH, EQUAL, 18),
+                       text(tool_p->empty() ? std::string{"(e.g. bash, file_*)"} : *tool_p) |
+                           color(pal.warning) | bold,
+                   }),
+                   std::move(err_tool),
 
-            separator() | dim,
-            // Path pattern
-            hbox({
-                text(" Path pattern: ") | color(pal.muted) | size(WIDTH, EQUAL, 18),
-                text(path_p->empty()
-                         ? std::string{"(e.g. **/*.cpp)"}
-                         : *path_p)
-                    | color(pal.warning) | bold,
-            }),
-            std::move(err_path),
+                   separator() | dim,
+                   // Path pattern
+                   hbox({
+                       text(" Path pattern: ") | color(pal.muted) | size(WIDTH, EQUAL, 18),
+                       text(path_p->empty() ? std::string{"(e.g. **/*.cpp)"} : *path_p) |
+                           color(pal.warning) | bold,
+                   }),
+                   std::move(err_path),
 
-            separator() | dim,
-            // Decision radiobox
-            hbox({
-                text(" Decision:     ") | color(pal.muted) | size(WIDTH, EQUAL, 18),
-                hbox(std::move(rb)),
-            }),
+                   separator() | dim,
+                   // Decision radiobox
+                   hbox({
+                       text(" Decision:     ") | color(pal.muted) | size(WIDTH, EQUAL, 18),
+                       hbox(std::move(rb)),
+                   }),
 
-            separator() | dim,
-            // Description (multi-line-ish single input)
-            hbox({
-                text(" Description:  ") | color(pal.muted) | size(WIDTH, EQUAL, 18),
-                text(desc->empty()
-                         ? std::string{"(optional human-readable note)"}
-                         : *desc)
-                    | color(pal.muted),
-            }),
+                   separator() | dim,
+                   // Description (multi-line-ish single input)
+                   hbox({
+                       text(" Description:  ") | color(pal.muted) | size(WIDTH, EQUAL, 18),
+                       text(desc->empty() ? std::string{"(optional human-readable note)"} : *desc) |
+                           color(pal.muted),
+                   }),
 
-            separator() | dim,
-            std::move(preview),
+                   separator() | dim,
+                   std::move(preview),
 
-            separator() | dim,
-            std::move(err_sub),
-            hbox({
-                CompEl(Button(" Submit ", submit) | color(pal.success) | bold),
-                text("   "),
-                CompEl(Button(" Cancel ", [on_cancel] {
-                    if (on_cancel) on_cancel();
-                }) | color(pal.muted)),
-                filler(),
-                text(" [Tab] cycle decision  [Enter] submit  [Esc] cancel ") | color(pal.muted),
-            }),
-        };
+                   separator() | dim,
+                   std::move(err_sub),
+                   hbox({
+                       CompEl(Button(" Submit ", submit) | color(pal.success) | bold),
+                       text("   "),
+                       CompEl(Button(" Cancel ",
+                                     [on_cancel] {
+                                         if (on_cancel) on_cancel();
+                                     }) |
+                              color(pal.muted)),
+                       filler(),
+                       text(" [Tab] cycle decision  [Enter] submit  [Esc] cancel ") |
+                           color(pal.muted),
+                   }),
+               };
 
-        return vbox(std::move(form_lines)) | yflex_grow | yframe;
-    }) | CatchEvent([tool_p, path_p, desc, dec, submit, on_cancel, field_cursor](Event e) {
-        // field_cursor tracks which field we're typing into: 0=tool 1=path 2=description
-        // Tab cycles the cursor; if already at 2, Tab additionally cycles
-        // the decision radiobox.
-        if (e == Event::Escape) {
-            if (on_cancel) on_cancel();
-            *field_cursor = 0;
-            return true;
-        }
-        if (e == Event::Return) { submit(); return true; }
-        if (e == Event::Tab) {
-            *field_cursor = (*field_cursor + 1) % 3;
-            if (*field_cursor == 2) {
-                *dec = (*dec + 1) % static_cast<int>(kDecisionLabels.size());
-            }
-            return true;
-        }
-        if (e == Event::Backspace || e.input() == "\x7f") {
-            switch (*field_cursor) {
-                case 0: if (!tool_p->empty()) tool_p->pop_back(); break;
-                case 1: if (!path_p->empty()) path_p->pop_back(); break;
-                case 2: if (!desc->empty())   desc->pop_back();   break;
-            }
-            return true;
-        }
-        if (e.is_character()) {
-            const char ch = e.character().front();
-            if (std::isprint(static_cast<unsigned char>(ch))) {
-                switch (*field_cursor) {
-                    case 0: *tool_p += ch; break;
-                    case 1: *path_p += ch; break;
-                    case 2: *desc   += ch; break;
-                }
-                return true;
-            }
-        }
-        return false;
-    });
+               return vbox(std::move(form_lines)) | yflex_grow | yframe;
+           }) |
+           CatchEvent([tool_p, path_p, desc, dec, submit, on_cancel, field_cursor](Event e) {
+               // field_cursor tracks which field we're typing into: 0=tool 1=path 2=description
+               // Tab cycles the cursor; if already at 2, Tab additionally cycles
+               // the decision radiobox.
+               if (e == Event::Escape) {
+                   if (on_cancel) on_cancel();
+                   *field_cursor = 0;
+                   return true;
+               }
+               if (e == Event::Return) {
+                   submit();
+                   return true;
+               }
+               if (e == Event::Tab) {
+                   *field_cursor = (*field_cursor + 1) % 3;
+                   if (*field_cursor == 2) {
+                       *dec = (*dec + 1) % static_cast<int>(kDecisionLabels.size());
+                   }
+                   return true;
+               }
+               if (e == Event::Backspace || e.input() == "\x7f") {
+                   switch (*field_cursor) {
+                   case 0:
+                       if (!tool_p->empty()) tool_p->pop_back();
+                       break;
+                   case 1:
+                       if (!path_p->empty()) path_p->pop_back();
+                       break;
+                   case 2:
+                       if (!desc->empty()) desc->pop_back();
+                       break;
+                   }
+                   return true;
+               }
+               if (e.is_character()) {
+                   const char ch = e.character().front();
+                   if (std::isprint(static_cast<unsigned char>(ch))) {
+                       switch (*field_cursor) {
+                       case 0:
+                           *tool_p += ch;
+                           break;
+                       case 1:
+                           *path_p += ch;
+                           break;
+                       case 2:
+                           *desc += ch;
+                           break;
+                       }
+                       return true;
+                   }
+               }
+               return false;
+           });
 }
 
-[[nodiscard]] Component BuildPermissionRuleDescriptionCard(
-    const RuleEntry& rule,
-    std::function<void()> on_edit,
-    std::function<void()> on_delete,
-    std::function<void()> on_duplicate)
-{
-    using ui_tabs_detail::TimeAgo;
+[[nodiscard]] Component BuildPermissionRuleDescriptionCard(const RuleEntry& rule,
+                                                           std::function<void()> on_edit,
+                                                           std::function<void()> on_delete,
+                                                           std::function<void()> on_duplicate) {
     using ui_tabs_detail::DecisionBadge;
+    using ui_tabs_detail::TimeAgo;
 
     auto rule_copy = std::make_shared<RuleEntry>(rule);
 
     // Derive timestamps as strings.  RuleEntry doesn't ship native times, so
     // we render "id suffix" as a pseudo-created-at for display.
     std::string created_str = rule.id.empty() ? std::string{"—"} : rule.id;
-    if (created_str.size() > 10)
-        created_str = created_str.substr(0, 10) + "…";
+    if (created_str.size() > 10) created_str = created_str.substr(0, 10) + "…";
 
     // RuleEntry has no last-used counter; approximate via enabled_count.
     const std::string last_used = rule.enabled_count
-        ? std::format("used {} time(s)", rule.enabled_count)
-        : std::string{"not used yet"};
+                                      ? std::format("used {} time(s)", rule.enabled_count)
+                                      : std::string{"not used yet"};
 
-    return Renderer([rule_copy, on_edit, on_delete, on_duplicate,
-                     created_str, last_used] {
+    return Renderer([rule_copy, on_edit, on_delete, on_duplicate, created_str, last_used] {
         const auto& pal = *loom::ui::design::theme::current_theme().palette;
         const RuleEntry& r = *rule_copy;
 
@@ -1664,24 +1609,19 @@ namespace loom::ui::permissions::rule_list {
             // Monospace tool/path patterns
             hbox({
                 text(" tool: ") | color(pal.muted) | size(WIDTH, EQUAL, 10),
-                text(std::format(" {} ", r.tool_pattern))
-                    | color(pal.primary)
-                    | bgcolor(pal.perm_rule_bg),
+                text(std::format(" {} ", r.tool_pattern)) | color(pal.primary) |
+                    bgcolor(pal.perm_rule_bg),
             }),
             hbox({
                 text(" path: ") | color(pal.muted) | size(WIDTH, EQUAL, 10),
-                text(std::format(" {} ",
-                                 r.path_pattern.value_or("(none)")))
-                    | color(pal.info)
-                    | bgcolor(pal.perm_rule_bg),
+                text(std::format(" {} ", r.path_pattern.value_or("(none)"))) | color(pal.info) |
+                    bgcolor(pal.perm_rule_bg),
             }),
             separator() | dim,
             // Description block
             hbox({
                 text(" desc: ") | color(pal.muted) | size(WIDTH, EQUAL, 10),
-                paragraph(r.description.empty()
-                              ? std::string{"(no description)"}
-                              : r.description),
+                paragraph(r.description.empty() ? std::string{"(no description)"} : r.description),
             }),
             separator() | dim,
             // Metadata row
@@ -1691,67 +1631,64 @@ namespace loom::ui::permissions::rule_list {
                 text(" | ") | dim,
                 text(last_used) | color(pal.muted),
                 filler(),
-                text(std::format(" scope={} strategy={} pri={} ",
-                    detail::ScopeName(r.scope),
-                    detail::StrategyName(r.strategy),
-                    r.priority)) | color(pal.muted),
+                text(std::format(" scope={} strategy={} pri={} ", detail::ScopeName(r.scope),
+                                 detail::StrategyName(r.strategy), r.priority)) |
+                    color(pal.muted),
             }),
             pc::ThinDivider(),
             // Action buttons
             hbox({
-                CompEl(Button(" Edit ", [on_edit] { if (on_edit) on_edit(); })
-                    | color(pal.info)),
+                CompEl(Button(" Edit ",
+                              [on_edit] {
+                                  if (on_edit) on_edit();
+                              }) |
+                       color(pal.info)),
                 text(" "),
-                CompEl(Button(" Delete ", [on_delete] { if (on_delete) on_delete(); })
-                    | color(pal.danger)),
+                CompEl(Button(" Delete ",
+                              [on_delete] {
+                                  if (on_delete) on_delete();
+                              }) |
+                       color(pal.danger)),
                 text(" "),
                 CompEl(Button(" Duplicate ",
-                    [on_duplicate] { if (on_duplicate) on_duplicate(); })
-                    | color(pal.success)),
+                              [on_duplicate] {
+                                  if (on_duplicate) on_duplicate();
+                              }) |
+                       color(pal.success)),
                 filler(),
-                r.enabled
-                    ? text(" ENABLED ") | color(pal.success)
-                    : text(" DISABLED ") | color(pal.danger),
+                r.enabled ? text(" ENABLED ") | color(pal.success)
+                          : text(" DISABLED ") | color(pal.danger),
             }),
         };
-        return window(
-            text(" Rule Detail ") | bold | color(pal.info),
-            vbox(std::move(lines)) | xflex_grow | size(WIDTH, GREATER_THAN, 60)
-        ) | color(pal.info);
+        return window(text(" Rule Detail ") | bold | color(pal.info),
+                      vbox(std::move(lines)) | xflex_grow | size(WIDTH, GREATER_THAN, 60)) |
+               color(pal.info);
     });
 }
 
-[[nodiscard]] Component BuildPermissionsTabs(
-    PermissionsTabsState state,
-    std::shared_ptr<PermTab> active_tab)
-{
+[[nodiscard]] Component BuildPermissionsTabs(PermissionsTabsState state,
+                                             std::shared_ptr<PermTab> active_tab) {
     // --- Build each of the 4 tab contents first (so we can switch between
     //     them without reconstructing state).
 
     // Tab 0: "All Rules" – use the existing MakePermissionRuleList factory.
     RuleListInput rl_input;
-    if (state.model.rule_list.has_value())
-        rl_input = std::move(*state.model.rule_list);
+    if (state.model.rule_list.has_value()) rl_input = std::move(*state.model.rule_list);
     RuleListCallbacks rl_cbs;
-    rl_cbs.on_add    = state.callbacks.on_add_rule;
+    rl_cbs.on_add = state.callbacks.on_add_rule;
     rl_cbs.on_update = state.callbacks.on_update_rule;
     rl_cbs.on_delete = state.callbacks.on_delete_rule;
-    auto tab_all_rules = MakePermissionRuleList(std::move(rl_input),
-                                                std::move(rl_cbs));
+    auto tab_all_rules = MakePermissionRuleList(std::move(rl_input), std::move(rl_cbs));
 
     // Tab 1: "Recent Denials"
     RecentDenialsState denials_state;
-    if (state.model.denials.has_value())
-        denials_state = *state.model.denials;
+    if (state.model.denials.has_value()) denials_state = *state.model.denials;
     auto tab_denials = BuildRecentDenialsTab(
-        std::move(denials_state),
-        state.callbacks.on_allow_once,
-        state.callbacks.on_always_allow);
+        std::move(denials_state), state.callbacks.on_allow_once, state.callbacks.on_always_allow);
 
     // Tab 2: "Workspaces"
     WorkspaceState ws_state;
-    if (state.model.workspaces.has_value())
-        ws_state = *state.model.workspaces;
+    if (state.model.workspaces.has_value()) ws_state = *state.model.workspaces;
     auto tab_workspaces = BuildWorkspaceTab(
         std::move(ws_state),
         [cbs = state.callbacks](const fs::path& p, peng::WorkspaceEntry::Policy) {
@@ -1761,21 +1698,19 @@ namespace loom::ui::permissions::rule_list {
 
     // Tab 3: "Create Rule" – form then submit fires on_add_rule callback.
     RuleEntry blank;
-    blank.id    = std::format("rule_{}",
-        std::chrono::steady_clock::now().time_since_epoch().count());
+    blank.id = std::format("rule_{}", std::chrono::steady_clock::now().time_since_epoch().count());
     blank.strategy = MatchStrategy::Glob;
-    blank.action   = PermissionAction::Allow;
-    blank.scope    = PermissionScope::Session;
-    blank.enabled  = true;
+    blank.action = PermissionAction::Allow;
+    blank.scope = PermissionScope::Session;
+    blank.enabled = true;
     blank.priority = 50;
-    blank.group_id = "g6"; // "Custom A"
+    blank.group_id = "g6";  // "Custom A"
     blank.tool_pattern = "*";
 
     auto errors = std::make_shared<RuleFormFieldErrors>();
     auto tab_create_rule = BuildPermissionRuleInputForm(
         std::move(blank), errors,
-        [on_add = state.callbacks.on_add_rule, active_tab](
-            const RuleEntry& r, FormDecision) {
+        [on_add = state.callbacks.on_add_rule, active_tab](const RuleEntry& r, FormDecision) {
             if (on_add) on_add(r);
             // Switch back to "All Rules" after successful creation so the
             // user sees the new rule in the list.
@@ -1787,66 +1722,89 @@ namespace loom::ui::permissions::rule_list {
     // We use CatchEvent to route keystrokes to the active sub-tab via the
     // inner component's OnEvent handler.  This mirrors the FTXUI
     // Container::Tab idiom.
-    return Renderer([active_tab, tab_all_rules, tab_denials,
-                     tab_workspaces, tab_create_rule] {
-        switch (*active_tab) {
-            case PermTab::AllRules:   return tab_all_rules->Render();
-            case PermTab::Denials:    return tab_denials->Render();
-            case PermTab::Workspaces: return tab_workspaces->Render();
-            case PermTab::CreateRule: return tab_create_rule->Render();
-        }
-        return tab_all_rules->Render();
-    }) | CatchEvent([active_tab, tab_all_rules, tab_denials,
-                      tab_workspaces, tab_create_rule](Event e) {
-        // Route events to the active sub-component first so inner controls
-        // (arrow keys, typing into the form, etc.) still work.
-        switch (*active_tab) {
-            case PermTab::AllRules:
-                if (tab_all_rules && tab_all_rules->OnEvent(e)) return true;
-                break;
-            case PermTab::Denials:
-                if (tab_denials && tab_denials->OnEvent(e)) return true;
-                break;
-            case PermTab::Workspaces:
-                if (tab_workspaces && tab_workspaces->OnEvent(e)) return true;
-                break;
-            case PermTab::CreateRule:
-                if (tab_create_rule && tab_create_rule->OnEvent(e)) return true;
-                break;
-        }
-        return false;
-    });
+    return Renderer([active_tab, tab_all_rules, tab_denials, tab_workspaces, tab_create_rule] {
+               switch (*active_tab) {
+               case PermTab::AllRules:
+                   return tab_all_rules->Render();
+               case PermTab::Denials:
+                   return tab_denials->Render();
+               case PermTab::Workspaces:
+                   return tab_workspaces->Render();
+               case PermTab::CreateRule:
+                   return tab_create_rule->Render();
+               }
+               return tab_all_rules->Render();
+           }) |
+           CatchEvent(
+               [active_tab, tab_all_rules, tab_denials, tab_workspaces, tab_create_rule](Event e) {
+                   // Route events to the active sub-component first so inner controls
+                   // (arrow keys, typing into the form, etc.) still work.
+                   switch (*active_tab) {
+                   case PermTab::AllRules:
+                       if (tab_all_rules && tab_all_rules->OnEvent(e)) return true;
+                       break;
+                   case PermTab::Denials:
+                       if (tab_denials && tab_denials->OnEvent(e)) return true;
+                       break;
+                   case PermTab::Workspaces:
+                       if (tab_workspaces && tab_workspaces->OnEvent(e)) return true;
+                       break;
+                   case PermTab::CreateRule:
+                       if (tab_create_rule && tab_create_rule->OnEvent(e)) return true;
+                       break;
+                   }
+                   return false;
+               });
 }
 
-} // namespace loom::ui::permissions::rule_list
+}  // namespace loom::ui::permissions::rule_list
 
 namespace loom::ui::permissions::rule_list::ev {
 
 void CycleFocusForward(RuleListState& st) {
     switch (st.focus) {
-        case FocusZone::Groups:    st.focus = FocusZone::Rules;   break;
-        case FocusZone::Rules:     st.focus = FocusZone::Editor;  break;
-        case FocusZone::Editor:    st.focus = FocusZone::Toolbar; break;
-        case FocusZone::Toolbar:   st.focus = FocusZone::Groups;  break;
-        case FocusZone::DiffModal: break;
-        case FocusZone::ImportModal: break;
+    case FocusZone::Groups:
+        st.focus = FocusZone::Rules;
+        break;
+    case FocusZone::Rules:
+        st.focus = FocusZone::Editor;
+        break;
+    case FocusZone::Editor:
+        st.focus = FocusZone::Toolbar;
+        break;
+    case FocusZone::Toolbar:
+        st.focus = FocusZone::Groups;
+        break;
+    case FocusZone::DiffModal:
+        break;
+    case FocusZone::ImportModal:
+        break;
     }
 }
 
 void CycleFocusBack(RuleListState& st) {
     switch (st.focus) {
-        case FocusZone::Groups:    st.focus = FocusZone::Toolbar; break;
-        case FocusZone::Toolbar:   st.focus = FocusZone::Editor;  break;
-        case FocusZone::Editor:    st.focus = FocusZone::Rules;   break;
-        case FocusZone::Rules:     st.focus = FocusZone::Groups;  break;
-        case FocusZone::DiffModal: break;
-        case FocusZone::ImportModal: break;
+    case FocusZone::Groups:
+        st.focus = FocusZone::Toolbar;
+        break;
+    case FocusZone::Toolbar:
+        st.focus = FocusZone::Editor;
+        break;
+    case FocusZone::Editor:
+        st.focus = FocusZone::Rules;
+        break;
+    case FocusZone::Rules:
+        st.focus = FocusZone::Groups;
+        break;
+    case FocusZone::DiffModal:
+        break;
+    case FocusZone::ImportModal:
+        break;
     }
 }
 
 void ToggleIndex(RuleListState& st, std::size_t fi) {
-    auto it = std::find(st.selected_indexes.begin(),
-                        st.selected_indexes.end(), fi);
+    auto it = std::find(st.selected_indexes.begin(), st.selected_indexes.end(), fi);
     if (it == st.selected_indexes.end())
         st.selected_indexes.push_back(fi);
     else
@@ -1861,9 +1819,9 @@ void SelectRange(RuleListState& st, std::size_t fi) {
     }
     const std::size_t a = std::min(*st.anchor_index, fi);
     const std::size_t b = std::max(*st.anchor_index, fi);
-    std::set<std::size_t> merge(st.selected_indexes.begin(),
-                                st.selected_indexes.end());
-    for (std::size_t i = a; i <= b; ++i) merge.insert(i);
+    std::set<std::size_t> merge(st.selected_indexes.begin(), st.selected_indexes.end());
+    for (std::size_t i = a; i <= b; ++i)
+        merge.insert(i);
     st.selected_indexes.assign(merge.begin(), merge.end());
 }
 
@@ -1879,17 +1837,17 @@ void CommitEditorChanges(RuleListState& st) {
 
     RuleEntry upd_copy = st.input.rules[st.filtered[*st.editing_idx]];
     upd_copy.path_pattern = st.editor.pattern_buf.empty()
-        ? std::nullopt
-        : std::optional<std::string>{st.editor.pattern_buf};
-    upd_copy.tool_pattern = st.editor.selected_tools.empty()
-        ? std::string{"*"} : [&]() {
-              std::string out = st.editor.selected_tools.front();
-              for (std::size_t i = 1; i < st.editor.selected_tools.size(); ++i)
-                  out += "|" + st.editor.selected_tools[i];
-              return out; }();
-    upd_copy.strategy    = static_cast<MatchStrategy>(st.editor.strategy_idx);
-    upd_copy.scope       = static_cast<PermissionScope>(st.editor.scope_idx);
-    upd_copy.action      = static_cast<PermissionAction>(st.editor.action_idx);
+                                ? std::nullopt
+                                : std::optional<std::string>{st.editor.pattern_buf};
+    upd_copy.tool_pattern = st.editor.selected_tools.empty() ? std::string{"*"} : [&]() {
+        std::string out = st.editor.selected_tools.front();
+        for (std::size_t i = 1; i < st.editor.selected_tools.size(); ++i)
+            out += "|" + st.editor.selected_tools[i];
+        return out;
+    }();
+    upd_copy.strategy = static_cast<MatchStrategy>(st.editor.strategy_idx);
+    upd_copy.scope = static_cast<PermissionScope>(st.editor.scope_idx);
+    upd_copy.action = static_cast<PermissionAction>(st.editor.action_idx);
     upd_copy.description = st.editor.description_buf;
     if (std::size_t(st.editor.group_idx) < st.input.groups.size())
         upd_copy.group_id = st.input.groups[st.editor.group_idx].id;
@@ -1898,8 +1856,7 @@ void CommitEditorChanges(RuleListState& st) {
     const RuleEntry& committed = st.input.rules[st.filtered[*st.editing_idx]];
     if (st.cbs.on_update) st.cbs.on_update(committed.id, committed);
     st.editor.dirty = false;
-    st.status_bar_msg = std::format("saved rule {}",
-                                    committed.id.substr(0, 14));
+    st.status_bar_msg = std::format("saved rule {}", committed.id.substr(0, 14));
     detail::RefreshFiltered(st);
 }
 
@@ -1907,14 +1864,15 @@ void LoadEditorForSelected(RuleListState& st, std::size_t fi) {
     if (fi >= st.filtered.size()) return;
     st.editing_idx = fi;
     const auto& r = st.input.rules[st.filtered[fi]];
-    st.editor.pattern_buf     = r.path_pattern.value_or("");
+    st.editor.pattern_buf = r.path_pattern.value_or("");
     st.editor.description_buf = r.description;
     st.editor.strategy_idx = static_cast<int>(r.strategy);
-    st.editor.scope_idx    = static_cast<int>(r.scope);
-    st.editor.action_idx   = static_cast<int>(r.action);
+    st.editor.scope_idx = static_cast<int>(r.scope);
+    st.editor.action_idx = static_cast<int>(r.action);
     for (std::size_t gi = 0; gi < st.input.groups.size(); ++gi) {
         if (st.input.groups[gi].id == r.group_id) {
-            st.editor.group_idx = (int)gi; break;
+            st.editor.group_idx = (int)gi;
+            break;
         }
     }
     st.editor.selected_tools.clear();
@@ -1929,12 +1887,11 @@ void LoadEditorForSelected(RuleListState& st, std::size_t fi) {
 
 void StartNewRule(RuleListState& st) {
     RuleEntry blank;
-    blank.id    = std::format("new_{}",
-        std::chrono::steady_clock::now().time_since_epoch().count());
+    blank.id = std::format("new_{}", std::chrono::steady_clock::now().time_since_epoch().count());
     blank.strategy = MatchStrategy::Glob;
-    blank.action   = PermissionAction::Ask;
-    blank.scope    = PermissionScope::Session;
-    blank.enabled  = true;
+    blank.action = PermissionAction::Ask;
+    blank.scope = PermissionScope::Session;
+    blank.enabled = true;
     blank.priority = 50;
     blank.tool_pattern = "*";
     if (st.active_group_idx < st.input.groups.size())
@@ -1955,12 +1912,14 @@ void DeleteAtCursor(RuleListState& st) {
     if (st.filtered.empty()) return;
     const std::size_t fi = st.rule_cursor;
     const auto rid = st.input.rules[st.filtered[fi]].id;
-    st.input.rules.erase(st.input.rules.begin() +
-                         static_cast<std::ptrdiff_t>(st.filtered[fi]));
+    st.input.rules.erase(st.input.rules.begin() + static_cast<std::ptrdiff_t>(st.filtered[fi]));
     detail::RefreshFiltered(st);
     if (st.cbs.on_delete) st.cbs.on_delete(rid);
     st.status_bar_msg = std::format("deleted rule {}", rid.substr(0, 14));
-    if (st.editing_idx) { st.editing_idx.reset(); st.editor.dirty = false; }
+    if (st.editing_idx) {
+        st.editing_idx.reset();
+        st.editor.dirty = false;
+    }
 }
 
 void FireBatch(RuleListState& st, BatchOp op, std::string arg) {
@@ -1973,31 +1932,32 @@ void FireBatch(RuleListState& st, BatchOp op, std::string arg) {
         if (si >= st.filtered.size()) continue;
         auto& r = st.input.rules[st.filtered[si]];
         switch (op) {
-            case BatchOp::Enable:       r.enabled = true;  break;
-            case BatchOp::Disable:      r.enabled = false; break;
-            case BatchOp::SetStrategy: {
-                for (std::size_t i = 0; i < detail::kStrategyNames.size(); ++i)
-                    if (detail::kStrategyNames[i] == arg)
-                        r.strategy = static_cast<MatchStrategy>(i);
-                break;
-            }
-            case BatchOp::SetScope: {
-                for (std::size_t i = 0; i < detail::kScopeNames.size(); ++i)
-                    if (detail::kScopeNames[i] == arg)
-                        r.scope = static_cast<PermissionScope>(i);
-                break;
-            }
-            case BatchOp::SetAction: {
-                for (std::size_t i = 0; i < detail::kActionNames.size(); ++i)
-                    if (detail::kActionNames[i] == arg)
-                        r.action = static_cast<PermissionAction>(i);
-                break;
-            }
-            case BatchOp::Delete:
-                // deferred to caller
-                break;
-            case BatchOp::ExportJson:
-                break;
+        case BatchOp::Enable:
+            r.enabled = true;
+            break;
+        case BatchOp::Disable:
+            r.enabled = false;
+            break;
+        case BatchOp::SetStrategy: {
+            for (std::size_t i = 0; i < detail::kStrategyNames.size(); ++i)
+                if (detail::kStrategyNames[i] == arg) r.strategy = static_cast<MatchStrategy>(i);
+            break;
+        }
+        case BatchOp::SetScope: {
+            for (std::size_t i = 0; i < detail::kScopeNames.size(); ++i)
+                if (detail::kScopeNames[i] == arg) r.scope = static_cast<PermissionScope>(i);
+            break;
+        }
+        case BatchOp::SetAction: {
+            for (std::size_t i = 0; i < detail::kActionNames.size(); ++i)
+                if (detail::kActionNames[i] == arg) r.action = static_cast<PermissionAction>(i);
+            break;
+        }
+        case BatchOp::Delete:
+            // deferred to caller
+            break;
+        case BatchOp::ExportJson:
+            break;
         }
         if (st.cbs.on_update) st.cbs.on_update(r.id, r);
     }
@@ -2007,16 +1967,14 @@ void FireBatch(RuleListState& st, BatchOp op, std::string arg) {
         std::sort(sorted.rbegin(), sorted.rend());
         for (auto si : sorted) {
             if (si >= st.filtered.size()) continue;
-            auto it = st.input.rules.begin() +
-                      static_cast<std::ptrdiff_t>(st.filtered[si]);
+            auto it = st.input.rules.begin() + static_cast<std::ptrdiff_t>(st.filtered[si]);
             st.input.rules.erase(it);
         }
         st.selected_indexes.clear();
     }
     detail::RefreshFiltered(st);
     if (st.cbs.on_batch) st.cbs.on_batch(std::move(ids), op, std::move(arg));
-    st.status_bar_msg = std::format("batch op applied to {} rows",
-                                    st.selected_indexes.size());
+    st.status_bar_msg = std::format("batch op applied to {} rows", st.selected_indexes.size());
     st.selected_indexes.clear();
     st.anchor_index.reset();
 }
@@ -2024,7 +1982,7 @@ void FireBatch(RuleListState& st, BatchOp op, std::string arg) {
 bool HandleGroups(RuleListState& st, Event e) {
     const std::size_t N = st.input.groups.size();
 
-    if (e == Event::ArrowUp   || e == Event::Character('k')) {
+    if (e == Event::ArrowUp || e == Event::Character('k')) {
         if (N == 0) return true;
         st.active_group_idx = (st.active_group_idx - 1 + N) % N;
         st.filters.group_id = st.input.groups[st.active_group_idx].id;
@@ -2040,8 +1998,7 @@ bool HandleGroups(RuleListState& st, Event e) {
     }
     if (e == Event::Return || e == Event::Character(' ')) {
         if (!st.filters.group_id.empty() &&
-            st.filters.group_id ==
-                st.input.groups[st.active_group_idx].id)
+            st.filters.group_id == st.input.groups[st.active_group_idx].id)
             st.filters.group_id.clear();
         else
             st.filters.group_id = st.input.groups[st.active_group_idx].id;
@@ -2064,17 +2021,24 @@ bool HandleGroups(RuleListState& st, Event e) {
 
 bool HandleSearch(RuleListState& st, Event e) {
     if (e == Event::Escape) {
-        st.search_buf.clear(); st.search_focused = false;
-        detail::RefreshFiltered(st); return true;
+        st.search_buf.clear();
+        st.search_focused = false;
+        detail::RefreshFiltered(st);
+        return true;
     }
-    if (e == Event::Return) { st.search_focused = false; return true; }
+    if (e == Event::Return) {
+        st.search_focused = false;
+        return true;
+    }
     if (e == Event::Backspace || e.input() == "\x7f") {
         if (!st.search_buf.empty()) st.search_buf.pop_back();
-        detail::RefreshFiltered(st); return true;
+        detail::RefreshFiltered(st);
+        return true;
     }
     if (e.is_character()) {
         st.search_buf += e.character();
-        detail::RefreshFiltered(st); return true;
+        detail::RefreshFiltered(st);
+        return true;
     }
     return false;
 }
@@ -2084,14 +2048,13 @@ bool HandleRules(RuleListState& st, Event e) {
 
     auto has_shift = [](const Event& ev) {
         const std::string& s = ev.input();
-        return s.size() >= 5 &&
-               s.substr(0, 5) == "\x1B[1;" &&
-               s.find(";2") != std::string::npos;
+        return s.size() >= 5 && s.substr(0, 5) == "\x1B[1;" && s.find(";2") != std::string::npos;
     };
 
     if (st.search_focused) return HandleSearch(st, e);
     if (e == Event::Character('/')) {
-        st.search_focused = true; return true;
+        st.search_focused = true;
+        return true;
     }
     if (e.is_character()) {
         char ch = e.character().front();
@@ -2102,27 +2065,33 @@ bool HandleRules(RuleListState& st, Event e) {
             return true;
         }
     }
-    if (e == Event::ArrowUp   || e == Event::Character('k')) {
+    if (e == Event::ArrowUp || e == Event::Character('k')) {
         if (N == 0) return true;
-        st.rule_cursor = (st.rule_cursor - 1 + N) % N; return true;
+        st.rule_cursor = (st.rule_cursor - 1 + N) % N;
+        return true;
     }
     if (e == Event::ArrowDown || e == Event::Character('j')) {
         if (N == 0) return true;
-        st.rule_cursor = (st.rule_cursor + 1) % N; return true;
+        st.rule_cursor = (st.rule_cursor + 1) % N;
+        return true;
     }
     if (e == Event::PageUp) {
         st.rule_cursor = st.rule_cursor < std::size_t(detail::kVScrollVisible)
-            ? 0 : st.rule_cursor - detail::kVScrollVisible; return true;
+                             ? 0
+                             : st.rule_cursor - detail::kVScrollVisible;
+        return true;
     }
     if (e == Event::PageDown) {
-        st.rule_cursor = std::min(N - 1,
-            st.rule_cursor + detail::kVScrollVisible); return true;
+        st.rule_cursor = std::min(N - 1, st.rule_cursor + detail::kVScrollVisible);
+        return true;
     }
     if (e == Event::Home || e == Event::Character('g')) {
-        st.rule_cursor = 0; return true;
+        st.rule_cursor = 0;
+        return true;
     }
-    if (e == Event::End  || e == Event::Character('G')) {
-        if (N > 0) st.rule_cursor = N - 1; return true;
+    if (e == Event::End || e == Event::Character('G')) {
+        if (N > 0) st.rule_cursor = N - 1;
+        return true;
     }
     if (e == Event::Character(' ')) {
         ev::ToggleIndex(st, st.rule_cursor);
@@ -2134,9 +2103,8 @@ bool HandleRules(RuleListState& st, Event e) {
         const std::string& s = ev.input();
         const std::string& b = base.input();
         // Shift+Arrow:  \x1B[A/B/C/D  →  \x1B[1;2X
-        return b.size() == 3 && b.substr(0, 2) == "\x1B[" &&
-               s.size() == 7 && s.substr(0, 5) == "\x1B[1;" &&
-               s[5] == '2' && s.back() == b.back();
+        return b.size() == 3 && b.substr(0, 2) == "\x1B[" && s.size() == 7 &&
+               s.substr(0, 5) == "\x1B[1;" && s[5] == '2' && s.back() == b.back();
     };
 
     if (has_shift(e) && (matches_arrow_with_shift(e, Event::ArrowDown) ||
@@ -2149,54 +2117,113 @@ bool HandleRules(RuleListState& st, Event e) {
         ev::SelectRange(st, st.rule_cursor);
         return true;
     }
-    if (e.input() == "ctrl+a") { ev::SelectAll(st); return true; }
+    if (e.input() == "ctrl+a") {
+        ev::SelectAll(st);
+        return true;
+    }
     if (e == Event::Character('v')) {
         st.anchor_index = st.rule_cursor;
         ev::ToggleIndex(st, st.rule_cursor);
         return true;
     }
-    if (e == Event::Character('n')) { ev::StartNewRule(st); return true; }
+    if (e == Event::Character('n')) {
+        ev::StartNewRule(st);
+        return true;
+    }
     if (e == Event::Delete || e == Event::Character('x')) {
-        ev::DeleteAtCursor(st); return true;
+        ev::DeleteAtCursor(st);
+        return true;
     }
     if (e == Event::Return) {
         ev::LoadEditorForSelected(st, st.rule_cursor);
         ev::ToggleIndex(st, st.rule_cursor);
-        st.focus = FocusZone::Editor; return true;
+        st.focus = FocusZone::Editor;
+        return true;
     }
-    if (e == Event::Character('E')) { ev::FireBatch(st, BatchOp::Enable);  return true; }
-    if (e == Event::Character('D')) { ev::FireBatch(st, BatchOp::Disable); return true; }
-    if (e == Event::Character('X')) { ev::FireBatch(st, BatchOp::Delete);  return true; }
-    if (e == Event::Character('J')) { ev::FireBatch(st, BatchOp::ExportJson); return true; }
+    if (e == Event::Character('E')) {
+        ev::FireBatch(st, BatchOp::Enable);
+        return true;
+    }
+    if (e == Event::Character('D')) {
+        ev::FireBatch(st, BatchOp::Disable);
+        return true;
+    }
+    if (e == Event::Character('X')) {
+        ev::FireBatch(st, BatchOp::Delete);
+        return true;
+    }
+    if (e == Event::Character('J')) {
+        ev::FireBatch(st, BatchOp::ExportJson);
+        return true;
+    }
     return false;
 }
 
 bool HandleEditor(RuleListState& st, Event e) {
-    if (e.input() == "ctrl+s") { ev::CommitEditorChanges(st); return true; }
-    if (e == Event::Escape) { st.editor.dirty = false; st.focus = FocusZone::Rules; return true; }
+    if (e.input() == "ctrl+s") {
+        ev::CommitEditorChanges(st);
+        return true;
+    }
+    if (e == Event::Escape) {
+        st.editor.dirty = false;
+        st.focus = FocusZone::Rules;
+        return true;
+    }
 
-    if (e == Event::Character('h')) { st.editor.strategy_idx = (st.editor.strategy_idx + 3) % 4; st.editor.dirty = true; return true; }
-    if (e == Event::Character('l')) { st.editor.strategy_idx = (st.editor.strategy_idx + 1) % 4; st.editor.dirty = true; return true; }
-    if (e == Event::Character('H')) { st.editor.scope_idx    = (st.editor.scope_idx    + 3) % 4; st.editor.dirty = true; return true; }
-    if (e == Event::Character('L')) { st.editor.scope_idx    = (st.editor.scope_idx    + 1) % 4; st.editor.dirty = true; return true; }
-    if (e == Event::ArrowLeft)  { st.editor.action_idx = (st.editor.action_idx + 3) % 4; st.editor.dirty = true; return true; }
-    if (e == Event::ArrowRight) { st.editor.action_idx = (st.editor.action_idx + 1) % 4; st.editor.dirty = true; return true; }
+    if (e == Event::Character('h')) {
+        st.editor.strategy_idx = (st.editor.strategy_idx + 3) % 4;
+        st.editor.dirty = true;
+        return true;
+    }
+    if (e == Event::Character('l')) {
+        st.editor.strategy_idx = (st.editor.strategy_idx + 1) % 4;
+        st.editor.dirty = true;
+        return true;
+    }
+    if (e == Event::Character('H')) {
+        st.editor.scope_idx = (st.editor.scope_idx + 3) % 4;
+        st.editor.dirty = true;
+        return true;
+    }
+    if (e == Event::Character('L')) {
+        st.editor.scope_idx = (st.editor.scope_idx + 1) % 4;
+        st.editor.dirty = true;
+        return true;
+    }
+    if (e == Event::ArrowLeft) {
+        st.editor.action_idx = (st.editor.action_idx + 3) % 4;
+        st.editor.dirty = true;
+        return true;
+    }
+    if (e == Event::ArrowRight) {
+        st.editor.action_idx = (st.editor.action_idx + 1) % 4;
+        st.editor.dirty = true;
+        return true;
+    }
 
     auto G = (int)st.input.groups.size();
-    if (e == Event::Character('<')) { st.editor.group_idx = (st.editor.group_idx - 1 + G) % G; st.editor.dirty = true; return true; }
-    if (e == Event::Character('>')) { st.editor.group_idx = (st.editor.group_idx + 1) % G; st.editor.dirty = true; return true; }
+    if (e == Event::Character('<')) {
+        st.editor.group_idx = (st.editor.group_idx - 1 + G) % G;
+        st.editor.dirty = true;
+        return true;
+    }
+    if (e == Event::Character('>')) {
+        st.editor.group_idx = (st.editor.group_idx + 1) % G;
+        st.editor.dirty = true;
+        return true;
+    }
 
     static constexpr std::array<const char*, 8> kToolNames = {
-        "BashTool","FileEditTool","FileWriteTool","FileReadTool",
-        "WebFetchTool","MCPTool","GlobTool","SkillTool",
+        "BashTool",     "FileEditTool", "FileWriteTool", "FileReadTool",
+        "WebFetchTool", "MCPTool",      "GlobTool",      "SkillTool",
     };
     if (e.is_character()) {
         char ch = e.character().front();
         if (ch >= '1' && ch <= '8') {
             int idx = ch - '1';
             std::string t = kToolNames[idx];
-            auto it = std::find(st.editor.selected_tools.begin(),
-                                st.editor.selected_tools.end(), t);
+            auto it =
+                std::find(st.editor.selected_tools.begin(), st.editor.selected_tools.end(), t);
             if (it == st.editor.selected_tools.end())
                 st.editor.selected_tools.push_back(std::move(t));
             else
@@ -2209,13 +2236,11 @@ bool HandleEditor(RuleListState& st, Event e) {
     if (e.is_character()) {
         auto c = e.character();
         if (c == "\b" || c == "\x7f") {
-            if (!st.editor.description_buf.empty())
-                st.editor.description_buf.pop_back();
+            if (!st.editor.description_buf.empty()) st.editor.description_buf.pop_back();
             st.editor.dirty = true;
             return true;
         }
-        if (c.size() == 1 &&
-            std::isprint(static_cast<unsigned char>(c.front()))) {
+        if (c.size() == 1 && std::isprint(static_cast<unsigned char>(c.front()))) {
             if (st.editor.description_buf.size() <
                 detail::kDescriptionRows * detail::kDescriptionCols) {
                 st.editor.description_buf += c.front();
@@ -2228,63 +2253,69 @@ bool HandleEditor(RuleListState& st, Event e) {
 }
 
 bool HandleToolbar(RuleListState& st, Event e) {
-    if (e == Event::ArrowLeft  || e == Event::Character('h')) {
-        st.toolbar_cursor = (st.toolbar_cursor + 3) % 4; return true;
+    if (e == Event::ArrowLeft || e == Event::Character('h')) {
+        st.toolbar_cursor = (st.toolbar_cursor + 3) % 4;
+        return true;
     }
     if (e == Event::ArrowRight || e == Event::Character('l')) {
-        st.toolbar_cursor = (st.toolbar_cursor + 1) % 4; return true;
+        st.toolbar_cursor = (st.toolbar_cursor + 1) % 4;
+        return true;
     }
     if (e == Event::Return || e == Event::Character(' ')) {
         switch (st.toolbar_cursor) {
-            case 0: ev::StartNewRule(st);                         return true;
-            case 1:
-                st.focus = FocusZone::ImportModal;
-                st.import_buf.clear();
-                st.status_bar_msg = "paste JSON rules";
-                return true;
-            case 2: {
-                std::string path = st.cbs.on_export ? st.cbs.on_export()
-                                                    : std::string{};
-                st.status_bar_msg = path.empty()
-                    ? std::string{"exported (no callback)"}
-                    : std::format("exported → {}", path);
-                return true;
-            }
-            case 3: {
-                // Diff = current state vs initial state (best-effort).
-                st.show_diff = true;
-                st.focus = FocusZone::DiffModal;
-                return true;
-            }
+        case 0:
+            ev::StartNewRule(st);
+            return true;
+        case 1:
+            st.focus = FocusZone::ImportModal;
+            st.import_buf.clear();
+            st.status_bar_msg = "paste JSON rules";
+            return true;
+        case 2: {
+            std::string path = st.cbs.on_export ? st.cbs.on_export() : std::string{};
+            st.status_bar_msg = path.empty() ? std::string{"exported (no callback)"}
+                                             : std::format("exported → {}", path);
+            return true;
+        }
+        case 3: {
+            // Diff = current state vs initial state (best-effort).
+            st.show_diff = true;
+            st.focus = FocusZone::DiffModal;
+            return true;
+        }
         }
     }
-    if (e == Event::Character('n')) { ev::StartNewRule(st); return true; }
+    if (e == Event::Character('n')) {
+        ev::StartNewRule(st);
+        return true;
+    }
     if (e == Event::Character('i')) {
-        st.focus = FocusZone::ImportModal; st.import_buf.clear(); return true;
+        st.focus = FocusZone::ImportModal;
+        st.import_buf.clear();
+        return true;
     }
     if (e == Event::Character('e')) {
-        std::string path = st.cbs.on_export ? st.cbs.on_export()
-                                            : std::string{};
-        st.status_bar_msg = path.empty()
-            ? std::string{"exported (no callback)"}
-            : std::format("exported → {}", path);
+        std::string path = st.cbs.on_export ? st.cbs.on_export() : std::string{};
+        st.status_bar_msg = path.empty() ? std::string{"exported (no callback)"}
+                                         : std::format("exported → {}", path);
         return true;
     }
     if (e == Event::Character('d')) {
-        st.show_diff = true; st.focus = FocusZone::DiffModal; return true;
+        st.show_diff = true;
+        st.focus = FocusZone::DiffModal;
+        return true;
     }
     return false;
 }
 
 bool HandleImportModal(RuleListState& st, Event e) {
     if (e == Event::Escape) {
-        st.focus = FocusZone::Toolbar; return true;
+        st.focus = FocusZone::Toolbar;
+        return true;
     }
     if (e == Event::Return) {
-        if (st.cbs.on_import && !st.import_buf.empty())
-            st.cbs.on_import(st.import_buf);
-        st.status_bar_msg = std::format("imported {} bytes",
-                                        st.import_buf.size());
+        if (st.cbs.on_import && !st.import_buf.empty()) st.cbs.on_import(st.import_buf);
+        st.status_bar_msg = std::format("imported {} bytes", st.import_buf.size());
         st.focus = FocusZone::Toolbar;
         return true;
     }
@@ -2308,13 +2339,11 @@ bool HandleDiffModal(RuleListState& st, Event e) {
     return false;
 }
 
-} // namespace loom::ui::permissions::rule_list::ev
+}  // namespace loom::ui::permissions::rule_list::ev
 
 namespace loom::utils::permissions_engine {
 
-[[nodiscard]] auto recent_denials(int limit)
-    -> std::vector<DenialEntry>
-{
+[[nodiscard]] auto recent_denials(int limit) -> std::vector<DenialEntry> {
     auto& s = g_state();
     std::lock_guard<std::mutex> lk(s.mx);
     std::vector<DenialEntry> out = s.denials;
@@ -2357,28 +2386,22 @@ auto __test_reset_denials() -> void {
     s.denials.clear();
 }
 
-[[nodiscard]] auto workspace_directories()
-    -> std::vector<WorkspaceEntry>
-{
+[[nodiscard]] auto workspace_directories() -> std::vector<WorkspaceEntry> {
     auto& s = g_state();
     std::lock_guard<std::mutex> lk(s.mx);
     return s.workspaces;
 }
 
-[[nodiscard]] auto add_workspace_dir(fs::path p,
-                                            WorkspaceEntry::Policy policy)
-    -> std::expected<void, std::string>
-{
-    if (p.empty())
-        return std::unexpected(std::string{"path must not be empty"});
+[[nodiscard]] auto add_workspace_dir(fs::path p, WorkspaceEntry::Policy policy)
+    -> std::expected<void, std::string> {
+    if (p.empty()) return std::unexpected(std::string{"path must not be empty"});
     std::error_code ec;
-    p = fs::weakly_canonical(p, ec); // best-effort normalization
+    p = fs::weakly_canonical(p, ec);  // best-effort normalization
     auto& s = g_state();
     std::lock_guard<std::mutex> lk(s.mx);
     for (const auto& w : s.workspaces) {
         if (fs::equivalent(w.path, p, ec) || w.path == p) {
-            return std::unexpected(
-                std::string{"workspace directory already exists"});
+            return std::unexpected(std::string{"workspace directory already exists"});
         }
     }
     s.workspaces.push_back(WorkspaceEntry{
@@ -2393,11 +2416,10 @@ auto __test_reset_denials() -> void {
     auto& s = g_state();
     std::lock_guard<std::mutex> lk(s.mx);
     std::error_code ec;
-    auto it = std::find_if(s.workspaces.begin(), s.workspaces.end(),
-        [&](const WorkspaceEntry& w) {
-            if (w.is_default) return false; // cannot remove defaults
-            return fs::equivalent(w.path, p, ec) || w.path == p;
-        });
+    auto it = std::find_if(s.workspaces.begin(), s.workspaces.end(), [&](const WorkspaceEntry& w) {
+        if (w.is_default) return false;  // cannot remove defaults
+        return fs::equivalent(w.path, p, ec) || w.path == p;
+    });
     if (it == s.workspaces.end()) return false;
     s.workspaces.erase(it);
     return true;
@@ -2424,19 +2446,17 @@ auto __test_reset_workspaces() -> void {
     s.workspaces.clear();
 }
 
-} // namespace loom::utils::permissions_engine
+}  // namespace loom::utils::permissions_engine
 
 namespace loom::ui::permissions::rule_list::ui_tabs_detail {
 
 [[nodiscard]] std::string TimeAgo(int64_t ts_ms) {
     using namespace std::chrono;
-    const auto now_ms = duration_cast<milliseconds>(
-        system_clock::now().time_since_epoch()).count();
+    const auto now_ms = duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count();
     int64_t diff = now_ms - ts_ms;
     if (diff < 0) diff = 0;
     const int64_t s = diff / 1000;
-    if (s < 60)
-        return std::format("{}s ago", std::max<int64_t>(1, s));
+    if (s < 60) return std::format("{}s ago", std::max<int64_t>(1, s));
     const int64_t m = s / 60;
     if (m < 60) return std::format("{}m ago", m);
     const int64_t h = m / 60;
@@ -2445,12 +2465,10 @@ namespace loom::ui::permissions::rule_list::ui_tabs_detail {
     return std::format("{}d ago", d);
 }
 
-[[nodiscard]] bool DenialMatches(const peng::DenialEntry& d,
-                                        std::string_view filter) {
+[[nodiscard]] bool DenialMatches(const peng::DenialEntry& d, std::string_view filter) {
     if (filter.empty()) return true;
     std::string f(filter);
-    std::transform(f.begin(), f.end(), f.begin(),
-                   [](unsigned char c) { return std::tolower(c); });
+    std::transform(f.begin(), f.end(), f.begin(), [](unsigned char c) { return std::tolower(c); });
     auto in = [&](std::string_view sv) {
         std::string hay(sv);
         std::transform(hay.begin(), hay.end(), hay.begin(),
@@ -2460,21 +2478,18 @@ namespace loom::ui::permissions::rule_list::ui_tabs_detail {
     return in(d.tool_name) || in(d.action) || in(d.path) || in(d.deny_reason);
 }
 
-[[nodiscard]] Element DialogFrame(std::string_view title,
-                                         Color accent,
-                                         Element body,
-                                         Element footer) {
+[[nodiscard]] Element DialogFrame(std::string_view title, Color accent, Element body,
+                                  Element footer) {
     return dbox({
         text("") | clear_under,
-        window(
-            hbox({text(std::string{" "}), text(std::string{title})}) | bold | color(accent),
-            vbox({
-                std::move(body) | size(WIDTH, GREATER_THAN, 40),
-                separator(),
-                std::move(footer),
-            }) | size(WIDTH, GREATER_THAN, 50)
-               | size(HEIGHT, GREATER_THAN, 6)
-        ) | color(accent),
+        window(hbox({text(std::string{" "}), text(std::string{title})}) | bold | color(accent),
+               vbox({
+                   std::move(body) | size(WIDTH, GREATER_THAN, 40),
+                   separator(),
+                   std::move(footer),
+               }) | size(WIDTH, GREATER_THAN, 50) |
+                   size(HEIGHT, GREATER_THAN, 6)) |
+            color(accent),
     });
 }
 
@@ -2483,41 +2498,45 @@ namespace loom::ui::permissions::rule_list::ui_tabs_detail {
     std::string_view label;
     Color c;
     switch (a) {
-        case eng::PermissionAction::Allow:
-            label = "ALLOW"; c = pal.success; break;
-        case eng::PermissionAction::AskOnce:
-            label = "ALLOW_ONCE"; c = pal.success; break;
-        case eng::PermissionAction::Ask:
-            label = "ASK"; c = pal.warning; break;
-        case eng::PermissionAction::Deny:
-            label = "DENY"; c = pal.danger; break;
+    case eng::PermissionAction::Allow:
+        label = "ALLOW";
+        c = pal.success;
+        break;
+    case eng::PermissionAction::AskOnce:
+        label = "ALLOW_ONCE";
+        c = pal.success;
+        break;
+    case eng::PermissionAction::Ask:
+        label = "ASK";
+        c = pal.warning;
+        break;
+    case eng::PermissionAction::Deny:
+        label = "DENY";
+        c = pal.danger;
+        break;
     }
     return text(std::format(" {} ", label)) | color(c) | bgcolor(pal.perm_rule_bg_darker) | bold;
 }
 
-[[nodiscard]] Element WorkspacePolicyBadge(peng::WorkspaceEntry::Policy p,
-                                                  bool is_default) {
+[[nodiscard]] Element WorkspacePolicyBadge(peng::WorkspaceEntry::Policy p, bool is_default) {
     const auto& theme = loom::ui::design::theme::current_theme();
     const auto& pal = *theme.palette;
-    const bool ansi = theme.variant == loom::ui::design::theme::ThemeVariant::LightAnsi
-                   || theme.variant == loom::ui::design::theme::ThemeVariant::DarkAnsi;
+    const bool ansi = theme.variant == loom::ui::design::theme::ThemeVariant::LightAnsi ||
+                      theme.variant == loom::ui::design::theme::ThemeVariant::DarkAnsi;
     if (is_default) {
-        return text(" DEFAULT ") | color(pal.muted)
-               | bgcolor(pal.message_actions_background);
+        return text(" DEFAULT ") | color(pal.muted) | bgcolor(pal.message_actions_background);
     }
     switch (p) {
-        case peng::WorkspaceEntry::Policy::Allow:
-            return text(" ALLOW ") | color(pal.success)
-                   | bgcolor(ansi ? pal.background : pal.success_tint_bg) | bold;
-        case peng::WorkspaceEntry::Policy::Deny:
-            return text(" DENY ") | color(pal.danger)
-                   | bgcolor(ansi ? pal.background : pal.danger_tint_bg) | bold;
-        case peng::WorkspaceEntry::Policy::Default:
-            return text(" DEFAULT ") | color(pal.muted)
-                   | bgcolor(pal.message_actions_background);
+    case peng::WorkspaceEntry::Policy::Allow:
+        return text(" ALLOW ") | color(pal.success) |
+               bgcolor(ansi ? pal.background : pal.success_tint_bg) | bold;
+    case peng::WorkspaceEntry::Policy::Deny:
+        return text(" DENY ") | color(pal.danger) |
+               bgcolor(ansi ? pal.background : pal.danger_tint_bg) | bold;
+    case peng::WorkspaceEntry::Policy::Default:
+        return text(" DEFAULT ") | color(pal.muted) | bgcolor(pal.message_actions_background);
     }
     return text("");
 }
 
-} // namespace loom::ui::permissions::rule_list::ui_tabs_detail
-
+}  // namespace loom::ui::permissions::rule_list::ui_tabs_detail

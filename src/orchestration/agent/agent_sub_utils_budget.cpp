@@ -15,7 +15,7 @@ import loom.serdes.json;
 // / PERSISTED_OUTPUT_CLOSING_TAG (defined in tool_helpers.cppm); graph_check
 // cannot see qualified loom::utils::NAME evidence because loom::utils is a
 // shallow (<3 segment) namespace path.
-import loom.tools.support.tool_helpers;  // arch-check: keep-import
+import loom.tools.support.tool_helpers; // arch-check: keep-import
 import loom.tools.tool;
 import loom.tools.agent_runtime;
 import loom.services.api.client;
@@ -24,9 +24,7 @@ namespace loom::tools::agent::utils {
 
 namespace fs = std::filesystem;
 
-[[nodiscard]] std::optional<std::size_t> json_positive_size_t(
-    loom::utils::json::JsonVal value
-) {
+[[nodiscard]] std::optional<std::size_t> json_positive_size_t(loom::utils::json::JsonVal value) {
     if (!value.valid() || !value.is_num()) return std::nullopt;
     const auto numeric = value.as_double();
     if (!std::isfinite(numeric) || numeric <= 0.0) return std::nullopt;
@@ -34,9 +32,7 @@ namespace fs = std::filesystem;
     return static_cast<std::size_t>(numeric);
 }
 
-[[nodiscard]] std::optional<std::size_t> agent_tool_threshold_override(
-    std::string_view tool_name
-) {
+[[nodiscard]] std::optional<std::size_t> agent_tool_threshold_override(std::string_view tool_name) {
     std::optional<std::size_t> override;
     with_agent_growthbook_env_overrides([&](loom::utils::json::JsonVal root) {
         auto overrides = root.get(AGENT_PERSIST_THRESHOLD_OVERRIDE_FLAG);
@@ -63,19 +59,16 @@ namespace fs = std::filesystem;
     return override.value_or(AGENT_MAX_TOOL_RESULTS_PER_MESSAGE_CHARS);
 }
 
-[[nodiscard]] AgentContentReplacementState agent_content_replacement_state_from_entries(
-    const std::vector<std::string>& entries
-) {
+[[nodiscard]] AgentContentReplacementState
+agent_content_replacement_state_from_entries(const std::vector<std::string>& entries) {
     return AgentContentReplacementState{
         .seen_ids = {},
         .replacements = resume_content_replacements_from_entries(entries),
     };
 }
 
-void mark_seen_tool_result_ids(
-    AgentContentReplacementState& state,
-    const std::vector<Message>& messages
-) {
+void mark_seen_tool_result_ids(AgentContentReplacementState& state,
+                               const std::vector<Message>& messages) {
     for (const auto& message : messages) {
         if (message.role != "user") continue;
         for (const auto& block : message.content) {
@@ -90,9 +83,8 @@ void mark_seen_tool_result_ids(
     return text.starts_with(loom::utils::PERSISTED_OUTPUT_TAG);
 }
 
-[[nodiscard]] std::unordered_set<std::string> unbounded_tool_result_budget_names(
-    const std::vector<ToolDefinition>& definitions
-) {
+[[nodiscard]] std::unordered_set<std::string>
+unbounded_tool_result_budget_names(const std::vector<ToolDefinition>& definitions) {
     std::unordered_set<std::string> names;
     for (const auto& definition : definitions) {
         if (definition.max_result_size_unbounded) {
@@ -102,23 +94,23 @@ void mark_seen_tool_result_ids(
     return names;
 }
 
-[[nodiscard]] std::unordered_map<std::string, std::size_t> tool_result_budget_thresholds(
-    const std::vector<ToolDefinition>& definitions
-) {
+[[nodiscard]] std::unordered_map<std::string, std::size_t>
+tool_result_budget_thresholds(const std::vector<ToolDefinition>& definitions) {
     std::unordered_map<std::string, std::size_t> thresholds;
     for (const auto& definition : definitions) {
         if (definition.max_result_size_unbounded) continue;
-        auto threshold = agent_tool_threshold_override(definition.name).value_or(definition.max_result_size_chars == 0
-            ? AGENT_DEFAULT_TOOL_RESULT_THRESHOLD_CHARS
-            : std::min(definition.max_result_size_chars, AGENT_DEFAULT_TOOL_RESULT_THRESHOLD_CHARS));
+        auto threshold = agent_tool_threshold_override(definition.name)
+                             .value_or(definition.max_result_size_chars == 0
+                                           ? AGENT_DEFAULT_TOOL_RESULT_THRESHOLD_CHARS
+                                           : std::min(definition.max_result_size_chars,
+                                                      AGENT_DEFAULT_TOOL_RESULT_THRESHOLD_CHARS));
         thresholds[lowercase_ascii(definition.name)] = threshold;
     }
     return thresholds;
 }
 
-[[nodiscard]] std::unordered_map<std::string, std::string> tool_name_by_tool_use_id(
-    const std::vector<Message>& messages
-) {
+[[nodiscard]] std::unordered_map<std::string, std::string>
+tool_name_by_tool_use_id(const std::vector<Message>& messages) {
     std::unordered_map<std::string, std::string> names;
     for (const auto& message : messages) {
         if (message.role != "assistant") continue;
@@ -131,21 +123,19 @@ void mark_seen_tool_result_ids(
     return names;
 }
 
-[[nodiscard]] bool should_skip_agent_budget_candidate(
-    const std::unordered_map<std::string, std::string>& tool_names,
-    const std::unordered_set<std::string>& skip_tool_names,
-    std::string_view tool_use_id
-) {
+[[nodiscard]] bool
+should_skip_agent_budget_candidate(const std::unordered_map<std::string, std::string>& tool_names,
+                                   const std::unordered_set<std::string>& skip_tool_names,
+                                   std::string_view tool_use_id) {
     auto it = tool_names.find(std::string(tool_use_id));
     if (it == tool_names.end()) return false;
     return skip_tool_names.contains(lowercase_ascii(it->second));
 }
 
-[[nodiscard]] std::size_t agent_budget_threshold_for_candidate(
-    const std::unordered_map<std::string, std::string>& tool_names,
-    const std::unordered_map<std::string, std::size_t>& thresholds,
-    std::string_view tool_use_id
-) {
+[[nodiscard]] std::size_t
+agent_budget_threshold_for_candidate(const std::unordered_map<std::string, std::string>& tool_names,
+                                     const std::unordered_map<std::string, std::size_t>& thresholds,
+                                     std::string_view tool_use_id) {
     auto name = tool_names.find(std::string(tool_use_id));
     if (name == tool_names.end()) return AGENT_DEFAULT_TOOL_RESULT_THRESHOLD_CHARS;
     auto threshold = thresholds.find(lowercase_ascii(name->second));
@@ -153,9 +143,8 @@ void mark_seen_tool_result_ids(
     return threshold->second;
 }
 
-[[nodiscard]] std::vector<std::vector<AgentToolResultCandidate>> collect_agent_budget_candidates_by_message(
-    const std::vector<Message>& messages
-) {
+[[nodiscard]] std::vector<std::vector<AgentToolResultCandidate>>
+collect_agent_budget_candidates_by_message(const std::vector<Message>& messages) {
     std::vector<std::vector<AgentToolResultCandidate>> groups;
     std::vector<AgentToolResultCandidate> current;
     auto flush = [&] {
@@ -185,21 +174,17 @@ void mark_seen_tool_result_ids(
     return groups;
 }
 
-[[nodiscard]] fs::path agent_tool_result_path(
-    std::string_view agent_id,
-    std::string_view tool_use_id
-) {
-    return loom::tools::agent_runtime::runtime_state_dir() /
-        "tool-results" /
-        (loom::tools::agent_runtime::safe_agent_filename(agent_id) + "-" +
+[[nodiscard]] fs::path agent_tool_result_path(std::string_view agent_id,
+                                              std::string_view tool_use_id) {
+    return loom::tools::agent_runtime::runtime_state_dir() / "tool-results" /
+           (loom::tools::agent_runtime::safe_agent_filename(agent_id) + "-" +
             loom::tools::agent_runtime::safe_agent_filename(tool_use_id) + ".txt");
 }
 
-[[nodiscard]] std::optional<std::string> build_agent_tool_result_replacement(
-    std::string_view agent_id,
-    const AgentToolResultCandidate& candidate,
-    std::string_view content
-) {
+[[nodiscard]] std::optional<std::string>
+build_agent_tool_result_replacement(std::string_view agent_id,
+                                    const AgentToolResultCandidate& candidate,
+                                    std::string_view content) {
     auto path = agent_tool_result_path(agent_id, candidate.tool_use_id);
     std::error_code ec;
     fs::create_directories(path.parent_path(), ec);
@@ -220,10 +205,8 @@ void mark_seen_tool_result_ids(
     replacement.reserve(preview.size() + path.string().size() + 192);
     replacement += loom::utils::PERSISTED_OUTPUT_TAG;
     replacement += "\n";
-    replacement += std::format(
-        "Output too large ({} bytes). Full output saved to: {}\n\n",
-        content.size(),
-        path.string());
+    replacement += std::format("Output too large ({} bytes). Full output saved to: {}\n\n",
+                               content.size(), path.string());
     replacement += std::format("Preview (first {} bytes):\n", preview_len);
     replacement += preview;
     replacement += has_more ? "\n...\n" : "\n";
@@ -233,8 +216,7 @@ void mark_seen_tool_result_ids(
 
 [[nodiscard]] std::string agent_content_replacement_entry_json(
     std::string_view agent_id,
-    const std::vector<std::pair<std::string, std::string>>& replacements
-) {
+    const std::vector<std::pair<std::string, std::string>>& replacements) {
     std::string out = R"({"type":"content-replacement","sessionId":")";
     out += json_escape_string(teammate_parent_session_id());
     out += R"(","agentId":")";
@@ -253,12 +235,9 @@ void mark_seen_tool_result_ids(
 }
 
 AgentToolResultBudgetOutcome apply_agent_tool_result_budget(
-    std::string_view agent_id,
-    std::vector<Message>& messages,
-    AgentContentReplacementState& state,
+    std::string_view agent_id, std::vector<Message>& messages, AgentContentReplacementState& state,
     const std::unordered_set<std::string>& skip_tool_names,
-    const std::unordered_map<std::string, std::size_t>& tool_thresholds
-) {
+    const std::unordered_map<std::string, std::size_t>& tool_thresholds) {
     AgentToolResultBudgetOutcome outcome;
     const auto tool_names = tool_name_by_tool_use_id(messages);
     const auto message_budget_limit = agent_per_message_budget_limit();
@@ -272,12 +251,14 @@ AgentToolResultBudgetOutcome apply_agent_tool_result_budget(
         for (const auto& candidate : candidates) {
             if (auto replacement = state.replacements.find(candidate.tool_use_id);
                 replacement != state.replacements.end()) {
-                messages[candidate.message_index].content[candidate.block_index].text = replacement->second;
+                messages[candidate.message_index].content[candidate.block_index].text =
+                    replacement->second;
                 state.seen_ids.insert(candidate.tool_use_id);
                 ++outcome.reapplied;
             } else if (state.seen_ids.contains(candidate.tool_use_id)) {
                 frozen_size += candidate.size;
-            } else if (should_skip_agent_budget_candidate(tool_names, skip_tool_names, candidate.tool_use_id)) {
+            } else if (should_skip_agent_budget_candidate(tool_names, skip_tool_names,
+                                                          candidate.tool_use_id)) {
                 state.seen_ids.insert(candidate.tool_use_id);
             } else {
                 fresh.push_back(candidate);
@@ -289,7 +270,8 @@ AgentToolResultBudgetOutcome apply_agent_tool_result_budget(
         std::size_t selected_size = 0;
         std::unordered_set<std::string> selected_ids;
         for (const auto& candidate : fresh) {
-            if (candidate.size > agent_budget_threshold_for_candidate(tool_names, tool_thresholds, candidate.tool_use_id)) {
+            if (candidate.size > agent_budget_threshold_for_candidate(tool_names, tool_thresholds,
+                                                                      candidate.tool_use_id)) {
                 selected.push_back(candidate);
                 selected_ids.insert(candidate.tool_use_id);
                 selected_size += candidate.size;
@@ -335,10 +317,9 @@ AgentToolResultBudgetOutcome apply_agent_tool_result_budget(
 
     if (!newly_replaced.empty()) {
         loom::tools::agent_runtime::native_agent_store().append_sidechain_entry(
-            agent_id,
-            agent_content_replacement_entry_json(agent_id, newly_replaced));
+            agent_id, agent_content_replacement_entry_json(agent_id, newly_replaced));
     }
     return outcome;
 }
 
-} // namespace loom::tools::agent::utils
+}  // namespace loom::tools::agent::utils

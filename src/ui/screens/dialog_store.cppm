@@ -19,7 +19,7 @@ export module loom.ui.screens.dialog_store;
 
 import std;
 
-import loom.ui.dialogs.system;                     // DialogQueue / DialogRendererRegistry
+import loom.ui.dialogs.system; // DialogQueue / DialogRendererRegistry
 
 export namespace loom::ui::repl_screen {
 
@@ -86,8 +86,7 @@ struct DialogStore {
     void PopOverlay() { dialog_queue.pop_overlay(); }
 
     /// Pop the front of the highest-priority non-suppressed bottom band.
-    void PopBottom(bool is_prompt_input_active,
-                   bool allow_dialogs_with_animation = true) {
+    void PopBottom(bool is_prompt_input_active, bool allow_dialogs_with_animation = true) {
         dialog_queue.pop_bottom(is_prompt_input_active, allow_dialogs_with_animation);
     }
 
@@ -95,9 +94,7 @@ struct DialogStore {
     void RemoveDialog(std::string_view id) { dialog_queue.remove(id); }
 
     /// Peek the top of the modal stack (const).
-    [[nodiscard]] auto PeekModal() const {
-        return dialog_queue.peek_modal();
-    }
+    [[nodiscard]] auto PeekModal() const { return dialog_queue.peek_modal(); }
 };
 
-}  // namespace loom::ui
+}  // namespace loom::ui::repl_screen

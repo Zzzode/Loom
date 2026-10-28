@@ -7,8 +7,7 @@ import loom.ui.dialogs.system;
 import loom.ui.dialogs.bottom_renderers;
 
 namespace loom::ui::app_dialogs {
-void register_bottom_dialog_renderers(
-    loom::ui::dialogs::system::DialogRendererRegistry& registry) {
+void register_bottom_dialog_renderers(loom::ui::dialogs::system::DialogRendererRegistry& registry) {
     loom::ui::dialogs::bottom_renderers::register_bottom_renderers(registry);
 }
 }  // namespace loom::ui::app_dialogs

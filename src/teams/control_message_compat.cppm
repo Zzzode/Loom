@@ -21,7 +21,7 @@ inline void normalize_request_id_key(std::map<std::string, std::string>& object)
     object.erase(camel);
 }
 
-} // namespace detail
+}  // namespace detail
 
 inline ControlMessageLike& normalize_control_message_keys(ControlMessageLike& message) {
     detail::normalize_request_id_key(message.fields);
@@ -31,4 +31,4 @@ inline ControlMessageLike& normalize_control_message_keys(ControlMessageLike& me
     return message;
 }
 
-} // namespace loom::utils::control_message_compat
+}  // namespace loom::utils::control_message_compat

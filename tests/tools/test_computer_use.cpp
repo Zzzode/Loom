@@ -4,10 +4,11 @@
 #pragma clang diagnostic ignored "-Wmissing-designated-field-initializers"
 
 #include <gtest/gtest.h>
+#include <httplib.h>
+
 #include <cstddef>
 #include <cstdlib>
 #include <cstring>
-#include <httplib.h>
 #ifndef _WIN32
 #include <fcntl.h>
 #include <sys/file.h>
@@ -35,7 +36,7 @@ import loom.tools.web_browser;
 import loom.orchestration.tools.mcp;
 import loom.commands.mcp.core_settings_loader;
 import loom.orchestration.runtime_backends;
-import loom.tools.runtime_backends.port;  // RFC-0001 B15: set_/clear_skill_loader_executor slot API
+import loom.tools.runtime_backends.port; // RFC-0001 B15: set_/clear_skill_loader_executor slot API
 import loom.tools.image_codec.port;
 import loom.tools.worktree;
 import loom.orchestration.agent;
@@ -64,7 +65,7 @@ import loom.teams.team_helpers;
 import loom.hooks.tool_permissions;
 import loom.services.api.client;
 import loom.services.mcp.types;
-import loom.services.mcp.connection_manager;  // RFC-0001 B6: svc_mcp::McpServerSnapshot
+import loom.services.mcp.connection_manager; // RFC-0001 B6: svc_mcp::McpServerSnapshot
 import loom.tools.repl;
 import loom.tools.skill;
 import loom.orchestration.agent.utils;
@@ -75,7 +76,9 @@ namespace fs = std::filesystem;
 // The agent helpers exercised by the existing tests live in
 // loom::tools::agent::utils after the agent_tool split; re-expose them through
 // the loom::tools::agent namespace so the historical call sites still resolve.
-namespace loom::tools::agent { using namespace utils; }
+namespace loom::tools::agent {
+using namespace utils;
+}
 
 namespace {
 
@@ -84,8 +87,7 @@ namespace {
 // does not block them. Production paths must supply a real checker (or accept
 // fail-closed denial for write/execute/network tools).
 loom::tools::agent::AgentLivePermissionCheckFn test_allow_all_check() {
-    auto allow = []([[maybe_unused]] std::string_view,
-                    [[maybe_unused]] std::string_view,
+    auto allow = []([[maybe_unused]] std::string_view, [[maybe_unused]] std::string_view,
                     [[maybe_unused]] std::string_view) {
         return loom::tools::agent::AgentLivePermissionCheck{.allowed = true};
     };
@@ -96,7 +98,8 @@ struct EnvironmentGuard {
     std::string name;
     std::optional<std::string> previous;
 
-    EnvironmentGuard(std::string key, const std::string& value) : name(std::move(key)) {
+    EnvironmentGuard(std::string key, const std::string& value)
+        : name(std::move(key)) {
         if (const char* existing = std::getenv(name.c_str())) {
             previous = existing;
         }
@@ -132,11 +135,10 @@ struct RuntimeComputerUseProviderGuard {
 struct FileToolServicesGuard {
     FileToolServicesGuard() {
         loom::orchestration::install_runtime_backends();
-        loom::tools::image_codec::set_codec(
-            loom::orchestration::make_image_codec());
-        loom::tools::set_skill_loader_executor(
-            loom::orchestration::make_skill_loader_executor());
+        loom::tools::image_codec::set_codec(loom::orchestration::make_image_codec());
+        loom::tools::set_skill_loader_executor(loom::orchestration::make_skill_loader_executor());
     }
+
     ~FileToolServicesGuard() {
         loom::tools::image_codec::clear_codec();
         loom::tools::clear_skill_loader_executor();
@@ -156,30 +158,29 @@ std::string shell_quote_for_test(std::string_view value) {
     return out;
 }
 
-} // namespace
-
+}  // namespace
 
 TEST(Tools, ComputerUseManagerUsesCaptureProviderForScreenshot) {
     using namespace loom::core::computer_use;
     using Rect = loom::core::computer_use::Rect;
 
     bool saw_region = false;
-    ComputerUseManager manager(ScreenCapture([&](std::optional<Rect> region)
-        -> std::expected<ImageData, std::string> {
-        saw_region = region.has_value();
-        if (region) {
-            EXPECT_EQ(region->x, 1);
-            EXPECT_EQ(region->y, 2);
-            EXPECT_EQ(region->width, 3u);
-            EXPECT_EQ(region->height, 4u);
-        }
-        return ImageData{
-            .pixels = {1, 2, 3, 4},
-            .width = 3,
-            .height = 4,
-            .format = "rgba",
-        };
-    }));
+    ComputerUseManager manager(
+        ScreenCapture([&](std::optional<Rect> region) -> std::expected<ImageData, std::string> {
+            saw_region = region.has_value();
+            if (region) {
+                EXPECT_EQ(region->x, 1);
+                EXPECT_EQ(region->y, 2);
+                EXPECT_EQ(region->width, 3u);
+                EXPECT_EQ(region->height, 4u);
+            }
+            return ImageData{
+                .pixels = {1, 2, 3, 4},
+                .width = 3,
+                .height = 4,
+                .format = "rgba",
+            };
+        }));
 
     auto result = manager.execute_action(ComputerAction{
         .type = ActionType::Screenshot,
@@ -218,9 +219,7 @@ TEST(Tools, ComputerUseInputActionReturnsPostActionScreenshot) {
             };
         }),
         // Input provider that succeeds and does NOT attach a frame itself.
-        [](const ComputerAction&) -> std::expected<void, std::string> {
-            return {};
-        });
+        [](const ComputerAction&) -> std::expected<void, std::string> { return {}; });
 
     auto result = manager.execute_action(ComputerAction{
         .type = ActionType::KeyType,
@@ -252,9 +251,7 @@ TEST(Tools, ComputerUseInputActionKeepsProviderProvidedFrame) {
             ++capture_calls;
             return ImageData{.pixels = {1}, .width = 1, .height = 1, .format = "png"};
         }),
-        [](const ComputerAction&) -> std::expected<void, std::string> {
-            return {};
-        });
+        [](const ComputerAction&) -> std::expected<void, std::string> { return {}; });
 
     // KeyPress goes through the same dispatch_input path; here we directly
     // verify a provider-supplied frame is preserved by calling dispatch via
@@ -297,7 +294,8 @@ TEST(Tools, RuntimeComputerUseScreenshotReturnsImageContentFromCaptureProvider) 
         });
 
     loom::core::ToolRegistry registry;
-    loom::tools::register_runtime_tools(registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
+    loom::tools::register_runtime_tools(
+        registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
     auto result = registry.execute("computer_use", loom::core::ToolInput::from_json(R"({
       "action": "screenshot",
       "x": 5,
@@ -350,12 +348,13 @@ if (request.action === 'screenshot') {
 )JS";
     }
     EnvironmentGuard log_guard("LOOM_COMPUTER_USE_LOG", log_path.string());
-    EnvironmentGuard command_guard(
-        "LOOM_COMPUTER_USE_CMD",
-        "node " + shell_quote_for_test(script_path.string()) + " {request}");
+    EnvironmentGuard command_guard("LOOM_COMPUTER_USE_CMD",
+                                   "node " + shell_quote_for_test(script_path.string()) +
+                                       " {request}");
 
     loom::core::ToolRegistry registry;
-    loom::tools::register_runtime_tools(registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
+    loom::tools::register_runtime_tools(
+        registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
 
     auto screenshot = registry.execute("computer_use", loom::core::ToolInput::from_json(R"({
       "action": "screenshot",
@@ -456,7 +455,8 @@ TEST(Tools, RuntimeComputerUseDispatchesInputActionsToProvider) {
         });
 
     loom::core::ToolRegistry registry;
-    loom::tools::register_runtime_tools(registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
+    loom::tools::register_runtime_tools(
+        registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
 
     auto click = registry.execute("computer_use", loom::core::ToolInput::from_json(R"({
       "action": "click",
@@ -510,7 +510,8 @@ TEST(Tools, RuntimeComputerUseRejectsInputActionsWithoutProvider) {
     EnvironmentGuard disable_native_input("LOOM_DISABLE_NATIVE_COMPUTER_INPUT", "1");
 
     loom::core::ToolRegistry registry;
-    loom::tools::register_runtime_tools(registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
+    loom::tools::register_runtime_tools(
+        registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
     auto result = registry.execute("computer_use", loom::core::ToolInput::from_json(R"({
       "action": "click",
       "x": 1,
@@ -520,7 +521,8 @@ TEST(Tools, RuntimeComputerUseRejectsInputActionsWithoutProvider) {
     ASSERT_TRUE(result.has_value());
     EXPECT_TRUE(result->is_error);
     ASSERT_FALSE(result->content.empty());
-    EXPECT_NE(result->content.front().text.find("Computer input control not available"), std::string::npos);
+    EXPECT_NE(result->content.front().text.find("Computer input control not available"),
+              std::string::npos);
 }
 
 TEST(RuntimeComputerUse, EscapesAndBuildsActionPayload) {

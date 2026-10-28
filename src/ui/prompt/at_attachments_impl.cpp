@@ -6,14 +6,13 @@
 /// blow clang's 2GB source-location budget in importers like tests/test_ui.cpp.
 module;
 
-
 module loom.ui.prompt.at_attachments;
 
 import std;
-import loom.types.types;  // arch-check: keep-import
+import loom.types.types; // arch-check: keep-import
 
 import loom.tools.agent_runtime;
-import loom.orchestration.tools.mcp;  // arch-check: keep-import (list_native_mcp_resources, read_native_mcp_resource)
+import loom.orchestration.tools.mcp; // arch-check: keep-import (list_native_mcp_resources, read_native_mcp_resource)
 
 namespace loom::ui::prompt::at_attachments {
 
@@ -23,13 +22,11 @@ namespace mcp = loom::tools;
 namespace fs = std::filesystem;
 
 // AT-10: agent mention — load agent definitions, attach when_to_use on match.
-std::optional<core::ContentBlock> try_attach_agent(
-    std::string_view name, const fs::path& cwd) {
+std::optional<core::ContentBlock> try_attach_agent(std::string_view name, const fs::path& cwd) {
     for (const auto& agent : agent_runtime::get_all_agent_definitions(cwd)) {
         if (name == agent.agent_type) {
-            return core::ContentBlock{core::TextBlock{
-                std::format("The user mentioned the agent @{}:\n{}",
-                            agent.agent_type, agent.when_to_use)}};
+            return core::ContentBlock{core::TextBlock{std::format(
+                "The user mentioned the agent @{}:\n{}", agent.agent_type, agent.when_to_use)}};
         }
     }
     return std::nullopt;
@@ -37,22 +34,24 @@ std::optional<core::ContentBlock> try_attach_agent(
 
 // AT-11: MCP resource — pre-validate against listed resources (avoid blocking
 // submit on an unknown/slow server), then read_resource.
-std::optional<core::ContentBlock> try_attach_mcp_resource(
-    std::string_view server, std::string_view uri) {
+std::optional<core::ContentBlock> try_attach_mcp_resource(std::string_view server,
+                                                          std::string_view uri) {
     const std::string sname(server);
     const std::string suri(uri);
     auto listed = mcp::list_native_mcp_resources(std::nullopt);
     if (!listed) return std::nullopt;
     bool known = false;
     for (const auto& r : *listed) {
-        if (r.server_name == sname && r.uri == suri) { known = true; break; }
+        if (r.server_name == sname && r.uri == suri) {
+            known = true;
+            break;
+        }
     }
     if (!known) return std::nullopt;
     auto read = mcp::read_native_mcp_resource(sname, suri);
     if (!read) return std::nullopt;
     return core::ContentBlock{core::TextBlock{
-        std::format("The user attached MCP resource @{}:{}:\n{}",
-                    sname, suri, read->content)}};
+        std::format("The user attached MCP resource @{}:{}:\n{}", sname, suri, read->content)}};
 }
 
 }  // namespace loom::ui::prompt::at_attachments

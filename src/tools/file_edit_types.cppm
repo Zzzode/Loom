@@ -2,6 +2,7 @@
 // Agent 9: audit completed 2026-06-09.
 module;
 #include <unistd.h>
+
 #include <cstdint>
 
 export module loom.tools.file_edit_types;
@@ -36,19 +37,19 @@ inline constexpr std::string_view kFileUnexpectedlyModifiedError =
 
 /// Error codes produced by the input validator.
 enum class ValidationErrorCode : int {
-    Ok                      = 0,   // no error
-    OldEqualsNew            = 1,   // old_string == new_string
-    PermissionDeniedDir     = 2,   // path matched a deny rule
-    FileAlreadyExists       = 3,   // old_string == '' but file is non-empty
-    FileNotFound            = 4,   // file missing and old_string != ''
-    NotebookBlocked         = 5,   // .ipynb files -> use NotebookEditTool
-    FileNotReadYet          = 6,   // no readFileState entry
-    FileModifiedSinceRead   = 7,   // mtime newer than read timestamp
-    OldStringNotFound       = 8,   // findActualString returned null
-    MultipleMatchesNoReplaceAll = 9, // N>1 matches + replace_all=false
-    FileTooLarge            = 10,  // exceeds MAX_EDIT_FILE_SIZE (1 GiB)
-    SecretInTeamMemory      = 11,  // team-memory secrets guard rejected
-    SettingsFileInvalid     = 12,  // validateInputForSettingsFileEdit rejected
+    Ok = 0,                           // no error
+    OldEqualsNew = 1,                 // old_string == new_string
+    PermissionDeniedDir = 2,          // path matched a deny rule
+    FileAlreadyExists = 3,            // old_string == '' but file is non-empty
+    FileNotFound = 4,                 // file missing and old_string != ''
+    NotebookBlocked = 5,              // .ipynb files -> use NotebookEditTool
+    FileNotReadYet = 6,               // no readFileState entry
+    FileModifiedSinceRead = 7,        // mtime newer than read timestamp
+    OldStringNotFound = 8,            // findActualString returned null
+    MultipleMatchesNoReplaceAll = 9,  // N>1 matches + replace_all=false
+    FileTooLarge = 10,                // exceeds MAX_EDIT_FILE_SIZE (1 GiB)
+    SecretInTeamMemory = 11,          // team-memory secrets guard rejected
+    SettingsFileInvalid = 12,         // validateInputForSettingsFileEdit rejected
 };
 
 /// Behavior hint for the caller when validation rejects an input.
@@ -70,15 +71,15 @@ struct ValidationOutcome {
 
     /// Convenience factory
     static ValidationOutcome ok() { return {}; }
+
     static ValidationOutcome ok_with(std::vector<std::pair<std::string, std::string>> m) {
-        return {
-            .passed = true,
-            .behavior = ValidationBehavior::Fail,
-            .message = {},
-            .code = ValidationErrorCode::Ok,
-            .meta = std::move(m)
-        };
+        return {.passed = true,
+                .behavior = ValidationBehavior::Fail,
+                .message = {},
+                .code = ValidationErrorCode::Ok,
+                .meta = std::move(m)};
     }
+
     static ValidationOutcome ask(std::string msg, ValidationErrorCode c) {
         return {.passed = false,
                 .behavior = ValidationBehavior::Ask,
@@ -122,10 +123,10 @@ struct FileEdit {
 /// from the `diff` npm package — we keep the names aligned with TS field
 /// names, not the npm ones).
 struct PatchHunk {
-    int old_start = 0;   // oldStart
-    int old_lines = 0;   // oldLines
-    int new_start = 0;   // newStart
-    int new_lines = 0;   // newLines
+    int old_start = 0;  // oldStart
+    int old_lines = 0;  // oldLines
+    int new_start = 0;  // newStart
+    int new_lines = 0;  // newLines
     std::vector<std::string> lines;
 };
 
@@ -145,14 +146,14 @@ struct GitDiffInfo {
 
 /// FileEditTool output (= FileEditOutput / outputSchema in TS).
 struct FileEditOutput {
-    std::filesystem::path file_path;     // filePath
-    std::string old_string;              // oldString
-    std::string new_string;              // newString (from model, NOT actualNew)
-    std::string original_file;           // originalFile — pre-edit content
+    std::filesystem::path file_path;  // filePath
+    std::string old_string;           // oldString
+    std::string new_string;           // newString (from model, NOT actualNew)
+    std::string original_file;        // originalFile — pre-edit content
     std::vector<PatchHunk> structured_patch;
-    bool user_modified = false;          // userModified
-    bool replace_all = false;            // replaceAll
-    std::optional<GitDiffInfo> git_diff; // gitDiff (optional)
+    bool user_modified = false;           // userModified
+    bool replace_all = false;             // replaceAll
+    std::optional<GitDiffInfo> git_diff;  // gitDiff (optional)
 };
 
-} // namespace loom::tools::file_edit
+}  // namespace loom::tools::file_edit

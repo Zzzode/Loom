@@ -9,9 +9,10 @@
 // access out-of-line.
 module;
 
+#include <ftxui/component/component.hpp>
+
 #include <cstddef>
 #include <cstdint>
-#include <ftxui/component/component.hpp>
 
 module loom.ui.app.app;
 
@@ -22,7 +23,7 @@ import loom.query.query_engine;
 import loom.ui.screens.repl_state;
 import loom.ui.screens.task_view_store;
 import loom.ui.screens.messages_store;
-import loom.ui.messages.messages_list;  // VirtualRendererMode
+import loom.ui.messages.messages_list; // VirtualRendererMode
 import loom.ui.screens.dialog_store;
 import loom.ui.screens.chrome_store;
 
@@ -41,8 +42,8 @@ std::optional<std::string> AppTestingSeams::copy_feedback_for_testing() const {
 bool AppTestingSeams::stop_background_workers_for_testing() {
     app->StopBackgroundWorkers();
     return !app->query_thread_.joinable() && !app->spinner_thread_.joinable() &&
-        !app->bash_thread_.joinable() && !app->leader_inbox_thread_.joinable() &&
-        !app->teammate_.inbox_thread().joinable();
+           !app->bash_thread_.joinable() && !app->leader_inbox_thread_.joinable() &&
+           !app->teammate_.inbox_thread().joinable();
 }
 
 std::function<void()> AppTestingSeams::runtime_agent_change_callback_for_testing() {
@@ -57,8 +58,8 @@ std::function<void(std::function<void()>)> AppTestingSeams::ui_dispatcher_for_te
     return app->ui_dispatcher();
 }
 
-bool AppTestingSeams::resume_session_for_testing(
-    const std::filesystem::path& sessions_dir, std::string session_id) {
+bool AppTestingSeams::resume_session_for_testing(const std::filesystem::path& sessions_dir,
+                                                 std::string session_id) {
     return app->ResumeSessionFromDirectory(sessions_dir, session_id, "Session resumed for testing");
 }
 
@@ -154,11 +155,14 @@ std::vector<std::string> AppAdapter::messages_for_testing() const {
     out.reserve(screen_state_->messages_store.messages.size());
     for (const auto& m : screen_state_->messages_store.messages) {
         std::string label = m.role;
-        if (m.is_local_command_input) label = "lc-input";
-        else if (m.is_local_command_output) label = "lc-output";
-        else if (m.is_thinking) label = "thinking";
-        std::string pv = m.content_preview.substr(
-            0, std::min<std::size_t>(30, m.content_preview.size()));
+        if (m.is_local_command_input)
+            label = "lc-input";
+        else if (m.is_local_command_output)
+            label = "lc-output";
+        else if (m.is_thinking)
+            label = "thinking";
+        std::string pv =
+            m.content_preview.substr(0, std::min<std::size_t>(30, m.content_preview.size()));
         out.push_back(label + ":" + pv);
     }
     return out;
@@ -201,8 +205,7 @@ bool AppAdapter::is_agents_view_for_testing() const noexcept {
     return screen_state_->mode == repl::ReplMode::AgentsView;
 }
 
-bool AppAdapter::is_local_jsx_command_for_testing(
-    std::string_view command_name) const noexcept {
+bool AppAdapter::is_local_jsx_command_for_testing(std::string_view command_name) const noexcept {
     return screen_state_->active_local_jsx_command &&
            screen_state_->active_local_jsx_command_name == command_name;
 }
@@ -254,10 +257,9 @@ bool AppAdapter::mouse_tracking_on_for_testing() const noexcept {
     return mouse_tracking_on_;
 }
 
-void AppAdapter::inject_copy_result_for_testing(
-    std::uint64_t generation,
-    loom::utils::clipboard::CopyResult result,
-    std::string text) {
+void AppAdapter::inject_copy_result_for_testing(std::uint64_t generation,
+                                                loom::utils::clipboard::CopyResult result,
+                                                std::string text) {
     std::lock_guard lock(copy_result_mutex_);
     pending_copy_result_ = PendingCopyResult{
         .generation = generation,
@@ -283,12 +285,11 @@ void AppAdapter::set_copy_generation_for_testing(std::uint64_t gen) {
 
 // ── Virtual renderer hysteresis (RFC 0008) ─────────────────────────────
 
-void AppAdapter::set_virtual_renderer_state_for_testing(
-    bool is_virtual, std::uint64_t switch_count, bool force_bottom) {
+void AppAdapter::set_virtual_renderer_state_for_testing(bool is_virtual, std::uint64_t switch_count,
+                                                        bool force_bottom) {
     auto& ms = screen_state_->messages_store;
-    ms.virtual_renderer_mode = is_virtual
-        ? loom::ui::messages_list::VirtualRendererMode::Virtual
-        : loom::ui::messages_list::VirtualRendererMode::Static;
+    ms.virtual_renderer_mode = is_virtual ? loom::ui::messages_list::VirtualRendererMode::Virtual
+                                          : loom::ui::messages_list::VirtualRendererMode::Static;
     ms.virtual_mode_switch_count = switch_count;
     ms.force_bottom_after_mode_switch = force_bottom;
 }
@@ -353,9 +354,12 @@ bool AppTestingSeams::is_loading_for_testing() const noexcept {
 }
 
 void AppTestingSeams::notify_conversation_changed_for_testing() {
-    const auto messages = static_cast<loom::core::QueryEngine*>(app->engine_raw())->get_conversation();
-    if (!messages.empty()) app->handle_committed_message(messages.back());
-    else app->conversation_projection_dirty_.store(true);
+    const auto messages =
+        static_cast<loom::core::QueryEngine*>(app->engine_raw())->get_conversation();
+    if (!messages.empty())
+        app->handle_committed_message(messages.back());
+    else
+        app->conversation_projection_dirty_.store(true);
 }
 
 void AppTestingSeams::inject_stream_event_for_testing(const loom::core::StreamEvent& ev) {
@@ -515,12 +519,10 @@ bool AppTestingSeams::mouse_tracking_on_for_testing() const noexcept {
     return app->mouse_tracking_on_for_testing();
 }
 
-void AppTestingSeams::inject_copy_result_for_testing(
-    std::uint64_t generation,
-    loom::utils::clipboard::CopyResult result,
-    std::string text) {
-    app->inject_copy_result_for_testing(
-        generation, std::move(result), std::move(text));
+void AppTestingSeams::inject_copy_result_for_testing(std::uint64_t generation,
+                                                     loom::utils::clipboard::CopyResult result,
+                                                     std::string text) {
+    app->inject_copy_result_for_testing(generation, std::move(result), std::move(text));
 }
 
 void AppTestingSeams::drain_copy_result_for_testing() {
@@ -535,18 +537,17 @@ void AppTestingSeams::set_copy_generation_for_testing(std::uint64_t gen) {
     app->set_copy_generation_for_testing(gen);
 }
 
-void AppTestingSeams::set_virtual_renderer_state_for_testing(
-    bool is_virtual, std::uint64_t switch_count, bool force_bottom) {
-    app->set_virtual_renderer_state_for_testing(
-        is_virtual, switch_count, force_bottom);
+void AppTestingSeams::set_virtual_renderer_state_for_testing(bool is_virtual,
+                                                             std::uint64_t switch_count,
+                                                             bool force_bottom) {
+    app->set_virtual_renderer_state_for_testing(is_virtual, switch_count, force_bottom);
 }
 
 bool AppTestingSeams::virtual_renderer_is_virtual_for_testing() const noexcept {
     return app->virtual_renderer_is_virtual_for_testing();
 }
 
-std::uint64_t
-AppTestingSeams::virtual_mode_switch_count_for_testing() const noexcept {
+std::uint64_t AppTestingSeams::virtual_mode_switch_count_for_testing() const noexcept {
     return app->virtual_mode_switch_count_for_testing();
 }
 
@@ -566,12 +567,16 @@ AppTestingSeams test_seams(AppAdapter* app) {
     return AppTestingSeams{app};
 }
 
-} // namespace loom::ui
+}  // namespace loom::ui
 
 namespace loom::ui {
-std::shared_ptr<repl::ReplScreenState> AppTestingSeams::agent_conversation_state_for_testing() const {
+std::shared_ptr<repl::ReplScreenState>
+AppTestingSeams::agent_conversation_state_for_testing() const {
     const auto found = app->agent_conversation_views_.find(app->active_agent_conversation_);
     return found == app->agent_conversation_views_.end() ? nullptr : found->second.state;
 }
-std::string AppTestingSeams::active_agent_conversation_for_testing() const { return app->active_agent_conversation_; }
-} // namespace loom::ui
+
+std::string AppTestingSeams::active_agent_conversation_for_testing() const {
+    return app->active_agent_conversation_;
+}
+}  // namespace loom::ui

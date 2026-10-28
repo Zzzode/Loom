@@ -70,20 +70,24 @@ std::shared_ptr<QuestionState> EnsureQuestion(const dsys::PromptDialogPayload& p
 class QuestionOwnerNode final : public Node {
 public:
     QuestionOwnerNode(Element child, std::shared_ptr<QuestionState> owner)
-        : Node(Elements{std::move(child)}), owner_(std::move(owner)) {}
+        : Node(Elements{std::move(child)})
+        , owner_(std::move(owner)) {}
+
     void ComputeRequirement() override {
         Node::ComputeRequirement();
         requirement_ = children_[0]->requirement();
     }
+
     void SetBox(Box box) override {
         Node::SetBox(box);
         children_[0]->SetBox(box);
     }
+
 private:
     std::shared_ptr<QuestionState> owner_;
 };
 
-} // namespace
+}  // namespace
 
 Element RenderPromptDialog(const dsys::PromptDialogPayload& p,
                            const dsys::DialogRenderContext& ctx) {
@@ -97,7 +101,8 @@ Element RenderPromptDialog(const dsys::PromptDialogPayload& p,
         text(""),
         hbox({text(std::string(loom::ui::design::figures::figures().pointer) + " ") |
                   color(palette.permission),
-              state->input->Render() | xflex}) | size(HEIGHT, EQUAL, 1),
+              state->input->Render() | xflex}) |
+            size(HEIGHT, EQUAL, 1),
         text(""),
         hbox({text(" [Enter] Submit") | color(palette.success),
               text("  [Esc] Cancel") | color(palette.danger)}),
@@ -108,13 +113,14 @@ Element RenderPromptDialog(const dsys::PromptDialogPayload& p,
 
 bool HandlePromptDialogEvent(dsys::PromptDialogPayload& p, const Event& event) {
     if (event == Event::Character('\x03') || event == Event::Character('\x04') ||
-        event == Event::Character('\x0c') || event == Event::Custom) return false;
+        event == Event::Character('\x0c') || event == Event::Custom)
+        return false;
     auto state = EnsureQuestion(p);
     if (state->resolved) return !event.is_mouse();
     if (event == Event::Return || event == Event::Escape) {
         auto callback = p.on_response;
-        auto value = event == Event::Escape ? std::optional<std::string>{} :
-                                            std::optional<std::string>{state->value};
+        auto value = event == Event::Escape ? std::optional<std::string>{}
+                                            : std::optional<std::string>{state->value};
         state->resolved = true;
         if (callback) callback(std::move(value));
         return true;
@@ -129,4 +135,4 @@ bool HandlePromptDialogEvent(dsys::PromptDialogPayload& p, const Event& event) {
     return handled || !event.is_mouse();
 }
 
-} // namespace loom::ui::dialogs::default_renderers
+}  // namespace loom::ui::dialogs::default_renderers

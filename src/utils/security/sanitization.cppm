@@ -23,7 +23,8 @@ namespace detail {
         ++i;
         return b0;
     }
-    if ((b0 & 0xE0u) == 0xC0u && i + 1 < input.size() && is_continuation(static_cast<unsigned char>(input[i + 1]))) {
+    if ((b0 & 0xE0u) == 0xC0u && i + 1 < input.size() &&
+        is_continuation(static_cast<unsigned char>(input[i + 1]))) {
         const auto cp = ((b0 & 0x1Fu) << 6u) | (static_cast<unsigned char>(input[i + 1]) & 0x3Fu);
         i += 2;
         return cp;
@@ -32,8 +33,8 @@ namespace detail {
         is_continuation(static_cast<unsigned char>(input[i + 1])) &&
         is_continuation(static_cast<unsigned char>(input[i + 2]))) {
         const auto cp = ((b0 & 0x0Fu) << 12u) |
-            ((static_cast<unsigned char>(input[i + 1]) & 0x3Fu) << 6u) |
-            (static_cast<unsigned char>(input[i + 2]) & 0x3Fu);
+                        ((static_cast<unsigned char>(input[i + 1]) & 0x3Fu) << 6u) |
+                        (static_cast<unsigned char>(input[i + 2]) & 0x3Fu);
         i += 3;
         return cp;
     }
@@ -42,9 +43,9 @@ namespace detail {
         is_continuation(static_cast<unsigned char>(input[i + 2])) &&
         is_continuation(static_cast<unsigned char>(input[i + 3]))) {
         const auto cp = ((b0 & 0x07u) << 18u) |
-            ((static_cast<unsigned char>(input[i + 1]) & 0x3Fu) << 12u) |
-            ((static_cast<unsigned char>(input[i + 2]) & 0x3Fu) << 6u) |
-            (static_cast<unsigned char>(input[i + 3]) & 0x3Fu);
+                        ((static_cast<unsigned char>(input[i + 1]) & 0x3Fu) << 12u) |
+                        ((static_cast<unsigned char>(input[i + 2]) & 0x3Fu) << 6u) |
+                        (static_cast<unsigned char>(input[i + 3]) & 0x3Fu);
         i += 4;
         return cp;
     }
@@ -75,16 +76,10 @@ inline void append_utf8(std::string& output, std::uint32_t cp) {
 }
 
 [[nodiscard]] inline bool is_dangerous_code_point(std::uint32_t cp) noexcept {
-    return
-        (cp >= 0x200Bu && cp <= 0x200Fu) ||
-        (cp >= 0x202Au && cp <= 0x202Eu) ||
-        (cp >= 0x2066u && cp <= 0x2069u) ||
-        cp == 0xFEFFu ||
-        (cp >= 0xE000u && cp <= 0xF8FFu) ||
-        (cp >= 0xF0000u && cp <= 0xFFFFDu) ||
-        (cp >= 0x100000u && cp <= 0x10FFFDu) ||
-        (cp >= 0xE0000u && cp <= 0xE007Fu) ||
-        is_noncharacter(cp);
+    return (cp >= 0x200Bu && cp <= 0x200Fu) || (cp >= 0x202Au && cp <= 0x202Eu) ||
+           (cp >= 0x2066u && cp <= 0x2069u) || cp == 0xFEFFu || (cp >= 0xE000u && cp <= 0xF8FFu) ||
+           (cp >= 0xF0000u && cp <= 0xFFFFDu) || (cp >= 0x100000u && cp <= 0x10FFFDu) ||
+           (cp >= 0xE0000u && cp <= 0xE007Fu) || is_noncharacter(cp);
 }
 
 [[nodiscard]] inline std::string sanitize_once(std::string_view input) {
@@ -141,78 +136,75 @@ inline void append_nfkc_compat(std::string& output, std::uint32_t cp) {
         return;
     }
     switch (cp) {
-        case 0x2160u:
-            output += "I";
-            return;
-        case 0x2161u:
-            output += "II";
-            return;
-        case 0x2162u:
-            output += "III";
-            return;
-        case 0x2163u:
-            output += "IV";
-            return;
-        case 0x2164u:
-            output += "V";
-            return;
-        case 0x2165u:
-            output += "VI";
-            return;
-        case 0x2166u:
-            output += "VII";
-            return;
-        case 0x2167u:
-            output += "VIII";
-            return;
-        case 0x2168u:
-            output += "IX";
-            return;
-        case 0x2169u:
-            output += "X";
-            return;
-        case 0x216Au:
-            output += "XI";
-            return;
-        case 0x216Bu:
-            output += "XII";
-            return;
-        case 0x338Fu:
-            output += "kg";
-            return;
-        case 0xFB00u:
-            output += "ff";
-            return;
-        case 0xFB01u:
-            output += "fi";
-            return;
-        case 0xFB02u:
-            output += "fl";
-            return;
-        case 0xFB03u:
-            output += "ffi";
-            return;
-        case 0xFB04u:
-            output += "ffl";
-            return;
-        case 0xFB05u:
-        case 0xFB06u:
-            output += "st";
-            return;
-        default:
-            append_utf8(output, cp);
-            return;
+    case 0x2160u:
+        output += "I";
+        return;
+    case 0x2161u:
+        output += "II";
+        return;
+    case 0x2162u:
+        output += "III";
+        return;
+    case 0x2163u:
+        output += "IV";
+        return;
+    case 0x2164u:
+        output += "V";
+        return;
+    case 0x2165u:
+        output += "VI";
+        return;
+    case 0x2166u:
+        output += "VII";
+        return;
+    case 0x2167u:
+        output += "VIII";
+        return;
+    case 0x2168u:
+        output += "IX";
+        return;
+    case 0x2169u:
+        output += "X";
+        return;
+    case 0x216Au:
+        output += "XI";
+        return;
+    case 0x216Bu:
+        output += "XII";
+        return;
+    case 0x338Fu:
+        output += "kg";
+        return;
+    case 0xFB00u:
+        output += "ff";
+        return;
+    case 0xFB01u:
+        output += "fi";
+        return;
+    case 0xFB02u:
+        output += "fl";
+        return;
+    case 0xFB03u:
+        output += "ffi";
+        return;
+    case 0xFB04u:
+        output += "ffl";
+        return;
+    case 0xFB05u:
+    case 0xFB06u:
+        output += "st";
+        return;
+    default:
+        append_utf8(output, cp);
+        return;
     }
 }
 
 [[nodiscard]] inline std::string normalize_nfkc_compat(std::string_view input) {
 #ifdef __APPLE__
-    CFStringRef source = CFStringCreateWithBytes(
-        kCFAllocatorDefault,
-        reinterpret_cast<const UInt8*>(input.data()),
-        static_cast<CFIndex>(input.size()),
-        kCFStringEncodingUTF8,
-        false);
+    CFStringRef source =
+        CFStringCreateWithBytes(kCFAllocatorDefault, reinterpret_cast<const UInt8*>(input.data()),
+                                static_cast<CFIndex>(input.size()), kCFStringEncodingUTF8, false);
     if (source != nullptr) {
         CFMutableStringRef normalized = CFStringCreateMutableCopy(kCFAllocatorDefault, 0, source);
         CFRelease(source);
@@ -220,9 +212,11 @@ inline void append_nfkc_compat(std::string& output, std::uint32_t cp) {
             const Boolean ok = CFStringTransform(normalized, nullptr, CFSTR("Any-NFKC"), false);
             if (ok) {
                 const CFIndex length = CFStringGetLength(normalized);
-                const CFIndex max_size = CFStringGetMaximumSizeForEncoding(length, kCFStringEncodingUTF8) + 1;
+                const CFIndex max_size =
+                    CFStringGetMaximumSizeForEncoding(length, kCFStringEncodingUTF8) + 1;
                 std::string output(static_cast<std::size_t>(max_size), '\0');
-                if (CFStringGetCString(normalized, output.data(), max_size, kCFStringEncodingUTF8)) {
+                if (CFStringGetCString(normalized, output.data(), max_size,
+                                       kCFStringEncodingUTF8)) {
                     output.resize(std::char_traits<char>::length(output.c_str()));
                     CFRelease(normalized);
                     return output;
@@ -241,16 +235,21 @@ inline void append_nfkc_compat(std::string& output, std::uint32_t cp) {
     return output;
 }
 
-} // namespace detail
+}  // namespace detail
 
 struct SanitizedValue {
     using Array = std::vector<SanitizedValue>;
+
     struct Object {
         std::vector<std::pair<std::string, SanitizedValue>> entries;
 
         Object() = default;
-        Object(std::initializer_list<std::pair<std::string, SanitizedValue>> init) : entries(init) {}
-        explicit Object(std::vector<std::pair<std::string, SanitizedValue>> values) : entries(std::move(values)) {}
+
+        Object(std::initializer_list<std::pair<std::string, SanitizedValue>> init)
+            : entries(init) {}
+
+        explicit Object(std::vector<std::pair<std::string, SanitizedValue>> values)
+            : entries(std::move(values)) {}
 
         [[nodiscard]] bool contains(std::string_view key) const {
             for (const auto& [candidate, _] : entries) {
@@ -276,18 +275,33 @@ struct SanitizedValue {
             entries.emplace_back(std::move(key), std::move(value));
         }
     };
+
     using Storage = std::variant<std::nullptr_t, bool, double, std::string, Array, Object>;
 
     Storage value = nullptr;
 
     SanitizedValue() = default;
-    SanitizedValue(std::nullptr_t) : value(nullptr) {}
-    SanitizedValue(bool v) : value(v) {}
-    SanitizedValue(double v) : value(v) {}
-    SanitizedValue(const char* v) : value(std::string(v == nullptr ? "" : v)) {}
-    SanitizedValue(std::string v) : value(std::move(v)) {}
-    SanitizedValue(Array v) : value(std::move(v)) {}
-    SanitizedValue(Object v) : value(std::move(v)) {}
+
+    SanitizedValue(std::nullptr_t)
+        : value(nullptr) {}
+
+    SanitizedValue(bool v)
+        : value(v) {}
+
+    SanitizedValue(double v)
+        : value(v) {}
+
+    SanitizedValue(const char* v)
+        : value(std::string(v == nullptr ? "" : v)) {}
+
+    SanitizedValue(std::string v)
+        : value(std::move(v)) {}
+
+    SanitizedValue(Array v)
+        : value(std::move(v)) {}
+
+    SanitizedValue(Object v)
+        : value(std::move(v)) {}
 
     [[nodiscard]] static SanitizedValue array(Array values) {
         return SanitizedValue(std::move(values));
@@ -297,17 +311,11 @@ struct SanitizedValue {
         return SanitizedValue(std::move(values));
     }
 
-    [[nodiscard]] const std::string& as_string() const {
-        return std::get<std::string>(value);
-    }
+    [[nodiscard]] const std::string& as_string() const { return std::get<std::string>(value); }
 
-    [[nodiscard]] const Array& as_array() const {
-        return std::get<Array>(value);
-    }
+    [[nodiscard]] const Array& as_array() const { return std::get<Array>(value); }
 
-    [[nodiscard]] const Object& as_object() const {
-        return std::get<Object>(value);
-    }
+    [[nodiscard]] const Object& as_object() const { return std::get<Object>(value); }
 };
 
 [[nodiscard]] inline std::string partially_sanitize_unicode(std::string_view prompt) {
@@ -329,27 +337,30 @@ struct SanitizedValue {
 }
 
 [[nodiscard]] inline SanitizedValue recursively_sanitize_unicode(const SanitizedValue& value) {
-    return std::visit([](const auto& item) -> SanitizedValue {
-        using T = std::decay_t<decltype(item)>;
-        if constexpr (std::is_same_v<T, std::string>) {
-            return SanitizedValue(partially_sanitize_unicode(item));
-        } else if constexpr (std::is_same_v<T, SanitizedValue::Array>) {
-            SanitizedValue::Array out;
-            out.reserve(item.size());
-            for (const auto& child : item) {
-                out.push_back(recursively_sanitize_unicode(child));
+    return std::visit(
+        [](const auto& item) -> SanitizedValue {
+            using T = std::decay_t<decltype(item)>;
+            if constexpr (std::is_same_v<T, std::string>) {
+                return SanitizedValue(partially_sanitize_unicode(item));
+            } else if constexpr (std::is_same_v<T, SanitizedValue::Array>) {
+                SanitizedValue::Array out;
+                out.reserve(item.size());
+                for (const auto& child : item) {
+                    out.push_back(recursively_sanitize_unicode(child));
+                }
+                return SanitizedValue::array(std::move(out));
+            } else if constexpr (std::is_same_v<T, SanitizedValue::Object>) {
+                SanitizedValue::Object out;
+                for (const auto& [key, child] : item.entries) {
+                    out.insert_or_assign(partially_sanitize_unicode(key),
+                                         recursively_sanitize_unicode(child));
+                }
+                return SanitizedValue::object(std::move(out));
+            } else {
+                return SanitizedValue(item);
             }
-            return SanitizedValue::array(std::move(out));
-        } else if constexpr (std::is_same_v<T, SanitizedValue::Object>) {
-            SanitizedValue::Object out;
-            for (const auto& [key, child] : item.entries) {
-                out.insert_or_assign(partially_sanitize_unicode(key), recursively_sanitize_unicode(child));
-            }
-            return SanitizedValue::object(std::move(out));
-        } else {
-            return SanitizedValue(item);
-        }
-    }, value.value);
+        },
+        value.value);
 }
 
-} // namespace loom::utils::sanitization
+}  // namespace loom::utils::sanitization

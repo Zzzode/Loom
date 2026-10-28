@@ -4,6 +4,7 @@
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/screen/screen.hpp>
 #include <gtest/gtest.h>
+
 #include "test_ui_helpers.h"
 
 import std;
@@ -34,11 +35,14 @@ struct Fixture {
             if (it == details.end()) return std::nullopt;
             return it->second;
         };
-        options.on_continue = [this](std::string id, std::string prompt) { continuations.emplace_back(std::move(id), std::move(prompt)); };
+        options.on_continue = [this](std::string id, std::string prompt) {
+            continuations.emplace_back(std::move(id), std::move(prompt));
+        };
         options.on_stop = [this](std::string id) { stops.push_back(std::move(id)); };
         options.on_close = [this] { ++closes; };
         return browser::CreateBrowser(std::move(options));
     }
+
     void add(std::string id, bool active = true, bool team = false) {
         browser::Entry entry;
         entry.id = id;
@@ -55,6 +59,7 @@ struct Fixture {
         detail.stop_reason = "No owned execution is active.";
         details.emplace(id, detail);
     }
+
     std::string paint(const Component& component, int columns = 80, int rows = 24) {
         state->columns = columns;
         state->rows = rows;
@@ -63,7 +68,7 @@ struct Fixture {
         return strip_ansi(screen.ToString());
     }
 };
-} // namespace
+}  // namespace
 
 TEST(InstanceBrowser, EmptyStatesKeepCategoriesHistoryAndExitDiscoverable) {
     Fixture fixture;
@@ -80,7 +85,8 @@ TEST(InstanceBrowser, EmptyStatesKeepCategoriesHistoryAndExitDiscoverable) {
 
 TEST(InstanceBrowser, SelectionUsesStableIdAcrossReorderAndHandlesRemovedRows) {
     Fixture fixture;
-    fixture.add("one"); fixture.add("two");
+    fixture.add("one");
+    fixture.add("two");
     auto component = fixture.create();
     (void)fixture.paint(component);
     EXPECT_EQ(fixture.state->selected_id, "one");
@@ -99,7 +105,9 @@ TEST(InstanceBrowser, SelectionUsesStableIdAcrossReorderAndHandlesRemovedRows) {
 
 TEST(InstanceBrowser, HistoryAndTeamCategoriesDoNotMixTaskOrInstanceRows) {
     Fixture fixture;
-    fixture.add("active"); fixture.add("failed", false); fixture.add("team", true, true);
+    fixture.add("active");
+    fixture.add("failed", false);
+    fixture.add("team", true, true);
     auto component = fixture.create();
     auto text = fixture.paint(component);
     EXPECT_NE(text.find("worker-active"), std::string::npos);
@@ -118,7 +126,8 @@ TEST(InstanceBrowser, HistoryAndTeamCategoriesDoNotMixTaskOrInstanceRows) {
 
 TEST(InstanceBrowser, DetailsStopAndEditableContinueUseSelectedIdentityAndCapabilities) {
     Fixture fixture;
-    fixture.add("running"); fixture.add("failed", false);
+    fixture.add("running");
+    fixture.add("failed", false);
     auto component = fixture.create();
     (void)fixture.paint(component);
     component->OnEvent(Event::Return);
@@ -161,8 +170,10 @@ TEST(InstanceBrowser, DetailSanitizesAnsiOscControlsPreservesUtf8AndBoundsTransc
     fixture.add("failed", false);
     fixture.state->selected_id = "failed";
     auto& detail = fixture.details.at("failed");
-    detail.error = "\x1b[31m预算耗尽\x1b[0m\a\x1b]8;;https://invalid.example\a错误\x1b]8;;\a\x1bPPRIVATE-PROTOCOL\x1b\\";
-    for (int i = 0; i < 200; ++i) detail.transcript += std::format("transcript-line-{}\n", i);
+    detail.error = "\x1b[31m预算耗尽\x1b[0m\a\x1b]8;;https://"
+                   "invalid.example\a错误\x1b]8;;\a\x1bPPRIVATE-PROTOCOL\x1b\\";
+    for (int i = 0; i < 200; ++i)
+        detail.transcript += std::format("transcript-line-{}\n", i);
     detail.output = std::string(17000, 'x') + "END-OUTPUT";
     auto component = fixture.create(true);
     auto text = fixture.paint(component, 40, 24);
@@ -218,30 +229,36 @@ TEST(InstanceBrowser, RetainedSelectionReopensListUnlessDetailWasExplicitlyReque
 }
 
 TEST(InstanceBrowser, ModalClearsUnderlyingTranscriptAndEditorAcrossItsWholeAllocatedBox) {
-    for (const int columns : {40, 60, 120}) for (const bool detail : {false, true}) {
-        Fixture fixture;
-        fixture.state->columns = columns;
-        fixture.state->rows = 24;
-        if (detail) fixture.state->selected_id = "unavailable";
-        auto component = fixture.create(detail);
-        Elements transcript;
-        for (int row = 0; row < 24; ++row) transcript.push_back(text(std::string(columns + 4, 'Z')));
-        auto screen = Screen::Create(Dimension::Fixed(columns + 4), Dimension::Fixed(24));
-        Render(screen, dbox({vbox(std::move(transcript)), hbox({component->Render(), filler()})}));
-        for (int row = 0; row < 24; ++row) for (int column = 0; column < columns; ++column) {
-            SCOPED_TRACE(std::format("columns={},detail={},cell={},{}", columns, detail, column, row));
-            EXPECT_NE(screen.PixelAt(column, row).character, "Z");
+    for (const int columns : {40, 60, 120})
+        for (const bool detail : {false, true}) {
+            Fixture fixture;
+            fixture.state->columns = columns;
+            fixture.state->rows = 24;
+            if (detail) fixture.state->selected_id = "unavailable";
+            auto component = fixture.create(detail);
+            Elements transcript;
+            for (int row = 0; row < 24; ++row)
+                transcript.push_back(text(std::string(columns + 4, 'Z')));
+            auto screen = Screen::Create(Dimension::Fixed(columns + 4), Dimension::Fixed(24));
+            Render(screen,
+                   dbox({vbox(std::move(transcript)), hbox({component->Render(), filler()})}));
+            for (int row = 0; row < 24; ++row)
+                for (int column = 0; column < columns; ++column) {
+                    SCOPED_TRACE(std::format("columns={},detail={},cell={},{}", columns, detail,
+                                             column, row));
+                    EXPECT_NE(screen.PixelAt(column, row).character, "Z");
+                }
+            EXPECT_EQ(screen.PixelAt(columns - 1, 5).background_color,
+                      loom::ui::design::theme::current_theme().palette->background);
+            EXPECT_EQ(screen.PixelAt(columns, 5).character, "Z");
+            EXPECT_EQ(screen.PixelAt(columns - 1, 5).character, " ");
         }
-        EXPECT_EQ(screen.PixelAt(columns - 1, 5).background_color,
-            loom::ui::design::theme::current_theme().palette->background);
-        EXPECT_EQ(screen.PixelAt(columns, 5).character, "Z");
-        EXPECT_EQ(screen.PixelAt(columns - 1, 5).character, " ");
-    }
 }
 
 TEST(InstanceBrowser, EnterOpensSelectedConversationAndIStillShowsDetails) {
     Fixture fixture;
-    fixture.add("first"); fixture.add("second");
+    fixture.add("first");
+    fixture.add("second");
     std::vector<std::string> opened;
     browser::Options options;
     options.state = fixture.state;

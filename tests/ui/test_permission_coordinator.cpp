@@ -17,11 +17,13 @@ namespace {
 using namespace std::chrono_literals;
 using loom::ui::PermissionCoordinator;
 namespace dsys = loom::ui::dialogs::system;
+
 struct AbortOnExit {
     PermissionCoordinator& coordinator;
+
     ~AbortOnExit() { coordinator.abort_all(); }
 };
-}
+}  // namespace
 
 TEST(PermissionCoordinator, ToolRequestsSerializeThroughCleanupAndRejectLateDecisions) {
     PermissionCoordinator coordinator;
@@ -152,8 +154,7 @@ TEST(PermissionCoordinator, DelayedShowAndExactCleanupCannotAffectNewRequestOrOt
     delayed_show();
     delayed_cleanup();
     ASSERT_TRUE(queue.peek_overlay());
-    EXPECT_EQ(dsys::id_of(queue.peek_overlay()->get()),
-              std::format("tool-permission-{}", second));
+    EXPECT_EQ(dsys::id_of(queue.peek_overlay()->get()), std::format("tool-permission-{}", second));
     EXPECT_TRUE(queue.has_any_bottom());
     EXPECT_TRUE(coordinator.permission_request_current(second));
     coordinator.abort_all();
@@ -209,8 +210,8 @@ protected:
 
     void SetUp() override {
         root_ = std::filesystem::temp_directory_path() /
-            std::format("loom_permission_requests_{}", std::chrono::steady_clock::now()
-                .time_since_epoch().count());
+                std::format("loom_permission_requests_{}",
+                            std::chrono::steady_clock::now().time_since_epoch().count());
         std::filesystem::create_directories(root_);
         home_.set(root_.string());
         config_dir_.set((root_ / "config").string());
@@ -218,59 +219,66 @@ protected:
         config.context_window.auto_compact = false;
         config.cwd = root_.string();
         engine_ = std::make_unique<loom::core::QueryEngine>(std::move(config), tools_);
-        app_ = ftxui::Make<loom::ui::AppAdapter>(
-            engine_.get(), nullptr, &commands_, root_ / "sessions", [] {});
+        app_ = ftxui::Make<loom::ui::AppAdapter>(engine_.get(), nullptr, &commands_,
+                                                 root_ / "sessions", [] {});
     }
+
     void TearDown() override {
         app_.reset();
         engine_.reset();
         std::error_code ignored;
         std::filesystem::remove_all(root_, ignored);
     }
+
     bool AwaitToolRequest(std::string_view tool, std::string_view description) {
-        return wait_until([&] {
-            // The queue also carries settings/skill/observer work. A nonempty
-            // queue and a single drain do not establish that this request is
-            // visible; wait on the actual typed payload owned by this caller.
-            (void)app_->Render();
-            const auto state = loom::ui::test_seams(app_).screen_state_for_testing();
-            const auto overlay = state->dialog_store.dialog_queue.peek_overlay();
-            if (!overlay) return false;
-            const auto* payload = std::get_if<dsys::ToolPermissionPayload>(&overlay->get());
-            return payload && payload->tool_name == tool &&
-                   payload->description == description &&
-                   payload->id.starts_with("tool-permission-");
-        }, 2s);
+        return wait_until(
+            [&] {
+                // The queue also carries settings/skill/observer work. A nonempty
+                // queue and a single drain do not establish that this request is
+                // visible; wait on the actual typed payload owned by this caller.
+                (void)app_->Render();
+                const auto state = loom::ui::test_seams(app_).screen_state_for_testing();
+                const auto overlay = state->dialog_store.dialog_queue.peek_overlay();
+                if (!overlay) return false;
+                const auto* payload = std::get_if<dsys::ToolPermissionPayload>(&overlay->get());
+                return payload && payload->tool_name == tool &&
+                       payload->description == description &&
+                       payload->id.starts_with("tool-permission-");
+            },
+            2s);
     }
+
     bool AwaitElicitation(std::string_view server, std::string_view description) {
-        return wait_until([&] {
-            (void)app_->Render();
-            const auto state = loom::ui::test_seams(app_).screen_state_for_testing();
-            const auto bottom = state->dialog_store.dialog_queue.peek_bottom(false);
-            if (!bottom) return false;
-            const auto* payload = std::get_if<dsys::ElicitationPayload>(&bottom->get());
-            return payload && payload->server_name == server &&
-                   payload->request_description == description &&
-                   payload->id.starts_with("elicitation-");
-        }, 2s);
+        return wait_until(
+            [&] {
+                (void)app_->Render();
+                const auto state = loom::ui::test_seams(app_).screen_state_for_testing();
+                const auto bottom = state->dialog_store.dialog_queue.peek_bottom(false);
+                if (!bottom) return false;
+                const auto* payload = std::get_if<dsys::ElicitationPayload>(&bottom->get());
+                return payload && payload->server_name == server &&
+                       payload->request_description == description &&
+                       payload->id.starts_with("elicitation-");
+            },
+            2s);
     }
-    loom::ui::AppAdapter* Adapter() {
-        return static_cast<loom::ui::AppAdapter*>(app_.get());
-    }
+
+    loom::ui::AppAdapter* Adapter() { return static_cast<loom::ui::AppAdapter*>(app_.get()); }
 };
+
 struct StopAppOnExit {
     ftxui::Component& app;
+
     ~StopAppOnExit() {
         if (app) (void)loom::ui::test_seams(app).stop_background_workers_for_testing();
     }
 };
-}
+}  // namespace
 
 TEST_F(AppPermissionRequests, ConcurrentToolCallbacksKeepLateResponseAndAbortBoundToOriginal) {
     const auto callback = Adapter()->get_permission_callback();
-    auto first = std::async(std::launch::async, [callback] {
-        return callback("Write", "first child request");
-    });
+    auto first = std::async(std::launch::async,
+                            [callback] { return callback("Write", "first child request"); });
     StopAppOnExit cleanup{app_};
     ASSERT_TRUE(AwaitToolRequest("Write", "first child request"));
     (void)app_->Render();
@@ -289,9 +297,8 @@ TEST_F(AppPermissionRequests, ConcurrentToolCallbacksKeepLateResponseAndAbortBou
     ASSERT_EQ(first.wait_for(2s), std::future_status::ready);
     EXPECT_FALSE(first.get());
 
-    auto second = std::async(std::launch::async, [callback] {
-        return callback("Bash", "second child request");
-    });
+    auto second = std::async(std::launch::async,
+                             [callback] { return callback("Bash", "second child request"); });
     // This guard must outlive second even if an assertion exits early.
     StopAppOnExit cleanup_second{app_};
     EXPECT_EQ(second.wait_for(20ms), std::future_status::timeout);
@@ -319,8 +326,8 @@ TEST_F(AppPermissionRequests, ConcurrentToolCallbacksKeepLateResponseAndAbortBou
 
 TEST_F(AppPermissionRequests, ConcurrentElicitationsKeepLateDecisionBoundAndCleanupExact) {
     auto first = std::async(std::launch::async, [] {
-        return loom::services::mcp::handle_elicitation({
-            .server_name = "first-server", .message = "first request", .schema = {}});
+        return loom::services::mcp::handle_elicitation(
+            {.server_name = "first-server", .message = "first request", .schema = {}});
     });
     StopAppOnExit cleanup{app_};
     ASSERT_TRUE(AwaitElicitation("first-server", "first request"));
@@ -337,8 +344,8 @@ TEST_F(AppPermissionRequests, ConcurrentElicitationsKeepLateDecisionBoundAndClea
     ASSERT_EQ(first.wait_for(2s), std::future_status::ready);
     EXPECT_TRUE(first.get().has_value());
     auto second = std::async(std::launch::async, [] {
-        return loom::services::mcp::handle_elicitation({
-            .server_name = "second-server", .message = "second request", .schema = {}});
+        return loom::services::mcp::handle_elicitation(
+            {.server_name = "second-server", .message = "second request", .schema = {}});
     });
     StopAppOnExit cleanup_second{app_};
     (void)app_->Render();
@@ -389,7 +396,6 @@ TEST_F(AppPermissionRequests, LegacyPanelDecisionCannotAnswerNativeRequestFromAn
     (void)app_->Render();
 }
 
-
 TEST_F(AppPermissionRequests, OwnedStopLeavesUnansweredElicitationPendingAndSiblingIndependent) {
     namespace runtime = loom::tools::agent_runtime;
     ScopedEnvVar runtime_dir{"LOOM_AGENT_RUNTIME_DIR"};
@@ -416,15 +422,21 @@ TEST_F(AppPermissionRequests, OwnedStopLeavesUnansweredElicitationPendingAndSibl
     sibling.background = true;
     store.upsert(std::move(sibling));
 
-    store.run_background_agent("elicitation-target", [&] {
-        const auto response = loom::services::mcp::handle_elicitation({
-            .server_name = "target-server", .message = "target approval pending", .schema = {}});
-        target_approved = response.has_value();
-        store.finish_agent("elicitation-target", response
-            ? std::expected<std::string, std::string>{"target approved"}
-            : std::expected<std::string, std::string>{std::unexpected(std::string{"target request declined"})});
-        target_finished.set_value();
-    }, owner);
+    store.run_background_agent(
+        "elicitation-target",
+        [&] {
+            const auto response =
+                loom::services::mcp::handle_elicitation({.server_name = "target-server",
+                                                         .message = "target approval pending",
+                                                         .schema = {}});
+            target_approved = response.has_value();
+            store.finish_agent("elicitation-target",
+                               response ? std::expected<std::string, std::string>{"target approved"}
+                                        : std::expected<std::string, std::string>{std::unexpected(
+                                              std::string{"target request declined"})});
+            target_finished.set_value();
+        },
+        owner);
     // Abort the application responder before Store destruction if an assertion
     // exits early, so its owned workers never depend on a closed UI for joins.
     StopAppOnExit cleanup{app_};
@@ -439,16 +451,23 @@ TEST_F(AppPermissionRequests, OwnedStopLeavesUnansweredElicitationPendingAndSibl
     const auto target_dialog_id = original->id;
     const auto target_response = original->on_response;
 
-    store.run_background_agent("elicitation-sibling", [&] {
-        sibling_entered.set_value();
-        const auto response = loom::services::mcp::handle_elicitation({
-            .server_name = "sibling-server", .message = "sibling approval pending", .schema = {}});
-        sibling_approved = response.has_value();
-        store.finish_agent("elicitation-sibling", response
-            ? std::expected<std::string, std::string>{"sibling approved"}
-            : std::expected<std::string, std::string>{std::unexpected(std::string{"sibling request declined"})});
-        sibling_finished.set_value();
-    }, owner);
+    store.run_background_agent(
+        "elicitation-sibling",
+        [&] {
+            sibling_entered.set_value();
+            const auto response =
+                loom::services::mcp::handle_elicitation({.server_name = "sibling-server",
+                                                         .message = "sibling approval pending",
+                                                         .schema = {}});
+            sibling_approved = response.has_value();
+            store.finish_agent("elicitation-sibling",
+                               response
+                                   ? std::expected<std::string, std::string>{"sibling approved"}
+                                   : std::expected<std::string, std::string>{
+                                         std::unexpected(std::string{"sibling request declined"})});
+            sibling_finished.set_value();
+        },
+        owner);
     ASSERT_EQ(sibling_started.wait_for(2s), std::future_status::ready);
     ASSERT_TRUE(store.request_owned_cancel("elicitation-target", session, owner));
     const auto pending_target = store.get("elicitation-target");
@@ -470,9 +489,8 @@ TEST_F(AppPermissionRequests, OwnedStopLeavesUnansweredElicitationPendingAndSibl
     target_response(false);
     ASSERT_EQ(target_done.wait_for(2s), std::future_status::ready);
     EXPECT_FALSE(target_approved.load());
-    EXPECT_TRUE(wait_until([&] {
-        return store.resume_unavailable_reason("elicitation-target").empty();
-    }, 2s));
+    EXPECT_TRUE(wait_until(
+        [&] { return store.resume_unavailable_reason("elicitation-target").empty(); }, 2s));
     const auto cancelled_target = store.get("elicitation-target");
     ASSERT_TRUE(cancelled_target);
     EXPECT_EQ(cancelled_target->status, runtime::NativeAgentStatus::Cancelled);
@@ -501,7 +519,6 @@ TEST_F(AppPermissionRequests, OwnedStopLeavesUnansweredElicitationPendingAndSibl
     (void)app_->Render();
     EXPECT_FALSE(state->dialog_store.dialog_queue.has_any_bottom());
 }
-
 
 TEST_F(AppPermissionRequests, ApprovalEmitsWorkingBeforeImmediatelyFollowingRootQuestion) {
     loom::ui::test_seams(app_).start_program_status_for_testing([this](std::string_view bytes) {
@@ -534,13 +551,15 @@ TEST_F(AppPermissionRequests, ApprovalEmitsWorkingBeforeImmediatelyFollowingRoot
     EXPECT_FALSE(state->dialog_store.dialog_queue.has_overlay());
     ASSERT_EQ(status_reports_.size(), permission_report + 2);
     EXPECT_NE(status_reports_.back().find("state=working"), std::string::npos);
-    ASSERT_TRUE(wait_until([&] {
-        (void)app_->Render();
-        const auto bottom = state->dialog_store.dialog_queue.peek_bottom(false);
-        if (!bottom) return false;
-        const auto* prompt = std::get_if<dsys::PromptDialogPayload>(&bottom->get());
-        return prompt && prompt->prompt_text == "Question immediately after approval";
-    }, 2s));
+    ASSERT_TRUE(wait_until(
+        [&] {
+            (void)app_->Render();
+            const auto bottom = state->dialog_store.dialog_queue.peek_bottom(false);
+            if (!bottom) return false;
+            const auto* prompt = std::get_if<dsys::PromptDialogPayload>(&bottom->get());
+            return prompt && prompt->prompt_text == "Question immediately after approval";
+        },
+        2s));
     (void)app_->OnEvent(ftxui::Event::Custom);
     ASSERT_EQ(status_reports_.size(), permission_report + 3);
     EXPECT_NE(status_reports_.back().find("state=blocked"), std::string::npos);

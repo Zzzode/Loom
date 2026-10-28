@@ -14,39 +14,45 @@ namespace runtime = loom::tools::agent_runtime;
 namespace json = loom::utils::json;
 
 std::string host_continue_record_reason(const runtime::NativeAgentRecord& record,
-                                       std::string_view session) {
+                                        std::string_view session) {
     if (session.empty() || !record.parent_session_id || *record.parent_session_id != session) {
         return "Agent does not belong to this session";
     }
     if (runtime::is_team_agent_record(record)) {
-        if (record.teammate_backend != "in-process" || !record.team_name || record.teammate_pane_id) {
+        if (record.teammate_backend != "in-process" || !record.team_name ||
+            record.teammate_pane_id) {
             return "Only native in-process Team Agents can be continued here";
         }
         auto team = loom::tools::global_team_store().get_by_id_or_name(*record.team_name);
         if (!team) return "Agent team is no longer available";
         if (!std::ranges::any_of(team->members, [&](const auto& member) {
                 return member.agent_id == record.agent_id;
-            })) return "Agent is no longer a member of its team";
+            }))
+            return "Agent is no longer a member of its team";
     }
     if (record.parent_agent_id && !record.parent_agent_id->empty()) {
         return "Nested agents cannot be continued here";
     }
     if (record.status == runtime::NativeAgentStatus::Queued ||
-        record.status == runtime::NativeAgentStatus::Running) return "Agent has not finished";
-    if (record.sidechain_entries.empty() && record.transcript.empty()) return "No retained context is available";
+        record.status == runtime::NativeAgentStatus::Running)
+        return "Agent has not finished";
+    if (record.sidechain_entries.empty() && record.transcript.empty())
+        return "No retained context is available";
     return {};
 }
-}
+}  // namespace
 
 std::string QueryEngine::agent_continue_unavailable_reason(std::string_view id) const {
     auto& store = runtime::native_agent_store();
     auto record = store.get(id);
     if (!record) return "Agent not found";
-    if (auto reason = host_continue_record_reason(*record, session_id_.str()); !reason.empty()) return reason;
+    if (auto reason = host_continue_record_reason(*record, session_id_.str()); !reason.empty())
+        return reason;
     if (auto reason = store.resume_unavailable_reason(id); !reason.empty()) return reason;
     const auto definitions = runtime::get_all_agent_definitions(
         record->cwd ? std::optional<std::filesystem::path>{*record->cwd} : std::nullopt);
-    if (!runtime::resolve_agent_type(record->agent_type, definitions)) return "Agent definition is no longer available";
+    if (!runtime::resolve_agent_type(record->agent_type, definitions))
+        return "Agent definition is no longer available";
     return {};
 }
 
@@ -56,20 +62,23 @@ std::string QueryEngine::agent_message_unavailable_reason(std::string_view id) c
     if (!record) return "Agent not found";
     if (record->status == runtime::NativeAgentStatus::Queued ||
         record->status == runtime::NativeAgentStatus::Running) {
-        return store.owned_message_unavailable_reason(id, session_id_.str(), tool_registry_->background_stop_token());
+        return store.owned_message_unavailable_reason(id, session_id_.str(),
+                                                      tool_registry_->background_stop_token());
     }
     return agent_continue_unavailable_reason(id);
 }
 
-Result<std::string> QueryEngine::send_agent_instance_message(std::string_view id, std::string_view prompt) {
-    if (prompt.empty()) return std::unexpected(Error::make(ErrorCode::InvalidRequest, "Agent message is empty"));
+Result<std::string> QueryEngine::send_agent_instance_message(std::string_view id,
+                                                             std::string_view prompt) {
+    if (prompt.empty())
+        return std::unexpected(Error::make(ErrorCode::InvalidRequest, "Agent message is empty"));
     auto& store = runtime::native_agent_store();
     const auto record = store.get(id);
     if (!record) return std::unexpected(Error::make(ErrorCode::InvalidRequest, "Agent not found"));
     if (record->status == runtime::NativeAgentStatus::Queued ||
         record->status == runtime::NativeAgentStatus::Running) {
-        auto queued = store.enqueue_owned_message(id, session_id_.str(), tool_registry_->background_stop_token(),
-                                                 std::string(prompt));
+        auto queued = store.enqueue_owned_message(
+            id, session_id_.str(), tool_registry_->background_stop_token(), std::string(prompt));
         if (!queued) return std::unexpected(Error::make(ErrorCode::InvalidRequest, queued.error()));
         return "Message queued for " + std::string(id);
     }
@@ -90,8 +99,11 @@ VoidResult QueryEngine::stop_agent_instance(std::string_view id) {
     return {};
 }
 
-Result<std::string> QueryEngine::continue_agent_instance(std::string_view id, std::string_view prompt) {
-    if (prompt.empty()) return std::unexpected(Error::make(ErrorCode::InvalidRequest, "Continuation message is empty"));
+Result<std::string> QueryEngine::continue_agent_instance(std::string_view id,
+                                                         std::string_view prompt) {
+    if (prompt.empty())
+        return std::unexpected(
+            Error::make(ErrorCode::InvalidRequest, "Continuation message is empty"));
     if (auto reason = agent_continue_unavailable_reason(id); !reason.empty()) {
         return std::unexpected(Error::make(ErrorCode::InvalidRequest, std::move(reason)));
     }
@@ -103,9 +115,15 @@ Result<std::string> QueryEngine::continue_agent_instance(std::string_view id, st
     const auto agent_id = std::string(id);
     const auto agent_type = record->agent_type;
     const auto cwd = record->cwd;
-    const auto constraint = HostAgentResumeConstraint{agent_id, agent_type, owner_session,
-        cwd, record->team_name, record->name, record->teammate_backend,
-        record->teammate_task_id, record->teammate_pane_id};
+    const auto constraint = HostAgentResumeConstraint{agent_id,
+                                                      agent_type,
+                                                      owner_session,
+                                                      cwd,
+                                                      record->team_name,
+                                                      record->name,
+                                                      record->teammate_backend,
+                                                      record->teammate_task_id,
+                                                      record->teammate_pane_id};
     json::JsonMutDoc doc;
     auto object = doc.object();
     object.add("agent_id", doc.string(agent_id));
@@ -119,9 +137,11 @@ Result<std::string> QueryEngine::continue_agent_instance(std::string_view id, st
     tool.id.value = generate_id();
     tool.name = "Agent";
     tool.input_json = doc.to_string();
-    const auto validate = [this, agent_id, agent_type, owner_session, cwd, constraint](std::string_view payload) -> std::string {
+    const auto validate = [this, agent_id, agent_type, owner_session, cwd,
+                           constraint](std::string_view payload) -> std::string {
         if (session_id_.str() != owner_session) return "Agent session changed before continuation";
-        if (auto reason = agent_continue_unavailable_reason(agent_id); !reason.empty()) return reason;
+        if (auto reason = agent_continue_unavailable_reason(agent_id); !reason.empty())
+            return reason;
         auto parsed = json::parse(payload);
         if (!parsed || !parsed->root().is_obj()) return "Invalid host continuation payload";
         auto root = parsed->root();
@@ -129,7 +149,8 @@ Result<std::string> QueryEngine::continue_agent_instance(std::string_view id, st
         root.iter_obj([&](json::JsonVal key, json::JsonVal) {
             const auto name = key.as_str();
             if (name != "agent_id" && name != "subagent_type" && name != "prompt" &&
-                name != "resume_existing" && name != "run_in_background" && name != "cwd") invalid = true;
+                name != "resume_existing" && name != "run_in_background" && name != "cwd")
+                invalid = true;
         });
         const auto matches = [&](std::string_view key, std::string_view value) {
             auto field = root.get(key);
@@ -152,8 +173,7 @@ Result<std::string> QueryEngine::continue_agent_instance(std::string_view id, st
         }
         return {};
     };
-    const auto result = execute_single_tool(tool, QueryOptions{}, validate,
-        constraint);
+    const auto result = execute_single_tool(tool, QueryOptions{}, validate, constraint);
     if (result.is_error) {
         std::string message;
         for (const auto& block : result.content) {
@@ -164,4 +184,4 @@ Result<std::string> QueryEngine::continue_agent_instance(std::string_view id, st
     return agent_id;
 }
 
-} // namespace loom::core
+}  // namespace loom::core

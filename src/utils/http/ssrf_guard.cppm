@@ -56,10 +56,14 @@ export namespace loom::utils::ssrf_guard {
     std::uint16_t out = 0;
     for (char ch : value) {
         out <<= 4;
-        if (ch >= '0' && ch <= '9') out += static_cast<std::uint16_t>(ch - '0');
-        else if (ch >= 'a' && ch <= 'f') out += static_cast<std::uint16_t>(10 + ch - 'a');
-        else if (ch >= 'A' && ch <= 'F') out += static_cast<std::uint16_t>(10 + ch - 'A');
-        else return std::nullopt;
+        if (ch >= '0' && ch <= '9')
+            out += static_cast<std::uint16_t>(ch - '0');
+        else if (ch >= 'a' && ch <= 'f')
+            out += static_cast<std::uint16_t>(10 + ch - 'a');
+        else if (ch >= 'A' && ch <= 'F')
+            out += static_cast<std::uint16_t>(10 + ch - 'A');
+        else
+            return std::nullopt;
     }
     return out;
 }
@@ -77,7 +81,8 @@ export namespace loom::utils::ssrf_guard {
     return parts;
 }
 
-[[nodiscard]] inline std::optional<std::array<std::uint16_t, 8>> expand_ipv6_groups(std::string_view input) {
+[[nodiscard]] inline std::optional<std::array<std::uint16_t, 8>>
+expand_ipv6_groups(std::string_view input) {
     std::string addr(input);
     std::vector<std::uint16_t> tail_hextets;
     if (addr.find('.') != std::string::npos) {
@@ -91,7 +96,8 @@ export namespace loom::utils::ssrf_guard {
     }
 
     const auto dbl = addr.find("::");
-    if (dbl != std::string::npos && addr.find("::", dbl + 2) != std::string::npos) return std::nullopt;
+    if (dbl != std::string::npos && addr.find("::", dbl + 2) != std::string::npos)
+        return std::nullopt;
 
     std::vector<std::string_view> head;
     std::vector<std::string_view> tail;
@@ -122,7 +128,8 @@ export namespace loom::utils::ssrf_guard {
         if (!h) return std::nullopt;
         groups[idx++] = *h;
     }
-    for (auto h : tail_hextets) groups[idx++] = h;
+    for (auto h : tail_hextets)
+        groups[idx++] = h;
     if (idx != 8) return std::nullopt;
     return groups;
 }
@@ -141,7 +148,8 @@ export namespace loom::utils::ssrf_guard {
 
 [[nodiscard]] inline bool is_blocked_v6(std::string_view address) {
     std::string lower(address);
-    std::transform(lower.begin(), lower.end(), lower.begin(), [](unsigned char ch) { return static_cast<char>(std::tolower(ch)); });
+    std::transform(lower.begin(), lower.end(), lower.begin(),
+                   [](unsigned char ch) { return static_cast<char>(std::tolower(ch)); });
     if (lower == "::1") return false;
     if (lower == "::") return true;
     if (auto mapped = extract_mapped_ipv4(lower)) return is_blocked_v4_parts(*mapped);
@@ -153,7 +161,8 @@ export namespace loom::utils::ssrf_guard {
 }
 
 [[nodiscard]] inline bool is_blocked_address(std::string_view address) {
-    if (address.find('.') != std::string_view::npos && address.find(':') == std::string_view::npos) {
+    if (address.find('.') != std::string_view::npos &&
+        address.find(':') == std::string_view::npos) {
         return is_blocked_v4(address);
     }
     if (address.find(':') != std::string_view::npos) {
@@ -162,4 +171,4 @@ export namespace loom::utils::ssrf_guard {
     return false;
 }
 
-} // namespace loom::utils::ssrf_guard
+}  // namespace loom::utils::ssrf_guard

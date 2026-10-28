@@ -27,8 +27,7 @@ namespace json = loom::utils::json;
 
 namespace {
 
-[[nodiscard]] std::string make_list_payload(const ConfigManager& manager,
-                                            bool loaded,
+[[nodiscard]] std::string make_list_payload(const ConfigManager& manager, bool loaded,
                                             std::string_view load_warning) {
     json::JsonMutDoc doc;
     auto out = doc.object();
@@ -41,7 +40,7 @@ namespace {
     return doc.to_string();
 }
 
-} // namespace
+}  // namespace
 
 [[nodiscard]] Result<ToolResult> config_backend(const ToolInput& input) {
     auto parsed = json::parse(input.json());
@@ -62,8 +61,7 @@ namespace {
         // key sets are still returned, with the manager error attached.
         const auto loaded = manager.load(quiet());
         const std::string warning = loaded ? std::string{} : loaded.error().message;
-        return ToolResult::success(
-            make_list_payload(manager, loaded.has_value(), warning));
+        return ToolResult::success(make_list_payload(manager, loaded.has_value(), warning));
     }
 
     if (action == "get") {
@@ -78,16 +76,16 @@ namespace {
         out.set("path", manager.user_config_path().string());
         out.set("user_file_valid", !manager.user_tier_unparseable());
         if (!key) {
-            out.add("settings",
-                    doc.raw_json(manager.serialize_agent_settings_json()));
+            out.add("settings", doc.raw_json(manager.serialize_agent_settings_json()));
         } else if (auto presence = manager.agent_secret_presence_json(*key)) {
             out.add("setting", doc.raw_json(*presence));
         } else if (auto setting = manager.agent_setting_value_json(*key)) {
             out.add("setting", doc.raw_json(*setting));
         } else {
-            return ToolResult::error(std::format(
-                "Unknown configuration key '{}'. Run action=list to see the "
-                "supported keys.", *key));
+            return ToolResult::error(
+                std::format("Unknown configuration key '{}'. Run action=list to see the "
+                            "supported keys.",
+                            *key));
         }
         doc.set_root(out);
         return ToolResult::success(doc.to_string());
@@ -98,9 +96,8 @@ namespace {
             return ToolResult::error("config set requires a key");
         }
         if (!root.has("value")) {
-            return ToolResult::error(
-                "config set requires a value (use null to clear "
-                "temperature or thinkingBudget)");
+            return ToolResult::error("config set requires a value (use null to clear "
+                                     "temperature or thinkingBudget)");
         }
         // set_user_setting validates, patches with salvage=ON, and performs
         // the quiet post-write reload itself.
@@ -130,8 +127,8 @@ namespace {
         return ToolResult::success(doc.to_string());
     }
 
-    return ToolResult::error(std::format(
-        "Unknown config action '{}' (expected get, set, or list)", action));
+    return ToolResult::error(
+        std::format("Unknown config action '{}' (expected get, set, or list)", action));
 }
 
-} // namespace loom::orchestration::detail
+}  // namespace loom::orchestration::detail

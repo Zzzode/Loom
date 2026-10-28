@@ -9,7 +9,6 @@ export namespace loom::commands {
 
 using std::filesystem::path;
 
-
 struct InstalledPlugin {
     std::string id;
     std::string version;
@@ -21,7 +20,6 @@ auto plugins_dir() -> path;
 auto read_manifest(const path& manifest_path) -> std::map<std::string, std::string>;
 auto write_manifest(const InstalledPlugin& plugin) -> std::expected<void, std::string>;
 auto set_plugin_enabled(std::string_view id, bool enabled) -> std::expected<void, std::string>;
-
 
 auto get_installed_plugins() -> std::vector<InstalledPlugin> {
     std::vector<InstalledPlugin> plugins;
@@ -42,7 +40,6 @@ auto get_installed_plugins() -> std::vector<InstalledPlugin> {
     return plugins;
 }
 
-
 auto enable_plugin(std::string_view id) -> std::expected<void, std::string> {
     if (id.empty()) {
         return std::unexpected("Plugin ID cannot be empty");
@@ -50,14 +47,12 @@ auto enable_plugin(std::string_view id) -> std::expected<void, std::string> {
     return set_plugin_enabled(id, true);
 }
 
-
 auto disable_plugin(std::string_view id) -> std::expected<void, std::string> {
     if (id.empty()) {
         return std::unexpected("Plugin ID cannot be empty");
     }
     return set_plugin_enabled(id, false);
 }
-
 
 auto get_plugin_info(std::string_view id) -> std::expected<InstalledPlugin, std::string> {
     if (id.empty()) {
@@ -108,4 +103,4 @@ auto set_plugin_enabled(std::string_view id, bool enabled) -> std::expected<void
     return std::unexpected("Plugin not found: " + std::string(id));
 }
 
-} // namespace loom::commands
+}  // namespace loom::commands

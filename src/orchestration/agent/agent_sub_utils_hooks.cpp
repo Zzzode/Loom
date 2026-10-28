@@ -12,8 +12,9 @@
 // std::fgets comes through import std.
 module;
 
-#include <cstdio>
 #include <sys/wait.h>
+
+#include <cstdio>
 
 module loom.orchestration.agent.utils;
 
@@ -44,7 +45,8 @@ AgentShellTaskCleanupGuard::~AgentShellTaskCleanupGuard() {
     if (!stopped.empty()) {
         loom::tools::agent_runtime::native_agent_store().append_transcript(
             agent_id,
-            std::format("system: stopped {} background shell task(s) owned by agent on exit", stopped.size()));
+            std::format("system: stopped {} background shell task(s) owned by agent on exit",
+                        stopped.size()));
     }
 }
 
@@ -64,25 +66,24 @@ AgentMcpCleanupGuard::~AgentMcpCleanupGuard() {
 
     bool cleaned = false;
     if (!remove_names.empty()) {
-        if (auto removed = loom::tools::remove_native_mcp_servers(std::move(remove_names)); removed) {
+        if (auto removed = loom::tools::remove_native_mcp_servers(std::move(remove_names));
+            removed) {
             cleaned = true;
         }
     }
     if (!restore_servers.empty()) {
-        if (auto restored = loom::tools::upsert_native_mcp_servers(std::move(restore_servers)); restored) {
+        if (auto restored = loom::tools::upsert_native_mcp_servers(std::move(restore_servers));
+            restored) {
             cleaned = true;
         }
     }
     if (cleaned && !agent_id.empty()) {
         loom::tools::agent_runtime::native_agent_store().append_transcript(
-            agent_id,
-            "system: cleaned agent-specific MCP server configuration");
+            agent_id, "system: cleaned agent-specific MCP server configuration");
     }
 }
 
-[[nodiscard]] std::string format_agent_runtime_context(
-    const AgentExecutionPlan& plan
-) {
+[[nodiscard]] std::string format_agent_runtime_context(const AgentExecutionPlan& plan) {
     std::string context = "Native agent runtime context:\n";
     context += std::format("- agent_id: {}\n", plan.agent_id);
     if (plan.description) context += std::format("- description: {}\n", *plan.description);
@@ -96,7 +97,8 @@ AgentMcpCleanupGuard::~AgentMcpCleanupGuard() {
     if (plan.color) context += std::format("- color: {}\n", *plan.color);
     if (plan.omit_loom_md) context += "- omit_loom_md: true\n";
     if (plan.critical_system_reminder) context += "- critical_system_reminder: configured\n";
-    if (plan.parent_agent_id) context += std::format("- parent_agent_id: {}\n", *plan.parent_agent_id);
+    if (plan.parent_agent_id)
+        context += std::format("- parent_agent_id: {}\n", *plan.parent_agent_id);
     if (plan.background) context += "- background: true\n";
     return context;
 }
@@ -131,14 +133,13 @@ AgentMcpCleanupGuard::~AgentMcpCleanupGuard() {
     return loom::tools::agent_runtime::agent_transcript_path(agent_id).string();
 }
 
-[[nodiscard]] std::expected<AgentWorktreeInfo, std::string> create_agent_worktree(
-    const AgentExecutionPlan& plan
-) {
+[[nodiscard]] std::expected<AgentWorktreeInfo, std::string>
+create_agent_worktree(const AgentExecutionPlan& plan) {
     auto base_cwd = plan.working_dir ? fs::path{*plan.working_dir} : fs::current_path();
     auto git_root = loom::utils::git::find_git_root(base_cwd);
     if (!git_root) {
-        return std::unexpected(
-            "Cannot create agent worktree: not in a git repository. Use cwd inside a git repository or omit isolation=worktree.");
+        return std::unexpected("Cannot create agent worktree: not in a git repository. Use cwd "
+                               "inside a git repository or omit isolation=worktree.");
     }
 
     auto slug = sanitized_agent_file_part(plan.agent_id);
@@ -151,7 +152,8 @@ AgentMcpCleanupGuard::~AgentMcpCleanupGuard() {
     if (ec) return std::unexpected("Cannot create worktree parent directory: " + ec.message());
 
     auto head = loom::utils::git::run_git_command("rev-parse HEAD", *git_root);
-    if (!head.success) return std::unexpected("Cannot resolve git HEAD for agent worktree: " + head.output);
+    if (!head.success)
+        return std::unexpected("Cannot resolve git HEAD for agent worktree: " + head.output);
 
     auto created = loom::utils::git::run_git_command(
         std::format("worktree add -B \"{}\" \"{}\" HEAD", branch, worktree_path.string()),
@@ -182,17 +184,14 @@ AgentMcpCleanupGuard::~AgentMcpCleanupGuard() {
     return false;
 }
 
-[[nodiscard]] bool hook_pattern_matches(
-    const std::optional<std::string>& pattern,
-    std::string_view value
-) {
+[[nodiscard]] bool hook_pattern_matches(const std::optional<std::string>& pattern,
+                                        std::string_view value) {
     if (!pattern || pattern->empty()) return true;
     std::size_t start = 0;
     while (start <= pattern->size()) {
         auto sep = pattern->find('|', start);
         auto part = std::string_view(*pattern).substr(
-            start,
-            sep == std::string_view::npos ? std::string_view::npos : sep - start);
+            start, sep == std::string_view::npos ? std::string_view::npos : sep - start);
         if (hook_pattern_matches_one(part, value)) return true;
         if (sep == std::string_view::npos) break;
         start = sep + 1;
@@ -200,13 +199,11 @@ AgentMcpCleanupGuard::~AgentMcpCleanupGuard() {
     return false;
 }
 
-[[nodiscard]] AgentHookRunResult run_agent_command_hook(
-    const loom::tools::agent_runtime::AgentHookCommand& hook,
-    const AgentExecutionPlan& plan,
-    std::string_view event,
-    std::string_view last_assistant_message,
-    std::optional<AgentToolHookContext> tool_context
-) {
+[[nodiscard]] AgentHookRunResult
+run_agent_command_hook(const loom::tools::agent_runtime::AgentHookCommand& hook,
+                       const AgentExecutionPlan& plan, std::string_view event,
+                       std::string_view last_assistant_message,
+                       std::optional<AgentToolHookContext> tool_context) {
     const auto transcript_path = default_agent_transcript_path(plan.agent_id);
     const auto cwd = plan.working_dir.value_or(fs::current_path().string());
     const auto shell = hook.shell.empty() ? std::string("bash") : hook.shell;
@@ -225,7 +222,9 @@ AgentMcpCleanupGuard::~AgentMcpCleanupGuard() {
         command += "LOOM_HOOK_TOOL_INPUT_JSON=" + shell_quote(tool_context->tool_input_json) + " ";
         command += "LOOM_HOOK_TOOL_USE_ID=" + shell_quote(tool_context->tool_use_id) + " ";
         if (!tool_context->tool_output_preview.empty()) {
-            command += "LOOM_HOOK_TOOL_OUTPUT_PREVIEW=" + shell_quote(tool_context->tool_output_preview) + " ";
+            command +=
+                "LOOM_HOOK_TOOL_OUTPUT_PREVIEW=" + shell_quote(tool_context->tool_output_preview) +
+                " ";
         }
         if (!tool_context->tool_error.empty()) {
             command += "LOOM_HOOK_TOOL_ERROR=" + shell_quote(tool_context->tool_error) + " ";
@@ -267,9 +266,8 @@ AgentMcpCleanupGuard::~AgentMcpCleanupGuard() {
     return preview;
 }
 
-[[nodiscard]] std::optional<AgentHookContinuationStop> hook_continuation_stop_from_output(
-    std::string_view output
-) {
+[[nodiscard]] std::optional<AgentHookContinuationStop>
+hook_continuation_stop_from_output(std::string_view output) {
     output = trim_tool_rule(output);
     if (output.empty() || !output.starts_with('{')) return std::nullopt;
 
@@ -289,7 +287,8 @@ AgentMcpCleanupGuard::~AgentMcpCleanupGuard() {
     return stop;
 }
 
-[[nodiscard]] std::optional<std::string> hook_additional_context_from_output(std::string_view output) {
+[[nodiscard]] std::optional<std::string>
+hook_additional_context_from_output(std::string_view output) {
     output = trim_tool_rule(output);
     if (output.empty()) return std::nullopt;
 
@@ -324,9 +323,11 @@ AgentMcpCleanupGuard::~AgentMcpCleanupGuard() {
     auto event = specific.get("hookEventName");
     if (event.valid() && event.is_str() && event.as_str() != "PreToolUse") return std::nullopt;
     auto permission = specific.get("permissionDecision");
-    if (!permission.valid() || !permission.is_str() || permission.as_str() != "deny") return std::nullopt;
+    if (!permission.valid() || !permission.is_str() || permission.as_str() != "deny")
+        return std::nullopt;
     auto reason = specific.get("permissionDecisionReason");
-    if (reason.valid() && reason.is_str() && !reason.as_str().empty()) return std::string(reason.as_str());
+    if (reason.valid() && reason.is_str() && !reason.as_str().empty())
+        return std::string(reason.as_str());
     return json_string(root, "reason").value_or("Blocked by hook");
 }
 
@@ -347,7 +348,8 @@ AgentMcpCleanupGuard::~AgentMcpCleanupGuard() {
     return serialized;
 }
 
-[[nodiscard]] std::optional<std::string> post_tool_hook_updated_mcp_output_text(std::string_view output) {
+[[nodiscard]] std::optional<std::string>
+post_tool_hook_updated_mcp_output_text(std::string_view output) {
     output = trim_tool_rule(output);
     if (output.empty() || !output.starts_with('{')) return std::nullopt;
 
@@ -365,10 +367,8 @@ AgentMcpCleanupGuard::~AgentMcpCleanupGuard() {
     return serialized;
 }
 
-[[nodiscard]] std::optional<std::string> hook_additional_context_for_event(
-    std::string_view output,
-    std::string_view event_name
-) {
+[[nodiscard]] std::optional<std::string>
+hook_additional_context_for_event(std::string_view output, std::string_view event_name) {
     output = trim_tool_rule(output);
     if (output.empty() || !output.starts_with('{')) return std::nullopt;
 
@@ -385,11 +385,9 @@ AgentMcpCleanupGuard::~AgentMcpCleanupGuard() {
     return std::string(text);
 }
 
-[[nodiscard]] AgentHookExecutionResult execute_agent_frontmatter_hooks(
-    const AgentExecutionPlan& plan,
-    std::string_view event,
-    std::string_view last_assistant_message
-) {
+[[nodiscard]] AgentHookExecutionResult
+execute_agent_frontmatter_hooks(const AgentExecutionPlan& plan, std::string_view event,
+                                std::string_view last_assistant_message) {
     AgentHookExecutionResult aggregate;
     auto it = plan.frontmatter_hooks.find(std::string(event));
     if (it == plan.frontmatter_hooks.end()) return aggregate;
@@ -410,13 +408,10 @@ AgentMcpCleanupGuard::~AgentMcpCleanupGuard() {
                 }
             }
             if (result.exit_code != 0 && !aggregate.error) {
-                aggregate.error = std::format(
-                    "{} hook for agent '{}' exited with code {}{}{}",
-                    event,
-                    plan.agent_id,
-                    result.exit_code,
-                    result.output.empty() ? "" : ": ",
-                    result.output.empty() ? "" : result.output);
+                aggregate.error =
+                    std::format("{} hook for agent '{}' exited with code {}{}{}", event,
+                                plan.agent_id, result.exit_code, result.output.empty() ? "" : ": ",
+                                result.output.empty() ? "" : result.output);
             }
         }
     }
@@ -424,14 +419,9 @@ AgentMcpCleanupGuard::~AgentMcpCleanupGuard() {
 }
 
 [[nodiscard]] AgentHookExecutionResult execute_agent_tool_frontmatter_hooks(
-    const AgentExecutionPlan& plan,
-    std::string_view event,
-    std::string_view tool_name,
-    std::string_view tool_input_json,
-    std::string_view tool_use_id,
-    std::string_view tool_output_preview,
-    std::string_view tool_error
-) {
+    const AgentExecutionPlan& plan, std::string_view event, std::string_view tool_name,
+    std::string_view tool_input_json, std::string_view tool_use_id,
+    std::string_view tool_output_preview, std::string_view tool_error) {
     AgentHookExecutionResult aggregate;
     auto it = plan.frontmatter_hooks.find(std::string(event));
     if (it == plan.frontmatter_hooks.end()) return aggregate;
@@ -463,7 +453,8 @@ AgentMcpCleanupGuard::~AgentMcpCleanupGuard() {
                     }
                 }
                 if (event == "PreToolUse") {
-                    if (auto denial = pre_tool_hook_denial_reason(result.output); denial && !aggregate.error) {
+                    if (auto denial = pre_tool_hook_denial_reason(result.output);
+                        denial && !aggregate.error) {
                         aggregate.error = std::move(*denial);
                     }
                     if (auto updated_input = pre_tool_hook_updated_input_json(result.output)) {
@@ -471,19 +462,16 @@ AgentMcpCleanupGuard::~AgentMcpCleanupGuard() {
                         aggregate.updated_input_json = std::move(*updated_input);
                     }
                 } else if (event == "PostToolUse") {
-                    if (auto updated_output = post_tool_hook_updated_mcp_output_text(result.output)) {
+                    if (auto updated_output =
+                            post_tool_hook_updated_mcp_output_text(result.output)) {
                         aggregate.updated_mcp_tool_output_text = std::move(*updated_output);
                     }
                 }
             }
             if (result.exit_code != 0 && !aggregate.error) {
                 aggregate.error = std::format(
-                    "{} hook for tool '{}' in agent '{}' exited with code {}{}{}",
-                    event,
-                    tool_name,
-                    plan.agent_id,
-                    result.exit_code,
-                    result.output.empty() ? "" : ": ",
+                    "{} hook for tool '{}' in agent '{}' exited with code {}{}{}", event, tool_name,
+                    plan.agent_id, result.exit_code, result.output.empty() ? "" : ": ",
                     result.output.empty() ? "" : result.output);
             }
         }
@@ -491,30 +479,13 @@ AgentMcpCleanupGuard::~AgentMcpCleanupGuard() {
     return aggregate;
 }
 
-[[nodiscard]] std::string format_tool_hook_additional_context(
-    std::string_view event,
-    std::string_view tool_name,
-    std::string_view tool_use_id,
-    const std::vector<std::string>& contexts
-) {
-    std::string message = std::format(
-        "<hook_additional_context hook=\"{}:{}\" tool_use_id=\"{}\">\n",
-        event,
-        tool_name,
-        tool_use_id);
-    for (std::size_t i = 0; i < contexts.size(); ++i) {
-        if (i > 0) message += "\n\n";
-        message += contexts[i];
-    }
-    message += "\n</hook_additional_context>";
-    return message;
-}
-
-[[nodiscard]] std::string format_hook_additional_context_message(
-    const std::vector<std::string>& contexts
-) {
+[[nodiscard]] std::string
+format_tool_hook_additional_context(std::string_view event, std::string_view tool_name,
+                                    std::string_view tool_use_id,
+                                    const std::vector<std::string>& contexts) {
     std::string message =
-        "<hook_additional_context hook=\"SubagentStart\">\n";
+        std::format("<hook_additional_context hook=\"{}:{}\" tool_use_id=\"{}\">\n", event,
+                    tool_name, tool_use_id);
     for (std::size_t i = 0; i < contexts.size(); ++i) {
         if (i > 0) message += "\n\n";
         message += contexts[i];
@@ -523,32 +494,46 @@ AgentMcpCleanupGuard::~AgentMcpCleanupGuard() {
     return message;
 }
 
-void append_hook_additional_context_messages(
-    std::vector<Message>& messages,
-    const std::vector<std::string>& contexts
-) {
-    if (contexts.empty()) return;
-    messages.push_back(Message::from_text("user", format_hook_additional_context_message(contexts)));
+[[nodiscard]] std::string
+format_hook_additional_context_message(const std::vector<std::string>& contexts) {
+    std::string message = "<hook_additional_context hook=\"SubagentStart\">\n";
+    for (std::size_t i = 0; i < contexts.size(); ++i) {
+        if (i > 0) message += "\n\n";
+        message += contexts[i];
+    }
+    message += "\n</hook_additional_context>";
+    return message;
 }
 
-[[nodiscard]] std::expected<std::optional<std::string>, std::string> normalize_agent_cwd(
-    const std::optional<std::string>& cwd
-) {
+void append_hook_additional_context_messages(std::vector<Message>& messages,
+                                             const std::vector<std::string>& contexts) {
+    if (contexts.empty()) return;
+    messages.push_back(
+        Message::from_text("user", format_hook_additional_context_message(contexts)));
+}
+
+[[nodiscard]] std::expected<std::optional<std::string>, std::string>
+normalize_agent_cwd(const std::optional<std::string>& cwd) {
     if (!cwd || cwd->empty()) return std::optional<std::string>{};
     std::error_code ec;
     fs::path path = fs::path{*cwd};
     if (path.is_relative()) path = fs::current_path(ec) / path;
-    if (ec) return std::unexpected(std::format("Cannot resolve current working directory: {}", ec.message()));
+    if (ec)
+        return std::unexpected(
+            std::format("Cannot resolve current working directory: {}", ec.message()));
     path = fs::weakly_canonical(path, ec);
-    if (ec) return std::unexpected(std::format("Cannot resolve agent cwd '{}': {}", *cwd, ec.message()));
+    if (ec)
+        return std::unexpected(
+            std::format("Cannot resolve agent cwd '{}': {}", *cwd, ec.message()));
     if (!fs::exists(path, ec) || !fs::is_directory(path, ec)) {
-        return std::unexpected(std::format("Agent cwd does not exist or is not a directory: {}", path.string()));
+        return std::unexpected(
+            std::format("Agent cwd does not exist or is not a directory: {}", path.string()));
     }
     return path.string();
 }
 
 void upsert_agent_record_for_plan(const AgentExecutionPlan& plan,
-    std::optional<std::stop_token> execution_owner) {
+                                  std::optional<std::stop_token> execution_owner) {
     loom::tools::agent_runtime::NativeAgentRecord record{
         .agent_id = plan.agent_id,
         .agent_type = plan.agent_type,
@@ -562,7 +547,8 @@ void upsert_agent_record_for_plan(const AgentExecutionPlan& plan,
         .background = plan.background,
         .status = loom::tools::agent_runtime::NativeAgentStatus::Queued,
         .transcript_path = default_agent_transcript_path(plan.agent_id),
-        .output_file_path = loom::tools::agent_runtime::agent_output_file_path(plan.agent_id).string(),
+        .output_file_path =
+            loom::tools::agent_runtime::agent_output_file_path(plan.agent_id).string(),
         .worktree_path = plan.worktree_path,
         .worktree_branch = plan.worktree_branch,
         .worktree_base_commit = plan.worktree_base_commit,
@@ -582,14 +568,16 @@ void upsert_agent_record_for_plan(const AgentExecutionPlan& plan,
     if (plan.resume_existing) {
         if (auto existing = loom::tools::agent_runtime::native_agent_store().get(plan.agent_id)) {
             record.created_at = existing->created_at;
-            record.parent_agent_id = record.parent_agent_id.or_else([&] { return existing->parent_agent_id; });
+            record.parent_agent_id =
+                record.parent_agent_id.or_else([&] { return existing->parent_agent_id; });
             record.description = record.description.or_else([&] { return existing->description; });
             record.name = record.name.or_else([&] { return existing->name; });
             record.team_name = record.team_name.or_else([&] { return existing->team_name; });
             record.cwd = record.cwd.or_else([&] { return existing->cwd; });
             record.isolation = record.isolation.or_else([&] { return existing->isolation; });
             record.mode = record.mode.or_else([&] { return existing->mode; });
-            record.transcript_path = existing->transcript_path.value_or(default_agent_transcript_path(plan.agent_id));
+            record.transcript_path =
+                existing->transcript_path.value_or(default_agent_transcript_path(plan.agent_id));
             record.sidechain_jsonl_path = existing->sidechain_jsonl_path;
             record.output_file_path = existing->output_file_path.value_or(
                 loom::tools::agent_runtime::agent_output_file_path(plan.agent_id).string());
@@ -598,32 +586,44 @@ void upsert_agent_record_for_plan(const AgentExecutionPlan& plan,
                     record.capabilities.push_back(capability);
                 }
             }
-            if (plan.fork_child_context && !std::ranges::contains(record.capabilities, "fork-subagent")) {
+            if (plan.fork_child_context &&
+                !std::ranges::contains(record.capabilities, "fork-subagent")) {
                 record.capabilities.push_back("fork-subagent");
             }
             record.transcript = std::move(existing->transcript);
             record.sidechain_entries = std::move(existing->sidechain_entries);
             record.pending_messages = std::move(existing->pending_messages);
-            record.worktree_path = record.worktree_path.or_else([&] { return existing->worktree_path; });
-            record.worktree_branch = record.worktree_branch.or_else([&] { return existing->worktree_branch; });
-            record.worktree_base_commit = record.worktree_base_commit.or_else([&] { return existing->worktree_base_commit; });
-            record.worktree_git_root = record.worktree_git_root.or_else([&] { return existing->worktree_git_root; });
-            record.teammate_backend = record.teammate_backend.or_else([&] { return existing->teammate_backend; });
-            record.teammate_task_id = record.teammate_task_id.or_else([&] { return existing->teammate_task_id; });
-            record.teammate_pane_id = record.teammate_pane_id.or_else([&] { return existing->teammate_pane_id; });
-            record.teammate_color = record.teammate_color.or_else([&] { return existing->teammate_color; });
-            record.parent_session_id = record.parent_session_id.or_else([&] { return existing->parent_session_id; });
+            record.worktree_path =
+                record.worktree_path.or_else([&] { return existing->worktree_path; });
+            record.worktree_branch =
+                record.worktree_branch.or_else([&] { return existing->worktree_branch; });
+            record.worktree_base_commit =
+                record.worktree_base_commit.or_else([&] { return existing->worktree_base_commit; });
+            record.worktree_git_root =
+                record.worktree_git_root.or_else([&] { return existing->worktree_git_root; });
+            record.teammate_backend =
+                record.teammate_backend.or_else([&] { return existing->teammate_backend; });
+            record.teammate_task_id =
+                record.teammate_task_id.or_else([&] { return existing->teammate_task_id; });
+            record.teammate_pane_id =
+                record.teammate_pane_id.or_else([&] { return existing->teammate_pane_id; });
+            record.teammate_color =
+                record.teammate_color.or_else([&] { return existing->teammate_color; });
+            record.parent_session_id =
+                record.parent_session_id.or_else([&] { return existing->parent_session_id; });
             record.worktree_cleanup_performed = existing->worktree_cleanup_performed;
         }
     }
 
     auto& store = loom::tools::agent_runtime::native_agent_store();
-    if (execution_owner) store.begin_execution(std::move(record), *execution_owner);
-    else store.upsert(std::move(record));
+    if (execution_owner)
+        store.begin_execution(std::move(record), *execution_owner);
+    else
+        store.upsert(std::move(record));
 }
 
 [[nodiscard]] std::string agent_output_file_path(std::string_view agent_id) {
     return loom::tools::agent_runtime::agent_output_file_path(agent_id).string();
 }
 
-} // namespace loom::tools::agent::utils
+}  // namespace loom::tools::agent::utils

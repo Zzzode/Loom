@@ -4,10 +4,11 @@
 #pragma clang diagnostic ignored "-Wmissing-designated-field-initializers"
 
 #include <gtest/gtest.h>
+#include <httplib.h>
+
 #include <cstddef>
 #include <cstdlib>
 #include <cstring>
-#include <httplib.h>
 #ifndef _WIN32
 #include <fcntl.h>
 #include <sys/file.h>
@@ -35,7 +36,7 @@ import loom.tools.web_browser;
 import loom.orchestration.tools.mcp;
 import loom.commands.mcp.core_settings_loader;
 import loom.orchestration.runtime_backends;
-import loom.tools.runtime_backends.port;  // RFC-0001 B15: set_/clear_skill_loader_executor slot API
+import loom.tools.runtime_backends.port; // RFC-0001 B15: set_/clear_skill_loader_executor slot API
 import loom.tools.image_codec.port;
 import loom.tools.worktree;
 import loom.orchestration.agent;
@@ -64,7 +65,7 @@ import loom.teams.team_helpers;
 import loom.hooks.tool_permissions;
 import loom.services.api.client;
 import loom.services.mcp.types;
-import loom.services.mcp.connection_manager;  // RFC-0001 B6: svc_mcp::McpServerSnapshot
+import loom.services.mcp.connection_manager; // RFC-0001 B6: svc_mcp::McpServerSnapshot
 import loom.tools.repl;
 import loom.tools.skill;
 import loom.orchestration.agent.utils;
@@ -75,7 +76,9 @@ namespace fs = std::filesystem;
 // The agent helpers exercised by the existing tests live in
 // loom::tools::agent::utils after the agent_tool split; re-expose them through
 // the loom::tools::agent namespace so the historical call sites still resolve.
-namespace loom::tools::agent { using namespace utils; }
+namespace loom::tools::agent {
+using namespace utils;
+}
 
 namespace {
 
@@ -84,8 +87,7 @@ namespace {
 // does not block them. Production paths must supply a real checker (or accept
 // fail-closed denial for write/execute/network tools).
 loom::tools::agent::AgentLivePermissionCheckFn test_allow_all_check() {
-    auto allow = []([[maybe_unused]] std::string_view,
-                    [[maybe_unused]] std::string_view,
+    auto allow = []([[maybe_unused]] std::string_view, [[maybe_unused]] std::string_view,
                     [[maybe_unused]] std::string_view) {
         return loom::tools::agent::AgentLivePermissionCheck{.allowed = true};
     };
@@ -105,19 +107,17 @@ loom::tools::agent::AgentLivePermissionCheckFn test_allow_all_check() {
 struct FileToolServicesGuard {
     FileToolServicesGuard() {
         loom::orchestration::install_runtime_backends();
-        loom::tools::image_codec::set_codec(
-            loom::orchestration::make_image_codec());
-        loom::tools::set_skill_loader_executor(
-            loom::orchestration::make_skill_loader_executor());
+        loom::tools::image_codec::set_codec(loom::orchestration::make_image_codec());
+        loom::tools::set_skill_loader_executor(loom::orchestration::make_skill_loader_executor());
     }
+
     ~FileToolServicesGuard() {
         loom::tools::image_codec::clear_codec();
         loom::tools::clear_skill_loader_executor();
     }
 };
 
-} // namespace
-
+}  // namespace
 
 TEST(Tools, FileReadAndWriteHonorAllowedDirectories) {
     auto root = fs::temp_directory_path() / "loom_file_permission_test";
@@ -147,24 +147,24 @@ TEST(Tools, FileReadAndWriteHonorAllowedDirectories) {
 
     loom::tools::FileReadTool read_tool;
     read_tool.set_allowed_directories({allowed.string()});
-    EXPECT_TRUE(read_tool.check_permission(loom::core::ToolInput::from_json(std::format(
-        R"({{"file_path":"{}"}})",
-        loom::tools::agent::json_escape_string(allowed_file.string())))));
-    EXPECT_FALSE(read_tool.check_permission(loom::core::ToolInput::from_json(std::format(
-        R"({{"file_path":"{}"}})",
-        loom::tools::agent::json_escape_string(blocked_file.string())))));
-    EXPECT_FALSE(read_tool.check_permission(loom::core::ToolInput::from_json(std::format(
-        R"({{"file_path":"{}"}})",
-        loom::tools::agent::json_escape_string(sibling_file.string())))));
+    EXPECT_TRUE(read_tool.check_permission(loom::core::ToolInput::from_json(
+        std::format(R"({{"file_path":"{}"}})",
+                    loom::tools::agent::json_escape_string(allowed_file.string())))));
+    EXPECT_FALSE(read_tool.check_permission(loom::core::ToolInput::from_json(
+        std::format(R"({{"file_path":"{}"}})",
+                    loom::tools::agent::json_escape_string(blocked_file.string())))));
+    EXPECT_FALSE(read_tool.check_permission(loom::core::ToolInput::from_json(
+        std::format(R"({{"file_path":"{}"}})",
+                    loom::tools::agent::json_escape_string(sibling_file.string())))));
 
     loom::tools::FileWriteTool write_tool;
     write_tool.set_allowed_directories({allowed.string()});
-    EXPECT_TRUE(write_tool.check_permission(loom::core::ToolInput::from_json(std::format(
-        R"({{"file_path":"{}","content":"ok"}})",
-        loom::tools::agent::json_escape_string((allowed / "write.txt").string())))));
-    EXPECT_FALSE(write_tool.check_permission(loom::core::ToolInput::from_json(std::format(
-        R"({{"file_path":"{}","content":"no"}})",
-        loom::tools::agent::json_escape_string((blocked / "write.txt").string())))));
+    EXPECT_TRUE(write_tool.check_permission(loom::core::ToolInput::from_json(
+        std::format(R"({{"file_path":"{}","content":"ok"}})",
+                    loom::tools::agent::json_escape_string((allowed / "write.txt").string())))));
+    EXPECT_FALSE(write_tool.check_permission(loom::core::ToolInput::from_json(
+        std::format(R"({{"file_path":"{}","content":"no"}})",
+                    loom::tools::agent::json_escape_string((blocked / "write.txt").string())))));
     EXPECT_FALSE(write_tool.check_permission(loom::core::ToolInput::from_json(std::format(
         R"({{"file_path":"{}","content":"no"}})",
         loom::tools::agent::json_escape_string((sibling_with_prefix / "write.txt").string())))));
@@ -202,8 +202,7 @@ TEST(Tools, PathValidationRejectsSymlinkEscapingAllowedDir) {
     auto r = loom::tools::path_validation::validate_path(
         target_via_symlink.string(), root, ctx,
         loom::tools::path_validation::FileOperationType::kCreate);
-    EXPECT_FALSE(r.allowed)
-        << "symlink escaping allowed_dirs must be rejected";
+    EXPECT_FALSE(r.allowed) << "symlink escaping allowed_dirs must be rejected";
 
     // Sanity: a direct path inside allowed is still allowed.
     auto r_ok = loom::tools::path_validation::validate_path(
@@ -306,7 +305,8 @@ TEST(Tools, NotebookRuntimeAdapterAcceptsTypeScriptInputShape) {
     }
 
     loom::core::ToolRegistry registry;
-    loom::tools::register_runtime_tools(registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
+    loom::tools::register_runtime_tools(
+        registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
 
     auto input = std::format(R"JSONFMT({{
       "notebook_path": "{}",
@@ -314,7 +314,8 @@ TEST(Tools, NotebookRuntimeAdapterAcceptsTypeScriptInputShape) {
       "edit_mode": "insert",
       "cell_type": "code",
       "new_source": "print(\"inserted\")"
-    }})JSONFMT", notebook_path.string());
+    }})JSONFMT",
+                             notebook_path.string());
     auto result = registry.execute("notebook_edit", loom::core::ToolInput::from_json(input));
 
     ASSERT_TRUE(result.has_value());
@@ -368,7 +369,8 @@ TEST(Tools, FileReadFormatsNotebookCellsForToolResult) {
     }
 
     loom::core::ToolRegistry registry;
-    loom::tools::register_runtime_tools(registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
+    loom::tools::register_runtime_tools(
+        registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
 
     auto input = std::format(R"({{"file_path":"{}"}})", notebook_path.string());
     auto result = registry.execute("Read", loom::core::ToolInput::from_json(input));
@@ -378,9 +380,13 @@ TEST(Tools, FileReadFormatsNotebookCellsForToolResult) {
     ASSERT_FALSE(result->content.empty());
     const auto& text = result->content.front().text;
     EXPECT_NE(text.find("Notebook:"), std::string::npos);
-    EXPECT_NE(text.find(R"CHECK(<cell id="code-cell"><language>r</language>print(1))CHECK"), std::string::npos);
+    EXPECT_NE(text.find(R"CHECK(<cell id="code-cell"><language>r</language>print(1))CHECK"),
+              std::string::npos);
     EXPECT_NE(text.find("\n1\n"), std::string::npos);
-    EXPECT_NE(text.find(R"(<cell id="cell-1"><cell_type>markdown</cell_type>markdown text</cell id="cell-1">)"), std::string::npos);
+    EXPECT_NE(
+        text.find(
+            R"(<cell id="cell-1"><cell_type>markdown</cell_type>markdown text</cell id="cell-1">)"),
+        std::string::npos);
     EXPECT_EQ(text.find(R"("nbformat")"), std::string::npos);
 
     fs::remove_all(root);
@@ -394,17 +400,16 @@ TEST(Tools, FileReadReturnsImageContentBlock) {
     auto image_path = root / "pixel.png";
     {
         const unsigned char png_header[] = {
-            0x89, 'P', 'N', 'G', '\r', '\n', 0x1a, '\n',
-            0x00, 0x00, 0x00, 0x0d, 'I', 'H', 'D', 'R',
-            0x00, 0x00, 0x00, 0x01,
-            0x00, 0x00, 0x00, 0x02,
+            0x89, 'P', 'N', 'G', '\r', '\n', 0x1a, '\n', 0x00, 0x00, 0x00, 0x0d,
+            'I',  'H', 'D', 'R', 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x02,
         };
         std::ofstream image(image_path, std::ios::binary);
         image.write(reinterpret_cast<const char*>(png_header), sizeof(png_header));
     }
 
     loom::core::ToolRegistry registry;
-    loom::tools::register_runtime_tools(registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
+    loom::tools::register_runtime_tools(
+        registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
 
     auto input = std::format(R"({{"file_path":"{}"}})", image_path.string());
     auto result = registry.execute("Read", loom::core::ToolInput::from_json(input));
@@ -433,7 +438,8 @@ TEST(Tools, FileReadReturnsPdfDocumentBlock) {
     }
 
     loom::core::ToolRegistry registry;
-    loom::tools::register_runtime_tools(registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
+    loom::tools::register_runtime_tools(
+        registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
 
     auto input = std::format(R"({{"file_path":"{}"}})", pdf_path.string());
     auto result = registry.execute("Read", loom::core::ToolInput::from_json(input));
@@ -460,10 +466,8 @@ TEST(Tools, ImageCodecGetInfoMapsPngHeaderToMetadata) {
     auto image_path = root / "header.png";
     {
         const unsigned char png_header[] = {
-            0x89, 'P', 'N', 'G', '\r', '\n', 0x1a, '\n',
-            0x00, 0x00, 0x00, 0x0d, 'I', 'H', 'D', 'R',
-            0x00, 0x00, 0x00, 0x03,
-            0x00, 0x00, 0x00, 0x02,
+            0x89, 'P', 'N', 'G', '\r', '\n', 0x1a, '\n', 0x00, 0x00, 0x00, 0x0d,
+            'I',  'H', 'D', 'R', 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x02,
         };
         std::ofstream image(image_path, std::ios::binary);
         image.write(reinterpret_cast<const char*>(png_header), sizeof(png_header));

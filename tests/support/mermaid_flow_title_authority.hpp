@@ -10,7 +10,8 @@ inline constexpr std::string_view kFlowTitleFixture =
 inline constexpr std::size_t kFlowTitleSourceBytes = 208u;
 inline constexpr std::string_view kFlowTitleSourceSha =
     "de66e2b2ba467e7d70024a299575d8f7c9d0a087b802b0754d75f47e2aca3f32";
-inline constexpr std::string_view kFlowTitleSourceGitBlob = "ed8d620d9139d60cc1f9089ec876719572146556";
+inline constexpr std::string_view kFlowTitleSourceGitBlob =
+    "ed8d620d9139d60cc1f9089ec876719572146556";
 inline constexpr std::string_view kFlowTitleText = "Test Title";
 inline constexpr std::string_view kFlowTitleModelJson =
     R"MODEL({"direction":"LR","nodes":[["A",{"id":"A","label":"A","shape":"rectangle"}],["B",{"id":"B","label":"B","shape":"rectangle"}],["C",{"id":"C","label":"C","shape":"rectangle"}]],"edges":[{"source":"A","target":"B","label":"","style":"solid","hasArrowStart":false,"hasArrowEnd":true},{"source":"A","target":"C","label":"","style":"solid","hasArrowStart":false,"hasArrowEnd":true}],"subgraphs":[]})MODEL";
@@ -37,9 +38,9 @@ inline void flow_title_bind(JsonVal fixture, std::size_t ordinal, std::size_t gl
     flow400_require(ordinal == kFlowTitleOrdinal && global == kFlowTitleGlobalOrdinal,
                     "Flow title authority ordinal tuple");
     flow400_require(flow400_text(fixture.get("path")) == kFlowTitleFixture &&
-                    flow400_number(fixture.get("bytes")) == kFlowTitleSourceBytes &&
-                    flow400_text(fixture.get("sha256")) == kFlowTitleSourceSha &&
-                    flow400_text(fixture.get("git_blob")) == kFlowTitleSourceGitBlob,
+                        flow400_number(fixture.get("bytes")) == kFlowTitleSourceBytes &&
+                        flow400_text(fixture.get("sha256")) == kFlowTitleSourceSha &&
+                        flow400_text(fixture.get("git_blob")) == kFlowTitleSourceGitBlob,
                     "Flow title Official manifest tuple");
     work.product(source.size(), 4u);
     flow400_require(source.size() == kFlowTitleSourceBytes && digest(source) == kFlowTitleSourceSha,
@@ -69,13 +70,13 @@ inline void flow_title_margin_bind(JsonVal fixture, std::size_t ordinal, std::si
     flow400_require(ordinal == kFlowTitleMarginOrdinal && global == kFlowTitleMarginGlobalOrdinal,
                     "Flow title-margin authority ordinal tuple");
     flow400_require(flow400_text(fixture.get("path")) == kFlowTitleMarginFixture &&
-                    flow400_number(fixture.get("bytes")) == kFlowTitleMarginSourceBytes &&
-                    flow400_text(fixture.get("sha256")) == kFlowTitleMarginSourceSha &&
-                    flow400_text(fixture.get("git_blob")) == kFlowTitleMarginSourceGitBlob,
+                        flow400_number(fixture.get("bytes")) == kFlowTitleMarginSourceBytes &&
+                        flow400_text(fixture.get("sha256")) == kFlowTitleMarginSourceSha &&
+                        flow400_text(fixture.get("git_blob")) == kFlowTitleMarginSourceGitBlob,
                     "Flow title-margin Official manifest tuple");
     work.product(source.size(), 4u);
     flow400_require(source.size() == kFlowTitleMarginSourceBytes &&
-                    digest(source) == kFlowTitleMarginSourceSha,
+                        digest(source) == kFlowTitleMarginSourceSha,
                     "Flow title-margin complete source binding");
     work.product(kFlowTitleMarginModelJson.size(), 4u);
     flow400_require(digest(kFlowTitleMarginModelJson) == kFlowTitleMarginModelSha,
@@ -118,7 +119,8 @@ inline std::vector<std::string> flow_title_geometry(const Grid& grid, const Mode
     if (occurrences != 1u) return {"Flow diagram title must occur exactly once"};
     const auto first = grid.row(0);
     const auto title_start = first.find(title);
-    if (title_start == std::string::npos || first.find(title, title_start + title.size()) != std::string::npos)
+    if (title_start == std::string::npos ||
+        first.find(title, title_start + title.size()) != std::string::npos)
         return {"Flow diagram title row differs"};
     for (int x = 0; x < grid.width; ++x) {
         const auto cell = grid.at({x, 0});
@@ -147,13 +149,16 @@ inline std::vector<std::string> flow_title_geometry(const Grid& grid, const Mode
 
 inline std::size_t flow_title_mutations(const Grid& good, const Model& model, OracleWork& work,
                                         std::string_view token = kSentinel) {
-    flow400_require(flow_title_geometry(good, model, work, kFlowTitleText, token).empty(), "Flow title mutation baseline");
+    flow400_require(flow_title_geometry(good, model, work, kFlowTitleText, token).empty(),
+                    "Flow title mutation baseline");
     std::size_t rejected = 0u;
-    const auto require_rejected = [&](const Grid& frame, const Model& expectation, std::string_view title) {
+    const auto require_rejected = [&](const Grid& frame, const Model& expectation,
+                                      std::string_view title) {
         const auto errors = flow_title_geometry(frame, expectation, work, title, token);
         flow400_require(!errors.empty(), "Flow title mutation accepted");
         for (const auto& error : errors)
-            flow400_require(!flow400_resource(error), "Flow title resource is not semantic-negative credit");
+            flow400_require(!flow400_resource(error),
+                            "Flow title resource is not semantic-negative credit");
         ++rejected;
     };
     flow400_copy_grid(good, work);
@@ -183,4 +188,4 @@ inline std::size_t flow_title_mutations(const Grid& good, const Model& model, Or
     return rejected;
 }
 
-} // namespace loom::test::mermaid_flow
+}  // namespace loom::test::mermaid_flow

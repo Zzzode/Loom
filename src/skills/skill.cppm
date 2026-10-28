@@ -3,9 +3,9 @@
 /// Skills are reusable workflow templates injected into the system prompt.
 module;
 
-#include <cstdlib>
-#include <cstdint>
 #include <cctype>
+#include <cstdint>
+#include <cstdlib>
 
 export module loom.skills.skill;
 
@@ -20,9 +20,9 @@ export import loom.skills.file_access.port;
 
 export namespace loom::skills {
 
-using loom::core::Result;
 using loom::core::Error;
 using loom::core::ErrorCode;
+using loom::core::Result;
 using loom::core::VoidResult;
 
 // ============================================================
@@ -31,21 +31,21 @@ using loom::core::VoidResult;
 
 /// Represents a single skill's metadata and content
 struct SkillDefinition {
-    std::string name;                          // Unique skill identifier
-    std::string description;                   // Human-readable description
-    std::vector<std::string> trigger_patterns; // Regex patterns for matching
-    std::string content;                       // Skill prompt content (markdown workflow)
-    bool is_builtin = false;                   // Whether this is a built-in skill
-    std::optional<std::string> author;         // Skill author (for custom skills)
-    std::optional<std::string> version;        // Skill version string
+    std::string name;                                // Unique skill identifier
+    std::string description;                         // Human-readable description
+    std::vector<std::string> trigger_patterns;       // Regex patterns for matching
+    std::string content;                             // Skill prompt content (markdown workflow)
+    bool is_builtin = false;                         // Whether this is a built-in skill
+    std::optional<std::string> author;               // Skill author (for custom skills)
+    std::optional<std::string> version;              // Skill version string
     std::optional<std::string> kind = std::nullopt;  // SL-08: skill kind (e.g. "workflow")
-    bool user_invocable = true;                // SL-10: false => reject /name invocation
+    bool user_invocable = true;                      // SL-10: false => reject /name invocation
 
     /// Serialize to JSON string for API transport
     [[nodiscard]] std::string to_json() const {
         return std::format(
-            R"({{"name":"{}","description":"{}","is_builtin":{},"trigger_count":{}}})",
-            name, description, is_builtin ? "true" : "false", trigger_patterns.size());
+            R"({{"name":"{}","description":"{}","is_builtin":{},"trigger_count":{}}})", name,
+            description, is_builtin ? "true" : "false", trigger_patterns.size());
     }
 };
 
@@ -82,13 +82,13 @@ concept Skill = requires(const T& skill) {
 
 /// Result of matching user input against skill triggers
 struct SkillMatch {
-    std::string skill_name;    // Matched skill name
-    double confidence = 0.0;   // Match confidence score [0.0, 1.0]
-    std::string matched_pattern; // The pattern that triggered the match
+    std::string skill_name;       // Matched skill name
+    double confidence = 0.0;      // Match confidence score [0.0, 1.0]
+    std::string matched_pattern;  // The pattern that triggered the match
 
     /// Compare by confidence for sorting
     [[nodiscard]] auto operator<=>(const SkillMatch& other) const {
-        return other.confidence <=> confidence; // Descending order
+        return other.confidence <=> confidence;  // Descending order
     }
 };
 
@@ -104,25 +104,21 @@ public:
     SkillLoader() {
         // Default search paths: ~/.loom/skills/ and project-local .loom/skills/
         if (auto home = std::getenv("HOME")) {
-            search_paths_.emplace_back(
-                std::filesystem::path(home) / ".loom" / "skills");
+            search_paths_.emplace_back(std::filesystem::path(home) / ".loom" / "skills");
         }
-        search_paths_.emplace_back(
-            std::filesystem::current_path() / ".loom" / "skills");
+        search_paths_.emplace_back(std::filesystem::current_path() / ".loom" / "skills");
     }
 
     /// Add additional search path for skill discovery
-    void add_search_path(std::filesystem::path path) {
-        search_paths_.push_back(std::move(path));
-    }
+    void add_search_path(std::filesystem::path path) { search_paths_.push_back(std::move(path)); }
 
     /// Load all skills from a directory, parsing markdown frontmatter
-    [[nodiscard]] Result<std::vector<SkillDefinition>> load_from_directory(
-        const std::filesystem::path& dir) const {
+    [[nodiscard]] Result<std::vector<SkillDefinition>>
+    load_from_directory(const std::filesystem::path& dir) const {
 
         std::vector<SkillDefinition> skills;
         if (!std::filesystem::exists(dir)) {
-            return skills; // Empty but not an error
+            return skills;  // Empty but not an error
         }
 
         for (const auto& entry : std::filesystem::directory_iterator(dir)) {
@@ -145,9 +141,9 @@ public:
     }
 
     /// Load skills from a directory and prefix their names, used by plugin skills.
-    [[nodiscard]] Result<std::vector<SkillDefinition>> load_from_directory_with_prefix(
-        const std::filesystem::path& dir,
-        std::string_view prefix) const {
+    [[nodiscard]] Result<std::vector<SkillDefinition>>
+    load_from_directory_with_prefix(const std::filesystem::path& dir,
+                                    std::string_view prefix) const {
         std::vector<SkillDefinition> loaded;
         if (std::filesystem::is_regular_file(dir) && dir.extension() == ".md") {
             if (auto skill = parse_skill_file(dir)) loaded.push_back(std::move(*skill));
@@ -199,8 +195,8 @@ public:
 
 private:
     /// Parse a directory-form skill, normally .loom/skills/<name>/SKILL.md.
-    [[nodiscard]] std::optional<SkillDefinition> parse_skill_directory(
-        const std::filesystem::path& dirpath) const {
+    [[nodiscard]] std::optional<SkillDefinition>
+    parse_skill_directory(const std::filesystem::path& dirpath) const {
 
         auto skill_path = dirpath / "SKILL.md";
         if (!std::filesystem::exists(skill_path)) {
@@ -212,15 +208,16 @@ private:
         if (!std::filesystem::exists(skill_path)) return std::nullopt;
 
         auto skill = parse_skill_file(skill_path);
-        if (skill && (skill->name == "SKILL" || skill->name == "skill" || skill->name == "prompt")) {
+        if (skill &&
+            (skill->name == "SKILL" || skill->name == "skill" || skill->name == "prompt")) {
             skill->name = dirpath.filename().string();
         }
         return skill;
     }
 
     /// Parse a single skill markdown file with YAML-like frontmatter
-    [[nodiscard]] std::optional<SkillDefinition> parse_skill_file(
-        const std::filesystem::path& filepath) const {
+    [[nodiscard]] std::optional<SkillDefinition>
+    parse_skill_file(const std::filesystem::path& filepath) const {
 
         std::ifstream file(filepath);
         if (!file.is_open()) return std::nullopt;
@@ -262,19 +259,27 @@ private:
             auto key = line.substr(0, colon_pos);
             auto value = line.substr(colon_pos + 1);
             // Trim whitespace
-            while (!key.empty() && key.back() == ' ') key.pop_back();
-            while (!value.empty() && value.front() == ' ') value.erase(value.begin());
+            while (!key.empty() && key.back() == ' ')
+                key.pop_back();
+            while (!value.empty() && value.front() == ' ')
+                value.erase(value.begin());
 
-            if (key == "description") def.description = value;
-            else if (key == "name") def.name = value;
-            else if (key == "author") def.author = value;
-            else if (key == "version") def.version = value;
-            else if (key == "trigger") def.trigger_patterns.push_back(value);
-            else if (key == "kind" || key == "type") def.kind = value;  // SL-08
+            if (key == "description")
+                def.description = value;
+            else if (key == "name")
+                def.name = value;
+            else if (key == "author")
+                def.author = value;
+            else if (key == "version")
+                def.version = value;
+            else if (key == "trigger")
+                def.trigger_patterns.push_back(value);
+            else if (key == "kind" || key == "type")
+                def.kind = value;                                           // SL-08
             else if (key == "user-invocable" || key == "user_invocable") {  // SL-10
                 std::string v = value;
                 std::transform(v.begin(), v.end(), v.begin(),
-                    [](unsigned char c) { return std::tolower(c); });
+                               [](unsigned char c) { return std::tolower(c); });
                 def.user_invocable = !(v == "false" || v == "0" || v == "no");
             }
         }
@@ -320,10 +325,10 @@ public:
                 if (std::regex_search(input.begin(), input.end(), it->second[i])) {
                     matches.push_back(SkillMatch{
                         .skill_name = skill.name,
-                        .confidence = 1.0, // Full regex match => high confidence
+                        .confidence = 1.0,  // Full regex match => high confidence
                         .matched_pattern = skill.trigger_patterns[i],
                     });
-                    break; // One match per skill is enough
+                    break;  // One match per skill is enough
                 }
             }
         }
@@ -334,9 +339,8 @@ public:
     }
 
     /// Inject matched skill content into system prompt
-    [[nodiscard]] std::string inject_into_prompt(
-        std::string_view base_prompt,
-        const std::vector<SkillMatch>& matches) const {
+    [[nodiscard]] std::string inject_into_prompt(std::string_view base_prompt,
+                                                 const std::vector<SkillMatch>& matches) const {
 
         if (matches.empty()) return std::string(base_prompt);
 
@@ -355,7 +359,7 @@ public:
     /// Get a specific skill by name
     [[nodiscard]] const SkillDefinition* find_skill(std::string_view name) const {
         auto it = std::ranges::find_if(registered_skills_,
-            [name](const SkillDefinition& s) { return s.name == name; });
+                                       [name](const SkillDefinition& s) { return s.name == name; });
         return (it != registered_skills_.end()) ? &(*it) : nullptr;
     }
 
@@ -365,9 +369,7 @@ public:
     }
 
     /// Number of registered skills
-    [[nodiscard]] std::size_t size() const noexcept {
-        return registered_skills_.size();
-    }
+    [[nodiscard]] std::size_t size() const noexcept { return registered_skills_.size(); }
 };
 
-} // namespace loom::skills
+}  // namespace loom::skills

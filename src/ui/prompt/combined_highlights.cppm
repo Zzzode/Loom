@@ -13,10 +13,10 @@
 ///   7. Member mention (priority 5)
 module;
 
+#include <ftxui/screen/color.hpp>
+
 #include <cstddef>
 #include <cstdint>
-
-#include <ftxui/screen/color.hpp>
 
 export module loom.ui.prompt.combined_highlights;
 
@@ -32,8 +32,8 @@ export namespace loom::ui::prompt {
 using ftxui::Color;
 using loom::utils::TextHighlight;
 namespace highlight_priority = loom::utils::highlight_priority;
-using loom::utils::ReferenceMatch;
 using loom::utils::parse_references;
+using loom::utils::ReferenceMatch;
 
 // ============================================================
 // Context struct — carries all inputs needed by the builder
@@ -96,12 +96,9 @@ struct CombinedHighlightContext {
 /// Get the rainbow color for a given character index within a trigger word.
 /// @param char_index  Position within the trigger (0 = first char).
 /// @param shimmer     If true, return the brighter shimmer variant.
-[[nodiscard]] inline Color get_rainbow_color(
-    std::size_t char_index,
-    bool shimmer = false) {
+[[nodiscard]] inline Color get_rainbow_color(std::size_t char_index, bool shimmer = false) {
     const auto* theme_palette = loom::ui::design::theme::current_theme().palette;
-    const auto& palette = shimmer ? theme_palette->rainbow_shimmer_stops
-                                  : theme_palette->rainbow;
+    const auto& palette = shimmer ? theme_palette->rainbow_shimmer_stops : theme_palette->rainbow;
     return palette[char_index % palette.size()];
 }
 
@@ -116,10 +113,9 @@ struct TriggerPosition {
 };
 
 /// Find all occurrences of a word-boundary keyword in the text.
-[[nodiscard]] inline std::vector<TriggerPosition> find_keyword_triggers(
-    std::string_view text,
-    const std::string& keyword_pattern,
-    bool case_insensitive = true) {
+[[nodiscard]] inline std::vector<TriggerPosition>
+find_keyword_triggers(std::string_view text, const std::string& keyword_pattern,
+                      bool case_insensitive = true) {
 
     std::vector<TriggerPosition> positions;
     if (text.empty() || keyword_pattern.empty()) return positions;
@@ -137,10 +133,9 @@ struct TriggerPosition {
 
         for (auto it = begin; it != end; ++it) {
             const auto& m = *it;
-            positions.push_back(TriggerPosition{
-                static_cast<std::size_t>(m.position()),
-                static_cast<std::size_t>(m.position() + m.length())
-            });
+            positions.push_back(
+                TriggerPosition{static_cast<std::size_t>(m.position()),
+                                static_cast<std::size_t>(m.position() + m.length())});
         }
     } catch (const std::regex_error&) {
         // Invalid regex — return empty (defensive)
@@ -149,37 +144,34 @@ struct TriggerPosition {
 }
 
 /// Find "/btw" at the start of the text (case-insensitive, word boundary).
-[[nodiscard]] inline std::vector<TriggerPosition> find_btw_triggers(
-    std::string_view text) {
+[[nodiscard]] inline std::vector<TriggerPosition> find_btw_triggers(std::string_view text) {
     // Pattern: /^\/btw\b/gi — anchored to start, case-insensitive
     std::vector<TriggerPosition> positions;
     if (text.empty()) return positions;
 
     try {
-        std::regex re(R"(^\/btw\b)",
-            std::regex::ECMAScript | std::regex::icase);
+        std::regex re(R"(^\/btw\b)", std::regex::ECMAScript | std::regex::icase);
         std::string s(text);
         std::smatch m;
         if (std::regex_search(s, m, re)) {
-            positions.push_back(TriggerPosition{
-                static_cast<std::size_t>(m.position()),
-                static_cast<std::size_t>(m.position() + m.length())
-            });
+            positions.push_back(
+                TriggerPosition{static_cast<std::size_t>(m.position()),
+                                static_cast<std::size_t>(m.position() + m.length())});
         }
-    } catch (const std::regex_error&) {}
+    } catch (const std::regex_error&) {
+    }
     return positions;
 }
 
 /// Find /command patterns in the text: /word at start or after whitespace.
 ///   regex: /(^|[\s])(\/[a-zA-Z][a-zA-Z0-9:\-_]*)/g
-[[nodiscard]] inline std::vector<TriggerPosition> find_slash_command_triggers(
-    std::string_view text) {
+[[nodiscard]] inline std::vector<TriggerPosition>
+find_slash_command_triggers(std::string_view text) {
     std::vector<TriggerPosition> positions;
     if (text.empty()) return positions;
 
     try {
-        std::regex re(R"((^|[\s])(\/[a-zA-Z][a-zA-Z0-9:\-_]*))",
-            std::regex::ECMAScript);
+        std::regex re(R"((^|[\s])(\/[a-zA-Z][a-zA-Z0-9:\-_]*))", std::regex::ECMAScript);
         std::string s(text);
         auto begin = std::sregex_iterator(s.begin(), s.end(), re);
         auto end = std::sregex_iterator();
@@ -187,36 +179,33 @@ struct TriggerPosition {
         for (auto it = begin; it != end; ++it) {
             const auto& m = *it;
             // m[2] = the /command part
-            std::size_t start = static_cast<std::size_t>(
-                m.position(2));
-            positions.push_back(TriggerPosition{
-                start,
-                start + static_cast<std::size_t>(m.length(2))
-            });
+            std::size_t start = static_cast<std::size_t>(m.position(2));
+            positions.push_back(
+                TriggerPosition{start, start + static_cast<std::size_t>(m.length(2))});
         }
-    } catch (const std::regex_error&) {}
+    } catch (const std::regex_error&) {
+    }
     return positions;
 }
 
 /// Find token budget shorthand patterns: +500k, +2m, +1b at start or end.
 ///   /^\s*\+(\d+(?:\.\d+)?)\s*(k|m|b)\b/i
 ///   /\s\+(\d+(?:\.\d+)?)\s*(k|m|b)\s*[.!?]?\s*$/i
-[[nodiscard]] inline std::vector<TriggerPosition> find_token_budget_triggers(
-    std::string_view text) {
+[[nodiscard]] inline std::vector<TriggerPosition>
+find_token_budget_triggers(std::string_view text) {
     std::vector<TriggerPosition> positions;
     if (text.empty()) return positions;
 
     try {
         // Start-of-line shorthand: +500k, +2m
         std::regex start_re(R"(^\s*\+(\d+(?:\.\d+)?)\s*(k|m|b)\b)",
-            std::regex::ECMAScript | std::regex::icase);
+                            std::regex::ECMAScript | std::regex::icase);
         std::string s(text);
         std::smatch m;
         if (std::regex_search(s, m, start_re)) {
             // Offset to skip leading whitespace (match the +Nxx part)
             std::size_t full_start = static_cast<std::size_t>(m.position());
-            std::size_t full_end = static_cast<std::size_t>(
-                m.position() + m.length());
+            std::size_t full_end = static_cast<std::size_t>(m.position() + m.length());
             // Trim leading whitespace from the highlight
             std::size_t trimmed_start = full_start;
             while (trimmed_start < full_end &&
@@ -228,12 +217,11 @@ struct TriggerPosition {
 
         // End-of-line shorthand: " +500k"
         std::regex end_re(R"(\s\+(\d+(?:\.\d+)?)\s*(k|m|b)\s*[.!?]?\s*$)",
-            std::regex::ECMAScript | std::regex::icase);
+                          std::regex::ECMAScript | std::regex::icase);
         if (std::regex_search(s, m, end_re)) {
             // +1: regex includes leading \s, skip it to get the +Nxx part
             std::size_t start = static_cast<std::size_t>(m.position()) + 1;
-            std::size_t end = static_cast<std::size_t>(
-                m.position() + m.length());
+            std::size_t end = static_cast<std::size_t>(m.position() + m.length());
             // Avoid double-counting if start and end match overlap
             bool already_covered = false;
             for (const auto& existing : positions) {
@@ -246,7 +234,8 @@ struct TriggerPosition {
                 positions.push_back(TriggerPosition{start, end});
             }
         }
-    } catch (const std::regex_error&) {}
+    } catch (const std::regex_error&) {
+    }
     return positions;
 }
 
@@ -259,9 +248,9 @@ struct MentionHighlight {
     Color color;
 };
 
-[[nodiscard]] inline std::vector<MentionHighlight> find_member_mentions(
-    std::string_view text,
-    const std::vector<std::pair<std::string, Color>>& team_members) {
+[[nodiscard]] inline std::vector<MentionHighlight>
+find_member_mentions(std::string_view text,
+                     const std::vector<std::pair<std::string, Color>>& team_members) {
 
     std::vector<MentionHighlight> highlights;
     if (text.empty() || team_members.empty()) return highlights;
@@ -279,17 +268,16 @@ struct MentionHighlight {
             for (const auto& [member_name, member_color] : team_members) {
                 if (member_name == name) {
                     std::size_t leading_space = m.length(1);
-                    std::size_t name_start = static_cast<std::size_t>(
-                        m.position()) + leading_space;
-                    std::size_t name_end = name_start +
-                        static_cast<std::size_t>(m.length(0) - leading_space);
-                    highlights.push_back(
-                        MentionHighlight{name_start, name_end, member_color});
+                    std::size_t name_start = static_cast<std::size_t>(m.position()) + leading_space;
+                    std::size_t name_end =
+                        name_start + static_cast<std::size_t>(m.length(0) - leading_space);
+                    highlights.push_back(MentionHighlight{name_start, name_end, member_color});
                     break;
                 }
             }
         }
-    } catch (const std::regex_error&) {}
+    } catch (const std::regex_error&) {
+    }
     return highlights;
 }
 
@@ -299,22 +287,20 @@ struct MentionHighlight {
 
 /// Build per-character rainbow highlights for a trigger word range.
 /// Each character gets its own TextHighlight with cycling rainbow colors.
-inline void add_rainbow_shimmer_highlights(
-    std::vector<TextHighlight>& highlights,
-    const std::vector<TriggerPosition>& triggers) {
+inline void add_rainbow_shimmer_highlights(std::vector<TextHighlight>& highlights,
+                                           const std::vector<TriggerPosition>& triggers) {
 
     for (const auto& trigger : triggers) {
         for (std::size_t i = trigger.start; i < trigger.end; ++i) {
             std::size_t char_offset = i - trigger.start;
-            highlights.push_back(TextHighlight{
-                .start = i,
-                .end = i + 1,
-                .color = get_rainbow_color(char_offset, false),
-                .dim = false,
-                .inverse = false,
-                .shimmer_color = get_rainbow_color(char_offset, true),
-                .priority = highlight_priority::RainbowShimmer
-            });
+            highlights.push_back(
+                TextHighlight{.start = i,
+                              .end = i + 1,
+                              .color = get_rainbow_color(char_offset, false),
+                              .dim = false,
+                              .inverse = false,
+                              .shimmer_color = get_rainbow_color(char_offset, true),
+                              .priority = highlight_priority::RainbowShimmer});
         }
     }
 }
@@ -329,8 +315,8 @@ inline void add_rainbow_shimmer_highlights(
 /// which sorts by (start, priority desc) and drops overlaps.  Here we simply
 /// push all detected highlights into the vector in source-priority order.
 ///
-[[nodiscard]] inline std::vector<TextHighlight> build_combined_highlights(
-    const CombinedHighlightContext& ctx) {
+[[nodiscard]] inline std::vector<TextHighlight>
+build_combined_highlights(const CombinedHighlightContext& ctx) {
 
     std::vector<TextHighlight> highlights;
     highlights.reserve(32);  // pre-allocate for typical input
@@ -348,76 +334,70 @@ inline void add_rainbow_shimmer_highlights(
         std::size_t ref_end = ref.index + ref.match.size();
 
         if (ctx.cursor_offset == ref_start) {
-            highlights.push_back(TextHighlight{
-                .start = ref_start,
-                .end = ref_end,
-                .color = std::nullopt,
-                .dim = false,
-                .inverse = true,
-                .shimmer_color = std::nullopt,
-                .priority = highlight_priority::ImageChip
-            });
+            highlights.push_back(TextHighlight{.start = ref_start,
+                                               .end = ref_end,
+                                               .color = std::nullopt,
+                                               .dim = false,
+                                               .inverse = true,
+                                               .shimmer_color = std::nullopt,
+                                               .priority = highlight_priority::ImageChip});
         }
     }
 
     // ── 2. History search highlights ────────────────────────────────────
     // When navigating history and a match is found, highlight the query
     // portion of the displayed text.
-    if (ctx.is_searching_history && ctx.history_match_found &&
-        !ctx.history_failed_match && !ctx.history_query.empty()) {
+    if (ctx.is_searching_history && ctx.history_match_found && !ctx.history_failed_match &&
+        !ctx.history_query.empty()) {
         std::size_t query_len = ctx.history_query.size();
-        highlights.push_back(TextHighlight{
-            .start = ctx.cursor_offset,
-            .end = ctx.cursor_offset + query_len,
-            .color = loom::ui::design::theme::current_theme().palette->primary,
-            .dim = false,
-            .inverse = false,
-            .shimmer_color = std::nullopt,
-            .priority = highlight_priority::HistorySearch
-        });
+        highlights.push_back(
+            TextHighlight{.start = ctx.cursor_offset,
+                          .end = ctx.cursor_offset + query_len,
+                          .color = loom::ui::design::theme::current_theme().palette->primary,
+                          .dim = false,
+                          .inverse = false,
+                          .shimmer_color = std::nullopt,
+                          .priority = highlight_priority::HistorySearch});
     }
 
     // ── 3. Btw trigger highlights (solid yellow) ────────────────────────
     auto btw_triggers = find_btw_triggers(ctx.text);
     for (const auto& trigger : btw_triggers) {
-        highlights.push_back(TextHighlight{
-            .start = trigger.start,
-            .end = trigger.end,
-            .color = loom::ui::design::theme::current_theme().palette->primary,
-            .dim = false,
-            .inverse = false,
-            .shimmer_color = std::nullopt,
-            .priority = highlight_priority::BtwTrigger
-        });
+        highlights.push_back(
+            TextHighlight{.start = trigger.start,
+                          .end = trigger.end,
+                          .color = loom::ui::design::theme::current_theme().palette->primary,
+                          .dim = false,
+                          .inverse = false,
+                          .shimmer_color = std::nullopt,
+                          .priority = highlight_priority::BtwTrigger});
     }
 
     // ── 4. Slash command highlights (blue) ──────────────────────────────
     auto slash_triggers = find_slash_command_triggers(ctx.text);
     for (const auto& trigger : slash_triggers) {
-        highlights.push_back(TextHighlight{
-            .start = trigger.start,
-            .end = trigger.end,
-            .color = loom::ui::design::theme::current_theme().palette->primary,
-            .dim = false,
-            .inverse = false,
-            .shimmer_color = std::nullopt,
-            .priority = highlight_priority::SlashCommand
-        });
+        highlights.push_back(
+            TextHighlight{.start = trigger.start,
+                          .end = trigger.end,
+                          .color = loom::ui::design::theme::current_theme().palette->primary,
+                          .dim = false,
+                          .inverse = false,
+                          .shimmer_color = std::nullopt,
+                          .priority = highlight_priority::SlashCommand});
     }
 
     // ── 5. Token budget highlights (blue) ───────────────────────────────
     if (ctx.token_budget_enabled) {
         auto budget_triggers = find_token_budget_triggers(ctx.text);
         for (const auto& trigger : budget_triggers) {
-            highlights.push_back(TextHighlight{
-                .start = trigger.start,
-                .end = trigger.end,
-                .color = loom::ui::design::theme::current_theme().palette->primary,
-                .dim = false,
-                .inverse = false,
-                .shimmer_color = std::nullopt,
-                .priority = highlight_priority::TokenBudget
-            });
+            highlights.push_back(
+                TextHighlight{.start = trigger.start,
+                              .end = trigger.end,
+                              .color = loom::ui::design::theme::current_theme().palette->primary,
+                              .dim = false,
+                              .inverse = false,
+                              .shimmer_color = std::nullopt,
+                              .priority = highlight_priority::TokenBudget});
         }
     }
 
@@ -425,15 +405,13 @@ inline void add_rainbow_shimmer_highlights(
     if (ctx.agent_swarms_enabled && !ctx.team_members.empty()) {
         auto mentions = find_member_mentions(ctx.text, ctx.team_members);
         for (const auto& mention : mentions) {
-            highlights.push_back(TextHighlight{
-                .start = mention.start,
-                .end = mention.end,
-                .color = mention.color,
-                .dim = false,
-                .inverse = false,
-                .shimmer_color = std::nullopt,
-                .priority = highlight_priority::Mention
-            });
+            highlights.push_back(TextHighlight{.start = mention.start,
+                                               .end = mention.end,
+                                               .color = mention.color,
+                                               .dim = false,
+                                               .inverse = false,
+                                               .shimmer_color = std::nullopt,
+                                               .priority = highlight_priority::Mention});
         }
     }
 
@@ -465,16 +443,16 @@ inline void add_rainbow_shimmer_highlights(
             std::vector<TriggerPosition> buddy_triggers;
             for (auto it = begin; it != end; ++it) {
                 const auto& m = *it;
-                buddy_triggers.push_back(TriggerPosition{
-                    static_cast<std::size_t>(m.position()),
-                    static_cast<std::size_t>(m.position() + m.length())
-                });
+                buddy_triggers.push_back(
+                    TriggerPosition{static_cast<std::size_t>(m.position()),
+                                    static_cast<std::size_t>(m.position() + m.length())});
             }
             add_rainbow_shimmer_highlights(highlights, buddy_triggers);
-        } catch (const std::regex_error&) {}
+        } catch (const std::regex_error&) {
+        }
     }
 
     return highlights;
 }
 
-} // namespace loom::ui::prompt
+}  // namespace loom::ui::prompt

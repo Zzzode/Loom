@@ -6,11 +6,11 @@
 // defined here as the canonical view model.
 module;
 
+#include <yyjson.h>
+
 #include <cctype>
 #include <cstdint>
 #include <cstring>
-
-#include <yyjson.h>
 
 export module loom.state.teammate_view_helpers;
 
@@ -56,11 +56,12 @@ namespace detail {
 
 inline std::string to_lower(std::string_view s) {
     std::string out(s);
-    for (char& c : out) c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+    for (char& c : out)
+        c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
     return out;
 }
 
-} // namespace detail
+}  // namespace detail
 
 inline bool teammate_matches_filter(const TeammateStateView& m, std::string_view filter) {
     if (filter.empty()) return true;
@@ -71,9 +72,8 @@ inline bool teammate_matches_filter(const TeammateStateView& m, std::string_view
     return hay(m.display_name) || hay(m.agent_id) || hay(m.status_message);
 }
 
-inline std::vector<TeammateStateView>
-apply_view_filter(const std::vector<TeammateStateView>& all,
-                  const TeammateViewState& view) {
+inline std::vector<TeammateStateView> apply_view_filter(const std::vector<TeammateStateView>& all,
+                                                        const TeammateViewState& view) {
     std::vector<TeammateStateView> out;
     out.reserve(all.size());
     for (const auto& m : all) {
@@ -89,10 +89,14 @@ apply_view_filter(const std::vector<TeammateStateView>& all,
     // (lower = earlier).
     auto online_rank = [](TeammateStateView::OnlineState s) -> int {
         switch (s) {
-            case TeammateStateView::OnlineState::Online: return 0;
-            case TeammateStateView::OnlineState::Busy: return 1;
-            case TeammateStateView::OnlineState::Offline: return 3;
-            case TeammateStateView::OnlineState::Crashed: return 4;
+        case TeammateStateView::OnlineState::Online:
+            return 0;
+        case TeammateStateView::OnlineState::Busy:
+            return 1;
+        case TeammateStateView::OnlineState::Offline:
+            return 3;
+        case TeammateStateView::OnlineState::Crashed:
+            return 4;
         }
         return 3;
     };
@@ -107,20 +111,20 @@ apply_view_filter(const std::vector<TeammateStateView>& all,
         if (pa != pb) return pa;
 
         switch (view.sort) {
-            case TaskSortKey::CreatedAtAsc:
-                return a.last_heartbeat_ms < b.last_heartbeat_ms;
-            case TaskSortKey::CreatedAtDesc:
-                return a.last_heartbeat_ms > b.last_heartbeat_ms;
-            case TaskSortKey::PriorityDescStatusAsc: {
-                int ra = online_rank(a.online);
-                int rb = online_rank(b.online);
-                if (ra != rb) return ra < rb;
-                // Secondary: active tasks descending (more active = earlier)
-                if (a.active_tasks != b.active_tasks) return a.active_tasks > b.active_tasks;
-                return disp_ci(a) < disp_ci(b);
-            }
-            case TaskSortKey::TitleAsc:
-                return disp_ci(a) < disp_ci(b);
+        case TaskSortKey::CreatedAtAsc:
+            return a.last_heartbeat_ms < b.last_heartbeat_ms;
+        case TaskSortKey::CreatedAtDesc:
+            return a.last_heartbeat_ms > b.last_heartbeat_ms;
+        case TaskSortKey::PriorityDescStatusAsc: {
+            int ra = online_rank(a.online);
+            int rb = online_rank(b.online);
+            if (ra != rb) return ra < rb;
+            // Secondary: active tasks descending (more active = earlier)
+            if (a.active_tasks != b.active_tasks) return a.active_tasks > b.active_tasks;
+            return disp_ci(a) < disp_ci(b);
+        }
+        case TaskSortKey::TitleAsc:
+            return disp_ci(a) < disp_ci(b);
         }
         return disp_ci(a) < disp_ci(b);
     });
@@ -131,13 +135,17 @@ apply_view_filter(const std::vector<TeammateStateView>& all,
 // State mutators
 // ---------------------------------------------------------------------------
 
-inline void toggle_collapsed(TeammateViewState& view) { view.collapsed = !view.collapsed; }
+inline void toggle_collapsed(TeammateViewState& view) {
+    view.collapsed = !view.collapsed;
+}
 
 inline void toggle_pin(TeammateViewState& view, std::string_view agent_id) {
     std::string key(agent_id);
     auto it = view.pinned_ids.find(key);
-    if (it == view.pinned_ids.end()) view.pinned_ids.insert(std::move(key));
-    else view.pinned_ids.erase(it);
+    if (it == view.pinned_ids.end())
+        view.pinned_ids.insert(std::move(key));
+    else
+        view.pinned_ids.erase(it);
 }
 
 inline bool is_pinned(const TeammateViewState& view, std::string_view agent_id) {
@@ -156,10 +164,14 @@ namespace detail {
 
 inline const char* online_str(TeammateStateView::OnlineState s) {
     switch (s) {
-        case TeammateStateView::OnlineState::Offline: return "offline";
-        case TeammateStateView::OnlineState::Online: return "online";
-        case TeammateStateView::OnlineState::Busy: return "busy";
-        case TeammateStateView::OnlineState::Crashed: return "crashed";
+    case TeammateStateView::OnlineState::Offline:
+        return "offline";
+    case TeammateStateView::OnlineState::Online:
+        return "online";
+    case TeammateStateView::OnlineState::Busy:
+        return "busy";
+    case TeammateStateView::OnlineState::Crashed:
+        return "crashed";
     }
     return "offline";
 }
@@ -173,10 +185,14 @@ inline TeammateStateView::OnlineState online_from(std::string_view s) {
 
 inline const char* sort_str(TaskSortKey k) {
     switch (k) {
-        case TaskSortKey::CreatedAtAsc: return "created_asc";
-        case TaskSortKey::CreatedAtDesc: return "created_desc";
-        case TaskSortKey::PriorityDescStatusAsc: return "priority_desc_status_asc";
-        case TaskSortKey::TitleAsc: return "title_asc";
+    case TaskSortKey::CreatedAtAsc:
+        return "created_asc";
+    case TaskSortKey::CreatedAtDesc:
+        return "created_desc";
+    case TaskSortKey::PriorityDescStatusAsc:
+        return "priority_desc_status_asc";
+    case TaskSortKey::TitleAsc:
+        return "title_asc";
     }
     return "priority_desc_status_asc";
 }
@@ -189,7 +205,7 @@ inline TaskSortKey sort_from(std::string_view s) {
     return TaskSortKey::PriorityDescStatusAsc;
 }
 
-} // namespace detail
+}  // namespace detail
 
 inline std::string teammate_view_state_to_json(const TeammateViewState& v) {
     loom::utils::json::JsonMutDoc doc;
@@ -199,7 +215,8 @@ inline std::string teammate_view_state_to_json(const TeammateViewState& v) {
     root.add("sort", doc.string(detail::sort_str(v.sort)));
     root.add("show_offline", doc.boolean(v.show_offline));
     auto arr = doc.array();
-    for (const auto& id : v.pinned_ids) arr.append(doc.string(id));
+    for (const auto& id : v.pinned_ids)
+        arr.append(doc.string(id));
     root.add("pinned_ids", arr);
     doc.set_root(root);
     return doc.to_string();
@@ -226,4 +243,4 @@ teammate_view_state_from_json(std::string_view s) {
     return v;
 }
 
-} // namespace loom::state::teammate_view
+}  // namespace loom::state::teammate_view

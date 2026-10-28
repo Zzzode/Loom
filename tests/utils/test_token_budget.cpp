@@ -4,8 +4,9 @@
 /// This file covers the token budget and timeout parsing suites.
 
 #include <gtest/gtest.h>
-#include <cstdlib>
 #include <httplib.h>
+
+#include <cstdlib>
 
 import std;
 import loom.text.string;
@@ -73,8 +74,8 @@ TEST(TokenBudget, BasicAllocation) {
     };
     loom::utils::token_budget::BudgetManager budget(config);
 
-    auto remaining_in_category = budget.allocate(
-        loom::utils::token_budget::BudgetCategory::SystemPrompt, 80);
+    auto remaining_in_category =
+        budget.allocate(loom::utils::token_budget::BudgetCategory::SystemPrompt, 80);
     EXPECT_EQ(remaining_in_category, 20u);
     EXPECT_TRUE(budget.can_fit(200));
     EXPECT_EQ(budget.remaining(), 920u);
@@ -101,7 +102,6 @@ TEST(TokenBudget, OverflowHandling) {
     loom::utils::token_budget::BudgetManager budget(config);
 
     EXPECT_EQ(budget.allocate(loom::utils::token_budget::BudgetCategory::SystemPrompt, 80), 20u);
-
 
     EXPECT_EQ(budget.allocate(loom::utils::token_budget::BudgetCategory::SystemPrompt, 50), 0u);
     EXPECT_FALSE(budget.can_fit(1));
@@ -133,11 +133,13 @@ TEST(TokenBudget, ParsesOriginalTokenBudgetSyntax) {
     EXPECT_EQ(loom::utils::token_budget::parse_token_budget("+500k"), 500000u);
     EXPECT_EQ(loom::utils::token_budget::parse_token_budget("please use 2M tokens"), 2000000u);
     EXPECT_EQ(loom::utils::token_budget::parse_token_budget("finish with +1.5m."), 1500000u);
-    EXPECT_FALSE(loom::utils::token_budget::parse_token_budget("budget 500k in the middle").has_value());
+    EXPECT_FALSE(
+        loom::utils::token_budget::parse_token_budget("budget 500k in the middle").has_value());
 }
 
 TEST(TokenBudget, FindsBudgetPositionsAndFormatsContinuationMessage) {
-    auto positions = loom::utils::token_budget::find_token_budget_positions(" +1.5m and use 2k tokens");
+    auto positions =
+        loom::utils::token_budget::find_token_budget_positions(" +1.5m and use 2k tokens");
 
     ASSERT_EQ(positions.size(), 2u);
     EXPECT_EQ(positions[0].start, 1u);
@@ -145,9 +147,8 @@ TEST(TokenBudget, FindsBudgetPositionsAndFormatsContinuationMessage) {
     EXPECT_EQ(positions[1].start, 11u);
     EXPECT_EQ(positions[1].end, 24u);
 
-    EXPECT_EQ(
-        loom::utils::token_budget::get_budget_continuation_message(80, 1200, 1500),
-        "Stopped at 80% of token target (1,200 / 1,500). Keep working — do not summarize.");
+    EXPECT_EQ(loom::utils::token_budget::get_budget_continuation_message(80, 1200, 1500),
+              "Stopped at 80% of token target (1,200 / 1,500). Keep working — do not summarize.");
 }
 
 TEST(Timeouts, ParsesDefaultAndMaxBashTimeoutsLikeTypeScript) {
@@ -161,7 +162,9 @@ TEST(Timeouts, ParsesDefaultAndMaxBashTimeoutsLikeTypeScript) {
 
     EXPECT_EQ(get_max_bash_timeout_ms({}), 600000);
     EXPECT_EQ(get_max_bash_timeout_ms({{"BASH_MAX_TIMEOUT_MS", "5000"}}), 120000);
-    EXPECT_EQ(get_max_bash_timeout_ms({{"BASH_DEFAULT_TIMEOUT_MS", "200000"}, {"BASH_MAX_TIMEOUT_MS", "5000"}}), 200000);
+    EXPECT_EQ(get_max_bash_timeout_ms(
+                  {{"BASH_DEFAULT_TIMEOUT_MS", "200000"}, {"BASH_MAX_TIMEOUT_MS", "5000"}}),
+              200000);
     EXPECT_EQ(get_max_bash_timeout_ms({{"BASH_MAX_TIMEOUT_MS", "900000"}}), 900000);
     EXPECT_EQ(get_max_bash_timeout_ms({{"BASH_DEFAULT_TIMEOUT_MS", "700000"}}), 700000);
 }

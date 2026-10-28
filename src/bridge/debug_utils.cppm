@@ -1,6 +1,6 @@
 module;
-#include <ctime>
 #include <cstdlib>
+#include <ctime>
 
 export module loom.bridge.debug_utils;
 
@@ -9,19 +9,19 @@ import std;
 export namespace loom::bridge {
 
 namespace detail {
-    inline std::mutex& get_debug_mutex() {
-        static std::mutex mutex;
-        return mutex;
-    }
-
-    inline bool& get_debug_enabled_ref() {
-        static bool enabled = []() {
-            const char* env = std::getenv("LOOM_BRIDGE_DEBUG");
-            return env && (std::string(env) == "1" || std::string(env) == "true");
-        }();
-        return enabled;
-    }
+inline std::mutex& get_debug_mutex() {
+    static std::mutex mutex;
+    return mutex;
 }
+
+inline bool& get_debug_enabled_ref() {
+    static bool enabled = []() {
+        const char* env = std::getenv("LOOM_BRIDGE_DEBUG");
+        return env && (std::string(env) == "1" || std::string(env) == "true");
+    }();
+    return enabled;
+}
+}  // namespace detail
 
 // Check if bridge debug logging is enabled
 bool is_bridge_debug_enabled();
@@ -44,8 +44,7 @@ void log_bridge_event(std::string_view event, std::map<std::string, std::string>
     // Timestamp
     auto now = std::chrono::system_clock::now();
     auto time_t_now = std::chrono::system_clock::to_time_t(now);
-    auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(
-        now.time_since_epoch()) % 1000;
+    auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()) % 1000;
 
     ofs << std::put_time(std::localtime(&time_t_now), "%Y-%m-%d %H:%M:%S");
     ofs << "." << std::setfill('0') << std::setw(3) << ms.count();
@@ -105,4 +104,4 @@ bool is_bridge_debug_enabled() {
     return detail::get_debug_enabled_ref();
 }
 
-} // namespace loom::bridge
+}  // namespace loom::bridge

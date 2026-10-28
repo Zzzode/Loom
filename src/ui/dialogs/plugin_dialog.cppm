@@ -18,15 +18,15 @@
 /// keybindings editor).
 module;
 
-#include <unistd.h>
-#include <cctype>
-#include <cstdint>
-#include <cstddef>
-
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/event.hpp>
 #include <ftxui/dom/elements.hpp>
+#include <unistd.h>
+
+#include <cctype>
+#include <cstddef>
+#include <cstdint>
 
 export module loom.ui.dialogs.plugin_dialog;
 
@@ -54,22 +54,29 @@ using namespace ftxui;
 inline Decorator padding(int top, int right, int bottom, int left) {
     return [=](Element e) -> Element {
         Elements rows;
-        for (int i = 0; i < top; ++i) rows.push_back(text(""));
+        for (int i = 0; i < top; ++i)
+            rows.push_back(text(""));
         {
             Elements left_pad, right_pad;
-            for (int i = 0; i < left; ++i) left_pad.push_back(text(" "));
-            for (int i = 0; i < right; ++i) right_pad.push_back(text(" "));
+            for (int i = 0; i < left; ++i)
+                left_pad.push_back(text(" "));
+            for (int i = 0; i < right; ++i)
+                right_pad.push_back(text(" "));
             rows.push_back(hbox({
                 hbox(std::move(left_pad)),
                 std::move(e),
                 hbox(std::move(right_pad)),
             }));
         }
-        for (int i = 0; i < bottom; ++i) rows.push_back(text(""));
+        for (int i = 0; i < bottom; ++i)
+            rows.push_back(text(""));
         return vbox(std::move(rows));
     };
 }
-inline Decorator padding(int all) { return padding(all, all, all, all); }
+
+inline Decorator padding(int all) {
+    return padding(all, all, all, all);
+}
 
 namespace ui = loom::commands::plugin_ui;
 namespace pf = loom::commands::plugin_helpers;
@@ -82,28 +89,27 @@ namespace plugin_manage = loom::ui::plugins::plugin_manage_panel;
 namespace plugin_browse = loom::ui::plugins::plugin_marketplace_browse;
 namespace plugin_settings = loom::ui::plugins::plugin_settings_dialog;
 
-using ui::ViewKind;
-using ui::ViewState;
+using ui::BrowseView;
+using ui::ConfigStep;
+using ui::ErrorActionKind;
+using ui::ErrorRow;
+using ui::InstalledCellData;
+using ui::MarketplaceInfo;
+using ui::SortedDiscoverListResult;
 using ui::TabId;
 using ui::TargetAction;
-using ui::ErrorRow;
-using ui::ErrorActionKind;
-using ui::InstalledCellData;
-using ui::SortedDiscoverListResult;
-using ui::ConfigStep;
 using ui::TrustWarningInfo;
 using ui::TrustWarningLevel;
-using ui::BrowseView;
-using ui::MarketplaceInfo;
+using ui::ViewKind;
+using ui::ViewState;
 
-using pf::InstallablePlugin;
-using pf::Pagination;
 using pf::DisplayPluginError;
 using pf::ErrorKind;
+using pf::InstallablePlugin;
+using pf::Pagination;
 
-[[nodiscard]] inline plugin_browse::PluginCardData ToPluginCardData(
-    const InstallablePlugin& plugin)
-{
+[[nodiscard]] inline plugin_browse::PluginCardData
+ToPluginCardData(const InstallablePlugin& plugin) {
     plugin_browse::PluginCardData card;
     card.base = plugin;
     card.name = plugin.entry.name.empty() ? plugin.plugin_id : plugin.entry.name;
@@ -119,9 +125,8 @@ using pf::ErrorKind;
     return card;
 }
 
-[[nodiscard]] inline plugin_settings::PerPluginSettings ToPluginSettings(
-    const InstalledCellData& plugin)
-{
+[[nodiscard]] inline plugin_settings::PerPluginSettings
+ToPluginSettings(const InstalledCellData& plugin) {
     plugin_settings::PerPluginSettings settings;
     settings.plugin_id = plugin.name + "@" + plugin.marketplace;
     settings.enabled = plugin.enabled;
@@ -141,25 +146,25 @@ struct PluginDialogInputs {
     std::vector<InstalledCellData> installed_plugins;
 
     // ── Browse / Discover data ──────────────────────────────────────────
-    std::vector<MarketplaceInfo>   marketplaces;
-    std::vector<InstallablePlugin> discover_plugins;   // flattened across markets
-    bool                           discover_empty = false;
-    std::optional<std::string>     discover_empty_reason;
+    std::vector<MarketplaceInfo> marketplaces;
+    std::vector<InstallablePlugin> discover_plugins;  // flattened across markets
+    bool discover_empty = false;
+    std::optional<std::string> discover_empty_reason;
 
     // ── Errors-tab data ─────────────────────────────────────────────────
     std::vector<ErrorRow> error_rows;
 
     // ── Validate data ───────────────────────────────────────────────────
     std::optional<std::string> validate_path;
-    bool                        validate_ok = true;
-    std::vector<std::string>    validate_messages;
+    bool validate_ok = true;
+    std::vector<std::string> validate_messages;
 
     // ── Add-marketplace data ────────────────────────────────────────────
     std::optional<std::string> add_marketplace_initial;
 
     // ── Callbacks (consumer-wired, never called from rendering code) ────
     std::function<void(const ViewState& next)> on_navigate;
-    std::function<void()>                       on_close;
+    std::function<void()> on_close;
 };
 
 // =========================================================================
@@ -169,12 +174,14 @@ struct PluginDialogInputs {
 namespace detail {
 
 /// Render a chip/tag pill.
-[[nodiscard]] inline Element Chip(std::string_view label, Color c = loom::ui::design::theme::current_theme().palette->info) {
+[[nodiscard]] inline Element
+Chip(std::string_view label, Color c = loom::ui::design::theme::current_theme().palette->info) {
     return hbox({
-        text(" "),
-        text(std::string{label}) | color(c),
-        text(" "),
-    }) | borderLight | size(WIDTH, EQUAL, (int)label.size() + 2);
+               text(" "),
+               text(std::string{label}) | color(c),
+               text(" "),
+           }) |
+           borderLight | size(WIDTH, EQUAL, (int)label.size() + 2);
 }
 
 /// Render a small status badge (enabled / disabled / error).
@@ -203,13 +210,12 @@ namespace detail {
     const char c = name.empty() ? '?' : (char)std::toupper((unsigned char)name[0]);
     return hbox({
         text(" "),
-        text(std::string{1, c}) | bold | color(name_color(name))
-             | bgcolor(pal.surface_tint_3),
+        text(std::string{1, c}) | bold | color(name_color(name)) | bgcolor(pal.surface_tint_3),
         text(" "),
     });
 }
 
-} // namespace detail
+}  // namespace detail
 
 // =========================================================================
 // 3.  Sub-view renderers (render functions only; interactive components
@@ -222,14 +228,17 @@ namespace detail {
 [[nodiscard]] inline Element RenderHelp() {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
     return vbox({
-        hbox({
-            text((" " + std::string{loom::ui::design::figures::kQuestionMarkPrefix} + "  Plugin Command Help ")) | bold | color(pal.info),
-            filler(),
-            text("Esc to go back") | color(pal.muted),
-        }),
-        separator(),
-        paragraph(std::string{ui::k_plugin_help_text}) | color(pal.muted),
-    }) | borderLight;
+               hbox({
+                   text((" " + std::string{loom::ui::design::figures::kQuestionMarkPrefix} +
+                         "  Plugin Command Help ")) |
+                       bold | color(pal.info),
+                   filler(),
+                   text("Esc to go back") | color(pal.muted),
+               }),
+               separator(),
+               paragraph(std::string{ui::k_plugin_help_text}) | color(pal.muted),
+           }) |
+           borderLight;
 }
 
 // ── 3c.  Errors tab ──────────────────────────────────────────────────────
@@ -239,7 +248,7 @@ namespace detail {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
     Color head_color = loom::ui::design::theme::current_theme().palette->danger;
     if (row.action_kind == ErrorActionKind::ManagedOnly) head_color = pal.warning;
-    if (row.action_kind == ErrorActionKind::Navigate)    head_color = pal.warning;
+    if (row.action_kind == ErrorActionKind::Navigate) head_color = pal.warning;
 
     Elements parts{
         text(selected ? "› " : "  ") | color(head_color),
@@ -266,14 +275,13 @@ namespace detail {
 }
 
 /// Render the full errors-tab list.
-[[nodiscard]] inline Element RenderErrorsTab(
-    const std::vector<ErrorRow>& rows, int selected)
-{
+[[nodiscard]] inline Element RenderErrorsTab(const std::vector<ErrorRow>& rows, int selected) {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
     Elements items;
     if (rows.empty()) {
-        items.push_back(text((" " + std::string{loom::ui::design::figures::kTick} + "  No errors to report. Everything looks good!"))
-                        | color(pal.success) | center);
+        items.push_back(text((" " + std::string{loom::ui::design::figures::kTick} +
+                              "  No errors to report. Everything looks good!")) |
+                        color(pal.success) | center);
     } else {
         for (int i = 0; i < (int)rows.size(); ++i) {
             items.push_back(RenderErrorRow(rows[i], i == selected));
@@ -285,7 +293,8 @@ namespace detail {
         hbox({
             text(" ⚠  Errors & Warnings ") | bold | color(pal.danger),
             filler(),
-            text(std::format("{} item{}", (int)rows.size(), rows.size() == 1 ? "" : "s")) | color(pal.muted),
+            text(std::format("{} item{}", (int)rows.size(), rows.size() == 1 ? "" : "s")) |
+                color(pal.muted),
         }),
         separator(),
         vbox(std::move(items)) | vscroll_indicator | yframe | flex,
@@ -296,14 +305,13 @@ namespace detail {
 
 // ── 3d.  Validate view ───────────────────────────────────────────────────
 
-[[nodiscard]] inline Element RenderValidate(
-    const std::optional<std::string>& path, bool ok,
-    const std::vector<std::string>& messages)
-{
+[[nodiscard]] inline Element RenderValidate(const std::optional<std::string>& path, bool ok,
+                                            const std::vector<std::string>& messages) {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
     Elements body;
     body.push_back(hbox({
-        text((" " + std::string{loom::ui::design::figures::kTick} + "  Manifest Validation ")) | bold | color(ok ? pal.success : pal.danger),
+        text((" " + std::string{loom::ui::design::figures::kTick} + "  Manifest Validation ")) |
+            bold | color(ok ? pal.success : pal.danger),
         filler(),
         path ? text(*path) | color(pal.info) | underlined : text("(no path)") | color(pal.muted),
     }));
@@ -339,16 +347,17 @@ namespace detail {
 
 /// Render the AddMarketplace input form skeleton (the actual interactive
 /// Input widget is built in MakeAddMarketplaceComponent below).
-[[nodiscard]] inline Element RenderAddMarketplace(
-    std::string_view current_value,
-    bool value_is_valid,
-    std::string_view validation_hint)
-{
+[[nodiscard]] inline Element RenderAddMarketplace(std::string_view current_value,
+                                                  bool value_is_valid,
+                                                  std::string_view validation_hint) {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
-    Color c = value_is_valid ? loom::ui::design::theme::current_theme().palette->success : loom::ui::design::theme::current_theme().palette->warning;
+    Color c = value_is_valid ? loom::ui::design::theme::current_theme().palette->success
+                             : loom::ui::design::theme::current_theme().palette->warning;
     return vbox({
         hbox({
-            text((" " + std::string{loom::ui::design::figures::kPointerSmall} + "  Add Marketplace ")) | bold | color(pal.info),
+            text((" " + std::string{loom::ui::design::figures::kPointerSmall} +
+                  "  Add Marketplace ")) |
+                bold | color(pal.info),
             filler(),
             text("Esc to cancel") | color(pal.muted),
         }),
@@ -356,20 +365,25 @@ namespace detail {
         text("") | size(HEIGHT, EQUAL, 1),
         hbox({
             text("  Marketplace URL or path: ") | bold,
-            text(std::string{current_value.empty() ? "(type here)" : current_value})
-                | color(c),
-            text("│") | (loom::ui::design::theme::current_theme().a11y.reduced_motion ? nothing : blink),
-        }) | borderLight | color(value_is_valid ? pal.success : pal.muted),
+            text(std::string{current_value.empty() ? "(type here)" : current_value}) | color(c),
+            text("│") |
+                (loom::ui::design::theme::current_theme().a11y.reduced_motion ? nothing : blink),
+        }) | borderLight |
+            color(value_is_valid ? pal.success : pal.muted),
         text("") | size(HEIGHT, EQUAL, 1),
         paragraph(std::string{validation_hint.empty()
-            ? "Paste a marketplace.json URL, a local directory path, or a "
-              "GitHub repo URL (owner/repo)."
-            : std::string{validation_hint}}) | color(pal.muted),
+                                  ? "Paste a marketplace.json URL, a local directory path, or a "
+                                    "GitHub repo URL (owner/repo)."
+                                  : std::string{validation_hint}}) |
+            color(pal.muted),
         text(""),
         hbox({
-            detail::Chip("file:", pal.info), text(" "),
-            detail::Chip("http(s)://", pal.success), text(" "),
-            detail::Chip("github:owner/repo", pal.info), text(" "),
+            detail::Chip("file:", pal.info),
+            text(" "),
+            detail::Chip("http(s)://", pal.success),
+            text(" "),
+            detail::Chip("github:owner/repo", pal.info),
+            text(" "),
             detail::Chip("local path", pal.primary),
         }) | color(pal.muted),
     });
@@ -377,24 +391,26 @@ namespace detail {
 
 // ── 3f.  Empty-state renderer (discover) ─────────────────────────────────
 
-[[nodiscard]] inline Element RenderDiscoverEmpty(
-    bool needs_empty,
-    const std::optional<std::string>& reason)
-{
+[[nodiscard]] inline Element RenderDiscoverEmpty(bool needs_empty,
+                                                 const std::optional<std::string>& reason) {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
     if (!needs_empty) return text("");
     return vbox({
-        text("") | size(HEIGHT, EQUAL, 2),
-        hbox({filler(),
-            text((" " + std::string{loom::ui::design::figures::kInfo} + " ")) | color(pal.warning),
-            text(reason.value_or("No plugins match your filters.")) | color(pal.muted),
-            filler(),
-        }),
-        hbox({filler(),
-            text(" Try removing filters or adding a marketplace. ") | color(pal.muted),
-            filler(),
-        }),
-    }) | flex;
+               text("") | size(HEIGHT, EQUAL, 2),
+               hbox({
+                   filler(),
+                   text((" " + std::string{loom::ui::design::figures::kInfo} + " ")) |
+                       color(pal.warning),
+                   text(reason.value_or("No plugins match your filters.")) | color(pal.muted),
+                   filler(),
+               }),
+               hbox({
+                   filler(),
+                   text(" Try removing filters or adding a marketplace. ") | color(pal.muted),
+                   filler(),
+               }),
+           }) |
+           flex;
 }
 
 // =========================================================================
@@ -402,24 +418,23 @@ namespace detail {
 // =========================================================================
 
 /// Render the full dialog chrome — wraps the active sub-view.
-[[nodiscard]] inline Element RenderPluginDialogChrome(
-    Element sub_view,
-    TabId active_tab)
-{
+[[nodiscard]] inline Element RenderPluginDialogChrome(Element sub_view, TabId active_tab) {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
     // Top tab bar (4 tabs)
     static constexpr std::array<std::pair<const char*, TabId>, 4> k_tabs = {{
-        {"Discover",     TabId::Discover},
-        {"Installed",    TabId::Installed},
+        {"Discover", TabId::Discover},
+        {"Installed", TabId::Installed},
         {"Marketplaces", TabId::Marketplaces},
-        {"Errors",       TabId::Errors},
+        {"Errors", TabId::Errors},
     }};
     Elements tab_bits;
     for (const auto& [label, id] : k_tabs) {
         const bool active = (id == active_tab);
         auto bit = text(" " + std::string{label} + " ");
-        if (active) bit = bit | bold | bgcolor(pal.info_tint_bg) | color(pal.info);
-        else        bit = bit | color(pal.muted);
+        if (active)
+            bit = bit | bold | bgcolor(pal.info_tint_bg) | color(pal.info);
+        else
+            bit = bit | color(pal.muted);
         tab_bits.push_back(std::move(bit));
     }
 
@@ -430,10 +445,11 @@ namespace detail {
     });
 
     return vbox({
-        top_bar,
-        separator() | color(pal.primary),
-        std::move(sub_view) | flex,
-    }) | borderDouble | bgcolor(pal.surface_tint_3);
+               top_bar,
+               separator() | color(pal.primary),
+               std::move(sub_view) | flex,
+           }) |
+           borderDouble | bgcolor(pal.surface_tint_3);
 }
 
 // =========================================================================
@@ -442,15 +458,15 @@ namespace detail {
 
 struct PluginDialogState {
     PluginDialogInputs inputs;
-    ViewKind           active_kind;
-    TabId              active_tab;
+    ViewKind active_kind;
+    TabId active_tab;
 
     // ── Errors list ─────────────────────────────────────────────────────
     int errors_selected = 0;
 
     // ── Add-marketplace ─────────────────────────────────────────────────
     std::string add_mp_value;
-    bool        add_mp_open = false;
+    bool add_mp_open = false;
 
     // ── Install-flow routing ────────────────────────────────────────────
     bool install_flow_active = false;
@@ -470,11 +486,10 @@ struct PluginDialogComponent : public ComponentBase {
     // Change-detection for lazy panel rebuild (Render() is called every
     // frame; OnEvent mutates state from within nested handlers).
     ViewKind last_active_kind_ = ViewKind::Help;
-    bool     last_install_flow_ = false;
+    bool last_install_flow_ = false;
 
     explicit PluginDialogComponent(std::shared_ptr<PluginDialogState> s)
-        : state(std::move(s))
-    {
+        : state(std::move(s)) {
         last_active_kind_ = state->active_kind;
         RebuildActivePanel();
     }
@@ -493,17 +508,14 @@ struct PluginDialogComponent : public ComponentBase {
         case ViewKind::BrowseMarketplace:
         case ViewKind::MarketplaceList: {
             plugin_browse::BrowsePanelInputs browse;
-            browse.initial_subtab =
-                (state->active_kind == ViewKind::DiscoverPlugins)
-                    ? plugin_browse::SubTab::Discover
-                    : plugin_browse::SubTab::Browse;
+            browse.initial_subtab = (state->active_kind == ViewKind::DiscoverPlugins)
+                                        ? plugin_browse::SubTab::Discover
+                                        : plugin_browse::SubTab::Browse;
             browse.marketplaces = state->inputs.marketplaces;
             browse.discover_empty = state->inputs.discover_empty;
             browse.discover_empty_reason = state->inputs.discover_empty_reason;
-            browse.target_marketplace =
-                state->inputs.initial_view.target_marketplace;
-            browse.target_plugin =
-                state->inputs.initial_view.target_plugin;
+            browse.target_marketplace = state->inputs.initial_view.target_marketplace;
+            browse.target_plugin = state->inputs.initial_view.target_plugin;
             for (const auto& plugin : state->inputs.discover_plugins) {
                 browse.discover_cards.push_back(ToPluginCardData(plugin));
             }
@@ -511,15 +523,14 @@ struct PluginDialogComponent : public ComponentBase {
             for (std::size_t i = 0; i < browse.marketplaces.size(); ++i) {
                 for (const auto& plugin : state->inputs.discover_plugins) {
                     if (plugin.marketplace_name == browse.marketplaces[i].name) {
-                        browse.marketplace_cards[i].push_back(
-                            ToPluginCardData(plugin));
+                        browse.marketplace_cards[i].push_back(ToPluginCardData(plugin));
                     }
                 }
             }
             browse.on_install = [this](std::string_view plugin_id) {
                 // Install → switch to ManagePlugins tab.
                 state->active_kind = ViewKind::ManagePlugins;
-                state->active_tab  = TabId::Installed;
+                state->active_tab = TabId::Installed;
                 if (state->inputs.on_navigate) {
                     ViewState next;
                     next.kind = ViewKind::ManagePlugins;
@@ -537,13 +548,10 @@ struct PluginDialogComponent : public ComponentBase {
         case ViewKind::ManagePlugins: {
             plugin_manage::ManagePanelInputs manage;
             manage.installed = state->inputs.installed_plugins;
-            manage.target_plugin =
-                state->inputs.initial_view.target_plugin;
+            manage.target_plugin = state->inputs.initial_view.target_plugin;
             manage.preselect_action = state->inputs.initial_view.action;
             manage.on_navigate = state->inputs.on_navigate;
-            manage.on_install_new = [this] {
-                state->install_flow_active = true;
-            };
+            manage.on_install_new = [this] { state->install_flow_active = true; };
             return plugin_manage::MakeManagePanel(std::move(manage));
         }
 
@@ -552,36 +560,31 @@ struct PluginDialogComponent : public ComponentBase {
             for (const auto& plugin : state->inputs.installed_plugins) {
                 settings.per_plugin.push_back(ToPluginSettings(plugin));
             }
-            settings.focus_plugin_id =
-                state->inputs.initial_view.target_plugin;
+            settings.focus_plugin_id = state->inputs.initial_view.target_plugin;
             settings.on_close = [this] {
                 if (state->inputs.on_close) state->inputs.on_close();
             };
-            return plugin_settings::MakePluginSettingsDialog(
-                std::move(settings));
+            return plugin_settings::MakePluginSettingsDialog(std::move(settings));
         }
 
         case ViewKind::Validate:
             return Renderer([st = state]() {
-                return RenderValidate(st->inputs.validate_path,
-                                      st->inputs.validate_ok,
+                return RenderValidate(st->inputs.validate_path, st->inputs.validate_ok,
                                       st->inputs.validate_messages);
             });
 
         case ViewKind::Errors:
             return Renderer([st = state]() {
-                return RenderErrorsTab(st->inputs.error_rows,
-                                       st->errors_selected);
+                return RenderErrorsTab(st->inputs.error_rows, st->errors_selected);
             });
 
         case ViewKind::AddMarketplace:
             return Renderer([st = state]() {
-                const bool valid = !st->add_mp_value.empty() &&
-                                   st->add_mp_value.size() >= 4;
+                const bool valid = !st->add_mp_value.empty() && st->add_mp_value.size() >= 4;
                 return RenderAddMarketplace(st->add_mp_value, valid, "");
             });
 
-        } // switch
+        }  // switch
         return Renderer([]() { return text(""); });
     }
 
@@ -589,7 +592,10 @@ struct PluginDialogComponent : public ComponentBase {
     void RebuildInstallPanel() {
         if (install_panel_) install_panel_->Detach();
         // Detach the active panel so only the wizard receives events.
-        if (active_panel_) { active_panel_->Detach(); active_panel_ = Component(); }
+        if (active_panel_) {
+            active_panel_->Detach();
+            active_panel_ = Component();
+        }
         plugin_install::InstallFlowInputs install;
         install.prepare_review = [](const plugin_install::SourceStepData& source,
                                     plugin_install::ReviewStepData& review) {
@@ -612,9 +618,7 @@ struct PluginDialogComponent : public ComponentBase {
             }
             return false;
         };
-        install.on_cancel = [this] {
-            state->install_flow_active = false;
-        };
+        install.on_cancel = [this] { state->install_flow_active = false; };
         install.on_complete = [this](const plugin_install::CompleteStepData&) {
             state->install_flow_active = false;
             state->active_kind = ViewKind::ManagePlugins;
@@ -640,15 +644,17 @@ struct PluginDialogComponent : public ComponentBase {
             if (state->install_flow_active) {
                 RebuildInstallPanel();
             } else {
-                if (install_panel_) { install_panel_->Detach(); install_panel_ = Component(); }
+                if (install_panel_) {
+                    install_panel_->Detach();
+                    install_panel_ = Component();
+                }
                 // active_kind may have changed (e.g. ManagePlugins after
                 // install complete).
                 RebuildActivePanel();
             }
         }
         // Detect view transitions (e.g. Errors → Navigate target).
-        if (!state->install_flow_active &&
-            state->active_kind != last_active_kind_) {
+        if (!state->install_flow_active && state->active_kind != last_active_kind_) {
             RebuildActivePanel();
         }
 
@@ -699,18 +705,14 @@ struct PluginDialogComponent : public ComponentBase {
                 return true;
             }
             if (event == Event::ArrowDown || event == Event::Character('j')) {
-                state->errors_selected = std::min(std::max(0, n - 1),
-                                                   state->errors_selected + 1);
+                state->errors_selected = std::min(std::max(0, n - 1), state->errors_selected + 1);
                 return true;
             }
             if (event == Event::Return && n > 0) {
                 const auto& row = state->inputs.error_rows[state->errors_selected];
-                if (row.action_kind == ErrorActionKind::Navigate &&
-                    row.nav_view.has_value())
-                {
+                if (row.action_kind == ErrorActionKind::Navigate && row.nav_view.has_value()) {
                     state->active_kind = *row.nav_view;
-                    state->active_tab  = row.nav_tab.value_or(
-                        ui::initial_tab_for(*row.nav_view));
+                    state->active_tab = row.nav_tab.value_or(ui::initial_tab_for(*row.nav_view));
                     RebuildActivePanel();
                     if (state->inputs.on_navigate) {
                         ViewState vs;
@@ -771,7 +773,7 @@ struct PluginDialogComponent : public ComponentBase {
     if (state->active_kind == ViewKind::Menu) {
         state->active_kind = ViewKind::DiscoverPlugins;
     }
-    state->active_tab  = ui::initial_tab_for(state->active_kind);
+    state->active_tab = ui::initial_tab_for(state->active_kind);
 
     // Pre-fill add-marketplace if routed with an initial value.
     if (state->inputs.add_marketplace_initial) {
@@ -781,4 +783,4 @@ struct PluginDialogComponent : public ComponentBase {
     return std::make_shared<PluginDialogComponent>(std::move(state));
 }
 
-} // namespace loom::ui::dialogs::plugin_dialog
+}  // namespace loom::ui::dialogs::plugin_dialog

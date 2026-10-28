@@ -1,10 +1,10 @@
 // C++23 Module: Layout engine with responsive adaptation and focus management
 module;
 
+#include <ftxui/dom/elements.hpp>
+
 #include <cstddef>
 #include <cstdint>
-
-#include <ftxui/dom/elements.hpp>
 
 export module loom.ui.chrome.layout;
 
@@ -24,24 +24,24 @@ enum class LayoutMode {
 
 // Focus target for keyboard navigation between panes
 enum class FocusTarget {
-    PromptInput,    // The input area
-    MessageList,    // Scrollable message history
-    SidePanel,      // Active side panel
-    BottomPanel,    // Bottom panel area
-    Overlay         // Overlay panel
+    PromptInput,  // The input area
+    MessageList,  // Scrollable message history
+    SidePanel,    // Active side panel
+    BottomPanel,  // Bottom panel area
+    Overlay       // Overlay panel
 };
 
 // Layout configuration for customizing sizes
 struct LayoutConfig {
     LayoutMode mode{LayoutMode::SingleColumn};
-    std::size_t sidebar_width{40};        // Hint for absolute sidebar width
-    std::size_t panel_height{15};         // Lines tall for bottom panel
-    std::size_t min_main_width{60};       // Minimum main content width
-    std::size_t min_main_height{10};      // Minimum main content height
-    double sidebar_ratio{0.3};            // Sidebar as a fraction of terminal width
-    double panel_ratio{0.3};              // Ratio of bottom panel to total height
-    std::size_t min_sidebar_width{20};    // Floor for the adaptive sidebar
-    std::size_t max_sidebar_width{80};    // Ceiling for the adaptive sidebar
+    std::size_t sidebar_width{40};      // Hint for absolute sidebar width
+    std::size_t panel_height{15};       // Lines tall for bottom panel
+    std::size_t min_main_width{60};     // Minimum main content width
+    std::size_t min_main_height{10};    // Minimum main content height
+    double sidebar_ratio{0.3};          // Sidebar as a fraction of terminal width
+    double panel_ratio{0.3};            // Ratio of bottom panel to total height
+    std::size_t min_sidebar_width{20};  // Floor for the adaptive sidebar
+    std::size_t max_sidebar_width{80};  // Ceiling for the adaptive sidebar
     bool show_status_bar{true};
     bool show_breadcrumb{true};
 
@@ -49,7 +49,8 @@ struct LayoutConfig {
     // clamped to [min_sidebar_width, min(max_sidebar_width, width - min_main_width)].
     // On terminals too narrow to honour min_main_width, the sidebar collapses to 0.
     [[nodiscard]] auto effective_sidebar_width(std::size_t term_width) const -> std::size_t {
-        std::size_t target = static_cast<std::size_t>(static_cast<double>(term_width) * sidebar_ratio);
+        std::size_t target =
+            static_cast<std::size_t>(static_cast<double>(term_width) * sidebar_ratio);
         std::size_t floor_by_main = term_width > min_main_width ? term_width - min_main_width : 0;
         std::size_t upper = std::min(max_sidebar_width, floor_by_main);
         std::size_t lower = min_sidebar_width > upper ? upper : min_sidebar_width;
@@ -71,7 +72,9 @@ struct TerminalSize {
     std::size_t height{24};
 
     [[nodiscard]] auto is_narrow() const -> bool { return width < 100; }
+
     [[nodiscard]] auto is_short() const -> bool { return height < 30; }
+
     [[nodiscard]] auto is_wide() const -> bool { return width >= 160; }
 };
 
@@ -106,7 +109,7 @@ struct StatusBarState {
 
 // Breadcrumb path for navigation context
 struct Breadcrumb {
-    std::vector<std::string> path; // e.g., ["Settings", "API Keys"]
+    std::vector<std::string> path;  // e.g., ["Settings", "API Keys"]
 
     [[nodiscard]] auto render() const -> ftxui::Element;
 
@@ -133,7 +136,8 @@ struct AppRenderState {
 // AppLayout: main layout engine managing pane arrangement
 class AppLayout {
 public:
-    explicit AppLayout(LayoutConfig config = {}) : config_(config) {}
+    explicit AppLayout(LayoutConfig config = {})
+        : config_(config) {}
 
     // Set the layout mode
     auto set_mode(LayoutMode mode) -> void {
@@ -175,33 +179,44 @@ public:
     // Cycle focus to next pane (Tab key)
     auto focus_next() -> void {
         switch (focus_) {
-            case FocusTarget::PromptInput:
-                focus_ = FocusTarget::MessageList; break;
-            case FocusTarget::MessageList:
-                focus_ = sidebar_visible_ ? FocusTarget::SidePanel : FocusTarget::PromptInput; break;
-            case FocusTarget::SidePanel:
-                focus_ = panel_visible_ ? FocusTarget::BottomPanel : FocusTarget::PromptInput; break;
-            case FocusTarget::BottomPanel:
-                focus_ = FocusTarget::PromptInput; break;
-            case FocusTarget::Overlay:
-                focus_ = FocusTarget::PromptInput; break;
+        case FocusTarget::PromptInput:
+            focus_ = FocusTarget::MessageList;
+            break;
+        case FocusTarget::MessageList:
+            focus_ = sidebar_visible_ ? FocusTarget::SidePanel : FocusTarget::PromptInput;
+            break;
+        case FocusTarget::SidePanel:
+            focus_ = panel_visible_ ? FocusTarget::BottomPanel : FocusTarget::PromptInput;
+            break;
+        case FocusTarget::BottomPanel:
+            focus_ = FocusTarget::PromptInput;
+            break;
+        case FocusTarget::Overlay:
+            focus_ = FocusTarget::PromptInput;
+            break;
         }
     }
 
     // Cycle focus to previous pane (Shift+Tab)
     auto focus_prev() -> void {
         switch (focus_) {
-            case FocusTarget::PromptInput:
-                focus_ = panel_visible_ ? FocusTarget::BottomPanel :
-                         (sidebar_visible_ ? FocusTarget::SidePanel : FocusTarget::MessageList); break;
-            case FocusTarget::MessageList:
-                focus_ = FocusTarget::PromptInput; break;
-            case FocusTarget::SidePanel:
-                focus_ = FocusTarget::MessageList; break;
-            case FocusTarget::BottomPanel:
-                focus_ = sidebar_visible_ ? FocusTarget::SidePanel : FocusTarget::MessageList; break;
-            case FocusTarget::Overlay:
-                focus_ = FocusTarget::PromptInput; break;
+        case FocusTarget::PromptInput:
+            focus_ = panel_visible_
+                         ? FocusTarget::BottomPanel
+                         : (sidebar_visible_ ? FocusTarget::SidePanel : FocusTarget::MessageList);
+            break;
+        case FocusTarget::MessageList:
+            focus_ = FocusTarget::PromptInput;
+            break;
+        case FocusTarget::SidePanel:
+            focus_ = FocusTarget::MessageList;
+            break;
+        case FocusTarget::BottomPanel:
+            focus_ = sidebar_visible_ ? FocusTarget::SidePanel : FocusTarget::MessageList;
+            break;
+        case FocusTarget::Overlay:
+            focus_ = FocusTarget::PromptInput;
+            break;
         }
     }
 
@@ -217,12 +232,19 @@ public:
 
     // Accessors
     [[nodiscard]] auto config() const -> const LayoutConfig& { return config_; }
+
     [[nodiscard]] auto mode() const -> LayoutMode { return config_.mode; }
+
     [[nodiscard]] auto focus() const -> FocusTarget { return focus_; }
+
     [[nodiscard]] auto sidebar_visible() const -> bool { return sidebar_visible_; }
+
     [[nodiscard]] auto panel_visible() const -> bool { return panel_visible_; }
+
     [[nodiscard]] auto main_rect() const -> PaneRect { return main_rect_; }
+
     [[nodiscard]] auto sidebar_rect() const -> PaneRect { return sidebar_rect_; }
+
     [[nodiscard]] auto panel_rect() const -> PaneRect { return panel_rect_; }
 
 private:
@@ -265,30 +287,30 @@ private:
         std::size_t available_h = h > (status_h + bread_h) ? h - status_h - bread_h : h;
 
         switch (config_.mode) {
-            case LayoutMode::SingleColumn:
-                main_rect_ = {0, bread_h, w, available_h};
-                sidebar_rect_ = {};
-                panel_rect_ = {};
-                break;
-            case LayoutMode::SplitHorizontal: {
-                auto sw = config_.effective_sidebar_width(w);
-                main_rect_ = {0, bread_h, w - sw, available_h};
-                sidebar_rect_ = {w - sw, bread_h, sw, available_h};
-                panel_rect_ = {};
-                break;
-            }
-            case LayoutMode::SplitVertical: {
-                auto ph = config_.effective_panel_height(available_h);
-                main_rect_ = {0, bread_h, w, available_h - ph};
-                sidebar_rect_ = {};
-                panel_rect_ = {0, bread_h + available_h - ph, w, ph};
-                break;
-            }
-            case LayoutMode::Overlay:
-                main_rect_ = {0, bread_h, w, available_h};
-                sidebar_rect_ = {w / 4, available_h / 4, w / 2, available_h / 2};
-                panel_rect_ = {};
-                break;
+        case LayoutMode::SingleColumn:
+            main_rect_ = {0, bread_h, w, available_h};
+            sidebar_rect_ = {};
+            panel_rect_ = {};
+            break;
+        case LayoutMode::SplitHorizontal: {
+            auto sw = config_.effective_sidebar_width(w);
+            main_rect_ = {0, bread_h, w - sw, available_h};
+            sidebar_rect_ = {w - sw, bread_h, sw, available_h};
+            panel_rect_ = {};
+            break;
+        }
+        case LayoutMode::SplitVertical: {
+            auto ph = config_.effective_panel_height(available_h);
+            main_rect_ = {0, bread_h, w, available_h - ph};
+            sidebar_rect_ = {};
+            panel_rect_ = {0, bread_h + available_h - ph, w, ph};
+            break;
+        }
+        case LayoutMode::Overlay:
+            main_rect_ = {0, bread_h, w, available_h};
+            sidebar_rect_ = {w / 4, available_h / 4, w / 2, available_h / 2};
+            panel_rect_ = {};
+            break;
         }
     }
 };
@@ -307,4 +329,4 @@ private:
     return layout;
 }
 
-} // namespace loom::ui
+}  // namespace loom::ui

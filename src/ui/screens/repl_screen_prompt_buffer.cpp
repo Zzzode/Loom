@@ -1,6 +1,6 @@
 // repl_screen_prompt_buffer.cpp - impl unit for loom.ui.screens.repl_screen
-// (RFC 0001 Phase C batch 9). prompt text-buffer mutation: utf8 cursor helpers, insert/backspace/delete,
-// pending @mention drain, prompt stash/restore, cursor moves and the
+// (RFC 0001 Phase C batch 9). prompt text-buffer mutation: utf8 cursor helpers,
+// insert/backspace/delete, pending @mention drain, prompt stash/restore, cursor moves and the
 // text-derived bash-mode predicate.
 //
 // Phase A (#184957): std is TEXTUAL here on purpose - no `import std;`.
@@ -26,62 +26,48 @@ namespace loom::ui::repl_screen {
     return (c & 0xC0) == 0x80;
 }
 
-[[nodiscard]] std::size_t clamp_input_cursor(
-    const std::string& text,
-    std::size_t pos) {
+[[nodiscard]] std::size_t clamp_input_cursor(const std::string& text, std::size_t pos) {
     if (pos == std::string::npos || pos > text.size()) return text.size();
-    while (pos > 0 &&
-           pos < text.size() &&
+    while (pos > 0 && pos < text.size() &&
            is_utf8_continuation_byte(static_cast<unsigned char>(text[pos]))) {
         --pos;
     }
     return pos;
 }
 
-[[nodiscard]] std::size_t input_cursor_or_end(
-    const ReplScreenState& s) {
+[[nodiscard]] std::size_t input_cursor_or_end(const ReplScreenState& s) {
     return clamp_input_cursor(s.input_text, s.input_cursor);
 }
 
-[[nodiscard]] std::size_t previous_utf8_boundary(
-    const std::string& text,
-    std::size_t pos) {
+[[nodiscard]] std::size_t previous_utf8_boundary(const std::string& text, std::size_t pos) {
     pos = clamp_input_cursor(text, pos);
     if (pos == 0) return 0;
     --pos;
-    while (pos > 0 &&
-           is_utf8_continuation_byte(static_cast<unsigned char>(text[pos]))) {
+    while (pos > 0 && is_utf8_continuation_byte(static_cast<unsigned char>(text[pos]))) {
         --pos;
     }
     return pos;
 }
 
-[[nodiscard]] std::size_t next_utf8_boundary(
-    const std::string& text,
-    std::size_t pos) {
+[[nodiscard]] std::size_t next_utf8_boundary(const std::string& text, std::size_t pos) {
     pos = clamp_input_cursor(text, pos);
     if (pos >= text.size()) return text.size();
     ++pos;
-    while (pos < text.size() &&
-           is_utf8_continuation_byte(static_cast<unsigned char>(text[pos]))) {
+    while (pos < text.size() && is_utf8_continuation_byte(static_cast<unsigned char>(text[pos]))) {
         ++pos;
     }
     return pos;
 }
 
-void set_prompt_input_text(
-    const std::shared_ptr<ReplScreenState>& state,
-    std::string value,
-    std::size_t cursor) {
+void set_prompt_input_text(const std::shared_ptr<ReplScreenState>& state, std::string value,
+                           std::size_t cursor) {
     state->input_text = std::move(value);
     state->input_cursor = clamp_input_cursor(state->input_text, cursor);
     state->is_prompt_input_active = true;
     state->last_keystroke = std::chrono::steady_clock::now();
 }
 
-void insert_prompt_text(
-    const std::shared_ptr<ReplScreenState>& state,
-    std::string_view value) {
+void insert_prompt_text(const std::shared_ptr<ReplScreenState>& state, std::string_view value) {
     auto cursor = input_cursor_or_end(*state);
     state->input_text.insert(cursor, value);
     set_prompt_input_text(state, std::move(state->input_text), cursor + value.size());
@@ -93,8 +79,7 @@ void insert_prompt_text(
 // number of tokens inserted. The staging mutex lives in the app composition
 // layer (AppAdapter::DrainPendingAtMentionInserts); this function touches
 // only drained, UI-thread-affined store data, so it needs no lock.
-std::size_t ApplyPendingAtMentionInserts(
-    const std::shared_ptr<ReplScreenState>& state) {
+std::size_t ApplyPendingAtMentionInserts(const std::shared_ptr<ReplScreenState>& state) {
     auto& drained = state->mcp_status_store.pending_at_mention_inserts;
     if (drained.empty()) return 0;
     std::size_t applied = 0;
@@ -129,12 +114,10 @@ std::size_t ApplyPendingAtMentionInserts(
 /// the stash/restore cycle.
 /// Returns true if something was actually stashed (input was non-empty or
 /// pasted contents were provided).
-bool StashCurrentPrompt(
-    const std::shared_ptr<ReplScreenState>& state,
-    std::unordered_map<int, ::loom::core::ImageBlock> pasted_images,
-    std::unordered_map<int, std::string> pasted_texts) {
-    if (state->input_text.empty() && pasted_images.empty() && pasted_texts.empty())
-        return false;
+bool StashCurrentPrompt(const std::shared_ptr<ReplScreenState>& state,
+                        std::unordered_map<int, ::loom::core::ImageBlock> pasted_images,
+                        std::unordered_map<int, std::string> pasted_texts) {
+    if (state->input_text.empty() && pasted_images.empty() && pasted_texts.empty()) return false;
     StashedPrompt sp;
     sp.text = state->input_text;
     sp.cursor_offset = state->input_cursor;
@@ -149,20 +132,18 @@ bool StashCurrentPrompt(
 /// input).  Also returns the stashed pasted-contents maps via out-params so
 /// the engine layer can restore [Image #N] / [...Truncated text #N] refs.
 /// Returns true if a stash was restored.
-bool RestoreStashedPrompt(
-    const std::shared_ptr<ReplScreenState>& state,
-    std::unordered_map<int, ::loom::core::ImageBlock>* out_images,
-    std::unordered_map<int, std::string>* out_texts) {
+bool RestoreStashedPrompt(const std::shared_ptr<ReplScreenState>& state,
+                          std::unordered_map<int, ::loom::core::ImageBlock>* out_images,
+                          std::unordered_map<int, std::string>* out_texts) {
     if (!state->prompt_store.stashed_prompt.has_value()) return false;
     auto stash = std::move(*state->prompt_store.stashed_prompt);
     state->prompt_store.stashed_prompt.reset();
     // Return pasted contents to the caller (engine layer).
     if (out_images) *out_images = std::move(stash.pasted_images);
-    if (out_texts)  *out_texts  = std::move(stash.pasted_texts);
+    if (out_texts) *out_texts = std::move(stash.pasted_texts);
     set_prompt_input_text(state, std::move(stash.text),
-        stash.cursor_offset == std::string::npos
-            ? std::string::npos
-            : stash.cursor_offset);
+                          stash.cursor_offset == std::string::npos ? std::string::npos
+                                                                   : stash.cursor_offset);
     return true;
 }
 
@@ -211,17 +192,13 @@ bool delete_prompt_text(const std::shared_ptr<ReplScreenState>& state) {
 }
 
 void move_prompt_cursor_left(const std::shared_ptr<ReplScreenState>& state) {
-    state->input_cursor = previous_utf8_boundary(
-        state->input_text,
-        input_cursor_or_end(*state));
+    state->input_cursor = previous_utf8_boundary(state->input_text, input_cursor_or_end(*state));
     state->is_prompt_input_active = true;
     state->last_keystroke = std::chrono::steady_clock::now();
 }
 
 void move_prompt_cursor_right(const std::shared_ptr<ReplScreenState>& state) {
-    state->input_cursor = next_utf8_boundary(
-        state->input_text,
-        input_cursor_or_end(*state));
+    state->input_cursor = next_utf8_boundary(state->input_text, input_cursor_or_end(*state));
     state->is_prompt_input_active = true;
     state->last_keystroke = std::chrono::steady_clock::now();
 }
@@ -242,28 +219,24 @@ void move_prompt_cursor_right(const std::shared_ptr<ReplScreenState>& state) {
     return s.prompt_store.input_mode == InputMode::Bash;
 }
 
-[[nodiscard]] std::optional<std::string> accept_selected_prompt_suggestion(
-    const std::shared_ptr<ReplScreenState>& state) {
+[[nodiscard]] std::optional<std::string>
+accept_selected_prompt_suggestion(const std::shared_ptr<ReplScreenState>& state) {
     if (state->autocomplete_suggestions.empty()) return std::nullopt;
 
     const int total = static_cast<int>(state->autocomplete_suggestions.size());
-    const int selected = std::clamp(
-        state->autocomplete_index < 0 ? 0 : state->autocomplete_index,
-        0,
-        total - 1);
+    const int selected =
+        std::clamp(state->autocomplete_index < 0 ? 0 : state->autocomplete_index, 0, total - 1);
     std::string accepted =
         state->autocomplete_suggestions[static_cast<std::size_t>(selected)].insert_text;
     if (accepted.empty()) {
-        accepted =
-            state->autocomplete_suggestions[static_cast<std::size_t>(selected)].display_text;
+        accepted = state->autocomplete_suggestions[static_cast<std::size_t>(selected)].display_text;
     }
 
-    const auto& suggestion =
-        state->autocomplete_suggestions[static_cast<std::size_t>(selected)];
+    const auto& suggestion = state->autocomplete_suggestions[static_cast<std::size_t>(selected)];
     std::size_t start = suggestion.replacement_start;
     std::size_t end = suggestion.replacement_end;
-    if (start == std::string::npos || end == std::string::npos ||
-        start > end || end > state->input_text.size()) {
+    if (start == std::string::npos || end == std::string::npos || start > end ||
+        end > state->input_text.size()) {
         start = 0;
         end = state->input_text.size();
     }

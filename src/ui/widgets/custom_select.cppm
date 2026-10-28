@@ -11,15 +11,15 @@
 ///   - Group collapse: groups render as label + separator today; no fold.
 module;
 
-#include <cmath>
-#include <cstdint>
-#include <cctype>
-
-#include <ftxui/dom/elements.hpp>
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/event.hpp>
+#include <ftxui/dom/elements.hpp>
+
+#include <cctype>
+#include <cmath>
 #include <cstddef>
+#include <cstdint>
 
 export module loom.ui.widgets.custom_select;
 
@@ -28,7 +28,6 @@ import loom.ui.foundation.theme_provider;
 import std;
 
 import loom.ui.foundation.design_figures;
-
 
 export namespace loom::ui::custom_select {
 using namespace ftxui;
@@ -39,21 +38,21 @@ using namespace ftxui;
 
 /// Selection behaviour
 enum class SelectMode : std::uint8_t {
-    Single,     // Select exactly one, Enter submits & closes
-    Multi,      // Toggle many, Enter keeps open (submit via callback)
+    Single,  // Select exactly one, Enter submits & closes
+    Multi,   // Toggle many, Enter keeps open (submit via callback)
 };
 
 /// Layout mode for displaying options
 enum class SelectLayout : std::uint8_t {
-    Compact,            // One line per option (default)
-    Expanded,           // Multiple lines with spacing + desc below
-    CompactVertical,    // Compact index with descriptions below
+    Compact,          // One line per option (default)
+    Expanded,         // Multiple lines with spacing + desc below
+    CompactVertical,  // Compact index with descriptions below
 };
 
 /// Where keyboard focus lives inside the component
 enum class FocusZone : std::uint8_t {
-    List,       // The option list (default)
-    Search,     // The embedded search input box
+    List,    // The option list (default)
+    Search,  // The embedded search input box
 };
 
 /// A single option in the select dropdown.
@@ -63,13 +62,14 @@ enum class FocusZone : std::uint8_t {
 /// component copies SelectOption into its own state; if this is too heavy,
 /// move the storage out and replace the vector with a span<const SelectOption>.
 struct SelectOption {
-    std::string label;            // Display text (highlighted in search)
-    std::string value;            // Opaque value passed to on_submit / on_change
-    std::string description;      // Secondary line (inline or expanded)
-    std::string group;            // Group key for Tab-grouping & separators
-    std::string icon;             // Optional 1-2 glyph prefix (e.g. std::string(loom::ui::design::figures::kTriangleRightSmall))
-    bool disabled = false;        // Cannot be selected/focused
-    bool dim_description = false; // Render description dimmer than default
+    std::string label;             // Display text (highlighted in search)
+    std::string value;             // Opaque value passed to on_submit / on_change
+    std::string description;       // Secondary line (inline or expanded)
+    std::string group;             // Group key for Tab-grouping & separators
+    std::string icon;              // Optional 1-2 glyph prefix (e.g.
+                                   // std::string(loom::ui::design::figures::kTriangleRightSmall))
+    bool disabled = false;         // Cannot be selected/focused
+    bool dim_description = false;  // Render description dimmer than default
 };
 
 // ------------------------------------------------------------------
@@ -152,9 +152,8 @@ struct CustomSelectOptions {
 
     /// Optional: custom renderer per option.
     /// If unset, the default renderer is used (icon + index + label + desc).
-    std::function<Element(const SelectOption& opt,
-                          bool hovered, bool selected,
-                          int display_index)> custom_render;
+    std::function<Element(const SelectOption& opt, bool hovered, bool selected, int display_index)>
+        custom_render;
 
     /// Optional: remote (async) search. Return a vector of *indices into
     /// the original options vector* that match the query. Leave nullopt to
@@ -167,8 +166,7 @@ struct CustomSelectOptions {
 /// External handle to a running CustomSelect (returned by factories).
 /// Lets consumers Submit() or ReadCurrentSelection() without reaching
 /// into internal state.
-class CustomSelectHandle
-    : public std::enable_shared_from_this<CustomSelectHandle> {
+class CustomSelectHandle : public std::enable_shared_from_this<CustomSelectHandle> {
 public:
     virtual ~CustomSelectHandle() = default;
 
@@ -199,8 +197,7 @@ namespace detail {
     return out;
 }
 
-[[nodiscard]] inline bool ContainsCI(std::string_view hay,
-                                     std::string_view needle) {
+[[nodiscard]] inline bool ContainsCI(std::string_view hay, std::string_view needle) {
     if (needle.empty()) return true;
     auto hay_l = ToLower(hay);
     auto ndl_l = ToLower(needle);
@@ -215,15 +212,15 @@ struct GroupMark {
     std::string group_name;
 };
 
-} // namespace detail
+}  // namespace detail
 
 // ============================================================
 // Rendering helpers
 // ============================================================
 
 /// Highlight all case-insensitive matches of `highlight` within `label`.
-[[nodiscard]] inline Element RenderHighlightedLabel(
-    const std::string& label, const std::string& highlight) {
+[[nodiscard]] inline Element RenderHighlightedLabel(const std::string& label,
+                                                    const std::string& highlight) {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
 
     if (highlight.empty()) return text(label);
@@ -234,22 +231,18 @@ struct GroupMark {
     size_t cursor = 0;
     size_t pos;
     while ((pos = lower_label.find(lower_hl, cursor)) != std::string::npos) {
-        if (pos > cursor)
-            parts.push_back(text(label.substr(cursor, pos - cursor)));
-        parts.push_back(text(label.substr(pos, highlight.size()))
-                        | bold | color(pal.warning));
+        if (pos > cursor) parts.push_back(text(label.substr(cursor, pos - cursor)));
+        parts.push_back(text(label.substr(pos, highlight.size())) | bold | color(pal.warning));
         cursor = pos + highlight.size();
     }
-    if (cursor < label.size())
-        parts.push_back(text(label.substr(cursor)));
+    if (cursor < label.size()) parts.push_back(text(label.substr(cursor)));
     return hbox(std::move(parts));
 }
 
 /// Render a vertical ASCII scrollbar of `height` rows, showing the current
 /// `ratio` (0..1) and `thumb_ratio` (0..1, fraction of visible / total).
 /// Characters: │█│░ — visually distinct even on 256-color terminals.
-[[nodiscard]] inline Elements RenderScrollBar(int height, double ratio,
-                                              double thumb_ratio) {
+[[nodiscard]] inline Elements RenderScrollBar(int height, double ratio, double thumb_ratio) {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
     if (height <= 0) return {};
     thumb_ratio = std::clamp(thumb_ratio, 1.0 / std::max(1, height), 1.0);
@@ -291,8 +284,7 @@ public:
             if (opts_.on_submit_single && single_selected_.has_value())
                 opts_.on_submit_single(*single_selected_);
         } else {
-            if (opts_.on_submit_multi)
-                opts_.on_submit_multi(SelectedValues());
+            if (opts_.on_submit_multi) opts_.on_submit_multi(SelectedValues());
         }
     }
 
@@ -336,58 +328,58 @@ public:
         auto self = std::static_pointer_cast<CustomSelectImpl>(shared_from_this());
         // Two internal sub-components: search Input (optional), and the list
         // Renderer + CatchEvent. We compose them vertically.
-        auto list = Renderer([self] { return self->RenderList(); })
-                   | CatchEvent([self](Event e) { return self->HandleListEvent(e); });
+        auto list = Renderer([self] { return self->RenderList(); }) |
+                    CatchEvent([self](Event e) { return self->HandleListEvent(e); });
 
         if (!opts_.enable_search) return list;
 
         search_input_ = Input(&search_text_, "Search options… (type / to focus)");
         // Hook on_change so filtering recomputes as the user types.
-        auto search_on_change = search_input_
-            | CatchEvent([self](Event) {
-                  // After the Input handles it, our `search_text_` ref is
-                  // updated. Recompute filter.
-                  self->ApplyFilter();
-                  self->EnsureFocusValid();
-                  return false;
-              });
+        auto search_on_change = search_input_ | CatchEvent([self](Event) {
+                                    // After the Input handles it, our `search_text_` ref is
+                                    // updated. Recompute filter.
+                                    self->ApplyFilter();
+                                    self->EnsureFocusValid();
+                                    return false;
+                                });
 
         auto sep = Renderer([] { return separator(); });
         return Container::Vertical({
-            search_on_change,
-            sep,
-            list,
-        }) | CatchEvent([self](Event e) -> bool {
-            // Top-level shortcuts that work regardless of focus zone.
-            if (e == Event::Escape) {
-                if (self->zone_ == FocusZone::Search) {
-                    // Esc in search box: clear search + return to list
-                    self->search_text_.clear();
-                    self->ApplyFilter();
-                    self->zone_ = FocusZone::List;
-                    return true;
-                }
-                if (self->opts_.on_cancel) self->opts_.on_cancel();
-                return true;
-            }
-            // '/' → always jump to search input
-            if (self->opts_.enable_search && e == Event::Character('/') &&
-                self->zone_ != FocusZone::Search) {
-                self->zone_ = FocusZone::Search;
-                self->search_input_->TakeFocus();
-                // Don't consume '/' yet - let Input append it so the user
-                // can immediately start typing a query.
-                return false;
-            }
-            // Ctrl-F / Ctrl-E search aliases (standard bindings)
-            if (self->opts_.enable_search && e.input() == "ctrl+f") {
-                self->zone_ = FocusZone::Search;
-                self->search_input_->TakeFocus();
-                return true;
-            }
-            // Forward to the default container dispatcher otherwise.
-            return false;
-        });
+                   search_on_change,
+                   sep,
+                   list,
+               }) |
+               CatchEvent([self](Event e) -> bool {
+                   // Top-level shortcuts that work regardless of focus zone.
+                   if (e == Event::Escape) {
+                       if (self->zone_ == FocusZone::Search) {
+                           // Esc in search box: clear search + return to list
+                           self->search_text_.clear();
+                           self->ApplyFilter();
+                           self->zone_ = FocusZone::List;
+                           return true;
+                       }
+                       if (self->opts_.on_cancel) self->opts_.on_cancel();
+                       return true;
+                   }
+                   // '/' → always jump to search input
+                   if (self->opts_.enable_search && e == Event::Character('/') &&
+                       self->zone_ != FocusZone::Search) {
+                       self->zone_ = FocusZone::Search;
+                       self->search_input_->TakeFocus();
+                       // Don't consume '/' yet - let Input append it so the user
+                       // can immediately start typing a query.
+                       return false;
+                   }
+                   // Ctrl-F / Ctrl-E search aliases (standard bindings)
+                   if (self->opts_.enable_search && e.input() == "ctrl+f") {
+                       self->zone_ = FocusZone::Search;
+                       self->search_input_->TakeFocus();
+                       return true;
+                   }
+                   // Forward to the default container dispatcher otherwise.
+                   return false;
+               });
     }
 
 private:
@@ -396,7 +388,7 @@ private:
     // (CustomSelectHandle is enabled_shared_from_this via the inheritance
     // pattern in MakeShared — we build with shared_ptr manually.)
 
-    static constexpr size_t kMaxBitset = 1u << 16; // 65536
+    static constexpr size_t kMaxBitset = 1u << 16;  // 65536
     // NOTE: options.size() may exceed kMaxBitset. For such large lists we
     // fall back to a sparse unordered_set<size_t> so multi-select still
     // works without deep-copy cost.
@@ -417,7 +409,7 @@ private:
     // -- selection state ---------------------------------------------
     std::optional<std::string> single_selected_;
     std::bitset<kMaxBitset> multi_selected_;
-    std::unordered_set<size_t> multi_selected_large_; // overflow for >=64K
+    std::unordered_set<size_t> multi_selected_large_;  // overflow for >=64K
     bool use_large_set_ = false;
 
     // -- group ordering (for Tab group-jumping) -----------------------
@@ -441,8 +433,10 @@ private:
                                                opts_.default_values.end());
             for (size_t i = 0; i < n; ++i) {
                 if (dv.count(opts_.options[i].value)) {
-                    if (use_large_set_) multi_selected_large_.insert(i);
-                    else multi_selected_.set(i);
+                    if (use_large_set_)
+                        multi_selected_large_.insert(i);
+                    else
+                        multi_selected_.set(i);
                 }
             }
         }
@@ -472,12 +466,8 @@ private:
             filtered_to_original_ = opts_.on_search(search_text_);
             // Validate all indices.
             filtered_to_original_.erase(
-                std::remove_if(filtered_to_original_.begin(),
-                               filtered_to_original_.end(),
-                               [&](int i) {
-                                   return i < 0 ||
-                                          i >= (int)opts_.options.size();
-                               }),
+                std::remove_if(filtered_to_original_.begin(), filtered_to_original_.end(),
+                               [&](int i) { return i < 0 || i >= (int)opts_.options.size(); }),
                 filtered_to_original_.end());
         } else if (!search_text_.empty()) {
             // Builtin: case-insensitive contains on label OR description OR
@@ -504,8 +494,7 @@ private:
         for (size_t i = 0; i < filtered_to_original_.size(); ++i) {
             const auto& g = opts_.options[filtered_to_original_[i]].group;
             if (g.empty()) continue;
-            if (seen.insert(g).second)
-                group_anchor_.emplace_back(g, (int)i);
+            if (seen.insert(g).second) group_anchor_.emplace_back(g, (int)i);
         }
     }
 
@@ -513,12 +502,14 @@ private:
     // Nav helpers
     // ------------------------------------------------------------------
     [[nodiscard]] int FocusedFiltered() const { return focused_filtered_; }
-    [[nodiscard]] int FilteredCount() const {
-        return (int)filtered_to_original_.size();
-    }
+
+    [[nodiscard]] int FilteredCount() const { return (int)filtered_to_original_.size(); }
 
     void EnsureFocusValid() {
-        if (FilteredCount() == 0) { focused_filtered_ = 0; return; }
+        if (FilteredCount() == 0) {
+            focused_filtered_ = 0;
+            return;
+        }
         focused_filtered_ = std::clamp(focused_filtered_, 0, FilteredCount() - 1);
         // If the currently focused slot is disabled, walk forward to the
         // first non-disabled.
@@ -534,11 +525,10 @@ private:
         for (int i = 0; i < n; ++i) {
             int idx = (from + i) % n;
             if (can_wrap || (from + i) < n) {
-                if (!opts_.options[filtered_to_original_[idx]].disabled)
-                    return idx;
+                if (!opts_.options[filtered_to_original_[idx]].disabled) return idx;
             }
         }
-        return from; // all disabled, keep original
+        return from;  // all disabled, keep original
     }
 
     [[nodiscard]] int LastNonDisabled(int from) const {
@@ -548,8 +538,7 @@ private:
         for (int i = 0; i < n; ++i) {
             int idx = (from - i + n * 2) % n;
             if (can_wrap || (from - i) >= 0) {
-                if (!opts_.options[filtered_to_original_[idx]].disabled)
-                    return idx;
+                if (!opts_.options[filtered_to_original_[idx]].disabled) return idx;
             }
         }
         return from;
@@ -557,8 +546,7 @@ private:
 
     void EnsureFocusVisible() {
         int n = FilteredCount();
-        int vc = std::max(1, std::min(opts_.visible_count,
-                                      std::max(1, n)));
+        int vc = std::max(1, std::min(opts_.visible_count, std::max(1, n)));
         if (focused_filtered_ < visible_start_) {
             visible_start_ = focused_filtered_;
         } else if (focused_filtered_ >= visible_start_ + vc) {
@@ -583,7 +571,8 @@ private:
         for (int i = 0; i < n; ++i) {
             int idx = (focused_filtered_ + 1 + i) % n;
             if (!opts_.options[filtered_to_original_[idx]].disabled) {
-                next = idx; break;
+                next = idx;
+                break;
             }
         }
         focused_filtered_ = next;
@@ -606,7 +595,8 @@ private:
         for (int i = 0; i < n; ++i) {
             int idx = (focused_filtered_ - 1 - i + n * 2) % n;
             if (!opts_.options[filtered_to_original_[idx]].disabled) {
-                prev = idx; break;
+                prev = idx;
+                break;
             }
         }
         focused_filtered_ = prev;
@@ -630,8 +620,7 @@ private:
     }
 
     void MovePageDown() {
-        int vc = std::max(1, std::min(opts_.visible_count,
-                                      std::max(1, FilteredCount())));
+        int vc = std::max(1, std::min(opts_.visible_count, std::max(1, FilteredCount())));
         int target = std::min(FilteredCount() - 1, focused_filtered_ + vc);
         focused_filtered_ = FirstNonDisabled(target);
         EnsureFocusVisible();
@@ -639,8 +628,7 @@ private:
     }
 
     void MovePageUp() {
-        int vc = std::max(1, std::min(opts_.visible_count,
-                                      std::max(1, FilteredCount())));
+        int vc = std::max(1, std::min(opts_.visible_count, std::max(1, FilteredCount())));
         int target = std::max(0, focused_filtered_ - vc);
         focused_filtered_ = FirstNonDisabled(target);
         EnsureFocusVisible();
@@ -703,20 +691,26 @@ private:
         for (int i : filtered_to_original_)
             if (!opts_.options[i].disabled) SetSelected(i);
         if (opts_.on_change && !opts_.options.empty())
-            opts_.on_change(opts_.options[filtered_to_original_[
-                std::min(focused_filtered_, FilteredCount()-1)]].value);
+            opts_.on_change(opts_
+                                .options[filtered_to_original_[std::min(focused_filtered_,
+                                                                        FilteredCount() - 1)]]
+                                .value);
     }
 
     void InvertSelectionMulti() {
         if (opts_.mode != SelectMode::Multi) return;
         for (int i : filtered_to_original_) {
             if (opts_.options[i].disabled) continue;
-            if (IsSelectedBitset(i)) UnsetSelected(i);
-            else SetSelected(i);
+            if (IsSelectedBitset(i))
+                UnsetSelected(i);
+            else
+                SetSelected(i);
         }
         if (opts_.on_change && !opts_.options.empty())
-            opts_.on_change(opts_.options[filtered_to_original_[
-                std::min(focused_filtered_, FilteredCount()-1)]].value);
+            opts_.on_change(opts_
+                                .options[filtered_to_original_[std::min(focused_filtered_,
+                                                                        FilteredCount() - 1)]]
+                                .value);
     }
 
     // Bitset helpers -----------------------------------------------------
@@ -725,13 +719,19 @@ private:
         if (use_large_set_) return multi_selected_large_.count(orig) > 0;
         return orig < kMaxBitset && multi_selected_.test(orig);
     }
+
     void SetSelected(size_t orig) {
-        if (use_large_set_) multi_selected_large_.insert(orig);
-        else if (orig < kMaxBitset) multi_selected_.set(orig);
+        if (use_large_set_)
+            multi_selected_large_.insert(orig);
+        else if (orig < kMaxBitset)
+            multi_selected_.set(orig);
     }
+
     void UnsetSelected(size_t orig) {
-        if (use_large_set_) multi_selected_large_.erase(orig);
-        else if (orig < kMaxBitset) multi_selected_.reset(orig);
+        if (use_large_set_)
+            multi_selected_large_.erase(orig);
+        else if (orig < kMaxBitset)
+            multi_selected_.reset(orig);
     }
 
     // ------------------------------------------------------------------
@@ -763,12 +763,24 @@ private:
         }
 
         // PgUp / PgDn
-        if (event == Event::PageUp) { MovePageUp(); return true; }
-        if (event == Event::PageDown) { MovePageDown(); return true; }
+        if (event == Event::PageUp) {
+            MovePageUp();
+            return true;
+        }
+        if (event == Event::PageDown) {
+            MovePageDown();
+            return true;
+        }
 
         // Tab / Shift-Tab group jump
-        if (event == Event::Tab) { JumpToNextGroup(); return true; }
-        if (event == Event::TabReverse) { JumpToPrevGroup(); return true; }
+        if (event == Event::Tab) {
+            JumpToNextGroup();
+            return true;
+        }
+        if (event == Event::TabReverse) {
+            JumpToPrevGroup();
+            return true;
+        }
 
         // a/A — select-all / invert (multi only)
         if (opts_.mode == SelectMode::Multi) {
@@ -800,8 +812,10 @@ private:
                 if (opts_.on_submit_single) opts_.on_submit_single(*single_selected_);
             } else {
                 // toggle, keep open
-                if (IsSelectedBitset(orig)) UnsetSelected(orig);
-                else SetSelected(orig);
+                if (IsSelectedBitset(orig))
+                    UnsetSelected(orig);
+                else
+                    SetSelected(orig);
                 if (opts_.on_change) opts_.on_change(opts_.options[orig].value);
             }
             return true;
@@ -825,10 +839,11 @@ private:
                                 single_selected_ = opts_.options[orig].value;
                                 if (opts_.on_change) opts_.on_change(*single_selected_);
                             } else {
-                                if (IsSelectedBitset(orig)) UnsetSelected(orig);
-                                else SetSelected(orig);
-                                if (opts_.on_change)
-                                    opts_.on_change(opts_.options[orig].value);
+                                if (IsSelectedBitset(orig))
+                                    UnsetSelected(orig);
+                                else
+                                    SetSelected(orig);
+                                if (opts_.on_change) opts_.on_change(opts_.options[orig].value);
                             }
                         }
                     }
@@ -869,24 +884,21 @@ private:
         // Header: search-result count summary
         if (!search_text_.empty() || !group_anchor_.empty()) {
             auto header_parts = Elements{};
-            header_parts.push_back(text(std::format(
-                " {} of {} option{}",
-                n,
-                (int)opts_.options.size(),
-                (int)opts_.options.size() == 1 ? "" : "s"))
-                | dim);
+            header_parts.push_back(
+                text(std::format(" {} of {} option{}", n, (int)opts_.options.size(),
+                                 (int)opts_.options.size() == 1 ? "" : "s")) |
+                dim);
             if (!search_text_.empty()) {
                 header_parts.push_back(text("  "));
-                header_parts.push_back(text(std::format("filter: '{}'", search_text_))
-                    | color(pal.info) | dim);
+                header_parts.push_back(text(std::format("filter: '{}'", search_text_)) |
+                                       color(pal.info) | dim);
             }
             body.push_back(hbox(std::move(header_parts)));
             body.push_back(separator());
         }
 
         if (n == 0) {
-            body.push_back(text("  No results, try different keywords")
-                            | color(pal.warning) | dim);
+            body.push_back(text("  No results, try different keywords") | color(pal.warning) | dim);
             // Fill remaining vertical slots
             for (int i = 0; i < vc - 1; ++i)
                 body.push_back(text(""));
@@ -904,10 +916,10 @@ private:
 
             // Group header + separator when group changes.
             if (!opt.group.empty() && opt.group != prev_group) {
-                if (!prev_group.empty() || fi != start)
-                    option_rows.push_back(separator() | dim);
+                if (!prev_group.empty() || fi != start) option_rows.push_back(separator() | dim);
                 option_rows.push_back(hbox({
-                    text(" " + std::string(loom::ui::design::figures::kDiamond) + " ") | color(pal.info),
+                    text(" " + std::string(loom::ui::design::figures::kDiamond) + " ") |
+                        color(pal.info),
                     text(opt.group) | bold | color(pal.info),
                 }));
                 prev_group = opt.group;
@@ -917,11 +929,9 @@ private:
             }
 
             bool hovered = (fi == focused_filtered_);
-            bool selected =
-                (opts_.mode == SelectMode::Single)
-                    ? (single_selected_.has_value() &&
-                       *single_selected_ == opt.value)
-                    : IsSelectedBitset(orig);
+            bool selected = (opts_.mode == SelectMode::Single)
+                                ? (single_selected_.has_value() && *single_selected_ == opt.value)
+                                : IsSelectedBitset(orig);
 
             Element row;
             if (opts_.custom_render) {
@@ -932,26 +942,22 @@ private:
             option_rows.push_back(row);
 
             // Expanded layout: add description below on its own line.
-            if (opts_.layout == SelectLayout::Expanded &&
-                !opts_.inline_descriptions &&
+            if (opts_.layout == SelectLayout::Expanded && !opts_.inline_descriptions &&
                 !opt.description.empty()) {
-                auto desc = text("     " + opt.description)
-                    | color(pal.muted) | dim;
+                auto desc = text("     " + opt.description) | color(pal.muted) | dim;
                 option_rows.push_back(std::move(desc));
                 if (fi < end - 1) option_rows.push_back(text(""));
             }
         }
 
         // Pad the end with empties so the list has a fixed height.
-        for (int i = 0; i < pad_after; ++i) option_rows.push_back(text(""));
+        for (int i = 0; i < pad_after; ++i)
+            option_rows.push_back(text(""));
 
         // Build the scrollbar alongside the option rows.
-        Elements bar = RenderScrollBar(
-            (int)option_rows.size(),
-            n <= 1 ? 0.0
-                   : (double)start / (double)(n - std::min(vc, n)),
-            n == 0 ? 1.0
-                   : (double)std::min(vc, n) / (double)n);
+        Elements bar = RenderScrollBar((int)option_rows.size(),
+                                       n <= 1 ? 0.0 : (double)start / (double)(n - std::min(vc, n)),
+                                       n == 0 ? 1.0 : (double)std::min(vc, n) / (double)n);
 
         // Pair each row with a bar cell.
         Elements combined;
@@ -959,40 +965,37 @@ private:
         for (size_t i = 0; i < option_rows.size(); ++i) {
             Element bar_cell = (i < bar.size()) ? bar[i] : filler();
             combined.push_back(hbox({
-                option_rows[i],
-                bar_cell | align_right,
-            }) | yflex_grow);
+                                   option_rows[i],
+                                   bar_cell | align_right,
+                               }) |
+                               yflex_grow);
         }
 
         // Prepend summary header
-        body.insert(body.end(),
-                    std::make_move_iterator(combined.begin()),
+        body.insert(body.end(), std::make_move_iterator(combined.begin()),
                     std::make_move_iterator(combined.end()));
 
         // Footer: position indicator + shortcut hints
         Elements footer_bits;
-        footer_bits.push_back(text(std::format(
-            " {}-{} / {}",
-            n == 0 ? 0 : start + 1,
-            n == 0 ? 0 : std::min(end, n),
-            n)) | dim);
+        footer_bits.push_back(text(std::format(" {}-{} / {}", n == 0 ? 0 : start + 1,
+                                               n == 0 ? 0 : std::min(end, n), n)) |
+                              dim);
         if (opts_.mode == SelectMode::Multi) {
             int sel = (int)SelectedValues().size();
-            footer_bits.push_back(text(std::format("  ·  {} selected", sel))
-                                  | color(pal.success) | dim);
+            footer_bits.push_back(text(std::format("  ·  {} selected", sel)) | color(pal.success) |
+                                  dim);
         }
         footer_bits.push_back(text("  ·  ↑↓j/k Nav  ⏎ Select  Space Toggle  "
                                    "a/A All/Invert  / Search  g/G Home/End  "
-                                   "Tab Groups  Esc Cancel")
-                              | dim);
+                                   "Tab Groups  Esc Cancel") |
+                              dim);
         body.push_back(separator());
         body.push_back(hbox(std::move(footer_bits)));
 
         return vbox(std::move(body));
     }
 
-    [[nodiscard]] Element RenderOptionRow(const SelectOption& opt,
-                                          bool hovered, bool selected,
+    [[nodiscard]] Element RenderOptionRow(const SelectOption& opt, bool hovered, bool selected,
                                           int display_idx_1based) const {
         const auto& pal = *loom::ui::design::theme::current_theme().palette;
         Elements parts;
@@ -1000,9 +1003,12 @@ private:
 
         // Selection / hover gutter
         if (selected)
-            parts.push_back(text(" " + std::string(loom::ui::design::figures::kTick) + " ") | color(pal.success) | bold);
+            parts.push_back(text(" " + std::string(loom::ui::design::figures::kTick) + " ") |
+                            color(pal.success) | bold);
         else if (hovered)
-            parts.push_back(text(" " + std::string(loom::ui::design::figures::kPointerSmall) + " ") | color(pal.info) | bold);
+            parts.push_back(
+                text(" " + std::string(loom::ui::design::figures::kPointerSmall) + " ") |
+                color(pal.info) | bold);
         else
             parts.push_back(text("   "));
 
@@ -1020,16 +1026,20 @@ private:
 
         // Label with search highlighting
         auto label_el = RenderHighlightedLabel(opt.label, search_text_);
-        if (opt.disabled) label_el = label_el | dim;
-        else if (hovered) label_el = label_el | bold;
+        if (opt.disabled)
+            label_el = label_el | dim;
+        else if (hovered)
+            label_el = label_el | bold;
         if (selected) label_el = label_el | color(pal.success);
         parts.push_back(label_el);
 
         // Inline description
         if (opts_.inline_descriptions && !opt.description.empty()) {
             auto desc = text(" — " + opt.description);
-            if (opt.dim_description) desc = desc | dim;
-            else desc = desc | color(pal.muted);
+            if (opt.dim_description)
+                desc = desc | dim;
+            else
+                desc = desc | color(pal.muted);
             parts.push_back(desc);
         }
 
@@ -1056,8 +1066,9 @@ struct Holder : CustomSelectImpl {
     using CustomSelectImpl::CustomSelectImpl;
     ~Holder() override;
 };
+
 Holder::~Holder() = default;
-} // namespace detail
+}  // namespace detail
 
 /// Build a CustomSelect component. Returns a pair:
 ///   - the FTXUI Component (to insert into your tree)
@@ -1073,10 +1084,10 @@ MakeCustomSelect(CustomSelectOptions opts) {
 
 /// Single-select convenience.
 /// Caller gets the selected value via on_submit (fired on Enter).
-[[nodiscard]] inline Component MakeSingleSelect(
-    std::vector<SelectOption> options,
-    std::function<void(const std::string& value)> on_submit,
-    std::function<void()> on_cancel = nullptr) {
+[[nodiscard]] inline Component
+MakeSingleSelect(std::vector<SelectOption> options,
+                 std::function<void(const std::string& value)> on_submit,
+                 std::function<void()> on_cancel = nullptr) {
 
     CustomSelectOptions opts;
     opts.options = std::move(options);
@@ -1090,11 +1101,10 @@ MakeCustomSelect(CustomSelectOptions opts) {
 /// Caller gets values via on_submit_multi — call handle->Submit() from an
 /// OK button to fire it, or rely on on_change for live updates.
 [[nodiscard]] inline std::pair<Component, std::shared_ptr<CustomSelectHandle>>
-MakeMultiSelect(
-    std::vector<SelectOption> options,
-    std::function<void(const std::vector<std::string>& values)> on_submit,
-    std::function<void(const std::string& changed_value)> on_change = nullptr,
-    std::function<void()> on_cancel = nullptr) {
+MakeMultiSelect(std::vector<SelectOption> options,
+                std::function<void(const std::vector<std::string>& values)> on_submit,
+                std::function<void(const std::string& changed_value)> on_change = nullptr,
+                std::function<void()> on_cancel = nullptr) {
 
     CustomSelectOptions opts;
     opts.options = std::move(options);
@@ -1105,4 +1115,4 @@ MakeMultiSelect(
     return MakeCustomSelect(std::move(opts));
 }
 
-} // namespace loom::ui::custom_select
+}  // namespace loom::ui::custom_select

@@ -5,9 +5,7 @@ export module loom.tools.sleep;
 
 import std;
 
-
 export namespace loom::tools {
-
 
 enum class SleepError {
     InvalidDuration,
@@ -18,14 +16,18 @@ enum class SleepError {
 
 constexpr auto format_error(SleepError err) -> std::string_view {
     switch (err) {
-        case SleepError::InvalidDuration:  return "Invalid sleep duration (must be > 0)";
-        case SleepError::DurationTooLong:  return "Sleep duration exceeds maximum allowed";
-        case SleepError::Cancelled:        return "Sleep was cancelled by abort signal";
-        case SleepError::ReasonEmpty:      return "Sleep reason must be specified";
-        default:                           return "Unknown sleep error";
+    case SleepError::InvalidDuration:
+        return "Invalid sleep duration (must be > 0)";
+    case SleepError::DurationTooLong:
+        return "Sleep duration exceeds maximum allowed";
+    case SleepError::Cancelled:
+        return "Sleep was cancelled by abort signal";
+    case SleepError::ReasonEmpty:
+        return "Sleep reason must be specified";
+    default:
+        return "Unknown sleep error";
     }
 }
-
 
 struct SleepRequest {
     std::chrono::seconds duration;
@@ -33,35 +35,29 @@ struct SleepRequest {
     std::optional<std::string> resume_hint;
 };
 
-
 struct SleepResult {
     std::chrono::milliseconds actual_duration{0};
     bool was_cancelled{false};
     std::string reason;
 };
 
-
 class AbortSignal {
 public:
-
     void abort() {
         std::lock_guard lock(mutex_);
         aborted_ = true;
         cv_.notify_all();
     }
 
-
     [[nodiscard]] bool is_aborted() const {
         std::lock_guard lock(mutex_);
         return aborted_;
     }
 
-
     auto wait_for(std::chrono::milliseconds duration) -> bool {
         std::unique_lock lock(mutex_);
         return cv_.wait_for(lock, duration, [this] { return aborted_; });
     }
-
 
     void reset() {
         std::lock_guard lock(mutex_);
@@ -74,11 +70,11 @@ private:
     bool aborted_{false};
 };
 
-
 class SleepTool {
 public:
     static constexpr std::string_view name = "sleep";
-    static constexpr std::string_view description = "Wait for a specified duration in proactive mode";
+    static constexpr std::string_view description =
+        "Wait for a specified duration in proactive mode";
     static constexpr std::chrono::seconds kMaxDuration{300};
     static constexpr std::chrono::seconds kMinDuration{1};
 
@@ -102,7 +98,8 @@ public:
         if (auto v = validate(request); !v) return std::unexpected(v.error());
 
         auto start = std::chrono::steady_clock::now();
-        auto target_duration = std::chrono::duration_cast<std::chrono::milliseconds>(request.duration);
+        auto target_duration =
+            std::chrono::duration_cast<std::chrono::milliseconds>(request.duration);
         bool cancelled = false;
 
         if (abort_signal_) {
@@ -138,7 +135,6 @@ public:
         };
     }
 
-
     void cancel() {
         if (abort_signal_) {
             abort_signal_->abort();
@@ -158,11 +154,12 @@ public:
     }},
     "required": ["duration", "reason"]
   }}
-}})json", name, description);
+}})json",
+                           name, description);
     }
 
 private:
     std::shared_ptr<AbortSignal> abort_signal_;
 };
 
-} // namespace loom::tools
+}  // namespace loom::tools

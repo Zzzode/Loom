@@ -27,33 +27,31 @@ struct VSCodeMCPServer {
 
 namespace detail {
 
-[[nodiscard]] inline std::optional<std::string> json_string(
-    loom::utils::json::JsonVal object,
-    std::string_view key) {
+[[nodiscard]] inline std::optional<std::string> json_string(loom::utils::json::JsonVal object,
+                                                            std::string_view key) {
     if (!object.is_obj()) return std::nullopt;
     auto value = object.get(key);
     if (!value.is_str()) return std::nullopt;
     return std::string(value.as_str());
 }
 
-[[nodiscard]] inline std::string normalize_transport(
-    loom::utils::json::JsonVal config,
-    const std::string& connection_string) {
+[[nodiscard]] inline std::string normalize_transport(loom::utils::json::JsonVal config,
+                                                     const std::string& connection_string) {
     auto transport = json_string(config, "type");
     if (!transport) transport = json_string(config, "transport");
     if (!transport && connection_string.starts_with("ws://")) return "ws";
-    if (!transport && (connection_string.starts_with("http://") ||
-                       connection_string.starts_with("https://"))) return "sse";
+    if (!transport &&
+        (connection_string.starts_with("http://") || connection_string.starts_with("https://")))
+        return "sse";
     return transport.value_or("stdio");
 }
 
-inline void add_server_from_config(
-    std::vector<VSCodeMCPServer>& servers,
-    std::string name,
-    loom::utils::json::JsonVal config) {
+inline void add_server_from_config(std::vector<VSCodeMCPServer>& servers, std::string name,
+                                   loom::utils::json::JsonVal config) {
     if (!config.is_obj()) return;
 
-    if (auto explicit_name = json_string(config, "name"); explicit_name && !explicit_name->empty()) {
+    if (auto explicit_name = json_string(config, "name");
+        explicit_name && !explicit_name->empty()) {
         name = std::move(*explicit_name);
     }
 
@@ -78,9 +76,8 @@ inline void add_server_from_config(
     servers.push_back(std::move(server));
 }
 
-inline void add_servers_from_object(
-    std::vector<VSCodeMCPServer>& servers,
-    loom::utils::json::JsonVal object) {
+inline void add_servers_from_object(std::vector<VSCodeMCPServer>& servers,
+                                    loom::utils::json::JsonVal object) {
     if (!object.is_obj()) return;
     object.iter_obj([&servers](loom::utils::json::JsonVal key, loom::utils::json::JsonVal value) {
         if (!key.is_str()) return;
@@ -88,9 +85,8 @@ inline void add_servers_from_object(
     });
 }
 
-inline void add_servers_from_document(
-    std::vector<VSCodeMCPServer>& servers,
-    loom::utils::json::JsonVal root) {
+inline void add_servers_from_document(std::vector<VSCodeMCPServer>& servers,
+                                      loom::utils::json::JsonVal root) {
     if (!root.is_obj()) return;
 
     const auto before_count = servers.size();
@@ -112,11 +108,10 @@ inline void add_servers_from_document(
     }
 }
 
-} // namespace detail
+}  // namespace detail
 
 /// Discover MCP servers from VS Code extensions
-inline std::vector<VSCodeMCPServer> discover_vscode_mcp_servers(
-    std::string_view workspace_path) {
+inline std::vector<VSCodeMCPServer> discover_vscode_mcp_servers(std::string_view workspace_path) {
     namespace fs = std::filesystem;
     std::vector<VSCodeMCPServer> servers;
 
@@ -127,7 +122,7 @@ inline std::vector<VSCodeMCPServer> discover_vscode_mcp_servers(
     if (fs::exists(mcp_config)) {
         std::ifstream ifs(mcp_config);
         std::string content((std::istreambuf_iterator<char>(ifs)),
-                             std::istreambuf_iterator<char>());
+                            std::istreambuf_iterator<char>());
 
         auto doc = loom::utils::json::parse(content);
         if (doc) {
@@ -148,7 +143,7 @@ inline std::vector<VSCodeMCPServer> discover_vscode_mcp_servers(
 
                 std::ifstream pf(package_json);
                 std::string pkg((std::istreambuf_iterator<char>(pf)),
-                                 std::istreambuf_iterator<char>());
+                                std::istreambuf_iterator<char>());
 
                 // Check if extension contributes MCP servers
                 if (pkg.find("\"mcp\"") != std::string::npos ||
@@ -203,10 +198,8 @@ inline bool connect_vscode_mcp(const VSCodeMCPServer& server) {
         return fs::exists(server.connection_string);
     }
 
-    if (server.transport_type == "sse" ||
-        server.transport_type == "http" ||
-        server.transport_type == "streamable_http" ||
-        server.transport_type == "ws" ||
+    if (server.transport_type == "sse" || server.transport_type == "http" ||
+        server.transport_type == "streamable_http" || server.transport_type == "ws" ||
         server.transport_type == "websocket") {
         return server.connection_string.starts_with("http://") ||
                server.connection_string.starts_with("https://") ||
@@ -217,4 +210,4 @@ inline bool connect_vscode_mcp(const VSCodeMCPServer& server) {
     return false;
 }
 
-} // namespace loom::services::mcp
+}  // namespace loom::services::mcp

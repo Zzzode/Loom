@@ -15,7 +15,7 @@
 // ────────────────────────────────────────────────────────────────────────
 module;
 
-#include <cstdlib>      // for std::getenv (is_unicode_supported)
+#include <cstdlib>  // for std::getenv (is_unicode_supported)
 
 // FTXUI Color.hpp: not used here (figures module is glyphs-only, no colors).
 #include <ftxui/dom/elements.hpp>  // for ftxui::Color forward refs that
@@ -40,13 +40,14 @@ using namespace std::string_view_literals;
 //   kPointerPrefix  — glyph + ASCII space, 2 display cells total, matching
 //                     the glyph+NBSP pair.  Use inside hbox layout so the
 //                     trailing cell doesn't get squashed by flex.
-inline constexpr std::string_view kPointer       = "\xE2\x9D\xAF";           // ❯ U+276F (1 display cell)
-inline constexpr std::string_view kPointerPrefix = "\xE2\x9D\xAF ";          // ❯ + space (2 cells)
+inline constexpr std::string_view kPointer = "\xE2\x9D\xAF";         // ❯ U+276F (1 display cell)
+inline constexpr std::string_view kPointerPrefix = "\xE2\x9D\xAF ";  // ❯ + space (2 cells)
 
 // Bash mode: literal '!' + NBSP.
-inline constexpr std::string_view kBashGlyph       = "!";                     // ASCII '!' U+0021 (1 cell)
-inline constexpr std::string_view kBashPrefix      = "! ";                     // ! + space (2 cells)
-inline constexpr char           kBashModeChar      = '!';                     // for leading-char detection: `text[0] == kBashModeChar`
+inline constexpr std::string_view kBashGlyph = "!";    // ASCII '!' U+0021 (1 cell)
+inline constexpr std::string_view kBashPrefix = "! ";  // ! + space (2 cells)
+inline constexpr char kBashModeChar =
+    '!';  // for leading-char detection: `text[0] == kBashModeChar`
 
 // Modes 'orphaned-permission' / 'task-notification' fall through to the
 // kPointer glyph — no distinct visual.  The CPP InputMode enum used to have
@@ -56,52 +57,75 @@ inline constexpr char           kBashModeChar      = '!';                     //
 // prompt glyph only has TWO rendered variants: kPointer vs kBashGlyph.
 //
 // ─── npm::figures defaults (common glyphs, ported verbatim) ────────────
-inline constexpr std::string_view kTick        = "\xE2\x9C\x94";  // ✔ U+2714 (success)
-inline constexpr std::string_view kCross       = "\xE2\x9C\x98";  // ✘ U+2718 (error)
-inline constexpr std::string_view kPointerSmall= "\xE2\x80\xBA";  // › U+203A (figures.pointerSmall)
-inline constexpr std::string_view kWarning     = "\xE2\x9A\xA0";  // ⚠ U+26A0 (figures.warning)
-inline constexpr std::string_view kInfo        = "\xE2\x84\xB9";  // ℹ U+2139 (figures.info)
-inline constexpr std::string_view kCircle      = "\xE2\x97\xAF";  // ◯ U+25EF (figures.circle)
-inline constexpr std::string_view kEllipsis    = "\xE2\x80\xA6";  // … U+2026 (figures.ellipsis — THREE DOTS leader)
-inline constexpr std::string_view kCheckboxOn  = "\xE2\x98\x92";  // ☒ U+2612 (figures.checkboxOn)
+inline constexpr std::string_view kTick = "\xE2\x9C\x94";   // ✔ U+2714 (success)
+inline constexpr std::string_view kCross = "\xE2\x9C\x98";  // ✘ U+2718 (error)
+inline constexpr std::string_view kPointerSmall =
+    "\xE2\x80\xBA";                                           // › U+203A (figures.pointerSmall)
+inline constexpr std::string_view kWarning = "\xE2\x9A\xA0";  // ⚠ U+26A0 (figures.warning)
+inline constexpr std::string_view kInfo = "\xE2\x84\xB9";     // ℹ U+2139 (figures.info)
+inline constexpr std::string_view kCircle = "\xE2\x97\xAF";   // ◯ U+25EF (figures.circle)
+inline constexpr std::string_view kEllipsis =
+    "\xE2\x80\xA6";  // … U+2026 (figures.ellipsis — THREE DOTS leader)
+inline constexpr std::string_view kCheckboxOn = "\xE2\x98\x92";   // ☒ U+2612 (figures.checkboxOn)
 inline constexpr std::string_view kCheckboxOff = "\xE2\x98\x90";  // ☐ U+2610 (figures.checkboxOff)
-inline constexpr std::string_view kBullet      = "\xE2\x97\x8F";  // ● U+25CF (figures.bullet)
-inline constexpr std::string_view kArrowDown   = "\xE2\x86\x93";  // ↓ U+2193 (figures.arrowDown — new-messages pill caret)
+inline constexpr std::string_view kBullet = "\xE2\x97\x8F";       // ● U+25CF (figures.bullet)
+inline constexpr std::string_view kArrowDown =
+    "\xE2\x86\x93";  // ↓ U+2193 (figures.arrowDown — new-messages pill caret)
 // Additional npm-figures glyphs used throughout the UI for status
 // indicators (GAP 5: fig-npm-glyphs-no-cpp-module).
-inline constexpr std::string_view kSquare      = "\xE2\x96\xA0";  // ■ U+25A0 (figures.square — solid square)
-inline constexpr std::string_view kDiamond     = "\xE2\x97\x86";  // ◆ U+25C6 (figures.diamond — filled diamond, alias kLozenge)
-inline constexpr std::string_view kLozenge     = "\xE2\x97\x86";  // ◆ U+25C6 (alias for kDiamond)
-inline constexpr std::string_view kArrowRight  = "\xE2\x86\x92";  // → U+2192 (figures.arrowRight — cross-session injected indicator)
+inline constexpr std::string_view kSquare =
+    "\xE2\x96\xA0";  // ■ U+25A0 (figures.square — solid square)
+inline constexpr std::string_view kDiamond =
+    "\xE2\x97\x86";  // ◆ U+25C6 (figures.diamond — filled diamond, alias kLozenge)
+inline constexpr std::string_view kLozenge = "\xE2\x97\x86";  // ◆ U+25C6 (alias for kDiamond)
+inline constexpr std::string_view kArrowRight =
+    "\xE2\x86\x92";  // → U+2192 (figures.arrowRight — cross-session injected indicator)
 
 // ─── Additional npm::figures glyphs (used in MCP dialogs, settings, task lists) ─
 // mainSymbols set (isUnicodeSupported).
 // These were missing from the CPP port; used by MCP server list (radio buttons),
 // settings carousel (triangles), task list (squares), companion UI (heart),
 // issue banner (star), and tree-drawing connectors.
-inline constexpr std::string_view kArrowUp             = "\xE2\x86\x91";  // ↑ U+2191 (figures.arrowUp — opus 1m merge notice)
-inline constexpr std::string_view kArrowLeft           = "\xE2\x86\x90";  // ← U+2190 (figures.arrowLeft — inbound channel indicator)
-inline constexpr std::string_view kRadioOn             = "\xE2\x97\x89";  // ◉ U+25C9 (figures.radioOn — selected radio button, alias kCircleFilled)
-inline constexpr std::string_view kRadioOff            = "\xE2\x97\xAF";  // ◯ U+25EF (figures.radioOff — unselected radio, alias kCircle)
-inline constexpr std::string_view kTriangleUpOutline   = "\xE2\x96\xB3";  // △ U+25B3 (figures.triangleUpOutline — warning triangle)
-inline constexpr std::string_view kTriangleRightSmall  = "\xE2\x96\xB8";  // ▸ U+25B8 (figures.triangleRightSmall — expand caret)
-inline constexpr std::string_view kTriangleDownSmall   = "\xE2\x96\xBE";  // ▾ U+25BE (figures.triangleDownSmall — collapse caret)
-inline constexpr std::string_view kStar                = "\xE2\x98\x85";  // ★ U+2605 (figures.star — favorite / diagnostic hint)
-inline constexpr std::string_view kHeart               = "\xE2\x99\xA5";  // ♥ U+2665 (figures.heart — companion pet)
-inline constexpr std::string_view kSquareSmall         = "\xE2\x97\xBB";  // ◻ U+25FB (figures.squareSmall — task todo)
-inline constexpr std::string_view kSquareSmallFilled   = "\xE2\x97\xBC";  // ◼ U+25FC (figures.squareSmallFilled — task done)
-inline constexpr std::string_view kCircleFilled        = "\xE2\x97\x89";  // ◉ U+25C9 (figures.circleFilled — checked circle, alias kRadioOn)
-inline constexpr std::string_view kCircleDouble        = "\xE2\x97\x8E";  // ◎ U+25CE (figures.circleDouble — remote indicator)
-inline constexpr std::string_view kPlay                = "\xE2\x96\xB6";  // ▶ U+25B6 (figures.play — play icon)
-inline constexpr std::string_view kQuestionMarkPrefix  = "(?)";             // (?) (figures.questionMarkPrefix — awaiting approval)
+inline constexpr std::string_view kArrowUp =
+    "\xE2\x86\x91";  // ↑ U+2191 (figures.arrowUp — opus 1m merge notice)
+inline constexpr std::string_view kArrowLeft =
+    "\xE2\x86\x90";  // ← U+2190 (figures.arrowLeft — inbound channel indicator)
+inline constexpr std::string_view kRadioOn =
+    "\xE2\x97\x89";  // ◉ U+25C9 (figures.radioOn — selected radio button, alias kCircleFilled)
+inline constexpr std::string_view kRadioOff =
+    "\xE2\x97\xAF";  // ◯ U+25EF (figures.radioOff — unselected radio, alias kCircle)
+inline constexpr std::string_view kTriangleUpOutline =
+    "\xE2\x96\xB3";  // △ U+25B3 (figures.triangleUpOutline — warning triangle)
+inline constexpr std::string_view kTriangleRightSmall =
+    "\xE2\x96\xB8";  // ▸ U+25B8 (figures.triangleRightSmall — expand caret)
+inline constexpr std::string_view kTriangleDownSmall =
+    "\xE2\x96\xBE";  // ▾ U+25BE (figures.triangleDownSmall — collapse caret)
+inline constexpr std::string_view kStar =
+    "\xE2\x98\x85";  // ★ U+2605 (figures.star — favorite / diagnostic hint)
+inline constexpr std::string_view kHeart =
+    "\xE2\x99\xA5";  // ♥ U+2665 (figures.heart — companion pet)
+inline constexpr std::string_view kSquareSmall =
+    "\xE2\x97\xBB";  // ◻ U+25FB (figures.squareSmall — task todo)
+inline constexpr std::string_view kSquareSmallFilled =
+    "\xE2\x97\xBC";  // ◼ U+25FC (figures.squareSmallFilled — task done)
+inline constexpr std::string_view kCircleFilled =
+    "\xE2\x97\x89";  // ◉ U+25C9 (figures.circleFilled — checked circle, alias kRadioOn)
+inline constexpr std::string_view kCircleDouble =
+    "\xE2\x97\x8E";  // ◎ U+25CE (figures.circleDouble — remote indicator)
+inline constexpr std::string_view kPlay = "\xE2\x96\xB6";  // ▶ U+25B6 (figures.play — play icon)
+inline constexpr std::string_view kQuestionMarkPrefix =
+    "(?)";  // (?) (figures.questionMarkPrefix — awaiting approval)
 
 // Tree-drawing chars (lineVertical / lineUpRight / lineUpDownRight).
 // Used by treeify.cppm and any hierarchical list rendering.  The "── " / "   "
 // suffixes are ASCII and appended by callers; only the box-drawing glyph itself
 // lives here so the byte sequence is defined once.
-inline constexpr std::string_view kLineVertical        = "\xE2\x94\x82";  // │ U+2502 (figures.lineVertical — tree vertical connector)
-inline constexpr std::string_view kLineUpRight         = "\xE2\x94\x94";  // └ U+2514 (figures.lineUpRight — tree last-child connector)
-inline constexpr std::string_view kLineUpDownRight     = "\xE2\x94\x9C";  // ├ U+251C (figures.lineUpDownRight — tree mid-child connector)
+inline constexpr std::string_view kLineVertical =
+    "\xE2\x94\x82";  // │ U+2502 (figures.lineVertical — tree vertical connector)
+inline constexpr std::string_view kLineUpRight =
+    "\xE2\x94\x94";  // └ U+2514 (figures.lineUpRight — tree last-child connector)
+inline constexpr std::string_view kLineUpDownRight =
+    "\xE2\x94\x9C";  // ├ U+251C (figures.lineUpDownRight — tree mid-child connector)
 
 // ─── CC-local figures ───────────────────────────────────────────────────────
 // Platform-aware + app-specific glyphs that don't come from npm::figures.
@@ -112,28 +136,45 @@ inline constexpr std::string_view kLineUpDownRight     = "\xE2\x94\x9C";  // ├
 // BLACK_CIRCLE: platform-aware.  Darwin = ⏺ U+23FA, others = ● U+25CF.
 // We expose BOTH so callers can choose; kBlackCircle is the Darwin default
 // (loom targets macOS), kBlackCircleFallback is the non-Darwin ●.
-inline constexpr std::string_view kBlackCircle         = "\xE2\x8F\xBA";  // ⏺ U+23FA (Darwin — message row prefix, system event dot)
-inline constexpr std::string_view kBlackCircleFallback = "\xE2\x97\x8F";  // ● U+25CF (non-Darwin, same as kBullet)
+inline constexpr std::string_view kBlackCircle =
+    "\xE2\x8F\xBA";  // ⏺ U+23FA (Darwin — message row prefix, system event dot)
+inline constexpr std::string_view kBlackCircleFallback =
+    "\xE2\x97\x8F";  // ● U+25CF (non-Darwin, same as kBullet)
 
-inline constexpr std::string_view kDiamondOpen         = "\xE2\x97\x87";  // ◇ U+25C7 (DIAMOND_OPEN — ultraplan running)
-inline constexpr std::string_view kTeardropAsterisk    = "\xE2\x9C\xBB";  // ✻ U+273B (TEARDROP_ASTERISK — scheduled_task / permission_retry)
-inline constexpr std::string_view kLightningBolt       = "\xE2\x86\xAF";  // ↯ U+21AF (LIGHTNING_BOLT — fast mode indicator)
-inline constexpr std::string_view kPauseIcon           = "\xE2\x8F\xB8";  // ⏸ U+23F8 (PAUSE_ICON — paused state)
-inline constexpr std::string_view kBulletOperator      = "\xE2\x88\x99";  // ∙ U+2219 (BULLET_OPERATOR — tool error prefix)
-inline constexpr std::string_view kRefreshArrow        = "\xE2\x86\xBB";  // ↻ U+21BB (REFRESH_ARROW — resource update indicator)
-inline constexpr std::string_view kChannelArrow        = "\xE2\x86\x90";  // ← U+2190 (CHANNEL_ARROW — inbound channel, alias kArrowLeft)
-inline constexpr std::string_view kInjectedArrow       = "\xE2\x86\x92";  // → U+2192 (INJECTED_ARROW — cross-session, alias kArrowRight)
-inline constexpr std::string_view kReferenceMark       = "\xE2\x80\xBB";  // ※ U+203B (REFERENCE_MARK — komejirushi, away-summary recap marker)
-inline constexpr std::string_view kBlockquoteBar       = "\xE2\x96\x8E";  // ▎ U+258E (BLOCKQUOTE_BAR — left one-quarter block)
-inline constexpr std::string_view kHeavyHorizontal     = "\xE2\x94\x81";  // ━ U+2501 (HEAVY_HORIZONTAL — heavy box-drawing separator)
-inline constexpr std::string_view kFlagIcon            = "\xE2\x9A\x91";  // ⚑ U+2691 (FLAG_ICON — issue banner)
-inline constexpr std::string_view kForkGlyph           = "\xE2\x91\x82";  // ⑂ U+2442 (FORK_GLYPH — fork directive indicator)
+inline constexpr std::string_view kDiamondOpen =
+    "\xE2\x97\x87";  // ◇ U+25C7 (DIAMOND_OPEN — ultraplan running)
+inline constexpr std::string_view kTeardropAsterisk =
+    "\xE2\x9C\xBB";  // ✻ U+273B (TEARDROP_ASTERISK — scheduled_task / permission_retry)
+inline constexpr std::string_view kLightningBolt =
+    "\xE2\x86\xAF";  // ↯ U+21AF (LIGHTNING_BOLT — fast mode indicator)
+inline constexpr std::string_view kPauseIcon =
+    "\xE2\x8F\xB8";  // ⏸ U+23F8 (PAUSE_ICON — paused state)
+inline constexpr std::string_view kBulletOperator =
+    "\xE2\x88\x99";  // ∙ U+2219 (BULLET_OPERATOR — tool error prefix)
+inline constexpr std::string_view kRefreshArrow =
+    "\xE2\x86\xBB";  // ↻ U+21BB (REFRESH_ARROW — resource update indicator)
+inline constexpr std::string_view kChannelArrow =
+    "\xE2\x86\x90";  // ← U+2190 (CHANNEL_ARROW — inbound channel, alias kArrowLeft)
+inline constexpr std::string_view kInjectedArrow =
+    "\xE2\x86\x92";  // → U+2192 (INJECTED_ARROW — cross-session, alias kArrowRight)
+inline constexpr std::string_view kReferenceMark =
+    "\xE2\x80\xBB";  // ※ U+203B (REFERENCE_MARK — komejirushi, away-summary recap marker)
+inline constexpr std::string_view kBlockquoteBar =
+    "\xE2\x96\x8E";  // ▎ U+258E (BLOCKQUOTE_BAR — left one-quarter block)
+inline constexpr std::string_view kHeavyHorizontal =
+    "\xE2\x94\x81";  // ━ U+2501 (HEAVY_HORIZONTAL — heavy box-drawing separator)
+inline constexpr std::string_view kFlagIcon =
+    "\xE2\x9A\x91";  // ⚑ U+2691 (FLAG_ICON — issue banner)
+inline constexpr std::string_view kForkGlyph =
+    "\xE2\x91\x82";  // ⑂ U+2442 (FORK_GLYPH — fork directive indicator)
 
 // Effort level indicators.
-inline constexpr std::string_view kEffortLow           = "\xE2\x97\x8B";  // ○ U+25CB (EFFORT_LOW)
-inline constexpr std::string_view kEffortMedium        = "\xE2\x97\x90";  // ◐ U+25D0 (EFFORT_MEDIUM)
-inline constexpr std::string_view kEffortHigh          = "\xE2\x97\x8F";  // ● U+25CF (EFFORT_HIGH, alias kBullet/kBlackCircleFallback)
-inline constexpr std::string_view kEffortMax           = "\xE2\x97\x89";  // ◉ U+25C9 (EFFORT_MAX — Opus 4.6 only, alias kRadioOn)
+inline constexpr std::string_view kEffortLow = "\xE2\x97\x8B";     // ○ U+25CB (EFFORT_LOW)
+inline constexpr std::string_view kEffortMedium = "\xE2\x97\x90";  // ◐ U+25D0 (EFFORT_MEDIUM)
+inline constexpr std::string_view kEffortHigh =
+    "\xE2\x97\x8F";  // ● U+25CF (EFFORT_HIGH, alias kBullet/kBlackCircleFallback)
+inline constexpr std::string_view kEffortMax =
+    "\xE2\x97\x89";  // ◉ U+25C9 (EFFORT_MAX — Opus 4.6 only, alias kRadioOn)
 
 // Bridge status indicators.
 // BRIDGE_SPINNER_FRAMES = ['·|·', '·/·', '·—·', '·\\·'] (4 frames).
@@ -151,16 +192,17 @@ inline constexpr std::size_t kBridgeSpinnerFrameCount = kBridgeSpinnerFrames.siz
 
 /// Get the bridge spinner glyph for a given frame index (wraps modulo count).
 [[nodiscard]] inline std::string_view bridge_spinner_frame_glyph(int frame) noexcept {
-    const auto idx = static_cast<std::size_t>(
-        ((frame % static_cast<int>(kBridgeSpinnerFrameCount)) +
-         static_cast<int>(kBridgeSpinnerFrameCount)) %
-        static_cast<int>(kBridgeSpinnerFrameCount));
+    const auto idx =
+        static_cast<std::size_t>(((frame % static_cast<int>(kBridgeSpinnerFrameCount)) +
+                                  static_cast<int>(kBridgeSpinnerFrameCount)) %
+                                 static_cast<int>(kBridgeSpinnerFrameCount));
     return kBridgeSpinnerFrames[idx];
 }
 
 // Bridge ready indicator '·✔︎·'
 //   (middot U+00B7 + heavy check U+2714 + VS15 U+FE0E + middot U+00B7).
-inline constexpr std::string_view kBridgeReadyIndicator = "\xC2\xB7\xE2\x9C\x94\xEF\xB8\x8E\xC2\xB7";  // ·✔︎·
+inline constexpr std::string_view kBridgeReadyIndicator =
+    "\xC2\xB7\xE2\x9C\x94\xEF\xB8\x8E\xC2\xB7";  // ·✔︎·
 
 // Bridge failed indicator '×' U+00D7.
 inline constexpr std::string_view kBridgeFailedIndicator = "\xC3\x97";  // × U+00D7
@@ -196,8 +238,7 @@ inline constexpr std::size_t kSpinnerFrameCount = kSpinnerFramesBraille.size();
 /// Get the spinner glyph for a given frame index (wraps modulo frame count).
 [[nodiscard]] inline std::string_view spinner_frame_glyph(int frame) noexcept {
     const auto idx = static_cast<std::size_t>(
-        ((frame % static_cast<int>(kSpinnerFrameCount)) +
-         static_cast<int>(kSpinnerFrameCount)) %
+        ((frame % static_cast<int>(kSpinnerFrameCount)) + static_cast<int>(kSpinnerFrameCount)) %
         static_cast<int>(kSpinnerFrameCount));
     return kSpinnerFrames[idx];
 }
@@ -208,10 +249,10 @@ inline constexpr std::size_t kSpinnerFrameCount = kSpinnerFramesBraille.size();
 // extra values from the old ReplScreenState::InputMode are preserved under
 // a separate VimMode enum / PlanMode flag so the prefix logic is clean.
 enum class PromptMode : int {
-    kPrompt              = 0,
-    kBash                = 1,
-    kOrphanedPermission  = 2,
-    kTaskNotification    = 3,
+    kPrompt = 0,
+    kBash = 1,
+    kOrphanedPermission = 2,
+    kTaskNotification = 3,
 };
 
 /// Detect bash mode from leading '!'.
@@ -267,23 +308,26 @@ enum class PromptMode : int {
     if (const char* wt = std::getenv("WT_SESSION"); wt && *wt) return true;
     if (const char* terminus = std::getenv("TERMINUS_SUBLIME"); terminus && *terminus) return true;
     if (const char* conemu = std::getenv("ConEmuTask");
-        conemu && std::string_view(conemu) == "{cmd::Cmder}") return true;
+        conemu && std::string_view(conemu) == "{cmd::Cmder}")
+        return true;
     if (const char* tp = std::getenv("TERM_PROGRAM"); tp) {
         const std::string_view tpv(tp);
         if (tpv == "Terminus-Sublime" || tpv == "vscode") return true;
     }
     if (const char* term = std::getenv("TERM"); term) {
         const std::string_view tv(term);
-        if (tv == "xterm-256color" || tv == "alacritty" ||
-            tv == "rxvt-unicode" || tv == "rxvt-unicode-256color") return true;
+        if (tv == "xterm-256color" || tv == "alacritty" || tv == "rxvt-unicode" ||
+            tv == "rxvt-unicode-256color")
+            return true;
     }
     if (const char* te = std::getenv("TERMINAL_EMULATOR");
-        te && std::string_view(te) == "JetBrains-JediTerm") return true;
+        te && std::string_view(te) == "JetBrains-JediTerm")
+        return true;
     return false;
 #else
     // Non-Windows: only the Linux kernel console (TERM=linux) lacks Unicode.
-    if (const char* term = std::getenv("TERM");
-        term && std::string_view(term) == "linux") return false;
+    if (const char* term = std::getenv("TERM"); term && std::string_view(term) == "linux")
+        return false;
     return true;
 #endif
 }
@@ -293,25 +337,26 @@ enum class PromptMode : int {
 // Only "special" glyphs differ; "common" glyphs (arrows, lines, bullet, etc.)
 // are identical in both main and fallback sets.
 namespace fallback {
-    inline constexpr std::string_view kTick        = "\xE2\x88\x9A";  // √ U+221A SQUARE ROOT
-    inline constexpr std::string_view kInfo        = "i";              // lowercase i
-    inline constexpr std::string_view kWarning     = "\xE2\x80\xBC";  // ‼ U+203C DOUBLE EXCLAMATION
-    inline constexpr std::string_view kCross       = "\xC3\x97";      // × U+00D7 MULTIPLICATION SIGN
-    inline constexpr std::string_view kSquareSmall = "\xE2\x96\xA1";  // □ U+25A1 WHITE SQUARE
-    inline constexpr std::string_view kSquareSmallFilled = "\xE2\x96\xA0";  // ■ U+25A0 BLACK SQUARE
-    inline constexpr std::string_view kCircle      = "( )";            // ASCII ( )
-    inline constexpr std::string_view kCircleFilled = "(*)";           // ASCII (*)
-    inline constexpr std::string_view kCircleDouble = "( )";           // ASCII ( )
-    inline constexpr std::string_view kRadioOn     = "(*)";           // alias kCircleFilled
-    inline constexpr std::string_view kRadioOff    = "( )";           // alias kCircle
-    inline constexpr std::string_view kCheckboxOn  = "[\xC3\x97]";    // [×] ASCII brackets + ×
-    inline constexpr std::string_view kCheckboxOff = "[ ]";            // ASCII [ ]
-    inline constexpr std::string_view kPointer     = ">";              // ASCII greater-than
-    inline constexpr std::string_view kTriangleUpOutline = "\xE2\x88\x86";  // ∆ U+2206 INCREMENT
-    inline constexpr std::string_view kTriangleRight = "\xE2\x96\xBA"; // ► U+25BA BLACK RIGHT-POINTING POINTER
-    inline constexpr std::string_view kLozenge     = "\xE2\x99\xA6";  // ♦ U+2666 BLACK DIAMOND SUIT
-    inline constexpr std::string_view kStar        = "\xE2\x9C\xB6";  // ✶ U+2736 SIX POINTED BLACK STAR
-    inline constexpr std::string_view kPlay        = "\xE2\x96\xBA";  // ► U+25BA (alias kTriangleRight)
+inline constexpr std::string_view kTick = "\xE2\x88\x9A";         // √ U+221A SQUARE ROOT
+inline constexpr std::string_view kInfo = "i";                    // lowercase i
+inline constexpr std::string_view kWarning = "\xE2\x80\xBC";      // ‼ U+203C DOUBLE EXCLAMATION
+inline constexpr std::string_view kCross = "\xC3\x97";            // × U+00D7 MULTIPLICATION SIGN
+inline constexpr std::string_view kSquareSmall = "\xE2\x96\xA1";  // □ U+25A1 WHITE SQUARE
+inline constexpr std::string_view kSquareSmallFilled = "\xE2\x96\xA0";  // ■ U+25A0 BLACK SQUARE
+inline constexpr std::string_view kCircle = "( )";                      // ASCII ( )
+inline constexpr std::string_view kCircleFilled = "(*)";                // ASCII (*)
+inline constexpr std::string_view kCircleDouble = "( )";                // ASCII ( )
+inline constexpr std::string_view kRadioOn = "(*)";                     // alias kCircleFilled
+inline constexpr std::string_view kRadioOff = "( )";                    // alias kCircle
+inline constexpr std::string_view kCheckboxOn = "[\xC3\x97]";           // [×] ASCII brackets + ×
+inline constexpr std::string_view kCheckboxOff = "[ ]";                 // ASCII [ ]
+inline constexpr std::string_view kPointer = ">";                       // ASCII greater-than
+inline constexpr std::string_view kTriangleUpOutline = "\xE2\x88\x86";  // ∆ U+2206 INCREMENT
+inline constexpr std::string_view kTriangleRight =
+    "\xE2\x96\xBA";  // ► U+25BA BLACK RIGHT-POINTING POINTER
+inline constexpr std::string_view kLozenge = "\xE2\x99\xA6";  // ♦ U+2666 BLACK DIAMOND SUIT
+inline constexpr std::string_view kStar = "\xE2\x9C\xB6";     // ✶ U+2736 SIX POINTED BLACK STAR
+inline constexpr std::string_view kPlay = "\xE2\x96\xBA";     // ► U+25BA (alias kTriangleRight)
 }  // namespace fallback
 
 // ─── Figures glyph set accessor ────────────────────────────────────────
@@ -332,13 +377,13 @@ struct Figures {
     std::string_view cross;
     std::string_view pointer;
     std::string_view pointerSmall;
-    std::string_view arrowUp;          // common — same in both sets
-    std::string_view arrowDown;        // common — same in both sets
-    std::string_view arrowLeft;        // common — same in both sets
-    std::string_view arrowRight;       // common — same in both sets
-    std::string_view bullet;           // common — same in both sets
-    std::string_view ellipsis;         // common — same in both sets
-    std::string_view square;           // common — same in both sets (U+25A0 solid)
+    std::string_view arrowUp;     // common — same in both sets
+    std::string_view arrowDown;   // common — same in both sets
+    std::string_view arrowLeft;   // common — same in both sets
+    std::string_view arrowRight;  // common — same in both sets
+    std::string_view bullet;      // common — same in both sets
+    std::string_view ellipsis;    // common — same in both sets
+    std::string_view square;      // common — same in both sets (U+25A0 solid)
     std::string_view squareSmall;
     std::string_view squareSmallFilled;
     std::string_view circle;
@@ -349,88 +394,88 @@ struct Figures {
     std::string_view checkboxOn;
     std::string_view checkboxOff;
     std::string_view triangleUpOutline;
-    std::string_view triangleDownSmall;  // common — same in both sets
-    std::string_view triangleRightSmall; // common — same in both sets
+    std::string_view triangleDownSmall;   // common — same in both sets
+    std::string_view triangleRightSmall;  // common — same in both sets
     std::string_view star;
-    std::string_view heart;            // common — same in both sets
+    std::string_view heart;  // common — same in both sets
     std::string_view play;
-    std::string_view questionMarkPrefix; // common — "(?)"
-    std::string_view lineVertical;     // common — tree drawing
-    std::string_view lineUpRight;      // common — tree drawing
-    std::string_view lineUpDownRight;  // common — tree drawing
+    std::string_view questionMarkPrefix;  // common — "(?)"
+    std::string_view lineVertical;        // common — tree drawing
+    std::string_view lineUpRight;         // common — tree drawing
+    std::string_view lineUpDownRight;     // common — tree drawing
 };
 
 /// Full Unicode glyph set — used when is_unicode_supported() == true.
 inline constexpr Figures kMainFigures = {
-    /*.tick           =*/ kTick,                    // ✔ U+2714
-    /*.info           =*/ kInfo,                    // ℹ U+2139
-    /*.warning        =*/ kWarning,                 // ⚠ U+26A0
-    /*.cross          =*/ kCross,                   // ✘ U+2718
-    /*.pointer        =*/ kPointer,                 // ❯ U+276F
-    /*.pointerSmall   =*/ kPointerSmall,            // › U+203A (common)
-    /*.arrowUp        =*/ kArrowUp,                 // ↑ U+2191 (common)
-    /*.arrowDown      =*/ kArrowDown,               // ↓ U+2193 (common)
-    /*.arrowLeft      =*/ kArrowLeft,               // ← U+2190 (common)
-    /*.arrowRight     =*/ kArrowRight,              // → U+2192 (common)
-    /*.bullet         =*/ kBullet,                  // ● U+25CF (common)
-    /*.ellipsis       =*/ kEllipsis,                // … U+2026 (common)
-    /*.square         =*/ kSquare,                  // ■ U+25A0 (common)
-    /*.squareSmall    =*/ kSquareSmall,             // ◻ U+25FB
-    /*.squareSmallFilled =*/ kSquareSmallFilled,    // ◼ U+25FC
-    /*.circle         =*/ kCircle,                  // ◯ U+25EF
-    /*.circleFilled   =*/ kCircleFilled,            // ◉ U+25C9
-    /*.circleDouble   =*/ kCircleDouble,            // ◎ U+25CE
-    /*.radioOn        =*/ kRadioOn,                 // ◉ U+25C9 (alias kCircleFilled)
-    /*.radioOff       =*/ kRadioOff,                // ◯ U+25EF (alias kCircle)
-    /*.checkboxOn     =*/ kCheckboxOn,              // ☒ U+2612
-    /*.checkboxOff    =*/ kCheckboxOff,             // ☐ U+2610
-    /*.triangleUpOutline =*/ kTriangleUpOutline,    // △ U+25B3
-    /*.triangleDownSmall =*/ kTriangleDownSmall,    // ▾ U+25BE (common)
-    /*.triangleRightSmall =*/ kTriangleRightSmall,  // ▸ U+25B8 (common)
-    /*.star           =*/ kStar,                    // ★ U+2605
-    /*.heart          =*/ kHeart,                   // ♥ U+2665 (common)
-    /*.play           =*/ kPlay,                    // ▶ U+25B6
-    /*.questionMarkPrefix =*/ kQuestionMarkPrefix,  // "(?)" (common)
-    /*.lineVertical   =*/ kLineVertical,            // │ U+2502 (common)
-    /*.lineUpRight    =*/ kLineUpRight,             // └ U+2514 (common)
-    /*.lineUpDownRight =*/ kLineUpDownRight,        // ├ U+251C (common)
+    /*.tick           =*/kTick,                    // ✔ U+2714
+    /*.info           =*/kInfo,                    // ℹ U+2139
+    /*.warning        =*/kWarning,                 // ⚠ U+26A0
+    /*.cross          =*/kCross,                   // ✘ U+2718
+    /*.pointer        =*/kPointer,                 // ❯ U+276F
+    /*.pointerSmall   =*/kPointerSmall,            // › U+203A (common)
+    /*.arrowUp        =*/kArrowUp,                 // ↑ U+2191 (common)
+    /*.arrowDown      =*/kArrowDown,               // ↓ U+2193 (common)
+    /*.arrowLeft      =*/kArrowLeft,               // ← U+2190 (common)
+    /*.arrowRight     =*/kArrowRight,              // → U+2192 (common)
+    /*.bullet         =*/kBullet,                  // ● U+25CF (common)
+    /*.ellipsis       =*/kEllipsis,                // … U+2026 (common)
+    /*.square         =*/kSquare,                  // ■ U+25A0 (common)
+    /*.squareSmall    =*/kSquareSmall,             // ◻ U+25FB
+    /*.squareSmallFilled =*/kSquareSmallFilled,    // ◼ U+25FC
+    /*.circle         =*/kCircle,                  // ◯ U+25EF
+    /*.circleFilled   =*/kCircleFilled,            // ◉ U+25C9
+    /*.circleDouble   =*/kCircleDouble,            // ◎ U+25CE
+    /*.radioOn        =*/kRadioOn,                 // ◉ U+25C9 (alias kCircleFilled)
+    /*.radioOff       =*/kRadioOff,                // ◯ U+25EF (alias kCircle)
+    /*.checkboxOn     =*/kCheckboxOn,              // ☒ U+2612
+    /*.checkboxOff    =*/kCheckboxOff,             // ☐ U+2610
+    /*.triangleUpOutline =*/kTriangleUpOutline,    // △ U+25B3
+    /*.triangleDownSmall =*/kTriangleDownSmall,    // ▾ U+25BE (common)
+    /*.triangleRightSmall =*/kTriangleRightSmall,  // ▸ U+25B8 (common)
+    /*.star           =*/kStar,                    // ★ U+2605
+    /*.heart          =*/kHeart,                   // ♥ U+2665 (common)
+    /*.play           =*/kPlay,                    // ▶ U+25B6
+    /*.questionMarkPrefix =*/kQuestionMarkPrefix,  // "(?)" (common)
+    /*.lineVertical   =*/kLineVertical,            // │ U+2502 (common)
+    /*.lineUpRight    =*/kLineUpRight,             // └ U+2514 (common)
+    /*.lineUpDownRight =*/kLineUpDownRight,        // ├ U+251C (common)
 };
 
 /// Fallback glyph set — used when is_unicode_supported() == false.
 /// Common glyphs (arrows, lines, bullet, ellipsis, etc.) are identical to main.
 inline constexpr Figures kFallbackFigures = {
-    /*.tick           =*/ fallback::kTick,                 // √
-    /*.info           =*/ fallback::kInfo,                 // i
-    /*.warning        =*/ fallback::kWarning,              // ‼
-    /*.cross          =*/ fallback::kCross,                // ×
-    /*.pointer        =*/ fallback::kPointer,              // >
-    /*.pointerSmall   =*/ kPointerSmall,                   // › (common)
-    /*.arrowUp        =*/ kArrowUp,                       // ↑ (common)
-    /*.arrowDown      =*/ kArrowDown,                     // ↓ (common)
-    /*.arrowLeft      =*/ kArrowLeft,                     // ← (common)
-    /*.arrowRight     =*/ kArrowRight,                    // → (common)
-    /*.bullet         =*/ kBullet,                        // ● (common)
-    /*.ellipsis       =*/ kEllipsis,                      // … (common)
-    /*.square         =*/ kSquare,                        // ■ (common)
-    /*.squareSmall    =*/ fallback::kSquareSmall,         // □
-    /*.squareSmallFilled =*/ fallback::kSquareSmallFilled,// ■
-    /*.circle         =*/ fallback::kCircle,              // "( )"
-    /*.circleFilled   =*/ fallback::kCircleFilled,        // "(*)"
-    /*.circleDouble   =*/ fallback::kCircleDouble,        // "( )"
-    /*.radioOn        =*/ fallback::kRadioOn,             // "(*)"
-    /*.radioOff       =*/ fallback::kRadioOff,            // "( )"
-    /*.checkboxOn     =*/ fallback::kCheckboxOn,          // "[×]"
-    /*.checkboxOff    =*/ fallback::kCheckboxOff,         // "[ ]"
-    /*.triangleUpOutline =*/ fallback::kTriangleUpOutline,// ∆
-    /*.triangleDownSmall =*/ kTriangleDownSmall,          // ▾ (common)
-    /*.triangleRightSmall =*/ kTriangleRightSmall,        // ▸ (common)
-    /*.star           =*/ fallback::kStar,                // ✶
-    /*.heart          =*/ kHeart,                         // ♥ (common)
-    /*.play           =*/ fallback::kPlay,                // ►
-    /*.questionMarkPrefix =*/ kQuestionMarkPrefix,        // "(?)" (common)
-    /*.lineVertical   =*/ kLineVertical,                  // │ (common)
-    /*.lineUpRight    =*/ kLineUpRight,                   // └ (common)
-    /*.lineUpDownRight =*/ kLineUpDownRight,              // ├ (common)
+    /*.tick           =*/fallback::kTick,                  // √
+    /*.info           =*/fallback::kInfo,                  // i
+    /*.warning        =*/fallback::kWarning,               // ‼
+    /*.cross          =*/fallback::kCross,                 // ×
+    /*.pointer        =*/fallback::kPointer,               // >
+    /*.pointerSmall   =*/kPointerSmall,                    // › (common)
+    /*.arrowUp        =*/kArrowUp,                         // ↑ (common)
+    /*.arrowDown      =*/kArrowDown,                       // ↓ (common)
+    /*.arrowLeft      =*/kArrowLeft,                       // ← (common)
+    /*.arrowRight     =*/kArrowRight,                      // → (common)
+    /*.bullet         =*/kBullet,                          // ● (common)
+    /*.ellipsis       =*/kEllipsis,                        // … (common)
+    /*.square         =*/kSquare,                          // ■ (common)
+    /*.squareSmall    =*/fallback::kSquareSmall,           // □
+    /*.squareSmallFilled =*/fallback::kSquareSmallFilled,  // ■
+    /*.circle         =*/fallback::kCircle,                // "( )"
+    /*.circleFilled   =*/fallback::kCircleFilled,          // "(*)"
+    /*.circleDouble   =*/fallback::kCircleDouble,          // "( )"
+    /*.radioOn        =*/fallback::kRadioOn,               // "(*)"
+    /*.radioOff       =*/fallback::kRadioOff,              // "( )"
+    /*.checkboxOn     =*/fallback::kCheckboxOn,            // "[×]"
+    /*.checkboxOff    =*/fallback::kCheckboxOff,           // "[ ]"
+    /*.triangleUpOutline =*/fallback::kTriangleUpOutline,  // ∆
+    /*.triangleDownSmall =*/kTriangleDownSmall,            // ▾ (common)
+    /*.triangleRightSmall =*/kTriangleRightSmall,          // ▸ (common)
+    /*.star           =*/fallback::kStar,                  // ✶
+    /*.heart          =*/kHeart,                           // ♥ (common)
+    /*.play           =*/fallback::kPlay,                  // ►
+    /*.questionMarkPrefix =*/kQuestionMarkPrefix,          // "(?)" (common)
+    /*.lineVertical   =*/kLineVertical,                    // │ (common)
+    /*.lineUpRight    =*/kLineUpRight,                     // └ (common)
+    /*.lineUpDownRight =*/kLineUpDownRight,                // ├ (common)
 };
 
 /// Returns a const reference to the active glyph set, determined once per
@@ -447,43 +492,41 @@ inline constexpr Figures kFallbackFigures = {
 // By default only replaces when !is_unicode_supported(); pass use_fallback=true
 // to force replacement regardless of terminal capability.
 namespace detail {
-    /// Replace all occurrences of `from` with `to` in string `s`.
-    inline void replace_all(std::string& s, std::string_view from,
-                            std::string_view to) noexcept {
-        if (from.empty()) return;
-        std::size_t pos = 0;
-        while ((pos = s.find(from, pos)) != std::string::npos) {
-            s.replace(pos, from.length(), to);
-            pos += to.length();
-        }
+/// Replace all occurrences of `from` with `to` in string `s`.
+inline void replace_all(std::string& s, std::string_view from, std::string_view to) noexcept {
+    if (from.empty()) return;
+    std::size_t pos = 0;
+    while ((pos = s.find(from, pos)) != std::string::npos) {
+        s.replace(pos, from.length(), to);
+        pos += to.length();
     }
+}
 }  // namespace detail
 
 /// Iterates over all specialMainSymbols entries and replaces each with its
 /// fallbackSymbols counterpart in the input string.
-[[nodiscard]] inline std::string replace_symbols(
-    std::string_view input,
-    bool use_fallback = !is_unicode_supported()) {
+[[nodiscard]] inline std::string replace_symbols(std::string_view input,
+                                                 bool use_fallback = !is_unicode_supported()) {
     if (!use_fallback) return std::string(input);
     std::string result(input);
     // Only "special" symbols have fallbacks; common glyphs are identical.
-    detail::replace_all(result, kTick,                fallback::kTick);
-    detail::replace_all(result, kInfo,                fallback::kInfo);
-    detail::replace_all(result, kWarning,             fallback::kWarning);
-    detail::replace_all(result, kCross,               fallback::kCross);
-    detail::replace_all(result, kSquareSmall,         fallback::kSquareSmall);
-    detail::replace_all(result, kSquareSmallFilled,   fallback::kSquareSmallFilled);
-    detail::replace_all(result, kCircle,              fallback::kCircle);
-    detail::replace_all(result, kCircleFilled,        fallback::kCircleFilled);
-    detail::replace_all(result, kCircleDouble,        fallback::kCircleDouble);
-    detail::replace_all(result, kRadioOn,             fallback::kRadioOn);
-    detail::replace_all(result, kRadioOff,            fallback::kRadioOff);
-    detail::replace_all(result, kCheckboxOn,          fallback::kCheckboxOn);
-    detail::replace_all(result, kCheckboxOff,         fallback::kCheckboxOff);
-    detail::replace_all(result, kPointer,             fallback::kPointer);
-    detail::replace_all(result, kTriangleUpOutline,   fallback::kTriangleUpOutline);
-    detail::replace_all(result, kStar,                fallback::kStar);
-    detail::replace_all(result, kPlay,                fallback::kPlay);
+    detail::replace_all(result, kTick, fallback::kTick);
+    detail::replace_all(result, kInfo, fallback::kInfo);
+    detail::replace_all(result, kWarning, fallback::kWarning);
+    detail::replace_all(result, kCross, fallback::kCross);
+    detail::replace_all(result, kSquareSmall, fallback::kSquareSmall);
+    detail::replace_all(result, kSquareSmallFilled, fallback::kSquareSmallFilled);
+    detail::replace_all(result, kCircle, fallback::kCircle);
+    detail::replace_all(result, kCircleFilled, fallback::kCircleFilled);
+    detail::replace_all(result, kCircleDouble, fallback::kCircleDouble);
+    detail::replace_all(result, kRadioOn, fallback::kRadioOn);
+    detail::replace_all(result, kRadioOff, fallback::kRadioOff);
+    detail::replace_all(result, kCheckboxOn, fallback::kCheckboxOn);
+    detail::replace_all(result, kCheckboxOff, fallback::kCheckboxOff);
+    detail::replace_all(result, kPointer, fallback::kPointer);
+    detail::replace_all(result, kTriangleUpOutline, fallback::kTriangleUpOutline);
+    detail::replace_all(result, kStar, fallback::kStar);
+    detail::replace_all(result, kPlay, fallback::kPlay);
     return result;
 }
 

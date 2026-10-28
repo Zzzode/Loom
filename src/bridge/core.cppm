@@ -1,6 +1,7 @@
 module;
 
 #include <unistd.h>
+
 #include <cstddef>
 #include <cstdint>
 
@@ -13,7 +14,8 @@ module;
 ///
 /// Flow:
 ///   1. POST /v1/code/sessions              (OAuth, no env_id) -> session.id
-///   2. POST /v1/code/sessions/{id}/bridge  (OAuth)            -> worker_jwt, expires_in, api_base_url, worker_epoch
+///   2. POST /v1/code/sessions/{id}/bridge  (OAuth)            -> worker_jwt, expires_in,
+///   api_base_url, worker_epoch
 ///   3. ReplTransport(session_url, worker_jwt, session_id, worker_epoch) -> SSE + CCRClient
 ///   4. createTokenRefreshScheduler                             -> proactive /bridge re-call
 ///   5. 401 on SSE -> rebuild transport with fresh /bridge credentials
@@ -28,7 +30,7 @@ import loom.bridge.bridge_messaging;
 import loom.bridge.session_api;
 import loom.bridge.session_id_compat;
 import loom.bridge.debug_utils;
-import loom.bridge.flush_gate;  // arch-check: keep-import (FlushGate field)
+import loom.bridge.flush_gate; // arch-check: keep-import (FlushGate field)
 import loom.bridge.messages;
 import loom.cli.sse_transport;
 import loom.cli.ccr_client;
@@ -52,11 +54,11 @@ using loom::core::Result;
 /// Lifecycle state reported by a bridge handle.
 enum class BridgeState { Ready, Connected, Reconnecting, Failed, Closed };
 
-using InboundMessageCallback  = std::function<void(const SDKMessage&)>;
+using InboundMessageCallback = std::function<void(const SDKMessage&)>;
 using PermissionResponseCallback = std::function<void(const SDKControlResponse&)>;
-using InterruptCallback       = std::function<void()>;
-using SetModelCallback        = std::function<void(const std::optional<std::string>&)>;
-using StateChangeCallback     = std::function<void(BridgeState, const std::optional<std::string>&)>;
+using InterruptCallback = std::function<void()>;
+using SetModelCallback = std::function<void(const std::optional<std::string>&)>;
+using StateChangeCallback = std::function<void(BridgeState, const std::optional<std::string>&)>;
 
 // =========================================================================
 // Poll interval configuration (pollConfigDefaults.ts)
@@ -82,15 +84,18 @@ PollIntervalConfig get_poll_config_defaults() {
 
 /// Callback type: attempt OAuth refresh for a stale token. Returns true
 /// if a fresh token was obtained.
-using AuthRefreshCallback = std::function<std::expected<void, std::string>(std::string_view stale_token)>;
+using AuthRefreshCallback =
+    std::function<std::expected<void, std::string>(std::string_view stale_token)>;
 
 /// Callback type: maps internal SDKMessage vector to JSON events for
 /// writeMessages / initial flush.
-using ToSDKMessagesCallback = std::function<std::vector<std::string>(const std::vector<SDKMessage>&)>;
+using ToSDKMessagesCallback =
+    std::function<std::vector<std::string>(const std::vector<SDKMessage>&)>;
 
 /// Callback type: fire on each title-worthy user message until the
 /// callback returns true (done). Caller owns the derive policy.
-using UserMessageCallback = std::function<bool(const std::string& text, const std::string& session_id)>;
+using UserMessageCallback =
+    std::function<bool(const std::string& text, const std::string& session_id)>;
 
 /// Callback type: max thinking tokens change.
 using SetMaxThinkingTokensCallback = std::function<void(std::optional<int64_t>)>;
@@ -132,7 +137,7 @@ struct EnvLessBridgeConfig {
     int64_t http_timeout_ms{15000};
     int64_t heartbeat_interval_ms{20000};
     double heartbeat_jitter_fraction{0.1};
-    int64_t token_refresh_buffer_ms{300000};     // 5 minutes before expiry
+    int64_t token_refresh_buffer_ms{300000};  // 5 minutes before expiry
     int64_t connect_timeout_ms{15000};
     int64_t teardown_archive_timeout_ms{1500};
     size_t uuid_dedup_buffer_size{2000};
@@ -160,12 +165,11 @@ enum class ConnectCause { initial, proactive_refresh, auth_401_recovery };
 
 /// Build a CCR worker session URL from the API base URL and session ID.
 /// Returns an HTTP(S) URL pointing at /v1/code/sessions/{id}.
-[[nodiscard]] inline std::string build_worker_session_url(
-    std::string_view api_base_url,
-    std::string_view session_id
-) {
+[[nodiscard]] inline std::string build_worker_session_url(std::string_view api_base_url,
+                                                          std::string_view session_id) {
     std::string base(api_base_url);
-    while (!base.empty() && base.back() == '/') base.pop_back();
+    while (!base.empty() && base.back() == '/')
+        base.pop_back();
     return std::format("{}/v1/code/sessions/{}", base, session_id);
 }
 
@@ -177,11 +181,8 @@ enum class ConnectCause { initial, proactive_refresh, auth_401_recovery };
 /// Returns the result on first success, or std::nullopt after exhausting
 /// all attempts.
 template <typename T>
-std::optional<T> with_retry(
-    std::function<std::optional<T>()> fn,
-    const std::string& label,
-    const EnvLessBridgeConfig& cfg
-) {
+std::optional<T> with_retry(std::function<std::optional<T>()> fn, const std::string& label,
+                            const EnvLessBridgeConfig& cfg) {
     const int max = cfg.init_retry_max_attempts;
     for (int attempt = 1; attempt <= max; ++attempt) {
         auto result = fn();
@@ -194,14 +195,15 @@ std::optional<T> with_retry(
             double jitter = base * cfg.init_retry_jitter_fraction *
                             (2.0 * std::generate_canonical<double, 32>(gen) - 1.0);
             double capped = base + jitter < static_cast<double>(cfg.init_retry_max_delay_ms)
-                ? base + jitter : static_cast<double>(cfg.init_retry_max_delay_ms);
+                                ? base + jitter
+                                : static_cast<double>(cfg.init_retry_max_delay_ms);
             auto delay_ms = static_cast<int64_t>(capped);
             log_bridge_event("retry", {
-                {"label", label},
-                {"attempt", std::to_string(attempt)},
-                {"max", std::to_string(max)},
-                {"delay_ms", std::to_string(delay_ms)},
-            });
+                                          {"label", label},
+                                          {"attempt", std::to_string(attempt)},
+                                          {"max", std::to_string(max)},
+                                          {"delay_ms", std::to_string(delay_ms)},
+                                      });
             std::this_thread::sleep_for(std::chrono::milliseconds(delay_ms));
         }
     }
@@ -232,7 +234,8 @@ public:
     /// How long before expiry to fire the refresh.
     static constexpr std::chrono::milliseconds kDefaultRefreshBuffer{std::chrono::minutes{5}};
     /// Retry delay after a failed/empty token fetch.
-    static constexpr std::chrono::milliseconds kRefreshRetryDelay{std::chrono::milliseconds{60'000}};
+    static constexpr std::chrono::milliseconds kRefreshRetryDelay{
+        std::chrono::milliseconds{60'000}};
     /// Follow-up refresh interval after a successful refresh.
     static constexpr std::chrono::milliseconds kFallbackRefreshInterval{std::chrono::minutes{30}};
     /// Give up after this many consecutive token-fetch failures
@@ -257,8 +260,8 @@ private:
             const auto remaining = deadline - std::chrono::steady_clock::now();
             if (remaining <= std::chrono::steady_clock::duration::zero()) return true;
             const auto chunk = remaining < std::chrono::seconds{1}
-                ? remaining
-                : std::chrono::steady_clock::duration{std::chrono::seconds{1}};
+                                   ? remaining
+                                   : std::chrono::steady_clock::duration{std::chrono::seconds{1}};
             std::this_thread::sleep_for(chunk);
         }
         return false;
@@ -267,8 +270,8 @@ private:
     /// One refresh attempt plus its retry/follow-up scheduling. Runs on the
     /// timer thread. `generation` is compared against the live counter before
     /// setting any follow-up timer.
-    void run_refresh(std::stop_token stop, std::string session_id,
-                     uint64_t generation, int failures_so_far) {
+    void run_refresh(std::stop_token stop, std::string session_id, uint64_t generation,
+                     int failures_so_far) {
         if (stop.stop_requested()) return;
 
         std::string oauth_token;
@@ -277,11 +280,12 @@ private:
             if (result) {
                 oauth_token = std::move(*result);
             } else {
-                log_bridge_event("token_refresh_fetch_failed", {
-                    {"label", label_},
-                    {"session_id", session_id},
-                    {"error", result.error().substr(0, 120)},
-                });
+                log_bridge_event("token_refresh_fetch_failed",
+                                 {
+                                     {"label", label_},
+                                     {"session_id", session_id},
+                                     {"error", result.error().substr(0, 120)},
+                                 });
             }
         }
 
@@ -296,14 +300,13 @@ private:
         if (oauth_token.empty()) {
             const int failures = failures_so_far + 1;
             log_bridge_event("token_refresh_no_oauth", {
-                {"label", label_},
-                {"session_id", session_id},
-                {"failures", std::to_string(failures)},
-            });
+                                                           {"label", label_},
+                                                           {"session_id", session_id},
+                                                           {"failures", std::to_string(failures)},
+                                                       });
             if (failures >= kMaxRefreshFailures) return;
             // Retry so the chain recovers once a token becomes available.
-            if (!sleep_until_or_stop(stop,
-                    std::chrono::steady_clock::now() + kRefreshRetryDelay)) {
+            if (!sleep_until_or_stop(stop, std::chrono::steady_clock::now() + kRefreshRetryDelay)) {
                 return;
             }
             run_refresh(stop, std::move(session_id), generation, failures);
@@ -312,13 +315,13 @@ private:
 
         if (on_refresh_) on_refresh_(session_id, oauth_token);
         log_bridge_event("token_refreshed", {
-            {"label", label_},
-            {"session_id", session_id},
-        });
+                                                {"label", label_},
+                                                {"session_id", session_id},
+                                            });
 
         // Keep long-running sessions authenticated.
         if (!sleep_until_or_stop(stop,
-                std::chrono::steady_clock::now() + kFallbackRefreshInterval)) {
+                                 std::chrono::steady_clock::now() + kFallbackRefreshInterval)) {
             return;
         }
         run_refresh(stop, std::move(session_id), generation, /*failures_so_far=*/0);
@@ -338,8 +341,7 @@ public:
         : refresh_buffer_ms_(params.refresh_buffer_ms)
         , get_access_token_fn_(std::move(params.get_access_token_async))
         , on_refresh_(std::move(params.on_refresh))
-        , label_(std::move(params.label))
-    {}
+        , label_(std::move(params.label)) {}
 
     ~TokenRefreshScheduler() { cancel_all(); }
 
@@ -356,18 +358,17 @@ public:
         }
 
         auto delay_s = expires_in_s - refresh_buffer_ms_.count() / 1000;
-        if (delay_s <= 0) delay_s = 5; // minimum 5s
+        if (delay_s <= 0) delay_s = 5;  // minimum 5s
         auto delay = std::chrono::seconds(delay_s);
         const auto generation = generation_;
 
-        timer_thread_ = std::jthread([this, sid = session_id, delay, generation](
-                                         std::stop_token stop) {
-            if (!sleep_until_or_stop(stop,
-                    std::chrono::steady_clock::now() + delay)) {
-                return;
-            }
-            run_refresh(stop, sid, generation, /*failures_so_far=*/0);
-        });
+        timer_thread_ =
+            std::jthread([this, sid = session_id, delay, generation](std::stop_token stop) {
+                if (!sleep_until_or_stop(stop, std::chrono::steady_clock::now() + delay)) {
+                    return;
+                }
+                run_refresh(stop, sid, generation, /*failures_so_far=*/0);
+            });
     }
 
     /// Cancel all scheduled refreshes.
@@ -383,9 +384,7 @@ public:
     }
 
     /// Check if a refresh is currently scheduled.
-    [[nodiscard]] bool is_scheduled() const {
-        return !active_session_id_.empty();
-    }
+    [[nodiscard]] bool is_scheduled() const { return !active_session_id_.empty(); }
 
 private:
     /// Bumped by schedule/cancel so an in-flight run_refresh can detect it
@@ -418,6 +417,7 @@ public:
     std::function<void(const std::string&)> on_error;
 
     SseConnection() = default;
+
     ~SseConnection() { disconnect(); }
 
     // Non-copyable, non-movable (owns background threads).
@@ -452,16 +452,16 @@ public:
         auto result = transport_->connect(url_, std::move(headers));
         if (!result) {
             log_bridge_event("sse_connect_failed", {
-                {"url", url_.substr(0, 80)},
-                {"error", result.error().substr(0, 120)},
-            });
+                                                       {"url", url_.substr(0, 80)},
+                                                       {"error", result.error().substr(0, 120)},
+                                                   });
             transport_.reset();
             return std::unexpected(result.error());
         }
 
         log_bridge_event("sse_connect", {
-            {"url", url_.substr(0, 80)},
-        });
+                                            {"url", url_.substr(0, 80)},
+                                        });
 
         // Drain the transport's event queue from a dedicated thread. The
         // transport enqueues every event in addition to firing on_event
@@ -495,9 +495,7 @@ public:
     }
 
     /// Check if connected.
-    [[nodiscard]] bool is_connected() const {
-        return transport_ && transport_->is_connected();
-    }
+    [[nodiscard]] bool is_connected() const { return transport_ && transport_->is_connected(); }
 };
 
 // =========================================================================
@@ -541,8 +539,7 @@ public:
         : session_url_(std::move(params.session_url))
         , ingress_token_(std::move(params.ingress_token))
         , session_id_(std::move(params.session_id))
-        , epoch_(params.epoch)
-    {
+        , epoch_(params.epoch) {
         if (params.get_auth_token) {
             auth_token_ = params.get_auth_token();
         }
@@ -579,17 +576,17 @@ public:
         auto result = client_->connect(session_url_, token);
         if (!result) {
             log_bridge_event("ccr_v2_register_failed", {
-                {"session_id", session_id_},
-                {"error", result.error().substr(0, 120)},
-            });
+                                                           {"session_id", session_id_},
+                                                           {"error", result.error().substr(0, 120)},
+                                                       });
             client_.reset();
             return std::unexpected(result.error());
         }
 
         log_bridge_event("ccr_v2_register", {
-            {"session_id", session_id_},
-            {"epoch", std::to_string(epoch_)},
-        });
+                                                {"session_id", session_id_},
+                                                {"epoch", std::to_string(epoch_)},
+                                            });
         registered_.store(true);
         return epoch_;
     }
@@ -599,8 +596,8 @@ public:
     /// soon as connect() succeeds. We re-post the last known state.
     void start_session() {
         log_bridge_event("ccr_v2_start_session", {
-            {"session_id", session_id_},
-        });
+                                                     {"session_id", session_id_},
+                                                 });
         report_state(last_state_);
     }
 
@@ -610,13 +607,12 @@ public:
     void report_state(const std::string& state) {
         last_state_ = state;
         log_bridge_event("ccr_v2_report_state", {
-            {"session_id", session_id_},
-            {"state", state},
-        });
+                                                    {"session_id", session_id_},
+                                                    {"state", state},
+                                                });
         if (client_) {
-            auto event = std::format(
-                R"({{"type":"state","session_id":"{}","state":"{}"}})",
-                session_id_, state);
+            auto event = std::format(R"({{"type":"state","session_id":"{}","state":"{}"}})",
+                                     session_id_, state);
             (void)client_->send_message(event);
         }
     }
@@ -626,9 +622,9 @@ public:
     /// batch on the first failure and surface its error.
     std::expected<void, std::string> write_batch(const std::vector<std::string>& events) {
         log_bridge_event("ccr_v2_write_batch", {
-            {"session_id", session_id_},
-            {"count", std::to_string(events.size())},
-        });
+                                                   {"session_id", session_id_},
+                                                   {"count", std::to_string(events.size())},
+                                               });
         if (!client_) {
             return std::unexpected("CCR client not registered");
         }
@@ -644,8 +640,8 @@ public:
     /// Write a single event.
     std::expected<void, std::string> write(const std::string& event_json) {
         log_bridge_event("ccr_v2_write", {
-            {"session_id", session_id_},
-        });
+                                             {"session_id", session_id_},
+                                         });
         if (!client_) {
             return std::unexpected("CCR client not registered");
         }
@@ -669,8 +665,8 @@ public:
         }
         registered_.store(false);
         log_bridge_event("ccr_v2_close", {
-            {"session_id", session_id_},
-        });
+                                             {"session_id", session_id_},
+                                         });
     }
 
     [[nodiscard]] bool is_registered() const { return registered_.load(); }
@@ -698,14 +694,9 @@ public:
     /// Callback: transport closed. Parameter: close code (0 = unknown).
     std::function<void(int)> on_close;
 
-    explicit ReplTransport(
-        const std::string& session_url,
-        const std::string& ingress_token,
-        const std::string& session_id,
-        int64_t epoch
-    )
-        : session_id_(session_id)
-    {
+    explicit ReplTransport(const std::string& session_url, const std::string& ingress_token,
+                           const std::string& session_id, int64_t epoch)
+        : session_id_(session_id) {
         CcrWorkerClient::Params params;
         params.session_url = session_url;
         params.ingress_token = ingress_token;
@@ -726,9 +717,9 @@ public:
         };
         sse_.on_error = [this](const std::string& error) {
             log_bridge_event("v2_transport_sse_error", {
-                {"session_id", session_id_},
-                {"error", error.substr(0, 120)},
-            });
+                                                           {"session_id", session_id_},
+                                                           {"error", error.substr(0, 120)},
+                                                       });
         };
 
         connected_.store(true);
@@ -792,13 +783,9 @@ public:
 };
 
 // Forward declaration
-int64_t archive_session(
-    const std::string& session_id,
-    const std::string& base_url,
-    const std::string& access_token,
-    const std::string& org_uuid,
-    std::chrono::milliseconds timeout
-);
+int64_t archive_session(const std::string& session_id, const std::string& base_url,
+                        const std::string& access_token, const std::string& org_uuid,
+                        std::chrono::milliseconds timeout);
 
 // =========================================================================
 // EnvLessReplBridgeHandle — concrete ReplBridgeHandle for the env-less path
@@ -833,18 +820,12 @@ class EnvLessReplBridgeHandle final : public ReplBridgeHandle {
     bool user_message_callback_done_{false};
 
 public:
-    EnvLessReplBridgeHandle(
-        std::string session_id,
-        std::string session_ingress_url,
-        std::unique_ptr<ReplTransport> transport,
-        std::unique_ptr<TokenRefreshScheduler> refresh,
-        EnvLessBridgeParams params,
-        EnvLessBridgeConfig cfg,
-        BoundedUUIDSet recent_posted_uuids,
-        BoundedUUIDSet recent_inbound_uuids,
-        std::unordered_set<std::string> initial_uuids,
-        bool user_message_done
-    )
+    EnvLessReplBridgeHandle(std::string session_id, std::string session_ingress_url,
+                            std::unique_ptr<ReplTransport> transport,
+                            std::unique_ptr<TokenRefreshScheduler> refresh,
+                            EnvLessBridgeParams params, EnvLessBridgeConfig cfg,
+                            BoundedUUIDSet recent_posted_uuids, BoundedUUIDSet recent_inbound_uuids,
+                            std::unordered_set<std::string> initial_uuids, bool user_message_done)
         : session_id_(std::move(session_id))
         , session_ingress_url_(std::move(session_ingress_url))
         , transport_(std::move(transport))
@@ -854,8 +835,7 @@ public:
         , initial_message_uuids_(std::move(initial_uuids))
         , params_(std::move(params))
         , cfg_(std::move(cfg))
-        , user_message_callback_done_(user_message_done)
-    {
+        , user_message_callback_done_(user_message_done) {
         state_ = BridgeState::Connected;
         wire_transport_callbacks();
     }
@@ -868,9 +848,7 @@ public:
 
     BridgeState state() const override { return state_; }
 
-    void close() override {
-        teardown();
-    }
+    void close() override { teardown(); }
 
     void flush() override {
         // No-op: the env-less bridge does not buffer externally.
@@ -942,7 +920,10 @@ public:
                 // Check if any user messages are in the batch for state reporting
                 bool has_user = false;
                 for (const auto& m : filtered) {
-                    if (m.type == "user") { has_user = true; break; }
+                    if (m.type == "user") {
+                        has_user = true;
+                        break;
+                    }
                 }
                 if (has_user && transport_) transport_->report_state("running");
                 if (transport_) transport_->write_batch(events);
@@ -969,9 +950,8 @@ public:
         if (transport_) {
             std::vector<std::string> events;
             for (const auto& m : filtered) {
-                events.push_back(std::format(
-                    R"({{"session_id":"{}","type":"{}","uuid":"{}"}})",
-                    session_id_, m.type, m.uuid.value_or("")));
+                events.push_back(std::format(R"({{"session_id":"{}","type":"{}","uuid":"{}"}})",
+                                             session_id_, m.type, m.uuid.value_or("")));
             }
             transport_->write_batch(events);
         }
@@ -1036,8 +1016,8 @@ private:
 
         transport_->on_connect = [this]() {
             log_bridge_event("v2_transport_connected", {
-                {"session_id", session_id_},
-            });
+                                                           {"session_id", session_id_},
+                                                       });
 
             if (!initial_flush_done_.load() && !params_.initial_messages.empty()) {
                 initial_flush_done_.store(true);
@@ -1049,12 +1029,8 @@ private:
 
         transport_->on_data = [this](const std::string& data) {
             handle_ingress_message(
-                data,
-                recent_posted_uuids_,
-                recent_inbound_uuids_,
-                params_.on_inbound_message,
-                params_.on_permission_response,
-                [this](const SDKControlRequest& req) {
+                data, recent_posted_uuids_, recent_inbound_uuids_, params_.on_inbound_message,
+                params_.on_permission_response, [this](const SDKControlRequest& req) {
                     ServerControlRequestHandlers handlers;
                     handlers.session_id = session_id_;
                     handlers.outbound_only = params_.outbound_only;
@@ -1066,17 +1042,16 @@ private:
                         if (transport_) transport_->write(event);
                     };
                     handle_server_control_request(req, handlers);
-                }
-            );
+                });
         };
 
         transport_->on_close = [this](int code) {
             if (torn_down_.load()) return;
 
             log_bridge_event("v2_transport_closed", {
-                {"session_id", session_id_},
-                {"code", std::to_string(code)},
-            });
+                                                        {"session_id", session_id_},
+                                                        {"code", std::to_string(code)},
+                                                    });
 
             // 401 we can recover from; all other codes are dead-ends.
             if (code == 401 && !auth_recovery_in_flight_.load()) {
@@ -1103,13 +1078,12 @@ private:
         std::vector<SDKMessage> capped;
         if (params_.initial_history_cap > 0 &&
             static_cast<int64_t>(eligible.size()) > params_.initial_history_cap) {
-            auto start = eligible.end() -
-                         static_cast<std::ptrdiff_t>(params_.initial_history_cap);
+            auto start = eligible.end() - static_cast<std::ptrdiff_t>(params_.initial_history_cap);
             capped.assign(start, eligible.end());
             log_bridge_event("history_capped", {
-                {"original", std::to_string(eligible.size())},
-                {"capped", std::to_string(capped.size())},
-            });
+                                                   {"original", std::to_string(eligible.size())},
+                                                   {"capped", std::to_string(capped.size())},
+                                               });
         } else {
             capped = std::move(eligible);
         }
@@ -1135,8 +1109,8 @@ private:
         set_state(BridgeState::Reconnecting, "JWT expired -- refreshing");
 
         log_bridge_event("auth_401_recovery_start", {
-            {"session_id", session_id_},
-        });
+                                                        {"session_id", session_id_},
+                                                    });
 
         // Attempt OAuth refresh
         if (params_.on_auth_401 && params_.get_access_token) {
@@ -1146,8 +1120,7 @@ private:
             }
         }
 
-        auto new_token = params_.get_access_token
-            ? params_.get_access_token() : std::nullopt;
+        auto new_token = params_.get_access_token ? params_.get_access_token() : std::nullopt;
 
         if (!new_token) {
             set_state(BridgeState::Failed, "JWT refresh failed: no OAuth token");
@@ -1158,13 +1131,10 @@ private:
         // Fetch fresh credentials
         auto fresh = with_retry<RemoteCredentials>(
             [this, &token = *new_token]() -> std::optional<RemoteCredentials> {
-                return fetch_remote_credentials(
-                    session_id_, params_.base_url, token,
-                    std::chrono::milliseconds{cfg_.http_timeout_ms});
+                return fetch_remote_credentials(session_id_, params_.base_url, token,
+                                                std::chrono::milliseconds{cfg_.http_timeout_ms});
             },
-            "fetchRemoteCredentials (recovery)",
-            cfg_
-        );
+            "fetchRemoteCredentials (recovery)", cfg_);
 
         if (!fresh) {
             set_state(BridgeState::Failed, "JWT refresh failed after 401");
@@ -1176,8 +1146,8 @@ private:
         rebuild_transport(*fresh);
 
         log_bridge_event("auth_401_recovery_success", {
-            {"session_id", session_id_},
-        });
+                                                          {"session_id", session_id_},
+                                                      });
 
         auth_recovery_in_flight_.store(false);
     }
@@ -1190,8 +1160,8 @@ private:
 
         auto session_url = build_worker_session_url(fresh.api_base_url, session_id_);
 
-        transport_ = std::make_unique<ReplTransport>(
-            session_url, fresh.worker_jwt, session_id_, fresh.worker_epoch);
+        transport_ = std::make_unique<ReplTransport>(session_url, fresh.worker_jwt, session_id_,
+                                                     fresh.worker_epoch);
 
         wire_transport_callbacks();
 
@@ -1235,8 +1205,7 @@ private:
         if (params_.get_access_token) {
             auto token = params_.get_access_token();
             if (token) {
-                archive_session(session_id_, params_.base_url, *token,
-                                params_.org_uuid,
+                archive_session(session_id_, params_.base_url, *token, params_.org_uuid,
                                 std::chrono::milliseconds{cfg_.teardown_archive_timeout_ms});
             }
         }
@@ -1246,8 +1215,8 @@ private:
 
         set_state(BridgeState::Closed);
         log_bridge_event("teardown", {
-            {"session_id", session_id_},
-        });
+                                         {"session_id", session_id_},
+                                     });
     }
 };
 
@@ -1266,15 +1235,11 @@ enum class ArchiveStatus {
 
 /// Archive a session by POSTing to the compat archive endpoint.
 /// Returns HTTP status code or error indicator.
-int64_t archive_session(
-    const std::string& session_id,
-    const std::string& base_url,
-    const std::string& access_token,
-    const std::string& org_uuid,
-    std::chrono::milliseconds timeout
-) {
+int64_t archive_session(const std::string& session_id, const std::string& base_url,
+                        const std::string& access_token, const std::string& org_uuid,
+                        std::chrono::milliseconds timeout) {
     if (session_id.empty() || base_url.empty() || access_token.empty()) {
-        return -1; // no_token / error
+        return -1;  // no_token / error
     }
 
     // Convert session ID to compat format if needed
@@ -1282,9 +1247,9 @@ int64_t archive_session(
     auto url = std::format("{}/v1/sessions/{}/archive", base_url, compat_id);
 
     log_bridge_event("archive_session", {
-        {"session_id", compat_id},
-        {"url", url.substr(0, 120)},
-    });
+                                            {"session_id", compat_id},
+                                            {"url", url.substr(0, 120)},
+                                        });
 
     // In production: HTTP POST with OAuth headers, anthropic-beta,
     // x-organization-uuid. For the module skeleton, log and return 200.
@@ -1296,19 +1261,17 @@ int64_t archive_session(
 /// Stub overload of create_code_session matching the env-less call convention.
 /// In production this would delegate to the session_api module with a proper
 /// CreateSessionRequest. For the skeleton, returns a synthetic session ID.
-std::optional<std::string> create_code_session(
-    std::string_view base_url,
-    std::string_view access_token,
-    std::string_view title,
-    std::chrono::milliseconds timeout,
-    const std::vector<std::string>& tags = {}
-) {
+std::optional<std::string> create_code_session(std::string_view base_url,
+                                               std::string_view access_token,
+                                               std::string_view title,
+                                               std::chrono::milliseconds timeout,
+                                               const std::vector<std::string>& tags = {}) {
     (void)timeout;
     (void)tags;
     if (base_url.empty() || access_token.empty()) return std::nullopt;
     // Synthetic session ID for skeleton
     return std::format("ses_{:016x}",
-        std::hash<std::string>{}(std::string(title) + std::string(base_url)));
+                       std::hash<std::string>{}(std::string(title) + std::string(base_url)));
 }
 
 // =========================================================================
@@ -1340,18 +1303,13 @@ std::unique_ptr<ReplBridgeHandle> init_env_less_bridge_core(EnvLessBridgeParams 
     // -- 2. Create code session --
     auto created_session_id = with_retry<std::string>(
         [&]() -> std::optional<std::string> {
-            return create_code_session(
-                params.base_url, *access_token, params.title,
-                std::chrono::milliseconds{cfg.http_timeout_ms},
-                params.tags);
+            return create_code_session(params.base_url, *access_token, params.title,
+                                       std::chrono::milliseconds{cfg.http_timeout_ms}, params.tags);
         },
-        "createCodeSession",
-        cfg
-    );
+        "createCodeSession", cfg);
     if (!created_session_id) {
         if (params.on_state_change) {
-            params.on_state_change(BridgeState::Failed,
-                "Session creation failed -- see debug log");
+            params.on_state_change(BridgeState::Failed, "Session creation failed -- see debug log");
         }
         log_bridge_event("init_failed", {{"reason", "session_create_failed"}});
         return nullptr;
@@ -1363,36 +1321,33 @@ std::unique_ptr<ReplBridgeHandle> init_env_less_bridge_core(EnvLessBridgeParams 
     // -- 3. Fetch bridge credentials --
     auto credentials = with_retry<RemoteCredentials>(
         [&]() -> std::optional<RemoteCredentials> {
-            return fetch_remote_credentials(
-                session_id, params.base_url, *access_token,
-                std::chrono::milliseconds{cfg.http_timeout_ms});
+            return fetch_remote_credentials(session_id, params.base_url, *access_token,
+                                            std::chrono::milliseconds{cfg.http_timeout_ms});
         },
-        "fetchRemoteCredentials",
-        cfg
-    );
+        "fetchRemoteCredentials", cfg);
     if (!credentials) {
         if (params.on_state_change) {
             params.on_state_change(BridgeState::Failed,
-                "Remote credentials fetch failed -- see debug log");
+                                   "Remote credentials fetch failed -- see debug log");
         }
         // Archive the failed session
-        archive_session(session_id, params.base_url, *access_token,
-                        params.org_uuid,
+        archive_session(session_id, params.base_url, *access_token, params.org_uuid,
                         std::chrono::milliseconds{cfg.teardown_archive_timeout_ms});
         log_bridge_event("init_failed", {{"reason", "creds_fetch_failed"}});
         return nullptr;
     }
 
-    log_bridge_event("credentials_fetched", {
-        {"session_id", session_id},
-        {"expires_in", std::to_string(credentials->expires_in)},
-    });
+    log_bridge_event("credentials_fetched",
+                     {
+                         {"session_id", session_id},
+                         {"expires_in", std::to_string(credentials->expires_in)},
+                     });
 
     // -- 4. Build REPL transport --
     auto session_url = build_worker_session_url(credentials->api_base_url, session_id);
 
-    auto transport = std::make_unique<ReplTransport>(
-        session_url, credentials->worker_jwt, session_id, credentials->worker_epoch);
+    auto transport = std::make_unique<ReplTransport>(session_url, credentials->worker_jwt,
+                                                     session_id, credentials->worker_epoch);
 
     // -- 5. Token refresh scheduler --
     TokenRefreshScheduler::Params refresh_params;
@@ -1404,19 +1359,18 @@ std::unique_ptr<ReplBridgeHandle> init_env_less_bridge_core(EnvLessBridgeParams 
         auto getter = params.get_access_token;
         refresh_params.get_access_token_async =
             [getter](std::string_view) -> std::expected<std::string, std::string> {
-                auto token = getter();
-                if (!token || token->empty()) {
-                    return std::unexpected("no OAuth access token available");
-                }
-                return *token;
-            };
+            auto token = getter();
+            if (!token || token->empty()) {
+                return std::unexpected("no OAuth access token available");
+            }
+            return *token;
+        };
     }
     // Proactive refresh: hand the fresh token to the transport so the SSE
     // read stream and the CCR worker keep authenticating.
     auto* transport_raw = transport.get();
-    refresh_params.on_refresh = [transport_raw, session_id](
-        const std::string& /*sid*/, const std::string& oauth_token
-    ) {
+    refresh_params.on_refresh = [transport_raw, session_id](const std::string& /*sid*/,
+                                                            const std::string& oauth_token) {
         if (!oauth_token.empty()) {
             transport_raw->update_token(oauth_token);
         }
@@ -1447,8 +1401,7 @@ std::unique_ptr<ReplBridgeHandle> init_env_less_bridge_core(EnvLessBridgeParams 
         if (params.on_state_change) {
             params.on_state_change(BridgeState::Failed, connect_result.error());
         }
-        archive_session(session_id, params.base_url, *access_token,
-                        params.org_uuid,
+        archive_session(session_id, params.base_url, *access_token, params.org_uuid,
                         std::chrono::milliseconds{cfg.teardown_archive_timeout_ms});
         log_bridge_event("init_failed", {{"reason", "transport_connect_failed"}});
         return nullptr;
@@ -1459,23 +1412,15 @@ std::unique_ptr<ReplBridgeHandle> init_env_less_bridge_core(EnvLessBridgeParams 
     }
 
     log_bridge_event("init_success", {
-        {"session_id", session_id},
-        {"expires_in", std::to_string(credentials->expires_in)},
-    });
+                                         {"session_id", session_id},
+                                         {"expires_in", std::to_string(credentials->expires_in)},
+                                     });
 
     // -- 8. Return handle --
     return std::make_unique<EnvLessReplBridgeHandle>(
-        session_id,
-        credentials->api_base_url,
-        std::move(transport),
-        std::move(refresh),
-        std::move(params),
-        std::move(cfg),
-        std::move(recent_posted_uuids),
-        std::move(recent_inbound_uuids),
-        std::move(initial_message_uuids),
-        user_message_done
-    );
+        session_id, credentials->api_base_url, std::move(transport), std::move(refresh),
+        std::move(params), std::move(cfg), std::move(recent_posted_uuids),
+        std::move(recent_inbound_uuids), std::move(initial_message_uuids), user_message_done);
 }
 
-} // namespace loom::bridge
+}  // namespace loom::bridge

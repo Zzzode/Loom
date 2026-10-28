@@ -71,16 +71,18 @@ struct ModelCost {
 
 /// Budget tracking for a session
 struct BudgetTracker {
-    double max_budget_usd = 10.0;              // Maximum allowed budget
-    double current_spend_usd = 0.0;            // Current total spend
+    double max_budget_usd = 10.0;                         // Maximum allowed budget
+    double current_spend_usd = 0.0;                       // Current total spend
     std::unordered_map<std::string, double> model_spend;  // Spend per model
-    bool budget_exceeded = false;              // Whether budget was exceeded
+    bool budget_exceeded = false;                         // Whether budget was exceeded
 
     /// Calculate cost for a token usage record
     [[nodiscard]] double calculate_cost(const TokenUsage& usage,
-                                         const ModelCost& cost) const noexcept {
-        return (static_cast<double>(usage.input_tokens) / 1000000.0 * cost.input_tokens_per_million) +
-               (static_cast<double>(usage.output_tokens) / 1000000.0 * cost.output_tokens_per_million);
+                                        const ModelCost& cost) const noexcept {
+        return (static_cast<double>(usage.input_tokens) / 1000000.0 *
+                cost.input_tokens_per_million) +
+               (static_cast<double>(usage.output_tokens) / 1000000.0 *
+                cost.output_tokens_per_million);
     }
 
     /// Track usage and update spend
@@ -95,7 +97,7 @@ struct BudgetTracker {
 
     /// Check if we can afford more token usage
     [[nodiscard]] bool can_afford(const TokenUsage& estimated_usage,
-                                   const ModelCost& cost) const noexcept {
+                                  const ModelCost& cost) const noexcept {
         auto estimated_cost = calculate_cost(estimated_usage, cost);
         return (current_spend_usd + estimated_cost) < max_budget_usd;
     }
@@ -104,7 +106,8 @@ struct BudgetTracker {
 struct ApiClientConfig {
     std::string base_url;
     std::string api_key;
-    std::string auth_token;  // OAuth/Pro/gateway bearer token; sent as Authorization: Bearer when non-empty (takes precedence over api_key)
+    std::string auth_token;  // OAuth/Pro/gateway bearer token; sent as Authorization: Bearer when
+                             // non-empty (takes precedence over api_key)
     std::string api_version{"2023-06-01"};
     std::chrono::milliseconds timeout{120000};
     int max_retries{3};
@@ -116,9 +119,8 @@ struct ApiMessagesEndpoint {
     std::string path;
 };
 
-[[nodiscard]] std::expected<ApiMessagesEndpoint, std::string> api_messages_endpoint(
-    std::string_view base_url
-);
+[[nodiscard]] std::expected<ApiMessagesEndpoint, std::string>
+api_messages_endpoint(std::string_view base_url);
 
 /// Permission denial record
 struct PermissionDenial {
@@ -133,31 +135,31 @@ struct PermissionDenial {
 
 /// Model parameters for API requests
 struct ModelParams {
-    std::string model;                               // Model ID (user-configured, no default)
-    std::uint32_t max_tokens = 0;                     // Explicit limit; zero uses automatic defaults
-    std::optional<double> temperature;                // Sampling temperature
-    std::optional<double> top_p;                      // Nucleus sampling
-    std::optional<std::uint32_t> top_k;              // Top-k sampling
-    bool extended_thinking = false;                    // Enable thinking blocks
-    std::optional<std::uint32_t> thinking_budget;     // Max thinking tokens
+    std::string model;                             // Model ID (user-configured, no default)
+    std::uint32_t max_tokens = 0;                  // Explicit limit; zero uses automatic defaults
+    std::optional<double> temperature;             // Sampling temperature
+    std::optional<double> top_p;                   // Nucleus sampling
+    std::optional<std::uint32_t> top_k;            // Top-k sampling
+    bool extended_thinking = false;                // Enable thinking blocks
+    std::optional<std::uint32_t> thinking_budget;  // Max thinking tokens
 };
 
 /// Retry policy configuration
 struct RetryPolicy {
-    std::uint32_t max_retries = 3;                    // Maximum retry attempts
-    std::chrono::milliseconds initial_delay{1000};    // First retry delay
-    double backoff_multiplier = 2.0;                  // Exponential backoff factor
-    std::chrono::milliseconds max_delay{30000};       // Maximum delay cap
-    bool retry_on_overload = true;                    // Retry 529 overloaded errors
-    bool retry_on_rate_limit = true;                  // Retry 429 rate limit errors
+    std::uint32_t max_retries = 3;                  // Maximum retry attempts
+    std::chrono::milliseconds initial_delay{1000};  // First retry delay
+    double backoff_multiplier = 2.0;                // Exponential backoff factor
+    std::chrono::milliseconds max_delay{30000};     // Maximum delay cap
+    bool retry_on_overload = true;                  // Retry 529 overloaded errors
+    bool retry_on_rate_limit = true;                // Retry 429 rate limit errors
 };
 
 /// Context window management settings
 struct ContextWindowConfig {
-    std::uint32_t max_context_tokens = 200000;    // Fallback when no model limit is known
-    double warning_threshold = 0.8;                // Warn when usage exceeds this ratio
-    double compaction_threshold = 0.9;             // Auto-compact when exceeding this
-    bool auto_compact = true;                      // Enable automatic compaction
+    std::uint32_t max_context_tokens = 200000;  // Fallback when no model limit is known
+    double warning_threshold = 0.8;             // Warn when usage exceeds this ratio
+    double compaction_threshold = 0.9;          // Auto-compact when exceeding this
+    bool auto_compact = true;                   // Enable automatic compaction
 };
 
 /// Thinking configuration
@@ -168,8 +170,8 @@ struct ThinkingConfig {
 };
 
 /// Resolve only explicit thinking overrides; absent values retain provider defaults.
-[[nodiscard]] ThinkingConfig resolve_thinking_config(
-    std::optional<bool> enabled, std::optional<std::uint32_t> budget);
+[[nodiscard]] ThinkingConfig resolve_thinking_config(std::optional<bool> enabled,
+                                                     std::optional<std::uint32_t> budget);
 
 /// Full query engine configuration
 struct QueryEngineConfig {
@@ -177,6 +179,7 @@ struct QueryEngineConfig {
     RetryPolicy retry_policy;
     ContextWindowConfig context_window;
     std::vector<ModelContextLimit> model_context_limits;
+
     /// Session-local attempted metadata load. Never persisted or logged.
     struct ModelMetadataSnapshot {
         std::string base_url;
@@ -185,14 +188,16 @@ struct QueryEngineConfig {
         std::string auth_token;
         std::vector<ModelContextLimit> limits;
     };
+
     std::shared_ptr<const ModelMetadataSnapshot> model_metadata;
     ThinkingConfig thinking_config;
-    std::string api_key;                            // API key (x-api-key)
-    std::string auth_token;                         // OAuth/gateway bearer token (Authorization: Bearer); takes precedence over api_key when set
-    std::optional<std::string> base_url;            // Custom API base URL
-    std::optional<std::string> custom_system_prompt;// Custom system prompt
-    std::optional<std::string> append_system_prompt;// Append to default system prompt
-    std::optional<std::string> cwd;                 // Working directory for operations
+    std::string api_key;     // API key (x-api-key)
+    std::string auth_token;  // OAuth/gateway bearer token (Authorization: Bearer); takes precedence
+                             // over api_key when set
+    std::optional<std::string> base_url;              // Custom API base URL
+    std::optional<std::string> custom_system_prompt;  // Custom system prompt
+    std::optional<std::string> append_system_prompt;  // Append to default system prompt
+    std::optional<std::string> cwd;                   // Working directory for operations
     /// Fixed session id instead of a generated one — lets a resumed run use
     /// the same session-memory/summary.md and transcript directory.
     std::optional<std::string> session_id_override;
@@ -205,18 +210,22 @@ struct QueryEngineConfig {
     /// see→act loop work best there); the OpenAI wire always uses the plain
     /// function form regardless.
     std::optional<bool> native_computer_tool;
-    std::optional<double> max_budget_usd;           // Max budget in USD
-    std::optional<std::uint32_t> max_turns;         // Max conversation turns
+    std::optional<double> max_budget_usd;    // Max budget in USD
+    std::optional<std::uint32_t> max_turns;  // Max conversation turns
+
     struct TaskBudget {
         std::uint32_t total{0};
         std::optional<std::uint32_t> remaining;
     };
-    std::optional<TaskBudget> task_budget;           // API-side output_config.task_budget
+
+    std::optional<TaskBudget> task_budget;  // API-side output_config.task_budget
+
     struct ResponseSchema {
-        std::string name;                            // schema name (json_schema.name)
-        std::string schema_json;                     // JSON schema payload (string)
+        std::string name;         // schema name (json_schema.name)
+        std::string schema_json;  // JSON schema payload (string)
     };
-    std::optional<ResponseSchema> response_schema;   // API-side output_config.format.json_schema
+
+    std::optional<ResponseSchema> response_schema;  // API-side output_config.format.json_schema
     std::vector<ToolDefinition> tools;              // Available tools for the model
     /// Optional callback that provides dynamically-discovered tools
     /// (e.g. MCP server tools) to be merged with config_.tools when
@@ -230,15 +239,14 @@ struct QueryEngineConfig {
     /// request serializer emit the servers' real schemas. Injected from the
     /// MCP wiring layer so this module does not depend on the (large) MCP
     /// module.
-    std::function<std::unordered_map<std::string, std::string>()>
-        mcp_input_schema_provider;
+    std::function<std::unordered_map<std::string, std::string>()> mcp_input_schema_provider;
     /// Flat list of raw permission deny rules (e.g. "Bash",
     /// "mcp__linear", "mcp__linear__*", "Bash(npm install)") applied to
     /// BOTH static and dynamic tools before the request "tools" array is
     /// serialized.
     std::vector<std::string> always_deny_rules;
-    std::vector<std::string> agent_definitions;     // Agent definitions
-    std::vector<std::string> fallback_models;       // Fallback models for capacity errors
+    std::vector<std::string> agent_definitions;  // Agent definitions
+    std::vector<std::string> fallback_models;    // Fallback models for capacity errors
 };
 
 /// Load best-effort capacity metadata once per effective session identity.
@@ -258,13 +266,13 @@ using StreamCallback = std::function<void(const StreamEvent&)>;
 
 /// Query options for a single request
 struct QueryOptions {
-    std::optional<StreamCallback> on_event;        // Per-event callback
-    bool include_thinking = true;                   // Include thinking in response
+    std::optional<StreamCallback> on_event;  // Per-event callback
+    bool include_thinking = true;            // Include thinking in response
     // Preserve non-interactive defaults; nullopt disables the streaming budget.
     std::optional<std::uint32_t> max_tool_rounds{20};
-    std::vector<std::string> enabled_tools;        // Subset of tools to enable
-    std::optional<std::string> prompt_uuid;        // UUID for this prompt
-    bool is_meta = false;                           // Whether this is a meta prompt
+    std::vector<std::string> enabled_tools;  // Subset of tools to enable
+    std::optional<std::string> prompt_uuid;  // UUID for this prompt
+    bool is_meta = false;                    // Whether this is a meta prompt
     // Resume a failed or budget-paused request from committed messages/results.
     bool resume_from_conversation = false;
     // AT-02: materialized @-mention file attachments (TextBlock/ImageBlock/...).
@@ -287,13 +295,13 @@ struct QueryOptions {
 
 /// Complete response from a query (after all tool loops resolve)
 struct QueryResponse {
-    AssistantMessage message;       // Final assistant message
-    TokenUsage total_usage;         // Cumulative token usage across all rounds
-    std::uint32_t tool_rounds = 0;  // Number of tool-call iterations
+    AssistantMessage message;              // Final assistant message
+    TokenUsage total_usage;                // Cumulative token usage across all rounds
+    std::uint32_t tool_rounds = 0;         // Number of tool-call iterations
     std::chrono::milliseconds elapsed{0};  // Total wall-clock time
-    bool budget_exceeded = false;   // Whether budget was hit
-    bool success = true;            // Whether query completed successfully
-    std::vector<std::string> errors;// Any errors encountered
+    bool budget_exceeded = false;          // Whether budget was hit
+    bool success = true;                   // Whether query completed successfully
+    std::vector<std::string> errors;       // Any errors encountered
 };
 
 /// Estimated committed working context, separate from cumulative billing usage.
@@ -326,11 +334,10 @@ struct SystemContext {
 class SystemPromptBuilder {
 public:
     /// Build a complete system prompt from components
-    [[nodiscard]] static std::string build(
-        std::optional<std::string_view> custom_prompt,
-        std::optional<std::string_view> append_prompt,
-        const UserContext& user_ctx,
-        const SystemContext& system_ctx);
+    [[nodiscard]] static std::string build(std::optional<std::string_view> custom_prompt,
+                                           std::optional<std::string_view> append_prompt,
+                                           const UserContext& user_ctx,
+                                           const SystemContext& system_ctx);
 
 private:
     /// Build default system prompt
@@ -360,14 +367,11 @@ public:
 
     /// Send a query and return the complete response after all tool loops.
     /// This is the blocking, complete-response interface.
-    [[nodiscard]] Result<QueryResponse> query(
-        std::string_view user_message,
-        const QueryOptions& options = {});
+    [[nodiscard]] Result<QueryResponse> query(std::string_view user_message,
+                                              const QueryOptions& options = {});
 
     /// Stream a query with real-time event callbacks
-    void stream_query(
-        std::string_view user_message,
-        const QueryOptions& options = {});
+    void stream_query(std::string_view user_message, const QueryOptions& options = {});
 
     /// Abort any in-flight query (thread-safe).  Also invokes the
     /// registered abort callback (if any) so the HTTP layer can shut
@@ -413,8 +417,7 @@ public:
     /// non-streaming response parsing and protocol event decoding. HTTP still
     /// runs through the real cancellable engine transport; supplying a backend
     /// does not replace network I/O. Messages retains its extended event handler.
-    using WireBackendFactory =
-        std::function<std::unique_ptr<loom::query::wire::WireBackend>()>;
+    using WireBackendFactory = std::function<std::unique_ptr<loom::query::wire::WireBackend>()>;
     void set_wire_backend_factory(WireBackendFactory factory);
 
     /// Set the lifecycle hook registry for event notifications
@@ -427,9 +430,8 @@ public:
     /// supplies stable context vars (session/conversation ids); per-call
     /// context (tool name, payload) is merged at dispatch time in
     /// execute_single_tool.
-    void set_user_hooks(
-        std::vector<loom::utils::hooks_registry::IndividualHookConfig> registry,
-        loom::utils::hooks_execution::HookExecutionContext ctx_template) {
+    void set_user_hooks(std::vector<loom::utils::hooks_registry::IndividualHookConfig> registry,
+                        loom::utils::hooks_execution::HookExecutionContext ctx_template) {
         user_hooks_ = std::move(registry);
         user_hooks_ctx_template_ = std::move(ctx_template);
         user_hooks_configured_ = true;
@@ -447,7 +449,9 @@ public:
         return model_context_.window_tokens;
     }
 
-    [[nodiscard]] const ResolvedModelContext& model_context() const noexcept { return model_context_; }
+    [[nodiscard]] const ResolvedModelContext& model_context() const noexcept {
+        return model_context_;
+    }
 
     [[nodiscard]] ContextUsageSnapshot context_usage() const;
 
@@ -467,9 +471,7 @@ public:
     /// Preserves system prompt and recent messages, summarizes middle.
     [[nodiscard]] loom::utils::VoidResult compact_conversation(std::string_view trigger = "manual");
 
-    void append_message_for_testing(Message msg) {
-        append_message(std::move(msg));
-    }
+    void append_message_for_testing(Message msg) { append_message(std::move(msg)); }
 
     /// Update model parameters at runtime
     void set_model_params(ModelParams params);
@@ -481,9 +483,7 @@ public:
     [[nodiscard]] std::string working_directory() const;
 
     /// Update the engine's working directory (e.g. after a user !cd command).
-    void set_working_directory(std::string path) {
-        config_.cwd = std::move(path);
-    }
+    void set_working_directory(std::string path) { config_.cwd = std::move(path); }
 
     /// Get session ID
     [[nodiscard]] const SessionId& session_id() const noexcept { return session_id_; }
@@ -492,17 +492,16 @@ public:
     /// New turns will append to this session's messages.jsonl file.
     void set_session_id(std::string id);
 
-    [[nodiscard]] Result<std::string> continue_agent_instance(
-        std::string_view id, std::string_view prompt);
+    [[nodiscard]] Result<std::string> continue_agent_instance(std::string_view id,
+                                                              std::string_view prompt);
     // Ended launches share normal engine policy state and require caller serialization.
     // Running delivery only accesses the scoped native mailbox.
-    [[nodiscard]] Result<std::string> send_agent_instance_message(
-        std::string_view id, std::string_view prompt);
+    [[nodiscard]] Result<std::string> send_agent_instance_message(std::string_view id,
+                                                                  std::string_view prompt);
     [[nodiscard]] std::string agent_message_unavailable_reason(std::string_view id) const;
     [[nodiscard]] VoidResult stop_agent_instance(std::string_view id);
     [[nodiscard]] std::string agent_continue_unavailable_reason(std::string_view id) const;
     [[nodiscard]] std::string agent_stop_unavailable_reason(std::string_view id) const;
-
 
     /// Get the sessions directory (nullopt if persistence is disabled).
     /// Body in query_engine_conversation.cpp (inline-def ratchet).
@@ -514,8 +513,7 @@ public:
 
     /// Testing seam: invoke a single tool-use block through the same path as
     /// the live tool loop (so in-loop tracking like discovered_skills_ fires).
-    [[nodiscard]] ToolResultMessage execute_single_tool_for_testing(
-        const ToolUseBlock& tool_use) {
+    [[nodiscard]] ToolResultMessage execute_single_tool_for_testing(const ToolUseBlock& tool_use) {
         QueryOptions options;
         return execute_single_tool(tool_use, options);
     }
@@ -542,8 +540,8 @@ private:
     static void populate_git_context(UserContext& ctx, const std::string& cwd);
 
     // Flatten recent user/assistant turns to plain text for the extractor.
-    [[nodiscard]] static std::string transcript_to_text(
-        const std::vector<Message>& messages, std::size_t max_chars);
+    [[nodiscard]] static std::string transcript_to_text(const std::vector<Message>& messages,
+                                                        std::size_t max_chars);
 
     // Kick off a detached LLM extraction turn when thresholds are met.
     // Mirrors TS extractMemories (throttle by new-message count, single
@@ -551,8 +549,9 @@ private:
     void maybe_run_memory_extraction();
 
     /// Build a UserMessage from raw text input
-    [[nodiscard]] UserMessage make_user_message(std::string_view text,
-                                                 std::optional<std::string_view> uuid = std::nullopt) const;
+    [[nodiscard]] UserMessage
+    make_user_message(std::string_view text,
+                      std::optional<std::string_view> uuid = std::nullopt) const;
 
     /// Thread-safe append to conversation history
 public:
@@ -601,9 +600,8 @@ private:
 
     [[nodiscard]] static bool env_truthy_any(std::initializer_list<const char*> names);
 
-    [[nodiscard]] static std::uint32_t env_uint_or_default(
-        std::initializer_list<const char*> names,
-        std::uint32_t fallback);
+    [[nodiscard]] static std::uint32_t env_uint_or_default(std::initializer_list<const char*> names,
+                                                           std::uint32_t fallback);
 
     [[nodiscard]] static bool time_based_microcompact_enabled();
 
@@ -615,14 +613,14 @@ private:
 
     [[nodiscard]] std::unordered_set<std::string> unbounded_tool_result_budget_names() const;
 
-    [[nodiscard]] static std::unordered_map<std::string, std::string> tool_name_by_tool_use_id(
-        const std::vector<Message>& messages);
+    [[nodiscard]] static std::unordered_map<std::string, std::string>
+    tool_name_by_tool_use_id(const std::vector<Message>& messages);
 
-    [[nodiscard]] static std::optional<std::string> tool_result_plain_text_content(
-        const ToolResultMessage& message);
+    [[nodiscard]] static std::optional<std::string>
+    tool_result_plain_text_content(const ToolResultMessage& message);
 
-    [[nodiscard]] static std::optional<std::string> tool_result_text_for_budget(
-        const ToolResultMessage& message);
+    [[nodiscard]] static std::optional<std::string>
+    tool_result_text_for_budget(const ToolResultMessage& message);
 
     [[nodiscard]] static std::vector<std::vector<QueryToolResultBudgetCandidate>>
     collect_tool_result_budget_candidates_by_message(
@@ -636,9 +634,9 @@ private:
 
     [[nodiscard]] std::filesystem::path query_tool_result_path(std::string_view tool_use_id) const;
 
-    [[nodiscard]] std::optional<std::string> build_query_tool_result_replacement(
-        const QueryToolResultBudgetCandidate& candidate,
-        std::string_view content) const;
+    [[nodiscard]] std::optional<std::string>
+    build_query_tool_result_replacement(const QueryToolResultBudgetCandidate& candidate,
+                                        std::string_view content) const;
 
     void replace_tool_result_message_locked(std::size_t message_index, std::string replacement);
 
@@ -652,10 +650,10 @@ private:
 
     [[nodiscard]] static std::string message_id_value(const Message& message);
 
-    [[nodiscard]] static std::optional<CompactPreservedSegment> compact_preserved_segment(
-        std::vector<Message>::const_iterator first,
-        std::vector<Message>::const_iterator last,
-        std::string_view anchor_id);
+    [[nodiscard]] static std::optional<CompactPreservedSegment>
+    compact_preserved_segment(std::vector<Message>::const_iterator first,
+                              std::vector<Message>::const_iterator last,
+                              std::string_view anchor_id);
 
     /// Read the latest checkpoint in the session's summary.md (empty when
     /// absent/unreadable).
@@ -664,8 +662,7 @@ private:
     /// Append one compaction summary to the session's summary.md, creating
     /// the session-memory directory as needed. Best-effort: a write failure
     /// must not break an in-memory compaction that already succeeded.
-    void append_session_summary(std::string_view cwd,
-                                std::string_view summary) const;
+    void append_session_summary(std::string_view cwd, std::string_view summary) const;
 
     /// Tool loop result structure
     struct ToolLoopResult {
@@ -688,26 +685,21 @@ private:
 
     /// Check if error code is retryable
     [[nodiscard]] bool is_retryable_error(ErrorCode code) const {
-        return code == ErrorCode::ConnectionFailed ||
-               code == ErrorCode::NetworkTimeout ||
-               code == ErrorCode::OverloadedError ||
-               code == ErrorCode::RateLimited;
+        return code == ErrorCode::ConnectionFailed || code == ErrorCode::NetworkTimeout ||
+               code == ErrorCode::OverloadedError || code == ErrorCode::RateLimited;
     }
 
     /// Check whether a tool is enabled for the current query.
-    [[nodiscard]] static bool is_tool_enabled_for_query(
-        std::string_view tool_name,
-        const QueryOptions& options);
+    [[nodiscard]] static bool is_tool_enabled_for_query(std::string_view tool_name,
+                                                        const QueryOptions& options);
 
     [[nodiscard]] std::optional<loom::services::compact::ContextManagementConfig>
     api_context_management() const;
 
     [[nodiscard]] bool thinking_enabled_for_request() const;
 
-    void add_output_config_to_json(
-        loom::utils::json::JsonMutVal& root,
-        loom::utils::json::JsonMutDoc& doc
-    ) const;
+    void add_output_config_to_json(loom::utils::json::JsonMutVal& root,
+                                   loom::utils::json::JsonMutDoc& doc) const;
 
 public:
     /// Build the output_config JSON fragment (for testing / introspection).
@@ -716,13 +708,12 @@ public:
 
     /// Build a non-streaming API request body (for testing / introspection).
     /// Runs the full tool-merge path including always_deny_rules filtering.
-    [[nodiscard]] std::string build_request_body_for_testing(
-        const QueryOptions& options = {}) const {
+    [[nodiscard]] std::string
+    build_request_body_for_testing(const QueryOptions& options = {}) const {
         return build_request_body(options);
     }
 
 private:
-
     void update_task_budget_remaining_after_compact(std::uint32_t pre_compact_tokens);
 
     void restore_task_budget_remaining_from_compact_boundaries_locked();
@@ -738,31 +729,26 @@ private:
     /// engine's conversation walk (system-prompt hoisting, snip filtering,
     /// compact-boundary skipping) and tool pruning live — the backends stay
     /// ignorant of the engine's message model.
-    [[nodiscard]] loom::query::wire::RequestInput build_wire_input(
-        const QueryOptions& options,
-        bool stream, bool include_dynamic = true) const;
+    [[nodiscard]] loom::query::wire::RequestInput
+    build_wire_input(const QueryOptions& options, bool stream, bool include_dynamic = true) const;
     void project_context_messages_locked(loom::query::wire::RequestInput& input) const;
 
     /// Build HTTP request body
-    [[nodiscard]] std::string build_request_body(
-        const QueryOptions& options,
-        bool stream = false) const;
-
+    [[nodiscard]] std::string build_request_body(const QueryOptions& options,
+                                                 bool stream = false) const;
 
     /// Append a Message variant to JSON array
-    void append_message_to_json(const Message& msg,
-                                loom::utils::json::JsonMutVal& arr,
+    void append_message_to_json(const Message& msg, loom::utils::json::JsonMutVal& arr,
                                 loom::utils::json::JsonMutDoc& doc) const;
 
     /// Convert content blocks to JSON
-    [[nodiscard]] loom::utils::json::JsonMutVal content_to_json(
-        const std::vector<ContentBlock>& content,
-        loom::utils::json::JsonMutDoc& doc) const;
+    [[nodiscard]] loom::utils::json::JsonMutVal
+    content_to_json(const std::vector<ContentBlock>& content,
+                    loom::utils::json::JsonMutDoc& doc) const;
 
     /// Low-level API request using httplib
-    [[nodiscard]] Result<ApiCallResult> send_request(
-        const QueryOptions& options,
-        bool is_retry_after_compact = false);
+    [[nodiscard]] Result<ApiCallResult> send_request(const QueryOptions& options,
+                                                     bool is_retry_after_compact = false);
 
     /// Classify HTTP status code to error code
     [[nodiscard]] ErrorCode classify_http_error(int status) const;
@@ -779,15 +765,15 @@ private:
 
     /// Stream a single API call with event callbacks
     [[nodiscard]] StreamCallResult stream_single_api_call(const QueryOptions& options,
-                                                         bool is_retry_after_compact = false);
+                                                          bool is_retry_after_compact = false);
 
     [[nodiscard]] VoidResult ensure_context_budget(const QueryOptions& options);
     [[nodiscard]] VoidResult compact_context_impl(std::string_view trigger,
-                                                 const QueryOptions& options,
-                                                 std::size_t rejected_payload_bytes = 0,
-                                                 bool payload_stream = true);
-    [[nodiscard]] Result<loom::services::compact::SummaryResponse> summarize_context(
-        const loom::services::compact::SummaryRequest& request);
+                                                  const QueryOptions& options,
+                                                  std::size_t rejected_payload_bytes = 0,
+                                                  bool payload_stream = true);
+    [[nodiscard]] Result<loom::services::compact::SummaryResponse>
+    summarize_context(const loom::services::compact::SummaryRequest& request);
     void observe_context_usage(const TokenUsage& usage,
                                const loom::query::wire::RequestInput& sent_input,
                                std::string_view sent_schema);
@@ -795,27 +781,26 @@ private:
     void initialize_context_schema();
     void capture_context_schema(std::string_view prepared_schema);
     void reset_context_observation_locked();
-    [[nodiscard]] std::string context_schema_text(const loom::query::wire::RequestInput& input) const;
+    [[nodiscard]] std::string
+    context_schema_text(const loom::query::wire::RequestInput& input) const;
     [[nodiscard]] static std::string context_schema_text(std::string_view prepared_body);
-    [[nodiscard]] std::optional<std::size_t> context_request_anchor_locked(
-        const std::vector<Message>& messages) const;
+    [[nodiscard]] std::optional<std::size_t>
+    context_request_anchor_locked(const std::vector<Message>& messages) const;
     void restore_context_request_anchor_locked();
     void persist_context_request_anchor_locked(std::string_view anchor_id) const;
-    [[nodiscard]] bool persist_context_checkpoint_locked(
-        const std::vector<Message>& candidate,
-        std::optional<std::uint32_t> task_budget_remaining) const;
+    [[nodiscard]] bool
+    persist_context_checkpoint_locked(const std::vector<Message>& candidate,
+                                      std::optional<std::uint32_t> task_budget_remaining) const;
     void restore_context_checkpoint_locked();
 
     /// Execute all pending tool-use blocks from an assistant message
     /// Uses parallel execution for read-only tools (P1-5)
-    [[nodiscard]] std::vector<ToolResultMessage> execute_pending_tools(
-        const AssistantMessage& msg,
-        const QueryOptions& options);
+    [[nodiscard]] std::vector<ToolResultMessage> execute_pending_tools(const AssistantMessage& msg,
+                                                                       const QueryOptions& options);
 
     /// Build a tool-result message for blocked tool execution.
-    [[nodiscard]] ToolResultMessage make_tool_error_result(
-        const ToolUseBlock& tool_use,
-        std::string message);
+    [[nodiscard]] ToolResultMessage make_tool_error_result(const ToolUseBlock& tool_use,
+                                                           std::string message);
 
     struct ToolPermissionCheck {
         bool allowed = true;
@@ -825,8 +810,7 @@ private:
 
     /// Execute a single tool and return the result message
     [[nodiscard]] ToolResultMessage execute_single_tool(
-        const ToolUseBlock& tool_use,
-        const QueryOptions& options,
+        const ToolUseBlock& tool_use, const QueryOptions& options,
         const std::function<std::string(std::string_view)>& validate_host_input = {},
         const std::optional<HostAgentResumeConstraint>& host_resume = std::nullopt);
 
@@ -855,9 +839,9 @@ private:
     QueryEngineConfig config_;
     std::shared_ptr<const ModelContextConfig> model_context_config_;
     ResolvedModelContext model_context_;
-    ToolRegistry* tool_registry_;              // Non-owning reference to tools
+    ToolRegistry* tool_registry_;                                 // Non-owning reference to tools
     loom::hooks::ToolPermissionHook* permission_hook_ = nullptr;  // Optional permission policy
-    loom::hooks::LifecycleHookRegistry* lifecycle_hooks_ = nullptr; // Optional lifecycle hooks
+    loom::hooks::LifecycleHookRegistry* lifecycle_hooks_ = nullptr;  // Optional lifecycle hooks
     // User-configured hook path (PreToolUse/PostToolUse via the
     // loom.hooks.execution engine).
     // When empty/disabled the tool loop is unchanged (the pipeline only
@@ -865,13 +849,13 @@ private:
     std::vector<loom::utils::hooks_registry::IndividualHookConfig> user_hooks_;
     loom::utils::hooks_execution::HookExecutionContext user_hooks_ctx_template_;
     bool user_hooks_configured_ = false;
-    std::vector<Message> conversation_;        // Full conversation history
-    TokenUsage cumulative_usage_;              // Session-wide token tracking
-    std::atomic<bool> aborted_{false};         // Abort signal for in-flight requests
-    std::function<bool()> external_abort_callback_; // Host-provided cancellation predicate
-    std::mutex abort_callback_mutex_;          // Guards abort_callback_
-    std::function<void()> abort_callback_;     // HTTP-layer socket shutdown (set by send_request*)
-    mutable std::mutex conversation_mutex_;    // Guards conversation history
+    std::vector<Message> conversation_;              // Full conversation history
+    TokenUsage cumulative_usage_;                    // Session-wide token tracking
+    std::atomic<bool> aborted_{false};               // Abort signal for in-flight requests
+    std::function<bool()> external_abort_callback_;  // Host-provided cancellation predicate
+    std::mutex abort_callback_mutex_;                // Guards abort_callback_
+    std::function<void()> abort_callback_;   // HTTP-layer socket shutdown (set by send_request*)
+    mutable std::mutex conversation_mutex_;  // Guards conversation history
     std::uint64_t conversation_revision_ = 0;
     loom::services::compact::UsageObservation context_observed_;
     std::string context_observed_key_;
@@ -886,15 +870,16 @@ private:
     // lock, on a pre-move copy) so it covers ALL commits including native
     // agent notifications. Empty when recording is inactive.
     std::function<void(const Message&)> on_commit_callback_;
-    mutable std::mutex state_mutex_;           // Guards mutable state
-    std::uint32_t token_budget_ = 0;           // Token budget for auto-continuation (0 = disabled)
+    mutable std::mutex state_mutex_;  // Guards mutable state
+    std::uint32_t token_budget_ = 0;  // Token budget for auto-continuation (0 = disabled)
 
     // Additional state tracking
-    SessionId session_id_;                     // Unique session identifier
-    std::optional<std::filesystem::path> sessions_dir_;  // transcript dir (nullopt = no persistence)
+    SessionId session_id_;  // Unique session identifier
+    std::optional<std::filesystem::path>
+        sessions_dir_;  // transcript dir (nullopt = no persistence)
     std::optional<std::filesystem::path> dump_prompts_dir_;  // API req/resp dump dir
-    std::vector<PermissionDenial> permission_denials_;  // Record of permission denials
-    std::unordered_set<std::string> discovered_skills_;  // Skills discovered this session
+    std::vector<PermissionDenial> permission_denials_;       // Record of permission denials
+    std::unordered_set<std::string> discovered_skills_;      // Skills discovered this session
     std::unordered_set<std::string> loaded_nested_memory_paths_;
     std::unordered_set<std::string> content_replacement_seen_ids_;
     std::unordered_map<std::string, std::string> content_replacements_;
@@ -924,15 +909,13 @@ private:
     std::jthread memory_extraction_thread_;
     // Set false on the extraction sub-engine so it does not recursively spawn
     // its own extractor after its (internal) query() turn.
-    bool memory_extraction_enabled_ =
-        [] {
-            // TS gates auto-extraction behind a feature flag; default OFF so
-            // headless/server/test runs don't fire background sub-agent API
-            // calls. Opt in with LOOM_ENABLE_MEMORY_EXTRACTION=1.
-            const char* v = std::getenv("LOOM_ENABLE_MEMORY_EXTRACTION");
-            return v && (std::string_view(v) == "1" ||
-                         std::string_view(v) == "true");
-        }();
+    bool memory_extraction_enabled_ = [] {
+        // TS gates auto-extraction behind a feature flag; default OFF so
+        // headless/server/test runs don't fire background sub-agent API
+        // calls. Opt in with LOOM_ENABLE_MEMORY_EXTRACTION=1.
+        const char* v = std::getenv("LOOM_ENABLE_MEMORY_EXTRACTION");
+        return v && (std::string_view(v) == "1" || std::string_view(v) == "true");
+    }();
 };
 
-} // namespace loom::core
+}  // namespace loom::core

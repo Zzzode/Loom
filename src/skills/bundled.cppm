@@ -42,7 +42,7 @@ import loom.skills.keybindings; // NOTE: simple shortcut sheet, separate from ke
 // ---------------------------------------------------------------------------
 // Bundled sub-modules (runtime impls)
 // ---------------------------------------------------------------------------
-import loom.skills.bundled.stuck;      // runtime: detect_stuck_pattern, get_stuck_skill_manifest
+import loom.skills.bundled.stuck; // runtime: detect_stuck_pattern, get_stuck_skill_manifest
 import loom.skills.bundled.loom_in_chrome;
 import loom.skills.bundled.skill_keybindings;
 
@@ -131,12 +131,13 @@ export namespace loom::skills {
     return SkillDefinition{
         .name = "verify",
         .description = "Verification checklist before claiming work is complete",
-        .trigger_patterns = {
-            R"(verif(?:y|ication))",
-            R"(before\s+(?:commit|merge|push|complet))",
-            R"(check(?:list)?.*(?:done|complete|ready))",
-            R"(make\s+sure)",
-        },
+        .trigger_patterns =
+            {
+                R"(verif(?:y|ication))",
+                R"(before\s+(?:commit|merge|push|complet))",
+                R"(check(?:list)?.*(?:done|complete|ready))",
+                R"(make\s+sure)",
+            },
         .content = R"(## Verification Before Completion
 
 ### Checklist
@@ -166,12 +167,13 @@ export namespace loom::skills {
     return SkillDefinition{
         .name = "batch",
         .description = "Batch operations pattern for processing multiple items efficiently",
-        .trigger_patterns = {
-            R"(batch\s+(?:process|operation|update|change))",
-            R"((?:all|every|each)\s+file)",
-            R"(bulk\s+(?:edit|update|rename|change))",
-            R"(across\s+(?:all|multiple|many))",
-        },
+        .trigger_patterns =
+            {
+                R"(batch\s+(?:process|operation|update|change))",
+                R"((?:all|every|each)\s+file)",
+                R"(bulk\s+(?:edit|update|rename|change))",
+                R"(across\s+(?:all|multiple|many))",
+            },
         .content = R"(## Batch Operations Pattern
 
 ### Planning Phase
@@ -213,14 +215,14 @@ export namespace loom::skills {
 [[nodiscard]] inline SkillDefinition make_self_unstuck_skill() {
     return SkillDefinition{
         .name = "self-unstuck",
-        .description =
-            "Strategies for getting unstuck when progress stalls on a task",
-        .trigger_patterns = {
-            R"(how\s+to\s+proceed)",
-            R"(stuck\s+on\s+this\s+task)",
-            R"(approach\s+not\s+working)",
-            R"(what\s+to\s+try\s+next)",
-        },
+        .description = "Strategies for getting unstuck when progress stalls on a task",
+        .trigger_patterns =
+            {
+                R"(how\s+to\s+proceed)",
+                R"(stuck\s+on\s+this\s+task)",
+                R"(approach\s+not\s+working)",
+                R"(what\s+to\s+try\s+next)",
+            },
         .content = R"(## Getting Unstuck
 
 ### Immediate Actions
@@ -260,7 +262,8 @@ export namespace loom::skills {
     auto manifest = loom::skills::bundled::get_stuck_skill_manifest();
     std::vector<std::string> triggers;
     triggers.reserve(manifest.triggers.size());
-    for (const auto& t : manifest.triggers) triggers.push_back(t);
+    for (const auto& t : manifest.triggers)
+        triggers.push_back(t);
     return SkillDefinition{
         .name = std::move(manifest.name),
         .description = std::move(manifest.description),
@@ -302,28 +305,29 @@ and loom::skills::bundled::suggest_unstuck_action(context).
             "filling forms, capturing screenshots, reading console logs, and navigating sites. "
             "Opens pages in new tabs within your existing Chrome session. Requires site-level "
             "permissions before executing (configured in the extension).",
-        .trigger_patterns = {
-            // English keywords
-            R"(chrome\s+extension)",
-            R"(chrome\s+plugin)",
-            R"(chrome\s+tool)",
-            R"(browser\s+automation)",
-            R"(web\s+page\s+(?:interact|scrape|automate))",
-            R"(web\s+browser\s+tool)",
-            R"((?:sidebar|side\s+bar)\s+(?:chrome|browser))",
-            R"(loom\s+in\s+chrome\s+not\s+respond)",
-            R"(cfc\s+(?:not|broken|issue))",
-            R"(chrome\s+(?:tab|screenshot|console))",
-            // English keyword patterns (replacing Chinese triggers)
-            R"(browser.*action)",
-            R"(web.*action)",
-            R"(chrome.*plugin)",
-            R"(sidebar)",
-            R"(extension.*not.responding)",
-        },
-        .content = loom::skills::bundled::build_loom_in_chrome_prompt()
-            + "\n\n## Troubleshooting\n\n"
-            + loom::skills::bundled::build_troubleshooting_checklist(),
+        .trigger_patterns =
+            {
+                // English keywords
+                R"(chrome\s+extension)",
+                R"(chrome\s+plugin)",
+                R"(chrome\s+tool)",
+                R"(browser\s+automation)",
+                R"(web\s+page\s+(?:interact|scrape|automate))",
+                R"(web\s+browser\s+tool)",
+                R"((?:sidebar|side\s+bar)\s+(?:chrome|browser))",
+                R"(loom\s+in\s+chrome\s+not\s+respond)",
+                R"(cfc\s+(?:not|broken|issue))",
+                R"(chrome\s+(?:tab|screenshot|console))",
+                // English keyword patterns (replacing Chinese triggers)
+                R"(browser.*action)",
+                R"(web.*action)",
+                R"(chrome.*plugin)",
+                R"(sidebar)",
+                R"(extension.*not.responding)",
+            },
+        .content = loom::skills::bundled::build_loom_in_chrome_prompt() +
+                   "\n\n## Troubleshooting\n\n" +
+                   loom::skills::bundled::build_troubleshooting_checklist(),
         .is_builtin = true,
         .author = std::nullopt,
         .version = "1.0.0",
@@ -339,26 +343,26 @@ and loom::skills::bundled::suggest_unstuck_action(context).
 [[nodiscard]] inline SkillDefinition make_keybindings_help_skill() {
     return SkillDefinition{
         .name = "keybindings-help",
-        .description =
-            "Use when the user wants to customize keyboard shortcuts, rebind keys, add "
-            "chord bindings, or modify ~/.loom/keybindings.json. Examples: \"rebind "
-            "ctrl+s\", \"add a chord shortcut\", \"change the submit key\", "
-            "\"customize keybindings\".",
-        .trigger_patterns = {
-            R"(keybind(?:ing)?s?\s+(?:customi[sz]e|change|modify|edit))",
-            R"(rebind\s+(?:key|shortcut))",
-            R"(customi[sz]e\s+(?:keyboard|shortcut|keybinding))",
-            R"(keybindings\.json)",
-            R"(chord\s+(?:key|binding|shortcut))",
-            R"(unbind\s+key)",
-            R"(change\s+submit\s+key)",
-            R"(unbind\s+default)",
-            // English keyword patterns (replacing Chinese triggers)
-            R"(shortcut.*custom)",
-            R"(key.?bind)",
-            R"(change.*shortcut)",
-            R"(rebind)",
-        },
+        .description = "Use when the user wants to customize keyboard shortcuts, rebind keys, add "
+                       "chord bindings, or modify ~/.loom/keybindings.json. Examples: \"rebind "
+                       "ctrl+s\", \"add a chord shortcut\", \"change the submit key\", "
+                       "\"customize keybindings\".",
+        .trigger_patterns =
+            {
+                R"(keybind(?:ing)?s?\s+(?:customi[sz]e|change|modify|edit))",
+                R"(rebind\s+(?:key|shortcut))",
+                R"(customi[sz]e\s+(?:keyboard|shortcut|keybinding))",
+                R"(keybindings\.json)",
+                R"(chord\s+(?:key|binding|shortcut))",
+                R"(unbind\s+key)",
+                R"(change\s+submit\s+key)",
+                R"(unbind\s+default)",
+                // English keyword patterns (replacing Chinese triggers)
+                R"(shortcut.*custom)",
+                R"(key.?bind)",
+                R"(change.*shortcut)",
+                R"(rebind)",
+            },
         .content = loom::skills::bundled::build_keybindings_help_prompt(),
         .is_builtin = true,
         .author = std::nullopt,
@@ -427,21 +431,18 @@ public:
     }
 
     /// Get all bundled skill definitions
-    [[nodiscard]] const std::vector<SkillDefinition>& all() const noexcept {
-        return skills_;
-    }
+    [[nodiscard]] const std::vector<SkillDefinition>& all() const noexcept { return skills_; }
 
     /// Find a built-in skill by name
     [[nodiscard]] const SkillDefinition* find(std::string_view name) const {
         auto it = std::ranges::find_if(skills_,
-            [name](const SkillDefinition& s) { return s.name == name; });
+                                       [name](const SkillDefinition& s) { return s.name == name; });
         return (it != skills_.end()) ? &(*it) : nullptr;
     }
 
     /// Compose multiple skills into a single combined skill
-    [[nodiscard]] SkillDefinition compose(
-        std::string_view composite_name,
-        const std::vector<std::string_view>& skill_names) const {
+    [[nodiscard]] SkillDefinition compose(std::string_view composite_name,
+                                          const std::vector<std::string_view>& skill_names) const {
 
         SkillDefinition composite;
         composite.name = std::string(composite_name);
@@ -454,9 +455,8 @@ public:
                 for (const auto& pattern : skill->trigger_patterns) {
                     composite.trigger_patterns.push_back(pattern);
                 }
-                composite.content += std::format(
-                    "\n---\n# {} - {}\n{}\n",
-                    skill->name, skill->description, skill->content);
+                composite.content += std::format("\n---\n# {} - {}\n{}\n", skill->name,
+                                                 skill->description, skill->content);
             }
         }
         return composite;
@@ -513,6 +513,6 @@ struct BundledSkillRegistrar {
 
 inline BundledSkillRegistrar g_bundled_registrar;
 
-} // namespace detail
+}  // namespace detail
 
-} // namespace loom::skills
+}  // namespace loom::skills

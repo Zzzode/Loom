@@ -3,7 +3,6 @@
 /// Migrated from src/tasks/types.ts
 module;
 
-
 export module loom.tasks.types;
 
 import std;
@@ -28,10 +27,12 @@ enum class BashTaskKind : std::uint8_t {
 /// State for a local shell (bash) task
 struct LocalShellTaskState : loom::core::TaskStateBase {
     std::string command;
+
     struct Result {
         int code = 0;
         bool interrupted = false;
     };
+
     std::optional<Result> result;
     bool completion_status_sent_in_attachment = false;
     // shellCommand is a runtime handle, not serialized
@@ -150,11 +151,16 @@ enum class RemoteTaskType : std::uint8_t {
 /// Convert RemoteTaskType to string
 [[nodiscard]] constexpr std::string_view remote_task_type_to_string(RemoteTaskType t) noexcept {
     switch (t) {
-        case RemoteTaskType::RemoteAgent: return "remote-agent";
-        case RemoteTaskType::Ultraplan: return "ultraplan";
-        case RemoteTaskType::Ultrareview: return "ultrareview";
-        case RemoteTaskType::AutofixPr: return "autofix-pr";
-        case RemoteTaskType::BackgroundPr: return "background-pr";
+    case RemoteTaskType::RemoteAgent:
+        return "remote-agent";
+    case RemoteTaskType::Ultraplan:
+        return "ultraplan";
+    case RemoteTaskType::Ultrareview:
+        return "ultrareview";
+    case RemoteTaskType::AutofixPr:
+        return "autofix-pr";
+    case RemoteTaskType::BackgroundPr:
+        return "background-pr";
     }
     return "unknown";
 }
@@ -207,8 +213,8 @@ struct RemoteAgentTaskState : loom::core::TaskStateBase {
 
 /// Teammate identity stored in task state
 struct TeammateIdentity {
-    std::string agent_id;       // e.g., "researcher@my-team"
-    std::string agent_name;     // e.g., "researcher"
+    std::string agent_id;    // e.g., "researcher@my-team"
+    std::string agent_name;  // e.g., "researcher"
     std::string team_name;
     std::optional<std::string> color;
     bool plan_mode_required = false;
@@ -245,7 +251,8 @@ struct InProcessTeammateTaskState : loom::core::TaskStateBase {
 };
 
 /// Type guard
-[[nodiscard]] inline bool is_in_process_teammate_task(const loom::core::TaskStateBase& task) noexcept {
+[[nodiscard]] inline bool
+is_in_process_teammate_task(const loom::core::TaskStateBase& task) noexcept {
     return task.type == loom::core::TaskType::InProcessTeammate;
 }
 
@@ -253,7 +260,7 @@ struct InProcessTeammateTaskState : loom::core::TaskStateBase {
 inline constexpr std::size_t TEAMMATE_MESSAGES_UI_CAP = 50;
 
 /// Append an item with cap enforcement
-template<typename T>
+template <typename T>
 [[nodiscard]] std::vector<T> append_capped_message(const std::vector<T>& prev, const T& item) {
     if (prev.empty()) {
         return {item};
@@ -324,15 +331,9 @@ struct MonitorMcpTaskState : loom::core::TaskStateBase {
 // ============================================================
 
 /// Union of all concrete task state types
-using TaskState = std::variant<
-    LocalShellTaskState,
-    LocalAgentTaskState,
-    RemoteAgentTaskState,
-    InProcessTeammateTaskState,
-    LocalWorkflowTaskState,
-    MonitorMcpTaskState,
-    DreamTaskState
->;
+using TaskState = std::variant<LocalShellTaskState, LocalAgentTaskState, RemoteAgentTaskState,
+                               InProcessTeammateTaskState, LocalWorkflowTaskState,
+                               MonitorMcpTaskState, DreamTaskState>;
 
 /// Same as TaskState - all types can appear in background indicator
 using BackgroundTaskState = TaskState;
@@ -384,4 +385,4 @@ using BackgroundTaskState = TaskState;
     return task.agent_type == "main-session";
 }
 
-} // namespace loom::tasks
+}  // namespace loom::tasks

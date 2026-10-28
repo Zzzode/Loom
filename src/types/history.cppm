@@ -5,13 +5,13 @@
 // that hook/source files will eventually migrate toward.
 module;
 
+#include <yyjson.h>
+
+#include <cstddef>
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-
-#include <yyjson.h>
-#include <cstddef>
 
 export module loom.history;
 
@@ -53,8 +53,8 @@ struct SessionHistory {
         m.id = next_id++;
         if (m.created_at_ms == 0) {
             using namespace std::chrono;
-            m.created_at_ms = duration_cast<milliseconds>(
-                system_clock::now().time_since_epoch()).count();
+            m.created_at_ms =
+                duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count();
         }
         last_active_ms = m.created_at_ms;
         messages.push_back(std::move(m));
@@ -77,14 +77,13 @@ struct SessionHistory {
 
     // Drop messages with id < before_msg_id, insert a compacted summary at
     // the boundary position.  Returns the number of messages dropped.
-    size_t compact_before(uint64_t before_msg_id,
-                          const std::string& replacement_summary_json) {
+    size_t compact_before(uint64_t before_msg_id, const std::string& replacement_summary_json) {
         auto it = std::find_if(messages.begin(), messages.end(),
-            [&](const HistoryMessage& m) { return m.id >= before_msg_id; });
+                               [&](const HistoryMessage& m) { return m.id >= before_msg_id; });
         size_t dropped = static_cast<size_t>(std::distance(messages.begin(), it));
         if (dropped == 0) return 0;
         HistoryMessage summary;
-        summary.id = 0; // placeholder; id only meaningful for uncompacted msgs
+        summary.id = 0;  // placeholder; id only meaningful for uncompacted msgs
         summary.role = Role::System;
         summary.content_json = replacement_summary_json;
         summary.created_at_ms = last_active_ms;
@@ -110,11 +109,16 @@ namespace detail {
 
 inline const char* role_to_str(Role r) {
     switch (r) {
-        case Role::System: return "system";
-        case Role::User: return "user";
-        case Role::Assistant: return "assistant";
-        case Role::Tool: return "tool";
-        case Role::ToolResult: return "tool_result";
+    case Role::System:
+        return "system";
+    case Role::User:
+        return "user";
+    case Role::Assistant:
+        return "assistant";
+    case Role::Tool:
+        return "tool";
+    case Role::ToolResult:
+        return "tool_result";
     }
     return "user";
 }
@@ -128,7 +132,7 @@ inline Role role_from_str(std::string_view s) {
     return Role::User;
 }
 
-} // namespace detail
+}  // namespace detail
 
 inline std::string to_json(const SessionHistory& h) {
     loom::utils::json::JsonMutDoc doc;
@@ -153,7 +157,8 @@ inline std::string to_json(const SessionHistory& h) {
         }
         obj.add("created_at_ms", doc.number(m.created_at_ms));
         if (!m.model_used.empty()) obj.add("model_used", doc.string(m.model_used));
-        if (m.token_estimate != 0) obj.add("token_estimate", doc.number(static_cast<int64_t>(m.token_estimate)));
+        if (m.token_estimate != 0)
+            obj.add("token_estimate", doc.number(static_cast<int64_t>(m.token_estimate)));
         if (m.compacted) obj.add("compacted", doc.boolean(true));
         arr.append(obj);
     }
@@ -229,7 +234,8 @@ public:
         std::shared_lock lk(mu_);
         std::vector<std::string> out;
         out.reserve(sessions_.size());
-        for (const auto& kv : sessions_) out.push_back(kv.first);
+        for (const auto& kv : sessions_)
+            out.push_back(kv.first);
         return out;
     }
 
@@ -259,8 +265,8 @@ public:
             if (ec) return std::unexpected("failed to create dir: " + ec.message());
         }
         auto tmp = file;
-        tmp += std::string(".tmp.") + std::to_string(
-            std::chrono::steady_clock::now().time_since_epoch().count());
+        tmp += std::string(".tmp.") +
+               std::to_string(std::chrono::steady_clock::now().time_since_epoch().count());
         {
             std::ofstream ofs(tmp, std::ios::binary | std::ios::trunc);
             if (!ofs) return std::unexpected("failed to open tmp file");
@@ -288,8 +294,16 @@ public:
         sessions_arr.iter([&](loom::utils::json::JsonVal v) {
             if (!ok) return;
             auto sh = history_from_json(v.to_string());
-            if (!sh) { ok = false; first_err = sh.error(); return; }
-            if (sh->session_id.empty()) { ok = false; first_err = "session with empty id"; return; }
+            if (!sh) {
+                ok = false;
+                first_err = sh.error();
+                return;
+            }
+            if (sh->session_id.empty()) {
+                ok = false;
+                first_err = "session with empty id";
+                return;
+            }
             loaded.emplace(sh->session_id, std::move(*sh));
         });
         if (!ok) return std::unexpected(first_err);
@@ -306,4 +320,4 @@ private:
     std::unordered_map<std::string, SessionHistory> sessions_;
 };
 
-} // namespace loom::history
+}  // namespace loom::history

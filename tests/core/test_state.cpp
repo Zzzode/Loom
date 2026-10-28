@@ -1,11 +1,10 @@
 /// @file test_state.cpp
 
-
 /// persistence, on_change_app_state, ftxui_integration
 
-#include <cstdlib>
-
 #include <gtest/gtest.h>
+
+#include <cstdlib>
 
 import std;
 import loom.state.app_state;
@@ -25,28 +24,24 @@ import loom.constants.prompts;
 namespace {
 
 [[nodiscard]] std::unique_ptr<loom::state::AppStore> make_test_store() {
-    return std::make_unique<loom::state::AppStore>(
-        loom::state::get_default_app_state(),
-        &loom::state::app_reducer);
+    return std::make_unique<loom::state::AppStore>(loom::state::get_default_app_state(),
+                                                   &loom::state::app_reducer);
 }
 
 [[nodiscard]] std::shared_ptr<loom::state::AppStore> make_shared_test_store() {
-    return std::make_shared<loom::state::AppStore>(
-        loom::state::get_default_app_state(),
-        &loom::state::app_reducer);
+    return std::make_shared<loom::state::AppStore>(loom::state::get_default_app_state(),
+                                                   &loom::state::app_reducer);
 }
 
 [[nodiscard]] loom::core::Message make_user_message(std::string id, std::string text) {
     return loom::core::UserMessage{
-        loom::core::MessageBase{
-            loom::core::MessageId{std::move(id)},
-            std::chrono::system_clock::now(),
-            {loom::core::TextBlock{std::move(text)}}
-        }
-    };
+        loom::core::MessageBase{loom::core::MessageId{std::move(id)},
+                                std::chrono::system_clock::now(),
+                                {loom::core::TextBlock{std::move(text)}}}};
 }
 
-} // namespace
+}  // namespace
+
 // ═══════════════════════════════════════════════════════════════════════════════
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -62,16 +57,15 @@ TEST(AppState, DefaultStateIsValid) {
 TEST(AppState, ObservableState) {
     loom::state::ObservableState obs_state;
     int change_count = 0;
-    
-    auto sub_id = obs_state.subscribe([&change_count](const auto&, const auto&) {
-        change_count++;
-    });
+
+    auto sub_id =
+        obs_state.subscribe([&change_count](const auto&, const auto&) { change_count++; });
     EXPECT_NE(sub_id, 0u);
-    
+
     auto new_state = loom::state::get_default_app_state();
     new_state.verbose = true;
     obs_state.set(new_state);
-    
+
     EXPECT_EQ(change_count, 1);
     EXPECT_TRUE(obs_state.get().verbose);
 }
@@ -109,16 +103,13 @@ TEST(StateStore, SubscribeReceivesNotifications) {
     auto store = make_test_store();
     int notify_count = 0;
 
-
-    auto sub_id = store->subscribe([&notify_count](const auto& /*prev*/, const auto& /*next*/) {
-        notify_count++;
-    });
+    auto sub_id = store->subscribe(
+        [&notify_count](const auto& /*prev*/, const auto& /*next*/) { notify_count++; });
 
     store->dispatch(loom::state::Action{loom::state::ActionType::SetVerbose, true});
     store->dispatch(loom::state::Action{loom::state::ActionType::SetLoading, true});
 
     EXPECT_EQ(notify_count, 2);
-
 
     store->unsubscribe(sub_id);
     store->dispatch(loom::state::Action{loom::state::ActionType::SetStreaming, true});
@@ -128,7 +119,6 @@ TEST(StateStore, SubscribeReceivesNotifications) {
 TEST(StateStore, UnknownActionNoOp) {
     auto store = make_test_store();
     auto before = store->get_state();
-
 
     store->dispatch(loom::state::Action{loom::state::ActionType::EnableTool});
     auto after = store->get_state();
@@ -140,9 +130,12 @@ TEST(StateStore, UnknownActionNoOp) {
 TEST(StateStore, DispatchPermissionParityActions) {
     auto store = make_test_store();
 
-    store->dispatch(loom::state::Action{loom::state::ActionType::GrantPermission, std::string{"Bash"}});
-    store->dispatch(loom::state::Action{loom::state::ActionType::RevokePermission, std::string{"Bash"}});
-    store->dispatch(loom::state::Action{loom::state::ActionType::GrantPermission, std::string{"Read"}});
+    store->dispatch(
+        loom::state::Action{loom::state::ActionType::GrantPermission, std::string{"Bash"}});
+    store->dispatch(
+        loom::state::Action{loom::state::ActionType::RevokePermission, std::string{"Bash"}});
+    store->dispatch(
+        loom::state::Action{loom::state::ActionType::GrantPermission, std::string{"Read"}});
 
     auto state = store->get_state();
     EXPECT_FALSE(state.tool_permission_context.allowed_tools.contains("Bash"));
@@ -154,12 +147,10 @@ TEST(StateStore, DispatchPermissionParityActions) {
 TEST(StateStore, DispatchMessageAndSettingsParityActions) {
     auto store = make_test_store();
 
-    store->dispatch(loom::state::Action{
-        loom::state::ActionType::AddMessage,
-        make_user_message("msg-1", "first")});
-    store->dispatch(loom::state::Action{
-        loom::state::ActionType::UpdateLastMessage,
-        make_user_message("msg-2", "replacement")});
+    store->dispatch(loom::state::Action{loom::state::ActionType::AddMessage,
+                                        make_user_message("msg-1", "first")});
+    store->dispatch(loom::state::Action{loom::state::ActionType::UpdateLastMessage,
+                                        make_user_message("msg-2", "replacement")});
 
     loom::state::Settings settings;
     settings.model = "test-model";
@@ -167,7 +158,8 @@ TEST(StateStore, DispatchMessageAndSettingsParityActions) {
     settings.verbose = true;
     store->dispatch(loom::state::Action{loom::state::ActionType::UpdateSettings, settings});
     store->dispatch(loom::state::Action{loom::state::ActionType::SetThinkingEnabled, false});
-    store->dispatch(loom::state::Action{loom::state::ActionType::SetPromptSuggestionEnabled, false});
+    store->dispatch(
+        loom::state::Action{loom::state::ActionType::SetPromptSuggestionEnabled, false});
 
     auto state = store->get_state();
     ASSERT_EQ(state.messages.size(), 1u);
@@ -186,26 +178,27 @@ TEST(StateStore, DispatchMessageAndSettingsParityActions) {
 TEST(StateStore, DispatchUiParityActions) {
     auto store = make_test_store();
 
-    store->dispatch(loom::state::Action{
-        loom::state::ActionType::SetSlashCommand,
-        std::optional<std::string>{"/help"}});
-    store->dispatch(loom::state::Action{loom::state::ActionType::AddNotification, std::string{"n1"}});
-    store->dispatch(loom::state::Action{loom::state::ActionType::AddNotification, std::string{"n2"}});
-    store->dispatch(loom::state::Action{loom::state::ActionType::DismissNotification, std::string{"n1"}});
-    store->dispatch(loom::state::Action{
-        loom::state::ActionType::SetStatusLineText,
-        std::optional<std::string>{"ready"}});
+    store->dispatch(loom::state::Action{loom::state::ActionType::SetSlashCommand,
+                                        std::optional<std::string>{"/help"}});
+    store->dispatch(
+        loom::state::Action{loom::state::ActionType::AddNotification, std::string{"n1"}});
+    store->dispatch(
+        loom::state::Action{loom::state::ActionType::AddNotification, std::string{"n2"}});
+    store->dispatch(
+        loom::state::Action{loom::state::ActionType::DismissNotification, std::string{"n1"}});
+    store->dispatch(loom::state::Action{loom::state::ActionType::SetStatusLineText,
+                                        std::optional<std::string>{"ready"}});
     store->dispatch(loom::state::Action{
         loom::state::ActionType::SetFooterSelection,
         std::optional<loom::state::FooterItem>{loom::state::FooterItem::Tasks}});
-    store->dispatch(loom::state::Action{
-        loom::state::ActionType::SetSpinnerTip,
-        std::optional<std::string>{"working"}});
+    store->dispatch(loom::state::Action{loom::state::ActionType::SetSpinnerTip,
+                                        std::optional<std::string>{"working"}});
     store->dispatch(loom::state::Action{loom::state::ActionType::SetBriefOnly, true});
     store->dispatch(loom::state::Action{loom::state::ActionType::SetShowTeammatePreview, true});
     store->dispatch(loom::state::Action{loom::state::ActionType::SetSelectedAgentIndex, 2});
     store->dispatch(loom::state::Action{loom::state::ActionType::SetCoordinatorTaskIndex, 3});
-    store->dispatch(loom::state::Action{loom::state::ActionType::SetViewSelectionMode, std::string{"viewing-agent"}});
+    store->dispatch(loom::state::Action{loom::state::ActionType::SetViewSelectionMode,
+                                        std::string{"viewing-agent"}});
 
     auto state = store->get_state();
     ASSERT_TRUE(state.active_slash_command.has_value());
@@ -234,31 +227,23 @@ TEST(StateStore, DispatchBridgeAndRemoteParityActions) {
     store->dispatch(loom::state::Action{loom::state::ActionType::SetBridgeConnected, true});
     store->dispatch(loom::state::Action{loom::state::ActionType::SetBridgeSessionActive, true});
     store->dispatch(loom::state::Action{loom::state::ActionType::SetBridgeReconnecting, true});
-    store->dispatch(loom::state::Action{
-        loom::state::ActionType::SetBridgeConnectUrl,
-        std::optional<std::string>{"http://bridge/connect"}});
-    store->dispatch(loom::state::Action{
-        loom::state::ActionType::SetBridgeSessionUrl,
-        std::optional<std::string>{"http://bridge/session"}});
-    store->dispatch(loom::state::Action{
-        loom::state::ActionType::SetBridgeEnvironmentId,
-        std::optional<std::string>{"env-1"}});
-    store->dispatch(loom::state::Action{
-        loom::state::ActionType::SetBridgeSessionId,
-        std::optional<std::string>{"session-1"}});
-    store->dispatch(loom::state::Action{
-        loom::state::ActionType::SetBridgeError,
-        std::optional<std::string>{"bridge error"}});
-    store->dispatch(loom::state::Action{
-        loom::state::ActionType::SetBridgeInitialName,
-        std::optional<std::string>{"local"}});
+    store->dispatch(loom::state::Action{loom::state::ActionType::SetBridgeConnectUrl,
+                                        std::optional<std::string>{"http://bridge/connect"}});
+    store->dispatch(loom::state::Action{loom::state::ActionType::SetBridgeSessionUrl,
+                                        std::optional<std::string>{"http://bridge/session"}});
+    store->dispatch(loom::state::Action{loom::state::ActionType::SetBridgeEnvironmentId,
+                                        std::optional<std::string>{"env-1"}});
+    store->dispatch(loom::state::Action{loom::state::ActionType::SetBridgeSessionId,
+                                        std::optional<std::string>{"session-1"}});
+    store->dispatch(loom::state::Action{loom::state::ActionType::SetBridgeError,
+                                        std::optional<std::string>{"bridge error"}});
+    store->dispatch(loom::state::Action{loom::state::ActionType::SetBridgeInitialName,
+                                        std::optional<std::string>{"local"}});
     store->dispatch(loom::state::Action{loom::state::ActionType::SetShowRemoteCallout, true});
-    store->dispatch(loom::state::Action{
-        loom::state::ActionType::SetRemoteSessionUrl,
-        std::optional<std::string>{"http://remote/session"}});
-    store->dispatch(loom::state::Action{
-        loom::state::ActionType::SetRemoteConnectionStatus,
-        loom::state::RemoteConnectionStatus::Connected});
+    store->dispatch(loom::state::Action{loom::state::ActionType::SetRemoteSessionUrl,
+                                        std::optional<std::string>{"http://remote/session"}});
+    store->dispatch(loom::state::Action{loom::state::ActionType::SetRemoteConnectionStatus,
+                                        loom::state::RemoteConnectionStatus::Connected});
     store->dispatch(loom::state::Action{loom::state::ActionType::SetRemoteBackgroundTaskCount, 7u});
 
     auto state = store->get_state();
@@ -293,25 +278,26 @@ TEST(StateStore, DispatchTasksAgentsAndOverlayParityActions) {
     store->dispatch(loom::state::Action{loom::state::ActionType::AddTask, task});
     task.status = "done";
     store->dispatch(loom::state::Action{loom::state::ActionType::UpdateTask, task});
-    store->dispatch(loom::state::Action{
-        loom::state::ActionType::SetForegroundedTaskId,
-        std::optional<std::string>{"task-1"}});
-    store->dispatch(loom::state::Action{
-        loom::state::ActionType::SetViewingAgentTaskId,
-        std::optional<std::string>{"task-1"}});
-    store->dispatch(loom::state::Action{
-        loom::state::ActionType::RegisterAgentName,
-        std::pair<std::string, std::string>{"agent-a", "task-1"}});
-    store->dispatch(loom::state::Action{
-        loom::state::ActionType::SetAgent,
-        std::optional<std::string>{"agent-a"}});
+    store->dispatch(loom::state::Action{loom::state::ActionType::SetForegroundedTaskId,
+                                        std::optional<std::string>{"task-1"}});
+    store->dispatch(loom::state::Action{loom::state::ActionType::SetViewingAgentTaskId,
+                                        std::optional<std::string>{"task-1"}});
+    store->dispatch(loom::state::Action{loom::state::ActionType::RegisterAgentName,
+                                        std::pair<std::string, std::string>{"agent-a", "task-1"}});
+    store->dispatch(loom::state::Action{loom::state::ActionType::SetAgent,
+                                        std::optional<std::string>{"agent-a"}});
     store->dispatch(loom::state::Action{loom::state::ActionType::SetKairosEnabled, true});
-    store->dispatch(loom::state::Action{loom::state::ActionType::SetCompanionReaction, std::optional<std::string>{"ok"}});
+    store->dispatch(loom::state::Action{loom::state::ActionType::SetCompanionReaction,
+                                        std::optional<std::string>{"ok"}});
     const auto pet_time = std::chrono::system_clock::now();
-    store->dispatch(loom::state::Action{loom::state::ActionType::SetCompanionPetTime, std::optional{pet_time}});
-    store->dispatch(loom::state::Action{loom::state::ActionType::AddActiveOverlay, std::string{"help"}});
-    store->dispatch(loom::state::Action{loom::state::ActionType::RemoveActiveOverlay, std::string{"help"}});
-    store->dispatch(loom::state::Action{loom::state::ActionType::AddActiveOverlay, std::string{"tasks"}});
+    store->dispatch(
+        loom::state::Action{loom::state::ActionType::SetCompanionPetTime, std::optional{pet_time}});
+    store->dispatch(
+        loom::state::Action{loom::state::ActionType::AddActiveOverlay, std::string{"help"}});
+    store->dispatch(
+        loom::state::Action{loom::state::ActionType::RemoveActiveOverlay, std::string{"help"}});
+    store->dispatch(
+        loom::state::Action{loom::state::ActionType::AddActiveOverlay, std::string{"tasks"}});
 
     auto state = store->get_state();
     ASSERT_TRUE(state.tasks.contains("task-1"));
@@ -327,7 +313,8 @@ TEST(StateStore, DispatchTasksAgentsAndOverlayParityActions) {
     EXPECT_FALSE(state.active_overlays.contains("help"));
     EXPECT_TRUE(state.active_overlays.contains("tasks"));
 
-    store->dispatch(loom::state::Action{loom::state::ActionType::RemoveTask, std::string{"task-1"}});
+    store->dispatch(
+        loom::state::Action{loom::state::ActionType::RemoveTask, std::string{"task-1"}});
     store->dispatch(loom::state::Action{loom::state::ActionType::ClearActiveOverlays});
     state = store->get_state();
     EXPECT_FALSE(state.tasks.contains("task-1"));
@@ -363,18 +350,20 @@ TEST(StateStore, DispatchFeatureBucketParityActions) {
     speculation.status = loom::state::SpeculationStatus::Active;
     speculation.id = "spec-1";
     store->dispatch(loom::state::Action{loom::state::ActionType::SetSpeculationState, speculation});
-    store->dispatch(loom::state::Action{loom::state::ActionType::SetSpeculationTimeSaved,
-                                      std::int64_t{1234}});
+    store->dispatch(
+        loom::state::Action{loom::state::ActionType::SetSpeculationTimeSaved, std::int64_t{1234}});
 
     loom::state::AppState::SkillImprovementState::Suggestion suggestion;
     suggestion.skill_name = "state";
-    store->dispatch(loom::state::Action{loom::state::ActionType::SetSkillSuggestion, std::optional{suggestion}});
-    store->dispatch(loom::state::Action{loom::state::ActionType::SetEffortValue, std::optional<std::string>{"high"}});
-    store->dispatch(loom::state::Action{loom::state::ActionType::SetAdvisorModel, std::optional<std::string>{"advisor"}});
+    store->dispatch(loom::state::Action{loom::state::ActionType::SetSkillSuggestion,
+                                        std::optional{suggestion}});
+    store->dispatch(loom::state::Action{loom::state::ActionType::SetEffortValue,
+                                        std::optional<std::string>{"high"}});
+    store->dispatch(loom::state::Action{loom::state::ActionType::SetAdvisorModel,
+                                        std::optional<std::string>{"advisor"}});
     store->dispatch(loom::state::Action{loom::state::ActionType::SetUltraplanLaunching, true});
-    store->dispatch(loom::state::Action{
-        loom::state::ActionType::SetUltraplanSessionUrl,
-        std::optional<std::string>{"http://ultraplan/session"}});
+    store->dispatch(loom::state::Action{loom::state::ActionType::SetUltraplanSessionUrl,
+                                        std::optional<std::string>{"http://ultraplan/session"}});
     store->dispatch(loom::state::Action{loom::state::ActionType::SetUltraplanMode, true});
 
     auto state = store->get_state();
@@ -415,23 +404,21 @@ TEST(StateStore, DispatchPendingRequestPromptAndInboxParityActions) {
         .host = "localhost",
         .created_at = std::chrono::system_clock::now(),
     };
-    store->dispatch(loom::state::Action{loom::state::ActionType::AddSandboxPermissionRequest, permission});
-    store->dispatch(loom::state::Action{
-        loom::state::ActionType::SetSelectedSandboxPermissionIndex,
-        std::size_t{4}});
-    store->dispatch(loom::state::Action{
-        loom::state::ActionType::SetPendingWorkerRequest,
-        std::optional{loom::state::AppState::PendingWorkerRequest{
-            .tool_name = "Bash",
-            .tool_use_id = "tool-1",
-            .description = "run command",
-        }}});
-    store->dispatch(loom::state::Action{
-        loom::state::ActionType::SetPendingSandboxRequest,
-        std::optional{loom::state::AppState::PendingSandboxRequest{
-            .request_id = "sandbox-1",
-            .host = "localhost",
-        }}});
+    store->dispatch(
+        loom::state::Action{loom::state::ActionType::AddSandboxPermissionRequest, permission});
+    store->dispatch(loom::state::Action{loom::state::ActionType::SetSelectedSandboxPermissionIndex,
+                                        std::size_t{4}});
+    store->dispatch(loom::state::Action{loom::state::ActionType::SetPendingWorkerRequest,
+                                        std::optional{loom::state::AppState::PendingWorkerRequest{
+                                            .tool_name = "Bash",
+                                            .tool_use_id = "tool-1",
+                                            .description = "run command",
+                                        }}});
+    store->dispatch(loom::state::Action{loom::state::ActionType::SetPendingSandboxRequest,
+                                        std::optional{loom::state::AppState::PendingSandboxRequest{
+                                            .request_id = "sandbox-1",
+                                            .host = "localhost",
+                                        }}});
 
     loom::state::AppState::PromptSuggestionState prompt;
     prompt.text = "try this";
@@ -465,9 +452,11 @@ TEST(StateStore, DispatchPendingRequestPromptAndInboxParityActions) {
     EXPECT_EQ(state.inbox.messages.front().id, "inbox-1");
 
     store->dispatch(loom::state::Action{loom::state::ActionType::ClearInitialMessage});
-    store->dispatch(loom::state::Action{loom::state::ActionType::RemoveSandboxPermissionRequest, std::string{"perm-1"}});
+    store->dispatch(loom::state::Action{loom::state::ActionType::RemoveSandboxPermissionRequest,
+                                        std::string{"perm-1"}});
     store->dispatch(loom::state::Action{loom::state::ActionType::ClearPromptSuggestion});
-    store->dispatch(loom::state::Action{loom::state::ActionType::RemoveInboxMessage, std::string{"inbox-1"}});
+    store->dispatch(
+        loom::state::Action{loom::state::ActionType::RemoveInboxMessage, std::string{"inbox-1"}});
     store->dispatch(loom::state::Action{loom::state::ActionType::AddInboxMessage, inbox_message});
     store->dispatch(loom::state::Action{loom::state::ActionType::ClearInboxMessages});
 
@@ -490,11 +479,13 @@ TEST(StateStore, UnsupportedSideEffectActionsRemainNoOps) {
     store->dispatch(loom::state::Action{loom::state::ActionType::ClearSavedState});
 
     auto after = store->get_state();
-    EXPECT_EQ(before.tool_permission_context.allowed_tools.size(), after.tool_permission_context.allowed_tools.size());
+    EXPECT_EQ(before.tool_permission_context.allowed_tools.size(),
+              after.tool_permission_context.allowed_tools.size());
     for (const auto& tool : before.tool_permission_context.allowed_tools) {
         EXPECT_TRUE(after.tool_permission_context.allowed_tools.contains(tool));
     }
-    EXPECT_EQ(before.tool_permission_context.denied_tools.size(), after.tool_permission_context.denied_tools.size());
+    EXPECT_EQ(before.tool_permission_context.denied_tools.size(),
+              after.tool_permission_context.denied_tools.size());
     for (const auto& tool : before.tool_permission_context.denied_tools) {
         EXPECT_TRUE(after.tool_permission_context.denied_tools.contains(tool));
     }
@@ -505,14 +496,14 @@ TEST(StateStore, UnsupportedSideEffectActionsRemainNoOps) {
 TEST(StateStore, MiddlewareSupport) {
     auto store = make_test_store();
     int middleware_count = 0;
-    
+
     store->add_middleware([&middleware_count](loom::state::DispatchFn next) {
         return [next = std::move(next), &middleware_count](const loom::state::Action& action) {
             middleware_count++;
             next(action);
         };
     });
-    
+
     store->dispatch(loom::state::Action{loom::state::ActionType::SetVerbose, true});
     EXPECT_EQ(middleware_count, 1);
 }
@@ -524,37 +515,32 @@ TEST(StateStore, MiddlewareSupport) {
 TEST(Selectors, IsVerbose) {
     auto state = loom::state::get_default_app_state();
     state.verbose = true;
-    
+
     EXPECT_TRUE(loom::state::selectors::is_verbose(state));
 }
 
 TEST(Selectors, IsLoading) {
     auto state = loom::state::get_default_app_state();
     state.is_loading = true;
-    
+
     EXPECT_TRUE(loom::state::selectors::is_loading(state));
 }
 
 TEST(Selectors, MemoizedSelector) {
     auto state = loom::state::get_default_app_state();
     int compute_count = 0;
-    
+
     loom::state::selectors::MemoizedSelector<bool, bool> selector(
-        [](const auto& s) {
-            return s.verbose;
-        },
+        [](const auto& s) { return s.verbose; },
         [&compute_count](const auto& s) {
             compute_count++;
             return s.verbose;
-        }
-    );
-    
+        });
 
     auto result1 = selector.select(state);
     auto result2 = selector.select(state);
     EXPECT_EQ(result1, result2);
     EXPECT_EQ(compute_count, 1);
-    
 
     state.verbose = true;
     auto result3 = selector.select(state);
@@ -569,15 +555,13 @@ TEST(Selectors, MemoizedSelector) {
 TEST(OnChangeAppState, StateChangeRegistry) {
     loom::state::on_change::StateChangeRegistry registry;
     int callback_count = 0;
-    
-    registry.register_callback([&callback_count](const auto&, const auto&) {
-        callback_count++;
-    });
-    
+
+    registry.register_callback([&callback_count](const auto&, const auto&) { callback_count++; });
+
     auto state1 = loom::state::get_default_app_state();
     auto state2 = loom::state::get_default_app_state();
     state2.verbose = true;
-    
+
     registry.run_callbacks(state1, state2);
     EXPECT_EQ(callback_count, 1);
 }
@@ -588,12 +572,12 @@ TEST(OnChangeAppState, StateChangeRegistry) {
 
 TEST(FTXUIIntegration, VerboseIndicator) {
     loom::state::ftxui::VerboseIndicator indicator;
-    
+
     auto store = make_shared_test_store();
     indicator.connect(store);
-    
+
     EXPECT_EQ(indicator.get_text(), "");
-    
+
     store->dispatch(loom::state::Action{loom::state::ActionType::SetVerbose, true});
     // Note: In real usage, the component would need to process the state change
     // This test verifies basic construction and API
@@ -602,19 +586,18 @@ TEST(FTXUIIntegration, VerboseIndicator) {
 
 TEST(FTXUIIntegration, LoadingIndicator) {
     loom::state::ftxui::LoadingIndicator indicator;
-    
+
     auto store = make_shared_test_store();
     indicator.connect(store);
-    
+
     EXPECT_EQ(indicator.get_text(), "");
 }
 
 TEST(FTXUIIntegration, MessageCounter) {
     loom::state::ftxui::MessageCounter counter;
-    
+
     auto store = make_shared_test_store();
     counter.connect(store);
-    
 
     EXPECT_EQ(counter.get_last_state().messages.size(), 0);
 }
@@ -622,10 +605,10 @@ TEST(FTXUIIntegration, MessageCounter) {
 TEST(FTXUIIntegration, ReactiveScreenManager) {
     auto store = make_shared_test_store();
     auto manager = loom::state::ftxui::make_reactive_screen_manager(store);
-    
+
     auto indicator = std::make_shared<loom::state::ftxui::VerboseIndicator>();
     manager->add_component(indicator);
-    
+
     EXPECT_EQ(manager->get_store(), store);
     manager->clear_components();
 }
@@ -638,11 +621,10 @@ TEST(Persistence, StatePersistenceAPI) {
 
     auto state_file = std::filesystem::temp_directory_path() / "loom_test_state.json";
     loom::state::persistence::StatePersistence persistence(state_file);
-    
+
     auto state = loom::state::get_default_app_state();
     state.verbose = true;
     state.is_loading = false;
-    
 
     auto save_result = persistence.save_state(state);
     ASSERT_TRUE(save_result.has_value());
@@ -662,8 +644,8 @@ TEST(Persistence, RoundTripsAllPersistedFields) {
     src.compact_mode = true;
     src.show_thinking = true;
     src.fast_mode = true;
-    src.thinking_enabled = false;             // default is true
-    src.prompt_suggestion_enabled = false;     // default is true
+    src.thinking_enabled = false;           // default is true
+    src.prompt_suggestion_enabled = false;  // default is true
     src.kairos_enabled = true;
     src.is_ultraplan_mode = true;
     src.ultraplan_launching = true;
@@ -702,10 +684,14 @@ TEST(Persistence, RoundTripsAllPersistedFields) {
     EXPECT_EQ(dst.selected_ip_agent_index, src.selected_ip_agent_index);
     EXPECT_EQ(dst.coordinator_task_index, src.coordinator_task_index);
     EXPECT_EQ(dst.remote_background_task_count, src.remote_background_task_count);
-    ASSERT_TRUE(dst.main_loop_model.has_value());  EXPECT_EQ(*dst.main_loop_model, *src.main_loop_model);
-    ASSERT_TRUE(dst.advisor_model.has_value());    EXPECT_EQ(*dst.advisor_model, *src.advisor_model);
-    ASSERT_TRUE(dst.effort_value.has_value());     EXPECT_EQ(*dst.effort_value, *src.effort_value);
-    ASSERT_TRUE(dst.status_line_text.has_value()); EXPECT_EQ(*dst.status_line_text, *src.status_line_text);
+    ASSERT_TRUE(dst.main_loop_model.has_value());
+    EXPECT_EQ(*dst.main_loop_model, *src.main_loop_model);
+    ASSERT_TRUE(dst.advisor_model.has_value());
+    EXPECT_EQ(*dst.advisor_model, *src.advisor_model);
+    ASSERT_TRUE(dst.effort_value.has_value());
+    EXPECT_EQ(*dst.effort_value, *src.effort_value);
+    ASSERT_TRUE(dst.status_line_text.has_value());
+    EXPECT_EQ(*dst.status_line_text, *src.status_line_text);
 }
 
 TEST(Persistence, AbsentOptionalStringsStayDefault) {
@@ -744,8 +730,10 @@ TEST(StoreUndoRedo, RoundTripsDispatchedActions) {
     store->enable_undo();
     EXPECT_FALSE(store->can_undo());
 
-    store->dispatch(loom::state::Action{loom::state::ActionType::SetVerbose, true});   // false -> true
-    store->dispatch(loom::state::Action{loom::state::ActionType::SetVerbose, false});  // true -> false
+    store->dispatch(
+        loom::state::Action{loom::state::ActionType::SetVerbose, true});  // false -> true
+    store->dispatch(
+        loom::state::Action{loom::state::ActionType::SetVerbose, false});  // true -> false
     EXPECT_FALSE(store->get_state().verbose);
 
     ASSERT_TRUE(store->can_undo());
@@ -769,7 +757,7 @@ TEST(StoreUndoRedo, CapacityBoundsHistoryToOneLevel) {
     store->dispatch(loom::state::Action{loom::state::ActionType::SetVerbose, true});
     store->dispatch(loom::state::Action{loom::state::ActionType::SetVerbose, false});
     store->undo();
-    EXPECT_TRUE(store->get_state().verbose); // only the most recent snapshot survives
+    EXPECT_TRUE(store->get_state().verbose);  // only the most recent snapshot survives
     EXPECT_FALSE(store->can_undo());
 }
 
@@ -777,10 +765,10 @@ TEST(StoreUndoRedo, NewActionClearsRedoStack) {
     auto store = make_test_store();
     store->enable_undo();
     store->dispatch(loom::state::Action{loom::state::ActionType::SetVerbose, true});
-    store->undo(); // verbose=false, redo has the true snapshot
+    store->undo();  // verbose=false, redo has the true snapshot
     ASSERT_TRUE(store->can_redo());
     store->dispatch(loom::state::Action{loom::state::ActionType::SetVerbose, true});
-    EXPECT_FALSE(store->can_redo()); // a new dispatch clears redo
+    EXPECT_FALSE(store->can_redo());  // a new dispatch clears redo
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -788,8 +776,7 @@ TEST(StoreUndoRedo, NewActionClearsRedoStack) {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 TEST(SessionHistory, SaveAllPersistsCreatedConversationIds) {
-    auto storage_path = std::filesystem::temp_directory_path() /
-        "loom_history_save_test.json";
+    auto storage_path = std::filesystem::temp_directory_path() / "loom_history_save_test.json";
     std::filesystem::remove(storage_path);
 
     loom::core::ConversationStore store(storage_path.string());
@@ -810,8 +797,7 @@ TEST(SessionHistory, SaveAllPersistsCreatedConversationIds) {
 }
 
 TEST(SessionHistory, LoadAllRestoresConversationIdsAndActiveSelection) {
-    auto storage_path = std::filesystem::temp_directory_path() /
-        "loom_history_load_test.json";
+    auto storage_path = std::filesystem::temp_directory_path() / "loom_history_load_test.json";
     std::filesystem::remove(storage_path);
 
     {
@@ -834,20 +820,16 @@ TEST(SessionHistory, LoadAllRestoresConversationIdsAndActiveSelection) {
 }
 
 TEST(SessionHistory, LoadAllRestoresSavedMessages) {
-    auto storage_path = std::filesystem::temp_directory_path() /
-        "loom_history_messages_test.json";
+    auto storage_path = std::filesystem::temp_directory_path() / "loom_history_messages_test.json";
     std::filesystem::remove(storage_path);
 
     {
         loom::core::ConversationStore store(storage_path.string());
         auto* conversation = store.create_conversation();
         conversation->add_message(loom::core::UserMessage{
-            loom::core::MessageBase{
-                loom::core::MessageId{"msg_user_1"},
-                std::chrono::system_clock::now(),
-                {loom::core::TextBlock{"hello from persisted history"}}
-            }
-        });
+            loom::core::MessageBase{loom::core::MessageId{"msg_user_1"},
+                                    std::chrono::system_clock::now(),
+                                    {loom::core::TextBlock{"hello from persisted history"}}}});
         ASSERT_TRUE(store.save_all().has_value());
     }
 
@@ -868,29 +850,28 @@ TEST(SessionHistory, LoadAllRestoresSavedMessages) {
 }
 
 TEST(SessionHistory, LoadAllRestoresCompactBoundaryMetadata) {
-    auto storage_path = std::filesystem::temp_directory_path() /
-        "loom_history_compact_boundary_test.json";
+    auto storage_path =
+        std::filesystem::temp_directory_path() / "loom_history_compact_boundary_test.json";
     std::filesystem::remove(storage_path);
 
     {
         loom::core::ConversationStore store(storage_path.string());
         auto* conversation = store.create_conversation();
         conversation->add_message(loom::core::SystemMessage{
-            loom::core::MessageBase{
-                loom::core::MessageId{"compact-boundary-1"},
-                std::chrono::system_clock::now(),
-                {loom::core::TextBlock{"Conversation compacted."}}
-            },
+            loom::core::MessageBase{loom::core::MessageId{"compact-boundary-1"},
+                                    std::chrono::system_clock::now(),
+                                    {loom::core::TextBlock{"Conversation compacted."}}},
             std::nullopt,
             std::string{"compact_boundary"},
             loom::core::CompactMetadata{
                 .trigger = "manual",
                 .pre_tokens = 1234,
-                .preserved_segment = loom::core::CompactPreservedSegment{
-                    .head_uuid = "head-message",
-                    .anchor_uuid = "summary-message",
-                    .tail_uuid = "tail-message",
-                },
+                .preserved_segment =
+                    loom::core::CompactPreservedSegment{
+                        .head_uuid = "head-message",
+                        .anchor_uuid = "summary-message",
+                        .tail_uuid = "tail-message",
+                    },
             },
             std::nullopt,
         });
@@ -919,19 +900,17 @@ TEST(SessionHistory, LoadAllRestoresCompactBoundaryMetadata) {
 }
 
 TEST(SessionHistory, LoadAllRestoresSnipMetadata) {
-    auto storage_path = std::filesystem::temp_directory_path() /
-        "loom_history_snip_metadata_test.json";
+    auto storage_path =
+        std::filesystem::temp_directory_path() / "loom_history_snip_metadata_test.json";
     std::filesystem::remove(storage_path);
 
     {
         loom::core::ConversationStore store(storage_path.string());
         auto* conversation = store.create_conversation();
         conversation->add_message(loom::core::SystemMessage{
-            loom::core::MessageBase{
-                loom::core::MessageId{"snip-boundary-1"},
-                std::chrono::system_clock::now(),
-                {loom::core::TextBlock{"Conversation snipped."}}
-            },
+            loom::core::MessageBase{loom::core::MessageId{"snip-boundary-1"},
+                                    std::chrono::system_clock::now(),
+                                    {loom::core::TextBlock{"Conversation snipped."}}},
             std::nullopt,
             std::string{"snip_boundary"},
             std::nullopt,
@@ -961,8 +940,8 @@ TEST(SessionHistory, LoadAllRestoresSnipMetadata) {
 }
 
 TEST(SessionHistory, LoadAllRestoresImageAndDocumentBlocks) {
-    auto storage_path = std::filesystem::temp_directory_path() /
-        "loom_history_rich_content_test.json";
+    auto storage_path =
+        std::filesystem::temp_directory_path() / "loom_history_rich_content_test.json";
     std::filesystem::remove(storage_path);
 
     {
@@ -971,17 +950,14 @@ TEST(SessionHistory, LoadAllRestoresImageAndDocumentBlocks) {
         loom::core::ImageBlock ib_rich_png;
         ib_rich_png.media_type = "image/png";
         ib_rich_png.data = "iVBORw0KGgo=";
-        conversation->add_message(loom::core::UserMessage{
-            loom::core::MessageBase{
-                loom::core::MessageId{"msg_user_rich"},
-                std::chrono::system_clock::now(),
-                {
-                    loom::core::TextBlock{"rich content"},
-                    std::move(ib_rich_png),
-                    loom::core::DocumentBlock{"application/pdf", "JVBERi0xLjQ="},
-                }
-            }
-        });
+        conversation->add_message(loom::core::UserMessage{loom::core::MessageBase{
+            loom::core::MessageId{"msg_user_rich"},
+            std::chrono::system_clock::now(),
+            {
+                loom::core::TextBlock{"rich content"},
+                std::move(ib_rich_png),
+                loom::core::DocumentBlock{"application/pdf", "JVBERi0xLjQ="},
+            }}});
         ASSERT_TRUE(store.save_all().has_value());
     }
 
@@ -1013,8 +989,7 @@ TEST(SessionHistory, LoadAllRestoresImageAndDocumentBlocks) {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 TEST(CliUpdate, DownloadUpdateCopiesFileUrlPayload) {
-    auto source_path = std::filesystem::temp_directory_path() /
-        "loom_update_source.bin";
+    auto source_path = std::filesystem::temp_directory_path() / "loom_update_source.bin";
     std::filesystem::remove(source_path);
     {
         std::ofstream output(source_path, std::ios::binary | std::ios::trunc);
@@ -1038,8 +1013,7 @@ TEST(CliUpdate, DownloadUpdateCopiesFileUrlPayload) {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 TEST(McpAuth, FetchConfiguredMetadataFromFileUrl) {
-    auto metadata_path = std::filesystem::temp_directory_path() /
-        "loom_mcp_oauth_metadata.json";
+    auto metadata_path = std::filesystem::temp_directory_path() / "loom_mcp_oauth_metadata.json";
     std::filesystem::remove(metadata_path);
     {
         std::ofstream output(metadata_path, std::ios::trunc);
@@ -1051,9 +1025,7 @@ TEST(McpAuth, FetchConfiguredMetadataFromFileUrl) {
     }
 
     auto metadata = loom::services::mcp::fetch_auth_server_metadata(
-        "test-server",
-        "https://mcp.example.com/sse",
-        "file://" + metadata_path.string());
+        "test-server", "https://mcp.example.com/sse", "file://" + metadata_path.string());
 
     ASSERT_TRUE(metadata.has_value()) << metadata.error().format();
     ASSERT_TRUE(metadata->has_value());
@@ -1076,17 +1048,13 @@ TEST(McpAuth, XaaFlowDoesNotReturnUnimplementedError) {
         .transport = "http",
         .url = "https://mcp.example.com/mcp",
         .headers = {},
-        .oauth = loom::services::mcp::McpOAuthConfig{
-            .auth_server_metadata_url = std::nullopt,
-            .callback_port = std::nullopt,
-            .client_id = std::nullopt,
-            .xaa = true}
-    };
+        .oauth = loom::services::mcp::McpOAuthConfig{.auth_server_metadata_url = std::nullopt,
+                                                     .callback_port = std::nullopt,
+                                                     .client_id = std::nullopt,
+                                                     .xaa = true}};
 
-    auto result = loom::services::mcp::perform_mcp_oauth_flow(
-        "test-server",
-        server_config,
-        [](const std::string&) {});
+    auto result = loom::services::mcp::perform_mcp_oauth_flow("test-server", server_config,
+                                                              [](const std::string&) {});
 
     ASSERT_FALSE(result.has_value());
     EXPECT_NE(result.error().code(), loom::utils::ErrorCode::unimplemented);
@@ -1098,9 +1066,8 @@ TEST(McpAuth, XaaFlowDoesNotReturnUnimplementedError) {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 TEST(SystemPrompts, ComputeSimpleEnvInfoIncludesDynamicRuntimeDetails) {
-    auto env_info = loom::constants::prompts::compute_simple_env_info(
-        "test-model",
-        {"/tmp/loom-extra"});
+    auto env_info =
+        loom::constants::prompts::compute_simple_env_info("test-model", {"/tmp/loom-extra"});
 
     EXPECT_NE(env_info.find("# Environment"), std::string::npos);
     EXPECT_NE(env_info.find("Primary working directory:"), std::string::npos);
@@ -1121,15 +1088,16 @@ TEST(SystemPrompts, GetSystemPromptAssemblesStaticAndDynamicSections) {
     ASSERT_GE(sections.size(), 6u);
 
     auto joined = std::accumulate(std::next(sections.begin()), sections.end(), sections.front(),
-        [](std::string acc, const std::string& section) {
-            acc += "\n";
-            acc += section;
-            return acc;
-        });
+                                  [](std::string acc, const std::string& section) {
+                                      acc += "\n";
+                                      acc += section;
+                                      return acc;
+                                  });
 
     EXPECT_NE(joined.find("You are Loom"), std::string::npos);
     EXPECT_NE(joined.find("# Tone and style"), std::string::npos);
-    EXPECT_NE(joined.find(loom::constants::prompts::system_prompt_dynamic_boundary), std::string::npos);
+    EXPECT_NE(joined.find(loom::constants::prompts::system_prompt_dynamic_boundary),
+              std::string::npos);
     EXPECT_NE(joined.find("# Environment"), std::string::npos);
     EXPECT_NE(joined.find("Read"), std::string::npos);
     EXPECT_NE(joined.find("Write"), std::string::npos);
@@ -1147,7 +1115,8 @@ struct CounterState {
     int value = 0;
 };
 
-[[nodiscard]] inline CounterState counter_reducer(const CounterState& s, const loom::state::Action& a) {
+[[nodiscard]] inline CounterState counter_reducer(const CounterState& s,
+                                                  const loom::state::Action& a) {
     CounterState next = s;
     if (a.type == loom::state::ActionType::SetLoading) {
         if (auto v = a.get_payload<bool>(); v && *v) next.value += 1;
@@ -1155,7 +1124,7 @@ struct CounterState {
     return next;
 }
 
-} // namespace
+}  // namespace
 
 TEST(StoreGenericity, IsGenericOverStateAndSupportsUndoRedo) {
     using CounterStore = loom::state::Store<CounterState, decltype(&counter_reducer)>;

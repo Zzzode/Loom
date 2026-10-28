@@ -1,7 +1,7 @@
 module;
 
-#include <cstdlib>
 #include <cctype>
+#include <cstdlib>
 
 export module loom.net.http.proxy_utils;
 
@@ -64,9 +64,8 @@ inline std::vector<std::string> parse_no_proxy(const char* no_proxy_env) {
 }
 
 [[nodiscard]] inline std::string lower(std::string value) {
-    std::transform(value.begin(), value.end(), value.begin(), [](unsigned char ch) {
-        return static_cast<char>(std::tolower(ch));
-    });
+    std::transform(value.begin(), value.end(), value.begin(),
+                   [](unsigned char ch) { return static_cast<char>(std::tolower(ch)); });
     return value;
 }
 
@@ -119,7 +118,7 @@ struct TargetHost {
     return pattern.find(':') != std::string_view::npos;
 }
 
-} // namespace detail
+}  // namespace detail
 
 // Resolve proxy configuration from environment variables
 inline std::optional<ProxyConfig> resolve_proxy() {
@@ -150,12 +149,10 @@ inline std::optional<ProxyConfig> resolve_proxy() {
 // Check if a URL should bypass the proxy (based on NO_PROXY patterns)
 inline bool should_use_proxy(std::string_view url) {
     auto config = resolve_proxy();
-    if (!config) return false; // No proxy configured
+    if (!config) return false;  // No proxy configured
 
     const auto target = detail::parse_target_host(url);
-    const auto host_with_port = target.port.empty()
-        ? target.host
-        : target.host + ":" + target.port;
+    const auto host_with_port = target.port.empty() ? target.host : target.host + ":" + target.port;
 
     // Check against NO_PROXY entries
     for (const auto& pattern : config->no_proxy) {
@@ -169,8 +166,7 @@ inline bool should_use_proxy(std::string_view url) {
         }
 
         if (lower_pattern.starts_with(".")) {
-            if (target.host == lower_pattern.substr(1) ||
-                target.host.ends_with(lower_pattern)) {
+            if (target.host == lower_pattern.substr(1) || target.host.ends_with(lower_pattern)) {
                 return false;
             }
             continue;
@@ -179,7 +175,7 @@ inline bool should_use_proxy(std::string_view url) {
         if (target.host == lower_pattern) return false;
     }
 
-    return true; // Should use proxy
+    return true;  // Should use proxy
 }
 
 // Get the proxy URL appropriate for a given target URL
@@ -190,4 +186,4 @@ inline std::optional<std::string> get_proxy_for_url(std::string_view url) {
     return config->url;
 }
 
-} // namespace loom::utils
+}  // namespace loom::utils

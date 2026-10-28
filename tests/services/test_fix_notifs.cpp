@@ -35,6 +35,7 @@ struct FakeIdentity {
     std::string agent_name;
 };
 enum class FakeStatus { Running, Completed, Failed, Killed };
+
 struct FakeTask {
     FakeIdentity identity;
     FakeStatus status{FakeStatus::Running};
@@ -42,6 +43,7 @@ struct FakeTask {
 
 struct NotifStateReset {
     NotifStateReset() { notif::reset_dismissals_for_tests(); }
+
     ~NotifStateReset() {
         notif::reset_dismissals_for_tests();
         notif::clear_mcp_connectivity();
@@ -61,8 +63,7 @@ struct BridgeWireGuard {
 };
 
 bool is_terminal(const FakeTask& t) {
-    return t.status == FakeStatus::Completed ||
-           t.status == FakeStatus::Failed ||
+    return t.status == FakeStatus::Completed || t.status == FakeStatus::Failed ||
            t.status == FakeStatus::Killed;
 }
 
@@ -73,7 +74,7 @@ notif::TeammateShutdownCause to_cause(const FakeTask& t) {
     return notif::TeammateShutdownCause::Finished;
 }
 
-} // namespace
+}  // namespace
 
 // ─── MCP status mapping ─────────────────────────────────────────────────────
 
@@ -186,7 +187,7 @@ TEST(FixNotifs, TeammateBridgeIgnoresRunningTasks) {
     NotifStateReset guard;
     std::vector<FakeTask> tasks{
         {.identity = {"a1", "Alpha"}, .status = FakeStatus::Running},
-        {.identity = {"a2", "Beta"},  .status = FakeStatus::Running},
+        {.identity = {"a2", "Beta"}, .status = FakeStatus::Running},
     };
     notif::inject_teammate_shutdowns_from_tasks(tasks, is_terminal, to_cause);
     EXPECT_TRUE(notif::get_all_teammate_shutdowns().empty());
@@ -196,8 +197,8 @@ TEST(FixNotifs, TeammateBridgeCollectsTerminalTasks) {
     NotifStateReset guard;
     std::vector<FakeTask> tasks{
         {.identity = {"runner", "Runner"}, .status = FakeStatus::Running},
-        {.identity = {"done",   "Done"},   .status = FakeStatus::Completed},
-        {.identity = {"boom",   "Boom"},   .status = FakeStatus::Killed},
+        {.identity = {"done", "Done"}, .status = FakeStatus::Completed},
+        {.identity = {"boom", "Boom"}, .status = FakeStatus::Killed},
     };
     notif::inject_teammate_shutdowns_from_tasks(tasks, is_terminal, to_cause);
 

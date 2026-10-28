@@ -5,9 +5,9 @@
 //         permissionSync.ts, reconnection.ts, constants.ts
 module;
 
-#include <cstdlib>
 #include <cstddef>
 #include <cstdint>
+#include <cstdlib>
 
 export module loom.teams.swarm.helpers;
 
@@ -70,10 +70,10 @@ enum class PermissionMode {
 
 /// Path allowed for all team members without asking
 struct TeamAllowedPath {
-    std::string path;           ///< Directory path (absolute)
-    std::string tool_name;      ///< Tool this applies to (e.g., "Edit", "Write")
-    std::string added_by;       ///< Agent name who added this rule
-    int64_t added_at = 0;      ///< Timestamp when added
+    std::string path;       ///< Directory path (absolute)
+    std::string tool_name;  ///< Tool this applies to (e.g., "Edit", "Write")
+    std::string added_by;   ///< Agent name who added this rule
+    int64_t added_at = 0;   ///< Timestamp when added
 };
 
 /// A member in a team file
@@ -152,44 +152,43 @@ public:
     static void write_team_file(std::string_view team_name, const TeamFile& team_file);
 
     /// Remove a teammate from team file by agent ID or name
-    [[nodiscard]] static bool remove_teammate(
-        std::string_view team_name,
-        std::optional<std::string_view> agent_id = std::nullopt,
-        std::optional<std::string_view> name = std::nullopt);
+    [[nodiscard]] static bool
+    remove_teammate(std::string_view team_name,
+                    std::optional<std::string_view> agent_id = std::nullopt,
+                    std::optional<std::string_view> name = std::nullopt);
 
     /// Remove a member from team by pane ID (also removes from hidden pane list)
-    [[nodiscard]] static bool remove_member_by_pane(
-        std::string_view team_name, std::string_view pane_id);
+    [[nodiscard]] static bool remove_member_by_pane(std::string_view team_name,
+                                                    std::string_view pane_id);
 
     /// Remove a member from team by agent ID
-    [[nodiscard]] static bool remove_member_by_agent_id(
-        std::string_view team_name, std::string_view agent_id);
+    [[nodiscard]] static bool remove_member_by_agent_id(std::string_view team_name,
+                                                        std::string_view agent_id);
 
     /// Add a pane ID to the hidden panes list
-    [[nodiscard]] static bool add_hidden_pane(
-        std::string_view team_name, std::string_view pane_id);
+    [[nodiscard]] static bool add_hidden_pane(std::string_view team_name, std::string_view pane_id);
 
     /// Remove a pane ID from the hidden panes list
-    [[nodiscard]] static bool remove_hidden_pane(
-        std::string_view team_name, std::string_view pane_id);
+    [[nodiscard]] static bool remove_hidden_pane(std::string_view team_name,
+                                                 std::string_view pane_id);
 
     /// Set a team member's permission mode
-    [[nodiscard]] static bool set_member_mode(
-        std::string_view team_name, std::string_view member_name,
-        PermissionMode mode);
+    [[nodiscard]] static bool set_member_mode(std::string_view team_name,
+                                              std::string_view member_name, PermissionMode mode);
 
     /// Set multiple members' modes in a single atomic write
-    [[nodiscard]] static bool set_multiple_member_modes(
-        std::string_view team_name,
-        const std::vector<std::pair<std::string, PermissionMode>>& updates);
+    [[nodiscard]] static bool
+    set_multiple_member_modes(std::string_view team_name,
+                              const std::vector<std::pair<std::string, PermissionMode>>& updates);
 
     /// Set a member's active status (idle/working)
-    static void set_member_active(
-        std::string_view team_name, std::string_view member_name, bool is_active);
+    static void set_member_active(std::string_view team_name, std::string_view member_name,
+                                  bool is_active);
 
     /// Sync current teammate's mode to config.json so team lead sees it
-    static void sync_teammate_mode(
-        PermissionMode mode, std::optional<std::string_view> team_name_override = std::nullopt);
+    static void
+    sync_teammate_mode(PermissionMode mode,
+                       std::optional<std::string_view> team_name_override = std::nullopt);
 
     /// Register a team for session cleanup (on exit)
     static void register_for_session_cleanup(std::string_view team_name) {
@@ -237,9 +236,8 @@ public:
             return it->second;
         }
         static constexpr AgentColor palette[] = {
-            AgentColor::Red, AgentColor::Blue, AgentColor::Green,
-            AgentColor::Yellow, AgentColor::Purple, AgentColor::Orange,
-            AgentColor::Pink, AgentColor::Cyan,
+            AgentColor::Red,    AgentColor::Blue,   AgentColor::Green, AgentColor::Yellow,
+            AgentColor::Purple, AgentColor::Orange, AgentColor::Pink,  AgentColor::Cyan,
         };
         auto color = palette[color_index_ % 8];
         color_assignments_[std::string(teammate_id)] = color;
@@ -265,23 +263,20 @@ public:
     }
 
     /// Check if currently running inside tmux
-    [[nodiscard]] static bool is_inside_tmux() {
-        return EnvironmentDetection::is_inside_tmux();
-    }
+    [[nodiscard]] static bool is_inside_tmux() { return EnvironmentDetection::is_inside_tmux(); }
 
     /// Create a new teammate pane in the swarm view (delegates to detected backend)
-    [[nodiscard]] static CreatePaneResult create_teammate_pane(
-        std::string_view teammate_name, AgentColor color);
+    [[nodiscard]] static CreatePaneResult create_teammate_pane(std::string_view teammate_name,
+                                                               AgentColor color);
 
     /// Enable pane border status (delegates to detected backend)
-    static void enable_pane_border_status(
-        std::optional<std::string_view> window_target = std::nullopt,
-        bool use_swarm_socket = false);
+    static void
+    enable_pane_border_status(std::optional<std::string_view> window_target = std::nullopt,
+                              bool use_swarm_socket = false);
 
     /// Send a command to a specific pane (delegates to detected backend)
-    static void send_command_to_pane(
-        std::string_view pane_id, std::string_view command,
-        bool use_swarm_socket = false);
+    static void send_command_to_pane(std::string_view pane_id, std::string_view command,
+                                     bool use_swarm_socket = false);
 
 private:
     static inline std::mutex mutex_;
@@ -302,8 +297,7 @@ public:
     [[nodiscard]] static std::string get_fallback_model();
 
     /// Set the provider-specific model ID table (called at startup)
-    static void set_provider_config(
-        std::string_view default_model_id) {
+    static void set_provider_config(std::string_view default_model_id) {
         std::lock_guard lock(mutex_);
         fallback_model_ = std::string(default_model_id);
     }
@@ -330,8 +324,10 @@ public:
         bool plan_mode_required = false;
         std::optional<PermissionMode> permission_mode;
     };
-    [[nodiscard]] static std::string build_inherited_cli_flags(
-        const InheritedFlagsOptions& options);
+
+    [[nodiscard]] static std::string
+    build_inherited_cli_flags(const InheritedFlagsOptions& options);
+
     [[nodiscard]] static std::string build_inherited_cli_flags() {
         return build_inherited_cli_flags(InheritedFlagsOptions{});
     }
@@ -368,9 +364,9 @@ public:
 
 /// Configuration for spawning an in-process teammate
 struct InProcessSpawnConfig {
-    std::string name;           ///< Display name (e.g., "researcher")
+    std::string name;  ///< Display name (e.g., "researcher")
     std::string team_name;
-    std::string prompt;         ///< Initial prompt/task
+    std::string prompt;  ///< Initial prompt/task
     std::optional<std::string> color;
     bool plan_mode_required = false;
     std::optional<std::string> model;
@@ -379,7 +375,7 @@ struct InProcessSpawnConfig {
 /// Result from spawning an in-process teammate
 struct InProcessSpawnOutput {
     bool success = false;
-    std::string agent_id;       ///< Full agent ID (format: "name@team")
+    std::string agent_id;  ///< Full agent ID (format: "name@team")
     std::optional<std::string> task_id;
     std::optional<std::string> error;
 };
@@ -521,9 +517,9 @@ private:
 /// Permission request message envelope (worker -> leader).
 /// Field names match the SDK `can_use_tool` snake_case shape.
 struct SwarmPermissionRequestMessage {
-    std::string type;        ///< Always "permission_request"
+    std::string type;  ///< Always "permission_request"
     std::string request_id;
-    std::string agent_id;    ///< Worker NAME (mailbox routing uses names)
+    std::string agent_id;  ///< Worker NAME (mailbox routing uses names)
     std::string tool_name;
     std::string tool_use_id;
     std::string description;
@@ -557,49 +553,45 @@ public:
     /// Serialize a request to the exact JSON text stored in the mailbox
     /// envelope. The input object is embedded verbatim (brace-checked with a
     /// {} fallback); the engine already produced it as parsed tool_use JSON.
-    [[nodiscard]] static std::string build_request_text(
-        const SwarmPermissionRequestMessage& request);
+    [[nodiscard]] static std::string
+    build_request_text(const SwarmPermissionRequestMessage& request);
 
     /// Serialize a response: success -> {"response":{}}, error -> {"error":...}.
-    [[nodiscard]] static std::string build_response_text(
-        const SwarmPermissionResponseMessage& response);
+    [[nodiscard]] static std::string
+    build_response_text(const SwarmPermissionResponseMessage& response);
 
     /// Parse a request envelope; nullopt on type mismatch/missing request_id.
-    [[nodiscard]] static std::optional<SwarmPermissionRequestMessage> parse_request(
-        std::string_view text);
+    [[nodiscard]] static std::optional<SwarmPermissionRequestMessage>
+    parse_request(std::string_view text);
 
     /// Parse a response envelope; nullopt on type mismatch/missing request_id.
-    [[nodiscard]] static std::optional<SwarmPermissionResponseMessage> parse_response(
-        std::string_view text);
+    [[nodiscard]] static std::optional<SwarmPermissionResponseMessage>
+    parse_response(std::string_view text);
 
     /// Worker -> leader mailbox ("team-lead"). Returns false on write failure.
-    static bool send_request_to_leader(
-        const SwarmPermissionRequestMessage& request,
-        std::string_view team_name);
+    static bool send_request_to_leader(const SwarmPermissionRequestMessage& request,
+                                       std::string_view team_name);
 
     /// Leader -> worker mailbox; envelope from is "team-lead".
-    static bool send_response_to_worker(
-        std::string_view worker_name,
-        const SwarmPermissionResponseMessage& response,
-        std::string_view team_name);
+    static bool send_response_to_worker(std::string_view worker_name,
+                                        const SwarmPermissionResponseMessage& response,
+                                        std::string_view team_name);
 
     /// One non-blocking scan of the worker's own inbox. Consumes (removes) the
     /// matching response exactly once, accepting both read and unread messages
     /// because the general 1.5s inbox worker may mark them read first.
-    [[nodiscard]] static std::optional<SwarmPermissionResponseMessage> poll_response(
-        std::string_view worker_name,
-        std::string_view team_name,
-        std::string_view request_id);
+    [[nodiscard]] static std::optional<SwarmPermissionResponseMessage>
+    poll_response(std::string_view worker_name, std::string_view team_name,
+                  std::string_view request_id);
 
     /// Blocking worker entry point (runs on the query/tool thread). Times out
     /// to a DENY (nullopt): TS waits forever, but a headless port must fail
     /// closed instead of wedging a worker on an unattended leader. Tune with
     /// LOOM_PERMISSION_TIMEOUT_MS (default 300000ms).
-    [[nodiscard]] static std::optional<SwarmPermissionResponseMessage> request_and_await(
-        const SwarmPermissionRequestMessage& request,
-        std::string_view team_name,
-        std::chrono::milliseconds timeout = default_timeout(),
-        std::chrono::milliseconds poll_interval = std::chrono::milliseconds(250));
+    [[nodiscard]] static std::optional<SwarmPermissionResponseMessage>
+    request_and_await(const SwarmPermissionRequestMessage& request, std::string_view team_name,
+                      std::chrono::milliseconds timeout = default_timeout(),
+                      std::chrono::milliseconds poll_interval = std::chrono::milliseconds(250));
 
     /// Env LOOM_PERMISSION_TIMEOUT_MS, else 300000ms (fail-closed default).
     [[nodiscard]] static std::chrono::milliseconds default_timeout();
@@ -622,8 +614,7 @@ class TeammateInit {
 public:
     /// Initialize hooks for a teammate running in a swarm.
     /// Registers a Stop hook that sends idle notification to team leader.
-    static void initialize_hooks(
-        std::string_view session_id, const TeammateInitInfo& info);
+    static void initialize_hooks(std::string_view session_id, const TeammateInitInfo& info);
 
     /// Apply team-wide allowed paths from team file
     static void apply_team_allowed_paths(const TeamFile& team_file);
@@ -654,9 +645,8 @@ public:
     [[nodiscard]] static std::optional<InitialTeamContext> compute_initial_context();
 
     /// Set dynamic team context from CLI args (called during arg parsing)
-    static void set_dynamic_context(
-        std::string_view team_name, std::string_view agent_id,
-        std::string_view agent_name) {
+    static void set_dynamic_context(std::string_view team_name, std::string_view agent_id,
+                                    std::string_view agent_name) {
         std::lock_guard lock(mutex_);
         dynamic_team_name_ = std::string(team_name);
         dynamic_agent_id_ = std::string(agent_id);
@@ -689,15 +679,23 @@ std::string SpawnUtils::build_inherited_cli_flags(const InheritedFlagsOptions& o
     if (opts.permission_mode) {
         out += " --permission-mode ";
         switch (*opts.permission_mode) {
-            case PermissionMode::Default: out += "default"; break;
-            case PermissionMode::BypassPermissions: out += "bypass"; break;
-            case PermissionMode::AcceptEdits: out += "accept-edits"; break;
+        case PermissionMode::Default:
+            out += "default";
+            break;
+        case PermissionMode::BypassPermissions:
+            out += "bypass";
+            break;
+        case PermissionMode::AcceptEdits:
+            out += "accept-edits";
+            break;
         }
     }
     return out;
 }
 
-std::string SpawnUtils::build_inherited_env_vars() { return {}; }
+std::string SpawnUtils::build_inherited_env_vars() {
+    return {};
+}
 
 // ── PermissionSync mailbox protocol implementation ─────────────────────────
 
@@ -711,24 +709,38 @@ namespace permission_detail {
     static const char* hex = "0123456789abcdef";
     for (unsigned char ch : value) {
         switch (ch) {
-            case '\\': out += R"(\\)"; break;
-            case '"': out += R"(\")"; break;
-            case '\n': out += R"(\n)"; break;
-            case '\r': out += R"(\r)"; break;
-            case '\t': out += R"(\t)"; break;
-            case '\b': out += R"(\b)"; break;
-            case '\f': out += R"(\f)"; break;
-            default:
-                // Escape every other C0 control byte so a tool-generated
-                // description can't emit invalid JSON that bricks the inbox.
-                if (ch < 0x20) {
-                    out += R"(\u00)";
-                    out.push_back(hex[(ch >> 4) & 0x0F]);
-                    out.push_back(hex[ch & 0x0F]);
-                } else {
-                    out.push_back(static_cast<char>(ch));
-                }
-                break;
+        case '\\':
+            out += R"(\\)";
+            break;
+        case '"':
+            out += R"(\")";
+            break;
+        case '\n':
+            out += R"(\n)";
+            break;
+        case '\r':
+            out += R"(\r)";
+            break;
+        case '\t':
+            out += R"(\t)";
+            break;
+        case '\b':
+            out += R"(\b)";
+            break;
+        case '\f':
+            out += R"(\f)";
+            break;
+        default:
+            // Escape every other C0 control byte so a tool-generated
+            // description can't emit invalid JSON that bricks the inbox.
+            if (ch < 0x20) {
+                out += R"(\u00)";
+                out.push_back(hex[(ch >> 4) & 0x0F]);
+                out.push_back(hex[ch & 0x0F]);
+            } else {
+                out.push_back(static_cast<char>(ch));
+            }
+            break;
         }
     }
     return out;
@@ -736,7 +748,8 @@ namespace permission_detail {
 
 [[nodiscard]] inline std::string unix_millis_now() {
     const auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(
-        std::chrono::system_clock::now().time_since_epoch()).count();
+                            std::chrono::system_clock::now().time_since_epoch())
+                            .count();
     return std::to_string(millis);
 }
 
@@ -766,23 +779,19 @@ namespace permission_detail {
 /// read/rewrite pattern of loom::utils::mark_all_read; the envelope serializer
 /// is replicated here because team_helpers' detail::write_messages is not
 /// exported from that module.
-inline bool remove_mailbox_message_by_text(
-    std::string_view worker_name,
-    std::string_view team_name,
-    std::string_view exact_text
-) {
+inline bool remove_mailbox_message_by_text(std::string_view worker_name, std::string_view team_name,
+                                           std::string_view exact_text) {
     // Share the inbox RMW lock with write_to_mailbox/mark_all_read so the
     // worker's response consumption cannot race the poller's mark-all-read.
     std::lock_guard<std::mutex> lock(loom::utils::teammate_inbox_mutex());
-    const auto inbox_path =
-        fs::path{loom::utils::get_inbox_path(worker_name, team_name)};
+    const auto inbox_path = fs::path{loom::utils::get_inbox_path(worker_name, team_name)};
     // Serialize against the leader and other pane PROCESSES as well.
     loom::utils::ScopedInboxLock flock(inbox_path);
     if (!flock.locked()) return false;
     // Unlocked read: we already hold LOCK_EX; a nested LOCK_SH on another
     // open file description would be denied by our own lock.
     auto messages = loom::utils::read_inbox(worker_name, team_name,
-                                          /*already_holds_exclusive_lock=*/true);
+                                            /*already_holds_exclusive_lock=*/true);
     if (!messages) return false;
     const auto before = messages->size();
     std::erase_if(*messages, [&](const loom::utils::TeammateMessage& message) {
@@ -820,7 +829,8 @@ inline bool remove_mailbox_message_by_text(
     out.push_back(']');
     return loom::utils::atomic_replace_file(inbox_path, out).has_value();
 }
-} // namespace permission_detail
+}  // namespace permission_detail
+
 // ============================================================================
 // Worker-side "Always allow" grant persistence
 // ============================================================================
@@ -846,8 +856,7 @@ struct WorkerAllowRule {
 /// Build the permission_updates JSON array for one whole-tool AlwaysAllow
 /// decision. Destination is "session": pane workers are ephemeral and the
 /// grant store below is the real persistence; we never touch settings files.
-[[nodiscard]] inline std::string build_always_allow_updates_json(
-    std::string_view tool_name) {
+[[nodiscard]] inline std::string build_always_allow_updates_json(std::string_view tool_name) {
     // json_quote escapes string CONTENT (the wrapping quotes are literal in
     // the fragments, matching every other envelope builder in this file).
     std::string text =
@@ -861,10 +870,9 @@ struct WorkerAllowRule {
 /// inputs (old_string/new_string) get a compact -/+ diff view, everything
 /// else gets pretty-printed JSON. Capped so a huge edit body cannot flood
 /// the overlay. Shared with tests to keep the dialog formatting stable.
-[[nodiscard]] inline std::string format_permission_request_input(
-    std::string_view /*tool_name*/,
-    std::string_view input_json,
-    std::size_t max_chars = 2000) {
+[[nodiscard]] inline std::string format_permission_request_input(std::string_view /*tool_name*/,
+                                                                 std::string_view input_json,
+                                                                 std::size_t max_chars = 2000) {
     auto parsed = loom::utils::json::parse(std::string(input_json));
     std::string rendered;
     if (parsed && parsed->root().is_obj()) {
@@ -883,9 +891,7 @@ struct WorkerAllowRule {
                 while (start <= text.size()) {
                     const auto nl = text.find('\n', start);
                     lines.push_back(text.substr(
-                        start,
-                        nl == std::string_view::npos ? text.size() - start
-                                                     : nl - start));
+                        start, nl == std::string_view::npos ? text.size() - start : nl - start));
                     if (nl == std::string_view::npos) break;
                     start = nl + 1;
                 }
@@ -926,8 +932,8 @@ public:
     static constexpr std::size_t kShardCount = 16;
 
     WorkerPermissionGrants(std::string team_name, std::string agent_name)
-        : team_name_(std::move(team_name)),
-          agent_name_(std::move(agent_name)) {}
+        : team_name_(std::move(team_name))
+        , agent_name_(std::move(agent_name)) {}
 
     /// Deterministic shard selection for a canonical grants path: FNV-1a
     /// 64-bit over the path bytes, mod kShardCount. The same path always
@@ -935,8 +941,7 @@ public:
     /// is pure, so callers/tests can prove two paths do not contend before
     /// doing the timing-sensitive measurement. Defined in the module
     /// implementation unit (swarm_helpers_shard.cpp, c16).
-    [[nodiscard]] static std::size_t shard_index_for(
-        std::string_view canonical_path);
+    [[nodiscard]] static std::size_t shard_index_for(std::string_view canonical_path);
 
     /// True when a whole-tool allow rule covers this exact tool name.
     /// c16: a LOCK_SH snapshot on the grants sibling, so the parse can
@@ -974,8 +979,7 @@ public:
         // dispatch), one process-wide table, no static-member lifecycle.
         static std::array<std::mutex, kShardCount> shard_mutexes;
         const auto path = grants_path();
-        std::lock_guard<std::mutex> proc_lock(
-            shard_mutexes[shard_index_for(path.string())]);
+        std::lock_guard<std::mutex> proc_lock(shard_mutexes[shard_index_for(path.string())]);
         loom::utils::ScopedFileLock flock(path);
         if (!flock.locked()) {
             // Fail closed: drop this update rather than persist against an
@@ -1001,12 +1005,11 @@ public:
                     .tool_name = std::string(name.as_str()),
                     .rule_content = {},
                 };
-                if (const auto content = rule.get("ruleContent");
-                    content.is_str()) {
+                if (const auto content = rule.get("ruleContent"); content.is_str()) {
                     candidate.rule_content = std::string(content.as_str());
                 }
-                const bool duplicate = std::ranges::any_of(
-                    rules, [&](const WorkerAllowRule& existing) {
+                const bool duplicate =
+                    std::ranges::any_of(rules, [&](const WorkerAllowRule& existing) {
                         return existing.tool_name == candidate.tool_name &&
                                existing.rule_content == candidate.rule_content;
                     });
@@ -1024,15 +1027,13 @@ private:
         const auto team = loom::utils::team_dir(team_name_);
         return fs::path{team} / "permissions" /
                ("worker-allow-" +
-                loom::utils::detail::sanitize_path_component(agent_name_, "agent") +
-                ".json");
+                loom::utils::detail::sanitize_path_component(agent_name_, "agent") + ".json");
     }
 
     /// Raw unlocked parse of the grant file. Callers either hold LOCK_EX
     /// (apply_updates) or LOCK_SH (allows) on the grants sibling. A
     /// missing/corrupt file yields an empty rule set.
-    [[nodiscard]] static std::vector<WorkerAllowRule>
-    load_rules_at(const fs::path& path) {
+    [[nodiscard]] static std::vector<WorkerAllowRule> load_rules_at(const fs::path& path) {
         std::vector<WorkerAllowRule> rules;
         // c16/c16a: open the leaf ONCE (O_NOFOLLOW|O_NONBLOCK) and parse the
         // returned buffer — a FIFO swapped over the leaf cannot block and a
@@ -1050,8 +1051,7 @@ private:
             if (!name.is_str()) return;
             WorkerAllowRule entry{};
             entry.tool_name = std::string(name.as_str());
-            if (const auto content = rule.get("rule_content");
-                content.is_str()) {
+            if (const auto content = rule.get("rule_content"); content.is_str()) {
                 entry.rule_content = std::string(content.as_str());
             }
             rules.push_back(std::move(entry));
@@ -1084,10 +1084,9 @@ private:
 };
 
 inline std::string PermissionSync::generate_request_id() {
-    static constexpr std::string_view alphabet =
-        "abcdefghijklmnopqrstuvwxyz0123456789";
-    thread_local std::mt19937 rng(static_cast<uint32_t>(
-        std::chrono::steady_clock::now().time_since_epoch().count()));
+    static constexpr std::string_view alphabet = "abcdefghijklmnopqrstuvwxyz0123456789";
+    thread_local std::mt19937 rng(
+        static_cast<uint32_t>(std::chrono::steady_clock::now().time_since_epoch().count()));
     std::string suffix(7, 'a');
     for (char& ch : suffix) {
         ch = alphabet[static_cast<std::size_t>(rng()) % alphabet.size()];
@@ -1095,9 +1094,8 @@ inline std::string PermissionSync::generate_request_id() {
     return "perm-" + permission_detail::unix_millis_now() + "-" + suffix;
 }
 
-inline std::string PermissionSync::build_request_text(
-    const SwarmPermissionRequestMessage& request
-) {
+inline std::string
+PermissionSync::build_request_text(const SwarmPermissionRequestMessage& request) {
     std::string text;
     text += "{\"type\":\"permission_request\",\"request_id\":\"";
     text += permission_detail::json_quote(request.request_id);
@@ -1115,9 +1113,8 @@ inline std::string PermissionSync::build_request_text(
     return text;
 }
 
-inline std::string PermissionSync::build_response_text(
-    const SwarmPermissionResponseMessage& response
-) {
+inline std::string
+PermissionSync::build_response_text(const SwarmPermissionResponseMessage& response) {
     std::string text = "{\"type\":\"permission_response\",\"request_id\":\"";
     text += permission_detail::json_quote(response.request_id);
     text += "\",\"subtype\":\"";
@@ -1125,8 +1122,7 @@ inline std::string PermissionSync::build_response_text(
     text += '"';
     if (response.subtype == "error") {
         text += ",\"error\":\"";
-        text += permission_detail::json_quote(
-            response.error.value_or("Permission denied"));
+        text += permission_detail::json_quote(response.error.value_or("Permission denied"));
         text += '"';
     } else {
         text += ",\"response\":{";
@@ -1144,8 +1140,7 @@ inline std::string PermissionSync::build_response_text(
         if (response.permission_updates_json) {
             if (need_comma) text += ',';
             text += "\"permission_updates\":";
-            text += permission_detail::normalize_updates_json(
-                *response.permission_updates_json);
+            text += permission_detail::normalize_updates_json(*response.permission_updates_json);
         }
         text += '}';
     }
@@ -1153,9 +1148,8 @@ inline std::string PermissionSync::build_response_text(
     return text;
 }
 
-inline std::optional<SwarmPermissionRequestMessage> PermissionSync::parse_request(
-    std::string_view text
-) {
+inline std::optional<SwarmPermissionRequestMessage>
+PermissionSync::parse_request(std::string_view text) {
     auto parsed = loom::utils::json::parse(text);
     if (!parsed.has_value()) return std::nullopt;
     const auto root = parsed->root();
@@ -1177,9 +1171,8 @@ inline std::optional<SwarmPermissionRequestMessage> PermissionSync::parse_reques
     return request;
 }
 
-inline std::optional<SwarmPermissionResponseMessage> PermissionSync::parse_response(
-    std::string_view text
-) {
+inline std::optional<SwarmPermissionResponseMessage>
+PermissionSync::parse_response(std::string_view text) {
     auto parsed = loom::utils::json::parse(text);
     if (!parsed.has_value()) return std::nullopt;
     const auto root = parsed->root();
@@ -1213,36 +1206,28 @@ inline std::optional<SwarmPermissionResponseMessage> PermissionSync::parse_respo
     return response;
 }
 
-inline bool PermissionSync::send_request_to_leader(
-    const SwarmPermissionRequestMessage& request,
-    std::string_view team_name
-) {
+inline bool PermissionSync::send_request_to_leader(const SwarmPermissionRequestMessage& request,
+                                                   std::string_view team_name) {
     loom::utils::TeammateMessage message;
     message.from = request.agent_id;
     message.text = build_request_text(request);
     message.timestamp = permission_detail::unix_millis_now();
-    return loom::utils::write_to_mailbox(
-        TEAM_LEAD_NAME, std::move(message), team_name).has_value();
+    return loom::utils::write_to_mailbox(TEAM_LEAD_NAME, std::move(message), team_name).has_value();
 }
 
-inline bool PermissionSync::send_response_to_worker(
-    std::string_view worker_name,
-    const SwarmPermissionResponseMessage& response,
-    std::string_view team_name
-) {
+inline bool PermissionSync::send_response_to_worker(std::string_view worker_name,
+                                                    const SwarmPermissionResponseMessage& response,
+                                                    std::string_view team_name) {
     loom::utils::TeammateMessage message;
     message.from = std::string(TEAM_LEAD_NAME);
     message.text = build_response_text(response);
     message.timestamp = permission_detail::unix_millis_now();
-    return loom::utils::write_to_mailbox(
-        worker_name, std::move(message), team_name).has_value();
+    return loom::utils::write_to_mailbox(worker_name, std::move(message), team_name).has_value();
 }
 
-inline std::optional<SwarmPermissionResponseMessage> PermissionSync::poll_response(
-    std::string_view worker_name,
-    std::string_view team_name,
-    std::string_view request_id
-) {
+inline std::optional<SwarmPermissionResponseMessage>
+PermissionSync::poll_response(std::string_view worker_name, std::string_view team_name,
+                              std::string_view request_id) {
     auto messages = loom::utils::read_inbox(worker_name, team_name);
     if (!messages) return std::nullopt;
 
@@ -1251,8 +1236,7 @@ inline std::optional<SwarmPermissionResponseMessage> PermissionSync::poll_respon
     // general 1.5s inbox poller may have marked the response read first.
     static std::mutex consumed_mutex;
     static std::unordered_set<std::string> consumed;
-    const std::string key =
-        std::string(team_name) + "/" + std::string(request_id);
+    const std::string key = std::string(team_name) + "/" + std::string(request_id);
 
     std::optional<SwarmPermissionResponseMessage> found;
     std::string found_text;
@@ -1271,25 +1255,21 @@ inline std::optional<SwarmPermissionResponseMessage> PermissionSync::poll_respon
     if (!found) return std::nullopt;
 
     // Delete the consumed envelope independently of the general inbox worker.
-    permission_detail::remove_mailbox_message_by_text(
-        worker_name, team_name, found_text);
+    permission_detail::remove_mailbox_message_by_text(worker_name, team_name, found_text);
     return found;
 }
 
-inline std::optional<SwarmPermissionResponseMessage> PermissionSync::request_and_await(
-    const SwarmPermissionRequestMessage& request,
-    std::string_view team_name,
-    std::chrono::milliseconds timeout,
-    std::chrono::milliseconds poll_interval
-) {
+inline std::optional<SwarmPermissionResponseMessage>
+PermissionSync::request_and_await(const SwarmPermissionRequestMessage& request,
+                                  std::string_view team_name, std::chrono::milliseconds timeout,
+                                  std::chrono::milliseconds poll_interval) {
     // Deliver the request envelope before entering the deadline loop; a
     // mailbox write failure denies immediately (fail closed).
     if (!send_request_to_leader(request, team_name)) return std::nullopt;
 
     const auto deadline = std::chrono::steady_clock::now() + timeout;
     while (std::chrono::steady_clock::now() < deadline) {
-        if (auto response = poll_response(
-                request.agent_id, team_name, request.request_id)) {
+        if (auto response = poll_response(request.agent_id, team_name, request.request_id)) {
             return response;
         }
         std::this_thread::sleep_for(poll_interval);
@@ -1298,8 +1278,7 @@ inline std::optional<SwarmPermissionResponseMessage> PermissionSync::request_and
 }
 
 inline std::chrono::milliseconds PermissionSync::default_timeout() {
-    if (const char* value = std::getenv("LOOM_PERMISSION_TIMEOUT_MS");
-        value && *value) {
+    if (const char* value = std::getenv("LOOM_PERMISSION_TIMEOUT_MS"); value && *value) {
         // NOLINTNEXTLINE(concurrency-mt-unsafe) — single-threaded env at start
         char* end = nullptr;
         const unsigned long long parsed = std::strtoull(value, &end, 10);
@@ -1310,4 +1289,4 @@ inline std::chrono::milliseconds PermissionSync::default_timeout() {
     return std::chrono::milliseconds(300000);
 }
 
-} // namespace loom::utils::swarm_helpers
+}  // namespace loom::utils::swarm_helpers

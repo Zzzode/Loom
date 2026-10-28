@@ -1,8 +1,9 @@
 // Test-only macOS CA injection for the real Loom PTY child. cpp-httplib loads
 // Keychain certificates instead of OpenSSL's SSL_CERT_FILE on macOS. Add only
 // the fixture CA before SSL_new; keep verification, sockets and signals intact.
-#include <cstdlib>
 #include <openssl/ssl.h>
+
+#include <cstdlib>
 
 namespace {
 
@@ -26,4 +27,4 @@ __attribute__((used, section("__DATA,__interpose"))) const Interpose ca_interpos
     reinterpret_cast<const void*>(SSL_new),
 };
 
-} // namespace
+}  // namespace

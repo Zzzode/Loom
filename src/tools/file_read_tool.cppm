@@ -17,14 +17,14 @@ import loom.skills.file_access.port;
 
 export namespace loom::tools::file_read {
 
-using loom::core::Tool;
-using loom::core::ToolInput;
-using loom::core::ToolOutputContent;
-using loom::core::ToolResult;
-using loom::core::ToolDefinition;
-using loom::core::ToolPermission;
 using loom::core::InputSchema;
 using loom::core::SchemaProperty;
+using loom::core::Tool;
+using loom::core::ToolDefinition;
+using loom::core::ToolInput;
+using loom::core::ToolOutputContent;
+using loom::core::ToolPermission;
+using loom::core::ToolResult;
 using loom::utils::Result;
 
 namespace fs = std::filesystem;
@@ -36,26 +36,16 @@ constexpr std::size_t kNotebookLargeOutputThreshold = 10000;
 // =========================================================================
 
 /// File encoding detection result
-enum class FileEncoding {
-    UTF8,
-    ASCII,
-    Latin1,
-    Binary,
-    Unknown
-};
+enum class FileEncoding { UTF8, ASCII, Latin1, Binary, Unknown };
 
 /// Image formats supported for binary detection
-constexpr std::array<std::string_view, 5> kImageExtensions = {
-    ".png", ".jpg", ".jpeg", ".gif", ".webp"
-};
+constexpr std::array<std::string_view, 5> kImageExtensions = {".png", ".jpg", ".jpeg", ".gif",
+                                                              ".webp"};
 
 /// Blocked device paths that we should never read
 constexpr std::array<std::string_view, 12> kBlockedPaths = {
-    "/dev/zero", "/dev/random", "/dev/urandom", "/dev/full",
-    "/dev/stdin", "/dev/tty", "/dev/console",
-    "/dev/stdout", "/dev/stderr",
-    "/dev/fd/0", "/dev/fd/1", "/dev/fd/2"
-};
+    "/dev/zero",    "/dev/random", "/dev/urandom", "/dev/full", "/dev/stdin", "/dev/tty",
+    "/dev/console", "/dev/stdout", "/dev/stderr",  "/dev/fd/0", "/dev/fd/1",  "/dev/fd/2"};
 
 /// FileReadTool input parameters
 struct FileReadInput {
@@ -115,7 +105,7 @@ struct FileReadInput {
 /// FileReadTool output result
 struct FileReadOutput {
     enum class OutputType { Text, Image, Notebook, PDF, FileUnchanged };
-    
+
     OutputType type = OutputType::Text;
     std::string content;
     std::string file_path;
@@ -152,15 +142,15 @@ struct FileReadOutput {
     if (!file) {
         return FileEncoding::Unknown;
     }
-    
+
     std::array<char, 8192> buffer;
     file.read(buffer.data(), buffer.size());
     auto bytes_read = file.gcount();
-    
+
     if (bytes_read <= 0) {
-        return FileEncoding::ASCII; // Empty file is ASCII
+        return FileEncoding::ASCII;  // Empty file is ASCII
     }
-    
+
     bool has_null = false;
     bool has_high_byte = false;
     for (std::streamsize i = 0; i < bytes_read; ++i) {
@@ -173,7 +163,7 @@ struct FileReadOutput {
             has_high_byte = true;
         }
     }
-    
+
     if (has_null) {
         return FileEncoding::Binary;
     }
@@ -239,13 +229,14 @@ struct FileReadOutput {
             metadata += std::format("<language>{}</language>", language);
         }
 
-        result += std::format("<cell id=\"{}\">{}{}</cell id=\"{}\">\n", id, metadata, cell.source, id);
+        result +=
+            std::format("<cell id=\"{}\">{}{}</cell id=\"{}\">\n", id, metadata, cell.source, id);
 
         if (cell.cell_type == CellType::Code && !cell.outputs.empty()) {
             if (notebook_outputs_are_large(cell)) {
-                result += std::format(
-                    "Outputs are too large to include. Use Bash with: cat {} | jq '.cells[{}].outputs'\n",
-                    path.string(), i);
+                result += std::format("Outputs are too large to include. Use Bash with: cat {} | "
+                                      "jq '.cells[{}].outputs'\n",
+                                      path.string(), i);
             } else {
                 for (const auto& output : cell.outputs) {
                     if (output.text.empty()) continue;
@@ -263,7 +254,8 @@ struct FileReadOutput {
     return result;
 }
 
-[[nodiscard]] std::expected<std::vector<std::uint8_t>, std::string> read_binary_file(const fs::path& path) {
+[[nodiscard]] std::expected<std::vector<std::uint8_t>, std::string>
+read_binary_file(const fs::path& path) {
     std::ifstream file(path, std::ios::binary);
     if (!file) {
         return std::unexpected(std::format("Failed to open file: {}", path.string()));
@@ -276,7 +268,8 @@ struct FileReadOutput {
     file.seekg(0, std::ios::beg);
     std::vector<std::uint8_t> bytes(static_cast<std::size_t>(size));
     if (!bytes.empty()) {
-        file.read(reinterpret_cast<char*>(bytes.data()), static_cast<std::streamsize>(bytes.size()));
+        file.read(reinterpret_cast<char*>(bytes.data()),
+                  static_cast<std::streamsize>(bytes.size()));
         if (file.gcount() != static_cast<std::streamsize>(bytes.size())) {
             return std::unexpected(std::format("Failed to read file: {}", path.string()));
         }
@@ -292,82 +285,78 @@ struct FileReadOutput {
 class FileReadTool {
 public:
     static constexpr std::string_view kName = "Read";
-    static constexpr std::string_view kDescription = 
+    static constexpr std::string_view kDescription =
         "Read the contents of a file. Supports line ranges for large files.";
-    
+
     static ToolDefinition definition() {
         return ToolDefinition{
             .name = std::string(kName),
             .description = std::string(kDescription),
-            .input_schema = InputSchema{
-                .properties = {
-                    SchemaProperty{
-                        .name = "file_path",
-                        .type = "string",
-                        .description = "Absolute path to the file to read",
-                        .required = true,
-                        .default_value = std::nullopt,
-                        .enum_values = std::nullopt,
-                    },
-                    SchemaProperty{
-                        .name = "offset",
-                        .type = "number",
-                        .description = "Line number to start reading from (1-based)",
-                        .required = false,
-                        .default_value = std::nullopt,
-                        .enum_values = std::nullopt,
-                    },
-                    SchemaProperty{
-                        .name = "limit",
-                        .type = "number",
-                        .description = "Maximum number of lines to read",
-                        .required = false,
-                        .default_value = std::nullopt,
-                        .enum_values = std::nullopt,
-                    },
-                    SchemaProperty{
-                        .name = "pages",
-                        .type = "string",
-                        .description = "Page range for PDF files (e.g., \"1-5\")",
-                        .required = false,
-                        .default_value = std::nullopt,
-                        .enum_values = std::nullopt,
-                    }
-                }
-            },
+            .input_schema =
+                InputSchema{
+                    .properties = {SchemaProperty{
+                                       .name = "file_path",
+                                       .type = "string",
+                                       .description = "Absolute path to the file to read",
+                                       .required = true,
+                                       .default_value = std::nullopt,
+                                       .enum_values = std::nullopt,
+                                   },
+                                   SchemaProperty{
+                                       .name = "offset",
+                                       .type = "number",
+                                       .description = "Line number to start reading from (1-based)",
+                                       .required = false,
+                                       .default_value = std::nullopt,
+                                       .enum_values = std::nullopt,
+                                   },
+                                   SchemaProperty{
+                                       .name = "limit",
+                                       .type = "number",
+                                       .description = "Maximum number of lines to read",
+                                       .required = false,
+                                       .default_value = std::nullopt,
+                                       .enum_values = std::nullopt,
+                                   },
+                                   SchemaProperty{
+                                       .name = "pages",
+                                       .type = "string",
+                                       .description = "Page range for PDF files (e.g., \"1-5\")",
+                                       .required = false,
+                                       .default_value = std::nullopt,
+                                       .enum_values = std::nullopt,
+                                   }}},
             .permission = ToolPermission::ReadOnly,
             .category = "filesystem",
             .max_result_size_chars = 0,
-            .max_result_size_unbounded = true
-        };
+            .max_result_size_unbounded = true};
     }
-    
+
     FileReadTool() = default;
 
     void set_allowed_directories(std::vector<std::string> dirs) {
         allowed_directories_ = std::move(dirs);
     }
-    
+
     [[nodiscard]] bool check_permission(const ToolInput& input) const {
         auto parsed = FileReadInput::from_json(input.json());
         if (!parsed) return false;
         return is_path_allowed(parsed->file_path);
     }
-    
+
     [[nodiscard]] Result<ToolResult> execute(const ToolInput& input) {
         auto parsed_input = FileReadInput::from_json(input.json());
         if (!parsed_input) {
-            return std::unexpected(loom::utils::Error(
-                loom::utils::ErrorCode::invalid_argument,
-                parsed_input.error()
-            ));
+            return std::unexpected(
+                loom::utils::Error(loom::utils::ErrorCode::invalid_argument, parsed_input.error()));
         }
-        
+
         return execute_internal(*parsed_input);
     }
-    
+
 private:
-    std::unordered_map<std::string, std::pair<std::string, std::chrono::system_clock::time_point>> read_cache_;
+    std::unordered_map<std::string, std::pair<std::string, std::chrono::system_clock::time_point>>
+        read_cache_;
     std::vector<std::string> allowed_directories_;
 
     [[nodiscard]] bool is_path_allowed(const fs::path& path) const {
@@ -389,22 +378,20 @@ private:
         }
         return false;
     }
-    
+
     /// Internal execution
     Result<ToolResult> execute_internal(const FileReadInput& input) {
         try {
             // Validate path first
             if (is_blocked_path(input.file_path)) {
                 return ToolResult::error(
-                    std::format("Cannot read blocked path: {}", input.file_path.string())
-                );
+                    std::format("Cannot read blocked path: {}", input.file_path.string()));
             }
 
             // Check if file exists
             if (!fs::exists(input.file_path)) {
                 return ToolResult::error(
-                    std::format("File not found: {}", input.file_path.string())
-                );
+                    std::format("File not found: {}", input.file_path.string()));
             }
 
             // After reading a file, discover any skill directories it belongs to
@@ -444,7 +431,7 @@ private:
             return ToolResult::error(std::format("Read error: {}", e.what()));
         }
     }
-    
+
     /// Read file as text
     Result<ToolResult> read_text(const FileReadInput& input) {
         // Check if binary file
@@ -452,39 +439,40 @@ private:
         if (encoding == FileEncoding::Binary) {
             return ToolResult::error("Cannot read binary file as text");
         }
-        
+
         std::ifstream file(input.file_path);
         if (!file) {
-            return ToolResult::error(std::format("Failed to open file: {}", input.file_path.string()));
+            return ToolResult::error(
+                std::format("Failed to open file: {}", input.file_path.string()));
         }
-        
+
         std::vector<std::string> lines;
         std::string line;
         while (std::getline(file, line)) {
             lines.push_back(line);
         }
-        
+
         // Apply offset and limit
         std::uint64_t start_idx = 0;
         std::uint64_t count = lines.size();
-        
+
         if (input.offset) {
             start_idx = std::min(*input.offset - 1, static_cast<std::uint64_t>(lines.size()));
         }
         if (input.limit) {
             count = std::min(*input.limit, static_cast<std::uint64_t>(lines.size()) - start_idx);
         }
-        
+
         // Build output with line numbers
         std::string result;
         std::uint64_t max_line = start_idx + count;
         std::size_t line_num_width = std::format("{}", max_line).size();
-        
+
         for (std::uint64_t i = 0; i < count; ++i) {
             auto line_num = start_idx + i + 1;
             result += std::format("{:>{}}  {}\n", line_num, line_num_width, lines[start_idx + i]);
         }
-        
+
         FileReadOutput output{
             .type = FileReadOutput::OutputType::Text,
             .content = result,
@@ -496,10 +484,10 @@ private:
             .image_type = std::nullopt,
             .original_size = std::nullopt,
         };
-        
+
         return format_text_result(output);
     }
-    
+
     /// Read image file
     Result<ToolResult> read_image(const FileReadInput& input) {
         // RFC-0001 B11: the concrete loom::services::image codec lives behind
@@ -522,15 +510,14 @@ private:
         }
         auto media_type = info->mime;
         if (media_type == "application/octet-stream") {
-            return ToolResult::error(std::format("Unsupported image format: {}", input.file_path.string()));
+            return ToolResult::error(
+                std::format("Unsupported image format: {}", input.file_path.string()));
         }
 
         auto data = codec.to_base64(std::span<const std::uint8_t>(bytes->data(), bytes->size()));
         return ToolResult::success_multi({
-            ToolOutputContent::text_output(std::format(
-                "Image file read: {} ({})",
-                input.file_path.string(),
-                info->summary)),
+            ToolOutputContent::text_output(
+                std::format("Image file read: {} ({})", input.file_path.string(), info->summary)),
             ToolOutputContent::image_output(std::move(media_type), std::move(data)),
         });
     }
@@ -552,14 +539,12 @@ private:
         auto data = codec.to_base64(std::span<const std::uint8_t>(bytes->data(), bytes->size()));
         const auto file_size = bytes->size();
         return ToolResult::success_multi({
-            ToolOutputContent::text_output(std::format(
-                "PDF file read: {} ({} bytes)",
-                input.file_path.string(),
-                file_size)),
+            ToolOutputContent::text_output(
+                std::format("PDF file read: {} ({} bytes)", input.file_path.string(), file_size)),
             ToolOutputContent::document_output("application/pdf", std::move(data)),
         });
     }
-    
+
     /// Read notebook file
     Result<ToolResult> read_notebook(const FileReadInput& input) {
         NotebookEditTool notebook_tool;
@@ -569,50 +554,51 @@ private:
         }
         return ToolResult::success(format_notebook_for_read(*notebook, input.file_path));
     }
-    
+
     /// Format text result
     ToolResult format_text_result(const FileReadOutput& output) {
         std::string result;
-        
+
         if (!output.content.empty()) {
             result = output.content;
         } else if (output.total_lines == 0) {
             result = "[Empty file]";
         } else {
-            result = std::format(
-                "[File has {} lines, starting at line {}]",
-                output.total_lines,
-                output.start_line
-            );
+            result = std::format("[File has {} lines, starting at line {}]", output.total_lines,
+                                 output.start_line);
         }
-        
+
         return ToolResult::success(result);
     }
 };
 
-} // namespace loom::tools::file_read
+}  // namespace loom::tools::file_read
 
 // Export main tool class
 export namespace loom::tools {
-    using loom::tools::file_read::FileReadTool;
+using loom::tools::file_read::FileReadTool;
 
-    /// Factory: create FileReadTool wrapped as ITool (adapts Result types across modules)
-    [[nodiscard]] auto make_file_read_tool() -> std::unique_ptr<loom::core::ITool> {
-        struct Adapter final : loom::core::ITool {
-            FileReadTool tool_;
-            loom::core::ToolDefinition def_ = FileReadTool::definition();
+/// Factory: create FileReadTool wrapped as ITool (adapts Result types across modules)
+[[nodiscard]] auto make_file_read_tool() -> std::unique_ptr<loom::core::ITool> {
+    struct Adapter final : loom::core::ITool {
+        FileReadTool tool_;
+        loom::core::ToolDefinition def_ = FileReadTool::definition();
 
-            const loom::core::ToolDefinition& definition() const override { return def_; }
-            std::expected<loom::core::ToolResult, loom::core::Error> execute(const loom::core::ToolInput& input) override {
-                auto result = tool_.execute(input);
-                if (result) return std::move(*result);
-                return std::unexpected(loom::core::Error::make(
-                    loom::core::ErrorCode::ToolExecutionFailed, result.error().format()));
-            }
-            bool check_permission(const loom::core::ToolInput& input) const override {
-                return tool_.check_permission(input);
-            }
-        };
-        return std::make_unique<Adapter>();
-    }
+        const loom::core::ToolDefinition& definition() const override { return def_; }
+
+        std::expected<loom::core::ToolResult, loom::core::Error>
+        execute(const loom::core::ToolInput& input) override {
+            auto result = tool_.execute(input);
+            if (result) return std::move(*result);
+            return std::unexpected(loom::core::Error::make(
+                loom::core::ErrorCode::ToolExecutionFailed, result.error().format()));
+        }
+
+        bool check_permission(const loom::core::ToolInput& input) const override {
+            return tool_.check_permission(input);
+        }
+    };
+
+    return std::make_unique<Adapter>();
 }
+}  // namespace loom::tools

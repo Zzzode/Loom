@@ -7,27 +7,26 @@
 ///   Summary  -> (rerun -> Running) or (Back -> on_done)
 module;
 
-#include <cstdint>
-
-#include <ftxui/dom/elements.hpp>
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/event.hpp>
 #include <ftxui/component/mouse.hpp>
+#include <ftxui/dom/elements.hpp>
 
+#include <cerrno>
+#include <cstdint>
 #include <cstdlib>
 #include <cstring>
-#include <cerrno>
 
 // POSIX TCP probe (used by the Network check). Guarded so non-POSIX builds
 // report "unsupported" instead of failing to compile.
 #if !defined(_WIN32)
+#include <fcntl.h>
+#include <netdb.h>
+#include <poll.h>
 #include <sys/socket.h>
 #include <sys/types.h>
-#include <netdb.h>
 #include <unistd.h>
-#include <fcntl.h>
-#include <poll.h>
 #endif
 
 export module loom.ui.screens.doctor_screen;
@@ -49,43 +48,43 @@ using namespace ftxui;
 
 /// Screen state machine (matches Doctor lifecycle)
 enum class ScreenState : std::uint8_t {
-    Splash,    // 0. Header banner, not started
-    Running,   // 1. Executing checks live (progress bar + spinner)
-    Results,   // 2. Per-check table with expandable detail rows
-    Summary,   // 3. Score gauge + Fix-all + Rerun + Back to REPL
+    Splash,   // 0. Header banner, not started
+    Running,  // 1. Executing checks live (progress bar + spinner)
+    Results,  // 2. Per-check table with expandable detail rows
+    Summary,  // 3. Score gauge + Fix-all + Rerun + Back to REPL
 };
 
 /// Severity level for a diagnostic check (3-tier + info)
 enum class DiagnosticSeverity : std::uint8_t {
-    Ok,         // Check passed
-    Info,       // Informational only
-    Warning,    // Non-critical issue (yellow)
-    Error,      // Critical issue (red)
-    Pending,    // Not yet executed (shown as spinner)
+    Ok,       // Check passed
+    Info,     // Informational only
+    Warning,  // Non-critical issue (yellow)
+    Error,    // Critical issue (red)
+    Pending,  // Not yet executed (shown as spinner)
 };
 
 /// Runtime state per check (for Running state live-updates)
 enum class CheckRunState : std::uint8_t {
-    Queued,     // Not started
-    Running,    // In progress
-    Done,       // Completed
+    Queued,   // Not started
+    Running,  // In progress
+    Done,     // Completed
 };
 
 /// Identifiers for each of the 13 diagnostic items (used for stable ordering)
 enum class CheckId : std::uint8_t {
-    ApiKey,              // 0: API key validity (HTTP)
-    Network,             // 1: Network connectivity
-    ConfigReadWrite,     // 2: Config file read/write permissions
-    DiskSpace,           // 3: Disk space availability
-    FsPermissions,       // 4: File-system permission model (plugins/sandbox)
-    VersionLatest,       // 5: Latest version (npm/GCS)
-    McpServers,          // 6: MCP server configuration/state
-    OAuthToken,          // 7: OAuth token validity / expiry
-    PermissionIntegrity, // 8: Permission system integrity (rules / unreachable)
-    Bridge,              // 9: IDE Bridge (JWT / sessions)
-    DefaultPermissions,  // 10: Default permission settings
-    ShellConfig,         // 11: Terminal shell configuration
-    PluginEngine,        // 12: Plugin engine (load / manifest)
+    ApiKey,               // 0: API key validity (HTTP)
+    Network,              // 1: Network connectivity
+    ConfigReadWrite,      // 2: Config file read/write permissions
+    DiskSpace,            // 3: Disk space availability
+    FsPermissions,        // 4: File-system permission model (plugins/sandbox)
+    VersionLatest,        // 5: Latest version (npm/GCS)
+    McpServers,           // 6: MCP server configuration/state
+    OAuthToken,           // 7: OAuth token validity / expiry
+    PermissionIntegrity,  // 8: Permission system integrity (rules / unreachable)
+    Bridge,               // 9: IDE Bridge (JWT / sessions)
+    DefaultPermissions,   // 10: Default permission settings
+    ShellConfig,          // 11: Terminal shell configuration
+    PluginEngine,         // 12: Plugin engine (load / manifest)
     _Count,
 };
 inline constexpr std::size_t kCheckCount = static_cast<std::size_t>(CheckId::_Count);
@@ -96,27 +95,27 @@ inline constexpr std::size_t kCheckCount = static_cast<std::size_t>(CheckId::_Co
 
 /// Definition of a single diagnostic check (immutable schema)
 struct CheckDefinition {
-    CheckId       id;
-    std::string   name;           // short label, e.g. "API Key"
-    std::string   description;    // one-liner, shown in help/detail
-    std::string   category;       // grouping label for the section
+    CheckId id;
+    std::string name;         // short label, e.g. "API Key"
+    std::string description;  // one-liner, shown in help/detail
+    std::string category;     // grouping label for the section
 };
 
 /// Result of a single diagnostic check (populated as they complete)
 struct CheckResult {
     DiagnosticSeverity severity = DiagnosticSeverity::Pending;
-    CheckRunState      run_state = CheckRunState::Queued;
-    std::string        message;           // Short pass/warn/fail line
-    std::string        detail;            // Longer multi-line explanation
-    std::optional<std::string> fix_hint;  // Human-readable fix suggestion
-    std::optional<std::string> fix_command; // One-shot shell command (if auto-fixable)
-    std::chrono::milliseconds elapsed{0}; // Execution wall-time
+    CheckRunState run_state = CheckRunState::Queued;
+    std::string message;                     // Short pass/warn/fail line
+    std::string detail;                      // Longer multi-line explanation
+    std::optional<std::string> fix_hint;     // Human-readable fix suggestion
+    std::optional<std::string> fix_command;  // One-shot shell command (if auto-fixable)
+    std::chrono::milliseconds elapsed{0};    // Execution wall-time
 };
 
 /// Version/dist-tag information for the installation under check.
 struct VersionInfo {
     std::string current_version;
-    std::string installation_type; // "npm", "native", "package manager"
+    std::string installation_type;  // "npm", "native", "package manager"
     std::string installation_path;
     std::string invoked_binary;
     std::optional<std::string> latest_version;
@@ -129,7 +128,7 @@ struct VersionInfo {
 
 /// Optional external warnings surfaced in the header area (see context warnings)
 struct ContextNotice {
-    std::string category;   // e.g. "Unreachable Rules", "MCP", "Agents"
+    std::string category;  // e.g. "Unreachable Rules", "MCP", "Agents"
     std::string message;
     DiagnosticSeverity severity;
     std::vector<std::string> details;
@@ -150,7 +149,7 @@ struct DoctorDataModel {
     VersionInfo version;
     VersionLockInfo locks;
     std::vector<ContextNotice> notices;
-    std::array<CheckResult, kCheckCount> results;   // 13 results, index = CheckId
+    std::array<CheckResult, kCheckCount> results;  // 13 results, index = CheckId
 };
 
 // ============================================================
@@ -159,58 +158,33 @@ struct DoctorDataModel {
 
 [[nodiscard]] inline const std::array<CheckDefinition, kCheckCount>& AllChecks() {
     static const std::array<CheckDefinition, kCheckCount> kChecks{{
-        { CheckId::ApiKey,
-          "API Key Validity",
-          "Validates the API key via an authenticated HTTP probe.",
-          "Connectivity" },
-        { CheckId::Network,
-          "Network Connectivity",
-          "Checks DNS + TLS reachability to the configured API endpoint.",
-          "Connectivity" },
-        { CheckId::ConfigReadWrite,
-          "Config File Access",
-          "Verifies read/write permissions on the XDG config home and project .loom directories.",
-          "System" },
-        { CheckId::DiskSpace,
-          "Disk Space",
-          "Ensures adequate free disk space for cache, locks, and context artifacts.",
-          "System" },
-        { CheckId::FsPermissions,
-          "File-system Permissions",
-          "Audits tool permission grants and sandbox/plugin isolation rules.",
-          "Security" },
-        { CheckId::VersionLatest,
-          "Version / Updates",
-          "Compares running build against latest npm / GCS dist-tags.",
-          "Updates" },
-        { CheckId::McpServers,
-          "MCP Server Status",
-          "Enumerates configured MCP servers and validates manifest parsing.",
-          "Integrations" },
-        { CheckId::OAuthToken,
-          "OAuth Token Validity",
-          "Checks access-token expiry and refresh-token availability.",
-          "Security" },
-        { CheckId::PermissionIntegrity,
-          "Permission System Integrity",
-          "Detects unreachable rules, duplicate patterns, and shadowed entries.",
-          "Security" },
-        { CheckId::Bridge,
-          "Bridge Status",
-          "IDE bridge server status: JWT signing, session table, open connections.",
-          "Integrations" },
-        { CheckId::DefaultPermissions,
-          "Default Permission Settings",
-          "Reports the user's current defaults and flags risky auto-approve rules.",
-          "Security" },
-        { CheckId::ShellConfig,
-          "Terminal Shell Configuration",
-          "Validates $SHELL, rc-file readability, and subshell spawning health.",
-          "System" },
-        { CheckId::PluginEngine,
-          "Plugin Engine",
-          "Lists loaded plugins, reports manifest errors, and flags load failures.",
-          "Integrations" },
+        {CheckId::ApiKey, "API Key Validity",
+         "Validates the API key via an authenticated HTTP probe.", "Connectivity"},
+        {CheckId::Network, "Network Connectivity",
+         "Checks DNS + TLS reachability to the configured API endpoint.", "Connectivity"},
+        {CheckId::ConfigReadWrite, "Config File Access",
+         "Verifies read/write permissions on the XDG config home and project .loom directories.",
+         "System"},
+        {CheckId::DiskSpace, "Disk Space",
+         "Ensures adequate free disk space for cache, locks, and context artifacts.", "System"},
+        {CheckId::FsPermissions, "File-system Permissions",
+         "Audits tool permission grants and sandbox/plugin isolation rules.", "Security"},
+        {CheckId::VersionLatest, "Version / Updates",
+         "Compares running build against latest npm / GCS dist-tags.", "Updates"},
+        {CheckId::McpServers, "MCP Server Status",
+         "Enumerates configured MCP servers and validates manifest parsing.", "Integrations"},
+        {CheckId::OAuthToken, "OAuth Token Validity",
+         "Checks access-token expiry and refresh-token availability.", "Security"},
+        {CheckId::PermissionIntegrity, "Permission System Integrity",
+         "Detects unreachable rules, duplicate patterns, and shadowed entries.", "Security"},
+        {CheckId::Bridge, "Bridge Status",
+         "IDE bridge server status: JWT signing, session table, open connections.", "Integrations"},
+        {CheckId::DefaultPermissions, "Default Permission Settings",
+         "Reports the user's current defaults and flags risky auto-approve rules.", "Security"},
+        {CheckId::ShellConfig, "Terminal Shell Configuration",
+         "Validates $SHELL, rc-file readability, and subshell spawning health.", "System"},
+        {CheckId::PluginEngine, "Plugin Engine",
+         "Lists loaded plugins, reports manifest errors, and flags load failures.", "Integrations"},
     }};
     return kChecks;
 }
@@ -226,11 +200,21 @@ struct DoctorDataModel {
 /// Severity icon + fg color pair
 [[nodiscard]] inline std::pair<std::string, Color> severity_display(DiagnosticSeverity sev) {
     switch (sev) {
-        case DiagnosticSeverity::Ok:      return {std::string{loom::ui::design::figures::kTick}, loom::ui::design::theme::current_theme().palette->success};
-        case DiagnosticSeverity::Info:    return {std::string{loom::ui::design::figures::kInfo}, loom::ui::design::theme::current_theme().palette->info};
-        case DiagnosticSeverity::Warning: return {std::string{loom::ui::design::figures::kWarning}, loom::ui::design::theme::current_theme().palette->warning};
-        case DiagnosticSeverity::Error:   return {std::string{loom::ui::design::figures::kCross}, loom::ui::design::theme::current_theme().palette->danger};
-        case DiagnosticSeverity::Pending: return {std::string{loom::ui::design::figures::kEllipsis}, loom::ui::design::theme::current_theme().palette->muted};
+    case DiagnosticSeverity::Ok:
+        return {std::string{loom::ui::design::figures::kTick},
+                loom::ui::design::theme::current_theme().palette->success};
+    case DiagnosticSeverity::Info:
+        return {std::string{loom::ui::design::figures::kInfo},
+                loom::ui::design::theme::current_theme().palette->info};
+    case DiagnosticSeverity::Warning:
+        return {std::string{loom::ui::design::figures::kWarning},
+                loom::ui::design::theme::current_theme().palette->warning};
+    case DiagnosticSeverity::Error:
+        return {std::string{loom::ui::design::figures::kCross},
+                loom::ui::design::theme::current_theme().palette->danger};
+    case DiagnosticSeverity::Pending:
+        return {std::string{loom::ui::design::figures::kEllipsis},
+                loom::ui::design::theme::current_theme().palette->muted};
     }
     return {"?", loom::ui::design::theme::current_theme().palette->text};
 }
@@ -238,11 +222,16 @@ struct DoctorDataModel {
 /// Label for the severity (used in summary counts)
 [[nodiscard]] inline std::string_view severity_label(DiagnosticSeverity sev) {
     switch (sev) {
-        case DiagnosticSeverity::Ok:      return "Pass";
-        case DiagnosticSeverity::Info:    return "Info";
-        case DiagnosticSeverity::Warning: return "Warn";
-        case DiagnosticSeverity::Error:   return "Fail";
-        case DiagnosticSeverity::Pending: return "Pending";
+    case DiagnosticSeverity::Ok:
+        return "Pass";
+    case DiagnosticSeverity::Info:
+        return "Info";
+    case DiagnosticSeverity::Warning:
+        return "Warn";
+    case DiagnosticSeverity::Error:
+        return "Fail";
+    case DiagnosticSeverity::Pending:
+        return "Pending";
     }
     return "?";
 }
@@ -251,8 +240,8 @@ struct DoctorDataModel {
 [[nodiscard]] inline std::string_view spinner_glyph(unsigned frame) {
     if (loom::ui::design::theme::current_theme().a11y.reduced_motion)
         return loom::ui::design::figures::kBullet;
-    static constexpr std::array<std::string_view, 10> kSpin =
-        {"⠋","⠙","⠹","⠸","⠼","⠴","⠦","⠧","⠇","⠏"};
+    static constexpr std::array<std::string_view, 10> kSpin = {"⠋", "⠙", "⠹", "⠸", "⠼",
+                                                               "⠴", "⠦", "⠧", "⠇", "⠏"};
     return kSpin[frame % kSpin.size()];
 }
 
@@ -264,16 +253,20 @@ struct ScoreSummary {
     int warn = 0;
     int err = 0;
     int total = 0;
-    int score = 0;        // 0..100
+    int score = 0;  // 0..100
 };
 
 [[nodiscard]] inline ScoreSummary ComputeScore(const std::array<CheckResult, kCheckCount>& r) {
     ScoreSummary s;
     for (auto& c : r) {
-        if (c.severity == DiagnosticSeverity::Ok)     ++s.ok;
-        else if (c.severity == DiagnosticSeverity::Info)    ++s.info;
-        else if (c.severity == DiagnosticSeverity::Warning) ++s.warn;
-        else if (c.severity == DiagnosticSeverity::Error)   ++s.err;
+        if (c.severity == DiagnosticSeverity::Ok)
+            ++s.ok;
+        else if (c.severity == DiagnosticSeverity::Info)
+            ++s.info;
+        else if (c.severity == DiagnosticSeverity::Warning)
+            ++s.warn;
+        else if (c.severity == DiagnosticSeverity::Error)
+            ++s.err;
     }
     s.total = static_cast<int>(kCheckCount);
     if (s.total > 0) {
@@ -294,18 +287,26 @@ struct ScoreSummary {
     std::string bar;
     bar.reserve(width + 2);
     bar.push_back('[');
-    int filled_ok   = width * s.ok   / std::max(1, s.total);
+    int filled_ok = width * s.ok / std::max(1, s.total);
     int filled_info = width * s.info / std::max(1, s.total);
     int filled_warn = width * s.warn / std::max(1, s.total);
     // err gets the remainder visually
     Elements parts;
     parts.push_back(text("["));
-    if (filled_ok > 0)   parts.push_back(text(std::string(filled_ok,   '=')) | color(loom::ui::design::theme::current_theme().palette->success)  | bold);
-    if (filled_info > 0) parts.push_back(text(std::string(filled_info, '-')) | color(loom::ui::design::theme::current_theme().palette->info));
-    if (filled_warn > 0) parts.push_back(text(std::string(filled_warn, '~')) | color(loom::ui::design::theme::current_theme().palette->warning));
+    if (filled_ok > 0)
+        parts.push_back(text(std::string(filled_ok, '=')) |
+                        color(loom::ui::design::theme::current_theme().palette->success) | bold);
+    if (filled_info > 0)
+        parts.push_back(text(std::string(filled_info, '-')) |
+                        color(loom::ui::design::theme::current_theme().palette->info));
+    if (filled_warn > 0)
+        parts.push_back(text(std::string(filled_warn, '~')) |
+                        color(loom::ui::design::theme::current_theme().palette->warning));
     int taken = filled_ok + filled_info + filled_warn;
     int filled_err = std::max(0, width - taken);
-    if (filled_err > 0) parts.push_back(text(std::string(filled_err,  'x')) | color(loom::ui::design::theme::current_theme().palette->danger) | dim);
+    if (filled_err > 0)
+        parts.push_back(text(std::string(filled_err, 'x')) |
+                        color(loom::ui::design::theme::current_theme().palette->danger) | dim);
     parts.push_back(text("]"));
     return hbox(std::move(parts));
 }
@@ -322,8 +323,7 @@ struct ScoreSummary {
 
 namespace detail {
 
-[[nodiscard]] inline std::optional<std::string>
-read_text_file(const std::filesystem::path& path) {
+[[nodiscard]] inline std::optional<std::string> read_text_file(const std::filesystem::path& path) {
     std::ifstream in(path, std::ios::binary);
     if (!in) return std::nullopt;
     return std::string{std::istreambuf_iterator<char>(in), std::istreambuf_iterator<char>()};
@@ -338,9 +338,9 @@ read_text_file(const std::filesystem::path& path) {
 #if !defined(_WIN32)
 // Open a non-blocking TCP connection to host:port within timeout_ms.
 // Returns the measured round-trip in milliseconds, or an error string.
-[[nodiscard]] inline std::expected<int, std::string>
-tcp_connect_rtt_ms(std::string_view host, int port, int timeout_ms) {
-    struct addrinfo hints {};
+[[nodiscard]] inline std::expected<int, std::string> tcp_connect_rtt_ms(std::string_view host,
+                                                                        int port, int timeout_ms) {
+    struct addrinfo hints{};
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
     std::string host_str(host);
@@ -355,7 +355,10 @@ tcp_connect_rtt_ms(std::string_view host, int port, int timeout_ms) {
     struct addrinfo* chosen = nullptr;
     for (struct addrinfo* p = res; p != nullptr; p = p->ai_next) {
         fd = socket(p->ai_family, p->ai_socktype, p->ai_protocol);
-        if (fd >= 0) { chosen = p; break; }
+        if (fd >= 0) {
+            chosen = p;
+            break;
+        }
     }
     if (fd < 0 || chosen == nullptr) {
         freeaddrinfo(res);
@@ -371,7 +374,7 @@ tcp_connect_rtt_ms(std::string_view host, int port, int timeout_ms) {
     if (rc == 0) {
         connected = true;
     } else if (errno == EINPROGRESS) {
-        struct pollfd pfd {};
+        struct pollfd pfd{};
         pfd.fd = fd;
         pfd.events = POLLOUT;
         int pr = ::poll(&pfd, 1, timeout_ms);
@@ -391,16 +394,17 @@ tcp_connect_rtt_ms(std::string_view host, int port, int timeout_ms) {
     } else {
         err = std::string("connect failed: ") + std::strerror(errno);
     }
-    auto rtt = static_cast<int>(std::chrono::duration_cast<std::chrono::milliseconds>(
-                                    std::chrono::steady_clock::now() - t0).count());
+    auto rtt = static_cast<int>(
+        std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - t0)
+            .count());
     ::close(fd);
     freeaddrinfo(res);
     if (!connected) return std::unexpected(err);
     return rtt;
 }
 #else
-[[nodiscard]] inline std::expected<int, std::string>
-tcp_connect_rtt_ms(std::string_view, int, int) {
+[[nodiscard]] inline std::expected<int, std::string> tcp_connect_rtt_ms(std::string_view, int,
+                                                                        int) {
     return std::unexpected("TCP probe not supported on this platform");
 }
 #endif
@@ -408,28 +412,31 @@ tcp_connect_rtt_ms(std::string_view, int, int) {
 // Count how many times `needle` occurs in `hay` (substring search).
 [[nodiscard]] inline std::size_t count_substring(std::string_view hay, std::string_view needle) {
     std::size_t n = 0, pos = 0;
-    while ((pos = hay.find(needle, pos)) != std::string_view::npos) { ++n; pos += needle.size(); }
+    while ((pos = hay.find(needle, pos)) != std::string_view::npos) {
+        ++n;
+        pos += needle.size();
+    }
     return n;
 }
 
-} // namespace detail
+}  // namespace detail
 
 /// Injectable environment for diagnostics. Tests construct one pointing at a
 /// temp directory; the live UI uses default_doctor_context().
 struct DoctorContext {
     std::filesystem::path home;
-    std::filesystem::path config_home;          // persisted-preferences root (e.g. ~/.loom)
-    std::filesystem::path state_home;           // runtime state root (locks, bridge jwk)
-    std::filesystem::path project_dir;          // current working directory
-    std::filesystem::path settings_file;        // settings.json
-    std::filesystem::path mcp_config;           // MCP servers config
-    std::filesystem::path plugin_dir;           // plugins root
-    std::filesystem::path token_store;          // OAuth token directory
+    std::filesystem::path config_home;    // persisted-preferences root (e.g. ~/.loom)
+    std::filesystem::path state_home;     // runtime state root (locks, bridge jwk)
+    std::filesystem::path project_dir;    // current working directory
+    std::filesystem::path settings_file;  // settings.json
+    std::filesystem::path mcp_config;     // MCP servers config
+    std::filesystem::path plugin_dir;     // plugins root
+    std::filesystem::path token_store;    // OAuth token directory
     std::string api_key;
     std::string shell;
     std::string current_version = "1.0.0-cpp";
     std::optional<std::string> latest_version;  // if known, compared against current_version
-    std::string network_endpoint;  // configured API host (empty = not configured)
+    std::string network_endpoint;               // configured API host (empty = not configured)
 };
 
 [[nodiscard]] inline DoctorContext default_doctor_context() {
@@ -455,8 +462,7 @@ struct DoctorContext {
     if (auto base = detail::env_or("LOOM_BASE_URL"); !base.empty()) {
         // Extract host from URL (strip scheme and path).
         auto scheme_end = base.find("://");
-        auto remainder = (scheme_end != std::string::npos)
-            ? base.substr(scheme_end + 3) : base;
+        auto remainder = (scheme_end != std::string::npos) ? base.substr(scheme_end + 3) : base;
         auto slash = remainder.find('/');
         ctx.network_endpoint = remainder.substr(0, slash);
     }
@@ -480,20 +486,21 @@ struct DoctorContext {
     auto t0 = std::chrono::steady_clock::now();
     auto done = [&]() {
         r.elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
-                        std::chrono::steady_clock::now() - t0);
+            std::chrono::steady_clock::now() - t0);
     };
 
     switch (id) {
     case CheckId::ApiKey: {
         if (!ctx.api_key.empty()) {
             r.severity = DiagnosticSeverity::Ok;
-            r.message = "LOOM_API_KEY is set (length " +
-                        std::to_string(ctx.api_key.size()) + ").";
-            r.detail = "Presence check passed. An authenticated HTTP probe is not run here to keep diagnostics deterministic.";
+            r.message = "LOOM_API_KEY is set (length " + std::to_string(ctx.api_key.size()) + ").";
+            r.detail = "Presence check passed. An authenticated HTTP probe is not run here to keep "
+                       "diagnostics deterministic.";
         } else {
             r.severity = DiagnosticSeverity::Warning;
             r.message = "LOOM_API_KEY is not set in the environment.";
-            r.detail = "The client may still authenticate via OAuth credentials; if neither is configured, requests will fail.";
+            r.detail = "The client may still authenticate via OAuth credentials; if neither is "
+                       "configured, requests will fail.";
             r.fix_hint = "Export LOOM_API_KEY or complete OAuth login.";
         }
         break;
@@ -509,8 +516,10 @@ struct DoctorContext {
         auto probe = detail::tcp_connect_rtt_ms(ctx.network_endpoint, 443, 2500);
         if (probe.has_value()) {
             r.severity = DiagnosticSeverity::Ok;
-            r.message = "Reached " + ctx.network_endpoint + ":443 in " + std::to_string(*probe) + " ms.";
-            r.detail = "DNS resolved and a TCP connection to port 443 completed within the 2500 ms budget.";
+            r.message =
+                "Reached " + ctx.network_endpoint + ":443 in " + std::to_string(*probe) + " ms.";
+            r.detail = "DNS resolved and a TCP connection to port 443 completed within the 2500 ms "
+                       "budget.";
         } else {
             r.severity = DiagnosticSeverity::Error;
             r.message = "Cannot reach " + ctx.network_endpoint + ":443.";
@@ -553,7 +562,7 @@ struct DoctorContext {
             r.message = "Could not query free space for " + ctx.config_home.string();
             r.detail = ec.message();
         } else {
-            constexpr std::uintmax_t kWarn = 2ull * 1024 * 1024 * 1024; // 2 GiB
+            constexpr std::uintmax_t kWarn = 2ull * 1024 * 1024 * 1024;  // 2 GiB
             r.detail = "Available: " + format_bytes(info.available) +
                        " / capacity: " + format_bytes(info.capacity);
             if (info.available < kWarn) {
@@ -572,22 +581,28 @@ struct DoctorContext {
         auto text = detail::read_text_file(ctx.settings_file);
         if (!text.has_value()) {
             r.severity = DiagnosticSeverity::Ok;
-            r.message = (id == CheckId::FsPermissions ? "No settings overrides file; using safe defaults."
-                                                       : "No custom default permissions; using built-in defaults.");
+            r.message = (id == CheckId::FsPermissions
+                             ? "No settings overrides file; using safe defaults."
+                             : "No custom default permissions; using built-in defaults.");
             r.detail = "Looked for: " + ctx.settings_file.string();
         } else {
             // A bare "**" as an auto-approve glob grants every command — flag it.
             std::size_t stars = detail::count_substring(*text, "\"**\"");
             if (stars > 0) {
                 r.severity = DiagnosticSeverity::Error;
-                r.message = "Wildcard auto-approve glob \"**\" found " + std::to_string(stars) + "x in settings.";
-                r.detail = "A \"**\" pattern matches every command, including destructive ones (rm, dd, chmod).";
-                r.fix_hint = "Tighten auto-approve globs to an explicit whitelist of safe commands.";
+                r.message = "Wildcard auto-approve glob \"**\" found " + std::to_string(stars) +
+                            "x in settings.";
+                r.detail = "A \"**\" pattern matches every command, including destructive ones "
+                           "(rm, dd, chmod).";
+                r.fix_hint =
+                    "Tighten auto-approve globs to an explicit whitelist of safe commands.";
             } else {
                 r.severity = DiagnosticSeverity::Ok;
-                r.message = (id == CheckId::FsPermissions ? "No broad wildcard permission grants in settings."
-                                                           : "Default permissions contain no wildcard auto-approve.");
-                r.detail = "Scanned " + ctx.settings_file.string() + " (" + std::to_string(text->size()) + " bytes).";
+                r.message = (id == CheckId::FsPermissions
+                                 ? "No broad wildcard permission grants in settings."
+                                 : "Default permissions contain no wildcard auto-approve.");
+                r.detail = "Scanned " + ctx.settings_file.string() + " (" +
+                           std::to_string(text->size()) + " bytes).";
             }
         }
         break;
@@ -606,7 +621,8 @@ struct DoctorContext {
             }
         } else {
             r.severity = DiagnosticSeverity::Info;
-            r.message = "Running version " + ctx.current_version + " (online latest-check skipped).";
+            r.message =
+                "Running version " + ctx.current_version + " (online latest-check skipped).";
             r.detail += "\nSet DoctorContext.latest_version to compare against a known release.";
         }
         break;
@@ -647,7 +663,8 @@ struct DoctorContext {
                 r.fix_hint = "Add the executable 'command' for each configured server.";
             } else {
                 r.severity = DiagnosticSeverity::Ok;
-                r.message = std::to_string(total) + " MCP server(s) configured, all with a 'command' field.";
+                r.message = std::to_string(total) +
+                            " MCP server(s) configured, all with a 'command' field.";
             }
             r.detail = "Config: " + cfg.string();
         }
@@ -769,8 +786,7 @@ struct DoctorContext {
 }
 
 /// Convenience: run all checks against a context.
-[[nodiscard]] inline std::array<CheckResult, kCheckCount>
-RunAllChecks(const DoctorContext& ctx) {
+[[nodiscard]] inline std::array<CheckResult, kCheckCount> RunAllChecks(const DoctorContext& ctx) {
     std::array<CheckResult, kCheckCount> out;
     for (std::size_t i = 0; i < kCheckCount; ++i) {
         out[i] = RunCheck(static_cast<CheckId>(i), ctx);
@@ -793,43 +809,56 @@ RunAllChecks(const DoctorContext& ctx) {
     const auto& palette = *loom::ui::design::theme::current_theme().palette;
     Elements lines = {
         hbox({
-            text((" " + std::string{loom::ui::design::figures::kInfo} + " ")) | bold | color(loom::ui::design::theme::current_theme().palette->success),
-            text("Doctor  —  ") | bold | color(loom::ui::design::theme::current_theme().palette->text),
-            text("Loom installation self-check") | color(loom::ui::design::theme::current_theme().palette->info),
+            text((" " + std::string{loom::ui::design::figures::kInfo} + " ")) | bold |
+                color(loom::ui::design::theme::current_theme().palette->success),
+            text("Doctor  —  ") | bold |
+                color(loom::ui::design::theme::current_theme().palette->text),
+            text("Loom installation self-check") |
+                color(loom::ui::design::theme::current_theme().palette->info),
             filler(),
-            text(started ? "  [running]" : "  [idle]") | color(started ? loom::ui::design::theme::current_theme().palette->info : palette.muted),
+            text(started ? "  [running]" : "  [idle]") |
+                color(started ? loom::ui::design::theme::current_theme().palette->info
+                              : palette.muted),
         }),
         separator(),
-        hbox({ text("  Version:      ") | color(palette.muted), text(v.current_version)        | color(loom::ui::design::theme::current_theme().palette->info) }),
-        hbox({ text("  Build type:   ") | color(palette.muted), text(v.installation_type.empty() ? "native" : v.installation_type) | color(loom::ui::design::theme::current_theme().palette->info) }),
-        hbox({ text("  Invoked as:   ") | color(palette.muted), text(v.invoked_binary.empty()    ? "loom" : v.invoked_binary) | color(palette.muted) }),
-        hbox({ text("  Install path: ") | color(palette.muted), text(v.installation_path) | color(palette.muted) }),
+        hbox({text("  Version:      ") | color(palette.muted),
+              text(v.current_version) |
+                  color(loom::ui::design::theme::current_theme().palette->info)}),
+        hbox({text("  Build type:   ") | color(palette.muted),
+              text(v.installation_type.empty() ? "native" : v.installation_type) |
+                  color(loom::ui::design::theme::current_theme().palette->info)}),
+        hbox({text("  Invoked as:   ") | color(palette.muted),
+              text(v.invoked_binary.empty() ? "loom" : v.invoked_binary) | color(palette.muted)}),
+        hbox({text("  Install path: ") | color(palette.muted),
+              text(v.installation_path) | color(palette.muted)}),
         v.package_manager
-            ? hbox({ text("  Pkg manager:  ") | color(palette.muted), text(*v.package_manager)     | color(loom::ui::design::theme::current_theme().palette->warning) })
+            ? hbox({text("  Pkg manager:  ") | color(palette.muted),
+                    text(*v.package_manager) |
+                        color(loom::ui::design::theme::current_theme().palette->warning)})
             : text(""),
-        v.config_install_method
-            ? hbox({ text("  Installer:    ") | color(palette.muted), text(*v.config_install_method) | color(palette.muted) })
-            : text(""),
+        v.config_install_method ? hbox({text("  Installer:    ") | color(palette.muted),
+                                        text(*v.config_install_method) | color(palette.muted)})
+                                : text(""),
     };
     return vbox(std::move(lines));
 }
 
 // --- Running state: progress bar + per-item live lines -----------------
-[[nodiscard]] inline Element RenderRunningState(
-    const DoctorDataModel& model,
-    unsigned spinner_frame,
-    std::size_t completed_count,
-    CheckId current)
-{
+[[nodiscard]] inline Element RenderRunningState(const DoctorDataModel& model,
+                                                unsigned spinner_frame, std::size_t completed_count,
+                                                CheckId current) {
     const auto total = kCheckCount;
     const int pct = static_cast<int>(completed_count * 100u / total);
     const int bar_width = 40;
-    const int filled   = bar_width * static_cast<int>(completed_count) / static_cast<int>(total);
+    const int filled = bar_width * static_cast<int>(completed_count) / static_cast<int>(total);
     Elements bar_parts;
     bar_parts.push_back(text("["));
-    if (filled > 0) bar_parts.push_back(text(std::string(filled, '#'))         | color(loom::ui::design::theme::current_theme().palette->success) | bold);
+    if (filled > 0)
+        bar_parts.push_back(text(std::string(filled, '#')) |
+                            color(loom::ui::design::theme::current_theme().palette->success) |
+                            bold);
     int rest = std::max(0, bar_width - filled);
-    if (rest   > 0) bar_parts.push_back(text(std::string(rest,   '-'))         | dim);
+    if (rest > 0) bar_parts.push_back(text(std::string(rest, '-')) | dim);
     bar_parts.push_back(text("]"));
 
     Elements lines;
@@ -838,13 +867,17 @@ RunAllChecks(const DoctorContext& ctx) {
 
     lines.push_back(hbox({
         text(" "),
-        text(std::string(spinner_glyph(spinner_frame))) | color(loom::ui::design::theme::current_theme().palette->info) | bold,
-        text("  Running checks …  ") | color(loom::ui::design::theme::current_theme().palette->info),
+        text(std::string(spinner_glyph(spinner_frame))) |
+            color(loom::ui::design::theme::current_theme().palette->info) | bold,
+        text("  Running checks …  ") |
+            color(loom::ui::design::theme::current_theme().palette->info),
         hbox(std::move(bar_parts)),
         text(" "),
-        text(std::format("{:>3}%", pct)) | bold | color(loom::ui::design::theme::current_theme().palette->text),
+        text(std::format("{:>3}%", pct)) | bold |
+            color(loom::ui::design::theme::current_theme().palette->text),
         filler(),
-        text(std::format(" {}/{} ", completed_count, total)) | color(loom::ui::design::theme::current_theme().palette->muted),
+        text(std::format(" {}/{} ", completed_count, total)) |
+            color(loom::ui::design::theme::current_theme().palette->muted),
     }));
 
     lines.push_back(text(""));
@@ -855,7 +888,9 @@ RunAllChecks(const DoctorContext& ctx) {
         if (res.run_state == CheckRunState::Done) {
             auto [glyph, col] = severity_display(res.severity);
             lines.push_back(hbox({
-                text(" "), text(glyph) | color(col), text(" "),
+                text(" "),
+                text(glyph) | color(col),
+                text(" "),
                 text(def.name) | color(loom::ui::design::theme::current_theme().palette->text),
                 filler(),
                 text(res.message) | color(severity_display(res.severity).second),
@@ -863,15 +898,19 @@ RunAllChecks(const DoctorContext& ctx) {
         } else if (static_cast<CheckId>(i) == current) {
             lines.push_back(hbox({
                 text(" "),
-                text(std::string(spinner_glyph(spinner_frame))) | color(loom::ui::design::theme::current_theme().palette->info) | bold,
+                text(std::string(spinner_glyph(spinner_frame))) |
+                    color(loom::ui::design::theme::current_theme().palette->info) | bold,
                 text(" "),
-                text(def.name) | color(loom::ui::design::theme::current_theme().palette->info) | bold,
+                text(def.name) | color(loom::ui::design::theme::current_theme().palette->info) |
+                    bold,
                 filler(),
                 text("…") | dim,
             }));
         } else {
             lines.push_back(hbox({
-                text(" "), text("·") | dim, text(" "),
+                text(" "),
+                text("·") | dim,
+                text(" "),
                 text(def.name) | color(loom::ui::design::theme::current_theme().palette->muted),
                 filler(),
                 text("queued") | color(loom::ui::design::theme::current_theme().palette->muted),
@@ -883,10 +922,8 @@ RunAllChecks(const DoctorContext& ctx) {
 }
 
 // --- Results state: per-row status + collapsible detail -----------------
-[[nodiscard]] inline Element RenderResultsState(
-    const DoctorDataModel& model,
-    const std::array<bool, kCheckCount>& expanded)
-{
+[[nodiscard]] inline Element RenderResultsState(const DoctorDataModel& model,
+                                                const std::array<bool, kCheckCount>& expanded) {
     const auto& palette = *loom::ui::design::theme::current_theme().palette;
     Elements lines;
     lines.push_back(RenderSplashHeader(model.version, false));
@@ -908,7 +945,8 @@ RunAllChecks(const DoctorContext& ctx) {
             if (!last_cat.empty()) lines.push_back(text(""));
             lines.push_back(hbox({
                 text("▸ ") | bold | color(loom::ui::design::theme::current_theme().palette->info),
-                text(def.category) | bold | color(loom::ui::design::theme::current_theme().palette->text),
+                text(def.category) | bold |
+                    color(loom::ui::design::theme::current_theme().palette->text),
             }));
             last_cat = def.category;
         }
@@ -918,7 +956,8 @@ RunAllChecks(const DoctorContext& ctx) {
         lines.push_back(hbox({
             text(" "),
             text(ex ? "▼ " : "▶ ") | color(palette.muted),
-            text(glyph) | color(col), text(" "),
+            text(glyph) | color(col),
+            text(" "),
             text(def.name) | bold | color(loom::ui::design::theme::current_theme().palette->text),
             filler(),
             text(std::format("[{}]", severity_label(res.severity))) | color(col),
@@ -927,10 +966,13 @@ RunAllChecks(const DoctorContext& ctx) {
 
         // Inline one-liner
         if (!res.message.empty()) {
-            Color msg_col = (res.severity == DiagnosticSeverity::Ok)      ? Color(loom::ui::design::theme::current_theme().palette->success)  :
-                            (res.severity == DiagnosticSeverity::Error)   ? Color(loom::ui::design::theme::current_theme().palette->danger)    :
-                            (res.severity == DiagnosticSeverity::Warning) ? Color(loom::ui::design::theme::current_theme().palette->warning) :
-                                                                            Color(loom::ui::design::theme::current_theme().palette->muted);
+            Color msg_col = (res.severity == DiagnosticSeverity::Ok)
+                                ? Color(loom::ui::design::theme::current_theme().palette->success)
+                            : (res.severity == DiagnosticSeverity::Error)
+                                ? Color(loom::ui::design::theme::current_theme().palette->danger)
+                            : (res.severity == DiagnosticSeverity::Warning)
+                                ? Color(loom::ui::design::theme::current_theme().palette->warning)
+                                : Color(loom::ui::design::theme::current_theme().palette->muted);
             lines.push_back(hbox({
                 text("     ") | dim,
                 text(res.message) | ftxui::color(msg_col),
@@ -943,10 +985,13 @@ RunAllChecks(const DoctorContext& ctx) {
                 std::size_t start = 0;
                 while (start < res.detail.size()) {
                     auto nl = res.detail.find('\n', start);
-                    auto piece = res.detail.substr(start, nl == std::string::npos ? std::string::npos : nl - start);
+                    auto piece = res.detail.substr(
+                        start, nl == std::string::npos ? std::string::npos : nl - start);
                     lines.push_back(hbox({
-                        text("     │ ") | dim | color(loom::ui::design::theme::current_theme().palette->info),
-                        text(piece) | color(loom::ui::design::theme::current_theme().palette->muted),
+                        text("     │ ") | dim |
+                            color(loom::ui::design::theme::current_theme().palette->info),
+                        text(piece) |
+                            color(loom::ui::design::theme::current_theme().palette->muted),
                     }));
                     if (nl == std::string::npos) break;
                     start = nl + 1;
@@ -954,15 +999,20 @@ RunAllChecks(const DoctorContext& ctx) {
             }
             if (res.fix_hint) {
                 lines.push_back(hbox({
-                    text("     └─ ") | dim | color(loom::ui::design::theme::current_theme().palette->warning),
-                    text("Fix: ") | bold | color(loom::ui::design::theme::current_theme().palette->warning),
-                    text(*res.fix_hint) | color(loom::ui::design::theme::current_theme().palette->warning),
+                    text("     └─ ") | dim |
+                        color(loom::ui::design::theme::current_theme().palette->warning),
+                    text("Fix: ") | bold |
+                        color(loom::ui::design::theme::current_theme().palette->warning),
+                    text(*res.fix_hint) |
+                        color(loom::ui::design::theme::current_theme().palette->warning),
                 }));
             }
             if (res.fix_command) {
                 lines.push_back(hbox({
-                    text("        $ ") | dim | color(loom::ui::design::theme::current_theme().palette->success),
-                    text(*res.fix_command) | color(loom::ui::design::theme::current_theme().palette->success),
+                    text("        $ ") | dim |
+                        color(loom::ui::design::theme::current_theme().palette->success),
+                    text(*res.fix_command) |
+                        color(loom::ui::design::theme::current_theme().palette->success),
                 }));
             }
         }
@@ -971,16 +1021,19 @@ RunAllChecks(const DoctorContext& ctx) {
     // Context notices (unreachable rules, plugin errors, etc.)
     if (!model.notices.empty()) {
         lines.push_back(separator());
-        lines.push_back(text(" Additional notices ") | bold | color(loom::ui::design::theme::current_theme().palette->warning));
+        lines.push_back(text(" Additional notices ") | bold |
+                        color(loom::ui::design::theme::current_theme().palette->warning));
         for (auto& n : model.notices) {
             auto [g, col] = severity_display(n.severity);
             lines.push_back(hbox({
-                text(" "), text(g) | color(col), text(" "),
+                text(" "),
+                text(g) | color(col),
+                text(" "),
                 text("[" + n.category + "] ") | color(palette.muted),
                 text(n.message) | color(col),
             }));
             for (auto& d : n.details) {
-                lines.push_back(hbox({ text("     └ ") | dim, text(d) | color(palette.muted) }));
+                lines.push_back(hbox({text("     └ ") | dim, text(d) | color(palette.muted)}));
             }
         }
     }
@@ -995,10 +1048,9 @@ struct SummaryUIState {
     std::vector<std::string> fix_log_lines;
 };
 
-[[nodiscard]] inline Element RenderSummaryState(
-    const DoctorDataModel& model,
-    const SummaryUIState& ui,
-    int focused_button)   // 0 = Fix all, 1 = Rerun, 2 = Back to REPL
+[[nodiscard]] inline Element
+RenderSummaryState(const DoctorDataModel& model, const SummaryUIState& ui,
+                   int focused_button)  // 0 = Fix all, 1 = Rerun, 2 = Back to REPL
 {
     const auto& palette = *loom::ui::design::theme::current_theme().palette;
     auto s = ComputeScore(model.results);
@@ -1013,23 +1065,31 @@ struct SummaryUIState {
         text(" Overall Score: ") | bold,
         text(std::format("{:>3}/100", s.score)) | bold | color(sc),
         filler(),
-        text(s.score >= 80 ? "HEALTHY" : s.score >= 50 ? "NEEDS ATTENTION" : "UNHEALTHY") | bold | color(sc),
+        text(s.score >= 80   ? "HEALTHY"
+             : s.score >= 50 ? "NEEDS ATTENTION"
+                             : "UNHEALTHY") |
+            bold | color(sc),
     }));
     lines.push_back(text(""));
-    lines.push_back(hbox({ text(" "), RenderScoreGauge(s), text(" "), text(std::format(" {} checks", s.total)) | color(palette.muted) }));
+    lines.push_back(hbox({text(" "), RenderScoreGauge(s), text(" "),
+                          text(std::format(" {} checks", s.total)) | color(palette.muted)}));
     lines.push_back(text(""));
 
     // Breakdown row
     lines.push_back(hbox({
         text("  "),
-        text(std::format("{}✓ ", s.ok))  | bold | color(loom::ui::design::theme::current_theme().palette->success),
-        text("passed  ")                 | color(palette.muted),
-        text(std::format("{}ℹ ", s.info)) | bold | color(loom::ui::design::theme::current_theme().palette->info),
-        text("info  ")                   | color(palette.muted),
-        text(std::format("{}⚠ ", s.warn)) | bold | color(loom::ui::design::theme::current_theme().palette->warning),
-        text("warnings  ")               | color(palette.muted),
-        text(std::format("{}✗ ", s.err))  | bold | color(loom::ui::design::theme::current_theme().palette->danger),
-        text("failed")                   | color(palette.muted),
+        text(std::format("{}✓ ", s.ok)) | bold |
+            color(loom::ui::design::theme::current_theme().palette->success),
+        text("passed  ") | color(palette.muted),
+        text(std::format("{}ℹ ", s.info)) | bold |
+            color(loom::ui::design::theme::current_theme().palette->info),
+        text("info  ") | color(palette.muted),
+        text(std::format("{}⚠ ", s.warn)) | bold |
+            color(loom::ui::design::theme::current_theme().palette->warning),
+        text("warnings  ") | color(palette.muted),
+        text(std::format("{}✗ ", s.err)) | bold |
+            color(loom::ui::design::theme::current_theme().palette->danger),
+        text("failed") | color(palette.muted),
     }));
 
     if (model.locks.enabled) {
@@ -1038,7 +1098,8 @@ struct SummaryUIState {
             text("  PID locks: ") | color(palette.muted),
             text(std::to_string(model.locks.lock_count) + " active") | color(palette.muted),
             model.locks.stale_locks_cleaned > 0
-                ? hbox({ text(std::format(", {} stale cleaned", model.locks.stale_locks_cleaned)) | color(loom::ui::design::theme::current_theme().palette->success) })
+                ? hbox({text(std::format(", {} stale cleaned", model.locks.stale_locks_cleaned)) |
+                        color(loom::ui::design::theme::current_theme().palette->success)})
                 : text(""),
         }));
     }
@@ -1047,21 +1108,29 @@ struct SummaryUIState {
     if (ui.show_fix_log) {
         lines.push_back(separator());
         lines.push_back(hbox({
-            text(" " + std::string{loom::ui::design::figures::kSquareSmallFilled} + "  Fix-all progress ") | bold | color(loom::ui::design::theme::current_theme().palette->info),
+            text(" " + std::string{loom::ui::design::figures::kSquareSmallFilled} +
+                 "  Fix-all progress ") |
+                bold | color(loom::ui::design::theme::current_theme().palette->info),
             filler(),
-            text(std::format("  step {}/{} ", ui.fix_step, ui.fix_log_lines.size() + 0)) | color(palette.muted),
+            text(std::format("  step {}/{} ", ui.fix_step, ui.fix_log_lines.size() + 0)) |
+                color(palette.muted),
         }));
         for (std::size_t i = 0; i < ui.fix_log_lines.size(); ++i) {
             const bool current = i + 1 == ui.fix_step;
-            const Color c = i < ui.fix_step ? loom::ui::design::theme::current_theme().palette->success : (current ? loom::ui::design::theme::current_theme().palette->info : palette.muted);
+            const Color c = i < ui.fix_step
+                                ? loom::ui::design::theme::current_theme().palette->success
+                                : (current ? loom::ui::design::theme::current_theme().palette->info
+                                           : palette.muted);
             std::string prefix = i < ui.fix_step ? "  ✓ " : (current ? "  ➜ " : "    ");
-            lines.push_back(hbox({ text(prefix) | color(c), text(ui.fix_log_lines[i]) | color(c) }));
+            lines.push_back(hbox({text(prefix) | color(c), text(ui.fix_log_lines[i]) | color(c)}));
         }
         if (ui.fix_step > ui.fix_log_lines.empty() ? 0 : ui.fix_log_lines.size()) {
             lines.push_back(text("") | dim);
             lines.push_back(hbox({
-                text("  " + std::string{loom::ui::design::figures::kTick} + " ") | color(loom::ui::design::theme::current_theme().palette->success),
-                text("Auto-fix complete.  Re-run the doctor to verify.") | bold | color(loom::ui::design::theme::current_theme().palette->success),
+                text("  " + std::string{loom::ui::design::figures::kTick} + " ") |
+                    color(loom::ui::design::theme::current_theme().palette->success),
+                text("Auto-fix complete.  Re-run the doctor to verify.") | bold |
+                    color(loom::ui::design::theme::current_theme().palette->success),
             }));
         }
     }
@@ -1073,7 +1142,8 @@ struct SummaryUIState {
         const bool focus = focused_button == idx;
         return hbox({
             text(focus ? "< " : "[ ") | ftxui::color(focus ? col : palette.muted),
-            text(std::string(label)) | (focus ? bold : ftxui::color(col)) | ftxui::color(focus ? col : palette.muted),
+            text(std::string(label)) | (focus ? bold : ftxui::color(col)) |
+                ftxui::color(focus ? col : palette.muted),
             text(focus ? " >" : " ]") | ftxui::color(focus ? col : palette.muted),
         });
     };
@@ -1081,7 +1151,7 @@ struct SummaryUIState {
     lines.push_back(hbox({
         btn(0, "Fix all", loom::ui::design::theme::current_theme().palette->info),
         text("  "),
-        btn(1, "Rerun",   loom::ui::design::theme::current_theme().palette->warning),
+        btn(1, "Rerun", loom::ui::design::theme::current_theme().palette->warning),
         text("  "),
         btn(2, "Back to REPL", loom::ui::design::theme::current_theme().palette->success),
         filler(),
@@ -1105,9 +1175,9 @@ struct DoctorScreenOptions {
 struct ScreenRuntime {
     ScreenState state = ScreenState::Splash;
     DoctorDataModel model;
-    std::array<bool, kCheckCount> expanded{};   // per-row expansion (Results)
-    int selected_row = 0;                       // focused check index (Results)
-    int focused_button = 0;                     // focused button (Summary)
+    std::array<bool, kCheckCount> expanded{};  // per-row expansion (Results)
+    int selected_row = 0;                      // focused check index (Results)
+    int focused_button = 0;                    // focused button (Summary)
     SummaryUIState summary_ui;
     unsigned spinner_frame = 0;
     std::size_t completed_count = 0;
@@ -1118,28 +1188,33 @@ struct ScreenRuntime {
 
 namespace detail {
 
-/// Build the list of fix-log lines from the check results (ordered by severity: errors first, then warnings).
+/// Build the list of fix-log lines from the check results (ordered by severity: errors first, then
+/// warnings).
 [[nodiscard]] inline std::vector<std::string> BuildFixPlan(const DoctorDataModel& m) {
     std::vector<std::string> plan;
     // Errors
     for (std::size_t i = 0; i < kCheckCount; ++i) {
         const auto& r = m.results[i];
         if (r.severity == DiagnosticSeverity::Error && r.fix_command) {
-            plan.push_back(std::format("[{}] Apply: {}", CheckDef(static_cast<CheckId>(i)).name, *r.fix_command));
+            plan.push_back(std::format("[{}] Apply: {}", CheckDef(static_cast<CheckId>(i)).name,
+                                       *r.fix_command));
         }
     }
     // Warnings
     for (std::size_t i = 0; i < kCheckCount; ++i) {
         const auto& r = m.results[i];
         if (r.severity == DiagnosticSeverity::Warning && r.fix_command) {
-            plan.push_back(std::format("[{}] Apply: {}", CheckDef(static_cast<CheckId>(i)).name, *r.fix_command));
+            plan.push_back(std::format("[{}] Apply: {}", CheckDef(static_cast<CheckId>(i)).name,
+                                       *r.fix_command));
         }
     }
-    if (plan.empty()) plan.push_back("No auto-fixable checks — all items healthy or require manual intervention.");
+    if (plan.empty())
+        plan.push_back(
+            "No auto-fixable checks — all items healthy or require manual intervention.");
     return plan;
 }
 
-} // namespace detail
+}  // namespace detail
 
 // ============================================================
 // Component factory (exported)
@@ -1155,7 +1230,8 @@ namespace detail {
     // Prime: ensure version info is non-empty (demo defaults for UI preview)
     if (rt->model.version.current_version.empty()) rt->model.version.current_version = "0.12.0";
     if (rt->model.version.installation_type.empty()) rt->model.version.installation_type = "native";
-    if (rt->model.version.installation_path.empty()) rt->model.version.installation_path = "/opt/loom/loom";
+    if (rt->model.version.installation_path.empty())
+        rt->model.version.installation_path = "/opt/loom/loom";
     if (rt->model.version.invoked_binary.empty()) rt->model.version.invoked_binary = "loom";
 
     // Seed the plan so it is available before the user clicks Fix-all
@@ -1185,15 +1261,19 @@ namespace detail {
                 separator(),
                 hbox({
                     text(" "),
-                    text(std::string(spinner_glyph(rt->spinner_frame))) | color(loom::ui::design::theme::current_theme().palette->info) | bold,
-                    text("  Preparing diagnostics suite (13 checks, 5 categories)…") | color(loom::ui::design::theme::current_theme().palette->info),
+                    text(std::string(spinner_glyph(rt->spinner_frame))) |
+                        color(loom::ui::design::theme::current_theme().palette->info) | bold,
+                    text("  Preparing diagnostics suite (13 checks, 5 categories)…") |
+                        color(loom::ui::design::theme::current_theme().palette->info),
                 }),
                 text(""),
-                hbox({ text(" Press Enter to skip the wait  ·  Esc closes Doctor") | color(loom::ui::design::theme::current_theme().palette->muted) }),
+                hbox({text(" Press Enter to skip the wait  ·  Esc closes Doctor") |
+                      color(loom::ui::design::theme::current_theme().palette->muted)}),
             });
             break;
         case ScreenState::Running:
-            body = RenderRunningState(rt->model, rt->spinner_frame, rt->completed_count, rt->current);
+            body =
+                RenderRunningState(rt->model, rt->spinner_frame, rt->completed_count, rt->current);
             break;
         case ScreenState::Results:
             body = RenderResultsState(rt->model, rt->expanded);
@@ -1213,165 +1293,183 @@ namespace detail {
         return body | borderStyled(ROUNDED, border_color) | size(WIDTH, GREATER_THAN, 72);
     });
 
-    return renderer | CatchEvent([rt, opts = std::move(opts), begin_runs](Event event) mutable -> bool {
-        // ============== Global keys ==============
-        if (event == Event::Escape) {
-            if (rt->state == ScreenState::Running || rt->state == ScreenState::Splash) {
-                // User bailed: go straight to Summary (what we have so far)
-                rt->state = ScreenState::Summary;
-                return true;
-            }
-            if (opts.on_done) opts.on_done("Doctor dismissed by user (Esc)");
-            return true;
-        }
+    return renderer |
+           CatchEvent([rt, opts = std::move(opts), begin_runs](Event event) mutable -> bool {
+               // ============== Global keys ==============
+               if (event == Event::Escape) {
+                   if (rt->state == ScreenState::Running || rt->state == ScreenState::Splash) {
+                       // User bailed: go straight to Summary (what we have so far)
+                       rt->state = ScreenState::Summary;
+                       return true;
+                   }
+                   if (opts.on_done) opts.on_done("Doctor dismissed by user (Esc)");
+                   return true;
+               }
 
-        // ============== Animation tick ==============
-        if (event.is_character() && event.character() == "\u0000") {
-            // not a real tick
-        }
-        if (event == Event::Custom) {} // ignore for safety
+               // ============== Animation tick ==============
+               if (event.is_character() && event.character() == "\u0000") {
+                   // not a real tick
+               }
+               if (event == Event::Custom) {
+               }  // ignore for safety
 
-        // FTXUI fires Event::Custom on animation frames.  We also bump the
-        // spinner on any unhandled repeat via a counter.  Use a catch-all
-        // approach: bump the frame on every unhandled event *and* on the
-        // periodic "animation tick" if the parent ScreenInteractive has one.
-        rt->spinner_frame++;
+               // FTXUI fires Event::Custom on animation frames.  We also bump the
+               // spinner on any unhandled repeat via a counter.  Use a catch-all
+               // approach: bump the frame on every unhandled event *and* on the
+               // periodic "animation tick" if the parent ScreenInteractive has one.
+               rt->spinner_frame++;
 
-        if (rt->state == ScreenState::Splash) {
-            if (rt->spinner_frame % 3 == 0) {
-                begin_runs();
-            }
-        } else if (rt->state == ScreenState::Running) {
-            // Advance one check every ~2 animation ticks (visible but not too slow)
-            if (rt->spinner_frame % 2 == 0) {
-                if (rt->completed_count < kCheckCount) {
-                    auto id = static_cast<CheckId>(rt->completed_count);
-                    rt->model.results[static_cast<std::size_t>(id)] = RunStub_Check(id);
-                    rt->completed_count++;
-                    if (rt->completed_count < kCheckCount) {
-                        rt->current = static_cast<CheckId>(rt->completed_count);
-                    } else {
-                        // All done.  Populate notices from results and proceed to Results.
-                        rt->state = ScreenState::Results;
-                        // Derive contextual notices (unreachable rules, MCP warnings, etc.)
-                        rt->model.notices.clear();
-                        auto& perm = rt->model.results[static_cast<std::size_t>(CheckId::PermissionIntegrity)];
-                        if (perm.severity != DiagnosticSeverity::Ok) {
-                            rt->model.notices.push_back(ContextNotice{
-                                "Permission Rules",
-                                perm.message,
-                                perm.severity,
-                                {"Use `/config permissions` to reorder and deduplicate.",
-                                 "See docs: https://docs.loom.dev/loom/docs/tool-permissions"},
-                            });
-                        }
-                        auto& mcp = rt->model.results[static_cast<std::size_t>(CheckId::McpServers)];
-                        if (mcp.severity == DiagnosticSeverity::Error) {
-                            rt->model.notices.push_back(ContextNotice{
-                                "MCP",
-                                "Some MCP servers are unavailable",
-                                DiagnosticSeverity::Warning,
-                                {"Run `loom mcp list` to see server definitions.",
-                                 "Run `loom mcp doctor` for per-server traces."},
-                            });
-                        }
-                        rt->summary_ui.fix_log_lines = detail::BuildFixPlan(rt->model);
-                    }
-                }
-            }
-        } else if (rt->state == ScreenState::Summary && rt->summary_ui.show_fix_log) {
-            // Advance fix log steps
-            if (rt->spinner_frame % 4 == 0) {
-                if (rt->summary_ui.fix_step <= rt->summary_ui.fix_log_lines.size()) {
-                    rt->summary_ui.fix_step++;
-                }
-            }
-        }
-        // Spinner-only state: always request redraw so animation feels smooth.
-        // (Returning true here would swallow *all* events, which we don't want.
-        //  The parent ScreenInteractive is expected to post animation ticks via
-        //  ScreenInteractive::TrackAnimation / Loop.  We leave this to the host.)
+               if (rt->state == ScreenState::Splash) {
+                   if (rt->spinner_frame % 3 == 0) {
+                       begin_runs();
+                   }
+               } else if (rt->state == ScreenState::Running) {
+                   // Advance one check every ~2 animation ticks (visible but not too slow)
+                   if (rt->spinner_frame % 2 == 0) {
+                       if (rt->completed_count < kCheckCount) {
+                           auto id = static_cast<CheckId>(rt->completed_count);
+                           rt->model.results[static_cast<std::size_t>(id)] = RunStub_Check(id);
+                           rt->completed_count++;
+                           if (rt->completed_count < kCheckCount) {
+                               rt->current = static_cast<CheckId>(rt->completed_count);
+                           } else {
+                               // All done.  Populate notices from results and proceed to Results.
+                               rt->state = ScreenState::Results;
+                               // Derive contextual notices (unreachable rules, MCP warnings, etc.)
+                               rt->model.notices.clear();
+                               auto& perm = rt->model.results[static_cast<std::size_t>(
+                                   CheckId::PermissionIntegrity)];
+                               if (perm.severity != DiagnosticSeverity::Ok) {
+                                   rt->model.notices.push_back(ContextNotice{
+                                       "Permission Rules",
+                                       perm.message,
+                                       perm.severity,
+                                       {"Use `/config permissions` to reorder and deduplicate.",
+                                        "See docs: "
+                                        "https://docs.loom.dev/loom/docs/tool-permissions"},
+                                   });
+                               }
+                               auto& mcp =
+                                   rt->model.results[static_cast<std::size_t>(CheckId::McpServers)];
+                               if (mcp.severity == DiagnosticSeverity::Error) {
+                                   rt->model.notices.push_back(ContextNotice{
+                                       "MCP",
+                                       "Some MCP servers are unavailable",
+                                       DiagnosticSeverity::Warning,
+                                       {"Run `loom mcp list` to see server definitions.",
+                                        "Run `loom mcp doctor` for per-server traces."},
+                                   });
+                               }
+                               rt->summary_ui.fix_log_lines = detail::BuildFixPlan(rt->model);
+                           }
+                       }
+                   }
+               } else if (rt->state == ScreenState::Summary && rt->summary_ui.show_fix_log) {
+                   // Advance fix log steps
+                   if (rt->spinner_frame % 4 == 0) {
+                       if (rt->summary_ui.fix_step <= rt->summary_ui.fix_log_lines.size()) {
+                           rt->summary_ui.fix_step++;
+                       }
+                   }
+               }
+               // Spinner-only state: always request redraw so animation feels smooth.
+               // (Returning true here would swallow *all* events, which we don't want.
+               //  The parent ScreenInteractive is expected to post animation ticks via
+               //  ScreenInteractive::TrackAnimation / Loop.  We leave this to the host.)
 
-        // ============== Per-state keys ==============
-        if (event == Event::Return) {
-            if (rt->state == ScreenState::Splash) {
-                begin_runs();
-                return true;
-            }
-            if (rt->state == ScreenState::Results) {
-                // Enter -> advance to Summary
-                rt->state = ScreenState::Summary;
-                return true;
-            }
-            if (rt->state == ScreenState::Summary) {
-                // Activate focused button
-                if (rt->focused_button == 0) {
-                    // Fix all: start progressive log if not already
-                    if (!rt->summary_ui.show_fix_log) {
-                        rt->summary_ui.show_fix_log = true;
-                        rt->summary_ui.fix_step = 1;
-                        // Phase-5 integration point: invoke each fix_command
-                        // via loom.services.bash_runner sequentially, streaming
-                        // stdout/stderr back to fix_log_lines for display.
-                    }
-                    return true;
-                }
-                if (rt->focused_button == 1) {
-                    // Rerun
-                    begin_runs();
-                    rt->summary_ui.show_fix_log = false;
-                    rt->summary_ui.fix_step = 0;
-                    return true;
-                }
-                if (rt->focused_button == 2) {
-                    // Back to REPL
-                    if (opts.on_done) opts.on_done("Doctor complete");
-                    return true;
-                }
-            }
-            return true;
-        }
+               // ============== Per-state keys ==============
+               if (event == Event::Return) {
+                   if (rt->state == ScreenState::Splash) {
+                       begin_runs();
+                       return true;
+                   }
+                   if (rt->state == ScreenState::Results) {
+                       // Enter -> advance to Summary
+                       rt->state = ScreenState::Summary;
+                       return true;
+                   }
+                   if (rt->state == ScreenState::Summary) {
+                       // Activate focused button
+                       if (rt->focused_button == 0) {
+                           // Fix all: start progressive log if not already
+                           if (!rt->summary_ui.show_fix_log) {
+                               rt->summary_ui.show_fix_log = true;
+                               rt->summary_ui.fix_step = 1;
+                               // Phase-5 integration point: invoke each fix_command
+                               // via loom.services.bash_runner sequentially, streaming
+                               // stdout/stderr back to fix_log_lines for display.
+                           }
+                           return true;
+                       }
+                       if (rt->focused_button == 1) {
+                           // Rerun
+                           begin_runs();
+                           rt->summary_ui.show_fix_log = false;
+                           rt->summary_ui.fix_step = 0;
+                           return true;
+                       }
+                       if (rt->focused_button == 2) {
+                           // Back to REPL
+                           if (opts.on_done) opts.on_done("Doctor complete");
+                           return true;
+                       }
+                   }
+                   return true;
+               }
 
-        // Arrow / tab navigation
-        if (rt->state == ScreenState::Results) {
-            if (event == Event::ArrowUp) {
-                rt->selected_row = (rt->selected_row + static_cast<int>(kCheckCount) - 1) % static_cast<int>(kCheckCount);
-                return true;
-            }
-            if (event == Event::ArrowDown) {
-                rt->selected_row = (rt->selected_row + 1) % static_cast<int>(kCheckCount);
-                return true;
-            }
-            if (event == Event::Character(' ') || event == Event::Tab) {
-                auto idx = static_cast<std::size_t>(rt->selected_row);
-                if (idx < kCheckCount) rt->expanded[idx] = !rt->expanded[idx];
-                return true;
-            }
-        }
+               // Arrow / tab navigation
+               if (rt->state == ScreenState::Results) {
+                   if (event == Event::ArrowUp) {
+                       rt->selected_row = (rt->selected_row + static_cast<int>(kCheckCount) - 1) %
+                                          static_cast<int>(kCheckCount);
+                       return true;
+                   }
+                   if (event == Event::ArrowDown) {
+                       rt->selected_row = (rt->selected_row + 1) % static_cast<int>(kCheckCount);
+                       return true;
+                   }
+                   if (event == Event::Character(' ') || event == Event::Tab) {
+                       auto idx = static_cast<std::size_t>(rt->selected_row);
+                       if (idx < kCheckCount) rt->expanded[idx] = !rt->expanded[idx];
+                       return true;
+                   }
+               }
 
-        if (rt->state == ScreenState::Summary) {
-            if (event == Event::ArrowRight || event == Event::Tab) {
-                rt->focused_button = (rt->focused_button + 1) % 3;
-                return true;
-            }
-            if (event == Event::ArrowLeft) {
-                rt->focused_button = (rt->focused_button + 2) % 3;
-                return true;
-            }
-        }
+               if (rt->state == ScreenState::Summary) {
+                   if (event == Event::ArrowRight || event == Event::Tab) {
+                       rt->focused_button = (rt->focused_button + 1) % 3;
+                       return true;
+                   }
+                   if (event == Event::ArrowLeft) {
+                       rt->focused_button = (rt->focused_button + 2) % 3;
+                       return true;
+                   }
+               }
 
-        // Character shortcuts
-        if (event.is_character()) {
-            auto c = event.character();
-            if (rt->state == ScreenState::Summary) {
-                if (c == "f" || c == "F") { rt->focused_button = 0; event = Event::Return; return false; /* re-handle */ }
-                if (c == "r" || c == "R") { rt->focused_button = 1; event = Event::Return; return false; }
-                if (c == "b" || c == "B") { rt->focused_button = 2; event = Event::Return; return false; }
-            }
-        }
+               // Character shortcuts
+               if (event.is_character()) {
+                   auto c = event.character();
+                   if (rt->state == ScreenState::Summary) {
+                       if (c == "f" || c == "F") {
+                           rt->focused_button = 0;
+                           event = Event::Return;
+                           return false; /* re-handle */
+                       }
+                       if (c == "r" || c == "R") {
+                           rt->focused_button = 1;
+                           event = Event::Return;
+                           return false;
+                       }
+                       if (c == "b" || c == "B") {
+                           rt->focused_button = 2;
+                           event = Event::Return;
+                           return false;
+                       }
+                   }
+               }
 
-        return false;
-    });
+               return false;
+           });
 }
 
-} // namespace loom::ui::doctor_screen
+}  // namespace loom::ui::doctor_screen

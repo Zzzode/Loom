@@ -7,7 +7,7 @@
 // verbatim to loom.orchestration.runtime_backends (runtime_backends_lsp.cpp).
 module;
 
-#include <cctype>   // std::isalnum in safe_ref
+#include <cctype>  // std::isalnum in safe_ref
 
 module loom.tools.runtime_registry;
 
@@ -90,7 +90,8 @@ namespace fs = std::filesystem;
 }
 
 [[nodiscard]] std::string format_task_summary(const Task& task) {
-    std::string out = std::format("{} [{}] {}", task.id, task_status_name(task.status), task.description);
+    std::string out =
+        std::format("{} [{}] {}", task.id, task_status_name(task.status), task.description);
     if (task.result) out += "\nresult: " + *task.result;
     if (task.error_message) out += "\nerror: " + *task.error_message;
     return out;
@@ -103,15 +104,10 @@ namespace fs = std::filesystem;
     return "completed";
 }
 
-[[nodiscard]] std::string format_background_task_summary(
-    const bash::BackgroundTaskSnapshot& task,
-    bool include_output) {
-    std::string out = std::format(
-        "Task: {}\nStatus: {}\nPID: {}\nCommand: {}",
-        task.id,
-        background_task_status(task),
-        task.pid,
-        task.command);
+[[nodiscard]] std::string format_background_task_summary(const bash::BackgroundTaskSnapshot& task,
+                                                         bool include_output) {
+    std::string out = std::format("Task: {}\nStatus: {}\nPID: {}\nCommand: {}", task.id,
+                                  background_task_status(task), task.pid, task.command);
     if (task.exit_code) {
         out += std::format("\nExit code: {}", *task.exit_code);
     }
@@ -125,13 +121,17 @@ namespace fs = std::filesystem;
     return out;
 }
 
-[[nodiscard]] Result<ToolResult> execute_task_tool(std::string_view tool_name, const ToolInput& input) {
+[[nodiscard]] Result<ToolResult> execute_task_tool(std::string_view tool_name,
+                                                   const ToolInput& input) {
     auto json = input.json();
     if (tool_name == "task_create") {
-        auto description = json_string(json, "description").or_else([&] { return json_string(json, "task"); });
-        if (!description || description->empty()) return ToolResult::error("task_create requires description");
-        auto id = json_string(json, "task_id").or_else([&] { return json_string(json, "id"); })
-            .value_or(std::format("task-{}", global_task_store().list().size() + 1));
+        auto description =
+            json_string(json, "description").or_else([&] { return json_string(json, "task"); });
+        if (!description || description->empty())
+            return ToolResult::error("task_create requires description");
+        auto id = json_string(json, "task_id")
+                      .or_else([&] { return json_string(json, "id"); })
+                      .value_or(std::format("task-{}", global_task_store().list().size() + 1));
         TaskCreateTool tool;
         auto task = tool.execute(id, *description);
         if (!task) return ToolResult::error(std::string(format_error(task.error())));
@@ -158,14 +158,15 @@ namespace fs = std::filesystem;
     }
 
     auto id = json_string(json, "task_id")
-        .or_else([&] { return json_string(json, "id"); })
-        .or_else([&]() -> std::optional<std::string> {
-            if (auto pid = json_int(json, "pid"); pid && *pid > 0) {
-                return std::to_string(*pid);
-            }
-            return std::nullopt;
-        });
-    if (!id || id->empty()) return ToolResult::error(std::format("{} requires task_id or pid", tool_name));
+                  .or_else([&] { return json_string(json, "id"); })
+                  .or_else([&]() -> std::optional<std::string> {
+                      if (auto pid = json_int(json, "pid"); pid && *pid > 0) {
+                          return std::to_string(*pid);
+                      }
+                      return std::nullopt;
+                  });
+    if (!id || id->empty())
+        return ToolResult::error(std::format("{} requires task_id or pid", tool_name));
 
     if (tool_name == "task_get") {
         if (auto background = bash::get_background_task_snapshot(*id)) {
@@ -191,7 +192,8 @@ namespace fs = std::filesystem;
         if (auto agent = agent_runtime::native_agent_store().get(*id);
             agent && is_native_agent_task(*agent)) {
             agent_runtime::native_agent_store().request_cancel(agent->agent_id, "stop requested");
-            auto stopped = agent_runtime::native_agent_store().get(agent->agent_id).value_or(*agent);
+            auto stopped =
+                agent_runtime::native_agent_store().get(agent->agent_id).value_or(*agent);
             return ToolResult::success(format_native_agent_task_summary(stopped));
         }
         TaskStopTool tool;
@@ -201,31 +203,37 @@ namespace fs = std::filesystem;
     }
     if (tool_name == "task_update") {
         auto status = parse_task_status(json_string(json, "status").value_or("running"));
-        auto result_text = json_string(json, "result").or_else([&] { return json_string(json, "output"); });
+        auto result_text =
+            json_string(json, "result").or_else([&] { return json_string(json, "output"); });
         if (auto agent = agent_runtime::native_agent_store().get(*id);
             agent && is_native_agent_task(*agent)) {
             switch (status) {
-                case TaskStatus::Running:
-                    agent_runtime::native_agent_store().mark_running(agent->agent_id);
-                    break;
-                case TaskStatus::Completed:
-                    agent_runtime::native_agent_store().mark_completed(agent->agent_id, result_text.value_or(""));
-                    break;
-                case TaskStatus::Failed:
-                    agent_runtime::native_agent_store().mark_failed(agent->agent_id, result_text.value_or("task marked failed"));
-                    break;
-                case TaskStatus::Cancelled:
-                    agent_runtime::native_agent_store().mark_cancelled(agent->agent_id, result_text.value_or("task marked cancelled"));
-                    break;
-                case TaskStatus::Pending:
-                    break;
+            case TaskStatus::Running:
+                agent_runtime::native_agent_store().mark_running(agent->agent_id);
+                break;
+            case TaskStatus::Completed:
+                agent_runtime::native_agent_store().mark_completed(agent->agent_id,
+                                                                   result_text.value_or(""));
+                break;
+            case TaskStatus::Failed:
+                agent_runtime::native_agent_store().mark_failed(
+                    agent->agent_id, result_text.value_or("task marked failed"));
+                break;
+            case TaskStatus::Cancelled:
+                agent_runtime::native_agent_store().mark_cancelled(
+                    agent->agent_id, result_text.value_or("task marked cancelled"));
+                break;
+            case TaskStatus::Pending:
+                break;
             }
-            return ToolResult::success(std::format("Updated task {} [{}]", *id, task_status_name(status)));
+            return ToolResult::success(
+                std::format("Updated task {} [{}]", *id, task_status_name(status)));
         }
         TaskUpdateTool tool;
         auto result = tool.execute(*id, status, result_text);
         if (!result) return ToolResult::error(std::string(format_error(result.error())));
-        return ToolResult::success(std::format("Updated task {} [{}]", *id, task_status_name(status)));
+        return ToolResult::success(
+            std::format("Updated task {} [{}]", *id, task_status_name(status)));
     }
     if (tool_name == "task_output") {
         if (auto background = bash::get_background_task_snapshot(*id)) {
@@ -244,12 +252,15 @@ namespace fs = std::filesystem;
 }
 
 [[nodiscard]] Result<ToolResult> execute_local_resource_read(const ToolInput& input) {
-    auto uri = json_string(input.json(), "uri").or_else([&] { return json_string(input.json(), "resource_uri"); });
+    auto uri = json_string(input.json(), "uri").or_else([&] {
+        return json_string(input.json(), "resource_uri");
+    });
     if (!uri || uri->empty()) return ToolResult::error("read_mcp_resource requires uri");
     std::string path_text = *uri;
     if (path_text.starts_with("file://")) path_text = path_text.substr(7);
     fs::path path = path_text;
-    if (!fs::exists(path)) return ToolResult::error(std::format("Resource not found: {}", path.string()));
+    if (!fs::exists(path))
+        return ToolResult::error(std::format("Resource not found: {}", path.string()));
     std::ifstream in(path);
     if (!in) return ToolResult::error(std::format("Cannot read resource: {}", path.string()));
     std::stringstream buffer;
@@ -260,12 +271,14 @@ namespace fs = std::filesystem;
 [[nodiscard]] Result<ToolResult> execute_resource_list(const ToolInput& input) {
     auto root = json_string(input.json(), "path").value_or(fs::current_path().string());
     fs::path base = root;
-    if (!fs::exists(base)) return ToolResult::error(std::format("Path not found: {}", base.string()));
+    if (!fs::exists(base))
+        return ToolResult::error(std::format("Path not found: {}", base.string()));
     std::string out = "Resources:\n";
     std::size_t count = 0;
     for (const auto& entry : fs::directory_iterator(base)) {
         if (!entry.is_regular_file()) continue;
-        out += std::format("- file://{} [{} bytes]\n", entry.path().string(), fs::file_size(entry.path()));
+        out += std::format("- file://{} [{} bytes]\n", entry.path().string(),
+                           fs::file_size(entry.path()));
         if (++count >= 100) break;
     }
     if (count == 0) out += "No file resources.\n";
@@ -298,9 +311,8 @@ namespace fs = std::filesystem;
     if (result->screenshot_base64) {
         std::vector<ToolOutputContent> content;
         content.push_back(ToolOutputContent::text_output(result->content));
-        content.push_back(ToolOutputContent::image_output(
-            result->media_type.value_or("image/png"),
-            std::move(*result->screenshot_base64)));
+        content.push_back(ToolOutputContent::image_output(result->media_type.value_or("image/png"),
+                                                          std::move(*result->screenshot_base64)));
         return ToolResult::success_multi(std::move(content));
     }
 
@@ -309,18 +321,25 @@ namespace fs = std::filesystem;
 
 [[nodiscard]] bool safe_ref(std::string_view text) {
     return !text.empty() && std::ranges::all_of(text, [](char c) {
-        return std::isalnum(static_cast<unsigned char>(c)) || c == '-' || c == '_' || c == '/' || c == '.';
+        return std::isalnum(static_cast<unsigned char>(c)) || c == '-' || c == '_' || c == '/' ||
+               c == '.';
     });
 }
 
 [[nodiscard]] Result<ToolResult> execute_worktree(std::string_view mode, const ToolInput& input) {
     auto json = input.json();
     if (mode == "enter") {
-        auto branch = json_string(json, "branch").or_else([&] { return json_string(json, "branch_name"); });
-        if (!branch || !safe_ref(*branch)) return ToolResult::error("enter_worktree requires a safe branch name");
-        auto path = json_string(json, "path").value_or((fs::current_path().parent_path() /
-            std::format("{}-{}", fs::current_path().filename().string(), *branch)).string());
-        return run_command(std::format("git worktree add -B {} {} 2>&1", runtime_shell_quote(*branch), runtime_shell_quote(path)));
+        auto branch =
+            json_string(json, "branch").or_else([&] { return json_string(json, "branch_name"); });
+        if (!branch || !safe_ref(*branch))
+            return ToolResult::error("enter_worktree requires a safe branch name");
+        auto path =
+            json_string(json, "path")
+                .value_or((fs::current_path().parent_path() /
+                           std::format("{}-{}", fs::current_path().filename().string(), *branch))
+                              .string());
+        return run_command(std::format("git worktree add -B {} {} 2>&1",
+                                       runtime_shell_quote(*branch), runtime_shell_quote(path)));
     }
 
     auto path = json_string(json, "path").value_or(fs::current_path().string());
@@ -330,7 +349,9 @@ namespace fs = std::filesystem;
 [[nodiscard]] Result<ToolResult> execute_brief(const ToolInput& input) {
     auto brief_path = fs::current_path() / ".loom" / "brief.md";
     fs::create_directories(brief_path.parent_path());
-    if (auto content = json_string(input.json(), "content").or_else([&] { return json_string(input.json(), "brief"); })) {
+    if (auto content = json_string(input.json(), "content").or_else([&] {
+            return json_string(input.json(), "brief");
+        })) {
         std::ofstream out(brief_path);
         if (!out) return ToolResult::error(std::format("Cannot write {}", brief_path.string()));
         out << *content;
@@ -351,8 +372,8 @@ namespace fs = std::filesystem;
     auto root = parsed->root();
 
     auto path = runtime_json_string(root, "notebook_path")
-        .or_else([&] { return runtime_json_string(root, "file_path"); })
-        .or_else([&] { return runtime_json_string(root, "path"); });
+                    .or_else([&] { return runtime_json_string(root, "file_path"); })
+                    .or_else([&] { return runtime_json_string(root, "path"); });
     if (!path) {
         return ToolResult::error("notebook_edit requires notebook_path");
     }
@@ -369,32 +390,45 @@ namespace fs = std::filesystem;
 
     if (auto operation_text = runtime_json_string(root, "operation")) {
         auto operation = parse_notebook_operation(*operation_text);
-        if (!operation) return ToolResult::error("notebook_edit operation must be insert, delete, update, or move");
+        if (!operation)
+            return ToolResult::error(
+                "notebook_edit operation must be insert, delete, update, or move");
         request.operation = *operation;
-        auto index = runtime_json_int(root, "cell_index").or_else([&] { return runtime_json_int(root, "cell_number"); });
-        if (!index || *index < 0) return ToolResult::error("notebook_edit requires a non-negative cell_index");
+        auto index = runtime_json_int(root, "cell_index").or_else([&] {
+            return runtime_json_int(root, "cell_number");
+        });
+        if (!index || *index < 0)
+            return ToolResult::error("notebook_edit requires a non-negative cell_index");
         request.cell_index = static_cast<std::size_t>(*index);
         if (auto target = runtime_json_int(root, "target_index"); target && *target >= 0) {
             request.target_index = static_cast<std::size_t>(*target);
         }
-        request.source = runtime_json_string(root, "source")
-            .or_else([&] { return runtime_json_string(root, "new_source"); });
+        request.source = runtime_json_string(root, "source").or_else([&] {
+            return runtime_json_string(root, "new_source");
+        });
     } else {
         auto edit_mode = runtime_json_string(root, "edit_mode").value_or("replace");
         auto operation = parse_notebook_operation(edit_mode);
-        if (!operation) return ToolResult::error("notebook_edit edit_mode must be replace, insert, or delete");
+        if (!operation)
+            return ToolResult::error("notebook_edit edit_mode must be replace, insert, or delete");
         request.operation = *operation;
-        request.source = runtime_json_string(root, "new_source")
-            .or_else([&] { return runtime_json_string(root, "source"); });
+        request.source = runtime_json_string(root, "new_source").or_else([&] {
+            return runtime_json_string(root, "source");
+        });
 
-        if (auto index = runtime_json_int(root, "cell_index").or_else([&] { return runtime_json_int(root, "cell_number"); })) {
-            if (*index < 0) return ToolResult::error("notebook_edit cell index must be non-negative");
+        if (auto index = runtime_json_int(root, "cell_index").or_else([&] {
+                return runtime_json_int(root, "cell_number");
+            })) {
+            if (*index < 0)
+                return ToolResult::error("notebook_edit cell index must be non-negative");
             request.cell_index = static_cast<std::size_t>(*index);
         } else {
             auto cell_id = runtime_json_string(root, "cell_id");
             if (cell_id) {
                 auto resolved = resolve_notebook_cell_index(notebook, cell_id);
-                if (!resolved) return ToolResult::error(std::format("Cell with ID \"{}\" not found in notebook", *cell_id));
+                if (!resolved)
+                    return ToolResult::error(
+                        std::format("Cell with ID \"{}\" not found in notebook", *cell_id));
                 request.cell_index = *resolved;
                 if (request.operation == CellOperation::Insert) {
                     ++request.cell_index;
@@ -402,22 +436,27 @@ namespace fs = std::filesystem;
             } else if (request.operation == CellOperation::Insert) {
                 request.cell_index = 0;
             } else {
-                return ToolResult::error("notebook_edit requires cell_id or cell_index when not inserting");
+                return ToolResult::error(
+                    "notebook_edit requires cell_id or cell_index when not inserting");
             }
         }
 
-        if (request.operation == CellOperation::Update && request.cell_index == notebook.cells.size()) {
+        if (request.operation == CellOperation::Update &&
+            request.cell_index == notebook.cells.size()) {
             request.operation = CellOperation::Insert;
         }
     }
 
     if (auto cell_type_text = runtime_json_string(root, "cell_type")) {
         auto cell_type = parse_cell_type(*cell_type_text);
-        if (!cell_type) return ToolResult::error("notebook_edit cell_type must be code, markdown, or raw");
+        if (!cell_type)
+            return ToolResult::error("notebook_edit cell_type must be code, markdown, or raw");
         request.cell_type = *cell_type;
     }
 
-    if ((request.operation == CellOperation::Insert || request.operation == CellOperation::Update) && !request.source) {
+    if ((request.operation == CellOperation::Insert ||
+         request.operation == CellOperation::Update) &&
+        !request.source) {
         return ToolResult::error("notebook_edit requires new_source for insert/update");
     }
 
@@ -429,4 +468,4 @@ namespace fs = std::filesystem;
     return ToolResult::success(result->message);
 }
 
-} // namespace loom::tools::detail
+}  // namespace loom::tools::detail

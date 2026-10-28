@@ -18,26 +18,24 @@ export namespace loom::services::api::with_retry_simple {
 // =========================================================================
 
 struct RetryConfig {
-    int                max_attempts    = 3;
+    int max_attempts = 3;
     std::chrono::milliseconds base_delay{500};
     std::chrono::milliseconds max_delay{10000};
-    std::vector<int>   retry_on_http   = {429, 500, 502, 503, 504};
-    double             jitter_ratio    = 0.2;  // ±20% uniform jitter
+    std::vector<int> retry_on_http = {429, 500, 502, 503, 504};
+    double jitter_ratio = 0.2;  // ±20% uniform jitter
 };
 
 // =========================================================================
 // BackoffDelay (exposed for tests)
 // =========================================================================
 
-[[nodiscard]] inline std::chrono::milliseconds
-BackoffDelay(const RetryConfig& cfg, int attempt_0based) noexcept {
+[[nodiscard]] inline std::chrono::milliseconds BackoffDelay(const RetryConfig& cfg,
+                                                            int attempt_0based) noexcept {
     const auto attempt = static_cast<std::uint32_t>(std::max(0, attempt_0based));
     const double raw =
-        static_cast<double>(cfg.base_delay.count()) *
-        std::pow(2.0, static_cast<double>(attempt));
-    auto capped = std::chrono::milliseconds{
-        static_cast<std::int64_t>(std::min<double>(
-            static_cast<double>(cfg.max_delay.count()), raw))};
+        static_cast<double>(cfg.base_delay.count()) * std::pow(2.0, static_cast<double>(attempt));
+    auto capped = std::chrono::milliseconds{static_cast<std::int64_t>(
+        std::min<double>(static_cast<double>(cfg.max_delay.count()), raw))};
 
     if (cfg.jitter_ratio > 0.0) {
         std::mt19937_64 gen{std::random_device{}()};
@@ -45,8 +43,7 @@ BackoffDelay(const RetryConfig& cfg, int attempt_0based) noexcept {
         const double hi = 1.0 + cfg.jitter_ratio;
         std::uniform_real_distribution<double> dist(lo, hi);
         capped = std::chrono::milliseconds{static_cast<std::int64_t>(
-            std::max<double>(0.0,
-                             static_cast<double>(capped.count()) * dist(gen)))};
+            std::max<double>(0.0, static_cast<double>(capped.count()) * dist(gen)))};
     }
     return capped;
 }
@@ -55,8 +52,7 @@ BackoffDelay(const RetryConfig& cfg, int attempt_0based) noexcept {
 // RunWithRetry
 // =========================================================================
 
-inline int RunWithRetry(const RetryConfig& cfg,
-                        std::function<int(int /*attempt 0-based*/)> fn) {
+inline int RunWithRetry(const RetryConfig& cfg, std::function<int(int /*attempt 0-based*/)> fn) {
     const int max_attempts = std::max(1, cfg.max_attempts);
     int last_rc = 0;
     for (int attempt = 0; attempt < max_attempts; ++attempt) {
@@ -70,7 +66,10 @@ inline int RunWithRetry(const RetryConfig& cfg,
         bool should_retry = is_transport;
         if (rc > 0) {
             for (int h : cfg.retry_on_http) {
-                if (h == rc) { should_retry = true; break; }
+                if (h == rc) {
+                    should_retry = true;
+                    break;
+                }
             }
         }
 

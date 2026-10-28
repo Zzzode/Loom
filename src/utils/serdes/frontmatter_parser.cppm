@@ -2,7 +2,6 @@ module;
 
 #include <cstddef>
 
-
 export module loom.serdes.frontmatter_parser;
 
 import std;
@@ -17,8 +16,8 @@ struct Frontmatter {
 [[nodiscard]] inline bool has_frontmatter(std::string_view sv) {
 
     size_t pos = 0;
-    while (pos < sv.size() && (sv[pos] == ' ' || sv[pos] == '\t' ||
-           sv[pos] == '\r' || sv[pos] == '\n')) {
+    while (pos < sv.size() &&
+           (sv[pos] == ' ' || sv[pos] == '\t' || sv[pos] == '\r' || sv[pos] == '\n')) {
         ++pos;
     }
     return sv.substr(pos, 3) == "---" &&
@@ -27,22 +26,21 @@ struct Frontmatter {
 
 namespace fm_detail {
 
-    inline std::string_view trim(std::string_view sv) {
-        auto start = sv.find_first_not_of(" \t\r\n");
-        if (start == std::string_view::npos) return {};
-        auto end = sv.find_last_not_of(" \t\r\n");
-        return sv.substr(start, end - start + 1);
-    }
-
-    inline std::string unquote(std::string_view sv) {
-        if (sv.size() >= 2 &&
-            ((sv.front() == '"' && sv.back() == '"') ||
-             (sv.front() == '\'' && sv.back() == '\''))) {
-            return std::string(sv.substr(1, sv.size() - 2));
-        }
-        return std::string(sv);
-    }
+inline std::string_view trim(std::string_view sv) {
+    auto start = sv.find_first_not_of(" \t\r\n");
+    if (start == std::string_view::npos) return {};
+    auto end = sv.find_last_not_of(" \t\r\n");
+    return sv.substr(start, end - start + 1);
 }
+
+inline std::string unquote(std::string_view sv) {
+    if (sv.size() >= 2 &&
+        ((sv.front() == '"' && sv.back() == '"') || (sv.front() == '\'' && sv.back() == '\''))) {
+        return std::string(sv.substr(1, sv.size() - 2));
+    }
+    return std::string(sv);
+}
+}  // namespace fm_detail
 
 [[nodiscard]] inline Frontmatter parse_frontmatter(std::string_view sv) {
     Frontmatter result;
@@ -94,7 +92,7 @@ namespace fm_detail {
         line_start = line_end + 1;
     }
 
-    size_t content_start = second_sep + 4; // "\n---"
+    size_t content_start = second_sep + 4;  // "\n---"
     if (content_start < sv.size() && sv[content_start] == '\r') ++content_start;
     if (content_start < sv.size() && sv[content_start] == '\n') ++content_start;
     result.content = std::string(sv.substr(content_start));
@@ -121,4 +119,4 @@ namespace fm_detail {
     return sv.substr(content_start);
 }
 
-} // namespace loom::utils
+}  // namespace loom::utils

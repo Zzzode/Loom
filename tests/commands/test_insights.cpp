@@ -2,9 +2,10 @@
 /// @brief Insights facet pipeline tests.
 
 #include <gtest/gtest.h>
-#include <cstdlib>
-#include <atomic>
 #include <unistd.h>
+
+#include <atomic>
+#include <cstdlib>
 
 import std;
 import loom.commands.command;
@@ -47,6 +48,7 @@ struct HomeGuard {
     std::string name = "HOME";
     std::optional<std::string> previous;
     fs::path tmp;
+
     explicit HomeGuard() {
         if (const char* h = std::getenv("HOME")) previous = h;
         auto base = fs::temp_directory_path();
@@ -57,6 +59,7 @@ struct HomeGuard {
         fs::create_directories(tmp);
         setenv("HOME", tmp.c_str(), 1);
     }
+
     ~HomeGuard() {
         if (previous) {
             setenv("HOME", previous->c_str(), 1);
@@ -84,7 +87,7 @@ insights::SessionFacets make_facets(std::string id) {
     return f;
 }
 
-} // namespace
+}  // namespace
 
 TEST(Insights, HumaniseLabelMap) {
     EXPECT_EQ(insights::humanise("fix_bug"), "Fix Bug");
@@ -141,8 +144,7 @@ TEST(Insights, FacetCacheRoundTrip) {
     EXPECT_EQ(loaded->underlying_goal, original.underlying_goal);
     EXPECT_EQ(loaded->outcome, original.outcome);
     EXPECT_EQ(loaded->goal_categories, original.goal_categories);
-    EXPECT_EQ(loaded->user_satisfaction_counts,
-              original.user_satisfaction_counts);
+    EXPECT_EQ(loaded->user_satisfaction_counts, original.user_satisfaction_counts);
     EXPECT_EQ(loaded->friction_counts, original.friction_counts);
     EXPECT_EQ(loaded->primary_success, original.primary_success);
     EXPECT_EQ(loaded->brief_summary, original.brief_summary);
@@ -160,7 +162,10 @@ TEST(Insights, FacetCacheRejectsInvalidSchema) {
     const std::string bad = R"({"session_id":"x","foo":1})";
     auto path = insights::detail::facets_dir();
     fs::create_directories(path);
-    { std::ofstream o(path / "bad-1.json"); o << bad; }
+    {
+        std::ofstream o(path / "bad-1.json");
+        o << bad;
+    }
     EXPECT_FALSE(insights::load_facets("bad-1").has_value());
 }
 
@@ -182,7 +187,10 @@ TEST(Insights, FacetCacheAcceptsTSJsonShape) {
     })";
     auto path = insights::detail::facets_dir();
     fs::create_directories(path);
-    { std::ofstream o(path / "ts-1.json"); o << good; }
+    {
+        std::ofstream o(path / "ts-1.json");
+        o << good;
+    }
 
     auto loaded = insights::load_facets("ts-1");
     ASSERT_TRUE(loaded.has_value());
@@ -194,8 +202,7 @@ TEST(Insights, FacetCacheAcceptsTSJsonShape) {
 TEST(Insights, HtmlReportHasExpectedStructure) {
     std::vector<insights::SessionFacets> facets = {make_facets("h1")};
     auto agg = insights::aggregate_facets(facets);
-    auto html = insights::render_html_report(
-        5, 100, "2026-01-01", "2026-06-01", agg);
+    auto html = insights::render_html_report(5, 100, "2026-01-01", "2026-06-01", agg);
 
     EXPECT_TRUE(html.starts_with("<!DOCTYPE html>"));
     EXPECT_NE(html.find("<title>Loom Insights</title>"), std::string::npos);
@@ -230,8 +237,7 @@ TEST(Insights, ExtractFacetsSeamParsesValidJson) {
     // prepends facet_extraction_prompt()). Assert it is forwarded intact.
     const std::string transcript =
         loom::commands::facet_extraction_prompt() + "user: please fix the bug";
-    loom::commands::LlmExtractFn stub = [&transcript](
-                                          const std::string& received) {
+    loom::commands::LlmExtractFn stub = [&transcript](const std::string& received) {
         EXPECT_EQ(received, transcript);
         return std::optional<std::string>(
             std::string("Here you go: {") +

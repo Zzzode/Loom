@@ -15,13 +15,14 @@ export namespace loom::skills::simplify {
     return SkillDefinition{
         .name = "simplify",
         .description = "Review and simplify code for reuse, quality, and efficiency",
-        .trigger_patterns = {
-            R"(simplif(?:y|ied|ication))",
-            R"(clean\s*up)",
-            R"(polish(?:ing)?)",
-            R"(reduce\s+complexity)",
-            R"(make.*(?:simpler|cleaner|shorter))",
-        },
+        .trigger_patterns =
+            {
+                R"(simplif(?:y|ied|ication))",
+                R"(clean\s*up)",
+                R"(polish(?:ing)?)",
+                R"(reduce\s+complexity)",
+                R"(make.*(?:simpler|cleaner|shorter))",
+            },
         .content = R"(## Simplify Skill
 
 ### Process
@@ -63,4 +64,4 @@ export namespace loom::skills::simplify {
     };
 }
 
-} // namespace loom::skills::simplify
+}  // namespace loom::skills::simplify

@@ -12,8 +12,8 @@ export module loom.sdk.core_schemas;
 
 import std;
 
-import loom.config.settings;       // SettingsScope (CONVERGE alias)
-import loom.tools.agent_runtime;   // AgentDefinition (CONVERGE alias)
+import loom.config.settings;     // SettingsScope (CONVERGE alias)
+import loom.tools.agent_runtime; // AgentDefinition (CONVERGE alias)
 
 export namespace loom::sdk::core_schemas {
 
@@ -250,4 +250,4 @@ struct RewindFilesResult {
     std::optional<int> deletions;
 };
 
-} // namespace loom::sdk::core_schemas
+}  // namespace loom::sdk::core_schemas

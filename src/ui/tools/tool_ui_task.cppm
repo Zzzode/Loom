@@ -5,7 +5,6 @@
 /// LICENCE:  Exported.  Imported by the tool UI registry initialization.
 module;
 
-
 export module loom.ui.tools.task;
 
 import std;
@@ -52,10 +51,11 @@ namespace detail {
     }
     // Numeric id
     auto start = colon + 1;
-    while (start < input_json.size() && input_json[start] == ' ') ++start;
+    while (start < input_json.size() && input_json[start] == ' ')
+        ++start;
     auto end = start;
-    while (end < input_json.size() &&
-           (input_json[end] >= '0' && input_json[end] <= '9')) ++end;
+    while (end < input_json.size() && (input_json[end] >= '0' && input_json[end] <= '9'))
+        ++end;
     if (end == start) return {};
     return std::string(input_json.substr(start, end - start));
 }
@@ -82,9 +82,7 @@ namespace detail {
 [[nodiscard]] inline ToolUIFunctions make_task_create_ui() {
     ToolUIFunctions fns;
 
-    fns.user_facing_name = [](std::string_view) {
-        return std::string{"TaskCreate"};
-    };
+    fns.user_facing_name = [](std::string_view) { return std::string{"TaskCreate"}; };
 
     fns.message = [](std::string_view input_json) {
         std::string subject = detail::extract_subject(input_json);
@@ -97,26 +95,18 @@ namespace detail {
         return std::string{"new task…"};
     };
 
-    fns.tag = [](std::string_view) -> std::optional<std::string> {
-        return std::nullopt;
-    };
+    fns.tag = [](std::string_view) -> std::optional<std::string> { return std::nullopt; };
 
-    fns.progress = [](std::string_view, std::string_view) {
-        return std::string{"Creating task…"};
-    };
+    fns.progress = [](std::string_view, std::string_view) { return std::string{"Creating task…"}; };
 
-    fns.queued = [](std::string_view) {
-        return std::string{"Waiting to create task…"};
-    };
+    fns.queued = [](std::string_view) { return std::string{"Waiting to create task…"}; };
 
     fns.is_transparent_wrapper = false;
 
     // The created task's ID and subject are visible on screen; index it so
     // users can search for task subjects.
-    fns.extract_search_text = [](
-        std::string_view output_text,
-        std::string_view /*error_text*/) -> std::optional<std::string>
-    {
+    fns.extract_search_text = [](std::string_view output_text,
+                                 std::string_view /*error_text*/) -> std::optional<std::string> {
         return std::string{output_text};
     };
 
@@ -130,9 +120,7 @@ namespace detail {
 [[nodiscard]] inline ToolUIFunctions make_task_update_ui() {
     ToolUIFunctions fns;
 
-    fns.user_facing_name = [](std::string_view) {
-        return std::string{"TaskUpdate"};
-    };
+    fns.user_facing_name = [](std::string_view) { return std::string{"TaskUpdate"}; };
 
     fns.message = [](std::string_view input_json) {
         std::string id = detail::extract_task_id(input_json);
@@ -165,8 +153,7 @@ namespace detail {
         return std::nullopt;
     };
 
-    fns.progress = [](std::string_view input_json,
-                       std::string_view) {
+    fns.progress = [](std::string_view input_json, std::string_view) {
         std::string id = detail::extract_task_id(input_json);
         if (!id.empty()) {
             return "Updating task #" + id + "…";
@@ -186,10 +173,8 @@ namespace detail {
 
     // The updated task status and subject are visible on screen; index it
     // so users can search for task subjects and status changes.
-    fns.extract_search_text = [](
-        std::string_view output_text,
-        std::string_view /*error_text*/) -> std::optional<std::string>
-    {
+    fns.extract_search_text = [](std::string_view output_text,
+                                 std::string_view /*error_text*/) -> std::optional<std::string> {
         return std::string{output_text};
     };
 
@@ -198,22 +183,16 @@ namespace detail {
 
 /// Register TaskCreate tool UI in the global registry.
 inline void register_task_create_ui() {
-    global_tool_ui_registry().register_tool_ui(
-        "task_create", make_task_create_ui());
-    global_tool_ui_registry().register_tool_ui(
-        "TaskCreate", make_task_create_ui());
-    global_tool_ui_registry().register_tool_ui(
-        "TaskCreateTool", make_task_create_ui());
+    global_tool_ui_registry().register_tool_ui("task_create", make_task_create_ui());
+    global_tool_ui_registry().register_tool_ui("TaskCreate", make_task_create_ui());
+    global_tool_ui_registry().register_tool_ui("TaskCreateTool", make_task_create_ui());
 }
 
 /// Register TaskUpdate tool UI in the global registry.
 inline void register_task_update_ui() {
-    global_tool_ui_registry().register_tool_ui(
-        "task_update", make_task_update_ui());
-    global_tool_ui_registry().register_tool_ui(
-        "TaskUpdate", make_task_update_ui());
-    global_tool_ui_registry().register_tool_ui(
-        "TaskUpdateTool", make_task_update_ui());
+    global_tool_ui_registry().register_tool_ui("task_update", make_task_update_ui());
+    global_tool_ui_registry().register_tool_ui("TaskUpdate", make_task_update_ui());
+    global_tool_ui_registry().register_tool_ui("TaskUpdateTool", make_task_update_ui());
 }
 
 }  // namespace loom::ui::tools::task_ui

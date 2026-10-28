@@ -13,36 +13,37 @@ import std;
 namespace loom::ui {
 namespace detail {
 
-TokenCache::TokenCache(std::size_t max_size) : max_size_(max_size) {}
+TokenCache::TokenCache(std::size_t max_size)
+    : max_size_(max_size) {}
 
 const std::vector<BlockToken>* TokenCache::find(std::string_view key) const {
-        auto it = map_.find(std::string(key));
-        if (it == map_.end()) return nullptr;
-        // Promote to MRU
-        lru_.splice(lru_.begin(), lru_, it->second);
-        return &it->second->tokens;
-    }
+    auto it = map_.find(std::string(key));
+    if (it == map_.end()) return nullptr;
+    // Promote to MRU
+    lru_.splice(lru_.begin(), lru_, it->second);
+    return &it->second->tokens;
+}
 
 void TokenCache::put(std::string key, std::vector<BlockToken> tokens) {
-        auto it = map_.find(key);
-        if (it != map_.end()) {
-            // Update existing and promote
-            it->second->tokens = std::move(tokens);
-            lru_.splice(lru_.begin(), lru_, it->second);
-            return;
-        }
-
-        // Evict if at capacity
-        if (lru_.size() >= max_size_) {
-            auto& last = lru_.back();
-            map_.erase(last.key);
-            lru_.pop_back();
-        }
-
-        // Insert new entry at front (MRU)
-        lru_.emplace_front(CacheEntry{key, std::move(tokens)});
-        map_.emplace(std::move(key), lru_.begin());
+    auto it = map_.find(key);
+    if (it != map_.end()) {
+        // Update existing and promote
+        it->second->tokens = std::move(tokens);
+        lru_.splice(lru_.begin(), lru_, it->second);
+        return;
     }
+
+    // Evict if at capacity
+    if (lru_.size() >= max_size_) {
+        auto& last = lru_.back();
+        map_.erase(last.key);
+        lru_.pop_back();
+    }
+
+    // Insert new entry at front (MRU)
+    lru_.emplace_front(CacheEntry{key, std::move(tokens)});
+    map_.emplace(std::move(key), lru_.begin());
+}
 
 /// Global token cache instance
 TokenCache& global_token_cache() {
@@ -50,5 +51,5 @@ TokenCache& global_token_cache() {
     return cache;
 }
 
-} // namespace detail
-} // namespace loom::ui
+}  // namespace detail
+}  // namespace loom::ui

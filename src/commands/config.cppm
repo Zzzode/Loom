@@ -20,11 +20,11 @@ using namespace loom::core;
 
 /// Subcommand for /config
 enum class ConfigAction : std::uint8_t {
-    List,       // List all settings
-    Get,        // Get a specific setting
-    Set,        // Set a specific setting
-    Open,       // Open config file in editor
-    Path,       // Show config file locations
+    List,  // List all settings
+    Get,   // Get a specific setting
+    Set,   // Set a specific setting
+    Open,  // Open config file in editor
+    Path,  // Show config file locations
 };
 
 /// Known configuration keys with their metadata. Projected from
@@ -34,7 +34,7 @@ enum class ConfigAction : std::uint8_t {
 struct ConfigKeyInfo {
     std::string_view key;
     std::string_view description;
-    std::string_view type;          // "string", "bool", "int", "enum"
+    std::string_view type;  // "string", "bool", "int", "enum"
     std::optional<std::string> default_value;
 };
 
@@ -46,15 +46,22 @@ public:
         return CommandDefinition{
             .name = "config",
             .description = "View and modify CLI configuration settings",
-            .args = {
-                CommandArg{.name = "action", .description = "Subcommand: list, get, set, open, path",
-                           .type = ArgType::Choice, .required = false,
-                           .choices = {"list", "get", "set", "open", "path"}},
-                CommandArg{.name = "key", .description = "Configuration key (for get/set)",
-                           .type = ArgType::Text, .required = false},
-                CommandArg{.name = "value", .description = "New value (for set)",
-                           .type = ArgType::Text, .required = false},
-            },
+            .args =
+                {
+                    CommandArg{.name = "action",
+                               .description = "Subcommand: list, get, set, open, path",
+                               .type = ArgType::Choice,
+                               .required = false,
+                               .choices = {"list", "get", "set", "open", "path"}},
+                    CommandArg{.name = "key",
+                               .description = "Configuration key (for get/set)",
+                               .type = ArgType::Text,
+                               .required = false},
+                    CommandArg{.name = "value",
+                               .description = "New value (for set)",
+                               .type = ArgType::Text,
+                               .required = false},
+                },
             .category = "session",
             .aliases = {"cfg"},
             .hidden = false,
@@ -69,20 +76,17 @@ public:
             return std::unexpected(Error::make(
                 ErrorCode::InvalidRequest,
                 std::format("Unknown config action: '{}'. Use: list, get, set, open, path",
-                           ctx.args[0])
-            ));
+                            ctx.args[0])));
         }
 
         // 'get' and 'set' require a key
         if (*action == ConfigAction::Get && ctx.args.size() < 2) {
-            return std::unexpected(Error::make(
-                ErrorCode::InvalidRequest, "/config get requires a key name"
-            ));
+            return std::unexpected(
+                Error::make(ErrorCode::InvalidRequest, "/config get requires a key name"));
         }
         if (*action == ConfigAction::Set && ctx.args.size() < 3) {
-            return std::unexpected(Error::make(
-                ErrorCode::InvalidRequest, "/config set requires a key and value"
-            ));
+            return std::unexpected(
+                Error::make(ErrorCode::InvalidRequest, "/config set requires a key and value"));
         }
         return {};
     }
@@ -90,7 +94,8 @@ public:
     [[nodiscard]] Result<CommandResult> execute(const CommandContext& ctx) {
         // Bare /config or /config open → trigger ConfigDialog via metadata tag
         if (ctx.args.empty() || ctx.args[0] == "open" || ctx.args[0] == "edit") {
-            return CommandResult{true, "Opening settings...", "UI:config", CommandStatus::Succeeded};
+            return CommandResult{true, "Opening settings...", "UI:config",
+                                 CommandStatus::Succeeded};
         }
 
         auto action = parse_action(ctx.args[0]).value_or(ConfigAction::List);
@@ -109,11 +114,16 @@ public:
         }
 
         switch (action) {
-            case ConfigAction::List: return execute_list();
-            case ConfigAction::Get:  return execute_get(ctx.args[1]);
-            case ConfigAction::Set:  return execute_set(ctx.args[1], ctx.args[2]);
-            case ConfigAction::Open: return execute_open();
-            case ConfigAction::Path: return execute_path();
+        case ConfigAction::List:
+            return execute_list();
+        case ConfigAction::Get:
+            return execute_get(ctx.args[1]);
+        case ConfigAction::Set:
+            return execute_set(ctx.args[1], ctx.args[2]);
+        case ConfigAction::Open:
+            return execute_open();
+        case ConfigAction::Path:
+            return execute_path();
         }
         return CommandResult::fail("Unknown config action");
     }
@@ -170,9 +180,9 @@ private:
 
     /// Parse action string to enum
     [[nodiscard]] static std::optional<ConfigAction> parse_action(std::string_view str) {
-        if (str == "list" || str == "ls")  return ConfigAction::List;
-        if (str == "get")                   return ConfigAction::Get;
-        if (str == "set")                   return ConfigAction::Set;
+        if (str == "list" || str == "ls") return ConfigAction::List;
+        if (str == "get") return ConfigAction::Get;
+        if (str == "set") return ConfigAction::Set;
         if (str == "open" || str == "edit") return ConfigAction::Open;
         if (str == "path" || str == "paths") return ConfigAction::Path;
         return std::nullopt;
@@ -184,28 +194,33 @@ private:
         std::string output = "Current Configuration:\n\n";
 
         output += std::format("  model             = {}\n", settings.model.default_model);
-        output += std::format("  maxOutputTokens   = {}\n", settings.model.max_output_tokens ? std::to_string(settings.model.max_output_tokens) : "auto");
+        output += std::format("  maxOutputTokens   = {}\n",
+                              settings.model.max_output_tokens
+                                  ? std::to_string(settings.model.max_output_tokens)
+                                  : "auto");
         output += std::format("  extendedThinking  = {}\n",
-                             settings.model.extended_thinking.has_value() ? (*settings.model.extended_thinking ? "true" : "false") : "auto");
+                              settings.model.extended_thinking.has_value()
+                                  ? (*settings.model.extended_thinking ? "true" : "false")
+                                  : "auto");
         output += std::format("  contextWindowSize = {}\n", settings.model.context_window_size);
         output += "\n";
         output += std::format("  showThinking      = {}\n",
-                             settings.display.show_thinking ? "true" : "false");
+                              settings.display.show_thinking ? "true" : "false");
         output += std::format("  showTokenUsage    = {}\n",
-                             settings.display.show_token_usage ? "true" : "false");
+                              settings.display.show_token_usage ? "true" : "false");
         output += std::format("  theme             = {}\n", settings.display.theme);
         output += "\n";
         output += std::format("  timeoutSeconds    = {}s\n", settings.network.timeout_seconds);
         output += std::format("  maxRetries        = {}\n", settings.network.max_retries);
         output += std::format("  verifySsl         = {}\n",
-                             settings.network.verify_ssl ? "true" : "false");
+                              settings.network.verify_ssl ? "true" : "false");
         output += std::format("  apiKey            = {}\n",
-                             settings.network.api_key ? "***" : "(not set)");
+                              settings.network.api_key ? "***" : "(not set)");
         output += "\n";
         output += std::format("  permissions.allow_bash  = {}\n",
-                             settings.permissions.allow_bash ? "true" : "false");
+                              settings.permissions.allow_bash ? "true" : "false");
         output += std::format("  permissions.allow_write = {}\n",
-                             settings.permissions.allow_file_write ? "true" : "false");
+                              settings.permissions.allow_file_write ? "true" : "false");
 
         return CommandResult::success(std::move(output));
     }
@@ -262,8 +277,7 @@ private:
         auto path = config_manager_.project_config_path();
         // Return path for the shell to open with $EDITOR
         return CommandResult::success(
-            std::format("Opening config file: {}\nRun: $EDITOR {}", path.string(), path.string())
-        );
+            std::format("Opening config file: {}\nRun: $EDITOR {}", path.string(), path.string()));
     }
 
     /// Show config file locations
@@ -272,7 +286,7 @@ private:
 
         std::string output = "Configuration file locations:\n\n";
         output += std::format("  Project: {} {}\n", project.string(),
-                             std::filesystem::exists(project) ? "(exists)" : "(not found)");
+                              std::filesystem::exists(project) ? "(exists)" : "(not found)");
         output += "\nPriority: CLI flags > env vars > project config > defaults\n";
 
         return CommandResult::success(std::move(output));
@@ -282,14 +296,18 @@ private:
     /// ConfigKeyInfo. Number (a floating-point scalar such as temperature)
     /// is reported as "int" because the completion metadata has no
     /// floating-point token; the value is still validated as a number.
-    [[nodiscard]] static constexpr std::string_view
-    type_name_for(UserSettingKind kind) noexcept {
+    [[nodiscard]] static constexpr std::string_view type_name_for(UserSettingKind kind) noexcept {
         switch (kind) {
-            case UserSettingKind::String:      return "string";
-            case UserSettingKind::Boolean:     return "bool";
-            case UserSettingKind::UInteger:    return "int";
-            case UserSettingKind::Number:      return "int";
-            case UserSettingKind::Enumeration: return "enum";
+        case UserSettingKind::String:
+            return "string";
+        case UserSettingKind::Boolean:
+            return "bool";
+        case UserSettingKind::UInteger:
+            return "int";
+        case UserSettingKind::Number:
+            return "int";
+        case UserSettingKind::Enumeration:
+            return "enum";
         }
         return "string";
     }
@@ -297,32 +315,42 @@ private:
     /// Project a spec's default value from a default-constructed Settings,
     /// so the Settings member initializers stay the single source of truth
     /// for defaults. Unset optional leaves report nullopt.
-    [[nodiscard]] static std::optional<std::string>
-    default_value_for(const UserSettingSpec& spec) {
+    [[nodiscard]] static std::optional<std::string> default_value_for(const UserSettingSpec& spec) {
         const Settings d{};
         const std::string_view key = spec.key;
-        if (key == "model")              return d.model.default_model;
-        if (key == "maxOutputTokens")    return d.model.max_output_tokens ? std::optional<std::string>(std::to_string(d.model.max_output_tokens)) : std::nullopt;
-        if (key == "temperature")        return d.model.temperature
-            ? std::optional<std::string>(std::format("{}", *d.model.temperature))
-            : std::nullopt;
-        if (key == "extendedThinking")   return d.model.extended_thinking.has_value() ? std::optional<std::string>(*d.model.extended_thinking ? "true" : "false") : std::nullopt;
-        if (key == "thinkingBudget")     return d.model.thinking_budget
-            ? std::optional<std::string>(std::to_string(*d.model.thinking_budget))
-            : std::nullopt;
-        if (key == "contextWindowSize")  return std::to_string(d.model.context_window_size);
-        if (key == "showThinking")       return d.display.show_thinking ? "true" : "false";
-        if (key == "showTokenUsage")     return d.display.show_token_usage ? "true" : "false";
-        if (key == "compactMode")        return d.display.compact_mode ? "true" : "false";
-        if (key == "theme")              return d.display.theme;
-        if (key == "lineWidth")          return d.display.line_width
-            ? std::optional<std::string>(std::to_string(*d.display.line_width))
-            : std::nullopt;
-        if (key == "timeoutSeconds")     return std::to_string(d.network.timeout_seconds);
-        if (key == "maxRetries")         return std::to_string(d.network.max_retries);
-        if (key == "permissions.allow_bash")       return d.permissions.allow_bash ? "true" : "false";
-        if (key == "permissions.allow_file_write") return d.permissions.allow_file_write ? "true" : "false";
-        if (key == "permissions.allow_network")    return d.permissions.allow_network ? "true" : "false";
+        if (key == "model") return d.model.default_model;
+        if (key == "maxOutputTokens")
+            return d.model.max_output_tokens
+                       ? std::optional<std::string>(std::to_string(d.model.max_output_tokens))
+                       : std::nullopt;
+        if (key == "temperature")
+            return d.model.temperature
+                       ? std::optional<std::string>(std::format("{}", *d.model.temperature))
+                       : std::nullopt;
+        if (key == "extendedThinking")
+            return d.model.extended_thinking.has_value()
+                       ? std::optional<std::string>(*d.model.extended_thinking ? "true" : "false")
+                       : std::nullopt;
+        if (key == "thinkingBudget")
+            return d.model.thinking_budget
+                       ? std::optional<std::string>(std::to_string(*d.model.thinking_budget))
+                       : std::nullopt;
+        if (key == "contextWindowSize") return std::to_string(d.model.context_window_size);
+        if (key == "showThinking") return d.display.show_thinking ? "true" : "false";
+        if (key == "showTokenUsage") return d.display.show_token_usage ? "true" : "false";
+        if (key == "compactMode") return d.display.compact_mode ? "true" : "false";
+        if (key == "theme") return d.display.theme;
+        if (key == "lineWidth")
+            return d.display.line_width
+                       ? std::optional<std::string>(std::to_string(*d.display.line_width))
+                       : std::nullopt;
+        if (key == "timeoutSeconds") return std::to_string(d.network.timeout_seconds);
+        if (key == "maxRetries") return std::to_string(d.network.max_retries);
+        if (key == "permissions.allow_bash") return d.permissions.allow_bash ? "true" : "false";
+        if (key == "permissions.allow_file_write")
+            return d.permissions.allow_file_write ? "true" : "false";
+        if (key == "permissions.allow_network")
+            return d.permissions.allow_network ? "true" : "false";
         return std::nullopt;
     }
 
@@ -336,28 +364,37 @@ private:
             return std::nullopt;
         }
         const auto& s = config_manager_.settings();
-        if (key == "model")             return s.model.default_model;
-        if (key == "maxOutputTokens")   return s.model.max_output_tokens ? std::to_string(s.model.max_output_tokens) : "auto";
-        if (key == "temperature")       return s.model.temperature
-            ? std::optional<std::string>(std::format("{}", *s.model.temperature))
-            : std::optional<std::string>("unset");
-        if (key == "extendedThinking")  return s.model.extended_thinking.has_value() ? (*s.model.extended_thinking ? "true" : "false") : "auto";
-        if (key == "thinkingBudget")    return s.model.thinking_budget
-            ? std::optional<std::string>(std::to_string(*s.model.thinking_budget))
-            : std::optional<std::string>("unset");
+        if (key == "model") return s.model.default_model;
+        if (key == "maxOutputTokens")
+            return s.model.max_output_tokens ? std::to_string(s.model.max_output_tokens) : "auto";
+        if (key == "temperature")
+            return s.model.temperature
+                       ? std::optional<std::string>(std::format("{}", *s.model.temperature))
+                       : std::optional<std::string>("unset");
+        if (key == "extendedThinking")
+            return s.model.extended_thinking.has_value()
+                       ? (*s.model.extended_thinking ? "true" : "false")
+                       : "auto";
+        if (key == "thinkingBudget")
+            return s.model.thinking_budget
+                       ? std::optional<std::string>(std::to_string(*s.model.thinking_budget))
+                       : std::optional<std::string>("unset");
         if (key == "contextWindowSize") return std::to_string(s.model.context_window_size);
-        if (key == "showThinking")      return s.display.show_thinking ? "true" : "false";
-        if (key == "showTokenUsage")    return s.display.show_token_usage ? "true" : "false";
-        if (key == "compactMode")       return s.display.compact_mode ? "true" : "false";
-        if (key == "theme")             return s.display.theme;
-        if (key == "lineWidth")         return s.display.line_width
-            ? std::optional<std::string>(std::to_string(*s.display.line_width))
-            : std::optional<std::string>("unset");
-        if (key == "timeoutSeconds")    return std::to_string(s.network.timeout_seconds);
-        if (key == "maxRetries")        return std::to_string(s.network.max_retries);
-        if (key == "permissions.allow_bash")       return s.permissions.allow_bash ? "true" : "false";
-        if (key == "permissions.allow_file_write") return s.permissions.allow_file_write ? "true" : "false";
-        if (key == "permissions.allow_network")    return s.permissions.allow_network ? "true" : "false";
+        if (key == "showThinking") return s.display.show_thinking ? "true" : "false";
+        if (key == "showTokenUsage") return s.display.show_token_usage ? "true" : "false";
+        if (key == "compactMode") return s.display.compact_mode ? "true" : "false";
+        if (key == "theme") return s.display.theme;
+        if (key == "lineWidth")
+            return s.display.line_width
+                       ? std::optional<std::string>(std::to_string(*s.display.line_width))
+                       : std::optional<std::string>("unset");
+        if (key == "timeoutSeconds") return std::to_string(s.network.timeout_seconds);
+        if (key == "maxRetries") return std::to_string(s.network.max_retries);
+        if (key == "permissions.allow_bash") return s.permissions.allow_bash ? "true" : "false";
+        if (key == "permissions.allow_file_write")
+            return s.permissions.allow_file_write ? "true" : "false";
+        if (key == "permissions.allow_network")
+            return s.permissions.allow_network ? "true" : "false";
         return std::nullopt;
     }
 
@@ -371,50 +408,53 @@ private:
         const auto* spec = loom::core::ConfigManager::find_user_setting(key);
         if (spec == nullptr) return {};
         if ((key == "maxOutputTokens" || key == "extendedThinking") &&
-            (value == "auto" || value == "null")) return {};
+            (value == "auto" || value == "null"))
+            return {};
         if (key == "maxOutputTokens") {
             try {
                 std::size_t used = 0;
                 const auto parsed = std::stoull(std::string(value), &used);
-                if (value.empty() || !std::ranges::all_of(value, [](char c) { return c >= '0' && c <= '9'; }) ||
-                    used != value.size() || parsed == 0 || parsed > std::numeric_limits<std::uint32_t>::max())
+                if (value.empty() ||
+                    !std::ranges::all_of(value, [](char c) { return c >= '0' && c <= '9'; }) ||
+                    used != value.size() || parsed == 0 ||
+                    parsed > std::numeric_limits<std::uint32_t>::max())
                     throw std::invalid_argument("invalid output override");
             } catch (...) {
-                return std::unexpected(Error::make(ErrorCode::InvalidRequest,
-                    "maxOutputTokens must be a positive uint32 integer, auto or null"));
+                return std::unexpected(
+                    Error::make(ErrorCode::InvalidRequest,
+                                "maxOutputTokens must be a positive uint32 integer, auto or null"));
             }
             return {};
         }
         switch (spec->kind) {
-            case UserSettingKind::Boolean:
-                if (value != "true" && value != "false") {
-                    return std::unexpected(Error::make(
-                        ErrorCode::InvalidRequest,
-                        std::format("'{}' must be 'true' or 'false', got: '{}'", key, value)
-                    ));
-                }
-                break;
-            case UserSettingKind::UInteger:
-                try { (void)std::stoul(std::string(value)); }
-                catch (...) {
-                    return std::unexpected(Error::make(
-                        ErrorCode::InvalidRequest,
-                        std::format("'{}' must be a positive integer, got: '{}'", key, value)
-                    ));
-                }
-                break;
-            case UserSettingKind::Number:
-                try { (void)std::stod(std::string(value)); }
-                catch (...) {
-                    return std::unexpected(Error::make(
-                        ErrorCode::InvalidRequest,
-                        std::format("'{}' must be a number, got: '{}'", key, value)
-                    ));
-                }
-                break;
-            case UserSettingKind::String:
-            case UserSettingKind::Enumeration:
-                break;  // No value validation.
+        case UserSettingKind::Boolean:
+            if (value != "true" && value != "false") {
+                return std::unexpected(Error::make(
+                    ErrorCode::InvalidRequest,
+                    std::format("'{}' must be 'true' or 'false', got: '{}'", key, value)));
+            }
+            break;
+        case UserSettingKind::UInteger:
+            try {
+                (void)std::stoul(std::string(value));
+            } catch (...) {
+                return std::unexpected(Error::make(
+                    ErrorCode::InvalidRequest,
+                    std::format("'{}' must be a positive integer, got: '{}'", key, value)));
+            }
+            break;
+        case UserSettingKind::Number:
+            try {
+                (void)std::stod(std::string(value));
+            } catch (...) {
+                return std::unexpected(
+                    Error::make(ErrorCode::InvalidRequest,
+                                std::format("'{}' must be a number, got: '{}'", key, value)));
+            }
+            break;
+        case UserSettingKind::String:
+        case UserSettingKind::Enumeration:
+            break;  // No value validation.
         }
         return {};
     }
@@ -431,31 +471,79 @@ private:
     [[nodiscard]] VoidResult apply_setting(std::string_view key, std::string_view value) {
         if (loom::core::ConfigManager::find_user_setting(key) == nullptr) {
             return std::unexpected(Error::make(ErrorCode::ConfigNotFound,
-                std::format("Unknown or read-only key: '{}'", key)));
+                                               std::format("Unknown or read-only key: '{}'", key)));
         }
         auto& s = config_manager_.settings_mut();
-        if (key == "model")               { s.model.default_model = value; return {}; }
-        if (key == "maxOutputTokens")     { s.model.max_output_tokens = (value == "auto" || value == "null") ? 0 : std::stoul(std::string(value)); return {}; }
-        if (key == "temperature")         { s.model.temperature = std::stod(std::string(value)); return {}; }
-        if (key == "extendedThinking")    {
-            if (value == "auto" || value == "null") s.model.extended_thinking.reset();
-            else s.model.extended_thinking = (value == "true");
+        if (key == "model") {
+            s.model.default_model = value;
             return {};
         }
-        if (key == "thinkingBudget")      { s.model.thinking_budget = std::stoul(std::string(value)); return {}; }
-        if (key == "contextWindowSize")   { s.model.context_window_size = std::stoul(std::string(value)); return {}; }
-        if (key == "showThinking")        { s.display.show_thinking = (value == "true"); return {}; }
-        if (key == "showTokenUsage")      { s.display.show_token_usage = (value == "true"); return {}; }
-        if (key == "compactMode")         { s.display.compact_mode = (value == "true"); return {}; }
-        if (key == "theme")               { s.display.theme = value; return {}; }
-        if (key == "lineWidth")           { s.display.line_width = std::stoul(std::string(value)); return {}; }
-        if (key == "timeoutSeconds")      { s.network.timeout_seconds = std::stoul(std::string(value)); return {}; }
-        if (key == "maxRetries")          { s.network.max_retries = std::stoul(std::string(value)); return {}; }
-        if (key == "permissions.allow_bash")       { s.permissions.allow_bash = (value == "true"); return {}; }
-        if (key == "permissions.allow_file_write") { s.permissions.allow_file_write = (value == "true"); return {}; }
-        if (key == "permissions.allow_network")    { s.permissions.allow_network = (value == "true"); return {}; }
+        if (key == "maxOutputTokens") {
+            s.model.max_output_tokens =
+                (value == "auto" || value == "null") ? 0 : std::stoul(std::string(value));
+            return {};
+        }
+        if (key == "temperature") {
+            s.model.temperature = std::stod(std::string(value));
+            return {};
+        }
+        if (key == "extendedThinking") {
+            if (value == "auto" || value == "null")
+                s.model.extended_thinking.reset();
+            else
+                s.model.extended_thinking = (value == "true");
+            return {};
+        }
+        if (key == "thinkingBudget") {
+            s.model.thinking_budget = std::stoul(std::string(value));
+            return {};
+        }
+        if (key == "contextWindowSize") {
+            s.model.context_window_size = std::stoul(std::string(value));
+            return {};
+        }
+        if (key == "showThinking") {
+            s.display.show_thinking = (value == "true");
+            return {};
+        }
+        if (key == "showTokenUsage") {
+            s.display.show_token_usage = (value == "true");
+            return {};
+        }
+        if (key == "compactMode") {
+            s.display.compact_mode = (value == "true");
+            return {};
+        }
+        if (key == "theme") {
+            s.display.theme = value;
+            return {};
+        }
+        if (key == "lineWidth") {
+            s.display.line_width = std::stoul(std::string(value));
+            return {};
+        }
+        if (key == "timeoutSeconds") {
+            s.network.timeout_seconds = std::stoul(std::string(value));
+            return {};
+        }
+        if (key == "maxRetries") {
+            s.network.max_retries = std::stoul(std::string(value));
+            return {};
+        }
+        if (key == "permissions.allow_bash") {
+            s.permissions.allow_bash = (value == "true");
+            return {};
+        }
+        if (key == "permissions.allow_file_write") {
+            s.permissions.allow_file_write = (value == "true");
+            return {};
+        }
+        if (key == "permissions.allow_network") {
+            s.permissions.allow_network = (value == "true");
+            return {};
+        }
         return std::unexpected(Error::make(ErrorCode::ConfigNotFound,
-            std::format("Unknown or read-only key: '{}'", key)));
+                                           std::format("Unknown or read-only key: '{}'", key)));
     }
 
     /// Get all known configuration keys with metadata, projected from the
@@ -475,4 +563,4 @@ private:
     }
 };
 
-} // namespace loom::commands
+}  // namespace loom::commands

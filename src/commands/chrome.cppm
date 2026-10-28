@@ -3,7 +3,6 @@
 /// Opens the Loom in Chrome setup page and lists reconnect/permissions links.
 module;
 
-
 export module loom.commands.chrome;
 
 import std;
@@ -25,7 +24,7 @@ inline void open_in_browser(std::string_view url) {
 #endif
 }
 
-} // namespace loom::commands
+}  // namespace loom::commands
 
 export namespace loom::commands {
 
@@ -44,9 +43,7 @@ public:
         };
     }
 
-    [[nodiscard]] static VoidResult validate(const CommandContext&) {
-        return {};
-    }
+    [[nodiscard]] static VoidResult validate(const CommandContext&) { return {}; }
 
     [[nodiscard]] static Result<CommandResult> execute(const CommandContext&) {
         // No browser-extension backend is reachable from this build.
@@ -60,9 +57,7 @@ public:
             "Opening the install page in your default browser.");
     }
 
-    [[nodiscard]] static std::vector<std::string> complete(std::string_view) {
-        return {};
-    }
+    [[nodiscard]] static std::vector<std::string> complete(std::string_view) { return {}; }
 };
 
-} // namespace loom::commands
+}  // namespace loom::commands

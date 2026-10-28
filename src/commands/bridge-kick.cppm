@@ -6,7 +6,6 @@ module;
 /// @brief BridgeKickCommand implementing the /bridge-kick slash command.
 /// Injects bridge failure states for manual recovery testing.
 
-
 export module loom.commands.bridge_kick;
 
 import std;
@@ -24,7 +23,7 @@ inline BridgeStatusProvider& status_provider() {
     static BridgeStatusProvider provider;
     return provider;
 }
-} // namespace detail
+}  // namespace detail
 
 inline void set_bridge_status_provider(BridgeStatusProvider provider) {
     detail::status_provider() = std::move(provider);
@@ -38,15 +37,24 @@ public:
         return CommandDefinition{
             .name = "bridge-kick",
             .description = "Inject bridge failure states for manual recovery testing",
-            .args = {
-                CommandArg{.name = "subcommand", .description = "Subcommand: close, poll, register, reconnect-session, heartbeat, reconnect, status",
-                           .type = ArgType::Choice, .required = false,
-                           .choices = {"close", "poll", "register", "reconnect-session", "heartbeat", "reconnect", "status"}},
-                CommandArg{.name = "parameter", .description = "Subcommand parameter",
-                           .type = ArgType::Text, .required = false},
-                CommandArg{.name = "parameter2", .description = "Second subcommand parameter",
-                           .type = ArgType::Text, .required = false},
-            },
+            .args =
+                {
+                    CommandArg{.name = "subcommand",
+                               .description = "Subcommand: close, poll, register, "
+                                              "reconnect-session, heartbeat, reconnect, status",
+                               .type = ArgType::Choice,
+                               .required = false,
+                               .choices = {"close", "poll", "register", "reconnect-session",
+                                           "heartbeat", "reconnect", "status"}},
+                    CommandArg{.name = "parameter",
+                               .description = "Subcommand parameter",
+                               .type = ArgType::Text,
+                               .required = false},
+                    CommandArg{.name = "parameter2",
+                               .description = "Second subcommand parameter",
+                               .type = ArgType::Text,
+                               .required = false},
+                },
             .category = "debug",
             .aliases = {},
             .hidden = false,
@@ -55,7 +63,7 @@ public:
 
     [[nodiscard]] VoidResult validate(const CommandContext& ctx) {
         if (ctx.args.empty()) {
-            return {}; // Default to help output
+            return {};  // Default to help output
         }
         return {};
     }
@@ -66,7 +74,7 @@ public:
         }
 
         const auto& subcommand = ctx.args[0];
-        
+
         if (subcommand == "close") {
             return handle_close(ctx);
         } else if (subcommand == "poll") {
@@ -88,18 +96,16 @@ public:
 
     [[nodiscard]] std::vector<std::string> complete(std::string_view partial) {
         std::vector<std::string> suggestions;
-        
+
         static constexpr std::array subcommands = {
-            "close", "poll", "register", "reconnect-session",
-            "heartbeat", "reconnect", "status"
-        };
-        
+            "close", "poll", "register", "reconnect-session", "heartbeat", "reconnect", "status"};
+
         for (const auto& subcmd : subcommands) {
             if (std::string_view(subcmd).starts_with(partial)) {
                 suggestions.emplace_back(subcmd);
             }
         }
-        
+
         return suggestions;
     }
 
@@ -122,32 +128,33 @@ private:
             return CommandResult::fail("close: need a numeric code");
         }
         const auto& code = ctx.args[1];
-        return CommandResult::success(
-            std::format("Fired transport close({}). Watch debug.log for [bridge:repl] recovery.", code));
+        return CommandResult::success(std::format(
+            "Fired transport close({}). Watch debug.log for [bridge:repl] recovery.", code));
     }
 
     [[nodiscard]] static Result<CommandResult> handle_poll(const CommandContext& ctx) {
         if (ctx.args.size() < 2) {
             return CommandResult::fail("poll: need 'transient' or a status code");
         }
-        
+
         const auto& param = ctx.args[1];
         if (param == "transient") {
             return CommandResult::success(
                 "Next poll will throw a transient (axios rejection). Poll loop woken.");
         }
-        
-        const auto& type = ctx.args.size() > 2 ? ctx.args[2] : 
-            (param == "404" ? "not_found_error" : "authentication_error");
-        return CommandResult::success(
-            std::format("Next poll will throw BridgeFatalError({}, {}). Poll loop woken.", param, type));
+
+        const auto& type = ctx.args.size() > 2
+                               ? ctx.args[2]
+                               : (param == "404" ? "not_found_error" : "authentication_error");
+        return CommandResult::success(std::format(
+            "Next poll will throw BridgeFatalError({}, {}). Poll loop woken.", param, type));
     }
 
     [[nodiscard]] static Result<CommandResult> handle_register(const CommandContext& ctx) {
         if (ctx.args.size() < 2) {
             return CommandResult::fail("register: need 'fail' or 'fatal'");
         }
-        
+
         const auto& param = ctx.args[1];
         if (param == "fatal") {
             return CommandResult::success(
@@ -155,25 +162,26 @@ private:
         } else if (param == "fail") {
             const auto n = ctx.args.size() > 2 ? ctx.args[2] : "1";
             return CommandResult::success(
-                std::format("Next {} registerBridgeEnvironment call(s) will transient-fail. Trigger with close/reconnect.", n));
+                std::format("Next {} registerBridgeEnvironment call(s) will transient-fail. "
+                            "Trigger with close/reconnect.",
+                            n));
         }
         return CommandResult::fail("register: need 'fail' or 'fatal'");
     }
 
     [[nodiscard]] static Result<CommandResult> handle_reconnect_session(const CommandContext&) {
-        return CommandResult::success(
-            "Next 2 POST /bridge/reconnect calls will 404. doReconnect Strategy 1 falls through to Strategy 2.");
+        return CommandResult::success("Next 2 POST /bridge/reconnect calls will 404. doReconnect "
+                                      "Strategy 1 falls through to Strategy 2.");
     }
 
     [[nodiscard]] static Result<CommandResult> handle_heartbeat(const CommandContext& ctx) {
         const auto& status = ctx.args.size() > 1 ? ctx.args[1] : "401";
-        return CommandResult::success(
-            std::format("Next heartbeat will {}. Watch for onHeartbeatFatal → work-state teardown.", status));
+        return CommandResult::success(std::format(
+            "Next heartbeat will {}. Watch for onHeartbeatFatal → work-state teardown.", status));
     }
 
     [[nodiscard]] static Result<CommandResult> handle_reconnect(const CommandContext&) {
-        return CommandResult::success(
-            "Called reconnectEnvironmentWithSession(). Watch debug.log.");
+        return CommandResult::success("Called reconnectEnvironmentWithSession(). Watch debug.log.");
     }
 
     [[nodiscard]] static Result<CommandResult> handle_status(const CommandContext&) {
@@ -185,4 +193,4 @@ private:
     }
 };
 
-} // namespace loom::commands
+}  // namespace loom::commands

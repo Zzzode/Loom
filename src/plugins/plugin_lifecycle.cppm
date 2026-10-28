@@ -123,16 +123,15 @@ inline auto exec_cmd(const std::string& cmd) -> std::expected<std::string, std::
     return result;
 }
 
-} // namespace detail
+}  // namespace detail
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Version Utilities (from pluginVersioning)
 // ─────────────────────────────────────────────────────────────────────────────
 
 /// Parse a version string (e.g. "1.2.3-beta.1") into a PluginVersion
-[[nodiscard]] inline std::expected<PluginVersion, std::string> parse_version(
-    std::string_view version_str
-) {
+[[nodiscard]] inline std::expected<PluginVersion, std::string>
+parse_version(std::string_view version_str) {
     std::string_view s = version_str;
     // Strip leading 'v'
     if (!s.empty() && s[0] == 'v') s = s.substr(1);
@@ -148,7 +147,8 @@ inline auto exec_cmd(const std::string& cmd) -> std::expected<std::string, std::
         return true;
     };
 
-    if (!parse_int(ver.major)) return std::unexpected("Invalid version: " + std::string(version_str));
+    if (!parse_int(ver.major))
+        return std::unexpected("Invalid version: " + std::string(version_str));
     if (s.empty() || s[0] != '.') return std::unexpected("Invalid version: missing minor");
     s = s.substr(1);
 
@@ -167,8 +167,7 @@ inline auto exec_cmd(const std::string& cmd) -> std::expected<std::string, std::
 
 /// Format a PluginVersion back into a string (e.g. "1.2.3-beta.1")
 [[nodiscard]] inline std::string format_version(PluginVersion version) {
-    std::string result = std::to_string(version.major) + "." +
-                         std::to_string(version.minor) + "." +
+    std::string result = std::to_string(version.major) + "." + std::to_string(version.minor) + "." +
                          std::to_string(version.patch);
     if (version.prerelease) {
         result += "-";
@@ -178,45 +177,50 @@ inline auto exec_cmd(const std::string& cmd) -> std::expected<std::string, std::
 }
 
 /// Check whether an installed version satisfies a semver constraint string
-[[nodiscard]] inline bool check_version_compatibility(
-    PluginVersion installed,
-    std::string_view constraint
-) {
+[[nodiscard]] inline bool check_version_compatibility(PluginVersion installed,
+                                                      std::string_view constraint) {
     if (constraint.empty() || constraint == "*") return true;
 
     // Parse constraint prefix
-    char op = '^'; // default: caret (compatible with)
+    char op = '^';  // default: caret (compatible with)
     std::string_view ver_part = constraint;
-    if (constraint.starts_with(">=")) { op = 'G'; ver_part = constraint.substr(2); }
-    else if (constraint.starts_with("^")) { op = '^'; ver_part = constraint.substr(1); }
-    else if (constraint.starts_with("~")) { op = '~'; ver_part = constraint.substr(1); }
-    else if (constraint.starts_with("=")) { op = '='; ver_part = constraint.substr(1); }
+    if (constraint.starts_with(">=")) {
+        op = 'G';
+        ver_part = constraint.substr(2);
+    } else if (constraint.starts_with("^")) {
+        op = '^';
+        ver_part = constraint.substr(1);
+    } else if (constraint.starts_with("~")) {
+        op = '~';
+        ver_part = constraint.substr(1);
+    } else if (constraint.starts_with("=")) {
+        op = '=';
+        ver_part = constraint.substr(1);
+    }
 
     auto req = parse_version(ver_part);
     if (!req) return false;
 
     switch (op) {
-        case '=': // exact match
-            return installed.major == req->major &&
-                   installed.minor == req->minor &&
-                   installed.patch == req->patch;
-        case '^': // compatible: same major, >= minor.patch
-            if (installed.major != req->major) return false;
-            if (installed.minor > req->minor) return true;
-            if (installed.minor == req->minor) return installed.patch >= req->patch;
-            return false;
-        case '~': // approximately: same major.minor, >= patch
-            return installed.major == req->major &&
-                   installed.minor == req->minor &&
-                   installed.patch >= req->patch;
-        case 'G': // >=
-            if (installed.major > req->major) return true;
-            if (installed.major < req->major) return false;
-            if (installed.minor > req->minor) return true;
-            if (installed.minor < req->minor) return false;
-            return installed.patch >= req->patch;
-        default:
-            return false;
+    case '=':  // exact match
+        return installed.major == req->major && installed.minor == req->minor &&
+               installed.patch == req->patch;
+    case '^':  // compatible: same major, >= minor.patch
+        if (installed.major != req->major) return false;
+        if (installed.minor > req->minor) return true;
+        if (installed.minor == req->minor) return installed.patch >= req->patch;
+        return false;
+    case '~':  // approximately: same major.minor, >= patch
+        return installed.major == req->major && installed.minor == req->minor &&
+               installed.patch >= req->patch;
+    case 'G':  // >=
+        if (installed.major > req->major) return true;
+        if (installed.major < req->major) return false;
+        if (installed.minor > req->minor) return true;
+        if (installed.minor < req->minor) return false;
+        return installed.patch >= req->patch;
+    default:
+        return false;
     }
 }
 
@@ -225,10 +229,8 @@ inline auto exec_cmd(const std::string& cmd) -> std::expected<std::string, std::
 // ─────────────────────────────────────────────────────────────────────────────
 
 /// Install a plugin by ID with optional configuration
-[[nodiscard]] inline std::expected<InstallResult, std::string> install_plugin(
-    std::string_view plugin_id,
-    PluginInstallOptions options = {}
-) {
+[[nodiscard]] inline std::expected<InstallResult, std::string>
+install_plugin(std::string_view plugin_id, PluginInstallOptions options = {}) {
     namespace fs = std::filesystem;
     auto start = std::chrono::steady_clock::now();
 
@@ -244,7 +246,8 @@ inline auto exec_cmd(const std::string& cmd) -> std::expected<std::string, std::
     if (!options.force && fs::exists(plugin_dir)) {
         std::lock_guard lock(reg.mutex);
         reg.states[std::string(plugin_id)] = PluginState::Installed;
-        return std::unexpected("Plugin '" + std::string(plugin_id) + "' already installed. Use --force to reinstall.");
+        return std::unexpected("Plugin '" + std::string(plugin_id) +
+                               "' already installed. Use --force to reinstall.");
     }
 
     // Create plugin directory
@@ -257,14 +260,13 @@ inline auto exec_cmd(const std::string& cmd) -> std::expected<std::string, std::
     }
 
     // Determine registry URL
-    std::string registry = options.registry_url.empty()
-        ? "https://registry.npmjs.org" : options.registry_url;
+    std::string registry =
+        options.registry_url.empty() ? "https://registry.npmjs.org" : options.registry_url;
 
     // Fetch plugin package via npm pack
     std::string version_suffix = options.version ? "@" + *options.version : "";
-    std::string cmd = "cd " + plugin_dir.string() + " && npm pack " +
-                      std::string(plugin_id) + version_suffix +
-                      " --registry=" + registry + " 2>&1";
+    std::string cmd = "cd " + plugin_dir.string() + " && npm pack " + std::string(plugin_id) +
+                      version_suffix + " --registry=" + registry + " 2>&1";
 
     auto result = detail::exec_cmd(cmd);
     if (!result) {
@@ -282,9 +284,10 @@ inline auto exec_cmd(const std::string& cmd) -> std::expected<std::string, std::
     auto end = std::chrono::steady_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
 
-    auto ver = options.version ? parse_version(*options.version) : std::expected<PluginVersion, std::string>{
-        PluginVersion{.major = 0, .minor = 0, .patch = 1, .prerelease = std::nullopt}
-    };
+    auto ver = options.version
+                   ? parse_version(*options.version)
+                   : std::expected<PluginVersion, std::string>{PluginVersion{
+                         .major = 0, .minor = 0, .patch = 1, .prerelease = std::nullopt}};
 
     {
         std::lock_guard lock(reg.mutex);
@@ -294,17 +297,16 @@ inline auto exec_cmd(const std::string& cmd) -> std::expected<std::string, std::
     return InstallResult{
         .plugin_id = std::string(plugin_id),
         .state = PluginState::Installed,
-        .installed_version = ver.value_or(PluginVersion{.major = 0, .minor = 0, .patch = 1, .prerelease = std::nullopt}),
+        .installed_version = ver.value_or(
+            PluginVersion{.major = 0, .minor = 0, .patch = 1, .prerelease = std::nullopt}),
         .warnings = {},
         .duration = duration,
     };
 }
 
 /// Uninstall a plugin, optionally removing its persistent data
-[[nodiscard]] inline std::expected<void, std::string> uninstall_plugin(
-    std::string_view plugin_id,
-    bool remove_data = false
-) {
+[[nodiscard]] inline std::expected<void, std::string> uninstall_plugin(std::string_view plugin_id,
+                                                                       bool remove_data = false) {
     namespace fs = std::filesystem;
     auto& reg = detail::get_registry();
 
@@ -345,10 +347,8 @@ inline auto exec_cmd(const std::string& cmd) -> std::expected<std::string, std::
 }
 
 /// Update a plugin to a specific version (or latest if not specified)
-[[nodiscard]] inline std::expected<InstallResult, std::string> update_plugin(
-    std::string_view plugin_id,
-    std::optional<std::string_view> target_version = {}
-) {
+[[nodiscard]] inline std::expected<InstallResult, std::string>
+update_plugin(std::string_view plugin_id, std::optional<std::string_view> target_version = {}) {
     // Uninstall current, then reinstall with new version
     auto uninstall_result = uninstall_plugin(plugin_id, false);
     // Ignore "not installed" errors — just proceed with install
@@ -374,7 +374,7 @@ inline auto exec_cmd(const std::string& cmd) -> std::expected<std::string, std::
     for (const auto& entry : fs::directory_iterator(plugins_dir, ec)) {
         if (!entry.is_directory()) continue;
         auto id = entry.path().filename().string();
-        if (id.starts_with(".")) continue; // skip hidden dirs
+        if (id.starts_with(".")) continue;  // skip hidden dirs
 
         auto result = update_plugin(id);
         if (result) {
@@ -390,9 +390,8 @@ inline auto exec_cmd(const std::string& cmd) -> std::expected<std::string, std::
 // ─────────────────────────────────────────────────────────────────────────────
 
 /// Load a plugin into the runtime, registering its tools and commands
-[[nodiscard]] inline std::expected<PluginLoadResult, std::string> load_plugin(
-    std::string_view plugin_id
-) {
+[[nodiscard]] inline std::expected<PluginLoadResult, std::string>
+load_plugin(std::string_view plugin_id) {
     namespace fs = std::filesystem;
     auto& reg = detail::get_registry();
 
@@ -410,7 +409,7 @@ inline auto exec_cmd(const std::string& cmd) -> std::expected<std::string, std::
     // Read manifest to discover exports
     std::ifstream ifs(manifest_path);
     std::string manifest_content((std::istreambuf_iterator<char>(ifs)),
-                                  std::istreambuf_iterator<char>());
+                                 std::istreambuf_iterator<char>());
 
     PluginLoadResult result;
     result.success = true;
@@ -429,9 +428,7 @@ inline auto exec_cmd(const std::string& cmd) -> std::expected<std::string, std::
 }
 
 /// Unload a plugin from the runtime, deregistering its tools and commands
-[[nodiscard]] inline std::expected<void, std::string> unload_plugin(
-    std::string_view plugin_id
-) {
+[[nodiscard]] inline std::expected<void, std::string> unload_plugin(std::string_view plugin_id) {
     auto& reg = detail::get_registry();
     std::lock_guard lock(reg.mutex);
 
@@ -450,9 +447,8 @@ inline auto exec_cmd(const std::string& cmd) -> std::expected<std::string, std::
 // ─────────────────────────────────────────────────────────────────────────────
 
 /// Resolve all transitive dependencies for a plugin
-[[nodiscard]] inline std::expected<std::vector<PluginDependency>, std::string> resolve_dependencies(
-    std::string_view plugin_id
-) {
+[[nodiscard]] inline std::expected<std::vector<PluginDependency>, std::string>
+resolve_dependencies(std::string_view plugin_id) {
     namespace fs = std::filesystem;
     auto plugin_dir = detail::get_plugin_dir(plugin_id);
     auto deps_file = plugin_dir / "dependencies.json";
@@ -503,15 +499,13 @@ inline auto exec_cmd(const std::string& cmd) -> std::expected<std::string, std::
 /// Enable or disable an installed plugin by toggling a `.disabled` marker
 /// file next to its manifest.  Returns an error when the plugin is not
 /// installed or filesystem writes fail.
-[[nodiscard]] inline std::expected<void, std::string> set_plugin_enabled(
-    std::string_view plugin_id, bool enabled
-) {
+[[nodiscard]] inline std::expected<void, std::string> set_plugin_enabled(std::string_view plugin_id,
+                                                                         bool enabled) {
     namespace fs = std::filesystem;
     const auto plugin_dir = detail::get_plugin_dir(plugin_id);
     std::error_code ec;
     if (!fs::exists(plugin_dir, ec)) {
-        return std::unexpected(
-            "Plugin '" + std::string(plugin_id) + "' is not installed.");
+        return std::unexpected("Plugin '" + std::string(plugin_id) + "' is not installed.");
     }
     const auto marker = plugin_dir / ".disabled";
     if (enabled) {
@@ -519,9 +513,8 @@ inline auto exec_cmd(const std::string& cmd) -> std::expected<std::string, std::
     } else {
         std::ofstream ofs(marker);
         if (!ofs.good()) {
-            return std::unexpected(
-                "Failed to write disabled marker for plugin '"
-                + std::string(plugin_id) + "'.");
+            return std::unexpected("Failed to write disabled marker for plugin '" +
+                                   std::string(plugin_id) + "'.");
         }
     }
     if (ec) {
@@ -530,4 +523,4 @@ inline auto exec_cmd(const std::string& cmd) -> std::expected<std::string, std::
     return {};
 }
 
-} // namespace loom::utils::plugins
+}  // namespace loom::utils::plugins

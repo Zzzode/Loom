@@ -1,9 +1,10 @@
 // RFC 0031 E2a durable cohort gate. Public API only (no module declaration):
 // it enforces the pre-registration ledger at tools/mermaid/e2a-cohort.json
 // against the live renderer and the pinned manifest.
-#include <gtest/gtest.h>
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/screen/screen.hpp>
+#include <gtest/gtest.h>
+
 #include <filesystem>
 #include <fstream>
 #include <iterator>
@@ -42,7 +43,8 @@ std::string fenced(const std::string& source, const char* language) {
 std::string render_text(const std::string& source, const char* language) {
     auto element = loom::ui::render_markdown(fenced(source, language));
     if (!element) return {};
-    auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(kWide), ftxui::Dimension::Fixed(kHeight));
+    auto screen =
+        ftxui::Screen::Create(ftxui::Dimension::Fixed(kWide), ftxui::Dimension::Fixed(kHeight));
     ftxui::Render(screen, element);
     return screen.ToString();
 }
@@ -52,11 +54,13 @@ std::string render_text(const std::string& source, const char* language) {
 struct CellCapture {
     std::vector<std::pair<std::string, std::string>> cells;
 };
+
 CellCapture capture_cells(const std::string& source, const char* language) {
     auto element = loom::ui::render_markdown(fenced(source, language));
     CellCapture out;
     if (!element) return out;
-    auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(kWide), ftxui::Dimension::Fixed(kHeight));
+    auto screen =
+        ftxui::Screen::Create(ftxui::Dimension::Fixed(kWide), ftxui::Dimension::Fixed(kHeight));
     ftxui::Render(screen, element);
     out.cells.reserve(static_cast<std::size_t>(kWide) * kHeight);
     for (int y = 0; y < kHeight; ++y)
@@ -66,6 +70,7 @@ CellCapture capture_cells(const std::string& source, const char* language) {
         }
     return out;
 }
+
 bool same_source_surface(const CellCapture& a, const CellCapture& b) {
     return a.cells == b.cells;
 }
@@ -108,18 +113,24 @@ std::string description_token(const std::string& source) {
     bool in_frontmatter = false, seen_description = false;
     while (std::getline(in, line)) {
         if (line == "---") {
-            if (!in_frontmatter) { in_frontmatter = true; continue; }
+            if (!in_frontmatter) {
+                in_frontmatter = true;
+                continue;
+            }
             break;
         }
         if (in_frontmatter) {
-            if (line.starts_with("description:")) { seen_description = true; continue; }
+            if (line.starts_with("description:")) {
+                seen_description = true;
+                continue;
+            }
             if (seen_description && line.size() > 2 && line[0] == ' ' && line[1] == ' ')
                 return line.substr(2);
         }
     }
     return {};
 }
-} // namespace
+}  // namespace
 
 TEST(MermaidE2aCohort, LedgerMatchesSchemaAndReviewed) {
     const auto root = ledger_root();
@@ -134,8 +145,9 @@ TEST(MermaidE2aCohort, LedgerMatchesSchemaAndReviewed) {
     EXPECT_EQ(root.get("review").get_string("verdict"), "approved");
 
     std::set<std::string> vocabulary;
-    root.get("blocker_vocabulary").iter(
-        [&](const JsonVal value) { vocabulary.emplace(value.as_str()); });
+    root.get("blocker_vocabulary").iter([&](const JsonVal value) {
+        vocabulary.emplace(value.as_str());
+    });
     EXPECT_EQ(vocabulary.size(), 7u);
     root.get("rows").iter([&](const JsonVal row) {
         if (row.get_string("prediction") == "predicted-blocked")
@@ -202,9 +214,15 @@ bool has_config_or_init(const std::string& source) {
     std::string line;
     bool skipped_open = false, closed = false;
     while (std::getline(in, line)) {
-        if (!skipped_open) { skipped_open = true; continue; }
+        if (!skipped_open) {
+            skipped_open = true;
+            continue;
+        }
         if (!closed) {
-            if (line == "---") { closed = true; continue; }
+            if (line == "---") {
+                closed = true;
+                continue;
+            }
             if (line == "config:") return true;
         } else if (line.find("%%{") != std::string::npos) {
             return true;
@@ -212,7 +230,7 @@ bool has_config_or_init(const std::string& source) {
     }
     return false;
 }
-} // namespace
+}  // namespace
 
 TEST(MermaidE2aCohort, ConfigAndInitRowsKeepWholeSource) {
     std::set<std::string> cohort;

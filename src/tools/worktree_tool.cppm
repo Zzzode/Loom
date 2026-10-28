@@ -6,7 +6,6 @@ export module loom.tools.worktree;
 
 import std;
 
-
 export namespace loom::tools {
 
 // Single-quote a string for safe interpolation into a POSIX shell command
@@ -16,8 +15,10 @@ export namespace loom::tools {
 [[nodiscard]] inline std::string worktree_shell_quote(std::string_view value) {
     std::string out = "'";
     for (char c : value) {
-        if (c == '\'') out += "'\\''";
-        else out.push_back(c);
+        if (c == '\'')
+            out += "'\\''";
+        else
+            out.push_back(c);
     }
     out.push_back('\'');
     return out;
@@ -40,18 +41,30 @@ enum class WorktreeError {
 
 constexpr auto format_error(WorktreeError err) -> std::string_view {
     switch (err) {
-        case WorktreeError::BranchNameEmpty:      return "Branch name is empty";
-        case WorktreeError::PathEmpty:            return "Worktree path is empty";
-        case WorktreeError::GitNotAvailable:      return "Git is not available";
-        case WorktreeError::WorktreeCreateFailed: return "Failed to create git worktree";
-        case WorktreeError::WorktreeDeleteFailed: return "Failed to delete git worktree";
-        case WorktreeError::WorktreeNotFound:     return "Worktree not found";
-        case WorktreeError::AlreadyInWorktree:    return "Already in a worktree session";
-        case WorktreeError::NotInWorktree:        return "Not currently in a worktree session";
-        case WorktreeError::DirectorySwitchFailed:return "Failed to switch working directory";
-        case WorktreeError::CleanupFailed:        return "Failed to clean up worktree resources";
-        case WorktreeError::BranchAlreadyExists:  return "Branch already exists";
-        default:                                  return "Unknown worktree error";
+    case WorktreeError::BranchNameEmpty:
+        return "Branch name is empty";
+    case WorktreeError::PathEmpty:
+        return "Worktree path is empty";
+    case WorktreeError::GitNotAvailable:
+        return "Git is not available";
+    case WorktreeError::WorktreeCreateFailed:
+        return "Failed to create git worktree";
+    case WorktreeError::WorktreeDeleteFailed:
+        return "Failed to delete git worktree";
+    case WorktreeError::WorktreeNotFound:
+        return "Worktree not found";
+    case WorktreeError::AlreadyInWorktree:
+        return "Already in a worktree session";
+    case WorktreeError::NotInWorktree:
+        return "Not currently in a worktree session";
+    case WorktreeError::DirectorySwitchFailed:
+        return "Failed to switch working directory";
+    case WorktreeError::CleanupFailed:
+        return "Failed to clean up worktree resources";
+    case WorktreeError::BranchAlreadyExists:
+        return "Branch already exists";
+    default:
+        return "Unknown worktree error";
     }
 }
 
@@ -82,9 +95,8 @@ public:
     }
 
     [[nodiscard]] bool is_in_worktree() const { return current_.has_value(); }
-    [[nodiscard]] const WorktreeInfo* current() const {
-        return current_ ? &*current_ : nullptr;
-    }
+
+    [[nodiscard]] const WorktreeInfo* current() const { return current_ ? &*current_ : nullptr; }
 
     auto enter(WorktreeInfo info) -> std::expected<void, WorktreeError> {
         if (current_) return std::unexpected(WorktreeError::AlreadyInWorktree);
@@ -110,12 +122,12 @@ private:
 class EnterWorktreeTool {
 public:
     static constexpr std::string_view name = "enter_worktree";
-    static constexpr std::string_view description = "Create a git worktree for isolated feature work";
+    static constexpr std::string_view description =
+        "Create a git worktree for isolated feature work";
 
     // Generate a default worktree path based on branch name
     static auto default_worktree_path(const std::filesystem::path& repo_root,
-                                       const std::string& branch_name) -> std::filesystem::path
-    {
+                                      const std::string& branch_name) -> std::filesystem::path {
         // Place worktrees in a sibling directory
         auto parent = repo_root.parent_path();
         auto dir_name = std::format("{}-worktree-{}", repo_root.filename().string(), branch_name);
@@ -145,8 +157,8 @@ public:
 
         // Determine worktree path
         auto original_path = std::filesystem::current_path();
-        auto worktree_path = request.target_path.value_or(
-            default_worktree_path(original_path, request.branch_name));
+        auto worktree_path =
+            request.target_path.value_or(default_worktree_path(original_path, request.branch_name));
 
         // Build git worktree command — shell-quote BOTH arguments to prevent
         // command injection via branch_name or path (e.g. "x; rm -rf $HOME").
@@ -154,11 +166,9 @@ public:
         const auto quoted_branch = worktree_shell_quote(request.branch_name);
         const auto quoted_path = worktree_shell_quote(worktree_path.string());
         if (request.create_branch) {
-            cmd = std::format("git worktree add -b {} {} 2>&1",
-                              quoted_branch, quoted_path);
+            cmd = std::format("git worktree add -b {} {} 2>&1", quoted_branch, quoted_path);
         } else {
-            cmd = std::format("git worktree add {} {} 2>&1",
-                              quoted_path, quoted_branch);
+            cmd = std::format("git worktree add {} {} 2>&1", quoted_path, quoted_branch);
         }
 
         int result = std::system(cmd.c_str());
@@ -203,7 +213,8 @@ public:
     }},
     "required": ["branch_name"]
   }}
-}})json", name, description);
+}})json",
+                           name, description);
     }
 };
 
@@ -211,7 +222,8 @@ public:
 class ExitWorktreeTool {
 public:
     static constexpr std::string_view name = "exit_worktree";
-    static constexpr std::string_view description = "Exit the current worktree and return to the original directory";
+    static constexpr std::string_view description =
+        "Exit the current worktree and return to the original directory";
 
     auto execute(bool remove_worktree = false) -> std::expected<WorktreeInfo, WorktreeError> {
         auto exit_result = WorktreeState::instance().exit();
@@ -253,8 +265,9 @@ public:
       "remove_worktree": {{ "type": "boolean", "description": "Remove the worktree directory (default false)" }}
     }}
   }}
-}})json", name, description);
+}})json",
+                           name, description);
     }
 };
 
-} // namespace loom::tools
+}  // namespace loom::tools

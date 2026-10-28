@@ -20,15 +20,15 @@
 ///   - cost_threshold_title_with_interpolated_dollars
 ///   - cost_threshold_with_docs_link_rendered
 
-#include <cstdint>
-#include <cstdlib>
-#include <cstring>
-
+#include <ftxui/component/event.hpp>
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/dom/node.hpp>
 #include <ftxui/screen/screen.hpp>
-#include <ftxui/component/event.hpp>
 #include <gtest/gtest.h>
+
+#include <cstdint>
+#include <cstdlib>
+#include <cstring>
 
 import std;
 import loom.ui.dialogs.cost_threshold_dialog;
@@ -43,8 +43,8 @@ namespace ct = loom::ui::dialogs::cost_threshold;
 // ============================================================
 
 std::string render_to_plain_text(ftxui::Element element, int width = 80, int height = 20) {
-    auto screen = ftxui::Screen::Create(
-        ftxui::Dimension::Fixed(width), ftxui::Dimension::Fixed(height));
+    auto screen =
+        ftxui::Screen::Create(ftxui::Dimension::Fixed(width), ftxui::Dimension::Fixed(height));
     ftxui::Render(screen, element);
     return screen.ToString();
 }
@@ -56,10 +56,14 @@ std::string strip_ansi(std::string_view s) {
     out.reserve(s.size());
     std::size_t i = 0;
     while (i < s.size()) {
-        if (s[i] == '\r') { ++i; continue; }
+        if (s[i] == '\r') {
+            ++i;
+            continue;
+        }
         if (s[i] == '\033' && i + 1 < s.size() && s[i + 1] == '[') {
             i += 2;
-            while (i < s.size() && (s[i] < 0x40 || s[i] > 0x7E)) ++i;
+            while (i < s.size() && (s[i] < 0x40 || s[i] > 0x7E))
+                ++i;
             if (i < s.size()) ++i;
             continue;
         }
@@ -106,7 +110,8 @@ std::string strip_trailing_ws_per_line(std::string s) {
         auto nl = s.find('\n', line_start);
         if (nl == std::string::npos) nl = s.size();
         std::size_t end = nl;
-        while (end > line_start && s[end - 1] == ' ') --end;
+        while (end > line_start && s[end - 1] == ' ')
+            --end;
         out.append(s, line_start, end - line_start);
         if (nl < s.size()) out.push_back('\n');
         line_start = nl + 1;
@@ -122,9 +127,7 @@ std::string rstrip_newline(std::string s) {
 
 // Normalise a golden comparison (strip ANSI + trailing WS + EOF newline).
 std::string norm(std::string&& s) {
-    return rstrip_newline(
-        strip_trailing_ws_per_line(
-            strip_ansi(std::move(s))));
+    return rstrip_newline(strip_trailing_ws_per_line(strip_ansi(std::move(s))));
 }
 
 // ============================================================
@@ -133,30 +136,24 @@ std::string norm(std::string&& s) {
 
 // Test 1 — integer dollar amount renders as "$N" without decimals.
 TEST(CostThreshold, FormatTitleIntegerDollars) {
-    EXPECT_EQ(ct::format_title(5.0),
-              "You've spent $5 on the API this session.");
+    EXPECT_EQ(ct::format_title(5.0), "You've spent $5 on the API this session.");
 }
 
 // Test 2 — fractional dollars round to nearest whole (%.0f semantics).
 TEST(CostThreshold, FormatTitleRoundsFractionalDollars) {
-    EXPECT_EQ(ct::format_title(4.7),
-              "You've spent $5 on the API this session.");
-    EXPECT_EQ(ct::format_title(4.3),
-              "You've spent $4 on the API this session.");
+    EXPECT_EQ(ct::format_title(4.7), "You've spent $5 on the API this session.");
+    EXPECT_EQ(ct::format_title(4.3), "You've spent $4 on the API this session.");
 }
 
 // Test 3 — zero spend allowed (boundary).
 TEST(CostThreshold, FormatTitleZeroSpend) {
-    EXPECT_EQ(ct::format_title(0.0),
-              "You've spent $0 on the API this session.");
+    EXPECT_EQ(ct::format_title(0.0), "You've spent $0 on the API this session.");
 }
 
 // Test 4 — large dollar amounts don't overflow or error.
 TEST(CostThreshold, FormatTitleLargeDollarAmounts) {
-    EXPECT_EQ(ct::format_title(999.99),
-              "You've spent $1000 on the API this session.");
-    EXPECT_EQ(ct::format_title(12345.67),
-              "You've spent $12346 on the API this session.");
+    EXPECT_EQ(ct::format_title(999.99), "You've spent $1000 on the API this session.");
+    EXPECT_EQ(ct::format_title(12345.67), "You've spent $12346 on the API this session.");
 }
 
 // ============================================================
@@ -168,21 +165,21 @@ TEST(CostThreshold, FormatTitleLargeDollarAmounts) {
 TEST(CostThreshold, PayloadFieldsMatchP0Contract) {
     static_assert(std::is_same_v<decltype(ct::CostThresholdPayload::dollars_spent), double>,
                   "dollars_spent must be double");
-    static_assert(std::is_same_v<decltype(ct::CostThresholdPayload::model_name),
-                                 std::optional<std::string>>,
-                  "model_name must be optional<string>");
+    static_assert(
+        std::is_same_v<decltype(ct::CostThresholdPayload::model_name), std::optional<std::string>>,
+        "model_name must be optional<string>");
     // on_done is function<void()> — NO parameters (not on_response(bool,bool)).
-    static_assert(std::is_same_v<decltype(ct::CostThresholdPayload::on_done),
-                                 std::function<void()>>,
-                  "on_done must be 0-arg void callback, NOT on_response(bool,bool)");
+    static_assert(
+        std::is_same_v<decltype(ct::CostThresholdPayload::on_done), std::function<void()>>,
+        "on_done must be 0-arg void callback, NOT on_response(bool,bool)");
 }
 
 // Test 6 — state_from_payload round-trips all fields.
 TEST(CostThreshold, StateFromPayloadCopiesAllFields) {
     ct::CostThresholdPayload p{
         .dollars_spent = 7.6,
-        .model_name    = std::string("test-model"),
-        .on_done       = [] { /* no-op */ },
+        .model_name = std::string("test-model"),
+        .on_done = [] { /* no-op */ },
     };
     ct::CostThresholdState st = ct::state_from_payload(p);
     EXPECT_DOUBLE_EQ(st.dollars_spent, 7.6);
@@ -196,8 +193,8 @@ TEST(CostThreshold, StateFromPayloadCopiesAllFields) {
 TEST(CostThreshold, PayloadWithoutModelNameYieldsEmptyOptional) {
     ct::CostThresholdPayload p{
         .dollars_spent = 3.0,
-        .model_name    = std::nullopt,
-        .on_done       = nullptr,
+        .model_name = std::nullopt,
+        .on_done = nullptr,
     };
     ct::CostThresholdState st = ct::state_from_payload(p);
     EXPECT_FALSE(st.model_name.has_value());
@@ -216,8 +213,7 @@ TEST(CostThreshold, RenderShowsInterpolatedTitle) {
         .on_done = nullptr,
     };
     auto plain = strip_ansi(render_to_plain_text(ct::RenderCostThreshold(st), 78, 14));
-    EXPECT_NE(plain.find("You've spent $5 on the API this session."),
-              std::string::npos);
+    EXPECT_NE(plain.find("You've spent $5 on the API this session."), std::string::npos);
 }
 
 // Test 9 — Renderer includes docs URL (body paragraph + external link).
@@ -229,8 +225,7 @@ TEST(CostThreshold, RenderShowsDocsLink) {
         .on_done = nullptr,
     };
     auto plain = strip_ansi(render_to_plain_text(ct::RenderCostThreshold(st), 78, 14));
-    EXPECT_NE(plain.find("Learn more about how to monitor your spending:"),
-              std::string::npos);
+    EXPECT_NE(plain.find("Learn more about how to monitor your spending:"), std::string::npos);
     EXPECT_NE(plain.find(std::string(ct::kDocsUrl)), std::string::npos);
 }
 
@@ -238,7 +233,7 @@ TEST(CostThreshold, RenderShowsDocsLink) {
 TEST(CostThreshold, RenderShowsModelNameWhenPresent) {
     ct::CostThresholdState st{
         .dollars_spent = 5.0,
-        .model_name    = std::string("test-model"),
+        .model_name = std::string("test-model"),
         .selected_index = 0,
         .on_done = nullptr,
     };
@@ -250,7 +245,7 @@ TEST(CostThreshold, RenderShowsModelNameWhenPresent) {
 TEST(CostThreshold, RenderOmitsModelLineWhenEmpty) {
     ct::CostThresholdState st{
         .dollars_spent = 12.0,
-        .model_name    = std::nullopt,
+        .model_name = std::nullopt,
         .selected_index = 0,
         .on_done = nullptr,
     };
@@ -272,11 +267,11 @@ TEST(CostThreshold, RenderHasSingleGotItThanksButtonNo3ActionChrome) {
     // The single correct button label must appear.
     EXPECT_NE(plain.find("Got it, thanks!"), std::string::npos);
     // Fabricated 3-action chrome MUST be absent (P0).
-    EXPECT_EQ(plain.find("Continue"),      std::string::npos);
+    EXPECT_EQ(plain.find("Continue"), std::string::npos);
     EXPECT_EQ(plain.find("Reset counter"), std::string::npos);
-    EXPECT_EQ(plain.find("Reset"),         std::string::npos);
-    EXPECT_EQ(plain.find("[q] Quit"),      std::string::npos);
-    EXPECT_EQ(plain.find("Quit"),          std::string::npos);
+    EXPECT_EQ(plain.find("Reset"), std::string::npos);
+    EXPECT_EQ(plain.find("[q] Quit"), std::string::npos);
+    EXPECT_EQ(plain.find("Quit"), std::string::npos);
 }
 
 // ============================================================
@@ -286,8 +281,8 @@ TEST(CostThreshold, RenderHasSingleGotItThanksButtonNo3ActionChrome) {
 // Test 13 — Golden: cost_threshold_title_with_interpolated_dollars
 TEST(CostThreshold, Golden_TitleWithInterpolatedDollars) {
     ct::CostThresholdState st{
-        .dollars_spent  = 4.7,  // rounds to $5
-        .model_name     = std::string("test-model"),
+        .dollars_spent = 4.7,  // rounds to $5
+        .model_name = std::string("test-model"),
         .selected_index = 0,
         .on_done = nullptr,
     };
@@ -305,8 +300,8 @@ TEST(CostThreshold, Golden_TitleWithInterpolatedDollars) {
 // Test 14 — Golden: cost_threshold_with_docs_link_rendered
 TEST(CostThreshold, Golden_WithDocsLinkRendered) {
     ct::CostThresholdState st{
-        .dollars_spent  = 12.0,
-        .model_name     = std::nullopt,
+        .dollars_spent = 12.0,
+        .model_name = std::nullopt,
         .selected_index = 0,
         .on_done = nullptr,
     };
@@ -336,12 +331,10 @@ TEST(CostThreshold, Keyboard_EnterEscapeSpaceAllTriggerOnDone) {
         EXPECT_TRUE(consumed);
         return calls.load();
     };
-    EXPECT_EQ(count_events(ftxui::Event::Return), 1)
-        << "Enter must trigger on_done";
+    EXPECT_EQ(count_events(ftxui::Event::Return), 1) << "Enter must trigger on_done";
     EXPECT_EQ(count_events(ftxui::Event::Escape), 1)
         << "Esc must trigger on_done (CRITICAL: NOT quit / data-loss!)";
-    EXPECT_EQ(count_events(ftxui::Event::Character(' ')), 1)
-        << "Space must trigger on_done";
+    EXPECT_EQ(count_events(ftxui::Event::Character(' ')), 1) << "Space must trigger on_done";
 }
 
 // Test 16 — Character shortcuts (g, y, o, k) trigger on_done.
@@ -356,7 +349,7 @@ TEST(CostThreshold, Keyboard_ShortcutsFire_ArrowsSwallowed) {
         EXPECT_EQ(calls.load(), 1) << "shortcut '" << c << "' should fire on_done";
     }
     // Arrow keys: swallowed (consumed=true) but on_done NOT called.
-    for (const auto* ev : {&ftxui::Event::ArrowUp,   &ftxui::Event::ArrowDown,
+    for (const auto* ev : {&ftxui::Event::ArrowUp, &ftxui::Event::ArrowDown,
                            &ftxui::Event::ArrowLeft, &ftxui::Event::ArrowRight}) {
         std::atomic<int> calls{0};
         ct::CostThresholdState st;
@@ -388,4 +381,4 @@ TEST(CostThreshold, Keyboard_StrayCharsSwallowedNoCrash) {
     }
 }
 
-} // anonymous namespace
+}  // anonymous namespace

@@ -33,13 +33,18 @@ public:
         return CommandDefinition{
             .name = "branch",
             .description = "Manage git branches",
-            .args = {
-                CommandArg{.name = "action", .description = "list | create | switch | delete",
-                           .type = ArgType::Choice, .required = false,
-                           .choices = {"list", "create", "switch", "delete"}},
-                CommandArg{.name = "branch_name", .description = "Branch name",
-                           .type = ArgType::Text, .required = false},
-            },
+            .args =
+                {
+                    CommandArg{.name = "action",
+                               .description = "list | create | switch | delete",
+                               .type = ArgType::Choice,
+                               .required = false,
+                               .choices = {"list", "create", "switch", "delete"}},
+                    CommandArg{.name = "branch_name",
+                               .description = "Branch name",
+                               .type = ArgType::Text,
+                               .required = false},
+                },
             .category = "git",
             .aliases = {"br"},
             .hidden = false,
@@ -54,9 +59,10 @@ public:
             // Could be a branch name for quick switch
             return {};
         }
-        if ((action == "create" || action == "switch" || action == "delete") && ctx.args.size() < 2) {
-            return std::unexpected(Error::make(ErrorCode::InvalidRequest,
-                std::format("Usage: /branch {} <branch_name>", action)));
+        if ((action == "create" || action == "switch" || action == "delete") &&
+            ctx.args.size() < 2) {
+            return std::unexpected(Error::make(
+                ErrorCode::InvalidRequest, std::format("Usage: /branch {} <branch_name>", action)));
         }
         return {};
     }
@@ -96,15 +102,16 @@ public:
 private:
     std::vector<BranchInfo> branches_;
 
-    [[nodiscard]] static Result<CommandResult> git_command(std::string_view command, std::string_view success) {
+    [[nodiscard]] static Result<CommandResult> git_command(std::string_view command,
+                                                           std::string_view success) {
         auto result = loom::utils::bash::execute_command(command);
         if (!result) {
             return std::unexpected(Error::make(ErrorCode::InternalError, result.error()));
         }
         if (result->exit_code != 0) {
-            return std::unexpected(Error::make(
-                ErrorCode::InvalidRequest,
-                std::format("git command failed: {}", result->stdout_output)));
+            return std::unexpected(
+                Error::make(ErrorCode::InvalidRequest,
+                            std::format("git command failed: {}", result->stdout_output)));
         }
         return CommandResult::success(std::string(success));
     }
@@ -122,7 +129,8 @@ private:
             std::vector<std::string> parts;
             std::string part;
             std::istringstream fields(line);
-            while (std::getline(fields, part, '\t')) parts.push_back(part);
+            while (std::getline(fields, part, '\t'))
+                parts.push_back(part);
             if (parts.size() < 2 || parts[1].empty()) continue;
             BranchInfo info;
             info.is_current = parts[0] == "*";
@@ -154,13 +162,13 @@ private:
         // Validate branch name
         if (name.empty() || name.find(' ') != std::string::npos) {
             return std::unexpected(Error::make(ErrorCode::InvalidRequest,
-                std::format("Invalid branch name: '{}'", name)));
+                                               std::format("Invalid branch name: '{}'", name)));
         }
         auto live_branches = read_git_branches();
         if (std::ranges::any_of(live_branches, [&](const auto& b) { return b.name == name; }) ||
             std::ranges::any_of(branches_, [&](const auto& b) { return b.name == name; })) {
             return std::unexpected(Error::make(ErrorCode::InvalidRequest,
-                std::format("Branch '{}' already exists.", name)));
+                                               std::format("Branch '{}' already exists.", name)));
         }
         auto quoted = loom::utils::bash::escape_shell_arg(name);
         auto command = std::format("git checkout -b {}", quoted);
@@ -171,21 +179,19 @@ private:
 
     [[nodiscard]] Result<CommandResult> switch_branch(const std::string& name) {
         auto quoted = loom::utils::bash::escape_shell_arg(name);
-        auto result = git_command(
-            std::format("git checkout {}", quoted),
-            std::format("Switched to branch: {}", name));
+        auto result = git_command(std::format("git checkout {}", quoted),
+                                  std::format("Switched to branch: {}", name));
         if (result) branches_ = read_git_branches();
         return result;
     }
 
     [[nodiscard]] Result<CommandResult> delete_branch(const std::string& name) {
         auto quoted = loom::utils::bash::escape_shell_arg(name);
-        auto result = git_command(
-            std::format("git branch -d {}", quoted),
-            std::format("Deleted branch: {}", name));
+        auto result = git_command(std::format("git branch -d {}", quoted),
+                                  std::format("Deleted branch: {}", name));
         if (result) branches_ = read_git_branches();
         return result;
     }
 };
 
-} // namespace loom::commands
+}  // namespace loom::commands

@@ -30,13 +30,13 @@ export module loom.sdk.harness;
 
 import std;
 
-import loom.types.types;            // ContentBlock, Message, TokenUsage, StreamEvent, Result, AssistantMessage
+import loom.types.types; // ContentBlock, Message, TokenUsage, StreamEvent, Result, AssistantMessage
 import loom.query.wire_protocol;    // WireBackend (for BackendFactory)
 import loom.hooks.tool_permissions; // PermissionContext, PermissionResponse
 // ToolRegistry is needed for the register_extra_tools field type; the
 // detector does not harvest the class name past loom.tools.tool's
 // concept/requires blocks (same marker as query_assembly.cppm).
-import loom.tools.tool;  // arch-check: keep-import
+import loom.tools.tool; // arch-check: keep-import
 
 export namespace loom::sdk {
 
@@ -81,8 +81,7 @@ using EventSink = std::function<void(const loom::core::StreamEvent&)>;
 /// parsing) does NOT go through WireBackend, so a factory returning a mock
 /// backend does not prevent real HTTP calls. For a no-network test, use a
 /// loopback HTTP server, not a mock backend.
-using BackendFactory =
-    std::function<std::unique_ptr<loom::query::wire::WireBackend>()>;
+using BackendFactory = std::function<std::unique_ptr<loom::query::wire::WireBackend>()>;
 
 /// API key provider. Called at construction; the key is never stored in the
 /// config struct (so it cannot be serialized by accident).
@@ -162,4 +161,4 @@ private:
     std::unique_ptr<Impl> impl_;
 };
 
-} // namespace loom::sdk
+}  // namespace loom::sdk

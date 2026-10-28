@@ -1,6 +1,6 @@
 // repl_screen_scroll.cpp - impl unit for loom.ui.screens.repl_screen
-// (RFC 0001 Phase C batch 9). unseen-divider computation, visible-message projection, transcript row
-// estimation and scroll bounds (incl. the virtual_list JumpHandle fast path).
+// (RFC 0001 Phase C batch 9). unseen-divider computation, visible-message projection, transcript
+// row estimation and scroll bounds (incl. the virtual_list JumpHandle fast path).
 //
 // Phase A (#184957): std is TEXTUAL here on purpose - no `import std;`.
 // Empty-GMF impl unit of an FTXUI-GMF primary: clang 22's reduced-BMI
@@ -31,8 +31,7 @@ namespace unseen_detail {
 
 /// Whether an assistant entry has visible text content.  Tool-use-only
 /// and thinking-only entries don't count as "new messages" to the user.
-[[nodiscard]] bool assistant_has_visible_text(
-    const MessageDisplayEntry& e) {
+[[nodiscard]] bool assistant_has_visible_text(const MessageDisplayEntry& e) {
     if (e.role != "assistant") return false;
     // Tool-use entries: never have visible text content to the user.
     // Tool-use blocks are not 'text' type, so they fail the check.
@@ -47,9 +46,9 @@ namespace unseen_detail {
 /// Count assistant turns in entries[start_idx..end).  A "turn" is a
 /// non-assistant→assistant transition, skipping system/progress rows
 /// and tool-use-only entries.
-[[nodiscard]] std::size_t count_unseen_assistant_turns(
-    const std::vector<MessageDisplayEntry>& entries,
-    std::size_t start_idx) {
+[[nodiscard]] std::size_t
+count_unseen_assistant_turns(const std::vector<MessageDisplayEntry>& entries,
+                             std::size_t start_idx) {
     std::size_t count = 0;
     bool prev_was_assistant = false;
     for (std::size_t i = start_idx; i < entries.size(); ++i) {
@@ -88,9 +87,9 @@ ComputeUnseenDivider(const ReplScreenState& s) {
     if (anchor_idx >= s.messages_store.messages.size()) return std::nullopt;
 
     const auto& anchor = s.messages_store.messages[anchor_idx];
-    const std::size_t count = std::max(
-        std::size_t{1},
-        unseen_detail::count_unseen_assistant_turns(s.messages_store.messages, idx));
+    const std::size_t count =
+        std::max(std::size_t{1},
+                 unseen_detail::count_unseen_assistant_turns(s.messages_store.messages, idx));
 
     ::loom::ui::messages_list::UnseenDivider ud;
     ud.first_unseen_uuid_prefix = anchor.id;
@@ -98,8 +97,8 @@ ComputeUnseenDivider(const ReplScreenState& s) {
     return ud;
 }
 
-[[nodiscard]] const std::vector<MessageDisplayEntry>& BuildVisibleMessages(
-    const ReplScreenState& s) {
+[[nodiscard]] const std::vector<MessageDisplayEntry>&
+BuildVisibleMessages(const ReplScreenState& s) {
     if (!s.active_local_jsx_command) {
         // Closing the overlay releases its owned transcript payloads.
         s.messages_store.local_overlay_rows.clear();
@@ -159,9 +158,8 @@ ComputeUnseenDivider(const ReplScreenState& s) {
         // width — overestimates for multi-byte UTF-8 (CJK chars are 3 bytes
         // but 2 columns), but overestimation is safer than underestimation
         // for scroll bounds.
-        const int visual = static_cast<int>(
-            (line_len + static_cast<std::size_t>(cols) - 1)
-            / static_cast<std::size_t>(cols));
+        const int visual = static_cast<int>((line_len + static_cast<std::size_t>(cols) - 1) /
+                                            static_cast<std::size_t>(cols));
         lines += std::max(1, visual);
         pos = nl + 1;
     }
@@ -260,10 +258,8 @@ ComputeUnseenDivider(const ReplScreenState& s) {
         if (!seen_content || result.empty()) return;
         while (!result.empty() && result.back() == ' ')
             result.pop_back();
-        if (!result.empty() && result.back() != '\n')
-            result += '\n';
-        if (result.size() < 2 ||
-            result[result.size() - 1] != '\n' ||
+        if (!result.empty() && result.back() != '\n') result += '\n';
+        if (result.size() < 2 || result[result.size() - 1] != '\n' ||
             result[result.size() - 2] != '\n') {
             result += '\n';
         }
@@ -271,9 +267,8 @@ ComputeUnseenDivider(const ReplScreenState& s) {
 
     while (pos < text.size()) {
         const std::size_t nl = text.find('\n', pos);
-        std::string_view line = (nl == std::string_view::npos)
-            ? text.substr(pos)
-            : text.substr(pos, nl - pos);
+        std::string_view line =
+            (nl == std::string_view::npos) ? text.substr(pos) : text.substr(pos, nl - pos);
         const bool last_line = (nl == std::string_view::npos);
 
         // ── Fenced code block ──────────────────────────────────────────
@@ -286,8 +281,7 @@ ComputeUnseenDivider(const ReplScreenState& s) {
                 // a blank row between consecutive block tokens).
                 ensure_block_boundary();
             } else {
-                if (!result.empty() && result.back() != '\n')
-                    result += '\n';
+                if (!result.empty() && result.back() != '\n') result += '\n';
                 result += line;
                 seen_content = true;
                 after_blank = false;
@@ -300,15 +294,14 @@ ComputeUnseenDivider(const ReplScreenState& s) {
         // ── Indented code block ────────────────────────────────────────
         if (in_indented_code) {
             if (is_blank_line(line)) {
-                std::size_t peek = last_line ? std::string_view::npos
-                                              : nl + 1;
+                std::size_t peek = last_line ? std::string_view::npos : nl + 1;
                 bool include_blank = false;
                 bool end_code = false;
                 while (peek < text.size()) {
                     const std::size_t pnl = text.find('\n', peek);
                     std::string_view pline = (pnl == std::string_view::npos)
-                        ? text.substr(peek)
-                        : text.substr(peek, pnl - peek);
+                                                 ? text.substr(peek)
+                                                 : text.substr(peek, pnl - peek);
                     if (!is_blank_line(pline)) {
                         if (leading_spaces(pline) >= 4)
                             include_blank = true;
@@ -316,11 +309,9 @@ ComputeUnseenDivider(const ReplScreenState& s) {
                             end_code = true;
                         break;
                     }
-                    peek = (pnl == std::string_view::npos)
-                        ? std::string_view::npos : pnl + 1;
+                    peek = (pnl == std::string_view::npos) ? std::string_view::npos : pnl + 1;
                 }
-                if (peek == std::string_view::npos)
-                    end_code = true;
+                if (peek == std::string_view::npos) end_code = true;
 
                 if (end_code) {
                     in_indented_code = false;
@@ -366,10 +357,8 @@ ComputeUnseenDivider(const ReplScreenState& s) {
             }
             while (!result.empty() && result.back() == ' ')
                 result.pop_back();
-            if (!result.empty() && result.back() != '\n')
-                result += '\n';
-            if (result.size() < 2 ||
-                result[result.size() - 1] != '\n' ||
+            if (!result.empty() && result.back() != '\n') result += '\n';
+            if (result.size() < 2 || result[result.size() - 1] != '\n' ||
                 result[result.size() - 2] != '\n') {
                 result += '\n';
             }
@@ -407,8 +396,7 @@ ComputeUnseenDivider(const ReplScreenState& s) {
         if ((after_blank || first_content) && leading_spaces(line) >= 4) {
             in_indented_code = true;
             after_blank = false;
-            if (!result.empty() && result.back() != '\n')
-                result += '\n';
+            if (!result.empty() && result.back() != '\n') result += '\n';
             result += line.substr(4);
             if (last_line) break;
             pos = nl + 1;
@@ -426,9 +414,7 @@ ComputeUnseenDivider(const ReplScreenState& s) {
 
         bool hard = false;
         if (!last_line) {
-            if (line.size() >= 2 &&
-                line[line.size() - 1] == ' ' &&
-                line[line.size() - 2] == ' ') {
+            if (line.size() >= 2 && line[line.size() - 1] == ' ' && line[line.size() - 2] == ' ') {
                 hard = true;
                 while (!line.empty() && line.back() == ' ')
                     line.remove_suffix(1);
@@ -453,8 +439,7 @@ ComputeUnseenDivider(const ReplScreenState& s) {
             break;
         }
     }
-    while (result.size() >= 2 &&
-           result[result.size() - 1] == '\n' &&
+    while (result.size() >= 2 && result[result.size() - 1] == '\n' &&
            result[result.size() - 2] == '\n') {
         result.pop_back();
         result.pop_back();
@@ -491,14 +476,19 @@ ComputeUnseenDivider(const ReplScreenState& s) {
         std::size_t i = 0;
         bool has_content = false;
         while (i < line.size()) {
-            while (i < line.size() && line[i] == ' ') ++i;
+            while (i < line.size() && line[i] == ' ')
+                ++i;
             if (i >= line.size()) break;
             std::size_t word_end = i;
-            while (word_end < line.size() && line[word_end] != ' ') ++word_end;
+            while (word_end < line.size() && line[word_end] != ' ')
+                ++word_end;
             const int word_len = static_cast<int>(word_end - i);
             if (word_len > cols) {
                 // Overlong atomic segment: hard-break (matches flexbox).
-                if (current > 0) { ++lines; current = 0; }
+                if (current > 0) {
+                    ++lines;
+                    current = 0;
+                }
                 lines += (word_len + cols - 1) / cols;
             } else {
                 if (current > 0 && current + 1 + word_len > cols) {
@@ -523,8 +513,8 @@ ComputeUnseenDivider(const ReplScreenState& s) {
     return lines;
 }
 
-[[nodiscard]] int EstimateTranscriptRows(
-    const std::vector<MessageDisplayEntry>& entries, int term_cols) {
+[[nodiscard]] int EstimateTranscriptRows(const std::vector<MessageDisplayEntry>& entries,
+                                         int term_cols) {
     int rows = 0;
     for (const auto& entry : entries) {
         // content_preview for tool entries is often
@@ -541,11 +531,9 @@ ComputeUnseenDivider(const ReplScreenState& s) {
             // 3 lines/notch = N dead wheel notches).
             const std::string& status = entry.tool_status.value_or("pending");
             const bool is_resolved =
-                (status == "success" || status == "error" ||
-                 status == "cancelled");
+                (status == "success" || status == "error" || status == "cancelled");
             content_lines = is_resolved ? 1 : 2;
-        } else if (entry.tool_result_content_items &&
-                   !entry.tool_result_content_items->empty()) {
+        } else if (entry.tool_result_content_items && !entry.tool_result_content_items->empty()) {
             // Structured tool result (MCP): concatenate text items.
             std::string full;
             for (const auto& item : *entry.tool_result_content_items) {
@@ -570,9 +558,8 @@ ComputeUnseenDivider(const ReplScreenState& s) {
             // makes max_offset far too small, clamping scroll-away and
             // causing content to jump during streaming.
             if (entry.thinking_active) {
-                const std::string& text = entry.full_content.empty()
-                    ? entry.content_preview
-                    : entry.full_content;
+                const std::string& text =
+                    entry.full_content.empty() ? entry.content_preview : entry.full_content;
                 content_lines = CountWrappedLines(text, term_cols) + 3;  // label + body + margins
             } else {
                 content_lines = 2;  // collapsed label + separator
@@ -592,22 +579,20 @@ ComputeUnseenDivider(const ReplScreenState& s) {
                 // counts 1300+ lines while rendering only ~68, creating a
                 // scroll dead-zone.
                 const std::string truncated =
-                    ::loom::ui::messages::TruncateUserPromptText(
-                        entry.content_preview);
+                    ::loom::ui::messages::TruncateUserPromptText(entry.content_preview);
                 content_lines = static_cast<int>(
                     ::loom::ui::messages::wrap_detail::WrappedPromptLines(
-                        truncated, term_cols -
-                        ::loom::ui::messages::wrap_detail::kPromptChromeColumns).size());
-            } else if (entry.is_local_command_output ||
-                       entry.is_local_jsx_output) {
+                        truncated,
+                        term_cols - ::loom::ui::messages::wrap_detail::kPromptChromeColumns)
+                        .size());
+            } else if (entry.is_local_command_output || entry.is_local_jsx_output) {
                 // Local command output (e.g. /help, /theme list) and JSX
                 // overlay output (e.g. /skills, /agents) render every line
                 // as a separate text() row — one display row per \n.  These
                 // entries carry role="system" (set in app_local_command.cpp
                 // and BuildVisibleMessages), so this check must precede the
                 // system flat-row branch below.
-                content_lines = CountWrappedLines(entry.content_preview,
-                                                  wrap_cols);
+                content_lines = CountWrappedLines(entry.content_preview, wrap_cols);
             } else if (entry.role == "assistant") {
                 // Assistant text renders through Markdown flexbox, which
                 // wraps at word boundaries (atomic words, break at spaces)
@@ -615,8 +600,7 @@ ComputeUnseenDivider(const ReplScreenState& s) {
                 // wrapping underestimates for text with spaces — e.g.
                 // 200 "word " at 40 cols: hard-wrap gives 27 lines,
                 // word-wrap gives 29, making the last line unreachable.
-                content_lines = CountWordWrappedLines(entry.content_preview,
-                                                      wrap_cols);
+                content_lines = CountWordWrappedLines(entry.content_preview, wrap_cols);
             } else if (entry.role == "system") {
                 // System messages render as flat text() rows — no Markdown
                 // wrapping, always 1 line (long content overflows the
@@ -624,8 +608,7 @@ ComputeUnseenDivider(const ReplScreenState& s) {
                 content_lines = 1;
             } else {
                 // Other roles: hard-wrap estimate is a safe default.
-                content_lines = CountWrappedLines(entry.content_preview,
-                                                  wrap_cols);
+                content_lines = CountWrappedLines(entry.content_preview, wrap_cols);
             }
         }
         rows += content_lines;
@@ -647,8 +630,7 @@ ComputeUnseenDivider(const ReplScreenState& s) {
     return std::clamp(vp / kViewportDivisor, kMinStride, kMaxStride);
 }
 
-bool ScrollTranscript(const std::shared_ptr<ReplScreenState>& state,
-                             int delta) {
+bool ScrollTranscript(const std::shared_ptr<ReplScreenState>& state, int delta) {
     if (!state || delta == 0) return false;
 
     const int viewport_rows = std::max(1, state->messages_store.viewport_height_lines);
@@ -671,9 +653,8 @@ bool ScrollTranscript(const std::shared_ptr<ReplScreenState>& state,
         // bug).  After the first scroll-away, scroll_offset holds the real
         // position and this branch disengages.
         const bool pinned = state->messages_store.scroll_pinned_to_bottom;
-        const int old_top = pinned
-            ? max_top
-            : std::clamp(state->messages_store.scroll_offset, 0, max_top);
+        const int old_top =
+            pinned ? max_top : std::clamp(state->messages_store.scroll_offset, 0, max_top);
         int target = old_top + delta;
         // Guarantee at least one row moves on PageUp/PageDown style deltas:
         // if target equals old_top, step by one row in the requested
@@ -696,7 +677,8 @@ bool ScrollTranscript(const std::shared_ptr<ReplScreenState>& state,
         // divider_index.  On repin, clear.
         if (was_pinned && !state->messages_store.scroll_pinned_to_bottom) {
             state->messages_store.divider_index = state->messages_store.messages.size();
-            state->messages_store.message_count_at_scroll_away = state->messages_store.messages.size();
+            state->messages_store.message_count_at_scroll_away =
+                state->messages_store.messages.size();
             // RFC 0008: user scrolled away — release the persistent
             // bottom-anchor so the view no longer bypasses the
             // visible.size()>1 guard.
@@ -709,8 +691,7 @@ bool ScrollTranscript(const std::shared_ptr<ReplScreenState>& state,
         // wiring), also update its scroll_top so Render() reuses it.
         if (state->messages_store.virtual_list_state) {
             state->messages_store.virtual_list_state->scroll_top = target;
-            vl::update_sticky_after_scroll(*state->messages_store.virtual_list_state,
-                                            old_top);
+            vl::update_sticky_after_scroll(*state->messages_store.virtual_list_state, old_top);
         }
         return true;
     }
@@ -719,9 +700,10 @@ bool ScrollTranscript(const std::shared_ptr<ReplScreenState>& state,
     if (visible_messages.empty()) return false;
     const int max_offset =
         std::max(0, (state->messages_store.rendered_content_height_lines
-            ? *state->messages_store.rendered_content_height_lines
-            : EstimateTranscriptRows(visible_messages,
-                state->messages_store.viewport_width_cols)) - viewport_rows);
+                         ? *state->messages_store.rendered_content_height_lines
+                         : EstimateTranscriptRows(visible_messages,
+                                                  state->messages_store.viewport_width_cols)) -
+                        viewport_rows);
     if (max_offset == 0) return false;
 
     // When pinned to bottom, scroll_offset is 0 but the view is visually
@@ -729,8 +711,8 @@ bool ScrollTranscript(const std::shared_ptr<ReplScreenState>& state,
     // so wheel-up actually moves the view instead of clamping 0 + (-3)
     // back to 0.
     const int base = state->messages_store.scroll_pinned_to_bottom
-        ? max_offset
-        : std::clamp(state->messages_store.scroll_offset, 0, max_offset);
+                         ? max_offset
+                         : std::clamp(state->messages_store.scroll_offset, 0, max_offset);
     const int next = std::clamp(base + delta, 0, max_offset);
     state->messages_store.scroll_offset = next;
     const bool was_pinned = state->messages_store.scroll_pinned_to_bottom;
@@ -749,25 +731,24 @@ bool ScrollTranscript(const std::shared_ptr<ReplScreenState>& state,
 }
 
 void JumpTranscriptToBottom(ReplScreenState& state) {
-    const int viewport_rows = std::max(
-        1, state.messages_store.viewport_height_lines);
-    const int total_lines = state.messages_store.virtual_list_active
-        ? state.messages_store.virtual_jh.total()
-        : (state.messages_store.rendered_content_height_lines
-            ? *state.messages_store.rendered_content_height_lines
-            : EstimateTranscriptRows(BuildVisibleMessages(state),
-                state.messages_store.viewport_width_cols));
+    const int viewport_rows = std::max(1, state.messages_store.viewport_height_lines);
+    const int total_lines =
+        state.messages_store.virtual_list_active
+            ? state.messages_store.virtual_jh.total()
+            : (state.messages_store.rendered_content_height_lines
+                   ? *state.messages_store.rendered_content_height_lines
+                   : EstimateTranscriptRows(BuildVisibleMessages(state),
+                                            state.messages_store.viewport_width_cols));
     const int max_top = std::max(0, total_lines - viewport_rows);
     const int old_top = state.messages_store.scroll_pinned_to_bottom
-        ? max_top
-        : std::clamp(state.messages_store.scroll_offset, 0, max_top);
+                            ? max_top
+                            : std::clamp(state.messages_store.scroll_offset, 0, max_top);
 
     state.messages_store.scroll_offset = max_top;
     if (state.messages_store.virtual_list_state) {
         namespace vl = loom::ui::messages::virtual_list;
         state.messages_store.virtual_list_state->scroll_top = max_top;
-        vl::update_sticky_after_scroll(
-            *state.messages_store.virtual_list_state, old_top);
+        vl::update_sticky_after_scroll(*state.messages_store.virtual_list_state, old_top);
     }
 
     state.messages_store.scroll_pinned_to_bottom = true;

@@ -24,6 +24,7 @@
 module;
 
 #include <unistd.h>
+
 #include <cstdint>
 
 export module loom.query.wire_messages;
@@ -83,8 +84,8 @@ struct TaskBudget {
 /// API-side output_config.format.json_schema (structured outputs).
 /// Mirrors QueryOptions::ResponseSchema.
 struct ResponseSchema {
-    std::string name;        ///< json_schema.name
-    std::string schema_json; ///< JSON schema payload, as a string
+    std::string name;         ///< json_schema.name
+    std::string schema_json;  ///< JSON schema payload, as a string
 };
 
 /// Everything the engine must hand over that RequestInput does not carry.
@@ -122,9 +123,8 @@ struct ApiMessagesEndpoint {
 /// request path, appending the /v1/messages (or <prefix>/messages) suffix.
 /// Rejects URLs with no scheme or an empty host. Moved verbatim from the
 /// engine, including the trailing-slash and "/v1" handling.
-[[nodiscard]] inline std::expected<ApiMessagesEndpoint, std::string> api_messages_endpoint(
-    std::string_view base_url
-) {
+[[nodiscard]] inline std::expected<ApiMessagesEndpoint, std::string>
+api_messages_endpoint(std::string_view base_url) {
     const auto scheme_end = base_url.find("://");
     if (scheme_end == std::string_view::npos) {
         return std::unexpected("API base URL must include http:// or https://");
@@ -133,11 +133,11 @@ struct ApiMessagesEndpoint {
     const auto authority_start = scheme_end + 3;
     const auto path_start = base_url.find('/', authority_start);
     std::string client_base_url = path_start == std::string_view::npos
-        ? std::string(base_url)
-        : std::string(base_url.substr(0, path_start));
+                                      ? std::string(base_url)
+                                      : std::string(base_url.substr(0, path_start));
     std::string path_prefix = path_start == std::string_view::npos
-        ? std::string{}
-        : std::string(base_url.substr(path_start));
+                                  ? std::string{}
+                                  : std::string(base_url.substr(path_start));
 
     while (client_base_url.size() > scheme_end + 3 && client_base_url.ends_with('/')) {
         client_base_url.pop_back();
@@ -163,10 +163,8 @@ struct ApiMessagesEndpoint {
 /// token wins and is sent as `Authorization: Bearer <token>`, otherwise the
 /// plain key goes out as `x-api-key`. Callers put the result into
 /// MessagesWireOptions::extra_headers.
-[[nodiscard]] inline std::pair<std::string, std::string> messages_credential_header(
-    std::string_view api_key,
-    std::string_view auth_token
-) {
+[[nodiscard]] inline std::pair<std::string, std::string>
+messages_credential_header(std::string_view api_key, std::string_view auth_token) {
     if (!auth_token.empty()) {
         return {"Authorization", std::string("Bearer ") + std::string(auth_token)};
     }
@@ -186,10 +184,8 @@ public:
     /// Convenience form for the common case: just the deployment coordinates
     /// plus the header pairs the caller computes itself.
     explicit MessagesWireBackend(
-        std::string base_url,
-        std::string api_version = "2023-06-01",
-        std::vector<std::pair<std::string, std::string>> extra_headers = {}
-    ) {
+        std::string base_url, std::string api_version = "2023-06-01",
+        std::vector<std::pair<std::string, std::string>> extra_headers = {}) {
         options_.base_url = std::move(base_url);
         options_.api_version = std::move(api_version);
         options_.extra_headers = std::move(extra_headers);
@@ -199,9 +195,7 @@ public:
     explicit MessagesWireBackend(MessagesWireOptions options)
         : options_(std::move(options)) {}
 
-    [[nodiscard]] WireApi api() const noexcept override {
-        return WireApi::Messages;
-    }
+    [[nodiscard]] WireApi api() const noexcept override { return WireApi::Messages; }
 
     /// URL + serialized body + headers for one non-streaming request.
     [[nodiscard]] std::expected<PreparedRequest, std::string>
@@ -274,11 +268,14 @@ public:
         // Parse usage
         auto usage = root.get("usage");
         if (usage.valid() && usage.is_obj()) {
-            result.usage.input_tokens = static_cast<std::uint32_t>(usage.get("input_tokens").as_int());
-            result.usage.output_tokens = static_cast<std::uint32_t>(usage.get("output_tokens").as_int());
+            result.usage.input_tokens =
+                static_cast<std::uint32_t>(usage.get("input_tokens").as_int());
+            result.usage.output_tokens =
+                static_cast<std::uint32_t>(usage.get("output_tokens").as_int());
             auto cache_creation = usage.get("cache_creation_input_tokens");
             if (cache_creation.valid()) {
-                result.usage.cache_creation_tokens = static_cast<std::uint32_t>(cache_creation.as_int());
+                result.usage.cache_creation_tokens =
+                    static_cast<std::uint32_t>(cache_creation.as_int());
             }
             auto cache_read = usage.get("cache_read_input_tokens");
             if (cache_read.valid()) {
@@ -305,10 +302,8 @@ public:
     ///     which keeps it on the result until StreamEnd).
     ///   * unknown event names and unparseable frames yield nothing, exactly
     ///     like the engine's silent fall-through.
-    [[nodiscard]] std::vector<StreamDelta> parse_stream_event(
-        std::string_view event_name,
-        std::string_view data
-    ) const override {
+    [[nodiscard]] std::vector<StreamDelta>
+    parse_stream_event(std::string_view event_name, std::string_view data) const override {
         std::vector<StreamDelta> out;
         if (data.empty() || data == "[DONE]") return out;
 
@@ -329,11 +324,13 @@ public:
                     }
                     auto cache_creation = usage.get("cache_creation_input_tokens");
                     if (cache_creation.valid()) {
-                        delta.usage.cache_creation_tokens = static_cast<std::uint32_t>(cache_creation.as_int());
+                        delta.usage.cache_creation_tokens =
+                            static_cast<std::uint32_t>(cache_creation.as_int());
                     }
                     auto cache_read = usage.get("cache_read_input_tokens");
                     if (cache_read.valid()) {
-                        delta.usage.cache_read_tokens = static_cast<std::uint32_t>(cache_read.as_int());
+                        delta.usage.cache_read_tokens =
+                            static_cast<std::uint32_t>(cache_read.as_int());
                     }
                 }
                 out.push_back(std::move(delta));
@@ -417,7 +414,8 @@ public:
                 }
                 auto cache_creation = usage.get("cache_creation_input_tokens");
                 if (cache_creation.valid()) {
-                    delta.usage.cache_creation_tokens = static_cast<std::uint32_t>(cache_creation.as_int());
+                    delta.usage.cache_creation_tokens =
+                        static_cast<std::uint32_t>(cache_creation.as_int());
                 }
                 auto cache_read = usage.get("cache_read_input_tokens");
                 if (cache_read.valid()) {
@@ -456,8 +454,7 @@ public:
         return out;
     }
 
-    [[nodiscard]] bool stop_reason_is_tool_use(
-        std::string_view stop_reason) const override {
+    [[nodiscard]] bool stop_reason_is_tool_use(std::string_view stop_reason) const override {
         return stop_reason == "tool_use";
     }
 
@@ -500,17 +497,12 @@ public:
                 const bool is_native_computer =
                     input.native_computer_tool && tool.name == "computer_use";
                 tool_obj.add("name",
-                             doc.string(is_native_computer
-                                            ? std::string{"computer"}
-                                            : tool.name));
+                             doc.string(is_native_computer ? std::string{"computer"} : tool.name));
                 if (is_native_computer) {
                     tool_obj.add("type", doc.string("computer_20241022"));
-                    tool_obj.add("display_width_px",
-                        doc.number(input.computer_display_width));
-                    tool_obj.add("display_height_px",
-                        doc.number(input.computer_display_height));
-                    tool_obj.add("display_number",
-                        doc.number(input.computer_display_number));
+                    tool_obj.add("display_width_px", doc.number(input.computer_display_width));
+                    tool_obj.add("display_height_px", doc.number(input.computer_display_height));
+                    tool_obj.add("display_number", doc.number(input.computer_display_number));
                 } else {
                     tool_obj.add("type", doc.string("function"));
                     tool_obj.add("description", doc.string(tool.description));
@@ -555,7 +547,7 @@ public:
             } else {
                 thinking_obj.add("type", doc.string("enabled"));
                 thinking_obj.add("budget_tokens",
-                    doc.number(static_cast<int64_t>(*input.thinking_budget_tokens)));
+                                 doc.number(static_cast<int64_t>(*input.thinking_budget_tokens)));
             }
             root.add("thinking", thinking_obj);
         }
@@ -584,92 +576,93 @@ public:
 private:
     /// Append a Message variant to the JSON array. System messages have no wire
     /// representation (their text was hoisted into `system` by the engine).
-    void append_message_to_json(const Message& msg,
-                                loom::utils::json::JsonMutVal& arr,
+    void append_message_to_json(const Message& msg, loom::utils::json::JsonMutVal& arr,
                                 loom::utils::json::JsonMutDoc& doc) const {
-        std::visit([&](const auto& m) {
-            using T = std::decay_t<decltype(m)>;
-            auto msg_obj = doc.object();
+        std::visit(
+            [&](const auto& m) {
+                using T = std::decay_t<decltype(m)>;
+                auto msg_obj = doc.object();
 
-            if constexpr (std::is_same_v<T, UserMessage>) {
-                msg_obj.add("role", doc.string("user"));
-                msg_obj.add("content", content_to_json(m.content, doc));
-            } else if constexpr (std::is_same_v<T, AssistantMessage>) {
-                msg_obj.add("role", doc.string("assistant"));
-                msg_obj.add("content", content_to_json(m.content, doc));
-            } else if constexpr (std::is_same_v<T, SystemMessage>) {
-                // System messages are handled separately
-                return;
-            } else if constexpr (std::is_same_v<T, ToolResultMessage>) {
-                msg_obj.add("role", doc.string("user"));
-                auto result_obj = doc.object();
-                result_obj.add("type", doc.string("tool_result"));
-                result_obj.add("tool_use_id", doc.string(m.tool_use_id.value));
-                result_obj.add("is_error", doc.boolean(m.is_error));
+                if constexpr (std::is_same_v<T, UserMessage>) {
+                    msg_obj.add("role", doc.string("user"));
+                    msg_obj.add("content", content_to_json(m.content, doc));
+                } else if constexpr (std::is_same_v<T, AssistantMessage>) {
+                    msg_obj.add("role", doc.string("assistant"));
+                    msg_obj.add("content", content_to_json(m.content, doc));
+                } else if constexpr (std::is_same_v<T, SystemMessage>) {
+                    // System messages are handled separately
+                    return;
+                } else if constexpr (std::is_same_v<T, ToolResultMessage>) {
+                    msg_obj.add("role", doc.string("user"));
+                    auto result_obj = doc.object();
+                    result_obj.add("type", doc.string("tool_result"));
+                    result_obj.add("tool_use_id", doc.string(m.tool_use_id.value));
+                    result_obj.add("is_error", doc.boolean(m.is_error));
 
-                std::string content_str;
-                bool has_rich_content = false;
-                for (const auto& block : m.content) {
-                    if (const auto* text = std::get_if<TextBlock>(&block)) {
-                        content_str += text->text;
-                    } else if (const auto* image = std::get_if<ImageBlock>(&block)) {
-                        (void)image;
-                        has_rich_content = true;
-                    }
-                }
-                if (has_rich_content) {
-                    auto rich_content = doc.array();
-                    if (!content_str.empty()) {
-                        auto text_obj = doc.object();
-                        text_obj.add("type", doc.string("text"));
-                        text_obj.add("text", doc.string(content_str));
-                        rich_content.append(text_obj);
-                    }
+                    std::string content_str;
+                    bool has_rich_content = false;
                     for (const auto& block : m.content) {
-                        if (const auto* image = std::get_if<ImageBlock>(&block)) {
-                            auto image_obj = doc.object();
-                            image_obj.add("type", doc.string("image"));
-                            auto source = doc.object();
-                            source.add("type", doc.string("base64"));
-                            source.add("media_type", doc.string(image->media_type));
-                            source.add("data", doc.string(image->data));
-                            image_obj.add("source", source);
-                            rich_content.append(image_obj);
+                        if (const auto* text = std::get_if<TextBlock>(&block)) {
+                            content_str += text->text;
+                        } else if (const auto* image = std::get_if<ImageBlock>(&block)) {
+                            (void)image;
+                            has_rich_content = true;
                         }
                     }
-                    result_obj.add("content", rich_content);
-                } else {
-                    result_obj.add("content", doc.string(content_str));
-                }
-                auto content_arr = doc.array();
-                content_arr.append(result_obj);
-                for (const auto& block : m.content) {
-                    if (const auto* document = std::get_if<DocumentBlock>(&block)) {
-                        auto document_obj = doc.object();
-                        document_obj.add("type", doc.string("document"));
-                        auto source = doc.object();
-                        source.add("type", doc.string("base64"));
-                        source.add("media_type", doc.string(document->media_type));
-                        source.add("data", doc.string(document->data));
-                        document_obj.add("source", source);
-                        content_arr.append(document_obj);
+                    if (has_rich_content) {
+                        auto rich_content = doc.array();
+                        if (!content_str.empty()) {
+                            auto text_obj = doc.object();
+                            text_obj.add("type", doc.string("text"));
+                            text_obj.add("text", doc.string(content_str));
+                            rich_content.append(text_obj);
+                        }
+                        for (const auto& block : m.content) {
+                            if (const auto* image = std::get_if<ImageBlock>(&block)) {
+                                auto image_obj = doc.object();
+                                image_obj.add("type", doc.string("image"));
+                                auto source = doc.object();
+                                source.add("type", doc.string("base64"));
+                                source.add("media_type", doc.string(image->media_type));
+                                source.add("data", doc.string(image->data));
+                                image_obj.add("source", source);
+                                rich_content.append(image_obj);
+                            }
+                        }
+                        result_obj.add("content", rich_content);
+                    } else {
+                        result_obj.add("content", doc.string(content_str));
                     }
+                    auto content_arr = doc.array();
+                    content_arr.append(result_obj);
+                    for (const auto& block : m.content) {
+                        if (const auto* document = std::get_if<DocumentBlock>(&block)) {
+                            auto document_obj = doc.object();
+                            document_obj.add("type", doc.string("document"));
+                            auto source = doc.object();
+                            source.add("type", doc.string("base64"));
+                            source.add("media_type", doc.string(document->media_type));
+                            source.add("data", doc.string(document->data));
+                            document_obj.add("source", source);
+                            content_arr.append(document_obj);
+                        }
+                    }
+                    msg_obj.add("content", content_arr);
                 }
-                msg_obj.add("content", content_arr);
-            }
-            // NOTE (preserved from the engine): ToolUseMessage is a
-            // conversation-log shape, not an API message shape, and is
-            // therefore never serialized here.
+                // NOTE (preserved from the engine): ToolUseMessage is a
+                // conversation-log shape, not an API message shape, and is
+                // therefore never serialized here.
 
-            arr.append(msg_obj);
-        }, msg);
+                arr.append(msg_obj);
+            },
+            msg);
     }
 
     /// Convert content blocks to JSON. A lone text block collapses to a plain
     /// string, matching what the API accepts and what the engine sent.
-    [[nodiscard]] loom::utils::json::JsonMutVal content_to_json(
-        const std::vector<ContentBlock>& content,
-        loom::utils::json::JsonMutDoc& doc) const {
+    [[nodiscard]] loom::utils::json::JsonMutVal
+    content_to_json(const std::vector<ContentBlock>& content,
+                    loom::utils::json::JsonMutDoc& doc) const {
         if (content.size() == 1) {
             if (const auto* text = std::get_if<TextBlock>(&content[0])) {
                 return doc.string(text->text);
@@ -678,52 +671,54 @@ private:
 
         auto arr = doc.array();
         for (const auto& block : content) {
-            std::visit([&](const auto& b) {
-                using T = std::decay_t<decltype(b)>;
-                if constexpr (std::is_same_v<T, TextBlock>) {
-                    auto obj = doc.object();
-                    obj.add("type", doc.string("text"));
-                    obj.add("text", doc.string(b.text));
-                    arr.append(obj);
-                } else if constexpr (std::is_same_v<T, ToolUseBlock>) {
-                    auto obj = doc.object();
-                    obj.add("type", doc.string("tool_use"));
-                    obj.add("id", doc.string(b.id.value));
-                    obj.add("name", doc.string(b.name));
-                    // Input must be a JSON object, not a string
-                    auto input_doc = loom::utils::json::parse(b.input_json);
-                    if (input_doc) {
-                        obj.add("input", doc.copy_val(input_doc->root()));
-                    } else {
-                        obj.add("input", doc.raw_json(b.input_json));
+            std::visit(
+                [&](const auto& b) {
+                    using T = std::decay_t<decltype(b)>;
+                    if constexpr (std::is_same_v<T, TextBlock>) {
+                        auto obj = doc.object();
+                        obj.add("type", doc.string("text"));
+                        obj.add("text", doc.string(b.text));
+                        arr.append(obj);
+                    } else if constexpr (std::is_same_v<T, ToolUseBlock>) {
+                        auto obj = doc.object();
+                        obj.add("type", doc.string("tool_use"));
+                        obj.add("id", doc.string(b.id.value));
+                        obj.add("name", doc.string(b.name));
+                        // Input must be a JSON object, not a string
+                        auto input_doc = loom::utils::json::parse(b.input_json);
+                        if (input_doc) {
+                            obj.add("input", doc.copy_val(input_doc->root()));
+                        } else {
+                            obj.add("input", doc.raw_json(b.input_json));
+                        }
+                        arr.append(obj);
+                    } else if constexpr (std::is_same_v<T, ThinkingBlock>) {
+                        auto obj = doc.object();
+                        obj.add("type", doc.string("thinking"));
+                        obj.add("thinking", doc.string(b.thinking));
+                        obj.add("signature", doc.string(b.signature));
+                        arr.append(obj);
+                    } else if constexpr (std::is_same_v<T, ImageBlock>) {
+                        auto obj = doc.object();
+                        obj.add("type", doc.string("image"));
+                        auto source = doc.object();
+                        source.add("type", doc.string("base64"));
+                        source.add("media_type", doc.string(b.media_type));
+                        source.add("data", doc.string(b.data));
+                        obj.add("source", source);
+                        arr.append(obj);
+                    } else if constexpr (std::is_same_v<T, DocumentBlock>) {
+                        auto obj = doc.object();
+                        obj.add("type", doc.string("document"));
+                        auto source = doc.object();
+                        source.add("type", doc.string("base64"));
+                        source.add("media_type", doc.string(b.media_type));
+                        source.add("data", doc.string(b.data));
+                        obj.add("source", source);
+                        arr.append(obj);
                     }
-                    arr.append(obj);
-                } else if constexpr (std::is_same_v<T, ThinkingBlock>) {
-                    auto obj = doc.object();
-                    obj.add("type", doc.string("thinking"));
-                    obj.add("thinking", doc.string(b.thinking));
-                    obj.add("signature", doc.string(b.signature));
-                    arr.append(obj);
-                } else if constexpr (std::is_same_v<T, ImageBlock>) {
-                    auto obj = doc.object();
-                    obj.add("type", doc.string("image"));
-                    auto source = doc.object();
-                    source.add("type", doc.string("base64"));
-                    source.add("media_type", doc.string(b.media_type));
-                    source.add("data", doc.string(b.data));
-                    obj.add("source", source);
-                    arr.append(obj);
-                } else if constexpr (std::is_same_v<T, DocumentBlock>) {
-                    auto obj = doc.object();
-                    obj.add("type", doc.string("document"));
-                    auto source = doc.object();
-                    source.add("type", doc.string("base64"));
-                    source.add("media_type", doc.string(b.media_type));
-                    source.add("data", doc.string(b.data));
-                    obj.add("source", source);
-                    arr.append(obj);
-                }
-            }, block);
+                },
+                block);
         }
         return arr;
     }
@@ -731,7 +726,7 @@ private:
     /// Parse a single content block from JSON. Types the engine does not read
     /// (tool_result, image, ...) are skipped, as before.
     void parse_content_block(loom::utils::json::JsonVal block,
-                            std::vector<ContentBlock>& content) const {
+                             std::vector<ContentBlock>& content) const {
         auto type = block.get("type").as_str();
 
         if (type == "text") {
@@ -756,24 +751,17 @@ private:
         }
     }
 
-    void add_input_tokens_object(
-        loom::utils::json::JsonMutVal& parent,
-        loom::utils::json::JsonMutDoc& doc,
-        std::string_view key,
-        std::uint32_t value
-    ) const {
+    void add_input_tokens_object(loom::utils::json::JsonMutVal& parent,
+                                 loom::utils::json::JsonMutDoc& doc, std::string_view key,
+                                 std::uint32_t value) const {
         auto obj = doc.object();
         obj.add("type", doc.string("input_tokens"));
         obj.add("value", doc.number(static_cast<int64_t>(value)));
         parent.add(key, obj);
     }
 
-    void add_string_array(
-        loom::utils::json::JsonMutVal& parent,
-        loom::utils::json::JsonMutDoc& doc,
-        std::string_view key,
-        const std::vector<std::string>& values
-    ) const {
+    void add_string_array(loom::utils::json::JsonMutVal& parent, loom::utils::json::JsonMutDoc& doc,
+                          std::string_view key, const std::vector<std::string>& values) const {
         auto arr = doc.array();
         for (const auto& value : values) {
             arr.append(doc.string(value));
@@ -781,11 +769,9 @@ private:
         parent.add(key, arr);
     }
 
-    void add_context_management_to_json(
-        loom::utils::json::JsonMutVal& root,
-        loom::utils::json::JsonMutDoc& doc,
-        const std::vector<ContextEdit>& edits_config
-    ) const {
+    void add_context_management_to_json(loom::utils::json::JsonMutVal& root,
+                                        loom::utils::json::JsonMutDoc& doc,
+                                        const std::vector<ContextEdit>& edits_config) const {
         auto context_management = doc.object();
         auto edits = doc.array();
 
@@ -797,7 +783,8 @@ private:
                 add_input_tokens_object(obj, doc, "trigger", *edit.trigger_input_tokens);
             }
             if (edit.clear_at_least_input_tokens) {
-                add_input_tokens_object(obj, doc, "clear_at_least", *edit.clear_at_least_input_tokens);
+                add_input_tokens_object(obj, doc, "clear_at_least",
+                                        *edit.clear_at_least_input_tokens);
             }
             if (edit.has_thinking_keep) {
                 if (edit.keep_all_thinking) {
@@ -828,10 +815,8 @@ private:
         root.add("context_management", context_management);
     }
 
-    void add_output_config_to_json(
-        loom::utils::json::JsonMutVal& root,
-        loom::utils::json::JsonMutDoc& doc
-    ) const {
+    void add_output_config_to_json(loom::utils::json::JsonMutVal& root,
+                                   loom::utils::json::JsonMutDoc& doc) const {
         const bool has_budget = options_.task_budget.has_value();
         const bool has_schema = options_.response_schema.has_value();
         if (!has_budget && !has_schema) return;
@@ -842,9 +827,8 @@ private:
             task_budget.add("type", doc.string("tokens"));
             task_budget.add("total", doc.number(static_cast<int64_t>(options_.task_budget->total)));
             if (options_.task_budget->remaining) {
-                task_budget.add(
-                    "remaining",
-                    doc.number(static_cast<int64_t>(*options_.task_budget->remaining)));
+                task_budget.add("remaining",
+                                doc.number(static_cast<int64_t>(*options_.task_budget->remaining)));
             }
             output_config.add("task_budget", task_budget);
         }
@@ -868,4 +852,4 @@ private:
     MessagesWireOptions options_;
 };
 
-} // namespace loom::query::wire
+}  // namespace loom::query::wire

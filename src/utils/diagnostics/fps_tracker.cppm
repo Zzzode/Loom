@@ -25,13 +25,11 @@ namespace detail {
     return std::chrono::duration<double, std::milli>(now).count();
 }
 
-} // namespace detail
+}  // namespace detail
 
 class FpsTracker {
 public:
-    void record(double duration_ms) {
-        record(duration_ms, detail::now_ms());
-    }
+    void record(double duration_ms) { record(duration_ms, detail::now_ms()); }
 
     void record(double duration_ms, double now_ms) {
         if (!first_render_time_.has_value()) {
@@ -42,7 +40,8 @@ public:
     }
 
     [[nodiscard]] std::optional<FpsMetrics> get_metrics() const {
-        if (frame_durations_.empty() || !first_render_time_.has_value() || !last_render_time_.has_value()) {
+        if (frame_durations_.empty() || !first_render_time_.has_value() ||
+            !last_render_time_.has_value()) {
             return std::nullopt;
         }
 
@@ -73,4 +72,4 @@ private:
     std::optional<double> last_render_time_ = std::nullopt;
 };
 
-} // namespace loom::utils::fps
+}  // namespace loom::utils::fps

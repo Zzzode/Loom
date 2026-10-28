@@ -1,9 +1,10 @@
 // MCP Authentication Module
 module;
+#include <httplib.h>
+
+#include <cctype>
 #include <cstdint>
 #include <cstdlib>
-#include <cctype>
-#include <httplib.h>
 
 export module loom.services.mcp.auth;
 
@@ -27,7 +28,8 @@ using loom::utils::json::JsonVal;
 // Error types
 class AuthenticationCancelledError : public std::runtime_error {
 public:
-    AuthenticationCancelledError() : std::runtime_error("Authentication was cancelled") {}
+    AuthenticationCancelledError()
+        : std::runtime_error("Authentication was cancelled") {}
 };
 
 struct McpOAuthTokenData {
@@ -40,6 +42,7 @@ struct McpOAuthTokenData {
     std::string client_id;
     std::string client_secret;
     std::optional<std::string> step_up_scope;
+
     struct DiscoveryState {
         std::optional<std::string> authorization_server_url;
         std::optional<std::string> resource_metadata_url;
@@ -60,9 +63,8 @@ namespace detail {
 
 inline Result<OAuthServerMetadata> parse_oauth_server_metadata(JsonVal root) {
     if (!root.is_obj()) {
-        return std::unexpected(loom::utils::Error(
-            loom::utils::ErrorCode::parse_error,
-            "OAuth server metadata must be a JSON object"));
+        return std::unexpected(loom::utils::Error(loom::utils::ErrorCode::parse_error,
+                                                  "OAuth server metadata must be a JSON object"));
     }
 
     OAuthServerMetadata metadata;
@@ -70,14 +72,13 @@ inline Result<OAuthServerMetadata> parse_oauth_server_metadata(JsonVal root) {
     metadata.token_endpoint = root.get_string("token_endpoint");
 
     if (metadata.authorization_endpoint.empty()) {
-        return std::unexpected(loom::utils::Error(
-            loom::utils::ErrorCode::parse_error,
-            "OAuth server metadata missing authorization_endpoint"));
+        return std::unexpected(
+            loom::utils::Error(loom::utils::ErrorCode::parse_error,
+                               "OAuth server metadata missing authorization_endpoint"));
     }
     if (metadata.token_endpoint.empty()) {
-        return std::unexpected(loom::utils::Error(
-            loom::utils::ErrorCode::parse_error,
-            "OAuth server metadata missing token_endpoint"));
+        return std::unexpected(loom::utils::Error(loom::utils::ErrorCode::parse_error,
+                                                  "OAuth server metadata missing token_endpoint"));
     }
 
     if (auto value = root.get("revocation_endpoint"); value.is_str()) {
@@ -95,27 +96,26 @@ inline Result<OAuthServerMetadata> parse_oauth_server_metadata(JsonVal root) {
 
 inline Result<OAuthServerMetadata> fetch_metadata_url(std::string_view url) {
     if (url.starts_with("file://")) {
-        auto path = std::filesystem::path(std::string(url.substr(std::string_view("file://").size())));
+        auto path =
+            std::filesystem::path(std::string(url.substr(std::string_view("file://").size())));
         auto parsed = loom::utils::json::parse_file(path);
         if (!parsed) return std::unexpected(parsed.error());
         return parse_oauth_server_metadata(parsed->root());
     }
 
     if (!url.starts_with("https://") && !url.starts_with("http://")) {
-        return std::unexpected(loom::utils::Error(
-            loom::utils::ErrorCode::invalid_argument,
-            "authServerMetadataUrl must use https://"));
+        return std::unexpected(loom::utils::Error(loom::utils::ErrorCode::invalid_argument,
+                                                  "authServerMetadataUrl must use https://"));
     }
 
     auto scheme_end = url.find("://");
     auto authority_start = scheme_end + 3;
     auto path_start = url.find('/', authority_start);
     std::string base = path_start == std::string_view::npos
-        ? std::string(url)
-        : std::string(url.substr(0, path_start));
-    std::string target = path_start == std::string_view::npos
-        ? std::string("/")
-        : std::string(url.substr(path_start));
+                           ? std::string(url)
+                           : std::string(url.substr(0, path_start));
+    std::string target = path_start == std::string_view::npos ? std::string("/")
+                                                              : std::string(url.substr(path_start));
 
     httplib::Client client(base);
     client.set_follow_location(true);
@@ -123,14 +123,13 @@ inline Result<OAuthServerMetadata> fetch_metadata_url(std::string_view url) {
     client.set_read_timeout(30, 0);
     auto response = client.Get(target, httplib::Headers{{"Accept", "application/json"}});
     if (!response) {
-        return std::unexpected(loom::utils::Error(
-            loom::utils::ErrorCode::network_error,
-            "Failed to fetch OAuth server metadata"));
+        return std::unexpected(loom::utils::Error(loom::utils::ErrorCode::network_error,
+                                                  "Failed to fetch OAuth server metadata"));
     }
     if (response->status < 200 || response->status >= 300) {
-        return std::unexpected(loom::utils::Error(
-            loom::utils::ErrorCode::network_error,
-            "HTTP " + std::to_string(response->status) + " fetching OAuth server metadata"));
+        return std::unexpected(loom::utils::Error(loom::utils::ErrorCode::network_error,
+                                                  "HTTP " + std::to_string(response->status) +
+                                                      " fetching OAuth server metadata"));
     }
 
     auto parsed = loom::utils::json::parse(response->body);
@@ -205,20 +204,18 @@ struct HttpEndpoint {
 
 inline Result<HttpEndpoint> parse_http_endpoint(std::string_view url) {
     if (!url.starts_with("https://") && !url.starts_with("http://")) {
-        return std::unexpected(loom::utils::Error(
-            loom::utils::ErrorCode::invalid_argument,
-            "OAuth token endpoint must use http:// or https://"));
+        return std::unexpected(
+            loom::utils::Error(loom::utils::ErrorCode::invalid_argument,
+                               "OAuth token endpoint must use http:// or https://"));
     }
     auto scheme_end = url.find("://");
     auto authority_start = scheme_end + 3;
     auto path_start = url.find('/', authority_start);
     HttpEndpoint endpoint;
-    endpoint.base = path_start == std::string_view::npos
-        ? std::string(url)
-        : std::string(url.substr(0, path_start));
-    endpoint.path = path_start == std::string_view::npos
-        ? std::string("/")
-        : std::string(url.substr(path_start));
+    endpoint.base = path_start == std::string_view::npos ? std::string(url)
+                                                         : std::string(url.substr(0, path_start));
+    endpoint.path = path_start == std::string_view::npos ? std::string("/")
+                                                         : std::string(url.substr(path_start));
     return endpoint;
 }
 
@@ -230,20 +227,17 @@ inline Result<JsonDoc> post_token_form(std::string_view token_endpoint, std::str
     client.set_follow_location(true);
     client.set_connection_timeout(10, 0);
     client.set_read_timeout(30, 0);
-    auto response = client.Post(
-        endpoint->path,
-        httplib::Headers{{"Accept", "application/json"}},
-        std::string(body),
-        "application/x-www-form-urlencoded");
+    auto response = client.Post(endpoint->path, httplib::Headers{{"Accept", "application/json"}},
+                                std::string(body), "application/x-www-form-urlencoded");
     if (!response) {
-        return std::unexpected(loom::utils::Error(
-            loom::utils::ErrorCode::network_error,
-            "Failed to exchange MCP OAuth authorization code"));
+        return std::unexpected(
+            loom::utils::Error(loom::utils::ErrorCode::network_error,
+                               "Failed to exchange MCP OAuth authorization code"));
     }
     if (response->status < 200 || response->status >= 300) {
-        return std::unexpected(loom::utils::Error(
-            loom::utils::ErrorCode::network_error,
-            "HTTP " + std::to_string(response->status) + " exchanging MCP OAuth authorization code"));
+        return std::unexpected(loom::utils::Error(loom::utils::ErrorCode::network_error,
+                                                  "HTTP " + std::to_string(response->status) +
+                                                      " exchanging MCP OAuth authorization code"));
     }
 
     auto parsed = loom::utils::json::parse(response->body);
@@ -256,10 +250,8 @@ struct FormPostResponse {
     std::string body;
 };
 
-inline Result<FormPostResponse> post_form_raw(
-    std::string_view url,
-    std::string_view body,
-    const httplib::Headers& headers = {}) {
+inline Result<FormPostResponse> post_form_raw(std::string_view url, std::string_view body,
+                                              const httplib::Headers& headers = {}) {
     auto endpoint = parse_http_endpoint(url);
     if (!endpoint) return std::unexpected(endpoint.error());
 
@@ -267,47 +259,43 @@ inline Result<FormPostResponse> post_form_raw(
     client.set_follow_location(true);
     client.set_connection_timeout(10, 0);
     client.set_read_timeout(30, 0);
-    auto response = client.Post(
-        endpoint->path,
-        headers,
-        std::string(body),
-        "application/x-www-form-urlencoded");
+    auto response = client.Post(endpoint->path, headers, std::string(body),
+                                "application/x-www-form-urlencoded");
     if (!response) {
-        return std::unexpected(loom::utils::Error(
-            loom::utils::ErrorCode::network_error,
-            "Failed to post MCP OAuth form request"));
+        return std::unexpected(loom::utils::Error(loom::utils::ErrorCode::network_error,
+                                                  "Failed to post MCP OAuth form request"));
     }
     return FormPostResponse{.status = response->status, .body = response->body};
 }
 
 inline int64_t current_epoch_seconds() {
     return std::chrono::duration_cast<std::chrono::seconds>(
-        std::chrono::system_clock::now().time_since_epoch()).count();
+               std::chrono::system_clock::now().time_since_epoch())
+        .count();
 }
 
-inline bool token_is_expired_or_expiring(const McpOAuthTokenData& token, int64_t leeway_seconds = 300) {
+inline bool token_is_expired_or_expiring(const McpOAuthTokenData& token,
+                                         int64_t leeway_seconds = 300) {
     return token.expires_at > 0 && token.expires_at <= current_epoch_seconds() + leeway_seconds;
 }
 
-inline Result<McpOAuthTokenData> parse_token_response(
-    JsonVal root,
-    const OAuthServerMetadata& metadata,
-    std::string_view client_id) {
+inline Result<McpOAuthTokenData> parse_token_response(JsonVal root,
+                                                      const OAuthServerMetadata& metadata,
+                                                      std::string_view client_id) {
     if (!root.valid() || !root.is_obj()) {
         return std::unexpected(loom::utils::Error(
-            loom::utils::ErrorCode::parse_error,
-            "MCP OAuth token response must be a JSON object"));
+            loom::utils::ErrorCode::parse_error, "MCP OAuth token response must be a JSON object"));
     }
     auto access_token = root.get("access_token");
     if (!access_token.valid() || !access_token.is_str() || access_token.as_str().empty()) {
-        return std::unexpected(loom::utils::Error(
-            loom::utils::ErrorCode::parse_error,
-            "MCP OAuth token response missing access_token"));
+        return std::unexpected(loom::utils::Error(loom::utils::ErrorCode::parse_error,
+                                                  "MCP OAuth token response missing access_token"));
     }
 
     McpOAuthTokenData token;
     token.access_token = std::string(access_token.as_str());
-    if (auto refresh_token = root.get("refresh_token"); refresh_token.valid() && refresh_token.is_str()) {
+    if (auto refresh_token = root.get("refresh_token");
+        refresh_token.valid() && refresh_token.is_str()) {
         token.refresh_token = std::string(refresh_token.as_str());
     }
     if (auto scope = root.get("scope"); scope.valid() && scope.is_str()) {
@@ -324,36 +312,32 @@ inline Result<McpOAuthTokenData> parse_token_response(
     return token;
 }
 
-inline Result<McpOAuthTokenData> exchange_authorization_code(
-    const OAuthServerMetadata& metadata,
-    std::string_view client_id,
-    std::string_view redirect_uri,
-    std::string_view code,
-    std::string_view code_verifier) {
-    auto body = std::string("grant_type=authorization_code")
-        + "&code=" + url_encode(code)
-        + "&redirect_uri=" + url_encode(redirect_uri)
-        + "&client_id=" + url_encode(client_id)
-        + "&code_verifier=" + url_encode(code_verifier);
+inline Result<McpOAuthTokenData> exchange_authorization_code(const OAuthServerMetadata& metadata,
+                                                             std::string_view client_id,
+                                                             std::string_view redirect_uri,
+                                                             std::string_view code,
+                                                             std::string_view code_verifier) {
+    auto body = std::string("grant_type=authorization_code") + "&code=" + url_encode(code) +
+                "&redirect_uri=" + url_encode(redirect_uri) +
+                "&client_id=" + url_encode(client_id) +
+                "&code_verifier=" + url_encode(code_verifier);
     auto token_doc = post_token_form(metadata.token_endpoint, body);
     if (!token_doc) return std::unexpected(token_doc.error());
 
     return parse_token_response(token_doc->root(), metadata, client_id);
 }
 
-inline Result<McpOAuthTokenData> refresh_oauth_token(
-    const OAuthServerMetadata& metadata,
-    const McpOAuthTokenData& existing_token,
-    std::string_view client_id) {
+inline Result<McpOAuthTokenData> refresh_oauth_token(const OAuthServerMetadata& metadata,
+                                                     const McpOAuthTokenData& existing_token,
+                                                     std::string_view client_id) {
     if (existing_token.refresh_token.empty()) {
-        return std::unexpected(loom::utils::Error(
-            loom::utils::ErrorCode::invalid_argument,
-            "MCP OAuth refresh token is not available"));
+        return std::unexpected(loom::utils::Error(loom::utils::ErrorCode::invalid_argument,
+                                                  "MCP OAuth refresh token is not available"));
     }
 
-    auto body = std::string("grant_type=refresh_token")
-        + "&refresh_token=" + url_encode(existing_token.refresh_token)
-        + "&client_id=" + url_encode(client_id);
+    auto body = std::string("grant_type=refresh_token") +
+                "&refresh_token=" + url_encode(existing_token.refresh_token) +
+                "&client_id=" + url_encode(client_id);
     auto token_doc = post_token_form(metadata.token_endpoint, body);
     if (!token_doc) return std::unexpected(token_doc.error());
 
@@ -373,15 +357,16 @@ inline Result<McpOAuthTokenData> refresh_oauth_token(
     return refreshed;
 }
 
-inline bool string_array_contains(const std::optional<std::vector<std::string>>& values, std::string_view needle) {
+inline bool string_array_contains(const std::optional<std::vector<std::string>>& values,
+                                  std::string_view needle) {
     if (!values) return false;
     return std::ranges::any_of(*values, [&](const auto& value) { return value == needle; });
 }
 
 inline std::string revocation_auth_method(const OAuthServerMetadata& metadata) {
     const auto* methods = metadata.revocation_endpoint_auth_methods_supported
-        ? &metadata.revocation_endpoint_auth_methods_supported
-        : &metadata.token_endpoint_auth_methods_supported;
+                              ? &metadata.revocation_endpoint_auth_methods_supported
+                              : &metadata.token_endpoint_auth_methods_supported;
     if (methods && !string_array_contains(*methods, "client_secret_basic") &&
         string_array_contains(*methods, "client_secret_post")) {
         return "client_secret_post";
@@ -389,23 +374,21 @@ inline std::string revocation_auth_method(const OAuthServerMetadata& metadata) {
     return "client_secret_basic";
 }
 
-inline Result<void> revoke_oauth_token(
-    std::string_view endpoint,
-    std::string_view token,
-    std::string_view token_type_hint,
-    const McpOAuthTokenData& token_data,
-    std::string_view auth_method) {
+inline Result<void> revoke_oauth_token(std::string_view endpoint, std::string_view token,
+                                       std::string_view token_type_hint,
+                                       const McpOAuthTokenData& token_data,
+                                       std::string_view auth_method) {
     if (endpoint.empty() || token.empty()) return {};
 
-    auto base_body = std::string("token=") + url_encode(token)
-        + "&token_type_hint=" + url_encode(token_type_hint);
+    auto base_body = std::string("token=") + url_encode(token) +
+                     "&token_type_hint=" + url_encode(token_type_hint);
 
     auto body = base_body;
     httplib::Headers headers{{"Accept", "application/json"}};
     if (!token_data.client_id.empty() && !token_data.client_secret.empty()) {
         if (auth_method == "client_secret_post") {
-            body += "&client_id=" + url_encode(token_data.client_id)
-                + "&client_secret=" + url_encode(token_data.client_secret);
+            body += "&client_id=" + url_encode(token_data.client_id) +
+                    "&client_secret=" + url_encode(token_data.client_secret);
         } else {
             const auto basic_payload =
                 url_encode(token_data.client_id) + ":" + url_encode(token_data.client_secret);
@@ -427,14 +410,14 @@ inline Result<void> revoke_oauth_token(
         auto retry = post_form_raw(endpoint, base_body, bearer_headers);
         if (!retry) return std::unexpected(retry.error());
         if (retry->status >= 200 && retry->status < 300) return {};
-        return std::unexpected(loom::utils::Error(
-            loom::utils::ErrorCode::network_error,
-            "HTTP " + std::to_string(retry->status) + " revoking MCP OAuth token"));
+        return std::unexpected(loom::utils::Error(loom::utils::ErrorCode::network_error,
+                                                  "HTTP " + std::to_string(retry->status) +
+                                                      " revoking MCP OAuth token"));
     }
 
-    return std::unexpected(loom::utils::Error(
-        loom::utils::ErrorCode::network_error,
-        "HTTP " + std::to_string(response->status) + " revoking MCP OAuth token"));
+    return std::unexpected(loom::utils::Error(loom::utils::ErrorCode::network_error,
+                                              "HTTP " + std::to_string(response->status) +
+                                                  " revoking MCP OAuth token"));
 }
 
 inline Result<void> store_token_data(std::string_view server_key, const McpOAuthTokenData& token) {
@@ -442,9 +425,9 @@ inline Result<void> store_token_data(std::string_view server_key, const McpOAuth
     std::error_code ec;
     std::filesystem::create_directories(path.parent_path(), ec);
     if (ec) {
-        return std::unexpected(loom::utils::Error(
-            loom::utils::ErrorCode::io_error,
-            "Failed to create MCP token directory: " + ec.message()));
+        return std::unexpected(
+            loom::utils::Error(loom::utils::ErrorCode::io_error,
+                               "Failed to create MCP token directory: " + ec.message()));
     }
 
     JsonMutDoc doc;
@@ -462,39 +445,37 @@ inline Result<void> store_token_data(std::string_view server_key, const McpOAuth
     }
     auto discovery = doc.object();
     if (token.discovery_state.authorization_server_url) {
-        discovery.add("authorization_server_url", doc.string(*token.discovery_state.authorization_server_url));
+        discovery.add("authorization_server_url",
+                      doc.string(*token.discovery_state.authorization_server_url));
     }
     if (token.discovery_state.resource_metadata_url) {
-        discovery.add("resource_metadata_url", doc.string(*token.discovery_state.resource_metadata_url));
+        discovery.add("resource_metadata_url",
+                      doc.string(*token.discovery_state.resource_metadata_url));
     }
     root.add("discovery_state", discovery);
     doc.set_root(root);
 
     std::ofstream file(path, std::ios::trunc);
     if (!file.is_open()) {
-        return std::unexpected(loom::utils::Error(
-            loom::utils::ErrorCode::io_error,
-            "Failed to open MCP token file for writing"));
+        return std::unexpected(loom::utils::Error(loom::utils::ErrorCode::io_error,
+                                                  "Failed to open MCP token file for writing"));
     }
     file << doc.to_pretty_string();
     file.close();
     std::filesystem::permissions(
-        path,
-        std::filesystem::perms::owner_read | std::filesystem::perms::owner_write,
-        std::filesystem::perm_options::replace,
-        ec);
+        path, std::filesystem::perms::owner_read | std::filesystem::perms::owner_write,
+        std::filesystem::perm_options::replace, ec);
     if (ec) {
-        return std::unexpected(loom::utils::Error(
-            loom::utils::ErrorCode::io_error,
-            "Failed to restrict MCP token permissions: " + ec.message()));
+        return std::unexpected(
+            loom::utils::Error(loom::utils::ErrorCode::io_error,
+                               "Failed to restrict MCP token permissions: " + ec.message()));
     }
     return {};
 }
 
-} // namespace detail
+}  // namespace detail
 
-std::string get_server_key(const std::string& server_name,
-                           const McpServerConfig& server_config) {
+std::string get_server_key(const std::string& server_name, const McpServerConfig& server_config) {
     JsonMutDoc doc;
     auto obj = doc.object();
     // The JSON keys ("type"/"url") are the persisted OAuth token-file key
@@ -526,8 +507,8 @@ bool has_mcp_discovery_but_no_token(const std::string& server_name,
     auto server_key = get_server_key(server_name, server_config);
     const auto token_path = detail::token_path_for_key(server_key);
     const bool has_discovery = server_config.oauth.has_value() &&
-        server_config.oauth->auth_server_metadata_url.has_value() &&
-        !server_config.oauth->auth_server_metadata_url->empty();
+                               server_config.oauth->auth_server_metadata_url.has_value() &&
+                               !server_config.oauth->auth_server_metadata_url->empty();
     return has_discovery && !std::filesystem::exists(token_path);
 }
 
@@ -538,9 +519,9 @@ void clear_server_tokens_from_local_storage(const std::string& server_name,
     std::filesystem::remove(detail::token_path_for_key(server_key), ec);
 }
 
-std::optional<McpOAuthTokenData> load_server_tokens_from_local_storage(
-    const std::string& server_name,
-    const McpServerConfig& server_config) {
+std::optional<McpOAuthTokenData>
+load_server_tokens_from_local_storage(const std::string& server_name,
+                                      const McpServerConfig& server_config) {
     auto server_key = get_server_key(server_name, server_config);
     const auto token_path = detail::token_path_for_key(server_key);
     if (!std::filesystem::exists(token_path)) return std::nullopt;
@@ -581,58 +562,58 @@ std::optional<McpOAuthTokenData> load_server_tokens_from_local_storage(
     return token;
 }
 
-std::optional<std::string> load_server_access_token_from_local_storage(
-    const std::string& server_name,
-    const McpServerConfig& server_config) {
+std::optional<std::string>
+load_server_access_token_from_local_storage(const std::string& server_name,
+                                            const McpServerConfig& server_config) {
     auto token = load_server_tokens_from_local_storage(server_name, server_config);
     if (!token || token->access_token.empty()) return std::nullopt;
     if (detail::token_is_expired_or_expiring(*token, 0)) return std::nullopt;
     return token->access_token;
 }
 
-Result<McpOAuthTokenData> refresh_server_tokens_from_local_storage(
-    const std::string& server_name,
-    const McpServerConfig& server_config) {
+Result<McpOAuthTokenData>
+refresh_server_tokens_from_local_storage(const std::string& server_name,
+                                         const McpServerConfig& server_config) {
     auto token = load_server_tokens_from_local_storage(server_name, server_config);
     if (!token) {
-        return std::unexpected(loom::utils::Error(
-            loom::utils::ErrorCode::invalid_argument,
-            "No MCP OAuth token data is stored for server"));
+        return std::unexpected(loom::utils::Error(loom::utils::ErrorCode::invalid_argument,
+                                                  "No MCP OAuth token data is stored for server"));
     }
     if (token->refresh_token.empty()) {
-        return std::unexpected(loom::utils::Error(
-            loom::utils::ErrorCode::invalid_argument,
-            "Stored MCP OAuth token has no refresh_token"));
+        return std::unexpected(loom::utils::Error(loom::utils::ErrorCode::invalid_argument,
+                                                  "Stored MCP OAuth token has no refresh_token"));
     }
 
-    if (!server_config.oauth ||
-        !server_config.oauth->auth_server_metadata_url ||
+    if (!server_config.oauth || !server_config.oauth->auth_server_metadata_url ||
         server_config.oauth->auth_server_metadata_url->empty()) {
-        return std::unexpected(loom::utils::Error(
-            loom::utils::ErrorCode::invalid_argument,
-            "MCP OAuth metadata is required before refreshing authorization."));
+        return std::unexpected(
+            loom::utils::Error(loom::utils::ErrorCode::invalid_argument,
+                               "MCP OAuth metadata is required before refreshing authorization."));
     }
     auto metadata = detail::fetch_metadata_url(*server_config.oauth->auth_server_metadata_url);
     if (!metadata) return std::unexpected(metadata.error());
 
-    const auto client_id = server_config.oauth && server_config.oauth->client_id
-        ? *server_config.oauth->client_id
-        : (!token->client_id.empty() ? token->client_id : std::string{"loom"});
+    const auto client_id =
+        server_config.oauth && server_config.oauth->client_id
+            ? *server_config.oauth->client_id
+            : (!token->client_id.empty() ? token->client_id : std::string{"loom"});
     auto refreshed = detail::refresh_oauth_token(*metadata, *token, client_id);
     if (!refreshed) return std::unexpected(refreshed.error());
     refreshed->server_name = server_name;
     refreshed->server_url = server_config.url.value_or(std::string{});
     refreshed->discovery_state.resource_metadata_url =
         server_config.oauth ? server_config.oauth->auth_server_metadata_url : std::nullopt;
-    if (auto stored = detail::store_token_data(get_server_key(server_name, server_config), *refreshed); !stored) {
+    if (auto stored =
+            detail::store_token_data(get_server_key(server_name, server_config), *refreshed);
+        !stored) {
         return std::unexpected(stored.error());
     }
     return refreshed;
 }
 
-std::optional<std::string> load_or_refresh_server_access_token_from_local_storage(
-    const std::string& server_name,
-    const McpServerConfig& server_config) {
+std::optional<std::string>
+load_or_refresh_server_access_token_from_local_storage(const std::string& server_name,
+                                                       const McpServerConfig& server_config) {
     auto token = load_server_tokens_from_local_storage(server_name, server_config);
     if (!token || token->access_token.empty()) return std::nullopt;
     if (!detail::token_is_expired_or_expiring(*token)) return token->access_token;
@@ -648,27 +629,21 @@ Result<void> revoke_server_tokens(const std::string& server_name,
     (void)preserve_step_up_state;
     auto token = load_server_tokens_from_local_storage(server_name, server_config);
     if (token && (!token->access_token.empty() || !token->refresh_token.empty()) &&
-        server_config.oauth &&
-        server_config.oauth->auth_server_metadata_url &&
+        server_config.oauth && server_config.oauth->auth_server_metadata_url &&
         !server_config.oauth->auth_server_metadata_url->empty()) {
-        if (auto metadata = detail::fetch_metadata_url(*server_config.oauth->auth_server_metadata_url);
+        if (auto metadata =
+                detail::fetch_metadata_url(*server_config.oauth->auth_server_metadata_url);
             metadata && metadata->revocation_endpoint && !metadata->revocation_endpoint->empty()) {
             const auto auth_method = detail::revocation_auth_method(*metadata);
             if (!token->refresh_token.empty()) {
-                (void)detail::revoke_oauth_token(
-                    *metadata->revocation_endpoint,
-                    token->refresh_token,
-                    "refresh_token",
-                    *token,
-                    auth_method);
+                (void)detail::revoke_oauth_token(*metadata->revocation_endpoint,
+                                                 token->refresh_token, "refresh_token", *token,
+                                                 auth_method);
             }
             if (!token->access_token.empty()) {
-                (void)detail::revoke_oauth_token(
-                    *metadata->revocation_endpoint,
-                    token->access_token,
-                    "access_token",
-                    *token,
-                    auth_method);
+                (void)detail::revoke_oauth_token(*metadata->revocation_endpoint,
+                                                 token->access_token, "access_token", *token,
+                                                 auth_method);
             }
         }
     }
@@ -689,12 +664,10 @@ public:
 // Loom OAuth client provider
 class McpOAuthProvider : public IOAuthClientProvider {
 public:
-    McpOAuthProvider(const std::string& server_name,
-                       const McpServerConfig& server_config,
-                       const std::string& redirect_uri,
-                       bool handle_redirection,
-                       std::function<void(const std::string&)> on_authorization_url,
-                       bool skip_browser_open = false)
+    McpOAuthProvider(const std::string& server_name, const McpServerConfig& server_config,
+                     const std::string& redirect_uri, bool handle_redirection,
+                     std::function<void(const std::string&)> on_authorization_url,
+                     bool skip_browser_open = false)
         : server_name_(server_name)
         , server_config_(server_config)
         , redirect_uri_(redirect_uri)
@@ -702,9 +675,7 @@ public:
         , on_authorization_url_callback_(std::move(on_authorization_url))
         , skip_browser_open_(skip_browser_open) {}
 
-    std::string get_redirect_url() const override {
-        return redirect_uri_;
-    }
+    std::string get_redirect_url() const override { return redirect_uri_; }
 
     Result<std::string> get_state() override {
         if (!state_) {
@@ -718,9 +689,7 @@ public:
         return {};
     }
 
-    void mark_step_up_pending(const std::string& scope) override {
-        pending_step_up_scope_ = scope;
-    }
+    void mark_step_up_pending(const std::string& scope) override { pending_step_up_scope_ = scope; }
 
 private:
     std::string server_name_;
@@ -737,10 +706,9 @@ private:
 };
 
 // Fetch auth server metadata
-Result<std::optional<OAuthServerMetadata>> fetch_auth_server_metadata(
-    const std::string& server_name,
-    const std::string& server_url,
-    const std::optional<std::string>& configured_metadata_url) {
+Result<std::optional<OAuthServerMetadata>>
+fetch_auth_server_metadata(const std::string& server_name, const std::string& server_url,
+                           const std::optional<std::string>& configured_metadata_url) {
     (void)server_name;
     (void)server_url;
 
@@ -769,25 +737,25 @@ Result<std::optional<OAuthServerMetadata>> fetch_auth_server_metadata(
 // from the single store. Ignored on the non-XAA path. The value transits only
 // through this parameter -> XaaConfig field -> HTTP form body; it is never
 // logged or returned in a tool result.
-Result<void> perform_mcp_oauth_flow(
-    const std::string& server_name,
-    const McpServerConfig& server_config,
-    std::function<void(const std::string&)> on_authorization_url,
-    std::optional<std::stop_token> abort_token = std::nullopt,
-    bool skip_browser_open = false,
-    std::optional<int> xaa_callback_port = std::nullopt,
-    std::optional<std::string> xaa_idp_client_secret = std::nullopt) {
+Result<void>
+perform_mcp_oauth_flow(const std::string& server_name, const McpServerConfig& server_config,
+                       std::function<void(const std::string&)> on_authorization_url,
+                       std::optional<std::stop_token> abort_token = std::nullopt,
+                       bool skip_browser_open = false,
+                       std::optional<int> xaa_callback_port = std::nullopt,
+                       std::optional<std::string> xaa_idp_client_secret = std::nullopt) {
     if (abort_token && abort_token->stop_requested()) {
-        return std::unexpected(loom::utils::Error(loom::utils::ErrorCode::cancelled,
-            "MCP OAuth flow was cancelled"));
+        return std::unexpected(
+            loom::utils::Error(loom::utils::ErrorCode::cancelled, "MCP OAuth flow was cancelled"));
     }
 
     // Check if XAA (cross-app access) is configured
     if (server_config.oauth && server_config.oauth->xaa) {
         if (!detail::is_xaa_enabled()) {
-            return std::unexpected(loom::utils::Error(
-                loom::utils::ErrorCode::invalid_argument,
-                "XAA is not enabled (set LOOM_ENABLE_XAA=1). Remove oauth.xaa to use the standard consent flow."));
+            return std::unexpected(
+                loom::utils::Error(loom::utils::ErrorCode::invalid_argument,
+                                   "XAA is not enabled (set LOOM_ENABLE_XAA=1). Remove oauth.xaa "
+                                   "to use the standard consent flow."));
         }
         if (!server_config.oauth->client_id || server_config.oauth->client_id->empty()) {
             return std::unexpected(loom::utils::Error(
@@ -820,16 +788,13 @@ Result<void> perform_mcp_oauth_flow(
         //   discoverProtectedResource → discoverAuthorizationServer →
         //   requestJwtAuthorizationGrant (id_token→ID-JAG) →
         //   exchangeJwtAuthGrant (ID-JAG→access_token)
-        auto xaa_result = authenticate_xaa(
-            *xaa_config,
-            server_config.url.value_or(std::string{}),
-            on_authorization_url,
-            skip_browser_open,
-            xaa_callback_port);
+        auto xaa_result =
+            authenticate_xaa(*xaa_config, server_config.url.value_or(std::string{}),
+                             on_authorization_url, skip_browser_open, xaa_callback_port);
         if (!xaa_result) {
-            return std::unexpected(loom::utils::Error(
-                loom::utils::ErrorCode::permission_denied,
-                "XAA flow failed: " + xaa_result.error().message()));
+            return std::unexpected(
+                loom::utils::Error(loom::utils::ErrorCode::permission_denied,
+                                   "XAA flow failed: " + xaa_result.error().message()));
         }
 
         McpOAuthTokenData token;
@@ -837,17 +802,17 @@ Result<void> perform_mcp_oauth_flow(
         token.server_url = server_config.url.value_or(std::string{});
         token.access_token = xaa_result->access_token;
         token.refresh_token = xaa_result->refresh_token.value_or("");
-        token.expires_at = detail::current_epoch_seconds()
-            + (xaa_result->expires_in.value_or(3600));
-        token.scope = xaa_result->scope.value_or(
-            xaa_config->scope.value_or("openid profile"));
+        token.expires_at =
+            detail::current_epoch_seconds() + (xaa_result->expires_in.value_or(3600));
+        token.scope = xaa_result->scope.value_or(xaa_config->scope.value_or("openid profile"));
         token.client_id = xaa_config->client_id;
         token.client_secret = xaa_config->client_secret;
-        token.discovery_state.authorization_server_url =
-            xaa_result->authorization_server_url;
+        token.discovery_state.authorization_server_url = xaa_result->authorization_server_url;
         token.discovery_state.resource_metadata_url =
             server_config.oauth ? server_config.oauth->auth_server_metadata_url : std::nullopt;
-        if (auto stored = detail::store_token_data(get_server_key(server_name, server_config), token); !stored) {
+        if (auto stored =
+                detail::store_token_data(get_server_key(server_name, server_config), token);
+            !stored) {
             return std::unexpected(stored.error());
         }
         return {};
@@ -857,11 +822,11 @@ Result<void> perform_mcp_oauth_flow(
     try {
         // Clear existing tokens
         clear_server_tokens_from_local_storage(server_name, server_config);
-        
+
         // Start callback listener before exposing the authorization URL.
         auto requested_port = server_config.oauth && server_config.oauth->callback_port
-            ? static_cast<uint16_t>(*server_config.oauth->callback_port)
-            : static_cast<uint16_t>(0);
+                                  ? static_cast<uint16_t>(*server_config.oauth->callback_port)
+                                  : static_cast<uint16_t>(0);
         loom::services::oauth::AuthCodeListener listener(requested_port);
         auto listener_start = listener.start();
         if (!listener_start) {
@@ -870,31 +835,29 @@ Result<void> perform_mcp_oauth_flow(
                 "Failed to start MCP OAuth callback listener: " + listener_start.error()));
         }
         auto redirect_uri = listener.get_redirect_uri();
-        
+
         // Create auth provider
         McpOAuthProvider provider(server_name, server_config, redirect_uri, true,
-                                    on_authorization_url, skip_browser_open);
-        
+                                  on_authorization_url, skip_browser_open);
+
         // Fetch metadata
         auto metadata_result = fetch_auth_server_metadata(
-            server_name,
-            server_config.url.value_or(std::string{}),
-            server_config.oauth ? server_config.oauth->auth_server_metadata_url : std::nullopt
-        );
+            server_name, server_config.url.value_or(std::string{}),
+            server_config.oauth ? server_config.oauth->auth_server_metadata_url : std::nullopt);
         if (!metadata_result) {
             return std::unexpected(metadata_result.error());
         }
-        
+
         if (*metadata_result) {
             provider.set_metadata(**metadata_result);
         }
-        
+
         // Get state
         auto state_result = provider.get_state();
         if (!state_result) {
             return std::unexpected(state_result.error());
         }
-        
+
         if (!*metadata_result) {
             return std::unexpected(loom::utils::Error(
                 loom::utils::ErrorCode::invalid_argument,
@@ -902,17 +865,16 @@ Result<void> perform_mcp_oauth_flow(
         }
 
         const auto client_id = server_config.oauth && server_config.oauth->client_id
-            ? *server_config.oauth->client_id
-            : std::string{"loom"};
+                                   ? *server_config.oauth->client_id
+                                   : std::string{"loom"};
         auto code_verifier = loom::services::oauth::generate_code_verifier();
         auto code_challenge = loom::services::oauth::generate_code_challenge(code_verifier);
-        auto authorization_url = std::string{(**metadata_result).authorization_endpoint}
-            + "?response_type=code"
-            + "&client_id=" + detail::url_encode(client_id)
-            + "&redirect_uri=" + detail::url_encode(redirect_uri)
-            + "&state=" + detail::url_encode(*state_result)
-            + "&code_challenge=" + detail::url_encode(code_challenge)
-            + "&code_challenge_method=S256";
+        auto authorization_url =
+            std::string{(**metadata_result).authorization_endpoint} + "?response_type=code" +
+            "&client_id=" + detail::url_encode(client_id) +
+            "&redirect_uri=" + detail::url_encode(redirect_uri) +
+            "&state=" + detail::url_encode(*state_result) +
+            "&code_challenge=" + detail::url_encode(code_challenge) + "&code_challenge_method=S256";
         if ((**metadata_result).scope && !(**metadata_result).scope->empty()) {
             authorization_url += "&scope=" + detail::url_encode(*(**metadata_result).scope);
         }
@@ -920,46 +882,43 @@ Result<void> perform_mcp_oauth_flow(
 
         if (abort_token && abort_token->stop_requested()) {
             return std::unexpected(loom::utils::Error(loom::utils::ErrorCode::cancelled,
-                "MCP OAuth flow was cancelled"));
+                                                      "MCP OAuth flow was cancelled"));
         }
 
         auto callback = listener.wait_for_callback(std::chrono::seconds{300});
         if (!callback) {
             return std::unexpected(loom::utils::Error(
-                loom::utils::ErrorCode::timeout,
-                "MCP OAuth callback failed: " + callback.error()));
+                loom::utils::ErrorCode::timeout, "MCP OAuth callback failed: " + callback.error()));
         }
         if (callback->state != *state_result) {
-            return std::unexpected(loom::utils::Error(
-                loom::utils::ErrorCode::permission_denied,
-                "MCP OAuth callback state did not match"));
+            return std::unexpected(loom::utils::Error(loom::utils::ErrorCode::permission_denied,
+                                                      "MCP OAuth callback state did not match"));
         }
 
-        auto token = detail::exchange_authorization_code(
-            **metadata_result,
-            client_id,
-            redirect_uri,
-            callback->code,
-            code_verifier);
+        auto token = detail::exchange_authorization_code(**metadata_result, client_id, redirect_uri,
+                                                         callback->code, code_verifier);
         if (!token) return std::unexpected(token.error());
 
         token->server_name = server_name;
         token->server_url = server_config.url.value_or(std::string{});
-        token->discovery_state.authorization_server_url = (**metadata_result).authorization_endpoint;
+        token->discovery_state.authorization_server_url =
+            (**metadata_result).authorization_endpoint;
         token->discovery_state.resource_metadata_url =
             server_config.oauth ? server_config.oauth->auth_server_metadata_url : std::nullopt;
-        if (auto stored = detail::store_token_data(get_server_key(server_name, server_config), *token); !stored) {
+        if (auto stored =
+                detail::store_token_data(get_server_key(server_name, server_config), *token);
+            !stored) {
             return std::unexpected(stored.error());
         }
         return {};
-        
+
     } catch (const AuthenticationCancelledError&) {
         throw;
     } catch (const std::exception& e) {
-        return std::unexpected(loom::utils::Error(
-            loom::utils::ErrorCode::permission_denied,
-            "MCP OAuth flow failed: " + std::string(e.what())));
+        return std::unexpected(
+            loom::utils::Error(loom::utils::ErrorCode::permission_denied,
+                               "MCP OAuth flow failed: " + std::string(e.what())));
     }
 }
 
-} // namespace loom::services::mcp
+}  // namespace loom::services::mcp

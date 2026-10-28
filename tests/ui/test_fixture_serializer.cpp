@@ -78,94 +78,103 @@ namespace {
 [[nodiscard]] ContentBlockStart make_content_block_start_thinking() {
     return ContentBlockStart{
         .index = 1,
-        .block = ThinkingBlock{
-            .thinking = "Let me think about this...",
-            .signature = "sig_abc123",
-        },
+        .block =
+            ThinkingBlock{
+                .thinking = "Let me think about this...",
+                .signature = "sig_abc123",
+            },
     };
 }
 
 [[nodiscard]] ContentBlockStart make_content_block_start_tool_use() {
     return ContentBlockStart{
         .index = 2,
-        .block = ToolUseBlock{
-            .id = ToolUseId{.value = "tu_001"},
-            .name = "Bash",
-            .input_json = R"({"command":"ls -la"})",
-        },
+        .block =
+            ToolUseBlock{
+                .id = ToolUseId{.value = "tu_001"},
+                .name = "Bash",
+                .input_json = R"({"command":"ls -la"})",
+            },
     };
 }
 
 [[nodiscard]] ContentBlockStart make_content_block_start_tool_result_str() {
     return ContentBlockStart{
         .index = 3,
-        .block = ToolResultBlock{
-            .tool_use_id = ToolUseId{.value = "tu_001"},
-            .content = std::string("file1.txt\nfile2.txt"),
-            .is_error = false,
-        },
+        .block =
+            ToolResultBlock{
+                .tool_use_id = ToolUseId{.value = "tu_001"},
+                .content = std::string("file1.txt\nfile2.txt"),
+                .is_error = false,
+            },
     };
 }
 
 [[nodiscard]] ContentBlockStart make_content_block_start_tool_result_arr() {
     return ContentBlockStart{
         .index = 4,
-        .block = ToolResultBlock{
-            .tool_use_id = ToolUseId{.value = "tu_002"},
-            .content = std::vector<ToolResultContentItem>{
-                {.type = "text", .text = "partial output", .media_type = "", .data = ""},
-                {.type = "image", .text = "", .media_type = "image/png", .data = "iVBOR="},
+        .block =
+            ToolResultBlock{
+                .tool_use_id = ToolUseId{.value = "tu_002"},
+                .content =
+                    std::vector<ToolResultContentItem>{
+                        {.type = "text", .text = "partial output", .media_type = "", .data = ""},
+                        {.type = "image", .text = "", .media_type = "image/png", .data = "iVBOR="},
+                    },
+                .is_error = true,
             },
-            .is_error = true,
-        },
     };
 }
 
 [[nodiscard]] ContentBlockStart make_content_block_start_image() {
     return ContentBlockStart{
         .index = 5,
-        .block = ImageBlock{
-            .media_type = "image/png",
-            .data = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAAB",
-            .width = 800,
-            .height = 600,
-            .size_bytes = std::nullopt,
-            .file_name = std::nullopt,
-            .source_path = std::nullopt,
-            .source = ImageBlockSource::Unknown,
-        },
+        .block =
+            ImageBlock{
+                .media_type = "image/png",
+                .data = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAAB",
+                .width = 800,
+                .height = 600,
+                .size_bytes = std::nullopt,
+                .file_name = std::nullopt,
+                .source_path = std::nullopt,
+                .source = ImageBlockSource::Unknown,
+            },
     };
 }
 
 [[nodiscard]] ContentBlockStart make_content_block_start_document() {
     return ContentBlockStart{
         .index = 6,
-        .block = DocumentBlock{
-            .media_type = "application/pdf",
-            .data = "JVBERi0xLjcKJYGBg==",
-        },
+        .block =
+            DocumentBlock{
+                .media_type = "application/pdf",
+                .data = "JVBERi0xLjcKJYGBg==",
+            },
     };
 }
 
 [[nodiscard]] StreamEnd make_stream_end() {
     return StreamEnd{
         .stop_reason = "end_turn",
-        .usage = TokenUsage{
-            .input_tokens = 150,
-            .output_tokens = 42,
-            .cache_creation_tokens = 10,
-            .cache_read_tokens = 100,
-        },
+        .usage =
+            TokenUsage{
+                .input_tokens = 150,
+                .output_tokens = 42,
+                .cache_creation_tokens = 10,
+                .cache_read_tokens = 100,
+            },
     };
 }
 
 [[nodiscard]] StreamEnd make_stream_end_no_stop_reason() {
     return StreamEnd{
         .stop_reason = std::nullopt,
-        .usage = TokenUsage{
-            .input_tokens = 10,
-            .output_tokens = 5,
-        },
+        .usage =
+            TokenUsage{
+                .input_tokens = 10,
+                .output_tokens = 5,
+            },
     };
 }
 
@@ -193,7 +202,7 @@ namespace {
     return msg;
 }
 
-} // anonymous namespace
+}  // anonymous namespace
 
 // ============================================================
 // StreamEvent round-trip tests
@@ -348,10 +357,11 @@ TEST(FixtureSerializer, ToolResultBlockStringRoundTrip) {
 TEST(FixtureSerializer, ToolResultBlockArrayRoundTrip) {
     ContentBlock b = ToolResultBlock{
         .tool_use_id = ToolUseId{.value = "tu_999"},
-        .content = std::vector<ToolResultContentItem>{
-            {.type = "text", .text = "line 1", .media_type = "", .data = ""},
-            {.type = "text", .text = "line 2", .media_type = "", .data = ""},
-        },
+        .content =
+            std::vector<ToolResultContentItem>{
+                {.type = "text", .text = "line 1", .media_type = "", .data = ""},
+                {.type = "text", .text = "line 2", .media_type = "", .data = ""},
+            },
         .is_error = false,
     };
     EXPECT_EQ(content_block_to_json(b), round_trip_block(b));
@@ -493,13 +503,14 @@ TEST(FixtureSerializer, AllEventsProduceValidJson) {
 }
 
 TEST(FixtureSerializer, UserOriginsAndRawXmlRoundTripWithoutInference) {
-    const std::string body = "<task_notification><summary>raw &amp; /private/output</summary></task_notification>";
+    const std::string body =
+        "<task_notification><summary>raw &amp; /private/output</summary></task_notification>";
     const std::vector<UserMessageOrigin> origins{
         HumanInput{}, LegacyHistory{},
-        TaskEvent{"sub-1", "parent-1", TaskEventKind::Subagent,
-            TaskEventStatus::Failed, "Review 中文"},
-        TaskEvent{"team-1", "parent-1", TaskEventKind::TeamAgent,
-            TaskEventStatus::Stopped, "Tester & <literal>"}};
+        TaskEvent{"sub-1", "parent-1", TaskEventKind::Subagent, TaskEventStatus::Failed,
+                  "Review 中文"},
+        TaskEvent{"team-1", "parent-1", TaskEventKind::TeamAgent, TaskEventStatus::Stopped,
+                  "Tester & <literal>"}};
     for (const auto& origin : origins) {
         UserMessage user;
         user.origin = origin;
@@ -521,8 +532,11 @@ TEST(FixtureSerializer, UserOriginsAndRawXmlRoundTripWithoutInference) {
 
 TEST(FixtureSerializer, OldCommitIsLegacyAndInvalidMetadataStaysHuman) {
     for (const auto& suffix : {std::string{}, std::string{R"(,"origin":null)"},
-                              std::string{R"(,"origin":"task_event","task_event":{})"}}) {
-        const auto input = std::string{R"({"type":"__commit__","message":{"role":"user","content":[{"type":"text","text":"<task_notification>same XML</task_notification>"}])"} + suffix + "}}";
+                               std::string{R"(,"origin":"task_event","task_event":{})"}}) {
+        const auto input =
+            std::string{
+                R"({"type":"__commit__","message":{"role":"user","content":[{"type":"text","text":"<task_notification>same XML</task_notification>"}])"} +
+            suffix + "}}";
         auto parsed = json::parse(input);
         ASSERT_TRUE(parsed.has_value()) << input;
         auto step = loom::testing::detail::parse_step(parsed->root(), 0);
@@ -542,9 +556,10 @@ TEST(FixtureSerializer, OldCommitIsLegacyAndInvalidMetadataStaysHuman) {
 
 TEST(FixtureSerializer, InvalidTaskEventResavesAsHumanWithoutLosingModelContent) {
     UserMessage user;
-    user.origin = TaskEvent{"agent", "parent", TaskEventKind::Subagent,
-        TaskEventStatus::Completed, std::string(4097, 'x')};
-    const std::string body = "<task_notification><result>keep full /private/output &amp; context</result></task_notification>";
+    user.origin = TaskEvent{"agent", "parent", TaskEventKind::Subagent, TaskEventStatus::Completed,
+                            std::string(4097, 'x')};
+    const std::string body = "<task_notification><result>keep full /private/output &amp; "
+                             "context</result></task_notification>";
     user.content.push_back(TextBlock{body});
     auto parsed = json::parse(commit_to_json(Message{user}));
     ASSERT_TRUE(parsed.has_value());

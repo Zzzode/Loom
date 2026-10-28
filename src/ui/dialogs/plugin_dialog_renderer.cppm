@@ -9,7 +9,6 @@
 ///           which has its own source-location budget.
 module;
 
-
 export module loom.ui.dialogs.plugin_dialog_renderer;
 
 import std;
@@ -20,7 +19,6 @@ export namespace loom::ui::dialogs::plugin_dialog_renderer {
 
 /// Register the PluginDialog dialog renderer into a registry.
 /// Implementation lives in plugin_dialog_renderer_impl.cpp.
-void register_plugin_dialog_renderer(
-    loom::ui::dialogs::system::DialogRendererRegistry& registry);
+void register_plugin_dialog_renderer(loom::ui::dialogs::system::DialogRendererRegistry& registry);
 
-} // namespace loom::ui::dialogs::plugin_dialog_renderer
+}  // namespace loom::ui::dialogs::plugin_dialog_renderer

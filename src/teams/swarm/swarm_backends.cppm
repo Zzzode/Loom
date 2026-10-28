@@ -30,9 +30,12 @@ enum class BackendType {
 /// Convert BackendType to string
 [[nodiscard]] inline std::string_view backend_type_name(BackendType type) {
     switch (type) {
-        case BackendType::Tmux: return "tmux";
-        case BackendType::ITerm2: return "iterm2";
-        case BackendType::InProcess: return "in-process";
+    case BackendType::Tmux:
+        return "tmux";
+    case BackendType::ITerm2:
+        return "iterm2";
+    case BackendType::InProcess:
+        return "in-process";
     }
     return "unknown";
 }
@@ -45,20 +48,35 @@ enum class PaneBackendType {
 
 /// Agent color names for pane borders and titles
 enum class AgentColor {
-    Red, Blue, Green, Yellow, Purple, Orange, Pink, Cyan,
+    Red,
+    Blue,
+    Green,
+    Yellow,
+    Purple,
+    Orange,
+    Pink,
+    Cyan,
 };
 
 /// Convert AgentColor to display string
 [[nodiscard]] inline std::string_view agent_color_name(AgentColor color) {
     switch (color) {
-        case AgentColor::Red: return "red";
-        case AgentColor::Blue: return "blue";
-        case AgentColor::Green: return "green";
-        case AgentColor::Yellow: return "yellow";
-        case AgentColor::Purple: return "purple";
-        case AgentColor::Orange: return "orange";
-        case AgentColor::Pink: return "pink";
-        case AgentColor::Cyan: return "cyan";
+    case AgentColor::Red:
+        return "red";
+    case AgentColor::Blue:
+        return "blue";
+    case AgentColor::Green:
+        return "green";
+    case AgentColor::Yellow:
+        return "yellow";
+    case AgentColor::Purple:
+        return "purple";
+    case AgentColor::Orange:
+        return "orange";
+    case AgentColor::Pink:
+        return "pink";
+    case AgentColor::Cyan:
+        return "cyan";
     }
     return "unknown";
 }
@@ -75,10 +93,10 @@ struct CreatePaneResult {
 
 /// Identity fields for a teammate
 struct TeammateIdentity {
-    std::string name;                       ///< Agent name (e.g., "researcher")
-    std::string team_name;                  ///< Team name this teammate belongs to
-    std::optional<AgentColor> color;        ///< Assigned color for UI differentiation
-    bool plan_mode_required = false;        ///< Whether plan mode approval required
+    std::string name;                 ///< Agent name (e.g., "researcher")
+    std::string team_name;            ///< Team name this teammate belongs to
+    std::optional<AgentColor> color;  ///< Assigned color for UI differentiation
+    bool plan_mode_required = false;  ///< Whether plan mode approval required
 };
 
 /// Configuration for spawning a teammate (any execution mode)
@@ -92,11 +110,11 @@ struct TeammateSpawnConfig {
     std::optional<std::string> agent_type;
 
     // Execution config
-    std::string prompt;                     ///< Initial prompt to send
-    std::string cwd;                        ///< Working directory
-    std::optional<std::string> model;       ///< Model to use
+    std::string prompt;                ///< Initial prompt to send
+    std::string cwd;                   ///< Working directory
+    std::optional<std::string> model;  ///< Model to use
     std::optional<std::string> system_prompt;
-    std::string system_prompt_mode = "default"; ///< "default", "replace", "append"
+    std::string system_prompt_mode = "default";  ///< "default", "replace", "append"
     std::optional<std::string> worktree_path;
     std::string parent_session_id;
 
@@ -108,10 +126,10 @@ struct TeammateSpawnConfig {
 /// Result from spawning a teammate
 struct TeammateSpawnResult {
     bool success = false;
-    std::string agent_id;                   ///< Unique ID: agentName@teamName
+    std::string agent_id;  ///< Unique ID: agentName@teamName
     std::optional<std::string> error;
-    std::optional<std::string> task_id;     ///< Task ID in app state (in-process)
-    std::optional<PaneId> pane_id;          ///< Pane ID (pane-based)
+    std::optional<std::string> task_id;  ///< Task ID in app state (in-process)
+    std::optional<PaneId> pane_id;       ///< Pane ID (pane-based)
 };
 
 /// Message to send to a teammate
@@ -119,15 +137,15 @@ struct TeammateMessage {
     std::string text;
     std::string from;
     std::optional<std::string> color;
-    std::optional<std::string> timestamp;   ///< ISO string
-    std::optional<std::string> summary;     ///< 5-10 word preview for UI
+    std::optional<std::string> timestamp;  ///< ISO string
+    std::optional<std::string> summary;    ///< 5-10 word preview for UI
 };
 
 /// Result from backend detection
 struct BackendDetectionResult {
     BackendType backend_type;
-    bool is_native = false;         ///< Running inside the backend's environment
-    bool needs_it2_setup = false;   ///< iTerm2 detected but it2 not installed
+    bool is_native = false;        ///< Running inside the backend's environment
+    bool needs_it2_setup = false;  ///< iTerm2 detected but it2 not installed
 };
 
 /// Teammate mode as captured at session startup
@@ -171,36 +189,32 @@ public:
     [[nodiscard]] virtual bool is_running_inside() const = 0;
 
     /// Create a new pane for a teammate in the swarm view
-    [[nodiscard]] virtual CreatePaneResult create_teammate_pane(
-        std::string_view name, AgentColor color) = 0;
+    [[nodiscard]] virtual CreatePaneResult create_teammate_pane(std::string_view name,
+                                                                AgentColor color) = 0;
 
     /// Send a command to a specific pane
-    virtual void send_command_to_pane(
-        const PaneId& pane_id, std::string_view command,
-        bool use_external_session = false) = 0;
+    virtual void send_command_to_pane(const PaneId& pane_id, std::string_view command,
+                                      bool use_external_session = false) = 0;
 
     /// Set the border color for a pane
-    virtual void set_pane_border_color(
-        const PaneId& pane_id, AgentColor color,
-        bool use_external_session = false) = 0;
+    virtual void set_pane_border_color(const PaneId& pane_id, AgentColor color,
+                                       bool use_external_session = false) = 0;
 
     /// Set the title for a pane
-    virtual void set_pane_title(
-        const PaneId& pane_id, std::string_view name, AgentColor color,
-        bool use_external_session = false) = 0;
+    virtual void set_pane_title(const PaneId& pane_id, std::string_view name, AgentColor color,
+                                bool use_external_session = false) = 0;
 
     /// Enable pane border status display (shows titles in borders)
-    virtual void enable_pane_border_status(
-        std::optional<std::string_view> window_target = std::nullopt,
-        bool use_external_session = false) = 0;
+    virtual void
+    enable_pane_border_status(std::optional<std::string_view> window_target = std::nullopt,
+                              bool use_external_session = false) = 0;
 
     /// Rebalance panes to achieve desired layout
-    virtual void rebalance_panes(
-        std::string_view window_target, bool has_leader) = 0;
+    virtual void rebalance_panes(std::string_view window_target, bool has_leader) = 0;
 
     /// Kill/close a specific pane
-    [[nodiscard]] virtual bool kill_pane(
-        const PaneId& pane_id, bool use_external_session = false) = 0;
+    [[nodiscard]] virtual bool kill_pane(const PaneId& pane_id,
+                                         bool use_external_session = false) = 0;
 
     /// Capture the visible tail of a pane's screen (tmux capture-pane -p).
     /// Returns nullopt when the pane does not exist / backend cannot capture
@@ -210,18 +224,18 @@ public:
     /// Non-pure (rather than = 0) so test doubles in other translation units
     /// do not all have to gain an override; the default means 'cannot capture'.
     /// The default body is out-of-line in swarm_backends_executor.cpp.
-    [[nodiscard]] virtual std::optional<std::string> capture_pane_text(
-        const PaneId& pane_id, int tail_lines = 200,
-        bool use_external_session = false);
+    [[nodiscard]] virtual std::optional<std::string>
+    capture_pane_text(const PaneId& pane_id, int tail_lines = 200,
+                      bool use_external_session = false);
 
     /// Hide a pane by breaking it out into a hidden window
-    [[nodiscard]] virtual bool hide_pane(
-        const PaneId& pane_id, bool use_external_session = false) = 0;
+    [[nodiscard]] virtual bool hide_pane(const PaneId& pane_id,
+                                         bool use_external_session = false) = 0;
 
     /// Show a previously hidden pane
-    [[nodiscard]] virtual bool show_pane(
-        const PaneId& pane_id, std::string_view target_window_or_pane,
-        bool use_external_session = false) = 0;
+    [[nodiscard]] virtual bool show_pane(const PaneId& pane_id,
+                                         std::string_view target_window_or_pane,
+                                         bool use_external_session = false) = 0;
 };
 
 // ============================================================================
@@ -242,16 +256,14 @@ public:
     [[nodiscard]] virtual bool is_available() const = 0;
 
     /// Spawn a new teammate with the given configuration
-    [[nodiscard]] virtual TeammateSpawnResult spawn(
-        const TeammateSpawnConfig& config) = 0;
+    [[nodiscard]] virtual TeammateSpawnResult spawn(const TeammateSpawnConfig& config) = 0;
 
     /// Send a message to a teammate
-    virtual void send_message(
-        std::string_view agent_id, const TeammateMessage& message) = 0;
+    virtual void send_message(std::string_view agent_id, const TeammateMessage& message) = 0;
 
     /// Terminate a teammate (graceful shutdown request)
-    [[nodiscard]] virtual bool terminate(
-        std::string_view agent_id, std::optional<std::string_view> reason = std::nullopt) = 0;
+    [[nodiscard]] virtual bool terminate(std::string_view agent_id,
+                                         std::optional<std::string_view> reason = std::nullopt) = 0;
 
     /// Force kill a teammate (immediate termination)
     [[nodiscard]] virtual bool kill(std::string_view agent_id) = 0;
@@ -330,47 +342,41 @@ private:
 class TmuxBackend : public PaneBackend {
 public:
     [[nodiscard]] BackendType type() const override { return BackendType::Tmux; }
+
     [[nodiscard]] std::string_view display_name() const override { return "tmux"; }
+
     [[nodiscard]] bool supports_hide_show() const override { return true; }
 
     [[nodiscard]] bool is_available() const override;
     [[nodiscard]] bool is_running_inside() const override;
 
-    [[nodiscard]] CreatePaneResult create_teammate_pane(
-        std::string_view name, AgentColor color) override;
+    [[nodiscard]] CreatePaneResult create_teammate_pane(std::string_view name,
+                                                        AgentColor color) override;
 
-    void send_command_to_pane(
-        const PaneId& pane_id, std::string_view command,
-        bool use_external_session = false) override;
+    void send_command_to_pane(const PaneId& pane_id, std::string_view command,
+                              bool use_external_session = false) override;
 
-    void set_pane_border_color(
-        const PaneId& pane_id, AgentColor color,
-        bool use_external_session = false) override;
+    void set_pane_border_color(const PaneId& pane_id, AgentColor color,
+                               bool use_external_session = false) override;
 
-    void set_pane_title(
-        const PaneId& pane_id, std::string_view name, AgentColor color,
-        bool use_external_session = false) override;
+    void set_pane_title(const PaneId& pane_id, std::string_view name, AgentColor color,
+                        bool use_external_session = false) override;
 
-    void enable_pane_border_status(
-        std::optional<std::string_view> window_target = std::nullopt,
-        bool use_external_session = false) override;
+    void enable_pane_border_status(std::optional<std::string_view> window_target = std::nullopt,
+                                   bool use_external_session = false) override;
 
-    void rebalance_panes(
-        std::string_view window_target, bool has_leader) override;
+    void rebalance_panes(std::string_view window_target, bool has_leader) override;
 
-    [[nodiscard]] bool kill_pane(
-        const PaneId& pane_id, bool use_external_session = false) override;
+    [[nodiscard]] bool kill_pane(const PaneId& pane_id, bool use_external_session = false) override;
 
-    [[nodiscard]] std::optional<std::string> capture_pane_text(
-        const PaneId& pane_id, int tail_lines = 200,
-        bool use_external_session = false) override;
+    [[nodiscard]] std::optional<std::string>
+    capture_pane_text(const PaneId& pane_id, int tail_lines = 200,
+                      bool use_external_session = false) override;
 
-    [[nodiscard]] bool hide_pane(
-        const PaneId& pane_id, bool use_external_session = false) override;
+    [[nodiscard]] bool hide_pane(const PaneId& pane_id, bool use_external_session = false) override;
 
-    [[nodiscard]] bool show_pane(
-        const PaneId& pane_id, std::string_view target_window_or_pane,
-        bool use_external_session = false) override;
+    [[nodiscard]] bool show_pane(const PaneId& pane_id, std::string_view target_window_or_pane,
+                                 bool use_external_session = false) override;
 
 private:
     /// Create teammate pane when inside tmux (with leader)
@@ -419,54 +425,48 @@ private:
 class ITermBackend : public PaneBackend {
 public:
     [[nodiscard]] BackendType type() const override { return BackendType::ITerm2; }
+
     [[nodiscard]] std::string_view display_name() const override { return "iTerm2"; }
+
     [[nodiscard]] bool supports_hide_show() const override { return false; }
 
     [[nodiscard]] bool is_available() const override;
     [[nodiscard]] bool is_running_inside() const override;
 
-    [[nodiscard]] CreatePaneResult create_teammate_pane(
-        std::string_view name, AgentColor color) override;
+    [[nodiscard]] CreatePaneResult create_teammate_pane(std::string_view name,
+                                                        AgentColor color) override;
 
-    void send_command_to_pane(
-        const PaneId& pane_id, std::string_view command,
-        bool use_external_session = false) override;
+    void send_command_to_pane(const PaneId& pane_id, std::string_view command,
+                              bool use_external_session = false) override;
 
     /// No-op for iTerm2 — color requires slow Python API calls
-    void set_pane_border_color(
-        const PaneId& pane_id, AgentColor color,
-        bool use_external_session = false) override;
+    void set_pane_border_color(const PaneId& pane_id, AgentColor color,
+                               bool use_external_session = false) override;
 
     /// No-op for iTerm2 — title requires slow Python API calls
-    void set_pane_title(
-        const PaneId& pane_id, std::string_view name, AgentColor color,
-        bool use_external_session = false) override;
+    void set_pane_title(const PaneId& pane_id, std::string_view name, AgentColor color,
+                        bool use_external_session = false) override;
 
     /// No-op for iTerm2 — pane titles shown in tabs automatically
-    void enable_pane_border_status(
-        std::optional<std::string_view> window_target = std::nullopt,
-        bool use_external_session = false) override;
+    void enable_pane_border_status(std::optional<std::string_view> window_target = std::nullopt,
+                                   bool use_external_session = false) override;
 
     /// No-op for iTerm2 — pane balancing handled automatically
-    void rebalance_panes(
-        std::string_view window_target, bool has_leader) override;
+    void rebalance_panes(std::string_view window_target, bool has_leader) override;
 
-    [[nodiscard]] bool kill_pane(
-        const PaneId& pane_id, bool use_external_session = false) override;
+    [[nodiscard]] bool kill_pane(const PaneId& pane_id, bool use_external_session = false) override;
 
     /// Not supported yet — iTerm2 has no capture-pane equivalent (TODO: it2 get-screen).
-    [[nodiscard]] std::optional<std::string> capture_pane_text(
-        const PaneId& pane_id, int tail_lines = 200,
-        bool use_external_session = false) override;
+    [[nodiscard]] std::optional<std::string>
+    capture_pane_text(const PaneId& pane_id, int tail_lines = 200,
+                      bool use_external_session = false) override;
 
     /// Not supported in iTerm2 (no equivalent to tmux break-pane)
-    [[nodiscard]] bool hide_pane(
-        const PaneId& pane_id, bool use_external_session = false) override;
+    [[nodiscard]] bool hide_pane(const PaneId& pane_id, bool use_external_session = false) override;
 
     /// Not supported in iTerm2 (no equivalent to tmux join-pane)
-    [[nodiscard]] bool show_pane(
-        const PaneId& pane_id, std::string_view target_window_or_pane,
-        bool use_external_session = false) override;
+    [[nodiscard]] bool show_pane(const PaneId& pane_id, std::string_view target_window_or_pane,
+                                 bool use_external_session = false) override;
 
 private:
     /// Parse session ID from `it2 session split` output
@@ -504,14 +504,12 @@ public:
     /// In-process backend is always available (no external dependencies)
     [[nodiscard]] bool is_available() const override { return true; }
 
-    [[nodiscard]] TeammateSpawnResult spawn(
-        const TeammateSpawnConfig& config) override;
+    [[nodiscard]] TeammateSpawnResult spawn(const TeammateSpawnConfig& config) override;
 
-    void send_message(
-        std::string_view agent_id, const TeammateMessage& message) override;
+    void send_message(std::string_view agent_id, const TeammateMessage& message) override;
 
-    [[nodiscard]] bool terminate(
-        std::string_view agent_id, std::optional<std::string_view> reason = std::nullopt) override;
+    [[nodiscard]] bool terminate(std::string_view agent_id,
+                                 std::optional<std::string_view> reason = std::nullopt) override;
 
     [[nodiscard]] bool kill(std::string_view agent_id) override;
 
@@ -562,18 +560,14 @@ public:
 
     [[nodiscard]] BackendType type() const override { return backend_->type(); }
 
-    [[nodiscard]] bool is_available() const override {
-        return backend_->is_available();
-    }
+    [[nodiscard]] bool is_available() const override { return backend_->is_available(); }
 
-    [[nodiscard]] TeammateSpawnResult spawn(
-        const TeammateSpawnConfig& config) override;
+    [[nodiscard]] TeammateSpawnResult spawn(const TeammateSpawnConfig& config) override;
 
-    void send_message(
-        std::string_view agent_id, const TeammateMessage& message) override;
+    void send_message(std::string_view agent_id, const TeammateMessage& message) override;
 
-    [[nodiscard]] bool terminate(
-        std::string_view agent_id, std::optional<std::string_view> reason = std::nullopt) override;
+    [[nodiscard]] bool terminate(std::string_view agent_id,
+                                 std::optional<std::string_view> reason = std::nullopt) override;
 
     [[nodiscard]] bool kill(std::string_view agent_id) override;
 
@@ -581,8 +575,8 @@ public:
 
     /// Capture the current screen tail of a spawned agent's pane.
     /// Returns nullopt when the agent is unknown or its pane cannot be captured.
-    [[nodiscard]] std::optional<std::string> capture_agent_pane(
-        std::string_view agent_id, int tail_lines = 200) const;
+    [[nodiscard]] std::optional<std::string> capture_agent_pane(std::string_view agent_id,
+                                                                int tail_lines = 200) const;
 
     /// Snapshot of agent_id -> pane info for every live spawned pane.
     [[nodiscard]] std::map<std::string, SpawnedPane> spawned_panes() const;
@@ -638,9 +632,9 @@ private:
 
 /// Python package manager types for installing it2
 enum class PythonPackageManager {
-    Uvx,    ///< uv tool install (preferred)
-    Pipx,   ///< pipx (good for isolated environments)
-    Pip,    ///< pip install --user (fallback)
+    Uvx,   ///< uv tool install (preferred)
+    Pipx,  ///< pipx (good for isolated environments)
+    Pip,   ///< pip install --user (fallback)
 };
 
 /// Result of attempting to install it2
@@ -760,8 +754,8 @@ public:
 
     /// Get a TeammateExecutor for spawning teammates.
     /// Returns InProcessBackend or PaneBackendExecutor based on configuration.
-    [[nodiscard]] static std::shared_ptr<TeammateExecutor> get_teammate_executor(
-        bool prefer_in_process = false);
+    [[nodiscard]] static std::shared_ptr<TeammateExecutor>
+    get_teammate_executor(bool prefer_in_process = false);
 
     /// Reset backend detection cache (for testing)
     static void reset() {
@@ -790,8 +784,8 @@ private:
 // ============================================================================
 
 /// Format an agent ID from name and team: "agentName@teamName"
-[[nodiscard]] inline std::string format_agent_id(
-    std::string_view agent_name, std::string_view team_name) {
+[[nodiscard]] inline std::string format_agent_id(std::string_view agent_name,
+                                                 std::string_view team_name) {
     std::string result;
     result.reserve(agent_name.size() + 1 + team_name.size());
     result.append(agent_name);
@@ -844,15 +838,11 @@ namespace detail {
 
 [[nodiscard]] std::string timestamp_now();
 
-[[nodiscard]] bool write_backend_message_to_mailbox(
-    std::string_view agent_id,
-    const TeammateMessage& message
-);
+[[nodiscard]] bool write_backend_message_to_mailbox(std::string_view agent_id,
+                                                    const TeammateMessage& message);
 
-[[nodiscard]] TeammateMessage shutdown_request_message(
-    std::string_view agent_id,
-    std::optional<std::string_view> reason
-);
+[[nodiscard]] TeammateMessage shutdown_request_message(std::string_view agent_id,
+                                                       std::optional<std::string_view> reason);
 
 [[nodiscard]] std::string shell_quote(std::string_view value);
 
@@ -873,19 +863,13 @@ struct TmuxArgv {
 
 [[nodiscard]] TmuxArgv tmux_list_windows_argv(std::string_view session);
 
-[[nodiscard]] TmuxArgv tmux_new_session_argv(
-    std::string_view session, std::string_view window
-);
+[[nodiscard]] TmuxArgv tmux_new_session_argv(std::string_view session, std::string_view window);
 
-[[nodiscard]] TmuxArgv tmux_new_window_argv(
-    std::string_view session, std::string_view window
-);
+[[nodiscard]] TmuxArgv tmux_new_window_argv(std::string_view session, std::string_view window);
 
 [[nodiscard]] TmuxArgv tmux_list_panes_argv(std::string_view target);
 
-[[nodiscard]] TmuxArgv tmux_split_window_argv(
-    std::string_view target, bool vertical
-);
+[[nodiscard]] TmuxArgv tmux_split_window_argv(std::string_view target, bool vertical);
 
 /// What create_pane_external must do to obtain a swarm-view window.
 enum class ExternalSessionAction {
@@ -908,12 +892,9 @@ struct ExternalSessionPlan {
 /// session/window always yields one unused pane (reuse_first_pane); an
 /// existing window only hands out pane 0 when it is still the sole pane, so a
 /// leader restart with live teammate panes splits instead of hijacking pane 0.
-[[nodiscard]] ExternalSessionPlan plan_external_swarm_view(
-    bool session_exists,
-    bool window_exists,
-    std::size_t pane_count,
-    bool first_pane_used
-);
+[[nodiscard]] ExternalSessionPlan plan_external_swarm_view(bool session_exists, bool window_exists,
+                                                           std::size_t pane_count,
+                                                           bool first_pane_used);
 
 // ── Injectable shell seams (tests only; production behavior unchanged) ──────
 //
@@ -949,9 +930,7 @@ struct ShellOutput {
 [[nodiscard]] ShellOutput read_shell_output_with_status(std::string_view command);
 
 // Unit-testable tmux arg builder for 'tmux capture-pane -p -t <id> -S -<lines>'.
-[[nodiscard]] std::string build_capture_pane_command(
-    std::string_view pane_id, int tail_lines
-);
+[[nodiscard]] std::string build_capture_pane_command(std::string_view pane_id, int tail_lines);
 
 [[nodiscard]] std::string teammate_command();
 
@@ -959,6 +938,6 @@ struct ShellOutput {
 
 [[nodiscard]] std::optional<TeammateMode> forced_mode_from_env();
 
-} // namespace detail
+}  // namespace detail
 
-} // namespace loom::utils::swarm_backends
+}  // namespace loom::utils::swarm_backends

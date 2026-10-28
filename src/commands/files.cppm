@@ -3,7 +3,6 @@
 /// Shows all files currently in context.
 module;
 
-
 export module loom.commands.files;
 
 import std;
@@ -30,17 +29,13 @@ public:
         };
     }
 
-    [[nodiscard]] VoidResult validate(const CommandContext&) {
-        return {};
-    }
+    [[nodiscard]] VoidResult validate(const CommandContext&) { return {}; }
 
     [[nodiscard]] Result<CommandResult> execute(const CommandContext&) {
         return CommandResult::fail("Context file provider is not configured.");
     }
 
-    [[nodiscard]] std::vector<std::string> complete(std::string_view) {
-        return {};
-    }
+    [[nodiscard]] std::vector<std::string> complete(std::string_view) { return {}; }
 };
 
-} // namespace loom::commands
+}  // namespace loom::commands

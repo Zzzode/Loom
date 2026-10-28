@@ -51,12 +51,11 @@ namespace detail {
 }
 
 /// Parse shell-style tokens; returns std::nullopt on unbalanced quotes.
-[[nodiscard]] inline std::optional<std::vector<std::string>>
-tokenize(std::string_view text) {
+[[nodiscard]] inline std::optional<std::vector<std::string>> tokenize(std::string_view text) {
     return loom::utils::argument_substitution::parse_shell_like_arguments(text);
 }
 
-} // namespace detail
+}  // namespace detail
 
 /// Extract the sed expression tokens from the full `sed …` command string.
 /// Returns std::nullopt on parse error (callers treat parse errors as "not
@@ -111,7 +110,7 @@ extract_sed_expressions(std::string_view command) {
             continue;
         }
 
-        if (arg.starts_with('-')) continue; // skip other flags
+        if (arg.starts_with('-')) continue;  // skip other flags
 
         if (!found_e_flag && !found_expression) {
             expressions.push_back(arg);
@@ -135,7 +134,7 @@ extract_sed_expressions(std::string_view command) {
     }
     const auto after_sed = detail::trim(trimmed.substr(3));
     auto tokens = detail::tokenize(after_sed);
-    if (!tokens.has_value()) return true; // parse failure → assume dangerous
+    if (!tokens.has_value()) return true;  // parse failure → assume dangerous
 
     std::size_t arg_count = 0;
     bool has_e_flag = false;
@@ -161,8 +160,8 @@ extract_sed_expressions(std::string_view command) {
 
         ++arg_count;
 
-        if (has_e_flag) return true;          // every positional is a file
-        if (arg_count > 1) return true;        // first positional = expression
+        if (has_e_flag) return true;     // every positional is a file
+        if (arg_count > 1) return true;  // first positional = expression
     }
 
     return false;
@@ -174,8 +173,7 @@ extract_sed_expressions(std::string_view command) {
 
 namespace detail {
 
-inline bool flag_is_allowed(std::string_view flag,
-                            const std::vector<std::string_view>& allowlist) {
+inline bool flag_is_allowed(std::string_view flag, const std::vector<std::string_view>& allowlist) {
     // Exact match
     for (auto a : allowlist) {
         if (flag == a) return true;
@@ -201,16 +199,15 @@ inline bool flag_is_allowed(std::string_view flag,
     return false;
 }
 
-inline bool validate_flags_against_allowlist(
-    const std::vector<std::string>& flags,
-    const std::vector<std::string_view>& allowlist) {
+inline bool validate_flags_against_allowlist(const std::vector<std::string>& flags,
+                                             const std::vector<std::string_view>& allowlist) {
     for (const auto& f : flags) {
         if (!flag_is_allowed(f, allowlist)) return false;
     }
     return true;
 }
 
-} // namespace detail
+}  // namespace detail
 
 // ---------------------------------------------------------------------------
 // Pattern 1: line-printing (sed -n with print commands)
@@ -223,7 +220,7 @@ inline bool validate_flags_against_allowlist(
     // Must end with 'p'
     if (cmd.back() != 'p') return false;
     const auto body = cmd.substr(0, cmd.size() - 1);
-    if (body.empty()) return true; // bare "p"
+    if (body.empty()) return true;  // bare "p"
 
     // Possible forms: digits  OR  digits,digits
     auto comma = body.find(',');
@@ -246,9 +243,8 @@ inline bool validate_flags_against_allowlist(
 }
 
 /// Check the command matches the line-printing pattern.
-[[nodiscard]] inline bool is_line_printing_command(
-    std::string_view command,
-    const std::vector<std::string>& expressions) {
+[[nodiscard]] inline bool is_line_printing_command(std::string_view command,
+                                                   const std::vector<std::string>& expressions) {
 
     const auto trimmed = detail::trim(command);
     if (!trimmed.starts_with("sed")) return false;
@@ -267,17 +263,18 @@ inline bool validate_flags_against_allowlist(
 
     // Allowlist for pattern 1
     static const std::vector<std::string_view> allowed = {
-        "-n", "--quiet", "--silent",
-        "-E", "--regexp-extended", "-r",
-        "-z", "--zero-terminated",
-        "--posix",
+        "-n", "--quiet", "--silent",          "-E",      "--regexp-extended",
+        "-r", "-z",      "--zero-terminated", "--posix",
     };
     if (!detail::validate_flags_against_allowlist(flags, allowed)) return false;
 
     // Require -n / --quiet / --silent (or combined form with 'n')
     bool has_n = false;
     for (const auto& f : flags) {
-        if (f == "-n" || f == "--quiet" || f == "--silent") { has_n = true; break; }
+        if (f == "-n" || f == "--quiet" || f == "--silent") {
+            has_n = true;
+            break;
+        }
         if (f.size() >= 2 && f[0] == '-' && f[1] != '-' && f.find('n') != std::string::npos) {
             has_n = true;
             break;
@@ -339,9 +336,8 @@ namespace detail {
     if (delim_count != 2) return false;
 
     // Extract flags
-    const auto flags = last_delim + 1 < rest.size()
-                           ? rest.substr(last_delim + 1)
-                           : std::string_view{};
+    const auto flags =
+        last_delim + 1 < rest.size() ? rest.substr(last_delim + 1) : std::string_view{};
 
     // Allow: zero or more [gpimIM] followed by at most one [1-9] followed by
     // zero or more [gpimIM].
@@ -359,14 +355,12 @@ namespace detail {
     return true;
 }
 
-} // namespace detail
+}  // namespace detail
 
 /// Pattern 2 check — matches TS isSubstitutionCommand().
-[[nodiscard]] inline bool is_substitution_command(
-    std::string_view command,
-    const std::vector<std::string>& expressions,
-    bool has_file_args_flag,
-    bool allow_file_writes) {
+[[nodiscard]] inline bool is_substitution_command(std::string_view command,
+                                                  const std::vector<std::string>& expressions,
+                                                  bool has_file_args_flag, bool allow_file_writes) {
 
     if (!allow_file_writes && has_file_args_flag) return false;
 
@@ -385,7 +379,10 @@ namespace detail {
     }
 
     std::vector<std::string_view> allowed = {
-        "-E", "--regexp-extended", "-r", "--posix",
+        "-E",
+        "--regexp-extended",
+        "-r",
+        "--posix",
     };
     if (allow_file_writes) {
         allowed.push_back("-i");
@@ -417,7 +414,7 @@ namespace detail {
     return true;
 }
 
-} // namespace detail
+}  // namespace detail
 
 /// Broad rejections — mirrors TS containsDangerousOperations().
 /// Returns true when the expression is dangerous.
@@ -510,10 +507,12 @@ namespace detail {
         //   digits, optional ,digits  OR  $  OR  /pattern/[/pattern/]
         std::size_t i = 0;
         // Case 1: pure numeric
-        while (i < s.size() && std::isdigit(static_cast<unsigned char>(s[i]))) ++i;
+        while (i < s.size() && std::isdigit(static_cast<unsigned char>(s[i])))
+            ++i;
         if (i > 0 && i < s.size() && s[i] == ',') {
             ++i;
-            while (i < s.size() && std::isdigit(static_cast<unsigned char>(s[i]))) ++i;
+            while (i < s.size() && std::isdigit(static_cast<unsigned char>(s[i])))
+                ++i;
             if (i < s.size() && s[i] == '$') ++i;
         }
         // Case 2: $
@@ -526,7 +525,10 @@ namespace detail {
                     i += 2;
                     continue;
                 }
-                if (s[i] == '/') { ++i; break; }
+                if (s[i] == '/') {
+                    ++i;
+                    break;
+                }
                 ++i;
             }
             // Optional second /pattern/
@@ -543,7 +545,10 @@ namespace detail {
                             i += 2;
                             continue;
                         }
-                        if (s[i] == '/') { ++i; break; }
+                        if (s[i] == '/') {
+                            ++i;
+                            break;
+                        }
                         ++i;
                     }
                 }
@@ -554,16 +559,17 @@ namespace detail {
             }
         }
         // Skip optional whitespace
-        while (i < s.size() && std::isspace(static_cast<unsigned char>(s[i]))) ++i;
+        while (i < s.size() && std::isspace(static_cast<unsigned char>(s[i])))
+            ++i;
         if (i < s.size() && s[i] == cmd_char) {
             // Must be followed by whitespace + non-whitespace, OR end-of-string
-            if (i + 1 == s.size()) return true; // bare "p", "d" etc.
+            if (i + 1 == s.size()) return true;  // bare "p", "d" etc.
             if (std::isspace(static_cast<unsigned char>(s[i + 1]))) {
                 // Require at least one filename / arg for w/W/e/E
-                if (cmd_char == 'w' || cmd_char == 'W' ||
-                    cmd_char == 'e' || cmd_char == 'E') {
+                if (cmd_char == 'w' || cmd_char == 'W' || cmd_char == 'e' || cmd_char == 'E') {
                     std::size_t j = i + 1;
-                    while (j < s.size() && std::isspace(static_cast<unsigned char>(s[j]))) ++j;
+                    while (j < s.size() && std::isspace(static_cast<unsigned char>(s[j])))
+                        ++j;
                     return j < s.size();
                 }
                 return true;
@@ -574,12 +580,9 @@ namespace detail {
 
     // w / W  followed by a filename
     static const std::vector<std::regex> write_patterns = {
-        std::regex(R"(^[wW]\s+\S+)"),
-        std::regex(R"(^\d+\s*[wW]\s+\S+)"),
-        std::regex(R"(^\$\s*[wW]\s+\S+)"),
-        std::regex(R"(^/[^/]*/[IMim]*\s*[wW]\s+\S+)"),
-        std::regex(R"(^\d+,\d+\s*[wW]\s+\S+)"),
-        std::regex(R"(^\d+,\$\s*[wW]\s+\S+)"),
+        std::regex(R"(^[wW]\s+\S+)"),           std::regex(R"(^\d+\s*[wW]\s+\S+)"),
+        std::regex(R"(^\$\s*[wW]\s+\S+)"),      std::regex(R"(^/[^/]*/[IMim]*\s*[wW]\s+\S+)"),
+        std::regex(R"(^\d+,\d+\s*[wW]\s+\S+)"), std::regex(R"(^\d+,\$\s*[wW]\s+\S+)"),
     };
     for (const auto& re : write_patterns) {
         if (std::regex_search(s, re)) return true;
@@ -588,12 +591,9 @@ namespace detail {
 
     // e / E  execute commands
     static const std::vector<std::regex> exec_patterns = {
-        std::regex(R"(^e)"),
-        std::regex(R"(^\d+\s*e)"),
-        std::regex(R"(^\$\s*e)"),
-        std::regex(R"(^/[^/]*/[IMim]*\s*e)"),
-        std::regex(R"(^\d+,\d+\s*e)"),
-        std::regex(R"(^\d+,\$\s*e)"),
+        std::regex(R"(^e)"),           std::regex(R"(^\d+\s*e)"),
+        std::regex(R"(^\$\s*e)"),      std::regex(R"(^/[^/]*/[IMim]*\s*e)"),
+        std::regex(R"(^\d+,\d+\s*e)"), std::regex(R"(^\d+,\$\s*e)"),
     };
     for (const auto& re : exec_patterns) {
         if (std::regex_search(s, re)) return true;
@@ -606,10 +606,8 @@ namespace detail {
         std::smatch m;
         if (std::regex_match(s, m, subst_re) && m.size() >= 3) {
             const auto flags = m[2].str();
-            if (flags.find('w') != std::string::npos ||
-                flags.find('W') != std::string::npos ||
-                flags.find('e') != std::string::npos ||
-                flags.find('E') != std::string::npos) {
+            if (flags.find('w') != std::string::npos || flags.find('W') != std::string::npos ||
+                flags.find('e') != std::string::npos || flags.find('E') != std::string::npos) {
                 return true;
             }
         }
@@ -619,10 +617,8 @@ namespace detail {
     if (!s.empty() && s[0] == 'y') {
         static const std::regex y_re(R"(y([^\\\n]))");
         if (std::regex_search(s, y_re)) {
-            if (s.find('w') != std::string::npos ||
-                s.find('W') != std::string::npos ||
-                s.find('e') != std::string::npos ||
-                s.find('E') != std::string::npos) {
+            if (s.find('w') != std::string::npos || s.find('W') != std::string::npos ||
+                s.find('e') != std::string::npos || s.find('E') != std::string::npos) {
                 return true;
             }
         }
@@ -636,9 +632,8 @@ namespace detail {
 // ---------------------------------------------------------------------------
 
 /// Top-level allowlist check — matches TS sedCommandIsAllowedByAllowlist().
-[[nodiscard]] inline bool sed_command_is_allowed_by_allowlist(
-    std::string_view command,
-    bool allow_file_writes = false) {
+[[nodiscard]] inline bool sed_command_is_allowed_by_allowlist(std::string_view command,
+                                                              bool allow_file_writes = false) {
 
     auto expressions = extract_sed_expressions(command);
     if (!expressions.has_value()) return false;
@@ -676,8 +671,8 @@ namespace detail {
 
 /// Result of a cross-cutting sed safety check.
 enum class SedSafetyDecision {
-    Passthrough, ///< Safe (or not a sed command).
-    Ask,         ///< Requires user approval.
+    Passthrough,  ///< Safe (or not a sed command).
+    Ask,          ///< Requires user approval.
 };
 
 struct SedSafetyResult {
@@ -689,8 +684,8 @@ struct SedSafetyResult {
 /// Takes the full compound command string and splits it on shell separators
 /// (;, &&, ||).  When `allow_file_writes` is true, the `-i` flag and file
 /// arguments are permitted for substitution commands.
-[[nodiscard]] inline SedSafetyResult
-check_sed_constraints(std::string_view command, bool allow_file_writes) {
+[[nodiscard]] inline SedSafetyResult check_sed_constraints(std::string_view command,
+                                                           bool allow_file_writes) {
     // Split on shell-level separators (handled via bash_shell_quoting helper
     // — that helper is quoted-token-aware).
     using loom::utils::bash_shell_quoting::detail::split_compound;
@@ -702,9 +697,7 @@ check_sed_constraints(std::string_view command, bool allow_file_writes) {
 
         // Determine base command (first whitespace-separated token)
         const auto space = trimmed.find_first_of(" \t");
-        const auto base = space == std::string_view::npos
-                             ? trimmed
-                             : trimmed.substr(0, space);
+        const auto base = space == std::string_view::npos ? trimmed : trimmed.substr(0, space);
         if (base != "sed") continue;
 
         if (!sed_command_is_allowed_by_allowlist(trimmed, allow_file_writes)) {
@@ -715,7 +708,7 @@ check_sed_constraints(std::string_view command, bool allow_file_writes) {
         }
     }
 
-    return { SedSafetyDecision::Passthrough, "No dangerous sed operations detected" };
+    return {SedSafetyDecision::Passthrough, "No dangerous sed operations detected"};
 }
 
 // ---------------------------------------------------------------------------
@@ -724,8 +717,8 @@ check_sed_constraints(std::string_view command, bool allow_file_writes) {
 
 /// Full sed safety check including path scope.
 /// Returns .valid == true when the command is safe to auto-execute.
-[[nodiscard]] inline ValidationResult
-is_sed_safe(std::string_view sed_cmd, const PathValidationContext& ctx) {
+[[nodiscard]] inline ValidationResult is_sed_safe(std::string_view sed_cmd,
+                                                  const PathValidationContext& ctx) {
     // 1. Cross-cutting dangerous-operations check.
     //    In "acceptEdits" mode (path restriction implies we're editing project
     //    files) we allow in-place writes; otherwise we require read-only.
@@ -748,4 +741,4 @@ is_sed_safe(std::string_view sed_cmd, const PathValidationContext& ctx) {
     return {true, std::nullopt};
 }
 
-} // namespace loom::tools::sed_validation
+}  // namespace loom::tools::sed_validation

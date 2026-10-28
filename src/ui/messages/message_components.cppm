@@ -1,8 +1,9 @@
 module;
+#include <ftxui/component/component.hpp>
+#include <ftxui/dom/elements.hpp>
+
 #include <cstddef>
 #include <cstdint>
-#include <ftxui/dom/elements.hpp>
-#include <ftxui/component/component.hpp>
 
 export module loom.ui.messages.message_components;
 
@@ -11,35 +12,36 @@ import std;
 import loom.ui.foundation.component_primitives;
 import loom.ui.foundation.theme_provider;
 
-import loom.ui.foundation.design_figures;  // kBlackCircleFallback (● U+25CF) — single source of truth
+import loom.ui.foundation.design_figures; // kBlackCircleFallback (● U+25CF) — single source of truth
 
 export namespace loom::ui::messages {
 
 // Message affordances share one style: underlined labels are mouse actions;
 // inverted key caps describe keyboard commands without implying click support.
-[[nodiscard]] inline ftxui::Element message_action(
-    std::string_view label,
-    ftxui::Color fg = loom::ui::design::theme::current_theme().palette->suggestion) {
+[[nodiscard]] inline ftxui::Element
+message_action(std::string_view label,
+               ftxui::Color fg = loom::ui::design::theme::current_theme().palette->suggestion) {
     using namespace ftxui;
-    return text("[" + std::string(label) + "]") | underlined | bold
-        | color(fg);
+    return text("[" + std::string(label) + "]") | underlined | bold | color(fg);
 }
 
-[[nodiscard]] inline ftxui::Element message_key_hint(
-    std::string_view key, std::string_view label) {
+[[nodiscard]] inline ftxui::Element message_key_hint(std::string_view key, std::string_view label) {
     using namespace ftxui;
     return hbox({loom::ui::design::primitives::kbd("[" + std::string(key) + "]"),
-                 text(std::string(label))})
-        | color(loom::ui::design::theme::current_theme().palette->text);
+                 text(std::string(label))}) |
+           color(loom::ui::design::theme::current_theme().palette->text);
 }
 
 // --- Error constants ---
 inline constexpr std::string_view kApiErrorPrefix = "API Error: ";
 inline constexpr std::string_view kApiTimeoutError = "Request timed out. Please try again.";
-inline constexpr std::string_view kInvalidApiKeyError = "Invalid API key. Please check your configuration.";
+inline constexpr std::string_view kInvalidApiKeyError =
+    "Invalid API key. Please check your configuration.";
 inline constexpr std::string_view kCreditBalanceTooLowError = "Your credit balance is too low.";
-inline constexpr std::string_view kPromptTooLongError = "Your prompt is too long for the current model's context window.";
-inline constexpr std::string_view kOrgDisabledError = "Your organization has disabled this feature.";
+inline constexpr std::string_view kPromptTooLongError =
+    "Your prompt is too long for the current model's context window.";
+inline constexpr std::string_view kOrgDisabledError =
+    "Your organization has disabled this feature.";
 inline constexpr std::string_view kTokenRevokedError = "Your API token has been revoked.";
 inline constexpr std::string_view kUserAbortError = "[interrupted by user]";
 inline constexpr std::string_view kNoResponseRequested = "[no response requested]";
@@ -49,15 +51,7 @@ inline constexpr int kMaxApiErrorChars = 1000;
 // Darwin-correct kBlackCircle (⏺ U+23FA) and platform fallback rationale.
 
 // --- Message block types ---
-enum class BlockType {
-    Text,
-    Code,
-    ToolUse,
-    ToolResult,
-    Thinking,
-    Image,
-    Error
-};
+enum class BlockType { Text, Code, ToolUse, ToolResult, Thinking, Image, Error };
 
 struct TextBlockParam {
     std::string text;
@@ -87,14 +81,12 @@ struct AssistantTextMessagePropsRequired {
 
 inline auto make_assistant_text_message_props(AssistantTextMessagePropsRequired required)
     -> AssistantTextMessageProps {
-    return AssistantTextMessageProps{
-        .param = std::move(required.param),
-        .add_margin = required.add_margin,
-        .should_show_dot = required.should_show_dot,
-        .verbose = required.verbose,
-        .width = std::nullopt,
-        .on_open_rate_limit_options = std::nullopt
-    };
+    return AssistantTextMessageProps{.param = std::move(required.param),
+                                     .add_margin = required.add_margin,
+                                     .should_show_dot = required.should_show_dot,
+                                     .verbose = required.verbose,
+                                     .width = std::nullopt,
+                                     .on_open_rate_limit_options = std::nullopt};
 }
 
 // --- Rate limit message (UNIFIED definition, canonical location) ---
@@ -102,16 +94,16 @@ inline auto make_assistant_text_message_props(AssistantTextMessagePropsRequired 
 // and row-dispatch code access.  All are optional / default-initialised
 // so callers can fill only the subset they know about.
 struct RateLimitInfo {
-    std::string reason;                 ///< Short reason (shown in preview)
-    std::string message;                ///< Human-readable description
-    std::string model;                  ///< Affected model name
-    std::string raw_text;               ///< Original error string (for verbosity)
-    int retry_after_seconds{0};         ///< Legacy integer seconds fallback
-    std::optional<std::chrono::seconds> retry_after;   ///< Precise backoff
+    std::string reason;                               ///< Short reason (shown in preview)
+    std::string message;                              ///< Human-readable description
+    std::string model;                                ///< Affected model name
+    std::string raw_text;                             ///< Original error string (for verbosity)
+    int retry_after_seconds{0};                       ///< Legacy integer seconds fallback
+    std::optional<std::chrono::seconds> retry_after;  ///< Precise backoff
     std::optional<double> tokens_remaining;
     std::optional<double> requests_remaining;
-    bool is_hard_limit{false};          ///< 429 hard stop vs warning
-    bool is_overloaded{false};          ///< "server overloaded" vs plain 429
+    bool is_hard_limit{false};  ///< 429 hard stop vs warning
+    bool is_overloaded{false};  ///< "server overloaded" vs plain 429
 };
 
 // --- Shared layout helpers (indent / padding Decorators) ---
@@ -119,10 +111,7 @@ struct RateLimitInfo {
 [[nodiscard]] inline ftxui::Decorator indent(int n) {
     using namespace ftxui;
     return [n](Element e) {
-        return hbox({
-            ftxui::text(std::string(static_cast<std::size_t>(n), ' ')),
-            std::move(e)
-        });
+        return hbox({ftxui::text(std::string(static_cast<std::size_t>(n), ' ')), std::move(e)});
     };
 }
 
@@ -131,15 +120,12 @@ struct RateLimitInfo {
     using namespace ftxui;
     return [=](Element e) -> Element {
         std::vector<Element> lines;
-        lines.reserve(static_cast<std::size_t>(top) + 1 +
-                      static_cast<std::size_t>(bottom));
+        lines.reserve(static_cast<std::size_t>(top) + 1 + static_cast<std::size_t>(bottom));
         const std::string h_pad_l(static_cast<std::size_t>(left), ' ');
         const std::string h_pad_r(static_cast<std::size_t>(right), ' ');
         for (int i = 0; i < top; ++i)
             lines.push_back(ftxui::text(h_pad_l + h_pad_r));
-        lines.push_back(ftxui::hbox({
-            ftxui::text(h_pad_l), std::move(e), ftxui::text(h_pad_r)
-        }));
+        lines.push_back(ftxui::hbox({ftxui::text(h_pad_l), std::move(e), ftxui::text(h_pad_r)}));
         for (int i = 0; i < bottom; ++i)
             lines.push_back(ftxui::text(h_pad_l + h_pad_r));
         return ftxui::vbox(std::move(lines));
@@ -170,7 +156,8 @@ enum class MessageRenderError {
 };
 
 // Classify an error message string into a known error type
-[[nodiscard]] inline auto classify_error(std::string_view text) -> std::optional<MessageRenderError> {
+[[nodiscard]] inline auto classify_error(std::string_view text)
+    -> std::optional<MessageRenderError> {
     if (text.find("Invalid API key") != std::string_view::npos ||
         text.find("invalid_api_key") != std::string_view::npos) {
         return MessageRenderError::InvalidApiKey;
@@ -236,35 +223,33 @@ enum class MessageRenderError {
 
 // Render an error message with appropriate styling
 [[nodiscard]] inline auto render_error_message(MessageRenderError error_type,
-                                                std::string_view raw_text)
-    -> std::string {
+                                               std::string_view raw_text) -> std::string {
     switch (error_type) {
-        case MessageRenderError::InvalidApiKey:
-            return "\033[31m" + std::string(kInvalidApiKeyError) + "\033[0m";
-        case MessageRenderError::TokenRevoked:
-            return "\033[31m" + std::string(kTokenRevokedError) + "\033[0m";
-        case MessageRenderError::CreditBalanceLow:
-            return "\033[31m" + std::string(kCreditBalanceTooLowError) + "\033[0m";
-        case MessageRenderError::PromptTooLong:
-            return "\033[33m" + std::string(kPromptTooLongError) + "\033[0m";
-        case MessageRenderError::OrgDisabled:
-            return "\033[31m" + std::string(kOrgDisabledError) + "\033[0m";
-        case MessageRenderError::ApiTimeout:
-            return "\033[33m" + std::string(kApiTimeoutError) + "\033[0m";
-        case MessageRenderError::RateLimit:
-            return "\033[33mRate limited. Retrying...\033[0m";
-        case MessageRenderError::UserAbort:
-            return "\033[2m" + std::string(kUserAbortError) + "\033[0m";
-        case MessageRenderError::GenericApi:
-            return "\033[31m" + truncate_api_error(raw_text) + "\033[0m";
+    case MessageRenderError::InvalidApiKey:
+        return "\033[31m" + std::string(kInvalidApiKeyError) + "\033[0m";
+    case MessageRenderError::TokenRevoked:
+        return "\033[31m" + std::string(kTokenRevokedError) + "\033[0m";
+    case MessageRenderError::CreditBalanceLow:
+        return "\033[31m" + std::string(kCreditBalanceTooLowError) + "\033[0m";
+    case MessageRenderError::PromptTooLong:
+        return "\033[33m" + std::string(kPromptTooLongError) + "\033[0m";
+    case MessageRenderError::OrgDisabled:
+        return "\033[31m" + std::string(kOrgDisabledError) + "\033[0m";
+    case MessageRenderError::ApiTimeout:
+        return "\033[33m" + std::string(kApiTimeoutError) + "\033[0m";
+    case MessageRenderError::RateLimit:
+        return "\033[33mRate limited. Retrying...\033[0m";
+    case MessageRenderError::UserAbort:
+        return "\033[2m" + std::string(kUserAbortError) + "\033[0m";
+    case MessageRenderError::GenericApi:
+        return "\033[31m" + truncate_api_error(raw_text) + "\033[0m";
     }
     return std::string(raw_text);
 }
 
 // Render the assistant text message element
-[[nodiscard]] inline auto render_assistant_text_message(
-    const AssistantTextMessageProps& props,
-    int terminal_width)
+[[nodiscard]] inline auto render_assistant_text_message(const AssistantTextMessageProps& props,
+                                                        int terminal_width)
     -> std::expected<std::string, std::string> {
 
     const auto& text = props.param.text;
@@ -314,13 +299,11 @@ enum class MessageRenderError {
 // --- FTXUI element factories ---
 
 // Create an FTXUI Element for an assistant text message
-[[nodiscard]] auto make_assistant_text_element(
-    const AssistantTextMessageProps& props,
-    int terminal_width) -> ftxui::Element;
+[[nodiscard]] auto make_assistant_text_element(const AssistantTextMessageProps& props,
+                                               int terminal_width) -> ftxui::Element;
 
 // Create an interactive FTXUI Component for rate-limit messages with retry button
-[[nodiscard]] auto make_rate_limit_component(
-    const RateLimitInfo& info,
-    std::function<void()> on_retry) -> ftxui::Component;
+[[nodiscard]] auto make_rate_limit_component(const RateLimitInfo& info,
+                                             std::function<void()> on_retry) -> ftxui::Component;
 
-} // namespace loom::ui::messages
+}  // namespace loom::ui::messages

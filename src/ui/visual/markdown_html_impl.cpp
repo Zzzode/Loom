@@ -37,8 +37,7 @@ struct FootnoteRenderState {
 
 // Forward declaration — render_list_html calls it for non-paragraph sub-blocks.
 namespace detail {
-[[nodiscard]] std::string render_block_to_html(const BlockToken& tok,
-                                               bool gfm_extensions,
+[[nodiscard]] std::string render_block_to_html(const BlockToken& tok, bool gfm_extensions,
                                                FootnoteRenderState* fn = nullptr);
 }
 
@@ -51,11 +50,21 @@ namespace {
     out.reserve(text.size());
     for (char c : text) {
         switch (c) {
-            case '&': out += "&amp;"; break;
-            case '<': out += "&lt;"; break;
-            case '>': out += "&gt;"; break;
-            case '"': out += "&quot;"; break;
-            default:  out += c; break;
+        case '&':
+            out += "&amp;";
+            break;
+        case '<':
+            out += "&lt;";
+            break;
+        case '>':
+            out += "&gt;";
+            break;
+        case '"':
+            out += "&quot;";
+            break;
+        default:
+            out += c;
+            break;
         }
     }
     return out;
@@ -69,12 +78,10 @@ namespace {
     std::string out;
     out.reserve(s.size());
     for (unsigned char c : s) {
-        if ((c >= '0' && c <= '9') || (c >= 'A' && c <= 'Z') ||
-            (c >= 'a' && c <= 'z') || c == '!' || c == '#' || c == '$' ||
-            c == '%' || c == '(' || c == ')' || c == '*' || c == '+' ||
-            c == ',' || c == '-' || c == '.' || c == '/' || c == ':' ||
-            c == ';' || c == '=' || c == '?' || c == '@' || c == '_' ||
-            c == '~') {
+        if ((c >= '0' && c <= '9') || (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') ||
+            c == '!' || c == '#' || c == '$' || c == '%' || c == '(' || c == ')' || c == '*' ||
+            c == '+' || c == ',' || c == '-' || c == '.' || c == '/' || c == ':' || c == ';' ||
+            c == '=' || c == '?' || c == '@' || c == '_' || c == '~') {
             out += static_cast<char>(c);
         } else if (c == '&') {
             out += "&amp;";
@@ -95,14 +102,13 @@ namespace {
 // on the tag name; these are escaped as text instead of passed through.
 [[nodiscard]] bool is_disallowed_block_tag(std::string_view name) {
     static constexpr std::array<std::string_view, 9> kDisallowed = {
-        "title", "textarea", "style", "xmp", "iframe",
+        "title",   "textarea", "style",  "xmp",      "iframe",
         "noembed", "noframes", "script", "plaintext"};
     for (const auto& d : kDisallowed) {
         if (name.size() == d.size()) {
             bool match = true;
             for (std::size_t j = 0; j < name.size(); ++j) {
-                if (std::tolower(static_cast<unsigned char>(name[j])) !=
-                    d[j]) {
+                if (std::tolower(static_cast<unsigned char>(name[j])) != d[j]) {
                     match = false;
                     break;
                 }
@@ -122,33 +128,31 @@ namespace {
 [[nodiscard]] bool is_type1_html_block(std::string_view content) {
     // Skip up to 3 spaces indent
     std::size_t pos = 0;
-    while (pos < content.size() && content[pos] == ' ' && pos < 3) ++pos;
+    while (pos < content.size() && content[pos] == ' ' && pos < 3)
+        ++pos;
     if (pos >= content.size() || content[pos] != '<') return false;
     ++pos;
     // Extract tag name (must start with a letter)
     const std::size_t name_start = pos;
-    while (pos < content.size() &&
-           std::isalpha(static_cast<unsigned char>(content[pos]))) {
+    while (pos < content.size() && std::isalpha(static_cast<unsigned char>(content[pos]))) {
         ++pos;
     }
     if (pos == name_start) return false;
     // Tag name must be followed by whitespace, '>', '/', or end-of-line
     // (rejects e.g. <scriptx>)
-    if (pos < content.size() && content[pos] != ' ' &&
-        content[pos] != '\t' && content[pos] != '\n' &&
-        content[pos] != '\r' && content[pos] != '>' &&
+    if (pos < content.size() && content[pos] != ' ' && content[pos] != '\t' &&
+        content[pos] != '\n' && content[pos] != '\r' && content[pos] != '>' &&
         content[pos] != '/') {
         return false;
     }
     const std::string_view name = content.substr(name_start, pos - name_start);
-    static constexpr std::array<std::string_view, 4> kType1 = {
-        "script", "pre", "style", "textarea"};
+    static constexpr std::array<std::string_view, 4> kType1 = {"script", "pre", "style",
+                                                               "textarea"};
     for (const auto& t : kType1) {
         if (name.size() == t.size()) {
             bool match = true;
             for (std::size_t j = 0; j < name.size(); ++j) {
-                if (std::tolower(static_cast<unsigned char>(name[j])) !=
-                    t[j]) {
+                if (std::tolower(static_cast<unsigned char>(name[j])) != t[j]) {
                     match = false;
                     break;
                 }
@@ -164,8 +168,7 @@ namespace {
 // <style>, <textarea>) are exempt — their content is raw text, not HTML.
 // Comments, CDATA, processing instructions, and declarations are passed
 // through unchanged (GFM §6.11, examples 652 + GFM ext ex 22).
-[[nodiscard]] std::string filter_disallowed_html_in_block(
-    std::string_view content) {
+[[nodiscard]] std::string filter_disallowed_html_in_block(std::string_view content) {
     if (is_type1_html_block(content)) {
         return std::string(content);
     }
@@ -234,8 +237,7 @@ namespace {
             ++tag_pos;
         }
         if (tag_pos > name_start) {
-            const std::string_view name =
-                content.substr(name_start, tag_pos - name_start);
+            const std::string_view name = content.substr(name_start, tag_pos - name_start);
             if (is_disallowed_block_tag(name)) {
                 result += "&lt;";
                 ++i;
@@ -261,8 +263,7 @@ namespace {
         if (c == '\n') {
             // Count trailing spaces in the output so far
             std::size_t trailing = 0;
-            while (trailing < out.size() &&
-                   out[out.size() - 1 - trailing] == ' ') {
+            while (trailing < out.size() && out[out.size() - 1 - trailing] == ' ') {
                 ++trailing;
             }
             if (trailing >= 2) {
@@ -276,11 +277,21 @@ namespace {
             }
         } else {
             switch (c) {
-                case '&': out += "&amp;"; break;
-                case '<': out += "&lt;"; break;
-                case '>': out += "&gt;"; break;
-                case '"': out += "&quot;"; break;
-                default:  out += c; break;
+            case '&':
+                out += "&amp;";
+                break;
+            case '<':
+                out += "&lt;";
+                break;
+            case '>':
+                out += "&gt;";
+                break;
+            case '"':
+                out += "&quot;";
+                break;
+            default:
+                out += c;
+                break;
             }
         }
     }
@@ -293,15 +304,13 @@ namespace {
 // First-def-wins by normalized label (case-insensitive lookup).  The
 // BlockToken pointers remain valid because they point into `blocks` (and
 // its sub_blocks / list_items), which outlives the render.
-void collect_footnote_defs(
-    const std::vector<BlockToken>& blocks,
-    std::map<std::string, FootnoteDefInfo>& defs) {
+void collect_footnote_defs(const std::vector<BlockToken>& blocks,
+                           std::map<std::string, FootnoteDefInfo>& defs) {
     for (const auto& block : blocks) {
         if (block.kind == BlockTokenKind::FootnoteDef) {
             auto key = detail::normalize_label(block.footnote_label);
             if (!defs.contains(key)) {
-                defs.emplace(key,
-                             FootnoteDefInfo{block.footnote_label, &block});
+                defs.emplace(key, FootnoteDefInfo{block.footnote_label, &block});
             }
         }
         if (!block.sub_blocks.empty()) {
@@ -322,149 +331,138 @@ void collect_footnote_defs(
 // <strong> (see src/html.c CMARK_NODE_STRONG case).  CommonMark 0.30+
 // allows the nesting, so this flattening is GFM-only.  parent_is_strong
 // tracks whether the tokens' direct parent in the AST is a Bold node.
-[[nodiscard]] std::string render_inlines_to_html(
-    const std::vector<InlineToken>& tokens,
-    bool gfm_extensions = false,
-    bool parent_is_strong = false,
-    FootnoteRenderState* fn = nullptr) {
+[[nodiscard]] std::string render_inlines_to_html(const std::vector<InlineToken>& tokens,
+                                                 bool gfm_extensions = false,
+                                                 bool parent_is_strong = false,
+                                                 FootnoteRenderState* fn = nullptr) {
     std::string out;
     for (const auto& tok : tokens) {
         switch (tok.kind) {
-            case InlineTokenKind::Text:
-                out += render_text_html(tok.text);
-                break;
-            case InlineTokenKind::Bold:
-                if (gfm_extensions && parent_is_strong) {
-                    // Suppress <strong> tags — same-type nesting flattened.
-                    if (!tok.children.empty()) {
-                        out += render_inlines_to_html(
-                            tok.children, gfm_extensions,
-                            /*parent_is_strong=*/true, fn);
-                    } else {
-                        out += render_text_html(tok.text);
-                    }
-                } else {
-                    out += "<strong>";
-                    if (!tok.children.empty()) {
-                        out += render_inlines_to_html(
-                            tok.children, gfm_extensions,
-                            /*parent_is_strong=*/true, fn);
-                    } else {
-                        out += render_text_html(tok.text);
-                    }
-                    out += "</strong>";
-                }
-                break;
-            case InlineTokenKind::Italic:
-                out += "<em>";
+        case InlineTokenKind::Text:
+            out += render_text_html(tok.text);
+            break;
+        case InlineTokenKind::Bold:
+            if (gfm_extensions && parent_is_strong) {
+                // Suppress <strong> tags — same-type nesting flattened.
                 if (!tok.children.empty()) {
-                    out += render_inlines_to_html(
-                        tok.children, gfm_extensions,
-                        /*parent_is_strong=*/false, fn);
+                    out += render_inlines_to_html(tok.children, gfm_extensions,
+                                                  /*parent_is_strong=*/true, fn);
                 } else {
                     out += render_text_html(tok.text);
                 }
-                out += "</em>";
-                break;
-            case InlineTokenKind::Code:
-                out += "<code>" + escape_html(tok.text) + "</code>";
-                break;
-            case InlineTokenKind::Link:
-                out += "<a href=\"" + escape_html(tok.url) + "\"";
-                if (!tok.title.empty()) {
-                    out += " title=\"" + escape_html(tok.title) + "\"";
-                }
-                out += ">";
+            } else {
+                out += "<strong>";
                 if (!tok.children.empty()) {
-                    out += render_inlines_to_html(
-                        tok.children, gfm_extensions,
-                        /*parent_is_strong=*/false, fn);
+                    out += render_inlines_to_html(tok.children, gfm_extensions,
+                                                  /*parent_is_strong=*/true, fn);
                 } else {
-                    out += escape_html(tok.text);
+                    out += render_text_html(tok.text);
                 }
-                out += "</a>";
-                break;
-            case InlineTokenKind::Image:
-                out += "<img src=\"" + escape_html(tok.url) + "\" alt=\"" +
-                       escape_html(tok.text) + "\"";
-                if (!tok.title.empty()) {
-                    out += " title=\"" + escape_html(tok.title) + "\"";
-                }
-                out += " />";
-                break;
-            case InlineTokenKind::Strikethrough:
-                // GFM strikethrough content can contain other inline
-                // constructs (autolinks, emphasis, code spans).  The
-                // tokenizer stores the raw content; re-tokenize here so
-                // nested constructs render correctly (GFM ex 26:
-                // ~~www.google.com~~ → <del><a href="...">...</a></del>).
-                out += "<del>";
-                out += render_inlines_to_html(
-                    detail::tokenize_inline(tok.text, nullptr, gfm_extensions),
-                    gfm_extensions,
-                    /*parent_is_strong=*/false, fn);
-                out += "</del>";
-                break;
-            case InlineTokenKind::Escape:
-                // The tokenizer already unescaped the character into `text`.
+                out += "</strong>";
+            }
+            break;
+        case InlineTokenKind::Italic:
+            out += "<em>";
+            if (!tok.children.empty()) {
+                out += render_inlines_to_html(tok.children, gfm_extensions,
+                                              /*parent_is_strong=*/false, fn);
+            } else {
+                out += render_text_html(tok.text);
+            }
+            out += "</em>";
+            break;
+        case InlineTokenKind::Code:
+            out += "<code>" + escape_html(tok.text) + "</code>";
+            break;
+        case InlineTokenKind::Link:
+            out += "<a href=\"" + escape_html(tok.url) + "\"";
+            if (!tok.title.empty()) {
+                out += " title=\"" + escape_html(tok.title) + "\"";
+            }
+            out += ">";
+            if (!tok.children.empty()) {
+                out += render_inlines_to_html(tok.children, gfm_extensions,
+                                              /*parent_is_strong=*/false, fn);
+            } else {
                 out += escape_html(tok.text);
-                break;
-            case InlineTokenKind::Math:
-                // CommonMark has no math; emit the raw content.
-                out += escape_html(tok.text);
-                break;
-            case InlineTokenKind::HtmlRaw:
-                // Raw HTML passes through unchanged (CommonMark §6.6).
-                out += tok.text;
-                break;
-            case InlineTokenKind::FootnoteRef: {
-                // GFM footnote reference: [^label].  If no definition
-                // exists (or footnotes disabled), render literal text.
-                if (!fn || !fn->defs) {
-                    out += "[^" + escape_html(tok.text) + "]";
-                    break;
-                }
-                auto key = detail::normalize_label(tok.text);
-                auto it = fn->defs->find(key);
-                if (it == fn->defs->end()) {
-                    out += "[^" + escape_html(tok.text) + "]";
-                    break;
-                }
-                // Assign display number on first reference.
-                int num = 0;
-                if (auto nit = fn->number.find(key); nit != fn->number.end()) {
-                    num = nit->second;
-                } else {
-                    num = fn->next_number++;
-                    fn->number[key] = num;
-                    fn->reference_order.push_back(key);
-                }
-                int count = ++fn->ref_count[key];
-                const auto& raw = it->second.raw_label;
-                const auto esc = escape_href(raw);
-                out += "<sup class=\"footnote-ref\"><a href=\"#fn-" + esc +
-                       "\" id=\"fnref-" + esc;
-                if (count > 1) out += "-" + std::to_string(count);
-                out += "\" data-footnote-ref>" + std::to_string(num) +
-                       "</a></sup>";
+            }
+            out += "</a>";
+            break;
+        case InlineTokenKind::Image:
+            out +=
+                "<img src=\"" + escape_html(tok.url) + "\" alt=\"" + escape_html(tok.text) + "\"";
+            if (!tok.title.empty()) {
+                out += " title=\"" + escape_html(tok.title) + "\"";
+            }
+            out += " />";
+            break;
+        case InlineTokenKind::Strikethrough:
+            // GFM strikethrough content can contain other inline
+            // constructs (autolinks, emphasis, code spans).  The
+            // tokenizer stores the raw content; re-tokenize here so
+            // nested constructs render correctly (GFM ex 26:
+            // ~~www.google.com~~ → <del><a href="...">...</a></del>).
+            out += "<del>";
+            out += render_inlines_to_html(
+                detail::tokenize_inline(tok.text, nullptr, gfm_extensions), gfm_extensions,
+                /*parent_is_strong=*/false, fn);
+            out += "</del>";
+            break;
+        case InlineTokenKind::Escape:
+            // The tokenizer already unescaped the character into `text`.
+            out += escape_html(tok.text);
+            break;
+        case InlineTokenKind::Math:
+            // CommonMark has no math; emit the raw content.
+            out += escape_html(tok.text);
+            break;
+        case InlineTokenKind::HtmlRaw:
+            // Raw HTML passes through unchanged (CommonMark §6.6).
+            out += tok.text;
+            break;
+        case InlineTokenKind::FootnoteRef: {
+            // GFM footnote reference: [^label].  If no definition
+            // exists (or footnotes disabled), render literal text.
+            if (!fn || !fn->defs) {
+                out += "[^" + escape_html(tok.text) + "]";
                 break;
             }
+            auto key = detail::normalize_label(tok.text);
+            auto it = fn->defs->find(key);
+            if (it == fn->defs->end()) {
+                out += "[^" + escape_html(tok.text) + "]";
+                break;
+            }
+            // Assign display number on first reference.
+            int num = 0;
+            if (auto nit = fn->number.find(key); nit != fn->number.end()) {
+                num = nit->second;
+            } else {
+                num = fn->next_number++;
+                fn->number[key] = num;
+                fn->reference_order.push_back(key);
+            }
+            int count = ++fn->ref_count[key];
+            const auto& raw = it->second.raw_label;
+            const auto esc = escape_href(raw);
+            out += "<sup class=\"footnote-ref\"><a href=\"#fn-" + esc + "\" id=\"fnref-" + esc;
+            if (count > 1) out += "-" + std::to_string(count);
+            out += "\" data-footnote-ref>" + std::to_string(num) + "</a></sup>";
+            break;
+        }
         }
     }
     // Strip trailing spaces on the last line (CommonMark: trailing spaces
     // at end of paragraph are stripped, not a hard break — no following line).
-    while (!out.empty() && out.back() == ' ') out.pop_back();
+    while (!out.empty() && out.back() == ' ')
+        out.pop_back();
     return out;
 }
 
 // ── List rendering (sub-blocks per item) ────────────────────────────
 
-void render_list_html(
-    const BlockToken& tok,
-    std::string& out,
-    bool ordered,
-    bool gfm_extensions,
-    FootnoteRenderState* fn = nullptr) {
+void render_list_html(const BlockToken& tok, std::string& out, bool ordered, bool gfm_extensions,
+                      FootnoteRenderState* fn = nullptr) {
     const auto& items = tok.list_items;
     const auto& tasks = tok.task_state;
     if (items.empty()) return;
@@ -492,13 +490,11 @@ void render_list_html(
         }
 
         const auto& sub_blocks = items[i];
-        if (sub_blocks.size() == 1 &&
-            sub_blocks[0].kind == BlockTokenKind::Paragraph &&
+        if (sub_blocks.size() == 1 && sub_blocks[0].kind == BlockTokenKind::Paragraph &&
             !tok.list_loose) {
             // Tight list, single paragraph: render inline content directly,
             // no trailing newline (</li> follows immediately).
-            out += render_inlines_to_html(sub_blocks[0].inlines,
-                                          gfm_extensions,
+            out += render_inlines_to_html(sub_blocks[0].inlines, gfm_extensions,
                                           /*parent_is_strong=*/false, fn);
         } else {
             // Loose list or multi-block item: render each sub-block
@@ -506,16 +502,14 @@ void render_list_html(
                 if (sub.kind == BlockTokenKind::Paragraph && !tok.list_loose) {
                     // Tight list: paragraph without <p> tags
                     out += render_inlines_to_html(sub.inlines, gfm_extensions,
-                                                  /*parent_is_strong=*/false,
-                                                  fn);
+                                                  /*parent_is_strong=*/false, fn);
                     out += '\n';
                 } else {
                     // Block element: ensure a newline separates it from
                     // <li> or the previous block (blocks already end with
                     // a trailing newline, so avoid doubling).
                     if (!out.empty() && out.back() != '\n') out += '\n';
-                    out += detail::render_block_to_html(sub, gfm_extensions,
-                                                        fn);
+                    out += detail::render_block_to_html(sub, gfm_extensions, fn);
                 }
             }
         }
@@ -527,16 +521,18 @@ void render_list_html(
 
 // ── Table rendering ─────────────────────────────────────────────────
 
-void render_table_html(const BlockToken& tok, std::string& out,
-                       bool gfm_extensions,
+void render_table_html(const BlockToken& tok, std::string& out, bool gfm_extensions,
                        FootnoteRenderState* fn = nullptr) {
     const auto& align = tok.table_align;
     auto align_attr = [&](std::size_t col) -> std::string {
         if (col >= align.size() || align[col] == 0) return "";
         switch (align[col]) {
-            case 1:  return " align=\"left\"";
-            case 2:  return " align=\"center\"";
-            default: return " align=\"right\"";
+        case 1:
+            return " align=\"left\"";
+        case 2:
+            return " align=\"center\"";
+        default:
+            return " align=\"right\"";
         }
     };
 
@@ -546,8 +542,7 @@ void render_table_html(const BlockToken& tok, std::string& out,
         out += align_attr(c);
         out += ">";
         out += render_inlines_to_html(
-            detail::tokenize_inline(tok.table_headers[c],
-                                    &tok.table_link_refs, gfm_extensions),
+            detail::tokenize_inline(tok.table_headers[c], &tok.table_link_refs, gfm_extensions),
             gfm_extensions,
             /*parent_is_strong=*/false, fn);
         out += "</th>\n";
@@ -562,8 +557,7 @@ void render_table_html(const BlockToken& tok, std::string& out,
                 out += align_attr(c);
                 out += ">";
                 out += render_inlines_to_html(
-                    detail::tokenize_inline(row[c], &tok.table_link_refs,
-                                            gfm_extensions),
+                    detail::tokenize_inline(row[c], &tok.table_link_refs, gfm_extensions),
                     gfm_extensions,
                     /*parent_is_strong=*/false, fn);
                 out += "</td>\n";
@@ -581,8 +575,8 @@ void render_table_html(const BlockToken& tok, std::string& out,
 // the href-escaped raw label.  `display_num` is the def's display number
 // (assigned on first ref).  `ref_total` is the total number of refs to
 // this def.  Multiple backrefs are space-separated.
-[[nodiscard]] std::string render_footnote_backref(
-    const std::string& esc_label, int display_num, int ref_total) {
+[[nodiscard]] std::string render_footnote_backref(const std::string& esc_label, int display_num,
+                                                  int ref_total) {
     std::string out;
     for (int i = 1; i <= ref_total; ++i) {
         if (i > 1) out += ' ';
@@ -592,13 +586,11 @@ void render_table_html(const BlockToken& tok, std::string& out,
                "data-footnote-backref-idx=\"" +
                std::to_string(display_num);
         if (i > 1) out += "-" + std::to_string(i);
-        out += "\" aria-label=\"Back to reference " +
-               std::to_string(display_num);
+        out += "\" aria-label=\"Back to reference " + std::to_string(display_num);
         if (i > 1) out += "-" + std::to_string(i);
         out += "\">↩";
         if (i > 1) {
-            out += "<sup class=\"footnote-ref\">" + std::to_string(i) +
-                   "</sup>";
+            out += "<sup class=\"footnote-ref\">" + std::to_string(i) + "</sup>";
         }
         out += "</a>";
     }
@@ -609,14 +601,12 @@ void render_table_html(const BlockToken& tok, std::string& out,
 // data-footnotes> containing an <ol> of definitions in first-reference
 // order.  The backref is placed inside the last paragraph (before </p>)
 // or directly in <li> if the last block is not a paragraph.
-[[nodiscard]] std::string render_footnotes_section(
-    FootnoteRenderState& fn, bool gfm_extensions) {
+[[nodiscard]] std::string render_footnotes_section(FootnoteRenderState& fn, bool gfm_extensions) {
     // Index-based loop (not a snapshot): rendering def content may
     // append new entries to reference_order (footnote refs inside
     // footnote def content).  Terminates because each def is appended
     // at most once (the number map guards re-assignment).
-    std::string out =
-        "<section class=\"footnotes\" data-footnotes>\n<ol>\n";
+    std::string out = "<section class=\"footnotes\" data-footnotes>\n<ol>\n";
     for (std::size_t idx = 0; idx < fn.reference_order.size(); ++idx) {
         // Copy: the vector may grow during rendering, invalidating refs.
         const std::string key = fn.reference_order[idx];
@@ -625,16 +615,13 @@ void render_table_html(const BlockToken& tok, std::string& out,
         const int num = fn.number.at(key);
         out += "<li id=\"fn-" + esc + "\">\n";
         const auto& subs = info.def_block->sub_blocks;
-        if (!subs.empty() &&
-            subs.back().kind == BlockTokenKind::Paragraph) {
+        if (!subs.empty() && subs.back().kind == BlockTokenKind::Paragraph) {
             // Backref inside the last paragraph (before </p>).
             for (std::size_t i = 0; i + 1 < subs.size(); ++i) {
-                out += detail::render_block_to_html(subs[i], gfm_extensions,
-                                                    &fn);
+                out += detail::render_block_to_html(subs[i], gfm_extensions, &fn);
             }
             out += "<p>";
-            out += render_inlines_to_html(subs.back().inlines,
-                                          gfm_extensions,
+            out += render_inlines_to_html(subs.back().inlines, gfm_extensions,
                                           /*parent_is_strong=*/false, &fn);
             // Re-read count after rendering: self-refs in the def
             // content increment ref_count during rendering.
@@ -660,92 +647,91 @@ namespace detail {
 
 // ── Block → HTML ────────────────────────────────────────────────────
 
-[[nodiscard]] std::string render_block_to_html(const BlockToken& tok,
-                                               bool gfm_extensions,
+[[nodiscard]] std::string render_block_to_html(const BlockToken& tok, bool gfm_extensions,
                                                FootnoteRenderState* fn) {
     std::string out;
 
     switch (tok.kind) {
-        case BlockTokenKind::Paragraph:
+    case BlockTokenKind::Paragraph:
+        out += "<p>";
+        out += render_inlines_to_html(tok.inlines, gfm_extensions,
+                                      /*parent_is_strong=*/false, fn);
+        out += "</p>\n";
+        break;
+
+    case BlockTokenKind::Heading:
+        out += "<h" + std::to_string(tok.heading_level) + ">";
+        out += render_inlines_to_html(tok.inlines, gfm_extensions,
+                                      /*parent_is_strong=*/false, fn);
+        out += "</h" + std::to_string(tok.heading_level) + ">\n";
+        break;
+
+    case BlockTokenKind::CodeBlock:
+        out += "<pre><code";
+        if (!tok.code_lang.empty()) {
+            out += " class=\"language-" + escape_html(tok.code_lang) + "\"";
+        }
+        out += ">";
+        out += escape_html(tok.code_content);
+        if (!tok.code_content.empty()) out += '\n';
+        out += "</code></pre>\n";
+        break;
+
+    case BlockTokenKind::UnorderedList:
+        render_list_html(tok, out, /*ordered=*/false, gfm_extensions, fn);
+        break;
+
+    case BlockTokenKind::OrderedList:
+        render_list_html(tok, out, /*ordered=*/true, gfm_extensions, fn);
+        break;
+
+    case BlockTokenKind::Blockquote:
+        out += "<blockquote>\n";
+        if (!tok.sub_blocks.empty()) {
+            for (const auto& sub : tok.sub_blocks) {
+                out += render_block_to_html(sub, gfm_extensions, fn);
+            }
+        } else if (!tok.inlines.empty()) {
             out += "<p>";
             out += render_inlines_to_html(tok.inlines, gfm_extensions,
                                           /*parent_is_strong=*/false, fn);
             out += "</p>\n";
-            break;
+        }
+        out += "</blockquote>\n";
+        break;
 
-        case BlockTokenKind::Heading:
-            out += "<h" + std::to_string(tok.heading_level) + ">";
-            out += render_inlines_to_html(tok.inlines, gfm_extensions,
-                                          /*parent_is_strong=*/false, fn);
-            out += "</h" + std::to_string(tok.heading_level) + ">\n";
-            break;
+    case BlockTokenKind::Table:
+        render_table_html(tok, out, gfm_extensions, fn);
+        break;
 
-        case BlockTokenKind::CodeBlock:
-            out += "<pre><code";
-            if (!tok.code_lang.empty()) {
-                out += " class=\"language-" + escape_html(tok.code_lang) + "\"";
-            }
-            out += ">";
-            out += escape_html(tok.code_content);
-            if (!tok.code_content.empty()) out += '\n';
-            out += "</code></pre>\n";
-            break;
+    case BlockTokenKind::HorizontalRule:
+        out += "<hr />\n";
+        break;
 
-        case BlockTokenKind::UnorderedList:
-            render_list_html(tok, out, /*ordered=*/false, gfm_extensions, fn);
-            break;
+    case BlockTokenKind::MathBlock:
+        // CommonMark has no math blocks; emit as paragraph.
+        out += "<p>" + escape_html(tok.math_content) + "</p>\n";
+        break;
 
-        case BlockTokenKind::OrderedList:
-            render_list_html(tok, out, /*ordered=*/true, gfm_extensions, fn);
-            break;
+    case BlockTokenKind::HtmlBlock:
+        // Raw HTML passes through unchanged (CommonMark §4.6).
+        // GFM's tagfilter extension is applied to inline HTML during
+        // tokenization (see parse_inline_html) and to HTML block
+        // content here — except for Type 1 blocks (<script>, <pre>,
+        // <style>, <textarea>), whose content is raw text, not HTML
+        // (CommonMark examples 140–145 vs GFM example 652).
+        if (gfm_extensions) {
+            out += filter_disallowed_html_in_block(tok.html_content);
+        } else {
+            out += tok.html_content;
+        }
+        out += '\n';
+        break;
 
-        case BlockTokenKind::Blockquote:
-            out += "<blockquote>\n";
-            if (!tok.sub_blocks.empty()) {
-                for (const auto& sub : tok.sub_blocks) {
-                    out += render_block_to_html(sub, gfm_extensions, fn);
-                }
-            } else if (!tok.inlines.empty()) {
-                out += "<p>";
-                out += render_inlines_to_html(tok.inlines, gfm_extensions,
-                                              /*parent_is_strong=*/false, fn);
-                out += "</p>\n";
-            }
-            out += "</blockquote>\n";
-            break;
-
-        case BlockTokenKind::Table:
-            render_table_html(tok, out, gfm_extensions, fn);
-            break;
-
-        case BlockTokenKind::HorizontalRule:
-            out += "<hr />\n";
-            break;
-
-        case BlockTokenKind::MathBlock:
-            // CommonMark has no math blocks; emit as paragraph.
-            out += "<p>" + escape_html(tok.math_content) + "</p>\n";
-            break;
-
-        case BlockTokenKind::HtmlBlock:
-            // Raw HTML passes through unchanged (CommonMark §4.6).
-            // GFM's tagfilter extension is applied to inline HTML during
-            // tokenization (see parse_inline_html) and to HTML block
-            // content here — except for Type 1 blocks (<script>, <pre>,
-            // <style>, <textarea>), whose content is raw text, not HTML
-            // (CommonMark examples 140–145 vs GFM example 652).
-            if (gfm_extensions) {
-                out += filter_disallowed_html_in_block(tok.html_content);
-            } else {
-                out += tok.html_content;
-            }
-            out += '\n';
-            break;
-
-        case BlockTokenKind::FootnoteDef:
-            // Footnote definitions are hoisted to the footnotes section
-            // (rendered by render_footnotes_section); no output here.
-            break;
+    case BlockTokenKind::FootnoteDef:
+        // Footnote definitions are hoisted to the footnotes section
+        // (rendered by render_footnotes_section); no output here.
+        break;
     }
 
     return out;
@@ -755,8 +741,7 @@ namespace detail {
 
 // ── Public API ──────────────────────────────────────────────────────
 
-[[nodiscard]] std::string render_markdown_to_html(std::string_view source,
-                                                   bool gfm_extensions) {
+[[nodiscard]] std::string render_markdown_to_html(std::string_view source, bool gfm_extensions) {
     // Fast-path: no markdown syntax → single paragraph.
     if (!detail::has_markdown_syntax(source)) {
         std::string text(source);

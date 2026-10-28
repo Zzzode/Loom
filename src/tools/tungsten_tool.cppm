@@ -25,4 +25,4 @@ struct TungstenResult {
     return {"analyze", "transform", "verify"};
 }
 
-} // namespace loom::tools::tungsten
+}  // namespace loom::tools::tungsten

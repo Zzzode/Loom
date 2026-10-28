@@ -40,11 +40,14 @@ public:
         return CommandDefinition{
             .name = "usage",
             .description = "Show token usage, cost, and rate limit status",
-            .args = {
-                CommandArg{.name = "section", .description = "tokens | cost | time | limits | all",
-                           .type = ArgType::Choice, .required = false,
-                           .choices = {"tokens", "cost", "time", "limits", "all"}},
-            },
+            .args =
+                {
+                    CommandArg{.name = "section",
+                               .description = "tokens | cost | time | limits | all",
+                               .type = ArgType::Choice,
+                               .required = false,
+                               .choices = {"tokens", "cost", "time", "limits", "all"}},
+                },
             .category = "session",
             .aliases = {"tokens"},
             .hidden = false,
@@ -56,7 +59,8 @@ public:
         auto section = ctx.args[0];
         static constexpr std::array valid = {"tokens", "cost", "time", "limits", "all"};
         if (std::ranges::find(valid, section) == valid.end()) {
-            return std::unexpected(Error::make(ErrorCode::InvalidRequest,
+            return std::unexpected(Error::make(
+                ErrorCode::InvalidRequest,
                 std::format("Invalid section: '{}'. Use: tokens|cost|time|limits|all", section)));
         }
         return {};
@@ -108,20 +112,17 @@ private:
     SessionUsage usage_{.session_start = std::chrono::system_clock::now()};
 
     [[nodiscard]] std::string format_token_usage() const {
-        return std::format(
-            "Token Usage:\n"
-            "  Input:          {:>8} tokens\n"
-            "  Output:         {:>8} tokens\n"
-            "  Cache creation: {:>8} tokens\n"
-            "  Cache read:     {:>8} tokens\n"
-            "  Total:          {:>8} tokens\n"
-            "  Requests:       {:>8}",
-            usage_.total_tokens.input_tokens,
-            usage_.total_tokens.output_tokens,
-            usage_.total_tokens.cache_creation_tokens,
-            usage_.total_tokens.cache_read_tokens,
-            usage_.total_tokens.total(),
-            usage_.request_count);
+        return std::format("Token Usage:\n"
+                           "  Input:          {:>8} tokens\n"
+                           "  Output:         {:>8} tokens\n"
+                           "  Cache creation: {:>8} tokens\n"
+                           "  Cache read:     {:>8} tokens\n"
+                           "  Total:          {:>8} tokens\n"
+                           "  Requests:       {:>8}",
+                           usage_.total_tokens.input_tokens, usage_.total_tokens.output_tokens,
+                           usage_.total_tokens.cache_creation_tokens,
+                           usage_.total_tokens.cache_read_tokens, usage_.total_tokens.total(),
+                           usage_.request_count);
     }
 
     [[nodiscard]] std::string format_cost() const {
@@ -140,13 +141,12 @@ private:
             return "Rate limits: No data available";
         }
         auto& rl = *usage_.rate_limit;
-        return std::format(
-            "Rate Limits:\n"
-            "  Requests remaining: {}\n"
-            "  Tokens remaining:   {}\n"
-            "  Resets in:          {}s",
-            rl.requests_remaining, rl.tokens_remaining, rl.reset_in.count());
+        return std::format("Rate Limits:\n"
+                           "  Requests remaining: {}\n"
+                           "  Tokens remaining:   {}\n"
+                           "  Resets in:          {}s",
+                           rl.requests_remaining, rl.tokens_remaining, rl.reset_in.count());
     }
 };
 
-} // namespace loom::commands
+}  // namespace loom::commands

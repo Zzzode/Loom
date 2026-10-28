@@ -1,16 +1,17 @@
 /// @file test_ui_runtime.cpp
-/// @brief Split from test_ui.cpp - AppRuntime, E2E_Gate, FullscreenLayout, Logo, PromptInput, ReplScreen (SLOC budget fix)
+/// @brief Split from test_ui.cpp - AppRuntime, E2E_Gate, FullscreenLayout, Logo, PromptInput,
+/// ReplScreen (SLOC budget fix)
 
-#include <cstdlib>
-
-#include <ftxui/dom/elements.hpp>
-#include <ftxui/dom/node.hpp>
-#include <ftxui/screen/screen.hpp>
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/event.hpp>
 #include <ftxui/component/mouse.hpp>
+#include <ftxui/dom/elements.hpp>
+#include <ftxui/dom/node.hpp>
+#include <ftxui/screen/screen.hpp>
 #include <gtest/gtest.h>
 #include <httplib.h>
+
+#include <cstdlib>
 
 #include "test_ui_helpers.h"
 
@@ -24,12 +25,6 @@ import loom.tools.tool;
 namespace {
 namespace fs = std::filesystem;
 }
-
-
-
-
-
-
 
 // =============================================================================
 // GAP: unseen-divider-in-transcript-missing (P1)
@@ -73,64 +68,84 @@ public:
             res.set_header("x-usage-input-tokens", "42");
             if (request_number == 1) {
                 // First round: model calls analyze_image tool
-                res.set_chunked_content_provider(
-                    "text/event-stream",
-                    [this](size_t, httplib::DataSink& sink) {
-                        if (phase_++ > 0) return false;
-                        sink.os <<
-                            "event: message_start\n"
-                            "data: {\"type\":\"message_start\",\"message\":{\"id\":\"msg_e2e_1\",\"type\":\"message\",\"role\":\"assistant\",\"model\":\"loom-test\",\"content\":[]}}\n\n"
-                            "event: content_block_start\n"
-                            "data: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"tool_use\",\"id\":\"toolu_e2e_1\",\"name\":\"analyze_image\",\"input\":{}}}\n\n"
-                            "event: content_block_delta\n"
-                            "data: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"{\\\"imageSource\\\":\\\"https://example.com/img.png\\\",\\\"prompt\\\":\\\"Describe this image in detail\\\"}\"}}\n\n"
-                            "event: content_block_stop\n"
-                            "data: {\"type\":\"content_block_stop\",\"index\":0}\n\n"
-                            "event: message_delta\n"
-                            "data: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"tool_use\",\"stop_sequence\":null},\"usage\":{\"output_tokens\":15}}\n\n"
-                            "event: message_stop\n"
-                            "data: {\"type\":\"message_stop\"}\n\n";
-                        sink.done();
-                        {
-                            std::lock_guard lock(mutex_);
-                            tool_sent_ = true;
-                        }
-                        cv_.notify_all();
-                        return true;
-                    });
+                res.set_chunked_content_provider("text/event-stream", [this](
+                                                                          size_t,
+                                                                          httplib::DataSink& sink) {
+                    if (phase_++ > 0) return false;
+                    sink.os << "event: message_start\n"
+                               "data: "
+                               "{\"type\":\"message_start\",\"message\":{\"id\":\"msg_e2e_1\","
+                               "\"type\":\"message\",\"role\":\"assistant\",\"model\":\"loom-"
+                               "test\",\"content\":[]}}\n\n"
+                               "event: content_block_start\n"
+                               "data: "
+                               "{\"type\":\"content_block_start\",\"index\":0,\"content_block\":{"
+                               "\"type\":\"tool_use\",\"id\":\"toolu_e2e_1\",\"name\":\"analyze_"
+                               "image\",\"input\":{}}}\n\n"
+                               "event: content_block_delta\n"
+                               "data: "
+                               "{\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":"
+                               "\"input_json_delta\",\"partial_json\":\"{\\\"imageSource\\\":"
+                               "\\\"https://example.com/img.png\\\",\\\"prompt\\\":\\\"Describe "
+                               "this image in detail\\\"}\"}}\n\n"
+                               "event: content_block_stop\n"
+                               "data: {\"type\":\"content_block_stop\",\"index\":0}\n\n"
+                               "event: message_delta\n"
+                               "data: "
+                               "{\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"tool_"
+                               "use\",\"stop_sequence\":null},\"usage\":{\"output_tokens\":15}}\n\n"
+                               "event: message_stop\n"
+                               "data: {\"type\":\"message_stop\"}\n\n";
+                    sink.done();
+                    {
+                        std::lock_guard lock(mutex_);
+                        tool_sent_ = true;
+                    }
+                    cv_.notify_all();
+                    return true;
+                });
             } else {
                 // Second round: model generates text reply after seeing tool result
-                res.set_chunked_content_provider(
-                    "text/event-stream",
-                    [this](size_t, httplib::DataSink& sink) {
-                        if (phase2_++ > 0) return false;
-                        sink.os <<
-                            "event: message_start\n"
-                            "data: {\"type\":\"message_start\",\"message\":{\"id\":\"msg_e2e_2\",\"type\":\"message\",\"role\":\"assistant\",\"model\":\"loom-test\",\"content\":[]}}\n\n"
-                            "event: content_block_start\n"
-                            "data: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"text\",\"text\":\"\"}}\n\n"
-                            "event: content_block_delta\n"
-                            "data: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"This is a screenshot of a dark-themed terminal UI showing a code review platform with bullet points and comment sections.\"}}\n\n"
-                            "event: content_block_stop\n"
-                            "data: {\"type\":\"content_block_stop\",\"index\":0}\n\n"
-                            "event: message_delta\n"
-                            "data: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\",\"stop_sequence\":null},\"usage\":{\"output_tokens\":25}}\n\n"
-                            "event: message_stop\n"
-                            "data: {\"type\":\"message_stop\"}\n\n";
-                        sink.done();
-                        {
-                            std::lock_guard lock(mutex_);
-                            reply_sent_ = true;
-                        }
-                        cv_.notify_all();
-                        return true;
-                    });
+                res.set_chunked_content_provider("text/event-stream", [this](
+                                                                          size_t,
+                                                                          httplib::DataSink& sink) {
+                    if (phase2_++ > 0) return false;
+                    sink.os
+                        << "event: message_start\n"
+                           "data: "
+                           "{\"type\":\"message_start\",\"message\":{\"id\":\"msg_e2e_2\",\"type\":"
+                           "\"message\",\"role\":\"assistant\",\"model\":\"loom-test\",\"content\":"
+                           "[]}}\n\n"
+                           "event: content_block_start\n"
+                           "data: "
+                           "{\"type\":\"content_block_start\",\"index\":0,\"content_block\":{"
+                           "\"type\":\"text\",\"text\":\"\"}}\n\n"
+                           "event: content_block_delta\n"
+                           "data: "
+                           "{\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":"
+                           "\"text_delta\",\"text\":\"This is a screenshot of a dark-themed "
+                           "terminal UI showing a code review platform with bullet points and "
+                           "comment sections.\"}}\n\n"
+                           "event: content_block_stop\n"
+                           "data: {\"type\":\"content_block_stop\",\"index\":0}\n\n"
+                           "event: message_delta\n"
+                           "data: "
+                           "{\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\","
+                           "\"stop_sequence\":null},\"usage\":{\"output_tokens\":25}}\n\n"
+                           "event: message_stop\n"
+                           "data: {\"type\":\"message_stop\"}\n\n";
+                    sink.done();
+                    {
+                        std::lock_guard lock(mutex_);
+                        reply_sent_ = true;
+                    }
+                    cv_.notify_all();
+                    return true;
+                });
             }
         });
         port_ = server_.bind_to_any_port("127.0.0.1");
-        thread_ = std::thread([this] {
-            server_.listen_after_bind();
-        });
+        thread_ = std::thread([this] { server_.listen_after_bind(); });
         server_.wait_until_ready();
     }
 
@@ -140,6 +155,7 @@ public:
     }
 
     bool valid() const { return port_ > 0; }
+
     std::string base_url() const { return "http://127.0.0.1:" + std::to_string(port_); }
 
     bool wait_for_tool(std::chrono::milliseconds timeout = std::chrono::seconds(3)) {
@@ -179,9 +195,8 @@ private:
 
 /// Helper: render app to plain text and check for required substrings.
 /// Returns vector of missing strings for diagnostic output.
-std::vector<std::string> check_required_strings(
-    const std::string& rendered,
-    const std::vector<std::string>& required) {
+std::vector<std::string> check_required_strings(const std::string& rendered,
+                                                const std::vector<std::string>& required) {
     std::vector<std::string> missing;
     for (const auto& s : required) {
         if (rendered.find(s) == std::string::npos) {
@@ -191,7 +206,7 @@ std::vector<std::string> check_required_strings(
     return missing;
 }
 
-} // namespace e2e_gate
+}  // namespace e2e_gate
 
 /// Unit test: find_divider_before_visible_index correctly matches on the
 /// first 24 chars of each payload row's uuid; skips compact-group rows.
@@ -205,36 +220,34 @@ TEST(E2E_Gate, StartupScreenHasAllElements) {
     loom::core::QueryEngine engine(std::move(config), tools);
 
     loom::commands::AppCommandRegistry commands;
-    const auto storage_root = fs::temp_directory_path() /
+    const auto storage_root =
+        fs::temp_directory_path() /
         ("loom_e2e_gate_startup_" +
          std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
 
-    auto app = ftxui::Make<loom::ui::AppAdapter>(
-        &engine, nullptr, &commands, storage_root, [] {});
+    auto app = ftxui::Make<loom::ui::AppAdapter>(&engine, nullptr, &commands, storage_root, [] {});
 
     // Render at a realistic terminal size
     auto rendered = strip_ansi(render_to_plain_text(app->Render(), 120, 36));
 
     // Critical elements that must always be visible on startup
     auto missing = check_required_strings(rendered, {
-        "Loom",   // Logo / app name
-        "Try ",          // Prompt placeholder hint
-    });
+                                                        "Loom",  // Logo / app name
+                                                        "Try ",  // Prompt placeholder hint
+                                                    });
 
-    EXPECT_TRUE(missing.empty())
-        << "E2E GATE FAIL: Startup screen missing critical elements:\n"
-        << "  Missing: " << [&] {
+    EXPECT_TRUE(missing.empty()) << "E2E GATE FAIL: Startup screen missing critical elements:\n"
+                                 << "  Missing: " <<
+        [&] {
             std::string s;
-            for (const auto& m : missing) s += "[" + m + "] ";
+            for (const auto& m : missing)
+                s += "[" + m + "] ";
             return s;
-        }()
-        << "\n  Rendered output (first 2000 chars):\n"
-        << rendered.substr(0, 2000);
+        }() << "\n  Rendered output (first 2000 chars):\n"
+                                 << rendered.substr(0, 2000);
 
     fs::remove_all(storage_root);
 }
-
-
 
 /// E2E Gate #4: API request body must include MCP tools in the tools array.
 /// Regression guard for "MCP tools not sent to API" bug.
@@ -246,13 +259,11 @@ TEST(E2E_Gate, McpToolsIncludedInApiRequestBody) {
 
     loom::core::ToolRegistry tools;
     // Register built-in tools so the request has something
-    tools.set_missing_tool_handler(
-        [](std::string_view tool_name,
-           const loom::core::ToolInput&) -> loom::core::Result<loom::core::ToolResult> {
-            return std::unexpected(loom::core::Error::make(
-                loom::core::ErrorCode::ToolNotFound,
-                std::format("Tool '{}' not found", tool_name)));
-        });
+    tools.set_missing_tool_handler([](std::string_view tool_name, const loom::core::ToolInput&)
+                                       -> loom::core::Result<loom::core::ToolResult> {
+        return std::unexpected(loom::core::Error::make(
+            loom::core::ErrorCode::ToolNotFound, std::format("Tool '{}' not found", tool_name)));
+    });
 
     loom::core::QueryEngineConfig config;
     config.api_key = "test-key";
@@ -275,32 +286,33 @@ TEST(E2E_Gate, McpToolsIncludedInApiRequestBody) {
     loom::core::QueryEngine engine(std::move(config), tools);
 
     loom::commands::AppCommandRegistry commands;
-    const auto storage_root = fs::temp_directory_path() /
+    const auto storage_root =
+        fs::temp_directory_path() /
         ("loom_e2e_gate_apibody_" +
          std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
 
-    auto app = ftxui::Make<loom::ui::AppAdapter>(
-        &engine, nullptr, &commands, storage_root, [] {});
+    auto app = ftxui::Make<loom::ui::AppAdapter>(&engine, nullptr, &commands, storage_root, [] {});
 
     app->HandleSubmit("test");
 
     // Wait for query to finish
-    ASSERT_TRUE(wait_until([&] {
-        (void)app->Render();
-        return !test_seams(app).is_query_running_for_testing();
-    }, std::chrono::seconds(5)));
+    ASSERT_TRUE(wait_until(
+        [&] {
+            (void)app->Render();
+            return !test_seams(app).is_query_running_for_testing();
+        },
+        std::chrono::seconds(5)));
 
     // The request body sent to the API should include the MCP tool name
     EXPECT_TRUE(server.request_contains_tool("analyze_image"))
         << "E2E GATE FAIL: API request body does not include MCP tool 'analyze_image'.\n"
         << "  The dynamic_tools_provider should ensure MCP tools are in the\n"
         << "  tools array sent to the API.\n"
-        << "  Last request body:\n" << server.last_body().substr(0, 2000);
+        << "  Last request body:\n"
+        << server.last_body().substr(0, 2000);
 
     fs::remove_all(storage_root);
 }
-
-
 
 /// E2E Gate #5: Image placeholder must show [Image #N] format, not just [Image].
 /// Regression guard for "image ID missing" bug.
@@ -322,8 +334,6 @@ TEST(E2E_Gate, ImagePlaceholderShowsNumberedId) {
         << "  Got: " << snap;
 }
 
-
-
 /// E2E Gate #6: ⎿ connector character (U+23BF) must be used for continuation
 /// blocks, NOT ⏿ (U+23FF). Regression guard for wrong Unicode codepoint.
 /// This test verifies the source files contain the correct UTF-8 bytes,
@@ -337,7 +347,7 @@ TEST(E2E_Gate, ConnectorCharacterIsCorrectCodepoint) {
 
     // Resolve project root relative to this test file (tests/test_ui.cpp)
     // Project root is one level above LOOM_TESTS_DIR
-    
+
     const auto project_root = std::string(LOOM_TESTS_DIR) + "/..";
 
     // Check all message rendering source files for the correct connector bytes

@@ -36,4 +36,4 @@ void register_group_d_commands(CommandRegistry& registry) {
     registry.register_command<SkillsCommand>();
 }
 
-} // namespace loom::commands
+}  // namespace loom::commands

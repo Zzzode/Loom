@@ -19,7 +19,7 @@ inline std::optional<fs::path> find_git_root(fs::path start = fs::current_path()
             return current;
         }
         auto parent = current.parent_path();
-        if (parent == current) break; // Reached filesystem root
+        if (parent == current) break;  // Reached filesystem root
         current = parent;
     }
     return std::nullopt;
@@ -117,4 +117,4 @@ inline bool is_bare_repo() {
     return result.starts_with("true");
 }
 
-} // namespace loom::utils
+}  // namespace loom::utils

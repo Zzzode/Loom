@@ -3,8 +3,8 @@
 /// Migrated from session.cppm supplement - session persistence logic
 module;
 
-
 #include <yyjson.h>
+
 #include <cstdint>
 
 export module loom.session.storage;
@@ -15,14 +15,12 @@ import loom.serdes.json;
 
 export namespace loom::session {
 
-[[nodiscard]] inline std::chrono::system_clock::time_point file_time_to_system_time(
-    std::filesystem::file_time_type file_time
-) {
+[[nodiscard]] inline std::chrono::system_clock::time_point
+file_time_to_system_time(std::filesystem::file_time_type file_time) {
     const auto now_file = std::filesystem::file_time_type::clock::now();
     const auto now_system = std::chrono::system_clock::now();
-    return std::chrono::time_point_cast<std::chrono::system_clock::duration>(
-        file_time - now_file + now_system
-    );
+    return std::chrono::time_point_cast<std::chrono::system_clock::duration>(file_time - now_file +
+                                                                             now_system);
 }
 
 /// Session metadata stored on disk
@@ -38,23 +36,22 @@ struct SessionMetadata {
 };
 
 /// List recent sessions from disk
-[[nodiscard]] inline std::vector<SessionMetadata> list_recent_sessions(
-    const std::filesystem::path& sessions_dir,
-    std::size_t limit = 20
-) {
+[[nodiscard]] inline std::vector<SessionMetadata>
+list_recent_sessions(const std::filesystem::path& sessions_dir, std::size_t limit = 20) {
     std::vector<SessionMetadata> sessions;
-    
+
     if (!std::filesystem::exists(sessions_dir)) return sessions;
-    
+
     for (const auto& entry : std::filesystem::directory_iterator(sessions_dir)) {
         if (!entry.is_directory()) continue;
-        
+
         auto metadata_path = entry.path() / "metadata.json";
         if (!std::filesystem::exists(metadata_path)) continue;
-        
+
         SessionMetadata meta;
         meta.session_id = entry.path().filename().string();
-        meta.last_active = file_time_to_system_time(std::filesystem::last_write_time(metadata_path));
+        meta.last_active =
+            file_time_to_system_time(std::filesystem::last_write_time(metadata_path));
 
         // Parse JSON metadata
         auto doc_result = loom::utils::json::parse_file(metadata_path);
@@ -92,39 +89,33 @@ struct SessionMetadata {
 
         sessions.push_back(std::move(meta));
     }
-    
+
     // Sort by last_active descending
     std::sort(sessions.begin(), sessions.end(),
-        [](const auto& a, const auto& b) { return a.last_active > b.last_active; });
-    
+              [](const auto& a, const auto& b) { return a.last_active > b.last_active; });
+
     if (sessions.size() > limit) {
         sessions.resize(limit);
     }
-    
+
     return sessions;
 }
 
 /// Get session directory path
-[[nodiscard]] inline std::filesystem::path get_session_dir(
-    const std::filesystem::path& sessions_dir,
-    std::string_view session_id
-) {
+[[nodiscard]] inline std::filesystem::path
+get_session_dir(const std::filesystem::path& sessions_dir, std::string_view session_id) {
     return sessions_dir / session_id;
 }
 
 /// Get the messages file path for a session
-[[nodiscard]] inline std::filesystem::path get_messages_path(
-    const std::filesystem::path& sessions_dir,
-    std::string_view session_id
-) {
+[[nodiscard]] inline std::filesystem::path
+get_messages_path(const std::filesystem::path& sessions_dir, std::string_view session_id) {
     return get_session_dir(sessions_dir, session_id) / "messages.jsonl";
 }
 
 /// Load session metadata from a single session directory
-[[nodiscard]] inline std::optional<SessionMetadata> load_session_metadata(
-    const std::filesystem::path& sessions_dir,
-    std::string_view session_id
-) {
+[[nodiscard]] inline std::optional<SessionMetadata>
+load_session_metadata(const std::filesystem::path& sessions_dir, std::string_view session_id) {
     auto dir = get_session_dir(sessions_dir, session_id);
     auto metadata_path = dir / "metadata.json";
     if (!std::filesystem::exists(metadata_path)) return std::nullopt;
@@ -155,24 +146,22 @@ struct SessionMetadata {
 
     auto created_val = root.get("created_at");
     if (created_val.is_num()) {
-        meta.created_at = std::chrono::system_clock::time_point(
-            std::chrono::seconds(created_val.as_int()));
+        meta.created_at =
+            std::chrono::system_clock::time_point(std::chrono::seconds(created_val.as_int()));
     }
 
     auto active_val = root.get("last_active");
     if (active_val.is_num()) {
-        meta.last_active = std::chrono::system_clock::time_point(
-            std::chrono::seconds(active_val.as_int()));
+        meta.last_active =
+            std::chrono::system_clock::time_point(std::chrono::seconds(active_val.as_int()));
     }
 
     return meta;
 }
 
 /// Save session metadata to disk as JSON
-inline bool save_session_metadata(
-    const std::filesystem::path& sessions_dir,
-    const SessionMetadata& meta
-) {
+inline bool save_session_metadata(const std::filesystem::path& sessions_dir,
+                                  const SessionMetadata& meta) {
     auto dir = get_session_dir(sessions_dir, meta.session_id);
     std::filesystem::create_directories(dir);
 
@@ -185,12 +174,14 @@ inline bool save_session_metadata(
     root.add("message_count", doc.number(static_cast<int64_t>(meta.message_count)));
     root.add("is_archived", doc.boolean(meta.is_archived));
 
-    auto created_epoch = std::chrono::duration_cast<std::chrono::seconds>(
-        meta.created_at.time_since_epoch()).count();
+    auto created_epoch =
+        std::chrono::duration_cast<std::chrono::seconds>(meta.created_at.time_since_epoch())
+            .count();
     root.add("created_at", doc.number(static_cast<int64_t>(created_epoch)));
 
-    auto active_epoch = std::chrono::duration_cast<std::chrono::seconds>(
-        meta.last_active.time_since_epoch()).count();
+    auto active_epoch =
+        std::chrono::duration_cast<std::chrono::seconds>(meta.last_active.time_since_epoch())
+            .count();
     root.add("last_active", doc.number(static_cast<int64_t>(active_epoch)));
 
     if (meta.title) {
@@ -207,11 +198,8 @@ inline bool save_session_metadata(
 }
 
 /// Append a single message (JSON line) to the session's messages file
-inline bool append_message(
-    const std::filesystem::path& sessions_dir,
-    std::string_view session_id,
-    std::string_view message_json
-) {
+inline bool append_message(const std::filesystem::path& sessions_dir, std::string_view session_id,
+                           std::string_view message_json) {
     auto path = get_messages_path(sessions_dir, session_id);
     std::filesystem::create_directories(path.parent_path());
 
@@ -225,10 +213,8 @@ inline bool append_message(
 }
 
 /// Load all messages from a session's JSONL file
-[[nodiscard]] inline std::vector<loom::utils::json::JsonDoc> load_messages(
-    const std::filesystem::path& sessions_dir,
-    std::string_view session_id
-) {
+[[nodiscard]] inline std::vector<loom::utils::json::JsonDoc>
+load_messages(const std::filesystem::path& sessions_dir, std::string_view session_id) {
     std::vector<loom::utils::json::JsonDoc> messages;
     auto path = get_messages_path(sessions_dir, session_id);
 
@@ -246,4 +232,4 @@ inline bool append_message(
     return messages;
 }
 
-} // namespace loom::session
+}  // namespace loom::session

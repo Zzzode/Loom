@@ -3,14 +3,16 @@
 ///
 /// Coverage:
 ///   1. BackoffDelay: exponential growth, cap truncation, non-zero +/- jitter
-///   2. WithRetry<fn()->int>: 0/2xx returns directly; 429/5xx retries by count; 400/non-retry -> immediate failure
+///   2. WithRetry<fn()->int>: 0/2xx returns directly; 429/5xx retries by count; 400/non-retry ->
+///   immediate failure
 ///   3. WithRetry<fn()->expected<T,string>>: value returns directly; unexpected retries
 ///   4. fn throws std::exception / captured as unexpected
 ///   5. RunWithRetry: transport errors (<0) retry; final failure returns last negative
 ///   6. max_attempts=1 never retries
 
-#include <cmath>
 #include <gtest/gtest.h>
+
+#include <cmath>
 
 import std;
 import loom.services.api.with_retry;
@@ -20,11 +22,12 @@ import loom.services.api.with_retry_simple;
 // (Phase 2 full version) which conflicts with with_retry_simple::RetryConfig.
 using namespace loom::services::api::with_retry_simple;
 
-// Dispatch-required interface lives under loom::services::api (WithRetry / RetryConfigLite); explicit alias.
+// Dispatch-required interface lives under loom::services::api (WithRetry / RetryConfigLite);
+// explicit alias.
 namespace api = loom::services::api;
-using RetryConfigLite  = loom::services::api::RetryConfigLite;
-template <typename F>
-auto WithRetryLite(const RetryConfigLite& cfg, F&& fn) {
+using RetryConfigLite = loom::services::api::RetryConfigLite;
+
+template <typename F> auto WithRetryLite(const RetryConfigLite& cfg, F&& fn) {
     return api::WithRetry(cfg, std::forward<F>(fn));
 }
 
@@ -33,15 +36,14 @@ namespace {
 // ---------------------------------------------------------------------------
 // Simple high-resolution timer (avoids CI-affected std::chrono drift)
 // ---------------------------------------------------------------------------
-template <typename F>
-std::chrono::milliseconds MeasureMs(F&& f) {
+template <typename F> std::chrono::milliseconds MeasureMs(F&& f) {
     auto start = std::chrono::steady_clock::now();
     std::invoke(std::forward<F>(f));
     auto end = std::chrono::steady_clock::now();
     return std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
 }
 
-} // namespace
+}  // namespace
 
 // ===========================================================================
 // BackoffDelay (int contract)
@@ -49,7 +51,7 @@ std::chrono::milliseconds MeasureMs(F&& f) {
 TEST(BackoffDelay, ExponentialGrowth) {
     RetryConfig cfg;
     cfg.base_delay = std::chrono::milliseconds(100);
-    cfg.max_delay  = std::chrono::milliseconds(1000);
+    cfg.max_delay = std::chrono::milliseconds(1000);
     cfg.jitter_ratio = 0.0;  // disable jitter for strict 2^n test
 
     auto d0 = BackoffDelay(cfg, 0).count();
@@ -69,9 +71,9 @@ TEST(BackoffDelay, ExponentialGrowth) {
 
 TEST(BackoffDelay, JitterRange) {
     RetryConfig cfg;
-    cfg.base_delay    = std::chrono::milliseconds(200);
-    cfg.max_delay     = std::chrono::milliseconds(5000);
-    cfg.jitter_ratio  = 0.2;
+    cfg.base_delay = std::chrono::milliseconds(200);
+    cfg.max_delay = std::chrono::milliseconds(5000);
+    cfg.jitter_ratio = 0.2;
 
     // sample multiple times, assert each falls in [160, 240] ms range (base=200, +/-20%)
     bool any_different = false;
@@ -97,7 +99,7 @@ TEST(RunWithRetry, SuccessOnFirstTry) {
     int rc = RunWithRetry(cfg, [&](int attempt) {
         ++calls;
         EXPECT_EQ(attempt, 0);
-        return 0;       // success
+        return 0;  // success
     });
     EXPECT_EQ(rc, 0);
     EXPECT_EQ(calls, 1);
@@ -112,8 +114,8 @@ TEST(RunWithRetry, Http2xxPassthrough) {
 TEST(RunWithRetry, TransportErrorRetriesThenFails) {
     RetryConfig cfg;
     cfg.max_attempts = 4;
-    cfg.base_delay   = std::chrono::milliseconds(5);
-    cfg.max_delay    = std::chrono::milliseconds(20);
+    cfg.base_delay = std::chrono::milliseconds(5);
+    cfg.max_delay = std::chrono::milliseconds(20);
     cfg.jitter_ratio = 0.0;
 
     int calls = 0;
@@ -139,8 +141,8 @@ TEST(RunWithRetry, TransportErrorRetriesThenFails) {
 TEST(RunWithRetry, Http429RetryThen400Abort) {
     RetryConfig cfg;
     cfg.max_attempts = 5;
-    cfg.base_delay   = std::chrono::milliseconds(3);
-    cfg.max_delay    = std::chrono::milliseconds(20);
+    cfg.base_delay = std::chrono::milliseconds(3);
+    cfg.max_delay = std::chrono::milliseconds(20);
     cfg.jitter_ratio = 0.0;
     cfg.retry_on_http = {429, 500, 502, 503, 504};
 
@@ -175,8 +177,8 @@ TEST(RunWithRetry, MaxAttempts1NoRetry) {
 TEST(RunWithRetry, EventuallySucceedsAfterRetries) {
     RetryConfig cfg;
     cfg.max_attempts = 5;
-    cfg.base_delay   = std::chrono::milliseconds(2);
-    cfg.max_delay    = std::chrono::milliseconds(20);
+    cfg.base_delay = std::chrono::milliseconds(2);
+    cfg.max_delay = std::chrono::milliseconds(20);
     cfg.jitter_ratio = 0.0;
 
     int calls = 0;
@@ -196,7 +198,7 @@ TEST(WithRetryIntConvention, ZeroMeansSuccess) {
     RetryConfigLite cfg;
     cfg.max_attempts = 3;
     cfg.base_delay_ms = 2;
-    cfg.max_delay_ms  = 10;
+    cfg.max_delay_ms = 10;
     auto result = WithRetry(cfg, []() -> int { return 0; });
     ASSERT_TRUE(result.has_value());
     EXPECT_EQ(*result, 0);
@@ -206,7 +208,7 @@ TEST(WithRetryIntConvention, RetryOnListedHttpStatus) {
     RetryConfigLite cfg;
     cfg.max_attempts = 4;
     cfg.base_delay_ms = 1;
-    cfg.max_delay_ms  = 10;
+    cfg.max_delay_ms = 10;
     int calls = 0;
     auto result = WithRetry(cfg, [&]() -> int {
         ++calls;
@@ -222,11 +224,11 @@ TEST(WithRetryIntConvention, NonRetryStatus) {
     RetryConfigLite cfg;
     cfg.max_attempts = 5;
     cfg.base_delay_ms = 1;
-    cfg.max_delay_ms  = 10;
+    cfg.max_delay_ms = 10;
     int calls = 0;
     auto result = WithRetry(cfg, [&]() -> int {
         ++calls;
-        return 401;   // not in default retry_on_http list
+        return 401;  // not in default retry_on_http list
     });
     EXPECT_FALSE(result.has_value());
     EXPECT_EQ(calls, 1);
@@ -246,7 +248,7 @@ TEST(WithRetryExpectedStyle, RetriesOnUnexpected) {
     RetryConfigLite cfg;
     cfg.max_attempts = 3;
     cfg.base_delay_ms = 1;
-    cfg.max_delay_ms  = 5;
+    cfg.max_delay_ms = 5;
     int calls = 0;
     auto result = WithRetry(cfg, [&]() -> std::expected<int, std::string> {
         ++calls;
@@ -262,7 +264,7 @@ TEST(WithRetryExpectedStyle, ExhaustedRetainsLastError) {
     RetryConfigLite cfg;
     cfg.max_attempts = 2;
     cfg.base_delay_ms = 1;
-    cfg.max_delay_ms  = 5;
+    cfg.max_delay_ms = 5;
     auto result = WithRetry(cfg, []() -> std::expected<int, std::string> {
         return std::unexpected(std::string("boom"));
     });
@@ -273,9 +275,7 @@ TEST(WithRetryExpectedStyle, ExhaustedRetainsLastError) {
 TEST(WithRetryExceptionCaptured, StdException) {
     RetryConfigLite cfg;
     cfg.max_attempts = 1;
-    auto result = WithRetry(cfg, []() -> int {
-        throw std::runtime_error("oh no");
-    });
+    auto result = WithRetry(cfg, []() -> int { throw std::runtime_error("oh no"); });
     EXPECT_FALSE(result.has_value());
     EXPECT_NE(result.error().find("oh no"), std::string::npos);
 }
@@ -283,9 +283,7 @@ TEST(WithRetryExceptionCaptured, StdException) {
 TEST(WithRetryExceptionCaptured, NonStdException) {
     RetryConfigLite cfg;
     cfg.max_attempts = 1;
-    auto result = WithRetry(cfg, []() -> int {
-        throw 42;
-    });
+    auto result = WithRetry(cfg, []() -> int { throw 42; });
     EXPECT_FALSE(result.has_value());
     EXPECT_EQ(result.error(), "exception: unknown");
 }
@@ -313,5 +311,3 @@ TEST(WithRetryConfigLite, BackoffMatchesExpectation) {
     EXPECT_EQ(calls, 1);
     EXPECT_LT(elapsed.count(), 100);
 }
-
-

@@ -3,7 +3,6 @@
 /// Ultraplan command for expanded planning flows.
 module;
 
-
 export module loom.commands.ultraplan;
 
 import std;
@@ -30,20 +29,16 @@ public:
         };
     }
 
-    [[nodiscard]] VoidResult validate(const CommandContext&) {
-        return {};
-    }
+    [[nodiscard]] VoidResult validate(const CommandContext&) { return {}; }
 
     [[nodiscard]] Result<CommandResult> execute(const CommandContext&) {
-        return CommandResult::success(
-            "The /ultraplan command is not enabled in this build. "
-            "It spawns a remote Loom-on-the-Web plan session, which is gated behind an external flag. "
-            "For local planning, use /plan to enter plan mode instead.");
+        return CommandResult::success("The /ultraplan command is not enabled in this build. "
+                                      "It spawns a remote Loom-on-the-Web plan session, which is "
+                                      "gated behind an external flag. "
+                                      "For local planning, use /plan to enter plan mode instead.");
     }
 
-    [[nodiscard]] std::vector<std::string> complete(std::string_view) {
-        return {};
-    }
+    [[nodiscard]] std::vector<std::string> complete(std::string_view) { return {}; }
 };
 
-} // namespace loom::commands
+}  // namespace loom::commands

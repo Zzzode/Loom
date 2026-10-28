@@ -1,16 +1,17 @@
 /// @file test_ui_runtime.cpp
-/// @brief Split from test_ui.cpp - AppRuntime, E2E_Gate, FullscreenLayout, Logo, PromptInput, ReplScreen (SLOC budget fix)
+/// @brief Split from test_ui.cpp - AppRuntime, E2E_Gate, FullscreenLayout, Logo, PromptInput,
+/// ReplScreen (SLOC budget fix)
 
-#include <cstdlib>
-
-#include <ftxui/dom/elements.hpp>
-#include <ftxui/dom/node.hpp>
-#include <ftxui/screen/screen.hpp>
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/event.hpp>
 #include <ftxui/component/mouse.hpp>
+#include <ftxui/dom/elements.hpp>
+#include <ftxui/dom/node.hpp>
+#include <ftxui/screen/screen.hpp>
 #include <gtest/gtest.h>
 #include <httplib.h>
+
+#include <cstdlib>
 
 #include "test_ui_helpers.h"
 
@@ -34,19 +35,22 @@ import loom.ui.foundation.theme_provider;
 
 namespace {
 namespace fs = std::filesystem;
+
 struct RestoreLogoTheme {
     loom::ui::design::theme::Theme original = loom::ui::design::theme::current_theme();
+
     ~RestoreLogoTheme() noexcept { loom::ui::design::theme::set_theme(original); }
 };
 
 std::optional<std::pair<int, int>> wordmark_origin(const ftxui::Screen& screen, bool large) {
     const int width = large ? 28 : 19;
-    const std::string top = large ? "██▍" + std::string(25, ' ')
-                                  : "█▋   ▁   ▁" + std::string(9, ' ');
+    const std::string top =
+        large ? "██▍" + std::string(25, ' ') : "█▋   ▁   ▁" + std::string(9, ' ');
     for (int y = 0; y < screen.dimy(); ++y) {
         for (int x = 0; x + width <= screen.dimx(); ++x) {
             std::string row;
-            for (int dx = 0; dx < width; ++dx) row += screen.PixelAt(x + dx, y).character;
+            for (int dx = 0; dx < width; ++dx)
+                row += screen.PixelAt(x + dx, y).character;
             if (row == top) return std::pair{x, y};
         }
     }
@@ -61,9 +65,10 @@ bool wordmark_join(int x, int y, std::pair<int, int> origin, bool large) {
 }
 
 bool wordmark_block(const std::string& character) {
-    return character != " " && std::string_view("▘▝▀▖▌▞▛▗▚▐▜▄▙▟█▁▂▃▅▆▇▉▊▋▍▎▏").find(character) != std::string_view::npos;
+    return character != " " && std::string_view("▘▝▀▖▌▞▛▗▚▐▜▄▙▟█▁▂▃▅▆▇▉▊▋▍▎▏").find(character) !=
+                                   std::string_view::npos;
 }
-}
+}  // namespace
 
 TEST(PasteCoordinator, StopWaitsForActiveReadsAndCompletionCallbacks) {
     std::promise<void> readers_started;
@@ -127,8 +132,8 @@ TEST(PasteCoordinator, DestructorWaitsForActiveReadAndOwnerCallback) {
 
     std::promise<void> destroying;
     auto destroying_started = destroying.get_future();
-    auto destruction = std::async(std::launch::async,
-        [paste = std::move(paste), &destroying]() mutable {
+    auto destruction =
+        std::async(std::launch::async, [paste = std::move(paste), &destroying]() mutable {
             destroying.set_value();
             paste.reset();
         });
@@ -139,9 +144,6 @@ TEST(PasteCoordinator, DestructorWaitsForActiveReadAndOwnerCallback) {
     destruction.get();
     EXPECT_TRUE(callback_finished.load());
 }
-
-
-
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // loom.ui.chrome.panels: panel data models and state transitions
@@ -159,7 +161,6 @@ TEST(PromptInput, InputBufferInsertMoveAndDelete) {
     EXPECT_EQ(buffer.content(), "Hell");
 }
 
-
 TEST(PromptInput, InputBufferBackspaceDeletesWholeUtf8Codepoint) {
     loom::ui::InputBuffer buffer;
     buffer.insert("你a");
@@ -170,15 +171,14 @@ TEST(PromptInput, InputBufferBackspaceDeletesWholeUtf8Codepoint) {
     EXPECT_TRUE(buffer.empty());
 }
 
-
 TEST(PromptInput, InputBufferSupportsMultiLineSelections) {
     loom::ui::InputBuffer buffer;
     buffer.insert("one\ntwo");
 
-    auto text = buffer.get_selection_text({.start = {.line = 0, .col = 1}, .end = {.line = 1, .col = 2}});
+    auto text =
+        buffer.get_selection_text({.start = {.line = 0, .col = 1}, .end = {.line = 1, .col = 2}});
     EXPECT_EQ(text, "ne\ntw");
 }
-
 
 TEST(PromptInput, HistoryManagerNavigatesAndSearches) {
     loom::ui::HistoryManager history;
@@ -193,7 +193,6 @@ TEST(PromptInput, HistoryManagerNavigatesAndSearches) {
     ASSERT_EQ(matches.size(), 1u);
     EXPECT_EQ(matches[0], "first command");
 }
-
 
 TEST(PromptInput, TypeaheadSuggestsSlashCommandsAndSelection) {
     loom::ui::Typeahead typeahead;
@@ -210,15 +209,14 @@ TEST(PromptInput, TypeaheadSuggestsSlashCommandsAndSelection) {
     EXPECT_EQ(*typeahead.selected_index(), 0u);
 }
 
-
 TEST(Logo, CondensedModeRendersStripPlusNotices) {
     namespace logo = loom::ui::logo;
 
     logo::LogoOptions opts;
-    opts.cwd                = "/home/alice/dev/loom";
-    opts.billing_type       = "Team Seat";
+    opts.cwd = "/home/alice/dev/loom";
+    opts.billing_type = "Team Seat";
     opts.model_display_name = "Loom Opus 4.8";
-    opts.is_condensed_mode  = true;   // default / early-return branch
+    opts.is_condensed_mode = true;  // default / early-return branch
 
     auto result = logo::RenderLogo(opts, /*cols=*/120);
     EXPECT_EQ(result.mode, logo::LogoLayoutMode::Condensed);
@@ -234,7 +232,6 @@ TEST(Logo, CondensedModeRendersStripPlusNotices) {
     EXPECT_EQ(s.find("Welcome back!"), std::string::npos);
 }
 
-
 // T2: Compact card mode (cols<70, !is_condensed_mode) renders the welcome
 //     banner + "Welcome to Loom [, {user}]" heading inside a rounded
 //     border, and reports LogoLayoutMode::Compact.
@@ -242,10 +239,10 @@ TEST(Logo, CompactModeRendersRoundedBorderCard) {
     namespace logo = loom::ui::logo;
 
     logo::LogoOptions opts;
-    opts.cwd                = "/x";
+    opts.cwd = "/x";
     opts.model_display_name = "Loom Sonnet 4.6";
-    opts.is_condensed_mode  = false;    // ← enables card mode
-    opts.username           = std::nullopt;
+    opts.is_condensed_mode = false;  // ← enables card mode
+    opts.username = std::nullopt;
 
     auto result = logo::RenderLogo(opts, /*cols=*/60);
     EXPECT_EQ(result.mode, logo::LogoLayoutMode::Compact);
@@ -266,7 +263,6 @@ TEST(Logo, CompactModeRendersRoundedBorderCard) {
     // default-active notices remain, so there is nothing to assert here.
 }
 
-
 // T3: Horizontal mode (cols>=70) renders the left panel | vertical divider |
 //     feed column, split inside a single rounded border.  Also the welcome
 //     greeting personalises for returning users with a display name set.
@@ -274,12 +270,12 @@ TEST(Logo, HorizontalModeSplitsIntoPanels) {
     namespace logo = loom::ui::logo;
 
     logo::LogoOptions opts;
-    opts.cwd                = "/workspace/repo";
-    opts.billing_type       = "API Usage";
+    opts.cwd = "/workspace/repo";
+    opts.billing_type = "API Usage";
     opts.model_display_name = "Loom Opus 4.8";
-    opts.is_condensed_mode  = false;
-    opts.username           = std::string("bob");
-    opts.org_name           = std::string("Acme Corp");
+    opts.is_condensed_mode = false;
+    opts.username = std::string("bob");
+    opts.org_name = std::string("Acme Corp");
 
     auto result = logo::RenderLogo(opts, /*cols=*/100);
     EXPECT_EQ(result.mode, logo::LogoLayoutMode::Horizontal);
@@ -304,7 +300,6 @@ TEST(Logo, HorizontalModeSplitsIntoPanels) {
     EXPECT_NE(s.find("Recent activity"), std::string::npos);
 }
 
-
 // T4: Notice activators each cause their body to appear when toggled, and
 //     remain invisible when the toggle is false (default). Validates the full
 //     10-deep × 6-status-notices activation tree.
@@ -314,12 +309,11 @@ TEST(Logo, EachNoticeActivatorAppearsWhenToggled) {
     // Baseline — every toggle off → no trace of debug/tmux/org/sandbox/guest/
     // overage/status/emergency strings.
     logo::LogoOptions opts;
-    opts.cwd                = "/t";
+    opts.cwd = "/t";
     opts.model_display_name = "M";
-    opts.is_condensed_mode  = true;
+    opts.is_condensed_mode = true;
 
-    auto base = strip_ansi(render_to_plain_text(
-        logo::render_logo(opts, 120), 120, 16));
+    auto base = strip_ansi(render_to_plain_text(logo::render_logo(opts, 120), 120, 16));
     EXPECT_EQ(base.find("Debug mode enabled"), std::string::npos);
     EXPECT_EQ(base.find("tmux session:"), std::string::npos);
     EXPECT_EQ(base.find("Message from "), std::string::npos);
@@ -382,7 +376,6 @@ TEST(Logo, EachNoticeActivatorAppearsWhenToggled) {
     EXPECT_NE(t.find("JetBrains plugin update available"), std::string::npos);
 }
 
-
 // T5: Column-based threshold mapping. cols<70 → Compact; cols≥70 → Horizontal
 //     *only* when is_condensed_mode=false; when true always → Condensed
 //     regardless of width.
@@ -390,7 +383,7 @@ TEST(Logo, LayoutModeThresholdsMatchTSSpec) {
     namespace logo = loom::ui::logo;
 
     logo::LogoOptions opts;
-    opts.cwd                = "/t";
+    opts.cwd = "/t";
     opts.model_display_name = "M";
 
     // Always Condensed when the gate is true.
@@ -411,15 +404,14 @@ TEST(Logo, LayoutModeThresholdsMatchTSSpec) {
     EXPECT_EQ(logo::layout_mode_from_cols(70), logo::LogoLayoutMode::Horizontal);
 }
 
-
 TEST(Logo, WordmarkPreservesCountersAndUsesFineContours) {
     namespace logo = loom::ui::logo;
     namespace theme = loom::ui::design::theme;
     RestoreLogoTheme restore;
     for (auto variant : {theme::ThemeVariant::Dark, theme::ThemeVariant::Light,
-             theme::ThemeVariant::DarkDaltonized, theme::ThemeVariant::LightDaltonized,
-             theme::ThemeVariant::Monochrome, theme::ThemeVariant::DarkAnsi,
-             theme::ThemeVariant::LightAnsi}) {
+                         theme::ThemeVariant::DarkDaltonized, theme::ThemeVariant::LightDaltonized,
+                         theme::ThemeVariant::Monochrome, theme::ThemeVariant::DarkAnsi,
+                         theme::ThemeVariant::LightAnsi}) {
         theme::set_theme(variant);
         const auto& palette = *theme::current_theme().palette;
         for (bool large : {false, true}) {
@@ -437,17 +429,18 @@ TEST(Logo, WordmarkPreservesCountersAndUsesFineContours) {
                     if (wordmark_block(pixel.character)) {
                         if (pixel.character != "█") ++partial;
                         if (std::string_view("▁▂▃▅▆▇▉▊▋▍▎▏").find(pixel.character) !=
-                            std::string_view::npos) ++fine_edges;
+                            std::string_view::npos)
+                            ++fine_edges;
                         if (pixel.inverted) ++reversed_edges;
                         EXPECT_EQ(pixel.background_color, ftxui::Color::Default);
-                        EXPECT_EQ(pixel.foreground_color,
-                                  wordmark_join(x, y, {0, 0}, large) ? palette.loom_body : palette.text);
+                        EXPECT_EQ(pixel.foreground_color, wordmark_join(x, y, {0, 0}, large)
+                                                              ? palette.loom_body
+                                                              : palette.text);
                     }
                 }
             }
             // Both O counters and both m counters remain open and readable.
-            for (int x : large ? std::vector<int>{7, 13, 20, 24}
-                               : std::vector<int>{5, 8, 16}) {
+            for (int x : large ? std::vector<int>{7, 13, 20, 24} : std::vector<int>{5, 8, 16}) {
                 EXPECT_EQ(screen.PixelAt(x, large ? 3 : 2).character, " ");
             }
             if (!large) {
@@ -478,8 +471,8 @@ TEST(Logo, LongMetadataDoesNotCompressWordmark) {
     opts.billing_type = std::string(50, 'B');
     opts.cwd = "/workspace/with/a/long/directory/loom";
     for (int width : {40, 69, 70, 80, 120}) {
-        auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(width),
-                                            ftxui::Dimension::Fixed(16));
+        auto screen =
+            ftxui::Screen::Create(ftxui::Dimension::Fixed(width), ftxui::Dimension::Fixed(16));
         ftxui::Render(screen, logo::RenderLogo(opts, width).root);
         const auto origin = wordmark_origin(screen, width >= 70);
         ASSERT_TRUE(origin.has_value()) << width;
@@ -503,8 +496,8 @@ TEST(Logo, WordmarkFitsMinimumCardAndStripWidths) {
     for (bool condensed : {false, true}) {
         opts.is_condensed_mode = condensed;
         for (int width : {20, 22, 23, 28, 29, 30}) {
-            auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(width),
-                                                ftxui::Dimension::Fixed(25));
+            auto screen =
+                ftxui::Screen::Create(ftxui::Dimension::Fixed(width), ftxui::Dimension::Fixed(25));
             ftxui::Render(screen, logo::RenderLogo(opts, width).root);
             const bool text_only = condensed ? width < 29 : width < 23;
             EXPECT_EQ(wordmark_origin(screen, false).has_value(), !text_only)
@@ -523,18 +516,18 @@ TEST(Logo, WelcomeBannerUsesLoomWeaveAcrossTerminalAndThemeVariants) {
     namespace theme = loom::ui::design::theme;
     RestoreLogoTheme restore;
     for (auto variant : {theme::ThemeVariant::Dark, theme::ThemeVariant::Light,
-             theme::ThemeVariant::DarkDaltonized, theme::ThemeVariant::LightDaltonized,
-             theme::ThemeVariant::Monochrome, theme::ThemeVariant::DarkAnsi,
-             theme::ThemeVariant::LightAnsi}) {
+                         theme::ThemeVariant::DarkDaltonized, theme::ThemeVariant::LightDaltonized,
+                         theme::ThemeVariant::Monochrome, theme::ThemeVariant::DarkAnsi,
+                         theme::ThemeVariant::LightAnsi}) {
         theme::set_theme(variant);
         const auto& palette = *theme::current_theme().palette;
-        for (auto welcome : {logo::WelcomeTheme::Dark, logo::WelcomeTheme::Light,
-                 logo::WelcomeTheme::AppleTerminalDark,
-                 logo::WelcomeTheme::AppleTerminalLight}) {
+        for (auto welcome :
+             {logo::WelcomeTheme::Dark, logo::WelcomeTheme::Light,
+              logo::WelcomeTheme::AppleTerminalDark, logo::WelcomeTheme::AppleTerminalLight}) {
             SCOPED_TRACE(std::string(theme::variant_name(variant)) +
                          " welcome=" + std::to_string(static_cast<int>(welcome)));
-            auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(120),
-                                               ftxui::Dimension::Fixed(20));
+            auto screen =
+                ftxui::Screen::Create(ftxui::Dimension::Fixed(120), ftxui::Dimension::Fixed(20));
             ftxui::Render(screen, logo::RenderWelcome(welcome));
             const auto rendered = strip_ansi(screen.ToString());
             EXPECT_NE(rendered.find("Welcome to Loom"), std::string::npos);
@@ -580,16 +573,13 @@ TEST(Logo, WelcomeThemeSelectorRetainsTerminalAndThemeDispatch) {
     namespace logo = loom::ui::logo;
     for (const auto* name : {"light", "light-daltonized", "light-ansi"}) {
         EXPECT_EQ(logo::ResolveWelcomeTheme(name, false), logo::WelcomeTheme::Light);
-        EXPECT_EQ(logo::ResolveWelcomeTheme(name, true),
-                  logo::WelcomeTheme::AppleTerminalLight);
+        EXPECT_EQ(logo::ResolveWelcomeTheme(name, true), logo::WelcomeTheme::AppleTerminalLight);
     }
     for (const auto* name : {"dark", "dark-daltonized", "dark-ansi", "monochrome"}) {
         EXPECT_EQ(logo::ResolveWelcomeTheme(name, false), logo::WelcomeTheme::Dark);
-        EXPECT_EQ(logo::ResolveWelcomeTheme(name, true),
-                  logo::WelcomeTheme::AppleTerminalDark);
+        EXPECT_EQ(logo::ResolveWelcomeTheme(name, true), logo::WelcomeTheme::AppleTerminalDark);
     }
 }
-
 
 // T7: ReplScreen → RenderWelcomeHeader default call path is still the
 //     condensed strip (no force_full_logo = unchanged behaviour for empty
@@ -601,8 +591,8 @@ TEST(Logo, ReplScreenDefaultWelcomeHeaderStillCondensed) {
     state.chrome_store.model_display_name = "GLM-5.2";
     state.cwd = "/tmp/cpp_migration";
 
-    auto rendered = strip_ansi(render_to_plain_text(
-        repl::RenderWelcomeHeader(state, 0, 120), 120, 20));
+    auto rendered =
+        strip_ansi(render_to_plain_text(repl::RenderWelcomeHeader(state, 0, 120), 120, 20));
 
     // Condensed baseline (identical expectations to the Phase-2 golden test
     // WelcomeHeaderUsesHomeCard).
@@ -615,7 +605,6 @@ TEST(Logo, ReplScreenDefaultWelcomeHeaderStillCondensed) {
     // Feed column hint MUST NOT appear (no forced full logo).
     EXPECT_EQ(rendered.find("Recent activity"), std::string::npos);
 }
-
 
 // T8: force_full_logo=true drives Logo's card layout path from the
 //     ReplScreen-level wrapper, regardless of ReplScreenState contents.
@@ -630,8 +619,7 @@ TEST(Logo, ReplScreenForceFullLogoOptsIntoCardMode) {
 
     // Wide + force_full → Horizontal mode.
     auto wide = strip_ansi(render_to_plain_text(
-        repl::RenderWelcomeHeader(state, 0, 120, /*force_full_logo=*/true),
-        120, 24));
+        repl::RenderWelcomeHeader(state, 0, 120, /*force_full_logo=*/true), 120, 24));
     EXPECT_NE(wide.find("\xE2\x95\xAD"), std::string::npos)
         << "force_full_logo=true should render the rounded border card";
     // empty user_display_name → TS formatWelcomeMessage returns "Welcome back!"
@@ -645,8 +633,7 @@ TEST(Logo, ReplScreenForceFullLogoOptsIntoCardMode) {
     // that runs between the left/right panels, scan for the divider appearing
     // at a fixed column > 10 across multiple consecutive rows.
     auto narrow = strip_ansi(render_to_plain_text(
-        repl::RenderWelcomeHeader(state, 0, 60, /*force_full_logo=*/true),
-        60, 32));
+        repl::RenderWelcomeHeader(state, 0, 60, /*force_full_logo=*/true), 60, 32));
     EXPECT_NE(narrow.find("\xE2\x95\xAD"), std::string::npos);
     // Walk lines and find columns where │ appears.  Round-border cards
     // place │ on their left/right edges (col 0 and col width-1); the
@@ -657,8 +644,11 @@ TEST(Logo, ReplScreenForceFullLogoOptsIntoCardMode) {
         std::vector<std::string> lines;
         std::string buf;
         for (char c : narrow) {
-            if (c == '\n') { lines.push_back(std::move(buf)); buf.clear(); }
-            else buf.push_back(c);
+            if (c == '\n') {
+                lines.push_back(std::move(buf));
+                buf.clear();
+            } else
+                buf.push_back(c);
         }
         if (!buf.empty()) lines.push_back(std::move(buf));
         std::map<int, int> col_count;
@@ -670,17 +660,19 @@ TEST(Logo, ReplScreenForceFullLogoOptsIntoCardMode) {
             }
         }
         int dominant = 0, dominant_col = -1;
-        for (auto [c, n] : col_count) if (n > dominant) { dominant = n; dominant_col = c; }
+        for (auto [c, n] : col_count)
+            if (n > dominant) {
+                dominant = n;
+                dominant_col = c;
+            }
         // Compact: any │s are only at the border edges (col 0 and col 59).
         // Dominant must NOT be a middle column (1..58 range) with count ≥ 3.
-        const bool is_middle_dominant =
-            dominant_col > 0 && dominant_col < 59 && dominant >= 3;
+        const bool is_middle_dominant = dominant_col > 0 && dominant_col < 59 && dominant >= 3;
         EXPECT_FALSE(is_middle_dominant)
             << "cols=60 is below the 70 threshold → no stable inter-panel divider; "
             << "found dominant middle col=" << dominant_col << " count=" << dominant;
     }
 }
-
 
 TEST(Logo, ColorsFollowSemanticTokensAcrossThemesAndLayouts) {
     namespace logo = loom::ui::logo;
@@ -690,20 +682,23 @@ TEST(Logo, ColorsFollowSemanticTokensAcrossThemesAndLayouts) {
     opts.cwd = "/workspace";
     opts.model_display_name = "MODEL";
     for (auto variant : {theme::ThemeVariant::Dark, theme::ThemeVariant::Light,
-             theme::ThemeVariant::DarkDaltonized, theme::ThemeVariant::LightDaltonized,
-             theme::ThemeVariant::Monochrome, theme::ThemeVariant::DarkAnsi,
-             theme::ThemeVariant::LightAnsi}) {
+                         theme::ThemeVariant::DarkDaltonized, theme::ThemeVariant::LightDaltonized,
+                         theme::ThemeVariant::Monochrome, theme::ThemeVariant::DarkAnsi,
+                         theme::ThemeVariant::LightAnsi}) {
         theme::set_theme(variant);
         const auto& palette = *theme::current_theme().palette;
         for (int width : {60, 100, 120}) {
-            SCOPED_TRACE(std::string(theme::variant_name(variant)) + " width=" + std::to_string(width));
+            SCOPED_TRACE(std::string(theme::variant_name(variant)) +
+                         " width=" + std::to_string(width));
             opts.is_condensed_mode = width == 120;
-            auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(width),
-                                               ftxui::Dimension::Fixed(40));
+            auto screen =
+                ftxui::Screen::Create(ftxui::Dimension::Fixed(width), ftxui::Dimension::Fixed(40));
             const auto result = logo::RenderLogo(opts, width);
             ftxui::Render(screen, result.root);
-            const bool large = opts.is_condensed_mode ? width >= 70
-                : result.mode == logo::LogoLayoutMode::Horizontal && result.left_width >= 28;
+            const bool large =
+                opts.is_condensed_mode
+                    ? width >= 70
+                    : result.mode == logo::LogoLayoutMode::Horizontal && result.left_width >= 28;
             const auto origin = wordmark_origin(screen, large);
             ASSERT_TRUE(origin.has_value());
             int border_corners = 0, monogram_corners = 0;
@@ -758,10 +753,10 @@ TEST(Logo, RenderModes_Goldens) {
     // ---- 9a: 60-col compact mode (no feeds, rounded border card) ----
     {
         logo::LogoOptions opts;
-        opts.cwd                = "/x";
+        opts.cwd = "/x";
         opts.model_display_name = "Loom Sonnet 4.6";
-        opts.is_condensed_mode  = false;
-        opts.username           = std::nullopt;
+        opts.is_condensed_mode = false;
+        opts.username = std::nullopt;
 
         auto result = logo::RenderLogo(opts, /*cols=*/60);
         ASSERT_EQ(result.mode, logo::LogoLayoutMode::Compact);
@@ -774,32 +769,32 @@ TEST(Logo, RenderModes_Goldens) {
     // ---- 9b: 100-col horizontal mode with 2 explicit feeds + divider ----
     {
         logo::LogoOptions opts;
-        opts.cwd                = "/workspace/repo";
-        opts.billing_type       = "API Usage";
+        opts.cwd = "/workspace/repo";
+        opts.billing_type = "API Usage";
         opts.model_display_name = "Loom Opus 4.8";
-        opts.is_condensed_mode  = false;
-        opts.username           = std::string("bob");
-        opts.org_name           = std::string("Acme Corp");
+        opts.is_condensed_mode = false;
+        opts.username = std::string("bob");
+        opts.org_name = std::string("Acme Corp");
 
         // Feed 1: Recent activity (with timestamps, faithful to Feed.tsx).
         logo::FeedConfig recent;
         recent.title = "Recent activity";
         recent.lines = {
-            logo::FeedLine{ "Implemented bash Ctrl+R history search", "09:14" },
-            logo::FeedLine{ "Refactored virtual list height engine",   "08:42" },
-            logo::FeedLine{ "Merged PR #482 enterprise auth 3-mode",    "yesterday" },
+            logo::FeedLine{"Implemented bash Ctrl+R history search", "09:14"},
+            logo::FeedLine{"Refactored virtual list height engine", "08:42"},
+            logo::FeedLine{"Merged PR #482 enterprise auth 3-mode", "yesterday"},
         };
 
         // Feed 2: What's new (no timestamps, has footer dim line).
         logo::FeedConfig whats_new;
-        whats_new.title  = "What\xE2\x80\x99s new";   // 's U+2019 apostrophe
-        whats_new.lines  = {
-            logo::FeedLine{ .text = "Paste images with Ctrl+V into prompt",
-                           .timestamp = std::nullopt },
-            logo::FeedLine{ .text = "Logo: compact + horizontal card modes",
-                           .timestamp = std::nullopt },
-            logo::FeedLine{ .text = "Sandbox bash commands via /sandbox toggle",
-                           .timestamp = std::nullopt },
+        whats_new.title = "What\xE2\x80\x99s new";  // 's U+2019 apostrophe
+        whats_new.lines = {
+            logo::FeedLine{.text = "Paste images with Ctrl+V into prompt",
+                           .timestamp = std::nullopt},
+            logo::FeedLine{.text = "Logo: compact + horizontal card modes",
+                           .timestamp = std::nullopt},
+            logo::FeedLine{.text = "Sandbox bash commands via /sandbox toggle",
+                           .timestamp = std::nullopt},
         };
         whats_new.footer = "Full changelog at /changelog";
 
@@ -816,7 +811,6 @@ TEST(Logo, RenderModes_Goldens) {
         check_golden("logo_render_modes_horizontal_100cols", snap);
     }
 }
-
 
 // ============================================================
 // P1-#sticky-prompt-clicked-state-missing — M1 FullscreenLayout
@@ -849,13 +843,13 @@ fl default_slots(int cols = 80, int rows = 24) {
     return s;
 }
 
-} // namespace sticky_prompt_test
+}  // namespace sticky_prompt_test
 
 /// State 1/3: sticky_prompt = nullopt.  No header, paddingTop=1, no pill.
 TEST(FullscreenLayout, StickyPromptState1_NoHeader) {
     using namespace sticky_prompt_test;
     fl s = default_slots();
-    s.sticky_prompt.reset();   // null = at bottom (TS state 1)
+    s.sticky_prompt.reset();  // null = at bottom (TS state 1)
     s.sticky_clicked = false;
     s.pill_visible = false;
 
@@ -867,7 +861,6 @@ TEST(FullscreenLayout, StickyPromptState1_NoHeader) {
     // prompt line still present
     EXPECT_NE(rendered.find("prompt>"), std::string::npos);
 }
-
 
 /// State 2/3: sticky_prompt = {text, scrollTo}.  Header visible,
 /// padCollapsed=true → paddingTop=0.
@@ -883,8 +876,7 @@ TEST(FullscreenLayout, StickyPromptState2_HeaderVisible) {
     // Header breadcrumb with prompt text
     EXPECT_NE(rendered.find("\xE2\x9D\xAF"), std::string::npos)
         << "sticky_prompt set must render a header with pointer prefix";
-    EXPECT_NE(rendered.find("Write a snake game in Python"),
-              std::string::npos);
+    EXPECT_NE(rendered.find("Write a snake game in Python"), std::string::npos);
     // prompt line still present
     EXPECT_NE(rendered.find("prompt>"), std::string::npos);
 
@@ -900,7 +892,6 @@ TEST(FullscreenLayout, StickyPromptState2_HeaderVisible) {
                  render_ansi(fl_ns::ComposeFullscreen(std::move(s2)), 80, 24));
 }
 
-
 /// State 3/3: sticky_prompt = {text, ...} + sticky_clicked = true.
 /// Header HIDDEN but padCollapsed still applies (paddingTop=0).
 /// This is the gap that was previously missing.
@@ -910,20 +901,17 @@ TEST(FullscreenLayout, StickyPromptState3_ClickedCollapsed) {
     fl s_visible = default_slots();
     s_visible.sticky_prompt = Sp{"Write a snake game in Python", 17};
     s_visible.sticky_clicked = false;
-    auto visible = strip_ansi(render_ansi(
-        fl_ns::ComposeFullscreen(std::move(s_visible)), 80, 24));
+    auto visible = strip_ansi(render_ansi(fl_ns::ComposeFullscreen(std::move(s_visible)), 80, 24));
 
     fl s_clicked = default_slots();
     s_clicked.sticky_prompt = Sp{"Write a snake game in Python", 17};
-    s_clicked.sticky_clicked = true;          // <-- the TS 'clicked' sentinel
-    auto clicked = strip_ansi(render_ansi(
-        fl_ns::ComposeFullscreen(std::move(s_clicked)), 80, 24));
+    s_clicked.sticky_clicked = true;  // <-- the TS 'clicked' sentinel
+    auto clicked = strip_ansi(render_ansi(fl_ns::ComposeFullscreen(std::move(s_clicked)), 80, 24));
 
     // State 3 invariant: ❯ header is gone.
     EXPECT_EQ(clicked.find("\xE2\x9D\xAF"), std::string::npos)
         << "sticky_clicked=true must hide the header row";
-    EXPECT_EQ(clicked.find("Write a snake game in Python"),
-              std::string::npos)
+    EXPECT_EQ(clicked.find("Write a snake game in Python"), std::string::npos)
         << "sticky_clicked=true must hide the header text";
 
     // But prompt line and messages still render.
@@ -962,7 +950,6 @@ TEST(FullscreenLayout, StickyPromptState3_ClickedCollapsed) {
                  render_ansi(fl_ns::ComposeFullscreen(std::move(s2)), 80, 24));
 }
 
-
 /// Behavioural: the on_sticky_click callback fires when the Component
 /// receives a click-event on the header row, with the correct
 /// StickyPrompt payload (scroll_target_row preserved).
@@ -993,16 +980,21 @@ TEST(FullscreenLayout, DISABLED_StickyPromptClickFiresCallback) {
     // flow through Screen's PostEvent; simulate by building a minimal
     // Container wrapper so the Component tree lives.
     auto slots_ptr = std::make_shared<fl>(std::move(s));
+
     // Wrap the layout in a component that Re-renders from the same slots
     // (so the captured closure remains bound).
     class ClickHarness : public ftxui::ComponentBase {
-     public:
+    public:
         std::shared_ptr<fl> slots_;
-        explicit ClickHarness(std::shared_ptr<fl> s) : slots_(std::move(s)) {}
+
+        explicit ClickHarness(std::shared_ptr<fl> s)
+            : slots_(std::move(s)) {}
+
         ftxui::Element Render() override {
             // Compose copies slots; we rebuild each frame.
             return fl_ns::ComposeFullscreen(*slots_);
         }
+
         // OnEvent: default ComponentBase::OnEvent dispatches to children.
         // ComposeFullscreen's StickyPromptHeaderComponent is NOT a direct
         // child (it's wrapped in a Node), so we manually deliver the event
@@ -1018,25 +1010,22 @@ TEST(FullscreenLayout, DISABLED_StickyPromptClickFiresCallback) {
             if (!on_click) return false;
             auto comp = ftxui::Make<fl_ns::StickyPromptHeaderComponent>(
                 std::string(prompt.text),
-                [p = std::move(prompt), cb = std::move(on_click)] {
-                    cb(p);
-                });
+                [p = std::move(prompt), cb = std::move(on_click)] { cb(p); });
             // The component's internal `box_` (used by OnEvent's Contain
             // check) is populated by ftxui::reflect() during Screen
             // render-walk.  Walk once at full-screen dimensions so
             // reflect(&box_) resolves to (0,0)..(cols,1) — i.e. row 0 of the
             // terminal matches the header, exactly like a real render.
-            auto tmp_screen = ftxui::Screen::Create(
-                ftxui::Dimension::Fixed(slots_->term_cols),
-                ftxui::Dimension::Fixed(slots_->term_rows));
+            auto tmp_screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(slots_->term_cols),
+                                                    ftxui::Dimension::Fixed(slots_->term_rows));
             ftxui::Render(tmp_screen, comp->Render());
             return comp->OnEvent(std::move(ev));
         }
     };
+
     auto harness = ftxui::Make<ClickHarness>(slots_ptr);
     // Render first so the component tree's reflect() boxes are populated.
-    auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(80),
-                                       ftxui::Dimension::Fixed(24));
+    auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(80), ftxui::Dimension::Fixed(24));
     ftxui::Render(screen, harness->Render());
 
     // Fire a mouse-left-released event at (3,0) — row 0 is the header.
@@ -1047,8 +1036,11 @@ TEST(FullscreenLayout, DISABLED_StickyPromptClickFiresCallback) {
     auto m = ftxui::Mouse{
         ftxui::Mouse::Button::Left,
         ftxui::Mouse::Motion::Released,
-        /*shift=*/false, /*meta=*/false, /*control=*/false,
-        /*x=*/3, /*y=*/0,
+        /*shift=*/false,
+        /*meta=*/false,
+        /*control=*/false,
+        /*x=*/3,
+        /*y=*/0,
     };
     bool handled = harness->OnEvent(ftxui::Event::Mouse("", m));
     EXPECT_TRUE(handled) << "header click event should be consumed";
@@ -1056,7 +1048,6 @@ TEST(FullscreenLayout, DISABLED_StickyPromptClickFiresCallback) {
     EXPECT_EQ(captured.text, "What does parse_cidr do?");
     EXPECT_EQ(captured.scroll_target_row, 42u);
 }
-
 
 /// NewMessagesPill: static rendering only (round-1 landing scope).
 ///
@@ -1071,8 +1062,7 @@ TEST(FullscreenLayout, NewMessagesPillStaticRender) {
     fl s_new = default_slots();
     s_new.pill_visible = true;
     s_new.new_message_count = 3;
-    auto r_new = strip_ansi(render_ansi(
-        fl_ns::ComposeFullscreen(std::move(s_new)), 80, 24));
+    auto r_new = strip_ansi(render_ansi(fl_ns::ComposeFullscreen(std::move(s_new)), 80, 24));
     EXPECT_NE(r_new.find("3 new messages"), std::string::npos);
     EXPECT_NE(r_new.find("\xE2\x86\x93"), std::string::npos)  // ↓
         << "pill arrow glyph missing";
@@ -1080,8 +1070,7 @@ TEST(FullscreenLayout, NewMessagesPillStaticRender) {
     fl s_jump = default_slots();
     s_jump.pill_visible = true;
     s_jump.new_message_count = 0;
-    auto r_jump = strip_ansi(render_ansi(
-        fl_ns::ComposeFullscreen(std::move(s_jump)), 80, 24));
+    auto r_jump = strip_ansi(render_ansi(fl_ns::ComposeFullscreen(std::move(s_jump)), 80, 24));
     EXPECT_NE(r_jump.find("Jump to bottom"), std::string::npos);
 
     // Pill should NOT render when overlay is set (TS guard:
@@ -1090,12 +1079,10 @@ TEST(FullscreenLayout, NewMessagesPillStaticRender) {
     s_hidden.pill_visible = true;
     s_hidden.new_message_count = 5;
     s_hidden.overlay = ftxui::text("PERMISSION REQUEST") | ftxui::border;
-    auto r_hidden = strip_ansi(render_ansi(
-        fl_ns::ComposeFullscreen(std::move(s_hidden)), 80, 24));
+    auto r_hidden = strip_ansi(render_ansi(fl_ns::ComposeFullscreen(std::move(s_hidden)), 80, 24));
     EXPECT_EQ(r_hidden.find("5 new messages"), std::string::npos)
         << "pill must hide when overlay is present";
 }
-
 
 /// NewMessagesPill: click-callback fires via Component dispatch.
 /// Deferred: see DISABLED_StickyPromptClickFiresCallback for rationale.
@@ -1111,87 +1098,96 @@ TEST(FullscreenLayout, DISABLED_NewMessagesPillClickCallback) {
     // Dispatch through the component (pill renders at row ~height-1 before
     // prompt; use a direct component probe similar to click harness above).
     auto slots_ptr = std::make_shared<fl>(std::move(s_cb));
+
     class PillHarness : public ftxui::ComponentBase {
-     public:
+    public:
         std::shared_ptr<fl> slots_;
-        explicit PillHarness(std::shared_ptr<fl> s) : slots_(std::move(s)) {}
-        ftxui::Element Render() override {
-            return fl_ns::ComposeFullscreen(*slots_);
-        }
+
+        explicit PillHarness(std::shared_ptr<fl> s)
+            : slots_(std::move(s)) {}
+
+        ftxui::Element Render() override { return fl_ns::ComposeFullscreen(*slots_); }
+
         bool OnEvent(ftxui::Event ev) override {
             // Pill is only rendered when visible + no overlay + has callback.
             if (!slots_->pill_visible || !slots_->on_pill_click ||
-                (slots_->overlay && *slots_->overlay)) return false;
+                (slots_->overlay && *slots_->overlay))
+                return false;
             // Build a PillComponent mirroring NewMessagesPill (same logic).
             using Role = loom::ui::design::tokens::Role;
-            (void)sizeof(loom::ui::design::tokens::Palette); // import-use anchor
+            (void)sizeof(loom::ui::design::tokens::Palette);  // import-use anchor
             const auto& pal = *loom::ui::design::theme::current_theme().palette;
-            ftxui::Color bg_n = loom::ui::design::tokens::token_by_role(
-                pal, Role::UserMessageBackground);
-            ftxui::Color bg_h = loom::ui::design::tokens::token_by_role(
-                pal, Role::UserMessageBackgroundHover);
-            ftxui::Color fg = loom::ui::design::tokens::token_by_role(
-                pal, Role::Subtle);
-            std::string label =
-                std::to_string(slots_->new_message_count) + " new message"
-                + (slots_->new_message_count == 1 ? "" : "s")
-                + " " + std::string(loom::ui::design::figures::kArrowDown);
+            ftxui::Color bg_n =
+                loom::ui::design::tokens::token_by_role(pal, Role::UserMessageBackground);
+            ftxui::Color bg_h =
+                loom::ui::design::tokens::token_by_role(pal, Role::UserMessageBackgroundHover);
+            ftxui::Color fg = loom::ui::design::tokens::token_by_role(pal, Role::Subtle);
+            std::string label = std::to_string(slots_->new_message_count) + " new message" +
+                                (slots_->new_message_count == 1 ? "" : "s") + " " +
+                                std::string(loom::ui::design::figures::kArrowDown);
             auto cb = slots_->on_pill_click;
+
             class Inner : public ftxui::ComponentBase {
-             public:
+            public:
                 std::string label_;
                 ftxui::Color bn_, bh_, fg_;
                 std::function<void()> cb_;
                 bool hovered_ = false;
                 ftxui::Box box_;
+
                 ftxui::Element Render() override {
                     const auto bg = hovered_ ? bh_ : bn_;
                     // NOTE: ftxui::reflect takes a non-const Box& — passing
                     // &box_ forms a pointer temporary which cannot bind.
                     ftxui::Box& box_ref = box_;
                     return ftxui::hbox({
-                        ftxui::filler(),
-                        ftxui::text(" " + label_ + " ")
-                            | ftxui::color(fg_) | ftxui::bgcolor(bg),
-                        ftxui::filler(),
-                    }) | ftxui::reflect(box_ref)
-                       | ftxui::size(ftxui::HEIGHT, ftxui::EQUAL, 1);
+                               ftxui::filler(),
+                               ftxui::text(" " + label_ + " ") | ftxui::color(fg_) |
+                                   ftxui::bgcolor(bg),
+                               ftxui::filler(),
+                           }) |
+                           ftxui::reflect(box_ref) | ftxui::size(ftxui::HEIGHT, ftxui::EQUAL, 1);
                 }
+
                 bool OnEvent(ftxui::Event e) override {
                     if (!e.is_mouse()) return false;
                     const auto& m = e.mouse();
                     if (!box_.Contain(m.x, m.y)) return false;
-                    if (m.button == ftxui::Mouse::Left &&
-                        m.motion == ftxui::Mouse::Released) {
+                    if (m.button == ftxui::Mouse::Left && m.motion == ftxui::Mouse::Released) {
                         if (cb_) cb_();
                         return true;
                     }
                     return false;
                 }
             };
+
             auto inner = ftxui::Make<Inner>();
             inner->label_ = std::move(label);
-            inner->bn_ = bg_n; inner->bh_ = bg_h; inner->fg_ = fg;
+            inner->bn_ = bg_n;
+            inner->bh_ = bg_h;
+            inner->fg_ = fg;
             inner->cb_ = std::move(cb);
             // Resolve reflect(&box_) via a Screen render-walk so Contain
             // checks behave like a live layout.
-            auto tmp = ftxui::Screen::Create(
-                ftxui::Dimension::Fixed(slots_->term_cols),
-                ftxui::Dimension::Fixed(slots_->term_rows));
+            auto tmp = ftxui::Screen::Create(ftxui::Dimension::Fixed(slots_->term_cols),
+                                             ftxui::Dimension::Fixed(slots_->term_rows));
             ftxui::Render(tmp, inner->Render());
             return inner->OnEvent(std::move(ev));
         }
     };
+
     auto harness = ftxui::Make<PillHarness>(slots_ptr);
-    auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(80),
-                                       ftxui::Dimension::Fixed(24));
+    auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(80), ftxui::Dimension::Fixed(24));
     ftxui::Render(screen, harness->Render());
     // Aim at y = 22 (just above prompt row).
     // FTXUI 5.x Mouse field order: button, motion, shift, meta, control, x, y.
     auto m = ftxui::Mouse{ftxui::Mouse::Button::Left,
                           ftxui::Mouse::Motion::Released,
-                          /*shift=*/false, /*meta=*/false, /*control=*/false,
-                          /*x=*/40, /*y=*/22};
+                          /*shift=*/false,
+                          /*meta=*/false,
+                          /*control=*/false,
+                          /*x=*/40,
+                          /*y=*/22};
     (void)harness->OnEvent(ftxui::Event::Mouse("", m));
     // Pill's y is computed by reflect() during Screen render; for the
     // purpose of verifying that the dispatch path and callback wiring
@@ -1208,7 +1204,6 @@ TEST(FullscreenLayout, DISABLED_NewMessagesPillClickCallback) {
     EXPECT_EQ(pill_fired, 1) << "pill on_pill_click callback should fire";
 }
 
-
 // =============================================================================
 
 namespace image_paste_test {
@@ -1224,7 +1219,8 @@ loom::core::UserMessage make_mixed_user_message() {
     loom::core::UserMessage m;
     ImageBlock img1;
     img1.media_type = "image/png";
-    img1.data = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
+    img1.data = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASU"
+                "VORK5CYII=";
     img1.width = 1;
     img1.height = 1;
     img1.size_bytes = 68;
@@ -1233,7 +1229,15 @@ loom::core::UserMessage make_mixed_user_message() {
 
     ImageBlock img2;
     img2.media_type = "image/jpeg";
-    img2.data = "/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/2wBDAQkJCQwLDBgNDRgyIRwhMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjL/wAARCAABAAEDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/9oADAMBAAIRAxEAPwCmHw4Q==";
+    img2.data =
+        "/9j/4AAQSkZJRgABAQEASABIAAD/"
+        "2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zND"
+        "L/"
+        "2wBDAQkJCQwLDBgNDRgyIRwhMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMj"
+        "L/wAARCAABAAEDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/"
+        "8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJic"
+        "oKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipq"
+        "rKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/9oADAMBAAIRAxEAPwCmHw4Q==";
     img2.width = 1024;
     img2.height = 768;
     img2.size_bytes = 142'311;
@@ -1249,7 +1253,7 @@ loom::core::UserMessage make_mixed_user_message() {
     };
     return m;
 }
-} // namespace image_paste_test
+}  // namespace image_paste_test
 
 /// Structural: project_messages splits a mixed user message into N rows.
 TEST(ImagePaste, MixedTextAndImage_SplitsIntoMultipleRows_OrderPreserved) {
@@ -1262,12 +1266,10 @@ TEST(ImagePaste, MixedTextAndImage_SplitsIntoMultipleRows_OrderPreserved) {
     //   1 — image screenshot_a.png (clipboard)
     //   2 — text "Also see this one:"
     //   3 — image IMG_1234.jpg (file)
-    ASSERT_EQ(rows.size(), 4u) << "expected 1+1+1+1=4 projected rows, got "
-                               << rows.size();
+    ASSERT_EQ(rows.size(), 4u) << "expected 1+1+1+1=4 projected rows, got " << rows.size();
     EXPECT_EQ(rows[0].role, "user");
     EXPECT_FALSE(rows[0].is_image);
-    EXPECT_NE(rows[0].content_preview.find("Describe these images"),
-              std::string::npos);
+    EXPECT_NE(rows[0].content_preview.find("Describe these images"), std::string::npos);
 
     EXPECT_EQ(rows[1].role, "user");
     EXPECT_TRUE(rows[1].is_image);
@@ -1275,13 +1277,11 @@ TEST(ImagePaste, MixedTextAndImage_SplitsIntoMultipleRows_OrderPreserved) {
     EXPECT_EQ(rows[1].image_block->file_name, "screenshot_a.png");
     EXPECT_EQ(rows[1].image_block->source, ImageBlockSource::Clipboard);
     EXPECT_NE(rows[1].content_preview.find("1x1"), std::string::npos);
-    EXPECT_NE(rows[1].content_preview.find("screenshot_a.png"),
-              std::string::npos);
+    EXPECT_NE(rows[1].content_preview.find("screenshot_a.png"), std::string::npos);
 
     EXPECT_EQ(rows[2].role, "user");
     EXPECT_FALSE(rows[2].is_image);
-    EXPECT_NE(rows[2].content_preview.find("Also see this one"),
-              std::string::npos);
+    EXPECT_NE(rows[2].content_preview.find("Also see this one"), std::string::npos);
 
     EXPECT_EQ(rows[3].role, "user");
     EXPECT_TRUE(rows[3].is_image);
@@ -1293,7 +1293,6 @@ TEST(ImagePaste, MixedTextAndImage_SplitsIntoMultipleRows_OrderPreserved) {
     EXPECT_NE(rows[3].content_preview.find("1024x768"), std::string::npos);
 }
 
-
 /// Regression: user message with ONLY an ImageBlock (no text) → projects to
 /// exactly ONE image row (not empty text).
 TEST(ImagePaste, ImageOnly_NoEmptyTextRow) {
@@ -1301,7 +1300,8 @@ TEST(ImagePaste, ImageOnly_NoEmptyTextRow) {
     loom::core::UserMessage u;
     ImageBlock img_only;
     img_only.media_type = "image/png";
-    img_only.data = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
+    img_only.data = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAA"
+                    "AASUVORK5CYII=";
     img_only.width = 1;
     img_only.height = 1;
     img_only.size_bytes = 68;
@@ -1323,7 +1323,6 @@ TEST(ImagePaste, ImageOnly_NoEmptyTextRow) {
     EXPECT_TRUE(single.image_block.has_value());
 }
 
-
 /// End-to-end render: a mixed user message rendered through the full
 /// BuildMessages pipeline must emit clipboard icon + image filename in the
 /// transcript (verifies both M3 and M4 are correctly wired).
@@ -1344,8 +1343,7 @@ TEST(ImagePaste, ClipboardImageCard_RendersClipboardIconAndFilename) {
     }
 
     Element el = RenderMessages(entries, -1, 40);
-    std::string snap = strip_ansi(
-        render_ansi(std::move(el), /*w=*/100, /*h=*/60));
+    std::string snap = strip_ansi(render_ansi(std::move(el), /*w=*/100, /*h=*/60));
 
     // Text rows.
     EXPECT_NE(snap.find("Describe these images:"), std::string::npos);
@@ -1363,13 +1361,14 @@ TEST(ImagePaste, ClipboardImageCard_RendersClipboardIconAndFilename) {
     // Dimension text "1024×768" (× = U+00D7 = UTF-8 "\xC3\x97").
     // NB: split the hex literal + ASCII digits so the C preprocessor does not
     // greedily consume "97768" as one hex escape sequence.
-    EXPECT_NE(snap.find("1024\xC3\x97" "768"), std::string::npos)
+    EXPECT_NE(snap.find("1024\xC3\x97"
+                        "768"),
+              std::string::npos)
         << "file-sourced image should render W×H metadata";
     // 142311 bytes → "139 KB".
     EXPECT_NE(snap.find("KB"), std::string::npos)
         << "file size should render as pretty-printed KB/MB";
 }
-
 
 /// Golden: Render a single clipboard-paste ImageMessageData card through
 /// message_image directly; snapshot pins exact layout (thumbnail, icon,
@@ -1381,16 +1380,15 @@ TEST(ImagePaste, ClipboardCard_GoldenSnapshot) {
     d.source_type = ImageSource::Clipboard;
     d.source = "";  // clipboard — no on-disk path
     d.alt_text = "screenshot_a.png 1x1 test data seed";
-    d.width = 1280; d.height = 800;
-    d.file_size = 483'211;   // → "471 KB"
+    d.width = 1280;
+    d.height = 800;
+    d.file_size = 483'211;  // → "471 KB"
     d.media_type = "image/png";
     d.file_name = "Screenshot 2026-06-30 at 14.22.05.png";
     d.add_margin = false;
     auto el = RenderImageBubble(d);
-    check_golden("clipboard_image_card",
-                 render_ansi(std::move(el), 100, 15));
+    check_golden("clipboard_image_card", render_ansi(std::move(el), 100, 15));
 }
-
 
 // ── Image paste: TS PromptInput.tsx onImagePaste + orphan cleanup parity ──
 
@@ -1405,26 +1403,22 @@ struct PasteTestHarness {
     std::filesystem::path storage_root;
     ftxui::Component app;  // actually loom::ui::AppAdapter*
 
-    loom::ui::AppAdapter* adapter() {
-        return dynamic_cast<loom::ui::AppAdapter*>(app.get());
-    }
+    loom::ui::AppAdapter* adapter() { return dynamic_cast<loom::ui::AppAdapter*>(app.get()); }
 
     PasteTestHarness() {
         config.context_window.auto_compact = false;
         config.cwd = std::filesystem::temp_directory_path().string();
-        engine = std::make_unique<loom::core::QueryEngine>(
-            std::move(config), tools);
-        storage_root = std::filesystem::temp_directory_path() /
+        engine = std::make_unique<loom::core::QueryEngine>(std::move(config), tools);
+        storage_root =
+            std::filesystem::temp_directory_path() /
             ("loom_paste_test_" +
              std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
-        app = ftxui::Make<loom::ui::AppAdapter>(
-            engine.get(), nullptr, &commands, storage_root, [] {});
+        app = ftxui::Make<loom::ui::AppAdapter>(engine.get(), nullptr, &commands, storage_root,
+                                                [] {});
         adapter()->SyncState();
     }
 
-    ~PasteTestHarness() {
-        std::filesystem::remove_all(storage_root);
-    }
+    ~PasteTestHarness() { std::filesystem::remove_all(storage_root); }
 
     /// Make a minimal ImageBlock for injection.
     static loom::core::ImageBlock make_test_image(int seed = 1) {
@@ -1452,7 +1446,6 @@ TEST(ImagePasteSubmit, EmptyTextNoImages_EarlyReturn) {
     EXPECT_FALSE(test_seams(a).is_query_running_for_testing());
 }
 
-
 /// TS REF: PromptInput.tsx L1066-1068 + handlePromptSubmit.ts L180-187 —
 /// empty text but with a referenced image → submit is allowed (has_images=true).
 /// The placeholder "[Image #1]" in the text counts as having content.
@@ -1473,13 +1466,15 @@ TEST(ImagePasteSubmit, TextWithImageRef_HasImagesTrue) {
     // has_images = any ref in text that also exists in pasted_contents_
     bool has_images = false;
     for (const auto& r : refs) {
-        if (test_seams(a).has_pasted_content_for_testing(r.id)) { has_images = true; break; }
+        if (test_seams(a).has_pasted_content_for_testing(r.id)) {
+            has_images = true;
+            break;
+        }
     }
     EXPECT_TRUE(has_images);
     // → text.empty() guard would NOT trigger (text is not empty).
     // → Even if text were empty "", has_images=true means submit proceeds.
 }
-
 
 /// TS REF: handlePromptSubmit.ts L180-185 — referenced-ids filter: only
 /// images whose [Image #N] ref is in the submit text are attached.  Orphaned
@@ -1504,7 +1499,6 @@ TEST(ImagePasteSubmit, ReferencedIdsFilter_OnlyAttachedRefdImages) {
     EXPECT_FALSE(referenced_ids.contains(2));
 }
 
-
 /// TS REF: PromptInput.tsx L1185-1200 — orphan cleanup: if the [Image #N]
 /// placeholder is no longer in input_text, the pasted_contents_ entry is pruned.
 TEST(ImagePasteOrphanCleanup, RefMissingFromInput_ImagePruned) {
@@ -1524,7 +1518,6 @@ TEST(ImagePasteOrphanCleanup, RefMissingFromInput_ImagePruned) {
     EXPECT_FALSE(test_seams(a).has_pasted_content_for_testing(1));
 }
 
-
 /// TS REF: PromptInput.tsx L1185-1200 — orphan cleanup: if the [Image #N]
 /// placeholder IS still in input_text, the entry is kept.
 TEST(ImagePasteOrphanCleanup, RefPresentInInput_ImageKept) {
@@ -1542,7 +1535,6 @@ TEST(ImagePasteOrphanCleanup, RefPresentInInput_ImageKept) {
     EXPECT_TRUE(test_seams(a).has_pasted_content_for_testing(1));
 }
 
-
 /// Multi-image: two pasted images, one ref removed → only that one is pruned.
 TEST(ImagePasteOrphanCleanup, MultiImagePartialPrune) {
     PasteTestHarness h;
@@ -1559,7 +1551,6 @@ TEST(ImagePasteOrphanCleanup, MultiImagePartialPrune) {
     EXPECT_TRUE(test_seams(a).has_pasted_content_for_testing(1));
     EXPECT_FALSE(test_seams(a).has_pasted_content_for_testing(2));
 }
-
 
 /// TS REF: handlePromptSubmit.ts L180-185 — submit filters: only images whose
 /// refs are STILL in the text at submit time are attached.  Orphaned images
@@ -1591,7 +1582,6 @@ TEST(ImagePasteSubmit, OrphanedImageNotInReferencedSet) {
     EXPECT_FALSE(attached_ids.contains(2));
 }
 
-
 /// TS REF: PromptInput.tsx L1181 insertTextAtCursor — the format_image_ref
 /// helper produces the exact placeholder string that gets inserted.
 TEST(ImagePasteFormat, FormatImageRefMatchesTS) {
@@ -1599,7 +1589,6 @@ TEST(ImagePasteFormat, FormatImageRefMatchesTS) {
     EXPECT_EQ(loom::utils::format_image_ref(1), "[Image #1]");
     EXPECT_EQ(loom::utils::format_image_ref(99), "[Image #99]");
 }
-
 
 /// TS REF: history.ts L62-75 — parse_references correctly extracts image refs
 /// from mixed text (integration check that the regex works in the UI context).
@@ -1615,7 +1604,6 @@ TEST(ImagePasteFormat, ParseReferencesFromPromptText) {
     EXPECT_EQ(refs[0].index, 24u);  // "explain this screenshot " = 24 chars
     EXPECT_EQ(refs[1].index, 44u);  // after "[Image #1] and also " = +20
 }
-
 
 // ── Ctrl+V event → placeholder insertion (the user-visible broken path) ──
 
@@ -1653,7 +1641,6 @@ TEST(ImagePasteCtrlV, OnEventCtrlV_InsertsPlaceholderImmediately) {
         << "Got input_text='" << text << "'";
 }
 
-
 /// Same test but with Event::Character('\x16') — the comparison used in
 /// AppAdapter::OnEvent L3143 and text_input.cppm L586.  Both should work
 /// because operator== only compares input_.
@@ -1668,7 +1655,6 @@ TEST(ImagePasteCtrlV, OnEventCtrlV_CharacterForm_AlsoInsertsPlaceholder) {
         << "Event::Character('\\x16') should also insert placeholder. "
         << "Got input_text='" << text << "'";
 }
-
 
 /// Verify the in-flight paste drain: OnEvent(Ctrl+V) inserts the placeholder
 /// AND posts the (fake, in testing mode) PNG to pending_paste_results_. The
@@ -1694,7 +1680,6 @@ TEST(ImagePasteCtrlV, PasteResultDrainsIntoPastedContentsOnNextEvent) {
     EXPECT_TRUE(test_seams(a).has_pasted_content_for_testing(1));
 }
 
-
 /// Verify that Event::Special("\x16") == Event::Character('\x16') — this is
 /// the fundamental assumption that makes the Ctrl+V detection work.
 /// FTXUI operator== only compares input_ (event.hpp L80), so both forms
@@ -1710,7 +1695,6 @@ TEST(ImagePasteCtrlV, EventSpecial16EqualsEventCharacter16) {
         << "Event::Special(\"\\x16\") should == Event::Character('\\x16') "
         << "because operator== only compares input_ strings.";
 }
-
 
 /// Verify the projection order for a user message built as
 /// [TextBlock, ImageBlock] (which is how query_engine.cppm assembles it:
@@ -1732,14 +1716,10 @@ TEST(ImagePasteCtrlV, ProjectionOrder_TextAboveImage) {
     Message msg{std::move(um)};
 
     auto entries = loom::ui::project_messages(msg);
-    ASSERT_EQ(entries.size(), 2u)
-        << "text + 1 image should project to exactly 2 rows";
-    EXPECT_FALSE(entries[0].is_image)
-        << "first row (top) must be the TEXT bubble, not the image";
-    EXPECT_TRUE(entries[1].is_image)
-        << "second row (bottom) must be the IMAGE card";
+    ASSERT_EQ(entries.size(), 2u) << "text + 1 image should project to exactly 2 rows";
+    EXPECT_FALSE(entries[0].is_image) << "first row (top) must be the TEXT bubble, not the image";
+    EXPECT_TRUE(entries[1].is_image) << "second row (bottom) must be the IMAGE card";
 }
-
 
 /// Verify the image renderer actually paints the UserImage card (ASCII
 /// thumbnail + metadata), not an empty box. The virtual-list render_payload_row

@@ -23,7 +23,8 @@ TEST(SettingsValidationConfig, ClassifiesPatternToolsAndCustomWebValidators) {
 
     auto web_fetch_url = validate_tool_content("WebFetch", "https://example.com/path");
     EXPECT_FALSE(web_fetch_url.valid);
-    EXPECT_EQ(web_fetch_url.suggestion, std::optional<std::string>{"Use \"domain:hostname\" format"});
+    EXPECT_EQ(web_fetch_url.suggestion,
+              std::optional<std::string>{"Use \"domain:hostname\" format"});
 
     EXPECT_TRUE(validate_tool_content("WebFetch", "domain:*.example.com").valid);
 }
@@ -54,15 +55,18 @@ TEST(SettingsPermissionValidation, ValidatesRulesAndReportsHelpfulErrors) {
 
     auto bash_bad_prefix = validate_permission_rule("Bash(npm:* test)");
     EXPECT_FALSE(bash_bad_prefix.valid);
-    EXPECT_EQ(bash_bad_prefix.error, std::optional<std::string>{"The :* pattern must be at the end"});
+    EXPECT_EQ(bash_bad_prefix.error,
+              std::optional<std::string>{"The :* pattern must be at the end"});
 
     auto file_bad_prefix = validate_permission_rule("Read(src:*)");
     EXPECT_FALSE(file_bad_prefix.valid);
-    EXPECT_EQ(file_bad_prefix.error, std::optional<std::string>{"The \":*\" syntax is only for Bash prefix rules"});
+    EXPECT_EQ(file_bad_prefix.error,
+              std::optional<std::string>{"The \":*\" syntax is only for Bash prefix rules"});
 
     auto mcp_pattern = validate_permission_rule("mcp__server__tool(*)");
     EXPECT_FALSE(mcp_pattern.valid);
-    EXPECT_EQ(mcp_pattern.error, std::optional<std::string>{"MCP rules do not support patterns in parentheses"});
+    EXPECT_EQ(mcp_pattern.error,
+              std::optional<std::string>{"MCP rules do not support patterns in parentheses"});
 }
 
 TEST(SettingsValidationTips, MirrorsTypeScriptTipPriorityAndDocFallbacks) {
@@ -105,7 +109,8 @@ TEST(SettingsValidationTips, MirrorsTypeScriptTipPriorityAndDocFallbacks) {
         .value = std::nullopt,
     });
     ASSERT_TRUE(enum_tip.has_value());
-    EXPECT_EQ(enum_tip->suggestion, std::optional<std::string>{"Valid values: \"sonnet\", \"opus\""});
+    EXPECT_EQ(enum_tip->suggestion,
+              std::optional<std::string>{"Valid values: \"sonnet\", \"opus\""});
 
     auto unknown = get_validation_tip({
         .path = "other",
@@ -147,6 +152,5 @@ TEST(SettingsValidationConfig, DocLinksAppearOnlyWhenADocsBaseIsConfigured) {
     ::unsetenv("LOOM_DOCS_BASE");
     ASSERT_TRUE(linked.has_value());
     ASSERT_TRUE(linked->doc_link.has_value());
-    EXPECT_EQ(*linked->doc_link,
-              "https://docs.example.test/en/iam#permission-modes");
+    EXPECT_EQ(*linked->doc_link, "https://docs.example.test/en/iam#permission-modes");
 }

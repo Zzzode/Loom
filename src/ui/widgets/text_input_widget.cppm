@@ -3,15 +3,15 @@
 /// placeholder, history, and priority-based combined highlights.
 module;
 
-#include <cctype>
-#include <cstdint>
-#include <cstddef>
-#include <cmath>
-
-#include <ftxui/dom/elements.hpp>
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/event.hpp>
+#include <ftxui/dom/elements.hpp>
+
+#include <cctype>
+#include <cmath>
+#include <cstddef>
+#include <cstdint>
 
 export module loom.ui.widgets.text_input_widget;
 
@@ -21,23 +21,23 @@ import loom.ui.foundation.theme_provider;
 
 import loom.parsing.highlight.text_highlighting;
 import loom.ui.prompt.combined_highlights;
-import loom.ui.prompt.placeholder_cascade;  // P1: RenderPlaceholder helper
-import loom.ui.foundation.ui_types;  // canonical VimMode
+import loom.ui.prompt.placeholder_cascade; // P1: RenderPlaceholder helper
+import loom.ui.foundation.ui_types;        // canonical VimMode
 
 export namespace loom::ui::text_input_widget {
 using namespace ftxui;
 
 // Re-export the canonical TextHighlight type from the highlighting module.
+using loom::utils::adjust_highlights_for_viewport;
+using loom::utils::filter_highlights_at_cursor;
+using loom::utils::segment_text_by_highlights;
 using loom::utils::TextHighlight;
 using loom::utils::TextSegment;
-using loom::utils::segment_text_by_highlights;
-using loom::utils::filter_highlights_at_cursor;
-using loom::utils::adjust_highlights_for_viewport;
 using namespace loom::utils::highlight_priority;
 
 // Re-export the combined highlights context and builder from the new module.
-using loom::ui::prompt::CombinedHighlightContext;
 using loom::ui::prompt::build_combined_highlights;
+using loom::ui::prompt::CombinedHighlightContext;
 
 // ============================================================
 // Types
@@ -135,13 +135,16 @@ public:
         return offset;
     }
 
-    [[nodiscard]] bool empty() const {
-        return lines_.size() == 1 && lines_[0].empty();
-    }
+    [[nodiscard]] bool empty() const { return lines_.size() == 1 && lines_[0].empty(); }
 
     [[nodiscard]] CursorPos cursor() const { return cursor_; }
+
     [[nodiscard]] int line_count() const { return static_cast<int>(lines_.size()); }
-    [[nodiscard]] const std::string& line(int idx) const { return lines_[static_cast<size_t>(idx)]; }
+
+    [[nodiscard]] const std::string& line(int idx) const {
+        return lines_[static_cast<size_t>(idx)];
+    }
+
     [[nodiscard]] const std::vector<std::string>& lines() const { return lines_; }
 
     void insert_char(char c) {
@@ -211,8 +214,14 @@ public:
     }
 
     void move_home() { cursor_.col = 0; }
+
     void move_end() { cursor_.col = static_cast<int>(lines_[cursor_.line].size()); }
-    void move_top() { cursor_.line = 0; cursor_.col = 0; }
+
+    void move_top() {
+        cursor_.line = 0;
+        cursor_.col = 0;
+    }
+
     void move_bottom() {
         cursor_.line = static_cast<int>(lines_.size()) - 1;
         cursor_.col = static_cast<int>(lines_[cursor_.line].size());
@@ -252,14 +261,12 @@ public:
 
 private:
     void clamp_cursor() {
-        cursor_.line = std::clamp(cursor_.line, 0,
-                                  static_cast<int>(lines_.size()) - 1);
+        cursor_.line = std::clamp(cursor_.line, 0, static_cast<int>(lines_.size()) - 1);
         clamp_col();
     }
 
     void clamp_col() {
-        cursor_.col = std::clamp(cursor_.col, 0,
-                                 static_cast<int>(lines_[cursor_.line].size()));
+        cursor_.col = std::clamp(cursor_.col, 0, static_cast<int>(lines_[cursor_.line].size()));
     }
 
     std::vector<std::string> lines_;
@@ -278,8 +285,8 @@ struct LinePart {
 };
 
 /// Split segments into per-line parts by breaking on '\n'.
-[[nodiscard]] inline std::vector<std::vector<LinePart>> split_segments_into_lines(
-    const std::vector<TextSegment>& segments) {
+[[nodiscard]] inline std::vector<std::vector<LinePart>>
+split_segments_into_lines(const std::vector<TextSegment>& segments) {
 
     std::vector<std::vector<LinePart>> lines = {{}};
     std::size_t pos = 0;
@@ -297,11 +304,7 @@ struct LinePart {
             }
 
             if (!part_text.empty()) {
-                lines.back().push_back(LinePart{
-                    part_text,
-                    seg.highlight,
-                    pos + seg_start
-                });
+                lines.back().push_back(LinePart{part_text, seg.highlight, pos + seg_start});
             }
 
             if (nl == std::string::npos) {
@@ -319,7 +322,7 @@ struct LinePart {
     // Ensure at least one empty part per line (so empty lines render a space)
     for (auto& line : lines) {
         if (line.empty()) {
-            line.push_back(LinePart{ " ", std::nullopt, 0 });
+            line.push_back(LinePart{" ", std::nullopt, 0});
         }
     }
 
@@ -327,9 +330,8 @@ struct LinePart {
 }
 
 /// Apply FTXUI decorators to a line part element based on its highlight.
-[[nodiscard]] inline Element decorate_line_part(
-    const LinePart& part,
-    [[maybe_unused]] bool has_shimmer_active = false) {
+[[nodiscard]] inline Element decorate_line_part(const LinePart& part,
+                                                [[maybe_unused]] bool has_shimmer_active = false) {
 
     Element el = text(part.text);
 
@@ -373,11 +375,9 @@ struct LinePart {
 /// When highlights are present, uses segment_text_by_highlights() to
 /// build non-overlapping styled segments.
 /// When no highlights are present, falls back to plain text rendering.
-[[nodiscard]] inline Element RenderTextInputWidget(
-    const TextInputWidgetOptions& opts,
-    const TextBuffer& buffer,
-    std::optional<VimMode> vim_mode,
-    bool focused) {
+[[nodiscard]] inline Element RenderTextInputWidget(const TextInputWidgetOptions& opts,
+                                                   const TextBuffer& buffer,
+                                                   std::optional<VimMode> vim_mode, bool focused) {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
 
     Elements all_lines;
@@ -392,14 +392,13 @@ struct LinePart {
 
         // Use shared RenderPlaceholder for consistent cursor-invert behavior
         // when focused + empty.
-        auto rendered = ph::RenderPlaceholder(
-            placeholder_sv,
-            /*value=*/"",
-            /*show_cursor=*/focused,
-            /*focused=*/focused,
-            /*terminal_focus=*/true,
-            /*prefix=*/opts.prefix,
-            /*prefix_color=*/pal.prompt_border);
+        auto rendered = ph::RenderPlaceholder(placeholder_sv,
+                                              /*value=*/"",
+                                              /*show_cursor=*/focused,
+                                              /*focused=*/focused,
+                                              /*terminal_focus=*/true,
+                                              /*prefix=*/opts.prefix,
+                                              /*prefix_color=*/pal.prompt_border);
 
         if (rendered.element.has_value()) {
             // NOTE: The prefix follows the prompt border token; we
@@ -424,21 +423,16 @@ struct LinePart {
         auto built = build_combined_highlights(ctx);
         // Merge: append built highlights to any manually-provided ones.
         // The segmenter's priority-resolution handles overlaps.
-        effective_highlights.insert(
-            effective_highlights.end(),
-            built.begin(), built.end());
+        effective_highlights.insert(effective_highlights.end(), built.begin(), built.end());
     }
 
     // ── Build filtered & adjusted highlights ──────────────────────────────
     auto cursor_off = buffer.cursor_flat_offset();
-    auto cursor_filtered = filter_highlights_at_cursor(
-        effective_highlights, cursor_off, focused);
+    auto cursor_filtered = filter_highlights_at_cursor(effective_highlights, cursor_off, focused);
 
-    std::size_t vp_end = opts.viewport_char_end > 0
-        ? opts.viewport_char_end
-        : full_text.size();
-    auto adjusted = adjust_highlights_for_viewport(
-        cursor_filtered, opts.viewport_char_offset, vp_end);
+    std::size_t vp_end = opts.viewport_char_end > 0 ? opts.viewport_char_end : full_text.size();
+    auto adjusted =
+        adjust_highlights_for_viewport(cursor_filtered, opts.viewport_char_offset, vp_end);
 
     // Determine viewport text
     std::string_view viewport_text = full_text;
@@ -464,8 +458,7 @@ struct LinePart {
 
         // Line numbers
         if (opts.show_line_numbers) {
-            parts.push_back(
-                text(std::format("{:3} ", i + 1)) | dim | color(pal.muted));
+            parts.push_back(text(std::format("{:3} ", i + 1)) | dim | color(pal.muted));
         }
 
         // Render line content
@@ -497,7 +490,7 @@ struct LinePart {
                     // Cursor is inside this part — split around it
                     std::string before = part.text.substr(0, col_in_line);
                     if (!before.empty()) {
-                        LinePart before_part{ before, part.highlight, part.start };
+                        LinePart before_part{before, part.highlight, part.start};
                         parts.push_back(decorate_line_part(before_part));
                     }
 
@@ -509,10 +502,8 @@ struct LinePart {
                     // Rest after cursor
                     std::string after = part.text.substr(col_in_line + 1);
                     if (!after.empty()) {
-                        LinePart after_part{
-                            after, part.highlight,
-                            part.start + static_cast<std::size_t>(col_in_line) + 1
-                        };
+                        LinePart after_part{after, part.highlight,
+                                            part.start + static_cast<std::size_t>(col_in_line) + 1};
                         parts.push_back(decorate_line_part(after_part));
                     }
 
@@ -547,24 +538,37 @@ struct LinePart {
         std::string mode_str;
         Color mode_color;
         switch (*vim_mode) {
-            case VimMode::Normal:
-                mode_str = "NORMAL"; mode_color = pal.info; break;
-            case VimMode::Insert:
-                mode_str = "INSERT"; mode_color = pal.auto_accept; break;
-            case VimMode::Visual:
-                mode_str = "VISUAL"; mode_color = pal.primary; break;
-            case VimMode::VisualLine:
-                mode_str = "VISUAL LINE"; mode_color = pal.primary; break;
-            case VimMode::VisualBlock:
-                mode_str = "VISUAL BLOCK"; mode_color = pal.primary; break;
-            case VimMode::Replace:
-                mode_str = "REPLACE"; mode_color = pal.danger; break;
-            case VimMode::Command:
-                mode_str = "COMMAND"; mode_color = pal.warning; break;
+        case VimMode::Normal:
+            mode_str = "NORMAL";
+            mode_color = pal.info;
+            break;
+        case VimMode::Insert:
+            mode_str = "INSERT";
+            mode_color = pal.auto_accept;
+            break;
+        case VimMode::Visual:
+            mode_str = "VISUAL";
+            mode_color = pal.primary;
+            break;
+        case VimMode::VisualLine:
+            mode_str = "VISUAL LINE";
+            mode_color = pal.primary;
+            break;
+        case VimMode::VisualBlock:
+            mode_str = "VISUAL BLOCK";
+            mode_color = pal.primary;
+            break;
+        case VimMode::Replace:
+            mode_str = "REPLACE";
+            mode_color = pal.danger;
+            break;
+        case VimMode::Command:
+            mode_str = "COMMAND";
+            mode_color = pal.warning;
+            break;
         }
         if (!mode_str.empty()) {
-            all_lines.push_back(
-                text(" -- " + mode_str + " --") | color(mode_color) | dim);
+            all_lines.push_back(text(" -- " + mode_str + " --") | color(mode_color) | dim);
         }
     }
 
@@ -590,438 +594,476 @@ struct LinePart {
         bool y_pending = false;
         bool r_pending = false;
     };
+
     auto state = std::make_shared<State>();
     state->opts = std::move(options);
     state->vim_mode = state->opts.vim_mode;  // propagate initial mode (nullopt = off)
     state->start_time = std::chrono::steady_clock::now();
 
     return Renderer([state] {
-        // Update cursor_offset in opts for cursor-based highlight filtering.
-        state->opts.cursor_offset = state->buffer.cursor_flat_offset();
+               // Update cursor_offset in opts for cursor-based highlight filtering.
+               state->opts.cursor_offset = state->buffer.cursor_flat_offset();
 
-        // NOTE: combined_ctx.text/cursor are synced inside RenderTextInputWidget
-        // from the live buffer — do NOT cache them here because get_text()
-        // returns a temporary std::string that would dangle the string_view.
+               // NOTE: combined_ctx.text/cursor are synced inside RenderTextInputWidget
+               // from the live buffer — do NOT cache them here because get_text()
+               // returns a temporary std::string that would dangle the string_view.
 
-        return RenderTextInputWidget(
-            state->opts, state->buffer, state->vim_mode, state->focused);
-    }) | CatchEvent([state](Event event) -> bool {
-        auto& buf = state->buffer;
-        auto& opts = state->opts;
-        const bool vim_active = state->vim_mode.has_value();
+               return RenderTextInputWidget(state->opts, state->buffer, state->vim_mode,
+                                            state->focused);
+           }) |
+           CatchEvent([state](Event event) -> bool {
+               auto& buf = state->buffer;
+               auto& opts = state->opts;
+               const bool vim_active = state->vim_mode.has_value();
 
-        // ── Vim Normal mode ────────────────────────────────────────────────
-        if (vim_active && *state->vim_mode == VimMode::Normal) {
-            // Enter Insert mode
-            if (event == Event::Character('i')) {
-                state->vim_mode = VimMode::Insert;
-                return true;
-            }
-            if (event == Event::Character('a')) {
-                state->vim_mode = VimMode::Insert;
-                buf.move_right();
-                return true;
-            }
-            if (event == Event::Character('A')) {
-                state->vim_mode = VimMode::Insert;
-                buf.move_end();
-                return true;
-            }
-            if (event == Event::Character('I')) {
-                state->vim_mode = VimMode::Insert;
-                buf.move_home();
-                return true;
-            }
-            if (event == Event::Character('o')) {
-                state->vim_mode = VimMode::Insert;
-                buf.move_end();
-                buf.insert_newline();
-                return true;
-            }
-            if (event == Event::Character('O')) {
-                state->vim_mode = VimMode::Insert;
-                buf.move_home();
-                // Insert newline above current line
-                auto cur_line = buf.line(buf.cursor().line);
-                buf.move_home();
-                buf.insert_newline();
-                buf.move_up();
-                return true;
-            }
+               // ── Vim Normal mode ────────────────────────────────────────────────
+               if (vim_active && *state->vim_mode == VimMode::Normal) {
+                   // Enter Insert mode
+                   if (event == Event::Character('i')) {
+                       state->vim_mode = VimMode::Insert;
+                       return true;
+                   }
+                   if (event == Event::Character('a')) {
+                       state->vim_mode = VimMode::Insert;
+                       buf.move_right();
+                       return true;
+                   }
+                   if (event == Event::Character('A')) {
+                       state->vim_mode = VimMode::Insert;
+                       buf.move_end();
+                       return true;
+                   }
+                   if (event == Event::Character('I')) {
+                       state->vim_mode = VimMode::Insert;
+                       buf.move_home();
+                       return true;
+                   }
+                   if (event == Event::Character('o')) {
+                       state->vim_mode = VimMode::Insert;
+                       buf.move_end();
+                       buf.insert_newline();
+                       return true;
+                   }
+                   if (event == Event::Character('O')) {
+                       state->vim_mode = VimMode::Insert;
+                       buf.move_home();
+                       // Insert newline above current line
+                       auto cur_line = buf.line(buf.cursor().line);
+                       buf.move_home();
+                       buf.insert_newline();
+                       buf.move_up();
+                       return true;
+                   }
 
-            // Enter Visual modes
-            if (event == Event::Character('v')) {
-                state->vim_mode = VimMode::Visual;
-                return true;
-            }
-            if (event == Event::Character('V')) {
-                state->vim_mode = VimMode::VisualLine;
-                return true;
-            }
-            // Ctrl+V = VisualBlock
-            if (event == Event::Special({'\x16'})) {
-                state->vim_mode = VimMode::VisualBlock;
-                return true;
-            }
+                   // Enter Visual modes
+                   if (event == Event::Character('v')) {
+                       state->vim_mode = VimMode::Visual;
+                       return true;
+                   }
+                   if (event == Event::Character('V')) {
+                       state->vim_mode = VimMode::VisualLine;
+                       return true;
+                   }
+                   // Ctrl+V = VisualBlock
+                   if (event == Event::Special({'\x16'})) {
+                       state->vim_mode = VimMode::VisualBlock;
+                       return true;
+                   }
 
-            // Enter Replace mode
-            if (event == Event::Character('R')) {
-                state->vim_mode = VimMode::Replace;
-                return true;
-            }
+                   // Enter Replace mode
+                   if (event == Event::Character('R')) {
+                       state->vim_mode = VimMode::Replace;
+                       return true;
+                   }
 
-            // Navigation
-            if (event == Event::Character('h') || event == Event::ArrowLeft) {
-                buf.move_left(); return true;
-            }
-            if (event == Event::Character('l') || event == Event::ArrowRight) {
-                buf.move_right(); return true;
-            }
-            if (event == Event::Character('j') || event == Event::ArrowDown) {
-                buf.move_down(); return true;
-            }
-            if (event == Event::Character('k') || event == Event::ArrowUp) {
-                buf.move_up(); return true;
-            }
-            if (event == Event::Character('0') || event == Event::Home) {
-                buf.move_home(); return true;
-            }
-            if (event == Event::Character('$') || event == Event::End) {
-                buf.move_end(); return true;
-            }
-            if (event == Event::Character('w')) {
-                // Word forward: jump to start of next word
-                int line = buf.cursor().line;
-                int col = buf.cursor().col;
-                auto& cur_line = buf.mutable_line(line);
-                int n = static_cast<int>(cur_line.size());
-                if (col < n) {
-                    if (!std::isspace(static_cast<unsigned char>(cur_line[col]))) {
-                        while (col < n && !std::isspace(static_cast<unsigned char>(cur_line[col]))) ++col;
-                    }
-                    while (col < n && std::isspace(static_cast<unsigned char>(cur_line[col]))) ++col;
-                    if (col >= n && line + 1 < buf.line_count()) {
-                        buf.set_cursor(line + 1, 0);
-                    } else {
-                        buf.set_cursor(line, col);
-                    }
-                }
-                return true;
-            }
-            if (event == Event::Character('b')) {
-                // Word backward: jump to start of previous word
-                int line = buf.cursor().line;
-                int col = buf.cursor().col;
-                if (col > 0) {
-                    auto& cur_line = buf.mutable_line(line);
-                    --col;
-                    while (col > 0 && std::isspace(static_cast<unsigned char>(cur_line[col]))) --col;
-                    while (col > 0 && !std::isspace(static_cast<unsigned char>(cur_line[col - 1]))) --col;
-                    buf.set_cursor(line, col);
-                } else if (line > 0) {
-                    int prev_line = line - 1;
-                    int prev_end = static_cast<int>(buf.mutable_line(prev_line).size());
-                    buf.set_cursor(prev_line, prev_end);
-                }
-                return true;
-            }
-            if (event == Event::Character('e')) {
-                // Word end: jump to end of current/next word
-                int line = buf.cursor().line;
-                int col = buf.cursor().col;
-                auto& cur_line = buf.mutable_line(line);
-                int n = static_cast<int>(cur_line.size());
-                if (col < n - 1 || (col == n - 1 && std::isspace(static_cast<unsigned char>(cur_line[col])))) {
-                    if (std::isspace(static_cast<unsigned char>(cur_line[col]))) {
-                        while (col < n && std::isspace(static_cast<unsigned char>(cur_line[col]))) ++col;
-                    }
-                    while (col < n - 1 && !std::isspace(static_cast<unsigned char>(cur_line[col + 1]))) ++col;
-                    buf.set_cursor(line, std::min(col, n - 1));
-                }
-                return true;
-            }
+                   // Navigation
+                   if (event == Event::Character('h') || event == Event::ArrowLeft) {
+                       buf.move_left();
+                       return true;
+                   }
+                   if (event == Event::Character('l') || event == Event::ArrowRight) {
+                       buf.move_right();
+                       return true;
+                   }
+                   if (event == Event::Character('j') || event == Event::ArrowDown) {
+                       buf.move_down();
+                       return true;
+                   }
+                   if (event == Event::Character('k') || event == Event::ArrowUp) {
+                       buf.move_up();
+                       return true;
+                   }
+                   if (event == Event::Character('0') || event == Event::Home) {
+                       buf.move_home();
+                       return true;
+                   }
+                   if (event == Event::Character('$') || event == Event::End) {
+                       buf.move_end();
+                       return true;
+                   }
+                   if (event == Event::Character('w')) {
+                       // Word forward: jump to start of next word
+                       int line = buf.cursor().line;
+                       int col = buf.cursor().col;
+                       auto& cur_line = buf.mutable_line(line);
+                       int n = static_cast<int>(cur_line.size());
+                       if (col < n) {
+                           if (!std::isspace(static_cast<unsigned char>(cur_line[col]))) {
+                               while (col < n &&
+                                      !std::isspace(static_cast<unsigned char>(cur_line[col])))
+                                   ++col;
+                           }
+                           while (col < n &&
+                                  std::isspace(static_cast<unsigned char>(cur_line[col])))
+                               ++col;
+                           if (col >= n && line + 1 < buf.line_count()) {
+                               buf.set_cursor(line + 1, 0);
+                           } else {
+                               buf.set_cursor(line, col);
+                           }
+                       }
+                       return true;
+                   }
+                   if (event == Event::Character('b')) {
+                       // Word backward: jump to start of previous word
+                       int line = buf.cursor().line;
+                       int col = buf.cursor().col;
+                       if (col > 0) {
+                           auto& cur_line = buf.mutable_line(line);
+                           --col;
+                           while (col > 0 &&
+                                  std::isspace(static_cast<unsigned char>(cur_line[col])))
+                               --col;
+                           while (col > 0 &&
+                                  !std::isspace(static_cast<unsigned char>(cur_line[col - 1])))
+                               --col;
+                           buf.set_cursor(line, col);
+                       } else if (line > 0) {
+                           int prev_line = line - 1;
+                           int prev_end = static_cast<int>(buf.mutable_line(prev_line).size());
+                           buf.set_cursor(prev_line, prev_end);
+                       }
+                       return true;
+                   }
+                   if (event == Event::Character('e')) {
+                       // Word end: jump to end of current/next word
+                       int line = buf.cursor().line;
+                       int col = buf.cursor().col;
+                       auto& cur_line = buf.mutable_line(line);
+                       int n = static_cast<int>(cur_line.size());
+                       if (col < n - 1 || (col == n - 1 && std::isspace(static_cast<unsigned char>(
+                                                               cur_line[col])))) {
+                           if (std::isspace(static_cast<unsigned char>(cur_line[col]))) {
+                               while (col < n &&
+                                      std::isspace(static_cast<unsigned char>(cur_line[col])))
+                                   ++col;
+                           }
+                           while (col < n - 1 &&
+                                  !std::isspace(static_cast<unsigned char>(cur_line[col + 1])))
+                               ++col;
+                           buf.set_cursor(line, std::min(col, n - 1));
+                       }
+                       return true;
+                   }
 
-            // Editing
-            if (event == Event::Character('x')) {
-                buf.delete_char();
-                if (opts.on_change) opts.on_change(buf.get_text());
-                return true;
-            }
-            // d = operator-pending (dd = delete current line)
-            if (event == Event::Character('d')) {
-                if (state->d_pending) {
-                    buf.delete_line();
-                    state->d_pending = false;
-                    if (opts.on_change) opts.on_change(buf.get_text());
-                } else {
-                    state->d_pending = true;
-                }
-                return true;
-            }
-            // y = yank (yy = yank line, conceptually yanked — no register in widget)
-            if (event == Event::Character('y')) {
-                if (state->y_pending) {
-                    state->y_pending = false;
-                } else {
-                    state->y_pending = true;
-                }
-                return true;
-            }
-            // p / P = paste (simplified: no register in widget, no-op)
-            if (event == Event::Character('p') || event == Event::Character('P')) {
-                return true;
-            }
+                   // Editing
+                   if (event == Event::Character('x')) {
+                       buf.delete_char();
+                       if (opts.on_change) opts.on_change(buf.get_text());
+                       return true;
+                   }
+                   // d = operator-pending (dd = delete current line)
+                   if (event == Event::Character('d')) {
+                       if (state->d_pending) {
+                           buf.delete_line();
+                           state->d_pending = false;
+                           if (opts.on_change) opts.on_change(buf.get_text());
+                       } else {
+                           state->d_pending = true;
+                       }
+                       return true;
+                   }
+                   // y = yank (yy = yank line, conceptually yanked — no register in widget)
+                   if (event == Event::Character('y')) {
+                       if (state->y_pending) {
+                           state->y_pending = false;
+                       } else {
+                           state->y_pending = true;
+                       }
+                       return true;
+                   }
+                   // p / P = paste (simplified: no register in widget, no-op)
+                   if (event == Event::Character('p') || event == Event::Character('P')) {
+                       return true;
+                   }
 
-            // Undo
-            // Widget has no undo stack: u is a no-op (don't clear buffer!)
-            if (event == Event::Character('u')) {
-                return true;
-            }
-            // Ctrl+R = redo (also no-op without undo stack)
-            if (event == Event::Special({'\x12'})) {
-                return true;
-            }
+                   // Undo
+                   // Widget has no undo stack: u is a no-op (don't clear buffer!)
+                   if (event == Event::Character('u')) {
+                       return true;
+                   }
+                   // Ctrl+R = redo (also no-op without undo stack)
+                   if (event == Event::Special({'\x12'})) {
+                       return true;
+                   }
 
-            // G = last line
-            if (event == Event::Character('G')) {
-                buf.move_bottom();
-                return true;
-            }
+                   // G = last line
+                   if (event == Event::Character('G')) {
+                       buf.move_bottom();
+                       return true;
+                   }
 
-            // J = join lines
-            if (event == Event::Character('J')) {
-                int cur_line = buf.cursor().line;
-                if (cur_line + 1 < buf.line_count()) {
-                    int old_col = buf.cursor().col;
-                    // Get next line content, trim leading whitespace
-                    auto& next = buf.mutable_line(cur_line + 1);
-                    size_t start = 0;
-                    while (start < next.size() && (next[start] == ' ' || next[start] == '\t'))
-                        ++start;
-                    std::string trimmed_next = next.substr(start);
-                    // Delete the next line by moving cursor there and calling delete_line
-                    buf.set_cursor(cur_line + 1, 0);
-                    buf.delete_line();
-                    // Now append " " + trimmed to current line
-                    auto& cur = buf.mutable_line(cur_line);
-                    cur += " " + trimmed_next;
-                    buf.set_cursor(cur_line, old_col);  // restore cursor position
-                    if (opts.on_change) opts.on_change(buf.get_text());
-                }
-                return true;
-            }
+                   // J = join lines
+                   if (event == Event::Character('J')) {
+                       int cur_line = buf.cursor().line;
+                       if (cur_line + 1 < buf.line_count()) {
+                           int old_col = buf.cursor().col;
+                           // Get next line content, trim leading whitespace
+                           auto& next = buf.mutable_line(cur_line + 1);
+                           size_t start = 0;
+                           while (start < next.size() &&
+                                  (next[start] == ' ' || next[start] == '\t'))
+                               ++start;
+                           std::string trimmed_next = next.substr(start);
+                           // Delete the next line by moving cursor there and calling delete_line
+                           buf.set_cursor(cur_line + 1, 0);
+                           buf.delete_line();
+                           // Now append " " + trimmed to current line
+                           auto& cur = buf.mutable_line(cur_line);
+                           cur += " " + trimmed_next;
+                           buf.set_cursor(cur_line, old_col);  // restore cursor position
+                           if (opts.on_change) opts.on_change(buf.get_text());
+                       }
+                       return true;
+                   }
 
-            // D = delete to end of line
-            if (event == Event::Character('D')) {
-                int line = buf.cursor().line;
-                int col = buf.cursor().col;
-                auto& cur = buf.mutable_line(line);
-                if (col < static_cast<int>(cur.size())) {
-                    cur.erase(col);
-                    if (opts.on_change) opts.on_change(buf.get_text());
-                }
-                return true;
-            }
+                   // D = delete to end of line
+                   if (event == Event::Character('D')) {
+                       int line = buf.cursor().line;
+                       int col = buf.cursor().col;
+                       auto& cur = buf.mutable_line(line);
+                       if (col < static_cast<int>(cur.size())) {
+                           cur.erase(col);
+                           if (opts.on_change) opts.on_change(buf.get_text());
+                       }
+                       return true;
+                   }
 
-            // C = change to end (delete + insert mode)
-            if (event == Event::Character('C')) {
-                int line = buf.cursor().line;
-                int col = buf.cursor().col;
-                auto& cur = buf.mutable_line(line);
-                if (col < static_cast<int>(cur.size())) {
-                    cur.erase(col);
-                }
-                state->vim_mode = VimMode::Insert;
-                if (opts.on_change) opts.on_change(buf.get_text());
-                return true;
-            }
+                   // C = change to end (delete + insert mode)
+                   if (event == Event::Character('C')) {
+                       int line = buf.cursor().line;
+                       int col = buf.cursor().col;
+                       auto& cur = buf.mutable_line(line);
+                       if (col < static_cast<int>(cur.size())) {
+                           cur.erase(col);
+                       }
+                       state->vim_mode = VimMode::Insert;
+                       if (opts.on_change) opts.on_change(buf.get_text());
+                       return true;
+                   }
 
-            // r = replace char
-            if (event == Event::Character('r')) {
-                state->r_pending = true;
-                return true;
-            }
+                   // r = replace char
+                   if (event == Event::Character('r')) {
+                       state->r_pending = true;
+                       return true;
+                   }
 
-            return false;
-        }
+                   return false;
+               }
 
-        // ── Vim Visual / VisualLine / VisualBlock modes ────────────────────
-        if (vim_active && (*state->vim_mode == VimMode::Visual ||
-                           *state->vim_mode == VimMode::VisualLine ||
-                           *state->vim_mode == VimMode::VisualBlock)) {
-            // Escape exits visual mode
-            if (event == Event::Escape) {
-                state->vim_mode = VimMode::Normal;
-                return true;
-            }
-            // Movement extends selection (visual feedback is handled by
-            // the renderer's highlight system; here we just move cursor).
-            if (event == Event::Character('h') || event == Event::ArrowLeft) {
-                buf.move_left(); return true;
-            }
-            if (event == Event::Character('l') || event == Event::ArrowRight) {
-                buf.move_right(); return true;
-            }
-            if (event == Event::Character('j') || event == Event::ArrowDown) {
-                buf.move_down(); return true;
-            }
-            if (event == Event::Character('k') || event == Event::ArrowUp) {
-                buf.move_up(); return true;
-            }
-            if (event == Event::Character('0') || event == Event::Home) {
-                buf.move_home(); return true;
-            }
-            if (event == Event::Character('$') || event == Event::End) {
-                buf.move_end(); return true;
-            }
-            // d = delete selection, y = yank selection
-            // Widget has no explicit selection anchor; just exit visual mode.
-            if (event == Event::Character('d') || event == Event::Character('y')) {
-                state->vim_mode = VimMode::Normal;
-                return true;
-            }
-            return false;
-        }
+               // ── Vim Visual / VisualLine / VisualBlock modes ────────────────────
+               if (vim_active && (*state->vim_mode == VimMode::Visual ||
+                                  *state->vim_mode == VimMode::VisualLine ||
+                                  *state->vim_mode == VimMode::VisualBlock)) {
+                   // Escape exits visual mode
+                   if (event == Event::Escape) {
+                       state->vim_mode = VimMode::Normal;
+                       return true;
+                   }
+                   // Movement extends selection (visual feedback is handled by
+                   // the renderer's highlight system; here we just move cursor).
+                   if (event == Event::Character('h') || event == Event::ArrowLeft) {
+                       buf.move_left();
+                       return true;
+                   }
+                   if (event == Event::Character('l') || event == Event::ArrowRight) {
+                       buf.move_right();
+                       return true;
+                   }
+                   if (event == Event::Character('j') || event == Event::ArrowDown) {
+                       buf.move_down();
+                       return true;
+                   }
+                   if (event == Event::Character('k') || event == Event::ArrowUp) {
+                       buf.move_up();
+                       return true;
+                   }
+                   if (event == Event::Character('0') || event == Event::Home) {
+                       buf.move_home();
+                       return true;
+                   }
+                   if (event == Event::Character('$') || event == Event::End) {
+                       buf.move_end();
+                       return true;
+                   }
+                   // d = delete selection, y = yank selection
+                   // Widget has no explicit selection anchor; just exit visual mode.
+                   if (event == Event::Character('d') || event == Event::Character('y')) {
+                       state->vim_mode = VimMode::Normal;
+                       return true;
+                   }
+                   return false;
+               }
 
-        // ── Vim Replace mode ───────────────────────────────────────────────
-        if (vim_active && *state->vim_mode == VimMode::Replace) {
-            if (event == Event::Escape) {
-                state->vim_mode = VimMode::Normal;
-                return true;
-            }
-            if (event.is_character()) {
-                char c = event.character()[0];
-                if (c >= 32 && c < 127) {
-                    // Replace: overwrite one char then return to Normal
-                    buf.delete_char();
-                    buf.insert_char(c);
-                    state->vim_mode = VimMode::Normal;
-                    if (opts.on_change) opts.on_change(buf.get_text());
-                    return true;
-                }
-            }
-            return false;
-        }
+               // ── Vim Replace mode ───────────────────────────────────────────────
+               if (vim_active && *state->vim_mode == VimMode::Replace) {
+                   if (event == Event::Escape) {
+                       state->vim_mode = VimMode::Normal;
+                       return true;
+                   }
+                   if (event.is_character()) {
+                       char c = event.character()[0];
+                       if (c >= 32 && c < 127) {
+                           // Replace: overwrite one char then return to Normal
+                           buf.delete_char();
+                           buf.insert_char(c);
+                           state->vim_mode = VimMode::Normal;
+                           if (opts.on_change) opts.on_change(buf.get_text());
+                           return true;
+                       }
+                   }
+                   return false;
+               }
 
-        // ── Escape (Insert mode or disabled) ───────────────────────────────
-        if (event == Event::Escape) {
-            // Clear any operator-pending state
-            state->d_pending = false;
-            state->y_pending = false;
-            state->r_pending = false;
-            if (vim_active && *state->vim_mode == VimMode::Insert) {
-                state->vim_mode = VimMode::Normal;
-                return true;
-            }
-            if (opts.on_escape) opts.on_escape();
-            return true;
-        }
+               // ── Escape (Insert mode or disabled) ───────────────────────────────
+               if (event == Event::Escape) {
+                   // Clear any operator-pending state
+                   state->d_pending = false;
+                   state->y_pending = false;
+                   state->r_pending = false;
+                   if (vim_active && *state->vim_mode == VimMode::Insert) {
+                       state->vim_mode = VimMode::Normal;
+                       return true;
+                   }
+                   if (opts.on_escape) opts.on_escape();
+                   return true;
+               }
 
-        // ── r-pending: replace char under cursor ──
-        if (state->r_pending && event.is_character()) {
-            char replacement = event.character()[0];
-            if (replacement >= 32 && replacement < 127) {
-                int line = buf.cursor().line;
-                int col = buf.cursor().col;
-                auto& cur = buf.mutable_line(line);
-                if (col < static_cast<int>(cur.size())) {
-                    cur[static_cast<size_t>(col)] = replacement;
-                    if (opts.on_change) opts.on_change(buf.get_text());
-                }
-                state->r_pending = false;
-                return true;
-            }
-        }
+               // ── r-pending: replace char under cursor ──
+               if (state->r_pending && event.is_character()) {
+                   char replacement = event.character()[0];
+                   if (replacement >= 32 && replacement < 127) {
+                       int line = buf.cursor().line;
+                       int col = buf.cursor().col;
+                       auto& cur = buf.mutable_line(line);
+                       if (col < static_cast<int>(cur.size())) {
+                           cur[static_cast<size_t>(col)] = replacement;
+                           if (opts.on_change) opts.on_change(buf.get_text());
+                       }
+                       state->r_pending = false;
+                       return true;
+                   }
+               }
 
-        // ── Insert mode / non-vim character input ──────────────────────────
-        if (event.is_character()) {
-            char c = event.character()[0];
-            if (c >= 32 && c < 127) {
-                buf.insert_char(c);
-                if (opts.on_change) opts.on_change(buf.get_text());
-                return true;
-            }
-        }
+               // ── Insert mode / non-vim character input ──────────────────────────
+               if (event.is_character()) {
+                   char c = event.character()[0];
+                   if (c >= 32 && c < 127) {
+                       buf.insert_char(c);
+                       if (opts.on_change) opts.on_change(buf.get_text());
+                       return true;
+                   }
+               }
 
-        if (event == Event::Return) {
-            if (opts.multiline && event == Event::Return) {
-                if (buf.line_count() == 1 || !opts.multiline) {
-                    if (opts.on_submit) {
-                        std::string text = buf.get_text();
-                        if (!text.empty()) {
-                            state->history.push_back(text);
-                            if (state->history.size() > opts.max_history) {
-                                state->history.pop_front();
-                            }
-                            opts.on_submit(text);
-                            buf.clear();
-                            state->history_index = std::string::npos;
-                        }
-                    }
-                    return true;
-                }
-            }
-            buf.insert_newline();
-            if (opts.on_change) opts.on_change(buf.get_text());
-            return true;
-        }
+               if (event == Event::Return) {
+                   if (opts.multiline && event == Event::Return) {
+                       if (buf.line_count() == 1 || !opts.multiline) {
+                           if (opts.on_submit) {
+                               std::string text = buf.get_text();
+                               if (!text.empty()) {
+                                   state->history.push_back(text);
+                                   if (state->history.size() > opts.max_history) {
+                                       state->history.pop_front();
+                                   }
+                                   opts.on_submit(text);
+                                   buf.clear();
+                                   state->history_index = std::string::npos;
+                               }
+                           }
+                           return true;
+                       }
+                   }
+                   buf.insert_newline();
+                   if (opts.on_change) opts.on_change(buf.get_text());
+                   return true;
+               }
 
-        if (event == Event::Backspace) {
-            buf.backspace();
-            if (opts.on_change) opts.on_change(buf.get_text());
-            return true;
-        }
-        if (event == Event::Delete) {
-            buf.delete_char();
-            if (opts.on_change) opts.on_change(buf.get_text());
-            return true;
-        }
+               if (event == Event::Backspace) {
+                   buf.backspace();
+                   if (opts.on_change) opts.on_change(buf.get_text());
+                   return true;
+               }
+               if (event == Event::Delete) {
+                   buf.delete_char();
+                   if (opts.on_change) opts.on_change(buf.get_text());
+                   return true;
+               }
 
-        if (event == Event::ArrowLeft)  { buf.move_left();  return true; }
-        if (event == Event::ArrowRight) { buf.move_right(); return true; }
-        if (event == Event::ArrowUp) {
-            if (buf.cursor().line == 0 && opts.show_history &&
-                !state->history.empty()) {
-                if (state->history_index == std::string::npos) {
-                    state->history_index = state->history.size() - 1;
-                } else if (state->history_index > 0) {
-                    state->history_index--;
-                }
-                buf.set_text(state->history[state->history_index]);
-                if (opts.on_change) opts.on_change(buf.get_text());
-            } else {
-                buf.move_up();
-            }
-            return true;
-        }
-        if (event == Event::ArrowDown) {
-            if (buf.cursor().line == buf.line_count() - 1 &&
-                state->history_index != std::string::npos) {
-                if (state->history_index < state->history.size() - 1) {
-                    state->history_index++;
-                    buf.set_text(state->history[state->history_index]);
-                } else {
-                    state->history_index = std::string::npos;
-                    buf.clear();
-                }
-                if (opts.on_change) opts.on_change(buf.get_text());
-            } else {
-                buf.move_down();
-            }
-            return true;
-        }
+               if (event == Event::ArrowLeft) {
+                   buf.move_left();
+                   return true;
+               }
+               if (event == Event::ArrowRight) {
+                   buf.move_right();
+                   return true;
+               }
+               if (event == Event::ArrowUp) {
+                   if (buf.cursor().line == 0 && opts.show_history && !state->history.empty()) {
+                       if (state->history_index == std::string::npos) {
+                           state->history_index = state->history.size() - 1;
+                       } else if (state->history_index > 0) {
+                           state->history_index--;
+                       }
+                       buf.set_text(state->history[state->history_index]);
+                       if (opts.on_change) opts.on_change(buf.get_text());
+                   } else {
+                       buf.move_up();
+                   }
+                   return true;
+               }
+               if (event == Event::ArrowDown) {
+                   if (buf.cursor().line == buf.line_count() - 1 &&
+                       state->history_index != std::string::npos) {
+                       if (state->history_index < state->history.size() - 1) {
+                           state->history_index++;
+                           buf.set_text(state->history[state->history_index]);
+                       } else {
+                           state->history_index = std::string::npos;
+                           buf.clear();
+                       }
+                       if (opts.on_change) opts.on_change(buf.get_text());
+                   } else {
+                       buf.move_down();
+                   }
+                   return true;
+               }
 
-        if (event == Event::Home) { buf.move_home(); return true; }
-        if (event == Event::End)  { buf.move_end();  return true; }
+               if (event == Event::Home) {
+                   buf.move_home();
+                   return true;
+               }
+               if (event == Event::End) {
+                   buf.move_end();
+                   return true;
+               }
 
-        return false;
-    });
+               return false;
+           });
 }
 
 /// Convenience: simple single-line text input
-[[nodiscard]] inline Component SimpleTextInput(
-    std::string placeholder,
-    std::function<void(const std::string&)> on_submit) {
+[[nodiscard]] inline Component SimpleTextInput(std::string placeholder,
+                                               std::function<void(const std::string&)> on_submit) {
 
     TextInputWidgetOptions opts;
     opts.placeholder = std::move(placeholder);
@@ -1030,4 +1072,4 @@ struct LinePart {
     return TextInputWidget(std::move(opts));
 }
 
-} // namespace loom::ui::text_input_widget
+}  // namespace loom::ui::text_input_widget

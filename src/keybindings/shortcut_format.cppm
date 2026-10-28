@@ -7,7 +7,6 @@
 /// observer/UI dependencies when not needed.
 module;
 
-
 export module loom.keybindings.shortcut_format;
 
 import std;
@@ -17,13 +16,9 @@ import loom.keybindings.schema;
 export namespace loom::keybindings {
 
 /// Callback type for analytics/telemetry logging
-using LogEventCallback = std::function<void(
-    std::string_view event_name,
-    std::string_view action,
-    std::string_view context,
-    std::string_view fallback,
-    std::string_view reason
-)>;
+using LogEventCallback = std::function<void(std::string_view event_name, std::string_view action,
+                                            std::string_view context, std::string_view fallback,
+                                            std::string_view reason)>;
 
 /// Tracks which action+context pairs have already logged a fallback event
 /// to avoid duplicate analytics from repeated calls.
@@ -50,11 +45,9 @@ public:
 /// Get the display text for a binding by searching through resolved bindings.
 /// Returns the formatted chord string for the first binding matching the action+context,
 /// or std::nullopt if no matching binding is found.
-[[nodiscard]] inline std::optional<std::string> get_binding_display_text(
-    std::string_view action,
-    std::string_view context,
-    const std::vector<Keybinding>& bindings
-) {
+[[nodiscard]] inline std::optional<std::string>
+get_binding_display_text(std::string_view action, std::string_view context,
+                         const std::vector<Keybinding>& bindings) {
     // Search in reverse order (later bindings override earlier ones)
     for (auto it = bindings.rbegin(); it != bindings.rend(); ++it) {
         if (it->command == action && it->when.value_or("") == context) {
@@ -86,28 +79,19 @@ public:
 /// @returns The configured shortcut display text, or fallback if not found
 ///
 /// Example:
-///   auto text = get_shortcut_display("app:toggleTranscript", "Global", "ctrl+o", bindings, tracker);
-[[nodiscard]] inline std::string get_shortcut_display(
-    std::string_view action,
-    std::string_view context,
-    std::string_view fallback,
-    const std::vector<Keybinding>& bindings,
-    FallbackTracker& tracker,
-    LogEventCallback log_fn = nullptr
-) {
+///   auto text = get_shortcut_display("app:toggleTranscript", "Global", "ctrl+o", bindings,
+///   tracker);
+[[nodiscard]] inline std::string
+get_shortcut_display(std::string_view action, std::string_view context, std::string_view fallback,
+                     const std::vector<Keybinding>& bindings, FallbackTracker& tracker,
+                     LogEventCallback log_fn = nullptr) {
     auto resolved = get_binding_display_text(action, context, bindings);
 
     if (!resolved.has_value()) {
         // Log fallback usage at most once per action+context pair
         if (log_fn && !tracker.has_logged(action, context)) {
             tracker.mark_logged(action, context);
-            log_fn(
-                "tengu_keybinding_fallback_used",
-                action,
-                context,
-                fallback,
-                "action_not_found"
-            );
+            log_fn("tengu_keybinding_fallback_used", action, context, fallback, "action_not_found");
         }
         return std::string(fallback);
     }
@@ -115,4 +99,4 @@ public:
     return *resolved;
 }
 
-} // namespace loom::keybindings
+}  // namespace loom::keybindings

@@ -10,8 +10,7 @@ import loom.ui.dialogs.system;
 import loom.ui.dialogs.hooks_renderer;
 
 namespace loom::ui::app_dialogs {
-void register_hooks_dialog_renderer(
-    loom::ui::dialogs::system::DialogRendererRegistry& registry) {
+void register_hooks_dialog_renderer(loom::ui::dialogs::system::DialogRendererRegistry& registry) {
     loom::ui::dialogs::hooks_renderer::register_hooks_renderer(registry);
 }
 }  // namespace loom::ui::app_dialogs

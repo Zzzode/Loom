@@ -4,8 +4,8 @@
 /// from environment variables or JSON configuration.
 module;
 
-#include <cstdint>
 #include <cstddef>
+#include <cstdint>
 #include <cstdlib>
 
 export module loom.config.feature_flags;
@@ -47,32 +47,32 @@ inline constexpr std::size_t FEATURE_COUNT = static_cast<std::size_t>(Feature::_
 /// Feature metadata for display and configuration
 struct FeatureInfo {
     Feature feature;
-    std::string_view name;       // Machine-readable name (used in env vars)
-    std::string_view display;    // Human-readable description
-    bool default_enabled;        // Default state at startup
+    std::string_view name;     // Machine-readable name (used in env vars)
+    std::string_view display;  // Human-readable description
+    bool default_enabled;      // Default state at startup
 };
 
 /// Static feature registry with compile-time metadata
 inline constexpr std::array<FeatureInfo, FEATURE_COUNT> FEATURE_REGISTRY = {{
-    {Feature::Proactive,       "PROACTIVE",          "Proactive suggestions",          false},
-    {Feature::Kairos,          "KAIROS",             "Kairos timing system",           false},
-    {Feature::BridgeMode,      "BRIDGE_MODE",        "IDE bridge integration",         false},
-    {Feature::Daemon,          "DAEMON",             "Background daemon mode",         false},
-    {Feature::AgentTriggers,   "AGENT_TRIGGERS",     "Automatic agent triggering",     false},
-    {Feature::MonitorTool,     "MONITOR_TOOL",       "System monitoring tool",         false},
-    {Feature::Templates,       "TEMPLATES",          "Template system",                false},
-    {Feature::BgSessions,      "BG_SESSIONS",        "Background sessions",            false},
-    {Feature::ByocRunner,      "BYOC_RUNNER",        "BYOC environment runner",        false},
-    {Feature::SelfHostedRunner,"SELF_HOSTED_RUNNER",  "Self-hosted runner",             false},
-    {Feature::CoordinatorMode, "COORDINATOR_MODE",   "Multi-agent coordinator",        false},
-    {Feature::WebBrowserTool,  "WEB_BROWSER_TOOL",   "Web browser tool",               false},
-    {Feature::TerminalPanel,   "TERMINAL_PANEL",     "Terminal panel UI",              false},
-    {Feature::HistorySnip,     "HISTORY_SNIP",       "History snippet extraction",     false},
-    {Feature::Ultraplan,       "ULTRAPLAN",          "Ultra planning mode",            false},
-    {Feature::UltraReview,     "ULTRAREVIEW",        "Ultra deep code review",         false},
-    {Feature::Torch,           "TORCH",              "Torch debugging mode",           false},
-    {Feature::ForkSubagent,    "FORK_SUBAGENT",      "Fork sub-agent support",         false},
-    {Feature::Buddy,           "BUDDY",              "Buddy pair programming mode",    false},
+    {Feature::Proactive, "PROACTIVE", "Proactive suggestions", false},
+    {Feature::Kairos, "KAIROS", "Kairos timing system", false},
+    {Feature::BridgeMode, "BRIDGE_MODE", "IDE bridge integration", false},
+    {Feature::Daemon, "DAEMON", "Background daemon mode", false},
+    {Feature::AgentTriggers, "AGENT_TRIGGERS", "Automatic agent triggering", false},
+    {Feature::MonitorTool, "MONITOR_TOOL", "System monitoring tool", false},
+    {Feature::Templates, "TEMPLATES", "Template system", false},
+    {Feature::BgSessions, "BG_SESSIONS", "Background sessions", false},
+    {Feature::ByocRunner, "BYOC_RUNNER", "BYOC environment runner", false},
+    {Feature::SelfHostedRunner, "SELF_HOSTED_RUNNER", "Self-hosted runner", false},
+    {Feature::CoordinatorMode, "COORDINATOR_MODE", "Multi-agent coordinator", false},
+    {Feature::WebBrowserTool, "WEB_BROWSER_TOOL", "Web browser tool", false},
+    {Feature::TerminalPanel, "TERMINAL_PANEL", "Terminal panel UI", false},
+    {Feature::HistorySnip, "HISTORY_SNIP", "History snippet extraction", false},
+    {Feature::Ultraplan, "ULTRAPLAN", "Ultra planning mode", false},
+    {Feature::UltraReview, "ULTRAREVIEW", "Ultra deep code review", false},
+    {Feature::Torch, "TORCH", "Torch debugging mode", false},
+    {Feature::ForkSubagent, "FORK_SUBAGENT", "Fork sub-agent support", false},
+    {Feature::Buddy, "BUDDY", "Buddy pair programming mode", false},
 }};
 
 // ============================================================
@@ -90,8 +90,7 @@ consteval bool feature_enabled([[maybe_unused]] Feature f) noexcept {
 /// Compile-time conditional execution (replaces IF_FEATURE macro)
 /// Usage:
 ///   if constexpr (is_feature_active<Feature::Buddy>) { ... }
-template <Feature F>
-inline constexpr bool is_feature_active = feature_enabled(F);
+template <Feature F> inline constexpr bool is_feature_active = feature_enabled(F);
 
 // ============================================================
 // FeatureFlagManager - runtime feature flag control
@@ -194,8 +193,7 @@ public:
     /// Sync feature flags from a remote source (e.g., GrowthBook).
     /// Accepts a callable that returns std::optional<bool> for each feature name.
     /// If the callable returns std::nullopt, the flag retains its current value.
-    template <typename FlagResolver>
-    void sync_from_remote(FlagResolver&& resolver) {
+    template <typename FlagResolver> void sync_from_remote(FlagResolver&& resolver) {
         for (const auto& info : FEATURE_REGISTRY) {
             auto result = resolver(info.name);
             if (result.has_value()) {
@@ -238,8 +236,7 @@ private:
 
 /// Executes fn only if the feature is enabled at runtime.
 /// For compile-time elimination, use `if constexpr (is_feature_active<F>)` instead.
-template <Feature F, typename Fn>
-inline void if_feature(Fn&& fn) {
+template <Feature F, typename Fn> inline void if_feature(Fn&& fn) {
     if (global_flags().is_enabled(F)) {
         std::forward<Fn>(fn)();
     }
@@ -255,4 +252,4 @@ inline auto if_feature_else(FnEnabled&& fn_enabled, FnDisabled&& fn_disabled) {
     }
 }
 
-} // namespace loom::core::flags
+}  // namespace loom::core::flags

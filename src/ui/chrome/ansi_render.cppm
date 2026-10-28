@@ -37,7 +37,7 @@ export module loom.ui.chrome.ansi_render;
 
 import std;
 
-import loom.ui.chrome.terminal_io;  // SgrAttr
+import loom.ui.chrome.terminal_io; // SgrAttr
 
 export namespace loom::ui::messages {
 
@@ -57,4 +57,4 @@ void apply_sgr_run(std::string_view params, loom::ui::termio::SgrAttr& attr);
 /// never empty — an escape-only / empty input yields one blank text line.
 [[nodiscard]] std::shared_ptr<void> ansi_to_ftxui_elements(std::string_view input);
 
-} // namespace loom::ui::messages
+}  // namespace loom::ui::messages

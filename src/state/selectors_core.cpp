@@ -3,8 +3,8 @@
 // settings / notification / overlay / effort / Ultraplan selectors.
 module;
 
-#include <cstdint>
 #include <cstddef>
+#include <cstdint>
 
 module loom.state.selectors;
 
@@ -177,7 +177,8 @@ namespace loom::state::selectors {
 }
 
 /// Check if a specific overlay is active
-[[nodiscard]] bool is_overlay_active(const AppState& state, std::string_view overlay_name) noexcept {
+[[nodiscard]] bool is_overlay_active(const AppState& state,
+                                     std::string_view overlay_name) noexcept {
     return state.active_overlays.contains(std::string(overlay_name));
 }
 
@@ -198,7 +199,8 @@ namespace loom::state::selectors {
 }
 
 /// Get the Ultraplan session URL
-[[nodiscard]] std::optional<std::string_view> get_ultraplan_session_url(const AppState& state) noexcept {
+[[nodiscard]] std::optional<std::string_view>
+get_ultraplan_session_url(const AppState& state) noexcept {
     if (state.ultraplan_session_url) {
         return *state.ultraplan_session_url;
     }
@@ -210,4 +212,4 @@ namespace loom::state::selectors {
     return state.speculation_session_time_saved_ms;
 }
 
-} // namespace loom::state::selectors
+}  // namespace loom::state::selectors

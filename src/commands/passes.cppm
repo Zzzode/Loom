@@ -3,7 +3,6 @@
 /// Guest passes command registration and visit handling.
 module;
 
-
 export module loom.commands.passes;
 
 import std;
@@ -30,20 +29,17 @@ public:
         };
     }
 
-    [[nodiscard]] VoidResult validate(const CommandContext&) {
-        return {};
-    }
+    [[nodiscard]] VoidResult validate(const CommandContext&) { return {}; }
 
     [[nodiscard]] Result<CommandResult> execute(const CommandContext&) {
         return CommandResult::success(
-            "Guest passes require the referral backend API, which is not reachable from this native build. "
+            "Guest passes require the referral backend API, which is not reachable from this "
+            "native build. "
             "Manage your passes in your account settings, or share a free week of Loom "
             "from your account page.");
     }
 
-    [[nodiscard]] std::vector<std::string> complete(std::string_view) {
-        return {};
-    }
+    [[nodiscard]] std::vector<std::string> complete(std::string_view) { return {}; }
 };
 
-} // namespace loom::commands
+}  // namespace loom::commands

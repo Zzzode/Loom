@@ -12,9 +12,7 @@ import loom.process.bash.bash_execution;
 
 import loom.serdes.json;
 
-
 export namespace loom::tools {
-
 
 enum class BrowserAction {
     Navigate,
@@ -27,16 +25,22 @@ enum class BrowserAction {
 
 constexpr auto action_name(BrowserAction a) -> std::string_view {
     switch (a) {
-        case BrowserAction::Navigate:   return "navigate";
-        case BrowserAction::Click:      return "click";
-        case BrowserAction::Extract:    return "extract";
-        case BrowserAction::Screenshot: return "screenshot";
-        case BrowserAction::FillForm:   return "fill_form";
-        case BrowserAction::GetTitle:   return "get_title";
-        default:                        return "unknown";
+    case BrowserAction::Navigate:
+        return "navigate";
+    case BrowserAction::Click:
+        return "click";
+    case BrowserAction::Extract:
+        return "extract";
+    case BrowserAction::Screenshot:
+        return "screenshot";
+    case BrowserAction::FillForm:
+        return "fill_form";
+    case BrowserAction::GetTitle:
+        return "get_title";
+    default:
+        return "unknown";
     }
 }
-
 
 enum class BrowserError {
     InvalidUrl,
@@ -52,25 +56,33 @@ enum class BrowserError {
 
 constexpr auto format_error(BrowserError err) -> std::string_view {
     switch (err) {
-        case BrowserError::InvalidUrl:          return "Invalid URL format";
-        case BrowserError::NavigationFailed:    return "Navigation to URL failed";
-        case BrowserError::ElementNotFound:     return "Element not found by selector";
-        case BrowserError::SelectorInvalid:     return "Invalid CSS/XPath selector";
-        case BrowserError::Timeout:             return "Browser operation timed out";
-        case BrowserError::PageLoadFailed:      return "Page failed to load";
-        case BrowserError::ExtractionFailed:    return "Content extraction failed";
-        case BrowserError::FormFieldNotFound:   return "Form field not found";
-        case BrowserError::BrowserNotAvailable: return "Browser automation not available";
-        default:                                return "Unknown browser error";
+    case BrowserError::InvalidUrl:
+        return "Invalid URL format";
+    case BrowserError::NavigationFailed:
+        return "Navigation to URL failed";
+    case BrowserError::ElementNotFound:
+        return "Element not found by selector";
+    case BrowserError::SelectorInvalid:
+        return "Invalid CSS/XPath selector";
+    case BrowserError::Timeout:
+        return "Browser operation timed out";
+    case BrowserError::PageLoadFailed:
+        return "Page failed to load";
+    case BrowserError::ExtractionFailed:
+        return "Content extraction failed";
+    case BrowserError::FormFieldNotFound:
+        return "Form field not found";
+    case BrowserError::BrowserNotAvailable:
+        return "Browser automation not available";
+    default:
+        return "Unknown browser error";
     }
 }
-
 
 struct FormField {
     std::string selector;
     std::string value;
 };
-
 
 struct BrowserRequest {
     BrowserAction action;
@@ -81,7 +93,6 @@ struct BrowserRequest {
     std::optional<std::string> extract_selector;
 };
 
-
 struct BrowserResult {
     std::string content;
     std::optional<std::string> title;
@@ -91,7 +102,6 @@ struct BrowserResult {
     std::chrono::milliseconds duration{0};
     bool success{true};
 };
-
 
 class UrlValidator {
 public:
@@ -113,15 +123,18 @@ public:
     }
 };
 
-
 class PageState {
 public:
     void set_url(std::string url) { current_url_ = std::move(url); }
+
     void set_title(std::string title) { title_ = std::move(title); }
+
     void set_content(std::string content) { content_ = std::move(content); }
 
     [[nodiscard]] auto url() const -> std::string_view { return current_url_; }
+
     [[nodiscard]] auto title() const -> std::string_view { return title_; }
+
     [[nodiscard]] auto content() const -> std::string_view { return content_; }
 
 private:
@@ -131,22 +144,20 @@ private:
 };
 
 using BrowserScreenshotBackend = std::function<std::expected<std::string, BrowserError>(
-    const BrowserRequest&,
-    const PageState&)>;
+    const BrowserRequest&, const PageState&)>;
 using BrowserAutomationBackend = std::function<std::expected<BrowserResult, BrowserError>(
-    const BrowserRequest&,
-    const PageState&)>;
-
+    const BrowserRequest&, const PageState&)>;
 
 class WebBrowserTool {
 public:
     static constexpr std::string_view name = "web_browser";
-    static constexpr std::string_view description = "Browser automation: navigate, click, extract, and fill forms";
+    static constexpr std::string_view description =
+        "Browser automation: navigate, click, extract, and fill forms";
 
     explicit WebBrowserTool(BrowserScreenshotBackend screenshot_backend = {},
                             BrowserAutomationBackend automation_backend = {})
-        : screenshot_backend_(std::move(screenshot_backend)),
-          automation_backend_(std::move(automation_backend)) {}
+        : screenshot_backend_(std::move(screenshot_backend))
+        , automation_backend_(std::move(automation_backend)) {}
 
     auto validate(const BrowserRequest& request) const -> std::expected<void, BrowserError> {
         if (request.action == BrowserAction::Navigate) {
@@ -158,8 +169,7 @@ public:
                 return std::unexpected(BrowserError::InvalidUrl);
             }
         }
-        if (request.action == BrowserAction::Click ||
-            request.action == BrowserAction::Extract) {
+        if (request.action == BrowserAction::Click || request.action == BrowserAction::Extract) {
             if (!request.selector || request.selector->empty()) {
                 return std::unexpected(BrowserError::SelectorInvalid);
             }
@@ -178,71 +188,71 @@ public:
         BrowserResult result;
 
         switch (request.action) {
-            case BrowserAction::Navigate: {
-                if (auto automated = run_automation(request); automated) {
-                    result = std::move(*automated);
-                    update_page_state(request, result);
-                    break;
-                }
-                auto url = UrlValidator::normalize(*request.url);
-                auto fetch_result = fetch_page(url, request.timeout);
-                if (!fetch_result) return std::unexpected(fetch_result.error());
-                page_state_.set_url(url);
-                page_state_.set_content(*fetch_result);
-                page_state_.set_title(extract_title(*fetch_result));
-                result.content = std::format("Navigated to: {}", url);
-                result.url = url;
-                break;
-            }
-            case BrowserAction::Click: {
-                auto automated = run_automation(request);
-                if (!automated) return std::unexpected(automated.error());
+        case BrowserAction::Navigate: {
+            if (auto automated = run_automation(request); automated) {
                 result = std::move(*automated);
                 update_page_state(request, result);
                 break;
             }
-            case BrowserAction::Extract: {
-                if (auto automated = run_automation(request); automated) {
-                    result = std::move(*automated);
-                    update_page_state(request, result);
-                    break;
-                }
-                if (page_state_.content().empty()) {
-                    return std::unexpected(BrowserError::ExtractionFailed);
-                }
-                return std::unexpected(BrowserError::BrowserNotAvailable);
-                break;
-            }
-            case BrowserAction::Screenshot: {
-                if (auto automated = run_automation(request); automated) {
-                    result = std::move(*automated);
-                    update_page_state(request, result);
-                    break;
-                }
-                auto screenshot = capture_screenshot(request);
-                if (!screenshot) return std::unexpected(screenshot.error());
-                result.content = "Captured browser screenshot.";
-                result.screenshot_base64 = std::move(*screenshot);
-                result.media_type = "image/png";
-                break;
-            }
-            case BrowserAction::FillForm: {
-                auto automated = run_automation(request);
-                if (!automated) return std::unexpected(automated.error());
+            auto url = UrlValidator::normalize(*request.url);
+            auto fetch_result = fetch_page(url, request.timeout);
+            if (!fetch_result) return std::unexpected(fetch_result.error());
+            page_state_.set_url(url);
+            page_state_.set_content(*fetch_result);
+            page_state_.set_title(extract_title(*fetch_result));
+            result.content = std::format("Navigated to: {}", url);
+            result.url = url;
+            break;
+        }
+        case BrowserAction::Click: {
+            auto automated = run_automation(request);
+            if (!automated) return std::unexpected(automated.error());
+            result = std::move(*automated);
+            update_page_state(request, result);
+            break;
+        }
+        case BrowserAction::Extract: {
+            if (auto automated = run_automation(request); automated) {
                 result = std::move(*automated);
                 update_page_state(request, result);
                 break;
             }
-            case BrowserAction::GetTitle: {
-                if (auto automated = run_automation(request); automated) {
-                    result = std::move(*automated);
-                    update_page_state(request, result);
-                    break;
-                }
-                result.content = std::string(page_state_.title());
-                result.title = std::string(page_state_.title());
+            if (page_state_.content().empty()) {
+                return std::unexpected(BrowserError::ExtractionFailed);
+            }
+            return std::unexpected(BrowserError::BrowserNotAvailable);
+            break;
+        }
+        case BrowserAction::Screenshot: {
+            if (auto automated = run_automation(request); automated) {
+                result = std::move(*automated);
+                update_page_state(request, result);
                 break;
             }
+            auto screenshot = capture_screenshot(request);
+            if (!screenshot) return std::unexpected(screenshot.error());
+            result.content = "Captured browser screenshot.";
+            result.screenshot_base64 = std::move(*screenshot);
+            result.media_type = "image/png";
+            break;
+        }
+        case BrowserAction::FillForm: {
+            auto automated = run_automation(request);
+            if (!automated) return std::unexpected(automated.error());
+            result = std::move(*automated);
+            update_page_state(request, result);
+            break;
+        }
+        case BrowserAction::GetTitle: {
+            if (auto automated = run_automation(request); automated) {
+                result = std::move(*automated);
+                update_page_state(request, result);
+                break;
+            }
+            result.content = std::string(page_state_.title());
+            result.title = std::string(page_state_.title());
+            break;
+        }
         }
 
         result.duration = std::chrono::duration_cast<std::chrono::milliseconds>(
@@ -265,7 +275,8 @@ public:
     }},
     "required": ["action"]
   }}
-}})json", name, description);
+}})json",
+                           name, description);
     }
 
 private:
@@ -276,8 +287,10 @@ private:
     [[nodiscard]] static std::string shell_quote(std::string_view value) {
         std::string out = "'";
         for (char c : value) {
-            if (c == '\'') out += "'\\''";
-            else out.push_back(c);
+            if (c == '\'')
+                out += "'\\''";
+            else
+                out.push_back(c);
         }
         out.push_back('\'');
         return out;
@@ -288,17 +301,33 @@ private:
         out.reserve(value.size() + 8);
         for (unsigned char ch : value) {
             switch (ch) {
-                case '"': out += "\\\""; break;
-                case '\\': out += "\\\\"; break;
-                case '\b': out += "\\b"; break;
-                case '\f': out += "\\f"; break;
-                case '\n': out += "\\n"; break;
-                case '\r': out += "\\r"; break;
-                case '\t': out += "\\t"; break;
-                default:
-                    if (ch < 0x20) out += std::format("\\u{:04x}", static_cast<unsigned>(ch));
-                    else out.push_back(static_cast<char>(ch));
-                    break;
+            case '"':
+                out += "\\\"";
+                break;
+            case '\\':
+                out += "\\\\";
+                break;
+            case '\b':
+                out += "\\b";
+                break;
+            case '\f':
+                out += "\\f";
+                break;
+            case '\n':
+                out += "\\n";
+                break;
+            case '\r':
+                out += "\\r";
+                break;
+            case '\t':
+                out += "\\t";
+                break;
+            default:
+                if (ch < 0x20)
+                    out += std::format("\\u{:04x}", static_cast<unsigned>(ch));
+                else
+                    out.push_back(static_cast<char>(ch));
+                break;
             }
         }
         return out;
@@ -309,19 +338,22 @@ private:
         std::string out = "{";
         out += std::format(R"("action":"{}")", action_name(request.action));
         if (request.url) out += std::format(R"(,"url":"{}")", json_escape(*request.url));
-        if (request.selector) out += std::format(R"(,"selector":"{}")", json_escape(*request.selector));
+        if (request.selector)
+            out += std::format(R"(,"selector":"{}")", json_escape(*request.selector));
         if (request.extract_selector) {
-            out += std::format(R"(,"extract_selector":"{}")", json_escape(*request.extract_selector));
+            out +=
+                std::format(R"(,"extract_selector":"{}")", json_escape(*request.extract_selector));
         }
-        if (!state.url().empty()) out += std::format(R"(,"current_url":"{}")", json_escape(state.url()));
+        if (!state.url().empty())
+            out += std::format(R"(,"current_url":"{}")", json_escape(state.url()));
         out += std::format(R"(,"timeout_seconds":{})", request.timeout.count());
         if (!request.form_fields.empty()) {
             out += R"(,"form_fields":[)";
             for (std::size_t i = 0; i < request.form_fields.size(); ++i) {
                 if (i > 0) out += ',';
                 out += std::format(R"({{"selector":"{}","value":"{}"}})",
-                    json_escape(request.form_fields[i].selector),
-                    json_escape(request.form_fields[i].value));
+                                   json_escape(request.form_fields[i].selector),
+                                   json_escape(request.form_fields[i].value));
             }
             out += ']';
         }
@@ -329,25 +361,23 @@ private:
         return out;
     }
 
-    [[nodiscard]] static std::optional<std::string> json_optional_string(
-        loom::utils::json::JsonVal root,
-        std::string_view key
-    ) {
+    [[nodiscard]] static std::optional<std::string>
+    json_optional_string(loom::utils::json::JsonVal root, std::string_view key) {
         auto value = root.get(key);
         if (!value || !value.is_str()) return std::nullopt;
         return std::string(value.as_str());
     }
 
-    [[nodiscard]] static std::expected<BrowserResult, BrowserError> parse_backend_result(
-        std::string_view output
-    ) {
+    [[nodiscard]] static std::expected<BrowserResult, BrowserError>
+    parse_backend_result(std::string_view output) {
         auto parsed = loom::utils::json::parse(output);
         if (!parsed || !parsed->root().is_obj()) {
             return std::unexpected(BrowserError::ExtractionFailed);
         }
         auto root = parsed->root();
         BrowserResult result{
-            .content = json_optional_string(root, "content").value_or("Browser automation completed."),
+            .content =
+                json_optional_string(root, "content").value_or("Browser automation completed."),
             .title = json_optional_string(root, "title"),
             .url = json_optional_string(root, "url"),
             .screenshot_base64 = json_optional_string(root, "screenshot_base64"),
@@ -362,10 +392,8 @@ private:
         return result;
     }
 
-    [[nodiscard]] static std::expected<BrowserResult, BrowserError> run_command_backend(
-        const BrowserRequest& request,
-        const PageState& state
-    ) {
+    [[nodiscard]] static std::expected<BrowserResult, BrowserError>
+    run_command_backend(const BrowserRequest& request, const PageState& state) {
         auto* command_env = std::getenv("LOOM_BROWSER_AUTOMATION_CMD");
         if (!command_env || std::string_view(command_env).empty()) {
             return std::unexpected(BrowserError::BrowserNotAvailable);
@@ -393,22 +421,22 @@ private:
         return parse_backend_result(output);
     }
 
-    [[nodiscard]] std::expected<BrowserResult, BrowserError> run_automation(
-        const BrowserRequest& request
-    ) const {
+    [[nodiscard]] std::expected<BrowserResult, BrowserError>
+    run_automation(const BrowserRequest& request) const {
         if (automation_backend_) return automation_backend_(request, page_state_);
         return run_command_backend(request, page_state_);
     }
 
     void update_page_state(const BrowserRequest& request, const BrowserResult& result) {
-        if (result.url) page_state_.set_url(*result.url);
-        else if (request.url) page_state_.set_url(UrlValidator::normalize(*request.url));
+        if (result.url)
+            page_state_.set_url(*result.url);
+        else if (request.url)
+            page_state_.set_url(UrlValidator::normalize(*request.url));
         if (result.title) page_state_.set_title(*result.title);
         if (!result.content.empty()) page_state_.set_content(result.content);
     }
 
-    static void replace_all(std::string& text,
-                            std::string_view needle,
+    static void replace_all(std::string& text, std::string_view needle,
                             std::string_view replacement) {
         std::size_t pos = 0;
         while ((pos = text.find(needle, pos)) != std::string::npos) {
@@ -417,8 +445,8 @@ private:
         }
     }
 
-    [[nodiscard]] std::expected<std::string, BrowserError> capture_screenshot(
-        const BrowserRequest& request) const {
+    [[nodiscard]] std::expected<std::string, BrowserError>
+    capture_screenshot(const BrowserRequest& request) const {
         if (screenshot_backend_) {
             return screenshot_backend_(request, page_state_);
         }
@@ -456,8 +484,7 @@ private:
     }
 
     auto fetch_page(const std::string& url, std::chrono::seconds timeout)
-        -> std::expected<std::string, BrowserError>
-    {
+        -> std::expected<std::string, BrowserError> {
         auto cmd = std::format("curl -sL --max-time {} {}", timeout.count(), shell_quote(url));
 
         auto cap = loom::utils::bash::exec_capture(cmd);
@@ -486,4 +513,4 @@ private:
     }
 };
 
-} // namespace loom::tools
+}  // namespace loom::tools

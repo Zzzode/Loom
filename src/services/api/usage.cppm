@@ -14,10 +14,10 @@ struct UsageData {
 };
 
 namespace detail {
-    inline std::mutex usage_mutex;
-    inline UsageData current_usage;
-    inline UsageData session_usage;
-} // namespace detail
+inline std::mutex usage_mutex;
+inline UsageData current_usage;
+inline UsageData session_usage;
+}  // namespace detail
 
 // Get current request usage
 auto get_current_usage() -> UsageData {
@@ -37,4 +37,4 @@ auto reset_usage() -> void {
     detail::current_usage = UsageData{};
 }
 
-} // namespace loom::services::api
+}  // namespace loom::services::api

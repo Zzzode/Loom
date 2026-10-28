@@ -60,17 +60,13 @@ using RuntimeExecutor = std::function<Result<ToolResult>(const ToolInput&)>;
 
 class RuntimeFunctionTool final : public ITool {
 public:
-    RuntimeFunctionTool(
-        ToolDefinition definition,
-        RuntimeExecutor executor,
-        loom::tools::agent::AgentLivePermissionCheckFn permission_check = {})
-        : definition_(std::move(definition)),
-          executor_(std::move(executor)),
-          permission_check_(std::move(permission_check)) {}
+    RuntimeFunctionTool(ToolDefinition definition, RuntimeExecutor executor,
+                        loom::tools::agent::AgentLivePermissionCheckFn permission_check = {})
+        : definition_(std::move(definition))
+        , executor_(std::move(executor))
+        , permission_check_(std::move(permission_check)) {}
 
-    [[nodiscard]] const ToolDefinition& definition() const override {
-        return definition_;
-    }
+    [[nodiscard]] const ToolDefinition& definition() const override { return definition_; }
 
     [[nodiscard]] Result<ToolResult> execute(const ToolInput& input) override {
         return executor_(input);
@@ -85,23 +81,16 @@ private:
     loom::tools::agent::AgentLivePermissionCheckFn permission_check_;
 };
 
-[[nodiscard]] ToolDefinition define_tool(
-    std::string name,
-    std::string description,
-    ToolPermission permission,
-    std::vector<SchemaProperty> properties = {},
-    std::string category = "runtime"
-);
+[[nodiscard]] ToolDefinition define_tool(std::string name, std::string description,
+                                         ToolPermission permission,
+                                         std::vector<SchemaProperty> properties = {},
+                                         std::string category = "runtime");
 
-[[nodiscard]] std::unique_ptr<ITool> make_runtime_tool(
-    std::string name,
-    std::string description,
-    ToolPermission permission,
-    std::vector<SchemaProperty> properties,
-    RuntimeExecutor executor,
-    std::string category = "runtime",
-    loom::tools::agent::AgentLivePermissionCheckFn permission_check = {}
-);
+[[nodiscard]] std::unique_ptr<ITool>
+make_runtime_tool(std::string name, std::string description, ToolPermission permission,
+                  std::vector<SchemaProperty> properties, RuntimeExecutor executor,
+                  std::string category = "runtime",
+                  loom::tools::agent::AgentLivePermissionCheckFn permission_check = {});
 
 // Ad-hoc JSON field accessors over a raw JSON string; definitions in
 // runtime_registry_json.cpp.
@@ -112,41 +101,45 @@ private:
 
 [[nodiscard]] bool json_bool(std::string_view json, std::string_view key, bool fallback = false);
 
-[[nodiscard]] std::optional<std::string> runtime_json_string(loom::utils::json::JsonVal obj, std::string_view key);
+[[nodiscard]] std::optional<std::string> runtime_json_string(loom::utils::json::JsonVal obj,
+                                                             std::string_view key);
 
-[[nodiscard]] std::optional<int> runtime_json_int(loom::utils::json::JsonVal obj, std::string_view key);
+[[nodiscard]] std::optional<int> runtime_json_int(loom::utils::json::JsonVal obj,
+                                                  std::string_view key);
 
-[[nodiscard]] std::optional<bool> runtime_json_bool(loom::utils::json::JsonVal obj, std::string_view key);
+[[nodiscard]] std::optional<bool> runtime_json_bool(loom::utils::json::JsonVal obj,
+                                                    std::string_view key);
 
-[[nodiscard]] std::optional<bool> runtime_json_semantic_bool(
-    loom::utils::json::JsonVal obj,
-    std::string_view key
-);
+[[nodiscard]] std::optional<bool> runtime_json_semantic_bool(loom::utils::json::JsonVal obj,
+                                                             std::string_view key);
 
-[[nodiscard]] std::vector<std::string> runtime_json_event_array(loom::utils::json::JsonVal obj, std::string_view key);
+[[nodiscard]] std::vector<std::string> runtime_json_event_array(loom::utils::json::JsonVal obj,
+                                                                std::string_view key);
 
-[[nodiscard]] std::vector<std::string> json_string_array(std::string_view json, std::string_view key);
+[[nodiscard]] std::vector<std::string> json_string_array(std::string_view json,
+                                                         std::string_view key);
 
-[[nodiscard]] std::optional<std::string> json_raw_value(std::string_view json, std::string_view key);
+[[nodiscard]] std::optional<std::string> json_raw_value(std::string_view json,
+                                                        std::string_view key);
 
 [[nodiscard]] std::optional<std::size_t> parse_notebook_cell_index(std::string_view text);
 
-[[nodiscard]] std::optional<std::size_t> resolve_notebook_cell_index(
-    const Notebook& notebook,
-    std::optional<std::string> cell_id
-);
+[[nodiscard]] std::optional<std::size_t>
+resolve_notebook_cell_index(const Notebook& notebook, std::optional<std::string> cell_id);
 
 [[nodiscard]] std::optional<CellOperation> parse_notebook_operation(std::string_view text);
 
 constexpr auto runtime_shell_quote = &runtime_shared_utils::shell_quote;
 
-[[nodiscard]] Result<ToolResult> run_command(std::string command, std::size_t max_bytes = 1024 * 512);
+[[nodiscard]] Result<ToolResult> run_command(std::string command,
+                                             std::size_t max_bytes = 1024 * 512);
 
 [[nodiscard]] std::string join_args(const std::vector<std::string>& args);
 
 [[nodiscard]] std::vector<std::string> read_lines(const fs::path& file);
 
-[[nodiscard]] std::string word_at_position(const std::vector<std::string>& lines, int line_no, int character);
+[[nodiscard]] std::string word_at_position(const std::vector<std::string>& lines, int line_no,
+                                           int character);
 
 [[nodiscard]] bool is_source_file(const fs::path& path);
 
@@ -166,18 +159,19 @@ constexpr auto escape_xml_text = &runtime_shared_utils::escape_xml;
 
 constexpr auto runtime_delivery_message_id = &runtime_shared_utils::runtime_delivery_message_id;
 
-constexpr auto format_agent_pending_user_message = &runtime_shared_utils::format_agent_pending_user_message;
+constexpr auto format_agent_pending_user_message =
+    &runtime_shared_utils::format_agent_pending_user_message;
 
-constexpr auto format_team_task_assignment_message = &runtime_team_shared::format_team_task_assignment_message;
+constexpr auto format_team_task_assignment_message =
+    &runtime_team_shared::format_team_task_assignment_message;
 
 // Defined exactly once in runtime_registry_native_agents.cpp; their addresses
 // are taken by the inline wrappers below (terminal-status predicate and
 // transcript-artifact cleanup).
 [[nodiscard]] bool native_agent_status_is_terminal(agent_runtime::NativeAgentStatus status);
 
-[[nodiscard]] std::size_t cleanup_native_agent_transcript_artifacts(
-    const agent_runtime::NativeAgentRecord& record
-);
+[[nodiscard]] std::size_t
+cleanup_native_agent_transcript_artifacts(const agent_runtime::NativeAgentRecord& record);
 
 constexpr auto safe_runtime_dir_component = &runtime_shared_utils::safe_runtime_dir_component;
 
@@ -198,8 +192,10 @@ constexpr auto team_lead_agent_id = &runtime_team_shared::team_lead_agent_id;
 
 using TeamConfigMemberRuntimeState = runtime_team_shared::TeamConfigMemberRuntimeState;
 
-constexpr auto write_team_config_optional_string = &runtime_team_shared::write_team_config_optional_string;
-constexpr auto write_team_config_optional_bool = &runtime_team_shared::write_team_config_optional_bool;
+constexpr auto write_team_config_optional_string =
+    &runtime_team_shared::write_team_config_optional_string;
+constexpr auto write_team_config_optional_bool =
+    &runtime_team_shared::write_team_config_optional_bool;
 constexpr auto write_team_config_member = &runtime_team_shared::write_team_config_member;
 constexpr auto write_team_config_file = &runtime_team_shared::write_team_config_file;
 
@@ -207,11 +203,9 @@ constexpr auto write_team_config_file = &runtime_team_shared::write_team_config_
 /// predicate) so call sites keep their zero-argument signature.
 [[nodiscard]] inline std::unordered_map<std::string, TeamConfigMemberRuntimeState>
 team_config_runtime_states_from_native_records(
-    std::span<const agent_runtime::NativeAgentRecord> records
-) {
+    std::span<const agent_runtime::NativeAgentRecord> records) {
     return runtime_team_shared::team_config_runtime_states_from_native_records(
-        records,
-        &native_agent_status_is_terminal);
+        records, &native_agent_status_is_terminal);
 }
 
 constexpr auto ensure_team_runtime_artifacts = &runtime_team_shared::ensure_team_runtime_artifacts;
@@ -220,36 +214,33 @@ constexpr auto collect_team_native_agents = &runtime_team_shared::collect_team_n
 
 /// Wrap the extracted function (which takes two explicit predicate/cleanup
 /// function pointers) so call sites keep their three-argument signature.
-[[nodiscard]] inline TeamDeletionCleanupSummary cleanup_team_runtime_artifacts(
-    std::string_view team_id,
-    std::string_view team_name,
-    std::span<const agent_runtime::NativeAgentRecord> records
-) {
+[[nodiscard]] inline TeamDeletionCleanupSummary
+cleanup_team_runtime_artifacts(std::string_view team_id, std::string_view team_name,
+                               std::span<const agent_runtime::NativeAgentRecord> records) {
     return runtime_team_shared::cleanup_team_runtime_artifacts(
-        team_id,
-        team_name,
-        records,
-        &native_agent_status_is_terminal,
+        team_id, team_name, records, &native_agent_status_is_terminal,
         &cleanup_native_agent_transcript_artifacts);
 }
 
-[[nodiscard]] std::string format_native_agent_task_summary(const agent_runtime::NativeAgentRecord& record);
+[[nodiscard]] std::string
+format_native_agent_task_summary(const agent_runtime::NativeAgentRecord& record);
 
-[[nodiscard]] std::optional<std::string> native_agent_notification_status(
-    agent_runtime::NativeAgentStatus status);
+[[nodiscard]] std::optional<std::string>
+native_agent_notification_status(agent_runtime::NativeAgentStatus status);
 
-[[nodiscard]] std::optional<std::string> format_native_agent_task_notification(
-    const agent_runtime::NativeAgentRecord& record);
+[[nodiscard]] std::optional<std::string>
+format_native_agent_task_notification(const agent_runtime::NativeAgentRecord& record);
 
-[[nodiscard]] std::string format_native_agent_task_output(const agent_runtime::NativeAgentRecord& record);
+[[nodiscard]] std::string
+format_native_agent_task_output(const agent_runtime::NativeAgentRecord& record);
 
 [[nodiscard]] std::string background_task_status(const bash::BackgroundTaskSnapshot& task);
 
-[[nodiscard]] std::string format_background_task_summary(
-    const bash::BackgroundTaskSnapshot& task,
-    bool include_output);
+[[nodiscard]] std::string format_background_task_summary(const bash::BackgroundTaskSnapshot& task,
+                                                         bool include_output);
 
-[[nodiscard]] Result<ToolResult> execute_task_tool(std::string_view tool_name, const ToolInput& input);
+[[nodiscard]] Result<ToolResult> execute_task_tool(std::string_view tool_name,
+                                                   const ToolInput& input);
 
 [[nodiscard]] Result<ToolResult> execute_skill_tool(const ToolInput& input);
 
@@ -261,7 +252,8 @@ constexpr auto collect_team_native_agents = &runtime_team_shared::collect_team_n
 
 [[nodiscard]] Result<ToolResult> execute_tool_search(const ToolInput& input);
 
-[[nodiscard]] std::optional<loom::tools::BrowserAction> parse_browser_action(std::string_view action);
+[[nodiscard]] std::optional<loom::tools::BrowserAction>
+parse_browser_action(std::string_view action);
 
 [[nodiscard]] std::vector<loom::tools::FormField> json_form_fields(std::string_view json);
 
@@ -274,10 +266,11 @@ constexpr auto collect_team_native_agents = &runtime_team_shared::collect_team_n
 // two mutable inline overrides stay here: they are named by the inline test
 // setters below and by the moved orchestration implementation unit (which
 // imports this module for them and for the json_* helpers).
-inline std::optional<loom::core::computer_use::CaptureProvider> computer_use_capture_provider_override;
+inline std::optional<loom::core::computer_use::CaptureProvider>
+    computer_use_capture_provider_override;
 inline std::optional<loom::core::computer_use::InputProvider> computer_use_input_provider_override;
 
-} // namespace loom::tools::detail
+}  // namespace detail
 
 // RFC-0001 B15: the four computer-use test setters keep their strong symbols
 // IN loom_tools. Their trivial bodies are inline in this interface and assign
@@ -320,50 +313,52 @@ using RuntimePeerAddress = runtime_message_delivery::RuntimePeerAddress;
 constexpr auto parse_runtime_peer_address = &runtime_message_delivery::parse_runtime_peer_address;
 constexpr auto build_runtime_json_object = &runtime_message_delivery::build_runtime_json_object;
 constexpr auto build_cross_session_prompt = &runtime_message_delivery::build_cross_session_prompt;
-constexpr auto build_uds_cross_session_payload = &runtime_message_delivery::build_uds_cross_session_payload;
+constexpr auto build_uds_cross_session_payload =
+    &runtime_message_delivery::build_uds_cross_session_payload;
 constexpr auto runtime_env_value = &runtime_message_delivery::runtime_env_value;
 constexpr auto first_runtime_env = &runtime_message_delivery::first_runtime_env;
-constexpr auto strip_runtime_trailing_slashes = &runtime_message_delivery::strip_runtime_trailing_slashes;
+constexpr auto strip_runtime_trailing_slashes =
+    &runtime_message_delivery::strip_runtime_trailing_slashes;
 constexpr auto is_safe_runtime_session_id = &runtime_message_delivery::is_safe_runtime_session_id;
-constexpr auto build_bridge_cross_session_event = &runtime_message_delivery::build_bridge_cross_session_event;
-constexpr auto send_bridge_cross_session_message = &runtime_message_delivery::send_bridge_cross_session_message;
-constexpr auto send_uds_cross_session_message = &runtime_message_delivery::send_uds_cross_session_message;
-constexpr auto build_structured_send_message_payload = &runtime_message_delivery::build_structured_send_message_payload;
-constexpr auto runtime_has_agent_api_credentials = &runtime_message_delivery::runtime_has_agent_api_credentials;
-constexpr auto native_agent_can_resume_locally = &runtime_message_delivery::native_agent_can_resume_locally;
+constexpr auto build_bridge_cross_session_event =
+    &runtime_message_delivery::build_bridge_cross_session_event;
+constexpr auto send_bridge_cross_session_message =
+    &runtime_message_delivery::send_bridge_cross_session_message;
+constexpr auto send_uds_cross_session_message =
+    &runtime_message_delivery::send_uds_cross_session_message;
+constexpr auto build_structured_send_message_payload =
+    &runtime_message_delivery::build_structured_send_message_payload;
+constexpr auto runtime_has_agent_api_credentials =
+    &runtime_message_delivery::runtime_has_agent_api_credentials;
+constexpr auto native_agent_can_resume_locally =
+    &runtime_message_delivery::native_agent_can_resume_locally;
 constexpr auto native_agent_resume_cwd = &runtime_message_delivery::native_agent_resume_cwd;
-constexpr auto build_native_agent_resume_input_json = &runtime_message_delivery::build_native_agent_resume_input_json;
+constexpr auto build_native_agent_resume_input_json =
+    &runtime_message_delivery::build_native_agent_resume_input_json;
 
 // Definition in runtime_registry_native_agents.cpp.
 [[nodiscard]] std::string build_team_member_agent_start_input_json(
-    const TeamMember& member,
-    std::string_view team_name,
-    std::string_view prompt,
+    const TeamMember& member, std::string_view team_name, std::string_view prompt,
     const runtime_team_shared::TeamMemberStartOptions* options,
-    const std::optional<std::string>& default_cwd,
-    const std::optional<std::string>& default_mode,
-    const std::optional<std::string>& default_isolation
-);
+    const std::optional<std::string>& default_cwd, const std::optional<std::string>& default_mode,
+    const std::optional<std::string>& default_isolation);
 
 constexpr auto runtime_tool_result_text = &runtime_message_delivery::runtime_tool_result_text;
-constexpr auto try_start_native_agent_resume = &runtime_message_delivery::try_start_native_agent_resume;
+constexpr auto try_start_native_agent_resume =
+    &runtime_message_delivery::try_start_native_agent_resume;
 
-[[nodiscard]] Result<ToolResult> execute_simple_runtime_tool(
-    std::string_view name,
-    const ToolInput& input,
-    ToolRegistry* registry = nullptr
-);
+[[nodiscard]] Result<ToolResult> execute_simple_runtime_tool(std::string_view name,
+                                                             const ToolInput& input,
+                                                             ToolRegistry* registry = nullptr);
 
 // team_create / team_delete branches extracted to
 // runtime_registry_team_dispatch.cpp.
-[[nodiscard]] Result<ToolResult> execute_team_create_runtime_tool(
-    const ToolInput& input,
-    ToolRegistry* registry
-);
+[[nodiscard]] Result<ToolResult> execute_team_create_runtime_tool(const ToolInput& input,
+                                                                  ToolRegistry* registry);
 
 [[nodiscard]] Result<ToolResult> execute_team_delete_runtime_tool(std::string_view json);
 
-} // namespace detail
+}  // namespace detail
 
 using loom::core::SchemaProperty;
 using loom::core::ToolPermission;
@@ -386,8 +381,7 @@ struct RuntimeToolOptions {
 
 [[nodiscard]] std::vector<std::string> runtime_tool_names();
 
-[[nodiscard]] std::vector<agent_runtime::AgentDefinition>
-get_built_in_agent_definitions();
+[[nodiscard]] std::vector<agent_runtime::AgentDefinition> get_built_in_agent_definitions();
 
 [[nodiscard]] bool are_explore_plan_agents_enabled();
 
@@ -400,4 +394,4 @@ void register_runtime_tools(loom::core::ToolRegistry& registry);
 // their data comes from the lifted NativeMcpRuntime and reaches main/server
 // via the orchestration module, not this rank-8 registry.
 
-} // namespace loom::tools
+}  // namespace loom::tools

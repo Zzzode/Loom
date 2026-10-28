@@ -82,10 +82,10 @@ struct KeyEvent {
 
     [[nodiscard]] auto canonical() const -> std::string {
         std::string result;
-        if (ctrl)  result += "Ctrl+";
-        if (alt)   result += "Alt+";
+        if (ctrl) result += "Ctrl+";
+        if (alt) result += "Alt+";
         if (shift) result += "Shift+";
-        if (meta)  result += "Meta+";
+        if (meta) result += "Meta+";
         result += key;
         return result;
     }
@@ -101,46 +101,90 @@ class TextInputHook {
 public:
     static constexpr std::size_t kMaxUndoHistory = 100;
 
-    explicit TextInputHook(bool multi_line = true) {
-        state_.multi_line = multi_line;
-    }
+    explicit TextInputHook(bool multi_line = true) { state_.multi_line = multi_line; }
 
     // ─── Key handling ──────────────────────────────────────────
 
     /// Process a key event; returns true if the event was consumed
     [[nodiscard]] auto handle_key(const KeyEvent& event) -> bool {
         // Ctrl+Z: undo
-        if (event.ctrl && event.key == "z") { undo(); return true; }
+        if (event.ctrl && event.key == "z") {
+            undo();
+            return true;
+        }
         // Ctrl+Y / Ctrl+Shift+Z: redo
         if (event.ctrl && (event.key == "y" || (event.shift && event.key == "z"))) {
-            redo(); return true;
+            redo();
+            return true;
         }
         // Ctrl+C: copy selection
-        if (event.ctrl && event.key == "c") { copy(); return true; }
+        if (event.ctrl && event.key == "c") {
+            copy();
+            return true;
+        }
         // Ctrl+V: paste
-        if (event.ctrl && event.key == "v") { paste(); return true; }
+        if (event.ctrl && event.key == "v") {
+            paste();
+            return true;
+        }
         // Ctrl+X: cut selection
-        if (event.ctrl && event.key == "x") { cut(); return true; }
+        if (event.ctrl && event.key == "x") {
+            cut();
+            return true;
+        }
         // Ctrl+A: select all
-        if (event.ctrl && event.key == "a") { select_all(); return true; }
+        if (event.ctrl && event.key == "a") {
+            select_all();
+            return true;
+        }
 
         // Word movement: Ctrl+Left / Ctrl+Right
-        if (event.ctrl && event.key == "Left")  { move_cursor_word(Direction::Left); return true; }
-        if (event.ctrl && event.key == "Right") { move_cursor_word(Direction::Right); return true; }
+        if (event.ctrl && event.key == "Left") {
+            move_cursor_word(Direction::Left);
+            return true;
+        }
+        if (event.ctrl && event.key == "Right") {
+            move_cursor_word(Direction::Right);
+            return true;
+        }
 
         // Home/End: line start/end
-        if (event.key == "Home") { move_to_line_start(); return true; }
-        if (event.key == "End")  { move_to_line_end(); return true; }
+        if (event.key == "Home") {
+            move_to_line_start();
+            return true;
+        }
+        if (event.key == "End") {
+            move_to_line_end();
+            return true;
+        }
 
         // Arrow keys: cursor movement
-        if (event.key == "Left")  { move_cursor(Direction::Left); return true; }
-        if (event.key == "Right") { move_cursor(Direction::Right); return true; }
-        if (event.key == "Up")    { move_cursor(Direction::Up); return true; }
-        if (event.key == "Down")  { move_cursor(Direction::Down); return true; }
+        if (event.key == "Left") {
+            move_cursor(Direction::Left);
+            return true;
+        }
+        if (event.key == "Right") {
+            move_cursor(Direction::Right);
+            return true;
+        }
+        if (event.key == "Up") {
+            move_cursor(Direction::Up);
+            return true;
+        }
+        if (event.key == "Down") {
+            move_cursor(Direction::Down);
+            return true;
+        }
 
         // Backspace / Delete
-        if (event.key == "Backspace") { delete_backward(); return true; }
-        if (event.key == "Delete")    { delete_forward(); return true; }
+        if (event.key == "Backspace") {
+            delete_backward();
+            return true;
+        }
+        if (event.key == "Delete") {
+            delete_forward();
+            return true;
+        }
 
         // Enter: newline (only in multi-line mode)
         if (event.key == "Enter" && state_.multi_line) {
@@ -202,36 +246,36 @@ public:
         clear_selection();
         auto lines = get_lines();
         switch (dir) {
-            case Direction::Left:
-                if (state_.cursor_pos.col > 0) {
-                    state_.cursor_pos.col--;
-                } else if (state_.cursor_pos.line > 0) {
-                    state_.cursor_pos.line--;
-                    state_.cursor_pos.col = lines[state_.cursor_pos.line].size();
-                }
-                break;
-            case Direction::Right:
-                if (state_.cursor_pos.col < lines[state_.cursor_pos.line].size()) {
-                    state_.cursor_pos.col++;
-                } else if (state_.cursor_pos.line + 1 < lines.size()) {
-                    state_.cursor_pos.line++;
-                    state_.cursor_pos.col = 0;
-                }
-                break;
-            case Direction::Up:
-                if (state_.cursor_pos.line > 0) {
-                    state_.cursor_pos.line--;
-                    state_.cursor_pos.col = std::min(state_.cursor_pos.col,
-                                                     lines[state_.cursor_pos.line].size());
-                }
-                break;
-            case Direction::Down:
-                if (state_.cursor_pos.line + 1 < lines.size()) {
-                    state_.cursor_pos.line++;
-                    state_.cursor_pos.col = std::min(state_.cursor_pos.col,
-                                                     lines[state_.cursor_pos.line].size());
-                }
-                break;
+        case Direction::Left:
+            if (state_.cursor_pos.col > 0) {
+                state_.cursor_pos.col--;
+            } else if (state_.cursor_pos.line > 0) {
+                state_.cursor_pos.line--;
+                state_.cursor_pos.col = lines[state_.cursor_pos.line].size();
+            }
+            break;
+        case Direction::Right:
+            if (state_.cursor_pos.col < lines[state_.cursor_pos.line].size()) {
+                state_.cursor_pos.col++;
+            } else if (state_.cursor_pos.line + 1 < lines.size()) {
+                state_.cursor_pos.line++;
+                state_.cursor_pos.col = 0;
+            }
+            break;
+        case Direction::Up:
+            if (state_.cursor_pos.line > 0) {
+                state_.cursor_pos.line--;
+                state_.cursor_pos.col =
+                    std::min(state_.cursor_pos.col, lines[state_.cursor_pos.line].size());
+            }
+            break;
+        case Direction::Down:
+            if (state_.cursor_pos.line + 1 < lines.size()) {
+                state_.cursor_pos.line++;
+                state_.cursor_pos.col =
+                    std::min(state_.cursor_pos.col, lines[state_.cursor_pos.line].size());
+            }
+            break;
         }
     }
 
@@ -241,12 +285,16 @@ public:
         auto offset = cursor_to_offset(state_.cursor_pos);
         if (dir == Direction::Left) {
 
-            while (offset > 0 && is_whitespace(state_.text[offset - 1])) offset--;
-            while (offset > 0 && !is_whitespace(state_.text[offset - 1])) offset--;
+            while (offset > 0 && is_whitespace(state_.text[offset - 1]))
+                offset--;
+            while (offset > 0 && !is_whitespace(state_.text[offset - 1]))
+                offset--;
         } else if (dir == Direction::Right) {
             auto len = state_.text.size();
-            while (offset < len && !is_whitespace(state_.text[offset])) offset++;
-            while (offset < len && is_whitespace(state_.text[offset])) offset++;
+            while (offset < len && !is_whitespace(state_.text[offset]))
+                offset++;
+            while (offset < len && is_whitespace(state_.text[offset]))
+                offset++;
         }
         state_.cursor_pos = offset_to_cursor(offset);
     }
@@ -320,10 +368,7 @@ public:
     auto select_all() -> void {
         auto lines = get_lines();
         state_.selection_start = CursorPos{0, 0};
-        state_.selection_end = CursorPos{
-            lines.size() - 1,
-            lines.back().size()
-        };
+        state_.selection_end = CursorPos{lines.size() - 1, lines.back().size()};
     }
 
     [[nodiscard]] auto has_selection() const -> bool {
@@ -341,8 +386,11 @@ public:
     }
 
     [[nodiscard]] auto state() const -> const TextInputState& { return state_; }
+
     [[nodiscard]] auto text() const -> std::string_view { return state_.text; }
+
     [[nodiscard]] auto cursor() const -> CursorPos { return state_.cursor_pos; }
+
     [[nodiscard]] auto is_empty() const -> bool { return state_.text.empty(); }
 
     /// Set text content programmatically (resets cursor)
@@ -390,7 +438,7 @@ private:
         auto lines = get_lines();
         std::size_t offset = 0;
         for (std::size_t i = 0; i < pos.line && i < lines.size(); ++i) {
-            offset += lines[i].size() + 1; // +1 for newline
+            offset += lines[i].size() + 1;  // +1 for newline
         }
         offset += std::min(pos.col, lines[pos.line].size());
         return std::min(offset, state_.text.size());
@@ -407,7 +455,7 @@ private:
                 pos.col = remaining;
                 return pos;
             }
-            remaining -= lines[i].size() + 1; // +1 for newline
+            remaining -= lines[i].size() + 1;  // +1 for newline
         }
 
         pos.line = lines.size() - 1;
@@ -423,10 +471,8 @@ private:
 
     /// Get current selection as a range
     [[nodiscard]] auto get_selection_range() const -> SelectionRange {
-        return SelectionRange{
-            state_.selection_start.value_or(state_.cursor_pos),
-            state_.selection_end.value_or(state_.cursor_pos)
-        };
+        return SelectionRange{state_.selection_start.value_or(state_.cursor_pos),
+                              state_.selection_end.value_or(state_.cursor_pos)};
     }
 
     /// Clear selection markers
@@ -437,7 +483,11 @@ private:
 
     /// Delete one character backward (Backspace)
     auto delete_backward() -> void {
-        if (has_selection()) { push_undo(); delete_selection(); return; }
+        if (has_selection()) {
+            push_undo();
+            delete_selection();
+            return;
+        }
         auto offset = cursor_to_offset(state_.cursor_pos);
         if (offset == 0) return;
         push_undo();
@@ -447,7 +497,11 @@ private:
 
     /// Delete one character forward (Delete key)
     auto delete_forward() -> void {
-        if (has_selection()) { push_undo(); delete_selection(); return; }
+        if (has_selection()) {
+            push_undo();
+            delete_selection();
+            return;
+        }
         auto offset = cursor_to_offset(state_.cursor_pos);
         if (offset >= state_.text.size()) return;
         push_undo();
@@ -460,4 +514,4 @@ private:
     }
 };
 
-} // namespace loom::hooks
+}  // namespace loom::hooks

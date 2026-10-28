@@ -7,13 +7,13 @@
 ///   ○  post-run / cleanup       pending
 module;
 
-#include <cmath>
-
-#include <ftxui/dom/elements.hpp>
+#include <ftxui/component/animation.hpp>
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/event.hpp>
-#include <ftxui/component/animation.hpp>
+#include <ftxui/dom/elements.hpp>
+
+#include <cmath>
 
 export module loom.ui.messages.message_hook_progress;
 
@@ -54,11 +54,17 @@ struct HookProgressEntry {
     for (const auto& hook : hooks) {
         auto [indicator, ind_color] = [&]() -> std::pair<std::string, Color> {
             switch (hook.state) {
-                case HookState::Pending: return {"○", loom::ui::design::theme::current_theme().palette->muted};
-                case HookState::Running: return {"◐", loom::ui::design::theme::current_theme().palette->warning};
-                case HookState::Completed: return {"●", loom::ui::design::theme::current_theme().palette->success};
-                case HookState::Failed: return {loom::ui::design::figures::kCross.data(), loom::ui::design::theme::current_theme().palette->danger};
-                case HookState::Skipped: return {"⊘", loom::ui::design::theme::current_theme().palette->muted};
+            case HookState::Pending:
+                return {"○", loom::ui::design::theme::current_theme().palette->muted};
+            case HookState::Running:
+                return {"◐", loom::ui::design::theme::current_theme().palette->warning};
+            case HookState::Completed:
+                return {"●", loom::ui::design::theme::current_theme().palette->success};
+            case HookState::Failed:
+                return {loom::ui::design::figures::kCross.data(),
+                        loom::ui::design::theme::current_theme().palette->danger};
+            case HookState::Skipped:
+                return {"⊘", loom::ui::design::theme::current_theme().palette->muted};
             }
             return {"?", loom::ui::design::theme::current_theme().palette->text};
         }();
@@ -72,7 +78,9 @@ struct HookProgressEntry {
         }));
 
         if (hook.error) {
-            elements.push_back(text("    " + *hook.error) | color(loom::ui::design::theme::current_theme().palette->danger) | dim);
+            elements.push_back(text("    " + *hook.error) |
+                               color(loom::ui::design::theme::current_theme().palette->danger) |
+                               dim);
         }
     }
 
@@ -86,7 +94,7 @@ struct HookProgressSummary {
     int completed = 0;
     int failed = 0;
     int running = 0;
-    double percent = 0.0;     // 0.0 - 100.0
+    double percent = 0.0;  // 0.0 - 100.0
 };
 
 [[nodiscard]] inline HookProgressSummary Summarize(const std::vector<HookProgressEntry>& hooks) {
@@ -94,10 +102,17 @@ struct HookProgressSummary {
     s.total = static_cast<int>(hooks.size());
     for (const auto& h : hooks) {
         switch (h.state) {
-            case HookState::Completed: ++s.completed; break;
-            case HookState::Failed:    ++s.failed;    break;
-            case HookState::Running:   ++s.running;   break;
-            default: break;
+        case HookState::Completed:
+            ++s.completed;
+            break;
+        case HookState::Failed:
+            ++s.failed;
+            break;
+        case HookState::Running:
+            ++s.running;
+            break;
+        default:
+            break;
         }
     }
     const int done = s.completed + s.failed;
@@ -108,17 +123,20 @@ struct HookProgressSummary {
 // ─── Interactive component (spinner + progress bar + dismiss) ──────────
 
 class HookProgressComponent : public ComponentBase {
-  public:
+public:
     using OnDismissFn = std::function<void()>;
 
     explicit HookProgressComponent(std::vector<HookProgressEntry> hooks,
                                    OnDismissFn on_dismiss = nullptr)
-        : hooks_(std::move(hooks)), on_dismiss_(std::move(on_dismiss))
-    {
+        : hooks_(std::move(hooks))
+        , on_dismiss_(std::move(on_dismiss)) {
         if (on_dismiss_) {
-            dismiss_btn_ = Button((" " + std::string(loom::ui::design::figures::kCross) + " dismiss "), [this] {
-                if (on_dismiss_) on_dismiss_();
-            }) | dim;
+            dismiss_btn_ =
+                Button((" " + std::string(loom::ui::design::figures::kCross) + " dismiss "),
+                       [this] {
+                           if (on_dismiss_) on_dismiss_();
+                       }) |
+                dim;
             Add(dismiss_btn_);
         }
     }
@@ -127,33 +145,34 @@ class HookProgressComponent : public ComponentBase {
         auto s = Summarize(hooks_);
 
         // Header: animated spinner + title + percentage
-        const std::string spin_char{loom::ui::design::theme::current_theme().a11y.reduced_motion
-            ? loom::ui::design::figures::kBullet
-            : loom::ui::design::figures::spinner_frame_glyph(
-                static_cast<int>(tick_count_ % loom::ui::design::figures::kSpinnerFrameCount))};
+        const std::string spin_char{
+            loom::ui::design::theme::current_theme().a11y.reduced_motion
+                ? loom::ui::design::figures::kBullet
+                : loom::ui::design::figures::spinner_frame_glyph(static_cast<int>(
+                      tick_count_ % loom::ui::design::figures::kSpinnerFrameCount))};
 
         // Progress bar: length = 20 chars
         constexpr int kBarWidth = 20;
-        const int filled = std::min(
-            kBarWidth,
-            static_cast<int>(std::round(s.percent / 100.0 * kBarWidth)));
+        const int filled =
+            std::min(kBarWidth, static_cast<int>(std::round(s.percent / 100.0 * kBarWidth)));
         const std::string_view kFill = "█";
         const std::string_view kEmpty = "░";
         std::string bar = "[";
         bar.reserve(kBarWidth * 3 + 2);
-        for (int i = 0; i < filled; ++i) bar.append(kFill);
-        for (int i = 0; i < kBarWidth - filled; ++i) bar.append(kEmpty);
+        for (int i = 0; i < filled; ++i)
+            bar.append(kFill);
+        for (int i = 0; i < kBarWidth - filled; ++i)
+            bar.append(kEmpty);
         bar += "]";
 
-        Color accent = s.failed > 0 ? loom::ui::design::theme::current_theme().palette->danger
-                     : s.running > 0 ? loom::ui::design::theme::current_theme().palette->warning
-                     : loom::ui::design::theme::current_theme().palette->success;
+        Color accent = s.failed > 0    ? loom::ui::design::theme::current_theme().palette->danger
+                       : s.running > 0 ? loom::ui::design::theme::current_theme().palette->warning
+                                       : loom::ui::design::theme::current_theme().palette->success;
 
-        Element dismiss_el = on_dismiss_ && dismiss_btn_
-                                 ? dismiss_btn_->Render()
-                                 : text("");
+        Element dismiss_el = on_dismiss_ && dismiss_btn_ ? dismiss_btn_->Render() : text("");
         auto header = hbox({
-            text(spin_char + " ") | color(accent) | (loom::ui::design::theme::current_theme().a11y.reduced_motion ? nothing : blink),
+            text(spin_char + " ") | color(accent) |
+                (loom::ui::design::theme::current_theme().a11y.reduced_motion ? nothing : blink),
             text("Running hooks") | bold,
             text(std::format("  {:>3.0f}%", s.percent)) | bold | color(accent),
             text("  " + bar) | color(accent),
@@ -161,9 +180,9 @@ class HookProgressComponent : public ComponentBase {
             dismiss_el,
         });
 
-        auto meta = text(std::format("  {} completed / {} failed / {} total",
-                                     s.completed, s.failed, s.total))
-                        | dim;
+        auto meta = text(std::format("  {} completed / {} failed / {} total", s.completed, s.failed,
+                                     s.total)) |
+                    dim;
 
         // Per-hook list (collapsible)
         Elements rows;
@@ -171,33 +190,40 @@ class HookProgressComponent : public ComponentBase {
             for (const auto& hook : hooks_) {
                 auto [ind, col] = [&]() -> std::pair<std::string, Color> {
                     switch (hook.state) {
-                        case HookState::Pending:   return {"○", loom::ui::design::theme::current_theme().palette->muted};
-                        case HookState::Running:   return {spin_char, loom::ui::design::theme::current_theme().palette->warning};
-                        case HookState::Completed: return {"●", loom::ui::design::theme::current_theme().palette->success};
-                        case HookState::Failed:    return {loom::ui::design::figures::kCross.data(), loom::ui::design::theme::current_theme().palette->danger};
-                        case HookState::Skipped:   return {"⊘", loom::ui::design::theme::current_theme().palette->muted};
+                    case HookState::Pending:
+                        return {"○", loom::ui::design::theme::current_theme().palette->muted};
+                    case HookState::Running:
+                        return {spin_char,
+                                loom::ui::design::theme::current_theme().palette->warning};
+                    case HookState::Completed:
+                        return {"●", loom::ui::design::theme::current_theme().palette->success};
+                    case HookState::Failed:
+                        return {loom::ui::design::figures::kCross.data(),
+                                loom::ui::design::theme::current_theme().palette->danger};
+                    case HookState::Skipped:
+                        return {"⊘", loom::ui::design::theme::current_theme().palette->muted};
                     }
                     return {"?", loom::ui::design::theme::current_theme().palette->text};
                 }();
                 std::string suffix;
-                if (hook.duration_ms)
-                    suffix = std::format("  ({:.0f}ms)", *hook.duration_ms);
+                if (hook.duration_ms) suffix = std::format("  ({:.0f}ms)", *hook.duration_ms);
                 rows.push_back(hbox({
                     text(ind) | color(col),
                     text(" " + hook.hook_name) | dim,
-                    text(suffix) | dim | color(loom::ui::design::theme::current_theme().palette->muted),
+                    text(suffix) | dim |
+                        color(loom::ui::design::theme::current_theme().palette->muted),
                 }));
                 if (hook.error) {
-                    rows.push_back(text("    " + *hook.error)
-                                       | color(loom::ui::design::theme::current_theme().palette->danger) | dim);
+                    rows.push_back(text("    " + *hook.error) |
+                                   color(loom::ui::design::theme::current_theme().palette->danger) |
+                                   dim);
                 }
             }
         }
 
-        auto toggle = text(std::format("  [{}] {} hooks ",
-                                       collapsed_ ? "+" : "−",
-                                       collapsed_ ? "show" : "hide"))
-                          | dim | color(loom::ui::design::theme::current_theme().palette->info);
+        auto toggle = text(std::format("  [{}] {} hooks ", collapsed_ ? "+" : "−",
+                                       collapsed_ ? "show" : "hide")) |
+                      dim | color(loom::ui::design::theme::current_theme().palette->info);
 
         Elements all;
         all.push_back(header);
@@ -224,11 +250,9 @@ class HookProgressComponent : public ComponentBase {
     }
 
     // Update hooks state vector from outside (e.g. engine progress events)
-    void Update(std::vector<HookProgressEntry> hooks) {
-        hooks_ = std::move(hooks);
-    }
+    void Update(std::vector<HookProgressEntry> hooks) { hooks_ = std::move(hooks); }
 
-  private:
+private:
     std::vector<HookProgressEntry> hooks_;
     OnDismissFn on_dismiss_;
     bool collapsed_ = false;
@@ -236,11 +260,10 @@ class HookProgressComponent : public ComponentBase {
     Component dismiss_btn_;
 };
 
-[[nodiscard]] inline Component MakeHookProgressMessage(
-    std::vector<HookProgressEntry> hooks,
-    HookProgressComponent::OnDismissFn on_dismiss = nullptr)
-{
+[[nodiscard]] inline Component
+MakeHookProgressMessage(std::vector<HookProgressEntry> hooks,
+                        HookProgressComponent::OnDismissFn on_dismiss = nullptr) {
     return Make<HookProgressComponent>(std::move(hooks), std::move(on_dismiss));
 }
 
-} // namespace loom::ui::messages
+}  // namespace loom::ui::messages

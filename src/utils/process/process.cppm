@@ -2,12 +2,12 @@
 // Provides async process spawning, management, and pooling
 module;
 
-#include <cstddef>
-#include <cstdint>
-
-#include <uv.h>
 #include <signal.h>
 #include <sys/types.h>
+#include <uv.h>
+
+#include <cstddef>
+#include <cstdint>
 
 export module loom.process.process;
 
@@ -25,7 +25,6 @@ using loom::utils::VoidResult;
 using loom::utils::async::EventLoop;
 using loom::utils::async::Task;
 
-
 struct ProcessOptions {
     std::string command;
     std::vector<std::string> args;
@@ -36,7 +35,6 @@ struct ProcessOptions {
     bool capture_stdout = true;
     bool capture_stderr = true;
 };
-
 
 struct ProcessResult {
     int exit_code;
@@ -113,16 +111,15 @@ struct ProcessContext {
     }
 };
 
-} // namespace detail
+}  // namespace detail
 
 // =========================================================================
 
 // =========================================================================
-inline Task<Result<ProcessResult>> spawn_process(
-    ProcessOptions opts, EventLoop& loop = EventLoop::default_loop()) {
+inline Task<Result<ProcessResult>> spawn_process(ProcessOptions opts,
+                                                 EventLoop& loop = EventLoop::default_loop()) {
 
     auto ctx = std::make_unique<detail::ProcessContext>();
-
 
     uv_pipe_init(loop.raw(), &ctx->stdout_pipe, 0);
     uv_pipe_init(loop.raw(), &ctx->stderr_pipe, 0);
@@ -133,14 +130,12 @@ inline Task<Result<ProcessResult>> spawn_process(
     ctx->timer.data = ctx.get();
     ctx->process.data = ctx.get();
 
-
     std::vector<char*> argv;
     argv.push_back(const_cast<char*>(opts.command.c_str()));
     for (auto& arg : opts.args) {
         argv.push_back(const_cast<char*>(arg.c_str()));
     }
     argv.push_back(nullptr);
-
 
     std::vector<std::string> env_strings;
     std::vector<char*> envp;
@@ -153,7 +148,6 @@ inline Task<Result<ProcessResult>> spawn_process(
         }
         envp.push_back(nullptr);
     }
-
 
     uv_stdio_container_t stdio[3];
     stdio[0].flags = UV_IGNORE;
@@ -171,25 +165,22 @@ inline Task<Result<ProcessResult>> spawn_process(
     uv_opts.stdio_count = 3;
     uv_opts.stdio = stdio;
 
-
     int r = uv_spawn(loop.raw(), &ctx->process, &uv_opts);
     if (r < 0) {
-        co_return std::unexpected(Error(ErrorCode::io_error,
-            std::format("Failed to spawn '{}': {}", opts.command, uv_strerror(r))));
+        co_return std::unexpected(
+            Error(ErrorCode::io_error,
+                  std::format("Failed to spawn '{}': {}", opts.command, uv_strerror(r))));
     }
 
-
     uv_read_start(reinterpret_cast<uv_stream_t*>(&ctx->stdout_pipe),
-        detail::ProcessContext::on_alloc, detail::ProcessContext::on_stdout_read);
+                  detail::ProcessContext::on_alloc, detail::ProcessContext::on_stdout_read);
     uv_read_start(reinterpret_cast<uv_stream_t*>(&ctx->stderr_pipe),
-        detail::ProcessContext::on_alloc, detail::ProcessContext::on_stderr_read);
-
+                  detail::ProcessContext::on_alloc, detail::ProcessContext::on_stderr_read);
 
     if (opts.timeout) {
         uv_timer_start(&ctx->timer, detail::ProcessContext::on_timeout,
-            static_cast<uint64_t>(opts.timeout->count()), 0);
+                       static_cast<uint64_t>(opts.timeout->count()), 0);
     }
-
 
     co_await std::suspend_always{};
 
@@ -204,8 +195,8 @@ inline Task<Result<ProcessResult>> spawn_process(
 // =========================================================================
 
 // =========================================================================
-[[nodiscard]] inline Result<pid_t> spawn_detached(
-    ProcessOptions opts, EventLoop& loop = EventLoop::default_loop()) {
+[[nodiscard]] inline Result<pid_t> spawn_detached(ProcessOptions opts,
+                                                  EventLoop& loop = EventLoop::default_loop()) {
 
     std::vector<char*> argv;
     argv.push_back(const_cast<char*>(opts.command.c_str()));
@@ -224,7 +215,6 @@ inline Task<Result<ProcessResult>> spawn_process(
     uv_opts.cwd = opts.cwd.empty() ? nullptr : opts.cwd.c_str();
     uv_opts.flags = UV_PROCESS_DETACHED;
 
-
     uv_stdio_container_t stdio[3];
     stdio[0].flags = UV_IGNORE;
     stdio[1].flags = UV_IGNORE;
@@ -234,8 +224,9 @@ inline Task<Result<ProcessResult>> spawn_process(
 
     int r = uv_spawn(loop.raw(), &process, &uv_opts);
     if (r < 0) {
-        return std::unexpected(Error(ErrorCode::io_error,
-            std::format("Failed to spawn detached '{}': {}", opts.command, uv_strerror(r))));
+        return std::unexpected(
+            Error(ErrorCode::io_error,
+                  std::format("Failed to spawn detached '{}': {}", opts.command, uv_strerror(r))));
     }
 
     pid_t pid = process.pid;
@@ -249,8 +240,9 @@ inline Task<Result<ProcessResult>> spawn_process(
 [[nodiscard]] inline VoidResult kill_process(pid_t pid, int signal = SIGTERM) {
     int r = uv_kill(pid, signal);
     if (r < 0) {
-        return std::unexpected(Error(ErrorCode::io_error,
-            std::format("Failed to kill process {}: {}", pid, uv_strerror(r))));
+        return std::unexpected(
+            Error(ErrorCode::io_error,
+                  std::format("Failed to kill process {}: {}", pid, uv_strerror(r))));
     }
     return {};
 }
@@ -268,18 +260,16 @@ inline Task<Result<ProcessResult>> spawn_process(
 // =========================================================================
 class ProcessPool {
 public:
-    explicit ProcessPool(std::size_t max_concurrent = 4,
-                         EventLoop& = EventLoop::default_loop())
+    explicit ProcessPool(std::size_t max_concurrent = 4, EventLoop& = EventLoop::default_loop())
         : max_concurrent_(max_concurrent) {}
 
-
-    void submit(ProcessOptions opts,
-                std::function<void(Result<ProcessResult>)> callback) {
+    void submit(ProcessOptions opts, std::function<void(Result<ProcessResult>)> callback) {
         pending_.push_back({std::move(opts), std::move(callback)});
         try_start_next();
     }
 
     [[nodiscard]] std::size_t active_count() const noexcept { return active_; }
+
     [[nodiscard]] std::size_t pending_count() const noexcept { return pending_.size(); }
 
 private:
@@ -288,8 +278,6 @@ private:
             auto [opts, cb] = std::move(pending_.front());
             pending_.pop_front();
             ++active_;
-
-
         }
     }
 
@@ -303,4 +291,4 @@ private:
     std::deque<PendingJob> pending_;
 };
 
-} // namespace loom::utils::process
+}  // namespace loom::utils::process

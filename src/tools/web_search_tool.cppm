@@ -26,7 +26,8 @@ struct SearchResult {
     static constexpr char hex[] = "0123456789ABCDEF";
     std::string out;
     for (unsigned char ch : s) {
-        if ((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || (ch >= '0' && ch <= '9') || ch == '-' || ch == '_' || ch == '.') {
+        if ((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || (ch >= '0' && ch <= '9') ||
+            ch == '-' || ch == '_' || ch == '.') {
             out += static_cast<char>(ch);
         } else if (ch == ' ') {
             out += '+';
@@ -80,11 +81,16 @@ struct SearchResult {
         }
 
         const auto entity = html.substr(i + 1, semi - i - 1);
-        if (entity == "amp") out += '&';
-        else if (entity == "lt") out += '<';
-        else if (entity == "gt") out += '>';
-        else if (entity == "quot") out += '"';
-        else if (entity == "apos" || entity == "#39" || entity == "#x27") out += '\'';
+        if (entity == "amp")
+            out += '&';
+        else if (entity == "lt")
+            out += '<';
+        else if (entity == "gt")
+            out += '>';
+        else if (entity == "quot")
+            out += '"';
+        else if (entity == "apos" || entity == "#39" || entity == "#x27")
+            out += '\'';
         else {
             out += '&';
             continue;
@@ -130,7 +136,8 @@ struct SearchResult {
     return normalize_space(html_decode(out));
 }
 
-[[nodiscard]] inline auto attr_value(std::string_view tag, std::string_view name) -> std::optional<std::string> {
+[[nodiscard]] inline auto attr_value(std::string_view tag, std::string_view name)
+    -> std::optional<std::string> {
     const auto attr = std::string(name) + "=";
     const auto pos = tag.find(attr);
     if (pos == std::string_view::npos) return std::nullopt;
@@ -155,7 +162,9 @@ struct SearchResult {
     return url_decode(std::string_view(decoded).substr(start, end - start));
 }
 
-[[nodiscard]] inline auto parse_duckduckgo_results(std::string_view html, std::size_t max_results = 5) -> std::vector<SearchResult> {
+[[nodiscard]] inline auto parse_duckduckgo_results(std::string_view html,
+                                                   std::size_t max_results = 5)
+    -> std::vector<SearchResult> {
     std::vector<SearchResult> results;
     std::size_t cursor = 0;
     while (results.size() < max_results) {
@@ -163,8 +172,10 @@ struct SearchResult {
         if (class_pos == std::string_view::npos) break;
         const auto tag_start = html.rfind("<a", class_pos);
         const auto tag_end = html.find('>', class_pos);
-        const auto close = html.find("</a>", tag_end == std::string_view::npos ? class_pos : tag_end);
-        if (tag_start == std::string_view::npos || tag_end == std::string_view::npos || close == std::string_view::npos) {
+        const auto close =
+            html.find("</a>", tag_end == std::string_view::npos ? class_pos : tag_end);
+        if (tag_start == std::string_view::npos || tag_end == std::string_view::npos ||
+            close == std::string_view::npos) {
             cursor = class_pos + 9;
             continue;
         }
@@ -178,10 +189,7 @@ struct SearchResult {
         }
 
         SearchResult result{
-            .title = std::move(title),
-            .url = extract_result_url(*href),
-            .snippet = {}
-        };
+            .title = std::move(title), .url = extract_result_url(*href), .snippet = {}};
 
         const auto snippet_class = html.find("result__snippet", close);
         const auto next_result = html.find("result__a", close + 4);
@@ -191,7 +199,8 @@ struct SearchResult {
             const auto snippet_start = html.find('>', snippet_class);
             std::size_t snippet_end = std::string_view::npos;
             if (snippet_tag_start != std::string_view::npos) {
-                const auto snippet_tag = html.substr(snippet_tag_start, snippet_start - snippet_tag_start + 1);
+                const auto snippet_tag =
+                    html.substr(snippet_tag_start, snippet_start - snippet_tag_start + 1);
                 if (snippet_tag.find("<a") != std::string_view::npos) {
                     snippet_end = html.find("</a>", snippet_start);
                 } else {
@@ -199,20 +208,21 @@ struct SearchResult {
                 }
             }
             if (snippet_start != std::string_view::npos && snippet_end != std::string_view::npos) {
-                result.snippet = strip_tags(html.substr(snippet_start + 1, snippet_end - snippet_start - 1));
+                result.snippet =
+                    strip_tags(html.substr(snippet_start + 1, snippet_end - snippet_start - 1));
             }
         }
 
-        const auto duplicate = std::ranges::any_of(results, [&](const SearchResult& existing) {
-            return existing.url == result.url;
-        });
+        const auto duplicate = std::ranges::any_of(
+            results, [&](const SearchResult& existing) { return existing.url == result.url; });
         if (!duplicate) results.push_back(std::move(result));
         cursor = close + 4;
     }
     return results;
 }
 
-[[nodiscard]] inline auto format_results(std::string_view query, std::string_view html) -> std::string {
+[[nodiscard]] inline auto format_results(std::string_view query, std::string_view html)
+    -> std::string {
     const auto results = parse_duckduckgo_results(html);
     if (results.empty()) {
         auto excerpt = strip_tags(html);
@@ -231,7 +241,8 @@ struct SearchResult {
     return out;
 }
 
-[[nodiscard]] inline auto parse_query(std::string_view json) -> std::expected<std::string, std::string> {
+[[nodiscard]] inline auto parse_query(std::string_view json)
+    -> std::expected<std::string, std::string> {
     auto parsed = loom::utils::json::parse(json);
     if (!parsed || !parsed->root().is_obj()) {
         return std::unexpected("Invalid JSON input");
@@ -251,20 +262,21 @@ struct SearchResult {
     std::string out;
     FILE* pipe = loom::utils::bash::popen_spawn(cmd.c_str());
     if (!pipe) return std::nullopt;
-    while (fgets(buf.data(), static_cast<int>(buf.size()), pipe) != nullptr) out += buf.data();
+    while (fgets(buf.data(), static_cast<int>(buf.size()), pipe) != nullptr)
+        out += buf.data();
     const int status = loom::utils::bash::pclose_spawn(pipe);
     if (status != 0) return std::nullopt;
     return out;
 }
-}
+}  // namespace detail
 
-using loom::core::Tool;
-using loom::core::ToolInput;
-using loom::core::ToolResult;
-using loom::core::ToolDefinition;
-using loom::core::ToolPermission;
 using loom::core::InputSchema;
 using loom::core::SchemaProperty;
+using loom::core::Tool;
+using loom::core::ToolDefinition;
+using loom::core::ToolInput;
+using loom::core::ToolPermission;
+using loom::core::ToolResult;
 using loom::utils::Result;
 
 // =========================================================================
@@ -275,36 +287,30 @@ using loom::utils::Result;
 class WebSearchTool {
 public:
     static constexpr std::string_view kName = "WebSearch";
-    static constexpr std::string_view kDescription = 
+    static constexpr std::string_view kDescription =
         "Search the web for a query and return results.";
-    
+
     static ToolDefinition definition() {
         return ToolDefinition{
             .name = std::string(kName),
             .description = std::string(kDescription),
-            .input_schema = InputSchema{
-                .properties = {
-                    SchemaProperty{
-                        .name = "query",
-                        .type = "string",
-                        .description = "Search query string",
-                        .required = true,
-                        .default_value = std::nullopt,
-                        .enum_values = std::nullopt
-                    }
-                }
-            },
+            .input_schema =
+                InputSchema{.properties = {SchemaProperty{.name = "query",
+                                                          .type = "string",
+                                                          .description = "Search query string",
+                                                          .required = true,
+                                                          .default_value = std::nullopt,
+                                                          .enum_values = std::nullopt}}},
             .permission = ToolPermission::Network,
-            .category = "network"
-        };
+            .category = "network"};
     }
-    
+
     WebSearchTool() = default;
-    
+
     [[nodiscard]] bool check_permission([[maybe_unused]] const ToolInput& input) const {
         return true;
     }
-    
+
     [[nodiscard]] Result<ToolResult> execute(const ToolInput& input) {
         auto parsed_query = detail::parse_query(input.json());
         if (!parsed_query) {
@@ -319,29 +325,33 @@ public:
     }
 };
 
-} // namespace loom::tools::web_search
+}  // namespace loom::tools::web_search
 
 // Export main tool class
 export namespace loom::tools {
-    using loom::tools::web_search::WebSearchTool;
+using loom::tools::web_search::WebSearchTool;
 
-    /// Factory: create WebSearchTool wrapped as ITool (adapts Result types across modules)
-    [[nodiscard]] auto make_web_search_tool() -> std::unique_ptr<loom::core::ITool> {
-        struct Adapter final : loom::core::ITool {
-            WebSearchTool tool_;
-            loom::core::ToolDefinition def_ = WebSearchTool::definition();
+/// Factory: create WebSearchTool wrapped as ITool (adapts Result types across modules)
+[[nodiscard]] auto make_web_search_tool() -> std::unique_ptr<loom::core::ITool> {
+    struct Adapter final : loom::core::ITool {
+        WebSearchTool tool_;
+        loom::core::ToolDefinition def_ = WebSearchTool::definition();
 
-            const loom::core::ToolDefinition& definition() const override { return def_; }
-            std::expected<loom::core::ToolResult, loom::core::Error> execute(const loom::core::ToolInput& input) override {
-                auto result = tool_.execute(input);
-                if (result) return std::move(*result);
-                return std::unexpected(loom::core::Error::make(
-                    loom::core::ErrorCode::ToolExecutionFailed, result.error().format()));
-            }
-            bool check_permission(const loom::core::ToolInput& input) const override {
-                return tool_.check_permission(input);
-            }
-        };
-        return std::make_unique<Adapter>();
-    }
+        const loom::core::ToolDefinition& definition() const override { return def_; }
+
+        std::expected<loom::core::ToolResult, loom::core::Error>
+        execute(const loom::core::ToolInput& input) override {
+            auto result = tool_.execute(input);
+            if (result) return std::move(*result);
+            return std::unexpected(loom::core::Error::make(
+                loom::core::ErrorCode::ToolExecutionFailed, result.error().format()));
+        }
+
+        bool check_permission(const loom::core::ToolInput& input) const override {
+            return tool_.check_permission(input);
+        }
+    };
+
+    return std::make_unique<Adapter>();
 }
+}  // namespace loom::tools

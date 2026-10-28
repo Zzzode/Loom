@@ -5,10 +5,10 @@
 ///   model: <model-id>
 module;
 
-#include <ftxui/dom/elements.hpp>
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/event.hpp>
+#include <ftxui/dom/elements.hpp>
 
 export module loom.ui.messages.message_rate_limit;
 
@@ -29,20 +29,25 @@ using namespace ftxui;
     std::vector<Element> elements;
 
     auto header = info.is_hard_limit
-        ? text("Rate limit reached") | bold | color(loom::ui::design::theme::current_theme().palette->danger)
-        : text("Approaching rate limit") | bold | color(loom::ui::design::theme::current_theme().palette->warning);
+                      ? text("Rate limit reached") | bold |
+                            color(loom::ui::design::theme::current_theme().palette->danger)
+                      : text("Approaching rate limit") | bold |
+                            color(loom::ui::design::theme::current_theme().palette->warning);
     elements.push_back(header);
 
     elements.push_back(text("  Model: " + info.model) | dim);
 
     if (info.retry_after) {
-        elements.push_back(text(std::format("  Retry after: {}s", info.retry_after->count())) | dim);
+        elements.push_back(text(std::format("  Retry after: {}s", info.retry_after->count())) |
+                           dim);
     }
     if (info.tokens_remaining) {
-        elements.push_back(text(std::format("  Tokens remaining: {:.0f}", *info.tokens_remaining)) | dim);
+        elements.push_back(text(std::format("  Tokens remaining: {:.0f}", *info.tokens_remaining)) |
+                           dim);
     }
     if (info.requests_remaining) {
-        elements.push_back(text(std::format("  Requests remaining: {:.0f}", *info.requests_remaining)) | dim);
+        elements.push_back(
+            text(std::format("  Requests remaining: {:.0f}", *info.requests_remaining)) | dim);
     }
 
     return vbox(elements);
@@ -51,40 +56,44 @@ using namespace ftxui;
 // ─── Interactive component: Retry + Options buttons ────────────────────
 
 class RateLimitMessageComponent : public ComponentBase {
-  public:
+public:
     using OnRetryFn = std::function<void()>;
     using OnOptionsFn = std::function<void()>;
 
-    explicit RateLimitMessageComponent(RateLimitInfo info,
-                                       OnRetryFn on_retry = nullptr,
+    explicit RateLimitMessageComponent(RateLimitInfo info, OnRetryFn on_retry = nullptr,
                                        OnOptionsFn on_options = nullptr)
-        : info_(std::move(info)),
-          on_retry_(std::move(on_retry)),
-          on_options_(std::move(on_options))
-    {
+        : info_(std::move(info))
+        , on_retry_(std::move(on_retry))
+        , on_options_(std::move(on_options)) {
         if (on_retry_) {
-            retry_btn_ = Button(" Retry now ", [this] {
-                if (on_retry_) on_retry_();
-            }) | bold;
+            retry_btn_ = Button(" Retry now ",
+                                [this] {
+                                    if (on_retry_) on_retry_();
+                                }) |
+                         bold;
             Add(retry_btn_);
         }
         if (on_options_) {
-            options_btn_ = Button(" Options ", [this] {
-                if (on_options_) on_options_();
-            }) | dim;
+            options_btn_ = Button(" Options ",
+                                  [this] {
+                                      if (on_options_) on_options_();
+                                  }) |
+                           dim;
             Add(options_btn_);
         }
     }
 
     Element Render() override {
-        const Color accent = info_.is_hard_limit ? loom::ui::design::theme::current_theme().palette->danger : loom::ui::design::theme::current_theme().palette->warning;
+        const Color accent = info_.is_hard_limit
+                                 ? loom::ui::design::theme::current_theme().palette->danger
+                                 : loom::ui::design::theme::current_theme().palette->warning;
 
         auto icon = hbox({
-            text(info_.is_overloaded ? (std::string(loom::ui::design::figures::kWarning) + " ") : (std::string(loom::ui::design::figures::kWarning) + " ")),
+            text(info_.is_overloaded ? (std::string(loom::ui::design::figures::kWarning) + " ")
+                                     : (std::string(loom::ui::design::figures::kWarning) + " ")),
             text(" "),
-            text(info_.is_hard_limit ? "Rate limit reached (429)"
-                                     : "Approaching rate limit")
-                | bold | color(accent),
+            text(info_.is_hard_limit ? "Rate limit reached (429)" : "Approaching rate limit") |
+                bold | color(accent),
         });
 
         auto meta = [&]() -> Elements {
@@ -94,39 +103,41 @@ class RateLimitMessageComponent : public ComponentBase {
             }
             if (info_.retry_after) {
                 auto secs = info_.retry_after->count();
-                m.push_back(
-                    text(std::format("retry-after: {}s", secs)) | color(accent) | dim);
+                m.push_back(text(std::format("retry-after: {}s", secs)) | color(accent) | dim);
             }
             if (info_.tokens_remaining) {
-                m.push_back(text(std::format("tokens remaining: {:.0f}",
-                                             *info_.tokens_remaining)) | dim);
+                m.push_back(text(std::format("tokens remaining: {:.0f}", *info_.tokens_remaining)) |
+                            dim);
             }
             if (info_.requests_remaining) {
-                m.push_back(text(std::format("requests remaining: {:.0f}",
-                                             *info_.requests_remaining)) | dim);
+                m.push_back(
+                    text(std::format("requests remaining: {:.0f}", *info_.requests_remaining)) |
+                    dim);
             }
             return m;
         }();
 
         // Action bar
-        Element retry_el = retry_btn_ ? retry_btn_->Render() | color(loom::ui::design::theme::current_theme().palette->success) : text("");
+        Element retry_el =
+            retry_btn_ ? retry_btn_->Render() |
+                             color(loom::ui::design::theme::current_theme().palette->success)
+                       : text("");
         Element options_el = options_btn_ ? options_btn_->Render() : text("");
         auto actions = hbox({
-            retry_el, text("  "),
+            retry_el,
+            text("  "),
             options_el,
         });
 
         Elements rows;
         rows.push_back(icon);
         for (auto& r : meta) {
-            rows.push_back(hbox({ text("  · ") | dim, std::move(r) }));
+            rows.push_back(hbox({text("  · ") | dim, std::move(r)}));
         }
         rows.push_back(separatorEmpty());
         rows.push_back(std::move(actions));
 
-        return vbox(std::move(rows))
-             | borderStyled(BorderStyle::ROUNDED, accent)
-             | padding(1);
+        return vbox(std::move(rows)) | borderStyled(BorderStyle::ROUNDED, accent) | padding(1);
     }
 
     bool OnEvent(Event event) override {
@@ -141,7 +152,7 @@ class RateLimitMessageComponent : public ComponentBase {
         return ComponentBase::OnEvent(event);
     }
 
-  private:
+private:
     RateLimitInfo info_;
     OnRetryFn on_retry_;
     OnOptionsFn on_options_;
@@ -149,13 +160,11 @@ class RateLimitMessageComponent : public ComponentBase {
     Component options_btn_;
 };
 
-[[nodiscard]] inline Component MakeRateLimitMessage(
-    RateLimitInfo info,
-    RateLimitMessageComponent::OnRetryFn on_retry = nullptr,
-    RateLimitMessageComponent::OnOptionsFn on_options = nullptr)
-{
-    return Make<RateLimitMessageComponent>(
-        std::move(info), std::move(on_retry), std::move(on_options));
+[[nodiscard]] inline Component
+MakeRateLimitMessage(RateLimitInfo info, RateLimitMessageComponent::OnRetryFn on_retry = nullptr,
+                     RateLimitMessageComponent::OnOptionsFn on_options = nullptr) {
+    return Make<RateLimitMessageComponent>(std::move(info), std::move(on_retry),
+                                           std::move(on_options));
 }
 
-} // namespace loom::ui::messages
+}  // namespace loom::ui::messages

@@ -9,11 +9,11 @@
 /// the module interface never see this closure.
 module;
 
-
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/event.hpp>
 #include <ftxui/dom/elements.hpp>
+
 #include <cstddef>
 
 module loom.ui.dialogs.hooks_renderer;
@@ -38,66 +38,75 @@ namespace {
 
 /// Convert a registry HookEventType to the UI's HookEvent enum.
 /// Returns nullopt for event types the UI doesn't display.
-[[nodiscard]] std::optional<loom::ui::hooks_ui::HookEvent> ConvertHookEvent(
-    loom::utils::hooks_registry::HookEventType ev)
-{
+[[nodiscard]] std::optional<loom::ui::hooks_ui::HookEvent>
+ConvertHookEvent(loom::utils::hooks_registry::HookEventType ev) {
     using UIEvent = loom::ui::hooks_ui::HookEvent;
     switch (ev) {
-        case loom::utils::hooks_registry::HookEventType::PreToolUse:    return UIEvent::PreToolUse;
-        case loom::utils::hooks_registry::HookEventType::PostToolUse:   return UIEvent::PostToolUse;
-        case loom::utils::hooks_registry::HookEventType::Notification:  return UIEvent::Notification;
-        case loom::utils::hooks_registry::HookEventType::Stop:          return UIEvent::Stop;
-        case loom::utils::hooks_registry::HookEventType::SubagentStop:  return UIEvent::SubagentStop;
-        default: return std::nullopt;
+    case loom::utils::hooks_registry::HookEventType::PreToolUse:
+        return UIEvent::PreToolUse;
+    case loom::utils::hooks_registry::HookEventType::PostToolUse:
+        return UIEvent::PostToolUse;
+    case loom::utils::hooks_registry::HookEventType::Notification:
+        return UIEvent::Notification;
+    case loom::utils::hooks_registry::HookEventType::Stop:
+        return UIEvent::Stop;
+    case loom::utils::hooks_registry::HookEventType::SubagentStop:
+        return UIEvent::SubagentStop;
+    default:
+        return std::nullopt;
     }
 }
 
 /// Convert a registry HookCommand variant to the UI's HookType.
-[[nodiscard]] loom::ui::hooks_ui::HookType ConvertHookType(
-    const loom::utils::hooks_registry::HookCommand& cmd)
-{
+[[nodiscard]] loom::ui::hooks_ui::HookType
+ConvertHookType(const loom::utils::hooks_registry::HookCommand& cmd) {
     using UIType = loom::ui::hooks_ui::HookType;
-    if (std::holds_alternative<loom::utils::hooks_registry::CommandHookConfig>(cmd)) return UIType::Command;
-    if (std::holds_alternative<loom::utils::hooks_registry::PromptHookConfig>(cmd))  return UIType::Prompt;
-    if (std::holds_alternative<loom::utils::hooks_registry::AgentHookConfig>(cmd))   return UIType::Agent;
-    if (std::holds_alternative<loom::utils::hooks_registry::HttpHookConfig>(cmd))    return UIType::Http;
+    if (std::holds_alternative<loom::utils::hooks_registry::CommandHookConfig>(cmd))
+        return UIType::Command;
+    if (std::holds_alternative<loom::utils::hooks_registry::PromptHookConfig>(cmd))
+        return UIType::Prompt;
+    if (std::holds_alternative<loom::utils::hooks_registry::AgentHookConfig>(cmd))
+        return UIType::Agent;
+    if (std::holds_alternative<loom::utils::hooks_registry::HttpHookConfig>(cmd))
+        return UIType::Http;
     return UIType::Command;  // FunctionHookConfig fallback
 }
 
 /// Extract the display content string from a HookCommand variant.
-[[nodiscard]] std::string ExtractHookContent(
-    const loom::utils::hooks_registry::HookCommand& cmd)
-{
+[[nodiscard]] std::string ExtractHookContent(const loom::utils::hooks_registry::HookCommand& cmd) {
     using namespace loom::utils::hooks_registry;
     if (auto* c = std::get_if<CommandHookConfig>(&cmd)) return c->command;
-    if (auto* p = std::get_if<PromptHookConfig>(&cmd))  return p->prompt;
-    if (auto* a = std::get_if<AgentHookConfig>(&cmd))   return a->prompt;
-    if (auto* h = std::get_if<HttpHookConfig>(&cmd))    return h->url;
-    if (auto* f = std::get_if<FunctionHookConfig>(&cmd)) return f->status_message.value_or("(function hook)");
+    if (auto* p = std::get_if<PromptHookConfig>(&cmd)) return p->prompt;
+    if (auto* a = std::get_if<AgentHookConfig>(&cmd)) return a->prompt;
+    if (auto* h = std::get_if<HttpHookConfig>(&cmd)) return h->url;
+    if (auto* f = std::get_if<FunctionHookConfig>(&cmd))
+        return f->status_message.value_or("(function hook)");
     return "";
 }
 
 /// Extract timeout in ms from a HookCommand variant, or nullopt.
-[[nodiscard]] std::optional<int> ExtractHookTimeoutMs(
-    const loom::utils::hooks_registry::HookCommand& cmd)
-{
+[[nodiscard]] std::optional<int>
+ExtractHookTimeoutMs(const loom::utils::hooks_registry::HookCommand& cmd) {
     using namespace loom::utils::hooks_registry;
     std::optional<int> secs;
-    if (auto* c = std::get_if<CommandHookConfig>(&cmd)) secs = c->timeout_seconds;
-    else if (auto* p = std::get_if<PromptHookConfig>(&cmd))  secs = p->timeout_seconds;
-    else if (auto* a = std::get_if<AgentHookConfig>(&cmd))   secs = a->timeout_seconds;
-    else if (auto* h = std::get_if<HttpHookConfig>(&cmd))    secs = h->timeout_seconds;
-    else if (auto* f = std::get_if<FunctionHookConfig>(&cmd)) secs = f->timeout_seconds;
+    if (auto* c = std::get_if<CommandHookConfig>(&cmd))
+        secs = c->timeout_seconds;
+    else if (auto* p = std::get_if<PromptHookConfig>(&cmd))
+        secs = p->timeout_seconds;
+    else if (auto* a = std::get_if<AgentHookConfig>(&cmd))
+        secs = a->timeout_seconds;
+    else if (auto* h = std::get_if<HttpHookConfig>(&cmd))
+        secs = h->timeout_seconds;
+    else if (auto* f = std::get_if<FunctionHookConfig>(&cmd))
+        secs = f->timeout_seconds;
     if (!secs) return std::nullopt;
     return *secs * 1000;
 }
 
 /// Convert a registry IndividualHookConfig to the UI's display model.
 /// Returns nullopt for hooks whose event type the UI doesn't support.
-[[nodiscard]] std::optional<loom::ui::hooks_ui::IndividualHookConfig> ConvertHook(
-    const loom::utils::hooks_registry::IndividualHookConfig& src,
-    int index)
-{
+[[nodiscard]] std::optional<loom::ui::hooks_ui::IndividualHookConfig>
+ConvertHook(const loom::utils::hooks_registry::IndividualHookConfig& src, int index) {
     auto ui_event = ConvertHookEvent(src.event);
     if (!ui_event) return std::nullopt;
 
@@ -114,10 +123,18 @@ namespace {
     std::string type_name;
     using UIType = loom::ui::hooks_ui::HookType;
     switch (dst.type) {
-        case UIType::Command: type_name = "cmd"; break;
-        case UIType::Prompt:  type_name = "prompt"; break;
-        case UIType::Agent:   type_name = "agent"; break;
-        case UIType::Http:    type_name = "http"; break;
+    case UIType::Command:
+        type_name = "cmd";
+        break;
+    case UIType::Prompt:
+        type_name = "prompt";
+        break;
+    case UIType::Agent:
+        type_name = "agent";
+        break;
+    case UIType::Http:
+        type_name = "http";
+        break;
     }
     dst.name = std::format("{}:{}", type_name, dst.matcher.tool_name);
     return dst;
@@ -128,18 +145,17 @@ namespace {
 struct HooksDialogHolder : public ComponentBase {
     Component menu;
 
-    explicit HooksDialogHolder(Component m) : menu(std::move(m)) {
+    explicit HooksDialogHolder(Component m)
+        : menu(std::move(m)) {
         ComponentBase::Add(menu);
     }
 
     Element Render() override { return menu->Render(); }
 
-    bool InjectEvent(const Event& event) {
-        return ComponentBase::OnEvent(event);
-    }
+    bool InjectEvent(const Event& event) { return ComponentBase::OnEvent(event); }
 };
 
-} // anonymous namespace
+}  // anonymous namespace
 
 // ============================================================
 // Registration (exported function implementation)
@@ -166,8 +182,7 @@ void register_hooks_renderer(dsys::DialogRendererRegistry& registry) {
                 std::vector<IndividualHookConfig> ui_hooks;
                 ui_hooks.reserve(registry_hooks.size());
                 for (size_t i = 0; i < registry_hooks.size(); ++i) {
-                    auto converted = ConvertHook(registry_hooks[i],
-                                                 static_cast<int>(i));
+                    auto converted = ConvertHook(registry_hooks[i], static_cast<int>(i));
                     if (converted) ui_hooks.push_back(std::move(*converted));
                 }
 
@@ -182,13 +197,11 @@ void register_hooks_renderer(dsys::DialogRendererRegistry& registry) {
                 opts.on_exit = p->on_close;
 
                 auto menu = HooksConfigMenu(std::move(opts));
-                auto holder = std::make_shared<HooksDialogHolder>(
-                    std::move(menu));
+                auto holder = std::make_shared<HooksDialogHolder>(std::move(menu));
                 p->component = holder;
             }
 
-            auto holder = std::static_pointer_cast<HooksDialogHolder>(
-                p->component);
+            auto holder = std::static_pointer_cast<HooksDialogHolder>(p->component);
             return holder ? holder->Render() : text("");
         },
         /*event_handler=*/
@@ -196,12 +209,10 @@ void register_hooks_renderer(dsys::DialogRendererRegistry& registry) {
             auto* p = std::get_if<dsys::HooksDialogPayload>(&payload);
             if (!p || !p->component) return false;
 
-            auto holder = std::static_pointer_cast<HooksDialogHolder>(
-                p->component);
+            auto holder = std::static_pointer_cast<HooksDialogHolder>(p->component);
             if (!holder) return false;
             return holder->InjectEvent(event);
-        }
-    );
+        });
 }
 
-} // namespace loom::ui::dialogs::hooks_renderer
+}  // namespace loom::ui::dialogs::hooks_renderer

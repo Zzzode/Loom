@@ -1,16 +1,17 @@
 /// @file test_ui_runtime.cpp
-/// @brief Split from test_ui.cpp - AppRuntime, E2E_Gate, FullscreenLayout, Logo, PromptInput, ReplScreen (SLOC budget fix)
+/// @brief Split from test_ui.cpp - AppRuntime, E2E_Gate, FullscreenLayout, Logo, PromptInput,
+/// ReplScreen (SLOC budget fix)
 
-#include <cstdlib>
-
-#include <ftxui/dom/elements.hpp>
-#include <ftxui/dom/node.hpp>
-#include <ftxui/screen/screen.hpp>
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/event.hpp>
 #include <ftxui/component/mouse.hpp>
+#include <ftxui/dom/elements.hpp>
+#include <ftxui/dom/node.hpp>
+#include <ftxui/screen/screen.hpp>
 #include <gtest/gtest.h>
 #include <httplib.h>
+
+#include <cstdlib>
 
 #include "test_ui_helpers.h"
 
@@ -28,7 +29,7 @@ import loom.ui.widgets.all_components;
 import loom.ui.messages.user_text_message;
 import loom.ui.messages.api_error_message;
 import loom.ui.messages.message_tool_result;
-import loom.ui.messages.messages_list;  // VirtualRendererMode
+import loom.ui.messages.messages_list; // VirtualRendererMode
 import loom.ui.messages.message_image;
 import loom.types.types;
 import loom.ui.foundation.declared_cursor;
@@ -36,12 +37,6 @@ import loom.ui.foundation.declared_cursor;
 namespace {
 namespace fs = std::filesystem;
 }
-
-
-
-
-
-
 
 TEST(ReplScreen, WelcomeHeaderUsesHomeCard) {
     namespace repl = loom::ui::repl_screen;
@@ -51,9 +46,7 @@ TEST(ReplScreen, WelcomeHeaderUsesHomeCard) {
     state.cwd = "/tmp/cpp_migration";
 
     auto rendered = strip_ansi(render_to_plain_text(
-        repl::RenderWelcomeHeader(state, /*spinner_frame=*/0, /*term_cols=*/120),
-        120,
-        16));
+        repl::RenderWelcomeHeader(state, /*spinner_frame=*/0, /*term_cols=*/120), 120, 16));
 
     // The default wide welcome header uses a six-line full Loom wordmark.
     EXPECT_NE(rendered.find("Loom"), std::string::npos);
@@ -68,15 +61,12 @@ TEST(ReplScreen, WelcomeHeaderUsesHomeCard) {
     EXPECT_EQ(rendered.find("Recent activity"), std::string::npos);
     EXPECT_EQ(rendered.find("What's new"), std::string::npos);
     EXPECT_EQ(rendered.find("Welcome to Loom"), std::string::npos);
-    EXPECT_EQ(rendered.find("Use /model to switch between models"),
-              std::string::npos);
+    EXPECT_EQ(rendered.find("Use /model to switch between models"), std::string::npos);
     // The wide Loom branding is a 28×6 full wordmark — there must
     // be NO 🐱 U+1F431 emoji anywhere (the UTF-8 encoding of U+1F431 is the
     // 4-byte sequence below).
     EXPECT_EQ(rendered.find("\xF0\x9F\x90\xB1"), std::string::npos);
 }
-
-
 
 TEST(ReplScreen, WelcomeHeaderShowsConfiguredAgentName) {
     namespace repl = loom::ui::repl_screen;
@@ -89,10 +79,8 @@ TEST(ReplScreen, WelcomeHeaderShowsConfiguredAgentName) {
     state.settings_agent_name = "custom-agent";
 
     auto rendered = strip_ansi(render_to_plain_text(
-        repl::RenderWelcomeHeader(state, /*spinner_frame=*/0, /*term_cols=*/120),
-        120, 16));
-    EXPECT_NE(rendered.find("@custom-agent \xC2\xB7 /tmp/cpp_migration"),
-              std::string::npos)
+        repl::RenderWelcomeHeader(state, /*spinner_frame=*/0, /*term_cols=*/120), 120, 16));
+    EXPECT_NE(rendered.find("@custom-agent \xC2\xB7 /tmp/cpp_migration"), std::string::npos)
         << "cwd line should carry the @<agent> prefix when settings.agent is set";
 
     // With no configured agent the prefix must disappear (plain cwd only).
@@ -100,12 +88,9 @@ TEST(ReplScreen, WelcomeHeaderShowsConfiguredAgentName) {
     plain.chrome_store.model_display_name = "GLM-5.2";
     plain.cwd = "/tmp/cpp_migration";
     auto rendered_plain = strip_ansi(render_to_plain_text(
-        repl::RenderWelcomeHeader(plain, /*spinner_frame=*/0, /*term_cols=*/120),
-        120, 16));
+        repl::RenderWelcomeHeader(plain, /*spinner_frame=*/0, /*term_cols=*/120), 120, 16));
     EXPECT_EQ(rendered_plain.find("@custom-agent"), std::string::npos);
 }
-
-
 
 TEST(ReplScreen, ShiftReturnInsertsNewlineForBothTerminalEncodings) {
     // Shift+Enter must insert a newline (not submit). Terminals emit either
@@ -117,21 +102,20 @@ TEST(ReplScreen, ShiftReturnInsertsNewlineForBothTerminalEncodings) {
         config.cwd = fs::temp_directory_path().string();
         loom::core::QueryEngine engine(std::move(config), tools);
         loom::commands::AppCommandRegistry commands;
-        const auto storage_root = fs::temp_directory_path() /
+        const auto storage_root =
+            fs::temp_directory_path() /
             ("loom_shift_ret_" +
-             std::to_string(std::chrono::steady_clock::now()
-                                .time_since_epoch().count()) +
+             std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()) +
              (seq[3] == '1' ? "_csiu" : "_kitty"));
-        auto app = ftxui::Make<loom::ui::AppAdapter>(
-            &engine, nullptr, &commands, storage_root, [] {});
+        auto app =
+            ftxui::Make<loom::ui::AppAdapter>(&engine, nullptr, &commands, storage_root, [] {});
 
         app->OnEvent(ftxui::Event::Character('a'));
         app->OnEvent(ftxui::Event::Special(seq));
         app->OnEvent(ftxui::Event::Character('b'));
 
         const auto text = test_seams(app).input_text_for_testing();
-        EXPECT_EQ(text, "a\nb")
-            << "shift-return sequence should insert a newline";
+        EXPECT_EQ(text, "a\nb") << "shift-return sequence should insert a newline";
         EXPECT_FALSE(test_seams(app).is_query_running_for_testing())
             << "shift-return must not submit the prompt";
 
@@ -140,8 +124,6 @@ TEST(ReplScreen, ShiftReturnInsertsNewlineForBothTerminalEncodings) {
         fs::remove_all(storage_root, ec);
     }
 }
-
-
 
 TEST(ReplScreen, WelcomeHeaderWidthAndColorTrackTerminal) {
     namespace repl = loom::ui::repl_screen;
@@ -153,11 +135,8 @@ TEST(ReplScreen, WelcomeHeaderWidthAndColorTrackTerminal) {
     state.chrome_store.model_display_name = "GLM-5.2";
     state.cwd = "/Users/example/Develop/Project";
 
-    auto wide_element =
-        repl::RenderWelcomeHeader(state, /*spinner_frame=*/0, /*term_cols=*/200);
-    auto screen = ftxui::Screen::Create(
-        ftxui::Dimension::Fixed(200),
-        ftxui::Dimension::Fixed(16));
+    auto wide_element = repl::RenderWelcomeHeader(state, /*spinner_frame=*/0, /*term_cols=*/200);
+    auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(200), ftxui::Dimension::Fixed(16));
     ftxui::Render(screen, wide_element);
     auto wide = strip_ansi(screen.ToString());
     // CondensedLogo should be able to consume almost the full terminal width
@@ -180,17 +159,13 @@ TEST(ReplScreen, WelcomeHeaderWidthAndColorTrackTerminal) {
     EXPECT_TRUE(has_brand_accent_pixel);
 
     auto normal = strip_ansi(render_to_plain_text(
-        repl::RenderWelcomeHeader(state, /*spinner_frame=*/0, /*term_cols=*/120),
-        120,
-        16));
+        repl::RenderWelcomeHeader(state, /*spinner_frame=*/0, /*term_cols=*/120), 120, 16));
     // CWD field truncates to fit narrower terminal; wide row should still be
     // measurably more filled on the CWD row.
     EXPECT_LT(max_line_width_bytes(normal),
               max_line_width_bytes(wide) + 1);  // monotonic non-decrease
     thm::set_theme(previous_theme);
 }
-
-
 
 TEST(ReplScreen, WelcomeHeaderLoomWeaveIsStatic) {
     namespace repl = loom::ui::repl_screen;
@@ -199,13 +174,9 @@ TEST(ReplScreen, WelcomeHeaderLoomWeaveIsStatic) {
     state.chrome_store.model_display_name = "GLM-5.2";
 
     auto frame0 = render_to_plain_text(
-        repl::RenderWelcomeHeader(state, /*spinner_frame=*/0, /*term_cols=*/120),
-        120,
-        16);
+        repl::RenderWelcomeHeader(state, /*spinner_frame=*/0, /*term_cols=*/120), 120, 16);
     auto frame8 = render_to_plain_text(
-        repl::RenderWelcomeHeader(state, /*spinner_frame=*/8, /*term_cols=*/120),
-        120,
-        16);
+        repl::RenderWelcomeHeader(state, /*spinner_frame=*/8, /*term_cols=*/120), 120, 16);
 
     // Welcome branding is static; spinner frames must not alter the weave.
     EXPECT_EQ(frame0, frame8);
@@ -217,8 +188,6 @@ TEST(ReplScreen, WelcomeHeaderLoomWeaveIsStatic) {
     EXPECT_EQ(strip_ansi(frame0).find("\xE2\x9C\xA7"), std::string::npos);  // ✧
     EXPECT_EQ(strip_ansi(frame0).find("\xE2\x9C\xB6"), std::string::npos);  // ✶
 }
-
-
 
 TEST(ReplScreen, PromptInputRendersTopAndBottomBorders) {
     // TS PromptInput.tsx:2237/2268: borderStyle="round" with borderBottom and
@@ -234,18 +203,14 @@ TEST(ReplScreen, PromptInputRendersTopAndBottomBorders) {
     repl::ReplScreenState state;
     state.input_text = "/";
 
-    auto rendered = strip_ansi(render_to_plain_text(
-        repl::RenderPromptInput(state, 80),
-        80,
-        4));
+    auto rendered = strip_ansi(render_to_plain_text(repl::RenderPromptInput(state, 80), 80, 4));
 
     std::size_t border_lines = 0;
     std::size_t line_start = 0;
     while (line_start <= rendered.size()) {
         const auto line_end = rendered.find('\n', line_start);
         const auto line = rendered.substr(
-            line_start,
-            line_end == std::string::npos ? std::string::npos : line_end - line_start);
+            line_start, line_end == std::string::npos ? std::string::npos : line_end - line_start);
         if (line.find("──────────") != std::string::npos) {
             ++border_lines;
         }
@@ -256,8 +221,6 @@ TEST(ReplScreen, PromptInputRendersTopAndBottomBorders) {
     EXPECT_GE(border_lines, 2u);  // top (with embedded ❯) + bottom
     EXPECT_NE(rendered.find("❯ /"), std::string::npos);
 }
-
-
 
 // Audit round7 P0 prefix-glyph-no-unified-impl: the prompt prefix — the first
 // glyph the user sees on every render — must be TS-faithful.  TS
@@ -279,8 +242,7 @@ TEST(ReplScreen, PromptPrefixGlyphIsTsFaithfulPointerOrBang) {
     {
         repl::ReplScreenState state;
         state.input_text = "hello";
-        auto rendered = strip_ansi(render_to_plain_text(
-            repl::RenderPromptInput(state, 80), 80, 4));
+        auto rendered = strip_ansi(render_to_plain_text(repl::RenderPromptInput(state, 80), 80, 4));
         EXPECT_NE(rendered.find("❯ hello"), std::string::npos);
         EXPECT_EQ(rendered.find("\xE2\x96\xB6"), std::string::npos);  // no ▶
         // The retired CPP-only badge pills must not appear as a prefix.
@@ -292,8 +254,7 @@ TEST(ReplScreen, PromptPrefixGlyphIsTsFaithfulPointerOrBang) {
     {
         repl::ReplScreenState state;
         state.input_text = "!ls";
-        auto rendered = strip_ansi(render_to_plain_text(
-            repl::RenderPromptInput(state, 80), 80, 4));
+        auto rendered = strip_ansi(render_to_plain_text(repl::RenderPromptInput(state, 80), 80, 4));
         // The rendered line begins with the bash bang prefix.
         EXPECT_NE(rendered.find("! "), std::string::npos);
     }
@@ -305,8 +266,6 @@ TEST(ReplScreen, PromptPrefixGlyphIsTsFaithfulPointerOrBang) {
         EXPECT_EQ(opts.prefix, "\xE2\x9D\xAF ");  // "❯ "
     }
 }
-
-
 
 TEST(ReplScreen, TranscriptScrollOffsetMovesLongLocalCommandOutput) {
     namespace repl = loom::ui::repl_screen;
@@ -324,25 +283,21 @@ TEST(ReplScreen, TranscriptScrollOffsetMovesLongLocalCommandOutput) {
     state.messages_store.messages.push_back(std::move(message));
 
     auto top = strip_ansi(render_to_plain_text(
-        repl::RenderMessages(state.messages_store.messages,
-                             state.messages_store.selected_message_idx,
-                             state.messages_store.viewport_height_lines,
-                             state.messages_store.scroll_offset,
-                             state.messages_store.scroll_pinned_to_bottom),
-        120,
-        8));
+        repl::RenderMessages(
+            state.messages_store.messages, state.messages_store.selected_message_idx,
+            state.messages_store.viewport_height_lines, state.messages_store.scroll_offset,
+            state.messages_store.scroll_pinned_to_bottom),
+        120, 8));
     EXPECT_NE(top.find("line-00"), std::string::npos);
     EXPECT_EQ(top.find("line-24"), std::string::npos);
 
     state.messages_store.scroll_offset = 24;
     auto scrolled = strip_ansi(render_to_plain_text(
-        repl::RenderMessages(state.messages_store.messages,
-                             state.messages_store.selected_message_idx,
-                             state.messages_store.viewport_height_lines,
-                             state.messages_store.scroll_offset,
-                             state.messages_store.scroll_pinned_to_bottom),
-        120,
-        8));
+        repl::RenderMessages(
+            state.messages_store.messages, state.messages_store.selected_message_idx,
+            state.messages_store.viewport_height_lines, state.messages_store.scroll_offset,
+            state.messages_store.scroll_pinned_to_bottom),
+        120, 8));
     EXPECT_EQ(scrolled.find("line-00"), std::string::npos);
     EXPECT_NE(scrolled.find("line-25"), std::string::npos);
 }
@@ -373,37 +328,27 @@ TEST(ReplScreen, VirtualTranscriptScrollOffsetMovesContent) {
 
     // scroll_offset = 0 — first message should be visible.
     auto top = strip_ansi(render_to_plain_text(
-        repl::RenderMessages(state.messages_store.messages,
-                             state.messages_store.selected_message_idx,
-                             state.messages_store.viewport_height_lines,
-                             state.messages_store.scroll_offset,
-                             state.messages_store.scroll_pinned_to_bottom,
-                             0, std::nullopt, {}, false, {}, false, false,
-                             false, false, nullptr, nullptr, nullptr, nullptr,
-                             &state.messages_store),
-        120,
-        20));
+        repl::RenderMessages(
+            state.messages_store.messages, state.messages_store.selected_message_idx,
+            state.messages_store.viewport_height_lines, state.messages_store.scroll_offset,
+            state.messages_store.scroll_pinned_to_bottom, 0, std::nullopt, {}, false, {}, false,
+            false, false, false, nullptr, nullptr, nullptr, nullptr, &state.messages_store),
+        120, 20));
     EXPECT_NE(top.find("vmsg-000"), std::string::npos) << top;
 
     // Scroll to offset 60 — first message should NOT be visible, but some
     // later message should be.
     state.messages_store.scroll_offset = 60;
     auto scrolled = strip_ansi(render_to_plain_text(
-        repl::RenderMessages(state.messages_store.messages,
-                             state.messages_store.selected_message_idx,
-                             state.messages_store.viewport_height_lines,
-                             state.messages_store.scroll_offset,
-                             state.messages_store.scroll_pinned_to_bottom,
-                             0, std::nullopt, {}, false, {}, false, false,
-                             false, false, nullptr, nullptr, nullptr, nullptr,
-                             &state.messages_store),
-        120,
-        20));
+        repl::RenderMessages(
+            state.messages_store.messages, state.messages_store.selected_message_idx,
+            state.messages_store.viewport_height_lines, state.messages_store.scroll_offset,
+            state.messages_store.scroll_pinned_to_bottom, 0, std::nullopt, {}, false, {}, false,
+            false, false, false, nullptr, nullptr, nullptr, nullptr, &state.messages_store),
+        120, 20));
     EXPECT_EQ(scrolled.find("vmsg-000"), std::string::npos) << scrolled;
     EXPECT_NE(scrolled.find("vmsg-"), std::string::npos) << scrolled;
 }
-
-
 
 TEST(ReplScreen, PromptInputParksHiddenNativeCursorAtCaret) {
     namespace repl = loom::ui::repl_screen;
@@ -412,9 +357,7 @@ TEST(ReplScreen, PromptInputParksHiddenNativeCursorAtCaret) {
     repl::ReplScreenState state;
     state.input_text = "hello";
 
-    auto screen = ftxui::Screen::Create(
-        ftxui::Dimension::Fixed(80),
-        ftxui::Dimension::Fixed(5));
+    auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(80), ftxui::Dimension::Fixed(5));
     ftxui::Render(screen, repl::RenderPromptInput(state, 80) | dc::cursor_reset());
 
     const auto cursor = screen.cursor();
@@ -425,14 +368,10 @@ TEST(ReplScreen, PromptInputParksHiddenNativeCursorAtCaret) {
     EXPECT_LT(cursor.y, 4);
 }
 
-
-
 TEST(ReplScreen, CursorResetParksHiddenCursorAwayFromTopLeft) {
     namespace dc = loom::ui::common::declared_cursor;
 
-    auto screen = ftxui::Screen::Create(
-        ftxui::Dimension::Fixed(20),
-        ftxui::Dimension::Fixed(5));
+    auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(20), ftxui::Dimension::Fixed(5));
     ftxui::Render(screen, ftxui::text("idle") | dc::cursor_reset());
 
     const auto cursor = screen.cursor();
@@ -440,8 +379,6 @@ TEST(ReplScreen, CursorResetParksHiddenCursorAwayFromTopLeft) {
     EXPECT_EQ(cursor.x, 19);
     EXPECT_EQ(cursor.y, 4);
 }
-
-
 
 // ─── Placeholder cascade tests (TS REF: usePromptInputPlaceholder.ts) ──────
 
@@ -460,8 +397,6 @@ TEST(ReplScreen, PlaceholderEmptyInputShowsExampleOnFirstSubmit) {
     EXPECT_NE(placeholder->find("Try"), std::string::npos);
 }
 
-
-
 TEST(ReplScreen, PlaceholderNonEmptyInputReturnsNullopt) {
     namespace repl = loom::ui::repl_screen;
 
@@ -472,8 +407,6 @@ TEST(ReplScreen, PlaceholderNonEmptyInputReturnsNullopt) {
     auto placeholder = repl::ComputePlaceholder(state);
     EXPECT_FALSE(placeholder.has_value());
 }
-
-
 
 TEST(ReplScreen, PlaceholderAfterSubmitNoExample) {
     namespace repl = loom::ui::repl_screen;
@@ -489,8 +422,6 @@ TEST(ReplScreen, PlaceholderAfterSubmitNoExample) {
     EXPECT_FALSE(placeholder.has_value());
 }
 
-
-
 TEST(ReplScreen, PlaceholderViewingAgentShowsMessageHint) {
     namespace repl = loom::ui::repl_screen;
 
@@ -503,8 +434,6 @@ TEST(ReplScreen, PlaceholderViewingAgentShowsMessageHint) {
     ASSERT_TRUE(placeholder.has_value());
     EXPECT_NE(placeholder->find("Message @researcher…"), std::string::npos);
 }
-
-
 
 TEST(ReplScreen, PlaceholderViewingAgentLongNameTruncated) {
     namespace repl = loom::ui::repl_screen;
@@ -523,8 +452,6 @@ TEST(ReplScreen, PlaceholderViewingAgentLongNameTruncated) {
     EXPECT_NE(placeholder->find("Message @very-long-agent-n..."), std::string::npos);
 }
 
-
-
 TEST(ReplScreen, PlaceholderQueuedCommandsHint) {
     namespace repl = loom::ui::repl_screen;
 
@@ -539,8 +466,6 @@ TEST(ReplScreen, PlaceholderQueuedCommandsHint) {
     EXPECT_EQ(*placeholder, "Press up to edit queued messages");
 }
 
-
-
 TEST(ReplScreen, PlaceholderQueuedCommandsHintCappedAt3) {
     namespace repl = loom::ui::repl_screen;
 
@@ -554,8 +479,6 @@ TEST(ReplScreen, PlaceholderQueuedCommandsHintCappedAt3) {
     // Should NOT show the hint anymore (capped at 3).
     EXPECT_FALSE(placeholder.has_value());
 }
-
-
 
 TEST(ReplScreen, PlaceholderAiSuggestionOverridesExample) {
     namespace repl = loom::ui::repl_screen;
@@ -572,8 +495,6 @@ TEST(ReplScreen, PlaceholderAiSuggestionOverridesExample) {
     // AI suggestion takes priority over the onboarding example.
     EXPECT_EQ(*placeholder, "explain the error above");
 }
-
-
 
 TEST(ReplScreen, PlaceholderAiSuggestionIgnoredInBashMode) {
     namespace repl = loom::ui::repl_screen;
@@ -592,8 +513,6 @@ TEST(ReplScreen, PlaceholderAiSuggestionIgnoredInBashMode) {
     EXPECT_NE(placeholder->find("fix lint errors"), std::string::npos);
 }
 
-
-
 TEST(ReplScreen, PlaceholderAiSuggestionIgnoredWhenViewingAgent) {
     namespace repl = loom::ui::repl_screen;
 
@@ -610,8 +529,6 @@ TEST(ReplScreen, PlaceholderAiSuggestionIgnoredWhenViewingAgent) {
     EXPECT_EQ(*placeholder, "Message @helper…");
 }
 
-
-
 TEST(ReplScreen, PlaceholderAiSuggestionIgnoredWhenSlashCommand) {
     namespace repl = loom::ui::repl_screen;
 
@@ -626,8 +543,6 @@ TEST(ReplScreen, PlaceholderAiSuggestionIgnoredWhenSlashCommand) {
     // The '/' suggestion is ignored; no other conditions match.
     EXPECT_FALSE(placeholder.has_value());
 }
-
-
 
 TEST(ReplScreen, PlaceholderPriorityOrder) {
     // Verify the full priority cascade (TS REF: PromptInput.tsx line 2014 +
@@ -685,8 +600,6 @@ TEST(ReplScreen, PlaceholderPriorityOrder) {
     EXPECT_FALSE(p6.has_value());
 }
 
-
-
 TEST(ReplScreen, PlaceholderRenderedInPromptInput) {
     // End-to-end: verify the computed placeholder actually appears in the
     // rendered prompt input element.
@@ -697,10 +610,7 @@ TEST(ReplScreen, PlaceholderRenderedInPromptInput) {
     state.prompt_store.submit_count = 0;
     state.prompt_store.prompt_suggestion_enabled = true;
 
-    auto rendered = strip_ansi(render_to_plain_text(
-        repl::RenderPromptInput(state, 80),
-        80,
-        6));
+    auto rendered = strip_ansi(render_to_plain_text(repl::RenderPromptInput(state, 80), 80, 6));
 
     // The placeholder "Try \"fix lint errors\"" should appear in the rendered output.
     EXPECT_NE(rendered.find("fix lint errors"), std::string::npos);
@@ -708,8 +618,6 @@ TEST(ReplScreen, PlaceholderRenderedInPromptInput) {
     // And the ❯ prefix glyph should be there.
     EXPECT_NE(rendered.find("\xE2\x9D\xAF"), std::string::npos);  // ❯
 }
-
-
 
 // ─── User prompt truncation (TS REF: UserPromptMessage.tsx lines 28-70) ─
 
@@ -721,8 +629,6 @@ TEST(ReplScreen, UserPromptTruncationShortTextUnchanged) {
     EXPECT_EQ(result, short_text);
 }
 
-
-
 TEST(ReplScreen, UserPromptTruncationExactLimitUnchanged) {
     // Exactly at the 10_000 char limit — no truncation.
     namespace msgs = loom::ui::messages;
@@ -731,8 +637,6 @@ TEST(ReplScreen, UserPromptTruncationExactLimitUnchanged) {
     EXPECT_EQ(result.size(), 10'000u);
     EXPECT_EQ(result, exact);
 }
-
-
 
 TEST(ReplScreen, UserPromptTruncationLongTextHeadTailSplit) {
     // > 10_000 chars: head 2500 + separator + tail 2500.
@@ -747,13 +651,11 @@ TEST(ReplScreen, UserPromptTruncationLongTextHeadTailSplit) {
     // Tail preserved.
     EXPECT_NE(result.find("TAIL!"), std::string::npos);
     // Separator present (ellipsis U+2026 = \xe2\x80\xa6).
-    EXPECT_NE(result.find("\xe2\x80\xa6 +"), std::string::npos);  // "… +"
+    EXPECT_NE(result.find("\xe2\x80\xa6 +"), std::string::npos);       // "… +"
     EXPECT_NE(result.find(" lines \xe2\x80\xa6"), std::string::npos);  // " lines …"
     // Result is much shorter than original.
     EXPECT_LT(result.size(), 6'000u);  // 2500 + ~40 sep + 2500
 }
-
-
 
 TEST(ReplScreen, UserPromptTruncationHiddenLineCount) {
     // Verify hidden line count in the separator.
@@ -767,9 +669,11 @@ TEST(ReplScreen, UserPromptTruncationHiddenLineCount) {
     text += "\n";
     text += std::string(99, 'x');
     // Hidden region: 50 newlines spread across ~2000 chars.
-    for (int i = 0; i < 50; ++i) text += "line\n";
+    for (int i = 0; i < 50; ++i)
+        text += "line\n";
     // Fill to exceed 10K.
-    while (text.size() < 10'500) text += 'y';
+    while (text.size() < 10'500)
+        text += 'y';
     // Tail region: last 2500 chars, with 2 newlines.
     text += "\ntail1\ntail2";
     auto result = msgs::TruncateUserPromptText(text);
@@ -780,8 +684,6 @@ TEST(ReplScreen, UserPromptTruncationHiddenLineCount) {
     EXPECT_NE(result.find("+50 lines"), std::string::npos);
 }
 
-
-
 TEST(ReplScreen, UserPromptTruncationNoNewlinesShowsZero) {
     // Single long line with no newlines — hidden count = 0.
     namespace msgs = loom::ui::messages;
@@ -789,8 +691,6 @@ TEST(ReplScreen, UserPromptTruncationNoNewlinesShowsZero) {
     auto result = msgs::TruncateUserPromptText(long_line);
     EXPECT_NE(result.find("+0 lines"), std::string::npos);
 }
-
-
 
 TEST(ReplScreen, UserPromptTruncationRenderedInMessage) {
     // End-to-end: RenderUserPromptMessage uses truncated text.
@@ -842,25 +742,29 @@ TEST(ReplScreen, RetainedMessagePayloadTracksMutationsModesAndSessionReset) {
     store.messages.push_back(entry);
     const auto render = [&](bool transcript = false) {
         return strip_ansi(render_to_plain_text(
-            repl::RenderMessages(store.messages, -1, 40, 0, true, 0,
-                std::nullopt, {}, false, {}, transcript, false, true, false,
-                nullptr, nullptr, nullptr, nullptr, &store), 160, 16));
+            repl::RenderMessages(store.messages, -1, 40, 0, true, 0, std::nullopt, {}, false, {},
+                                 transcript, false, true, false, nullptr, nullptr, nullptr, nullptr,
+                                 &store),
+            160, 16));
     };
 
     render();
-    const auto* retained = std::get<loom::ui::messages::UserTextMessageData>(
-        store.render_input.rows.front()).content.data();
+    const auto* retained =
+        std::get<loom::ui::messages::UserTextMessageData>(store.render_input.rows.front())
+            .content.data();
     render();
-    EXPECT_EQ(retained, std::get<loom::ui::messages::UserTextMessageData>(
-        store.render_input.rows.front()).content.data());
+    EXPECT_EQ(retained,
+              std::get<loom::ui::messages::UserTextMessageData>(store.render_input.rows.front())
+                  .content.data());
     // Same ID and same length must still invalidate an in-place edit.
     store.messages.front().content_preview = std::string(128, 'b');
     EXPECT_NE(render().find(std::string(32, 'b')), std::string::npos);
-    EXPECT_EQ(std::get<loom::ui::messages::UserTextMessageData>(
-        store.render_input.rows.front()).content, std::string(128, 'b'));
+    EXPECT_EQ(
+        std::get<loom::ui::messages::UserTextMessageData>(store.render_input.rows.front()).content,
+        std::string(128, 'b'));
     render(true);
-    EXPECT_TRUE(std::get<loom::ui::messages::UserTextMessageData>(
-        store.render_input.rows.front()).is_transcript_mode);
+    EXPECT_TRUE(std::get<loom::ui::messages::UserTextMessageData>(store.render_input.rows.front())
+                    .is_transcript_mode);
 
     entry.id = "two";
     entry.content_preview = "second session row";
@@ -888,9 +792,10 @@ TEST(ReplScreen, RetainedMessagePayloadInvalidatesSearchText) {
     store.render_input.search_query = "alpha";
     const auto render = [&] {
         return strip_ansi(render_to_plain_text(
-            repl::RenderMessages(store.messages, -1, 40, 0, true, 0,
-                std::nullopt, {}, false, {}, false, false, true, false,
-                nullptr, nullptr, nullptr, nullptr, &store), 120, 16));
+            repl::RenderMessages(store.messages, -1, 40, 0, true, 0, std::nullopt, {}, false, {},
+                                 false, false, true, false, nullptr, nullptr, nullptr, nullptr,
+                                 &store),
+            120, 16));
     };
     EXPECT_NE(render().find("alpha"), std::string::npos);
     store.messages.front().content_preview = "bravo";
@@ -906,9 +811,8 @@ TEST(ReplScreen, RetainedMessagePayloadRefreshesStructuredResultsAndCallbacks) {
     result.id = "result";
     result.role = "tool";
     result.tool_result_content_items.emplace();
-    result.tool_result_content_items->push_back(
-        ::loom::core::ToolResultContentItem{.type = "text", .text = "alpha",
-            .media_type = {}, .data = {}});
+    result.tool_result_content_items->push_back(::loom::core::ToolResultContentItem{
+        .type = "text", .text = "alpha", .media_type = {}, .data = {}});
     store.messages.push_back(result);
     repl::MessageDisplayEntry error;
     error.id = "error";
@@ -920,20 +824,21 @@ TEST(ReplScreen, RetainedMessagePayloadRefreshesStructuredResultsAndCallbacks) {
     store.messages.push_back(error);
     int retried = 0;
     const auto render = [&](std::function<void()> retry) {
-        (void)repl::RenderMessages(store.messages, -1, 40, 0, true, 0,
-            std::nullopt, {}, false, {}, false, false, true, false,
-            std::move(retry), nullptr, nullptr, nullptr, &store);
+        (void)repl::RenderMessages(store.messages, -1, 40, 0, true, 0, std::nullopt, {}, false, {},
+                                   false, false, true, false, std::move(retry), nullptr, nullptr,
+                                   nullptr, &store);
     };
     render([&] { retried = 1; });
     store.messages.front().tool_result_content_items->front().text = "bravo";
     render([&] { retried = 2; });
-    const auto& items = std::get<loom::ui::messages::ToolResultOptions>(
-        store.render_input.rows.front()).content_items;
+    const auto& items =
+        std::get<loom::ui::messages::ToolResultOptions>(store.render_input.rows.front())
+            .content_items;
     ASSERT_TRUE(items.has_value());
     ASSERT_EQ(items->size(), 1u);
     EXPECT_EQ(items->front().text, "bravo");
-    std::get<loom::ui::messages::api_error_message::APIErrorOptions>(
-        store.render_input.rows.back()).on_retry();
+    std::get<loom::ui::messages::api_error_message::APIErrorOptions>(store.render_input.rows.back())
+        .on_retry();
     EXPECT_EQ(retried, 2);
 }
 
@@ -954,29 +859,28 @@ TEST(ReplScreen, RetainedImagePayloadCachesMetadataWithoutBase64) {
     entry.image_block->file_name = std::string(64, 'f');
     store.messages.push_back(std::move(entry));
     const auto render = [&] {
-        (void)repl::RenderMessages(store.messages, -1, 40, 0, true, 0,
-            std::nullopt, {}, false, {}, false, false, true, false,
-            nullptr, nullptr, nullptr, nullptr, &store);
+        (void)repl::RenderMessages(store.messages, -1, 40, 0, true, 0, std::nullopt, {}, false, {},
+                                   false, false, true, false, nullptr, nullptr, nullptr, nullptr,
+                                   &store);
     };
     render();
     ASSERT_TRUE(store.render_sources.front().image_block.has_value());
     EXPECT_TRUE(store.render_sources.front().image_block->data.empty());
     EXPECT_LT(store.render_sources.front().image_block->data.capacity(), 100u);
     EXPECT_EQ(store.messages.front().image_block->data.size(), 1'000'000u);
-    const auto* retained_name = std::get<image::ImageMessageData>(
-        store.render_input.rows.front()).file_name.data();
+    const auto* retained_name =
+        std::get<image::ImageMessageData>(store.render_input.rows.front()).file_name.data();
     // Updating only binary content does not change the displayed image row.
     store.messages.front().image_block->data.assign(1'000'000, 'b');
     render();
-    EXPECT_EQ(retained_name, std::get<image::ImageMessageData>(
-        store.render_input.rows.front()).file_name.data());
+    EXPECT_EQ(retained_name,
+              std::get<image::ImageMessageData>(store.render_input.rows.front()).file_name.data());
     store.messages.front().image_block->width = 640;
     store.messages.front().image_block->file_name = "changed.png";
     render();
-    EXPECT_EQ(std::get<image::ImageMessageData>(
-        store.render_input.rows.front()).width, 640u);
-    EXPECT_EQ(std::get<image::ImageMessageData>(
-        store.render_input.rows.front()).file_name, "changed.png");
+    EXPECT_EQ(std::get<image::ImageMessageData>(store.render_input.rows.front()).width, 640u);
+    EXPECT_EQ(std::get<image::ImageMessageData>(store.render_input.rows.front()).file_name,
+              "changed.png");
     EXPECT_TRUE(store.render_sources.front().image_block->data.empty());
     EXPECT_LT(store.render_sources.front().image_block->data.capacity(), 100u);
 }
@@ -987,8 +891,7 @@ TEST(ReplScreen, HeldPromptInputUpdatesRenderedProjectionAndCursor) {
     state.input_text = "hello";
     state.input_cursor = 2;
     const auto render = [&] {
-        return strip_ansi(render_to_plain_text(
-            repl::RenderPromptInput(state, 80), 80, 8));
+        return strip_ansi(render_to_plain_text(repl::RenderPromptInput(state, 80), 80, 8));
     };
     EXPECT_NE(render().find("❯ hello"), std::string::npos);
     ASSERT_TRUE(state.prompt_render_input);

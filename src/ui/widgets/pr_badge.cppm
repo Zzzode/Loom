@@ -10,12 +10,7 @@ import loom.ui.foundation.theme_provider;
 
 export namespace ui::components {
 
-enum class PrReviewState {
-    Approved,
-    ChangesRequested,
-    Pending,
-    Merged
-};
+enum class PrReviewState { Approved, ChangesRequested, Pending, Merged };
 
 struct PrBadgeOptions {
     int number = 0;
@@ -29,33 +24,33 @@ namespace detail {
 std::optional<ftxui::Color> GetPrStatusColor(std::optional<PrReviewState> state) {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
     using namespace ftxui;
-    
+
     if (!state) {
         return std::nullopt;
     }
-    
+
     switch (*state) {
-        case PrReviewState::Approved:
-            return pal.success;
-        case PrReviewState::ChangesRequested:
-            return pal.danger;
-        case PrReviewState::Pending:
-            return pal.warning;
-        case PrReviewState::Merged:
-            return pal.merged;
-        default:
-            return std::nullopt;
+    case PrReviewState::Approved:
+        return pal.success;
+    case PrReviewState::ChangesRequested:
+        return pal.danger;
+    case PrReviewState::Pending:
+        return pal.warning;
+    case PrReviewState::Merged:
+        return pal.merged;
+    default:
+        return std::nullopt;
     }
 }
 
-} // namespace detail
+}  // namespace detail
 
 ftxui::Element PrBadge(const PrBadgeOptions& options) {
     using namespace ftxui;
-    
+
     auto status_color = detail::GetPrStatusColor(options.review_state);
     bool should_dim = !status_color && !options.bold;
-    
+
     auto label = text("#" + std::to_string(options.number));
     if (status_color) {
         label = label | color(*status_color);
@@ -66,20 +61,16 @@ ftxui::Element PrBadge(const PrBadgeOptions& options) {
     if (options.bold) {
         label = label | bold;
     }
-    
+
     // Note: FTXUI doesn't have a Link component, so we'll just display the badge
     auto pr_label = text("PR");
     if (!options.bold) {
         pr_label = pr_label | dim;
     }
 
-    auto badge = hbox({
-        pr_label,
-        text(" "),
-        label
-    });
-    
+    auto badge = hbox({pr_label, text(" "), label});
+
     return badge;
 }
 
-} // namespace ui::components
+}  // namespace ui::components

@@ -9,90 +9,101 @@ import std;
 export namespace loom::utils::bash_shell_quoting {
 
 namespace detail {
-    [[nodiscard]] inline bool is_shell_safe(char c) {
-        return std::isalnum(static_cast<unsigned char>(c)) || c == '-' || c == '_' || c == '.' || c == '/' || c == ':';
-    }
+[[nodiscard]] inline bool is_shell_safe(char c) {
+    return std::isalnum(static_cast<unsigned char>(c)) || c == '-' || c == '_' || c == '.' ||
+           c == '/' || c == ':';
+}
 
-    [[nodiscard]] inline std::string shell_quote_one(std::string_view arg) {
-        if (arg.empty()) return "''";
-        bool needs_quote = false;
-        for (char c : arg) {
-            if (!is_shell_safe(c)) {
-                needs_quote = true;
-                break;
-            }
+[[nodiscard]] inline std::string shell_quote_one(std::string_view arg) {
+    if (arg.empty()) return "''";
+    bool needs_quote = false;
+    for (char c : arg) {
+        if (!is_shell_safe(c)) {
+            needs_quote = true;
+            break;
         }
-        if (!needs_quote) return std::string(arg);
-        std::string out = "'";
-        for (char c : arg) {
-            if (c == '\'') out += "'\"'\"'";
-            else out.push_back(c);
-        }
-        out.push_back('\'');
-        return out;
     }
-
-    [[nodiscard]] inline bool contains_heredoc(std::string_view command) {
-        const std::string s(command);
-        static const std::regex bitshift1(R"(\d\s*<<\s*\d)");
-        static const std::regex bitshift2(R"(\[\[\s*\d+\s*<<\s*\d+\s*\]\])");
-        static const std::regex bitshift3(R"(\$\(\(.*<<.*\)\))");
-        if (std::regex_search(s, bitshift1) || std::regex_search(s, bitshift2) || std::regex_search(s, bitshift3)) return false;
-        static const std::regex heredoc(R"(<<-?\s*(?:(['"]?)(\w+)\1|\\(\w+)))");
-        return std::regex_search(s, heredoc);
+    if (!needs_quote) return std::string(arg);
+    std::string out = "'";
+    for (char c : arg) {
+        if (c == '\'')
+            out += "'\"'\"'";
+        else
+            out.push_back(c);
     }
+    out.push_back('\'');
+    return out;
+}
 
-    [[nodiscard]] inline bool contains_multiline_string(std::string_view command) {
-        bool in_single = false;
-        bool in_double = false;
-        for (std::size_t i = 0; i < command.size(); ++i) {
-            const char c = command[i];
-            if (c == '\\' && !in_single) {
-                ++i;
-                continue;
-            }
-            if (c == '\'' && !in_double) in_single = !in_single;
-            else if (c == '"' && !in_single) in_double = !in_double;
-            else if (c == '\n' && (in_single || in_double)) return true;
-        }
+[[nodiscard]] inline bool contains_heredoc(std::string_view command) {
+    const std::string s(command);
+    static const std::regex bitshift1(R"(\d\s*<<\s*\d)");
+    static const std::regex bitshift2(R"(\[\[\s*\d+\s*<<\s*\d+\s*\]\])");
+    static const std::regex bitshift3(R"(\$\(\(.*<<.*\)\))");
+    if (std::regex_search(s, bitshift1) || std::regex_search(s, bitshift2) ||
+        std::regex_search(s, bitshift3))
         return false;
-    }
+    static const std::regex heredoc(R"(<<-?\s*(?:(['"]?)(\w+)\1|\\(\w+)))");
+    return std::regex_search(s, heredoc);
+}
 
-    [[nodiscard]] inline std::vector<std::string> split_compound(std::string_view command) {
-        std::vector<std::string> parts;
-        std::string current;
-        bool in_single = false;
-        bool in_double = false;
-        for (std::size_t i = 0; i < command.size(); ++i) {
-            const char c = command[i];
-            if (c == '\\' && !in_single) {
-                current.push_back(c);
-                if (i + 1 < command.size()) current.push_back(command[++i]);
+[[nodiscard]] inline bool contains_multiline_string(std::string_view command) {
+    bool in_single = false;
+    bool in_double = false;
+    for (std::size_t i = 0; i < command.size(); ++i) {
+        const char c = command[i];
+        if (c == '\\' && !in_single) {
+            ++i;
+            continue;
+        }
+        if (c == '\'' && !in_double)
+            in_single = !in_single;
+        else if (c == '"' && !in_single)
+            in_double = !in_double;
+        else if (c == '\n' && (in_single || in_double))
+            return true;
+    }
+    return false;
+}
+
+[[nodiscard]] inline std::vector<std::string> split_compound(std::string_view command) {
+    std::vector<std::string> parts;
+    std::string current;
+    bool in_single = false;
+    bool in_double = false;
+    for (std::size_t i = 0; i < command.size(); ++i) {
+        const char c = command[i];
+        if (c == '\\' && !in_single) {
+            current.push_back(c);
+            if (i + 1 < command.size()) current.push_back(command[++i]);
+            continue;
+        }
+        if (c == '\'' && !in_double)
+            in_single = !in_single;
+        else if (c == '"' && !in_single)
+            in_double = !in_double;
+        if (!in_single && !in_double) {
+            if (c == ';' || (c == '&' && i + 1 < command.size() && command[i + 1] == '&') ||
+                (c == '|' && i + 1 < command.size() && command[i + 1] == '|')) {
+                parts.push_back(current);
+                current.clear();
+                if (c == '&' || c == '|') ++i;
                 continue;
             }
-            if (c == '\'' && !in_double) in_single = !in_single;
-            else if (c == '"' && !in_single) in_double = !in_double;
-            if (!in_single && !in_double) {
-                if (c == ';' || (c == '&' && i + 1 < command.size() && command[i + 1] == '&') || (c == '|' && i + 1 < command.size() && command[i + 1] == '|')) {
-                    parts.push_back(current);
-                    current.clear();
-                    if (c == '&' || c == '|') ++i;
-                    continue;
-                }
-            }
-            current.push_back(c);
         }
-        parts.push_back(current);
-        return parts;
+        current.push_back(c);
     }
+    parts.push_back(current);
+    return parts;
+}
 
-    [[nodiscard]] inline std::string trim(std::string s) {
-        auto not_space = [](unsigned char c) { return !std::isspace(c); };
-        s.erase(s.begin(), std::find_if(s.begin(), s.end(), not_space));
-        s.erase(std::find_if(s.rbegin(), s.rend(), not_space).base(), s.end());
-        return s;
-    }
-} // namespace detail
+[[nodiscard]] inline std::string trim(std::string s) {
+    auto not_space = [](unsigned char c) { return !std::isspace(c); };
+    s.erase(s.begin(), std::find_if(s.begin(), s.end(), not_space));
+    s.erase(std::find_if(s.rbegin(), s.rend(), not_space).base(), s.end());
+    return s;
+}
+}  // namespace detail
 
 [[nodiscard]] inline bool has_shell_quote_single_quote_bug(std::string_view command) {
     bool in_single = false;
@@ -117,7 +128,9 @@ namespace detail {
                     --j;
                 }
                 if (backslash_count > 0 && backslash_count % 2 == 1) return true;
-                if (backslash_count > 0 && backslash_count % 2 == 0 && command.find('\'', i + 1) != std::string_view::npos) return true;
+                if (backslash_count > 0 && backslash_count % 2 == 0 &&
+                    command.find('\'', i + 1) != std::string_view::npos)
+                    return true;
             }
         }
     }
@@ -133,7 +146,8 @@ namespace detail {
     return out;
 }
 
-[[nodiscard]] inline std::string quote_shell_command(std::string_view command, bool add_stdin_redirect = true) {
+[[nodiscard]] inline std::string quote_shell_command(std::string_view command,
+                                                     bool add_stdin_redirect = true) {
     const bool heredoc = detail::contains_heredoc(command);
     if (heredoc || detail::contains_multiline_string(command)) {
         std::string quoted = detail::shell_quote_one(command);
@@ -173,7 +187,8 @@ namespace detail {
                     out.push_back(current);
                     current.clear();
                 }
-            } else current.push_back(c);
+            } else
+                current.push_back(c);
         }
         if (!current.empty()) out.push_back(current);
         return out;
@@ -183,7 +198,9 @@ namespace detail {
     for (std::size_t i = 1; i < strings.size(); ++i) {
         const auto other = split_words(strings[i]);
         std::size_t shared = 0;
-        while (shared < common_words && shared < other.size() && first_words[shared] == other[shared]) ++shared;
+        while (shared < common_words && shared < other.size() &&
+               first_words[shared] == other[shared])
+            ++shared;
         common_words = shared;
     }
     common_words = std::max<std::size_t>(1, common_words);
@@ -226,5 +243,4 @@ namespace detail {
     return collapsed;
 }
 
-} // namespace loom::utils::bash_shell_quoting
-
+}  // namespace loom::utils::bash_shell_quoting

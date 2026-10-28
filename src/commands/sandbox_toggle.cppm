@@ -2,7 +2,6 @@ module;
 
 #include <unistd.h>
 
-
 export module loom.commands.sandbox_toggle;
 
 import std;
@@ -10,7 +9,7 @@ import std;
 export namespace loom::commands {
 
 namespace detail {
-    inline bool sandbox_enabled = false;
+inline bool sandbox_enabled = false;
 }
 
 auto is_sandbox_enabled() -> bool {
@@ -41,4 +40,4 @@ auto show_sandbox_info() -> std::string {
     return info;
 }
 
-} // namespace loom::commands
+}  // namespace loom::commands

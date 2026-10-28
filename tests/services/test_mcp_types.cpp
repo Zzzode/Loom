@@ -1,20 +1,21 @@
 /// @file test_mcp_types.cpp
 /// @brief Service layer tests split from test_services.cpp.
 
-#include <cctype>
-#include <cstdint>
-#include <cstdlib>
-#include <atomic>
 #include <arpa/inet.h>
 #include <fcntl.h>
 #include <netinet/in.h>
 #include <signal.h>
+#include <sys/file.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/time.h>
-#include <sys/file.h>
 #include <sys/wait.h>
 #include <unistd.h>
+
+#include <atomic>
+#include <cctype>
+#include <cstdint>
+#include <cstdlib>
 #ifdef __APPLE__
 #include <CommonCrypto/CommonDigest.h>
 #else
@@ -23,9 +24,8 @@
 
 #include <gtest/gtest.h>
 #include <httplib.h>
+
 #include <limits>
-
-
 
 import std;
 import loom.cli.ccr_client;
@@ -85,7 +85,8 @@ namespace {
 struct CurrentPathGuard {
     fs::path previous;
 
-    explicit CurrentPathGuard(const fs::path& next) : previous(fs::current_path()) {
+    explicit CurrentPathGuard(const fs::path& next)
+        : previous(fs::current_path()) {
         fs::current_path(next);
     }
 
@@ -97,7 +98,7 @@ struct CurrentPathGuard {
 
 [[nodiscard]] bool c13_ancestry_clean(const fs::path& base) {
     std::error_code ec;
-    for (auto d = base; ; d = d.parent_path()) {
+    for (auto d = base;; d = d.parent_path()) {
         if (fs::exists(d / ".git", ec)) return false;
         if (d.parent_path() == d || d.parent_path().empty()) return true;
     }
@@ -107,14 +108,12 @@ struct CurrentPathGuard {
     std::error_code ec;
     for (const char* var : {"XDG_RUNTIME_DIR", "TMPDIR"}) {
         if (const char* v = std::getenv(var);
-            v != nullptr && fs::is_directory(v, ec) && !ec &&
-            c13_ancestry_clean(v)) {
+            v != nullptr && fs::is_directory(v, ec) && !ec && c13_ancestry_clean(v)) {
             return fs::path(v);
         }
         ec.clear();
     }
-    if (fs::is_directory("/dev/shm", ec) && !ec &&
-        c13_ancestry_clean("/dev/shm")) {
+    if (fs::is_directory("/dev/shm", ec) && !ec && c13_ancestry_clean("/dev/shm")) {
         return fs::path("/dev/shm");
     }
     if (c13_ancestry_clean(fs::temp_directory_path())) {
@@ -132,10 +131,8 @@ struct CurrentPathGuard {
         const fs::path root =
             base_dir /
             (std::string(name) + std::to_string(::getpid()) + "_" +
-             std::to_string(counter.fetch_add(1,
-                 std::memory_order_relaxed)) + "_" +
-             std::to_string(std::chrono::system_clock::now()
-                                 .time_since_epoch().count()));
+             std::to_string(counter.fetch_add(1, std::memory_order_relaxed)) + "_" +
+             std::to_string(std::chrono::system_clock::now().time_since_epoch().count()));
         std::error_code create_ec;
         fs::create_directories(root, create_ec);
         std::error_code probe_ec;
@@ -154,7 +151,8 @@ struct EnvironmentGuard {
     std::string name;
     std::optional<std::string> previous;
 
-    EnvironmentGuard(std::string key, const std::string& value) : name(std::move(key)) {
+    EnvironmentGuard(std::string key, const std::string& value)
+        : name(std::move(key)) {
         if (const char* existing = std::getenv(name.c_str())) {
             previous = existing;
         }
@@ -183,8 +181,7 @@ void c6_write_file(const fs::path& path, std::string_view content) {
     file << content;
 }
 
-[[nodiscard]] std::size_t c6_count_occurrences(std::string_view haystack,
-                                               std::string_view needle) {
+[[nodiscard]] std::size_t c6_count_occurrences(std::string_view haystack, std::string_view needle) {
     std::size_t count = 0;
     std::size_t pos = 0;
     while ((pos = haystack.find(needle, pos)) != std::string_view::npos) {
@@ -194,8 +191,7 @@ void c6_write_file(const fs::path& path, std::string_view content) {
     return count;
 }
 
-[[nodiscard]] std::vector<std::string>
-c6_json_keys(loom::utils::json::JsonVal object) {
+[[nodiscard]] std::vector<std::string> c6_json_keys(loom::utils::json::JsonVal object) {
     std::vector<std::string> keys;
     object.iter_obj([&](auto key, auto) {
         if (key.is_str()) keys.emplace_back(key.as_str());
@@ -205,19 +201,16 @@ c6_json_keys(loom::utils::json::JsonVal object) {
 
 // ── McpMutationOutcome helpers (RFC 0007 Phase 2) ──────────────────────
 
-[[nodiscard]] std::size_t
-mcp_count_status(const loom::core::McpMutationOutcome& outcome,
-                 loom::core::McpMutationStatus status) {
-    return static_cast<std::size_t>(std::ranges::count_if(
-        outcome.entries,
-        [&](const loom::core::McpMutationEntry& e) {
+[[nodiscard]] std::size_t mcp_count_status(const loom::core::McpMutationOutcome& outcome,
+                                           loom::core::McpMutationStatus status) {
+    return static_cast<std::size_t>(
+        std::ranges::count_if(outcome.entries, [&](const loom::core::McpMutationEntry& e) {
             return e.status == status;
         }));
 }
 
-[[nodiscard]] bool
-mcp_has_status(const loom::core::McpMutationOutcome& outcome,
-               loom::core::McpMutationStatus status) {
+[[nodiscard]] bool mcp_has_status(const loom::core::McpMutationOutcome& outcome,
+                                  loom::core::McpMutationStatus status) {
     return mcp_count_status(outcome, status) > 0;
 }
 
@@ -244,22 +237,27 @@ class TempHome {
 public:
     TempHome() {
         root_ = fs::temp_directory_path() /
-                ("loom-mcp-fb-" + std::to_string(::getpid()) + "-" +
-                 std::to_string(counter_++));
+                ("loom-mcp-fb-" + std::to_string(::getpid()) + "-" + std::to_string(counter_++));
         fs::create_directories(root_);
         if (const char* prev = std::getenv("HOME")) prev_home_ = prev;
         if (const char* prev = std::getenv("LOOM_CONFIG_DIR")) prev_config_ = prev;
         ::unsetenv("LOOM_CONFIG_DIR");
         ::setenv("HOME", root_.c_str(), 1);
     }
+
     ~TempHome() {
-        if (prev_home_) ::setenv("HOME", prev_home_->c_str(), 1);
-        else ::unsetenv("HOME");
-        if (prev_config_) ::setenv("LOOM_CONFIG_DIR", prev_config_->c_str(), 1);
-        else ::unsetenv("LOOM_CONFIG_DIR");
+        if (prev_home_)
+            ::setenv("HOME", prev_home_->c_str(), 1);
+        else
+            ::unsetenv("HOME");
+        if (prev_config_)
+            ::setenv("LOOM_CONFIG_DIR", prev_config_->c_str(), 1);
+        else
+            ::unsetenv("LOOM_CONFIG_DIR");
         std::error_code ec;
         fs::remove_all(root_, ec);
     }
+
     TempHome(const TempHome&) = delete;
     TempHome& operator=(const TempHome&) = delete;
 
@@ -268,14 +266,19 @@ public:
         fs::create_directories(dir);
         std::ofstream(dir / "settings.json") << json;
     }
+
     void write_loom(std::string_view json) {
         auto dir = root_ / ".loom";
         fs::create_directories(dir);
         std::ofstream(dir / "settings.json") << json;
     }
+
     [[nodiscard]] fs::path agents_path() const { return root_ / ".agents" / "settings.json"; }
+
     [[nodiscard]] fs::path loom_path() const { return root_ / ".loom" / "settings.json"; }
+
     [[nodiscard]] bool loom_exists() const { return fs::exists(root_ / ".loom" / "settings.json"); }
+
     [[nodiscard]] fs::path root() const { return root_; }
 
     /// Create (if needed) and return the "work" subdirectory used as CWD.
@@ -286,9 +289,7 @@ public:
     }
 
     /// The project settings path under the work directory.
-    [[nodiscard]] fs::path project_path() {
-        return work_dir() / ".loom" / "settings.json";
-    }
+    [[nodiscard]] fs::path project_path() { return work_dir() / ".loom" / "settings.json"; }
 
 private:
     fs::path root_;
@@ -297,10 +298,11 @@ private:
     static inline int counter_ = 0;
 };
 
-} // namespace
+}  // namespace
 
 TEST(McpConfigParser, ParsesJsonFieldsAndExplicitTransports) {
-    const auto parsed = loom::services::mcp::ConfigParser::parse_json(R"JSON({
+    const auto parsed =
+        loom::services::mcp::ConfigParser::parse_json(R"JSON({
       "mcpServers": {
         "stdio_fixture": {
           "type": "stdio",
@@ -341,7 +343,8 @@ TEST(McpConfigParser, ParsesJsonFieldsAndExplicitTransports) {
           "args": ["missing-command"]
         }
       }
-    })JSON", loom::services::mcp::ConfigScope::Project);
+    })JSON",
+                                                      loom::services::mcp::ConfigScope::Project);
 
     ASSERT_TRUE(parsed.has_value()) << static_cast<int>(parsed.error());
     ASSERT_EQ(parsed->size(), 4u);
@@ -358,19 +361,20 @@ TEST(McpConfigParser, ParsesJsonFieldsAndExplicitTransports) {
     EXPECT_FALSE(stdio.enabled);
     EXPECT_EQ(stdio.scope, loom::services::mcp::ConfigScope::Project);
 
-	const auto& sse = parsed->at("sse_fixture");
-	EXPECT_EQ(sse.transport, loom::services::mcp::TransportType::Sse);
-	EXPECT_EQ(sse.url, "http://127.0.0.1:8123/events");
-	EXPECT_EQ(sse.headers.at("Authorization"), "Bearer token");
-	EXPECT_EQ(sse.headers_helper, "node helper.js");
-	ASSERT_TRUE(sse.oauth.has_value());
-	ASSERT_TRUE(sse.oauth->auth_server_metadata_url.has_value());
-	EXPECT_EQ(*sse.oauth->auth_server_metadata_url, "https://auth.example.com/.well-known/oauth-authorization-server");
-	ASSERT_TRUE(sse.oauth->callback_port.has_value());
-	EXPECT_EQ(*sse.oauth->callback_port, 19485);
-	ASSERT_TRUE(sse.oauth->client_id.has_value());
-	EXPECT_EQ(*sse.oauth->client_id, "client-1");
-	EXPECT_TRUE(sse.oauth->xaa);
+    const auto& sse = parsed->at("sse_fixture");
+    EXPECT_EQ(sse.transport, loom::services::mcp::TransportType::Sse);
+    EXPECT_EQ(sse.url, "http://127.0.0.1:8123/events");
+    EXPECT_EQ(sse.headers.at("Authorization"), "Bearer token");
+    EXPECT_EQ(sse.headers_helper, "node helper.js");
+    ASSERT_TRUE(sse.oauth.has_value());
+    ASSERT_TRUE(sse.oauth->auth_server_metadata_url.has_value());
+    EXPECT_EQ(*sse.oauth->auth_server_metadata_url,
+              "https://auth.example.com/.well-known/oauth-authorization-server");
+    ASSERT_TRUE(sse.oauth->callback_port.has_value());
+    EXPECT_EQ(*sse.oauth->callback_port, 19485);
+    ASSERT_TRUE(sse.oauth->client_id.has_value());
+    EXPECT_EQ(*sse.oauth->client_id, "client-1");
+    EXPECT_TRUE(sse.oauth->xaa);
 
     const auto& http = parsed->at("http_fixture");
     EXPECT_EQ(http.transport, loom::services::mcp::TransportType::StreamableHttp);
@@ -386,14 +390,16 @@ TEST(McpConfigParser, ParsesJsonFieldsAndExplicitTransports) {
 }
 
 TEST(McpConfigParser, SupportsServersAliasAndRejectsInvalidJson) {
-    const auto parsed = loom::services::mcp::ConfigParser::parse_json(R"JSON({
+    const auto parsed =
+        loom::services::mcp::ConfigParser::parse_json(R"JSON({
       "servers": {
         "alias_fixture": {
           "transport": "streamable-http",
           "url": "http://127.0.0.1:8127/mcp"
         }
       }
-    })JSON", loom::services::mcp::ConfigScope::User);
+    })JSON",
+                                                      loom::services::mcp::ConfigScope::User);
 
     ASSERT_TRUE(parsed.has_value()) << static_cast<int>(parsed.error());
     ASSERT_EQ(parsed->size(), 1u);
@@ -401,33 +407,29 @@ TEST(McpConfigParser, SupportsServersAliasAndRejectsInvalidJson) {
     EXPECT_EQ(alias.transport, loom::services::mcp::TransportType::StreamableHttp);
     EXPECT_EQ(alias.scope, loom::services::mcp::ConfigScope::User);
 
-    const auto invalid = loom::services::mcp::ConfigParser::parse_json(
-        "{",
-        loom::services::mcp::ConfigScope::User
-    );
+    const auto invalid =
+        loom::services::mcp::ConfigParser::parse_json("{", loom::services::mcp::ConfigScope::User);
     ASSERT_FALSE(invalid.has_value());
     EXPECT_EQ(invalid.error(), loom::services::mcp::ConfigError::ParseError);
 }
 
 TEST(McpTypes, JsonRpcSerializationIncludesParams) {
     auto request = loom::services::mcp::make_request(
-        int64_t{7},
-        "tools/call",
+        int64_t{7}, "tools/call",
         std::optional<std::string>{R"({"name":"echo","arguments":{"value":"hello"}})"});
 
     const auto serialized = loom::services::mcp::serialize_request(request);
 
     EXPECT_NE(serialized.find(R"("method":"tools/call")"), std::string::npos);
-    EXPECT_NE(serialized.find(R"("params":{"name":"echo","arguments":{"value":"hello"}})"), std::string::npos);
+    EXPECT_NE(serialized.find(R"("params":{"name":"echo","arguments":{"value":"hello"}})"),
+              std::string::npos);
 
     auto notification = loom::services::mcp::make_notification(
-        "notifications/initialized",
-        std::optional<std::string>{R"({"ready":true})"});
+        "notifications/initialized", std::optional<std::string>{R"({"ready":true})"});
 
     const auto serialized_notification = loom::services::mcp::serialize_notification(notification);
     EXPECT_NE(serialized_notification.find(R"("params":{"ready":true})"), std::string::npos);
 }
-
 
 // RFC-0001 B4: persisted-data round-trip coverage for the canonical
 // loom.config.mcp_types settings shape — legacy snake_case reads, project
@@ -539,7 +541,6 @@ TEST(McpTypes, ReadsOldShapedSnakeCaseAndRewritesCamelCase) {
     fs::remove_all(root);
 }
 
-
 // RFC-0001 B followup c4: canonical camelCase input with an explicitly
 // disabled server and an oauth issuer must survive load -> save -> reload
 // byte-for-byte in meaning, and be rewritten in canonical spelling.
@@ -607,7 +608,6 @@ TEST(McpTypes, DisabledAndOauthIssuerSurviveConfigRewrite) {
 
     fs::remove_all(root);
 }
-
 
 // RFC-0001 B followup c4: configScope reads canonical camelCase and legacy
 // snake_case alike, but every rewrite emits only the canonical camelCase
@@ -677,7 +677,6 @@ TEST(McpTypes, ConfigScopeRoundTripsInCanonicalCamelCase) {
     fs::remove_all(root);
 }
 
-
 // RFC-0001 B followup c4: absent optional keys stay unset. A minimal server
 // must round-trip without a "disabled" or oauth "issuer" key in the rewrite,
 // while configScope is still written with its "project" default.
@@ -732,7 +731,6 @@ TEST(McpTypes, AbsentDisabledAndIssuerKeysStayUnset) {
 
     fs::remove_all(root);
 }
-
 
 // RFC-0001 B followup c12: the xaaIdp section (issuer/clientId/callbackPort)
 // used to be dropped by the hand-rolled full-save serializer. All three
@@ -827,8 +825,8 @@ TEST(McpTypes, XaaIdpRoundTripsConfigRewrite) {
     // Bad-type tolerance: a numeric issuer and a string callbackPort are
     // ignored without failing the load, while a well-typed clientId in the
     // same object still parses.
-    const auto bad_root = fs::temp_directory_path() /
-        ("loom_mcp_types_xaa_idp_bad_" + std::to_string(suffix));
+    const auto bad_root =
+        fs::temp_directory_path() / ("loom_mcp_types_xaa_idp_bad_" + std::to_string(suffix));
     fs::create_directories(bad_root);
     const auto bad_project = bad_root / "project.json";
     {
@@ -850,7 +848,6 @@ TEST(McpTypes, XaaIdpRoundTripsConfigRewrite) {
 
     fs::remove_all(bad_root);
 }
-
 
 // RFC-0001 B followup c12: default settings never emit an xaaIdp section,
 // and a save/load/save cycle with the section absent is byte-stable (this
@@ -900,7 +897,8 @@ TEST(McpTypes, XaaIdpOmittedWhenUnset) {
 
 TEST(McpTypes, EnvironmentLayerLeavesMcpServersUntouched) {
     const auto suffix = std::chrono::system_clock::now().time_since_epoch().count();
-    const auto root = fs::temp_directory_path() / ("loom_mcp_types_env_test_" + std::to_string(suffix));
+    const auto root =
+        fs::temp_directory_path() / ("loom_mcp_types_env_test_" + std::to_string(suffix));
     fs::create_directories(root);
     const auto project_path = root / "project.json";
 
@@ -944,23 +942,21 @@ TEST(McpTypes, EnvironmentLayerLeavesMcpServersUntouched) {
     fs::remove_all(root);
 }
 
-
 // ============================================================================
 // RFC-0001 B followup c6: per-tier MCP file routing (design doc groups 2-13)
 // ============================================================================
-
-
 
 // Group 2: three physical files, lowest-to-highest precedence; a name in all
 // three resolves to the local value.
 
 TEST(McpTypes, McpStorageThreeFilePrecedence) {
     const auto suffix = std::chrono::system_clock::now().time_since_epoch().count();
-    const auto root = fs::temp_directory_path() / ("loom_mcp_c6_three_file_" + std::to_string(suffix));
+    const auto root =
+        fs::temp_directory_path() / ("loom_mcp_c6_three_file_" + std::to_string(suffix));
     fs::create_directories(root);
-    const auto user_path    = root / "user.json";
+    const auto user_path = root / "user.json";
     const auto project_path = root / "project.json";
-    const auto local_path   = root / "project.local.json";
+    const auto local_path = root / "project.local.json";
 
     c6_write_file(user_path, R"JSON({
   "mcpServers": {
@@ -1000,9 +996,9 @@ TEST(McpTypes, McpStorageThreeFilePrecedence) {
     EXPECT_EQ(by_name.at("onlyl").args, (std::vector<std::string>{"l.js"}));
 
     EXPECT_EQ(*manager.mcp_server_owner("shared"), loom::core::McpStorageScope::Local);
-    EXPECT_EQ(*manager.mcp_server_owner("onlyu"),  loom::core::McpStorageScope::User);
-    EXPECT_EQ(*manager.mcp_server_owner("onlyp"),  loom::core::McpStorageScope::Project);
-    EXPECT_EQ(*manager.mcp_server_owner("onlyl"),  loom::core::McpStorageScope::Local);
+    EXPECT_EQ(*manager.mcp_server_owner("onlyu"), loom::core::McpStorageScope::User);
+    EXPECT_EQ(*manager.mcp_server_owner("onlyp"), loom::core::McpStorageScope::Project);
+    EXPECT_EQ(*manager.mcp_server_owner("onlyl"), loom::core::McpStorageScope::Local);
 
     const auto shared_files = manager.find_mcp_server_files("shared");
     ASSERT_EQ(shared_files.size(), 3u);
@@ -1012,18 +1008,18 @@ TEST(McpTypes, McpStorageThreeFilePrecedence) {
     fs::remove_all(root);
 }
 
-
 // Groups 3 + 8: upsert(User) writes ONLY the user file (no model/display/
 // features sections, other files untouched), and the patched entry is
 // compared STRUCTURALLY with the C4-pinned key set/order preserved.
 
 TEST(McpTypes, McpUpsertUserWritesOnlyUserFile) {
     const auto suffix = std::chrono::system_clock::now().time_since_epoch().count();
-    const auto root = fs::temp_directory_path() / ("loom_mcp_c6_user_upsert_" + std::to_string(suffix));
+    const auto root =
+        fs::temp_directory_path() / ("loom_mcp_c6_user_upsert_" + std::to_string(suffix));
     fs::create_directories(root);
-    const auto user_path    = root / "user.json";
+    const auto user_path = root / "user.json";
     const auto project_path = root / "project.json";
-    const auto local_path   = root / "project.local.json";
+    const auto local_path = root / "project.local.json";
 
     loom::core::McpServerConfig cfg;
     cfg.name = "srv";
@@ -1068,24 +1064,24 @@ TEST(McpTypes, McpUpsertUserWritesOnlyUserFile) {
 
     // Key order is exactly the C4-pinned set (command omitted as empty).
     const auto keys = c6_json_keys(entry);
-    EXPECT_EQ(keys, (std::vector<std::string>{
-        "type", "args", "env", "url", "headers", "headersHelper",
-        "disabled", "configScope", "oauth"}));
+    EXPECT_EQ(keys,
+              (std::vector<std::string>{"type", "args", "env", "url", "headers", "headersHelper",
+                                        "disabled", "configScope", "oauth"}));
     EXPECT_EQ(entry.get("type").as_str(), std::string_view("http"));
     ASSERT_TRUE(entry.get("args").is_arr());
     EXPECT_EQ(entry.get("args").at(0).as_str(), std::string_view("a1"));
     EXPECT_EQ(entry.get("args").at(1).as_str(), std::string_view("a2"));
     EXPECT_EQ(entry.get("env").get("K").as_str(), std::string_view("V"));
     EXPECT_EQ(entry.get("url").as_str(), std::string_view("https://mcp.example.com/mcp"));
-    EXPECT_EQ(entry.get("headers").get("Authorization").as_str(),
-              std::string_view("Bearer abc"));
+    EXPECT_EQ(entry.get("headers").get("Authorization").as_str(), std::string_view("Bearer abc"));
     EXPECT_EQ(entry.get("headersHelper").as_str(), std::string_view("node h.js"));
     EXPECT_FALSE(entry.get("disabled").as_bool());
     EXPECT_EQ(entry.get("configScope").as_str(), std::string_view("user"));
     const auto oauth_json = entry.get("oauth");
     ASSERT_TRUE(oauth_json.is_obj());
-    EXPECT_EQ(c6_json_keys(oauth_json), (std::vector<std::string>{
-        "authServerMetadataUrl", "callbackPort", "clientId", "xaa", "issuer"}));
+    EXPECT_EQ(c6_json_keys(oauth_json),
+              (std::vector<std::string>{"authServerMetadataUrl", "callbackPort", "clientId", "xaa",
+                                        "issuer"}));
     EXPECT_EQ(oauth_json.get("callbackPort").as_int(), 19485);
     EXPECT_EQ(oauth_json.get("clientId").as_str(), std::string_view("client-1"));
     EXPECT_TRUE(oauth_json.get("xaa").as_bool());
@@ -1100,8 +1096,7 @@ TEST(McpTypes, McpUpsertUserWritesOnlyUserFile) {
 
         // Same-name upsert replaces, never duplicates.
         cfg.url = "https://mcp.example.com/v2";
-        ASSERT_TRUE(reloaded.upsert_mcp_server(loom::core::McpStorageScope::User, cfg)
-                        .has_value());
+        ASSERT_TRUE(reloaded.upsert_mcp_server(loom::core::McpStorageScope::User, cfg).has_value());
     }
     auto reparsed = loom::utils::json::parse_file(user_path);
     ASSERT_TRUE(reparsed.has_value());
@@ -1112,7 +1107,6 @@ TEST(McpTypes, McpUpsertUserWritesOnlyUserFile) {
     fs::remove_all(root);
 }
 
-
 // Group 8 (stdio variant): the patched file is whole-file yyjson-PRETTY
 // (inline arrays become multiline), the key order survives, and a reload
 // round-trips every field structurally.
@@ -1121,9 +1115,9 @@ TEST(McpTypes, McpPatchedEntryStructuralShapeAndKeyOrder) {
     const auto root = c13_make_temp_root("loom_mcp_c6_shape_");
     fs::create_directories(root);
     CurrentPathGuard cwd_guard(root);
-    const auto user_path    = root / "user.json";
+    const auto user_path = root / "user.json";
     const auto project_path = root / "project.json";
-    const auto local_path   = root / "project.local.json";
+    const auto local_path = root / "project.local.json";
 
     loom::core::McpServerConfig cfg;
     cfg.name = "runner";
@@ -1137,8 +1131,8 @@ TEST(McpTypes, McpPatchedEntryStructuralShapeAndKeyOrder) {
     {
         loom::core::ConfigManager manager(user_path, project_path, local_path);
         ASSERT_TRUE(manager.load().has_value());
-        ASSERT_TRUE(manager.upsert_mcp_server(loom::core::McpStorageScope::Project, cfg)
-                        .has_value());
+        ASSERT_TRUE(
+            manager.upsert_mcp_server(loom::core::McpStorageScope::Project, cfg).has_value());
     }
 
     const std::string text = c6_read_file(project_path);
@@ -1148,9 +1142,8 @@ TEST(McpTypes, McpPatchedEntryStructuralShapeAndKeyOrder) {
     ASSERT_TRUE(parsed.has_value());
     const auto entry = parsed->root().get("mcpServers").get("runner");
     ASSERT_TRUE(entry.is_obj());
-    EXPECT_EQ(c6_json_keys(entry),
-              (std::vector<std::string>{"type", "command", "args", "env",
-                                        "disabled", "configScope"}));
+    EXPECT_EQ(c6_json_keys(entry), (std::vector<std::string>{"type", "command", "args", "env",
+                                                             "disabled", "configScope"}));
     EXPECT_EQ(entry.get("type").as_str(), std::string_view("stdio"));
     EXPECT_EQ(entry.get("command").as_str(), std::string_view("node"));
     EXPECT_EQ(entry.get("args").size(), 3u);
@@ -1170,7 +1163,6 @@ TEST(McpTypes, McpPatchedEntryStructuralShapeAndKeyOrder) {
     fs::remove_all(root);
 }
 
-
 // Group 4: the default Local scope creates settings.local.json (no
 // settings.json) and appends its basename to ./.gitignore exactly once,
 // coping with a pre-existing file that has no trailing newline.
@@ -1180,7 +1172,8 @@ TEST(McpTypes, McpUpsertLocalCreatesLocalFileAndGitignore) {
         GTEST_SKIP() << "git not available";
     }
     const auto suffix = std::chrono::system_clock::now().time_since_epoch().count();
-    const auto root = fs::temp_directory_path() / ("loom_mcp_c6_local_gitignore_" + std::to_string(suffix));
+    const auto root =
+        fs::temp_directory_path() / ("loom_mcp_c6_local_gitignore_" + std::to_string(suffix));
     fs::create_directories(root);
     CurrentPathGuard cwd_guard(root);
     // c13e: .gitignore appends happen only inside a git work tree.
@@ -1189,9 +1182,9 @@ TEST(McpTypes, McpUpsertLocalCreatesLocalFileAndGitignore) {
     // Existing .gitignore with NO trailing newline.
     c6_write_file(root / ".gitignore", "sentinel");
 
-    const auto user_path    = root / "user.json";
+    const auto user_path = root / "user.json";
     const auto project_path = root / ".loom" / "settings.json";
-    const auto local_path   = root / ".loom" / "settings.local.json";
+    const auto local_path = root / ".loom" / "settings.local.json";
 
     auto make_stdio = [](std::string name) {
         loom::core::McpServerConfig cfg;
@@ -1206,8 +1199,8 @@ TEST(McpTypes, McpUpsertLocalCreatesLocalFileAndGitignore) {
     {
         loom::core::ConfigManager manager(user_path, project_path, local_path);
         ASSERT_TRUE(manager.load().has_value());
-        ASSERT_TRUE(manager.upsert_mcp_server(loom::core::McpStorageScope::Local,
-                                              make_stdio("l1")).has_value());
+        ASSERT_TRUE(manager.upsert_mcp_server(loom::core::McpStorageScope::Local, make_stdio("l1"))
+                        .has_value());
     }
     EXPECT_TRUE(fs::exists(local_path));
     EXPECT_FALSE(fs::exists(project_path));
@@ -1222,9 +1215,9 @@ TEST(McpTypes, McpUpsertLocalCreatesLocalFileAndGitignore) {
         ASSERT_FALSE(ec);
         const auto perms = status.permissions();
         const auto none = fs::perms::none;
-        EXPECT_EQ(perms & (fs::perms::group_read | fs::perms::group_write |
-                           fs::perms::group_exec | fs::perms::others_read |
-                           fs::perms::others_write | fs::perms::others_exec),
+        EXPECT_EQ(perms &
+                      (fs::perms::group_read | fs::perms::group_write | fs::perms::group_exec |
+                       fs::perms::others_read | fs::perms::others_write | fs::perms::others_exec),
                   none);
         EXPECT_NE(perms & fs::perms::owner_read, none);
         EXPECT_NE(perms & fs::perms::owner_write, none);
@@ -1233,8 +1226,8 @@ TEST(McpTypes, McpUpsertLocalCreatesLocalFileAndGitignore) {
     {
         loom::core::ConfigManager manager(user_path, project_path, local_path);
         ASSERT_TRUE(manager.load().has_value());
-        ASSERT_TRUE(manager.upsert_mcp_server(loom::core::McpStorageScope::Local,
-                                              make_stdio("l2")).has_value());
+        ASSERT_TRUE(manager.upsert_mcp_server(loom::core::McpStorageScope::Local, make_stdio("l2"))
+                        .has_value());
     }
     const std::string gitignore = c6_read_file(root / ".gitignore");
     // Line-exact idempotency (the lock line contains the data basename as
@@ -1248,7 +1241,6 @@ TEST(McpTypes, McpUpsertLocalCreatesLocalFileAndGitignore) {
     fs::remove_all(root);
 }
 
-
 // Group 6: default remove clears every physical copy and is idempotent;
 // --scope touches one file; unknown names yield an empty outcome; removing
 // the last entry drops mcpServers but preserves sibling sections.
@@ -1257,9 +1249,9 @@ TEST(McpTypes, McpRemoveAllCopiesScopedAndNotFound) {
     const auto root = c13_make_temp_root("loom_mcp_c6_remove_");
     fs::create_directories(root);
     CurrentPathGuard cwd_guard(root);
-    const auto user_path    = root / "user.json";
+    const auto user_path = root / "user.json";
     const auto project_path = root / "project.json";
-    const auto local_path   = root / "project.local.json";
+    const auto local_path = root / "project.local.json";
 
     // Default removal touches both polluted copies.
     c6_write_file(user_path, R"JSON({
@@ -1293,7 +1285,8 @@ TEST(McpTypes, McpRemoveAllCopiesScopedAndNotFound) {
         loom::core::ConfigManager reloaded(user_path, project_path, local_path);
         ASSERT_TRUE(reloaded.load().has_value());
         std::set<std::string> names;
-        for (const auto& server : reloaded.settings().mcp_servers) names.insert(server.name);
+        for (const auto& server : reloaded.settings().mcp_servers)
+            names.insert(server.name);
         EXPECT_EQ(names, (std::set<std::string>{"uonly", "ponly"}));
     }
 
@@ -1303,11 +1296,11 @@ TEST(McpTypes, McpRemoveAllCopiesScopedAndNotFound) {
     {
         loom::core::ConfigManager manager(user_path, project_path, local_path);
         ASSERT_TRUE(manager.load().has_value());
-        auto outcome = manager.remove_mcp_server(
-            "s", loom::core::McpStorageScope::Project);
+        auto outcome = manager.remove_mcp_server("s", loom::core::McpStorageScope::Project);
         ASSERT_TRUE(outcome.has_value());
         EXPECT_EQ(mcp_count_status(*outcome, loom::core::McpMutationStatus::Modified), 1u);
-        const auto* path = mcp_first_path_with_status(*outcome, loom::core::McpMutationStatus::Modified);
+        const auto* path =
+            mcp_first_path_with_status(*outcome, loom::core::McpMutationStatus::Modified);
         ASSERT_NE(path, nullptr);
         EXPECT_EQ(*path, project_path);
     }
@@ -1340,8 +1333,7 @@ TEST(McpTypes, McpRemoveAllCopiesScopedAndNotFound) {
     {
         loom::core::ConfigManager manager(user_path, project_path, local_path);
         ASSERT_TRUE(manager.load().has_value());
-        auto removed = manager.remove_mcp_server(
-            "last", loom::core::McpStorageScope::Project);
+        auto removed = manager.remove_mcp_server("last", loom::core::McpStorageScope::Project);
         ASSERT_TRUE(removed.has_value());
         EXPECT_TRUE(mcp_has_status(*removed, loom::core::McpMutationStatus::Modified));
         auto parsed = loom::utils::json::parse_file(project_path);
@@ -1353,7 +1345,6 @@ TEST(McpTypes, McpRemoveAllCopiesScopedAndNotFound) {
     fs::remove_all(root);
 }
 
-
 // Group 7: enable/disable patch only "disabled" on the owner file; unknown
 // sibling keys survive; lower tiers are untouched; the batch helper patches
 // one file per distinct owner.
@@ -1362,9 +1353,9 @@ TEST(McpTypes, McpEnableDisablePatchesOwnerFiles) {
     const auto root = c13_make_temp_root("loom_mcp_c6_disable_");
     fs::create_directories(root);
     CurrentPathGuard cwd_guard(root);
-    const auto user_path    = root / "user.json";
+    const auto user_path = root / "user.json";
     const auto project_path = root / "project.json";
-    const auto local_path   = root / "project.local.json";
+    const auto local_path = root / "project.local.json";
 
     c6_write_file(project_path, R"JSON({
   "mcpServers": {
@@ -1402,8 +1393,8 @@ TEST(McpTypes, McpEnableDisablePatchesOwnerFiles) {
         // Unknown name and wrong-scope name are NotFound.
         auto zzz = manager.set_mcp_server_disabled("zzz", true);
         EXPECT_TRUE(mcp_has_status(zzz, loom::core::McpMutationStatus::NotFound));
-        auto pon_local = manager.set_mcp_server_disabled(
-            "pon", true, loom::core::McpStorageScope::Local);
+        auto pon_local =
+            manager.set_mcp_server_disabled("pon", true, loom::core::McpStorageScope::Local);
         EXPECT_TRUE(mcp_has_status(pon_local, loom::core::McpMutationStatus::NotFound));
     }
     EXPECT_NE(c6_read_file(project_path), project_before);
@@ -1414,25 +1405,28 @@ TEST(McpTypes, McpEnableDisablePatchesOwnerFiles) {
         ASSERT_TRUE(manager.load().has_value());
         const std::vector<std::string> project_names{"pon", "px"};
         const std::vector<std::string> local_names{"lon"};
-        EXPECT_TRUE(manager.set_mcp_servers_disabled_in(
-            loom::core::McpStorageScope::Project, project_names, true).has_value());
-        EXPECT_TRUE(manager.set_mcp_servers_disabled_in(
-            loom::core::McpStorageScope::Local, local_names, true).has_value());
-        for (const auto& [path, names] : {
-                 std::pair{project_path, std::vector<std::string>{"pon", "px"}},
-                 std::pair{local_path, std::vector<std::string>{"lon"}}}) {
+        EXPECT_TRUE(manager
+                        .set_mcp_servers_disabled_in(loom::core::McpStorageScope::Project,
+                                                     project_names, true)
+                        .has_value());
+        EXPECT_TRUE(
+            manager
+                .set_mcp_servers_disabled_in(loom::core::McpStorageScope::Local, local_names, true)
+                .has_value());
+        for (const auto& [path, names] :
+             {std::pair{project_path, std::vector<std::string>{"pon", "px"}},
+              std::pair{local_path, std::vector<std::string>{"lon"}}}) {
             auto doc = loom::utils::json::parse_file(path);
             ASSERT_TRUE(doc.has_value()) << path.string();
             for (const auto& name : names) {
-                EXPECT_TRUE(doc->root().get("mcpServers").get(name)
-                                .get("disabled").as_bool()) << path.string() << " " << name;
+                EXPECT_TRUE(doc->root().get("mcpServers").get(name).get("disabled").as_bool())
+                    << path.string() << " " << name;
             }
         }
     }
 
     fs::remove_all(root);
 }
-
 
 // Group 9 (§A): key=value user content and a non-object local root make
 // those tiers contribute zero entries with one diagnostic each, while the
@@ -1443,12 +1437,12 @@ TEST(McpTypes, McpGarbageUserLocalFilesSkippedAndUpsertRejected) {
     const auto root = c13_make_temp_root("loom_mcp_c6_garbage_");
     fs::create_directories(root);
     CurrentPathGuard cwd_guard(root);
-    const auto user_path    = root / "user.json";
+    const auto user_path = root / "user.json";
     const auto project_path = root / "project.json";
-    const auto local_path   = root / "project.local.json";
+    const auto local_path = root / "project.local.json";
 
-    c6_write_file(user_path, "FOO=bar\nBAZ=qux\n");              // not JSON
-    c6_write_file(local_path, "[1, 2]\n");                        // valid JSON, wrong root
+    c6_write_file(user_path, "FOO=bar\nBAZ=qux\n");  // not JSON
+    c6_write_file(local_path, "[1, 2]\n");           // valid JSON, wrong root
     c6_write_file(project_path, R"JSON({
   "mcpServers": {
     "g1": {"command": "node"},
@@ -1462,7 +1456,8 @@ TEST(McpTypes, McpGarbageUserLocalFilesSkippedAndUpsertRejected) {
     loom::core::ConfigManager manager(user_path, project_path, local_path);
     ASSERT_TRUE(manager.load().has_value());
     std::set<std::string> names;
-    for (const auto& server : manager.settings().mcp_servers) names.insert(server.name);
+    for (const auto& server : manager.settings().mcp_servers)
+        names.insert(server.name);
     EXPECT_EQ(names, (std::set<std::string>{"g1", "p1"}));
 
     loom::core::McpServerConfig cfg;
@@ -1483,17 +1478,16 @@ TEST(McpTypes, McpGarbageUserLocalFilesSkippedAndUpsertRejected) {
 
     // Other tiers remain patchable.
     cfg.name = "newp";
-    ASSERT_TRUE(manager.upsert_mcp_server(loom::core::McpStorageScope::Project, cfg)
-                    .has_value());
+    ASSERT_TRUE(manager.upsert_mcp_server(loom::core::McpStorageScope::Project, cfg).has_value());
     loom::core::ConfigManager reloaded(user_path, project_path, local_path);
     ASSERT_TRUE(reloaded.load().has_value());
     names.clear();
-    for (const auto& server : reloaded.settings().mcp_servers) names.insert(server.name);
+    for (const auto& server : reloaded.settings().mcp_servers)
+        names.insert(server.name);
     EXPECT_EQ(names, (std::set<std::string>{"g1", "newp", "p1"}));
 
     fs::remove_all(root);
 }
-
 
 // Group 10: $LOOM_CONFIG_DIR routes the user tier; config_home_write() and
 // the default ConfigManager constructor both honor it.
@@ -1524,8 +1518,7 @@ TEST(McpTypes, McpUserScopeHonorsConfigDirEnv) {
     {
         loom::core::ConfigManager manager;
         ASSERT_TRUE(manager.load().has_value());
-        ASSERT_TRUE(manager.upsert_mcp_server(loom::core::McpStorageScope::User, cfg)
-                        .has_value());
+        ASSERT_TRUE(manager.upsert_mcp_server(loom::core::McpStorageScope::User, cfg).has_value());
     }
     EXPECT_TRUE(fs::exists(config_dir / "settings.json"));
     EXPECT_FALSE(fs::exists(fake_home / ".loom" / "settings.json"));
@@ -1539,7 +1532,6 @@ TEST(McpTypes, McpUserScopeHonorsConfigDirEnv) {
 
     fs::remove_all(root);
 }
-
 
 // Group 11: unwritable files aggregate into the failed list without
 // aborting writable tiers; all-unwritable-present is an empty touched list
@@ -1556,9 +1548,9 @@ TEST(McpTypes, McpRemoveAggregatesUnwritableFiles) {
     {
         const auto ro = root / "ro";
         fs::create_directories(ro);
-        const auto user_path    = ro / "user.json";
+        const auto user_path = ro / "user.json";
         const auto project_path = root / "project.json";
-        const auto local_path   = root / "project.local.json";
+        const auto local_path = root / "project.local.json";
         c6_write_file(user_path, R"JSON({"mcpServers": {"dup": {"command": "node"}}})JSON");
         c6_write_file(project_path, R"JSON({"mcpServers": {"dup": {"command": "node"}}})JSON");
 
@@ -1569,11 +1561,13 @@ TEST(McpTypes, McpRemoveAggregatesUnwritableFiles) {
         auto outcome = manager.remove_mcp_server("dup");
         ASSERT_TRUE(outcome.has_value());
         EXPECT_EQ(mcp_count_status(*outcome, loom::core::McpMutationStatus::Modified), 1u);
-        const auto* touched_path = mcp_first_path_with_status(*outcome, loom::core::McpMutationStatus::Modified);
+        const auto* touched_path =
+            mcp_first_path_with_status(*outcome, loom::core::McpMutationStatus::Modified);
         ASSERT_NE(touched_path, nullptr);
         EXPECT_EQ(*touched_path, project_path);
         EXPECT_EQ(mcp_count_status(*outcome, loom::core::McpMutationStatus::WriteFailed), 1u);
-        const auto* failed_path = mcp_first_path_with_status(*outcome, loom::core::McpMutationStatus::WriteFailed);
+        const auto* failed_path =
+            mcp_first_path_with_status(*outcome, loom::core::McpMutationStatus::WriteFailed);
         ASSERT_NE(failed_path, nullptr);
         EXPECT_EQ(*failed_path, user_path);
 
@@ -1584,9 +1578,9 @@ TEST(McpTypes, McpRemoveAggregatesUnwritableFiles) {
         // Both files present in one read-only directory: present, zero writes.
         const auto ro2 = root / "ro2";
         fs::create_directories(ro2);
-        const auto user_path    = ro2 / "user.json";
+        const auto user_path = ro2 / "user.json";
         const auto project_path = ro2 / "project.json";
-        const auto local_path   = ro2 / "project.local.json";
+        const auto local_path = ro2 / "project.local.json";
         c6_write_file(user_path, R"JSON({"mcpServers": {"dup": {"command": "node"}}})JSON");
         c6_write_file(project_path, R"JSON({"mcpServers": {"dup": {"command": "node"}}})JSON");
 
@@ -1605,7 +1599,6 @@ TEST(McpTypes, McpRemoveAggregatesUnwritableFiles) {
     fs::remove_all(root);
 }
 
-
 // Group 12 (§B secret boundary): a full save to the PROJECT file omits
 // user/local-only entries (which may carry Authorization headers) and
 // re-emits the PROJECT FILE'S OWN value for physically-present names, never
@@ -1615,9 +1608,9 @@ TEST(McpTypes, McpProjectSaveDoesNotLeakUserLocalSecrets) {
     const auto root = c13_make_temp_root("loom_mcp_c6_secret_boundary_");
     fs::create_directories(root);
     CurrentPathGuard cwd_guard(root);
-    const auto user_path    = root / "user.json";
+    const auto user_path = root / "user.json";
     const auto project_path = root / "project.json";
-    const auto local_path   = root / "project.local.json";
+    const auto local_path = root / "project.local.json";
 
     c6_write_file(project_path, R"JSON({
   "mcpServers": {
@@ -1683,7 +1676,6 @@ TEST(McpTypes, McpProjectSaveDoesNotLeakUserLocalSecrets) {
     fs::remove_all(root);
 }
 
-
 // B1 (review followup): mutators must keep in-memory bookkeeping and the
 // merged vector consistent with disk, so a full save on the SAME
 // ConfigManager instance (no reload) cannot resurrect a removed entry or
@@ -1694,9 +1686,9 @@ TEST(McpTypes, McpMutationsStayCoherentForSameInstanceSave) {
     // Pin CWD to the git-ancestry-clean temp root so the walk-up
     // gitignore appender never reaches a real work tree (e.g. /tmp/.git).
     CurrentPathGuard cwd_guard(root);
-    const auto user_path    = root / "user.json";
+    const auto user_path = root / "user.json";
     const auto project_path = root / "project.json";
-    const auto local_path   = root / "project.local.json";
+    const auto local_path = root / "project.local.json";
 
     c6_write_file(project_path, R"JSON({
   "mcpServers": {
@@ -1712,12 +1704,11 @@ TEST(McpTypes, McpMutationsStayCoherentForSameInstanceSave) {
 
         // Remove a PROJECT entry and immediately full-save on the SAME
         // instance (the old bug rewrote the stale merged entry back).
-        auto removed = manager.remove_mcp_server(
-            "p1", loom::core::McpStorageScope::Project);
+        auto removed = manager.remove_mcp_server("p1", loom::core::McpStorageScope::Project);
         ASSERT_TRUE(removed.has_value());
         EXPECT_EQ(mcp_count_status(*removed, loom::core::McpMutationStatus::Modified), 1u);
         EXPECT_TRUE(std::ranges::none_of(manager.settings().mcp_servers,
-            [](const auto& s) { return s.name == "p1"; }));
+                                         [](const auto& s) { return s.name == "p1"; }));
         ASSERT_TRUE(manager.save().has_value());
 
         const std::string text = c6_read_file(project_path);
@@ -1734,7 +1725,8 @@ TEST(McpTypes, McpMutationsStayCoherentForSameInstanceSave) {
         loom::core::ConfigManager reloaded(user_path, project_path, local_path);
         ASSERT_TRUE(reloaded.load().has_value());
         std::set<std::string> names;
-        for (const auto& s : reloaded.settings().mcp_servers) names.insert(s.name);
+        for (const auto& s : reloaded.settings().mcp_servers)
+            names.insert(s.name);
         EXPECT_EQ(names, (std::set<std::string>{"p2"}));
     }
 
@@ -1751,8 +1743,8 @@ TEST(McpTypes, McpMutationsStayCoherentForSameInstanceSave) {
         local_cfg.command = "node";
         local_cfg.args = {"l.js"};
         local_cfg.config_scope = "local";
-        ASSERT_TRUE(manager.upsert_mcp_server(loom::core::McpStorageScope::Local, local_cfg)
-                        .has_value());
+        ASSERT_TRUE(
+            manager.upsert_mcp_server(loom::core::McpStorageScope::Local, local_cfg).has_value());
         ASSERT_EQ(manager.settings().mcp_servers.size(), 2u);  // p2, l1
         ASSERT_TRUE(manager.mcp_server_owner("l1").has_value());
         EXPECT_EQ(*manager.mcp_server_owner("l1"), loom::core::McpStorageScope::Local);
@@ -1783,10 +1775,10 @@ TEST(McpTypes, McpMutationsStayCoherentForSameInstanceSave) {
         shadow.command = "node";
         shadow.args = {"project-shadow.js"};
         shadow.config_scope = "project";
-        ASSERT_TRUE(manager.upsert_mcp_server(loom::core::McpStorageScope::Project, shadow)
-                        .has_value());
+        ASSERT_TRUE(
+            manager.upsert_mcp_server(loom::core::McpStorageScope::Project, shadow).has_value());
         auto effective = std::ranges::find(manager.settings().mcp_servers, "l1",
-                                          [](const auto& s) { return s.name; });
+                                           [](const auto& s) { return s.name; });
         ASSERT_NE(effective, manager.settings().mcp_servers.end());
         EXPECT_EQ(effective->args, (std::vector<std::string>{"l.js"}));  // local wins
         EXPECT_EQ(*manager.mcp_server_owner("l1"), loom::core::McpStorageScope::Local);
@@ -1794,7 +1786,6 @@ TEST(McpTypes, McpMutationsStayCoherentForSameInstanceSave) {
 
     fs::remove_all(root);
 }
-
 
 // §A followup: a zero-length or all-whitespace user/local file behaves like
 // a MISSING file — no warning state, zero entries, and an upsert creates it
@@ -1804,18 +1795,22 @@ TEST(McpTypes, McpBlankUserLocalFilesTreatedAsMissing) {
     const auto suffix = std::chrono::system_clock::now().time_since_epoch().count();
     const auto root = fs::temp_directory_path() / ("loom_mcp_c6_blank_" + std::to_string(suffix));
     fs::create_directories(root);
-    const auto user_path    = root / "user.json";
+    const auto user_path = root / "user.json";
     const auto project_path = root / "project.json";
-    const auto local_path   = root / "project.local.json";
+    const auto local_path = root / "project.local.json";
 
     // --- §A asymmetry: project stays a HARD failure even when blank or
     // garbage; only user/local get the soft policy. -----------------------
-    { std::ofstream(project_path) << "   \n"; }  // blank project file
+    {
+        std::ofstream(project_path) << "   \n";
+    }  // blank project file
     {
         loom::core::ConfigManager m(user_path, project_path, local_path);
         EXPECT_FALSE(m.load().has_value());
     }
-    { std::ofstream(project_path) << "[1, 2]\n"; }  // valid JSON, wrong root
+    {
+        std::ofstream(project_path) << "[1, 2]\n";
+    }  // valid JSON, wrong root
     {
         loom::core::ConfigManager m(user_path, project_path, local_path);
         EXPECT_FALSE(m.load().has_value());
@@ -1824,8 +1819,12 @@ TEST(McpTypes, McpBlankUserLocalFilesTreatedAsMissing) {
     // --- Blank user/local: tolerated like a missing file, NO warning, and a
     // subsequent upsert creates the file fresh. ---------------------------
     c6_write_file(project_path, R"JSON({"mcpServers": {"g1": {"command": "node"}}})JSON");
-    { std::ofstream(user_path) << ""; }
-    { std::ofstream(local_path) << "  \n\t \n"; }
+    {
+        std::ofstream(user_path) << "";
+    }
+    {
+        std::ofstream(local_path) << "  \n\t \n";
+    }
     {
         testing::internal::CaptureStderr();
         loom::core::ConfigManager manager(user_path, project_path, local_path);
@@ -1850,8 +1849,12 @@ TEST(McpTypes, McpBlankUserLocalFilesTreatedAsMissing) {
     // skipped but a warning names each bad path, and lower tiers load. ----
     fs::remove(user_path);
     fs::remove(local_path);
-    { std::ofstream(user_path) << "FOO=bar\nBAZ=qux\n"; }
-    { std::ofstream(local_path) << "[1, 2]\n"; }
+    {
+        std::ofstream(user_path) << "FOO=bar\nBAZ=qux\n";
+    }
+    {
+        std::ofstream(local_path) << "[1, 2]\n";
+    }
     {
         testing::internal::CaptureStderr();
         loom::core::ConfigManager manager(user_path, project_path, local_path);
@@ -1866,7 +1869,6 @@ TEST(McpTypes, McpBlankUserLocalFilesTreatedAsMissing) {
 
     fs::remove_all(root);
 }
-
 
 // Mode/gitignore follow-up: tmp+rename must preserve a pre-existing
 // non-local file's mode (pre-C6 in-place ofstream kept the inode mode),
@@ -1886,9 +1888,9 @@ TEST(McpTypes, McpPatchPreservesFileModesAndProtectsPreExistingLocal) {
     CurrentPathGuard cwd_guard(root);
     // c13e: gitignore appends require a work tree.
     ASSERT_EQ(std::system("git init -q --initial-branch main"), 0);
-    const auto user_path    = root / "user.json";
+    const auto user_path = root / "user.json";
     const auto project_path = root / ".loom" / "settings.json";
-    const auto local_path   = root / ".loom" / "settings.local.json";
+    const auto local_path = root / ".loom" / "settings.local.json";
 
     auto make_cfg = [](std::string name) {
         loom::core::McpServerConfig cfg;
@@ -1912,15 +1914,13 @@ TEST(McpTypes, McpPatchPreservesFileModesAndProtectsPreExistingLocal) {
     {
         loom::core::ConfigManager manager(user_path, project_path, local_path);
         ASSERT_TRUE(manager.load().has_value());
-        ASSERT_TRUE(manager.upsert_mcp_server(loom::core::McpStorageScope::Project,
-                                              make_cfg("p2")).has_value());
-        EXPECT_EQ(mode_of(project_path),
-                  fs::perms::owner_read | fs::perms::owner_write);
-        auto p1_disable = manager.set_mcp_server_disabled(
-            "p1", true, loom::core::McpStorageScope::Project);
+        ASSERT_TRUE(manager.upsert_mcp_server(loom::core::McpStorageScope::Project, make_cfg("p2"))
+                        .has_value());
+        EXPECT_EQ(mode_of(project_path), fs::perms::owner_read | fs::perms::owner_write);
+        auto p1_disable =
+            manager.set_mcp_server_disabled("p1", true, loom::core::McpStorageScope::Project);
         EXPECT_TRUE(mcp_has_status(p1_disable, loom::core::McpMutationStatus::Modified));
-        EXPECT_EQ(mode_of(project_path),
-                  fs::perms::owner_read | fs::perms::owner_write);
+        EXPECT_EQ(mode_of(project_path), fs::perms::owner_read | fs::perms::owner_write);
     }
 
     // Pre-existing 0640 user file keeps 0640 across an upsert.
@@ -1933,8 +1933,8 @@ TEST(McpTypes, McpPatchPreservesFileModesAndProtectsPreExistingLocal) {
     {
         loom::core::ConfigManager manager(user_path, project_path, local_path);
         ASSERT_TRUE(manager.load().has_value());
-        ASSERT_TRUE(manager.upsert_mcp_server(loom::core::McpStorageScope::User,
-                                              make_cfg("u2")).has_value());
+        ASSERT_TRUE(manager.upsert_mcp_server(loom::core::McpStorageScope::User, make_cfg("u2"))
+                        .has_value());
         EXPECT_EQ(mode_of(user_path),
                   fs::perms::owner_read | fs::perms::owner_write | fs::perms::group_read);
     }
@@ -1957,16 +1957,14 @@ TEST(McpTypes, McpPatchPreservesFileModesAndProtectsPreExistingLocal) {
     {
         loom::core::ConfigManager manager(user_path, project_path, local_path);
         ASSERT_TRUE(manager.load().has_value());
-        ASSERT_TRUE(manager.upsert_mcp_server(loom::core::McpStorageScope::Local,
-                                              make_cfg("l2")).has_value());
+        ASSERT_TRUE(manager.upsert_mcp_server(loom::core::McpStorageScope::Local, make_cfg("l2"))
+                        .has_value());
     }
     ASSERT_TRUE(fs::exists(root / ".gitignore"));
-    EXPECT_NE(c6_read_file(root / ".gitignore").find("settings.local.json"),
-              std::string::npos);
+    EXPECT_NE(c6_read_file(root / ".gitignore").find("settings.local.json"), std::string::npos);
     EXPECT_NE(c6_read_file(root / ".gitignore").find("settings.local.json.lock"),
               std::string::npos);
-    EXPECT_EQ(mode_of(local_path),
-              fs::perms::owner_read | fs::perms::owner_write);
+    EXPECT_EQ(mode_of(local_path), fs::perms::owner_read | fs::perms::owner_write);
     // Both entries survive (pre-existing local content is not overwritten).
     auto local_doc = loom::utils::json::parse_file(local_path);
     ASSERT_TRUE(local_doc.has_value());
@@ -2033,7 +2031,8 @@ TEST(McpFallback, FallbackEnumeration) {
     // Both servers are read from the fallback.
     ASSERT_EQ(cm.settings().mcp_servers.size(), 2u);
     std::set<std::string> names;
-    for (const auto& s : cm.settings().mcp_servers) names.insert(s.name);
+    for (const auto& s : cm.settings().mcp_servers)
+        names.insert(s.name);
     EXPECT_EQ(names, (std::set<std::string>{"fb1", "fb2"}));
 
     // find_mcp_server_files returns the ~/.agents path.
@@ -2047,7 +2046,8 @@ TEST(McpFallback, FallbackEnumeration) {
 
 TEST(McpFallback, RemoveFallbackOnly) {
     TempHome home;
-    home.write_agents(R"JSON({"mcpServers": {"fb-only": {"command": "node", "args": ["fb.js"]}}})JSON");
+    home.write_agents(
+        R"JSON({"mcpServers": {"fb-only": {"command": "node", "args": ["fb.js"]}}})JSON");
     CurrentPathGuard cwd_guard(home.work_dir());
 
     const std::string before = c6_read_file(home.agents_path());
@@ -2068,7 +2068,8 @@ TEST(McpFallback, RemoveFallbackOnly) {
 
 TEST(McpFallback, RemoveFallbackOnlyExplicitScope) {
     TempHome home;
-    home.write_agents(R"JSON({"mcpServers": {"fb-only": {"command": "node", "args": ["fb.js"]}}})JSON");
+    home.write_agents(
+        R"JSON({"mcpServers": {"fb-only": {"command": "node", "args": ["fb.js"]}}})JSON");
     CurrentPathGuard cwd_guard(home.work_dir());
 
     const std::string before = c6_read_file(home.agents_path());
@@ -2101,12 +2102,14 @@ TEST(McpFallback, RemoveNotFound) {
 
 TEST(McpFallback, RemoveMultiLayerWritableAndFallback) {
     TempHome home;
-    home.write_agents(R"JSON({"mcpServers": {"dup": {"command": "node", "args": ["agents.js"]}}})JSON");
+    home.write_agents(
+        R"JSON({"mcpServers": {"dup": {"command": "node", "args": ["agents.js"]}}})JSON");
     CurrentPathGuard cwd_guard(home.work_dir());
 
     // Write a project file with the same server name.
-    c6_write_file(home.project_path(),
-                  R"JSON({"mcpServers": {"dup": {"command": "node", "args": ["project.js"]}}})JSON");
+    c6_write_file(
+        home.project_path(),
+        R"JSON({"mcpServers": {"dup": {"command": "node", "args": ["project.js"]}}})JSON");
 
     const std::string agents_before = c6_read_file(home.agents_path());
 
@@ -2377,7 +2380,8 @@ TEST(McpFallback, EnableFallbackSourcePath) {
 
 TEST(McpFallback, EnableAllFallbackSourcePath) {
     TempHome home;
-    home.write_agents(R"JSON({"mcpServers": {"fb1": {"command": "node", "args": ["a.js"]}, "fb2": {"command": "node", "args": ["b.js"]}}})JSON");
+    home.write_agents(
+        R"JSON({"mcpServers": {"fb1": {"command": "node", "args": ["a.js"]}, "fb2": {"command": "node", "args": ["b.js"]}}})JSON");
     CurrentPathGuard cwd_guard(home.work_dir());
 
     loom::core::ConfigManager cm;
@@ -2440,23 +2444,20 @@ TEST(McpFallback, EnableNamedOwnerOnlyScope) {
     EXPECT_EQ(mcp_count_status(outcome, loom::core::McpMutationStatus::SkippedReadOnly), 1u);
 
     // Find the Modified entry and verify it's the local scope.
-    const auto& modified_entry = *std::ranges::find_if(
-        outcome.entries, [](const auto& e) {
-            return e.status == loom::core::McpMutationStatus::Modified;
-        });
+    const auto& modified_entry = *std::ranges::find_if(outcome.entries, [](const auto& e) {
+        return e.status == loom::core::McpMutationStatus::Modified;
+    });
     EXPECT_EQ(modified_entry.source->scope, loom::core::McpStorageScope::Local);
 
     // Find the SkippedReadOnly entry and verify it's the fallback.
-    const auto& skipped_entry = *std::ranges::find_if(
-        outcome.entries, [](const auto& e) {
-            return e.status == loom::core::McpMutationStatus::SkippedReadOnly;
-        });
+    const auto& skipped_entry = *std::ranges::find_if(outcome.entries, [](const auto& e) {
+        return e.status == loom::core::McpMutationStatus::SkippedReadOnly;
+    });
     EXPECT_EQ(skipped_entry.source->scope, loom::core::McpStorageScope::User);
     EXPECT_EQ(skipped_entry.source->path, home.agents_path());
 
     // Project and fallback files must be byte-unchanged.
-    EXPECT_EQ(c6_read_file(home.agents_path()), agents_orig)
-        << "~/.agents must be byte-unchanged";
+    EXPECT_EQ(c6_read_file(home.agents_path()), agents_orig) << "~/.agents must be byte-unchanged";
     EXPECT_EQ(c6_read_file(proj_dir / "settings.json"), proj_orig)
         << "project file must be byte-unchanged (only local owner is modified)";
 
@@ -2487,16 +2488,15 @@ TEST(McpFallback, EnableAllWriteFailureAndFallbackSkip) {
     ASSERT_TRUE(cm.is_user_fallback());
 
     // Make the project directory read-only so the patch fails.
-    fs::permissions(loom_dir, fs::perms::owner_read | fs::perms::owner_exec |
-                               fs::perms::group_read | fs::perms::group_exec |
-                               fs::perms::others_read | fs::perms::others_exec,
+    fs::permissions(loom_dir,
+                    fs::perms::owner_read | fs::perms::owner_exec | fs::perms::group_read |
+                        fs::perms::group_exec | fs::perms::others_read | fs::perms::others_exec,
                     fs::perm_options::replace);
 
     auto outcome = cm.set_all_mcp_servers_disabled(true);
 
     // Restore permissions so TempHome destructor can clean up.
-    fs::permissions(loom_dir, fs::perms::owner_all | fs::perms::group_all |
-                               fs::perms::others_all,
+    fs::permissions(loom_dir, fs::perms::owner_all | fs::perms::group_all | fs::perms::others_all,
                     fs::perm_options::replace);
 
     // The writable server "wr" should have WriteFailed.
@@ -2507,8 +2507,9 @@ TEST(McpFallback, EnableAllWriteFailureAndFallbackSkip) {
     // No server should have been Modified.
     EXPECT_EQ(mcp_count_status(outcome, loom::core::McpMutationStatus::Modified), 0u);
     // ~/.agents must be byte-unchanged.
-    EXPECT_EQ(c6_read_file(home.agents_path()),
-              std::string(R"JSON({"mcpServers": {"fb": {"command": "node", "args": ["fb.js"]}}})JSON"));
+    EXPECT_EQ(
+        c6_read_file(home.agents_path()),
+        std::string(R"JSON({"mcpServers": {"fb": {"command": "node", "args": ["fb.js"]}}})JSON"));
 }
 
 // Writable no-op + write failure + fallback skip: all three statuses in one
@@ -2534,16 +2535,15 @@ TEST(McpFallback, EnableAllNoOpPlusWriteFailurePlusFallbackSkip) {
     ASSERT_TRUE(cm.is_user_fallback());
 
     // Make the .loom directory read-only so the project patch fails.
-    fs::permissions(loom_dir, fs::perms::owner_read | fs::perms::owner_exec |
-                               fs::perms::group_read | fs::perms::group_exec |
-                               fs::perms::others_read | fs::perms::others_exec,
+    fs::permissions(loom_dir,
+                    fs::perms::owner_read | fs::perms::owner_exec | fs::perms::group_read |
+                        fs::perms::group_exec | fs::perms::others_read | fs::perms::others_exec,
                     fs::perm_options::replace);
 
     auto outcome = cm.set_all_mcp_servers_disabled(true);
 
     // Restore permissions so TempHome destructor can clean up.
-    fs::permissions(loom_dir, fs::perms::owner_all | fs::perms::group_all |
-                               fs::perms::others_all,
+    fs::permissions(loom_dir, fs::perms::owner_all | fs::perms::group_all | fs::perms::others_all,
                     fs::perm_options::replace);
 
     // All three statuses must be present.
@@ -2556,8 +2556,9 @@ TEST(McpFallback, EnableAllNoOpPlusWriteFailurePlusFallbackSkip) {
     EXPECT_EQ(outcome.modified_count(), 0u);
     EXPECT_TRUE(outcome.has_failures());
     // ~/.agents must be byte-unchanged.
-    EXPECT_EQ(c6_read_file(home.agents_path()),
-              std::string(R"JSON({"mcpServers": {"fb": {"command": "node", "args": ["fb.js"]}}})JSON"));
+    EXPECT_EQ(
+        c6_read_file(home.agents_path()),
+        std::string(R"JSON({"mcpServers": {"fb": {"command": "node", "args": ["fb.js"]}}})JSON"));
 }
 
 // End of file

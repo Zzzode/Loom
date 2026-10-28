@@ -31,9 +31,9 @@
 
 module;
 
-#include <cstdlib>
 #include <cstddef>
 #include <cstdint>
+#include <cstdlib>
 #include <ctime>
 
 export module loom.commands.insights;
@@ -139,13 +139,13 @@ struct SessionFacets {
     std::string session_id;
     std::string underlying_goal;
     std::map<std::string, std::size_t> goal_categories;
-    std::string outcome;                                   // fully_achieved | ...
+    std::string outcome;  // fully_achieved | ...
     std::map<std::string, std::size_t> user_satisfaction_counts;
-    std::string loom_helpfulness;                        // unhelpful | ...
-    std::string session_type;                              // single_task | ...
+    std::string loom_helpfulness;  // unhelpful | ...
+    std::string session_type;      // single_task | ...
     std::map<std::string, std::size_t> friction_counts;
     std::string friction_detail;
-    std::string primary_success;                           // none | fast_accurate_search | ...
+    std::string primary_success;  // none | fast_accurate_search | ...
     std::string brief_summary;
 };
 
@@ -186,8 +186,7 @@ read_count_map(const loom::utils::json::JsonVal& obj) {
     if (!obj.is_obj()) return out;
     obj.iter_obj([&](loom::utils::json::JsonVal key, loom::utils::json::JsonVal val) {
         if (key.is_str() && val.is_num() && val.as_int() > 0) {
-            out[std::string(key.as_str())] =
-                static_cast<std::size_t>(val.as_int());
+            out[std::string(key.as_str())] = static_cast<std::size_t>(val.as_int());
         }
     });
     return out;
@@ -196,15 +195,14 @@ read_count_map(const loom::utils::json::JsonVal& obj) {
 /// Parse a SessionFacets from an already-validated JSON value.
 /// `session_id` is supplied by the caller (cache filename), matching the TS
 /// `{ ...parsed, session_id }` merge.
-[[nodiscard]] inline SessionFacets
-facets_from_json(const loom::utils::json::JsonVal& o, std::string session_id) {
+[[nodiscard]] inline SessionFacets facets_from_json(const loom::utils::json::JsonVal& o,
+                                                    std::string session_id) {
     SessionFacets f;
     f.session_id = std::move(session_id);
     f.underlying_goal = o.get_string("underlying_goal");
     f.goal_categories = read_count_map(o.get("goal_categories"));
     f.outcome = o.get_string("outcome");
-    f.user_satisfaction_counts =
-        read_count_map(o.get("user_satisfaction_counts"));
+    f.user_satisfaction_counts = read_count_map(o.get("user_satisfaction_counts"));
     f.loom_helpfulness = o.get_string("loom_helpfulness");
     f.session_type = o.get_string("session_type");
     f.friction_counts = read_count_map(o.get("friction_counts"));
@@ -218,13 +216,11 @@ facets_from_json(const loom::utils::json::JsonVal& o, std::string session_id) {
 /// Pure and deterministic — directly mirrors the TS aggregateData loop for the
 /// facet-derived fields (goal_categories/outcomes/satisfaction/helpfulness/
 /// session_types/friction/success).
-[[nodiscard]] inline AggregatedFacets
-aggregate_facets(const std::vector<SessionFacets>& facets) {
+[[nodiscard]] inline AggregatedFacets aggregate_facets(const std::vector<SessionFacets>& facets) {
     AggregatedFacets r;
     r.sessions_with_facets = facets.size();
 
-    auto bump = [](std::map<std::string, std::size_t>& m,
-                   const std::string& key, std::size_t n) {
+    auto bump = [](std::map<std::string, std::size_t>& m, const std::string& key, std::size_t n) {
         if (!key.empty()) m[key] += n;
     };
     auto bump_count_map = [&](std::map<std::string, std::size_t>& dst,
@@ -260,13 +256,15 @@ inline fs::path usage_data_dir() {
     return base / ".loom" / "usage-data";
 }
 
-inline fs::path facets_dir() { return usage_data_dir() / "facets"; }
+inline fs::path facets_dir() {
+    return usage_data_dir() / "facets";
+}
 
 inline fs::path facet_path(std::string_view session_id) {
     return facets_dir() / std::string(session_id).append(".json");
 }
 
-} // namespace detail
+}  // namespace detail
 
 /// Render a SessionFacets to a pretty JSON string. Round-trips through
 /// facets_from_json so the written form is the canonical aggregate input.
@@ -275,8 +273,7 @@ inline fs::path facet_path(std::string_view session_id) {
     auto root = doc.object();
     doc.set_root(root);
 
-    auto put_map = [&](std::string_view key,
-                       const std::map<std::string, std::size_t>& m) {
+    auto put_map = [&](std::string_view key, const std::map<std::string, std::size_t>& m) {
         auto obj = doc.object();
         for (const auto& [k, v] : m) {
             obj.add(std::string_view(k), doc.number(static_cast<int64_t>(v)));
@@ -303,8 +300,7 @@ inline fs::path facet_path(std::string_view session_id) {
 /// Returns an error if the write fails (mirrors TS writeFile). The directory
 /// is created with default permissions; the file is written 0600 on POSIX
 /// (std::ofstream has no portable mode knob, so we chmod after the fact).
-[[nodiscard]] inline loom::utils::Result<void>
-save_facets(const SessionFacets& f) {
+[[nodiscard]] inline loom::utils::Result<void> save_facets(const SessionFacets& f) {
     std::error_code ec;
     fs::create_directories(detail::facets_dir(), ec);
     // Ignore directory-exists; surface other errors.
@@ -313,18 +309,17 @@ save_facets(const SessionFacets& f) {
     if (!out) {
         return std::unexpected(loom::utils::Error(
             loom::utils::ErrorCode::internal_error,
-            std::format("Failed to open facet cache for write: {}",
-                        path.string())));
+            std::format("Failed to open facet cache for write: {}", path.string())));
     }
     out << facets_to_json(f);
     out.close();
     if (!out) {
-        return std::unexpected(loom::utils::Error(
-            loom::utils::ErrorCode::internal_error,
-            std::format("Failed to write facet cache: {}", path.string())));
+        return std::unexpected(
+            loom::utils::Error(loom::utils::ErrorCode::internal_error,
+                               std::format("Failed to write facet cache: {}", path.string())));
     }
-    fs::permissions(path, fs::perms::owner_read | fs::perms::owner_write,
-                    fs::perm_options::replace, ec);
+    fs::permissions(path, fs::perms::owner_read | fs::perms::owner_write, fs::perm_options::replace,
+                    ec);
     return {};
 }
 
@@ -332,16 +327,14 @@ save_facets(const SessionFacets& f) {
 /// Mirrors the TS loadCachedFacets: a corrupt file is treated as a cache miss
 /// (the TS source deletes it; here we only return nullopt to keep the helper
 /// pure and side-effect-free for testability — the caller can recreate it).
-[[nodiscard]] inline std::optional<SessionFacets>
-load_facets(std::string_view session_id) {
+[[nodiscard]] inline std::optional<SessionFacets> load_facets(std::string_view session_id) {
     auto path = detail::facet_path(session_id);
     std::error_code ec;
     if (!fs::exists(path, ec) || ec) return std::nullopt;
 
     std::ifstream in(path, std::ios::binary);
     if (!in) return std::nullopt;
-    std::string content((std::istreambuf_iterator<char>(in)),
-                        std::istreambuf_iterator<char>());
+    std::string content((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
     auto parsed = loom::utils::json::parse(content);
     if (!parsed) return std::nullopt;
     auto root = parsed->root();
@@ -367,12 +360,24 @@ namespace detail {
     out.reserve(sv.size() + sv.size() / 8);
     for (char c : sv) {
         switch (c) {
-            case '&': out += "&amp;"; break;
-            case '<': out += "&lt;"; break;
-            case '>': out += "&gt;"; break;
-            case '"': out += "&quot;"; break;
-            case '\'': out += "&apos;"; break;
-            default: out += c; break;
+        case '&':
+            out += "&amp;";
+            break;
+        case '<':
+            out += "&lt;";
+            break;
+        case '>':
+            out += "&gt;";
+            break;
+        case '"':
+            out += "&quot;";
+            break;
+        case '\'':
+            out += "&apos;";
+            break;
+        default:
+            out += c;
+            break;
         }
     }
     return out;
@@ -382,18 +387,15 @@ namespace detail {
 /// humanised; the list is sorted by descending count then by key for a stable
 /// deterministic order (the TS sorts by descending count only; the tie-break
 /// makes the output testable).
-[[nodiscard]] inline std::string render_ranked_list(
-    const std::map<std::string, std::size_t>& counts,
-    std::string_view list_class) {
+[[nodiscard]] inline std::string
+render_ranked_list(const std::map<std::string, std::size_t>& counts, std::string_view list_class) {
     if (counts.empty()) return "<p class=\"empty\">No data</p>\n";
 
-    std::vector<std::pair<std::string, std::size_t>> rows(counts.begin(),
-                                                          counts.end());
-    std::sort(rows.begin(), rows.end(),
-              [](const auto& a, const auto& b) {
-                  if (a.second != b.second) return a.second > b.second;
-                  return a.first < b.first;
-              });
+    std::vector<std::pair<std::string, std::size_t>> rows(counts.begin(), counts.end());
+    std::sort(rows.begin(), rows.end(), [](const auto& a, const auto& b) {
+        if (a.second != b.second) return a.second > b.second;
+        return a.first < b.first;
+    });
 
     std::string out;
     out += std::format("<ol class=\"{}\">\n", list_class);
@@ -407,26 +409,25 @@ namespace detail {
 }
 
 /// Render a section with a heading and a ranked list body.
-[[nodiscard]] inline std::string render_section(
-    std::string_view id, std::string_view title,
-    const std::map<std::string, std::size_t>& counts) {
+[[nodiscard]] inline std::string render_section(std::string_view id, std::string_view title,
+                                                const std::map<std::string, std::size_t>& counts) {
     std::string out;
-    out += std::format("<section id=\"{}\">\n  <h2>{}</h2>\n",
-                       escape_html(id), escape_html(title));
+    out += std::format("<section id=\"{}\">\n  <h2>{}</h2>\n", escape_html(id), escape_html(title));
     out += render_ranked_list(counts, "facet-list");
     out += "</section>\n";
     return out;
 }
 
-} // namespace detail
+}  // namespace detail
 
 /// Build the full HTML insights report from the session stats + aggregated
 /// facets. Pure function — given the same inputs it always produces the same
 /// document, which is what the tests assert.
-[[nodiscard]] inline std::string render_html_report(
-    std::size_t total_sessions, std::size_t total_messages,
-    std::string_view date_range_start, std::string_view date_range_end,
-    const AggregatedFacets& agg) {
+[[nodiscard]] inline std::string render_html_report(std::size_t total_sessions,
+                                                    std::size_t total_messages,
+                                                    std::string_view date_range_start,
+                                                    std::string_view date_range_end,
+                                                    const AggregatedFacets& agg) {
     std::string out;
     out += "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n";
     out += "  <meta charset=\"utf-8\">\n";
@@ -453,8 +454,7 @@ namespace detail {
     out += "  <h1>Loom Insights</h1>\n";
     out += std::format("  <p class=\"subtitle\">{} messages across {} "
                        "sessions | {} to {}</p>\n",
-                       total_messages, total_sessions,
-                       detail::escape_html(date_range_start),
+                       total_messages, total_sessions, detail::escape_html(date_range_start),
                        detail::escape_html(date_range_end));
 
     out += "  <div class=\"stats\">\n";
@@ -469,19 +469,13 @@ namespace detail {
                        agg.sessions_with_facets);
     out += "  </div>\n";
 
-    out += detail::render_section("goals", "What You Worked On",
-                                  agg.goal_categories);
+    out += detail::render_section("goals", "What You Worked On", agg.goal_categories);
     out += detail::render_section("outcomes", "Outcomes", agg.outcomes);
-    out += detail::render_section("satisfaction", "Satisfaction",
-                                  agg.satisfaction);
-    out += detail::render_section("helpfulness", "Loom Helpfulness",
-                                  agg.helpfulness);
-    out += detail::render_section("types", "Session Types",
-                                  agg.session_types);
-    out += detail::render_section("friction", "Where Things Went Wrong",
-                                  agg.friction);
-    out += detail::render_section("success", "What Worked Well",
-                                  agg.success);
+    out += detail::render_section("satisfaction", "Satisfaction", agg.satisfaction);
+    out += detail::render_section("helpfulness", "Loom Helpfulness", agg.helpfulness);
+    out += detail::render_section("types", "Session Types", agg.session_types);
+    out += detail::render_section("friction", "Where Things Went Wrong", agg.friction);
+    out += detail::render_section("success", "What Worked Well", agg.success);
 
     out += "</body>\n</html>\n";
     return out;
@@ -502,8 +496,7 @@ namespace detail {
 // the facets tagged with the supplied session id. It is the unit of behaviour
 // the seam encapsulates so the parsing/validation can be tested with a stub.
 // ============================================================================
-using LlmExtractFn =
-    std::function<std::optional<std::string>(const std::string& transcript)>;
+using LlmExtractFn = std::function<std::optional<std::string>(const std::string& transcript)>;
 
 /// The facet extraction prompt prefix — verbatim from the TS source. Exported
 /// so callers (and tests) can assert the contract matches the TS feature.
@@ -542,8 +535,7 @@ inline const std::string& facet_extraction_prompt() {
 /// invalid schema) — mirroring the TS extractFacetsFromAPI null-on-failure
 /// contract.
 [[nodiscard]] inline std::optional<SessionFacets>
-extract_facets_with_seam(const LlmExtractFn& seam,
-                         const std::string& transcript,
+extract_facets_with_seam(const LlmExtractFn& seam, const std::string& transcript,
                          std::string_view session_id) {
     if (!seam) return std::nullopt;
     auto text = seam(transcript);
@@ -552,8 +544,7 @@ extract_facets_with_seam(const LlmExtractFn& seam,
     // Match the first {...} blob, like the TS /\{[\s\S]*\}/ regex.
     auto first = text->find('{');
     auto last = text->rfind('}');
-    if (first == std::string::npos || last == std::string::npos ||
-        last <= first) {
+    if (first == std::string::npos || last == std::string::npos || last <= first) {
         return std::nullopt;
     }
     auto blob = text->substr(first, last - first + 1);
@@ -579,8 +570,7 @@ public:
     [[nodiscard]] static CommandDefinition definition() {
         return CommandDefinition{
             .name = "insights",
-            .description =
-                "Report local usage statistics and session facet analysis",
+            .description = "Report local usage statistics and session facet analysis",
             .args = {},
             .category = "tools",
             .aliases = {},
@@ -588,9 +578,7 @@ public:
         };
     }
 
-    [[nodiscard]] static VoidResult validate(const CommandContext&) {
-        return {};
-    }
+    [[nodiscard]] static VoidResult validate(const CommandContext&) { return {}; }
 
     [[nodiscard]] static Result<CommandResult> execute(const CommandContext& ctx) {
         auto sessions = loom::utils::list_sessions(std::nullopt);
@@ -617,21 +605,18 @@ public:
         out += std::format("  Total sessions: {}\n", sessions.size());
         out += std::format("  Total messages: {}\n", total_messages);
         if (total_messages > 0) {
-            out += std::format(
-                "  Avg messages/session: {:.1}\n",
-                static_cast<double>(total_messages) /
-                    static_cast<double>(sessions.size()));
+            out += std::format("  Avg messages/session: {:.1}\n",
+                               static_cast<double>(total_messages) /
+                                   static_cast<double>(sessions.size()));
         }
-        out += std::format("  Sessions with a recorded model: {}\n",
-                           with_model);
+        out += std::format("  Sessions with a recorded model: {}\n", with_model);
 
         if (!by_model.empty()) {
             out += "\n  Sessions by model:\n";
-            std::vector<std::pair<std::string, std::size_t>> sorted(
-                by_model.begin(), by_model.end());
-            std::ranges::sort(sorted, [](const auto& a, const auto& b) {
-                return a.second > b.second;
-            });
+            std::vector<std::pair<std::string, std::size_t>> sorted(by_model.begin(),
+                                                                    by_model.end());
+            std::ranges::sort(sorted,
+                              [](const auto& a, const auto& b) { return a.second > b.second; });
             for (const auto& [model, count] : sorted) {
                 out += std::format("    {:<30} {}\n", model, count);
             }
@@ -647,28 +632,25 @@ public:
         }
 
         // Build a structured stats text for the LLM narrative fallback.
-        std::string stats_text = std::format(
-            "Total sessions: {}\n"
-            "Total messages: {}\n"
-            "Average messages per session: {:.1f}\n"
-            "Sessions with a recorded model: {} of {}\n",
-            sessions.size(), total_messages,
-            sessions.empty() ? 0.0 :
-                static_cast<double>(total_messages) /
-                    static_cast<double>(sessions.size()),
-            with_model, sessions.size());
+        std::string stats_text =
+            std::format("Total sessions: {}\n"
+                        "Total messages: {}\n"
+                        "Average messages per session: {:.1f}\n"
+                        "Sessions with a recorded model: {} of {}\n",
+                        sessions.size(), total_messages,
+                        sessions.empty() ? 0.0
+                                         : static_cast<double>(total_messages) /
+                                               static_cast<double>(sessions.size()),
+                        with_model, sessions.size());
 
         if (!by_model.empty()) {
             stats_text += "\nModel distribution (sessions per model):\n";
-            std::vector<std::pair<std::string, std::size_t>> sorted_models(
-                by_model.begin(), by_model.end());
+            std::vector<std::pair<std::string, std::size_t>> sorted_models(by_model.begin(),
+                                                                           by_model.end());
             std::ranges::sort(sorted_models,
-                              [](const auto& a, const auto& b) {
-                                  return a.second > b.second;
-                              });
+                              [](const auto& a, const auto& b) { return a.second > b.second; });
             for (const auto& [model, count] : sorted_models) {
-                stats_text += std::format("  - {}: {} sessions\n",
-                                          model, count);
+                stats_text += std::format("  - {}: {} sessions\n", model, count);
             }
         }
 
@@ -676,10 +658,8 @@ public:
         std::size_t recent_shown = 0;
         for (const auto& s : sessions) {
             if (recent_shown++ >= 10) break;
-            stats_text += std::format("  - {} | {} messages",
-                                      s.id, s.message_count);
-            if (!s.model.empty())
-                stats_text += std::format(" | model: {}", s.model);
+            stats_text += std::format("  - {} | {} messages", s.id, s.message_count);
+            if (!s.model.empty()) stats_text += std::format(" | model: {}", s.model);
             stats_text += "\n";
         }
 
@@ -695,8 +675,7 @@ public:
 
         if (!facets.empty()) {
             auto agg = aggregate_facets(facets);
-            out += std::format("\n  Facet analysis ({} sessions):\n",
-                               agg.sessions_with_facets);
+            out += std::format("\n  Facet analysis ({} sessions):\n", agg.sessions_with_facets);
             out += render_facet_summary(agg);
 
             // Best-effort HTML report write. Date range is derived from the
@@ -708,16 +687,14 @@ public:
                 date_end = format_date(sessions.front().last_active);
                 date_start = format_date(sessions.back().last_active);
             }
-            auto html = render_html_report(sessions.size(), total_messages,
-                                           date_start, date_end, agg);
+            auto html =
+                render_html_report(sessions.size(), total_messages, date_start, date_end, agg);
             auto report_path = detail::usage_data_dir() / "report.html";
             std::error_code ec;
             fs::create_directories(detail::usage_data_dir(), ec);
-            if (std::ofstream f(report_path, std::ios::binary | std::ios::trunc);
-                f) {
+            if (std::ofstream f(report_path, std::ios::binary | std::ios::trunc); f) {
                 f << html;
-                out += std::format("\n  HTML report written to: {}\n",
-                                   report_path.string());
+                out += std::format("\n  HTML report written to: {}\n", report_path.string());
             }
         } else {
             // No cached facets — fall back to LLM narrative analysis.
@@ -725,62 +702,57 @@ public:
             // model produces a 6-section narrative insight report from
             // the raw session statistics.
             constexpr int ACTION_ADD_NOTIFICATION = 18;
-            std::string note = std::format(
-                "Analyzing {} sessions ({} messages) for insights…",
-                sessions.size(), total_messages);
+            std::string note = std::format("Analyzing {} sessions ({} messages) for insights…",
+                                           sessions.size(), total_messages);
             ctx.dispatch_action(ACTION_ADD_NOTIFICATION, &note);
 
-            std::string narrative_prompt = std::format(
-                "Analyze my Loom usage patterns based on the "
-                "following session statistics. These are local session "
-                "scans — no rich facet extraction (goal categories, "
-                "outcomes, friction tags) is available, so work from "
-                "the aggregate signals below.\n\n"
-                "## Session Statistics\n\n"
-                "{}\n\n"
-                "## Analysis Request\n\n"
-                "Please provide a narrative insight report in these "
-                "six sections:\n\n"
-                "1. **Project Areas**: What types of work appear to "
-                "dominate my sessions? Consider model choices, message "
-                "volumes, and session recency patterns to infer the "
-                "kinds of projects and tasks I engage with most.\n\n"
-                "2. **Interaction Style**: How do I engage with Loom "
-                "Code? Look at session length, message frequency, and "
-                "model preferences to characterize my interaction "
-                "patterns — e.g., deep work sessions vs. quick queries.\n\n"
-                "3. **What Works Well**: Productive patterns you can "
-                "observe. Which models do I prefer, and what might "
-                "that say about the tasks where Loom is most helpful?\n\n"
-                "4. **Friction Analysis**: Where might I be struggling "
-                "or encountering inefficiencies? Consider unusually "
-                "long sessions, high message counts per session, or "
-                "model switching patterns.\n\n"
-                "5. **Suggestions for Improvement**: Concrete, "
-                "actionable suggestions based on the data. Be specific "
-                "about what I could do differently.\n\n"
-                "6. **On the Horizon**: Emerging patterns or trends "
-                "visible in recent sessions compared to older ones.\n\n"
-                "Be data-driven. Where statistics are limited or "
-                "ambiguous, note that clearly rather than speculating. "
-                "Format each section with a bold heading and 2-4 "
-                "sentences of analysis.",
-                stats_text);
+            std::string narrative_prompt =
+                std::format("Analyze my Loom usage patterns based on the "
+                            "following session statistics. These are local session "
+                            "scans — no rich facet extraction (goal categories, "
+                            "outcomes, friction tags) is available, so work from "
+                            "the aggregate signals below.\n\n"
+                            "## Session Statistics\n\n"
+                            "{}\n\n"
+                            "## Analysis Request\n\n"
+                            "Please provide a narrative insight report in these "
+                            "six sections:\n\n"
+                            "1. **Project Areas**: What types of work appear to "
+                            "dominate my sessions? Consider model choices, message "
+                            "volumes, and session recency patterns to infer the "
+                            "kinds of projects and tasks I engage with most.\n\n"
+                            "2. **Interaction Style**: How do I engage with Loom "
+                            "Code? Look at session length, message frequency, and "
+                            "model preferences to characterize my interaction "
+                            "patterns — e.g., deep work sessions vs. quick queries.\n\n"
+                            "3. **What Works Well**: Productive patterns you can "
+                            "observe. Which models do I prefer, and what might "
+                            "that say about the tasks where Loom is most helpful?\n\n"
+                            "4. **Friction Analysis**: Where might I be struggling "
+                            "or encountering inefficiencies? Consider unusually "
+                            "long sessions, high message counts per session, or "
+                            "model switching patterns.\n\n"
+                            "5. **Suggestions for Improvement**: Concrete, "
+                            "actionable suggestions based on the data. Be specific "
+                            "about what I could do differently.\n\n"
+                            "6. **On the Horizon**: Emerging patterns or trends "
+                            "visible in recent sessions compared to older ones.\n\n"
+                            "Be data-driven. Where statistics are limited or "
+                            "ambiguous, note that clearly rather than speculating. "
+                            "Format each section with a bold heading and 2-4 "
+                            "sentences of analysis.",
+                            stats_text);
 
             return CommandResult::inject(std::move(narrative_prompt));
         }
         return CommandResult::success(std::move(out));
     }
 
-    [[nodiscard]] static std::vector<std::string>
-    complete(std::string_view) {
-        return {};
-    }
+    [[nodiscard]] static std::vector<std::string> complete(std::string_view) { return {}; }
 
 private:
     /// Format a time_point as YYYY-MM-DD for the report date range.
-    [[nodiscard]] static std::string
-    format_date(std::chrono::system_clock::time_point tp) {
+    [[nodiscard]] static std::string format_date(std::chrono::system_clock::time_point tp) {
         const auto t = std::chrono::system_clock::to_time_t(tp);
         std::tm tm{};
         gmtime_r(&t, &tm);
@@ -791,18 +763,14 @@ private:
 
     /// Render the aggregate facet breakdown as a compact text summary for the
     /// command's stdout output. Top-3 per dimension, humanised labels.
-    [[nodiscard]] static std::string
-    render_facet_summary(const AggregatedFacets& agg) {
-        auto render_top = [](const std::map<std::string, std::size_t>& m,
-                             std::size_t n) {
+    [[nodiscard]] static std::string render_facet_summary(const AggregatedFacets& agg) {
+        auto render_top = [](const std::map<std::string, std::size_t>& m, std::size_t n) {
             if (m.empty()) return std::string("    (none)\n");
-            std::vector<std::pair<std::string, std::size_t>> rows(m.begin(),
-                                                                  m.end());
-            std::sort(rows.begin(), rows.end(),
-                      [](const auto& a, const auto& b) {
-                          if (a.second != b.second) return a.second > b.second;
-                          return a.first < b.first;
-                      });
+            std::vector<std::pair<std::string, std::size_t>> rows(m.begin(), m.end());
+            std::sort(rows.begin(), rows.end(), [](const auto& a, const auto& b) {
+                if (a.second != b.second) return a.second > b.second;
+                return a.first < b.first;
+            });
             std::string s;
             std::size_t i = 0;
             for (const auto& [k, v] : rows) {
@@ -822,4 +790,4 @@ private:
     }
 };
 
-} // namespace loom::commands
+}  // namespace loom::commands

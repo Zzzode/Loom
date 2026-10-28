@@ -16,41 +16,41 @@
 // root and screens-area modules import a store.
 module;
 
-#include <cstdint>
-
 #include <ftxui/component/event.hpp>
+
+#include <cstdint>
 
 export module loom.ui.screens.repl_state;
 
 import std;
 
 import loom.types.types;
-import loom.ui.foundation.ui_types;                 // loom::ui::common::PromptInputMode
-import loom.ui.dialogs.system;                     // DialogQueue / payloads
-import loom.ui.prompt.prompt_input_footer;         // footer::* projection types
-import loom.ui.screens.messages_store;             // MessagesStore / MessageDisplayEntry
-import loom.ui.screens.prompt_store;               // PromptStore / StashedPrompt
-import loom.ui.screens.task_view_store;            // TaskViewStore / SpinnerMode
-import loom.ui.screens.permission_store;           // PermissionStore / PermissionRequestInfo
-import loom.ui.screens.dialog_store;               // DialogStore / dialog handles
-import loom.ui.screens.mcp_status_store;           // McpStatusStore
-import loom.ui.screens.chrome_store;               // ChromeStore / StatusBarData
-import loom.ui.screens.todo_store;                 // TodoStore (todo-list panel)
-import loom.ui.features.agents.agent_cards;        // AgentCardData
-import loom.ui.features.agents.agent_wizard;       // WizardDraft (callback sig)
+import loom.ui.foundation.ui_types;          // loom::ui::common::PromptInputMode
+import loom.ui.dialogs.system;               // DialogQueue / payloads
+import loom.ui.prompt.prompt_input_footer;   // footer::* projection types
+import loom.ui.screens.messages_store;       // MessagesStore / MessageDisplayEntry
+import loom.ui.screens.prompt_store;         // PromptStore / StashedPrompt
+import loom.ui.screens.task_view_store;      // TaskViewStore / SpinnerMode
+import loom.ui.screens.permission_store;     // PermissionStore / PermissionRequestInfo
+import loom.ui.screens.dialog_store;         // DialogStore / dialog handles
+import loom.ui.screens.mcp_status_store;     // McpStatusStore
+import loom.ui.screens.chrome_store;         // ChromeStore / StatusBarData
+import loom.ui.screens.todo_store;           // TodoStore (todo-list panel)
+import loom.ui.features.agents.agent_cards;  // AgentCardData
+import loom.ui.features.agents.agent_wizard; // WizardDraft (callback sig)
 import loom.ui.widgets.text_input;
-import loom.ui.visual.markdown;                    // arch-check: keep-import (StreamingMarkdown ptr field)
+import loom.ui.visual.markdown; // arch-check: keep-import (StreamingMarkdown ptr field)
 
 export namespace loom::ui::repl_screen {
 using namespace ftxui;
 
 // M7: pull the dialog framework types up into convenient aliases.
-namespace dsys_fw   = loom::ui::dialogs::system;
-namespace cards     = loom::ui::agents::cards;
-using DialogQueue            = dsys_fw::DialogQueue;
+namespace dsys_fw = loom::ui::dialogs::system;
+namespace cards = loom::ui::agents::cards;
+using DialogQueue = dsys_fw::DialogQueue;
 using DialogRendererRegistry = dsys_fw::DialogRendererRegistry;
-using DialogRenderContext    = dsys_fw::DialogRenderContext;
-using DialogPayloadVariant   = dsys_fw::DialogPayloadVariant;
+using DialogRenderContext = dsys_fw::DialogRenderContext;
+using DialogPayloadVariant = dsys_fw::DialogPayloadVariant;
 
 // =========================================================
 // Enums
@@ -59,7 +59,7 @@ using DialogPayloadVariant   = dsys_fw::DialogPayloadVariant;
 /// Top-level mode.  1:1 with the focusedInputDialog union
 /// plus contextual panel modes.  Names in trailing comments.
 enum class ReplMode : std::uint8_t {
-    Normal,                   // (none) — base layout
+    Normal,  // (none) — base layout
     // Dialogs (overlay via dbox)
     MessageSelector,          // 'message-selector'
     SandboxPermission,        // 'sandbox-permission'
@@ -80,12 +80,18 @@ enum class ReplMode : std::uint8_t {
     LspRecommendation,        // 'lsp-recommendation'
     PluginHint,               // 'plugin-hint'
     // Panels (rendered inline — no overlay)
-    TasksView, TeamsView, AgentsView, SettingsView, HelpView, AboutView, QuickOpen,
+    TasksView,
+    TeamsView,
+    AgentsView,
+    SettingsView,
+    HelpView,
+    AboutView,
+    QuickOpen,
     // UI13 — agent wizard (create/edit).
-    CreateAgent,        // 4-step new-agent wizard
-    EditAgent,          // 4-step edit-agent wizard
+    CreateAgent,  // 4-step new-agent wizard
+    EditAgent,    // 4-step edit-agent wizard
     // UI8  — trust dialog (standalone takeover; 4-tier risk UX).
-    TrustDialog,        // 'trust-dialog'
+    TrustDialog,  // 'trust-dialog'
 };
 
 /// Input modes — unified canonical enum from loom::ui::common.
@@ -206,9 +212,9 @@ struct ReplScreenState {
     // RenderNotifications() picks the highest-priority active item.
     loom::ui::prompt::footer::ApiKeyStatus api_key_status =
         loom::ui::prompt::footer::ApiKeyStatus::Unknown;
-    bool is_remote_session = false;   // LOOM_REMOTE → changes error text
-    bool debug_mode = false;          // "Debug mode" pill
-    bool verbose = false;             // show token count when valid + verbose
+    bool is_remote_session = false;  // LOOM_REMOTE → changes error text
+    bool debug_mode = false;         // "Debug mode" pill
+    bool verbose = false;            // show token count when valid + verbose
     // IDE selection indicator (IdeStatusIndicator)
     bool ide_connected = false;
     std::optional<std::string> ide_file_path;
@@ -227,6 +233,7 @@ struct ReplScreenState {
     // app.cppm). The renderer mods this by kWelcomeTips.size(). Previously the
     // tip used spinner_frame, which cycled the tip on every mouse-move re-render.
     std::size_t welcome_tip_index{0};
+
     struct AutocompleteSuggestion {
         std::string display_text;
         std::string description;
@@ -249,6 +256,7 @@ struct ReplScreenState {
         /// in the picker.
         std::string color_name{};
     };
+
     std::vector<AutocompleteSuggestion> autocomplete_suggestions;
     // INF-05: input text at which the user dismissed the popup with Esc.
     // RefreshAutocompleteSuggestions stays dismissed until the input changes
@@ -296,8 +304,8 @@ struct ReplScreenState {
     PermissionStore permission_store;
     // Settings-driven UI configuration (the settings subset
     // that the renderer needs — populated by the engine/app layer).
-    std::string settings_model;             // Configured default model
-    std::string settings_agent_name;        // Configured settings.agent
+    std::string settings_model;       // Configured default model
+    std::string settings_agent_name;  // Configured settings.agent
 
     // Bridge / remote-control footer projection (bridge
     // fields; projected from the app store in SyncState).
@@ -306,7 +314,7 @@ struct ReplScreenState {
     bool bridge_connected = false;
     bool bridge_session_active = false;
     bool bridge_reconnecting = false;
-    bool bridge_selected = false;           // footer item focused (IDE selection)
+    bool bridge_selected = false;  // footer item focused (IDE selection)
 
     // Footer pasting indicator (isPasting +
     // PASTE_COMPLETION_TIMEOUT_MS = 100ms). A multi-char event (terminal
@@ -328,10 +336,10 @@ struct ReplScreenState {
     std::optional<std::chrono::steady_clock::time_point> exit_message_until;
     std::string exit_message_key = "Ctrl-C";
 
-    bool status_line_enabled = false;       // User-configurable status line
-    std::string status_line_command;        // Shell command for status line
-    int status_line_padding = 0;            // Horizontal padding for status line
-    std::string status_line_text;           // Cached output of the status line command (may contain ANSI)
+    bool status_line_enabled = false;  // User-configurable status line
+    std::string status_line_command;   // Shell command for status line
+    int status_line_padding = 0;       // Horizontal padding for status line
+    std::string status_line_text;  // Cached output of the status line command (may contain ANSI)
 
     // Built-in status bar (the toggleable segment bar rendered by
     // RenderBuiltinStatusLine).  Driven by the `statusLine` config key's
@@ -364,8 +372,8 @@ struct ReplScreenCallbacks {
     std::function<void(const std::string&, InputMode)> on_submit;
     // A rejected view-local submission retains its editor text and history.
     std::function<bool(const std::string&, InputMode)> on_submit_checked;
-    std::function<void()> on_interrupt;                 // Ctrl+C
-    std::function<void()> on_exit;                      // Ctrl+D or /exit
+    std::function<void()> on_interrupt;  // Ctrl+C
+    std::function<void()> on_exit;       // Ctrl+D or /exit
     /// 'ctrl+l':'app:redraw'
     /// (Global context) + handleRedraw ->
     /// forceRedraw (ERASE_SCREEN '\x1b[2J' + CURSOR_HOME '\x1b[H', then
@@ -384,12 +392,13 @@ struct ReplScreenCallbacks {
         std::string_view decision,  // "allow_once", "allow_always", "deny", "abort"
         std::string_view scope,     // "session", "global", "project", "loom_folder", etc.
         std::string_view feedback   // user feedback text, may be empty
-    )> on_permission_decision;
+        )>
+        on_permission_decision;
     std::function<void(ReplMode, int)> on_dialog_action;
     std::function<void(ReplMode)> on_mode_change;
     std::function<void(const std::string& command)> enqueue_slash_command;
-    std::function<std::optional<loom::ui::agents::cards::AgentCardData>(
-        std::string_view agent_id)> load_agent_for_wizard;
+    std::function<std::optional<loom::ui::agents::cards::AgentCardData>(std::string_view agent_id)>
+        load_agent_for_wizard;
     std::function<void(const loom::ui::agents::wizard::WizardDraft& draft)> save_agent_from_wizard;
     std::function<void()> on_local_jsx_cancel;
     std::function<bool(Event)> on_local_jsx_event;
@@ -414,4 +423,4 @@ struct ReplScreenCallbacks {
     ::loom::ui::StreamingMarkdown* streaming_md = nullptr;
 };
 
-}  // namespace loom::ui
+}  // namespace loom::ui::repl_screen

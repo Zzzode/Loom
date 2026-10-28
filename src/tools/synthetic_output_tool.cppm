@@ -2,7 +2,6 @@ module;
 
 #include <cstddef>
 
-
 export module loom.tools.synthetic_output_tool;
 
 import std;
@@ -17,38 +16,35 @@ struct SyntheticOutput {
 
 namespace detail {
 
-    inline std::mutex g_templates_mutex;
-    inline std::map<std::string, std::string> g_templates = {
+inline std::mutex g_templates_mutex;
+inline std::map<std::string, std::string> g_templates = {
 
-        {"summary", "## Summary\n\n{{content}}\n\n---\n*Generated at {{timestamp}}*"},
-        {"error_report", "## Error Report\n\n**Error**: {{error}}\n**Context**: {{context}}\n**Suggestion**: {{suggestion}}"},
-        {"task_complete", "✓ Task completed: {{description}}\n\nDuration: {{duration}}\nResult: {{result}}"},
-        {"code_review", "## Code Review\n\n**File**: {{file}}\n**Changes**: {{changes}}\n\n### Findings\n{{findings}}"},
-        {"progress", "[{{current}}/{{total}}] {{message}}"},
-    };
-}
+    {"summary", "## Summary\n\n{{content}}\n\n---\n*Generated at {{timestamp}}*"},
+    {"error_report", "## Error Report\n\n**Error**: {{error}}\n**Context**: "
+                     "{{context}}\n**Suggestion**: {{suggestion}}"},
+    {"task_complete",
+     "✓ Task completed: {{description}}\n\nDuration: {{duration}}\nResult: {{result}}"},
+    {"code_review", "## Code Review\n\n**File**: {{file}}\n**Changes**: {{changes}}\n\n### "
+                    "Findings\n{{findings}}"},
+    {"progress", "[{{current}}/{{total}}] {{message}}"},
+};
+}  // namespace detail
 
-inline auto register_output_template(
-    std::string_view name,
-    std::string_view template_str
-) -> void {
+inline auto register_output_template(std::string_view name, std::string_view template_str) -> void {
     std::lock_guard lock(detail::g_templates_mutex);
     detail::g_templates[std::string(name)] = std::string(template_str);
 }
 
-inline auto generate_synthetic_output(
-    std::string_view template_name,
-    const std::map<std::string, std::string>& vars
-) -> SyntheticOutput {
+inline auto generate_synthetic_output(std::string_view template_name,
+                                      const std::map<std::string, std::string>& vars)
+    -> SyntheticOutput {
     std::lock_guard lock(detail::g_templates_mutex);
 
     auto it = detail::g_templates.find(std::string(template_name));
     if (it == detail::g_templates.end()) {
-        return SyntheticOutput{
-            .content = "Template not found: " + std::string(template_name),
-            .format = "text",
-            .metadata = {{"error", "template_not_found"}}
-        };
+        return SyntheticOutput{.content = "Template not found: " + std::string(template_name),
+                               .format = "text",
+                               .metadata = {{"error", "template_not_found"}}};
     }
 
     std::string result = it->second;
@@ -72,8 +68,7 @@ inline auto generate_synthetic_output(
     }
 
     std::string format = "text";
-    if (result.find('#') != std::string::npos ||
-        result.find("**") != std::string::npos) {
+    if (result.find('#') != std::string::npos || result.find("**") != std::string::npos) {
         format = "markdown";
     }
     if (result.starts_with("{") || result.starts_with("[")) {
@@ -87,11 +82,7 @@ inline auto generate_synthetic_output(
     metadata["template"] = std::string(template_name);
     metadata["vars_count"] = std::to_string(vars.size());
 
-    return SyntheticOutput{
-        .content = result,
-        .format = format,
-        .metadata = metadata
-    };
+    return SyntheticOutput{.content = result, .format = format, .metadata = metadata};
 }
 
-} // namespace loom::tools
+}  // namespace loom::tools

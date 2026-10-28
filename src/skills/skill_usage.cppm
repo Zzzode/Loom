@@ -8,7 +8,6 @@
 /// for robustness; semantically equivalent to TS's Record<name,{usageCount,lastUsedAt}>.
 module;
 
-
 export module loom.skills.support;
 
 import std;

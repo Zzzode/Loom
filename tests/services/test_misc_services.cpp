@@ -1,20 +1,21 @@
 /// @file test_misc_services.cpp
 /// @brief Service layer tests split from test_services.cpp.
 
-#include <cctype>
-#include <cstdint>
-#include <cstdlib>
-#include <atomic>
 #include <arpa/inet.h>
 #include <fcntl.h>
 #include <netinet/in.h>
 #include <signal.h>
+#include <sys/file.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/time.h>
-#include <sys/file.h>
 #include <sys/wait.h>
 #include <unistd.h>
+
+#include <atomic>
+#include <cctype>
+#include <cstdint>
+#include <cstdlib>
 #ifdef __APPLE__
 #include <CommonCrypto/CommonDigest.h>
 #else
@@ -23,9 +24,8 @@
 
 #include <gtest/gtest.h>
 #include <httplib.h>
+
 #include <limits>
-
-
 
 import std;
 import loom.cli.ccr_client;
@@ -86,7 +86,8 @@ struct EnvironmentGuard {
     std::string name;
     std::optional<std::string> previous;
 
-    EnvironmentGuard(std::string key, const std::string& value) : name(std::move(key)) {
+    EnvironmentGuard(std::string key, const std::string& value)
+        : name(std::move(key)) {
         if (const char* existing = std::getenv(name.c_str())) {
             previous = existing;
         }
@@ -154,9 +155,7 @@ public:
         }
 
         running_.store(true);
-        accept_thread_ = std::jthread([this](std::stop_token stop) {
-            accept_loop(stop);
-        });
+        accept_thread_ = std::jthread([this](std::stop_token stop) { accept_loop(stop); });
     }
 
     ~LocalCcrHttpServer() {
@@ -170,13 +169,11 @@ public:
 
     [[nodiscard]] bool ready() const noexcept { return listen_fd_ >= 0 && port_ != 0; }
 
-    [[nodiscard]] std::string base_url() const {
-        return std::format("http://127.0.0.1:{}", port_);
-    }
+    [[nodiscard]] std::string base_url() const { return std::format("http://127.0.0.1:{}", port_); }
 
-    [[nodiscard]] std::optional<std::vector<LocalCcrHttpRequest>> wait_for_requests(
-        std::size_t count,
-        std::chrono::milliseconds timeout = std::chrono::seconds(3)) {
+    [[nodiscard]] std::optional<std::vector<LocalCcrHttpRequest>>
+    wait_for_requests(std::size_t count,
+                      std::chrono::milliseconds timeout = std::chrono::seconds(3)) {
         std::unique_lock lock(mutex_);
         if (!cv_.wait_for(lock, timeout, [this, count] { return requests_.size() >= count; })) {
             return std::nullopt;
@@ -189,7 +186,8 @@ private:
         while (!stop.stop_requested() && running_.load()) {
             sockaddr_in client_addr{};
             socklen_t client_len = sizeof(client_addr);
-            int client_fd = ::accept(listen_fd_, reinterpret_cast<sockaddr*>(&client_addr), &client_len);
+            int client_fd =
+                ::accept(listen_fd_, reinterpret_cast<sockaddr*>(&client_addr), &client_len);
             if (client_fd < 0) {
                 if (!running_.load()) break;
                 continue;
@@ -243,20 +241,18 @@ private:
     }
 
     static bool send_response(int fd, int status, std::string_view reason, std::string_view body) {
-        const auto response = std::format(
-            "HTTP/1.1 {} {}\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{}",
-            status,
-            reason,
-            body.size(),
-            body);
+        const auto response =
+            std::format("HTTP/1.1 {} {}\r\nContent-Type: application/json\r\nContent-Length: "
+                        "{}\r\nConnection: close\r\n\r\n{}",
+                        status, reason, body.size(), body);
         return send_all(fd, response);
     }
 
     static bool send_sse_response(int fd, std::string_view body) {
-        const auto response = std::format(
-            "HTTP/1.1 200 OK\r\nContent-Type: text/event-stream\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{}",
-            body.size(),
-            body);
+        const auto response =
+            std::format("HTTP/1.1 200 OK\r\nContent-Type: text/event-stream\r\nContent-Length: "
+                        "{}\r\nConnection: close\r\n\r\n{}",
+                        body.size(), body);
         return send_all(fd, response);
     }
 
@@ -273,7 +269,8 @@ private:
             send_response(fd, 201, "Created", R"({"id":"remote-session-1"})");
             return;
         }
-        if (request->method == "POST" && request->path == "/api/sessions/remote-session-1/messages") {
+        if (request->method == "POST" &&
+            request->path == "/api/sessions/remote-session-1/messages") {
             send_response(fd, 200, "OK", R"({"content":"remote-ok"})");
             return;
         }
@@ -281,15 +278,15 @@ private:
             send_response(fd, 201, "Created", R"({"ok":true})");
             return;
         }
-        if (request->method == "POST" && request->path == "/api/sessions/remote-session-1/messages?stream=true") {
-            send_sse_response(fd,
-                "event: message\r\n"
-                "data: {\"delta\":\"one\"}\r\n"
-                "\r\n"
-                "data: {\"delta\":\"two\"}\r\n"
-                "\r\n"
-                "data: [DONE]\r\n"
-                "\r\n");
+        if (request->method == "POST" &&
+            request->path == "/api/sessions/remote-session-1/messages?stream=true") {
+            send_sse_response(fd, "event: message\r\n"
+                                  "data: {\"delta\":\"one\"}\r\n"
+                                  "\r\n"
+                                  "data: {\"delta\":\"two\"}\r\n"
+                                  "\r\n"
+                                  "data: [DONE]\r\n"
+                                  "\r\n");
             return;
         }
         if (request->method == "DELETE" && request->path == "/api/sessions/remote-session-1") {
@@ -337,9 +334,7 @@ public:
         }
 
         running_.store(true);
-        accept_thread_ = std::jthread([this](std::stop_token stop) {
-            accept_loop(stop);
-        });
+        accept_thread_ = std::jthread([this](std::stop_token stop) { accept_loop(stop); });
     }
 
     ~LocalWebSocketMcpServer() {
@@ -352,6 +347,7 @@ public:
     }
 
     [[nodiscard]] bool ready() const noexcept { return listen_fd_ >= 0 && port_ != 0; }
+
     [[nodiscard]] std::uint16_t port() const noexcept { return port_; }
 
     [[nodiscard]] std::vector<std::string> requests() const {
@@ -364,8 +360,8 @@ public:
         return handshake_headers_;
     }
 
-    [[nodiscard]] bool wait_for_tool_call(
-        std::chrono::milliseconds timeout = std::chrono::seconds(3)) {
+    [[nodiscard]] bool
+    wait_for_tool_call(std::chrono::milliseconds timeout = std::chrono::seconds(3)) {
         std::unique_lock lock(mutex_);
         return cv_.wait_for(lock, timeout, [this] { return saw_tool_call_; });
     }
@@ -375,7 +371,8 @@ private:
         while (!stop.stop_requested() && running_.load()) {
             sockaddr_in client_addr{};
             socklen_t client_len = sizeof(client_addr);
-            int client_fd = ::accept(listen_fd_, reinterpret_cast<sockaddr*>(&client_addr), &client_len);
+            int client_fd =
+                ::accept(listen_fd_, reinterpret_cast<sockaddr*>(&client_addr), &client_len);
             if (client_fd < 0) {
                 if (!running_.load()) break;
                 continue;
@@ -429,7 +426,8 @@ private:
             unsigned char ext[8]{};
             if (!read_exact(fd, reinterpret_cast<char*>(ext), 8)) return std::nullopt;
             len = 0;
-            for (unsigned char byte : ext) len = (len << 8) | byte;
+            for (unsigned char byte : ext)
+                len = (len << 8) | byte;
         }
 
         std::array<unsigned char, 4> mask{};
@@ -477,12 +475,11 @@ private:
             handshake_headers_ = *headers;
         }
 
-        const std::string response =
-            "HTTP/1.1 101 Switching Protocols\r\n"
-            "Upgrade: websocket\r\n"
-            "Connection: Upgrade\r\n"
-            "Sec-WebSocket-Accept: local-test\r\n"
-            "Sec-WebSocket-Protocol: mcp\r\n\r\n";
+        const std::string response = "HTTP/1.1 101 Switching Protocols\r\n"
+                                     "Upgrade: websocket\r\n"
+                                     "Connection: Upgrade\r\n"
+                                     "Sec-WebSocket-Accept: local-test\r\n"
+                                     "Sec-WebSocket-Protocol: mcp\r\n\r\n";
         if (!send_all(fd, response)) return;
 
         while (running_.load()) {
@@ -511,8 +508,7 @@ private:
                 const auto name = std::string(params.get("name").as_str());
                 auto payload = std::format(
                     R"({{"jsonrpc":"2.0","id":{},"result":{{"content":[{{"type":"text","text":"called:{}"}}],"isError":false}}}})",
-                    json_id_literal(id),
-                    name);
+                    json_id_literal(id), name);
                 send_text_frame(fd, payload);
                 {
                     std::lock_guard lock(mutex_);
@@ -564,9 +560,7 @@ public:
         }
 
         running_.store(true);
-        accept_thread_ = std::jthread([this](std::stop_token stop) {
-            accept_loop(stop);
-        });
+        accept_thread_ = std::jthread([this](std::stop_token stop) { accept_loop(stop); });
     }
 
     ~LocalSseMcpServer() {
@@ -591,17 +585,11 @@ public:
         }
     }
 
-    [[nodiscard]] bool ready() const {
-        return listen_fd_ >= 0 && port_ != 0;
-    }
+    [[nodiscard]] bool ready() const { return listen_fd_ >= 0 && port_ != 0; }
 
-    [[nodiscard]] std::string url() const {
-        return std::format("http://127.0.0.1:{}/sse", port_);
-    }
+    [[nodiscard]] std::string url() const { return std::format("http://127.0.0.1:{}/sse", port_); }
 
-    [[nodiscard]] uint16_t port() const {
-        return port_;
-    }
+    [[nodiscard]] uint16_t port() const { return port_; }
 
     [[nodiscard]] std::vector<std::string> post_bodies() const {
         std::lock_guard lock(posts_mutex_);
@@ -616,9 +604,7 @@ private:
                 if (!running_.load()) return;
                 continue;
             }
-            workers_.emplace_back([this, fd](std::stop_token) {
-                handle_connection(fd);
-            });
+            workers_.emplace_back([this, fd](std::stop_token) { handle_connection(fd); });
         }
     }
 
@@ -634,9 +620,11 @@ private:
         const auto content_length_pos = request.find("Content-Length:");
         if (content_length_pos == std::string::npos) return request;
         auto value_start = content_length_pos + std::string_view("Content-Length:").size();
-        while (value_start < request.size() && request[value_start] == ' ') ++value_start;
+        while (value_start < request.size() && request[value_start] == ' ')
+            ++value_start;
         auto value_end = request.find("\r\n", value_start);
-        const auto body_len = static_cast<std::size_t>(std::atoi(request.substr(value_start, value_end - value_start).c_str()));
+        const auto body_len = static_cast<std::size_t>(
+            std::atoi(request.substr(value_start, value_end - value_start).c_str()));
         const auto body_start = request.find("\r\n\r\n") + 4;
         while (request.size() < body_start + body_len) {
             char buf[4096];
@@ -666,13 +654,12 @@ private:
             std::lock_guard lock(sse_mutex_);
             sse_fd_ = fd;
         }
-        send_all(fd,
-            "HTTP/1.1 200 OK\r\n"
-            "Content-Type: text/event-stream\r\n"
-            "Cache-Control: no-cache\r\n"
-            "Connection: keep-alive\r\n\r\n"
-            "event: endpoint\n"
-            "data: /messages\n\n");
+        send_all(fd, "HTTP/1.1 200 OK\r\n"
+                     "Content-Type: text/event-stream\r\n"
+                     "Cache-Control: no-cache\r\n"
+                     "Connection: keep-alive\r\n\r\n"
+                     "event: endpoint\n"
+                     "data: /messages\n\n");
 
         while (running_.load()) {
             std::this_thread::sleep_for(std::chrono::milliseconds{20});
@@ -686,7 +673,8 @@ private:
 
     void handle_post(int fd, const std::string& request) {
         const auto body_start = request.find("\r\n\r\n");
-        const auto body = body_start == std::string::npos ? std::string{} : request.substr(body_start + 4);
+        const auto body =
+            body_start == std::string::npos ? std::string{} : request.substr(body_start + 4);
         {
             std::lock_guard lock(posts_mutex_);
             post_bodies_.push_back(body);
@@ -710,11 +698,11 @@ private:
                 id));
         } else if (method == "tools/call") {
             const auto params = root.get("params");
-            const auto name = params.is_obj() ? std::string(params.get("name").as_str()) : std::string{};
+            const auto name =
+                params.is_obj() ? std::string(params.get("name").as_str()) : std::string{};
             send_sse_json(std::format(
                 R"({{"jsonrpc":"2.0","id":{},"result":{{"content":[{{"type":"text","text":"called:{}"}}],"isError":false}}}})",
-                id,
-                name));
+                id, name));
         }
     }
 
@@ -744,7 +732,7 @@ loom::bridge::TokenRefreshScheduler::Params fast_refresh_params() {
     return p;
 }
 
-} // namespace
+}  // namespace
 
 TEST(CcrClient, UsesDefaultHttpTransportForRemoteSessionLifecycle) {
     LocalCcrHttpServer server;
@@ -795,9 +783,10 @@ TEST(CcrClient, StreamsMessagesThroughDefaultHttpTransport) {
     ASSERT_TRUE(connected.has_value()) << connected.error();
 
     std::vector<std::pair<std::string, bool>> chunks;
-    auto streamed = client.send_message_streaming("stream \"remote\"", [&](std::string_view chunk, bool is_final) {
-        chunks.emplace_back(std::string(chunk), is_final);
-    });
+    auto streamed = client.send_message_streaming(
+        "stream \"remote\"", [&](std::string_view chunk, bool is_final) {
+            chunks.emplace_back(std::string(chunk), is_final);
+        });
     ASSERT_TRUE(streamed.has_value()) << streamed.error();
 
     ASSERT_EQ(chunks.size(), 3u);
@@ -833,13 +822,14 @@ TEST(CcrClient, StreamsMessagesThroughDefaultHttpTransport) {
 TEST(CcrClient, DoesNotInventSessionWhenRemoteHandshakeFails) {
     loom::cli::CcrClient client;
     client.set_http_transport([](const loom::cli::CcrHttpRequest&)
-        -> std::expected<loom::cli::CcrHttpResponse, std::string> {
+                                  -> std::expected<loom::cli::CcrHttpResponse, std::string> {
         return std::unexpected("network down");
     });
 
     auto connected = client.connect("https://remote.example/api", "ccr-token");
     ASSERT_FALSE(connected.has_value());
-    EXPECT_NE(connected.error().find("Remote session handshake failed: network down"), std::string::npos);
+    EXPECT_NE(connected.error().find("Remote session handshake failed: network down"),
+              std::string::npos);
     EXPECT_FALSE(client.is_connected());
 }
 
@@ -858,8 +848,7 @@ TEST(IdeIntegration, ReadsLockfileAndCallsIdeMcpTool) {
         std::ofstream lockfile(lockfile_path);
         lockfile << std::format(
             R"({{"workspaceFolders":["{}"],"pid":{},"ideName":"VS Code","transport":"sse"}})",
-            fs::current_path().string(),
-            static_cast<int>(::getpid()));
+            fs::current_path().string(), static_cast<int>(::getpid()));
     }
 
     loom::utils::ide::IdeLockfileScanner scanner;
@@ -871,14 +860,14 @@ TEST(IdeIntegration, ReadsLockfileAndCallsIdeMcpTool) {
     EXPECT_EQ(lockfiles.front().workspace_folders.front(), fs::current_path());
 
     auto response = loom::utils::ide::callIdeRpc(
-        "openFile",
-        R"({"filePath":"/tmp/example.ts","preview":false})");
+        "openFile", R"({"filePath":"/tmp/example.ts","preview":false})");
     EXPECT_TRUE(response.success) << response.error.value_or(response.result);
     EXPECT_NE(response.result.find("called:openFile"), std::string::npos) << response.result;
 
     const auto posts = server.post_bodies();
     std::string joined;
-    for (const auto& body : posts) joined += body + "\n";
+    for (const auto& body : posts)
+        joined += body + "\n";
     EXPECT_NE(joined.find(R"("method":"initialize")"), std::string::npos) << joined;
     EXPECT_NE(joined.find(R"("method":"tools/call")"), std::string::npos) << joined;
     EXPECT_NE(joined.find(R"("name":"openFile")"), std::string::npos) << joined;
@@ -891,7 +880,8 @@ TEST(IdeIntegration, CallsIdeWebSocketMcpToolFromLockfile) {
     ASSERT_TRUE(server.ready());
 
     const auto suffix = std::chrono::system_clock::now().time_since_epoch().count();
-    const auto temp_home = fs::temp_directory_path() / ("loom_ide_ws_home_" + std::to_string(suffix));
+    const auto temp_home =
+        fs::temp_directory_path() / ("loom_ide_ws_home_" + std::to_string(suffix));
     const auto ide_dir = temp_home / ".loom" / "ide";
     fs::create_directories(ide_dir);
     EnvironmentGuard home("HOME", temp_home.string());
@@ -901,24 +891,24 @@ TEST(IdeIntegration, CallsIdeWebSocketMcpToolFromLockfile) {
         std::ofstream lockfile(lockfile_path);
         lockfile << std::format(
             R"({{"workspaceFolders":["{}"],"pid":{},"ideName":"Cursor","transport":"ws","authToken":"test-token"}})",
-            fs::current_path().string(),
-            static_cast<int>(::getpid()));
+            fs::current_path().string(), static_cast<int>(::getpid()));
     }
 
     auto response = loom::utils::ide::callIdeRpc(
-        "openFile",
-        R"({"filePath":"/tmp/example.ts","preview":false})");
+        "openFile", R"({"filePath":"/tmp/example.ts","preview":false})");
     EXPECT_TRUE(response.success) << response.error.value_or(response.result);
     EXPECT_NE(response.result.find("called:openFile"), std::string::npos) << response.result;
     EXPECT_TRUE(server.wait_for_tool_call());
 
     const auto headers = server.handshake_headers();
     EXPECT_NE(headers.find("Sec-WebSocket-Protocol: mcp"), std::string::npos) << headers;
-    EXPECT_NE(headers.find("X-Loom-Code-Ide-Authorization: test-token"), std::string::npos) << headers;
+    EXPECT_NE(headers.find("X-Loom-Code-Ide-Authorization: test-token"), std::string::npos)
+        << headers;
 
     const auto requests = server.requests();
     std::string joined;
-    for (const auto& request : requests) joined += request + "\n";
+    for (const auto& request : requests)
+        joined += request + "\n";
     EXPECT_NE(joined.find(R"("method":"initialize")"), std::string::npos) << joined;
     EXPECT_NE(joined.find(R"("method":"notifications/initialized")"), std::string::npos) << joined;
     EXPECT_NE(joined.find(R"("method":"tools/call")"), std::string::npos) << joined;
@@ -929,7 +919,8 @@ TEST(IdeIntegration, CallsIdeWebSocketMcpToolFromLockfile) {
 
 TEST(IdeIntegration, DiscoversVSCodeWorkspaceMcpServersFromObjectConfig) {
     const auto suffix = std::chrono::system_clock::now().time_since_epoch().count();
-    const auto root = fs::temp_directory_path() / ("loom_vscode_mcp_workspace_" + std::to_string(suffix));
+    const auto root =
+        fs::temp_directory_path() / ("loom_vscode_mcp_workspace_" + std::to_string(suffix));
     const auto workspace = root / "workspace";
     const auto home = root / "home";
     fs::create_directories(workspace / ".vscode");
@@ -960,9 +951,8 @@ TEST(IdeIntegration, DiscoversVSCodeWorkspaceMcpServersFromObjectConfig) {
 
     auto servers = loom::services::mcp::discover_vscode_mcp_servers(workspace.string());
     auto find_server = [&servers](std::string_view name) {
-        return std::find_if(servers.begin(), servers.end(), [name](const auto& server) {
-            return server.name == name;
-        });
+        return std::find_if(servers.begin(), servers.end(),
+                            [name](const auto& server) { return server.name == name; });
     };
 
     auto stdio = find_server("workspace-stdio");
@@ -987,7 +977,8 @@ TEST(IdeIntegration, DiscoversVSCodeWorkspaceMcpServersFromObjectConfig) {
 
 TEST(IdeIntegration, DiscoversVSCodeExtensionContributedMcpServers) {
     const auto suffix = std::chrono::system_clock::now().time_since_epoch().count();
-    const auto root = fs::temp_directory_path() / ("loom_vscode_mcp_extension_" + std::to_string(suffix));
+    const auto root =
+        fs::temp_directory_path() / ("loom_vscode_mcp_extension_" + std::to_string(suffix));
     const auto workspace = root / "workspace";
     const auto home = root / "home";
     const auto extension = home / ".vscode" / "extensions" / "publisher.fixture-1.0.0";
@@ -1016,9 +1007,8 @@ TEST(IdeIntegration, DiscoversVSCodeExtensionContributedMcpServers) {
 
     auto servers = loom::services::mcp::discover_vscode_mcp_servers(workspace.string());
     auto find_server = [&servers](std::string_view name) {
-        return std::find_if(servers.begin(), servers.end(), [name](const auto& server) {
-            return server.name == name;
-        });
+        return std::find_if(servers.begin(), servers.end(),
+                            [name](const auto& server) { return server.name == name; });
     };
 
     auto stdio = find_server("extension-stdio");
@@ -1072,12 +1062,10 @@ TEST(TokenEstimator, EstimatesTextImagesToolsAndModelLimits) {
     EXPECT_TRUE(TokenEstimator::fits_in_context(1000, "test-model"));
 }
 
-
 // ─── P2-07: WorkerRegistry + Server types smoke tests ───────────────────────
 
 import loom.daemon.worker_registry;
 import loom.server.types;
-
 
 TEST(WorkerRegistry, ExpiresStale) {
     auto& r = loom::daemon::WorkerRegistry::instance();
@@ -1118,14 +1106,14 @@ TEST(WorkerRegistry, PickBest) {
         return *r.register_worker(std::move(w));
     };
 
-    const std::string id_a = mk(0, 1, 100, 1000, "A");   // ratio 0/1, free mem 900
-    const std::string id_b = mk(1, 4, 200, 1000, "B");   // ratio 0.25
-    const std::string id_c = mk(7, 8, 50,  1000, "C");   // ratio 0.875
+    const std::string id_a = mk(0, 1, 100, 1000, "A");  // ratio 0/1, free mem 900
+    const std::string id_b = mk(1, 4, 200, 1000, "B");  // ratio 0.25
+    const std::string id_c = mk(7, 8, 50, 1000, "C");   // ratio 0.875
     (void)id_c;
 
     loom::daemon::WorkerQueryFilters f;
     f.capability_required = "query";
-    f.min_free_tasks = 0;          // do not filter on free slots here
+    f.min_free_tasks = 0;  // do not filter on free slots here
     f.require_heartbeat_within_ms = 0;
     auto best = r.pick_best(f);
     ASSERT_TRUE(best.has_value());
@@ -1160,11 +1148,9 @@ TEST(WorkerRegistry, Cordon) {
     EXPECT_TRUE(r.find_matching(f).front().cordoned);
 }
 
-
 // ── Speculation suggestion engine (port of TS speculation.ts) ────────────────
 // The deterministic ranker replaces the former single hardcoded suggestion.
 // These tests pin the ranker's contract without a live LLM.
-
 
 TEST(SpeculationSuggestion, EmptyTurnsReturnsNothing) {
     using loom::services::prompt_suggestion::rank_candidate_suggestions;
@@ -1185,7 +1171,8 @@ TEST(SpeculationSuggestion, AssistantTurnYieldsRankedCandidates) {
     using namespace loom::services::prompt_suggestion;
     SuggestionRequest req;
     req.recent_turns.push_back({.role = "user", .content = "implement the login flow"});
-    req.recent_turns.push_back({.role = "assistant", .content = "I implemented the login flow with tests."});
+    req.recent_turns.push_back(
+        {.role = "assistant", .content = "I implemented the login flow with tests."});
     const auto r = rank_candidate_suggestions(req);
     EXPECT_FALSE(r.empty());
     for (const auto& s : r) {
@@ -1199,7 +1186,8 @@ TEST(SpeculationSuggestion, ResultsSortedByConfidenceDesc) {
     using namespace loom::services::prompt_suggestion;
     SuggestionRequest req;
     req.recent_turns.push_back({.role = "user", .content = "refactor the module"});
-    req.recent_turns.push_back({.role = "assistant", .content = "I refactored it and added tests."});
+    req.recent_turns.push_back(
+        {.role = "assistant", .content = "I refactored it and added tests."});
     const auto r = rank_candidate_suggestions(req);
     for (std::size_t i = 1; i < r.size(); ++i) {
         EXPECT_GE(r[i - 1].confidence, r[i].confidence);
@@ -1211,7 +1199,8 @@ TEST(SpeculationSuggestion, RespectsMaxSuggestions) {
     SuggestionRequest req;
     req.max_suggestions = 2;
     req.recent_turns.push_back({.role = "user", .content = "ship the feature"});
-    req.recent_turns.push_back({.role = "assistant", .content = "Shipped with full test coverage."});
+    req.recent_turns.push_back(
+        {.role = "assistant", .content = "Shipped with full test coverage."});
     const auto r = rank_candidate_suggestions(req);
     EXPECT_LE(r.size(), 2u);
 }
@@ -1221,7 +1210,6 @@ TEST(SpeculationSuggestion, QualityFilterRejectsEmpty) {
     EXPECT_TRUE(should_filter_suggestion(""));
     EXPECT_TRUE(should_filter_suggestion("   "));
 }
-
 
 // ===========================================================================
 // TokenRefreshScheduler — proactive refresh must carry a real token.
@@ -1233,8 +1221,8 @@ TEST(BridgeTokenRefresh, RefreshDeliversFetchedTokenToCallback) {
     auto params = fast_refresh_params();
     params.get_access_token_async =
         [](std::string_view) -> std::expected<std::string, std::string> {
-            return std::string{"fresh-oauth-token"};
-        };
+        return std::string{"fresh-oauth-token"};
+    };
 
     std::mutex m;
     std::condition_variable cv;
@@ -1252,8 +1240,8 @@ TEST(BridgeTokenRefresh, RefreshDeliversFetchedTokenToCallback) {
     EXPECT_TRUE(scheduler.is_scheduled());
 
     std::unique_lock lock(m);
-    const bool fired = cv.wait_for(lock, std::chrono::seconds(20),
-                                   [&] { return !seen_token.empty(); });
+    const bool fired =
+        cv.wait_for(lock, std::chrono::seconds(20), [&] { return !seen_token.empty(); });
     ASSERT_TRUE(fired) << "refresh callback never delivered a token";
     EXPECT_EQ(seen_session, "ses_test");
     // The regression: this used to be empty.
@@ -1268,13 +1256,11 @@ TEST(BridgeTokenRefresh, EmptyTokenTriggersBoundedRetriesNotASilentStop) {
     std::atomic<int> fetch_calls{0};
     params.get_access_token_async =
         [&](std::string_view) -> std::expected<std::string, std::string> {
-            fetch_calls.fetch_add(1);
-            return std::unexpected("no OAuth access token available");
-        };
-    std::atomic<int> refresh_calls{0};
-    params.on_refresh = [&](const std::string&, const std::string&) {
-        refresh_calls.fetch_add(1);
+        fetch_calls.fetch_add(1);
+        return std::unexpected("no OAuth access token available");
     };
+    std::atomic<int> refresh_calls{0};
+    params.on_refresh = [&](const std::string&, const std::string&) { refresh_calls.fetch_add(1); };
 
     loom::bridge::TokenRefreshScheduler scheduler(std::move(params));
     scheduler.schedule_from_expires_in("ses_retry", /*expires_in_s=*/1);
@@ -1283,8 +1269,7 @@ TEST(BridgeTokenRefresh, EmptyTokenTriggersBoundedRetriesNotASilentStop) {
     // window we expect exactly the initial fetch and NO on_refresh.
     std::this_thread::sleep_for(std::chrono::seconds(8));
     EXPECT_GE(fetch_calls.load(), 1);
-    EXPECT_EQ(refresh_calls.load(), 0)
-        << "a failed token fetch must not fire on_refresh";
+    EXPECT_EQ(refresh_calls.load(), 0) << "a failed token fetch must not fire on_refresh";
 
     scheduler.cancel_all();
 }
@@ -1293,12 +1278,10 @@ TEST(BridgeTokenRefresh, CancelAllStopsScheduledRefresh) {
     auto params = fast_refresh_params();
     params.get_access_token_async =
         [](std::string_view) -> std::expected<std::string, std::string> {
-            return std::string{"tok"};
-        };
-    std::atomic<int> refresh_calls{0};
-    params.on_refresh = [&](const std::string&, const std::string&) {
-        refresh_calls.fetch_add(1);
+        return std::string{"tok"};
     };
+    std::atomic<int> refresh_calls{0};
+    params.on_refresh = [&](const std::string&, const std::string&) { refresh_calls.fetch_add(1); };
 
     loom::bridge::TokenRefreshScheduler scheduler(std::move(params));
     scheduler.schedule_from_expires_in("ses_cancel", /*expires_in_s=*/30);

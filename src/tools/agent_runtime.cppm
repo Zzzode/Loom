@@ -60,30 +60,22 @@ struct AgentExecutionResult {
     std::vector<std::string> transcript;
 };
 
-enum class AgentLifecycle {
-    Starting,
-    Running,
-    Suspended,
-    Completed,
-    Failed,
-    Cancelled
-};
+enum class AgentLifecycle { Starting, Running, Suspended, Completed, Failed, Cancelled };
 
-enum class NativeAgentStatus {
-    Queued,
-    Running,
-    Completed,
-    Failed,
-    Cancelled
-};
+enum class NativeAgentStatus { Queued, Running, Completed, Failed, Cancelled };
 
 [[nodiscard]] inline std::string_view native_agent_status_name(NativeAgentStatus status) {
     switch (status) {
-        case NativeAgentStatus::Queued: return "queued";
-        case NativeAgentStatus::Running: return "running";
-        case NativeAgentStatus::Completed: return "completed";
-        case NativeAgentStatus::Failed: return "failed";
-        case NativeAgentStatus::Cancelled: return "cancelled";
+    case NativeAgentStatus::Queued:
+        return "queued";
+    case NativeAgentStatus::Running:
+        return "running";
+    case NativeAgentStatus::Completed:
+        return "completed";
+    case NativeAgentStatus::Failed:
+        return "failed";
+    case NativeAgentStatus::Cancelled:
+        return "cancelled";
     }
     return "unknown";
 }
@@ -136,10 +128,8 @@ struct PendingTaskEvent {
     std::string model_context;
 };
 
-[[nodiscard]] inline NativeAgentRecord make_native_agent_record(
-    std::string agent_id,
-    std::string agent_type)
-{
+[[nodiscard]] inline NativeAgentRecord make_native_agent_record(std::string agent_id,
+                                                                std::string agent_type) {
     NativeAgentRecord record;
     record.agent_id = std::move(agent_id);
     record.agent_type = std::move(agent_type);
@@ -226,73 +216,59 @@ struct PluginComponentPaths {
 
 [[nodiscard]] inline bool valid_agent_color(std::string_view value) {
     return value == "red" || value == "blue" || value == "green" || value == "yellow" ||
-        value == "purple" || value == "orange" || value == "pink" || value == "cyan";
+           value == "purple" || value == "orange" || value == "pink" || value == "cyan";
 }
 
 [[nodiscard]] bool valid_agent_effort(std::string_view value);
 [[nodiscard]] bool valid_agent_isolation(std::string_view value);
 [[nodiscard]] std::string valid_agent_isolation_options();
 
-
 [[nodiscard]] std::optional<std::string> yaml_scalar_to_string(const loom::utils::YamlValue& value);
-[[nodiscard]] const loom::utils::YamlValue* yaml_field(
-    const loom::utils::YamlMap& fields,
-    std::string_view key);
-[[nodiscard]] std::optional<std::string> yaml_string_field(
-    const loom::utils::YamlMap& fields,
-    std::string_view key);
+[[nodiscard]] const loom::utils::YamlValue* yaml_field(const loom::utils::YamlMap& fields,
+                                                       std::string_view key);
+[[nodiscard]] std::optional<std::string> yaml_string_field(const loom::utils::YamlMap& fields,
+                                                           std::string_view key);
 [[nodiscard]] std::vector<std::string> yaml_string_list(const loom::utils::YamlValue& value);
-[[nodiscard]] std::vector<std::string> yaml_string_list_field(
-    const loom::utils::YamlMap& fields,
-    std::string_view key);
-void append_yaml_string_map(
-    const loom::utils::YamlValue& value,
-    std::unordered_map<std::string, std::string>& out);
-
+[[nodiscard]] std::vector<std::string> yaml_string_list_field(const loom::utils::YamlMap& fields,
+                                                              std::string_view key);
+void append_yaml_string_map(const loom::utils::YamlValue& value,
+                            std::unordered_map<std::string, std::string>& out);
 
 [[nodiscard]] std::optional<std::string> json_scalar_to_string(loom::utils::json::JsonVal value);
-[[nodiscard]] std::optional<std::string> json_string_field(
-    loom::utils::json::JsonVal object,
-    std::string_view key);
+[[nodiscard]] std::optional<std::string> json_string_field(loom::utils::json::JsonVal object,
+                                                           std::string_view key);
 [[nodiscard]] std::vector<std::string> json_string_list(loom::utils::json::JsonVal value);
-[[nodiscard]] std::vector<std::string> json_string_list_field(
-    loom::utils::json::JsonVal object,
-    std::string_view key);
-void append_json_string_map(
-    loom::utils::json::JsonVal value,
-    std::unordered_map<std::string, std::string>& out);
+[[nodiscard]] std::vector<std::string> json_string_list_field(loom::utils::json::JsonVal object,
+                                                              std::string_view key);
+void append_json_string_map(loom::utils::json::JsonVal value,
+                            std::unordered_map<std::string, std::string>& out);
 
+[[nodiscard]] std::optional<AgentInlineMcpServerConfig>
+parse_inline_mcp_server_config(std::string name, const loom::utils::YamlValue& value);
 
-[[nodiscard]] std::optional<AgentInlineMcpServerConfig> parse_inline_mcp_server_config(
-    std::string name,
-    const loom::utils::YamlValue& value);
-
-
-[[nodiscard]] std::optional<AgentInlineMcpServerConfig> parse_inline_mcp_server_config(
-    std::string name,
-    loom::utils::json::JsonVal value);
+[[nodiscard]] std::optional<AgentInlineMcpServerConfig>
+parse_inline_mcp_server_config(std::string name, loom::utils::json::JsonVal value);
 
 struct ParsedAgentMcpServers {
     std::vector<std::string> references;
     std::vector<AgentInlineMcpServerConfig> inline_configs;
 };
 
-
 [[nodiscard]] ParsedAgentMcpServers parse_agent_mcp_servers(const loom::utils::YamlValue& value);
-
 
 [[nodiscard]] ParsedAgentMcpServers parse_agent_mcp_servers(loom::utils::json::JsonVal value);
 
-
 [[nodiscard]] std::string canonical_hook_event_name(std::string_view event);
 
-
-[[nodiscard]] std::optional<AgentHookCommand> parse_agent_hook_command(const loom::utils::YamlValue& value);
-[[nodiscard]] std::vector<AgentHookCommand> parse_agent_hook_commands(const loom::utils::YamlValue& value);
-[[nodiscard]] std::optional<AgentHookMatcher> parse_agent_hook_matcher(const loom::utils::YamlValue& value);
-[[nodiscard]] std::vector<AgentHookMatcher> parse_agent_hook_matchers(const loom::utils::YamlValue& value);
+[[nodiscard]] std::optional<AgentHookCommand>
+parse_agent_hook_command(const loom::utils::YamlValue& value);
+[[nodiscard]] std::vector<AgentHookCommand>
+parse_agent_hook_commands(const loom::utils::YamlValue& value);
+[[nodiscard]] std::optional<AgentHookMatcher>
+parse_agent_hook_matcher(const loom::utils::YamlValue& value);
+[[nodiscard]] std::vector<AgentHookMatcher>
+parse_agent_hook_matchers(const loom::utils::YamlValue& value);
 [[nodiscard]] AgentHooksByEvent parse_agent_hooks(const loom::utils::YamlValue& value);
-
 
 enum class ResolutionError {
     EmptyRequestedType,
@@ -303,17 +279,21 @@ enum class ResolutionError {
 
 [[nodiscard]] inline std::string_view resolution_error_name(ResolutionError err) {
     switch (err) {
-        case ResolutionError::EmptyRequestedType:        return "empty_requested_type";
-        case ResolutionError::ExactOrCanonicalMatchNotFound: return "exact_or_canonical_match_not_found";
-        case ResolutionError::SuffixMatchAmbiguous:      return "suffix_match_ambiguous";
-        case ResolutionError::NoCompatibleMatch:         return "no_compatible_match";
+    case ResolutionError::EmptyRequestedType:
+        return "empty_requested_type";
+    case ResolutionError::ExactOrCanonicalMatchNotFound:
+        return "exact_or_canonical_match_not_found";
+    case ResolutionError::SuffixMatchAmbiguous:
+        return "suffix_match_ambiguous";
+    case ResolutionError::NoCompatibleMatch:
+        return "no_compatible_match";
     }
     return "unknown";
 }
 
-[[nodiscard]] std::optional<std::string> find_canonical_agent_type_match(
-    std::string_view requested_type,
-    const std::vector<AgentDefinition>& agents);
+[[nodiscard]] std::optional<std::string>
+find_canonical_agent_type_match(std::string_view requested_type,
+                                const std::vector<AgentDefinition>& agents);
 
 // Resolves a user-provided agent type string into a concrete agent.
 //
@@ -321,26 +301,24 @@ enum class ResolutionError {
 //   1. Exact string equality on agent.agent_type
 //      // Test case: exact match when present  →  Plan → "Plan" (preserves casing)
 //   2. Case- and separator-insensitive canonical match
-//      // Test case: case-insensitive + space/dash variants  →  "General Purpose" → "general-purpose"
+//      // Test case: case-insensitive + space/dash variants  →  "General Purpose" →
+//      "general-purpose"
 //   3. Otherwise nullopt
 //      // Test case: no compatible match  →  "non-existent-agent" → undefined
 
-[[nodiscard]] std::optional<std::string> resolve_requested_agent_type(
-    std::string_view requested_type,
-    const std::vector<AgentDefinition>& agents);
+[[nodiscard]] std::optional<std::string>
+resolve_requested_agent_type(std::string_view requested_type,
+                             const std::vector<AgentDefinition>& agents);
 
 // Rich-result wrapper around resolve_requested_agent_type: returns the matched
 // AgentDefinition directly, or a ResolutionError explaining why resolution failed.
 //
 // This is the C++-idiomatic public API consumed by loom.tools.agent_type_resolution.
 
-[[nodiscard]] std::expected<AgentDefinition, ResolutionError> resolve_agent_type(
-    std::string_view id,
-    const std::vector<AgentDefinition>& agents);
+[[nodiscard]] std::expected<AgentDefinition, ResolutionError>
+resolve_agent_type(std::string_view id, const std::vector<AgentDefinition>& agents);
 
-
-[[nodiscard]] std::string format_agent_type_list(
-    const std::vector<AgentDefinition>& agents);
+[[nodiscard]] std::string format_agent_type_list(const std::vector<AgentDefinition>& agents);
 [[nodiscard]] bool is_sdk_entrypoint();
 
 // Feature flag gate for Explore + Plan (TS: areExplorePlanAgentsEnabled).
@@ -350,54 +328,42 @@ enum class ResolutionError {
 [[nodiscard]] bool are_explore_plan_agents_enabled();
 [[nodiscard]] bool is_verification_agent_enabled();
 
-
 [[nodiscard]] std::vector<AgentDefinition> built_in_agent_definitions();
 
-
-void append_existing_plugin_component_path(
-    loom::utils::json::JsonVal value,
-    const fs::path& plugin_dir,
-    std::vector<fs::path>& out);
-[[nodiscard]] std::optional<PluginComponentPaths> read_plugin_component_paths(
-    const fs::path& plugin_dir);
+void append_existing_plugin_component_path(loom::utils::json::JsonVal value,
+                                           const fs::path& plugin_dir, std::vector<fs::path>& out);
+[[nodiscard]] std::optional<PluginComponentPaths>
+read_plugin_component_paths(const fs::path& plugin_dir);
 [[nodiscard]] std::vector<PluginComponentPaths> discover_plugin_component_paths();
 
+[[nodiscard]] std::optional<AgentDefinition> parse_agent_markdown(const fs::path& path,
+                                                                  std::string source);
 
-[[nodiscard]] std::optional<AgentDefinition> parse_agent_markdown(
-    const fs::path& path,
-    std::string source);
+[[nodiscard]] std::optional<int> json_positive_int_field(loom::utils::json::JsonVal object,
+                                                         std::string_view key);
+[[nodiscard]] std::optional<bool> json_bool_field(loom::utils::json::JsonVal object,
+                                                  std::string_view key);
 
-
-[[nodiscard]] std::optional<int> json_positive_int_field(
-    loom::utils::json::JsonVal object,
-    std::string_view key);
-[[nodiscard]] std::optional<bool> json_bool_field(
-    loom::utils::json::JsonVal object,
-    std::string_view key);
-
-
-[[nodiscard]] std::optional<AgentHookCommand> parse_agent_hook_command(loom::utils::json::JsonVal value);
-[[nodiscard]] std::vector<AgentHookCommand> parse_agent_hook_commands(loom::utils::json::JsonVal value);
-[[nodiscard]] std::optional<AgentHookMatcher> parse_agent_hook_matcher(loom::utils::json::JsonVal value);
-[[nodiscard]] std::vector<AgentHookMatcher> parse_agent_hook_matchers(loom::utils::json::JsonVal value);
+[[nodiscard]] std::optional<AgentHookCommand>
+parse_agent_hook_command(loom::utils::json::JsonVal value);
+[[nodiscard]] std::vector<AgentHookCommand>
+parse_agent_hook_commands(loom::utils::json::JsonVal value);
+[[nodiscard]] std::optional<AgentHookMatcher>
+parse_agent_hook_matcher(loom::utils::json::JsonVal value);
+[[nodiscard]] std::vector<AgentHookMatcher>
+parse_agent_hook_matchers(loom::utils::json::JsonVal value);
 [[nodiscard]] AgentHooksByEvent parse_agent_hooks(loom::utils::json::JsonVal value);
 
-
-[[nodiscard]] std::optional<AgentDefinition> parse_agent_json_definition(
-    std::string name,
-    loom::utils::json::JsonVal object,
-    const fs::path& path,
-    std::string source);
-[[nodiscard]] std::vector<AgentDefinition> parse_agents_json_file(
-    const fs::path& path,
-    std::string source);
-[[nodiscard]] std::vector<AgentDefinition> parse_agents_json_string(
-    std::string_view json,
-    std::string source,
-    const fs::path& virtual_path = {});
-[[nodiscard]] std::vector<AgentDefinition> load_agent_definitions_from_settings_file(
-    const fs::path& path,
-    std::string source);
+[[nodiscard]] std::optional<AgentDefinition>
+parse_agent_json_definition(std::string name, loom::utils::json::JsonVal object,
+                            const fs::path& path, std::string source);
+[[nodiscard]] std::vector<AgentDefinition> parse_agents_json_file(const fs::path& path,
+                                                                  std::string source);
+[[nodiscard]] std::vector<AgentDefinition>
+parse_agents_json_string(std::string_view json, std::string source,
+                         const fs::path& virtual_path = {});
+[[nodiscard]] std::vector<AgentDefinition>
+load_agent_definitions_from_settings_file(const fs::path& path, std::string source);
 [[nodiscard]] std::vector<AgentDefinition> load_flag_agent_definitions();
 [[nodiscard]] std::vector<AgentDefinition> load_policy_agent_definitions();
 
@@ -409,9 +375,8 @@ struct FailedAgentFile {
 // Mirrors TS `getParseError`: describes *why* a markdown file with a
 // frontmatter `name:` field failed to parse as a valid agent definition.
 
-[[nodiscard]] std::string get_parse_error(
-    const loom::utils::YamlMap& fields,
-    std::string_view fallback = "Unknown parsing error");
+[[nodiscard]] std::string get_parse_error(const loom::utils::YamlMap& fields,
+                                          std::string_view fallback = "Unknown parsing error");
 
 struct LoadAgentDefinitionsResult {
     std::vector<AgentDefinition> agents;
@@ -423,40 +388,30 @@ struct LoadAgentDefinitionsResult {
 // frontmatter but were otherwise invalid (matching TS getParseError semantics).
 // Co-located reference markdown (no `name:` frontmatter) is silently skipped.
 
-[[nodiscard]] LoadAgentDefinitionsResult load_agent_definitions_from_dir_ex(
-    const fs::path& dir,
-    std::string source);
+[[nodiscard]] LoadAgentDefinitionsResult load_agent_definitions_from_dir_ex(const fs::path& dir,
+                                                                            std::string source);
 
 // Original (backward-compatible) API: returns only the successfully parsed
 // agents and drops any diagnostic information. Implemented in terms of the
 // richer loader so callers can pick whichever surface they need.
-[[nodiscard]] std::vector<AgentDefinition> load_agent_definitions_from_dir(
-    const fs::path& dir,
-    std::string source);
+[[nodiscard]] std::vector<AgentDefinition> load_agent_definitions_from_dir(const fs::path& dir,
+                                                                           std::string source);
 
-
-[[nodiscard]] std::string qualify_plugin_component_name(
-    std::string_view plugin_name,
-    std::string value);
+[[nodiscard]] std::string qualify_plugin_component_name(std::string_view plugin_name,
+                                                        std::string value);
 void qualify_plugin_mcp_names(AgentDefinition& agent, std::string_view plugin_name);
-void append_plugin_agent_definition(
-    std::vector<AgentDefinition>& agents,
-    AgentDefinition agent,
-    std::string_view plugin_name,
-    const std::vector<std::string>& namespace_parts);
-void load_plugin_agents_from_path(
-    std::vector<AgentDefinition>& agents,
-    const fs::path& path,
-    std::string_view plugin_name,
-    std::vector<std::string> namespace_parts = {});
+void append_plugin_agent_definition(std::vector<AgentDefinition>& agents, AgentDefinition agent,
+                                    std::string_view plugin_name,
+                                    const std::vector<std::string>& namespace_parts);
+void load_plugin_agents_from_path(std::vector<AgentDefinition>& agents, const fs::path& path,
+                                  std::string_view plugin_name,
+                                  std::vector<std::string> namespace_parts = {});
 [[nodiscard]] std::vector<AgentDefinition> load_plugin_agent_definitions();
 
-
-[[nodiscard]] std::vector<AgentDefinition> get_all_agent_definitions(
-    std::optional<fs::path> cwd = std::nullopt);
-[[nodiscard]] std::optional<AgentDefinition> find_agent_definition(
-    std::string_view requested_type,
-    std::optional<fs::path> cwd = std::nullopt);
+[[nodiscard]] std::vector<AgentDefinition>
+get_all_agent_definitions(std::optional<fs::path> cwd = std::nullopt);
+[[nodiscard]] std::optional<AgentDefinition>
+find_agent_definition(std::string_view requested_type, std::optional<fs::path> cwd = std::nullopt);
 [[nodiscard]] bool has_teammate_identity();
 
 inline void append_prompt_section(std::string& prompt, std::string_view section) {
@@ -469,18 +424,18 @@ inline void append_prompt_section(std::string& prompt, std::string_view section)
     std::optional<std::string> existing_append_prompt = std::nullopt,
     std::optional<fs::path> cwd = std::nullopt);
 
-
 std::expected<AgentExecutionResult, std::string> run_agent(const AgentRuntimeConfig& config);
 
-std::expected<std::string, std::string> fork_subagent(std::string_view parent_id, const AgentRuntimeConfig& config);
+std::expected<std::string, std::string> fork_subagent(std::string_view parent_id,
+                                                      const AgentRuntimeConfig& config);
 
 std::expected<AgentExecutionResult, std::string> resume_agent(std::string_view agent_id);
 
 // Minimal light-weight API used by consumers that only need the agent type
 // names discovered in a directory.
 
-[[nodiscard]] std::expected<std::vector<std::string>, std::string> load_agents_from_dir(std::string_view dir_path);
-
+[[nodiscard]] std::expected<std::vector<std::string>, std::string>
+load_agents_from_dir(std::string_view dir_path);
 
 // Full loader: scans the directory and returns every parsed AgentDefinition
 // (matching TS getAgentDefinitionsWithOverrides for a single directory).
@@ -494,9 +449,8 @@ std::expected<AgentExecutionResult, std::string> resume_agent(std::string_view a
 //   "flagSettings"    env var parsed definitions
 //   "custom"          arbitrary caller-supplied directory
 
-[[nodiscard]] LoadAgentDefinitionsResult load_agents_dir(
-    const fs::path& dir,
-    std::string_view source = "custom");
+[[nodiscard]] LoadAgentDefinitionsResult load_agents_dir(const fs::path& dir,
+                                                         std::string_view source = "custom");
 
 // Fork / resume message helpers.
 //
@@ -524,6 +478,7 @@ std::expected<AgentExecutionResult, std::string> resume_agent(std::string_view a
 [[nodiscard]] inline bool text_contains_fork_boilerplate_tag(std::string_view text) {
     return text.find("<fork-boilerplate>") != std::string_view::npos;
 }
+
 // Builds the child-machine instructions prepended to a fork directive. The
 // string is intentionally byte-stable across all fork children so the
 // rendered fork prefix stays cache-identical and prompt cache hits maximise.
@@ -534,13 +489,10 @@ std::expected<AgentExecutionResult, std::string> resume_agent(std::string_view a
 // separate git worktree — instructs it to translate inherited paths and
 // re-read stale files.
 
-[[nodiscard]] std::string build_worktree_fork_notice(
-    std::string_view parent_cwd,
-    std::string_view worktree_cwd);
-
+[[nodiscard]] std::string build_worktree_fork_notice(std::string_view parent_cwd,
+                                                     std::string_view worktree_cwd);
 
 AgentLifecycle get_agent_lifecycle(std::string_view agent_id);
-
 
 [[nodiscard]] std::string json_escape(std::string_view value);
 
@@ -569,7 +521,8 @@ AgentLifecycle get_agent_lifecycle(std::string_view agent_id);
     return runtime_state_dir() / (safe_agent_filename(agent_id) + ".sidechain.jsonl");
 }
 
-[[nodiscard]] inline std::optional<NativeAgentStatus> native_agent_status_from_string(std::string_view status) {
+[[nodiscard]] inline std::optional<NativeAgentStatus>
+native_agent_status_from_string(std::string_view status) {
     if (status == "queued") return NativeAgentStatus::Queued;
     if (status == "running") return NativeAgentStatus::Running;
     if (status == "completed") return NativeAgentStatus::Completed;
@@ -578,25 +531,26 @@ AgentLifecycle get_agent_lifecycle(std::string_view agent_id);
     return std::nullopt;
 }
 
-[[nodiscard]] inline std::optional<std::string> native_agent_terminal_notification_status(NativeAgentStatus status) {
+[[nodiscard]] inline std::optional<std::string>
+native_agent_terminal_notification_status(NativeAgentStatus status) {
     switch (status) {
-        case NativeAgentStatus::Completed: return "completed";
-        case NativeAgentStatus::Failed: return "failed";
-        case NativeAgentStatus::Cancelled: return "stopped";
-        case NativeAgentStatus::Queued:
-        case NativeAgentStatus::Running:
-            return std::nullopt;
+    case NativeAgentStatus::Completed:
+        return "completed";
+    case NativeAgentStatus::Failed:
+        return "failed";
+    case NativeAgentStatus::Cancelled:
+        return "stopped";
+    case NativeAgentStatus::Queued:
+    case NativeAgentStatus::Running:
+        return std::nullopt;
     }
     return std::nullopt;
 }
 
-[[nodiscard]] std::string json_string_field(
-    loom::utils::json::JsonVal value,
-    std::initializer_list<std::string_view> keys);
-
+[[nodiscard]] std::string json_string_field(loom::utils::json::JsonVal value,
+                                            std::initializer_list<std::string_view> keys);
 
 [[nodiscard]] std::string json_text_from_content(loom::utils::json::JsonVal content);
-
 
 [[nodiscard]] std::string xml_escape(std::string_view text);
 
@@ -607,90 +561,78 @@ AgentLifecycle get_agent_lifecycle(std::string_view agent_id);
 }
 
 [[nodiscard]] inline std::string native_agent_output_file(const NativeAgentRecord& record) {
-    if (record.output_file_path && !record.output_file_path->empty()) return *record.output_file_path;
+    if (record.output_file_path && !record.output_file_path->empty())
+        return *record.output_file_path;
     if (record.transcript_path && !record.transcript_path->empty()) return *record.transcript_path;
     return agent_output_file_path(record.agent_id).string();
 }
 
-[[nodiscard]] std::optional<std::string> format_native_agent_task_notification(
-    const NativeAgentRecord& record);
+[[nodiscard]] std::optional<std::string>
+format_native_agent_task_notification(const NativeAgentRecord& record);
 
-[[nodiscard]] std::optional<PendingTaskEvent> make_native_agent_task_event(
-    const NativeAgentRecord& record);
+[[nodiscard]] std::optional<PendingTaskEvent>
+make_native_agent_task_event(const NativeAgentRecord& record);
 
-void write_json_string_array(std::ostream& out, std::string_view name, const std::vector<std::string>& values);
+void write_json_string_array(std::ostream& out, std::string_view name,
+                             const std::vector<std::string>& values);
 
-void write_json_optional_string(
-    std::ostream& out,
-    std::string_view name,
-    const std::optional<std::string>& value);
+void write_json_optional_string(std::ostream& out, std::string_view name,
+                                const std::optional<std::string>& value);
 
-void refresh_native_agent_output_symlink(
-    const fs::path& output_path,
-    const fs::path& transcript_path);
+void refresh_native_agent_output_symlink(const fs::path& output_path,
+                                         const fs::path& transcript_path);
 
-
-[[nodiscard]] std::pair<std::string_view, std::string_view> split_transcript_role(
-    std::string_view entry);
+[[nodiscard]] std::pair<std::string_view, std::string_view>
+split_transcript_role(std::string_view entry);
 [[nodiscard]] std::string sidechain_message_role(std::string_view role);
 
-
 [[nodiscard]] std::string fallback_sidechain_content_json(std::string_view text);
-[[nodiscard]] std::string normalize_sidechain_content_json(
-    std::string_view content_json,
-    std::string_view fallback_text);
-[[nodiscard]] std::string make_sidechain_jsonl_entry(
-    std::string_view agent_id,
-    std::size_t index,
-    std::string_view role,
-    std::string_view content_json,
-    std::string_view fallback_text);
-[[nodiscard]] std::optional<std::string> rebase_sidechain_jsonl_entry_for_agent(
-    std::string_view entry,
-    std::string_view agent_id,
-    std::size_t index);
-[[nodiscard]] std::optional<std::string> rebase_content_replacement_entry_for_agent(
-    std::string_view entry,
-    std::string_view agent_id);
-[[nodiscard]] std::vector<std::string> fork_sidechain_entries_for_child(
-    const NativeAgentRecord& parent,
-    std::string_view child_agent_id);
-void collect_sidechain_tool_use_state(
-    loom::utils::json::JsonVal content,
-    std::vector<std::string>& tool_use_ids,
-    std::unordered_set<std::string>& seen_tool_use_ids,
-    std::unordered_set<std::string>& tool_result_ids);
-[[nodiscard]] std::vector<std::string> unresolved_tool_use_ids_from_sidechain_entries(
-    const std::vector<std::string>& entries);
-[[nodiscard]] std::string fork_missing_tool_results_content_json(
-    const std::vector<std::string>& tool_use_ids,
-    std::string_view directive_message);
+[[nodiscard]] std::string normalize_sidechain_content_json(std::string_view content_json,
+                                                           std::string_view fallback_text);
+[[nodiscard]] std::string make_sidechain_jsonl_entry(std::string_view agent_id, std::size_t index,
+                                                     std::string_view role,
+                                                     std::string_view content_json,
+                                                     std::string_view fallback_text);
+[[nodiscard]] std::optional<std::string>
+rebase_sidechain_jsonl_entry_for_agent(std::string_view entry, std::string_view agent_id,
+                                       std::size_t index);
+[[nodiscard]] std::optional<std::string>
+rebase_content_replacement_entry_for_agent(std::string_view entry, std::string_view agent_id);
+[[nodiscard]] std::vector<std::string>
+fork_sidechain_entries_for_child(const NativeAgentRecord& parent, std::string_view child_agent_id);
+void collect_sidechain_tool_use_state(loom::utils::json::JsonVal content,
+                                      std::vector<std::string>& tool_use_ids,
+                                      std::unordered_set<std::string>& seen_tool_use_ids,
+                                      std::unordered_set<std::string>& tool_result_ids);
+[[nodiscard]] std::vector<std::string>
+unresolved_tool_use_ids_from_sidechain_entries(const std::vector<std::string>& entries);
+[[nodiscard]] std::string
+fork_missing_tool_results_content_json(const std::vector<std::string>& tool_use_ids,
+                                       std::string_view directive_message);
 [[nodiscard]] bool native_agent_record_is_fork_child(const NativeAgentRecord& record);
-[[nodiscard]] std::vector<std::string> fork_child_capabilities(
-    const NativeAgentRecord& parent,
-    const AgentRuntimeConfig& config);
-bool write_sidechain_jsonl(
-    const NativeAgentRecord& record,
-    const fs::path& sidechain_path);
+[[nodiscard]] std::vector<std::string> fork_child_capabilities(const NativeAgentRecord& parent,
+                                                               const AgentRuntimeConfig& config);
+bool write_sidechain_jsonl(const NativeAgentRecord& record, const fs::path& sidechain_path);
 bool persist_native_agent_record(const NativeAgentRecord& record);
-[[nodiscard]] std::expected<void, std::string> persist_native_agent_checkpoint(const NativeAgentRecord& record);
+[[nodiscard]] std::expected<void, std::string>
+persist_native_agent_checkpoint(const NativeAgentRecord& record);
 [[nodiscard]] std::vector<std::string> read_transcript_lines(const fs::path& path);
 [[nodiscard]] std::string transcript_text_from_content(loom::utils::json::JsonVal content);
-[[nodiscard]] std::optional<std::string> transcript_entry_from_ts_jsonl(loom::utils::json::JsonVal root);
-[[nodiscard]] std::optional<std::string> transcript_entry_from_sidechain_jsonl_line(std::string_view line);
-[[nodiscard]] std::vector<std::string> transcript_lines_from_sidechain_entries(
-    const std::vector<std::string>& entries);
+[[nodiscard]] std::optional<std::string>
+transcript_entry_from_ts_jsonl(loom::utils::json::JsonVal root);
+[[nodiscard]] std::optional<std::string>
+transcript_entry_from_sidechain_jsonl_line(std::string_view line);
+[[nodiscard]] std::vector<std::string>
+transcript_lines_from_sidechain_entries(const std::vector<std::string>& entries);
 [[nodiscard]] std::vector<std::string> read_sidechain_transcript_lines(const fs::path& path);
 [[nodiscard]] std::vector<std::string> read_sidechain_jsonl_entries(const fs::path& path);
 
-
 [[nodiscard]] std::vector<std::string> json_string_array(loom::utils::json::JsonVal value);
 
-
-[[nodiscard]] std::optional<NativeAgentRecord> load_native_agent_record_from_path(const fs::path& path);
+[[nodiscard]] std::optional<NativeAgentRecord>
+load_native_agent_record_from_path(const fs::path& path);
 [[nodiscard]] std::optional<NativeAgentRecord> load_native_agent_record(std::string_view agent_id);
 [[nodiscard]] std::vector<NativeAgentRecord> load_all_native_agent_records();
-
 
 class NativeAgentStore {
 public:
@@ -719,16 +661,17 @@ public:
     void end_execution(std::string_view agent_id);
 
     /// Reserve resumed IDs before record mutation or startup hooks.
-    [[nodiscard]] std::expected<void, std::string> reserve_resume(
-        std::string_view agent_id,
-        const std::optional<loom::core::HostAgentResumeConstraint>& host = std::nullopt);
+    [[nodiscard]] std::expected<void, std::string>
+    reserve_resume(std::string_view agent_id,
+                   const std::optional<loom::core::HostAgentResumeConstraint>& host = std::nullopt);
     void release_resume(std::string_view agent_id) noexcept;
     [[nodiscard]] std::string resume_unavailable_reason(std::string_view agent_id) const;
-    [[nodiscard]] std::string owned_stop_unavailable_reason(
-        std::string_view agent_id, std::string_view session_id, std::stop_token owner) const;
-    [[nodiscard]] std::expected<void, std::string> request_owned_cancel(
-        std::string_view agent_id, std::string_view session_id, std::stop_token owner);
-
+    [[nodiscard]] std::string owned_stop_unavailable_reason(std::string_view agent_id,
+                                                            std::string_view session_id,
+                                                            std::stop_token owner) const;
+    [[nodiscard]] std::expected<void, std::string> request_owned_cancel(std::string_view agent_id,
+                                                                        std::string_view session_id,
+                                                                        std::stop_token owner);
 
     /// Drain workers from a host thread without holding the record lock needed by cleanup.
     /// Calling this from one of this store's workers throws std::logic_error.
@@ -755,19 +698,20 @@ public:
 
     [[nodiscard]] bool is_cancel_requested(std::string_view agent_id) const;
 
-    [[nodiscard]] std::vector<PendingTaskEvent> take_pending_task_events(
-        std::string_view parent_session_id);
+    [[nodiscard]] std::vector<PendingTaskEvent>
+    take_pending_task_events(std::string_view parent_session_id);
 
     void clear_for_testing();
 
     void append_transcript(std::string_view agent_id, std::string entry);
 
     // Host input is admitted only after worker initialization and before finalization.
-    [[nodiscard]] std::string owned_message_unavailable_reason(
-        std::string_view agent_id, std::string_view session_id, std::stop_token owner) const;
-    [[nodiscard]] std::expected<void, std::string> enqueue_owned_message(
-        std::string_view agent_id, std::string_view session_id, std::stop_token owner,
-        std::string message);
+    [[nodiscard]] std::string owned_message_unavailable_reason(std::string_view agent_id,
+                                                               std::string_view session_id,
+                                                               std::stop_token owner) const;
+    [[nodiscard]] std::expected<void, std::string>
+    enqueue_owned_message(std::string_view agent_id, std::string_view session_id,
+                          std::stop_token owner, std::string message);
     [[nodiscard]] bool open_input(std::string_view agent_id);
     [[nodiscard]] bool close_input_if_idle(std::string_view agent_id);
     void close_input(std::string_view agent_id);
@@ -780,55 +724,49 @@ public:
 
     [[nodiscard]] std::vector<std::string> take_pending_messages(std::string_view agent_id);
 
-    void append_sidechain_message(
-        std::string_view agent_id,
-        std::string_view role,
-        std::string_view content_json,
-        std::string_view fallback_text = {},
-        std::optional<std::string_view> transcript_entry = std::nullopt,
-        bool request_anchor = false);
+    void append_sidechain_message(std::string_view agent_id, std::string_view role,
+                                  std::string_view content_json,
+                                  std::string_view fallback_text = {},
+                                  std::optional<std::string_view> transcript_entry = std::nullopt,
+                                  bool request_anchor = false);
 
     void append_sidechain_entry(std::string_view agent_id, std::string entry);
 
     /// Checkpoint publication is conditional on unchanged history and an atomic
     /// authoritative write. Other mutations keep their established semantics.
-    [[nodiscard]] std::expected<void, std::string> append_checkpoint_checked(
-        std::string_view agent_id, std::size_t expected_entries, std::string entry);
+    [[nodiscard]] std::expected<void, std::string>
+    append_checkpoint_checked(std::string_view agent_id, std::size_t expected_entries,
+                              std::string entry);
 
     void update_progress(std::string_view agent_id, double progress);
 
-    void set_worktree_metadata(
-        std::string_view agent_id,
-        std::string path,
-        std::string branch,
-        std::string base_commit,
-        std::string git_root);
+    void set_worktree_metadata(std::string_view agent_id, std::string path, std::string branch,
+                               std::string base_commit, std::string git_root);
 
     void mark_worktree_cleaned(std::string_view agent_id);
 
-    void set_teammate_metadata(
-        std::string_view agent_id,
-        std::string backend,
-        std::optional<std::string> task_id = std::nullopt,
-        std::optional<std::string> pane_id = std::nullopt,
-        std::optional<std::string> color = std::nullopt,
-        std::optional<std::string> parent_session_id = std::nullopt);
+    void set_teammate_metadata(std::string_view agent_id, std::string backend,
+                               std::optional<std::string> task_id = std::nullopt,
+                               std::optional<std::string> pane_id = std::nullopt,
+                               std::optional<std::string> color = std::nullopt,
+                               std::optional<std::string> parent_session_id = std::nullopt);
 
 private:
     void upsert_locked(NativeAgentRecord record);
     void begin_execution_locked(std::string_view agent_id, std::stop_token owner);
-    [[nodiscard]] std::string owned_message_reason_locked(
-        std::string_view agent_id, std::string_view session_id, std::stop_token owner) const;
+    [[nodiscard]] std::string owned_message_reason_locked(std::string_view agent_id,
+                                                          std::string_view session_id,
+                                                          std::stop_token owner) const;
 
-    template <typename Fn>
-    void update(std::string_view agent_id, Fn&& fn) {
+    template <typename Fn> void update(std::string_view agent_id, Fn&& fn) {
         {
             std::scoped_lock lock(mutex_);
             auto it = records_.find(std::string(agent_id));
             if (it == records_.end()) {
                 if (auto loaded = load_native_agent_record(agent_id)) {
                     auto loaded_agent_id = loaded->agent_id;
-                    auto [inserted, _] = records_.emplace(std::move(loaded_agent_id), std::move(*loaded));
+                    auto [inserted, _] =
+                        records_.emplace(std::move(loaded_agent_id), std::move(*loaded));
                     it = inserted;
                 } else {
                     return;
@@ -839,7 +777,8 @@ private:
                 it->second.transcript_path = agent_transcript_path(it->second.agent_id).string();
             }
             if (!it->second.sidechain_jsonl_path) {
-                it->second.sidechain_jsonl_path = agent_sidechain_jsonl_path(it->second.agent_id).string();
+                it->second.sidechain_jsonl_path =
+                    agent_sidechain_jsonl_path(it->second.agent_id).string();
             }
             if (!it->second.output_file_path) {
                 it->second.output_file_path = agent_output_file_path(it->second.agent_id).string();
@@ -851,27 +790,33 @@ private:
     }
 
     void notify_changed() noexcept;
+
     struct ChangeObserver {
         std::atomic<bool> active{true};
         std::function<void()> callback;
     };
+
     std::mutex observers_mutex_;
     std::unordered_map<std::size_t, std::shared_ptr<ChangeObserver>> observers_;
     std::size_t next_observer_token_ = 0;
     mutable std::mutex mutex_;
     mutable std::unordered_map<std::string, NativeAgentRecord> records_;
+
     struct ActiveExecution {
         std::size_t count = 0;
         std::stop_token owner;
         bool accepting_input = false;
     };
+
     std::unordered_map<std::string, ActiveExecution> active_executions_;
     std::unordered_set<std::string> resume_reservations_;
+
     struct BackgroundWorker {
         std::stop_token owner;
         std::shared_ptr<std::atomic<bool>> finished;
         std::thread thread;
     };
+
     std::mutex workers_mutex_;
     std::mutex drain_mutex_;
     std::vector<BackgroundWorker> workers_;
@@ -879,7 +824,6 @@ private:
 
 NativeAgentStore& native_agent_store();
 
-
 [[nodiscard]] std::string runtime_agent_id(const AgentRuntimeConfig& config);
 
-} // namespace loom::tools::agent_runtime
+}  // namespace loom::tools::agent_runtime

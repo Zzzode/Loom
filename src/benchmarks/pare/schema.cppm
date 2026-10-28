@@ -66,11 +66,7 @@ struct NormalizedUsage {
     int64_t total_tokens = 0;
 };
 
-enum class CaseRunStatus {
-    Evaluated,
-    Skipped,
-    Unavailable
-};
+enum class CaseRunStatus { Evaluated, Skipped, Unavailable };
 
 struct CaseRunResult;
 
@@ -173,6 +169,7 @@ struct PerCaseComparison {
 struct ComparisonResult {
     std::string version;
     std::string timestamp;
+
     struct {
         std::string cases_path;
         std::string case_set_hash;
@@ -181,17 +178,20 @@ struct ComparisonResult {
         VariantConfig baseline;
         VariantConfig candidate;
     } config;
+
     struct {
         AggregateResult baseline;
         AggregateResult candidate;
         AggregateDelta delta;
         std::optional<AggregateEvaluationSummary> evaluation;
     } aggregate;
+
     struct {
         GroupedSummary baseline;
         GroupedSummary candidate;
     } grouped;
+
     std::vector<PerCaseComparison> per_case;
 };
 
-} // namespace loom::benchmarks::pare
+}  // namespace loom::benchmarks::pare

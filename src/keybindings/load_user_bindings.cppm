@@ -19,17 +19,10 @@ import loom.serdes.json;
 export namespace loom::keybindings {
 
 /// Severity level for keybinding warnings
-enum class WarningSeverity {
-    warning,
-    error
-};
+enum class WarningSeverity { warning, error };
 
 /// Type of keybinding warning
-enum class WarningType {
-    parse_error,
-    duplicate_key,
-    validation_error
-};
+enum class WarningType { parse_error, duplicate_key, validation_error };
 
 /// A warning produced during keybinding loading/validation
 struct KeybindingWarning {
@@ -172,10 +165,8 @@ public:
 
 private:
     /// Load and parse keybindings from a file, merge with defaults
-    [[nodiscard]] KeybindingsLoadResult load_from_file(
-        const std::filesystem::path& path,
-        const std::vector<Keybinding>& defaults
-    ) {
+    [[nodiscard]] KeybindingsLoadResult load_from_file(const std::filesystem::path& path,
+                                                       const std::vector<Keybinding>& defaults) {
         std::error_code ec;
         if (!std::filesystem::exists(path, ec)) {
             // File doesn't exist - use defaults
@@ -188,12 +179,8 @@ private:
         if (!file.is_open()) {
             // Cannot open file - return defaults with warning
             cached_bindings_ = defaults;
-            cached_warnings_ = {{
-                WarningType::parse_error,
-                WarningSeverity::error,
-                "Failed to open keybindings.json",
-                std::nullopt
-            }};
+            cached_warnings_ = {{WarningType::parse_error, WarningSeverity::error,
+                                 "Failed to open keybindings.json", std::nullopt}};
             return {cached_bindings_, cached_warnings_};
         }
 
@@ -208,38 +195,30 @@ private:
     }
 
     /// Parse JSON content and validate keybinding structure
-    [[nodiscard]] KeybindingsLoadResult parse_and_validate(
-        const std::string& content,
-        const std::vector<Keybinding>& defaults
-    ) {
+    [[nodiscard]] KeybindingsLoadResult
+    parse_and_validate(const std::string& content, const std::vector<Keybinding>& defaults) {
         if (content.empty()) {
-            return {defaults, {{
-                WarningType::parse_error,
-                WarningSeverity::error,
-                "keybindings.json is empty",
-                "Use format: { \"bindings\": [ ... ] }"
-            }}};
+            return {defaults,
+                    {{WarningType::parse_error, WarningSeverity::error, "keybindings.json is empty",
+                      "Use format: { \"bindings\": [ ... ] }"}}};
         }
 
         auto doc_result = loom::utils::json::parse(content);
         if (!doc_result) {
-            return {defaults, {{
-                WarningType::parse_error,
-                WarningSeverity::error,
-                "Failed to parse keybindings.json: " + doc_result.error().message(),
-                "Use format: { \"bindings\": [ { \"id\": \"...\", \"keys\": [\"ctrl+k\"], \"command\": \"...\" } ] }"
-            }}};
+            return {defaults,
+                    {{WarningType::parse_error, WarningSeverity::error,
+                      "Failed to parse keybindings.json: " + doc_result.error().message(),
+                      "Use format: { \"bindings\": [ { \"id\": \"...\", \"keys\": [\"ctrl+k\"], "
+                      "\"command\": \"...\" } ] }"}}};
         }
 
         auto root = doc_result->root();
         auto bindings_val = root.get("bindings");
         if (!root || !root.is_obj() || !bindings_val || !bindings_val.is_arr()) {
-            return {defaults, {{
-                WarningType::validation_error,
-                WarningSeverity::error,
-                "keybindings.json must contain a bindings array",
-                "Use format: { \"bindings\": [ ... ] }"
-            }}};
+            return {defaults,
+                    {{WarningType::validation_error, WarningSeverity::error,
+                      "keybindings.json must contain a bindings array",
+                      "Use format: { \"bindings\": [ ... ] }"}}};
         }
 
         std::vector<Keybinding> merged = defaults;
@@ -252,17 +231,18 @@ private:
         bindings_val.iter([&](loom::utils::json::JsonVal item) {
             if (!item.is_obj()) {
                 warnings.push_back({WarningType::validation_error, WarningSeverity::warning,
-                    "Ignored non-object keybinding entry", std::nullopt});
+                                    "Ignored non-object keybinding entry", std::nullopt});
                 return;
             }
 
             auto id_val = item.get("id");
             auto command_val = item.get("command");
             auto keys_val = item.get("keys");
-            if (!id_val || !id_val.is_str() || !command_val || !command_val.is_str() ||
-                !keys_val || !keys_val.is_arr()) {
+            if (!id_val || !id_val.is_str() || !command_val || !command_val.is_str() || !keys_val ||
+                !keys_val.is_arr()) {
                 warnings.push_back({WarningType::validation_error, WarningSeverity::warning,
-                    "Ignored keybinding entry missing id, command, or keys array", std::nullopt});
+                                    "Ignored keybinding entry missing id, command, or keys array",
+                                    std::nullopt});
                 return;
             }
 
@@ -276,20 +256,25 @@ private:
             });
             if (binding.keys.empty()) {
                 warnings.push_back({WarningType::validation_error, WarningSeverity::warning,
-                    "Ignored keybinding with empty keys: " + binding.id, std::nullopt});
+                                    "Ignored keybinding with empty keys: " + binding.id,
+                                    std::nullopt});
                 return;
             }
             if (auto when_val = item.get("when"); when_val && when_val.is_str()) {
                 binding.when = std::string(when_val.as_str());
             }
             if (auto args_val = item.get("args"); args_val) {
-                binding.args = args_val.is_str() ? std::string(args_val.as_str()) : args_val.to_string();
+                binding.args =
+                    args_val.is_str() ? std::string(args_val.as_str()) : args_val.to_string();
             }
 
             if (!seen_ids.insert(binding.id).second) {
-                warnings.push_back({WarningType::duplicate_key, WarningSeverity::warning,
-                    "Duplicate keybinding id overrides earlier entry: " + binding.id, std::nullopt});
-                std::erase_if(merged, [&](const Keybinding& existing) { return existing.id == binding.id; });
+                warnings.push_back(
+                    {WarningType::duplicate_key, WarningSeverity::warning,
+                     "Duplicate keybinding id overrides earlier entry: " + binding.id,
+                     std::nullopt});
+                std::erase_if(
+                    merged, [&](const Keybinding& existing) { return existing.id == binding.id; });
             }
             merged.push_back(std::move(binding));
         });
@@ -345,4 +330,4 @@ inline void dispose_keybinding_watcher() {
     get_loader().dispose();
 }
 
-} // namespace loom::keybindings
+}  // namespace loom::keybindings

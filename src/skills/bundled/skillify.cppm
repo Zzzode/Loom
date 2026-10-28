@@ -18,7 +18,8 @@ export namespace loom::skills::bundled {
 // Skillify Prompt - mirrors TS bundled/skillify.ts
 // ============================================================
 
-constexpr std::string_view SKILLIFY_PROMPT = R"(## Skillify - Capture a Repeatable Workflow as a Skill
+constexpr std::string_view SKILLIFY_PROMPT =
+    R"(## Skillify - Capture a Repeatable Workflow as a Skill
 
 ### Purpose
 You are converting this session's repeatable process into a reusable skill that
@@ -166,15 +167,16 @@ is complete and we can proceed.
         .description =
             "Capture this session's repeatable workflow as a reusable skill. "
             "Call at the end of the process you want to capture with an optional description.",
-        .trigger_patterns = {
-            R"(skillif(?:y|ied))",
-            R"(create\s+(?:a\s+)?skill)",
-            R"(make.*(?:into|as)\s+(?:a\s+)?skill)",
-            R"(save.*(?:as|into)\s+(?:a\s+)?skill)",
-            R"(new\s+skill\s+from)",
-            R"(capture\s+(?:this\s+)?(?:workflow|process|pattern))",
-            R"(turn\s+(?:this\s+)?into\s+(?:a\s+)?skill)",
-        },
+        .trigger_patterns =
+            {
+                R"(skillif(?:y|ied))",
+                R"(create\s+(?:a\s+)?skill)",
+                R"(make.*(?:into|as)\s+(?:a\s+)?skill)",
+                R"(save.*(?:as|into)\s+(?:a\s+)?skill)",
+                R"(new\s+skill\s+from)",
+                R"(capture\s+(?:this\s+)?(?:workflow|process|pattern))",
+                R"(turn\s+(?:this\s+)?into\s+(?:a\s+)?skill)",
+            },
         .content = std::string(SKILLIFY_PROMPT),
         .is_builtin = true,
         .author = std::nullopt,
@@ -188,15 +190,12 @@ is complete and we can proceed.
 
 /// Given a skill name and save location, return the filesystem path where
 /// the SKILL.md should be written. Does NOT create files — caller handles I/O.
-[[nodiscard]] inline std::filesystem::path build_skill_save_path(
-    std::string_view skill_name,
-    bool is_project_local,
-    const std::filesystem::path& project_root,
-    const std::filesystem::path& home_dir
-) {
-    std::filesystem::path base = is_project_local
-        ? project_root / ".loom" / "skills"
-        : home_dir / ".loom" / "skills";
+[[nodiscard]] inline std::filesystem::path
+build_skill_save_path(std::string_view skill_name, bool is_project_local,
+                      const std::filesystem::path& project_root,
+                      const std::filesystem::path& home_dir) {
+    std::filesystem::path base =
+        is_project_local ? project_root / ".loom" / "skills" : home_dir / ".loom" / "skills";
     return base / std::string(skill_name) / "SKILL.md";
 }
 
@@ -206,11 +205,10 @@ is complete and we can proceed.
     std::vector<SkillManifest> all;
     for (const auto& path : get_skills_search_paths()) {
         auto found = load_skills_directory(path);
-        all.insert(all.end(),
-                   std::make_move_iterator(found.begin()),
+        all.insert(all.end(), std::make_move_iterator(found.begin()),
                    std::make_move_iterator(found.end()));
     }
     return all;
 }
 
-} // namespace loom::skills::bundled
+}  // namespace loom::skills::bundled

@@ -3,8 +3,8 @@
 /// Detects Chrome-extension related user queries and injects install/debug workflow prompts.
 /// Mirrors the loomInChrome skill content.
 module;
-#include <cstdlib>
 #include <cstdio>
+#include <cstdlib>
 
 export module loom.skills.bundled.loom_in_chrome;
 
@@ -24,12 +24,10 @@ constexpr const char* CHROME_WEB_STORE_URL =
     "https://chromewebstore.google.com/detail/loom/fcoeoabgfenejglbffodgkkbkcdhcgfn";
 
 /// Reconnect URL opened after native-host manifest installation
-constexpr const char* CHROME_EXTENSION_RECONNECT_URL =
-    "https://clau.de/chrome/reconnect";
+constexpr const char* CHROME_EXTENSION_RECONNECT_URL = "https://clau.de/chrome/reconnect";
 
 /// Native host identifier used in Chrome manifest files
-constexpr const char* NATIVE_HOST_IDENTIFIER =
-    "com.anthropic.loom_code_browser_extension";
+constexpr const char* NATIVE_HOST_IDENTIFIER = "com.anthropic.loom_code_browser_extension";
 
 /// Base Chrome system prompt.
 /// The full prompt is injected when the skill is triggered.
@@ -129,8 +127,8 @@ inline std::expected<std::string, std::string> exec_command(const std::string& c
 
     int status = loom::utils::bash::pclose_spawn(pipe);
     if (status != 0 && output.empty()) {
-        return std::unexpected("Command failed with exit code " +
-            std::to_string(status) + ": " + cmd);
+        return std::unexpected("Command failed with exit code " + std::to_string(status) + ": " +
+                               cmd);
     }
     return output;
 }
@@ -164,7 +162,7 @@ inline std::string detect_platform() {
 #endif
 }
 
-} // namespace detail
+}  // namespace detail
 
 // ---------------------------------------------------------------------------
 // Auto-enable detection
@@ -184,8 +182,8 @@ inline bool should_auto_enable_loom_in_chrome() {
     namespace fs = std::filesystem;
     if (const char* home = std::getenv("HOME")) {
         fs::path manifest_path = fs::path(home) /
-            "Library/Application Support/Google/Chrome/NativeMessagingHosts" /
-            (std::string(NATIVE_HOST_IDENTIFIER) + ".json");
+                                 "Library/Application Support/Google/Chrome/NativeMessagingHosts" /
+                                 (std::string(NATIVE_HOST_IDENTIFIER) + ".json");
         if (fs::exists(manifest_path)) return true;
     }
 
@@ -263,8 +261,8 @@ inline std::string build_troubleshooting_checklist() {
 
 /// Build the complete prompt text injected when the loom-in-chrome skill fires.
 /// If `task_args` is provided, appends a "Task" section with the user's request.
-inline std::string build_loom_in_chrome_prompt(
-    std::optional<std::string_view> task_args = std::nullopt) {
+inline std::string
+build_loom_in_chrome_prompt(std::optional<std::string_view> task_args = std::nullopt) {
 
     std::ostringstream oss;
     oss << BASE_CHROME_PROMPT << "\n" << SKILL_ACTIVATION_MESSAGE;
@@ -291,21 +289,21 @@ loom::skills::SkillManifest get_loom_in_chrome_skill_manifest() {
             "Opens pages in new tabs within your existing Chrome session. Requires site-level "
             "permissions before executing (configured in the extension).",
         .version = "1.0.0",
-        .triggers = {
-            "chrome extension",
-            "chrome plugin",
-            "chrome extension",
-            "sidebar",
-            "Loom in Chrome",
-            "CFC",
-            "browser automation",
-            "browser tool",
-            "chrome tab",
-            "web actions",
-            "browser actions",
-        },
-        .directory = {}
-    };
+        .triggers =
+            {
+                "chrome extension",
+                "chrome plugin",
+                "chrome extension",
+                "sidebar",
+                "Loom in Chrome",
+                "CFC",
+                "browser automation",
+                "browser tool",
+                "chrome tab",
+                "web actions",
+                "browser actions",
+            },
+        .directory = {}};
 }
 
-} // namespace loom::skills::bundled
+}  // namespace loom::skills::bundled

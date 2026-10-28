@@ -1,8 +1,9 @@
 module;
-#include <cstdlib>
-#include <cstdio>
 #include <httplib.h>
+
 #include <cstddef>
+#include <cstdio>
+#include <cstdlib>
 
 export module loom.cli.update;
 
@@ -46,12 +47,12 @@ std::expected<ParsedUrl, std::string> parse_http_url(std::string_view url) {
 
 std::filesystem::path make_download_path(std::string_view url) {
     auto hash = std::hash<std::string_view>{}(url);
-    return std::filesystem::temp_directory_path() /
-        ("loom-update-" + std::to_string(hash));
+    return std::filesystem::temp_directory_path() / ("loom-update-" + std::to_string(hash));
 }
 
 std::expected<std::filesystem::path, std::string> copy_file_url(std::string_view url) {
-    auto source = std::filesystem::path(std::string(url.substr(std::string_view("file://").size())));
+    auto source =
+        std::filesystem::path(std::string(url.substr(std::string_view("file://").size())));
     if (!std::filesystem::exists(source)) {
         return std::unexpected("Update source file does not exist: " + source.string());
     }
@@ -60,7 +61,8 @@ std::expected<std::filesystem::path, std::string> copy_file_url(std::string_view
     }
 
     auto download_path = make_download_path(url);
-    std::filesystem::copy_file(source, download_path, std::filesystem::copy_options::overwrite_existing);
+    std::filesystem::copy_file(source, download_path,
+                               std::filesystem::copy_options::overwrite_existing);
     if (std::filesystem::file_size(download_path) == 0) {
         std::filesystem::remove(download_path);
         return std::unexpected("Downloaded update is empty");
@@ -83,7 +85,7 @@ std::expected<std::filesystem::path, std::string> download_http_url(std::string_
     }
     if (response->status < 200 || response->status >= 300) {
         return std::unexpected("Failed to download update: HTTP status " +
-            std::to_string(response->status));
+                               std::to_string(response->status));
     }
     if (response->body.empty()) {
         return std::unexpected("Downloaded update is empty");
@@ -119,13 +121,16 @@ int compare_semver(const std::string& a, const std::string& b) {
             if (hyphen != std::string_view::npos) segment = segment.substr(0, hyphen);
             int val = 0;
             for (char c : segment) {
-                if (c >= '0' && c <= '9') val = val * 10 + (c - '0');
-                else break;
+                if (c >= '0' && c <= '9')
+                    val = val * 10 + (c - '0');
+                else
+                    break;
             }
             parts.push_back(val);
             pos = dot + 1;
         }
-        while (parts.size() < 3) parts.push_back(0);
+        while (parts.size() < 3)
+            parts.push_back(0);
         return parts;
     };
 
@@ -176,7 +181,7 @@ void record_check_time() {
     ofs << std::chrono::system_clock::to_time_t(now);
 }
 
-} // namespace loom::cli::detail
+}  // namespace loom::cli::detail
 
 export namespace loom::cli {
 
@@ -202,7 +207,7 @@ std::optional<UpdateInfo> check_for_update() {
     if (last_check) {
         auto elapsed = std::chrono::system_clock::now() - *last_check;
         if (elapsed < std::chrono::hours(1)) {
-            return std::nullopt; // Too soon to check again
+            return std::nullopt;  // Too soon to check again
         }
     }
 
@@ -221,7 +226,7 @@ std::optional<UpdateInfo> check_for_update() {
 
     auto response = client.Get(parsed->target);
     if (!response || response->status != 200 || response->body.empty()) {
-        return std::nullopt; // Silently fail — updates are best-effort
+        return std::nullopt;  // Silently fail — updates are best-effort
     }
 
     detail::record_check_time();
@@ -237,17 +242,15 @@ std::optional<UpdateInfo> check_for_update() {
 
     // Compare versions
     if (detail::compare_semver(latest_version, current_version) <= 0) {
-        return std::nullopt; // Already up to date
+        return std::nullopt;  // Already up to date
     }
 
-    return UpdateInfo{
-        .current = current_version,
-        .latest = latest_version,
-        .url = download_url.empty() ? manifest_url : download_url,
-        .changelog = changelog,
-        .is_security_update = (security == "true"),
-        .is_breaking = (breaking == "true")
-    };
+    return UpdateInfo{.current = current_version,
+                      .latest = latest_version,
+                      .url = download_url.empty() ? manifest_url : download_url,
+                      .changelog = changelog,
+                      .is_security_update = (security == "true"),
+                      .is_breaking = (breaking == "true")};
 }
 
 // Download an update from the given URL to a temporary location
@@ -275,8 +278,8 @@ std::expected<void, std::string> apply_update(std::filesystem::path update_file)
         return std::unexpected("Update file is empty");
     }
 
-    // Determine the path of the currently running binary
-    #ifdef __APPLE__
+// Determine the path of the currently running binary
+#ifdef __APPLE__
     // On macOS, use _NSGetExecutablePath or /proc/self/exe equivalent
     std::string current_binary;
     // Use /proc/self/exe on Linux, realpath on argv[0] as fallback
@@ -295,16 +298,16 @@ std::expected<void, std::string> apply_update(std::filesystem::path update_file)
             current_binary = "/usr/local/bin/loom";
         }
     }
-    #elif __linux__
+#elif __linux__
     std::string current_binary;
     if (fs::exists("/proc/self/exe")) {
         current_binary = fs::read_symlink("/proc/self/exe").string();
     } else {
         current_binary = "/usr/local/bin/loom";
     }
-    #else
+#else
     std::string current_binary = "loom.exe";
-    #endif
+#endif
 
     if (current_binary.empty()) {
         return std::unexpected("Could not determine current binary path");
@@ -330,12 +333,12 @@ std::expected<void, std::string> apply_update(std::filesystem::path update_file)
         return std::unexpected("Failed to replace binary: " + ec.message());
     }
 
-    // Set executable permissions (Unix only)
-    #ifndef _WIN32
+// Set executable permissions (Unix only)
+#ifndef _WIN32
     fs::permissions(current_binary,
-        fs::perms::owner_exec | fs::perms::group_exec | fs::perms::others_exec,
-        fs::perm_options::add, ec);
-    #endif
+                    fs::perms::owner_exec | fs::perms::group_exec | fs::perms::others_exec,
+                    fs::perm_options::add, ec);
+#endif
 
     // Clean up
     fs::remove(backup_path, ec);
@@ -368,8 +371,8 @@ std::string get_update_channel() {
                     while (!value.empty() && (value.front() == ' ' || value.front() == '"')) {
                         value.erase(value.begin());
                     }
-                    while (!value.empty() && (value.back() == ' ' || value.back() == '"' ||
-                                              value.back() == ',')) {
+                    while (!value.empty() &&
+                           (value.back() == ' ' || value.back() == '"' || value.back() == ',')) {
                         value.pop_back();
                     }
                     if (value == "stable" || value == "beta" || value == "nightly") {
@@ -397,9 +400,8 @@ void set_update_channel(std::string_view channel) {
     std::string existing_content;
     if (std::filesystem::exists(config_path)) {
         std::ifstream ifs(config_path);
-        existing_content = std::string(
-            (std::istreambuf_iterator<char>(ifs)),
-            std::istreambuf_iterator<char>());
+        existing_content =
+            std::string((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
     }
 
     // Simple JSON write/merge
@@ -439,12 +441,12 @@ inline std::string get_config_path() {
     if (home) {
         return std::string(home) + "/.config/loom/update.json";
     }
-    #ifdef _WIN32
+#ifdef _WIN32
     const char* appdata = std::getenv("APPDATA");
     if (appdata) {
         return std::string(appdata) + "/loom/update.json";
     }
-    #endif
+#endif
     return "/tmp/loom-update.json";
 }
 
@@ -460,8 +462,8 @@ inline std::string get_manifest_url(const std::string& channel) {
 
 // Format a user-facing update notification message
 inline std::string format_update_notification(const UpdateInfo& info) {
-    std::string msg = "A new version of Loom is available: v" + info.latest +
-        " (current: v" + info.current + ")\n";
+    std::string msg = "A new version of Loom is available: v" + info.latest + " (current: v" +
+                      info.current + ")\n";
     if (info.is_security_update) {
         msg += "  [SECURITY] This update contains security fixes.\n";
     }
@@ -475,4 +477,4 @@ inline std::string format_update_notification(const UpdateInfo& info) {
     return msg;
 }
 
-} // namespace loom::cli
+}  // namespace loom::cli

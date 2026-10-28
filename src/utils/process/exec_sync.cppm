@@ -1,8 +1,9 @@
 module;
 
-#include <cstdlib>
-#include <cstdio>
 #include <sys/wait.h>
+
+#include <cstdio>
+#include <cstdlib>
 
 export module loom.process.exec_sync;
 
@@ -12,8 +13,7 @@ import loom.process.bash.bash_execution;
 export namespace loom::utils {
 
 // Execute a command synchronously and return stdout
-inline std::expected<std::string, std::string>
-exec_sync(std::string_view command) {
+inline std::expected<std::string, std::string> exec_sync(std::string_view command) {
     std::string cmd(command);
     // Redirect stderr to /dev/null for clean stdout capture
     cmd += " 2>/dev/null";
@@ -26,7 +26,7 @@ exec_sync(std::string_view command) {
     int status = pipe_cap->status;
     if (status != 0) {
         return std::unexpected("Command failed with exit code " +
-            std::to_string(WEXITSTATUS(status)));
+                               std::to_string(WEXITSTATUS(status)));
     }
 
     // Trim trailing newline
@@ -61,4 +61,4 @@ exec_sync_lines(std::string_view command) {
     return lines;
 }
 
-} // namespace loom::utils
+}  // namespace loom::utils

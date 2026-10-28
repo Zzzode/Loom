@@ -13,7 +13,8 @@ namespace loom::tools::notebook_detail {
 
 namespace json = loom::utils::json;
 
-[[nodiscard]] auto read_file(const std::filesystem::path& path) -> std::expected<std::string, std::string> {
+[[nodiscard]] auto read_file(const std::filesystem::path& path)
+    -> std::expected<std::string, std::string> {
     std::ifstream file(path);
     if (!file) return std::unexpected("cannot open file");
     return std::string((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
@@ -40,8 +41,7 @@ void replace_obj_value(json::JsonMutVal obj, std::string_view key, json::JsonMut
     obj.add(key, value);
 }
 
-} // namespace loom::tools::notebook_detail
-
+}  // namespace loom::tools::notebook_detail
 
 export namespace loom::tools {
 
@@ -54,10 +54,14 @@ enum class CellType {
 
 constexpr auto cell_type_name(CellType t) -> std::string_view {
     switch (t) {
-        case CellType::Code:     return "code";
-        case CellType::Markdown: return "markdown";
-        case CellType::Raw:      return "raw";
-        default:                 return "unknown";
+    case CellType::Code:
+        return "code";
+    case CellType::Markdown:
+        return "markdown";
+    case CellType::Raw:
+        return "raw";
+    default:
+        return "unknown";
     }
 }
 
@@ -78,11 +82,16 @@ enum class CellOperation {
 
 constexpr auto cell_op_name(CellOperation op) -> std::string_view {
     switch (op) {
-        case CellOperation::Insert: return "insert";
-        case CellOperation::Delete: return "delete";
-        case CellOperation::Update: return "update";
-        case CellOperation::Move:   return "move";
-        default:                    return "unknown";
+    case CellOperation::Insert:
+        return "insert";
+    case CellOperation::Delete:
+        return "delete";
+    case CellOperation::Update:
+        return "update";
+    case CellOperation::Move:
+        return "move";
+    default:
+        return "unknown";
     }
 }
 
@@ -101,16 +110,26 @@ enum class NotebookError {
 
 constexpr auto format_error(NotebookError err) -> std::string_view {
     switch (err) {
-        case NotebookError::PathEmpty:           return "Notebook path is empty";
-        case NotebookError::FileNotFound:        return "Notebook file not found";
-        case NotebookError::InvalidNotebook:     return "Invalid notebook format";
-        case NotebookError::CellIndexOutOfRange: return "Cell index is out of range";
-        case NotebookError::InvalidCellType:     return "Invalid cell type";
-        case NotebookError::InvalidOperation:    return "Invalid cell operation";
-        case NotebookError::ParseError:          return "Failed to parse notebook JSON";
-        case NotebookError::IoError:             return "I/O error reading/writing notebook";
-        case NotebookError::ContentTooLarge:     return "Cell content exceeds size limit";
-        default:                                 return "Unknown notebook error";
+    case NotebookError::PathEmpty:
+        return "Notebook path is empty";
+    case NotebookError::FileNotFound:
+        return "Notebook file not found";
+    case NotebookError::InvalidNotebook:
+        return "Invalid notebook format";
+    case NotebookError::CellIndexOutOfRange:
+        return "Cell index is out of range";
+    case NotebookError::InvalidCellType:
+        return "Invalid cell type";
+    case NotebookError::InvalidOperation:
+        return "Invalid cell operation";
+    case NotebookError::ParseError:
+        return "Failed to parse notebook JSON";
+    case NotebookError::IoError:
+        return "I/O error reading/writing notebook";
+    case NotebookError::ContentTooLarge:
+        return "Cell content exceeds size limit";
+    default:
+        return "Unknown notebook error";
     }
 }
 
@@ -148,10 +167,10 @@ struct Notebook {
 struct NotebookEditRequest {
     std::filesystem::path notebook_path;
     CellOperation operation;
-    size_t cell_index{0};                         // Target cell index
-    std::optional<size_t> target_index;           // Destination for move operation
-    std::optional<CellType> cell_type;            // For insert/update
-    std::optional<std::string> source;            // Cell content for insert/update
+    size_t cell_index{0};                // Target cell index
+    std::optional<size_t> target_index;  // Destination for move operation
+    std::optional<CellType> cell_type;   // For insert/update
+    std::optional<std::string> source;   // Cell content for insert/update
 };
 
 // Edit result
@@ -166,15 +185,15 @@ struct NotebookEditResult {
 class NotebookEditTool {
 public:
     static constexpr std::string_view name = "notebook_edit";
-    static constexpr std::string_view description = "Edit Jupyter notebook cells (insert, delete, update, move)";
-    static constexpr size_t kMaxCellContent = 1024 * 1024; // 1MB per cell
+    static constexpr std::string_view description =
+        "Edit Jupyter notebook cells (insert, delete, update, move)";
+    static constexpr size_t kMaxCellContent = 1024 * 1024;  // 1MB per cell
 
     NotebookEditTool() = default;
 
     // Validate an edit request
     auto validate(const NotebookEditRequest& request, const Notebook& notebook) const
-        -> std::expected<void, NotebookError>
-    {
+        -> std::expected<void, NotebookError> {
         if (request.notebook_path.empty()) {
             return std::unexpected(NotebookError::PathEmpty);
         }
@@ -182,49 +201,48 @@ public:
         size_t cell_count = notebook.cells.size();
 
         switch (request.operation) {
-            case CellOperation::Insert:
-                if (request.cell_index > cell_count) {
-                    return std::unexpected(NotebookError::CellIndexOutOfRange);
-                }
-                if (!request.source) {
-                    return std::unexpected(NotebookError::InvalidOperation);
-                }
-                if (request.source->size() > kMaxCellContent) {
-                    return std::unexpected(NotebookError::ContentTooLarge);
-                }
-                break;
+        case CellOperation::Insert:
+            if (request.cell_index > cell_count) {
+                return std::unexpected(NotebookError::CellIndexOutOfRange);
+            }
+            if (!request.source) {
+                return std::unexpected(NotebookError::InvalidOperation);
+            }
+            if (request.source->size() > kMaxCellContent) {
+                return std::unexpected(NotebookError::ContentTooLarge);
+            }
+            break;
 
-            case CellOperation::Delete:
-                if (request.cell_index >= cell_count) {
-                    return std::unexpected(NotebookError::CellIndexOutOfRange);
-                }
-                break;
+        case CellOperation::Delete:
+            if (request.cell_index >= cell_count) {
+                return std::unexpected(NotebookError::CellIndexOutOfRange);
+            }
+            break;
 
-            case CellOperation::Update:
-                if (request.cell_index >= cell_count) {
-                    return std::unexpected(NotebookError::CellIndexOutOfRange);
-                }
-                if (!request.source) {
-                    return std::unexpected(NotebookError::InvalidOperation);
-                }
-                break;
+        case CellOperation::Update:
+            if (request.cell_index >= cell_count) {
+                return std::unexpected(NotebookError::CellIndexOutOfRange);
+            }
+            if (!request.source) {
+                return std::unexpected(NotebookError::InvalidOperation);
+            }
+            break;
 
-            case CellOperation::Move:
-                if (request.cell_index >= cell_count) {
-                    return std::unexpected(NotebookError::CellIndexOutOfRange);
-                }
-                if (!request.target_index || *request.target_index >= cell_count) {
-                    return std::unexpected(NotebookError::CellIndexOutOfRange);
-                }
-                break;
+        case CellOperation::Move:
+            if (request.cell_index >= cell_count) {
+                return std::unexpected(NotebookError::CellIndexOutOfRange);
+            }
+            if (!request.target_index || *request.target_index >= cell_count) {
+                return std::unexpected(NotebookError::CellIndexOutOfRange);
+            }
+            break;
         }
         return {};
     }
 
     // Load a notebook from disk.
     auto load_notebook(const std::filesystem::path& path) const
-        -> std::expected<Notebook, NotebookError>
-    {
+        -> std::expected<Notebook, NotebookError> {
         if (!std::filesystem::exists(path)) {
             return std::unexpected(NotebookError::FileNotFound);
         }
@@ -276,12 +294,21 @@ public:
 
         bool ok = true;
         cells.iter([&](notebook_detail::json::JsonVal cell_val) {
-            if (!cell_val.is_obj()) { ok = false; return; }
+            if (!cell_val.is_obj()) {
+                ok = false;
+                return;
+            }
 
             auto type_val = cell_val.get("cell_type");
-            if (!type_val.is_str()) { ok = false; return; }
+            if (!type_val.is_str()) {
+                ok = false;
+                return;
+            }
             auto cell_type = parse_cell_type(type_val.as_str());
-            if (!cell_type) { ok = false; return; }
+            if (!cell_type) {
+                ok = false;
+                return;
+            }
 
             NotebookCell cell;
             cell.cell_type = *cell_type;
@@ -328,8 +355,7 @@ public:
 
     // Save notebook back to disk
     auto save_notebook(const std::filesystem::path& path, const Notebook& notebook) const
-        -> std::expected<void, NotebookError>
-    {
+        -> std::expected<void, NotebookError> {
         namespace json = notebook_detail::json;
 
         // Parse the round-tripped raw JSON, then copy it into a mutable document
@@ -358,9 +384,8 @@ public:
 
             if (cell.dirty || cell.raw_json.empty()) {
                 notebook_detail::replace_obj_value(cell_obj, "cell_type",
-                    mut_doc.string(cell_type_name(cell.cell_type)));
-                notebook_detail::replace_obj_value(cell_obj, "source",
-                    mut_doc.string(cell.source));
+                                                   mut_doc.string(cell_type_name(cell.cell_type)));
+                notebook_detail::replace_obj_value(cell_obj, "source", mut_doc.string(cell.source));
 
                 if (!cell_obj.get("metadata").valid()) {
                     notebook_detail::replace_obj_value(cell_obj, "metadata", mut_doc.object());
@@ -368,7 +393,8 @@ public:
                 if (cell.id && !cell_obj.get("id").valid()) {
                     notebook_detail::replace_obj_value(cell_obj, "id", mut_doc.string(*cell.id));
                 }
-                if (cell.cell_type == CellType::Code && (cell.clear_code_outputs || cell.raw_json.empty())) {
+                if (cell.cell_type == CellType::Code &&
+                    (cell.clear_code_outputs || cell.raw_json.empty())) {
                     notebook_detail::replace_obj_value(cell_obj, "execution_count", mut_doc.null());
                     notebook_detail::replace_obj_value(cell_obj, "outputs", mut_doc.array());
                 }
@@ -410,60 +436,62 @@ public:
         result.affected_index = request.cell_index;
 
         switch (request.operation) {
-            case CellOperation::Insert: {
-                NotebookCell new_cell{
-                    .cell_type = request.cell_type.value_or(CellType::Code),
-                    .id = std::nullopt,
-                    .source = *request.source,
-                    .outputs = {},
-                    .execution_count = std::nullopt,
-                    .metadata = {},
-                    .raw_json = {},
-                    .dirty = true,
-                    .clear_code_outputs = false,
-                };
-                if (notebook.nbformat > 4 || (notebook.nbformat == 4 && notebook.nbformat_minor >= 5)) {
-                    auto now = std::chrono::steady_clock::now().time_since_epoch().count();
-                    new_cell.id = std::format("cell-{}", static_cast<unsigned long long>(now));
-                }
-                if (new_cell.cell_type == CellType::Code) {
-                    new_cell.clear_code_outputs = true;
-                }
-                notebook.cells.insert(notebook.cells.begin() +
-                    static_cast<ptrdiff_t>(request.cell_index), std::move(new_cell));
-                result.message = std::format("Inserted cell at index {}", request.cell_index);
-                break;
+        case CellOperation::Insert: {
+            NotebookCell new_cell{
+                .cell_type = request.cell_type.value_or(CellType::Code),
+                .id = std::nullopt,
+                .source = *request.source,
+                .outputs = {},
+                .execution_count = std::nullopt,
+                .metadata = {},
+                .raw_json = {},
+                .dirty = true,
+                .clear_code_outputs = false,
+            };
+            if (notebook.nbformat > 4 || (notebook.nbformat == 4 && notebook.nbformat_minor >= 5)) {
+                auto now = std::chrono::steady_clock::now().time_since_epoch().count();
+                new_cell.id = std::format("cell-{}", static_cast<unsigned long long>(now));
             }
-            case CellOperation::Delete: {
-                notebook.cells.erase(notebook.cells.begin() +
-                    static_cast<ptrdiff_t>(request.cell_index));
-                result.message = std::format("Deleted cell at index {}", request.cell_index);
-                break;
+            if (new_cell.cell_type == CellType::Code) {
+                new_cell.clear_code_outputs = true;
             }
-            case CellOperation::Update: {
-                auto& cell = notebook.cells[request.cell_index];
-                const bool was_code = cell.cell_type == CellType::Code;
-                cell.source = *request.source;
-                if (request.cell_type) cell.cell_type = *request.cell_type;
-                cell.dirty = true;
-                if (was_code) {
-                    cell.outputs.clear();
-                    cell.execution_count = std::nullopt;
-                    cell.clear_code_outputs = true;
-                }
-                result.message = std::format("Updated cell at index {}", request.cell_index);
-                break;
+            notebook.cells.insert(notebook.cells.begin() +
+                                      static_cast<ptrdiff_t>(request.cell_index),
+                                  std::move(new_cell));
+            result.message = std::format("Inserted cell at index {}", request.cell_index);
+            break;
+        }
+        case CellOperation::Delete: {
+            notebook.cells.erase(notebook.cells.begin() +
+                                 static_cast<ptrdiff_t>(request.cell_index));
+            result.message = std::format("Deleted cell at index {}", request.cell_index);
+            break;
+        }
+        case CellOperation::Update: {
+            auto& cell = notebook.cells[request.cell_index];
+            const bool was_code = cell.cell_type == CellType::Code;
+            cell.source = *request.source;
+            if (request.cell_type) cell.cell_type = *request.cell_type;
+            cell.dirty = true;
+            if (was_code) {
+                cell.outputs.clear();
+                cell.execution_count = std::nullopt;
+                cell.clear_code_outputs = true;
             }
-            case CellOperation::Move: {
-                auto cell = std::move(notebook.cells[request.cell_index]);
-                notebook.cells.erase(notebook.cells.begin() +
-                    static_cast<ptrdiff_t>(request.cell_index));
-                notebook.cells.insert(notebook.cells.begin() +
-                    static_cast<ptrdiff_t>(*request.target_index), std::move(cell));
-                result.message = std::format("Moved cell from {} to {}",
-                    request.cell_index, *request.target_index);
-                break;
-            }
+            result.message = std::format("Updated cell at index {}", request.cell_index);
+            break;
+        }
+        case CellOperation::Move: {
+            auto cell = std::move(notebook.cells[request.cell_index]);
+            notebook.cells.erase(notebook.cells.begin() +
+                                 static_cast<ptrdiff_t>(request.cell_index));
+            notebook.cells.insert(notebook.cells.begin() +
+                                      static_cast<ptrdiff_t>(*request.target_index),
+                                  std::move(cell));
+            result.message =
+                std::format("Moved cell from {} to {}", request.cell_index, *request.target_index);
+            break;
+        }
         }
 
         // Save modified notebook
@@ -492,8 +520,9 @@ public:
     }},
     "required": ["notebook_path", "operation", "cell_index"]
   }}
-}})json", name, description);
+}})json",
+                           name, description);
     }
 };
 
-} // namespace loom::tools
+}  // namespace loom::tools

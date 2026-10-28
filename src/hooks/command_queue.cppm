@@ -8,9 +8,7 @@ export module loom.hooks.command_queue;
 
 import std;
 
-
 export namespace loom::hooks {
-
 
 enum class QueuePriority {
     low,
@@ -19,7 +17,6 @@ enum class QueuePriority {
     system,
 };
 
-
 struct QueuedCommand {
     std::string id;
     std::string command_text;
@@ -27,13 +24,11 @@ struct QueuedCommand {
     std::chrono::steady_clock::time_point enqueued_at;
     std::uint32_t timeout_ms{30000};
 
-
     [[nodiscard]] auto is_expired() const -> bool {
         auto elapsed = std::chrono::steady_clock::now() - enqueued_at;
         return elapsed > std::chrono::milliseconds(timeout_ms);
     }
 };
-
 
 struct QueueState {
     std::size_t pending{0};
@@ -42,7 +37,6 @@ struct QueueState {
     std::size_t cancelled_count{0};
 };
 
-
 struct CommandCompleteEvent {
     std::string id;
     bool success{true};
@@ -50,14 +44,13 @@ struct CommandCompleteEvent {
     std::chrono::milliseconds duration;
 };
 
-
 using CommandCompleteCallback = std::function<void(const CommandCompleteEvent&)>;
 
 using CommandExecutor = std::function<std::expected<void, std::string>(const QueuedCommand&)>;
 
-
 class CommandQueue {
     using Clock = std::chrono::steady_clock;
+
 public:
     CommandQueue() = default;
 
@@ -66,24 +59,20 @@ public:
      * System-priority commands are inserted at the front.
      */
     [[nodiscard]] auto enqueue(std::string_view command_text,
-                                QueuePriority priority = QueuePriority::normal,
-                                std::uint32_t timeout_ms = 30000) -> std::string {
+                               QueuePriority priority = QueuePriority::normal,
+                               std::uint32_t timeout_ms = 30000) -> std::string {
         std::lock_guard lock{mu_};
 
         auto id = generate_id();
-        QueuedCommand cmd{
-            .id = id,
-            .command_text = std::string(command_text),
-            .priority = priority,
-            .enqueued_at = Clock::now(),
-            .timeout_ms = timeout_ms
-        };
-
+        QueuedCommand cmd{.id = id,
+                          .command_text = std::string(command_text),
+                          .priority = priority,
+                          .enqueued_at = Clock::now(),
+                          .timeout_ms = timeout_ms};
 
         if (is_duplicate(cmd)) {
             return id;
         }
-
 
         if (priority == QueuePriority::system) {
             queue_.push_front(std::move(cmd));
@@ -95,19 +84,15 @@ public:
         return id;
     }
 
-
     [[nodiscard]] auto cancel(std::string_view id) -> bool {
         std::lock_guard lock{mu_};
-
 
         if (current_ && current_->id == id) {
             cancel_requested_ = true;
             return true;
         }
 
-
-        auto it = std::ranges::find_if(queue_,
-            [id](const auto& cmd) { return cmd.id == id; });
+        auto it = std::ranges::find_if(queue_, [id](const auto& cmd) { return cmd.id == id; });
         if (it != queue_.end()) {
             queue_.erase(it);
             cancelled_count_++;
@@ -115,7 +100,6 @@ public:
         }
         return false;
     }
-
 
     auto cancel_all() -> void {
         std::lock_guard lock{mu_};
@@ -126,21 +110,17 @@ public:
         }
     }
 
-
     [[nodiscard]] auto get_current() const -> std::optional<QueuedCommand> {
         std::lock_guard lock{mu_};
         return current_;
     }
-
 
     [[nodiscard]] auto get_pending_count() const -> std::size_t {
         std::lock_guard lock{mu_};
         return queue_.size();
     }
 
-
-    [[nodiscard]] auto process_next(CommandExecutor executor)
-        -> std::expected<void, std::string> {
+    [[nodiscard]] auto process_next(CommandExecutor executor) -> std::expected<void, std::string> {
         QueuedCommand cmd;
         {
             std::lock_guard lock{mu_};
@@ -160,8 +140,8 @@ public:
 
         auto start_time = Clock::now();
         auto result = executor(cmd);
-        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(
-            Clock::now() - start_time);
+        auto duration =
+            std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - start_time);
 
         {
             std::lock_guard lock{mu_};
@@ -169,47 +149,37 @@ public:
             completed_count_++;
         }
 
-
-        CommandCompleteEvent event{
-            .id = cmd.id,
-            .success = result.has_value(),
-            .error_message = result.has_value() ? "" : result.error(),
-            .duration = duration
-        };
+        CommandCompleteEvent event{.id = cmd.id,
+                                   .success = result.has_value(),
+                                   .error_message = result.has_value() ? "" : result.error(),
+                                   .duration = duration};
         notify_complete(event);
 
         return result;
     }
-
 
     [[nodiscard]] auto is_idle() const -> bool {
         std::lock_guard lock{mu_};
         return !current_ && queue_.empty();
     }
 
-
     auto on_command_complete(CommandCompleteCallback callback) -> void {
         std::lock_guard lock{mu_};
         complete_callbacks_.push_back(std::move(callback));
     }
 
-
     [[nodiscard]] auto state() const -> QueueState {
         std::lock_guard lock{mu_};
-        return QueueState{
-            .pending = queue_.size(),
-            .current = current_,
-            .completed_count = completed_count_,
-            .cancelled_count = cancelled_count_
-        };
+        return QueueState{.pending = queue_.size(),
+                          .current = current_,
+                          .completed_count = completed_count_,
+                          .cancelled_count = cancelled_count_};
     }
-
 
     [[nodiscard]] auto is_cancel_requested() const -> bool {
         std::lock_guard lock{mu_};
         return cancel_requested_;
     }
-
 
     auto set_dedup_window(std::chrono::milliseconds window) -> void {
         std::lock_guard lock{mu_};
@@ -227,11 +197,7 @@ private:
     bool cancel_requested_{false};
     std::chrono::milliseconds dedup_window_{500};
 
-
-    [[nodiscard]] auto generate_id() -> std::string {
-        return std::format("cmd_{}", ++id_counter_);
-    }
-
+    [[nodiscard]] auto generate_id() -> std::string { return std::format("cmd_{}", ++id_counter_); }
 
     [[nodiscard]] auto is_duplicate(const QueuedCommand& cmd) const -> bool {
         auto now = Clock::now();
@@ -243,7 +209,6 @@ private:
         }
         return false;
     }
-
 
     [[nodiscard]] auto find_insert_position(QueuePriority priority)
         -> std::deque<QueuedCommand>::iterator {
@@ -258,14 +223,15 @@ private:
         return it;
     }
 
-
     auto purge_expired() -> void {
         std::erase_if(queue_, [this](const QueuedCommand& cmd) {
-            if (cmd.is_expired()) { cancelled_count_++; return true; }
+            if (cmd.is_expired()) {
+                cancelled_count_++;
+                return true;
+            }
             return false;
         });
     }
-
 
     auto notify_complete(const CommandCompleteEvent& event) -> void {
         for (const auto& cb : complete_callbacks_) {
@@ -274,4 +240,4 @@ private:
     }
 };
 
-} // namespace loom::hooks
+}  // namespace loom::hooks

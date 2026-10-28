@@ -37,7 +37,7 @@ namespace detail {
     return result;
 }
 
-} // namespace detail
+}  // namespace detail
 
 // ============================================================
 // Platform URL / file openers.
@@ -67,14 +67,12 @@ namespace detail {
     std::string cmd = "rundll32 url.dll,FileProtocolHandler " + quoted;
     return std::system(cmd.c_str()) == 0;
 #elif defined(__APPLE__)
-    std::string cmd = browser_env && *browser_env
-        ? std::string(browser_env) + " " + quoted
-        : "open " + quoted;
+    std::string cmd =
+        browser_env && *browser_env ? std::string(browser_env) + " " + quoted : "open " + quoted;
     return std::system(cmd.c_str()) == 0;
 #else
-    std::string cmd = browser_env && *browser_env
-        ? std::string(browser_env) + " " + quoted
-        : "xdg-open " + quoted;
+    std::string cmd = browser_env && *browser_env ? std::string(browser_env) + " " + quoted
+                                                  : "xdg-open " + quoted;
     return std::system(cmd.c_str()) == 0;
 #endif
 }
@@ -169,17 +167,14 @@ namespace detail {
     if (ec) ap = p;
     const std::string raw = ap.string();
     static constexpr char kHex[] = "0123456789ABCDEF";
-    static constexpr std::string_view kSafe =
-        "!$&'()*+,-.:;=@_";
+    static constexpr std::string_view kSafe = "!$&'()*+,-.:;=@_";
     std::string url;
     url.reserve(raw.size() + 7);
     url += "file://";
     for (unsigned char c : raw) {
         const bool unreserved =
-            (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') ||
-            (c >= '0' && c <= '9');
-        if (c == '/' || unreserved ||
-            kSafe.find(static_cast<char>(c)) != std::string_view::npos) {
+            (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9');
+        if (c == '/' || unreserved || kSafe.find(static_cast<char>(c)) != std::string_view::npos) {
             url.push_back(static_cast<char>(c));
         } else {
             url.push_back('%');
@@ -254,8 +249,8 @@ bool supports_hyperlinks() {
     const char* term_program = std::getenv("TERM_PROGRAM");
     if (term_program) {
         std::string_view tp(term_program);
-        if (tp == "iTerm.app" || tp == "Apple_Terminal" ||
-            tp == "WezTerm" || tp == "vscode") return true;
+        if (tp == "iTerm.app" || tp == "Apple_Terminal" || tp == "WezTerm" || tp == "vscode")
+            return true;
     }
     if (std::getenv("WT_SESSION")) return true;
 
@@ -263,7 +258,8 @@ bool supports_hyperlinks() {
     if (vte) {
         try {
             if (std::stoi(vte) >= 5000) return true;
-        } catch (...) {}
+        } catch (...) {
+        }
     }
 
     // Additional hyperlink terminals via TERM_PROGRAM / LC_TERMINAL.
@@ -321,4 +317,4 @@ std::string make_file_link(fs::path file, std::optional<int> line) {
     return make_hyperlink(url, display);
 }
 
-} // namespace loom::utils
+}  // namespace loom::utils

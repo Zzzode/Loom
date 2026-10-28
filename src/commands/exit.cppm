@@ -8,13 +8,13 @@ import std;
 export namespace loom::commands {
 
 auto exit_state_path() -> std::filesystem::path {
-    if (const char* home = std::getenv("HOME")) return std::filesystem::path{home} / ".loom" / "last-exit.txt";
+    if (const char* home = std::getenv("HOME"))
+        return std::filesystem::path{home} / ".loom" / "last-exit.txt";
     return std::filesystem::path{".loom"} / "last-exit.txt";
 }
 
 auto confirm_exit_with_pending_changes() -> bool;
 auto save_state_before_exit() -> void;
-
 
 auto execute_exit(bool force = false) -> void {
     if (!force) {
@@ -27,16 +27,13 @@ auto execute_exit(bool force = false) -> void {
     static_cast<void>(std::atexit([] {}));
 }
 
-
 auto confirm_exit_with_pending_changes() -> bool {
     return true;
 }
 
-
 auto get_exit_prompt() -> std::string {
     return "Are you sure you want to exit? (y/n)";
 }
-
 
 auto save_state_before_exit() -> void {
     auto path = exit_state_path();
@@ -45,4 +42,4 @@ auto save_state_before_exit() -> void {
     output << "status=exited\n";
 }
 
-} // namespace loom::commands
+}  // namespace loom::commands

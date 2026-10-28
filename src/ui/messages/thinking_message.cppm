@@ -7,14 +7,14 @@
 /// mode (a) plain and mode (b) redacted through a single data model.
 module;
 
-#include <cstdint>
-#include <cctype>
-
-#include <ftxui/dom/elements.hpp>
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/event.hpp>
+#include <ftxui/dom/elements.hpp>
+
+#include <cctype>
 #include <cstddef>
+#include <cstdint>
 
 export module loom.ui.messages.thinking_message;
 
@@ -25,7 +25,7 @@ import loom.ui.foundation.theme_provider;
 import loom.ui.messages.message_components;
 import loom.types.types;
 import loom.ui.foundation.clock;
-import loom.ui.foundation.design_figures;  // kSpinnerFrames canonical set (GAP 4)
+import loom.ui.foundation.design_figures; // kSpinnerFrames canonical set (GAP 4)
 import loom.ui.visual.markdown;           // render_markdown_dim for thinking body
 
 export namespace loom::ui::messages::thinking_message {
@@ -47,22 +47,22 @@ inline constexpr int kThinkingTimeoutSeconds = 30;
 
 /// State of the thinking process
 enum class ThinkingState : std::uint8_t {
-    Active,     // Currently thinking (streaming)
-    Paused,     // Paused/waiting for tool result
-    Complete,   // Thinking finished
+    Active,    // Currently thinking (streaming)
+    Paused,    // Paused/waiting for tool result
+    Complete,  // Thinking finished
 };
 
 /// Rendering mode for the thinking block
 enum class ThinkingMode : std::uint8_t {
-    Plain,      ///< Normal chain-of-thought text
-    Redacted,   ///< Redacted / encrypted reasoning with lock badge
+    Plain,     ///< Normal chain-of-thought text
+    Redacted,  ///< Redacted / encrypted reasoning with lock badge
 };
 
 /// A section within the thinking content (plain mode)
 struct ThinkingSection {
-    std::string title;          // Optional section heading
-    std::string content;        // The thinking text
-    bool is_key_insight = false; // Highlight as important
+    std::string title;            // Optional section heading
+    std::string content;          // The thinking text
+    bool is_key_insight = false;  // Highlight as important
 };
 
 /// Data for a thinking message
@@ -72,12 +72,12 @@ struct ThinkingMessageData {
 
     // --- Plain mode fields ---
     std::vector<ThinkingSection> sections;
-    std::string raw_text;                   // Full raw thinking text
+    std::string raw_text;  // Full raw thinking text
 
     // --- Redacted mode fields ---
-    std::string redacted_reason;            // Why redacted (policy / safety / etc.)
-    std::optional<std::size_t> encrypted_bytes; // Encrypted payload size
-    bool redacted_show_placeholder{true};   // Show "filtered" placeholder body
+    std::string redacted_reason;                 // Why redacted (policy / safety / etc.)
+    std::optional<std::size_t> encrypted_bytes;  // Encrypted payload size
+    bool redacted_show_placeholder{true};        // Show "filtered" placeholder body
 
     // --- Shared ---
     std::chrono::milliseconds duration{0};  // Time spent thinking
@@ -94,12 +94,12 @@ struct ThinkingMessageData {
 /// Options for the thinking message component
 struct ThinkingMessageOptions {
     ThinkingMessageData data;
-    int max_visible_lines = 15;             // N-line truncation
-    bool keyword_highlight = true;          // Numbers / TODO / etc. simple color
+    int max_visible_lines = 15;     // N-line truncation
+    bool keyword_highlight = true;  // Numbers / TODO / etc. simple color
     bool show_token_count = true;
     bool animate_streaming = true;
     std::function<void()> on_toggle;
-    std::function<void()> on_copy_text;     // 'c' copies full plaintext
+    std::function<void()> on_copy_text;  // 'c' copies full plaintext
 };
 
 // ============================================================
@@ -133,13 +133,11 @@ inline Elements highlight_line_tokens(const std::string& line) {
 
         // --- Number literal ---
         if (std::isdigit(static_cast<unsigned char>(c)) ||
-            (c == '-' && i + 1 < n &&
-             std::isdigit(static_cast<unsigned char>(line[i + 1])))) {
+            (c == '-' && i + 1 < n && std::isdigit(static_cast<unsigned char>(line[i + 1])))) {
             std::size_t j = i;
             if (c == '-') ++j;
-            while (j < n && (std::isdigit(static_cast<unsigned char>(line[j])) ||
-                             line[j] == '.' || line[j] == '_' ||
-                             line[j] == 'x' || line[j] == 'X' ||
+            while (j < n && (std::isdigit(static_cast<unsigned char>(line[j])) || line[j] == '.' ||
+                             line[j] == '_' || line[j] == 'x' || line[j] == 'X' ||
                              std::isxdigit(static_cast<unsigned char>(line[j])))) {
                 ++j;
             }
@@ -150,7 +148,8 @@ inline Elements highlight_line_tokens(const std::string& line) {
                 continue;
             }
             flush_plain();
-            out.push_back(text(line.substr(i, j - i)) | color(loom::ui::design::theme::current_theme().palette->info));
+            out.push_back(text(line.substr(i, j - i)) |
+                          color(loom::ui::design::theme::current_theme().palette->info));
             i = j;
             continue;
         }
@@ -160,8 +159,7 @@ inline Elements highlight_line_tokens(const std::string& line) {
             std::isupper(static_cast<unsigned char>(c))) {
             std::size_t j = i;
             bool has_lower = false;
-            while (j < n && (std::isalnum(static_cast<unsigned char>(line[j])) ||
-                             line[j] == '_')) {
+            while (j < n && (std::isalnum(static_cast<unsigned char>(line[j])) || line[j] == '_')) {
                 if (std::islower(static_cast<unsigned char>(line[j]))) has_lower = true;
                 ++j;
             }
@@ -169,19 +167,23 @@ inline Elements highlight_line_tokens(const std::string& line) {
             // Only treat as constant if entirely upper/digit/underscore and len>=3
             if (!has_lower && word.size() >= 3 && is_id_boundary(j < n ? line[j] : '\0')) {
                 flush_plain();
-                out.push_back(text(word) | color(loom::ui::design::theme::current_theme().palette->primary) | bold);
+                out.push_back(text(word) |
+                              color(loom::ui::design::theme::current_theme().palette->primary) |
+                              bold);
                 i = j;
                 continue;
             }
             // TODO / FIXME / NOTE / XXX keyword family (any case-insensitive prefix)
             std::string upper;
             upper.reserve(word.size());
-            for (char w : word) upper.push_back(static_cast<char>(
-                std::toupper(static_cast<unsigned char>(w))));
-            if (upper == "TODO" || upper == "FIXME" || upper == "NOTE" ||
-                upper == "XXX"  || upper == "HACK"  || upper == "BUG") {
+            for (char w : word)
+                upper.push_back(static_cast<char>(std::toupper(static_cast<unsigned char>(w))));
+            if (upper == "TODO" || upper == "FIXME" || upper == "NOTE" || upper == "XXX" ||
+                upper == "HACK" || upper == "BUG") {
                 flush_plain();
-                out.push_back(text(word) | color(loom::ui::design::theme::current_theme().palette->warning) | bold);
+                out.push_back(text(word) |
+                              color(loom::ui::design::theme::current_theme().palette->warning) |
+                              bold);
                 i = j;
                 continue;
             }
@@ -196,8 +198,7 @@ inline Elements highlight_line_tokens(const std::string& line) {
 }
 
 /// Wrap highlighted line tokens with style — indented, dim, graylight.
-inline Element render_thinking_line(const std::string& line, bool highlight,
-                                    bool is_key_insight) {
+inline Element render_thinking_line(const std::string& line, bool highlight, bool is_key_insight) {
     if (line.empty()) return text("");
     Elements line_parts;
     if (highlight) {
@@ -217,11 +218,12 @@ inline Element render_thinking_line(const std::string& line, bool highlight,
 inline std::size_t count_lines(const std::string& s) {
     if (s.empty()) return 0;
     std::size_t n = 1;
-    for (char c : s) if (c == '\n') ++n;
+    for (char c : s)
+        if (c == '\n') ++n;
     return n;
 }
 
-} // namespace detail
+}  // namespace detail
 
 // ============================================================
 // Thinking timeout detection
@@ -230,12 +232,11 @@ inline std::size_t count_lines(const std::string& s) {
 /// Return the effective thinking duration in milliseconds.
 /// Prefers live elapsed time from `thinking_start_time`; falls back to
 /// the static `duration` field if start_time is not set.
-[[nodiscard]] inline std::chrono::milliseconds effective_duration(
-    const ThinkingMessageData& data) {
+[[nodiscard]] inline std::chrono::milliseconds effective_duration(const ThinkingMessageData& data) {
     if (data.thinking_start_time.time_since_epoch().count() != 0) {
         auto now = clock::steady_now();
-        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
-            now - data.thinking_start_time);
+        auto elapsed =
+            std::chrono::duration_cast<std::chrono::milliseconds>(now - data.thinking_start_time);
         // Use max(static, live) to avoid going backwards
         return std::max(elapsed, data.duration);
     }
@@ -251,13 +252,13 @@ inline std::size_t count_lines(const std::string& s) {
 
 /// Render the "Still thinking... (30s+)" timeout banner.
 /// Returns an empty element if thinking has not exceeded the threshold.
-[[nodiscard]] inline Element RenderThinkingTimeoutBanner(
-    const ThinkingMessageData& data) {
+[[nodiscard]] inline Element RenderThinkingTimeoutBanner(const ThinkingMessageData& data) {
     if (!is_thinking_timed_out(data)) return text("");
     auto dur_sec = static_cast<double>(effective_duration(data).count()) / 1000.0;
     std::string label = std::format("Still thinking... ({:.0f}s+)", dur_sec);
     return hbox({
-        text(("  " + std::string(loom::ui::design::figures::kWarning) + " ")) | color(loom::ui::design::theme::current_theme().palette->warning) | dim,
+        text(("  " + std::string(loom::ui::design::figures::kWarning) + " ")) |
+            color(loom::ui::design::theme::current_theme().palette->warning) | dim,
         text(label) | color(loom::ui::design::theme::current_theme().palette->warning) | dim,
     });
 }
@@ -288,68 +289,78 @@ inline std::size_t count_lines(const std::string& s) {
 }
 
 /// Render the thinking message header (works for both modes)
-[[nodiscard]] inline Element RenderThinkingHeader(const ThinkingMessageData& data,
-                                                   int frame) {
+[[nodiscard]] inline Element RenderThinkingHeader(const ThinkingMessageData& data, int frame) {
     Elements parts;
 
     if (data.mode == ThinkingMode::Redacted) {
         // --- Redacted header: lock icon + "Encrypted reasoning" ---
-        parts.push_back(text((std::string(loom::ui::design::figures::kSquare) + " ")) | color(loom::ui::design::theme::current_theme().palette->message_redacted_accent));
-        parts.push_back(text("Encrypted reasoning") | color(loom::ui::design::theme::current_theme().palette->message_redacted_accent) | bold);
+        parts.push_back(
+            text((std::string(loom::ui::design::figures::kSquare) + " ")) |
+            color(loom::ui::design::theme::current_theme().palette->message_redacted_accent));
+        parts.push_back(
+            text("Encrypted reasoning") |
+            color(loom::ui::design::theme::current_theme().palette->message_redacted_accent) |
+            bold);
 
         if (data.encrypted_bytes) {
-            parts.push_back(text(std::format(" · {}", format_bytes(*data.encrypted_bytes)))
-                            | dim);
+            parts.push_back(text(std::format(" · {}", format_bytes(*data.encrypted_bytes))) | dim);
         }
         if (!data.redacted_reason.empty()) {
-            parts.push_back(text(" — " + data.redacted_reason)
-                            | color(loom::ui::design::theme::current_theme().palette->muted) | dim);
+            parts.push_back(text(" — " + data.redacted_reason) |
+                            color(loom::ui::design::theme::current_theme().palette->muted) | dim);
         }
         // Trailing token/duration
         if (data.duration.count() > 0) {
             std::string dur = (data.duration.count() >= 1000)
-                ? std::format(" ({:.1f}s)", data.duration.count() / 1000.0)
-                : std::format(" ({}ms)", data.duration.count());
+                                  ? std::format(" ({:.1f}s)", data.duration.count() / 1000.0)
+                                  : std::format(" ({}ms)", data.duration.count());
             parts.push_back(text(dur) | dim);
         }
         if (data.token_count > 0) {
             parts.push_back(filler());
-            parts.push_back(text(std::format("{} tokens", data.token_count))
-                            | color(loom::ui::design::theme::current_theme().palette->muted) | dim);
+            parts.push_back(text(std::format("{} tokens", data.token_count)) |
+                            color(loom::ui::design::theme::current_theme().palette->muted) | dim);
         }
         return hbox(parts);
     }
 
     // --- Plain mode header ---
     switch (data.state) {
-        case ThinkingState::Active:
-            parts.push_back(text(thinking_spinner(frame) + " ") | color(loom::ui::design::theme::current_theme().palette->info));
-            parts.push_back(text("Thinking") | color(loom::ui::design::theme::current_theme().palette->info) | bold);
-            parts.push_back(text("...") | color(loom::ui::design::theme::current_theme().palette->info) | dim | (loom::ui::design::theme::current_theme().a11y.reduced_motion ? nothing : blink));
-            break;
-        case ThinkingState::Paused:
-            parts.push_back(text(std::string(loom::ui::design::figures::kPauseIcon) + " ") | color(loom::ui::design::theme::current_theme().palette->warning));
-            parts.push_back(text("Thinking (paused)") | color(loom::ui::design::theme::current_theme().palette->warning));
-            break;
-        case ThinkingState::Complete:
-            parts.push_back(text((std::string(loom::ui::design::figures::kDiamondOpen) + " ")) | dim);
-            parts.push_back(text("Reasoning") | color(loom::ui::design::theme::current_theme().palette->muted));
-            break;
+    case ThinkingState::Active:
+        parts.push_back(text(thinking_spinner(frame) + " ") |
+                        color(loom::ui::design::theme::current_theme().palette->info));
+        parts.push_back(text("Thinking") |
+                        color(loom::ui::design::theme::current_theme().palette->info) | bold);
+        parts.push_back(
+            text("...") | color(loom::ui::design::theme::current_theme().palette->info) | dim |
+            (loom::ui::design::theme::current_theme().a11y.reduced_motion ? nothing : blink));
+        break;
+    case ThinkingState::Paused:
+        parts.push_back(text(std::string(loom::ui::design::figures::kPauseIcon) + " ") |
+                        color(loom::ui::design::theme::current_theme().palette->warning));
+        parts.push_back(text("Thinking (paused)") |
+                        color(loom::ui::design::theme::current_theme().palette->warning));
+        break;
+    case ThinkingState::Complete:
+        parts.push_back(text((std::string(loom::ui::design::figures::kDiamondOpen) + " ")) | dim);
+        parts.push_back(text("Reasoning") |
+                        color(loom::ui::design::theme::current_theme().palette->muted));
+        break;
     }
 
     // Duration
     if (data.duration.count() > 0) {
         std::string dur = (data.duration.count() >= 1000)
-            ? std::format(" ({:.1f}s)", data.duration.count() / 1000.0)
-            : std::format(" ({}ms)", data.duration.count());
+                              ? std::format(" ({:.1f}s)", data.duration.count() / 1000.0)
+                              : std::format(" ({}ms)", data.duration.count());
         parts.push_back(text(dur) | dim);
     }
 
     // Token count
     if (data.token_count > 0) {
         parts.push_back(filler());
-        parts.push_back(text(std::format("{} tokens", data.token_count))
-                        | color(loom::ui::design::theme::current_theme().palette->muted) | dim);
+        parts.push_back(text(std::format("{} tokens", data.token_count)) |
+                        color(loom::ui::design::theme::current_theme().palette->muted) | dim);
     }
 
     return hbox(parts);
@@ -360,8 +371,8 @@ inline std::size_t count_lines(const std::string& s) {
 // ============================================================
 
 /// Render the thinking content body (plain mode)
-[[nodiscard]] inline Element RenderThinkingBody(
-    const ThinkingMessageData& data, int max_lines, bool highlight) {
+[[nodiscard]] inline Element RenderThinkingBody(const ThinkingMessageData& data, int max_lines,
+                                                bool highlight) {
 
     if (data.is_collapsed) {
         // Show summary only
@@ -384,8 +395,8 @@ inline std::size_t count_lines(const std::string& s) {
     bool truncated = false;
     int remaining_total = 0;
 
-    auto split_and_emit = [&](const std::string& content, int indent,
-                              bool is_key_insight, int limit) -> int {
+    auto split_and_emit = [&](const std::string& content, int indent, bool is_key_insight,
+                              int limit) -> int {
         // returns remaining lines not rendered
         int rendered = 0;
         int total = 0;
@@ -420,14 +431,19 @@ inline std::size_t count_lines(const std::string& s) {
         // Render structured sections
         for (const auto& section : data.sections) {
             if (!section.title.empty()) {
-                auto title_el = text("  ■ " + section.title)
-                    | bold | color(section.is_key_insight ? loom::ui::design::theme::current_theme().palette->primary : loom::ui::design::theme::current_theme().palette->text);
+                auto title_el =
+                    text("  ■ " + section.title) | bold |
+                    color(section.is_key_insight
+                              ? loom::ui::design::theme::current_theme().palette->primary
+                              : loom::ui::design::theme::current_theme().palette->text);
                 elements.push_back(title_el);
             }
             int limit = std::max(1, max_lines - lines_shown);
-            if (limit <= 0) { truncated = true; break; }
-            int remaining = split_and_emit(section.content, 4,
-                                           section.is_key_insight, limit);
+            if (limit <= 0) {
+                truncated = true;
+                break;
+            }
+            int remaining = split_and_emit(section.content, 4, section.is_key_insight, limit);
             lines_shown += (limit - remaining);
             if (remaining > 0) {
                 truncated = true;
@@ -446,9 +462,8 @@ inline std::size_t count_lines(const std::string& s) {
     }
 
     if (truncated) {
-        elements.push_back(
-            hbox({text(std::format("  … {} more lines", remaining_total)),
-                  message_key_hint("E", "Show more")}));
+        elements.push_back(hbox({text(std::format("  … {} more lines", remaining_total)),
+                                 message_key_hint("E", "Show more")}));
     }
 
     return vbox(elements);
@@ -465,8 +480,8 @@ inline std::size_t count_lines(const std::string& s) {
     }
     Elements rows;
     rows.push_back(text("  This thinking content has been encrypted and cannot "
-                        "be displayed.")
-                   | dim | color(loom::ui::design::theme::current_theme().palette->muted));
+                        "be displayed.") |
+                   dim | color(loom::ui::design::theme::current_theme().palette->muted));
 
     std::string extra;
     if (data.encrypted_bytes) {
@@ -477,12 +492,14 @@ inline std::size_t count_lines(const std::string& s) {
     } else {
         extra += "Reason: policy filter";
     }
-    rows.push_back(text("  " + extra) | dim | color(loom::ui::design::theme::current_theme().palette->muted));
+    rows.push_back(text("  " + extra) | dim |
+                   color(loom::ui::design::theme::current_theme().palette->muted));
 
     // Static "🔒 Encrypted reasoning" badge
     auto badge = hbox({
         text("  [ ") | dim,
-        text((std::string(loom::ui::design::figures::kSquare) + " Encrypted reasoning")) | color(loom::ui::design::theme::current_theme().palette->message_redacted_accent) | bold,
+        text((std::string(loom::ui::design::figures::kSquare) + " Encrypted reasoning")) |
+            color(loom::ui::design::theme::current_theme().palette->message_redacted_accent) | bold,
         text(" ]") | dim,
     });
     rows.insert(rows.begin(), badge);
@@ -494,8 +511,8 @@ inline std::size_t count_lines(const std::string& s) {
 // ============================================================
 
 /// Render a complete thinking message (plain or redacted mode)
-[[nodiscard]] inline Element RenderThinkingMessage(
-    const ThinkingMessageOptions& opts, int frame = 0) {
+[[nodiscard]] inline Element RenderThinkingMessage(const ThinkingMessageOptions& opts,
+                                                   int frame = 0) {
 
     const auto& data = opts.data;
     auto header = RenderThinkingHeader(data, frame);
@@ -504,8 +521,7 @@ inline std::size_t count_lines(const std::string& s) {
     content.push_back(header);
 
     // Budget indicator for extended thinking (plain/active only)
-    if (data.mode == ThinkingMode::Plain &&
-        data.state == ThinkingState::Active &&
+    if (data.mode == ThinkingMode::Plain && data.state == ThinkingState::Active &&
         data.budget_remaining_pct < 100) {
         double progress = (100 - data.budget_remaining_pct) / 100.0;
         content.push_back(hbox({
@@ -521,14 +537,13 @@ inline std::size_t count_lines(const std::string& s) {
     }
 
     Element body = (data.mode == ThinkingMode::Redacted)
-        ? RenderRedactedBody(data)
-        : RenderThinkingBody(data, opts.max_visible_lines, opts.keyword_highlight);
+                       ? RenderRedactedBody(data)
+                       : RenderThinkingBody(data, opts.max_visible_lines, opts.keyword_highlight);
 
     content.push_back(body);
 
     // Toggle hint (complete plain mode only)
-    if (data.mode == ThinkingMode::Plain &&
-        data.state == ThinkingState::Complete) {
+    if (data.mode == ThinkingMode::Plain && data.state == ThinkingState::Complete) {
         Elements hints = {
             message_key_hint("Enter/Space", data.is_collapsed ? "Expand" : "Collapse"),
             filler(),
@@ -538,9 +553,10 @@ inline std::size_t count_lines(const std::string& s) {
         content.push_back(hbox(hints));
     }
 
-    Color border_color = (data.mode == ThinkingMode::Redacted)
-        ? loom::ui::design::theme::current_theme().palette->message_redacted_accent
-        : loom::ui::design::theme::current_theme().palette->muted;
+    Color border_color =
+        (data.mode == ThinkingMode::Redacted)
+            ? loom::ui::design::theme::current_theme().palette->message_redacted_accent
+            : loom::ui::design::theme::current_theme().palette->muted;
     return vbox(content) | borderLight | color(border_color);
 }
 
@@ -572,16 +588,14 @@ inline constexpr std::string_view kThinkingLabel = "\xE2\x88\xB4";  // ∴
 /// When `show_timeout` is true (thinking > 30s), the label becomes
 /// `∴ Thinking (30s+)` with a semantic warning tint.
 [[nodiscard]] inline Element RenderThinkingMessageCollapsed(
-    std::string_view thinking, bool add_margin,
-    bool show_timeout = false, int timeout_seconds = 0,
-    std::chrono::milliseconds duration = std::chrono::milliseconds{0},
-    bool can_toggle = true) {
+    std::string_view thinking, bool add_margin, bool show_timeout = false, int timeout_seconds = 0,
+    std::chrono::milliseconds duration = std::chrono::milliseconds{0}, bool can_toggle = true) {
     Elements line_parts;
     line_parts.push_back(text(std::string(kThinkingLabel)));
     if (show_timeout) {
         line_parts.push_back(text(" Thinking"));
-        line_parts.push_back(text(std::format(" ({}s+)", timeout_seconds))
-                             | color(loom::ui::design::theme::current_theme().palette->warning));
+        line_parts.push_back(text(std::format(" ({}s+)", timeout_seconds)) |
+                             color(loom::ui::design::theme::current_theme().palette->warning));
     } else if (duration.count() > 0) {
         // Show "Thought for Xs" or "Thought for Xms" when duration is known.
         auto ms = duration.count();
@@ -600,9 +614,8 @@ inline constexpr std::string_view kThinkingLabel = "\xE2\x88\xB4";  // ∴
         std::size_t pos = 0;
         while (pos < thinking.size()) {
             auto nl = thinking.find('\n', pos);
-            std::string_view line = (nl == std::string_view::npos)
-                ? thinking.substr(pos)
-                : thinking.substr(pos, nl - pos);
+            std::string_view line = (nl == std::string_view::npos) ? thinking.substr(pos)
+                                                                   : thinking.substr(pos, nl - pos);
             // Trim leading whitespace.
             while (!line.empty() && (line.front() == ' ' || line.front() == '\t'))
                 line.remove_prefix(1);
@@ -621,8 +634,8 @@ inline constexpr std::string_view kThinkingLabel = "\xE2\x88\xB4";  // ∴
             line_parts.push_back(text("  " + summary) | dim);
         }
     }
-    Element summary = hbox(std::move(line_parts))
-        | color(loom::ui::design::theme::current_theme().palette->muted) | xflex;
+    Element summary = hbox(std::move(line_parts)) |
+                      color(loom::ui::design::theme::current_theme().palette->muted) | xflex;
     Elements parts{std::move(summary)};
     if (can_toggle) {
         parts.push_back(text(" "));
@@ -640,12 +653,14 @@ inline constexpr std::string_view kThinkingLabel = "\xE2\x88\xB4";  // ∴
 /// M4 passes plain dim text).  Indented left padding = 2.
 /// Adds a blank line before and after for visual separation from adjacent
 /// user/assistant messages.
-[[nodiscard]] inline Element RenderThinkingMessageExpanded(
-    const std::string& thinking, bool add_margin, bool can_collapse = false) {
+[[nodiscard]] inline Element RenderThinkingMessageExpanded(const std::string& thinking,
+                                                           bool add_margin,
+                                                           bool can_collapse = false) {
     Element label = hbox({
-        text(std::string(kThinkingLabel)),
-        text(" Thinking…"),
-    }) | dim | color(loom::ui::design::theme::current_theme().palette->muted);
+                        text(std::string(kThinkingLabel)),
+                        text(" Thinking…"),
+                    }) |
+                    dim | color(loom::ui::design::theme::current_theme().palette->muted);
 
     // Body: indented 2, dim.  Rendered as Markdown (code fences, lists,
     // headings, etc.) with dim styling to match the thinking block's
@@ -666,9 +681,10 @@ inline constexpr std::string_view kThinkingLabel = "\xE2\x88\xB4";  // ∴
 /// Top-level faithful dispatcher mirroring AssistantThinkingMessage:
 /// show_full_thinking = is_transcript_mode || verbose  → expanded; else
 /// collapsed.  Empty thinking → empty element.
-[[nodiscard]] inline Element RenderThinkingMessageFaithful(
-    const ThinkingMessageData& data, bool is_transcript_mode, bool verbose,
-    bool add_margin = true, bool can_toggle = true) {
+[[nodiscard]] inline Element RenderThinkingMessageFaithful(const ThinkingMessageData& data,
+                                                           bool is_transcript_mode, bool verbose,
+                                                           bool add_margin = true,
+                                                           bool can_toggle = true) {
     if (data.raw_text.empty() && data.sections.empty()) {
         return text("");
     }
@@ -684,11 +700,9 @@ inline constexpr std::string_view kThinkingLabel = "\xE2\x88\xB4";  // ∴
     if (!show_full) {
         // Pass 30s+ timeout info for the collapsed label.
         bool timed_out = is_thinking_timed_out(data);
-        int secs = timed_out ? static_cast<int>(
-            effective_duration(data).count() / 1000) : 0;
-        return RenderThinkingMessageCollapsed(thinking, add_margin,
-                                              timed_out, secs,
-                                              data.duration, can_toggle);
+        int secs = timed_out ? static_cast<int>(effective_duration(data).count() / 1000) : 0;
+        return RenderThinkingMessageCollapsed(thinking, add_margin, timed_out, secs, data.duration,
+                                              can_toggle);
     }
     return RenderThinkingMessageExpanded(thinking, add_margin, can_toggle && !is_transcript_mode);
 }
@@ -702,53 +716,54 @@ inline constexpr std::string_view kThinkingLabel = "\xE2\x88\xB4";  // ∴
     struct State {
         ThinkingMessageOptions opts;
         int frame = 0;
-        bool full_expand = false;    // e key: ignore N-line truncation
+        bool full_expand = false;  // e key: ignore N-line truncation
     };
 
     auto state = std::make_shared<State>();
     state->opts = std::move(options);
 
     return Renderer([state] {
-        auto& o = state->opts;
-        if (state->full_expand && !o.data.is_collapsed) {
-            // Use a huge effective line limit
-            auto copy = o;
-            copy.max_visible_lines = 1'000'000;
-            if (o.data.state == ThinkingState::Active) state->frame++;
-            return RenderThinkingMessage(copy, state->frame);
-        }
-        if (o.data.state == ThinkingState::Active) state->frame++;
-        return RenderThinkingMessage(o, state->frame);
-    }) | CatchEvent([state](Event event) -> bool {
-        auto& d = state->opts.data;
-        auto& o = state->opts;
+               auto& o = state->opts;
+               if (state->full_expand && !o.data.is_collapsed) {
+                   // Use a huge effective line limit
+                   auto copy = o;
+                   copy.max_visible_lines = 1'000'000;
+                   if (o.data.state == ThinkingState::Active) state->frame++;
+                   return RenderThinkingMessage(copy, state->frame);
+               }
+               if (o.data.state == ThinkingState::Active) state->frame++;
+               return RenderThinkingMessage(o, state->frame);
+           }) |
+           CatchEvent([state](Event event) -> bool {
+               auto& d = state->opts.data;
+               auto& o = state->opts;
 
-        // Toggle collapsed (Enter / space)
-        if (event == Event::Return || event == Event::Character(' ')) {
-            d.is_collapsed = !d.is_collapsed;
-            if (!d.is_collapsed) state->full_expand = false;
-            if (o.on_toggle) o.on_toggle();
-            return true;
-        }
+               // Toggle collapsed (Enter / space)
+               if (event == Event::Return || event == Event::Character(' ')) {
+                   d.is_collapsed = !d.is_collapsed;
+                   if (!d.is_collapsed) state->full_expand = false;
+                   if (o.on_toggle) o.on_toggle();
+                   return true;
+               }
 
-        // 'e' — expand fully (ignore line limit)
-        if (event == Event::Character('e') || event == Event::Character('E')) {
-            if (!d.is_collapsed) {
-                state->full_expand = !state->full_expand;
-                return true;
-            }
-        }
+               // 'e' — expand fully (ignore line limit)
+               if (event == Event::Character('e') || event == Event::Character('E')) {
+                   if (!d.is_collapsed) {
+                       state->full_expand = !state->full_expand;
+                       return true;
+                   }
+               }
 
-        // 'c' — copy full text (fires callback; clipboard copy is host job)
-        if (event == Event::Character('c') || event == Event::Character('C')) {
-            if (d.mode == ThinkingMode::Plain && !d.raw_text.empty()) {
-                if (o.on_copy_text) o.on_copy_text();
-                return true;
-            }
-        }
+               // 'c' — copy full text (fires callback; clipboard copy is host job)
+               if (event == Event::Character('c') || event == Event::Character('C')) {
+                   if (d.mode == ThinkingMode::Plain && !d.raw_text.empty()) {
+                       if (o.on_copy_text) o.on_copy_text();
+                       return true;
+                   }
+               }
 
-        return false;
-    });
+               return false;
+           });
 }
 
-} // namespace loom::ui::messages::thinking_message
+}  // namespace loom::ui::messages::thinking_message

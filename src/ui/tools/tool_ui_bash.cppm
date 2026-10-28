@@ -20,8 +20,7 @@ namespace detail {
 
 /// Truncate a bash command for display, preserving the end (head ellipsis).
 /// Uses a 60-char limit for inline summary.
-[[nodiscard]] inline std::string truncate_command(std::string_view cmd,
-                                                   std::size_t max_len = 60) {
+[[nodiscard]] inline std::string truncate_command(std::string_view cmd, std::size_t max_len = 60) {
     if (cmd.size() <= max_len) return std::string(cmd);
 
     // Head ellipsis: show the *end* of the command (most relevant part)
@@ -67,12 +66,24 @@ namespace detail {
             ++i;
             char c = input_json[i];
             switch (c) {
-                case 'n': result += '\n'; break;
-                case 't': result += '\t'; break;
-                case 'r': result += '\r'; break;
-                case '\\': result += '\\'; break;
-                case '"': result += '"'; break;
-                default: result += c; break;
+            case 'n':
+                result += '\n';
+                break;
+            case 't':
+                result += '\t';
+                break;
+            case 'r':
+                result += '\r';
+                break;
+            case '\\':
+                result += '\\';
+                break;
+            case '"':
+                result += '"';
+                break;
+            default:
+                result += c;
+                break;
             }
         } else {
             result += input_json[i];
@@ -100,8 +111,10 @@ namespace detail {
     if (end == 0) return {};
 
     auto start = partial.rfind('\n', end - 1);
-    if (start == std::string_view::npos) start = 0;
-    else ++start;  // skip the newline
+    if (start == std::string_view::npos)
+        start = 0;
+    else
+        ++start;  // skip the newline
 
     std::string_view line = partial.substr(start, end - start);
 
@@ -144,12 +157,9 @@ namespace detail {
         return detail::truncate_command(cmd, 60);
     };
 
-    fns.tag = [](std::string_view) -> std::optional<std::string> {
-        return std::nullopt;
-    };
+    fns.tag = [](std::string_view) -> std::optional<std::string> { return std::nullopt; };
 
-    fns.progress = [](std::string_view input_json,
-                       std::string_view partial_result) {
+    fns.progress = [](std::string_view input_json, std::string_view partial_result) {
         // If no progress data, return "Running…"; otherwise return the
         // last line of output (ShellProgressMessage).
         std::string last_line = detail::last_output_line(partial_result);
@@ -169,10 +179,8 @@ namespace detail {
 
     // BashToolResultMessage shows stdout + stderr.
     // UI never shows persistedOutputPath, backgroundInfo — model-facing.
-    fns.extract_search_text = [](
-        std::string_view output_text,
-        std::string_view error_text) -> std::optional<std::string>
-    {
+    fns.extract_search_text = [](std::string_view output_text,
+                                 std::string_view error_text) -> std::optional<std::string> {
         if (error_text.empty()) return std::string{output_text};
         return std::string{output_text} + "\n" + std::string{error_text};
     };

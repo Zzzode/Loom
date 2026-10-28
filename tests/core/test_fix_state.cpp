@@ -26,7 +26,6 @@
 
 #include <gtest/gtest.h>
 
-
 import std;
 import loom.state.app_state;
 import loom.state.store;
@@ -43,8 +42,8 @@ namespace {
 // Build a fresh store with undo/redo enabled and no on-disk persistence wired
 // (persistence_ defaults to nullptr so notify() skips the auto-save branch).
 auto make_undo_store() -> std::unique_ptr<AppStore> {
-    auto store = std::make_unique<AppStore>(
-        loom::state::get_default_app_state(), &loom::state::app_reducer);
+    auto store =
+        std::make_unique<AppStore>(loom::state::get_default_app_state(), &loom::state::app_reducer);
     store->enable_undo();
     return store;
 }
@@ -54,8 +53,9 @@ struct NotifyRecorder {
     struct Pair {
         bool prev_verbose;
         bool next_verbose;
-        bool same_identity; // prev.verbose == next.verbose AND same address
+        bool same_identity;  // prev.verbose == next.verbose AND same address
     };
+
     std::vector<Pair> pairs;
 
     void operator()(const AppState& prev, const AppState& next) {
@@ -67,7 +67,7 @@ struct NotifyRecorder {
     }
 };
 
-} // namespace
+}  // namespace
 
 // ---------------------------------------------------------------------------
 // M1 regression: undo() must notify subscribers with prev = pre-undo state
@@ -78,9 +78,7 @@ struct NotifyRecorder {
 TEST(StateUndoRedoNotify, UndoNotifiesWithDistinctPrevAndNext) {
     auto store = make_undo_store();
     NotifyRecorder recorder;
-    auto sub_id = store->subscribe([&](const AppState& p, const AppState& n) {
-        recorder(p, n);
-    });
+    auto sub_id = store->subscribe([&](const AppState& p, const AppState& n) { recorder(p, n); });
     (void)sub_id;
 
     // verbose: default false -> true (one subscriber notification).
@@ -88,8 +86,7 @@ TEST(StateUndoRedoNotify, UndoNotifiesWithDistinctPrevAndNext) {
     ASSERT_EQ(recorder.pairs.size(), 1u);
     EXPECT_FALSE(recorder.pairs[0].prev_verbose);
     EXPECT_TRUE(recorder.pairs[0].next_verbose);
-    EXPECT_FALSE(recorder.pairs[0].same_identity)
-        << "dispatch must notify with prev != next";
+    EXPECT_FALSE(recorder.pairs[0].same_identity) << "dispatch must notify with prev != next";
 
     recorder.pairs.clear();
 
@@ -109,9 +106,7 @@ TEST(StateUndoRedoNotify, UndoNotifiesWithDistinctPrevAndNext) {
 TEST(StateUndoRedoNotify, RedoNotifiesWithDistinctPrevAndNext) {
     auto store = make_undo_store();
     NotifyRecorder recorder;
-    auto sub_id = store->subscribe([&](const AppState& p, const AppState& n) {
-        recorder(p, n);
-    });
+    auto sub_id = store->subscribe([&](const AppState& p, const AppState& n) { recorder(p, n); });
     (void)sub_id;
 
     store->dispatch(Action{ActionType::SetVerbose, true});  // false -> true
@@ -138,9 +133,7 @@ TEST(StateUndoRedoNotify, RedoNotifiesWithDistinctPrevAndNext) {
 TEST(StateUndoRedoNotify, ConsecutiveUndosEachNotifyCorrectly) {
     auto store = make_undo_store();
     NotifyRecorder recorder;
-    auto sub_id = store->subscribe([&](const AppState& p, const AppState& n) {
-        recorder(p, n);
-    });
+    auto sub_id = store->subscribe([&](const AppState& p, const AppState& n) { recorder(p, n); });
     (void)sub_id;
 
     // Build a 3-deep history: verbose toggles false -> true -> false -> true.
@@ -183,8 +176,7 @@ TEST(StateUndoRedoNotify, ConsecutiveUndosEachNotifyCorrectly) {
 // ---------------------------------------------------------------------------
 
 TEST(StatePersistence, SaveLoadRoundTripPreservesFields) {
-    auto tmp = std::filesystem::temp_directory_path() /
-        "loom_test_fix_state_app_state.json";
+    auto tmp = std::filesystem::temp_directory_path() / "loom_test_fix_state_app_state.json";
     std::filesystem::remove(tmp);
 
     StatePersistence persist(tmp);
@@ -217,8 +209,7 @@ TEST(StatePersistence, SaveLoadRoundTripPreservesFields) {
 
 // The crash-safe write path must not leave a stale .tmp file behind on success.
 TEST(StatePersistence, AtomicWriteLeavesNoTempFile) {
-    auto tmp = std::filesystem::temp_directory_path() /
-        "loom_test_fix_state_notmp.json";
+    auto tmp = std::filesystem::temp_directory_path() / "loom_test_fix_state_notmp.json";
     std::filesystem::remove(tmp);
     std::filesystem::remove(std::string(tmp.string()) + ".tmp");
 

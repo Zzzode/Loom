@@ -3,14 +3,14 @@
 /// DialogRendererRegistry, DialogFrame, DefaultRenderers, FullDialogRegistry.
 /// Split from test_dialog_system.cpp (SLOC budget).
 
-#include <cstdlib>
-
-#include <gtest/gtest.h>
+#include <ftxui/component/component.hpp>
+#include <ftxui/component/event.hpp>
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/dom/node.hpp>
 #include <ftxui/screen/screen.hpp>
-#include <ftxui/component/component.hpp>
-#include <ftxui/component/event.hpp>
+#include <gtest/gtest.h>
+
+#include <cstdlib>
 
 import std;
 import loom.ui.dialogs.system;
@@ -41,7 +41,7 @@ namespace dialog_test_golden {
 
 /// Directory holding golden snapshot files (derived from __FILE__).
 std::string golden_dir() {
-    
+
     return std::string(LOOM_TESTS_DIR) + "/golden/";
 }
 
@@ -69,20 +69,16 @@ void check_golden(const std::string& name, const std::string& actual) {
         return;
     }
     std::ifstream in(path, std::ios::binary);
-    ASSERT_TRUE(in.good()) << "golden missing: " << path
-                           << " (run UPDATE_GOLDENS=1 to create)";
-    std::string expected((std::istreambuf_iterator<char>(in)),
-                         std::istreambuf_iterator<char>());
+    ASSERT_TRUE(in.good()) << "golden missing: " << path << " (run UPDATE_GOLDENS=1 to create)";
+    std::string expected((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
     EXPECT_EQ(normalize_line_endings(actual), normalize_line_endings(expected))
-        << "golden mismatch for '" << name
-        << "' (run UPDATE_GOLDENS=1 to refresh)";
+        << "golden mismatch for '" << name << "' (run UPDATE_GOLDENS=1 to refresh)";
 }
 
 /// Render an Element to a fixed-size terminal buffer (includes ANSI codes).
 std::string render_to_ansi(ftxui::Element element, int width, int height) {
-    auto screen = ftxui::Screen::Create(
-        ftxui::Dimension::Fixed(width),
-        ftxui::Dimension::Fixed(height));
+    auto screen =
+        ftxui::Screen::Create(ftxui::Dimension::Fixed(width), ftxui::Dimension::Fixed(height));
     ftxui::Render(screen, element);
     return screen.ToString();
 }
@@ -97,13 +93,11 @@ std::string render_to_ansi(ftxui::Element element, int width, int height) {
     };
 }
 
-} // namespace dialog_test_golden
-
+}  // namespace dialog_test_golden
 
 // ============================================================
 // DialogType / DialogSlot / DialogPriority tests
 // ============================================================
-
 
 TEST(DialogSystem, DialogTypeNames) {
     EXPECT_EQ(dsys::dialog_type_name(dsys::DialogType::ToolPermission), "tool-permission");
@@ -295,7 +289,7 @@ TEST(DialogQueue, Band3AnimationSuppression) {
         q.push(dsys::DialogPayloadVariant{prompt});
     }
     auto peeked = q.peek_bottom(/*typing=*/false,
-                                 /*allow_dialogs_with_animation=*/false);
+                                /*allow_dialogs_with_animation=*/false);
     EXPECT_FALSE(peeked.has_value())
         << "Band3 PromptDialog MUST be suppressed when animation is active";
 
@@ -317,7 +311,7 @@ TEST(DialogQueue, Band3AnimationSuppression) {
         << "Band2 SandboxPermission MUST NOT be blocked by animation";
     // Pop the Band2 front.
     q.pop_bottom(false, /*animation_ok=*/false);
-    EXPECT_EQ(q.total_size(), 1u); // prompt-1 still in Band3
+    EXPECT_EQ(q.total_size(), 1u);  // prompt-1 still in Band3
 
     // Case D: now Band3 (prompt) is next; animation still active → nullopt.
     peeked = q.peek_bottom(false, /*animation_ok=*/false);
@@ -339,7 +333,7 @@ TEST(DialogQueue, Band3AnimationSuppression) {
     EXPECT_EQ(dsys::id_of(peeked->get()), "cost-1");
     // pop correctly uses the same suppression rule
     q.pop_bottom(false, /*animation_ok=*/false);
-    EXPECT_EQ(q.total_size(), 1u); // only prompt-1 remains
+    EXPECT_EQ(q.total_size(), 1u);  // only prompt-1 remains
 
     // Case F: Cost gone — prompt is alone again.  Animation off → prompt.
     peeked = q.peek_bottom(false, /*animation_ok=*/true);
@@ -355,20 +349,20 @@ TEST(DialogQueue, Band3AnimationSuppression) {
     {
         dsys::ToolPermissionPayload tp;
         tp.id = "tp-1";
-        q.push(dsys::DialogPayloadVariant{tp}); // → Overlay slot
+        q.push(dsys::DialogPayloadVariant{tp});  // → Overlay slot
     }
     EXPECT_TRUE(q.has_overlay());
     auto overlay_peek = q.peek_overlay();
     ASSERT_TRUE(overlay_peek.has_value());
 
     EXPECT_FALSE(dsys::should_show_dialog(overlay_peek->get(),
-                                           /*typing=*/false,
-                                           /*animation_ok=*/false))
+                                          /*typing=*/false,
+                                          /*animation_ok=*/false))
         << "Overlay (ToolPermission, Band3) MUST be suppressed by should_show_dialog "
            "when animation is active";
     EXPECT_TRUE(dsys::should_show_dialog(overlay_peek->get(),
-                                          /*typing=*/false,
-                                          /*animation_ok=*/true))
+                                         /*typing=*/false,
+                                         /*animation_ok=*/true))
         << "Overlay (ToolPermission, Band3) MUST show when animation is off";
 
     // ------------------------------------------------------------------
@@ -533,9 +527,9 @@ TEST(DialogRendererRegistry, CustomRendererOverridesFallback) {
     dsys::DialogRenderContext ctx;
 
     bool called = false;
-    registry.register_dialog(dsys::DialogType::ToolPermission,
-        [&](dsys::DialogPayloadVariant&,
-            const dsys::DialogRenderContext&) -> ftxui::Element {
+    registry.register_dialog(
+        dsys::DialogType::ToolPermission,
+        [&](dsys::DialogPayloadVariant&, const dsys::DialogRenderContext&) -> ftxui::Element {
             called = true;
             return ftxui::text("custom renderer");
         });
@@ -554,10 +548,10 @@ TEST(DialogRendererRegistry, EventHandlerDispatchesCorrectType) {
 
     bool handled = false;
     registry.register_event_handler(dsys::DialogType::CostThreshold,
-        [&](dsys::DialogPayloadVariant&, const ftxui::Event&) -> bool {
-            handled = true;
-            return true;
-        });
+                                    [&](dsys::DialogPayloadVariant&, const ftxui::Event&) -> bool {
+                                        handled = true;
+                                        return true;
+                                    });
 
     dsys::CostThresholdPayload ct;
     ct.id = "test";
@@ -706,7 +700,7 @@ TEST(DefaultRenderers, RegisterAllDefaultRenderers) {
     {
         dsys::CostThresholdPayload ct;
         ct.id = "ct-test";
-        ct.dollars_spent = 4.7;    // rounds to $5
+        ct.dollars_spent = 4.7;  // rounds to $5
         ct.model_name = std::string("test-model");
         dsys::DialogPayloadVariant payload = ct;
         auto el = registry.render(payload, ctx);
@@ -717,11 +711,9 @@ TEST(DefaultRenderers, RegisterAllDefaultRenderers) {
         std::string out = screen.ToString();
         EXPECT_FALSE(out.empty());
         // Title must be formatted with dollars_spent using $%.0f (rounded)
-        EXPECT_NE(out.find("You've spent $5 on the API this session."),
-                  std::string::npos);
+        EXPECT_NE(out.find("You've spent $5 on the API this session."), std::string::npos);
         // Body + docs link must appear
-        EXPECT_NE(out.find("Learn more about how to monitor your spending:"),
-                  std::string::npos);
+        EXPECT_NE(out.find("Learn more about how to monitor your spending:"), std::string::npos);
         // No docs site ships with this build, so no link is rendered by
         // default; the paragraph above stands on its own.
         EXPECT_EQ(out.find("code.loom.com"), std::string::npos)
@@ -875,18 +867,16 @@ TEST(FullDialogRegistry, AllDialogTypesRenderable) {
     // Helper: push a payload and verify it renders
     // NOTE: registry.render() takes DialogPayloadVariant& (non-const) so renderers
     // can lazily attach per-dialog UI state (e.g. ToolPermission ui_state).
-    auto check_render = [&](dsys::DialogPayloadVariant payload,
-                            const char* name) {
+    auto check_render = [&](dsys::DialogPayloadVariant payload, const char* name) {
         SCOPED_TRACE(name);
         auto el = registry.render(payload, ctx);
         EXPECT_TRUE(el) << "DialogType " << name << " has no renderer";
         if (el) {
             // Render to screen to verify no crashes
-            auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(80),
-                                                ftxui::Dimension::Fixed(10));
+            auto screen =
+                ftxui::Screen::Create(ftxui::Dimension::Fixed(80), ftxui::Dimension::Fixed(10));
             Render(screen, el);
-            EXPECT_FALSE(screen.ToString().empty())
-                << "DialogType " << name << " rendered empty";
+            EXPECT_FALSE(screen.ToString().empty()) << "DialogType " << name << " rendered empty";
         }
     };
 
@@ -1119,13 +1109,13 @@ TEST(FullDialogRegistry, DialogTypeCountMatches) {
     // we have renderers + payloads for.  This catches drift between
     // the enum and the implementation.
     constexpr int kExpectedCount =
-        1 +  // ToolPermission (overlay)
-        14 + // bottom slot (MessageSelector + SandboxPermission + PromptDialog +
-             // WorkerSandboxPermission + Elicitation + CostThreshold + IdleReturn +
-             // UltraplanChoice + UltraplanLaunch + IdeOnboarding + InitOnboarding +
-             // ModelSwitch + UndercoverCallout + EffortCallout + RemoteCallout +
-             // LspRecommendation + PluginHint + DesktopUpsell → 18 total bottom
-             // Let's just use the enum value as ground truth
+        1 +   // ToolPermission (overlay)
+        14 +  // bottom slot (MessageSelector + SandboxPermission + PromptDialog +
+              // WorkerSandboxPermission + Elicitation + CostThreshold + IdleReturn +
+              // UltraplanChoice + UltraplanLaunch + IdeOnboarding + InitOnboarding +
+              // ModelSwitch + UndercoverCallout + EffortCallout + RemoteCallout +
+              // LspRecommendation + PluginHint + DesktopUpsell → 18 total bottom
+              // Let's just use the enum value as ground truth
         0;
     (void)kExpectedCount;
 
@@ -1140,14 +1130,14 @@ TEST(DialogFrame, GoldenDefault) {
     props.title = "Dialog Frame Test";
     props.subtitle = "Default Info variant";
     props.style = dframe::FrameStyle::Info;
-    props.content = ftxui::paragraph(
-            "Lorem ipsum dolor sit amet consectetur adipiscing elit sed do "
-            "eiusmod tempor incididunt ut labore") | ftxui::xflex_grow;
+    props.content =
+        ftxui::paragraph("Lorem ipsum dolor sit amet consectetur adipiscing elit sed do "
+                         "eiusmod tempor incididunt ut labore") |
+        ftxui::xflex_grow;
 
     auto el = dframe::DialogFrame(props, theme);
-    dialog_test_golden::check_golden(
-        "dialog_frame_default",
-        dialog_test_golden::render_to_ansi(std::move(el), 80, 20));
+    dialog_test_golden::check_golden("dialog_frame_default",
+                                     dialog_test_golden::render_to_ansi(std::move(el), 80, 20));
 }
 
 TEST(DialogFrame, GoldenWithSubtitle) {
@@ -1160,9 +1150,8 @@ TEST(DialogFrame, GoldenWithSubtitle) {
     props.content = ftxui::text("A");
 
     auto el = dframe::DialogFrame(props, theme);
-    dialog_test_golden::check_golden(
-        "dialog_frame_with_subtitle",
-        dialog_test_golden::render_to_ansi(std::move(el), 80, 20));
+    dialog_test_golden::check_golden("dialog_frame_with_subtitle",
+                                     dialog_test_golden::render_to_ansi(std::move(el), 80, 20));
 }
 
 TEST(DialogFrame, GoldenWithWorkerBadge) {
@@ -1176,9 +1165,8 @@ TEST(DialogFrame, GoldenWithWorkerBadge) {
     props.content = ftxui::text("rm -rf /");
 
     auto el = dframe::DialogFrame(props, theme);
-    dialog_test_golden::check_golden(
-        "dialog_frame_with_worker_badge",
-        dialog_test_golden::render_to_ansi(std::move(el), 80, 20));
+    dialog_test_golden::check_golden("dialog_frame_with_worker_badge",
+                                     dialog_test_golden::render_to_ansi(std::move(el), 80, 20));
 }
 
 TEST(DialogFrame, GoldenLongContent) {
@@ -1186,8 +1174,7 @@ TEST(DialogFrame, GoldenLongContent) {
 
     ftxui::Elements lines;
     for (int n = 1; n <= 15; ++n) {
-        lines.push_back(ftxui::text(
-            "Line " + std::to_string(n) + " of review content..."));
+        lines.push_back(ftxui::text("Line " + std::to_string(n) + " of review content..."));
     }
 
     dframe::DialogFrameProps props;
@@ -1196,9 +1183,8 @@ TEST(DialogFrame, GoldenLongContent) {
     props.content = ftxui::vbox(std::move(lines));
 
     auto el = dframe::DialogFrame(props, theme);
-    dialog_test_golden::check_golden(
-        "dialog_frame_long_content",
-        dialog_test_golden::render_to_ansi(std::move(el), 80, 20));
+    dialog_test_golden::check_golden("dialog_frame_long_content",
+                                     dialog_test_golden::render_to_ansi(std::move(el), 80, 20));
 }
 
 TEST(DialogFrame, GoldenNarrowWidth) {
@@ -1210,9 +1196,8 @@ TEST(DialogFrame, GoldenNarrowWidth) {
     props.content = ftxui::paragraph("Short");
 
     auto el = dframe::DialogFrame(props, theme);
-    dialog_test_golden::check_golden(
-        "dialog_frame_narrow_width",
-        dialog_test_golden::render_to_ansi(std::move(el), 40, 15));
+    dialog_test_golden::check_golden("dialog_frame_narrow_width",
+                                     dialog_test_golden::render_to_ansi(std::move(el), 40, 15));
 }
 
 TEST(DialogFrame, GoldenWideWidth) {
@@ -1243,17 +1228,14 @@ TEST(DialogFrame, GoldenWideWidth) {
     props.inner_padding_x = 2;
     props.inner_padding_y = 1;
     props.content = ftxui::vbox({
-        ftxui::paragraph(
-            "The system detected the following issues during the last build:"),
+        ftxui::paragraph("The system detected the following issues during the last build:"),
         ftxui::text(""),
         ftxui::vbox(std::move(issue_rows)),
     });
 
     auto el = dframe::DialogFrame(props, theme);
-    dialog_test_golden::check_golden(
-        "dialog_frame_wide_width",
-        dialog_test_golden::render_to_ansi(std::move(el), 120, 15));
+    dialog_test_golden::check_golden("dialog_frame_wide_width",
+                                     dialog_test_golden::render_to_ansi(std::move(el), 120, 15));
 }
 
-
-} // namespace
+}  // namespace

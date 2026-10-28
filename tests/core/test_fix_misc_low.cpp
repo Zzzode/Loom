@@ -42,10 +42,14 @@ namespace oauth = loom::services::oauth;
 class OauthPortEnvOverride : public ::testing::Test {
 protected:
     void SetUp() override { old_ = std::getenv("MCP_OAUTH_CALLBACK_PORT"); }
+
     void TearDown() override {
-        if (old_) setenv("MCP_OAUTH_CALLBACK_PORT", old_, 1);
-        else      unsetenv("MCP_OAUTH_CALLBACK_PORT");
+        if (old_)
+            setenv("MCP_OAUTH_CALLBACK_PORT", old_, 1);
+        else
+            unsetenv("MCP_OAUTH_CALLBACK_PORT");
     }
+
     const char* old_ = nullptr;
 };
 
@@ -70,8 +74,8 @@ TEST(OauthPort, RandomProbeReturnsOpenEphemeralPort) {
     auto port = oauth_port::find_available_oauth_port();
     ASSERT_TRUE(port.has_value()) << port.error();
     // Either an ephemeral-range hit or the documented fallback (3118).
-    bool in_range = *port >= oauth_port::kRedirectPortRangeStart &&
-                    *port <= oauth_port::kRedirectPortRangeEnd;
+    bool in_range =
+        *port >= oauth_port::kRedirectPortRangeStart && *port <= oauth_port::kRedirectPortRangeEnd;
     bool is_fallback = *port == oauth_port::kRedirectPortFallback;
     EXPECT_TRUE(in_range || is_fallback) << "got port " << *port;
 }
@@ -88,8 +92,8 @@ TEST(OauthPort, BuildRedirectUriMatchesTsShape) {
 TEST(SecretScanner, DetectsGitHubPat) {
     auto m = secret::scan_for_secrets("token: ghp_0123456789abcdefghijkmnopqrstuvwxyzAB");
     ASSERT_FALSE(m.empty());
-    auto it = std::find_if(m.begin(), m.end(),
-                           [](const auto& x) { return x.ruleId == "github-pat"; });
+    auto it =
+        std::find_if(m.begin(), m.end(), [](const auto& x) { return x.ruleId == "github-pat"; });
     ASSERT_NE(it, m.end());
     EXPECT_EQ(it->label, "GitHub PAT");
 }
@@ -104,11 +108,10 @@ TEST(SecretScanner, DetectsStripeAccessToken) {
 
 TEST(SecretScanner, DeduplicatesByRuleId) {
     // Two GitHub PATs in one string -> a single "github-pat" match.
-    auto m = secret::scan_for_secrets(
-        "ghp_0123456789abcdefghijkmnopqrstuvwxyzAB and "
-        "ghp_9999999999zzzzzzzzzzzzzzzzzzzzzzzzzz");
-    long count = std::count_if(m.begin(), m.end(),
-                               [](const auto& x) { return x.ruleId == "github-pat"; });
+    auto m = secret::scan_for_secrets("ghp_0123456789abcdefghijkmnopqrstuvwxyzAB and "
+                                      "ghp_9999999999zzzzzzzzzzzzzzzzzzzzzzzzzz");
+    long count =
+        std::count_if(m.begin(), m.end(), [](const auto& x) { return x.ruleId == "github-pat"; });
     EXPECT_EQ(count, 1);
 }
 
@@ -176,10 +179,11 @@ TEST(OauthCrypto, PkceVerifierIsUniqueAndWellShaped) {
     EXPECT_EQ(b.size(), 43u);
     EXPECT_NE(a, b);
     auto only_b64url = [](char c) {
-        return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') ||
-               (c >= '0' && c <= '9') || c == '-' || c == '_';
+        return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') ||
+               c == '-' || c == '_';
     };
-    for (char c : a) EXPECT_TRUE(only_b64url(c)) << c;
+    for (char c : a)
+        EXPECT_TRUE(only_b64url(c)) << c;
     // S256 challenge is base64URL(SHA256(verifier)) -> 43 chars.
     EXPECT_EQ(oauth::generate_code_challenge(a).size(), 43u);
 }

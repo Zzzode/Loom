@@ -20,11 +20,11 @@ export namespace loom::hooks::permission {
 // ────────────────────────────────────────────────────────────────────────────
 // Re-exports so downstream consumers get the resolver types with one import.
 // ────────────────────────────────────────────────────────────────────────────
-using ::loom::hooks::permission::Decision;
 using ::loom::hooks::permission::ActionKind;
-using ::loom::hooks::permission::RiskLevel;
+using ::loom::hooks::permission::Decision;
 using ::loom::hooks::permission::PermissionRequest;
 using ::loom::hooks::permission::PermissionResolver;
+using ::loom::hooks::permission::RiskLevel;
 
 /// Callback signature for the interactive prompt hook.
 /// When the resolver cannot auto-approve, the gate invokes this callback
@@ -42,9 +42,9 @@ class PermissionGate {
 public:
     /// Underlying resolver — exposed so callers can prepopulate caches,
     /// serialize to JSON, or query cache_size() in tests.
-    PermissionResolver   resolver;
+    PermissionResolver resolver;
     /// User-visible prompt hook.  May be left empty for safe-default mode.
-    InteractivePromptFn  interactive_prompt;
+    InteractivePromptFn interactive_prompt;
 
     /// Run the full gate pipeline: resolver → (optional) prompt → cache
     /// update.  Returns `true` if the caller should PROCEED with the tool
@@ -80,12 +80,8 @@ public:
             // concrete (tool_name, first path-or-"*").
             if (user == Decision::AlwaysAllow || user == Decision::AlwaysDeny) {
                 const std::string& path_key =
-                    req.affected_paths.empty()
-                        ? empty_path_star()
-                        : req.affected_paths.front();
-                resolver.CacheAlways(std::string(req.tool_name),
-                                     path_key,
-                                     user);
+                    req.affected_paths.empty() ? empty_path_star() : req.affected_paths.front();
+                resolver.CacheAlways(std::string(req.tool_name), path_key, user);
             }
             return user;
         }

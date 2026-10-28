@@ -3,9 +3,9 @@
 // module interface.
 module;
 
-#include <cstdint>
-
 #include <yyjson.h>
+
+#include <cstdint>
 
 module loom.serdes.json;
 
@@ -13,22 +13,54 @@ import std;
 
 namespace loom::utils::json {
 
-bool JsonVal::is_null() const noexcept { return yyjson_is_null(val_); }
-bool JsonVal::is_bool() const noexcept { return yyjson_is_bool(val_); }
-bool JsonVal::is_num() const noexcept { return yyjson_is_num(val_); }
-bool JsonVal::is_int() const noexcept { return yyjson_is_int(val_); }
-bool JsonVal::is_double() const noexcept { return yyjson_is_real(val_); }
-bool JsonVal::is_str() const noexcept { return yyjson_is_str(val_); }
-bool JsonVal::is_arr() const noexcept { return yyjson_is_arr(val_); }
-bool JsonVal::is_obj() const noexcept { return yyjson_is_obj(val_); }
+bool JsonVal::is_null() const noexcept {
+    return yyjson_is_null(val_);
+}
+
+bool JsonVal::is_bool() const noexcept {
+    return yyjson_is_bool(val_);
+}
+
+bool JsonVal::is_num() const noexcept {
+    return yyjson_is_num(val_);
+}
+
+bool JsonVal::is_int() const noexcept {
+    return yyjson_is_int(val_);
+}
+
+bool JsonVal::is_double() const noexcept {
+    return yyjson_is_real(val_);
+}
+
+bool JsonVal::is_str() const noexcept {
+    return yyjson_is_str(val_);
+}
+
+bool JsonVal::is_arr() const noexcept {
+    return yyjson_is_arr(val_);
+}
+
+bool JsonVal::is_obj() const noexcept {
+    return yyjson_is_obj(val_);
+}
 
 std::string_view JsonVal::as_str() const noexcept {
     const char* s = yyjson_get_str(val_);
     return s ? std::string_view(s, yyjson_get_len(val_)) : std::string_view{};
 }
-int64_t JsonVal::as_int() const noexcept { return yyjson_get_sint(val_); }
-double JsonVal::as_double() const noexcept { return yyjson_get_num(val_); }
-bool JsonVal::as_bool() const noexcept { return yyjson_get_bool(val_); }
+
+int64_t JsonVal::as_int() const noexcept {
+    return yyjson_get_sint(val_);
+}
+
+double JsonVal::as_double() const noexcept {
+    return yyjson_get_num(val_);
+}
+
+bool JsonVal::as_bool() const noexcept {
+    return yyjson_get_bool(val_);
+}
 
 JsonVal JsonVal::get(std::string_view key) const noexcept {
     return JsonVal(yyjson_obj_getn(val_, key.data(), key.size()));
@@ -69,4 +101,4 @@ std::optional<JsonVal> JsonVal::get_object(std::string_view key) const noexcept 
     return child;
 }
 
-} // namespace loom::utils::json
+}  // namespace loom::utils::json

@@ -4,8 +4,8 @@
 /// for terminal rendering.
 module;
 
-#include <cstdint>
 #include <cstddef>
+#include <cstdint>
 
 export module loom.ui.chrome.text_measure;
 
@@ -18,14 +18,10 @@ export namespace loom::ui::text_measure {
 struct TextMetrics {
     size_t width;
     size_t height;
-    size_t visible_width; // excluding ANSI escapes
+    size_t visible_width;  // excluding ANSI escapes
 };
 
-enum class BidiDirection {
-    LTR,
-    RTL,
-    Auto
-};
+enum class BidiDirection { LTR, RTL, Auto };
 
 struct LineWidthEntry {
     std::string_view line;
@@ -55,8 +51,8 @@ inline auto decode_utf8(const char* data, size_t len) -> std::pair<char32_t, siz
     }
     if ((byte & 0xE0) == 0xC0) {
         if (len < 2) return {0xFFFD, 1};
-        char32_t cp = (static_cast<char32_t>(byte & 0x1F) << 6) |
-                      (static_cast<char32_t>(data[1]) & 0x3F);
+        char32_t cp =
+            (static_cast<char32_t>(byte & 0x1F) << 6) | (static_cast<char32_t>(data[1]) & 0x3F);
         return {cp, 2};
     }
     if ((byte & 0xF0) == 0xE0) {
@@ -92,16 +88,16 @@ inline auto skip_ansi_escape(const char* data, size_t len) -> size_t {
             }
             ++i;
         }
-        return len; // unterminated, skip all
+        return len;  // unterminated, skip all
     }
 
     // OSC sequences: ESC ] ... ST (ESC \ or BEL)
     if (data[1] == ']') {
         size_t i = 2;
         while (i < len) {
-            if (data[i] == '\007') return i + 1; // BEL terminator
+            if (data[i] == '\007') return i + 1;  // BEL terminator
             if (data[i] == '\033' && i + 1 < len && data[i + 1] == '\\') {
-                return i + 2; // ST terminator
+                return i + 2;  // ST terminator
             }
             ++i;
         }
@@ -116,13 +112,13 @@ inline auto skip_ansi_escape(const char* data, size_t len) -> size_t {
 /// Check if a code point is an emoji modifier, ZWJ, or variation selector
 /// that should be handled as zero-width in sequences.
 inline auto is_emoji_modifier(char32_t ch) -> bool {
-    return (ch >= 0x1F3FB && ch <= 0x1F3FF) || // Fitzpatrick skin tones
+    return (ch >= 0x1F3FB && ch <= 0x1F3FF) ||  // Fitzpatrick skin tones
            ch == 0x200D ||                      // ZWJ
            ch == 0xFE0F ||                      // Variation Selector-16 (emoji presentation)
            ch == 0xFE0E;                        // Variation Selector-15 (text presentation)
 }
 
-} // namespace detail
+}  // namespace detail
 
 // ─── Functions ───────────────────────────────────────────────────────────────
 
@@ -131,69 +127,62 @@ inline auto is_wide_char(char32_t ch) -> bool {
     // East Asian Fullwidth (F), Wide (W), and some ambiguous ranges commonly
     // treated as wide in CJK terminal contexts. Based on UAX #11 plus emoji.
     return (ch >= 0x1100 &&
-            (ch <= 0x115F ||                        // Hangul Jamo
-             ch == 0x2329 || ch == 0x232A ||        // Angle brackets
-             (ch >= 0x2E80 && ch <= 0x303E) ||      // CJK Radicals, Kangxi, CJK Symbols
-             (ch >= 0x3040 && ch <= 0x33BF) ||      // Hiragana, Katakana, Bopomofo, etc.
-             (ch >= 0x33C0 && ch <= 0x33FF) ||      // CJK Compatibility
-             (ch >= 0x3400 && ch <= 0x4DBF) ||      // CJK Unified Extension A
-             (ch >= 0x4E00 && ch <= 0x9FFF) ||      // CJK Unified
-             (ch >= 0xA000 && ch <= 0xA4CF) ||      // Yi
-             (ch >= 0xA960 && ch <= 0xA97F) ||      // Hangul Jamo Extended-A
-             (ch >= 0xAC00 && ch <= 0xD7AF) ||      // Hangul Syllables
-             (ch >= 0xF900 && ch <= 0xFAFF) ||      // CJK Compatibility Ideographs
-             (ch >= 0xFE10 && ch <= 0xFE19) ||      // Vertical Forms
-             (ch >= 0xFE30 && ch <= 0xFE6F) ||      // CJK Compatibility Forms
-             (ch >= 0xFF01 && ch <= 0xFF60) ||      // Fullwidth ASCII variants
-             (ch >= 0xFFE0 && ch <= 0xFFE6) ||      // Fullwidth Signs
-             (ch >= 0x1F004 && ch <= 0x1F004) ||    // Mahjong Tile Red Dragon
-             (ch >= 0x1F0CF && ch <= 0x1F0CF) ||    // Playing Card Black Joker
-             (ch >= 0x1F18E && ch <= 0x1F18E) ||    // Negative Squared AB
-             (ch >= 0x1F191 && ch <= 0x1F19A) ||    // Squared CL..Squared VS
-             (ch >= 0x1F200 && ch <= 0x1F202) ||    // Square Hiragana
-             (ch >= 0x1F210 && ch <= 0x1F23B) ||    // Squared CJK Unified
-             (ch >= 0x1F240 && ch <= 0x1F248) ||    // Tortoise Shell Bracketed CJK
-             (ch >= 0x1F250 && ch <= 0x1F251) ||    // Circled Ideograph
-             (ch >= 0x1F300 && ch <= 0x1F5FF) ||    // Miscellaneous Symbols and Pictographs
-             (ch >= 0x1F600 && ch <= 0x1F64F) ||    // Emoticons
-             (ch >= 0x1F680 && ch <= 0x1F6FF) ||    // Transport and Map Symbols
-             (ch >= 0x1F700 && ch <= 0x1F77F) ||    // Alchemical Symbols
-             (ch >= 0x1F780 && ch <= 0x1F7FF) ||    // Geometric Shapes Extended
-             (ch >= 0x1F800 && ch <= 0x1F8FF) ||    // Supplemental Arrows-C
-             (ch >= 0x1F900 && ch <= 0x1F9FF) ||    // Supplemental Symbols and Pictographs
-             (ch >= 0x1FA00 && ch <= 0x1FA6F) ||    // Chess Symbols
-             (ch >= 0x1FA70 && ch <= 0x1FAFF) ||    // Symbols and Pictographs Extended-A
-             (ch >= 0x20000 && ch <= 0x2FFFD) ||    // CJK Unified Extension B+
-             (ch >= 0x30000 && ch <= 0x3FFFD)));    // CJK Unified Extension G+
+            (ch <= 0x115F ||                      // Hangul Jamo
+             ch == 0x2329 || ch == 0x232A ||      // Angle brackets
+             (ch >= 0x2E80 && ch <= 0x303E) ||    // CJK Radicals, Kangxi, CJK Symbols
+             (ch >= 0x3040 && ch <= 0x33BF) ||    // Hiragana, Katakana, Bopomofo, etc.
+             (ch >= 0x33C0 && ch <= 0x33FF) ||    // CJK Compatibility
+             (ch >= 0x3400 && ch <= 0x4DBF) ||    // CJK Unified Extension A
+             (ch >= 0x4E00 && ch <= 0x9FFF) ||    // CJK Unified
+             (ch >= 0xA000 && ch <= 0xA4CF) ||    // Yi
+             (ch >= 0xA960 && ch <= 0xA97F) ||    // Hangul Jamo Extended-A
+             (ch >= 0xAC00 && ch <= 0xD7AF) ||    // Hangul Syllables
+             (ch >= 0xF900 && ch <= 0xFAFF) ||    // CJK Compatibility Ideographs
+             (ch >= 0xFE10 && ch <= 0xFE19) ||    // Vertical Forms
+             (ch >= 0xFE30 && ch <= 0xFE6F) ||    // CJK Compatibility Forms
+             (ch >= 0xFF01 && ch <= 0xFF60) ||    // Fullwidth ASCII variants
+             (ch >= 0xFFE0 && ch <= 0xFFE6) ||    // Fullwidth Signs
+             (ch >= 0x1F004 && ch <= 0x1F004) ||  // Mahjong Tile Red Dragon
+             (ch >= 0x1F0CF && ch <= 0x1F0CF) ||  // Playing Card Black Joker
+             (ch >= 0x1F18E && ch <= 0x1F18E) ||  // Negative Squared AB
+             (ch >= 0x1F191 && ch <= 0x1F19A) ||  // Squared CL..Squared VS
+             (ch >= 0x1F200 && ch <= 0x1F202) ||  // Square Hiragana
+             (ch >= 0x1F210 && ch <= 0x1F23B) ||  // Squared CJK Unified
+             (ch >= 0x1F240 && ch <= 0x1F248) ||  // Tortoise Shell Bracketed CJK
+             (ch >= 0x1F250 && ch <= 0x1F251) ||  // Circled Ideograph
+             (ch >= 0x1F300 && ch <= 0x1F5FF) ||  // Miscellaneous Symbols and Pictographs
+             (ch >= 0x1F600 && ch <= 0x1F64F) ||  // Emoticons
+             (ch >= 0x1F680 && ch <= 0x1F6FF) ||  // Transport and Map Symbols
+             (ch >= 0x1F700 && ch <= 0x1F77F) ||  // Alchemical Symbols
+             (ch >= 0x1F780 && ch <= 0x1F7FF) ||  // Geometric Shapes Extended
+             (ch >= 0x1F800 && ch <= 0x1F8FF) ||  // Supplemental Arrows-C
+             (ch >= 0x1F900 && ch <= 0x1F9FF) ||  // Supplemental Symbols and Pictographs
+             (ch >= 0x1FA00 && ch <= 0x1FA6F) ||  // Chess Symbols
+             (ch >= 0x1FA70 && ch <= 0x1FAFF) ||  // Symbols and Pictographs Extended-A
+             (ch >= 0x20000 && ch <= 0x2FFFD) ||  // CJK Unified Extension B+
+             (ch >= 0x30000 && ch <= 0x3FFFD)));  // CJK Unified Extension G+
 }
 
 /// Determines if a Unicode code point is a combining character (zero width).
 inline auto is_combining_char(char32_t ch) -> bool {
-    return (ch >= 0x0300 && ch <= 0x036F) ||   // Combining Diacritical Marks
-           (ch >= 0x0483 && ch <= 0x0489) ||   // Cyrillic combining marks
-           (ch >= 0x0591 && ch <= 0x05BD) ||   // Hebrew combining marks
-           (ch >= 0x05BF && ch <= 0x05BF) ||
-           (ch >= 0x05C1 && ch <= 0x05C2) ||
-           (ch >= 0x05C4 && ch <= 0x05C5) ||
-           (ch >= 0x05C7 && ch <= 0x05C7) ||
-           (ch >= 0x0610 && ch <= 0x061A) ||   // Arabic combining marks
-           (ch >= 0x064B && ch <= 0x065F) ||
-           (ch >= 0x0670 && ch <= 0x0670) ||
-           (ch >= 0x06D6 && ch <= 0x06DC) ||
-           (ch >= 0x06DF && ch <= 0x06E4) ||
-           (ch >= 0x06E7 && ch <= 0x06E8) ||
-           (ch >= 0x06EA && ch <= 0x06ED) ||
-           (ch >= 0x0711 && ch <= 0x0711) ||   // Syriac
-           (ch >= 0x0730 && ch <= 0x074A) ||
-           (ch >= 0x0E31 && ch <= 0x0E31) ||   // Thai
-           (ch >= 0x0E34 && ch <= 0x0E3A) ||
-           (ch >= 0x0E47 && ch <= 0x0E4E) ||
-           (ch >= 0x1AB0 && ch <= 0x1AFF) ||   // Combining Diacritical Extended
-           (ch >= 0x1DC0 && ch <= 0x1DFF) ||   // Combining Diacritical Supplement
-           (ch >= 0x20D0 && ch <= 0x20FF) ||   // Combining Diacritical for Symbols
-           (ch >= 0xFE00 && ch <= 0xFE0F) ||   // Variation Selectors
-           (ch >= 0xFE20 && ch <= 0xFE2F) ||   // Combining Half Marks
-           (ch >= 0xE0100 && ch <= 0xE01EF);   // Variation Selectors Supplement
+    return (ch >= 0x0300 && ch <= 0x036F) ||  // Combining Diacritical Marks
+           (ch >= 0x0483 && ch <= 0x0489) ||  // Cyrillic combining marks
+           (ch >= 0x0591 && ch <= 0x05BD) ||  // Hebrew combining marks
+           (ch >= 0x05BF && ch <= 0x05BF) || (ch >= 0x05C1 && ch <= 0x05C2) ||
+           (ch >= 0x05C4 && ch <= 0x05C5) || (ch >= 0x05C7 && ch <= 0x05C7) ||
+           (ch >= 0x0610 && ch <= 0x061A) ||  // Arabic combining marks
+           (ch >= 0x064B && ch <= 0x065F) || (ch >= 0x0670 && ch <= 0x0670) ||
+           (ch >= 0x06D6 && ch <= 0x06DC) || (ch >= 0x06DF && ch <= 0x06E4) ||
+           (ch >= 0x06E7 && ch <= 0x06E8) || (ch >= 0x06EA && ch <= 0x06ED) ||
+           (ch >= 0x0711 && ch <= 0x0711) ||                                    // Syriac
+           (ch >= 0x0730 && ch <= 0x074A) || (ch >= 0x0E31 && ch <= 0x0E31) ||  // Thai
+           (ch >= 0x0E34 && ch <= 0x0E3A) || (ch >= 0x0E47 && ch <= 0x0E4E) ||
+           (ch >= 0x1AB0 && ch <= 0x1AFF) ||  // Combining Diacritical Extended
+           (ch >= 0x1DC0 && ch <= 0x1DFF) ||  // Combining Diacritical Supplement
+           (ch >= 0x20D0 && ch <= 0x20FF) ||  // Combining Diacritical for Symbols
+           (ch >= 0xFE00 && ch <= 0xFE0F) ||  // Variation Selectors
+           (ch >= 0xFE20 && ch <= 0xFE2F) ||  // Combining Half Marks
+           (ch >= 0xE0100 && ch <= 0xE01EF);  // Variation Selectors Supplement
 }
 
 /// Determines if a code point is a zero-width control character.
@@ -208,7 +197,7 @@ inline auto is_zero_width_control(char32_t ch) -> bool {
 
 /// Returns the display width of a character: 0 for combining, 2 for wide, 1 otherwise.
 inline auto char_width(char32_t ch) -> int {
-    if (ch < 0x20) return 0;    // Control characters
+    if (ch < 0x20) return 0;  // Control characters
     if (is_zero_width_control(ch)) return 0;
     if (is_combining_char(ch)) return 0;
     if (detail::is_emoji_modifier(ch)) return 0;
@@ -323,7 +312,8 @@ inline auto measure_text(std::string_view text, MeasureConfig config = {}) -> Te
                     continue;
                 }
                 if (line[j] == '\t') {
-                    int spaces = config.tab_width - static_cast<int>(col % static_cast<size_t>(config.tab_width));
+                    int spaces = config.tab_width -
+                                 static_cast<int>(col % static_cast<size_t>(config.tab_width));
                     line_width += static_cast<size_t>(spaces);
                     col += static_cast<size_t>(spaces);
                     ++j;
@@ -343,11 +333,7 @@ inline auto measure_text(std::string_view text, MeasureConfig config = {}) -> Te
 
     if (height == 0) height = 1;
 
-    return TextMetrics{
-        .width = max_width,
-        .height = height,
-        .visible_width = max_width
-    };
+    return TextMetrics{.width = max_width, .height = height, .visible_width = max_width};
 }
 
 /// Returns the maximum width across a span of lines.
@@ -366,42 +352,45 @@ inline auto detect_bidi_direction(std::string_view text) -> BidiDirection {
     while (i < text.size()) {
         // Skip ANSI
         auto skip = detail::skip_ansi_escape(text.data() + i, text.size() - i);
-        if (skip > 0) { i += skip; continue; }
+        if (skip > 0) {
+            i += skip;
+            continue;
+        }
 
         auto [cp, bytes] = detail::decode_utf8(text.data() + i, text.size() - i);
         i += bytes;
 
         // Strong LTR: Latin, Greek, Cyrillic, CJK, etc.
-        if ((cp >= 0x0041 && cp <= 0x005A) || // A-Z
-            (cp >= 0x0061 && cp <= 0x007A) || // a-z
-            (cp >= 0x00C0 && cp <= 0x02AF) || // Latin Extended
-            (cp >= 0x0370 && cp <= 0x03FF) || // Greek
-            (cp >= 0x0400 && cp <= 0x04FF) || // Cyrillic
-            (cp >= 0x1100 && cp <= 0x11FF) || // Hangul Jamo
-            (cp >= 0x3040 && cp <= 0x9FFF) || // CJK
-            (cp >= 0xAC00 && cp <= 0xD7AF)) { // Hangul Syllables
+        if ((cp >= 0x0041 && cp <= 0x005A) ||  // A-Z
+            (cp >= 0x0061 && cp <= 0x007A) ||  // a-z
+            (cp >= 0x00C0 && cp <= 0x02AF) ||  // Latin Extended
+            (cp >= 0x0370 && cp <= 0x03FF) ||  // Greek
+            (cp >= 0x0400 && cp <= 0x04FF) ||  // Cyrillic
+            (cp >= 0x1100 && cp <= 0x11FF) ||  // Hangul Jamo
+            (cp >= 0x3040 && cp <= 0x9FFF) ||  // CJK
+            (cp >= 0xAC00 && cp <= 0xD7AF)) {  // Hangul Syllables
             return BidiDirection::LTR;
         }
 
         // Strong RTL: Arabic, Hebrew, Thaana, etc.
-        if ((cp >= 0x0590 && cp <= 0x05FF) || // Hebrew
-            (cp >= 0x0600 && cp <= 0x06FF) || // Arabic
-            (cp >= 0x0700 && cp <= 0x074F) || // Syriac
-            (cp >= 0x0750 && cp <= 0x077F) || // Arabic Supplement
-            (cp >= 0x0780 && cp <= 0x07BF) || // Thaana
-            (cp >= 0x07C0 && cp <= 0x07FF) || // NKo
-            (cp >= 0x0800 && cp <= 0x083F) || // Samaritan
-            (cp >= 0x0840 && cp <= 0x085F) || // Mandaic
-            (cp >= 0x08A0 && cp <= 0x08FF) || // Arabic Extended-A
-            (cp >= 0xFB50 && cp <= 0xFDFF) || // Arabic Presentation A
-            (cp >= 0xFE70 && cp <= 0xFEFF) || // Arabic Presentation B
-            (cp >= 0x10800 && cp <= 0x10FFF) || // RTL supplementary
-            (cp >= 0x1E800 && cp <= 0x1EFFF)) { // RTL supplementary
+        if ((cp >= 0x0590 && cp <= 0x05FF) ||    // Hebrew
+            (cp >= 0x0600 && cp <= 0x06FF) ||    // Arabic
+            (cp >= 0x0700 && cp <= 0x074F) ||    // Syriac
+            (cp >= 0x0750 && cp <= 0x077F) ||    // Arabic Supplement
+            (cp >= 0x0780 && cp <= 0x07BF) ||    // Thaana
+            (cp >= 0x07C0 && cp <= 0x07FF) ||    // NKo
+            (cp >= 0x0800 && cp <= 0x083F) ||    // Samaritan
+            (cp >= 0x0840 && cp <= 0x085F) ||    // Mandaic
+            (cp >= 0x08A0 && cp <= 0x08FF) ||    // Arabic Extended-A
+            (cp >= 0xFB50 && cp <= 0xFDFF) ||    // Arabic Presentation A
+            (cp >= 0xFE70 && cp <= 0xFEFF) ||    // Arabic Presentation B
+            (cp >= 0x10800 && cp <= 0x10FFF) ||  // RTL supplementary
+            (cp >= 0x1E800 && cp <= 0x1EFFF)) {  // RTL supplementary
             return BidiDirection::RTL;
         }
     }
 
-    return BidiDirection::LTR; // Default to LTR if no strong character found
+    return BidiDirection::LTR;  // Default to LTR if no strong character found
 }
 
 /// Reorders text according to the Unicode Bidi Algorithm (simplified).
@@ -419,8 +408,7 @@ inline auto reorder_bidi(std::string_view text, BidiDirection base) -> std::stri
         size_t i = 0;
         while (i < text.size()) {
             auto [cp, bytes] = detail::decode_utf8(text.data() + i, text.size() - i);
-            if ((cp >= 0x0590 && cp <= 0x08FF) ||
-                (cp >= 0xFB50 && cp <= 0xFEFF)) {
+            if ((cp >= 0x0590 && cp <= 0x08FF) || (cp >= 0xFB50 && cp <= 0xFEFF)) {
                 has_rtl = true;
                 break;
             }
@@ -493,9 +481,7 @@ public:
     }
 
     /// Removes a specific line from the cache.
-    auto invalidate(std::string_view line) -> void {
-        cache_.erase(std::string{line});
-    }
+    auto invalidate(std::string_view line) -> void { cache_.erase(std::string{line}); }
 
     /// Clears all cached entries.
     auto clear() -> void {
@@ -505,9 +491,7 @@ public:
     }
 
     /// Returns the number of cached entries.
-    [[nodiscard]] auto size() const -> size_t {
-        return cache_.size();
-    }
+    [[nodiscard]] auto size() const -> size_t { return cache_.size(); }
 
     /// Returns cache hit rate (0.0 - 1.0).
     [[nodiscard]] auto hit_rate() const -> double {
@@ -526,4 +510,4 @@ private:
     size_t max_capacity_ = 4096;
 };
 
-} // namespace loom::ui::text_measure
+}  // namespace loom::ui::text_measure

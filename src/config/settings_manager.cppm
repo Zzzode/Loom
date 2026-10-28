@@ -3,8 +3,8 @@
 //         changeDetector.ts, internalWrites.ts
 module;
 
-#include <cstdlib>
 #include <cstdint>
+#include <cstdlib>
 
 export module loom.config.settings_manager;
 
@@ -48,15 +48,8 @@ enum class EditableSource {
 };
 
 /// Represents a JSON settings value (simplified)
-using SettingsValue = std::variant<
-    std::monostate,
-    bool,
-    int64_t,
-    double,
-    std::string,
-    std::vector<std::string>,
-    std::map<std::string, std::string>
->;
+using SettingsValue = std::variant<std::monostate, bool, int64_t, double, std::string,
+                                   std::vector<std::string>, std::map<std::string, std::string>>;
 
 /// Flat settings map (key -> value)
 using SettingsJson = std::map<std::string, SettingsValue>;
@@ -89,37 +82,40 @@ struct UpdateResult {
 
 [[nodiscard]] inline fs::path settings_path_for_source(SettingSource source) {
     switch (source) {
-        case SettingSource::UserSettings:
-            return home_dir() / ".loom" / "settings.json";
-        case SettingSource::ProjectSettings:
-            return fs::current_path() / ".loom" / "settings.json";
-        case SettingSource::LocalSettings:
-            return fs::current_path() / ".loom" / "settings.local.json";
-        case SettingSource::FlagSettings:
-        case SettingSource::PolicySettings:
-            return {};
+    case SettingSource::UserSettings:
+        return home_dir() / ".loom" / "settings.json";
+    case SettingSource::ProjectSettings:
+        return fs::current_path() / ".loom" / "settings.json";
+    case SettingSource::LocalSettings:
+        return fs::current_path() / ".loom" / "settings.local.json";
+    case SettingSource::FlagSettings:
+    case SettingSource::PolicySettings:
+        return {};
     }
     return {};
 }
 
 [[nodiscard]] inline SettingSource editable_to_setting_source(EditableSource source) {
     switch (source) {
-        case EditableSource::UserSettings: return SettingSource::UserSettings;
-        case EditableSource::ProjectSettings: return SettingSource::ProjectSettings;
-        case EditableSource::LocalSettings: return SettingSource::LocalSettings;
+    case EditableSource::UserSettings:
+        return SettingSource::UserSettings;
+    case EditableSource::ProjectSettings:
+        return SettingSource::ProjectSettings;
+    case EditableSource::LocalSettings:
+        return SettingSource::LocalSettings;
     }
     return SettingSource::UserSettings;
 }
 
-[[nodiscard]] inline std::optional<SettingsValue> settings_value_from_json(loom::utils::json::JsonVal value) {
+[[nodiscard]] inline std::optional<SettingsValue>
+settings_value_from_json(loom::utils::json::JsonVal value) {
     if (!value.valid() || value.is_null()) return SettingsValue{std::monostate{}};
     if (value.is_bool()) return SettingsValue{value.as_bool()};
     if (value.is_num()) {
         auto as_double = value.as_double();
         auto as_int = value.as_int();
-        return as_double == static_cast<double>(as_int)
-            ? SettingsValue{as_int}
-            : SettingsValue{as_double};
+        return as_double == static_cast<double>(as_int) ? SettingsValue{as_int}
+                                                        : SettingsValue{as_double};
     }
     if (value.is_str()) return SettingsValue{std::string(value.as_str())};
     if (value.is_arr()) {
@@ -159,35 +155,36 @@ struct UpdateResult {
     return parse_settings_json(parsed->root());
 }
 
-inline void add_settings_value(
-    loom::utils::json::JsonMutDoc& doc,
-    loom::utils::json::JsonMutVal& root,
-    std::string_view key,
-    const SettingsValue& value) {
-    std::visit([&](const auto& typed) {
-        using T = std::decay_t<decltype(typed)>;
-        if constexpr (std::is_same_v<T, std::monostate>) {
-            root.add(key, doc.null());
-        } else if constexpr (std::is_same_v<T, bool>) {
-            root.add(key, doc.boolean(typed));
-        } else if constexpr (std::is_same_v<T, int64_t>) {
-            root.add(key, doc.number(typed));
-        } else if constexpr (std::is_same_v<T, double>) {
-            root.add(key, doc.number(typed));
-        } else if constexpr (std::is_same_v<T, std::string>) {
-            root.add(key, doc.string(typed));
-        } else if constexpr (std::is_same_v<T, std::vector<std::string>>) {
-            auto arr = doc.array();
-            for (const auto& item : typed) arr.append(doc.string(item));
-            root.add(key, arr);
-        } else if constexpr (std::is_same_v<T, std::map<std::string, std::string>>) {
-            auto obj = doc.object();
-            for (const auto& [map_key, map_value] : typed) {
-                obj.add(map_key, doc.string(map_value));
+inline void add_settings_value(loom::utils::json::JsonMutDoc& doc,
+                               loom::utils::json::JsonMutVal& root, std::string_view key,
+                               const SettingsValue& value) {
+    std::visit(
+        [&](const auto& typed) {
+            using T = std::decay_t<decltype(typed)>;
+            if constexpr (std::is_same_v<T, std::monostate>) {
+                root.add(key, doc.null());
+            } else if constexpr (std::is_same_v<T, bool>) {
+                root.add(key, doc.boolean(typed));
+            } else if constexpr (std::is_same_v<T, int64_t>) {
+                root.add(key, doc.number(typed));
+            } else if constexpr (std::is_same_v<T, double>) {
+                root.add(key, doc.number(typed));
+            } else if constexpr (std::is_same_v<T, std::string>) {
+                root.add(key, doc.string(typed));
+            } else if constexpr (std::is_same_v<T, std::vector<std::string>>) {
+                auto arr = doc.array();
+                for (const auto& item : typed)
+                    arr.append(doc.string(item));
+                root.add(key, arr);
+            } else if constexpr (std::is_same_v<T, std::map<std::string, std::string>>) {
+                auto obj = doc.object();
+                for (const auto& [map_key, map_value] : typed) {
+                    obj.add(map_key, doc.string(map_value));
+                }
+                root.add(key, obj);
             }
-            root.add(key, obj);
-        }
-    }, value);
+        },
+        value);
 }
 
 [[nodiscard]] inline std::string serialize_settings_json(const SettingsJson& settings) {
@@ -236,8 +233,7 @@ public:
     }
 
     /// Get cached parsed file result
-    [[nodiscard]] std::optional<SettingsWithErrors>
-    get_parsed_file(const fs::path& path) const {
+    [[nodiscard]] std::optional<SettingsWithErrors> get_parsed_file(const fs::path& path) const {
         std::lock_guard lock(mutex_);
         auto it = parse_file_cache_.find(path);
         if (it == parse_file_cache_.end()) return std::nullopt;
@@ -344,7 +340,9 @@ public:
         minutes mdm_poll_interval{30};
     };
 
-    ChangeDetector() : ChangeDetector(Config{}) {}
+    ChangeDetector()
+        : ChangeDetector(Config{}) {}
+
     explicit ChangeDetector(Config config)
         : config_(std::move(config)) {}
 
@@ -353,16 +351,15 @@ public:
         if (initialized_ || disposed_) return false;
         initialized_ = true;
         watched_files_.clear();
-        for (auto source : {SettingSource::UserSettings, SettingSource::ProjectSettings, SettingSource::LocalSettings}) {
+        for (auto source : {SettingSource::UserSettings, SettingSource::ProjectSettings,
+                            SettingSource::LocalSettings}) {
             auto path = settings_path_for_source(source);
             if (!path.empty()) {
                 watched_files_[source] = path;
                 mtimes_[path] = current_mtime(path);
             }
         }
-        watcher_thread_ = std::jthread([this](std::stop_token stop) {
-            poll_loop(stop);
-        });
+        watcher_thread_ = std::jthread([this](std::stop_token stop) { poll_loop(stop); });
         return true;
     }
 
@@ -378,9 +375,7 @@ public:
     }
 
     /// Manually notify listeners of a programmatic settings change
-    void notify_change(SettingSource source) {
-        fan_out(source);
-    }
+    void notify_change(SettingSource source) { fan_out(source); }
 
     /// Clean up file watcher resources
     void dispose() {
@@ -400,6 +395,7 @@ public:
 
     /// Reset for testing
     void reset_for_testing() { reset_for_testing(Config{}); }
+
     void reset_for_testing(Config config) {
         dispose();
         initialized_ = false;
@@ -427,7 +423,8 @@ private:
                     auto previous = mtimes_[path];
                     if (next != previous) {
                         mtimes_[path] = next;
-                        if (!write_tracker_ || !write_tracker_->consume(path, config_.internal_write_window)) {
+                        if (!write_tracker_ ||
+                            !write_tracker_->consume(path, config_.internal_write_window)) {
                             changed_sources.push_back(source);
                         }
                     }
@@ -447,9 +444,8 @@ private:
     }
 
     friend class SettingsApplier;
-    void set_write_tracker(InternalWriteTracker* tracker) {
-        write_tracker_ = tracker;
-    }
+
+    void set_write_tracker(InternalWriteTracker* tracker) { write_tracker_ = tracker; }
 
     Config config_;
     bool initialized_ = false;
@@ -471,8 +467,7 @@ private:
 /// invalidate caches, and notify listeners.
 class SettingsApplier {
 public:
-    SettingsApplier(SettingsCache& cache,
-                    InternalWriteTracker& write_tracker,
+    SettingsApplier(SettingsCache& cache, InternalWriteTracker& write_tracker,
                     ChangeDetector& change_detector)
         : cache_(cache)
         , write_tracker_(write_tracker)
@@ -482,8 +477,7 @@ public:
 
     /// Apply a settings change to the specified source.
     /// Merges new settings with existing, writes to disk, and resets caches.
-    [[nodiscard]] UpdateResult apply(EditableSource source,
-                                     const SettingsJson& new_settings) {
+    [[nodiscard]] UpdateResult apply(EditableSource source, const SettingsJson& new_settings) {
         auto file_path = get_file_path_for_editable_source(source);
         if (file_path.empty()) {
             return {.success = true, .error_message = {}};
@@ -526,18 +520,16 @@ public:
     }
 
 private:
-    [[nodiscard]] static std::string get_file_path_for_editable_source(
-        EditableSource source) {
+    [[nodiscard]] static std::string get_file_path_for_editable_source(EditableSource source) {
         return settings_path_for_source(editable_to_setting_source(source)).string();
     }
 
-    [[nodiscard]] static SettingsJson load_from_file(
-        const std::string& path) {
+    [[nodiscard]] static SettingsJson load_from_file(const std::string& path) {
         return read_settings_file(fs::path(path));
     }
 
-    [[nodiscard]] static SettingsJson merge_settings(
-        const SettingsJson& existing, const SettingsJson& incoming) {
+    [[nodiscard]] static SettingsJson merge_settings(const SettingsJson& existing,
+                                                     const SettingsJson& incoming) {
         SettingsJson result = existing;
         for (const auto& [key, value] : incoming) {
             // For arrays: replace entirely (caller computes final state)
@@ -548,9 +540,8 @@ private:
         return result;
     }
 
-    [[nodiscard]] static bool write_settings_file(
-        const std::string& path,
-        const SettingsJson& settings) {
+    [[nodiscard]] static bool write_settings_file(const std::string& path,
+                                                  const SettingsJson& settings) {
         auto target = fs::path(path);
         auto temp = target;
         temp += ".tmp";
@@ -621,8 +612,7 @@ public:
     }
 
     /// Get settings for a specific source (cached per-source)
-    [[nodiscard]] std::optional<SettingsJson> get_settings_for_source(
-        SettingSource source) {
+    [[nodiscard]] std::optional<SettingsJson> get_settings_for_source(SettingSource source) {
         auto cached = cache_.get_source_cache(source);
         if (cached) return *cached;
 
@@ -655,18 +645,16 @@ public:
     }
 
     /// Force reset all caches (used after programmatic changes)
-    void reset_cache() {
-        cache_.reset();
-    }
+    void reset_cache() { cache_.reset(); }
 
     /// Dispose all resources
-    void dispose() {
-        change_detector_.dispose();
-    }
+    void dispose() { change_detector_.dispose(); }
 
     /// Access underlying components (for testing)
     SettingsCache& cache() { return cache_; }
+
     ChangeDetector& change_detector() { return change_detector_; }
+
     InternalWriteTracker& write_tracker() { return write_tracker_; }
 
 private:
@@ -685,10 +673,8 @@ private:
 
         // Merge sources in priority order
         static constexpr SettingSource sources[] = {
-            SettingSource::UserSettings,
-            SettingSource::ProjectSettings,
-            SettingSource::LocalSettings,
-            SettingSource::FlagSettings,
+            SettingSource::UserSettings,   SettingSource::ProjectSettings,
+            SettingSource::LocalSettings,  SettingSource::FlagSettings,
             SettingSource::PolicySettings,
         };
 
@@ -705,22 +691,23 @@ private:
     }
 
     /// Load settings for a single source from disk
-    [[nodiscard]] std::optional<SettingsJson> load_settings_for_source(
-        SettingSource source) {
+    [[nodiscard]] std::optional<SettingsJson> load_settings_for_source(SettingSource source) {
         if (source == SettingSource::FlagSettings) {
             SettingsJson flags;
             if (const char* model = std::getenv("LOOM_MODEL"); model && *model) {
                 flags["model"] = std::string(model);
             }
             if (const char* verbose = std::getenv("LOOM_VERBOSE"); verbose && *verbose) {
-                flags["verbose"] = std::string_view(verbose) == "1" || std::string_view(verbose) == "true";
+                flags["verbose"] =
+                    std::string_view(verbose) == "1" || std::string_view(verbose) == "true";
             }
             return flags.empty() ? std::nullopt : std::optional<SettingsJson>{std::move(flags)};
         }
 
         fs::path path;
         if (source == SettingSource::PolicySettings) {
-            if (const char* policy_path = std::getenv("LOOM_POLICY_SETTINGS"); policy_path && *policy_path) {
+            if (const char* policy_path = std::getenv("LOOM_POLICY_SETTINGS");
+                policy_path && *policy_path) {
                 path = policy_path;
             }
         } else {
@@ -743,7 +730,8 @@ private:
             });
         }
         cache_.set_parsed_file(path, parsed);
-        return parsed.settings.empty() ? std::nullopt : std::optional<SettingsJson>{std::move(parsed.settings)};
+        return parsed.settings.empty() ? std::nullopt
+                                       : std::optional<SettingsJson>{std::move(parsed.settings)};
     }
 
     SettingsCache cache_;
@@ -752,4 +740,4 @@ private:
     SettingsApplier applier_;
 };
 
-} // namespace loom::utils::settings_manager
+}  // namespace loom::utils::settings_manager

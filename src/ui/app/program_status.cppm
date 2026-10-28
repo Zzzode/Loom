@@ -21,9 +21,8 @@ public:
     void Cancel() noexcept;
     void Complete(bool error, bool paused = false) noexcept;
     void Acknowledge() noexcept;
-    void Refresh(bool working,
-                 terminal::osc::ProgramStatusKind blocked =
-                     terminal::osc::ProgramStatusKind::None) noexcept;
+    void Refresh(bool working, terminal::osc::ProgramStatusKind blocked =
+                                   terminal::osc::ProgramStatusKind::None) noexcept;
     void Flush(Time now) noexcept;
     void Finish(bool normal, Time now) noexcept;
 

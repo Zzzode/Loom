@@ -5,7 +5,6 @@
 /// LICENCE:  Exported.  Imported by the tool UI registry initialization.
 module;
 
-
 export module loom.ui.tools.web_search;
 
 import std;
@@ -32,8 +31,7 @@ namespace detail {
 }
 
 /// Truncate query for display.
-[[nodiscard]] inline std::string display_query(std::string_view query,
-                                                std::size_t max_len = 50) {
+[[nodiscard]] inline std::string display_query(std::string_view query, std::size_t max_len = 50) {
     if (query.size() <= max_len) return std::string{query};
     return std::string(query.substr(0, max_len)) + "\xE2\x80\xA6";  // …
 }
@@ -47,9 +45,7 @@ namespace detail {
 [[nodiscard]] inline ToolUIFunctions make_web_search_ui() {
     ToolUIFunctions fns;
 
-    fns.user_facing_name = [](std::string_view) {
-        return std::string{"Web Search"};
-    };
+    fns.user_facing_name = [](std::string_view) { return std::string{"Web Search"}; };
 
     fns.message = [](std::string_view input_json) {
         std::string query = detail::extract_query(input_json);
@@ -59,12 +55,9 @@ namespace detail {
         return std::string{"web search…"};
     };
 
-    fns.tag = [](std::string_view) -> std::optional<std::string> {
-        return std::nullopt;
-    };
+    fns.tag = [](std::string_view) -> std::optional<std::string> { return std::nullopt; };
 
-    fns.progress = [](std::string_view input_json,
-                       std::string_view partial_result) {
+    fns.progress = [](std::string_view input_json, std::string_view partial_result) {
         std::string query = detail::extract_query(input_json);
         if (!partial_result.empty()) {
             // Count results
@@ -83,19 +76,15 @@ namespace detail {
         return std::string{"Searching web…"};
     };
 
-    fns.queued = [](std::string_view) {
-        return std::string{"Waiting to search web…"};
-    };
+    fns.queued = [](std::string_view) { return std::string{"Waiting to search web…"}; };
 
     fns.is_transparent_wrapper = false;
 
     // render_tool_result_message shows only "Did N searches in Xs" chrome —
     // the results[] content never appears on screen. Heuristic would index
     // string entries in results[] (phantom match). Nothing to search.
-    fns.extract_search_text = [](
-        std::string_view /*output_text*/,
-        std::string_view /*error_text*/) -> std::optional<std::string>
-    {
+    fns.extract_search_text = [](std::string_view /*output_text*/,
+                                 std::string_view /*error_text*/) -> std::optional<std::string> {
         return std::string{};
     };
 

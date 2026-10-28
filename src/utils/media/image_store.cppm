@@ -1,8 +1,8 @@
 module;
 
+#include <cstddef>
 #include <cstdint>
 #include <cstdlib>
-#include <cstddef>
 
 export module loom.media.image_store;
 
@@ -72,7 +72,7 @@ inline auto detect_mime(std::string_view data) -> std::string {
     return "application/octet-stream";
 }
 
-} // namespace detail
+}  // namespace detail
 
 inline std::expected<PasteResult, std::string> handle_image_paste(std::string_view clipboard_data) {
     if (clipboard_data.empty()) {
@@ -94,10 +94,14 @@ inline std::expected<PasteResult, std::string> handle_image_paste(std::string_vi
     auto mime = detail::detect_mime(clipboard_data);
 
     std::string ext = ".bin";
-    if (mime == "image/png") ext = ".png";
-    else if (mime == "image/jpeg") ext = ".jpg";
-    else if (mime == "image/gif") ext = ".gif";
-    else if (mime == "image/webp") ext = ".webp";
+    if (mime == "image/png")
+        ext = ".png";
+    else if (mime == "image/jpeg")
+        ext = ".jpg";
+    else if (mime == "image/gif")
+        ext = ".gif";
+    else if (mime == "image/webp")
+        ext = ".webp";
 
     auto filepath = store_dir / (id + ext);
     std::ofstream ofs(filepath, std::ios::binary);
@@ -198,4 +202,4 @@ inline std::vector<StoredImage> list_images() {
     return result;
 }
 
-} // namespace loom::utils::image_store
+}  // namespace loom::utils::image_store

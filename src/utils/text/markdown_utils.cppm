@@ -24,15 +24,15 @@ std::string render_markdown_to_terminal(std::string_view md, int width) {
 
         // Headers
         if (line.starts_with("### ")) {
-            result += "\033[1;36m"; // Bold cyan
+            result += "\033[1;36m";  // Bold cyan
             result += line.substr(4);
             result += "\033[0m\n";
         } else if (line.starts_with("## ")) {
-            result += "\033[1;33m"; // Bold yellow
+            result += "\033[1;33m";  // Bold yellow
             result += line.substr(3);
             result += "\033[0m\n";
         } else if (line.starts_with("# ")) {
-            result += "\033[1;35m"; // Bold magenta
+            result += "\033[1;35m";  // Bold magenta
             result += line.substr(2);
             result += "\033[0m\n";
         }
@@ -50,10 +50,11 @@ std::string render_markdown_to_terminal(std::string_view md, int width) {
         }
         // Code block fence
         else if (line.starts_with("```")) {
-            result += "\033[2m"; // Dim for code blocks
+            result += "\033[2m";  // Dim for code blocks
             result += "─";
             // Repeat to fill width
-            for (int i = 1; i < width - 2 && i < 80; ++i) result += "─";
+            for (int i = 1; i < width - 2 && i < 80; ++i)
+                result += "─";
             result += "\033[0m\n";
         }
         // Normal text
@@ -127,7 +128,8 @@ std::string strip_markdown(std::string_view md) {
         } else {
             // Strip header markers
             std::string_view content = line;
-            while (content.starts_with("#")) content.remove_prefix(1);
+            while (content.starts_with("#"))
+                content.remove_prefix(1);
             if (content.starts_with(" ")) content.remove_prefix(1);
 
             // Strip bullet markers
@@ -164,4 +166,4 @@ std::string wrap_in_code_block(std::string_view content, std::string_view lang) 
     return result;
 }
 
-} // namespace loom::utils
+}  // namespace loom::utils

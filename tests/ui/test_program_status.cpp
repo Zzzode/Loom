@@ -1,7 +1,7 @@
 /// @file test_program_status.cpp
 /// @brief OSC 7501 lifecycle and the production FTXUI input parser.
-#include <gtest/gtest.h>
 #include <ftxui/component/terminal_input_parser.hpp>
+#include <gtest/gtest.h>
 
 import std;
 import loom.terminal.osc;
@@ -31,6 +31,7 @@ struct Harness {
         ASSERT_TRUE(reporter.HandleControl(reply, now));
         reporter.Flush(now);
     }
+
     std::string report(State state, Kind kind = Kind::None) {
         return *osc::program_status(state, kind);
     }
@@ -41,8 +42,10 @@ struct ParserHarness {
     ftxui::TerminalInputParser parser{receiver->MakeSender()};
 
     void add(std::string_view bytes) {
-        for (const auto byte : bytes) parser.Add(byte);
+        for (const auto byte : bytes)
+            parser.Add(byte);
     }
+
     std::vector<ftxui::Event> drain() {
         std::vector<ftxui::Event> events;
         ftxui::Task task;

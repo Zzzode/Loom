@@ -2,13 +2,14 @@
 /// @brief Bridge messages, config, and transport tests (split from test_bridge.cpp).
 
 #include <gtest/gtest.h>
-#include <cstdint>
-#include <cstdlib>
 #include <netinet/in.h>
 #include <openssl/sha.h>
-#include <sys/socket.h>
 #include <signal.h>
+#include <sys/socket.h>
 #include <unistd.h>
+
+#include <cstdint>
+#include <cstdlib>
 
 #include "bridge_test_helpers.hpp"
 
@@ -36,7 +37,8 @@ TEST(BridgeMessages, DetectsAndNormalizesMalformedBase64Images) {
     auto normalized = loom::bridge::normalize_image_blocks({malformed});
     ASSERT_EQ(normalized.size(), 1u);
     ASSERT_TRUE(std::holds_alternative<loom::bridge::ImageBlock>(normalized.front()));
-    EXPECT_EQ(std::get<loom::bridge::ImageBlock>(normalized.front()).source.media_type, "image/png");
+    EXPECT_EQ(std::get<loom::bridge::ImageBlock>(normalized.front()).source.media_type,
+              "image/png");
 }
 
 TEST(BridgeMessages, ExtractsOnlyUserMessagesWithContent) {
@@ -59,9 +61,8 @@ TEST(BridgeMessages, ExtractsOnlyUserMessagesWithContent) {
 
 TEST(BridgeMessages, FlushGateBuffersUntilOpened) {
     std::vector<std::string> handled;
-    loom::bridge::MessageFlushGate gate([&handled](const loom::bridge::SDKMessage& msg) {
-        handled.push_back(msg.type);
-    });
+    loom::bridge::MessageFlushGate gate(
+        [&handled](const loom::bridge::SDKMessage& msg) { handled.push_back(msg.type); });
 
     loom::bridge::SDKMessage message;
     message.type = "user";
@@ -131,9 +132,10 @@ TEST(BridgeTransport, WebSocketConnectSendsAndDisconnects) {
     std::vector<std::string> received;
     std::mutex received_mutex;
     std::condition_variable received_cv;
-    transport.on_state_change([&transitions](loom::bridge::TransportState, loom::bridge::TransportState next) {
-        transitions.push_back(next);
-    });
+    transport.on_state_change(
+        [&transitions](loom::bridge::TransportState, loom::bridge::TransportState next) {
+            transitions.push_back(next);
+        });
     transport.on_message([&](loom::bridge::BridgeMessage msg) {
         {
             std::lock_guard lock(received_mutex);
@@ -167,9 +169,8 @@ TEST(BridgeTransport, WebSocketConnectSendsAndDisconnects) {
 
     {
         std::unique_lock lock(received_mutex);
-        ASSERT_TRUE(received_cv.wait_for(lock, std::chrono::seconds(3), [&] {
-            return !received.empty();
-        }));
+        ASSERT_TRUE(
+            received_cv.wait_for(lock, std::chrono::seconds(3), [&] { return !received.empty(); }));
     }
     ASSERT_EQ(received.size(), 1u);
     EXPECT_EQ(received.front(), "srv-1");
@@ -264,9 +265,8 @@ TEST(BridgeTransport, HttpPollingPostsMessagesAndPollsInboundEvents) {
 
     {
         std::unique_lock lock(received_mutex);
-        ASSERT_TRUE(received_cv.wait_for(lock, std::chrono::seconds(3), [&] {
-            return !received.empty();
-        }));
+        ASSERT_TRUE(
+            received_cv.wait_for(lock, std::chrono::seconds(3), [&] { return !received.empty(); }));
     }
     ASSERT_FALSE(received.empty());
     EXPECT_EQ(received.front().id, "poll-1");

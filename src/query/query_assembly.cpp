@@ -32,12 +32,10 @@ namespace fs = std::filesystem;
 // wires this as the registry's permission_check when the caller supplies an
 // ask_user callback but no explicit permission_check, so the re-expressed
 // server route keeps its current permission behaviour.
-[[nodiscard]] loom::tools::AgentLivePermissionCheck check_agent_tool_permission(
-    loom::hooks::ToolPermissionHook& permission_hook,
-    std::string_view tool_name,
-    std::string_view input_json,
-    std::string_view tool_use_id
-) {
+[[nodiscard]] loom::tools::AgentLivePermissionCheck
+check_agent_tool_permission(loom::hooks::ToolPermissionHook& permission_hook,
+                            std::string_view tool_name, std::string_view input_json,
+                            std::string_view tool_use_id) {
     permission_hook.set_current_tool_use_id(tool_use_id);
     auto response = permission_hook.can_use_response(tool_name, input_json);
     permission_hook.clear_current_tool_use_id();
@@ -60,9 +58,8 @@ namespace fs = std::filesystem;
 
 /// Parse one content-block JSON object into a ContentBlock.
 /// Returns nullopt for unknown types (skipped, not fatal).
-[[nodiscard]] std::optional<loom::core::ContentBlock> parse_content_block(
-    loom::utils::json::JsonVal block)
-{
+[[nodiscard]] std::optional<loom::core::ContentBlock>
+parse_content_block(loom::utils::json::JsonVal block) {
     if (!block.is_obj()) return std::nullopt;
     auto type_val = block.get("type");
     if (!type_val.is_str()) return std::nullopt;
@@ -77,12 +74,11 @@ namespace fs = std::filesystem;
         auto tv = block.get("thinking");
         if (!tv.is_str()) return std::nullopt;
         auto sv = block.get("signature");
-        return loom::core::ThinkingBlock{
-            .thinking  = std::string(tv.as_str()),
-            .signature = sv.is_str() ? std::string(sv.as_str()) : ""};
+        return loom::core::ThinkingBlock{.thinking = std::string(tv.as_str()),
+                                         .signature = sv.is_str() ? std::string(sv.as_str()) : ""};
     }
     if (type == "tool_use") {
-        auto id_val   = block.get("id");
+        auto id_val = block.get("id");
         auto name_val = block.get("name");
         if (!id_val.is_str() || !name_val.is_str()) return std::nullopt;
         // input is a JSON object; re-serialize to the input_json string.
@@ -90,10 +86,9 @@ namespace fs = std::filesystem;
         if (auto iv = block.get("input"); iv.valid()) {
             input_json = iv.to_string();
         }
-        return loom::core::ToolUseBlock{
-            .id         = loom::core::ToolUseId{std::string(id_val.as_str())},
-            .name       = std::string(name_val.as_str()),
-            .input_json = std::move(input_json)};
+        return loom::core::ToolUseBlock{.id = loom::core::ToolUseId{std::string(id_val.as_str())},
+                                        .name = std::string(name_val.as_str()),
+                                        .input_json = std::move(input_json)};
     }
     if (type == "tool_result") {
         const auto id = block.get("tool_use_id");
@@ -107,17 +102,21 @@ namespace fs = std::filesystem;
             result.content = std::string(content.as_str());
         } else {
             std::vector<loom::core::ToolResultContentItem> items;
-            if (content.is_arr()) content.iter([&](loom::utils::json::JsonVal item) {
-                const auto item_type = item.get_string("type");
-                if (item_type == "text" && item.get("text").is_str()) {
-                    items.push_back({"text", item.get_string("text"), {}, {}});
-                } else if (item_type == "image") {
-                    const auto source = item.get("source");
-                    if (source.get("media_type").is_str() && source.get("data").is_str()) {
-                        items.push_back({"image", {}, source.get_string("media_type"), source.get_string("data")});
+            if (content.is_arr())
+                content.iter([&](loom::utils::json::JsonVal item) {
+                    const auto item_type = item.get_string("type");
+                    if (item_type == "text" && item.get("text").is_str()) {
+                        items.push_back({"text", item.get_string("text"), {}, {}});
+                    } else if (item_type == "image") {
+                        const auto source = item.get("source");
+                        if (source.get("media_type").is_str() && source.get("data").is_str()) {
+                            items.push_back({"image",
+                                             {},
+                                             source.get_string("media_type"),
+                                             source.get_string("data")});
+                        }
                     }
-                }
-            });
+                });
             result.content = std::move(items);
         }
         return result;
@@ -131,21 +130,19 @@ namespace fs = std::filesystem;
         if (type == "image") {
             loom::core::ImageBlock img;
             img.media_type = std::string(mv.as_str());
-            img.data       = std::string(dv.as_str());
+            img.data = std::string(dv.as_str());
             return img;
         }
-        return loom::core::DocumentBlock{
-            .media_type = std::string(mv.as_str()),
-            .data       = std::string(dv.as_str())};
+        return loom::core::DocumentBlock{.media_type = std::string(mv.as_str()),
+                                         .data = std::string(dv.as_str())};
     }
     return std::nullopt;  // unknown block type — skip
 }
 
 /// Parse the `content` field of a tool_result object (string or array of
 /// text/image items) into ContentBlocks.
-[[nodiscard]] std::vector<loom::core::ContentBlock> parse_tool_result_content(
-    loom::utils::json::JsonVal cv)
-{
+[[nodiscard]] std::vector<loom::core::ContentBlock>
+parse_tool_result_content(loom::utils::json::JsonVal cv) {
     std::vector<loom::core::ContentBlock> blocks;
     if (cv.is_str()) {
         blocks.push_back(loom::core::TextBlock{std::string(cv.as_str())});
@@ -160,8 +157,7 @@ namespace fs = std::filesystem;
         const auto t = std::string(tv.as_str());
         if (t == "text") {
             auto txt = item.get("text");
-            if (txt.is_str())
-                blocks.push_back(loom::core::TextBlock{std::string(txt.as_str())});
+            if (txt.is_str()) blocks.push_back(loom::core::TextBlock{std::string(txt.as_str())});
         } else if (t == "image") {
             auto src = item.get("source");
             if (src.is_obj()) {
@@ -170,7 +166,7 @@ namespace fs = std::filesystem;
                 if (mv.is_str() && dv.is_str()) {
                     loom::core::ImageBlock img;
                     img.media_type = std::string(mv.as_str());
-                    img.data       = std::string(dv.as_str());
+                    img.data = std::string(dv.as_str());
                     blocks.push_back(std::move(img));
                 }
             }
@@ -179,7 +175,7 @@ namespace fs = std::filesystem;
     return blocks;
 }
 
-} // namespace
+}  // namespace
 
 // Rank-10 seed-line parser. The server's prior_message_lines are the
 // session messages.jsonl lines written by message_json()
@@ -200,10 +196,8 @@ namespace fs = std::filesystem;
 // block objects (text / thinking / tool_use / tool_result / image /
 // document).  ToolResultMessage is serialized as role="user" with a
 // tool_result object as the first array element.
-[[nodiscard]] std::optional<loom::core::Message> parse_session_message_value(
-    loom::utils::json::JsonVal root,
-    std::size_t index
-) {
+[[nodiscard]] std::optional<loom::core::Message>
+parse_session_message_value(loom::utils::json::JsonVal root, std::size_t index) {
     if (!root.valid() || !root.is_obj()) return std::nullopt;
     auto role_val = root.get("role");
     auto content_val = root.get("content");
@@ -229,8 +223,7 @@ namespace fs = std::filesystem;
             msg.timestamp = timestamp;
             msg.content.push_back(loom::core::TextBlock{content});
             auto model = root.get("model");
-            if (model.valid() && model.is_str())
-                msg.model = std::string(model.as_str());
+            if (model.valid() && model.is_str()) msg.model = std::string(model.as_str());
             return loom::core::Message{std::move(msg)};
         }
         if (role == "user" || role == "system") {
@@ -257,17 +250,13 @@ namespace fs = std::filesystem;
         auto first = content_val.at(0);
         if (first.is_obj()) {
             auto ftype = first.get("type");
-            if (ftype.is_str() &&
-                std::string(ftype.as_str()) == "tool_result")
-            {
+            if (ftype.is_str() && std::string(ftype.as_str()) == "tool_result") {
                 loom::core::ToolResultMessage trm{};
                 trm.id.value = id;
                 trm.timestamp = timestamp;
                 if (auto tv = first.get("tool_use_id"); tv.is_str())
-                    trm.tool_use_id =
-                        loom::core::ToolUseId{std::string(tv.as_str())};
-                if (auto ev = first.get("is_error"); ev.is_bool())
-                    trm.is_error = ev.as_bool();
+                    trm.tool_use_id = loom::core::ToolUseId{std::string(tv.as_str())};
+                if (auto ev = first.get("is_error"); ev.is_bool()) trm.is_error = ev.as_bool();
                 if (auto cv = first.get("content"); cv.valid())
                     trm.content = parse_tool_result_content(cv);
                 // Document blocks may follow the tool_result object.
@@ -283,8 +272,7 @@ namespace fs = std::filesystem;
     // Regular content blocks (thinking, tool_use, text, image, document).
     std::vector<loom::core::ContentBlock> blocks;
     for (std::size_t i = 0; i < content_val.size(); ++i) {
-        if (auto blk = parse_content_block(content_val.at(i)))
-            blocks.push_back(std::move(*blk));
+        if (auto blk = parse_content_block(content_val.at(i))) blocks.push_back(std::move(*blk));
     }
     if (blocks.empty()) return std::nullopt;
 
@@ -294,8 +282,7 @@ namespace fs = std::filesystem;
         msg.timestamp = timestamp;
         msg.content = std::move(blocks);
         auto model = root.get("model");
-        if (model.valid() && model.is_str())
-            msg.model = std::string(model.as_str());
+        if (model.valid() && model.is_str()) msg.model = std::string(model.as_str());
         return loom::core::Message{std::move(msg)};
     }
     if (role == "user" || role == "system") {
@@ -315,16 +302,14 @@ namespace {
 // Internal seed-line wrapper: parse the JSON line, then delegate to the
 // exported parse_session_message_value. Used by assemble()'s
 // prior_message_lines path.
-[[nodiscard]] std::optional<loom::core::Message> parse_seed_message(
-    const std::string& line,
-    std::size_t index
-) {
+[[nodiscard]] std::optional<loom::core::Message> parse_seed_message(const std::string& line,
+                                                                    std::size_t index) {
     auto parsed = loom::utils::json::parse(line);
     if (!parsed) return std::nullopt;
     return parse_session_message_value(parsed->root(), index);
 }
 
-} // namespace
+}  // namespace
 
 // ============================================================
 // AssemblyHandle — PIMPL special members
@@ -356,10 +341,8 @@ loom::core::QueryEngine& AssemblyHandle::engine() noexcept {
 // resolve_engine_config — the recipe's :714-731 settings mapping
 // ============================================================
 
-loom::core::Result<loom::core::QueryEngineConfig> resolve_engine_config(
-    const loom::core::Settings& settings,
-    const AssemblyOverrides& overrides
-) {
+loom::core::Result<loom::core::QueryEngineConfig>
+resolve_engine_config(const loom::core::Settings& settings, const AssemblyOverrides& overrides) {
     loom::core::QueryEngineConfig config;
     config.api_key = overrides.api_key.value_or(settings.network.api_key.value_or(""));
     if (overrides.base_url) {
@@ -367,15 +350,14 @@ loom::core::Result<loom::core::QueryEngineConfig> resolve_engine_config(
     } else if (settings.network.base_url) {
         config.base_url = *settings.network.base_url;
     }
-    config.model_params.model =
-        overrides.requested_model.value_or(settings.model.default_model);
+    config.model_params.model = overrides.requested_model.value_or(settings.model.default_model);
     config.model_params.max_tokens = settings.model.max_output_tokens;
     config.model_params.temperature = settings.model.temperature;
     config.context_window.max_context_tokens = settings.model.context_window_size;
     config.model_context_limits = settings.model.context_limits;
     config.retry_policy.max_retries = settings.network.max_retries;
-    config.thinking_config = loom::core::resolve_thinking_config(
-        settings.model.extended_thinking, settings.model.thinking_budget);
+    config.thinking_config = loom::core::resolve_thinking_config(settings.model.extended_thinking,
+                                                                 settings.model.thinking_budget);
     config.cwd = overrides.cwd.value_or(fs::current_path().string());
     // permissions.deny must be enforced on the headless/server engine too,
     // not only the interactive CLI — otherwise denied tools still reach
@@ -391,10 +373,8 @@ loom::core::Result<loom::core::QueryEngineConfig> resolve_engine_config(
 // assemble — the assemble-only recipe
 // ============================================================
 
-loom::core::Result<AssemblyHandle> assemble(
-    const AssemblyConfig& config,
-    const AssemblyCallbacks& callbacks
-) {
+loom::core::Result<AssemblyHandle> assemble(const AssemblyConfig& config,
+                                            const AssemblyCallbacks& callbacks) {
     auto impl = std::make_unique<AssemblyHandle::Impl>();
     auto engine_config = config.engine;
     loom::core::prepare_model_metadata(engine_config);
@@ -434,13 +414,10 @@ loom::core::Result<AssemblyHandle> assemble(
         // the re-expressed server route keeps its current behaviour (the
         // server wired check_agent_tool_permission(permission_hook, ...)).
         options.permission_check = loom::tools::AgentLivePermissionCheckFn{
-            [hook = impl->permission_hook.get()](
-                std::string_view tool_name,
-                std::string_view input_json,
-                std::string_view tool_use_id
-            ) {
-                return check_agent_tool_permission(
-                    *hook, tool_name, input_json, tool_use_id);
+            [hook = impl->permission_hook.get()](std::string_view tool_name,
+                                                 std::string_view input_json,
+                                                 std::string_view tool_use_id) {
+                return check_agent_tool_permission(*hook, tool_name, input_json, tool_use_id);
             }};
     }
     options.permission_hook_valid_for_background = false;
@@ -453,8 +430,7 @@ loom::core::Result<AssemblyHandle> assemble(
 
     // Step 6: route unregistered tool names (e.g. MCP server tools) to
     // connected MCP servers (RFC-0001 B15 unified fallback).
-    impl->registry->set_missing_tool_handler(
-        loom::orchestration::make_missing_tool_backend());
+    impl->registry->set_missing_tool_handler(loom::orchestration::make_missing_tool_backend());
 
     // Step 7 + 8: snapshot visible definitions and wire the dynamic MCP
     // tool providers (recipe steps 7-8, server_routes.cppm:800-810) so MCP
@@ -470,14 +446,13 @@ loom::core::Result<AssemblyHandle> assemble(
     // Step 9: the engine. Constructed AFTER the tool snapshot (config.tools
     // is consumed at query time, so the engine must see the registered
     // tools — §2.3 body-construction rationale).
-    impl->engine = std::make_unique<loom::core::QueryEngine>(
-        std::move(engine_config), *impl->registry);
+    impl->engine =
+        std::make_unique<loom::core::QueryEngine>(std::move(engine_config), *impl->registry);
 
     // Step 10: abort / permission callbacks.
     if (config.cancel_flag) {
-        impl->engine->set_external_abort_callback([flag = config.cancel_flag] {
-            return flag->load();
-        });
+        impl->engine->set_external_abort_callback(
+            [flag = config.cancel_flag] { return flag->load(); });
     }
     if (have_ask_user) {
         impl->engine->set_permission_hook(impl->permission_hook.get());
@@ -509,4 +484,4 @@ loom::core::Result<AssemblyHandle> assemble(
     return AssemblyHandle(std::move(impl));
 }
 
-} // namespace loom::query
+}  // namespace loom::query

@@ -12,6 +12,9 @@
 /// The conformance suite (test_markdown_render_conformance.cpp) verifies
 /// text content; this file verifies presentation.
 
+#include <ftxui/dom/elements.hpp>
+#include <ftxui/screen/color.hpp>
+#include <ftxui/screen/screen.hpp>
 #include <gtest/gtest.h>
 
 #include <optional>
@@ -19,10 +22,6 @@
 #include <string>
 #include <string_view>
 #include <vector>
-
-#include <ftxui/dom/elements.hpp>
-#include <ftxui/screen/color.hpp>
-#include <ftxui/screen/screen.hpp>
 
 import std;
 import loom.ui.foundation.theme_provider;
@@ -36,12 +35,11 @@ namespace ui = loom::ui;
 // ── Render helpers ──────────────────────────────────────────────────
 
 // Render markdown to a Screen at the given dimensions.
-[[nodiscard]] ftxui::Screen render_to_screen(
-        std::string_view markdown, int width = 200, int height = 50) {
+[[nodiscard]] ftxui::Screen render_to_screen(std::string_view markdown, int width = 200,
+                                             int height = 50) {
     auto el = ui::render_markdown(markdown);
-    auto screen = ftxui::Screen::Create(
-        ftxui::Dimension::Fixed(width),
-        ftxui::Dimension::Fixed(height));
+    auto screen =
+        ftxui::Screen::Create(ftxui::Dimension::Fixed(width), ftxui::Dimension::Fixed(height));
     ftxui::Render(screen, el);
     return screen;
 }
@@ -58,8 +56,8 @@ struct PixelRef {
 // Searches row by row, handling multi-byte UTF-8 characters and automerged
 // pixels (one pixel may hold several characters).  Returns the pixel at the
 // start of the match.
-[[nodiscard]] std::optional<PixelRef> find_pixel_with_text(
-        const ftxui::Screen& screen, std::string_view text) {
+[[nodiscard]] std::optional<PixelRef> find_pixel_with_text(const ftxui::Screen& screen,
+                                                           std::string_view text) {
     for (int y = 0; y < screen.dimy(); ++y) {
         std::string row_text;
         std::vector<int> byte_to_x;
@@ -84,8 +82,7 @@ struct PixelRef {
 [[nodiscard]] bool has_colored_pixel(const ftxui::Screen& screen) {
     for (int y = 0; y < screen.dimy(); ++y) {
         for (int x = 0; x < screen.dimx(); ++x) {
-            if (screen.PixelAt(x, y).foreground_color !=
-                ftxui::Color::Default) {
+            if (screen.PixelAt(x, y).foreground_color != ftxui::Color::Default) {
                 return true;
             }
         }
@@ -108,8 +105,8 @@ struct PixelRef {
             if (next == '[') {
                 // CSI: ESC [ ... final byte (0x40–0x7E)
                 i += 2;
-                while (i < text.size() &&
-                       !(text[i] >= 0x40 && text[i] <= 0x7e)) ++i;
+                while (i < text.size() && !(text[i] >= 0x40 && text[i] <= 0x7e))
+                    ++i;
                 if (i < text.size()) ++i;  // skip final byte
                 continue;
             }
@@ -117,9 +114,14 @@ struct PixelRef {
                 // OSC: ESC ] ... BEL or ESC-backslash
                 i += 2;
                 while (i < text.size()) {
-                    if (text[i] == '\x07') { ++i; break; }
-                    if (text[i] == '\x1b' && i + 1 < text.size() &&
-                        text[i + 1] == '\\') { i += 2; break; }
+                    if (text[i] == '\x07') {
+                        ++i;
+                        break;
+                    }
+                    if (text[i] == '\x1b' && i + 1 < text.size() && text[i + 1] == '\\') {
+                        i += 2;
+                        break;
+                    }
                     ++i;
                 }
                 continue;
@@ -154,8 +156,8 @@ struct PixelRef {
 }
 
 // Find byte offsets of a UTF-8 character sequence in a line.
-[[nodiscard]] std::vector<std::size_t> find_utf8_positions(
-        std::string_view line, std::string_view utf8_char) {
+[[nodiscard]] std::vector<std::size_t> find_utf8_positions(std::string_view line,
+                                                           std::string_view utf8_char) {
     std::vector<std::size_t> positions;
     std::size_t pos = 0;
     while ((pos = line.find(utf8_char, pos)) != std::string_view::npos) {
@@ -168,11 +170,12 @@ struct PixelRef {
 // Count leading spaces in a string.
 [[nodiscard]] std::size_t leading_spaces(std::string_view s) {
     std::size_t n = 0;
-    while (n < s.size() && s[n] == ' ') ++n;
+    while (n < s.size() && s[n] == ' ')
+        ++n;
     return n;
 }
 
-} // namespace
+}  // namespace
 
 // ════════════════════════════════════════════════════════════════════
 // Layer 2: Style tests
@@ -182,8 +185,7 @@ TEST(MarkdownRenderStyles, BoldStyle) {
     auto screen = render_to_screen("This is **bold** text");
     auto ref = find_pixel_with_text(screen, "bold");
     ASSERT_TRUE(ref.has_value()) << "bold text not found in rendered output";
-    EXPECT_TRUE(ref->pixel->bold)
-        << "bold markdown did not produce bold pixel style";
+    EXPECT_TRUE(ref->pixel->bold) << "bold markdown did not produce bold pixel style";
 }
 
 TEST(MarkdownRenderStyles, ItalicStyle) {
@@ -192,8 +194,7 @@ TEST(MarkdownRenderStyles, ItalicStyle) {
     auto screen = render_to_screen("This is *italic* text");
     auto ref = find_pixel_with_text(screen, "italic");
     ASSERT_TRUE(ref.has_value()) << "italic text not found in rendered output";
-    EXPECT_TRUE(ref->pixel->dim)
-        << "italic markdown did not produce dim pixel style";
+    EXPECT_TRUE(ref->pixel->dim) << "italic markdown did not produce dim pixel style";
 }
 
 TEST(MarkdownRenderStyles, InlineCodeColor) {
@@ -205,52 +206,43 @@ TEST(MarkdownRenderStyles, InlineCodeColor) {
 }
 
 TEST(MarkdownRenderStyles, LinkHyperlink) {
-    auto screen = render_to_screen(
-        "Visit [Example](https://example.com) for details");
+    auto screen = render_to_screen("Visit [Example](https://example.com) for details");
     auto ref = find_pixel_with_text(screen, "Example");
     ASSERT_TRUE(ref.has_value()) << "link text not found in rendered output";
-    EXPECT_NE(ref->pixel->hyperlink, 0)
-        << "link text did not produce a hyperlink pixel";
+    EXPECT_NE(ref->pixel->hyperlink, 0) << "link text did not produce a hyperlink pixel";
     if (ref->pixel->hyperlink != 0) {
-        EXPECT_EQ(screen.Hyperlink(ref->pixel->hyperlink),
-                  "https://example.com")
+        EXPECT_EQ(screen.Hyperlink(ref->pixel->hyperlink), "https://example.com")
             << "hyperlink URL mismatch";
     }
-    EXPECT_TRUE(ref->pixel->underlined)
-        << "link text did not produce underlined pixel style";
+    EXPECT_TRUE(ref->pixel->underlined) << "link text did not produce underlined pixel style";
 }
 
 TEST(MarkdownRenderStyles, StrikethroughStyle) {
     auto screen = render_to_screen("This is ~~deleted~~ text");
     auto ref = find_pixel_with_text(screen, "deleted");
-    ASSERT_TRUE(ref.has_value())
-        << "strikethrough text not found in rendered output";
+    ASSERT_TRUE(ref.has_value()) << "strikethrough text not found in rendered output";
     EXPECT_TRUE(ref->pixel->strikethrough)
         << "strikethrough markdown did not produce strikethrough pixel style";
 }
 
 TEST(MarkdownRenderStyles, DimOption) {
     auto el = ui::render_markdown_dim("some dimmed text");
-    auto screen = ftxui::Screen::Create(
-        ftxui::Dimension::Fixed(200), ftxui::Dimension::Fixed(3));
+    auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(200), ftxui::Dimension::Fixed(3));
     ftxui::Render(screen, el);
     auto ref = find_pixel_with_text(screen, "dimmed");
     ASSERT_TRUE(ref.has_value()) << "dimmed text not found in rendered output";
-    EXPECT_TRUE(ref->pixel->dim)
-        << "render_markdown_dim did not apply dim style";
+    EXPECT_TRUE(ref->pixel->dim) << "render_markdown_dim did not apply dim style";
 }
 
 TEST(MarkdownRenderStyles, HeadingBold) {
     auto screen = render_to_screen("# Heading One");
     auto ref = find_pixel_with_text(screen, "Heading");
     ASSERT_TRUE(ref.has_value()) << "heading text not found in rendered output";
-    EXPECT_TRUE(ref->pixel->bold)
-        << "heading did not produce bold pixel style";
+    EXPECT_TRUE(ref->pixel->bold) << "heading did not produce bold pixel style";
 }
 
 TEST(MarkdownRenderStyles, CodeBlockSyntaxHighlight) {
-    auto screen = render_to_screen(
-        "```cpp\nint main() { return 0; }\n```");
+    auto screen = render_to_screen("```cpp\nint main() { return 0; }\n```");
     EXPECT_TRUE(has_colored_pixel(screen))
         << "code block with syntax highlighting produced no colored pixels";
 }
@@ -258,13 +250,10 @@ TEST(MarkdownRenderStyles, CodeBlockSyntaxHighlight) {
 TEST(MarkdownRenderStyles, FootnoteRefDimmed) {
     // Footnote definitions are hoisted to the footnotes section (HTML
     // serializer only); the terminal renderer shows the literal label dimmed.
-    auto screen = render_to_screen(
-        "See note[^1] here.\n\n[^1]: The footnote content.");
+    auto screen = render_to_screen("See note[^1] here.\n\n[^1]: The footnote content.");
     auto ref = find_pixel_with_text(screen, "[^1]");
-    ASSERT_TRUE(ref.has_value())
-        << "footnote ref not found in rendered output";
-    EXPECT_TRUE(ref->pixel->dim)
-        << "footnote ref did not produce dim pixel style";
+    ASSERT_TRUE(ref.has_value()) << "footnote ref not found in rendered output";
+    EXPECT_TRUE(ref->pixel->dim) << "footnote ref did not produce dim pixel style";
 }
 
 TEST(MarkdownRenderStyles, MathUsesInfoToken) {
@@ -279,10 +268,8 @@ TEST(MarkdownRenderStyles, EscapeNotBold) {
     // Escaped asterisks must render as literal asterisks, not bold markers.
     auto screen = render_to_screen(R"(\*not bold\*)");
     auto ref = find_pixel_with_text(screen, "not bold");
-    ASSERT_TRUE(ref.has_value())
-        << "escaped text not found in rendered output";
-    EXPECT_FALSE(ref->pixel->bold)
-        << "escaped asterisks incorrectly produced bold style";
+    ASSERT_TRUE(ref.has_value()) << "escaped text not found in rendered output";
+    EXPECT_FALSE(ref->pixel->bold) << "escaped asterisks incorrectly produced bold style";
     // The literal asterisks must be present in the output.
     std::string out = strip_ansi(screen.ToString());
     EXPECT_NE(out.find("*not bold*"), std::string::npos)
@@ -293,12 +280,9 @@ TEST(MarkdownRenderStyles, NestedBoldItalic) {
     // ***both*** is bold+italic — the terminal renderer applies bold+dim.
     auto screen = render_to_screen("This is ***both*** styles");
     auto ref = find_pixel_with_text(screen, "both");
-    ASSERT_TRUE(ref.has_value())
-        << "nested bold+italic text not found in rendered output";
-    EXPECT_TRUE(ref->pixel->bold)
-        << "nested bold+italic did not produce bold pixel style";
-    EXPECT_TRUE(ref->pixel->dim)
-        << "nested bold+italic did not produce dim pixel style";
+    ASSERT_TRUE(ref.has_value()) << "nested bold+italic text not found in rendered output";
+    EXPECT_TRUE(ref->pixel->bold) << "nested bold+italic did not produce bold pixel style";
+    EXPECT_TRUE(ref->pixel->dim) << "nested bold+italic did not produce dim pixel style";
 }
 
 // ════════════════════════════════════════════════════════════════════
@@ -306,9 +290,8 @@ TEST(MarkdownRenderStyles, NestedBoldItalic) {
 // ════════════════════════════════════════════════════════════════════
 
 TEST(MarkdownRenderStyles, EnglishWrapsAtWordBoundary) {
-    std::string md =
-        "This is a long English paragraph that should wrap to multiple "
-        "lines when rendered at a narrow terminal width.";
+    std::string md = "This is a long English paragraph that should wrap to multiple "
+                     "lines when rendered at a narrow terminal width.";
     auto screen = render_to_screen(md, 20, 10);
     std::string out = strip_ansi(screen.ToString());
     int lines = count_nonempty_lines(out);
@@ -326,24 +309,20 @@ TEST(MarkdownRenderStyles, CjkWrapsAtCharBoundary) {
     // At width 10 (5 CJK chars per line at 2 cols each), a 4-char sequence
     // can span a line boundary, so assert on 2-char substrings that stay
     // on one line.
-    std::string md =
-        "这是一段很长的中文文本用来测试折行功能是否正常工作"
-        "当终端宽度不够时应该能够在任意中文字符之间换行";
+    std::string md = "这是一段很长的中文文本用来测试折行功能是否正常工作"
+                     "当终端宽度不够时应该能够在任意中文字符之间换行";
     auto screen = render_to_screen(md, 10, 15);
     std::string out = strip_ansi(screen.ToString());
     int lines = count_nonempty_lines(out);
     EXPECT_GT(lines, 1) << "CJK text did not wrap at width 10";
     // All content must be present — no character swallowing.
-    EXPECT_NE(out.find("中文"), std::string::npos)
-        << "CJK content was swallowed during wrapping";
-    EXPECT_NE(out.find("换行"), std::string::npos)
-        << "CJK content was swallowed during wrapping";
+    EXPECT_NE(out.find("中文"), std::string::npos) << "CJK content was swallowed during wrapping";
+    EXPECT_NE(out.find("换行"), std::string::npos) << "CJK content was swallowed during wrapping";
 }
 
 TEST(MarkdownRenderStyles, MixedContentWraps) {
-    std::string md =
-        "比较特别的一点：**整棵 C++23 named modules**（`import std;`），"
-        "没有任何依赖。";
+    std::string md = "比较特别的一点：**整棵 C++23 named modules**（`import std;`），"
+                     "没有任何依赖。";
     auto screen = render_to_screen(md, 30, 10);
     std::string out = strip_ansi(screen.ToString());
     int lines = count_nonempty_lines(out);
@@ -355,8 +334,7 @@ TEST(MarkdownRenderStyles, MixedContentWraps) {
 }
 
 TEST(MarkdownRenderStyles, ListItemIndentation) {
-    auto screen = render_to_screen(
-        "- first item\n- second item\n- third item", 80, 10);
+    auto screen = render_to_screen("- first item\n- second item\n- third item", 80, 10);
     std::string out = strip_ansi(screen.ToString());
     auto lines = split_lines(out);
     int found = 0;
@@ -374,8 +352,7 @@ TEST(MarkdownRenderStyles, ListItemIndentation) {
 }
 
 TEST(MarkdownRenderStyles, NestedListProgressiveIndent) {
-    auto screen = render_to_screen(
-        "- top level\n  - nested level", 80, 10);
+    auto screen = render_to_screen("- top level\n  - nested level", 80, 10);
     std::string out = strip_ansi(screen.ToString());
     auto lines = split_lines(out);
     std::size_t top_indent = 0;
@@ -413,15 +390,13 @@ TEST(MarkdownRenderStyles, BlockquoteLeftBorder) {
             break;
         }
     }
-    EXPECT_TRUE(found_border)
-        << "blockquote did not produce a left border (▎) in the output";
+    EXPECT_TRUE(found_border) << "blockquote did not produce a left border (▎) in the output";
 }
 
 TEST(MarkdownRenderStyles, CodeBlockNoWrap) {
     // A long code line must stay on one line (truncated by the stencil,
     // not wrapped to the next line).
-    auto screen = render_to_screen(
-        "```\nabcdefghijklmnopqrstuvwxyz0123456789\n```", 20, 10);
+    auto screen = render_to_screen("```\nabcdefghijklmnopqrstuvwxyz0123456789\n```", 20, 10);
     std::string out = strip_ansi(screen.ToString());
     // The first 20 characters of the code must be present.
     EXPECT_NE(out.find("abcdefghijklmnopqrst"), std::string::npos)
@@ -432,17 +407,15 @@ TEST(MarkdownRenderStyles, CodeBlockNoWrap) {
     for (const auto& line : lines) {
         if (line.find("abcdefghij") != std::string::npos) ++code_lines;
     }
-    EXPECT_EQ(code_lines, 1)
-        << "code block wrapped to " << code_lines << " lines (expected 1)";
+    EXPECT_EQ(code_lines, 1) << "code block wrapped to " << code_lines << " lines (expected 1)";
 }
 
 TEST(MarkdownRenderStyles, TableAlignsColumns) {
-    auto screen = render_to_screen(
-        "| Name | Value |\n"
-        "|------|-------|\n"
-        "| alpha | 1 |\n"
-        "| beta | 22 |",
-        80, 10);
+    auto screen = render_to_screen("| Name | Value |\n"
+                                   "|------|-------|\n"
+                                   "| alpha | 1 |\n"
+                                   "| beta | 22 |",
+                                   80, 10);
     std::string out = strip_ansi(screen.ToString());
     // The table must contain vertical and horizontal box-drawing chars.
     constexpr std::string_view kVBar = "\xE2\x94\x82";  // │ U+2502
@@ -467,26 +440,24 @@ TEST(MarkdownRenderStyles, TableAlignsColumns) {
             data_positions = find_utf8_positions(line, kVBar);
         }
     }
-    ASSERT_FALSE(header_positions.empty())
-        << "table header row with │ not found";
-    ASSERT_FALSE(data_positions.empty())
-        << "table data row with │ not found";
+    ASSERT_FALSE(header_positions.empty()) << "table header row with │ not found";
+    ASSERT_FALSE(data_positions.empty()) << "table data row with │ not found";
     EXPECT_EQ(header_positions, data_positions)
         << "table │ separators are not aligned between header and data rows";
 }
 
 TEST(MarkdownRenderStyles, MermaidRespectsInheritedPaletteAndDimMode) {
     const auto original = ui::design::theme::current_theme();
-    for (auto variant : {ui::design::theme::ThemeVariant::Dark,
-                         ui::design::theme::ThemeVariant::Light,
-                         ui::design::theme::ThemeVariant::Monochrome}) {
+    for (auto variant :
+         {ui::design::theme::ThemeVariant::Dark, ui::design::theme::ThemeVariant::Light,
+          ui::design::theme::ThemeVariant::Monochrome}) {
         ui::design::theme::set_theme(variant);
         ui::MarkdownOptions options;
         options.dim_color = true;
-        auto element = ui::render_markdown(
-            "```mermaid\nflowchart LR\nA[Client] --> B[Server]\n```", options);
-        auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(100),
-                                           ftxui::Dimension::Fixed(30));
+        auto element =
+            ui::render_markdown("```mermaid\nflowchart LR\nA[Client] --> B[Server]\n```", options);
+        auto screen =
+            ftxui::Screen::Create(ftxui::Dimension::Fixed(100), ftxui::Dimension::Fixed(30));
         ftxui::Render(screen, element);
         const auto label = find_pixel_with_text(screen, "Client");
         EXPECT_TRUE(label.has_value());

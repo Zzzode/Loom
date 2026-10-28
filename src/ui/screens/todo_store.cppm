@@ -18,7 +18,7 @@ export module loom.ui.screens.todo_store;
 
 import std;
 
-import loom.ui.features.todos.todo_panel;        // TodoDisplayItem
+import loom.ui.features.todos.todo_panel; // TodoDisplayItem
 
 export namespace loom::ui::repl_screen {
 

@@ -4,10 +4,11 @@
 #pragma clang diagnostic ignored "-Wmissing-designated-field-initializers"
 
 #include <gtest/gtest.h>
+#include <httplib.h>
+
 #include <cstddef>
 #include <cstdlib>
 #include <cstring>
-#include <httplib.h>
 #ifndef _WIN32
 #include <fcntl.h>
 #include <sys/file.h>
@@ -35,7 +36,7 @@ import loom.tools.web_browser;
 import loom.orchestration.tools.mcp;
 import loom.commands.mcp.core_settings_loader;
 import loom.orchestration.runtime_backends;
-import loom.tools.runtime_backends.port;  // RFC-0001 B15: set_/clear_skill_loader_executor slot API
+import loom.tools.runtime_backends.port; // RFC-0001 B15: set_/clear_skill_loader_executor slot API
 import loom.tools.image_codec.port;
 import loom.tools.worktree;
 import loom.orchestration.agent;
@@ -64,7 +65,7 @@ import loom.teams.team_helpers;
 import loom.hooks.tool_permissions;
 import loom.services.api.client;
 import loom.services.mcp.types;
-import loom.services.mcp.connection_manager;  // RFC-0001 B6: svc_mcp::McpServerSnapshot
+import loom.services.mcp.connection_manager; // RFC-0001 B6: svc_mcp::McpServerSnapshot
 import loom.tools.repl;
 import loom.tools.skill;
 import loom.orchestration.agent.utils;
@@ -75,7 +76,9 @@ namespace fs = std::filesystem;
 // The agent helpers exercised by the existing tests live in
 // loom::tools::agent::utils after the agent_tool split; re-expose them through
 // the loom::tools::agent namespace so the historical call sites still resolve.
-namespace loom::tools::agent { using namespace utils; }
+namespace loom::tools::agent {
+using namespace utils;
+}
 
 namespace {
 
@@ -84,8 +87,7 @@ namespace {
 // does not block them. Production paths must supply a real checker (or accept
 // fail-closed denial for write/execute/network tools).
 loom::tools::agent::AgentLivePermissionCheckFn test_allow_all_check() {
-    auto allow = []([[maybe_unused]] std::string_view,
-                    [[maybe_unused]] std::string_view,
+    auto allow = []([[maybe_unused]] std::string_view, [[maybe_unused]] std::string_view,
                     [[maybe_unused]] std::string_view) {
         return loom::tools::agent::AgentLivePermissionCheck{.allowed = true};
     };
@@ -95,7 +97,8 @@ loom::tools::agent::AgentLivePermissionCheckFn test_allow_all_check() {
 struct CurrentPathGuard {
     fs::path previous;
 
-    explicit CurrentPathGuard(const fs::path& next) : previous(fs::current_path()) {
+    explicit CurrentPathGuard(const fs::path& next)
+        : previous(fs::current_path()) {
         fs::current_path(next);
     }
 
@@ -109,7 +112,8 @@ struct EnvironmentGuard {
     std::string name;
     std::optional<std::string> previous;
 
-    EnvironmentGuard(std::string key, const std::string& value) : name(std::move(key)) {
+    EnvironmentGuard(std::string key, const std::string& value)
+        : name(std::move(key)) {
         if (const char* existing = std::getenv(name.c_str())) {
             previous = existing;
         }
@@ -129,7 +133,8 @@ struct EnvironmentUnsetGuard {
     std::string name;
     std::optional<std::string> previous;
 
-    explicit EnvironmentUnsetGuard(std::string key) : name(std::move(key)) {
+    explicit EnvironmentUnsetGuard(std::string key)
+        : name(std::move(key)) {
         if (const char* existing = std::getenv(name.c_str())) {
             previous = existing;
         }
@@ -145,7 +150,7 @@ struct EnvironmentUnsetGuard {
     }
 };
 
-} // namespace
+}  // namespace
 
 // ===========================================================================
 // RFC-0001 B followup c13b — structured 'config' runtime tool, registry E2E.
@@ -155,6 +160,7 @@ namespace {
 struct RtConfigJson {
     loom::utils::json::JsonDoc doc;
     loom::utils::json::JsonVal root;
+
     explicit RtConfigJson(std::string_view text) {
         if (auto parsed = loom::utils::json::parse(text)) {
             doc = std::move(*parsed);
@@ -176,16 +182,18 @@ struct RtConfigEnv {
     RtConfigEnv()
         : root(fs::temp_directory_path() /
                ("loom_rt_config_" +
-                std::to_string(std::chrono::system_clock::now()
-                                   .time_since_epoch().count()))),
-          dir_guard("LOOM_CONFIG_DIR"),
-          home_guard("HOME", [&] { fs::create_directories(root);
-                                   home = root / "home";
-                                   work = root / "work";
-                                   fs::create_directories(home);
-                                   fs::create_directories(work);
-                                   return home.string(); }()),
-          cwd_guard(work) {}
+                std::to_string(std::chrono::system_clock::now().time_since_epoch().count())))
+        , dir_guard("LOOM_CONFIG_DIR")
+        , home_guard("HOME",
+                     [&] {
+                         fs::create_directories(root);
+                         home = root / "home";
+                         work = root / "work";
+                         fs::create_directories(home);
+                         fs::create_directories(work);
+                         return home.string();
+                     }())
+        , cwd_guard(work) {}
 
     ~RtConfigEnv() {
         std::error_code ec;
@@ -194,22 +202,19 @@ struct RtConfigEnv {
 
     [[nodiscard]] fs::path user_file() const { return home / ".loom" / "settings.json"; }
 
-    static loom::core::ToolRegistry& registry_with_perms(
-        loom::core::ToolRegistry& registry) {
+    static loom::core::ToolRegistry& registry_with_perms(loom::core::ToolRegistry& registry) {
         loom::tools::register_runtime_tools(
-            registry,
-            loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
+            registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
         return registry;
     }
 };
 
 [[nodiscard]] loom::core::Result<loom::core::ToolResult>
 rt_config_run(loom::core::ToolRegistry& registry, std::string_view json) {
-    return registry.execute("config",
-                            loom::core::ToolInput::from_json(std::string(json)));
+    return registry.execute("config", loom::core::ToolInput::from_json(std::string(json)));
 }
 
-} // namespace
+}  // namespace
 
 // get on a missing installation returns structured defaults and creates no
 // files or directories.
@@ -229,8 +234,7 @@ TEST(RuntimeConfigTool, GetMissingReturnsDefaultsAndCreatesNothing) {
     EXPECT_EQ(parsed.root.get("user_file_valid").as_bool(), true);
     const auto settings = parsed.root.get("settings");
     EXPECT_TRUE(settings.get("model").get("value").is_str());
-    EXPECT_EQ(std::string(settings.get("model").get("source").as_str()),
-              "default");
+    EXPECT_EQ(std::string(settings.get("model").get("source").as_str()), "default");
     EXPECT_TRUE(settings.get("temperature").get("value").is_null());
     EXPECT_TRUE(settings.get("maxOutputTokens").get("value").is_null());
     EXPECT_TRUE(settings.get("extendedThinking").get("value").is_null());
@@ -266,8 +270,7 @@ TEST(RuntimeConfigTool, SetTypedValuesVerifiedByRealLoad) {
     EXPECT_EQ(manager.settings().network.max_retries, 2u);
     EXPECT_EQ(manager.settings().model.default_model, "rt-model");
 
-    auto one = rt_config_run(
-        registry, R"({"action":"get","key":"maxRetries"})");
+    auto one = rt_config_run(registry, R"({"action":"get","key":"maxRetries"})");
     ASSERT_TRUE(one.has_value());
     RtConfigJson parsed(one->content.front().text);
     const auto setting = parsed.root.get("setting");
@@ -287,29 +290,21 @@ TEST(RuntimeConfigTool, InvalidReadonlyBlockedUnknownAreErrors) {
         auto result = rt_config_run(registry, payload);
         ASSERT_TRUE(result.has_value()) << payload;
         EXPECT_TRUE(result->is_error) << payload;
-        EXPECT_NE(result->content.front().text.find(hint),
-                  std::string::npos)
+        EXPECT_NE(result->content.front().text.find(hint), std::string::npos)
             << result->content.front().text;
         EXPECT_FALSE(fs::exists(env.user_file()));
     };
-    expect_error(R"({"action":"set","key":"temperature","value":2})",
-                 "between 0 and 1");
-    expect_error(R"({"action":"set","key":"model","value":""})",
-                 "must not be empty");
+    expect_error(R"({"action":"set","key":"temperature","value":2})", "between 0 and 1");
+    expect_error(R"({"action":"set","key":"model","value":""})", "must not be empty");
     expect_error(R"({"action":"set","key":"theme","value":"dark"})",
                  "not writable through this tool");
-    expect_error(R"({"action":"set","key":"apiKey","value":"abc"})",
-                 "LOOM_API_KEY");
-    expect_error(R"({"action":"set","key":"mcpServers","value":{}})",
-                 "loom mcp");
+    expect_error(R"({"action":"set","key":"apiKey","value":"abc"})", "LOOM_API_KEY");
+    expect_error(R"({"action":"set","key":"mcpServers","value":{}})", "loom mcp");
     expect_error(R"({"action":"set","key":"xaaIdp","value":{}})", "/mcp xaa");
-    expect_error(R"({"action":"set","key":"nope.nope","value":1})",
-                 "Unknown configuration key");
+    expect_error(R"({"action":"set","key":"nope.nope","value":1})", "Unknown configuration key");
     expect_error(R"({"action":"set"})", "requires a key");
-    expect_error(R"({"action":"set","key":"maxRetries"})",
-                 "requires a value");
-    expect_error(R"({"action":"get","key":"nope.nope"})",
-                 "Unknown configuration key");
+    expect_error(R"({"action":"set","key":"maxRetries"})", "requires a value");
+    expect_error(R"({"action":"get","key":"nope.nope"})", "Unknown configuration key");
 }
 
 // $LOOM_CONFIG_DIR routes both the write and subsequent reads.
@@ -324,16 +319,14 @@ TEST(RuntimeConfigTool, HonorsConfigDirEnvRouting) {
 
     loom::core::ToolRegistry registry;
     RtConfigEnv::registry_with_perms(registry);
-    auto result = rt_config_run(
-        registry, R"({"action":"set","key":"maxRetries","value":6})");
+    auto result = rt_config_run(registry, R"({"action":"set","key":"maxRetries","value":6})");
     ASSERT_TRUE(result.has_value());
     EXPECT_FALSE(result->is_error) << result->content.front().text;
     EXPECT_TRUE(fs::exists(cfg_dir / "settings.json"));
 
     auto got = rt_config_run(registry, R"({"action":"get"})");
     RtConfigJson parsed(got->content.front().text);
-    EXPECT_EQ(parsed.root.get("settings").get("maxRetries")
-                  .get("value").as_int(), 6);
+    EXPECT_EQ(parsed.root.get("settings").get("maxRetries").get("value").as_int(), 6);
 
     std::error_code ec;
     fs::remove_all(root, ec);
@@ -348,39 +341,29 @@ TEST(RuntimeConfigTool, JunkRepairResponsesCarrySalvageState) {
 
     fs::create_directories(env.user_file().parent_path());
     {
-        std::ofstream(env.user_file())
-            << R"({"model":{"default_model":"kept"}} TRAILING JUNK)";
+        std::ofstream(env.user_file()) << R"({"model":{"default_model":"kept"}} TRAILING JUNK)";
     }
-    auto dropped = rt_config_run(
-        registry,
-        R"({"action":"set","key":"maxRetries","value":3})");
+    auto dropped = rt_config_run(registry, R"({"action":"set","key":"maxRetries","value":3})");
     ASSERT_TRUE(dropped.has_value());
     RtConfigJson d(dropped->content.front().text);
-    EXPECT_EQ(std::string(d.root.get("repaired").as_str()),
-              "trailing_junk_dropped");
+    EXPECT_EQ(std::string(d.root.get("repaired").as_str()), "trailing_junk_dropped");
 
     {
         std::ofstream(env.user_file()) << "[1, 2] AND JUNK";
     }
-    auto replaced = rt_config_run(
-        registry,
-        R"({"action":"set","key":"maxRetries","value":4})");
+    auto replaced = rt_config_run(registry, R"({"action":"set","key":"maxRetries","value":4})");
     ASSERT_TRUE(replaced.has_value());
     RtConfigJson r(replaced->content.front().text);
-    EXPECT_EQ(std::string(r.root.get("repaired").as_str()),
-              "replaced_unparseable");
+    EXPECT_EQ(std::string(r.root.get("repaired").as_str()), "replaced_unparseable");
 
-    auto clean = rt_config_run(
-        registry,
-        R"({"action":"set","key":"maxRetries","value":5})");
+    auto clean = rt_config_run(registry, R"({"action":"set","key":"maxRetries","value":5})");
     ASSERT_TRUE(clean.has_value());
     RtConfigJson c(clean->content.front().text);
     EXPECT_TRUE(c.root.get("repaired").is_null());
 
     auto got = rt_config_run(registry, R"({"action":"get"})");
     RtConfigJson g(got->content.front().text);
-    EXPECT_EQ(g.root.get("settings").get("maxRetries")
-                  .get("value").as_int(), 5);
+    EXPECT_EQ(g.root.get("settings").get("maxRetries").get("value").as_int(), 5);
 }
 
 // list returns the closed writable/read-only/blocked sets plus null-clear
@@ -415,11 +398,9 @@ TEST(RuntimeConfigTool, NullSlotFailsClosedThenReinstalls) {
         auto result = rt_config_run(registry, R"({"action":"get"})");
         ASSERT_TRUE(result.has_value());
         EXPECT_TRUE(result->is_error);
-        EXPECT_EQ(result->content.front().text,
-                  "Runtime tool 'config' has no runtime handler");
+        EXPECT_EQ(result->content.front().text, "Runtime tool 'config' has no runtime handler");
     }
-    loom::tools::set_config_backend(
-        loom::orchestration::make_config_backend());
+    loom::tools::set_config_backend(loom::orchestration::make_config_backend());
     {
         auto result = rt_config_run(registry, R"({"action":"get"})");
         ASSERT_TRUE(result.has_value());
@@ -437,8 +418,8 @@ TEST(RuntimeConfigTool, SecretBytesNeverLeakResponses) {
     fs::create_directories(env.user_file().parent_path());
     {
         std::ofstream f(env.user_file());
-        f << "{\"network\":{\"api_key\":\"" << kSecret
-          << "\",\"base_url\":\"https://" << kSecret << ".invalid/\"}}";
+        f << "{\"network\":{\"api_key\":\"" << kSecret << "\",\"base_url\":\"https://" << kSecret
+          << ".invalid/\"}}";
     }
     EnvironmentGuard key_guard("LOOM_API_KEY", std::string(kSecret));
 
@@ -450,13 +431,11 @@ TEST(RuntimeConfigTool, SecretBytesNeverLeakResponses) {
     for (const auto payload : payloads) {
         auto result = rt_config_run(registry, payload);
         ASSERT_TRUE(result.has_value()) << payload;
-        EXPECT_EQ(result->content.front().text.find(kSecret),
-                  std::string::npos)
+        EXPECT_EQ(result->content.front().text.find(kSecret), std::string::npos)
             << result->content.front().text;
     }
 
-    auto presence = rt_config_run(
-        registry, R"({"action":"get","key":"apiKey"})");
+    auto presence = rt_config_run(registry, R"({"action":"get","key":"apiKey"})");
     RtConfigJson parsed(presence->content.front().text);
     const auto setting = parsed.root.get("setting");
     EXPECT_EQ(setting.get("set").as_bool(), true);
@@ -471,18 +450,14 @@ TEST(RuntimeConfigTool, AuthTokenPresenceAndSecretOmission) {
     loom::core::ToolRegistry registry;
     RtConfigEnv::registry_with_perms(registry);
 
-    constexpr std::string_view kTokenSecret =
-        "SECRET-rt-c13c-auth-token-9911";
+    constexpr std::string_view kTokenSecret = "SECRET-rt-c13c-auth-token-9911";
     {
         EnvironmentUnsetGuard no_api_key("LOOM_API_KEY");
-        EnvironmentGuard token_guard("LOOM_AUTH_TOKEN",
-                                     std::string(kTokenSecret));
+        EnvironmentGuard token_guard("LOOM_AUTH_TOKEN", std::string(kTokenSecret));
 
-        auto presence = rt_config_run(
-            registry, R"({"action":"get","key":"apiKey"})");
+        auto presence = rt_config_run(registry, R"({"action":"get","key":"apiKey"})");
         ASSERT_TRUE(presence.has_value());
-        EXPECT_EQ(presence->content.front().text.find(kTokenSecret),
-                  std::string::npos)
+        EXPECT_EQ(presence->content.front().text.find(kTokenSecret), std::string::npos)
             << presence->content.front().text;
         RtConfigJson parsed(presence->content.front().text);
         const auto setting = parsed.root.get("setting");
@@ -490,16 +465,12 @@ TEST(RuntimeConfigTool, AuthTokenPresenceAndSecretOmission) {
         EXPECT_EQ(std::string(setting.get("source").as_str()), "env");
 
         // Combined with an API key: still set, and neither secret leaks.
-        EnvironmentGuard key_guard("LOOM_API_KEY",
-                                   "SECRET-rt-c13c-api-key-3322");
-        auto both = rt_config_run(
-            registry, R"({"action":"get","key":"apiKey"})");
+        EnvironmentGuard key_guard("LOOM_API_KEY", "SECRET-rt-c13c-api-key-3322");
+        auto both = rt_config_run(registry, R"({"action":"get","key":"apiKey"})");
         ASSERT_TRUE(both.has_value());
         const auto& text = both->content.front().text;
-        EXPECT_EQ(text.find("SECRET-rt-c13c-auth-token-9911"),
-                  std::string::npos);
-        EXPECT_EQ(text.find("SECRET-rt-c13c-api-key-3322"),
-                  std::string::npos);
+        EXPECT_EQ(text.find("SECRET-rt-c13c-auth-token-9911"), std::string::npos);
+        EXPECT_EQ(text.find("SECRET-rt-c13c-api-key-3322"), std::string::npos);
         RtConfigJson bparsed(text);
         EXPECT_EQ(bparsed.root.get("setting").get("set").as_bool(), true);
     }
@@ -507,12 +478,10 @@ TEST(RuntimeConfigTool, AuthTokenPresenceAndSecretOmission) {
     // Neither set → presence false / source none.
     EnvironmentUnsetGuard no_api_key("LOOM_API_KEY");
     EnvironmentUnsetGuard no_token("LOOM_AUTH_TOKEN");
-    auto none = rt_config_run(
-        registry, R"({"action":"get","key":"apiKey"})");
+    auto none = rt_config_run(registry, R"({"action":"get","key":"apiKey"})");
     RtConfigJson nparsed(none->content.front().text);
     EXPECT_EQ(nparsed.root.get("setting").get("set").as_bool(), false);
-    EXPECT_EQ(std::string(nparsed.root.get("setting").get("source").as_str()),
-              "none");
+    EXPECT_EQ(std::string(nparsed.root.get("setting").get("source").as_str()), "none");
 }
 
 // A set shadowed by an engaged env var still writes and reports shadowed.
@@ -522,51 +491,45 @@ TEST(RuntimeConfigTool, EnvShadowDisclosure) {
     RtConfigEnv::registry_with_perms(registry);
     EnvironmentGuard model_guard("LOOM_MODEL", "env-rt-model");
 
-    auto result = rt_config_run(
-        registry,
-        R"({"action":"set","key":"model","value":"file-rt-model"})");
+    auto result =
+        rt_config_run(registry, R"({"action":"set","key":"model","value":"file-rt-model"})");
     ASSERT_TRUE(result.has_value());
     EXPECT_FALSE(result->is_error) << result->content.front().text;
     RtConfigJson parsed(result->content.front().text);
     EXPECT_EQ(parsed.root.get("shadowed").as_bool(), true);
-    EXPECT_EQ(std::string(parsed.root.get("shadowed_by").as_str()),
-              "LOOM_MODEL");
-    EXPECT_EQ(std::string(parsed.root.get("value").as_str()),
-              "file-rt-model");
+    EXPECT_EQ(std::string(parsed.root.get("shadowed_by").as_str()), "LOOM_MODEL");
+    EXPECT_EQ(std::string(parsed.root.get("value").as_str()), "file-rt-model");
 
-    auto got = rt_config_run(
-        registry, R"({"action":"get","key":"model"})");
+    auto got = rt_config_run(registry, R"({"action":"get","key":"model"})");
     RtConfigJson g(got->content.front().text);
-    EXPECT_EQ(std::string(g.root.get("setting").get("source").as_str()),
-              "env");
-    EXPECT_EQ(std::string(g.root.get("setting").get("value").as_str()),
-              "env-rt-model");
+    EXPECT_EQ(std::string(g.root.get("setting").get("source").as_str()), "env");
+    EXPECT_EQ(std::string(g.root.get("setting").get("value").as_str()), "env-rt-model");
 }
 
 TEST(RuntimeConfigTool, GenerationOverridesCanReturnToProviderDefaults) {
     RtConfigEnv env;
     loom::core::ToolRegistry registry;
     RtConfigEnv::registry_with_perms(registry);
-    for (auto payload : {
-        R"({"action":"set","key":"maxOutputTokens","value":4096})",
-        R"({"action":"set","key":"extendedThinking","value":false})"}) {
+    for (auto payload : {R"({"action":"set","key":"maxOutputTokens","value":4096})",
+                         R"({"action":"set","key":"extendedThinking","value":false})"}) {
         const auto result = rt_config_run(registry, payload);
         ASSERT_TRUE(result.has_value());
         ASSERT_FALSE(result->is_error) << result->content.front().text;
     }
-    const auto explicit_false = rt_config_run(registry, R"({"action":"get","key":"extendedThinking"})");
+    const auto explicit_false =
+        rt_config_run(registry, R"({"action":"get","key":"extendedThinking"})");
     ASSERT_TRUE(explicit_false.has_value());
     RtConfigJson parsed_false(explicit_false->content.front().text);
     const auto value = parsed_false.root.get("setting").get("value");
     ASSERT_TRUE(value.is_bool());
     EXPECT_FALSE(value.as_bool());
     for (auto key : {"maxOutputTokens", "extendedThinking"}) {
-        const auto cleared = rt_config_run(registry,
-            std::format(R"({{"action":"set","key":"{}","value":null}})", key));
+        const auto cleared = rt_config_run(
+            registry, std::format(R"({{"action":"set","key":"{}","value":null}})", key));
         ASSERT_TRUE(cleared.has_value());
         ASSERT_FALSE(cleared->is_error) << cleared->content.front().text;
-        const auto result = rt_config_run(registry,
-            std::format(R"({{"action":"get","key":"{}"}})", key));
+        const auto result =
+            rt_config_run(registry, std::format(R"({{"action":"get","key":"{}"}})", key));
         ASSERT_TRUE(result.has_value());
         RtConfigJson parsed(result->content.front().text);
         EXPECT_TRUE(parsed.root.get("setting").get("value").is_null()) << key;

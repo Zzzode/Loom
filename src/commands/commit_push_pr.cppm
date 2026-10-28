@@ -5,8 +5,15 @@ import std;
 import loom.process.exec_sync;
 
 export namespace loom::commands::commit_push_pr {
-struct CommandResponse { bool ok{true}; bool inject{false}; std::string message; };
-[[nodiscard]] inline auto name() -> std::string_view { return "commit_push_pr"; }
+struct CommandResponse {
+    bool ok{true};
+    bool inject{false};
+    std::string message;
+};
+
+[[nodiscard]] inline auto name() -> std::string_view {
+    return "commit_push_pr";
+}
 
 [[nodiscard]] inline auto run(std::string_view branch = {}) -> CommandResponse {
     auto git_root = loom::utils::exec_sync("git rev-parse --show-toplevel");
@@ -21,38 +28,37 @@ struct CommandResponse { bool ok{true}; bool inject{false}; std::string message;
 
     // Preflight failed — return diagnostic info as a regular success message
     if (!gh_status) {
-        return {.ok = true, .message = std::format(
-            "Commit-push-PR preflight\n"
-            "Repository: {}\n"
-            "Branch: {}\n"
-            "Requested branch: {}\n"
-            "Upstream: {}\n"
-            "Changed paths: {}\n"
-            "GitHub CLI: not authenticated\n"
-            "Please run `gh auth login` first.",
-            *git_root,
-            current_branch ? *current_branch : "<unknown>",
-            branch.empty() ? "<current>" : std::string(branch),
-            upstream ? *upstream : "<none>",
-            dirty_count)};
+        return {.ok = true,
+                .message = std::format("Commit-push-PR preflight\n"
+                                       "Repository: {}\n"
+                                       "Branch: {}\n"
+                                       "Requested branch: {}\n"
+                                       "Upstream: {}\n"
+                                       "Changed paths: {}\n"
+                                       "GitHub CLI: not authenticated\n"
+                                       "Please run `gh auth login` first.",
+                                       *git_root, current_branch ? *current_branch : "<unknown>",
+                                       branch.empty() ? "<current>" : std::string(branch),
+                                       upstream ? *upstream : "<none>", dirty_count)};
     }
 
     // Preflight passed — inject the workflow prompt
-    return {.ok = true, .inject = true, .message = std::format(
-        "Please perform the following git workflow:\n"
-        "1. Stage all changes: git add -A\n"
-        "2. Create a commit with a conventional commit message (format: type(scope): description)\n"
-        "3. Push to the current branch's remote\n"
-        "4. Create a pull request using gh pr create\n\n"
-        "Use the Bash tool to run these commands. For the commit message, analyze the diff first.\n\n"
-        "Context:\n"
-        "- Repository: {}\n"
-        "- Branch: {}\n"
-        "- Upstream: {}\n"
-        "- Changed paths: {}",
-        *git_root,
-        current_branch ? *current_branch : "<unknown>",
-        upstream ? *upstream : "<none>",
-        dirty_count)};
+    return {.ok = true,
+            .inject = true,
+            .message = std::format("Please perform the following git workflow:\n"
+                                   "1. Stage all changes: git add -A\n"
+                                   "2. Create a commit with a conventional commit message (format: "
+                                   "type(scope): description)\n"
+                                   "3. Push to the current branch's remote\n"
+                                   "4. Create a pull request using gh pr create\n\n"
+                                   "Use the Bash tool to run these commands. For the commit "
+                                   "message, analyze the diff first.\n\n"
+                                   "Context:\n"
+                                   "- Repository: {}\n"
+                                   "- Branch: {}\n"
+                                   "- Upstream: {}\n"
+                                   "- Changed paths: {}",
+                                   *git_root, current_branch ? *current_branch : "<unknown>",
+                                   upstream ? *upstream : "<none>", dirty_count)};
 }
-}
+}  // namespace loom::commands::commit_push_pr

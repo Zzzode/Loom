@@ -2,7 +2,6 @@ module;
 
 #include <cstddef>
 
-
 export module loom.ui.chrome.yoga;
 
 import std;
@@ -57,9 +56,9 @@ struct LayoutNode {
     Align align = Align::Stretch;
     std::optional<int> width;
     std::optional<int> height;
-    int flex = 0;         // Flex grow factor
-    int margin = 0;       // Outer margin (all sides)
-    int padding = 0;      // Inner padding (all sides)
+    int flex = 0;     // Flex grow factor
+    int margin = 0;   // Outer margin (all sides)
+    int padding = 0;  // Inner padding (all sides)
     std::vector<LayoutNode*> children;
 };
 
@@ -89,12 +88,11 @@ inline auto get_cross_size(const LayoutNode& node, FlexDirection dir) -> int {
     return node.width.value_or(0);
 }
 
-} // namespace detail
+}  // namespace detail
 
 // Compute layout for the entire tree, returning computed layouts in tree order
-inline auto compute_layout(LayoutNode& root,
-                           int container_width,
-                           int container_height) -> std::vector<ComputedLayout> {
+inline auto compute_layout(LayoutNode& root, int container_width, int container_height)
+    -> std::vector<ComputedLayout> {
     std::vector<ComputedLayout> results;
 
     // Root node fills the container
@@ -143,34 +141,31 @@ inline auto compute_layout(LayoutNode& root,
     }
 
     // Calculate starting position based on justify
-    int total_children_size = std::accumulate(
-        child_main_sizes.begin(), child_main_sizes.end(), 0);
+    int total_children_size = std::accumulate(child_main_sizes.begin(), child_main_sizes.end(), 0);
     int gap = 0;
     int start_offset = 0;
 
     switch (root.justify) {
-        case Justify::Start:
-            start_offset = 0;
-            break;
-        case Justify::Center:
-            start_offset = (main_space - total_children_size) / 2;
-            break;
-        case Justify::End:
-            start_offset = main_space - total_children_size;
-            break;
-        case Justify::SpaceBetween:
-            if (root.children.size() > 1) {
-                gap = (main_space - total_children_size) /
-                      static_cast<int>(root.children.size() - 1);
-            }
-            break;
-        case Justify::SpaceAround:
-            if (!root.children.empty()) {
-                gap = (main_space - total_children_size) /
-                      static_cast<int>(root.children.size());
-                start_offset = gap / 2;
-            }
-            break;
+    case Justify::Start:
+        start_offset = 0;
+        break;
+    case Justify::Center:
+        start_offset = (main_space - total_children_size) / 2;
+        break;
+    case Justify::End:
+        start_offset = main_space - total_children_size;
+        break;
+    case Justify::SpaceBetween:
+        if (root.children.size() > 1) {
+            gap = (main_space - total_children_size) / static_cast<int>(root.children.size() - 1);
+        }
+        break;
+    case Justify::SpaceAround:
+        if (!root.children.empty()) {
+            gap = (main_space - total_children_size) / static_cast<int>(root.children.size());
+            start_offset = gap / 2;
+        }
+        break;
     }
 
     // Second pass: position children
@@ -190,16 +185,16 @@ inline auto compute_layout(LayoutNode& root,
         // Cross axis alignment
         int cross_offset = 0;
         switch (root.align) {
-            case Align::Start:
-            case Align::Stretch:
-                cross_offset = 0;
-                break;
-            case Align::Center:
-                cross_offset = (cross_space - child_cross - child->margin * 2) / 2;
-                break;
-            case Align::End:
-                cross_offset = cross_space - child_cross - child->margin * 2;
-                break;
+        case Align::Start:
+        case Align::Stretch:
+            cross_offset = 0;
+            break;
+        case Align::Center:
+            cross_offset = (cross_space - child_cross - child->margin * 2) / 2;
+            break;
+        case Align::End:
+            cross_offset = cross_space - child_cross - child->margin * 2;
+            break;
         }
 
         ComputedLayout child_layout;
@@ -222,4 +217,4 @@ inline auto compute_layout(LayoutNode& root,
     return results;
 }
 
-} // namespace loom::ui::layout
+}  // namespace loom::ui::layout

@@ -78,28 +78,27 @@ bool json_val_eq(loom::utils::json::JsonVal a, loom::utils::json::JsonVal b) {
 }
 
 // Round-trip: serialize → parse → re-serialize → compare semantically.
-#define ROUND_TRIP_STR(to_json_fn, from_json_fn, value)                          \
-    do {                                                                         \
-        auto _json1 = (to_json_fn)(value);                                       \
-        auto _parsed = (from_json_fn)(_json1);                                   \
-        ASSERT_TRUE(_parsed.has_value()) << _parsed.error();                     \
-        auto _json2 = (to_json_fn)(*_parsed);                                    \
-        EXPECT_TRUE(json_eq(_json1, _json2));                                    \
+#define ROUND_TRIP_STR(to_json_fn, from_json_fn, value)                                            \
+    do {                                                                                           \
+        auto _json1 = (to_json_fn)(value);                                                         \
+        auto _parsed = (from_json_fn)(_json1);                                                     \
+        ASSERT_TRUE(_parsed.has_value()) << _parsed.error();                                       \
+        auto _json2 = (to_json_fn)(*_parsed);                                                      \
+        EXPECT_TRUE(json_eq(_json1, _json2));                                                      \
     } while (0)
 
 // Round-trip through the ControlRequest envelope (for inner subtypes whose
 // _from_json takes JsonVal, not string_view).
-#define ROUND_TRIP_REQUEST(subtype_value)                                        \
-    do {                                                                         \
-        ControlRequest _req;                                                     \
-        _req.request_id = "req-001";                                             \
-        _req.request = (subtype_value);                                          \
-        ROUND_TRIP_STR(ControlRequest_to_json, ControlRequest_from_json, _req);  \
+#define ROUND_TRIP_REQUEST(subtype_value)                                                          \
+    do {                                                                                           \
+        ControlRequest _req;                                                                       \
+        _req.request_id = "req-001";                                                               \
+        _req.request = (subtype_value);                                                            \
+        ROUND_TRIP_STR(ControlRequest_to_json, ControlRequest_from_json, _req);                    \
     } while (0)
 
 // Round-trip for a type with string_view _from_json.
-#define ROUND_TRIP_TYPE(type, value)                                             \
-    ROUND_TRIP_STR(type##_to_json, type##_from_json, value)
+#define ROUND_TRIP_TYPE(type, value) ROUND_TRIP_STR(type##_to_json, type##_from_json, value)
 
 // ============================================================================
 // Control request subtypes — the 21 subtypes
@@ -268,8 +267,10 @@ TEST(SdkSerde, InitializeResponse) {
         .api_key_source = "user",
         .api_provider = "firstParty",
     };
-    v.commands = {SlashCommand{.name = "review", .description = "Review code", .argument_hint = "[pr]"}};
-    v.agents = {AgentInfo{.name = "code-reviewer", .description = "Reviews code", .model = "sonnet"}};
+    v.commands = {
+        SlashCommand{.name = "review", .description = "Review code", .argument_hint = "[pr]"}};
+    v.agents = {
+        AgentInfo{.name = "code-reviewer", .description = "Reviews code", .model = "sonnet"}};
     v.models = {ModelInfo{
         .value = "test-model",
         .display_name = "Test Model",
@@ -377,15 +378,15 @@ TEST(SdkSerde, SDKResultSuccess) {
                    R"("cache_creation_input_tokens":0,"cache_read_input_tokens":0,)"
                    R"("server_tool_use":{"web_search_requests":0}})";
     v.model_usage = {{"test-model", ModelUsage{
-        .input_tokens = 1500,
-        .output_tokens = 300,
-        .cache_read_input_tokens = 200,
-        .cache_creation_input_tokens = 50,
-        .web_search_requests = 0,
-        .cost_usd = 0.00234,
-        .context_window = 200000,
-        .max_output_tokens = 8192,
-    }}};
+                                        .input_tokens = 1500,
+                                        .output_tokens = 300,
+                                        .cache_read_input_tokens = 200,
+                                        .cache_creation_input_tokens = 50,
+                                        .web_search_requests = 0,
+                                        .cost_usd = 0.00234,
+                                        .context_window = 200000,
+                                        .max_output_tokens = 8192,
+                                    }}};
     v.permission_denials = {SDKPermissionDenial{
         .tool_name = "Bash",
         .tool_use_id = "toolu_denied",
@@ -422,15 +423,15 @@ TEST(SdkSerde, SDKResultError) {
                    R"("cache_creation_input_tokens":0,"cache_read_input_tokens":0,)"
                    R"("server_tool_use":{"web_search_requests":0}})";
     v.model_usage = {{"test-model", ModelUsage{
-        .input_tokens = 50000,
-        .output_tokens = 10000,
-        .cache_read_input_tokens = 0,
-        .cache_creation_input_tokens = 0,
-        .web_search_requests = 0,
-        .cost_usd = 0.05,
-        .context_window = 200000,
-        .max_output_tokens = 8192,
-    }}};
+                                        .input_tokens = 50000,
+                                        .output_tokens = 10000,
+                                        .cache_read_input_tokens = 0,
+                                        .cache_creation_input_tokens = 0,
+                                        .web_search_requests = 0,
+                                        .cost_usd = 0.05,
+                                        .context_window = 200000,
+                                        .max_output_tokens = 8192,
+                                    }}};
     v.errors = {"Max turns exceeded", "Context window full"};
     v.fast_mode_state = FastModeState::Off;
     v.uuid = "msg-uuid-006";

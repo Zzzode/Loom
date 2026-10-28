@@ -4,8 +4,9 @@
 /// This file covers the terminal_io (ANSI/CSI/SGR parsing) suites.
 
 #include <gtest/gtest.h>
-#include <cstdlib>
 #include <httplib.h>
+
+#include <cstdlib>
 
 import std;
 import loom.text.string;

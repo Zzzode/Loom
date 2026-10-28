@@ -2,12 +2,12 @@
 /// @brief Hook execution display, hook config editor, hook status indicators.
 module;
 
-#include <cstdint>
-
-#include <ftxui/dom/elements.hpp>
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/event.hpp>
+#include <ftxui/dom/elements.hpp>
+
+#include <cstdint>
 
 export module loom.ui.features.hooks_ui;
 
@@ -35,17 +35,17 @@ enum class HookEvent : std::uint8_t {
 
 /// Hook type discriminator
 enum class HookType : std::uint8_t {
-    Command,    // Shell command to execute
-    Prompt,     // Prompt to inject into conversation
-    Agent,      // Agent-based hook
-    Http,       // HTTP webhook
+    Command,  // Shell command to execute
+    Prompt,   // Prompt to inject into conversation
+    Agent,    // Agent-based hook
+    Http,     // HTTP webhook
 };
 
 /// Matcher for determining when a hook fires
 struct HookMatcher {
-    std::string tool_name;              // Tool name pattern (glob supported)
-    std::optional<std::string> project; // Project filter
-    std::optional<std::string> path;    // File path pattern
+    std::string tool_name;               // Tool name pattern (glob supported)
+    std::optional<std::string> project;  // Project filter
+    std::optional<std::string> path;     // File path pattern
 };
 
 /// A single hook configuration entry
@@ -55,7 +55,7 @@ struct IndividualHookConfig {
     HookType type;
     HookEvent event;
     HookMatcher matcher;
-    std::string command_or_content;     // Command string or prompt content
+    std::string command_or_content;  // Command string or prompt content
     std::optional<int> timeout_ms;
     bool enabled = true;
 };
@@ -86,16 +86,23 @@ struct HookExecResult {
 
 /// Navigation mode for the hooks config menu
 struct ModeSelectEvent {};
-struct ModeSelectMatcher { HookEvent event; };
-struct ModeSelectHook { HookEvent event; std::string matcher; };
-struct ModeViewHook { HookEvent event; IndividualHookConfig hook; };
 
-using HooksMenuMode = std::variant<
-    ModeSelectEvent,
-    ModeSelectMatcher,
-    ModeSelectHook,
-    ModeViewHook
->;
+struct ModeSelectMatcher {
+    HookEvent event;
+};
+
+struct ModeSelectHook {
+    HookEvent event;
+    std::string matcher;
+};
+
+struct ModeViewHook {
+    HookEvent event;
+    IndividualHookConfig hook;
+};
+
+using HooksMenuMode =
+    std::variant<ModeSelectEvent, ModeSelectMatcher, ModeSelectHook, ModeViewHook>;
 
 // ============================================================
 // Status Indicator Helpers
@@ -105,11 +112,16 @@ using HooksMenuMode = std::variant<
 [[nodiscard]] inline std::pair<std::string, Color> hook_event_display(HookEvent ev) {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
     switch (ev) {
-        case HookEvent::PreToolUse:   return {"⟨", pal.info};
-        case HookEvent::PostToolUse:  return {"⟩", pal.info};
-        case HookEvent::Notification: return {std::string(loom::ui::design::figures::kInfo), pal.warning};
-        case HookEvent::Stop:         return {std::string(loom::ui::design::figures::kSquare), pal.danger};
-        case HookEvent::SubagentStop: return {std::string(loom::ui::design::figures::kSquare), pal.primary};
+    case HookEvent::PreToolUse:
+        return {"⟨", pal.info};
+    case HookEvent::PostToolUse:
+        return {"⟩", pal.info};
+    case HookEvent::Notification:
+        return {std::string(loom::ui::design::figures::kInfo), pal.warning};
+    case HookEvent::Stop:
+        return {std::string(loom::ui::design::figures::kSquare), pal.danger};
+    case HookEvent::SubagentStop:
+        return {std::string(loom::ui::design::figures::kSquare), pal.primary};
     }
     return {"?", pal.text};
 }
@@ -117,11 +129,16 @@ using HooksMenuMode = std::variant<
 /// Get hook event display name
 [[nodiscard]] inline std::string hook_event_name(HookEvent ev) {
     switch (ev) {
-        case HookEvent::PreToolUse:   return "PreToolUse";
-        case HookEvent::PostToolUse:  return "PostToolUse";
-        case HookEvent::Notification: return "Notification";
-        case HookEvent::Stop:         return "Stop";
-        case HookEvent::SubagentStop: return "SubagentStop";
+    case HookEvent::PreToolUse:
+        return "PreToolUse";
+    case HookEvent::PostToolUse:
+        return "PostToolUse";
+    case HookEvent::Notification:
+        return "Notification";
+    case HookEvent::Stop:
+        return "Stop";
+    case HookEvent::SubagentStop:
+        return "SubagentStop";
     }
     return "Unknown";
 }
@@ -130,12 +147,18 @@ using HooksMenuMode = std::variant<
 [[nodiscard]] inline std::pair<std::string, Color> hook_exec_status_display(HookExecStatus s) {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
     switch (s) {
-        case HookExecStatus::Pending:   return {std::string(loom::ui::design::figures::kEffortLow), pal.muted};
-        case HookExecStatus::Running:   return {std::string(loom::ui::design::figures::kEffortMedium), pal.info};
-        case HookExecStatus::Succeeded: return {std::string(loom::ui::design::figures::kTick), pal.success};
-        case HookExecStatus::Failed:    return {std::string(loom::ui::design::figures::kCross), pal.danger};
-        case HookExecStatus::TimedOut:  return {std::string(loom::ui::design::figures::kEllipsis), pal.warning};
-        case HookExecStatus::Skipped:   return {std::string(loom::ui::design::figures::kCircle), pal.muted};
+    case HookExecStatus::Pending:
+        return {std::string(loom::ui::design::figures::kEffortLow), pal.muted};
+    case HookExecStatus::Running:
+        return {std::string(loom::ui::design::figures::kEffortMedium), pal.info};
+    case HookExecStatus::Succeeded:
+        return {std::string(loom::ui::design::figures::kTick), pal.success};
+    case HookExecStatus::Failed:
+        return {std::string(loom::ui::design::figures::kCross), pal.danger};
+    case HookExecStatus::TimedOut:
+        return {std::string(loom::ui::design::figures::kEllipsis), pal.warning};
+    case HookExecStatus::Skipped:
+        return {std::string(loom::ui::design::figures::kCircle), pal.muted};
     }
     return {"?", pal.text};
 }
@@ -143,10 +166,14 @@ using HooksMenuMode = std::variant<
 /// Get hook type badge
 [[nodiscard]] inline std::string hook_type_badge(HookType t) {
     switch (t) {
-        case HookType::Command: return "cmd";
-        case HookType::Prompt:  return "prompt";
-        case HookType::Agent:   return "agent";
-        case HookType::Http:    return "http";
+    case HookType::Command:
+        return "cmd";
+    case HookType::Prompt:
+        return "prompt";
+    case HookType::Agent:
+        return "agent";
+    case HookType::Http:
+        return "http";
     }
     return "?";
 }
@@ -156,8 +183,7 @@ using HooksMenuMode = std::variant<
 // ============================================================
 
 /// Render a hook execution result row
-[[nodiscard]] inline Element RenderHookExecRow(
-    const HookExecResult& result, bool selected) {
+[[nodiscard]] inline Element RenderHookExecRow(const HookExecResult& result, bool selected) {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
 
     auto [icon, icon_color] = hook_exec_status_display(result.status);
@@ -181,8 +207,7 @@ using HooksMenuMode = std::variant<
     }
 
     // Show output preview if succeeded
-    if (result.output && result.status == HookExecStatus::Succeeded
-        && !result.output->empty()) {
+    if (result.output && result.status == HookExecStatus::Succeeded && !result.output->empty()) {
         auto preview = result.output->substr(0, 80);
         result_parts.push_back(hbox({
             text("   ") | dim,
@@ -209,8 +234,8 @@ struct HookEventSummary {
 };
 
 /// Render the event selection list
-[[nodiscard]] inline Element RenderSelectEventMode(
-    const std::vector<HookEventSummary>& events, int selected_index) {
+[[nodiscard]] inline Element RenderSelectEventMode(const std::vector<HookEventSummary>& events,
+                                                   int selected_index) {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
 
     Elements items;
@@ -221,11 +246,9 @@ struct HookEventSummary {
 
         auto row = hbox({
             text(" " + icon + " ") | color(ic),
-            text(hook_event_name(ev.event))
-                | (sel ? bold : nothing) | color(pal.text),
+            text(hook_event_name(ev.event)) | (sel ? bold : nothing) | color(pal.text),
             filler(),
-            text(std::format(" {} matchers, {} hooks ",
-                ev.matcher_count, ev.hook_count)) | dim,
+            text(std::format(" {} matchers, {} hooks ", ev.matcher_count, ev.hook_count)) | dim,
         });
 
         if (sel) row = row | bgcolor(pal.surface_tint_1);
@@ -237,15 +260,18 @@ struct HookEventSummary {
     }
 
     return vbox({
-        text(" Hook Events ") | bold | color(pal.info),
-        separator(),
-        vbox(items) | vscroll_indicator | yframe | flex,
-        separator(),
-        hbox({
-            text(" [Enter]") | color(pal.info), text(" drill in "),
-            text("[Esc]") | color(pal.info), text(" close "),
-        }) | dim,
-    }) | borderRounded;
+               text(" Hook Events ") | bold | color(pal.info),
+               separator(),
+               vbox(items) | vscroll_indicator | yframe | flex,
+               separator(),
+               hbox({
+                   text(" [Enter]") | color(pal.info),
+                   text(" drill in "),
+                   text("[Esc]") | color(pal.info),
+                   text(" close "),
+               }) | dim,
+           }) |
+           borderRounded;
 }
 
 // ============================================================
@@ -271,19 +297,16 @@ struct HookEventSummary {
     }));
     rows.push_back(hbox({
         text(" Matcher: ") | bold,
-        text(hook.matcher.tool_name.empty() ? "*" : hook.matcher.tool_name)
-            | color(pal.warning),
+        text(hook.matcher.tool_name.empty() ? "*" : hook.matcher.tool_name) | color(pal.warning),
     }));
     rows.push_back(hbox({
         text(" Enabled: ") | bold,
-        text(hook.enabled ? "yes" : "no")
-            | color(hook.enabled ? pal.success : pal.danger),
+        text(hook.enabled ? "yes" : "no") | color(hook.enabled ? pal.success : pal.danger),
     }));
 
     rows.push_back(separator());
     rows.push_back(text(" Content:") | bold);
-    rows.push_back(paragraph(hook.command_or_content) | dim
-        | size(WIDTH, LESS_THAN, 70));
+    rows.push_back(paragraph(hook.command_or_content) | dim | size(WIDTH, LESS_THAN, 70));
 
     if (hook.timeout_ms) {
         rows.push_back(separator());
@@ -303,7 +326,7 @@ struct HookEventSummary {
 /// Options for the hooks config menu
 struct HooksUIOptions {
     std::vector<IndividualHookConfig> all_hooks;
-    std::vector<std::string> tool_names; // Available tool names for matching
+    std::vector<std::string> tool_names;  // Available tool names for matching
     HooksMenuMode mode;
     int selected_index = 0;
 
@@ -311,15 +334,18 @@ struct HooksUIOptions {
 };
 
 /// Compute event summaries from all hooks
-[[nodiscard]] inline std::vector<HookEventSummary> compute_event_summaries(
-    const std::vector<IndividualHookConfig>& hooks) {
+[[nodiscard]] inline std::vector<HookEventSummary>
+compute_event_summaries(const std::vector<IndividualHookConfig>& hooks) {
 
     // Collect unique events
     std::vector<HookEvent> seen_events;
     for (const auto& h : hooks) {
         bool found = false;
         for (auto ev : seen_events) {
-            if (ev == h.event) { found = true; break; }
+            if (ev == h.event) {
+                found = true;
+                break;
+            }
         }
         if (!found) seen_events.push_back(h.event);
     }
@@ -334,7 +360,10 @@ struct HooksUIOptions {
             ++summary.hook_count;
             bool matcher_seen = false;
             for (const auto& m : matchers_seen) {
-                if (m == h.matcher.tool_name) { matcher_seen = true; break; }
+                if (m == h.matcher.tool_name) {
+                    matcher_seen = true;
+                    break;
+                }
             }
             if (!matcher_seen) {
                 matchers_seen.push_back(h.matcher.tool_name);
@@ -351,38 +380,39 @@ struct HooksUIOptions {
     auto state = std::make_shared<HooksUIOptions>(std::move(options));
 
     return Renderer([state] {
-        if (std::holds_alternative<ModeSelectEvent>(state->mode)) {
-            auto summaries = compute_event_summaries(state->all_hooks);
-            return RenderSelectEventMode(summaries, state->selected_index);
-        }
-        if (std::holds_alternative<ModeViewHook>(state->mode)) {
-            auto& vh = std::get<ModeViewHook>(state->mode);
-            return RenderHookDetail(vh.hook);
-        }
-        // Default: event selection
-        auto summaries = compute_event_summaries(state->all_hooks);
-        return RenderSelectEventMode(summaries, state->selected_index);
-    }) | CatchEvent([state](Event event) -> bool {
-        if (event == Event::Escape) {
-            // Navigate back or exit
-            if (std::holds_alternative<ModeSelectEvent>(state->mode)) {
-                if (state->on_exit) state->on_exit();
-            } else {
-                state->mode = ModeSelectEvent{};
-                state->selected_index = 0;
-            }
-            return true;
-        }
-        if (event == Event::ArrowUp || event == Event::Character('k')) {
-            state->selected_index = std::max(0, state->selected_index - 1);
-            return true;
-        }
-        if (event == Event::ArrowDown || event == Event::Character('j')) {
-            state->selected_index++;
-            return true;
-        }
-        return false;
-    });
+               if (std::holds_alternative<ModeSelectEvent>(state->mode)) {
+                   auto summaries = compute_event_summaries(state->all_hooks);
+                   return RenderSelectEventMode(summaries, state->selected_index);
+               }
+               if (std::holds_alternative<ModeViewHook>(state->mode)) {
+                   auto& vh = std::get<ModeViewHook>(state->mode);
+                   return RenderHookDetail(vh.hook);
+               }
+               // Default: event selection
+               auto summaries = compute_event_summaries(state->all_hooks);
+               return RenderSelectEventMode(summaries, state->selected_index);
+           }) |
+           CatchEvent([state](Event event) -> bool {
+               if (event == Event::Escape) {
+                   // Navigate back or exit
+                   if (std::holds_alternative<ModeSelectEvent>(state->mode)) {
+                       if (state->on_exit) state->on_exit();
+                   } else {
+                       state->mode = ModeSelectEvent{};
+                       state->selected_index = 0;
+                   }
+                   return true;
+               }
+               if (event == Event::ArrowUp || event == Event::Character('k')) {
+                   state->selected_index = std::max(0, state->selected_index - 1);
+                   return true;
+               }
+               if (event == Event::ArrowDown || event == Event::Character('j')) {
+                   state->selected_index++;
+                   return true;
+               }
+               return false;
+           });
 }
 
-} // namespace loom::ui::hooks_ui
+}  // namespace loom::ui::hooks_ui

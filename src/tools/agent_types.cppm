@@ -6,13 +6,7 @@ import loom.types.tool_types;
 
 export namespace loom::tools {
 
-enum class AgentType {
-    Explore,
-    Plan,
-    Verify,
-    GeneralPurpose,
-    Custom
-};
+enum class AgentType { Explore, Plan, Verify, GeneralPurpose, Custom };
 
 struct MultiAgentAgentConfig {
     AgentType type;
@@ -33,21 +27,26 @@ struct MultiAgentResult {
 
 inline auto agent_type_to_string(AgentType type) -> std::string_view {
     switch (type) {
-        case AgentType::Explore:        return "explore";
-        case AgentType::Plan:           return "plan";
-        case AgentType::Verify:         return "verify";
-        case AgentType::GeneralPurpose: return "general";
-        case AgentType::Custom:         return "custom";
+    case AgentType::Explore:
+        return "explore";
+    case AgentType::Plan:
+        return "plan";
+    case AgentType::Verify:
+        return "verify";
+    case AgentType::GeneralPurpose:
+        return "general";
+    case AgentType::Custom:
+        return "custom";
     }
     return "unknown";
 }
 
 inline auto parse_agent_type(std::string_view str) -> std::optional<AgentType> {
-    if (str == "explore")  return AgentType::Explore;
-    if (str == "plan")     return AgentType::Plan;
-    if (str == "verify")   return AgentType::Verify;
-    if (str == "general")  return AgentType::GeneralPurpose;
-    if (str == "custom")   return AgentType::Custom;
+    if (str == "explore") return AgentType::Explore;
+    if (str == "plan") return AgentType::Plan;
+    if (str == "verify") return AgentType::Verify;
+    if (str == "general") return AgentType::GeneralPurpose;
+    if (str == "custom") return AgentType::Custom;
     return std::nullopt;
 }
 
@@ -55,9 +54,9 @@ inline auto parse_agent_type(std::string_view str) -> std::optional<AgentType> {
 // =========================================================================
 
 struct AgentConfig {
-    int max_turns = 200;           // Max agentic loop iterations
-    int max_depth = 3;             // Max recursive agent nesting depth
-    std::string default_model;  // No default — must be explicitly configured
+    int max_turns = 200;                     // Max agentic loop iterations
+    int max_depth = 3;                       // Max recursive agent nesting depth
+    std::string default_model;               // No default — must be explicitly configured
     std::vector<std::string> allowed_tools;  // Empty = inherit all from parent
     std::vector<std::string> denied_tools;   // Explicitly blocked tools for sub-agents
     std::optional<std::string> parent_agent_id;
@@ -74,12 +73,9 @@ struct AgentLivePermissionCheck {
 };
 
 using AgentLivePermissionCheckFn = std::function<AgentLivePermissionCheck(
-    std::string_view tool_name,
-    std::string_view input_json,
-    std::string_view tool_use_id
-)>;
+    std::string_view tool_name, std::string_view input_json, std::string_view tool_use_id)>;
 
-} // namespace loom::tools
+}  // namespace loom::tools
 
 // Re-export the DTOs under the agent namespace spelling so importers that
 // name them loom::tools::agent::X can depend on this zero-service leaf alone.
@@ -89,4 +85,4 @@ using loom::tools::AgentConfig;
 using loom::tools::AgentLivePermissionCheck;
 using loom::tools::AgentLivePermissionCheckFn;
 
-} // namespace loom::tools::agent
+}  // namespace loom::tools::agent

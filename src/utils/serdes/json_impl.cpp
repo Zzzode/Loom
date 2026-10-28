@@ -1,9 +1,9 @@
 module;
 
+#include <yyjson.h>
+
 #include <cstddef>
 #include <cstdlib>
-
-#include <yyjson.h>
 
 module loom.serdes.json;
 
@@ -56,4 +56,4 @@ std::string to_string(JsonVal val) {
     return val.to_string();
 }
 
-} // namespace loom::utils::json
+}  // namespace loom::utils::json

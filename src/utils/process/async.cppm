@@ -3,10 +3,10 @@
 module;
 
 #include <unistd.h>
+#include <uv.h>
+
 #include <cstddef>
 #include <cstdint>
-
-#include <uv.h>
 
 export module loom.process.async;
 
@@ -23,8 +23,7 @@ using loom::utils::Result;
 // =========================================================================
 
 // =========================================================================
-template<typename T = void>
-class Task {
+template <typename T = void> class Task {
 public:
     struct Promise;
     using promise_type = Promise;
@@ -35,33 +34,41 @@ public:
         std::coroutine_handle<> continuation;
         std::exception_ptr exception;
 
-        Task get_return_object() {
-            return Task{handle_type::from_promise(*this)};
-        }
-        std::suspend_always initial_suspend() noexcept { return {}; }
+        Task get_return_object() { return Task{handle_type::from_promise(*this)}; }
 
+        std::suspend_always initial_suspend() noexcept { return {}; }
 
         struct FinalAwaiter {
             bool await_ready() noexcept { return false; }
+
             std::coroutine_handle<> await_suspend(handle_type h) noexcept {
-                if (h.promise().continuation)
-                    return h.promise().continuation;
+                if (h.promise().continuation) return h.promise().continuation;
                 return std::noop_coroutine();
             }
+
             void await_resume() noexcept {}
         };
+
         FinalAwaiter final_suspend() noexcept { return {}; }
 
         void return_value(T val) { value = std::move(val); }
+
         void unhandled_exception() { exception = std::current_exception(); }
     };
 
-    Task() noexcept : handle_(nullptr) {}
-    explicit Task(handle_type h) noexcept : handle_(h) {}
-    ~Task() { if (handle_) handle_.destroy(); }
+    Task() noexcept
+        : handle_(nullptr) {}
 
+    explicit Task(handle_type h) noexcept
+        : handle_(h) {}
 
-    Task(Task&& other) noexcept : handle_(std::exchange(other.handle_, nullptr)) {}
+    ~Task() {
+        if (handle_) handle_.destroy();
+    }
+
+    Task(Task&& other) noexcept
+        : handle_(std::exchange(other.handle_, nullptr)) {}
+
     Task& operator=(Task&& other) noexcept {
         if (this != &other) {
             if (handle_) handle_.destroy();
@@ -69,26 +76,25 @@ public:
         }
         return *this;
     }
+
     Task(const Task&) = delete;
     Task& operator=(const Task&) = delete;
 
-
     bool await_ready() const noexcept { return false; }
+
     std::coroutine_handle<> await_suspend(std::coroutine_handle<> awaiting) noexcept {
         handle_.promise().continuation = awaiting;
         return handle_;
     }
+
     T await_resume() {
-        if (handle_.promise().exception)
-            std::rethrow_exception(handle_.promise().exception);
+        if (handle_.promise().exception) std::rethrow_exception(handle_.promise().exception);
         return std::move(*handle_.promise().value);
     }
 
-
     T get() {
         handle_.resume();
-        if (handle_.promise().exception)
-            std::rethrow_exception(handle_.promise().exception);
+        if (handle_.promise().exception) std::rethrow_exception(handle_.promise().exception);
         return std::move(*handle_.promise().value);
     }
 
@@ -98,9 +104,7 @@ private:
     handle_type handle_;
 };
 
-
-template<>
-class Task<void> {
+template <> class Task<void> {
 public:
     struct Promise;
     using promise_type = Promise;
@@ -111,31 +115,41 @@ public:
         std::exception_ptr exception;
         bool completed = false;
 
-        Task get_return_object() {
-            return Task{handle_type::from_promise(*this)};
-        }
+        Task get_return_object() { return Task{handle_type::from_promise(*this)}; }
+
         std::suspend_always initial_suspend() noexcept { return {}; }
 
         struct FinalAwaiter {
             bool await_ready() noexcept { return false; }
+
             std::coroutine_handle<> await_suspend(handle_type h) noexcept {
-                if (h.promise().continuation)
-                    return h.promise().continuation;
+                if (h.promise().continuation) return h.promise().continuation;
                 return std::noop_coroutine();
             }
+
             void await_resume() noexcept {}
         };
+
         FinalAwaiter final_suspend() noexcept { return {}; }
 
         void return_void() { completed = true; }
+
         void unhandled_exception() { exception = std::current_exception(); }
     };
 
-    Task() noexcept : handle_(nullptr) {}
-    explicit Task(handle_type h) noexcept : handle_(h) {}
-    ~Task() { if (handle_) handle_.destroy(); }
+    Task() noexcept
+        : handle_(nullptr) {}
 
-    Task(Task&& other) noexcept : handle_(std::exchange(other.handle_, nullptr)) {}
+    explicit Task(handle_type h) noexcept
+        : handle_(h) {}
+
+    ~Task() {
+        if (handle_) handle_.destroy();
+    }
+
+    Task(Task&& other) noexcept
+        : handle_(std::exchange(other.handle_, nullptr)) {}
+
     Task& operator=(Task&& other) noexcept {
         if (this != &other) {
             if (handle_) handle_.destroy();
@@ -143,17 +157,19 @@ public:
         }
         return *this;
     }
+
     Task(const Task&) = delete;
     Task& operator=(const Task&) = delete;
 
     bool await_ready() const noexcept { return false; }
+
     std::coroutine_handle<> await_suspend(std::coroutine_handle<> awaiting) noexcept {
         handle_.promise().continuation = awaiting;
         return handle_;
     }
+
     void await_resume() {
-        if (handle_.promise().exception)
-            std::rethrow_exception(handle_.promise().exception);
+        if (handle_.promise().exception) std::rethrow_exception(handle_.promise().exception);
     }
 
     [[nodiscard]] handle_type raw_handle() const noexcept { return handle_; }
@@ -168,11 +184,11 @@ private:
 class EventLoop {
 public:
     EventLoop() { uv_loop_init(&loop_); }
+
     ~EventLoop() { uv_loop_close(&loop_); }
 
     EventLoop(const EventLoop&) = delete;
     EventLoop& operator=(const EventLoop&) = delete;
-
 
     void run() { uv_run(&loop_, UV_RUN_DEFAULT); }
 
@@ -181,7 +197,6 @@ public:
     void stop() { uv_stop(&loop_); }
 
     [[nodiscard]] uv_loop_t* raw() noexcept { return &loop_; }
-
 
     static EventLoop& default_loop() {
         static EventLoop instance;
@@ -207,48 +222,52 @@ struct SleepAwaiter {
         handle = h;
         uv_timer_init(loop.raw(), &timer);
         timer.data = this;
-        uv_timer_start(&timer, [](uv_timer_t* t) {
-            auto* self = static_cast<SleepAwaiter*>(t->data);
-            uv_timer_stop(t);
-            uv_close(reinterpret_cast<uv_handle_t*>(t), nullptr);
-            self->handle.resume();
-        }, ms, 0);
+        uv_timer_start(
+            &timer,
+            [](uv_timer_t* t) {
+                auto* self = static_cast<SleepAwaiter*>(t->data);
+                uv_timer_stop(t);
+                uv_close(reinterpret_cast<uv_handle_t*>(t), nullptr);
+                self->handle.resume();
+            },
+            ms, 0);
     }
 
     void await_resume() noexcept {}
 };
 
-[[nodiscard]] inline SleepAwaiter sleep(
-    uint64_t ms, EventLoop& loop = EventLoop::default_loop()) {
+[[nodiscard]] inline SleepAwaiter sleep(uint64_t ms, EventLoop& loop = EventLoop::default_loop()) {
     return SleepAwaiter{loop, ms, {}, {}};
 }
 
 // =========================================================================
 
 // =========================================================================
-template<typename T>
-class Channel {
+template <typename T> class Channel {
 public:
-    explicit Channel(std::size_t capacity = 0) : capacity_(capacity) {}
-
+    explicit Channel(std::size_t capacity = 0)
+        : capacity_(capacity) {}
 
     struct SendAwaiter {
         Channel& ch;
         T value;
+
         bool await_ready() { return ch.buffer_.size() < ch.capacity_; }
+
         void await_suspend(std::coroutine_handle<> h) {
             ch.send_waiters_.push_back({h, std::move(value)});
         }
+
         void await_resume() {}
     };
 
-
     struct RecvAwaiter {
         Channel& ch;
+
         bool await_ready() { return !ch.buffer_.empty(); }
-        void await_suspend(std::coroutine_handle<> h) {
-            ch.recv_waiters_.push_back(h);
-        }
+
+        void await_suspend(std::coroutine_handle<> h) { ch.recv_waiters_.push_back(h); }
+
         T await_resume() {
             T val = std::move(ch.buffer_.front());
             ch.buffer_.pop_front();
@@ -264,9 +283,11 @@ public:
     };
 
     SendAwaiter send(T value) { return {*this, std::move(value)}; }
+
     RecvAwaiter recv() { return {*this}; }
 
     [[nodiscard]] bool empty() const { return buffer_.empty(); }
+
     [[nodiscard]] std::size_t size() const { return buffer_.size(); }
 
 private:
@@ -277,6 +298,7 @@ private:
         std::coroutine_handle<> handle;
         T value;
     };
+
     std::deque<PendingSend> send_waiters_;
     std::deque<std::coroutine_handle<>> recv_waiters_;
 };
@@ -287,13 +309,15 @@ private:
 class AsyncFile {
 public:
     explicit AsyncFile(EventLoop& loop = EventLoop::default_loop())
-        : loop_(loop), fd_(-1) {}
+        : loop_(loop)
+        , fd_(-1) {}
 
-    ~AsyncFile() { if (fd_ >= 0) close_sync(); }
+    ~AsyncFile() {
+        if (fd_ >= 0) close_sync();
+    }
 
     AsyncFile(const AsyncFile&) = delete;
     AsyncFile& operator=(const AsyncFile&) = delete;
-
 
     Task<Result<void>> open(const std::string& path, int flags, int mode = 0644) {
         struct OpenCtx {
@@ -301,28 +325,27 @@ public:
             std::coroutine_handle<> handle;
             int result = -1;
         };
+
         OpenCtx ctx;
         ctx.req.data = &ctx;
 
-        uv_fs_open(loop_.raw(), &ctx.req, path.c_str(), flags, mode,
-            [](uv_fs_t* req) {
-                auto* c = static_cast<OpenCtx*>(req->data);
-                c->result = static_cast<int>(req->result);
-                uv_fs_req_cleanup(req);
-                c->handle.resume();
-            });
-
+        uv_fs_open(loop_.raw(), &ctx.req, path.c_str(), flags, mode, [](uv_fs_t* req) {
+            auto* c = static_cast<OpenCtx*>(req->data);
+            c->result = static_cast<int>(req->result);
+            uv_fs_req_cleanup(req);
+            c->handle.resume();
+        });
 
         co_await std::suspend_always{};
 
         if (ctx.result < 0) {
-            co_return std::unexpected(Error(ErrorCode::io_error,
-                std::format("Failed to open file: {}", uv_strerror(ctx.result))));
+            co_return std::unexpected(
+                Error(ErrorCode::io_error,
+                      std::format("Failed to open file: {}", uv_strerror(ctx.result))));
         }
         fd_ = ctx.result;
         co_return Result<void>{};
     }
-
 
     Task<Result<std::string>> read(std::size_t size, int64_t offset = -1) {
         std::string buffer(size, '\0');
@@ -333,52 +356,54 @@ public:
             std::coroutine_handle<> handle;
             ssize_t result = -1;
         };
+
         ReadCtx ctx;
         ctx.req.data = &ctx;
 
-        uv_fs_read(loop_.raw(), &ctx.req, fd_, &buf, 1, offset,
-            [](uv_fs_t* req) {
-                auto* c = static_cast<ReadCtx*>(req->data);
-                c->result = req->result;
-                uv_fs_req_cleanup(req);
-                c->handle.resume();
-            });
+        uv_fs_read(loop_.raw(), &ctx.req, fd_, &buf, 1, offset, [](uv_fs_t* req) {
+            auto* c = static_cast<ReadCtx*>(req->data);
+            c->result = req->result;
+            uv_fs_req_cleanup(req);
+            c->handle.resume();
+        });
 
         co_await std::suspend_always{};
 
         if (ctx.result < 0) {
-            co_return std::unexpected(Error(ErrorCode::io_error,
-                std::format("Read failed: {}", uv_strerror(static_cast<int>(ctx.result)))));
+            co_return std::unexpected(
+                Error(ErrorCode::io_error,
+                      std::format("Read failed: {}", uv_strerror(static_cast<int>(ctx.result)))));
         }
         buffer.resize(static_cast<std::size_t>(ctx.result));
         co_return buffer;
     }
 
-
     Task<Result<std::size_t>> write(std::string_view data, int64_t offset = -1) {
-        uv_buf_t buf = uv_buf_init(const_cast<char*>(data.data()),
-                                    static_cast<unsigned int>(data.size()));
+        uv_buf_t buf =
+            uv_buf_init(const_cast<char*>(data.data()), static_cast<unsigned int>(data.size()));
+
         struct WriteCtx {
             uv_fs_t req{};
             std::coroutine_handle<> handle;
             ssize_t result = -1;
         };
+
         WriteCtx ctx;
         ctx.req.data = &ctx;
 
-        uv_fs_write(loop_.raw(), &ctx.req, fd_, &buf, 1, offset,
-            [](uv_fs_t* req) {
-                auto* c = static_cast<WriteCtx*>(req->data);
-                c->result = req->result;
-                uv_fs_req_cleanup(req);
-                c->handle.resume();
-            });
+        uv_fs_write(loop_.raw(), &ctx.req, fd_, &buf, 1, offset, [](uv_fs_t* req) {
+            auto* c = static_cast<WriteCtx*>(req->data);
+            c->result = req->result;
+            uv_fs_req_cleanup(req);
+            c->handle.resume();
+        });
 
         co_await std::suspend_always{};
 
         if (ctx.result < 0) {
-            co_return std::unexpected(Error(ErrorCode::io_error,
-                std::format("Write failed: {}", uv_strerror(static_cast<int>(ctx.result)))));
+            co_return std::unexpected(
+                Error(ErrorCode::io_error,
+                      std::format("Write failed: {}", uv_strerror(static_cast<int>(ctx.result)))));
         }
         co_return static_cast<std::size_t>(ctx.result);
     }
@@ -407,7 +432,7 @@ struct ProcessOutput {
 // =========================================================================
 
 // =========================================================================
-template<typename... Tasks>
+template <typename... Tasks>
 Task<std::tuple<typename std::remove_reference_t<Tasks>::handle_type::promise_type...>>
 when_all(Tasks&&... tasks) {
 
@@ -415,8 +440,7 @@ when_all(Tasks&&... tasks) {
 }
 
 // WhenAll for vector of same-type tasks
-template<typename T>
-Task<std::vector<T>> when_all_vec(std::vector<Task<T>> tasks) {
+template <typename T> Task<std::vector<T>> when_all_vec(std::vector<Task<T>> tasks) {
     std::vector<T> results;
     results.reserve(tasks.size());
     for (auto& task : tasks) {
@@ -428,14 +452,12 @@ Task<std::vector<T>> when_all_vec(std::vector<Task<T>> tasks) {
 // =========================================================================
 
 // =========================================================================
-template<typename T>
-struct WhenAnyResult {
+template <typename T> struct WhenAnyResult {
     std::size_t index;
     T value;
 };
 
-template<typename T>
-Task<WhenAnyResult<T>> when_any(std::vector<Task<T>> tasks) {
+template <typename T> Task<WhenAnyResult<T>> when_any(std::vector<Task<T>> tasks) {
 
     for (std::size_t i = 0; i < tasks.size(); ++i) {
         if (tasks[i].raw_handle() && !tasks[i].raw_handle().done()) {
@@ -448,4 +470,4 @@ Task<WhenAnyResult<T>> when_any(std::vector<Task<T>> tasks) {
     co_return WhenAnyResult<T>{0, std::move(result)};
 }
 
-} // namespace loom::utils::async
+}  // namespace loom::utils::async

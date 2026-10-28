@@ -28,12 +28,9 @@ namespace dsys = loom::ui::dialogs::system;
 // 6-arg canonical form: queue, tool_name, description, on_response, on_abort,
 //                       can_always_allow
 inline void PushToolPermission(
-    dsys::DialogQueue& queue,
-    std::string tool_name,
-    std::string description,
+    dsys::DialogQueue& queue, std::string tool_name, std::string description,
     std::function<void(typename dsys::ToolPermissionPayload::Decision, bool)> on_response,
-    std::function<void()> on_abort,
-    bool can_always_allow) {
+    std::function<void()> on_abort, bool can_always_allow) {
     dsys::ToolPermissionPayload p;
     p.id = "tool-permission";
     p.tool_name = std::move(tool_name);
@@ -48,12 +45,11 @@ inline void PushToolPermission(
 // 4-arg convenience form (used by tests) — supplies safe defaults for the
 // two trailing parameters.
 inline void PushToolPermission(
-    dsys::DialogQueue& queue,
-    std::string tool_name,
-    std::string description,
+    dsys::DialogQueue& queue, std::string tool_name, std::string description,
     std::function<void(typename dsys::ToolPermissionPayload::Decision, bool)> on_response) {
-    PushToolPermission(queue, std::move(tool_name), std::move(description),
-                       std::move(on_response), []() {}, /*can_always_allow=*/true);
+    PushToolPermission(
+        queue, std::move(tool_name), std::move(description), std::move(on_response), []() {},
+        /*can_always_allow=*/true);
 }
 
 // Rich form: caller supplies the tool-specific detail payload + action kind
@@ -61,14 +57,11 @@ inline void PushToolPermission(
 // computer-use action) rather than a bare tool name. Used by the live
 // permission callback for computer-use actions.
 inline void PushToolPermissionDetailed(
-    dsys::DialogQueue& queue,
-    std::string tool_name,
-    std::string description,
+    dsys::DialogQueue& queue, std::string tool_name, std::string description,
     loom::ui::permissions::single_prompt::ActionKind action_kind,
     loom::ui::permissions::single_prompt::ToolDetail detail,
     std::function<void(typename dsys::ToolPermissionPayload::Decision, bool)> on_response,
-    std::function<void()> on_abort,
-    bool can_always_allow) {
+    std::function<void()> on_abort, bool can_always_allow) {
     dsys::ToolPermissionPayload p;
     p.id = "tool-permission";
     p.tool_name = std::move(tool_name);
@@ -86,23 +79,21 @@ inline void PushToolPermissionDetailed(
 // CostThreshold
 // ---------------------------------------------------------------------------
 // Canonical P0x3 contract — 0-arg on_done, dollars_spent, optional model_name.
-inline void PushCostThreshold(dsys::DialogQueue& queue,
-                              double dollars_spent,
+inline void PushCostThreshold(dsys::DialogQueue& queue, double dollars_spent,
                               std::optional<std::string> model_name,
                               std::function<void()> on_done) {
     dsys::CostThresholdPayload p;
     p.id = "cost-threshold";
     p.dollars_spent = dollars_spent;
-    p.model_name    = std::move(model_name);
-    p.on_done       = std::move(on_done);
+    p.model_name = std::move(model_name);
+    p.on_done = std::move(on_done);
     queue.push(std::move(p));
 }
 
 // ---------------------------------------------------------------------------
 // SandboxPermission
 // ---------------------------------------------------------------------------
-inline void PushSandboxPermission(dsys::DialogQueue& queue,
-                                  std::string origin,
+inline void PushSandboxPermission(dsys::DialogQueue& queue, std::string origin,
                                   std::function<void(bool allow, bool always)> on_response) {
     dsys::SandboxPermissionPayload p;
     p.id = "sandbox-permission";
@@ -116,8 +107,7 @@ inline void PushSandboxPermission(dsys::DialogQueue& queue,
 // ---------------------------------------------------------------------------
 // SettingsPanel / HelpView / LspRecommendation / ModelSwitch
 // ---------------------------------------------------------------------------
-inline void PushSettingsPanel(dsys::DialogQueue& queue,
-                              std::string initial_tab,
+inline void PushSettingsPanel(dsys::DialogQueue& queue, std::string initial_tab,
                               std::function<void()> on_close) {
     dsys::SettingsPanelPayload p;
     p.id = "settings-panel";
@@ -126,8 +116,7 @@ inline void PushSettingsPanel(dsys::DialogQueue& queue,
     queue.push_modal(std::move(p));
 }
 
-inline void PushHelpView(dsys::DialogQueue& queue,
-                         std::string section,
+inline void PushHelpView(dsys::DialogQueue& queue, std::string section,
                          std::function<void()> on_close) {
     dsys::HelpViewPayload p;
     p.id = "help-view";
@@ -136,8 +125,7 @@ inline void PushHelpView(dsys::DialogQueue& queue,
     queue.push_modal(std::move(p));
 }
 
-inline void PushLspRecommendation(dsys::DialogQueue& queue,
-                                  std::string server_name,
+inline void PushLspRecommendation(dsys::DialogQueue& queue, std::string server_name,
                                   std::function<void(bool install)> on_response) {
     dsys::LspRecommendationPayload p;
     p.id = "lsp-rec";
@@ -146,22 +134,19 @@ inline void PushLspRecommendation(dsys::DialogQueue& queue,
     queue.push(std::move(p));
 }
 
-inline void PushModelSwitch(dsys::DialogQueue& queue,
-                            std::string current_model,
+inline void PushModelSwitch(dsys::DialogQueue& queue, std::string current_model,
                             std::string target_model,
                             std::function<void(bool confirm)> on_response) {
     dsys::ModelSwitchPayload p;
     p.id = "model-switch";
     p.from_model = std::move(current_model);
-    p.to_model   = std::move(target_model);
+    p.to_model = std::move(target_model);
     p.on_response = std::move(on_response);
     queue.push(std::move(p));
 }
 
-inline void PushMessageSelector(dsys::DialogQueue& queue,
-                                std::vector<std::string> options,
-                                std::string prompt,
-                                std::function<void(int idx)> on_select) {
+inline void PushMessageSelector(dsys::DialogQueue& queue, std::vector<std::string> options,
+                                std::string prompt, std::function<void(int idx)> on_select) {
     dsys::MessageSelectorPayload p;
     p.id = "message-selector";
     p.options = std::move(options);
@@ -174,10 +159,8 @@ inline void PushMessageSelector(dsys::DialogQueue& queue,
 // ---------------------------------------------------------------------------
 // Elicitation
 // ---------------------------------------------------------------------------
-inline void PushElicitation(dsys::DialogQueue& queue,
-                            std::string server_name,
-                            std::uint64_t request_id,
-                            std::string message,
+inline void PushElicitation(dsys::DialogQueue& queue, std::string server_name,
+                            std::uint64_t request_id, std::string message,
                             std::function<void(bool approve)> on_response) {
     dsys::ElicitationPayload p;
     p.id = "elicitation";
@@ -204,8 +187,7 @@ inline void PushElicitation(dsys::DialogQueue& queue,
 // ---------------------------------------------------------------------------
 // QuickOpen
 // ---------------------------------------------------------------------------
-inline void PushQuickOpen(dsys::DialogQueue& queue,
-                          std::vector<dsys::QuickOpenItem> items,
+inline void PushQuickOpen(dsys::DialogQueue& queue, std::vector<dsys::QuickOpenItem> items,
                           std::string query,
                           std::function<void(int index, bool confirmed)> on_result) {
     dsys::QuickOpenPayload p;
@@ -232,8 +214,8 @@ inline void PushSessionPicker(dsys::DialogQueue& queue,
     // Must be mutable: pop_standalone() destroys this lambda (and its
     // captures) along with the payload, so move the user callback to a
     // local BEFORE popping — otherwise the capture is destroyed mid-call.
-    p.on_select = [&queue, on_select = std::move(on_select)](
-                      const std::string& session_id) mutable {
+    p.on_select = [&queue,
+                   on_select = std::move(on_select)](const std::string& session_id) mutable {
         auto cb = std::move(on_select);
         queue.pop_standalone();
         if (cb) cb(session_id);
@@ -244,8 +226,7 @@ inline void PushSessionPicker(dsys::DialogQueue& queue,
 // ---------------------------------------------------------------------------
 // AboutDialog
 // ---------------------------------------------------------------------------
-inline void PushAboutDialog(dsys::DialogQueue& queue,
-                            std::function<void()> on_close) {
+inline void PushAboutDialog(dsys::DialogQueue& queue, std::function<void()> on_close) {
     dsys::AboutDialogPayload p;
     p.id = "about-dialog";
     p.on_close = std::move(on_close);
@@ -255,8 +236,7 @@ inline void PushAboutDialog(dsys::DialogQueue& queue,
 // ---------------------------------------------------------------------------
 // TasksView / TeamsView
 // ---------------------------------------------------------------------------
-inline void PushTasksView(dsys::DialogQueue& queue,
-                          std::function<void()> on_close) {
+inline void PushTasksView(dsys::DialogQueue& queue, std::function<void()> on_close) {
     dsys::TasksViewPayload p;
     p.id = "tasks-view";
     p.selected_index = 0;
@@ -264,8 +244,7 @@ inline void PushTasksView(dsys::DialogQueue& queue,
     queue.push_modal(std::move(p));
 }
 
-inline void PushTeamsView(dsys::DialogQueue& queue,
-                          std::function<void()> on_close) {
+inline void PushTeamsView(dsys::DialogQueue& queue, std::function<void()> on_close) {
     dsys::TeamsViewPayload p;
     p.id = "teams-view";
     p.selected_index = 0;
@@ -276,8 +255,7 @@ inline void PushTeamsView(dsys::DialogQueue& queue,
 // ---------------------------------------------------------------------------
 // ExportDialog
 // ---------------------------------------------------------------------------
-inline void PushExportDialog(dsys::DialogQueue& queue,
-                             std::string format,
+inline void PushExportDialog(dsys::DialogQueue& queue, std::string format,
                              std::function<void(bool do_export)> on_response) {
     dsys::ExportDialogPayload p;
     p.id = "export-dialog";
@@ -289,26 +267,22 @@ inline void PushExportDialog(dsys::DialogQueue& queue,
 // ---------------------------------------------------------------------------
 // DiffDialog
 // ---------------------------------------------------------------------------
-inline void PushDiffDialog(dsys::DialogQueue& queue,
-                           std::string title,
-                           std::string before_text,
-                           std::string after_text,
-                           std::function<void(bool accept)> on_response) {
+inline void PushDiffDialog(dsys::DialogQueue& queue, std::string title, std::string before_text,
+                           std::string after_text, std::function<void(bool accept)> on_response) {
     dsys::DiffDialogPayload p;
     p.id = "diff-dialog";
     p.title = std::move(title);
     p.before_text = std::move(before_text);
-    p.after_text  = std::move(after_text);
+    p.after_text = std::move(after_text);
     p.on_response = std::move(on_response);
-    p.on_close    = []() {};
+    p.on_close = []() {};
     queue.push_modal(std::move(p));
 }
 
 // ---------------------------------------------------------------------------
 // GlobalSearch / HistorySearch
 // ---------------------------------------------------------------------------
-inline void PushGlobalSearch(dsys::DialogQueue& queue,
-                             std::string query,
+inline void PushGlobalSearch(dsys::DialogQueue& queue, std::string query,
                              std::function<void()> on_close) {
     dsys::GlobalSearchPayload p;
     p.id = "global-search";
@@ -318,8 +292,7 @@ inline void PushGlobalSearch(dsys::DialogQueue& queue,
     queue.push_modal(std::move(p));
 }
 
-inline void PushHistorySearch(dsys::DialogQueue& queue,
-                              std::string query,
+inline void PushHistorySearch(dsys::DialogQueue& queue, std::string query,
                               std::function<void(std::string_view conversation_id)> on_select) {
     dsys::HistorySearchPayload p;
     p.id = "history-search";
@@ -332,8 +305,7 @@ inline void PushHistorySearch(dsys::DialogQueue& queue,
 // ---------------------------------------------------------------------------
 // FeedbackSurvey
 // ---------------------------------------------------------------------------
-inline void PushFeedbackSurvey(dsys::DialogQueue& queue,
-                               std::function<void()> on_close) {
+inline void PushFeedbackSurvey(dsys::DialogQueue& queue, std::function<void()> on_close) {
     dsys::FeedbackSurveyPayload p;
     p.id = "feedback-survey";
     p.state = dsys::FeedbackSurveyState::Open;
@@ -345,8 +317,7 @@ inline void PushFeedbackSurvey(dsys::DialogQueue& queue,
 // ---------------------------------------------------------------------------
 // ManagedSettingsSecurity
 // ---------------------------------------------------------------------------
-inline void PushManagedSettingsSecurity(dsys::DialogQueue& queue,
-                                        std::function<void()> on_close) {
+inline void PushManagedSettingsSecurity(dsys::DialogQueue& queue, std::function<void()> on_close) {
     dsys::ManagedSettingsSecurityPayload p;
     p.id = "managed-settings-security";
     p.selected_index = 0;
@@ -363,9 +334,7 @@ inline void PushManagedSettingsSecurity(dsys::DialogQueue& queue,
 // tab, row, or auto-open an action panel).  menu_selected is retained on
 // the payload for back-compat but is no longer used for routing (no
 // card dashboard — routes straight to the tabs).
-inline void PushPluginDialog(dsys::DialogQueue& queue,
-                             int menu_selected,
-                             std::string id_suffix,
+inline void PushPluginDialog(dsys::DialogQueue& queue, int menu_selected, std::string id_suffix,
                              std::function<void()> on_close) {
     dsys::PluginDialogPayload p;
     p.id = "plugins-dialog" + (id_suffix.empty() ? "" : ":" + std::move(id_suffix));
@@ -383,8 +352,7 @@ inline void PushPluginDialog(dsys::DialogQueue& queue,
 // constructed; renderers that actually need the state object check for it
 // and build lazily.
 // ---------------------------------------------------------------------------
-inline void PushTrustDialog(dsys::DialogQueue& queue,
-                            std::string scope,
+inline void PushTrustDialog(dsys::DialogQueue& queue, std::string scope,
                             std::function<void(bool)> /*on_response_adapter_ignored_by_payload*/) {
     dsys::TrustDialogPayload p;
     p.id = "trust-dialog:" + std::move(scope);
@@ -397,8 +365,7 @@ inline void PushTrustDialog(dsys::DialogQueue& queue,
 // CommandMetadata dispatcher (UI:* tag → push corresponding dialog)
 // ---------------------------------------------------------------------------
 // 2-arg canonical form (used everywhere).
-inline bool PushFromCommandMetadata(dsys::DialogQueue& queue,
-                                    std::string_view metadata) {
+inline bool PushFromCommandMetadata(dsys::DialogQueue& queue, std::string_view metadata) {
     // Agents / wizards — standalone-slot fullscreen payloads.
     if (metadata == "CREATE_AGENT") {
         dsys::CreateAgentWizardPayload p;
@@ -419,7 +386,7 @@ inline bool PushFromCommandMetadata(dsys::DialogQueue& queue,
         return true;
     }
     if (metadata == "UI:settings") {
-        PushSettingsPanel(queue, "general", [](){});
+        PushSettingsPanel(queue, "general", []() {});
         return true;
     }
     if (metadata == "UI:permissions") {
@@ -428,65 +395,65 @@ inline bool PushFromCommandMetadata(dsys::DialogQueue& queue,
         // sets screen_state_->dialog_store.settings_initial_tab and switches mode to
         // SettingsView directly.  This queue-push form is provided for
         // callers that route exclusively through PushFromCommandMetadata.
-        PushSettingsPanel(queue, "Permissions", [](){});
+        PushSettingsPanel(queue, "Permissions", []() {});
         return true;
     }
     if (metadata == "UI:help") {
-        PushHelpView(queue, "commands", [](){});
+        PushHelpView(queue, "commands", []() {});
         return true;
     }
     if (metadata == "UI:config") {
         dsys::ConfigDialogPayload p;
         p.id = "config-dialog";
-        p.on_close = [](){};
+        p.on_close = []() {};
         queue.push_modal(std::move(p));
         return true;
     }
     if (metadata == "UI:mcp") {
         dsys::MCPDialogPayload p;
         p.id = "mcp-dialog";
-        p.on_close = [](){};
+        p.on_close = []() {};
         queue.push_modal(std::move(p));
         return true;
     }
     if (metadata == "UI:quick-open") {
-        PushQuickOpen(queue, {}, "", [](int, bool){});
+        PushQuickOpen(queue, {}, "", [](int, bool) {});
         return true;
     }
     if (metadata == "UI:about") {
-        PushAboutDialog(queue, [](){});
+        PushAboutDialog(queue, []() {});
         return true;
     }
     if (metadata == "UI:tasks") {
-        PushTasksView(queue, [](){});
+        PushTasksView(queue, []() {});
         return true;
     }
     if (metadata == "UI:teams") {
-        PushTeamsView(queue, [](){});
+        PushTeamsView(queue, []() {});
         return true;
     }
     if (metadata == "UI:export") {
-        PushExportDialog(queue, "markdown", [](bool){});
+        PushExportDialog(queue, "markdown", [](bool) {});
         return true;
     }
     if (metadata == "DIFF_DIALOG") {
-        PushDiffDialog(queue, "", "", "", [](bool){});
+        PushDiffDialog(queue, "", "", "", [](bool) {});
         return true;
     }
     if (metadata == "UI:feedback") {
-        PushFeedbackSurvey(queue, [](){});
+        PushFeedbackSurvey(queue, []() {});
         return true;
     }
     if (metadata == "GLOBAL_SEARCH") {
-        PushGlobalSearch(queue, "", [](){});
+        PushGlobalSearch(queue, "", []() {});
         return true;
     }
     if (metadata == "HISTORY_SEARCH") {
-        PushHistorySearch(queue, "", [](std::string_view){});
+        PushHistorySearch(queue, "", [](std::string_view) {});
         return true;
     }
     if (metadata == "MANAGED_SETTINGS_SECURITY") {
-        PushManagedSettingsSecurity(queue, [](){});
+        PushManagedSettingsSecurity(queue, []() {});
         return true;
     }
     if (metadata == "UI:model-picker") {
@@ -496,7 +463,7 @@ inline bool PushFromCommandMetadata(dsys::DialogQueue& queue,
         // the actual model switch is performed by the command handler when
         // the user selects a model (which dispatches SwitchModel via the
         // AppState action system — see loom.commands.model).
-        PushModelSwitch(queue, "", "", [](bool){});
+        PushModelSwitch(queue, "", "", [](bool) {});
         return true;
     }
     // ── Plugin dialog — all "UI:plugins:*" variants map to the same   ──
@@ -507,59 +474,50 @@ inline bool PushFromCommandMetadata(dsys::DialogQueue& queue,
     //    back-compat but is no longer used for routing.                 ──
     if (metadata == "UI:plugins:discover-plugins") {
         // Discover tab (trending & recommended plugins)
-        PushPluginDialog(queue, 2, "discover-plugins",
-                         [&queue]() { queue.pop_modal(); });
+        PushPluginDialog(queue, 2, "discover-plugins", [&queue]() { queue.pop_modal(); });
         return true;
     }
     if (metadata == "UI:plugins:manage-plugins") {
         // Installed tab (enable/disable/uninstall)
-        PushPluginDialog(queue, 0, "manage-plugins",
-                         [&queue]() { queue.pop_modal(); });
+        PushPluginDialog(queue, 0, "manage-plugins", [&queue]() { queue.pop_modal(); });
         return true;
     }
     if (metadata == "UI:plugins:manage-marketplaces") {
         // Marketplaces tab (marketplace CRUD: add/remove/update)
-        PushPluginDialog(queue, 3, "manage-marketplaces",
-                         [&queue]() { queue.pop_modal(); });
+        PushPluginDialog(queue, 3, "manage-marketplaces", [&queue]() { queue.pop_modal(); });
         return true;
     }
     if (metadata == "UI:plugins:add-marketplace") {
         // Marketplaces tab, pre-open the add-input form
-        PushPluginDialog(queue, 3, "add-marketplace",
-                         [&queue]() { queue.pop_modal(); });
+        PushPluginDialog(queue, 3, "add-marketplace", [&queue]() { queue.pop_modal(); });
         return true;
     }
     if (metadata.starts_with("UI:plugins:browse-marketplace:")) {
         // Browse subtab scoped to a single marketplace
         constexpr auto kPrefixLen = sizeof("UI:plugins:") - 1;  // skip "UI:plugins:"
-        PushPluginDialog(queue, 1,
-            std::string{metadata.substr(kPrefixLen)},
-            [&queue]() { queue.pop_modal(); });
+        PushPluginDialog(queue, 1, std::string{metadata.substr(kPrefixLen)},
+                         [&queue]() { queue.pop_modal(); });
         return true;
     }
     if (metadata.starts_with("UI:plugins:manage-plugins?")) {
         // Installed tab, with action query (e.g. ?action=uninstall)
         constexpr auto kPrefixLen = sizeof("UI:plugins:") - 1;
-        PushPluginDialog(queue, 0,
-            std::string{metadata.substr(kPrefixLen)},
-            [&queue]() { queue.pop_modal(); });
+        PushPluginDialog(queue, 0, std::string{metadata.substr(kPrefixLen)},
+                         [&queue]() { queue.pop_modal(); });
         return true;
     }
     if (metadata.starts_with("UI:plugins:manage-marketplaces?")) {
         // Marketplaces tab, with action query (e.g. ?action=remove)
         constexpr auto kPrefixLen = sizeof("UI:plugins:") - 1;
-        PushPluginDialog(queue, 3,
-            std::string{metadata.substr(kPrefixLen)},
-            [&queue]() { queue.pop_modal(); });
+        PushPluginDialog(queue, 3, std::string{metadata.substr(kPrefixLen)},
+                         [&queue]() { queue.pop_modal(); });
         return true;
     }
     // ── Doctor — standalone fullscreen diagnostics ──
     if (metadata == "UI:doctor") {
         dsys::DoctorDialogPayload p;
         p.id = "doctor-dialog";
-        p.on_done = [&queue](std::string /*result*/) {
-            queue.pop_standalone();
-        };
+        p.on_done = [&queue](std::string /*result*/) { queue.pop_standalone(); };
         queue.push_standalone(std::move(p));
         return true;
     }
@@ -567,9 +525,7 @@ inline bool PushFromCommandMetadata(dsys::DialogQueue& queue,
     if (metadata == "UI:hooks") {
         dsys::HooksDialogPayload p;
         p.id = "hooks-config";
-        p.on_close = [&queue]() {
-            queue.pop_modal();
-        };
+        p.on_close = [&queue]() { queue.pop_modal(); };
         queue.push_modal(std::move(p));
         return true;
     }
@@ -577,9 +533,7 @@ inline bool PushFromCommandMetadata(dsys::DialogQueue& queue,
     if (metadata == "UI:statusline") {
         dsys::StatuslineDialogPayload p;
         p.id = "statusline-dialog";
-        p.on_close = [&queue]() {
-            queue.pop_modal();
-        };
+        p.on_close = [&queue]() { queue.pop_modal(); };
         queue.push_modal(std::move(p));
         return true;
     }
@@ -588,7 +542,7 @@ inline bool PushFromCommandMetadata(dsys::DialogQueue& queue,
         dsys::UndercoverCalloutPayload p;
         p.id = "undercover-callout";
         p.is_active = true;
-        p.on_dismiss = [](){};
+        p.on_dismiss = []() {};
         queue.push(std::move(p));
         return true;
     }
@@ -601,7 +555,7 @@ inline bool PushFromCommandMetadata(dsys::DialogQueue& queue,
         } else {
             p.effort_level = "medium";
         }
-        p.on_dismiss = [](){};
+        p.on_dismiss = []() {};
         queue.push(std::move(p));
         return true;
     }
@@ -613,7 +567,7 @@ inline bool PushFromCommandMetadata(dsys::DialogQueue& queue,
             p.host = std::string{metadata.substr(kPrefixLen)};
         }
         p.is_connected = true;
-        p.on_dismiss = [](){};
+        p.on_dismiss = []() {};
         queue.push(std::move(p));
         return true;
     }
@@ -639,14 +593,14 @@ inline bool PushFromCommandMetadata(dsys::DialogQueue& queue,
             auto pos = rest.find('|');
             if (pos != std::string::npos) {
                 p.plugin_name = rest.substr(0, pos);
-                p.hint_text   = rest.substr(pos + 1);
+                p.hint_text = rest.substr(pos + 1);
             } else {
                 p.plugin_name = std::move(rest);
-                p.hint_text   = "Install this plugin for better support.";
+                p.hint_text = "Install this plugin for better support.";
             }
         } else {
             p.plugin_name = "plugin";
-            p.hint_text   = "Install this plugin for better support.";
+            p.hint_text = "Install this plugin for better support.";
         }
         p.on_response = [](bool) {};
         queue.push(std::move(p));
@@ -660,8 +614,7 @@ inline bool PushFromCommandMetadata(dsys::DialogQueue& queue,
 // push() is synchronous (no async phase), we just route via PushFromCommandMetadata
 // and then invoke enqueue_fn if the route matched.
 template <typename EnqueueFn>
-inline bool PushFromCommandMetadata(dsys::DialogQueue& queue,
-                                    std::string_view metadata,
+inline bool PushFromCommandMetadata(dsys::DialogQueue& queue, std::string_view metadata,
                                     EnqueueFn&& enqueue_fn) {
     const bool matched = PushFromCommandMetadata(queue, metadata);
     if (matched) {
@@ -677,4 +630,4 @@ inline bool PushFromCommandMetadata(dsys::DialogQueue& queue,
     return matched;
 }
 
-} // namespace loom::ui::dialogs::triggers
+}  // namespace loom::ui::dialogs::triggers

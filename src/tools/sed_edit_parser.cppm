@@ -28,32 +28,43 @@ export namespace loom::tools::sed_edit_parser {
 // ---------------------------------------------------------------------------
 
 enum class SedParseError {
-    NotASedCommand,          ///< String does not begin with "sed "
-    MalformedShellTokens,    ///< Shell quoting is unbalanced / invalid
-    MissingInPlaceFlag,      ///< In-place edit expected -i flag
-    MissingExpression,       ///< No sed expression found
-    MissingFilePath,         ///< No target file path found
-    MultipleFiles,           ///< More than one file argument
-    UnknownFlag,             ///< Unrecognised command-line flag
-    InvalidSubstitution,     ///< s/// expression is malformed
-    InvalidFlags,            ///< Substitution flags contain disallowed chars
-    InvalidAddress,          ///< Address range is not parseable
-    GlobToken,               ///< Glob patterns present; not supported
+    NotASedCommand,        ///< String does not begin with "sed "
+    MalformedShellTokens,  ///< Shell quoting is unbalanced / invalid
+    MissingInPlaceFlag,    ///< In-place edit expected -i flag
+    MissingExpression,     ///< No sed expression found
+    MissingFilePath,       ///< No target file path found
+    MultipleFiles,         ///< More than one file argument
+    UnknownFlag,           ///< Unrecognised command-line flag
+    InvalidSubstitution,   ///< s/// expression is malformed
+    InvalidFlags,          ///< Substitution flags contain disallowed chars
+    InvalidAddress,        ///< Address range is not parseable
+    GlobToken,             ///< Glob patterns present; not supported
 };
 
 [[nodiscard]] constexpr std::string_view sed_parse_error_name(SedParseError e) noexcept {
     switch (e) {
-        case SedParseError::NotASedCommand:        return "not_a_sed_command";
-        case SedParseError::MalformedShellTokens:  return "malformed_shell_tokens";
-        case SedParseError::MissingInPlaceFlag:    return "missing_in_place_flag";
-        case SedParseError::MissingExpression:     return "missing_expression";
-        case SedParseError::MissingFilePath:       return "missing_file_path";
-        case SedParseError::MultipleFiles:         return "multiple_files";
-        case SedParseError::UnknownFlag:           return "unknown_flag";
-        case SedParseError::InvalidSubstitution:   return "invalid_substitution";
-        case SedParseError::InvalidFlags:          return "invalid_flags";
-        case SedParseError::InvalidAddress:        return "invalid_address";
-        case SedParseError::GlobToken:             return "glob_token";
+    case SedParseError::NotASedCommand:
+        return "not_a_sed_command";
+    case SedParseError::MalformedShellTokens:
+        return "malformed_shell_tokens";
+    case SedParseError::MissingInPlaceFlag:
+        return "missing_in_place_flag";
+    case SedParseError::MissingExpression:
+        return "missing_expression";
+    case SedParseError::MissingFilePath:
+        return "missing_file_path";
+    case SedParseError::MultipleFiles:
+        return "multiple_files";
+    case SedParseError::UnknownFlag:
+        return "unknown_flag";
+    case SedParseError::InvalidSubstitution:
+        return "invalid_substitution";
+    case SedParseError::InvalidFlags:
+        return "invalid_flags";
+    case SedParseError::InvalidAddress:
+        return "invalid_address";
+    case SedParseError::GlobToken:
+        return "glob_token";
     }
     return "unknown";
 }
@@ -64,13 +75,13 @@ enum class SedParseError {
 
 /// Operation kind produced by the parser.
 enum class SedOp {
-    Substitute,   ///< s/pattern/replacement/flags
-    Delete,       ///< [address]d
-    Append,       ///< [address]a\text
-    Insert,       ///< [address]i\text
-    Change,       ///< [address]c\text
-    Print,        ///< [address]p
-    Transliterate ///< y/src/dest/
+    Substitute,    ///< s/pattern/replacement/flags
+    Delete,        ///< [address]d
+    Append,        ///< [address]a\text
+    Insert,        ///< [address]i\text
+    Change,        ///< [address]c\text
+    Print,         ///< [address]p
+    Transliterate  ///< y/src/dest/
 };
 
 /// A single parsed sed command (one expression unit).
@@ -96,9 +107,7 @@ struct SedCommand {
     bool extended_regex{false};
 
     // True if the 'g' (global) flag is present
-    [[nodiscard]] bool global() const noexcept {
-        return flags.find('g') != std::string::npos;
-    }
+    [[nodiscard]] bool global() const noexcept { return flags.find('g') != std::string::npos; }
 
     // True if any of the case-insensitive flags are present
     [[nodiscard]] bool case_insensitive() const noexcept {
@@ -113,17 +122,16 @@ struct SedCommand {
 
 /// Top-level in-place edit descriptor (matches TS SedEditInfo shape).
 struct SedEditInfo {
-    std::string file_path;         ///< Target file
-    std::string pattern;           ///< Regex pattern (substitution only)
-    std::string replacement;       ///< Replacement text
-    std::string flags;             ///< Substitution flag chars
-    bool extended_regex{false};    ///< -E / -r was passed
-    std::vector<SedCommand> commands; ///< All parsed sub-commands
+    std::string file_path;             ///< Target file
+    std::string pattern;               ///< Regex pattern (substitution only)
+    std::string replacement;           ///< Replacement text
+    std::string flags;                 ///< Substitution flag chars
+    bool extended_regex{false};        ///< -E / -r was passed
+    std::vector<SedCommand> commands;  ///< All parsed sub-commands
 };
 
 /// Result alias — follows project std::expected convention.
-template <typename T>
-using SedResult = std::expected<T, SedParseError>;
+template <typename T> using SedResult = std::expected<T, SedParseError>;
 
 // ---------------------------------------------------------------------------
 // Internal helpers
@@ -174,7 +182,7 @@ namespace detail {
     cmd.op = SedOp::Substitute;
 
     enum class State { Pattern, Replacement, Flags } state = State::Pattern;
-    std::string *current_field = &cmd.pattern;
+    std::string* current_field = &cmd.pattern;
 
     for (std::size_t j = 0; j < rest.size(); ++j) {
         const char c = rest[j];
@@ -235,7 +243,7 @@ namespace detail {
     return std::move(*parsed);
 }
 
-} // namespace detail
+}  // namespace detail
 
 // ---------------------------------------------------------------------------
 // Public API — parse_sed_commands
@@ -243,8 +251,7 @@ namespace detail {
 
 /// Parse a full `sed …` command line into a vector of structured commands.
 /// The input is the full raw shell command (e.g. "sed -i 's/foo/bar/g' f.txt").
-[[nodiscard]] inline SedResult<std::vector<SedCommand>>
-parse_sed_commands(std::string_view input) {
+[[nodiscard]] inline SedResult<std::vector<SedCommand>> parse_sed_commands(std::string_view input) {
     const auto trimmed = detail::trim(input);
 
     // Must start with "sed"
@@ -275,7 +282,7 @@ parse_sed_commands(std::string_view input) {
                 const auto& next = args[i + 1];
                 if (!next.empty() && !next.starts_with('-') &&
                     (next == "." || next.starts_with('.'))) {
-                    ++i; // consume suffix
+                    ++i;  // consume suffix
                 }
             }
             continue;
@@ -404,9 +411,12 @@ parse_sed_commands(std::string_view input) {
                     const char op_char = piece[op_pos - 1];
                     if (op_char == 'a' || op_char == 'i' || op_char == 'c') {
                         SedCommand c;
-                        if (op_char == 'a') c.op = SedOp::Append;
-                        else if (op_char == 'i') c.op = SedOp::Insert;
-                        else c.op = SedOp::Change;
+                        if (op_char == 'a')
+                            c.op = SedOp::Append;
+                        else if (op_char == 'i')
+                            c.op = SedOp::Insert;
+                        else
+                            c.op = SedOp::Change;
                         auto addr = detail::trim(piece.substr(0, op_pos - 1));
                         if (!addr.empty()) c.address_start = std::string(addr);
                         if (op_pos + 1 < piece.size()) {
@@ -450,8 +460,7 @@ parse_sed_commands(std::string_view input) {
 /// Parse the full command into an in-place edit descriptor.
 /// Returns `nullopt`-via-unexpected whenever the command is NOT a simple
 /// `sed -i 's/pattern/replacement/flags' file` form.
-[[nodiscard]] inline SedResult<SedEditInfo>
-parse_sed_edit_command(std::string_view command) {
+[[nodiscard]] inline SedResult<SedEditInfo> parse_sed_edit_command(std::string_view command) {
     const auto trimmed = detail::trim(command);
 
     if (!trimmed.starts_with("sed")) {
@@ -563,12 +572,24 @@ namespace detail {
 
 // Placeholder tokens used during BRE→ERE conversion.  Using the same
 // null-byte-delimited sentinel approach as TS but static C++ strings.
-constexpr std::string_view kBsPh  = "\x00" "BACKSLASH"  "\x00";
-constexpr std::string_view kPlusPh= "\x00" "PLUS"       "\x00";
-constexpr std::string_view kQstPh = "\x00" "QUESTION"   "\x00";
-constexpr std::string_view kPipePh= "\x00" "PIPE"       "\x00";
-constexpr std::string_view kLpPh  = "\x00" "LPAREN"     "\x00";
-constexpr std::string_view kRpPh  = "\x00" "RPAREN"     "\x00";
+constexpr std::string_view kBsPh = "\x00"
+                                   "BACKSLASH"
+                                   "\x00";
+constexpr std::string_view kPlusPh = "\x00"
+                                     "PLUS"
+                                     "\x00";
+constexpr std::string_view kQstPh = "\x00"
+                                    "QUESTION"
+                                    "\x00";
+constexpr std::string_view kPipePh = "\x00"
+                                     "PIPE"
+                                     "\x00";
+constexpr std::string_view kLpPh = "\x00"
+                                   "LPAREN"
+                                   "\x00";
+constexpr std::string_view kRpPh = "\x00"
+                                   "RPAREN"
+                                   "\x00";
 
 inline void replace_all_str(std::string& s, std::string_view from, std::string_view to) {
     if (from.empty()) return;
@@ -579,7 +600,7 @@ inline void replace_all_str(std::string& s, std::string_view from, std::string_v
     }
 }
 
-} // namespace detail
+}  // namespace detail
 
 /// Convert a sed BRE pattern into a C++ (ERE) regex pattern.
 /// Mirrors the TS `applySedSubstitution` preprocessing step.
@@ -588,17 +609,17 @@ inline void replace_all_str(std::string& s, std::string_view from, std::string_v
     detail::replace_all_str(pattern, "\\/", "/");
 
     if (extended_regex) {
-        return pattern; // ERE matches C++ std::regex semantics closely enough
+        return pattern;  // ERE matches C++ std::regex semantics closely enough
     }
 
     // Step 1: protect literal backslash pairs.
     detail::replace_all_str(pattern, "\\\\", std::string(detail::kBsPh));
     // Step 2: convert BRE-escaped metachars → placeholders
-    detail::replace_all_str(pattern, "\\+",  std::string(detail::kPlusPh));
-    detail::replace_all_str(pattern, "\\?",  std::string(detail::kQstPh));
-    detail::replace_all_str(pattern, "\\|",  std::string(detail::kPipePh));
-    detail::replace_all_str(pattern, "\\(",  std::string(detail::kLpPh));
-    detail::replace_all_str(pattern, "\\)",  std::string(detail::kRpPh));
+    detail::replace_all_str(pattern, "\\+", std::string(detail::kPlusPh));
+    detail::replace_all_str(pattern, "\\?", std::string(detail::kQstPh));
+    detail::replace_all_str(pattern, "\\|", std::string(detail::kPipePh));
+    detail::replace_all_str(pattern, "\\(", std::string(detail::kLpPh));
+    detail::replace_all_str(pattern, "\\)", std::string(detail::kRpPh));
     // Step 3: escape literal (un-escaped) metacharacters
     detail::replace_all_str(pattern, "+", "\\+");
     detail::replace_all_str(pattern, "?", "\\?");
@@ -606,12 +627,12 @@ inline void replace_all_str(std::string& s, std::string_view from, std::string_v
     detail::replace_all_str(pattern, "(", "\\(");
     detail::replace_all_str(pattern, ")", "\\)");
     // Step 4: restore placeholders → ERE equivalents
-    detail::replace_all_str(pattern, detail::kBsPh,   "\\\\");
+    detail::replace_all_str(pattern, detail::kBsPh, "\\\\");
     detail::replace_all_str(pattern, detail::kPlusPh, "+");
-    detail::replace_all_str(pattern, detail::kQstPh,  "?");
+    detail::replace_all_str(pattern, detail::kQstPh, "?");
     detail::replace_all_str(pattern, detail::kPipePh, "|");
-    detail::replace_all_str(pattern, detail::kLpPh,   "(");
-    detail::replace_all_str(pattern, detail::kRpPh,   ")");
+    detail::replace_all_str(pattern, detail::kLpPh, "(");
+    detail::replace_all_str(pattern, detail::kRpPh, ")");
 
     return pattern;
 }
@@ -622,11 +643,11 @@ inline void replace_all_str(std::string& s, std::string_view from, std::string_v
 
 /// Apply a single substitution to content, mimicking JS replace() call
 /// semantics.  Uses std::regex internally.
-[[nodiscard]] inline std::string
-apply_sed_substitution(std::string_view content, const SedEditInfo& info) {
+[[nodiscard]] inline std::string apply_sed_substitution(std::string_view content,
+                                                        const SedEditInfo& info) {
     // Build regex flags
     std::regex_constants::syntax_option_type opts = std::regex::ECMAScript;
-    if (info.extended_regex) opts |= std::regex::icase; // no-op placeholder — handled below
+    if (info.extended_regex) opts |= std::regex::icase;  // no-op placeholder — handled below
     // ECMAScript is the default and matches JS semantics closest.
 
     auto ere_pattern = bre_to_ere(info.pattern, info.extended_regex);
@@ -646,8 +667,7 @@ apply_sed_substitution(std::string_view content, const SedEditInfo& info) {
         //   &  → $& (full match, escaped as $$& in C++ regex)
         // (C++ std::regex_replace uses $& for the whole match too — like JS.)
 
-        constexpr std::string_view kEscAmpPh =
-            "___ESCAPED_AMPERSAND_2F7A9C4E___";
+        constexpr std::string_view kEscAmpPh = "___ESCAPED_AMPERSAND_2F7A9C4E___";
         std::string repl = info.replacement;
         detail::replace_all_str(repl, "\\/", "/");
         detail::replace_all_str(repl, "\\&", std::string(kEscAmpPh));
@@ -660,7 +680,7 @@ apply_sed_substitution(std::string_view content, const SedEditInfo& info) {
             return std::regex_replace(std::string(content), re, repl);
         }
         return std::regex_replace(std::string(content), re, repl,
-                                   std::regex_constants::format_first_only);
+                                  std::regex_constants::format_first_only);
     } catch (const std::regex_error&) {
         // Invalid regex → return content unchanged (mirrors TS behaviour).
         return std::string(content);
@@ -668,8 +688,8 @@ apply_sed_substitution(std::string_view content, const SedEditInfo& info) {
 }
 
 /// Overload taking a single SedCommand directly.
-[[nodiscard]] inline std::string
-apply_sed_substitution(std::string_view content, const SedCommand& cmd) {
+[[nodiscard]] inline std::string apply_sed_substitution(std::string_view content,
+                                                        const SedCommand& cmd) {
     SedEditInfo info;
     info.pattern = cmd.pattern;
     info.replacement = cmd.replacement;
@@ -678,4 +698,4 @@ apply_sed_substitution(std::string_view content, const SedCommand& cmd) {
     return apply_sed_substitution(content, info);
 }
 
-} // namespace loom::tools::sed_edit_parser
+}  // namespace loom::tools::sed_edit_parser

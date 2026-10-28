@@ -28,18 +28,18 @@ struct TeammateCoordinator::Impl {
     std::string teammate_self_team_;
 };
 
-TeammateCoordinator::TeammateCoordinator() : impl_(std::make_unique<Impl>()) {}
+TeammateCoordinator::TeammateCoordinator()
+    : impl_(std::make_unique<Impl>()) {}
+
 TeammateCoordinator::~TeammateCoordinator() = default;
 
 // ── Self-contained methods ──────────────────────────────────────────────
 
 bool TeammateCoordinator::running_as_pane_teammate() const {
-    return !impl_->teammate_self_agent_name_.empty() &&
-           !impl_->teammate_self_team_.empty();
+    return !impl_->teammate_self_agent_name_.empty() && !impl_->teammate_self_team_.empty();
 }
 
-void TeammateCoordinator::configure_for_testing(
-    std::string agent_name, std::string team) {
+void TeammateCoordinator::configure_for_testing(std::string agent_name, std::string team) {
     impl_->teammate_self_agent_name_ = std::move(agent_name);
     impl_->teammate_self_team_ = std::move(team);
 }

@@ -1,16 +1,17 @@
 /// @file test_ui_runtime.cpp
-/// @brief Split from test_ui.cpp - AppRuntime, E2E_Gate, FullscreenLayout, Logo, PromptInput, ReplScreen (SLOC budget fix)
+/// @brief Split from test_ui.cpp - AppRuntime, E2E_Gate, FullscreenLayout, Logo, PromptInput,
+/// ReplScreen (SLOC budget fix)
 
-#include <cstdlib>
-
-#include <ftxui/dom/elements.hpp>
-#include <ftxui/dom/node.hpp>
-#include <ftxui/screen/screen.hpp>
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/event.hpp>
 #include <ftxui/component/mouse.hpp>
+#include <ftxui/dom/elements.hpp>
+#include <ftxui/dom/node.hpp>
+#include <ftxui/screen/screen.hpp>
 #include <gtest/gtest.h>
 #include <httplib.h>
+
+#include <cstdlib>
 
 #include "test_ui_helpers.h"
 
@@ -22,9 +23,6 @@ namespace {
 namespace fs = std::filesystem;
 }
 
-
-
-
 TEST(ReplScreen, CustomStatusLineSuppressesDefaultHintAndNativeStatusBar) {
     namespace repl = loom::ui::repl_screen;
 
@@ -35,17 +33,13 @@ TEST(ReplScreen, CustomStatusLineSuppressesDefaultHintAndNativeStatusBar) {
     state.chrome_store.status_bar.model_name = "native-status-model";
     state.chrome_store.status_bar.cost_usd = 0.1234;
 
-    auto rendered = strip_ansi(render_to_plain_text(
-        repl::RenderReplScreen(state),
-        120,
-        30));
+    auto rendered = strip_ansi(render_to_plain_text(repl::RenderReplScreen(state), 120, 30));
 
     EXPECT_NE(rendered.find("custom status"), std::string::npos);
     EXPECT_EQ(rendered.find("? for shortcuts"), std::string::npos);
     EXPECT_EQ(rendered.find("native-status-model"), std::string::npos);
     EXPECT_EQ(rendered.find("$0.1234"), std::string::npos);
 }
-
 
 TEST(ReplScreen, CustomStatusLineOnlyRendersInPromptMode) {
     namespace repl = loom::ui::repl_screen;
@@ -56,14 +50,10 @@ TEST(ReplScreen, CustomStatusLineOnlyRendersInPromptMode) {
     state.status_line_command = ":";
     state.status_line_text = "custom status";
 
-    auto rendered = strip_ansi(render_to_plain_text(
-        repl::RenderReplScreen(state),
-        120,
-        30));
+    auto rendered = strip_ansi(render_to_plain_text(repl::RenderReplScreen(state), 120, 30));
 
     EXPECT_EQ(rendered.find("custom status"), std::string::npos);
 }
-
 
 TEST(ReplScreen, PastingIndicatorShowsForBatchAndNotSingleKeystroke) {
     namespace repl = loom::ui::repl_screen;
@@ -79,19 +69,15 @@ TEST(ReplScreen, PastingIndicatorShowsForBatchAndNotSingleKeystroke) {
     // Simulate a paste batch by stamping as the CatchEvent handler does,
     // then render: the footer must contain "Pasting text…".
     state.pasting_since = std::chrono::steady_clock::now();
-    auto pasting = strip_ansi(render_to_plain_text(
-        repl::RenderReplScreen(state), 120, 30));
+    auto pasting = strip_ansi(render_to_plain_text(repl::RenderReplScreen(state), 120, 30));
     EXPECT_NE(pasting.find("Pasting text"), std::string::npos);
 
     // After the 100ms window the hint disappears (event-driven re-render).
     std::this_thread::sleep_for(std::chrono::milliseconds(120));
-    auto settled = strip_ansi(render_to_plain_text(
-        repl::RenderReplScreen(state), 120, 30));
+    auto settled = strip_ansi(render_to_plain_text(repl::RenderReplScreen(state), 120, 30));
     EXPECT_EQ(settled.find("Pasting text"), std::string::npos);
-    EXPECT_FALSE(state.pasting_since.has_value())
-        << "stale timestamp should be cleared on render";
+    EXPECT_FALSE(state.pasting_since.has_value()) << "stale timestamp should be cleared on render";
 }
-
 
 TEST(ReplScreen, CtrlLRedrawsWithoutMutatingInput) {
     namespace repl = loom::ui::repl_screen;
@@ -102,10 +88,8 @@ TEST(ReplScreen, CtrlLRedrawsWithoutMutatingInput) {
     state->input_text = "hello";
     state->input_cursor = 5;
     state->autocomplete_suggestions = {
-        {.display_text = "/help", .description = "help",
-         .insert_text = "/help "},
-        {.display_text = "/hi", .description = "hi",
-         .insert_text = "/hi "},
+        {.display_text = "/help", .description = "help", .insert_text = "/help "},
+        {.display_text = "/hi", .description = "hi", .insert_text = "/hi "},
     };
     state->autocomplete_index = 1;
 
@@ -116,14 +100,12 @@ TEST(ReplScreen, CtrlLRedrawsWithoutMutatingInput) {
 
     EXPECT_TRUE(component->OnEvent(ftxui::Event::Character("\x0C")));
     EXPECT_TRUE(redraw) << "Ctrl+L must invoke the on_redraw callback";
-    EXPECT_EQ(state->input_text, "hello")
-        << "redraw must never clear the input";
+    EXPECT_EQ(state->input_text, "hello") << "redraw must never clear the input";
     EXPECT_EQ(state->input_cursor, 5u);
     EXPECT_EQ(state->autocomplete_suggestions.size(), 2u);
     EXPECT_EQ(state->autocomplete_index, 1);
 
-    const auto rendered = strip_ansi(render_to_plain_text(
-        repl::RenderReplScreen(*state), 120, 30));
+    const auto rendered = strip_ansi(render_to_plain_text(repl::RenderReplScreen(*state), 120, 30));
     EXPECT_NE(rendered.find("hello"), std::string::npos);
 
     // Global redraw works (defaultBindings.ts:42 global context).
@@ -135,10 +117,8 @@ TEST(ReplScreen, CtrlLRedrawsWithoutMutatingInput) {
     pcbs.on_redraw = [&] { panel_redraw = true; };
     auto pcomp = repl::ReplScreen(pstate, std::move(pcbs));
     EXPECT_TRUE(pcomp->OnEvent(ftxui::Event::Character("\x0C")));
-    EXPECT_TRUE(panel_redraw)
-        << "Ctrl+L must trigger a global redraw";
+    EXPECT_TRUE(panel_redraw) << "Ctrl+L must trigger a global redraw";
 }
-
 
 TEST(ReplScreen, EscapeDoublePressClearsInputAndSavesToHistory) {
     namespace repl = loom::ui::repl_screen;
@@ -149,9 +129,7 @@ TEST(ReplScreen, EscapeDoublePressClearsInputAndSavesToHistory) {
 
     std::string saved;
     repl::ReplScreenCallbacks callbacks;
-    callbacks.on_save_to_history = [&](const std::string& text) {
-        saved = text;
-    };
+    callbacks.on_save_to_history = [&](const std::string& text) { saved = text; };
     auto component = repl::ReplScreen(state, std::move(callbacks));
 
     for (char c : std::string("discard me")) {
@@ -162,8 +140,7 @@ TEST(ReplScreen, EscapeDoublePressClearsInputAndSavesToHistory) {
     // First Esc arms: text retained, "Esc again to clear" hint shown.
     EXPECT_TRUE(component->OnEvent(ftxui::Event::Escape));
     EXPECT_EQ(state->input_text, "discard me");
-    const auto armed = strip_ansi(render_to_plain_text(
-        repl::RenderReplScreen(*state), 120, 30));
+    const auto armed = strip_ansi(render_to_plain_text(repl::RenderReplScreen(*state), 120, 30));
     EXPECT_NE(armed.find("Esc again to clear"), std::string::npos);
     EXPECT_TRUE(saved.empty());
 
@@ -173,11 +150,9 @@ TEST(ReplScreen, EscapeDoublePressClearsInputAndSavesToHistory) {
     EXPECT_EQ(state->input_cursor, std::string::npos);
     EXPECT_EQ(state->history_index, std::string::npos);
     EXPECT_EQ(saved, "discard me");
-    const auto cleared = strip_ansi(render_to_plain_text(
-        repl::RenderReplScreen(*state), 120, 30));
+    const auto cleared = strip_ansi(render_to_plain_text(repl::RenderReplScreen(*state), 120, 30));
     EXPECT_EQ(cleared.find("Esc again to clear"), std::string::npos);
 }
-
 
 TEST(ReplScreen, EscapeDoublePressExpiresAfterWindowAndRearms) {
     namespace repl = loom::ui::repl_screen;
@@ -193,8 +168,7 @@ TEST(ReplScreen, EscapeDoublePressExpiresAfterWindowAndRearms) {
 
     EXPECT_TRUE(component->OnEvent(ftxui::Event::Escape));
     EXPECT_EQ(state->input_text, "persistent text");
-    const auto armed = strip_ansi(render_to_plain_text(
-        repl::RenderReplScreen(*state), 120, 30));
+    const auto armed = strip_ansi(render_to_plain_text(repl::RenderReplScreen(*state), 120, 30));
     EXPECT_NE(armed.find("Esc again to clear"), std::string::npos);
 
     // Past the 800ms double-press window the second Esc re-arms instead
@@ -203,19 +177,16 @@ TEST(ReplScreen, EscapeDoublePressExpiresAfterWindowAndRearms) {
     EXPECT_TRUE(component->OnEvent(ftxui::Event::Escape));
     EXPECT_EQ(state->input_text, "persistent text")
         << "an expired first press must not clear on the next Esc";
-    const auto rearmed = strip_ansi(render_to_plain_text(
-        repl::RenderReplScreen(*state), 120, 30));
+    const auto rearmed = strip_ansi(render_to_plain_text(repl::RenderReplScreen(*state), 120, 30));
     EXPECT_NE(rearmed.find("Esc again to clear"), std::string::npos)
         << "re-arming must show the hint with a fresh 1000ms timeout";
 
     // The notification itself expires after its 1000ms timeout
     // (event-driven QueueAdvance on render, no ticker).
     std::this_thread::sleep_for(std::chrono::milliseconds(1050));
-    const auto expired = strip_ansi(render_to_plain_text(
-        repl::RenderReplScreen(*state), 120, 30));
+    const auto expired = strip_ansi(render_to_plain_text(repl::RenderReplScreen(*state), 120, 30));
     EXPECT_EQ(expired.find("Esc again to clear"), std::string::npos);
 }
-
 
 TEST(ReplScreen, BridgeStatusPillReflectsProjectionState) {
     namespace repl = loom::ui::repl_screen;
@@ -230,8 +201,7 @@ TEST(ReplScreen, BridgeStatusPillReflectsProjectionState) {
     state.bridge_enabled = true;
     state.bridge_explicit_remote = true;
     state.bridge_connected = true;
-    auto connected = strip_ansi(render_to_plain_text(
-        repl::RenderReplScreen(state), 120, 30));
+    auto connected = strip_ansi(render_to_plain_text(repl::RenderReplScreen(state), 120, 30));
     EXPECT_NE(connected.find("Remote Control"), std::string::npos)
         << "explicit connected bridge should show the status pill";
 
@@ -239,28 +209,23 @@ TEST(ReplScreen, BridgeStatusPillReflectsProjectionState) {
     state.bridge_connected = false;
     state.bridge_explicit_remote = false;
     state.bridge_reconnecting = true;
-    auto reconnecting = strip_ansi(render_to_plain_text(
-        repl::RenderReplScreen(state), 120, 30));
-    EXPECT_NE(reconnecting.find("Remote Control reconnecting"),
-              std::string::npos)
+    auto reconnecting = strip_ansi(render_to_plain_text(repl::RenderReplScreen(state), 120, 30));
+    EXPECT_NE(reconnecting.find("Remote Control reconnecting"), std::string::npos)
         << "implicit remote still surfaces the reconnecting state";
 
     // Implicit remote that is merely connected/disconnected is hidden by
     // RenderBridgeStatus (matches the TS !explicit gate).
     state.bridge_reconnecting = false;
-    auto hidden = strip_ansi(render_to_plain_text(
-        repl::RenderReplScreen(state), 120, 30));
+    auto hidden = strip_ansi(render_to_plain_text(repl::RenderReplScreen(state), 120, 30));
     EXPECT_EQ(hidden.find("Remote Control"), std::string::npos)
         << "non-reconnecting implicit remote must not show the pill";
 
     // Disabled bridge renders no pill at all.
     state.bridge_enabled = false;
     state.bridge_explicit_remote = true;
-    auto disabled = strip_ansi(render_to_plain_text(
-        repl::RenderReplScreen(state), 120, 30));
+    auto disabled = strip_ansi(render_to_plain_text(repl::RenderReplScreen(state), 120, 30));
     EXPECT_EQ(disabled.find("Remote Control"), std::string::npos);
 }
-
 
 TEST(ReplScreen, FreshScreenDoesNotRenderLegacyEmptyState) {
     namespace repl = loom::ui::repl_screen;
@@ -269,10 +234,7 @@ TEST(ReplScreen, FreshScreenDoesNotRenderLegacyEmptyState) {
     state.chrome_store.model_display_name = "GLM-5.2";
     state.cwd = "/tmp/cpp_migration";
 
-    auto rendered = strip_ansi(render_to_plain_text(
-        repl::RenderReplScreen(state),
-        120,
-        32));
+    auto rendered = strip_ansi(render_to_plain_text(repl::RenderReplScreen(state), 120, 32));
 
     EXPECT_NE(rendered.find("Loom"), std::string::npos);
     EXPECT_EQ(rendered.find("Type a message to begin."), std::string::npos);
@@ -290,25 +252,26 @@ TEST(ReplScreen, FreshScreenDoesNotRenderLegacyEmptyState) {
         std::size_t pos = 0;
         while (pos <= rendered.size()) {
             const auto nl = rendered.find('\n', pos);
-            lines.emplace_back(rendered.substr(
-                pos, nl == std::string::npos ? std::string::npos : nl - pos));
+            lines.emplace_back(
+                rendered.substr(pos, nl == std::string::npos ? std::string::npos : nl - pos));
             if (nl == std::string::npos) break;
             pos = nl + 1;
         }
         const auto is_blank = [](const std::string& l) {
             return l.find_first_not_of(' ') == std::string::npos;
         };
-        const auto header_it = std::find_if(lines.begin(), lines.end(),
-            [](const std::string& l) { return l.find("Loom") != std::string::npos; });
-        const auto prompt_it = std::find_if(lines.begin(), lines.end(),
-            [](const std::string& l) { return l.find("\xE2\x9D\xAF") != std::string::npos; });  // ❯ glyph
+        const auto header_it = std::find_if(lines.begin(), lines.end(), [](const std::string& l) {
+            return l.find("Loom") != std::string::npos;
+        });
+        const auto prompt_it = std::find_if(lines.begin(), lines.end(), [](const std::string& l) {
+            return l.find("\xE2\x9D\xAF") != std::string::npos;
+        });  // ❯ glyph
         ASSERT_NE(header_it, lines.end());
         ASSERT_NE(prompt_it, lines.end());
         ASSERT_LT(header_it, prompt_it);
         for (auto it = header_it + 1; it < prompt_it; ++it) {
-            EXPECT_FALSE(is_blank(*it))
-                << "blank row between welcome header and prompt at line "
-                << std::distance(lines.begin(), it);
+            EXPECT_FALSE(is_blank(*it)) << "blank row between welcome header and prompt at line "
+                                        << std::distance(lines.begin(), it);
         }
     }
 }

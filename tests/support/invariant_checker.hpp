@@ -55,6 +55,8 @@
 
 #pragma once
 
+#include <gtest/gtest.h>
+
 #include <cstddef>
 #include <cstdint>
 #include <map>
@@ -63,8 +65,6 @@
 #include <string>
 #include <string_view>
 #include <vector>
-
-#include <gtest/gtest.h>
 
 #include "streaming_replay.hpp"
 
@@ -128,14 +128,12 @@ public:
     //
     // Returns an empty string on pass, a failure message otherwise.
     // ============================================================
-    [[nodiscard]] static std::string check_inv07_grace_expiry(
-        std::string_view screen) {
+    [[nodiscard]] static std::string check_inv07_grace_expiry(std::string_view screen) {
         // The collapsed label is marked by the " (ctrl+o to expand)" hint,
         // which RenderThinkingMessageCollapsed emits exclusively. Within
         // the 3s collapse grace the thinking row is still expanded, so the
         // hint is absent; after expiry it must appear.
-        if (screen.find(kCollapsedThinkingHint) ==
-            std::string_view::npos) {
+        if (screen.find(kCollapsedThinkingHint) == std::string_view::npos) {
             return "INV-07: collapsed thinking label (\" (ctrl+o to "
                    "expand)\") not found after grace expiry";
         }
@@ -147,8 +145,8 @@ public:
     /// targeted tests that need to assert exact occurrence counts
     /// (e.g. Bug 1 regression: streaming text cleared after tool
     /// completion — see test_streaming_replay.cpp).
-    [[nodiscard]] static std::size_t count_text_on_screen(
-        std::string_view screen, std::string_view text) {
+    [[nodiscard]] static std::size_t count_text_on_screen(std::string_view screen,
+                                                          std::string_view text) {
         if (text.size() < 40) return 0;
         const std::string flat = flatten(screen);
         const std::string needle = flatten(text).substr(0, 40);
@@ -162,8 +160,7 @@ private:
     // ============================================================
 
     /// "∴ Thinking…" — U+2234 (∴) + " Thinking" + U+2026 (…).
-    static constexpr std::string_view kThinkingLabel =
-        "\xE2\x88\xB4 Thinking\xE2\x80\xA6";
+    static constexpr std::string_view kThinkingLabel = "\xE2\x88\xB4 Thinking\xE2\x80\xA6";
 
     /// " (ctrl+o to expand)" — the collapsed-label hint (kCtrlOHint in
     /// thinking_message.cppm). Emitted ONLY by
@@ -171,8 +168,7 @@ private:
     /// thinking row. Used by INV-07 (grace expiry). The collapsed label
     /// reads `∴ Thinking  <summary> (ctrl+o to expand)` for a committed
     /// block (duration=0), so the hint — not the glyph — is the marker.
-    static constexpr std::string_view kCollapsedThinkingHint =
-        " (ctrl+o to expand)";
+    static constexpr std::string_view kCollapsedThinkingHint = " (ctrl+o to expand)";
 
     /// "● " — U+25CF (BLACK CIRCLE) + space. Prefix of both the committed
     /// assistant-text row and the committed tool-use row.
@@ -201,6 +197,7 @@ private:
         std::string text;
         std::size_t commit = 0;  // commit sequence number (for ordering)
     };
+
     struct CommittedTool {
         std::string name;
         std::size_t commit = 0;
@@ -218,13 +215,14 @@ private:
         bool exec_done = false;
         std::string result_text;
     };
+
     /// tool_use_id → state (from ToolExecutionStart / ToolExecutionEnd).
     std::map<std::string, ToolState> tools_;
 
-    bool query_running_ = false;   ///< true after first Event, false on EndQuery
-    bool post_commit_ = false;     ///< true after any __commit__ while running
-    bool post_end_query_ = false;  ///< true after __end_query__
-    std::size_t commit_count_ = 0; ///< monotonic commit sequence number
+    bool query_running_ = false;    ///< true after first Event, false on EndQuery
+    bool post_commit_ = false;      ///< true after any __commit__ while running
+    bool post_end_query_ = false;   ///< true after __end_query__
+    std::size_t commit_count_ = 0;  ///< monotonic commit sequence number
 
     // ============================================================
     // State update
@@ -233,13 +231,14 @@ private:
     /// Update internal state from the step that just executed.
     void update_state(const ReplayStep& step) {
         switch (step.kind) {
-            case ReplayStepKind::Event:
-                // The harness sets query_running_ before the first event;
-                // mirror that so post-commit / post-end-query scoping is
-                // accurate.
-                if (!query_running_) query_running_ = true;
-                if (step.event) {
-                    std::visit([this](const auto& e) {
+        case ReplayStepKind::Event:
+            // The harness sets query_running_ before the first event;
+            // mirror that so post-commit / post-end-query scoping is
+            // accurate.
+            if (!query_running_) query_running_ = true;
+            if (step.event) {
+                std::visit(
+                    [this](const auto& e) {
                         using T = std::decay_t<decltype(e)>;
 
                         if constexpr (std::is_same_v<T, loom::core::StreamStart>) {
@@ -249,39 +248,33 @@ private:
                             // do not append to turn-1 entries.
                             thinking_deltas_.clear();
                             block_types_.clear();
-                        } else if constexpr (std::is_same_v<
-                                          T, loom::core::ContentBlockStart>) {
+                        } else if constexpr (std::is_same_v<T, loom::core::ContentBlockStart>) {
                             // Record the block type so later deltas can be
                             // classified as thinking vs text.
                             std::string type;
-                            std::visit([&type](const auto& b) {
-                                using B = std::decay_t<decltype(b)>;
-                                if constexpr (std::is_same_v<
-                                                  B, loom::core::ThinkingBlock>)
-                                    type = "thinking";
-                                else if constexpr (std::is_same_v<
-                                                       B, loom::core::TextBlock>)
-                                    type = "text";
-                                else if constexpr (std::is_same_v<
-                                                       B, loom::core::ToolUseBlock>)
-                                    type = "tool_use";
-                            }, e.block);
+                            std::visit(
+                                [&type](const auto& b) {
+                                    using B = std::decay_t<decltype(b)>;
+                                    if constexpr (std::is_same_v<B, loom::core::ThinkingBlock>)
+                                        type = "thinking";
+                                    else if constexpr (std::is_same_v<B, loom::core::TextBlock>)
+                                        type = "text";
+                                    else if constexpr (std::is_same_v<B, loom::core::ToolUseBlock>)
+                                        type = "tool_use";
+                                },
+                                e.block);
                             block_types_[e.index] = std::move(type);
-                        } else if constexpr (std::is_same_v<
-                                                 T, loom::core::ContentBlockDelta>) {
+                        } else if constexpr (std::is_same_v<T, loom::core::ContentBlockDelta>) {
                             // Accumulate thinking deltas only.
                             auto it = block_types_.find(e.index);
-                            if (it != block_types_.end() &&
-                                it->second == "thinking") {
+                            if (it != block_types_.end() && it->second == "thinking") {
                                 thinking_deltas_[e.index] += e.delta_text;
                             }
-                        } else if constexpr (std::is_same_v<
-                                                 T, loom::core::ToolExecutionStart>) {
+                        } else if constexpr (std::is_same_v<T, loom::core::ToolExecutionStart>) {
                             auto& ts = tools_[e.tool_use_id];
                             ts.name = e.tool_name;
                             ts.exec_started = true;
-                        } else if constexpr (std::is_same_v<
-                                                 T, loom::core::ToolExecutionEnd>) {
+                        } else if constexpr (std::is_same_v<T, loom::core::ToolExecutionEnd>) {
                             auto it = tools_.find(e.tool_use_id);
                             if (it != tools_.end()) {
                                 it->second.exec_done = true;
@@ -290,45 +283,49 @@ private:
                         }
                         // ContentBlockStop / ToolExecutionProgress /
                         // StreamEnd / StreamError need no tracked state.
-                    }, *step.event);
-                }
-                break;
+                    },
+                    *step.event);
+            }
+            break;
 
-            case ReplayStepKind::Commit:
-                if (step.message) {
-                    // ReplayStep::message is a full Message variant; every
-                    // alternative carries a content vector via MessageBase.
-                    std::visit([this](const auto& m) {
+        case ReplayStepKind::Commit:
+            if (step.message) {
+                // ReplayStep::message is a full Message variant; every
+                // alternative carries a content vector via MessageBase.
+                std::visit(
+                    [this](const auto& m) {
                         for (const auto& block : m.content) {
-                            std::visit([this](const auto& b) {
-                                using B = std::decay_t<decltype(b)>;
-                                if constexpr (std::is_same_v<
-                                                  B, loom::core::TextBlock>) {
-                                    committed_texts_.push_back(
-                                        {.text = b.text, .commit = commit_count_});
-                                } else if constexpr (std::is_same_v<
-                                                         B, loom::core::ThinkingBlock>) {
-                                    committed_thinking_.push_back(b.thinking);
-                                } else if constexpr (std::is_same_v<
-                                                         B, loom::core::ToolUseBlock>) {
-                                    committed_tools_.push_back(
-                                        {.name = b.name, .commit = commit_count_});
-                                }
-                            }, block);
+                            std::visit(
+                                [this](const auto& b) {
+                                    using B = std::decay_t<decltype(b)>;
+                                    if constexpr (std::is_same_v<B, loom::core::TextBlock>) {
+                                        committed_texts_.push_back(
+                                            {.text = b.text, .commit = commit_count_});
+                                    } else if constexpr (std::is_same_v<
+                                                             B, loom::core::ThinkingBlock>) {
+                                        committed_thinking_.push_back(b.thinking);
+                                    } else if constexpr (std::is_same_v<B,
+                                                                        loom::core::ToolUseBlock>) {
+                                        committed_tools_.push_back(
+                                            {.name = b.name, .commit = commit_count_});
+                                    }
+                                },
+                                block);
                         }
-                    }, *step.message);
-                }
-                if (query_running_) post_commit_ = true;
-                ++commit_count_;
-                break;
+                    },
+                    *step.message);
+            }
+            if (query_running_) post_commit_ = true;
+            ++commit_count_;
+            break;
 
-            case ReplayStepKind::EndQuery:
-                query_running_ = false;
-                post_end_query_ = true;
-                break;
+        case ReplayStepKind::EndQuery:
+            query_running_ = false;
+            post_end_query_ = true;
+            break;
 
-            case ReplayStepKind::Checkpoint:
-                break;  // no state change
+        case ReplayStepKind::Checkpoint:
+            break;  // no state change
         }
     }
 
@@ -365,16 +362,16 @@ private:
             const std::string flat = flatten(content);
             if (flat.empty()) return;
             // General probe: first 50 chars must appear on screen.
-            if (flat_screen.find(flat.substr(0, 50)) !=
-                std::string_view::npos) {
+            if (flat_screen.find(flat.substr(0, 50)) != std::string_view::npos) {
                 found_any = true;
-                if (flat.size() > longest_visible.size())
-                    longest_visible = flat;
+                if (flat.size() > longest_visible.size()) longest_visible = flat;
             }
         };
 
-        for (const auto& [idx, text] : thinking_deltas_) consider(text);
-        for (const auto& text : committed_thinking_) consider(text);
+        for (const auto& [idx, text] : thinking_deltas_)
+            consider(text);
+        for (const auto& text : committed_thinking_)
+            consider(text);
 
         if (!found_any) {
             return "thinking label present but no tracked thinking content "
@@ -389,8 +386,7 @@ private:
             const std::size_t off = kTruncBoundary + 10;  // 210
             if (off < longest_visible.size()) {
                 const std::string probe = longest_visible.substr(off, 50);
-                if (!probe.empty() &&
-                    flat_screen.find(probe) == std::string_view::npos) {
+                if (!probe.empty() && flat_screen.find(probe) == std::string_view::npos) {
                     return "thinking content beyond char 200 not found on "
                            "screen — truncated?";
                 }
@@ -420,8 +416,7 @@ private:
         for (const auto& ct : committed_texts_) {
             if (ct.text.size() < 40) continue;
             const std::string needle = flatten(ct.text).substr(0, 40);
-            if (needle.size() < 40)
-                continue;  // flatten shrank it below the threshold
+            if (needle.size() < 40) continue;  // flatten shrank it below the threshold
             const auto count = count_occurrences(flat, needle);
             if (count > 2) {
                 return "committed text appears " + std::to_string(count) +
@@ -486,8 +481,7 @@ private:
             // Otherwise look for an Input:/Output: section on the next
             // non-empty line (MCP-style tools).
             if (const auto next = next_non_empty_line(screen, *line_idx)) {
-                const std::string_view next_line =
-                    get_line(screen, *next);
+                const std::string_view next_line = get_line(screen, *next);
                 if (next_line.find("Input:") != std::string_view::npos ||
                     next_line.find("Output:") != std::string_view::npos) {
                     continue;
@@ -511,12 +505,10 @@ private:
     std::string check_inv06(std::string_view screen) const {
         for (const auto& tool : committed_tools_) {
             for (const auto& ct : committed_texts_) {
-                if (ct.commit <= tool.commit)
-                    continue;  // text was not committed after the tool
+                if (ct.commit <= tool.commit) continue;  // text was not committed after the tool
                 if (ct.text.size() < 40) continue;
 
-                const std::string tool_needle =
-                    std::string(kToolBullet) + tool.name;
+                const std::string tool_needle = std::string(kToolBullet) + tool.name;
                 const auto tool_line = find_line(screen, tool_needle);
                 if (!tool_line) continue;  // tool not visible
 
@@ -560,13 +552,14 @@ private:
                 in_ws = false;
             }
         }
-        while (!out.empty() && out.back() == ' ') out.pop_back();
+        while (!out.empty() && out.back() == ' ')
+            out.pop_back();
         return out;
     }
 
     /// Count non-overlapping occurrences of `needle` in `hay`.
-    [[nodiscard]] static std::size_t count_occurrences(
-        std::string_view hay, std::string_view needle) {
+    [[nodiscard]] static std::size_t count_occurrences(std::string_view hay,
+                                                       std::string_view needle) {
         if (needle.empty()) return 0;
         std::size_t count = 0;
         std::size_t pos = 0;
@@ -579,8 +572,8 @@ private:
 
     /// Find the index of the first line that contains `text`.
     /// Lines are split on '\n'. Returns std::nullopt if not found.
-    [[nodiscard]] static std::optional<std::size_t> find_line(
-        std::string_view screen, std::string_view text) {
+    [[nodiscard]] static std::optional<std::size_t> find_line(std::string_view screen,
+                                                              std::string_view text) {
         std::size_t line_idx = 0;
         for (std::size_t start = 0; start < screen.size();) {
             const auto end = screen.find('\n', start);
@@ -597,8 +590,7 @@ private:
 
     /// Get the line at `line_idx` (0-based, split on '\n'). Returns an
     /// empty view if the index is out of range.
-    [[nodiscard]] static std::string_view get_line(
-        std::string_view screen, std::size_t line_idx) {
+    [[nodiscard]] static std::string_view get_line(std::string_view screen, std::size_t line_idx) {
         std::size_t idx = 0;
         for (std::size_t start = 0; start < screen.size();) {
             const auto end = screen.find('\n', start);
@@ -616,8 +608,8 @@ private:
     /// Find the index of the first non-empty (whitespace-only counts as
     /// empty) line strictly after `after_line`. Returns std::nullopt if
     /// there is no such line.
-    [[nodiscard]] static std::optional<std::size_t> next_non_empty_line(
-        std::string_view screen, std::size_t after_line) {
+    [[nodiscard]] static std::optional<std::size_t> next_non_empty_line(std::string_view screen,
+                                                                        std::size_t after_line) {
         std::size_t idx = 0;
         for (std::size_t start = 0; start < screen.size();) {
             const auto end = screen.find('\n', start);

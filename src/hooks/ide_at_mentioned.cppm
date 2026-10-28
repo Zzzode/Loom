@@ -6,12 +6,12 @@ import std;
 export namespace loom::hooks {
 
 struct AtMention {
-    std::string type;                 // "file" | "symbol"
-    std::string value;                // path / symbol text (line anchor stripped)
-    int start;                        // byte offset of the leading '@' in the input
-    int end;                          // byte offset one past the last token char
-    std::optional<int> line_start;    // parsed from a trailing "#L<start>" anchor
-    std::optional<int> line_end;      // parsed from a trailing "#L<start>-<end>" anchor
+    std::string type;               // "file" | "symbol"
+    std::string value;              // path / symbol text (line anchor stripped)
+    int start;                      // byte offset of the leading '@' in the input
+    int end;                        // byte offset one past the last token char
+    std::optional<int> line_start;  // parsed from a trailing "#L<start>" anchor
+    std::optional<int> line_end;    // parsed from a trailing "#L<start>-<end>" anchor
 };
 
 namespace detail {
@@ -32,8 +32,7 @@ inline std::optional<int> parse_digits(std::string_view s) {
 // portion (everything before the anchor) is returned; when a valid anchor is
 // present, line_start/line_end are populated. Tokens without a valid anchor
 // are returned verbatim with the optionals left empty.
-inline std::string strip_line_anchor(std::string_view token,
-                                     std::optional<int>& line_start,
+inline std::string strip_line_anchor(std::string_view token, std::optional<int>& line_start,
                                      std::optional<int>& line_end) {
     line_start.reset();
     line_end.reset();
@@ -45,20 +44,22 @@ inline std::string strip_line_anchor(std::string_view token,
 
     std::string_view anchor = token.substr(hash);
     // Anchor must be "#L" (case-insensitive) followed by at least one digit.
-    if (anchor.size() < 3 || anchor[0] != '#' ||
-        (anchor[1] != 'L' && anchor[1] != 'l') || anchor[2] < '0' || anchor[2] > '9') {
+    if (anchor.size() < 3 || anchor[0] != '#' || (anchor[1] != 'L' && anchor[1] != 'l') ||
+        anchor[2] < '0' || anchor[2] > '9') {
         return std::string(token);
     }
 
     std::string_view nums = anchor.substr(2);
     std::size_t i = 0;
-    while (i < nums.size() && nums[i] >= '0' && nums[i] <= '9') ++i;
+    while (i < nums.size() && nums[i] >= '0' && nums[i] <= '9')
+        ++i;
     line_start = parse_digits(nums.substr(0, i));
 
     if (i < nums.size() && nums[i] == '-') {
         std::size_t j = i + 1;
         std::size_t k = j;
-        while (k < nums.size() && nums[k] >= '0' && nums[k] <= '9') ++k;
+        while (k < nums.size() && nums[k] >= '0' && nums[k] <= '9')
+            ++k;
         if (k > j) {
             line_end = parse_digits(nums.substr(j, k - j));
         }
@@ -67,7 +68,7 @@ inline std::string strip_line_anchor(std::string_view token,
     return std::string(token.substr(0, hash));
 }
 
-} // namespace detail
+}  // namespace detail
 
 inline std::vector<AtMention> parse_at_mentions(std::string_view input) {
     std::vector<AtMention> mentions;
@@ -107,8 +108,8 @@ inline std::vector<AtMention> parse_at_mentions(std::string_view input) {
 // joined to workspace_root, the result is weakly-canonicalised, and the path
 // must exist and be a regular file. Symbol mentions are not resolvable here
 // (no symbol index is wired) and return an explanatory error.
-inline std::expected<std::string, std::string>
-resolve_at_mention(const AtMention& mention, std::string_view workspace_root) {
+inline std::expected<std::string, std::string> resolve_at_mention(const AtMention& mention,
+                                                                  std::string_view workspace_root) {
     if (mention.value.empty()) {
         return std::unexpected("Empty mention value");
     }
@@ -144,8 +145,7 @@ resolve_at_mention(const AtMention& mention, std::string_view workspace_root) {
 }
 
 // Convenience overload: resolve against the process current working directory.
-inline std::expected<std::string, std::string>
-resolve_at_mention(const AtMention& mention) {
+inline std::expected<std::string, std::string> resolve_at_mention(const AtMention& mention) {
     std::error_code ec;
     auto cwd = std::filesystem::current_path(ec);
     if (ec) {
@@ -157,8 +157,8 @@ resolve_at_mention(const AtMention& mention) {
 inline std::vector<std::string> get_at_mention_completions(std::string_view prefix) {
     // Return common @mention targets that match the given prefix
     static const std::vector<std::string> known_targets = {
-        "file", "symbol", "url", "workspace", "selection", "terminal",
-        "git", "problems", "codebase",
+        "file",     "symbol", "url",      "workspace", "selection",
+        "terminal", "git",    "problems", "codebase",
     };
     std::vector<std::string> completions;
     for (const auto& target : known_targets) {
@@ -169,4 +169,4 @@ inline std::vector<std::string> get_at_mention_completions(std::string_view pref
     return completions;
 }
 
-} // namespace loom::hooks
+}  // namespace loom::hooks

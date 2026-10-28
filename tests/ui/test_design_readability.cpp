@@ -24,17 +24,18 @@ namespace todos = loom::ui::todos;
 namespace teams = loom::ui::teams::live;
 namespace figures = loom::ui::design::figures;
 
-constexpr auto kVariants = std::array{
-    theme::ThemeVariant::Dark, theme::ThemeVariant::Light,
-    theme::ThemeVariant::DarkDaltonized, theme::ThemeVariant::LightDaltonized,
-    theme::ThemeVariant::Monochrome, theme::ThemeVariant::LightAnsi,
-    theme::ThemeVariant::DarkAnsi};
-constexpr auto kRgbVariants = std::array{
-    theme::ThemeVariant::Dark, theme::ThemeVariant::Light,
-    theme::ThemeVariant::DarkDaltonized, theme::ThemeVariant::LightDaltonized};
+constexpr auto kVariants =
+    std::array{theme::ThemeVariant::Dark,           theme::ThemeVariant::Light,
+               theme::ThemeVariant::DarkDaltonized, theme::ThemeVariant::LightDaltonized,
+               theme::ThemeVariant::Monochrome,     theme::ThemeVariant::LightAnsi,
+               theme::ThemeVariant::DarkAnsi};
+constexpr auto kRgbVariants =
+    std::array{theme::ThemeVariant::Dark, theme::ThemeVariant::Light,
+               theme::ThemeVariant::DarkDaltonized, theme::ThemeVariant::LightDaltonized};
 
 struct RestoreTheme {
     theme::Theme original = theme::current_theme();
+
     ~RestoreTheme() { theme::set_theme(original); }
 };
 
@@ -49,8 +50,7 @@ std::optional<std::array<int, 3>> Rgb(ftxui::Color color) {
     const char* end = sgr.data() + sgr.size();
     for (std::size_t i = 0; i < channels.size(); ++i) {
         const auto result = std::from_chars(cursor, end, channels[i]);
-        if (result.ec != std::errc{} || channels[i] < 0 || channels[i] > 255)
-            return std::nullopt;
+        if (result.ec != std::errc{} || channels[i] < 0 || channels[i] > 255) return std::nullopt;
         cursor = result.ptr;
         if (i + 1 < channels.size()) {
             if (cursor == end || *cursor++ != ';') return std::nullopt;
@@ -63,11 +63,9 @@ std::optional<std::array<int, 3>> Rgb(ftxui::Color color) {
 double Luminance(const std::array<int, 3>& rgb) {
     auto linear = [](int channel) {
         const double value = static_cast<double>(channel) / 255.0;
-        return value <= 0.04045 ? value / 12.92
-            : std::pow((value + 0.055) / 1.055, 2.4);
+        return value <= 0.04045 ? value / 12.92 : std::pow((value + 0.055) / 1.055, 2.4);
     };
-    return linear(rgb[0]) * 0.2126 + linear(rgb[1]) * 0.7152
-         + linear(rgb[2]) * 0.0722;
+    return linear(rgb[0]) * 0.2126 + linear(rgb[1]) * 0.7152 + linear(rgb[2]) * 0.0722;
 }
 
 void ExpectContrast(ftxui::Color foreground, ftxui::Color background) {
@@ -81,16 +79,14 @@ void ExpectContrast(ftxui::Color foreground, ftxui::Color background) {
 }
 
 ftxui::Screen Paint(ftxui::Element element, int height = 4) {
-    auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(100),
-                                      ftxui::Dimension::Fixed(height));
+    auto screen =
+        ftxui::Screen::Create(ftxui::Dimension::Fixed(100), ftxui::Dimension::Fixed(height));
     ftxui::Render(screen, std::move(element));
     return screen;
 }
 
-void ExpectWordInk(const ftxui::Screen& screen, std::string_view word,
-                   ftxui::Color foreground,
-                   ftxui::Color background = ftxui::Color::Default,
-                   bool struck = false) {
+void ExpectWordInk(const ftxui::Screen& screen, std::string_view word, ftxui::Color foreground,
+                   ftxui::Color background = ftxui::Color::Default, bool struck = false) {
     for (int y = 0; y < screen.dimy(); ++y) {
         for (int x = 0; x + static_cast<int>(word.size()) <= screen.dimx(); ++x) {
             bool matches = true;
@@ -115,8 +111,8 @@ void ExpectWordInk(const ftxui::Screen& screen, std::string_view word,
     ADD_FAILURE() << "Missing rendered word: " << word;
 }
 
-void ExpectGlyphInk(const ftxui::Screen& screen, std::string_view glyph,
-                    ftxui::Color foreground, ftxui::Color background) {
+void ExpectGlyphInk(const ftxui::Screen& screen, std::string_view glyph, ftxui::Color foreground,
+                    ftxui::Color background) {
     for (int y = 0; y < screen.dimy(); ++y) {
         for (int x = 0; x < screen.dimx(); ++x) {
             const auto& pixel = screen.PixelAt(x, y);
@@ -131,18 +127,18 @@ void ExpectGlyphInk(const ftxui::Screen& screen, std::string_view glyph,
 }
 
 std::array<ftxui::Color, 8> AgentColors(const theme::Palette& pal) {
-    return {pal.subagent_red, pal.subagent_blue, pal.subagent_green,
-            pal.subagent_yellow, pal.subagent_purple, pal.subagent_orange,
-            pal.subagent_pink, pal.subagent_cyan};
+    return {pal.subagent_red,    pal.subagent_blue,   pal.subagent_green, pal.subagent_yellow,
+            pal.subagent_purple, pal.subagent_orange, pal.subagent_pink,  pal.subagent_cyan};
 }
 
 std::vector<ftxui::Color> BrandColors(const theme::Palette& pal) {
     std::vector<ftxui::Color> colors{
-        pal.primary, pal.primary_shimmer, pal.bash_border, pal.plan_mode,
-        pal.fast_mode, pal.fast_mode_shimmer, pal.spinner_gold, pal.brief_label,
-        pal.brief_label_you, pal.brief_label_loom, pal.role_pill_user,
-        pal.role_pill_assistant, pal.role_pill_system, pal.role_pill_tool,
-        pal.role_pill_thinking, pal.accent_pink, pal.rainbow_shimmer};
+        pal.primary,          pal.primary_shimmer, pal.bash_border,
+        pal.plan_mode,        pal.fast_mode,       pal.fast_mode_shimmer,
+        pal.spinner_gold,     pal.brief_label,     pal.brief_label_you,
+        pal.brief_label_loom, pal.role_pill_user,  pal.role_pill_assistant,
+        pal.role_pill_system, pal.role_pill_tool,  pal.role_pill_thinking,
+        pal.accent_pink,      pal.rainbow_shimmer};
     colors.insert(colors.end(), pal.rainbow.begin(), pal.rainbow.end());
     colors.insert(colors.end(), pal.rainbow_shimmer_stops.begin(), pal.rainbow_shimmer_stops.end());
     return colors;
@@ -155,8 +151,9 @@ TEST(DesignReadability, TruecolorActualSurfacePairsMeetOrdinaryTextContrast) {
         SCOPED_TRACE(theme::variant_name(variant));
         theme::set_theme(variant);
         const auto& pal = *theme::current_theme().palette;
-        for (const auto background : {pal.background, pal.user_message_background,
-                 pal.user_message_background_hover, pal.message_actions_background}) {
+        for (const auto background :
+             {pal.background, pal.user_message_background, pal.user_message_background_hover,
+              pal.message_actions_background}) {
             ExpectContrast(pal.muted, background);
             ExpectContrast(pal.text, background);
         }
@@ -172,8 +169,9 @@ TEST(DesignReadability, ConcreteThemeControlForegroundsDoNotEqualTheirSurfaces) 
     for (const auto variant : kVariants) {
         SCOPED_TRACE(theme::variant_name(variant));
         const auto& pal = *theme::palette_for_variant(variant);
-        for (const auto background : {pal.background, pal.user_message_background,
-                 pal.user_message_background_hover, pal.message_actions_background}) {
+        for (const auto background :
+             {pal.background, pal.user_message_background, pal.user_message_background_hover,
+              pal.message_actions_background}) {
             EXPECT_NE(pal.muted, background);
             EXPECT_NE(pal.text, background);
         }
@@ -191,8 +189,9 @@ TEST(DesignReadability, NavigationPillsAndHeldStickyHoverUseReadableInk) {
         const auto& pal = *theme::current_theme().palette;
         for (bool actionable : {false, true}) {
             const auto screen = Paint(fullscreen::NewMessagesPill(7, actionable));
-            ExpectWordInk(screen, "new", pal.muted, actionable
-                ? pal.user_message_background_hover : pal.user_message_background);
+            ExpectWordInk(screen, "new", pal.muted,
+                          actionable ? pal.user_message_background_hover
+                                     : pal.user_message_background);
         }
         auto sticky = ftxui::Make<fullscreen::StickyPromptHeaderComponent>("Breadcrumb", [] {});
         ExpectWordInk(Paint(sticky->Render()), "Breadcrumb", pal.muted,
@@ -217,11 +216,10 @@ TEST(DesignReadability, UserPromptAndCommandPrefixesStayReadableWhenSelected) {
         const auto& pal = *theme::current_theme().palette;
         for (bool selected : {false, true}) {
             const auto screen = Paint(messages::RenderUserPromptMessage(data, selected));
-            ExpectGlyphInk(screen, figures::kPointer,
-                selected ? pal.suggestion : pal.muted,
-                selected ? pal.message_actions_background : pal.user_message_background);
+            ExpectGlyphInk(screen, figures::kPointer, selected ? pal.suggestion : pal.muted,
+                           selected ? pal.message_actions_background : pal.user_message_background);
             ExpectWordInk(screen, "Readable", pal.text,
-                selected ? pal.message_actions_background : pal.user_message_background);
+                          selected ? pal.message_actions_background : pal.user_message_background);
             ExpectGlyphInk(Paint(messages::RenderUserCommandMessage(data, selected)),
                            figures::kPointer, pal.muted, pal.user_message_background);
         }
@@ -264,12 +262,12 @@ TEST(DesignBrand, ModesAndRoleAccentsShareTheirThemePrimaryAndGold) {
     for (const auto variant : kVariants) {
         SCOPED_TRACE(theme::variant_name(variant));
         const auto& pal = *theme::palette_for_variant(variant);
-        for (const auto color : {pal.bash_border, pal.plan_mode, pal.brief_label,
-                 pal.brief_label_loom, pal.role_pill_assistant,
-                 pal.role_pill_thinking, pal.accent_pink})
+        for (const auto color :
+             {pal.bash_border, pal.plan_mode, pal.brief_label, pal.brief_label_loom,
+              pal.role_pill_assistant, pal.role_pill_thinking, pal.accent_pink})
             EXPECT_EQ(color, pal.primary);
-        for (const auto color : {pal.fast_mode, pal.brief_label_you,
-                 pal.role_pill_user, pal.role_pill_system, pal.role_pill_tool})
+        for (const auto color : {pal.fast_mode, pal.brief_label_you, pal.role_pill_user,
+                                 pal.role_pill_system, pal.role_pill_tool})
             EXPECT_EQ(color, pal.spinner_gold);
     }
 }
@@ -299,8 +297,8 @@ TEST(DesignBrand, TruecolorWarmAccentsAndHighlightsStayReadable) {
 
 TEST(DesignBrand, EightNamedAgentForegroundsAreUniqueAndReadableOnCardSurfaces) {
     RestoreTheme restore;
-    constexpr std::array<std::string_view, 8> names{
-        "red", "blue", "green", "yellow", "purple", "orange", "pink", "cyan"};
+    constexpr std::array<std::string_view, 8> names{"red",    "blue",   "green", "yellow",
+                                                    "purple", "orange", "pink",  "cyan"};
     for (const auto variant : kRgbVariants) {
         SCOPED_TRACE(theme::variant_name(variant));
         theme::set_theme(variant);
@@ -328,7 +326,8 @@ TEST(DesignBrand, LogoBodyIdentityIsPreservedWhileDarkBodyUsesWarmOffWhite) {
         const auto& pal = *theme::palette_for_variant(variant);
         EXPECT_EQ(pal.loom_body, ftxui::Color::RGB(215, 119, 87));
         EXPECT_NE(pal.primary, pal.loom_body);
-        if (variant == theme::ThemeVariant::Dark || variant == theme::ThemeVariant::DarkDaltonized) {
+        if (variant == theme::ThemeVariant::Dark ||
+            variant == theme::ThemeVariant::DarkDaltonized) {
             EXPECT_EQ(pal.text, ftxui::Color::RGB(224, 218, 210));
             EXPECT_NE(pal.text, ftxui::Color::RGB(255, 255, 255));
         }
@@ -336,13 +335,13 @@ TEST(DesignBrand, LogoBodyIdentityIsPreservedWhileDarkBodyUsesWarmOffWhite) {
 }
 
 TEST(DesignBrand, AnsiTouchedAccentsStayInNamedSixteenColorPalette) {
-    const auto named = std::array{
-        ftxui::Color::Black, ftxui::Color::Red, ftxui::Color::Green,
-        ftxui::Color::Yellow, ftxui::Color::Blue, ftxui::Color::Magenta,
-        ftxui::Color::Cyan, ftxui::Color::GrayLight, ftxui::Color::GrayDark,
-        ftxui::Color::RedLight, ftxui::Color::GreenLight, ftxui::Color::YellowLight,
-        ftxui::Color::BlueLight, ftxui::Color::MagentaLight,
-        ftxui::Color::CyanLight, ftxui::Color::White};
+    const auto named =
+        std::array{ftxui::Color::Black,     ftxui::Color::Red,          ftxui::Color::Green,
+                   ftxui::Color::Yellow,    ftxui::Color::Blue,         ftxui::Color::Magenta,
+                   ftxui::Color::Cyan,      ftxui::Color::GrayLight,    ftxui::Color::GrayDark,
+                   ftxui::Color::RedLight,  ftxui::Color::GreenLight,   ftxui::Color::YellowLight,
+                   ftxui::Color::BlueLight, ftxui::Color::MagentaLight, ftxui::Color::CyanLight,
+                   ftxui::Color::White};
     for (const auto variant : {theme::ThemeVariant::LightAnsi, theme::ThemeVariant::DarkAnsi}) {
         SCOPED_TRACE(theme::variant_name(variant));
         const auto& pal = *theme::palette_for_variant(variant);
@@ -363,9 +362,10 @@ TEST(DesignBrand, MonochromeTouchedAccentsAndIdentitiesRemainAchromatic) {
     const auto agents = AgentColors(pal);
     colors.insert(colors.end(), agents.begin(), agents.end());
     for (const auto color : colors) {
-        EXPECT_TRUE(color == ftxui::Color(ftxui::Color::Black)
-                 || color == ftxui::Color(ftxui::Color::GrayDark)
-                 || color == ftxui::Color(ftxui::Color::GrayLight)
-                 || color == ftxui::Color(ftxui::Color::White)) << color.Print(false);
+        EXPECT_TRUE(color == ftxui::Color(ftxui::Color::Black) ||
+                    color == ftxui::Color(ftxui::Color::GrayDark) ||
+                    color == ftxui::Color(ftxui::Color::GrayLight) ||
+                    color == ftxui::Color(ftxui::Color::White))
+            << color.Print(false);
     }
 }

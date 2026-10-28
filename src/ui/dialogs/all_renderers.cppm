@@ -26,46 +26,44 @@ export namespace loom::ui::dialogs::all_renderers {
 using loom::ui::dialogs::default_renderers::register_default_renderers;
 
 /// Named registration entry-point matching the module name.
-template <typename... Args>
-inline void register_all_renderers(Args&&... args) {
-    loom::ui::dialogs::default_renderers::register_default_renderers(
-        std::forward<Args>(args)...);
+template <typename... Args> inline void register_all_renderers(Args&&... args) {
+    loom::ui::dialogs::default_renderers::register_default_renderers(std::forward<Args>(args)...);
 }
 
 // ── Layer 1: 6 overlay/bottom dialogs from default_renderers ─────────────
 // (ToolPermission, SandboxPermission, PromptDialog, Elicitation,
 //  CostThreshold, IdleReturn, GenericDialog fallback)
-using loom::ui::dialogs::default_renderers::RenderToolPermission;
 using loom::ui::dialogs::default_renderers::HandleToolPermissionEvent;
+using loom::ui::dialogs::default_renderers::RenderToolPermission;
 
-using loom::ui::dialogs::default_renderers::RenderSandboxPermission;
 using loom::ui::dialogs::default_renderers::HandleSandboxPermissionEvent;
+using loom::ui::dialogs::default_renderers::RenderSandboxPermission;
 
-using loom::ui::dialogs::default_renderers::RenderPromptDialog;
 using loom::ui::dialogs::default_renderers::HandlePromptDialogEvent;
+using loom::ui::dialogs::default_renderers::RenderPromptDialog;
 
-using loom::ui::dialogs::default_renderers::RenderElicitation;
 using loom::ui::dialogs::default_renderers::HandleElicitationEvent;
+using loom::ui::dialogs::default_renderers::RenderElicitation;
 
-using loom::ui::dialogs::default_renderers::RenderCostThreshold;
 using loom::ui::dialogs::default_renderers::HandleCostThresholdEvent;
+using loom::ui::dialogs::default_renderers::RenderCostThreshold;
 
-using loom::ui::dialogs::default_renderers::RenderIdleReturn;
 using loom::ui::dialogs::default_renderers::HandleIdleReturnEvent;
+using loom::ui::dialogs::default_renderers::RenderIdleReturn;
 
-using loom::ui::dialogs::default_renderers::RenderGenericDialog;
 using loom::ui::dialogs::default_renderers::HandleGenericDialogEvent;
+using loom::ui::dialogs::default_renderers::RenderGenericDialog;
 
 // ── Layer 2: permission-panel modules ───────────────────────────────────
-using loom::ui::dialogs::sandbox_permission::RenderDefault;
 using loom::ui::dialogs::sandbox_permission::HandleSandboxPermissionEvent;
+using loom::ui::dialogs::sandbox_permission::RenderDefault;
 
 // ── Layer 3: quick_open (exact signatures already, direct using) ─────────
-using loom::ui::dialogs::quick_open::RenderQuickOpen;
 using loom::ui::dialogs::quick_open::HandleQuickOpenEvent;
+using loom::ui::dialogs::quick_open::RenderQuickOpen;
 
 // ── Layer 4: session_picker (standalone /resume picker) ──────────────────
-using loom::ui::dialogs::session_picker::RenderSessionPicker;
 using loom::ui::dialogs::session_picker::HandleSessionPickerEvent;
+using loom::ui::dialogs::session_picker::RenderSessionPicker;
 
 }  // namespace loom::ui::dialogs::all_renderers

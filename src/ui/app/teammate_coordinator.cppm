@@ -12,7 +12,7 @@ export module loom.ui.app.teammate_coordinator;
 
 import std;
 
-import loom.teams.swarm.helpers;  // SwarmPermissionRequestMessage
+import loom.teams.swarm.helpers; // SwarmPermissionRequestMessage
 
 export namespace loom::ui {
 

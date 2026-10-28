@@ -5,9 +5,9 @@
 /// rendering, no side effects).
 module;
 
-#include <cstdint>
-
 #include <ftxui/dom/elements.hpp>
+
+#include <cstdint>
 
 export module loom.ui.foundation.ui_types;
 
@@ -64,7 +64,7 @@ struct AgentValidationResult {
     std::vector<std::string> errors;
 };
 
-} // namespace agents
+}  // namespace agents
 
 // ============================================================
 // PromptInputMode
@@ -83,25 +83,25 @@ struct AgentValidationResult {
 // separate type, plan mode is a separate flag).
 // ============================================================
 enum class PromptInputMode {
-    Normal,             ///< Default prompt.  Also used by
-                        ///  modules that historically called this 'Prompt'.
-    Bash,               ///< Shell-first (leading '!').
-    SlashCommand,       ///< Slash-command mode (leading '/').  text_input
-                        ///  called this 'Command'.
-    HistorySearch,      ///< Ctrl+R reverse history search.
-    PlanMode,           ///< Plan-only mode.
-    FileRef,            ///< File-reference (leading '@').
-    Agent,              ///< Agent mention (leading '*').
-    BgRun,              ///< '&' background run.
-    MCP,                ///< MCP resource mode.
-    VimNormal,          ///< Vim normal mode.
-    VimInsert,          ///< Vim insert mode.
-    VimVisual,          ///< Vim visual mode.
-    OrphanedPermission, ///< Orphaned permission prompt.
-    TaskNotification,   ///< Task notification overlay.
-    FastMode,           ///< Fast mode (CPP extension).
-    Search,             ///< Generic search mode (text_input.cppm used this
-                        ///  separately from HistorySearch).
+    Normal,              ///< Default prompt.  Also used by
+                         ///  modules that historically called this 'Prompt'.
+    Bash,                ///< Shell-first (leading '!').
+    SlashCommand,        ///< Slash-command mode (leading '/').  text_input
+                         ///  called this 'Command'.
+    HistorySearch,       ///< Ctrl+R reverse history search.
+    PlanMode,            ///< Plan-only mode.
+    FileRef,             ///< File-reference (leading '@').
+    Agent,               ///< Agent mention (leading '*').
+    BgRun,               ///< '&' background run.
+    MCP,                 ///< MCP resource mode.
+    VimNormal,           ///< Vim normal mode.
+    VimInsert,           ///< Vim insert mode.
+    VimVisual,           ///< Vim visual mode.
+    OrphanedPermission,  ///< Orphaned permission prompt.
+    TaskNotification,    ///< Task notification overlay.
+    FastMode,            ///< Fast mode (CPP extension).
+    Search,              ///< Generic search mode (text_input.cppm used this
+                         ///  separately from HistorySearch).
 };
 
 // NOTE: prompt-mode helpers (prependModeCharacterToInput, getModeFromInput,
@@ -172,12 +172,12 @@ constexpr std::array<std::string_view, 49> kNullRenderingTypes = {{
 
 /// Returns true when the attachment type is in the null-rendering list.
 [[nodiscard]] inline bool is_null_rendering_attachment_type(std::string_view type) {
-    static const std::set<std::string_view> s_set(
-        kNullRenderingTypes.begin(), kNullRenderingTypes.end());
+    static const std::set<std::string_view> s_set(kNullRenderingTypes.begin(),
+                                                  kNullRenderingTypes.end());
     return s_set.contains(type);
 }
 
-} // namespace attachment_filter
+}  // namespace attachment_filter
 
 // ============================================================
 // PermissionMode + EffortLevel
@@ -188,19 +188,14 @@ constexpr std::array<std::string_view, 49> kNullRenderingTypes = {{
 
 /// Permission mode for tool execution.
 enum class PermissionMode {
-    Default,        ///< default — confirm each tool use
-    AcceptEdits,    ///< 🔓 auto-accept file edits
-    AcceptAll,      ///< 🔓🔓 auto-accept all tools
-    Plan            ///< 📋 plan-only mode
+    Default,      ///< default — confirm each tool use
+    AcceptEdits,  ///< 🔓 auto-accept file edits
+    AcceptAll,    ///< 🔓🔓 auto-accept all tools
+    Plan          ///< 📋 plan-only mode
 };
 
 /// Effort level for query execution.
-enum class EffortLevel {
-    Low,
-    Medium,
-    High,
-    Auto
-};
+enum class EffortLevel { Low, Medium, High, Auto };
 
 // ============================================================
 // Canonical VimMode enum — re-exported from loom.vim.vim_types
@@ -215,10 +210,10 @@ enum class EffortLevel {
 //   - src/hooks/vim_input.cppm (5 values)
 //   - src/ui/components/text_input.cppm (bool enable_vim)
 // ============================================================
-using loom::vim::VimMode;
 using loom::vim::is_editing_mode;
 using loom::vim::is_navigation_mode;
 using loom::vim::vim_mode_label;
 using loom::vim::vim_mode_short_label;
+using loom::vim::VimMode;
 
-} // namespace loom::ui::common
+}  // namespace loom::ui::common

@@ -44,7 +44,6 @@ export namespace loom::ui::clock {
 /// test replay (RFC 0003 §8.3), not concurrent use. The replay harness
 /// clears it (std::nullopt) at the start of every play() so clock state
 /// never leaks across fixtures.
-void set_steady_now_for_testing(
-    std::optional<std::chrono::steady_clock::time_point> now) noexcept;
+void set_steady_now_for_testing(std::optional<std::chrono::steady_clock::time_point> now) noexcept;
 
-} // namespace loom::ui::clock
+}  // namespace loom::ui::clock

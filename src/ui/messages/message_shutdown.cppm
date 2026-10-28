@@ -5,11 +5,10 @@
 //   [Resume session]   [Start new]
 module;
 
-
-#include <ftxui/dom/elements.hpp>
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/event.hpp>
+#include <ftxui/dom/elements.hpp>
 
 export module loom.ui.messages.message_shutdown;
 
@@ -24,11 +23,11 @@ using namespace ftxui;
 
 /// Reason for shutdown
 enum class ShutdownReason {
-    UserExit,       // User typed /exit or Ctrl+D
+    UserExit,        // User typed /exit or Ctrl+D
     SignalReceived,  // SIGINT/SIGTERM
-    Error,          // Fatal error
-    SessionEnd,     // Session ended normally
-    Timeout         // Idle timeout
+    Error,           // Fatal error
+    SessionEnd,      // Session ended normally
+    Timeout          // Idle timeout
 };
 
 /// Data for a shutdown message
@@ -50,30 +49,30 @@ struct ShutdownMessageData {
     Color msg_color = loom::ui::design::theme::current_theme().palette->muted;
 
     switch (data.reason) {
-        case ShutdownReason::UserExit:
-            icon = loom::ui::design::figures::kArrowRight.data();
-            message = "Goodbye!";
-            break;
-        case ShutdownReason::SignalReceived:
-            icon = loom::ui::design::figures::kLightningBolt.data();
-            message = "Interrupted";
-            msg_color = loom::ui::design::theme::current_theme().palette->warning;
-            break;
-        case ShutdownReason::Error:
-            icon = loom::ui::design::figures::kCross.data();
-            message = "Session ended due to error";
-            msg_color = loom::ui::design::theme::current_theme().palette->danger;
-            break;
-        case ShutdownReason::SessionEnd:
-            icon = loom::ui::design::figures::kTick.data();
-            message = "Session complete";
-            msg_color = loom::ui::design::theme::current_theme().palette->success;
-            break;
-        case ShutdownReason::Timeout:
-            icon = loom::ui::design::figures::kWarning.data();
-            message = "Session timed out";
-            msg_color = loom::ui::design::theme::current_theme().palette->warning;
-            break;
+    case ShutdownReason::UserExit:
+        icon = loom::ui::design::figures::kArrowRight.data();
+        message = "Goodbye!";
+        break;
+    case ShutdownReason::SignalReceived:
+        icon = loom::ui::design::figures::kLightningBolt.data();
+        message = "Interrupted";
+        msg_color = loom::ui::design::theme::current_theme().palette->warning;
+        break;
+    case ShutdownReason::Error:
+        icon = loom::ui::design::figures::kCross.data();
+        message = "Session ended due to error";
+        msg_color = loom::ui::design::theme::current_theme().palette->danger;
+        break;
+    case ShutdownReason::SessionEnd:
+        icon = loom::ui::design::figures::kTick.data();
+        message = "Session complete";
+        msg_color = loom::ui::design::theme::current_theme().palette->success;
+        break;
+    case ShutdownReason::Timeout:
+        icon = loom::ui::design::figures::kWarning.data();
+        message = "Session timed out";
+        msg_color = loom::ui::design::theme::current_theme().palette->warning;
+        break;
     }
 
     parts.push_back(text(icon + " " + message) | color(msg_color));
@@ -99,7 +98,8 @@ struct ShutdownMessageData {
         if (data.total_cost > 0.0) {
             stats += std::format(" | ${:.4f}", data.total_cost);
         }
-        parts.push_back(text("  [" + stats + "]") | dim | color(loom::ui::design::theme::current_theme().palette->muted));
+        parts.push_back(text("  [" + stats + "]") | dim |
+                        color(loom::ui::design::theme::current_theme().palette->muted));
     }
 
     return vbox(parts);
@@ -108,17 +108,15 @@ struct ShutdownMessageData {
 // ─── Interactive component with Resume / New buttons ───────────────────
 
 class ShutdownMessageComponent : public ComponentBase {
-  public:
+public:
     using OnResumeFn = std::function<void()>;
     using OnNewSessionFn = std::function<void()>;
 
-    explicit ShutdownMessageComponent(ShutdownMessageData data,
-                                      OnResumeFn on_resume = nullptr,
+    explicit ShutdownMessageComponent(ShutdownMessageData data, OnResumeFn on_resume = nullptr,
                                       OnNewSessionFn on_new = nullptr)
-        : data_(std::move(data)),
-          on_resume_(std::move(on_resume)),
-          on_new_session_(std::move(on_new))
-    {
+        : data_(std::move(data))
+        , on_resume_(std::move(on_resume))
+        , on_new_session_(std::move(on_new)) {
         if (on_resume_) {
             resume_btn_ = Button(" ↻ Resume ", [this] {
                 if (on_resume_) on_resume_();
@@ -126,9 +124,10 @@ class ShutdownMessageComponent : public ComponentBase {
             Add(resume_btn_);
         }
         if (on_new_session_) {
-            new_btn_ = Button((" " + std::string(loom::ui::design::figures::kStar) + " New session "), [this] {
-                if (on_new_session_) on_new_session_();
-            });
+            new_btn_ = Button(
+                (" " + std::string(loom::ui::design::figures::kStar) + " New session "), [this] {
+                    if (on_new_session_) on_new_session_();
+                });
             Add(new_btn_);
         }
     }
@@ -146,15 +145,16 @@ class ShutdownMessageComponent : public ComponentBase {
         // Action row
         Elements actions;
         if (resume_btn_) {
-            actions.push_back(resume_btn_->Render() | color(loom::ui::design::theme::current_theme().palette->info));
+            actions.push_back(resume_btn_->Render() |
+                              color(loom::ui::design::theme::current_theme().palette->info));
             actions.push_back(text("  "));
         }
         if (new_btn_) {
-            actions.push_back(new_btn_->Render() | color(loom::ui::design::theme::current_theme().palette->primary));
+            actions.push_back(new_btn_->Render() |
+                              color(loom::ui::design::theme::current_theme().palette->primary));
         }
-        auto action_row = actions.empty()
-            ? Element{text("")}
-            : Element{hbox(std::move(actions)) | center};
+        auto action_row =
+            actions.empty() ? Element{text("")} : Element{hbox(std::move(actions)) | center};
 
         Elements rows;
         rows.push_back(divider);
@@ -162,22 +162,29 @@ class ShutdownMessageComponent : public ComponentBase {
         rows.push_back(body | center);
         rows.push_back(separatorEmpty());
         rows.push_back(action_row);
-        rows.push_back(separator() | color(loom::ui::design::theme::current_theme().palette->muted));
+        rows.push_back(separator() |
+                       color(loom::ui::design::theme::current_theme().palette->muted));
 
         return vbox(std::move(rows)) | center;
     }
 
     bool OnEvent(Event event) override {
         if (event == Event::Character('r') || event == Event::Character('R')) {
-            if (on_resume_) { on_resume_(); return true; }
+            if (on_resume_) {
+                on_resume_();
+                return true;
+            }
         }
         if (event == Event::Character('n') || event == Event::Character('N')) {
-            if (on_new_session_) { on_new_session_(); return true; }
+            if (on_new_session_) {
+                on_new_session_();
+                return true;
+            }
         }
         return ComponentBase::OnEvent(event);
     }
 
-  private:
+private:
     ShutdownMessageData data_;
     OnResumeFn on_resume_;
     OnNewSessionFn on_new_session_;
@@ -185,13 +192,11 @@ class ShutdownMessageComponent : public ComponentBase {
     Component new_btn_;
 };
 
-[[nodiscard]] inline Component MakeShutdownMessage(
-    ShutdownMessageData data,
-    ShutdownMessageComponent::OnResumeFn on_resume = nullptr,
-    ShutdownMessageComponent::OnNewSessionFn on_new = nullptr)
-{
-    return Make<ShutdownMessageComponent>(
-        std::move(data), std::move(on_resume), std::move(on_new));
+[[nodiscard]] inline Component
+MakeShutdownMessage(ShutdownMessageData data,
+                    ShutdownMessageComponent::OnResumeFn on_resume = nullptr,
+                    ShutdownMessageComponent::OnNewSessionFn on_new = nullptr) {
+    return Make<ShutdownMessageComponent>(std::move(data), std::move(on_resume), std::move(on_new));
 }
 
-} // namespace loom::ui::messages::shutdown
+}  // namespace loom::ui::messages::shutdown

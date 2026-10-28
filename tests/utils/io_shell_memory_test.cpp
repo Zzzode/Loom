@@ -1,6 +1,5 @@
 #include <gtest/gtest.h>
 
-
 import std;
 import loom.process.bash.bash_shell_quoting;
 import loom.fs.memory_file_detection;
@@ -20,17 +19,22 @@ TEST(MemoryFileDetection, DetectsSessionFilesPatternsAndMemoryDirectories) {
         .windows = false,
     };
 
-    EXPECT_EQ(detect_session_file_type("/Users/me/.loom/session-memory/session-1.md", config), SessionFileType::SessionMemory);
-    EXPECT_EQ(detect_session_file_type("/Users/me/.loom/projects/proj/session.jsonl", config), SessionFileType::SessionTranscript);
+    EXPECT_EQ(detect_session_file_type("/Users/me/.loom/session-memory/session-1.md", config),
+              SessionFileType::SessionMemory);
+    EXPECT_EQ(detect_session_file_type("/Users/me/.loom/projects/proj/session.jsonl", config),
+              SessionFileType::SessionTranscript);
     EXPECT_FALSE(detect_session_file_type("/Users/me/.loom/LOOM.md", config).has_value());
 
-    EXPECT_EQ(detect_session_pattern_type("**/session-memory/*.md"), SessionFileType::SessionMemory);
-    EXPECT_EQ(detect_session_pattern_type(".loom/projects/**/*.jsonl"), SessionFileType::SessionTranscript);
+    EXPECT_EQ(detect_session_pattern_type("**/session-memory/*.md"),
+              SessionFileType::SessionMemory);
+    EXPECT_EQ(detect_session_pattern_type(".loom/projects/**/*.jsonl"),
+              SessionFileType::SessionTranscript);
     EXPECT_TRUE(is_auto_managed_memory_pattern("/tmp/project/agent-memory/*.md", config));
     EXPECT_FALSE(is_auto_managed_memory_pattern("LOOM.md", config));
 
     EXPECT_TRUE(is_memory_directory("/Users/me/.loom/session-memory/abc/..", config));
-    EXPECT_TRUE(is_shell_command_targeting_memory("grep foo /Users/me/.loom/session-memory/session-1.md;", config));
+    EXPECT_TRUE(is_shell_command_targeting_memory(
+        "grep foo /Users/me/.loom/session-memory/session-1.md;", config));
     EXPECT_FALSE(is_shell_command_targeting_memory("grep foo /Users/me/project/LOOM.md", config));
 
     const MemoryDetectionConfig windows_config{
@@ -42,7 +46,8 @@ TEST(MemoryFileDetection, DetectsSessionFilesPatternsAndMemoryDirectories) {
         .team_mem_path = "",
         .windows = true,
     };
-    EXPECT_TRUE(is_shell_command_targeting_memory("grep foo /c/Users/me/.loom/session-memory/session-1.md", windows_config));
+    EXPECT_TRUE(is_shell_command_targeting_memory(
+        "grep foo /c/Users/me/.loom/session-memory/session-1.md", windows_config));
 }
 
 TEST(ModelCost, CalculatesTokenCostsAndFormatsPricingStrings) {
@@ -75,7 +80,8 @@ TEST(ReadFileInRange, ReadsLineRangesStripsBomCrAndTruncatesByBytes) {
     const auto path = std::filesystem::temp_directory_path() / "loom_read_file_in_range_test.txt";
     {
         std::ofstream out(path, std::ios::binary);
-        out << "\xEF\xBB\xBF" "first\r\nsecond\r\nthird\n";
+        out << "\xEF\xBB\xBF"
+               "first\r\nsecond\r\nthird\n";
     }
 
     auto selected = loom::utils::read_file_in_range::read_file_in_range(path.string(), 1, 2);
@@ -86,15 +92,17 @@ TEST(ReadFileInRange, ReadsLineRangesStripsBomCrAndTruncatesByBytes) {
     EXPECT_EQ(selected->read_bytes, 12u);
     EXPECT_GT(selected->mtime_ms, 0.0);
 
-    auto truncated = loom::utils::read_file_in_range::read_file_in_range(
-        path.string(), 0, std::nullopt, 11, true);
+    auto truncated = loom::utils::read_file_in_range::read_file_in_range(path.string(), 0,
+                                                                         std::nullopt, 11, true);
     ASSERT_TRUE(truncated.has_value()) << truncated.error().message;
     EXPECT_EQ(truncated->content, "first");
     EXPECT_TRUE(truncated->truncated_by_bytes);
 
-    auto too_large = loom::utils::read_file_in_range::read_file_in_range(path.string(), 0, std::nullopt, 5, false);
+    auto too_large = loom::utils::read_file_in_range::read_file_in_range(path.string(), 0,
+                                                                         std::nullopt, 5, false);
     ASSERT_FALSE(too_large.has_value());
-    EXPECT_EQ(too_large.error().kind, loom::utils::read_file_in_range::ReadFileRangeErrorKind::FileTooLarge);
+    EXPECT_EQ(too_large.error().kind,
+              loom::utils::read_file_in_range::ReadFileRangeErrorKind::FileTooLarge);
 
     std::filesystem::remove(path);
 }
@@ -102,17 +110,20 @@ TEST(ReadFileInRange, ReadsLineRangesStripsBomCrAndTruncatesByBytes) {
 TEST(BashShellQuoting, QuotesCommandsDetectsRedirectsAndRewritesWindowsNull) {
     using namespace loom::utils::bash_shell_quoting;
 
-    EXPECT_TRUE(has_shell_quote_single_quote_bug(R"(git ls-remote 'safe\' '--upload-pack=evil' 'repo')"));
+    EXPECT_TRUE(
+        has_shell_quote_single_quote_bug(R"(git ls-remote 'safe\' '--upload-pack=evil' 'repo')"));
     EXPECT_FALSE(has_shell_quote_single_quote_bug(R"(echo 'safe\\')"));
 
     EXPECT_EQ(quote_shell_command("cat <<EOF\nhi!\nEOF"), "'cat <<EOF\nhi!\nEOF'");
-    EXPECT_EQ(quote_shell_command("printf 'a\nb'", true), "'printf '\"'\"'a\nb'\"'\"'' < /dev/null");
+    EXPECT_EQ(quote_shell_command("printf 'a\nb'", true),
+              "'printf '\"'\"'a\nb'\"'\"'' < /dev/null");
     EXPECT_TRUE(has_stdin_redirect("cat < input.txt"));
     EXPECT_FALSE(has_stdin_redirect("cat <<EOF"));
     EXPECT_FALSE(should_add_stdin_redirect("cat < input.txt"));
     EXPECT_FALSE(should_add_stdin_redirect("cat <<EOF"));
     EXPECT_TRUE(should_add_stdin_redirect("cat file.txt"));
-    EXPECT_EQ(rewrite_windows_null_redirect("ls >nul 2>NUL && echo keep >null"), "ls >/dev/null 2>/dev/null && echo keep >null");
+    EXPECT_EQ(rewrite_windows_null_redirect("ls >nul 2>NUL && echo keep >null"),
+              "ls >/dev/null 2>/dev/null && echo keep >null");
 }
 
 TEST(BashPrefix, CollapsesCompoundPrefixesByWordAlignedRoot) {
@@ -120,7 +131,8 @@ TEST(BashPrefix, CollapsesCompoundPrefixesByWordAlignedRoot) {
 
     EXPECT_EQ(longest_common_prefix({"git fetch origin", "git worktree list"}), "git");
     EXPECT_EQ(longest_common_prefix({"npm run test", "npm run lint"}), "npm run");
-    EXPECT_EQ(compound_command_prefixes("git fetch origin && git worktree list"), (std::vector<std::string>{"git"}));
-    EXPECT_EQ(compound_command_prefixes("git status && npm run test"), (std::vector<std::string>{"git status", "npm run test"}));
+    EXPECT_EQ(compound_command_prefixes("git fetch origin && git worktree list"),
+              (std::vector<std::string>{"git"}));
+    EXPECT_EQ(compound_command_prefixes("git status && npm run test"),
+              (std::vector<std::string>{"git status", "npm run test"}));
 }
-

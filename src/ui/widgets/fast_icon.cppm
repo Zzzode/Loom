@@ -42,4 +42,4 @@ std::string GetFastIconString(bool apply_color = true, bool cooldown = false) {
     return std::string(figs::kLightningBolt);
 }
 
-} // namespace ui::components
+}  // namespace ui::components

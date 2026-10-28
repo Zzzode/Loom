@@ -19,23 +19,23 @@ export namespace loom::commands::plugin {
 // ─────────────────────────────────────────────────────────────────────────────
 
 enum class SubcommandType : unsigned char {
-    Menu,       // No args → show main menu
-    Help,       // help | --help | -h
-    Install,    // install / i
-    Manage,     // manage
-    Uninstall,  // uninstall
-    Enable,     // enable
-    Disable,    // disable
-    Validate,   // validate
-    Marketplace // marketplace / market
+    Menu,        // No args → show main menu
+    Help,        // help | --help | -h
+    Install,     // install / i
+    Manage,      // manage
+    Uninstall,   // uninstall
+    Enable,      // enable
+    Disable,     // disable
+    Validate,    // validate
+    Marketplace  // marketplace / market
 };
 
 enum class MarketplaceAction : unsigned char {
-    None,   // No sub-action → marketplace menu
-    Add,    // add
-    Remove, // remove / rm
-    Update, // update
-    List    // list
+    None,    // No sub-action → marketplace menu
+    Add,     // add
+    Remove,  // remove / rm
+    Update,  // update
+    List     // list
 };
 
 /// Parsed representation of a /plugin command invocation.
@@ -43,18 +43,18 @@ struct ParsedSubcommand {
     SubcommandType type = SubcommandType::Menu;
 
     // ── Install fields ────────────────────────────────────────────────────
-    std::optional<std::string> marketplace; // install: marketplace URL/name
-    std::optional<std::string> plugin_name; // install: plugin name
+    std::optional<std::string> marketplace;  // install: marketplace URL/name
+    std::optional<std::string> plugin_name;  // install: plugin name
 
     // ── Uninstall/Enable/Disable fields ───────────────────────────────────
-    std::optional<std::string> target_plugin; // uninstall|enable|disable target
+    std::optional<std::string> target_plugin;  // uninstall|enable|disable target
 
     // ── Validate fields ───────────────────────────────────────────────────
-    std::optional<std::string> validate_path; // validate target
+    std::optional<std::string> validate_path;  // validate target
 
     // ── Marketplace fields ────────────────────────────────────────────────
     MarketplaceAction market_action = MarketplaceAction::None;
-    std::string market_target; // add|remove|update target (URL/name)
+    std::string market_target;  // add|remove|update target (URL/name)
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -81,19 +81,18 @@ inline std::vector<std::string> split_ws(std::string_view s) {
 }
 
 inline std::string to_lower(std::string s) {
-    for (char& c : s) c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+    for (char& c : s)
+        c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
     return s;
 }
 
 inline bool looks_like_marketplace(std::string_view target) {
-    return target.starts_with("http://") ||
-           target.starts_with("https://") ||
-           target.starts_with("file://") ||
-           target.find('/') != std::string_view::npos ||
+    return target.starts_with("http://") || target.starts_with("https://") ||
+           target.starts_with("file://") || target.find('/') != std::string_view::npos ||
            target.find('\\') != std::string_view::npos;
 }
 
-} // namespace detail
+}  // namespace detail
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Public API
@@ -126,14 +125,14 @@ inline bool looks_like_marketplace(std::string_view target) {
     // ── install / i ───────────────────────────────────────────────────────
     if (cmd == "install" || cmd == "i") {
         out.type = SubcommandType::Install;
-        if (parts.size() < 2) return out; // bare "install" → browse UI later
+        if (parts.size() < 2) return out;  // bare "install" → browse UI later
 
         const std::string& target = parts[1];
         const auto at = target.find('@');
         if (at != std::string::npos) {
             // plugin@marketplace format
-            out.plugin_name   = target.substr(0, at);
-            out.marketplace   = target.substr(at + 1);
+            out.plugin_name = target.substr(0, at);
+            out.marketplace = target.substr(at + 1);
             return out;
         }
         if (detail::looks_like_marketplace(target)) {
@@ -186,8 +185,7 @@ inline bool looks_like_marketplace(std::string_view target) {
     // ── marketplace / market ──────────────────────────────────────────────
     if (cmd == "marketplace" || cmd == "market") {
         out.type = SubcommandType::Marketplace;
-        const std::string action =
-            parts.size() >= 2 ? detail::to_lower(parts[1]) : std::string{};
+        const std::string action = parts.size() >= 2 ? detail::to_lower(parts[1]) : std::string{};
 
         if (action == "add") {
             out.market_action = MarketplaceAction::Add;
@@ -225,4 +223,4 @@ inline bool looks_like_marketplace(std::string_view target) {
     return out;
 }
 
-} // namespace loom::commands::plugin
+}  // namespace loom::commands::plugin

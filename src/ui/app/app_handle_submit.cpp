@@ -46,7 +46,7 @@ import loom.ui.messages.message_pipeline;
 import loom.types.types;
 import loom.commands.command;
 import loom.ui.dialogs.triggers;
-import loom.ui.dialogs.system;       // SessionPickerEntry (dsys alias)
+import loom.ui.dialogs.system; // SessionPickerEntry (dsys alias)
 import loom.vim.vim_mode;
 import loom.session.storage;
 import loom.query.assembly;
@@ -54,8 +54,8 @@ import loom.serdes.json;
 
 namespace loom::ui {
 // Defined in app_store_bridge.cpp (impl unit of this module).
-CommandContext command_context_for_engine(loom::core::QueryEngine* engine,
-                                          void* app_store, std::string cwd);
+CommandContext command_context_for_engine(loom::core::QueryEngine* engine, void* app_store,
+                                          std::string cwd);
 
 namespace repl = loom::ui::repl_screen;
 namespace agent_runtime = loom::tools::agent_runtime;
@@ -81,10 +81,8 @@ static std::string format_session_age(std::chrono::system_clock::time_point tp) 
 
 /// Count messages in a session by counting non-empty lines in its
 /// messages.jsonl file.  Returns 0 if the file does not exist.
-[[nodiscard]] int count_session_messages(
-    const std::filesystem::path& sessions_dir,
-    const std::string& session_id)
-{
+[[nodiscard]] int count_session_messages(const std::filesystem::path& sessions_dir,
+                                         const std::string& session_id) {
     auto jsonl_path = sessions_dir / session_id / "messages.jsonl";
     if (!std::filesystem::exists(jsonl_path)) return 0;
     std::ifstream ifs(jsonl_path);
@@ -99,19 +97,17 @@ static std::string format_session_age(std::chrono::system_clock::time_point tp) 
 /// Extract the first user message text from a session's messages.jsonl
 /// as a display title.  Handles both content formats the engine writes:
 ///   - plain string (single TextBlock):  {"role":"user","content":"hello"}
-///   - content-block array (multi-block): {"role":"user","content":[{"type":"text","text":"hello"}]}
+///   - content-block array (multi-block):
+///   {"role":"user","content":[{"type":"text","text":"hello"}]}
 /// Returns "Session" if no user message with text is found.
-[[nodiscard]] std::string first_user_message_as_title(
-    const std::filesystem::path& sessions_dir,
-    const std::string& session_id)
-{
+[[nodiscard]] std::string first_user_message_as_title(const std::filesystem::path& sessions_dir,
+                                                      const std::string& session_id) {
     auto docs = loom::session::load_messages(sessions_dir, session_id);
     for (std::size_t i = 0; i < docs.size(); ++i) {
         auto root = docs[i].root();
         if (!root.valid() || !root.is_obj()) continue;
         auto role_val = root.get("role");
-        if (!role_val.is_str() || role_val.as_str() != std::string_view("user"))
-            continue;
+        if (!role_val.is_str() || role_val.as_str() != std::string_view("user")) continue;
         auto content_val = root.get("content");
         if (!content_val.valid()) continue;
 
@@ -125,9 +121,7 @@ static std::string format_session_age(std::chrono::system_clock::time_point tp) 
                 auto block = content_val.at(j);
                 if (!block.is_obj()) continue;
                 auto type_val = block.get("type");
-                if (!type_val.is_str() ||
-                    type_val.as_str() != std::string_view("text"))
-                    continue;
+                if (!type_val.is_str() || type_val.as_str() != std::string_view("text")) continue;
                 auto text_val = block.get("text");
                 if (!text_val.is_str()) continue;
                 text = std::string(text_val.as_str());
@@ -136,7 +130,8 @@ static std::string format_session_age(std::chrono::system_clock::time_point tp) 
         }
 
         if (!text.empty()) {
-            for (auto& c : text) if (c == '\n') c = ' ';
+            for (auto& c : text)
+                if (c == '\n') c = ' ';
             if (text.size() > 60) text = text.substr(0, 60) + "…";
             return text;
         }
@@ -146,16 +141,14 @@ static std::string format_session_age(std::chrono::system_clock::time_point tp) 
 }
 
 // ── HandleSubmit (moved out of app_autocomplete.cpp to reduce import closure) ──
-void AppAdapter::HandleSubmit(const std::string& text,
-                              repl::InputMode submit_mode,
-                              bool wait_for_pastes,
-                              bool retry_request) {
+void AppAdapter::HandleSubmit(const std::string& text, repl::InputMode submit_mode,
+                              bool wait_for_pastes, bool retry_request) {
     if (!retry_request && wait_for_pastes && HasInFlightPasteReferences(text)) {
         const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(3);
         pending_paste_submission_ = PendingPasteSubmission{text, submit_mode, deadline};
         paste_submission_deadline_ms_.store(
-            std::chrono::duration_cast<std::chrono::milliseconds>(
-                deadline.time_since_epoch()).count());
+            std::chrono::duration_cast<std::chrono::milliseconds>(deadline.time_since_epoch())
+                .count());
         return;
     }
 
@@ -181,12 +174,11 @@ void AppAdapter::HandleSubmit(const std::string& text,
     if (query_running_.load()) return;
 
     // P0-1: bash (!) routing.
-    const bool bash_by_mode   = submit_mode == repl::InputMode::Bash;
+    const bool bash_by_mode = submit_mode == repl::InputMode::Bash;
     const bool bash_by_prefix = text.starts_with('!');
     if (!retry_request && (bash_by_mode || bash_by_prefix)) {
-        const std::string stripped(
-            bash_by_prefix ? std::string(figs::strip_mode_prefix(text))
-                           : text);
+        const std::string stripped(bash_by_prefix ? std::string(figs::strip_mode_prefix(text))
+                                                  : text);
         if (!stripped.empty()) {
             this->RunLocalBashCommand(stripped);
             screen_state_->prompt_store.input_mode = repl::InputMode::Normal;
@@ -239,59 +231,65 @@ void AppAdapter::HandleSubmit(const std::string& text,
             attachments.push_back(std::move(it->second));
         }
     }
-    for (int id : referenced_ids) paste_.pasted_contents().erase(id);
+    for (int id : referenced_ids)
+        paste_.pasted_contents().erase(id);
 
     // Expand [...Truncated text #N] refs into their full text.
-    std::string expanded_text = retry_request ? std::string{} : loom::utils::expand_pasted_text_refs(
-        text, [this](int id) -> std::optional<std::string> {
-            auto it = paste_.pasted_text_contents().find(id);
-            if (it != paste_.pasted_text_contents().end()) return it->second;
-            return std::nullopt;
-        });
-    for (const auto& ref : refs) paste_.pasted_text_contents().erase(ref.id);
+    std::string expanded_text = retry_request
+                                    ? std::string{}
+                                    : loom::utils::expand_pasted_text_refs(
+                                          text, [this](int id) -> std::optional<std::string> {
+                                              auto it = paste_.pasted_text_contents().find(id);
+                                              if (it != paste_.pasted_text_contents().end())
+                                                  return it->second;
+                                              return std::nullopt;
+                                          });
+    for (const auto& ref : refs)
+        paste_.pasted_text_contents().erase(ref.id);
 
-    query_thread_ = std::jthread([this, text = std::move(expanded_text), attachments = std::move(attachments), cwd = screen_state_->cwd, retry_request, tool_round_budget = tool_round_budget_, program_generation, dispatch = ui_dispatcher()](std::stop_token st) {
-        core::QueryOptions opts;
-        opts.max_tool_rounds = tool_round_budget;
-        opts.resume_from_conversation = retry_request;
-        for (const auto& img : attachments) {
-            opts.attachments.push_back(img);
-        }
-        opts.on_commit = [this](const Message& message) {
-            handle_committed_message(message);
-        };
-        opts.on_event = [this, &st](const core::StreamEvent& ev) {
-            if (st.stop_requested()) return;
-            handle_stream_event(ev);
-        };
-
-        // AT-02: materialize @-mention file references into content blocks.
-        auto* engine = static_cast<loom::core::QueryEngine*>(engine_raw());
-        if (retry_request) {
-            engine->stream_query({}, opts);
-        } else {
-            auto materialized = atatt::materialize_at_mentions(text, cwd);
-            for (auto& b : materialized.blocks) {
-                opts.attachments.push_back(std::move(b));
+    query_thread_ = std::jthread(
+        [this, text = std::move(expanded_text), attachments = std::move(attachments),
+         cwd = screen_state_->cwd, retry_request, tool_round_budget = tool_round_budget_,
+         program_generation, dispatch = ui_dispatcher()](std::stop_token st) {
+            core::QueryOptions opts;
+            opts.max_tool_rounds = tool_round_budget;
+            opts.resume_from_conversation = retry_request;
+            for (const auto& img : attachments) {
+                opts.attachments.push_back(img);
             }
-            engine->stream_query(materialized.text, opts);
-        }
+            opts.on_commit = [this](const Message& message) { handle_committed_message(message); };
+            opts.on_event = [this, &st](const core::StreamEvent& ev) {
+                if (st.stop_requested()) return;
+                handle_stream_event(ev);
+            };
 
-        // Capture before publishing completion: Render may consume pending_error_.
-        bool failed = false;
-        bool paused = false;
-        {
-            std::lock_guard lock(result_mutex_);
-            ResetGenerationRate();
-            paused = pending_error_ && pending_error_->type == "tool_round_limit";
-            failed = pending_error_.has_value() && !paused;
-        }
-        dispatch([this, program_generation, failed, paused] {
-            CompleteProgramStatusOperation(program_generation, failed, paused);
+            // AT-02: materialize @-mention file references into content blocks.
+            auto* engine = static_cast<loom::core::QueryEngine*>(engine_raw());
+            if (retry_request) {
+                engine->stream_query({}, opts);
+            } else {
+                auto materialized = atatt::materialize_at_mentions(text, cwd);
+                for (auto& b : materialized.blocks) {
+                    opts.attachments.push_back(std::move(b));
+                }
+                engine->stream_query(materialized.text, opts);
+            }
+
+            // Capture before publishing completion: Render may consume pending_error_.
+            bool failed = false;
+            bool paused = false;
+            {
+                std::lock_guard lock(result_mutex_);
+                ResetGenerationRate();
+                paused = pending_error_ && pending_error_->type == "tool_round_limit";
+                failed = pending_error_.has_value() && !paused;
+            }
+            dispatch([this, program_generation, failed, paused] {
+                CompleteProgramStatusOperation(program_generation, failed, paused);
+            });
+            query_running_.store(false);
+            PostRenderEvent();
         });
-        query_running_.store(false);
-        PostRenderEvent();
-    });
 }
 
 void AppAdapter::handle_committed_message(const Message& message) {
@@ -318,14 +316,15 @@ void AppAdapter::ResetGenerationRate(bool suppress) {
     generation_rate_deadline_ms_.store(0);
 }
 
-void AppAdapter::ObserveGenerationDelta(
-        std::uint32_t index, std::chrono::steady_clock::time_point now) {
+void AppAdapter::ObserveGenerationDelta(std::uint32_t index,
+                                        std::chrono::steady_clock::time_point now) {
     auto& rate = generation_rate_;
     if (rate.suppressed) return;
     // Invalidate before replacing last_delta: an unconsumed expiry wake must
     // not let fresh data bridge a silent interval or a backwards test clock.
-    if (rate.block_index != index || (rate.last_delta &&
-        (now < *rate.last_delta || now - *rate.last_delta >= std::chrono::seconds(2))))
+    if (rate.block_index != index ||
+        (rate.last_delta &&
+         (now < *rate.last_delta || now - *rate.last_delta >= std::chrono::seconds(2))))
         ResetGenerationRate();
     rate.block_index = index;
     rate.last_delta = now;
@@ -335,7 +334,10 @@ void AppAdapter::ProjectGenerationRate() {
     auto& projected = screen_state_->task_view_store.estimated_generation_tps;
     projected.reset();
     auto& rate = generation_rate_;
-    if (!query_running_.load()) { ResetGenerationRate(); return; }
+    if (!query_running_.load()) {
+        ResetGenerationRate();
+        return;
+    }
     if (rate.suppressed || !rate.block_index || !rate.last_delta) return;
     const auto now = clock::steady_now();
     if (now < *rate.last_delta || now - *rate.last_delta >= std::chrono::seconds(2) ||
@@ -352,11 +354,13 @@ void AppAdapter::ProjectGenerationRate() {
     } else if (streaming_text_index_ == index) {
         buffer = streaming_text_;
     }
-    if (buffer.empty()) { ResetGenerationRate(); return; }
+    if (buffer.empty()) {
+        ResetGenerationRate();
+        return;
+    }
 
-    if (rate.samples.empty() ||
-        (now - rate.samples.back().at >= std::chrono::milliseconds(100) &&
-         *rate.last_delta > rate.samples.back().at)) {
+    if (rate.samples.empty() || (now - rate.samples.back().at >= std::chrono::milliseconds(100) &&
+                                 *rate.last_delta > rate.samples.back().at)) {
         const auto count = loom::utils::token_budget::TokenEstimator{}.estimate_tokens(buffer);
         if (!rate.samples.empty() && count < rate.samples.back().tokens) {
             ResetGenerationRate();
@@ -365,7 +369,8 @@ void AppAdapter::ProjectGenerationRate() {
         const auto boundary = now - std::chrono::seconds(2);
         while (rate.samples.size() > 1 && rate.samples[1].at <= boundary)
             rate.samples.pop_front();
-        while (rate.samples.size() >= 22) rate.samples.pop_front();
+        while (rate.samples.size() >= 22)
+            rate.samples.pop_front();
         rate.samples.push_back({now, count});
         rate.value.reset();
         if (rate.samples.size() >= 2) {
@@ -381,8 +386,10 @@ void AppAdapter::ProjectGenerationRate() {
     // The real-clock wake only schedules a UI drain. Fake-clock tests validate
     // expiry above without depending on this existing background wake loop.
     if (projected && screen_.load()) {
-        generation_rate_deadline_ms_.store(std::chrono::ceil<std::chrono::milliseconds>(
-            (*rate.last_delta + std::chrono::seconds(2)).time_since_epoch()).count());
+        generation_rate_deadline_ms_.store(
+            std::chrono::ceil<std::chrono::milliseconds>(
+                (*rate.last_delta + std::chrono::seconds(2)).time_since_epoch())
+                .count());
     }
 }
 
@@ -392,160 +399,164 @@ void AppAdapter::handle_stream_event(const core::StreamEvent& ev) {
     bool apply_event = true;
     bool refresh_rate = false;
 
-    std::visit([this, &apply_event, &refresh_rate](const auto& e) {
-        using T = std::decay_t<decltype(e)>;
+    std::visit(
+        [this, &apply_event, &refresh_rate](const auto& e) {
+            using T = std::decay_t<decltype(e)>;
 
-        if constexpr (std::is_same_v<T, core::StreamStart>) {
-            std::lock_guard lk(result_mutex_);
-            refresh_rate = generation_rate_.value.has_value();
-            ResetGenerationRate();
-            streaming_text_.clear();
-            streaming_text_index_.reset();
-            streaming_finalizing_ = false;
-            streaming_message_committed_ = false;
-            pending_markdown_reset_ = true;
-            streaming_tools_.clear();
-            streaming_thinking_.clear();
-            event_dedup_.clear_indices();
-            apply_event = false;
-            return;
-        }
-
-        if constexpr (std::is_same_v<T, core::ContentBlockStart>) {
-            apply_event = event_dedup_.should_accept_start(e.index);
-            if (!apply_event) return;
-            std::lock_guard lk(result_mutex_);
-            ResetGenerationRate();
-            if (const auto* tool = std::get_if<core::ToolUseBlock>(&e.block)) {
-                streaming_tools_[e.index] = StreamingToolPreview{
-                    .tool_name = tool->name,
-                    .tool_use_id = tool->id.value,
-                    .input_json = tool->input_json == "{}" ? std::string{} : tool->input_json,
-                    .result_preview = {},
-                    .compact_preview = {},
-                    .error_code = 0,
-                    .truncated = false,
-                    .complete = false,
-                    .is_error = false,
-                    .streaming_started_at = clock::steady_now(),
-                };
-                pending_spinner_ = PendingSpinner{repl::SpinnerMode::ToolUse, tool->name};
-            } else if (const auto* thinking = std::get_if<core::ThinkingBlock>(&e.block)) {
-                streaming_thinking_[e.index] = StreamingThinkingPreview{
-                    .text = thinking->thinking,
-                    .complete = false,
-                    .streaming_ended_at = std::nullopt,
-                    .streaming_started_at = clock::steady_now(),
-                };
-                pending_spinner_ = PendingSpinner{repl::SpinnerMode::Thinking, std::nullopt};
-            } else if (std::get_if<core::TextBlock>(&e.block)) {
-                // Track the text block's actual index so the streaming
-                // projection places it in the correct order (the model can
-                // emit text before tool_use: thinking → text → tool_use).
-                streaming_text_index_ = e.index;
-            }
-        } else if constexpr (std::is_same_v<T, core::ContentBlockDelta>) {
-            apply_event = event_dedup_.should_accept_delta(e.index);
-            if (!apply_event) return;
-            std::lock_guard lk(result_mutex_);
-            if (auto tool = streaming_tools_.find(e.index); tool != streaming_tools_.end()) {
-                tool->second.input_json += e.delta_text;
-            } else if (auto thinking = streaming_thinking_.find(e.index); thinking != streaming_thinking_.end()) {
-                thinking->second.text += e.delta_text;
-            } else {
-                streaming_text_ += e.delta_text;
-                pending_spinner_ = PendingSpinner{repl::SpinnerMode::Responding, std::nullopt};
-            }
-            if (!e.delta_text.empty()) ObserveGenerationDelta(e.index, clock::steady_now());
-        } else if constexpr (std::is_same_v<T, core::ContentBlockStop>) {
-            apply_event = event_dedup_.should_accept_stop(e.index);
-            if (!apply_event) return;
-            std::lock_guard lk(result_mutex_);
-            if (generation_rate_.block_index == e.index) ResetGenerationRate();
-            if (auto tool = streaming_tools_.find(e.index); tool != streaming_tools_.end())
-                tool->second.complete = true;
-            if (auto thinking = streaming_thinking_.find(e.index); thinking != streaming_thinking_.end()) {
-                thinking->second.complete = true;
-                thinking->second.streaming_ended_at =
-                    clock::steady_now();
-                const auto due = std::chrono::duration_cast<std::chrono::milliseconds>(
-                    thinking->second.streaming_ended_at->time_since_epoch()).count() + 3000;
-                auto scheduled = thinking_collapse_deadline_ms_.load();
-                while ((scheduled == 0 || due < scheduled) &&
-                       !thinking_collapse_deadline_ms_.compare_exchange_weak(scheduled, due)) {}
-                // Cache the timing so committed thinking entries (which
-                // lack timing info) can show "∴ Thought for Xs" and the
-                // chain compressor's live elapsed timer survives the
-                // streaming→committed transition.
-                if (thinking->second.streaming_started_at) {
-                    auto dur = std::chrono::duration_cast<
-                        std::chrono::milliseconds>(
-                            *thinking->second.streaming_ended_at -
-                            *thinking->second.streaming_started_at);
-                    thinking_duration_cache_[thinking->second.text] = ThinkingTiming{
-                        .duration = dur,
-                        .start_time = *thinking->second.streaming_started_at,
-                    };
-                }
-            }
-        } else if constexpr (std::is_same_v<T, core::ToolExecutionStart>) {
-            apply_event = event_dedup_.should_accept_exec_start(e.tool_use_id);
-            if (!apply_event) return;
-            std::lock_guard lk(result_mutex_);
-            ResetGenerationRate();
-            for (auto& [idx, preview] : streaming_tools_) {
-                if (preview.tool_use_id == e.tool_use_id &&
-                    !preview.exec_done) {
-                    preview.exec_started = true;
-                    if (preview.result_preview.empty()) preview.result_preview = "Starting…";
-                    break;
-                }
-            }
-        } else if constexpr (std::is_same_v<T, core::ToolExecutionProgress>) {
-            std::lock_guard lk(result_mutex_);
-            for (auto& [idx, preview] : streaming_tools_) {
-                if (preview.tool_use_id == e.tool_use_id && !preview.exec_done) {
-                    preview.result_preview = e.partial_result;
-                    break;
-                }
-            }
-        } else if constexpr (std::is_same_v<T, core::ToolExecutionEnd>) {
-            apply_event = event_dedup_.should_accept_exec_end(e.tool_use_id);
-            if (!apply_event) return;
-            std::lock_guard lk(result_mutex_);
-            for (auto& [idx, preview] : streaming_tools_) {
-                if (preview.tool_use_id == e.tool_use_id) {
-                    preview.result_preview = e.result;
-                    preview.is_error       = e.is_error;
-                    preview.exec_done      = true;
-                    const auto aug = pl::augment_tool_result(
-                        preview.result_preview, preview.is_error);
-                    preview.truncated       = aug.truncated;
-                    preview.error_code      = aug.error_code;
-                    preview.compact_preview = std::move(aug.preview);
-                    break;
-                }
-            }
-        } else if constexpr (std::is_same_v<T, core::StreamError>) {
-            if (e.error_type == "tool_error") {
+            if constexpr (std::is_same_v<T, core::StreamStart>) {
+                std::lock_guard lk(result_mutex_);
+                refresh_rate = generation_rate_.value.has_value();
+                ResetGenerationRate();
+                streaming_text_.clear();
+                streaming_text_index_.reset();
+                streaming_finalizing_ = false;
+                streaming_message_committed_ = false;
+                pending_markdown_reset_ = true;
+                streaming_tools_.clear();
+                streaming_thinking_.clear();
+                event_dedup_.clear_indices();
                 apply_event = false;
                 return;
             }
-            std::lock_guard lk(result_mutex_);
-            ResetGenerationRate();
-            pending_error_ = PendingError{
-                .type = e.error_type,
-                .message = e.message,
-            };
-        } else if constexpr (std::is_same_v<T, core::StreamEnd>) {
-            // Finish live styling but keep the body visible until the
-            // engine publishes its committed replacement.
-            std::lock_guard lk(result_mutex_);
-            ResetGenerationRate();
-            pending_error_.reset();
-            streaming_finalizing_ = true;
-        }
-    }, ev);
+
+            if constexpr (std::is_same_v<T, core::ContentBlockStart>) {
+                apply_event = event_dedup_.should_accept_start(e.index);
+                if (!apply_event) return;
+                std::lock_guard lk(result_mutex_);
+                ResetGenerationRate();
+                if (const auto* tool = std::get_if<core::ToolUseBlock>(&e.block)) {
+                    streaming_tools_[e.index] = StreamingToolPreview{
+                        .tool_name = tool->name,
+                        .tool_use_id = tool->id.value,
+                        .input_json = tool->input_json == "{}" ? std::string{} : tool->input_json,
+                        .result_preview = {},
+                        .compact_preview = {},
+                        .error_code = 0,
+                        .truncated = false,
+                        .complete = false,
+                        .is_error = false,
+                        .streaming_started_at = clock::steady_now(),
+                    };
+                    pending_spinner_ = PendingSpinner{repl::SpinnerMode::ToolUse, tool->name};
+                } else if (const auto* thinking = std::get_if<core::ThinkingBlock>(&e.block)) {
+                    streaming_thinking_[e.index] = StreamingThinkingPreview{
+                        .text = thinking->thinking,
+                        .complete = false,
+                        .streaming_ended_at = std::nullopt,
+                        .streaming_started_at = clock::steady_now(),
+                    };
+                    pending_spinner_ = PendingSpinner{repl::SpinnerMode::Thinking, std::nullopt};
+                } else if (std::get_if<core::TextBlock>(&e.block)) {
+                    // Track the text block's actual index so the streaming
+                    // projection places it in the correct order (the model can
+                    // emit text before tool_use: thinking → text → tool_use).
+                    streaming_text_index_ = e.index;
+                }
+            } else if constexpr (std::is_same_v<T, core::ContentBlockDelta>) {
+                apply_event = event_dedup_.should_accept_delta(e.index);
+                if (!apply_event) return;
+                std::lock_guard lk(result_mutex_);
+                if (auto tool = streaming_tools_.find(e.index); tool != streaming_tools_.end()) {
+                    tool->second.input_json += e.delta_text;
+                } else if (auto thinking = streaming_thinking_.find(e.index);
+                           thinking != streaming_thinking_.end()) {
+                    thinking->second.text += e.delta_text;
+                } else {
+                    streaming_text_ += e.delta_text;
+                    pending_spinner_ = PendingSpinner{repl::SpinnerMode::Responding, std::nullopt};
+                }
+                if (!e.delta_text.empty()) ObserveGenerationDelta(e.index, clock::steady_now());
+            } else if constexpr (std::is_same_v<T, core::ContentBlockStop>) {
+                apply_event = event_dedup_.should_accept_stop(e.index);
+                if (!apply_event) return;
+                std::lock_guard lk(result_mutex_);
+                if (generation_rate_.block_index == e.index) ResetGenerationRate();
+                if (auto tool = streaming_tools_.find(e.index); tool != streaming_tools_.end())
+                    tool->second.complete = true;
+                if (auto thinking = streaming_thinking_.find(e.index);
+                    thinking != streaming_thinking_.end()) {
+                    thinking->second.complete = true;
+                    thinking->second.streaming_ended_at = clock::steady_now();
+                    const auto due = std::chrono::duration_cast<std::chrono::milliseconds>(
+                                         thinking->second.streaming_ended_at->time_since_epoch())
+                                         .count() +
+                                     3000;
+                    auto scheduled = thinking_collapse_deadline_ms_.load();
+                    while ((scheduled == 0 || due < scheduled) &&
+                           !thinking_collapse_deadline_ms_.compare_exchange_weak(scheduled, due)) {
+                    }
+                    // Cache the timing so committed thinking entries (which
+                    // lack timing info) can show "∴ Thought for Xs" and the
+                    // chain compressor's live elapsed timer survives the
+                    // streaming→committed transition.
+                    if (thinking->second.streaming_started_at) {
+                        auto dur = std::chrono::duration_cast<std::chrono::milliseconds>(
+                            *thinking->second.streaming_ended_at -
+                            *thinking->second.streaming_started_at);
+                        thinking_duration_cache_[thinking->second.text] = ThinkingTiming{
+                            .duration = dur,
+                            .start_time = *thinking->second.streaming_started_at,
+                        };
+                    }
+                }
+            } else if constexpr (std::is_same_v<T, core::ToolExecutionStart>) {
+                apply_event = event_dedup_.should_accept_exec_start(e.tool_use_id);
+                if (!apply_event) return;
+                std::lock_guard lk(result_mutex_);
+                ResetGenerationRate();
+                for (auto& [idx, preview] : streaming_tools_) {
+                    if (preview.tool_use_id == e.tool_use_id && !preview.exec_done) {
+                        preview.exec_started = true;
+                        if (preview.result_preview.empty()) preview.result_preview = "Starting…";
+                        break;
+                    }
+                }
+            } else if constexpr (std::is_same_v<T, core::ToolExecutionProgress>) {
+                std::lock_guard lk(result_mutex_);
+                for (auto& [idx, preview] : streaming_tools_) {
+                    if (preview.tool_use_id == e.tool_use_id && !preview.exec_done) {
+                        preview.result_preview = e.partial_result;
+                        break;
+                    }
+                }
+            } else if constexpr (std::is_same_v<T, core::ToolExecutionEnd>) {
+                apply_event = event_dedup_.should_accept_exec_end(e.tool_use_id);
+                if (!apply_event) return;
+                std::lock_guard lk(result_mutex_);
+                for (auto& [idx, preview] : streaming_tools_) {
+                    if (preview.tool_use_id == e.tool_use_id) {
+                        preview.result_preview = e.result;
+                        preview.is_error = e.is_error;
+                        preview.exec_done = true;
+                        const auto aug =
+                            pl::augment_tool_result(preview.result_preview, preview.is_error);
+                        preview.truncated = aug.truncated;
+                        preview.error_code = aug.error_code;
+                        preview.compact_preview = std::move(aug.preview);
+                        break;
+                    }
+                }
+            } else if constexpr (std::is_same_v<T, core::StreamError>) {
+                if (e.error_type == "tool_error") {
+                    apply_event = false;
+                    return;
+                }
+                std::lock_guard lk(result_mutex_);
+                ResetGenerationRate();
+                pending_error_ = PendingError{
+                    .type = e.error_type,
+                    .message = e.message,
+                };
+            } else if constexpr (std::is_same_v<T, core::StreamEnd>) {
+                // Finish live styling but keep the body visible until the
+                // engine publishes its committed replacement.
+                std::lock_guard lk(result_mutex_);
+                ResetGenerationRate();
+                pending_error_.reset();
+                streaming_finalizing_ = true;
+            }
+        },
+        ev);
 
     if (apply_event) {
         statusline_update_pending_.store(true);
@@ -570,7 +581,8 @@ void AppAdapter::HandleCommand(std::string_view cmd) {
     if (query_running_.load()) return;
     if (normalized == "/clear") {
         static_cast<loom::core::QueryEngine*>(engine_raw())->clear_conversation();
-        (void)loom::tools::todo_write_store().clear_scope(loom::tools::TodoWriteTool::kDefaultScope);
+        (void)loom::tools::todo_write_store().clear_scope(
+            loom::tools::TodoWriteTool::kDefaultScope);
         local_command_messages_.clear();
         screen_state_->messages_store.divider_index.reset();
         screen_state_->messages_store.unseen_divider.reset();
@@ -602,8 +614,7 @@ void AppAdapter::HandleCommand(std::string_view cmd) {
                     ref_texts[r.id] = it->second;
                 }
             }
-            repl::StashCurrentPrompt(screen_state_,
-                std::move(ref_images), std::move(ref_texts));
+            repl::StashCurrentPrompt(screen_state_, std::move(ref_images), std::move(ref_texts));
             repl::set_prompt_input_text(screen_state_, {}, 0);
         }
         auto result = static_cast<loom::core::QueryEngine*>(engine_raw())->compact_conversation();
@@ -616,18 +627,21 @@ void AppAdapter::HandleCommand(std::string_view cmd) {
                 std::unordered_map<int, ImageBlock> ri;
                 std::unordered_map<int, std::string> rt;
                 repl::RestoreStashedPrompt(screen_state_, &ri, &rt);
-                for (auto& [id, img] : ri) paste_.pasted_contents()[id] = std::move(img);
-                for (auto& [id, txt] : rt) paste_.pasted_text_contents()[id] = std::move(txt);
+                for (auto& [id, img] : ri)
+                    paste_.pasted_contents()[id] = std::move(img);
+                for (auto& [id, txt] : rt)
+                    paste_.pasted_text_contents()[id] = std::move(txt);
             }
         }
         return;
     }
     if (normalized == "/cost") {
         auto usage = static_cast<loom::core::QueryEngine*>(engine_raw())->get_usage();
-        auto cost = static_cast<loom::core::QueryEngine*>(engine_raw())->budget_tracker().current_spend_usd;
+        auto cost =
+            static_cast<loom::core::QueryEngine*>(engine_raw())->budget_tracker().current_spend_usd;
         screen_state_->task_view_store.spinner_tip = std::format(
-            "Cost: ${:.4f} | In: {} | Out: {} | Ctx: {:.0f}%",
-            cost, usage.input_tokens, usage.output_tokens,
+            "Cost: ${:.4f} | In: {} | Out: {} | Ctx: {:.0f}%", cost, usage.input_tokens,
+            usage.output_tokens,
             static_cast<loom::core::QueryEngine*>(engine_raw())->context_utilization() * 100.0);
         return;
     }
@@ -638,11 +652,12 @@ void AppAdapter::HandleCommand(std::string_view cmd) {
             auto params = static_cast<loom::core::QueryEngine*>(engine_raw())->model_params();
             std::string old_model = params.model;
             params.model = std::string(new_model);
-            static_cast<loom::core::QueryEngine*>(engine_raw())->set_model_params(std::move(params));
+            static_cast<loom::core::QueryEngine*>(engine_raw())
+                ->set_model_params(std::move(params));
 
             AppendLocalCommandInputMessage(std::string(normalized));
-            AppendLocalCommandMessage(
-                std::format("Switched model: {} → {}", old_model, new_model), false);
+            AppendLocalCommandMessage(std::format("Switched model: {} → {}", old_model, new_model),
+                                      false);
             this->TriggerStatuslineUpdate();
         }
         this->SyncState();
@@ -656,8 +671,10 @@ void AppAdapter::HandleCommand(std::string_view cmd) {
             auto arg = normalized.substr(args_start + 1);
             set_vim_enabled(arg == "on" || arg == "1");
         }
-        if (vim_enabled()) loom::vim::enable_vim_mode();
-        else loom::vim::disable_vim_mode();
+        if (vim_enabled())
+            loom::vim::enable_vim_mode();
+        else
+            loom::vim::disable_vim_mode();
         this->TriggerStatuslineUpdate();
         return;
     }
@@ -685,10 +702,11 @@ void AppAdapter::HandleCommand(std::string_view cmd) {
 
     if (auto parsed = loom::core::CommandRegistry::parse(normalized)) {
         const bool known_command =
-            static_cast<loom::commands::AppCommandRegistry*>(cmd_registry_raw()) && static_cast<loom::commands::AppCommandRegistry*>(cmd_registry_raw())->has_command(parsed->name);
+            static_cast<loom::commands::AppCommandRegistry*>(cmd_registry_raw()) &&
+            static_cast<loom::commands::AppCommandRegistry*>(cmd_registry_raw())
+                ->has_command(parsed->name);
         if (!known_command) {
-            if (auto skill =
-                    acsrc::find_skill_suggestion(screen_state_->cwd, parsed->name)) {
+            if (auto skill = acsrc::find_skill_suggestion(screen_state_->cwd, parsed->name)) {
                 // SL-10: reject skills marked user_invocable=false (model-only).
                 if (!skill->user_invocable) {
                     AppendLocalCommandInputMessage(std::string(normalized));
@@ -711,10 +729,9 @@ void AppAdapter::HandleCommand(std::string_view cmd) {
             // SL-09: unknown-command file-path disambiguation
             const auto looks_like_command = [](std::string_view name) {
                 return !name.empty() &&
-                    name.find_first_not_of(
-                        "abcdefghijklmnopqrstuvwxyz"
-                        "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-                        "0123456789:-_") == std::string_view::npos;
+                       name.find_first_not_of("abcdefghijklmnopqrstuvwxyz"
+                                              "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                                              "0123456789:-_") == std::string_view::npos;
             };
             if (looks_like_command(parsed->name)) {
                 std::error_code ec;
@@ -734,9 +751,11 @@ void AppAdapter::HandleCommand(std::string_view cmd) {
     }
 
     if (static_cast<loom::commands::AppCommandRegistry*>(cmd_registry_raw())) {
-        auto result = static_cast<loom::commands::AppCommandRegistry*>(cmd_registry_raw())->execute(
-            command,
-            command_context_for_engine(static_cast<loom::core::QueryEngine*>(engine_raw()), app_store_raw(), screen_state_->cwd));
+        auto result =
+            static_cast<loom::commands::AppCommandRegistry*>(cmd_registry_raw())
+                ->execute(command, command_context_for_engine(
+                                       static_cast<loom::core::QueryEngine*>(engine_raw()),
+                                       app_store_raw(), screen_state_->cwd));
         if (result) {
             if (result->status == CommandStatus::Injected) {
                 this->HandleSubmit(result->message);
@@ -760,9 +779,8 @@ void AppAdapter::HandleCommand(std::string_view cmd) {
                 //    directly resume a session by ID ──
                 if (result->metadata->starts_with("UI:resume")) {
                     auto* engine = static_cast<loom::core::QueryEngine*>(engine_raw());
-                    auto sessions_dir = engine && engine->sessions_dir()
-                        ? *engine->sessions_dir()
-                        : this->sessions_dir();
+                    auto sessions_dir = engine && engine->sessions_dir() ? *engine->sessions_dir()
+                                                                         : this->sessions_dir();
 
                     if (*result->metadata == "UI:resume") {
                         // ── Open the interactive session picker dialog ──
@@ -775,13 +793,11 @@ void AppAdapter::HandleCommand(std::string_view cmd) {
                             // message_count, which is 0 for sessions that
                             // use messages.jsonl (the engine appends to the
                             // file but doesn't update the metadata count).
-                            int actual_count = count_session_messages(
-                                sessions_dir, m.session_id);
+                            int actual_count = count_session_messages(sessions_dir, m.session_id);
                             if (actual_count == 0) continue;
                             auto title = m.title.value_or("Session");
                             if (title.empty() || title == "Session") {
-                                title = first_user_message_as_title(
-                                    sessions_dir, m.session_id);
+                                title = first_user_message_as_title(sessions_dir, m.session_id);
                             }
                             entries.push_back(dsys::SessionPickerEntry{
                                 .session_id = m.session_id,
@@ -793,14 +809,11 @@ void AppAdapter::HandleCommand(std::string_view cmd) {
                             });
                         }
                         dtrig::PushSessionPicker(
-                            screen_state_->dialog_store.dialog_queue,
-                            std::move(entries),
-                            [this, sessions_dir = std::move(sessions_dir)](
-                                const std::string& id) {
+                            screen_state_->dialog_store.dialog_queue, std::move(entries),
+                            [this, sessions_dir = std::move(sessions_dir)](const std::string& id) {
                                 if (!id.empty()) {
                                     this->ResumeSessionFromDirectory(
-                                        sessions_dir, id,
-                                        std::format("Resuming session: {}", id));
+                                        sessions_dir, id, std::format("Resuming session: {}", id));
                                 }
                             });
                         AppendLocalCommandMessage(result->message, false, true);
@@ -809,10 +822,8 @@ void AppAdapter::HandleCommand(std::string_view cmd) {
                     }
 
                     // ── Direct resume: "UI:resume:<session_id>" ──
-                    auto session_id = result->metadata->substr(
-                        std::string("UI:resume:").size());
-                    this->ResumeSessionFromDirectory(
-                        sessions_dir, session_id, result->message);
+                    auto session_id = result->metadata->substr(std::string("UI:resume:").size());
+                    this->ResumeSessionFromDirectory(sessions_dir, session_id, result->message);
                     return;
                 }
                 auto enqueue_fn = [this](std::string_view c) {
@@ -820,17 +831,17 @@ void AppAdapter::HandleCommand(std::string_view cmd) {
                         this->HandleCommand(c);
                     }
                 };
-                if (dtrig::PushFromCommandMetadata(
-                        screen_state_->dialog_store.dialog_queue,
-                        *result->metadata,
-                        enqueue_fn))
-                {
-                    AppendLocalCommandMessage(result->message, !result->ok || result->status == core::CommandStatus::Failed);
+                if (dtrig::PushFromCommandMetadata(screen_state_->dialog_store.dialog_queue,
+                                                   *result->metadata, enqueue_fn)) {
+                    AppendLocalCommandMessage(result->message,
+                                              !result->ok ||
+                                                  result->status == core::CommandStatus::Failed);
                     PostRenderEvent();
                     return;
                 }
             }
-            AppendLocalCommandMessage(result->message, !result->ok || result->status == core::CommandStatus::Failed);
+            AppendLocalCommandMessage(result->message,
+                                      !result->ok || result->status == core::CommandStatus::Failed);
             return;
         }
         AppendLocalCommandMessage(result.error().message, true);
@@ -840,11 +851,9 @@ void AppAdapter::HandleCommand(std::string_view cmd) {
     }
 }
 
-bool AppAdapter::ResumeSessionFromDirectory(
-    const std::filesystem::path& sessions_dir,
-    std::string_view session_id,
-    std::string_view status_message)
-{
+bool AppAdapter::ResumeSessionFromDirectory(const std::filesystem::path& sessions_dir,
+                                            std::string_view session_id,
+                                            std::string_view status_message) {
     auto* engine = static_cast<loom::core::QueryEngine*>(engine_raw());
     if (!engine || !loom::session::load_session_metadata(sessions_dir, session_id)) {
         AppendLocalCommandMessage(
@@ -859,8 +868,7 @@ bool AppAdapter::ResumeSessionFromDirectory(
     auto docs = loom::session::load_messages(sessions_dir, session_id);
     messages.reserve(docs.size());
     for (std::size_t i = 0; i < docs.size(); ++i) {
-        if (auto parsed = loom::query::parse_session_message_value(
-                docs[i].root(), i)) {
+        if (auto parsed = loom::query::parse_session_message_value(docs[i].root(), i)) {
             messages.push_back(std::move(*parsed));
         }
     }

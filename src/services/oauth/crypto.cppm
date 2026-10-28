@@ -1,6 +1,6 @@
 module;
-#include <cstdint>
 #include <cstddef>
+#include <cstdint>
 export module loom.services.oauth.crypto;
 
 import std;
@@ -36,18 +36,14 @@ namespace detail {
 
 inline void fill_fallback(std::span<uint8_t> bytes) {
     static std::atomic<uint64_t> counter{0};
-    const auto now = static_cast<uint64_t>(
-        std::chrono::high_resolution_clock::now().time_since_epoch().count());
+    const auto now =
+        static_cast<uint64_t>(std::chrono::high_resolution_clock::now().time_since_epoch().count());
     const auto sequence = counter.fetch_add(1, std::memory_order_relaxed);
-    const auto address = static_cast<uint64_t>(
-        reinterpret_cast<std::uintptr_t>(bytes.data()));
+    const auto address = static_cast<uint64_t>(reinterpret_cast<std::uintptr_t>(bytes.data()));
     std::seed_seq seed{
-        static_cast<uint32_t>(now),
-        static_cast<uint32_t>(now >> 32),
-        static_cast<uint32_t>(sequence),
-        static_cast<uint32_t>(sequence >> 32),
-        static_cast<uint32_t>(address),
-        static_cast<uint32_t>(address >> 32),
+        static_cast<uint32_t>(now),      static_cast<uint32_t>(now >> 32),
+        static_cast<uint32_t>(sequence), static_cast<uint32_t>(sequence >> 32),
+        static_cast<uint32_t>(address),  static_cast<uint32_t>(address >> 32),
     };
     std::mt19937_64 gen(seed);
     std::uniform_int_distribution<int> dist(0, 255);
@@ -62,7 +58,7 @@ inline void fill_random_bytes(std::span<uint8_t> bytes) {
     fill_fallback(bytes);
 }
 
-} // namespace detail
+}  // namespace detail
 
 // Base64url encode a byte span (no padding, URL-safe)
 auto base64url_encode(std::span<const uint8_t> data) -> std::string {
@@ -113,4 +109,4 @@ auto generate_state() -> std::string {
     return base64url_encode(random_bytes);
 }
 
-} // namespace loom::services::oauth
+}  // namespace loom::services::oauth

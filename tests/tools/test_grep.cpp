@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
-#include <cstdlib>
 #include <uv.h>
+
+#include <cstdlib>
 #ifndef _WIN32
 #include <signal.h>
 #include <unistd.h>
@@ -19,6 +20,7 @@ namespace {
 
 struct TempDir {
     fs::path path;
+
     TempDir() {
         auto pattern = (fs::temp_directory_path() / "loom-grep-XXXXXX").string();
         uv_fs_t request{};
@@ -27,7 +29,12 @@ struct TempDir {
         uv_fs_req_cleanup(&request);
         if (rc < 0) throw std::runtime_error(uv_strerror(rc));
     }
-    ~TempDir() { std::error_code ec; fs::remove_all(path, ec); }
+
+    ~TempDir() {
+        std::error_code ec;
+        fs::remove_all(path, ec);
+    }
+
     void write(const fs::path& name, std::string_view data) {
         fs::create_directories((path / name).parent_path());
         std::ofstream file(path / name, std::ios::binary);
@@ -38,13 +45,18 @@ struct TempDir {
 struct EnvironmentGuard {
     std::string key;
     std::optional<std::string> old;
-    EnvironmentGuard(std::string name, const std::string& value) : key(std::move(name)) {
+
+    EnvironmentGuard(std::string name, const std::string& value)
+        : key(std::move(name)) {
         if (const auto* previous = std::getenv(key.c_str())) old = previous;
         uv_os_setenv(key.c_str(), value.c_str());
     }
+
     ~EnvironmentGuard() {
-        if (old) uv_os_setenv(key.c_str(), old->c_str());
-        else uv_os_unsetenv(key.c_str());
+        if (old)
+            uv_os_setenv(key.c_str(), old->c_str());
+        else
+            uv_os_unsetenv(key.c_str());
     }
 };
 
@@ -55,7 +67,8 @@ std::string quote(std::string_view value) {
     return quoted.substr(1, quoted.size() - 2);
 }
 
-loom::core::ToolInput search_input(const fs::path& path, std::string_view pattern = "needle", std::string_view options = "") {
+loom::core::ToolInput search_input(const fs::path& path, std::string_view pattern = "needle",
+                                   std::string_view options = "") {
     return loom::core::ToolInput::from_json(std::format(
         R"({{"pattern":"{}","path":"{}"{}}})", quote(pattern), quote(path.string()), options));
 }
@@ -64,12 +77,16 @@ class GrepTest : public testing::Test {
 protected:
     TempDir dir;
     loom::core::ToolRegistry registry;
+
     void SetUp() override { registry.register_tool(loom::tools::make_grep_tool()); }
-    loom::core::ToolResult search(const fs::path& path, std::string_view pattern = "needle", std::string_view options = "") {
+
+    loom::core::ToolResult search(const fs::path& path, std::string_view pattern = "needle",
+                                  std::string_view options = "") {
         auto result = registry.execute("Grep", search_input(path, pattern, options));
         if (!result) throw std::runtime_error(result.error().format());
         return std::move(*result);
     }
+
     void fake_rg(std::string_view mode) {
         std::array<char, 4096> executable{};
         auto size = executable.size();
@@ -83,6 +100,7 @@ protected:
         fs::remove(dir.path / "bin/rg");
         fs::create_symlink(fs::path(std::string(executable.data(), size)), dir.path / "bin/rg");
     }
+
     bool wait_for_pid() {
         const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(3);
         while (std::chrono::steady_clock::now() < deadline) {
@@ -95,6 +113,7 @@ protected:
         }
         return false;
     }
+
     void expect_reaped() {
 #ifndef _WIN32
         std::ifstream pid_file(dir.path / "pid");
@@ -103,9 +122,8 @@ protected:
         EXPECT_EQ(::kill(pid, 0), -1) << "search child must be terminated and reaped";
 #endif
     }
-    void stalled_rg() {
-        fake_rg("stall");
-    }
+
+    void stalled_rg() { fake_rg("stall"); }
 };
 
 TEST_F(GrepTest, ModesAndPagination) {
@@ -200,8 +218,9 @@ TEST_F(GrepTest, SeparatesNoMatchesFromRegexPathAndTypeErrors) {
     EXPECT_NE(bad_regex.content.front().text.find("regex"), std::string::npos);
     EXPECT_TRUE(search(dir.path / "missing").is_error);
     EXPECT_TRUE(search(dir.path, "needle", R"(,"type":"not_a_known_type")").is_error);
-    for (const auto* option : {R"(,"output_mode":"bad")", R"(,"timeout_ms":0)",
-            R"(,"timeout_ms":1.5)", R"(,"head_limit":-1)", R"(,"offset":100001)"})
+    for (const auto* option :
+         {R"(,"output_mode":"bad")", R"(,"timeout_ms":0)", R"(,"timeout_ms":1.5)",
+          R"(,"head_limit":-1)", R"(,"offset":100001)"})
         EXPECT_TRUE(search(dir.path, "needle", option).is_error);
 }
 
@@ -323,17 +342,22 @@ TEST_F(GrepTest, QueryAbortShutdownAndExternalCancellationReachRunningSearch) {
         call.id.value = "grep-cancellation";
         call.name = "Grep";
         call.input_json = std::string(search_input(dir.path).json());
-        auto work = std::async(std::launch::async, [&] { return engine.execute_single_tool_for_testing(call); });
+        auto work = std::async(std::launch::async,
+                               [&] { return engine.execute_single_tool_for_testing(call); });
         EXPECT_TRUE(wait_for_pid());
-        if (std::string_view(kind) == "abort") engine.abort();
-        else if (std::string_view(kind) == "shutdown") engine.request_tool_shutdown();
-        else external.store(true);
+        if (std::string_view(kind) == "abort")
+            engine.abort();
+        else if (std::string_view(kind) == "shutdown")
+            engine.request_tool_shutdown();
+        else
+            external.store(true);
         EXPECT_EQ(work.wait_for(std::chrono::seconds(3)), std::future_status::ready);
         auto result = work.get();
         EXPECT_TRUE(result.is_error);
         EXPECT_EQ(result.tool_use_id.value, "grep-cancellation");
         ASSERT_FALSE(result.content.empty());
-        EXPECT_NE(std::get<loom::core::TextBlock>(result.content.front()).text.find("cancelled"), std::string::npos);
+        EXPECT_NE(std::get<loom::core::TextBlock>(result.content.front()).text.find("cancelled"),
+                  std::string::npos);
         expect_reaped();
     }
 }
@@ -358,7 +382,8 @@ int run_fake_ripgrep(const fs::path& directory) {
     if (!pid) return 1;
     if (mode == "flood") {
         ::signal(SIGPIPE, SIG_DFL);
-        while (std::cout << "file:1:needle needle needle\n") {}
+        while (std::cout << "file:1:needle needle needle\n") {
+        }
         return 1;
     }
     if (mode == "closed-stdout") {
@@ -371,7 +396,7 @@ int run_fake_ripgrep(const fs::path& directory) {
 }
 #endif
 
-} // namespace
+}  // namespace
 
 int main(int argc, char** argv) {
 #ifndef _WIN32

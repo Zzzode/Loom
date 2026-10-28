@@ -4,8 +4,8 @@
 //           bashState.ts, processManager.ts, ptyManager.ts, shellSession.ts
 module;
 
-#include <cerrno>
 #include <cctype>
+#include <cerrno>
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
@@ -14,15 +14,16 @@ module;
 #ifdef _WIN32
 #include <windows.h>
 #else
-#include <signal.h>
-#include <sys/wait.h>
-#include <sys/types.h>
-#include <unistd.h>
 #include <dirent.h>
+#include <signal.h>
 #include <spawn.h>
 #include <sys/socket.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <unistd.h>
 #ifdef __APPLE__
 #include <crt_externs.h>
+
 #include <cstddef>
 #define LOOM_ENVIRON (*_NSGetEnviron())
 #else
@@ -41,23 +42,10 @@ export namespace loom::utils::bash {
 using ExitCode = std::int32_t;
 
 /// Signal types that can be sent to processes
-enum class SignalType {
-    Int,
-    Term,
-    Kill,
-    Hup,
-    Pipe,
-    Tstp,
-    Cont
-};
+enum class SignalType { Int, Term, Kill, Hup, Pipe, Tstp, Cont };
 
 /// Current state of a process
-enum class ProcessState {
-    Running,
-    Stopped,
-    Exited,
-    Signaled
-};
+enum class ProcessState { Running, Stopped, Exited, Signaled };
 
 /// Information about a running or completed process
 struct ProcessInfo {
@@ -81,13 +69,7 @@ struct BashHistoryEntry {
 struct CompletionItem {
     std::string text;
     std::string description;
-    enum class Type {
-        File,
-        Directory,
-        Command,
-        Variable,
-        Alias
-    } type;
+    enum class Type { File, Directory, Command, Variable, Alias } type;
 };
 
 /// Configuration for a shell session
@@ -127,13 +109,20 @@ constexpr std::size_t MAX_HISTORY_SIZE = 1000;
 #ifndef _WIN32
 inline int signal_type_to_posix(SignalType sig) {
     switch (sig) {
-        case SignalType::Int:  return SIGINT;
-        case SignalType::Term: return SIGTERM;
-        case SignalType::Kill: return SIGKILL;
-        case SignalType::Hup:  return SIGHUP;
-        case SignalType::Pipe: return SIGPIPE;
-        case SignalType::Tstp: return SIGTSTP;
-        case SignalType::Cont: return SIGCONT;
+    case SignalType::Int:
+        return SIGINT;
+    case SignalType::Term:
+        return SIGTERM;
+    case SignalType::Kill:
+        return SIGKILL;
+    case SignalType::Hup:
+        return SIGHUP;
+    case SignalType::Pipe:
+        return SIGPIPE;
+    case SignalType::Tstp:
+        return SIGTSTP;
+    case SignalType::Cont:
+        return SIGCONT;
     }
     return SIGTERM;
 }
@@ -149,7 +138,7 @@ inline std::string read_stream(FILE* stream) {
     return output;
 }
 
-} // namespace detail
+}  // namespace detail
 
 [[nodiscard]] inline auto escape_shell_arg(std::string_view arg) -> std::string;
 
@@ -164,8 +153,7 @@ struct ExecCaptureResult {
 /// falls back to popen. Shell-redirection tokens in `cmd` ("2>/dev/null",
 /// "2>&1") still work because the command still runs under /bin/sh -c. This is
 /// the drop-in replacement for the `popen(...,"r") ... pclose(...)` idiom.
-[[nodiscard]] std::expected<ExecCaptureResult, std::string>
-exec_capture(const std::string& cmd) {
+[[nodiscard]] std::expected<ExecCaptureResult, std::string> exec_capture(const std::string& cmd) {
     ExecCaptureResult result;
 #ifdef _WIN32
     FILE* pipe = ::_popen(cmd.c_str(), "r");
@@ -183,7 +171,8 @@ exec_capture(const std::string& cmd) {
 
     posix_spawn_file_actions_t actions;
     if (::posix_spawn_file_actions_init(&actions) != 0) {
-        ::close(pipefd[0]); ::close(pipefd[1]);
+        ::close(pipefd[0]);
+        ::close(pipefd[1]);
         return std::unexpected(std::string{"posix_spawn_file_actions_init failed"});
     }
     ::posix_spawn_file_actions_adddup2(&actions, pipefd[1], STDOUT_FILENO);
@@ -256,7 +245,10 @@ exec_stream(const std::string& cmd, const std::function<void(std::string_view)>&
     int rc = ::posix_spawnp(&pid, "/bin/sh", &actions, nullptr, argv.data(), LOOM_ENVIRON);
     ::posix_spawn_file_actions_destroy(&actions);
     ::close(pipefd[1]);
-    if (rc != 0) { ::close(pipefd[0]); return std::unexpected(std::string{"posix_spawn failed"}); }
+    if (rc != 0) {
+        ::close(pipefd[0]);
+        return std::unexpected(std::string{"posix_spawn failed"});
+    }
     std::array<char, 4096> buf{};
     ssize_t r;
     while ((r = ::read(pipefd[0], buf.data(), buf.size())) > 0) {
@@ -272,8 +264,8 @@ exec_stream(const std::string& cmd, const std::function<void(std::string_view)>&
 /// Write `input` to a command's stdin via `/bin/sh -c cmd`, returning the raw
 /// wait status. Replaces the `popen(...,"w") ... fwrite ... pclose` idiom
 /// (e.g. piping text into pbcopy/clip/xclip).
-[[nodiscard]] std::expected<int, std::string>
-exec_write(const std::string& cmd, std::string_view input) {
+[[nodiscard]] std::expected<int, std::string> exec_write(const std::string& cmd,
+                                                         std::string_view input) {
 #ifdef _WIN32
     FILE* pipe = ::_popen(cmd.c_str(), "w");
     if (!pipe) return std::unexpected(std::string{"popen failed"});
@@ -284,7 +276,8 @@ exec_write(const std::string& cmd, std::string_view input) {
     if (::pipe(pipefd) != 0) return std::unexpected(std::string{"pipe failed"});
     posix_spawn_file_actions_t actions;
     if (::posix_spawn_file_actions_init(&actions) != 0) {
-        ::close(pipefd[0]); ::close(pipefd[1]);
+        ::close(pipefd[0]);
+        ::close(pipefd[1]);
         return std::unexpected(std::string{"posix_spawn_file_actions_init failed"});
     }
     ::posix_spawn_file_actions_adddup2(&actions, pipefd[0], STDIN_FILENO);
@@ -332,6 +325,7 @@ inline std::mutex& popen_spawn_mtx() {
     static std::mutex m;
     return m;
 }
+
 inline std::unordered_map<FILE*, pid_t>& popen_spawn_pids() {
     static std::unordered_map<FILE*, pid_t> m;
     return m;
@@ -347,7 +341,8 @@ inline std::unordered_map<FILE*, pid_t>& popen_spawn_pids() {
     if (::pipe(pipefd) != 0) return nullptr;
     posix_spawn_file_actions_t fa;
     if (::posix_spawn_file_actions_init(&fa) != 0) {
-        ::close(pipefd[0]); ::close(pipefd[1]);
+        ::close(pipefd[0]);
+        ::close(pipefd[1]);
         return nullptr;
     }
     ::posix_spawn_file_actions_adddup2(&fa, pipefd[1], STDOUT_FILENO);
@@ -422,30 +417,44 @@ inline int pclose_spawn(FILE* f) {
     int sv[2];
     if (::socketpair(AF_UNIX, SOCK_STREAM, 0, sv) != 0) return nullptr;
     posix_spawn_file_actions_t fa;
-    if (::posix_spawn_file_actions_init(&fa) != 0) { ::close(sv[0]); ::close(sv[1]); return nullptr; }
+    if (::posix_spawn_file_actions_init(&fa) != 0) {
+        ::close(sv[0]);
+        ::close(sv[1]);
+        return nullptr;
+    }
     ::posix_spawn_file_actions_adddup2(&fa, sv[1], STDIN_FILENO);
     ::posix_spawn_file_actions_adddup2(&fa, sv[1], STDOUT_FILENO);
     ::posix_spawn_file_actions_addclose(&fa, sv[1]);
     static const std::string sh = "/bin/sh";
     static const std::string dash_c = "-c";
-    std::vector<char*> argv = { const_cast<char*>(sh.data()), const_cast<char*>(dash_c.data()), const_cast<char*>(cmd.c_str()), nullptr };
+    std::vector<char*> argv = {const_cast<char*>(sh.data()), const_cast<char*>(dash_c.data()),
+                               const_cast<char*>(cmd.c_str()), nullptr};
     pid_t pid = 0;
     int rc = ::posix_spawnp(&pid, "/bin/sh", &fa, nullptr, argv.data(), LOOM_ENVIRON);
     ::posix_spawn_file_actions_destroy(&fa);
     ::close(sv[1]);
-    if (rc != 0) { ::close(sv[0]); return nullptr; }
+    if (rc != 0) {
+        ::close(sv[0]);
+        return nullptr;
+    }
     FILE* f = ::fdopen(sv[0], "r+");
-    if (!f) { ::close(sv[0]); ::kill(pid, SIGTERM); ::waitpid(pid, nullptr, 0); return nullptr; }
-    { std::lock_guard lock(popen_spawn_mtx()); popen_spawn_pids()[f] = pid; }
+    if (!f) {
+        ::close(sv[0]);
+        ::kill(pid, SIGTERM);
+        ::waitpid(pid, nullptr, 0);
+        return nullptr;
+    }
+    {
+        std::lock_guard lock(popen_spawn_mtx());
+        popen_spawn_pids()[f] = pid;
+    }
     return f;
 #endif
 }
 
 /// Execute a command synchronously and return the result
-[[nodiscard]] inline auto execute_command(
-    std::string_view command,
-    ShellSessionConfig config = {}
-) -> std::expected<ExecutionResult, std::string> {
+[[nodiscard]] inline auto execute_command(std::string_view command, ShellSessionConfig config = {})
+    -> std::expected<ExecutionResult, std::string> {
     if (command.empty()) {
         return std::unexpected(std::string{"command must not be empty"});
     }
@@ -461,10 +470,10 @@ inline int pclose_spawn(FILE* f) {
 
     // Set up environment variables
     for (const auto& env : config.env_vars) {
-        // Each env var is "KEY=VALUE"
-        #ifndef _WIN32
+// Each env var is "KEY=VALUE"
+#ifndef _WIN32
         putenv(const_cast<char*>(env.c_str()));
-        #endif
+#endif
     }
 
     // Execute via shell using popen for stdout capture
@@ -485,7 +494,7 @@ inline int pclose_spawn(FILE* f) {
     result.stdout_output = std::move(output);
     result.duration = duration;
 
-    #ifndef _WIN32
+#ifndef _WIN32
     if (WIFEXITED(status)) {
         result.exit_code = WEXITSTATUS(status);
     } else if (WIFSIGNALED(status)) {
@@ -494,9 +503,9 @@ inline int pclose_spawn(FILE* f) {
     } else {
         result.exit_code = -1;
     }
-    #else
+#else
     result.exit_code = status;
-    #endif
+#endif
 
     // Check for timeout
     if (duration >= std::chrono::duration_cast<std::chrono::milliseconds>(config.timeout)) {
@@ -507,11 +516,10 @@ inline int pclose_spawn(FILE* f) {
 }
 
 /// Execute a command with streaming output via callback
-[[nodiscard]] inline auto execute_command_streaming(
-    std::string_view command,
-    std::function<void(std::string_view)> on_output,
-    ShellSessionConfig config = {}
-) -> std::expected<ExitCode, std::string> {
+[[nodiscard]] inline auto execute_command_streaming(std::string_view command,
+                                                    std::function<void(std::string_view)> on_output,
+                                                    ShellSessionConfig config = {})
+    -> std::expected<ExitCode, std::string> {
     if (command.empty()) {
         return std::unexpected(std::string{"command must not be empty"});
     }
@@ -530,30 +538,28 @@ inline int pclose_spawn(FILE* f) {
     }
     int status = *stream_result;
 
-    #ifndef _WIN32
+#ifndef _WIN32
     if (WIFEXITED(status)) {
         return WEXITSTATUS(status);
     } else if (WIFSIGNALED(status)) {
         return static_cast<ExitCode>(128 + WTERMSIG(status));
     }
-    #endif
+#endif
 
     return static_cast<ExitCode>(status);
 }
 
 /// Send a signal to a process by PID
-[[nodiscard]] inline auto send_signal(
-    std::uint64_t pid,
-    SignalType signal
-) -> std::expected<void, std::string> {
-    #ifndef _WIN32
+[[nodiscard]] inline auto send_signal(std::uint64_t pid, SignalType signal)
+    -> std::expected<void, std::string> {
+#ifndef _WIN32
     int posix_sig = detail::signal_type_to_posix(signal);
     int result = kill(static_cast<pid_t>(pid), posix_sig);
     if (result != 0) {
         return std::unexpected(std::string{"failed to send signal: "} + std::strerror(errno));
     }
     return {};
-    #else
+#else
     // Windows: only support termination
     HANDLE process = OpenProcess(PROCESS_TERMINATE, FALSE, static_cast<DWORD>(pid));
     if (!process) {
@@ -565,27 +571,25 @@ inline int pclose_spawn(FILE* f) {
         return std::unexpected(std::string{"failed to terminate process"});
     }
     return {};
-    #endif
+#endif
 }
 
 /// Get information about a process by PID
-[[nodiscard]] inline auto get_process_info(
-    std::uint64_t pid
-) -> std::optional<ProcessInfo> {
-    #ifndef _WIN32
+[[nodiscard]] inline auto get_process_info(std::uint64_t pid) -> std::optional<ProcessInfo> {
+#ifndef _WIN32
     // Check if process exists by sending signal 0
     int result = kill(static_cast<pid_t>(pid), 0);
     if (result != 0) {
-        return std::nullopt; // Process doesn't exist or we can't access it
+        return std::nullopt;  // Process doesn't exist or we can't access it
     }
 
     ProcessInfo info;
     info.pid = pid;
     info.state = ProcessState::Running;
-    info.started_at = std::chrono::steady_clock::now(); // approximate
+    info.started_at = std::chrono::steady_clock::now();  // approximate
 
-    // Try to get command name from /proc on Linux
-    #ifdef __linux__
+// Try to get command name from /proc on Linux
+#ifdef __linux__
     std::string cmdline_path = "/proc/" + std::to_string(pid) + "/cmdline";
     FILE* f = fopen(cmdline_path.c_str(), "r");
     if (f) {
@@ -595,7 +599,7 @@ inline int pclose_spawn(FILE* f) {
         info.command = std::string(buf.data());
         fclose(f);
     }
-    #endif
+#endif
 
     // Check if stopped via waitpid with WNOHANG
     int status = 0;
@@ -615,7 +619,7 @@ inline int pclose_spawn(FILE* f) {
     }
 
     return info;
-    #else
+#else
     HANDLE process = OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, static_cast<DWORD>(pid));
     if (!process) return std::nullopt;
 
@@ -635,13 +639,12 @@ inline int pclose_spawn(FILE* f) {
     }
     CloseHandle(process);
     return info;
-    #endif
+#endif
 }
 
 /// Retrieve recent bash history entries
-[[nodiscard]] inline auto get_bash_history(
-    std::size_t limit = 100
-) -> std::vector<BashHistoryEntry> {
+[[nodiscard]] inline auto get_bash_history(std::size_t limit = 100)
+    -> std::vector<BashHistoryEntry> {
     std::lock_guard lock(detail::history_mutex());
     auto& store = detail::history_store();
 
@@ -673,17 +676,15 @@ inline void add_history_entry(BashHistoryEntry entry) {
 }
 
 /// Get completion suggestions for a partial command
-[[nodiscard]] inline auto get_completions(
-    std::string_view partial,
-    std::string_view cwd
-) -> std::vector<CompletionItem> {
+[[nodiscard]] inline auto get_completions(std::string_view partial, std::string_view cwd)
+    -> std::vector<CompletionItem> {
     std::vector<CompletionItem> completions;
 
     if (partial.empty()) return completions;
 
     // Determine if we're completing a path or a command
-    bool is_path = partial.find('/') != std::string_view::npos ||
-                   partial.starts_with("./") || partial.starts_with("~/");
+    bool is_path = partial.find('/') != std::string_view::npos || partial.starts_with("./") ||
+                   partial.starts_with("~/");
 
     if (is_path) {
         // File/directory completion
@@ -760,9 +761,9 @@ inline void add_history_entry(BashHistoryEntry entry) {
 
         // Deduplicate
         std::sort(completions.begin(), completions.end(),
-            [](const auto& a, const auto& b) { return a.text < b.text; });
+                  [](const auto& a, const auto& b) { return a.text < b.text; });
         auto last = std::unique(completions.begin(), completions.end(),
-            [](const auto& a, const auto& b) { return a.text == b.text; });
+                                [](const auto& a, const auto& b) { return a.text == b.text; });
         completions.erase(last, completions.end());
     }
 
@@ -770,29 +771,17 @@ inline void add_history_entry(BashHistoryEntry entry) {
 }
 
 /// Check if a command is considered dangerous
-[[nodiscard]] inline auto is_dangerous_command(
-    std::string_view command
-) -> bool {
+[[nodiscard]] inline auto is_dangerous_command(std::string_view command) -> bool {
     // Known dangerous patterns
     static constexpr std::array dangerous_patterns = {
-        "rm -rf /",
-        "rm -rf /*",
-        "mkfs.",
-        "dd if=/dev/zero",
-        "dd if=/dev/random",
-        ":(){ :|:& };:",
-        "chmod -R 777 /",
-        "chown -R",
-        "> /dev/sda",
-        "mv /* /dev/null",
-        "wget.*|.*sh",
-        "curl.*|.*sh",
-        "format c:",
+        "rm -rf /",      "rm -rf /*",      "mkfs.",     "dd if=/dev/zero", "dd if=/dev/random",
+        ":(){ :|:& };:", "chmod -R 777 /", "chown -R",  "> /dev/sda",      "mv /* /dev/null",
+        "wget.*|.*sh",   "curl.*|.*sh",    "format c:",
     };
 
     std::string cmd_lower(command);
     std::transform(cmd_lower.begin(), cmd_lower.end(), cmd_lower.begin(),
-        [](unsigned char c) { return std::tolower(c); });
+                   [](unsigned char c) { return std::tolower(c); });
 
     for (auto pattern : dangerous_patterns) {
         if (cmd_lower.find(pattern) != std::string::npos) {
@@ -804,9 +793,7 @@ inline void add_history_entry(BashHistoryEntry entry) {
 }
 
 /// Escape a string for safe use as a shell argument
-[[nodiscard]] inline auto escape_shell_arg(
-    std::string_view arg
-) -> std::string {
+[[nodiscard]] inline auto escape_shell_arg(std::string_view arg) -> std::string {
     std::string result;
     result += '\'';
     for (char c : arg) {
@@ -821,9 +808,8 @@ inline void add_history_entry(BashHistoryEntry entry) {
 }
 
 /// Split a shell command string into individual arguments
-[[nodiscard]] inline auto split_shell_command(
-    std::string_view command
-) -> std::vector<std::string> {
+[[nodiscard]] inline auto split_shell_command(std::string_view command)
+    -> std::vector<std::string> {
     std::vector<std::string> args;
     std::string current;
     bool in_single_quote = false;
@@ -872,4 +858,4 @@ inline void add_history_entry(BashHistoryEntry entry) {
     return args;
 }
 
-} // namespace loom::utils::bash
+}  // namespace loom::utils::bash

@@ -42,12 +42,14 @@ struct CachePathSet {
     std::string sanitized;
     sanitized.reserve(name.size());
     for (unsigned char ch : name) {
-        const bool alnum = (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || (ch >= '0' && ch <= '9');
+        const bool alnum =
+            (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || (ch >= '0' && ch <= '9');
         sanitized.push_back(alnum ? static_cast<char>(ch) : '-');
     }
     if (sanitized.size() <= max_sanitized_length) return sanitized;
     const auto hash = djb2_hash(name);
-    const auto abs_hash = hash < 0 ? static_cast<std::uint32_t>(-(static_cast<std::int64_t>(hash))) : static_cast<std::uint32_t>(hash);
+    const auto abs_hash = hash < 0 ? static_cast<std::uint32_t>(-(static_cast<std::int64_t>(hash)))
+                                   : static_cast<std::uint32_t>(hash);
     return sanitized.substr(0, max_sanitized_length) + "-" + to_base36(abs_hash);
 }
 
@@ -56,12 +58,14 @@ struct CachePathSet {
 }
 
 [[nodiscard]] inline std::string join_path(std::string left, std::string_view right) {
-    while (!left.empty() && left.back() == '/') left.pop_back();
+    while (!left.empty() && left.back() == '/')
+        left.pop_back();
     if (left.empty()) return std::string(right);
     return left + "/" + std::string(right);
 }
 
-[[nodiscard]] inline CachePathSet build_cache_paths(std::string_view cache_base, std::string_view cwd, std::string_view server_name) {
+[[nodiscard]] inline CachePathSet
+build_cache_paths(std::string_view cache_base, std::string_view cwd, std::string_view server_name) {
     const auto project = project_dir(cwd);
     const auto base = join_path(std::string(cache_base), project);
     return CachePathSet{
@@ -72,4 +76,4 @@ struct CachePathSet {
     };
 }
 
-} // namespace loom::utils::cache_paths
+}  // namespace loom::utils::cache_paths

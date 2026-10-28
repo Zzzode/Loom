@@ -10,8 +10,9 @@
 module;
 
 #include <unistd.h>
-#include <cstdint>
+
 #include <cstddef>
+#include <cstdint>
 #include <cstdio>
 
 export module loom.skills.bundled.debug;
@@ -29,23 +30,29 @@ export namespace loom::skills::bundled {
 
 /// The five failure categories (plus unknown)
 enum class FailureType : std::uint8_t {
-    TestFail = 0,       // Unit/integration/E2E test failure
-    BuildFail,          // Compile, link, transpile, bundle error
-    RuntimeError,       // Unhandled exception, crash, panic, segfault
-    ScriptFail,         // Script/CLI tool exit != 0
-    Http5xx,            // HTTP 5xx server errors (429 rate limit too)
-    Unknown,            // No pattern matched
+    TestFail = 0,  // Unit/integration/E2E test failure
+    BuildFail,     // Compile, link, transpile, bundle error
+    RuntimeError,  // Unhandled exception, crash, panic, segfault
+    ScriptFail,    // Script/CLI tool exit != 0
+    Http5xx,       // HTTP 5xx server errors (429 rate limit too)
+    Unknown,       // No pattern matched
 };
 
 /// Human-readable label for a failure type
 [[nodiscard]] constexpr std::string_view failure_type_name(FailureType t) noexcept {
     switch (t) {
-        case FailureType::TestFail:     return "TestFailure";
-        case FailureType::BuildFail:    return "BuildFailure";
-        case FailureType::RuntimeError: return "RuntimeError";
-        case FailureType::ScriptFail:   return "ScriptFailure";
-        case FailureType::Http5xx:      return "HTTPServerError";
-        case FailureType::Unknown:      return "Unknown";
+    case FailureType::TestFail:
+        return "TestFailure";
+    case FailureType::BuildFail:
+        return "BuildFailure";
+    case FailureType::RuntimeError:
+        return "RuntimeError";
+    case FailureType::ScriptFail:
+        return "ScriptFailure";
+    case FailureType::Http5xx:
+        return "HTTPServerError";
+    case FailureType::Unknown:
+        return "Unknown";
     }
     return "Unknown";
 }
@@ -57,11 +64,11 @@ enum class FailureType : std::uint8_t {
 /// A single extracted error occurrence from logs
 struct ExtractedError {
     FailureType type = FailureType::Unknown;
-    std::string message;              // The error message (short, 1 line)
-    std::optional<std::string> file;  // File path if found
-    std::optional<int> line;          // Line number if found
-    std::optional<std::string> stack; // Stack/trace snippet (multi-line)
-    std::string matched_pattern;      // Which regex matched (for debugging)
+    std::string message;               // The error message (short, 1 line)
+    std::optional<std::string> file;   // File path if found
+    std::optional<int> line;           // Line number if found
+    std::optional<std::string> stack;  // Stack/trace snippet (multi-line)
+    std::string matched_pattern;       // Which regex matched (for debugging)
 };
 
 // ============================================================
@@ -70,10 +77,10 @@ struct ExtractedError {
 
 /// One hypothesis: what might be wrong, how to verify, how to fix
 struct Hypothesis {
-    std::string description;          // "Missing import of foo in bar.ts"
-    int likelihood = 0;               // 1-10, higher = more likely
-    std::string verify_command;       // Shell/pytest/compile command to verify
-    std::string fix_hint;             // FileEdit suggestion or exact edit
+    std::string description;     // "Missing import of foo in bar.ts"
+    int likelihood = 0;          // 1-10, higher = more likely
+    std::string verify_command;  // Shell/pytest/compile command to verify
+    std::string fix_hint;        // FileEdit suggestion or exact edit
     FailureType related_type = FailureType::Unknown;
 };
 
@@ -88,30 +95,30 @@ struct Hypothesis {
 /// Result of a delegated tool call (matches ToolResult shape)
 struct DelegatedResult {
     bool success = false;
-    std::string output;               // Combined stdout/stderr or edit diff
-    std::string error_message;        // Set if success == false
+    std::string output;         // Combined stdout/stderr or edit diff
+    std::string error_message;  // Set if success == false
 };
 
 /// Callback for running a shell command (delegates to BashTool)
-using BashDelegate = std::function<DelegatedResult(
-    std::string_view command,         // The command to run
-    std::string_view description      // Human-readable intent
-)>;
+using BashDelegate =
+    std::function<DelegatedResult(std::string_view command,     // The command to run
+                                  std::string_view description  // Human-readable intent
+                                  )>;
 
 /// Callback for running a script (delegates to ScriptTool)
-using ScriptDelegate = std::function<DelegatedResult(
-    std::string_view script_content,  // Full script body
-    std::string_view language,        // "bash", "python", "node", etc.
-    std::string_view description      // Human-readable intent
-)>;
+using ScriptDelegate =
+    std::function<DelegatedResult(std::string_view script_content,  // Full script body
+                                  std::string_view language,    // "bash", "python", "node", etc.
+                                  std::string_view description  // Human-readable intent
+                                  )>;
 
 /// Callback for editing a file (delegates to FileEditTool)
-using FileEditDelegate = std::function<DelegatedResult(
-    std::string_view file_path,       // File to edit
-    std::string_view old_text,        // Text to match and replace
-    std::string_view new_text,        // Replacement text
-    std::string_view description      // Human-readable intent
-)>;
+using FileEditDelegate =
+    std::function<DelegatedResult(std::string_view file_path,   // File to edit
+                                  std::string_view old_text,    // Text to match and replace
+                                  std::string_view new_text,    // Replacement text
+                                  std::string_view description  // Human-readable intent
+                                  )>;
 
 /// Tool delegation bundle — caller wires BashTool / ScriptTool / FileEditTool
 struct ToolDelegates {
@@ -135,28 +142,40 @@ struct ClassifierPattern {
 
 inline constexpr std::array<ClassifierPattern, 18> PATTERNS = {{
     // ---- TestFail ----
-    {FailureType::TestFail, R"((?i)\bfailed\s+\d+\s+(?:test|assert))",      "pytest/jest failed N tests"},
-    {FailureType::TestFail, R"((?i)\b(?:FAIL|AssertionError|Expected)\b)",  "FAIL/AssertionError"},
-    {FailureType::TestFail, R"((?i)\b(?:test|spec).*\b(?:failed|failure)\b)","test(s) failed"},
-    {FailureType::TestFail, R"((?i)\bPASSED\s*=\s*\d+.*FAILED\s*=\s*[1-9])","pytest summary"},
+    {FailureType::TestFail, R"((?i)\bfailed\s+\d+\s+(?:test|assert))",
+     "pytest/jest failed N tests"},
+    {FailureType::TestFail, R"((?i)\b(?:FAIL|AssertionError|Expected)\b)", "FAIL/AssertionError"},
+    {FailureType::TestFail, R"((?i)\b(?:test|spec).*\b(?:failed|failure)\b)", "test(s) failed"},
+    {FailureType::TestFail, R"((?i)\bPASSED\s*=\s*\d+.*FAILED\s*=\s*[1-9])", "pytest summary"},
     // ---- BuildFail ----
-    {FailureType::BuildFail, R"((?i)\berror(?:\[\d+\])?:\s*(?:\S+\.\w+):(\d+))",  "compiler error with file:line"},
-    {FailureType::BuildFail, R"((?i)\b(?:compile|build|transpile|bundle|link)\b.*\berror\b)", "build error"},
-    {FailureType::BuildFail, R"((?i)\bundefined\s+(?:reference|symbol))",  "linker undefined reference"},
-    {FailureType::BuildFail, R"((?i)\bno\s+(?:member|function|type)\s+named)",   "C++ missing member"},
-    {FailureType::BuildFail, R"((?i)error\s+(?:TS\d{4}|C\d{4}|E\d{4}))",    "TS/C/C++ error code"},
+    {FailureType::BuildFail, R"((?i)\berror(?:\[\d+\])?:\s*(?:\S+\.\w+):(\d+))",
+     "compiler error with file:line"},
+    {FailureType::BuildFail, R"((?i)\b(?:compile|build|transpile|bundle|link)\b.*\berror\b)",
+     "build error"},
+    {FailureType::BuildFail, R"((?i)\bundefined\s+(?:reference|symbol))",
+     "linker undefined reference"},
+    {FailureType::BuildFail, R"((?i)\bno\s+(?:member|function|type)\s+named)",
+     "C++ missing member"},
+    {FailureType::BuildFail, R"((?i)error\s+(?:TS\d{4}|C\d{4}|E\d{4}))", "TS/C/C++ error code"},
     // ---- RuntimeError ----
-    {FailureType::RuntimeError, R"((?i)\b(uncaught\s+exception|panic|segfault|segmentation\s+fault|SIGSEGV|SIGABRT)\b)", "crash signal"},
-    {FailureType::RuntimeError, R"((?i)\b(TypeError|ReferenceError|NullPointerException|RuntimeError)\b)", "exception class"},
-    {FailureType::RuntimeError, R"((?i)\bat\s+\S+\.(\w+):(\d+):(\d+))",   "stack trace frame (file:line:col)"},
-    {FailureType::RuntimeError, R"((?i)Traceback\s+\(most\s+recent\s+call\s+last\))", "Python traceback"},
+    {FailureType::RuntimeError,
+     R"((?i)\b(uncaught\s+exception|panic|segfault|segmentation\s+fault|SIGSEGV|SIGABRT)\b)",
+     "crash signal"},
+    {FailureType::RuntimeError,
+     R"((?i)\b(TypeError|ReferenceError|NullPointerException|RuntimeError)\b)", "exception class"},
+    {FailureType::RuntimeError, R"((?i)\bat\s+\S+\.(\w+):(\d+):(\d+))",
+     "stack trace frame (file:line:col)"},
+    {FailureType::RuntimeError, R"((?i)Traceback\s+\(most\s+recent\s+call\s+last\))",
+     "Python traceback"},
     // ---- ScriptFail ----
-    {FailureType::ScriptFail, R"((?i)\b(?:command|script|process)\s+(?:not\s+found|failed|exited))", "cmd/script failed"},
-    {FailureType::ScriptFail, R"((?i)\bexit\s+code\s+[1-9]\d*\b)",        "non-zero exit"},
-    {FailureType::ScriptFail, R"((?i)\bENOENT|EPERM|EACCES\b)",            "errno strings"},
+    {FailureType::ScriptFail, R"((?i)\b(?:command|script|process)\s+(?:not\s+found|failed|exited))",
+     "cmd/script failed"},
+    {FailureType::ScriptFail, R"((?i)\bexit\s+code\s+[1-9]\d*\b)", "non-zero exit"},
+    {FailureType::ScriptFail, R"((?i)\bENOENT|EPERM|EACCES\b)", "errno strings"},
     // ---- Http5xx ----
-    {FailureType::Http5xx, R"((?i)\b(?:5\d{2}|429)\b\s+(?:Server|Too\s+Many|Internal))", "HTTP 5xx/429"},
-    {FailureType::Http5xx, R"((?i)\b(?:5\d{2}|429)\b\s*(?:error|status))","HTTP status 5xx/429"},
+    {FailureType::Http5xx, R"((?i)\b(?:5\d{2}|429)\b\s+(?:Server|Too\s+Many|Internal))",
+     "HTTP 5xx/429"},
+    {FailureType::Http5xx, R"((?i)\b(?:5\d{2}|429)\b\s*(?:error|status))", "HTTP status 5xx/429"},
 }};
 
 /// Classify a failure by matching all patterns against captured output.
@@ -188,7 +207,7 @@ classify(std::string_view output) {
     return {best, counts};
 }
 
-} // namespace classifier
+}  // namespace classifier
 
 // ============================================================
 // Error Extraction
@@ -200,60 +219,47 @@ namespace extractor {
 struct ExtractPattern {
     FailureType type;
     std::string_view regex;
-    int message_group = 1;   // Which regex group is the message
-    int file_group = 0;      // 0 = not present
-    int line_group = 0;      // 0 = not present
+    int message_group = 1;  // Which regex group is the message
+    int file_group = 0;     // 0 = not present
+    int line_group = 0;     // 0 = not present
 };
 
 inline constexpr std::array<ExtractPattern, 12> EXTRACT_PATTERNS = {{
     // Python: File "x.py", line N, in func\nTypeError: msg
     {FailureType::RuntimeError,
-     R"RX(File\s+"([^"]+)",\s+line\s+(\d+)[\s\S]*?\n\s*(?:\w+Error|\w+Exception):\s*([^\n]+))RX",
-     3, 1, 2},
+     R"RX(File\s+"([^"]+)",\s+line\s+(\d+)[\s\S]*?\n\s*(?:\w+Error|\w+Exception):\s*([^\n]+))RX", 3,
+     1, 2},
     // JS/TS stack: at func (file.js:123:45) then Error: msg
     {FailureType::RuntimeError,
-     R"((?:\w+Error):\s*([^\n]+)[\s\S]*?at\s+(?:\S+\s+\()?([^:\n\s)]+):(\d+))",
-     1, 2, 3},
+     R"((?:\w+Error):\s*([^\n]+)[\s\S]*?at\s+(?:\S+\s+\()?([^:\n\s)]+):(\d+))", 1, 2, 3},
     // C++/GCC: file.cpp:123:45: error: message
     {FailureType::BuildFail,
-     R"RX(([\w/\.\-]+\.(?:cpp|cc|c|cxx|h|hpp)):(\d+):\d*:\s*error:\s*([^\n]+))RX",
-     3, 1, 2},
+     R"RX(([\w/\.\-]+\.(?:cpp|cc|c|cxx|h|hpp)):(\d+):\d*:\s*error:\s*([^\n]+))RX", 3, 1, 2},
     // Rust/Cargo: error[E1234]: message  --> file.rs:123:45
-    {FailureType::BuildFail,
-     R"(error(?:\[\w+\])?:\s*([^\n]+)[\s\S]*?-->\s*([^:\s]+):(\d+))",
-     1, 2, 3},
+    {FailureType::BuildFail, R"(error(?:\[\w+\])?:\s*([^\n]+)[\s\S]*?-->\s*([^:\s]+):(\d+))", 1, 2,
+     3},
     // TypeScript TS1234: file.ts(123,45): error TS1234: message
-    {FailureType::BuildFail,
-     R"(([\w/\.\-]+\.tsx?)\((\d+),\d+\):\s*error\s+TS\d+:\s*([^\n]+))",
-     3, 1, 2},
+    {FailureType::BuildFail, R"(([\w/\.\-]+\.tsx?)\((\d+),\d+\):\s*error\s+TS\d+:\s*([^\n]+))", 3,
+     1, 2},
     // pytest: FAILED test_file.py::test_name - assert error
     {FailureType::TestFail,
-     R"(FAILED\s+([\w/\.\-]+\.py)::\w+[\s\S]*?(?:assert|AssertionError)(?::?\s*([^\n]*))?)",
-     2, 1, 0},
+     R"(FAILED\s+([\w/\.\-]+\.py)::\w+[\s\S]*?(?:assert|AssertionError)(?::?\s*([^\n]*))?)", 2, 1,
+     0},
     // Jest: FAIL test/file.test.ts then Error: message or Expected/Received
     {FailureType::TestFail,
-     R"(FAIL\s+([\w/\.\-]+\.(?:t|j)sx?)[\s\S]*?(?:Error|Expected)(?::?\s*([^\n]*))?)",
-     2, 1, 0},
+     R"(FAIL\s+([\w/\.\-]+\.(?:t|j)sx?)[\s\S]*?(?:Error|Expected)(?::?\s*([^\n]*))?)", 2, 1, 0},
     // npm/Yarn: npm ERR! message or error An error occurred
-    {FailureType::ScriptFail,
-     R"(npm\s+ERR!\s*([^\n]+)|error\s+(?:[A-Z_]+)?\s*:\s*([^\n]+))",
-     0, 0, 0},  // group 1 or 2 depending on pattern
+    {FailureType::ScriptFail, R"(npm\s+ERR!\s*([^\n]+)|error\s+(?:[A-Z_]+)?\s*:\s*([^\n]+))", 0, 0,
+     0},  // group 1 or 2 depending on pattern
     // Go compiler: # package  file.go:123:45: message
-    {FailureType::BuildFail,
-     R"(([\w/\.\-]+\.go):(\d+):\d*:\s*([^\n]+))",
-     3, 1, 2},
+    {FailureType::BuildFail, R"(([\w/\.\-]+\.go):(\d+):\d*:\s*([^\n]+))", 3, 1, 2},
     // Shell: line 45: command: not found / command: Permission denied
-    {FailureType::ScriptFail,
-     R"(line\s+(\d+):\s+(\S+):\s+([^\n]+))",
-     3, 0, 1},
+    {FailureType::ScriptFail, R"(line\s+(\d+):\s+(\S+):\s+([^\n]+))", 3, 0, 1},
     // HTTP 5xx: status 500 Internal Server Error or response: 502 Bad Gateway
-    {FailureType::Http5xx,
-     R"((?:status|response|HTTP)\D*((?:5\d{2})|429)\s+([A-Za-z ]+))",
-     0, 0, 0},
+    {FailureType::Http5xx, R"((?:status|response|HTTP)\D*((?:5\d{2})|429)\s+([A-Za-z ]+))", 0, 0,
+     0},
     // Generic catch-all: ERROR: message or Error: message
-    {FailureType::Unknown,
-     R"((?i)\berror\b[:\-\s]+([^\n]{10,200}))",
-     1, 0, 0},
+    {FailureType::Unknown, R"((?i)\berror\b[:\-\s]+([^\n]{10,200}))", 1, 0, 0},
 }};
 
 /// Extract structured errors from raw output.
@@ -263,8 +269,7 @@ inline constexpr std::array<ExtractPattern, 12> EXTRACT_PATTERNS = {{
     for (const auto& pat : EXTRACT_PATTERNS) {
         try {
             std::regex re(std::string(pat.regex));
-            auto begin = std::cregex_iterator(
-                output.begin(), output.end(), re);
+            auto begin = std::cregex_iterator(output.begin(), output.end(), re);
             auto end = std::cregex_iterator();
 
             for (auto it = begin; it != end; ++it) {
@@ -273,40 +278,39 @@ inline constexpr std::array<ExtractPattern, 12> EXTRACT_PATTERNS = {{
                 e.type = pat.type;
                 e.matched_pattern = std::string(pat.regex).substr(0, 40);
 
-                if (pat.message_group > 0 &&
-                    static_cast<size_t>(pat.message_group) < m.size() &&
+                if (pat.message_group > 0 && static_cast<size_t>(pat.message_group) < m.size() &&
                     m[pat.message_group].matched) {
                     e.message = m[pat.message_group].str();
                 }
 
-                if (pat.file_group > 0 &&
-                    static_cast<size_t>(pat.file_group) < m.size() &&
+                if (pat.file_group > 0 && static_cast<size_t>(pat.file_group) < m.size() &&
                     m[pat.file_group].matched) {
                     e.file = m[pat.file_group].str();
                 }
 
-                if (pat.line_group > 0 &&
-                    static_cast<size_t>(pat.line_group) < m.size() &&
+                if (pat.line_group > 0 && static_cast<size_t>(pat.line_group) < m.size() &&
                     m[pat.line_group].matched) {
                     try {
                         e.line = std::stoi(m[pat.line_group].str());
-                    } catch (...) {}
+                    } catch (...) {
+                    }
                 }
 
                 // Fallback: for npm ERR! / error X: patterns with 2-group alt
                 if (e.message.empty() && m.size() >= 3) {
-                    if (m[1].matched) e.message = m[1].str();
-                    else if (m[2].matched) e.message = m[2].str();
+                    if (m[1].matched)
+                        e.message = m[1].str();
+                    else if (m[2].matched)
+                        e.message = m[2].str();
                 }
 
                 // Trim message
-                while (!e.message.empty() &&
-                       (e.message.back() == '\r' || e.message.back() == ' '))
+                while (!e.message.empty() && (e.message.back() == '\r' || e.message.back() == ' '))
                     e.message.pop_back();
 
                 if (!e.message.empty() || e.file.has_value()) {
                     found.push_back(std::move(e));
-                    if (found.size() >= 10) break; // cap at 10 errors
+                    if (found.size() >= 10) break;  // cap at 10 errors
                 }
             }
         } catch (const std::regex_error&) {
@@ -317,7 +321,7 @@ inline constexpr std::array<ExtractPattern, 12> EXTRACT_PATTERNS = {{
     return found;
 }
 
-} // namespace extractor
+}  // namespace extractor
 
 // ============================================================
 // Root Cause Hypothesis Generator
@@ -327,30 +331,27 @@ namespace hypotheses {
 
 /// Generate 3-5 ranked hypotheses based on failure type and extracted errors.
 /// Ranked by likelihood score 1-10.
-[[nodiscard]] inline std::vector<Hypothesis> generate(
-    FailureType type,
-    const std::vector<ExtractedError>& errors
-) {
+[[nodiscard]] inline std::vector<Hypothesis> generate(FailureType type,
+                                                      const std::vector<ExtractedError>& errors) {
     std::vector<Hypothesis> result;
 
-    auto add = [&](int likelihood, std::string desc,
-                   std::string verify, std::string fix,
+    auto add = [&](int likelihood, std::string desc, std::string verify, std::string fix,
                    FailureType rt = FailureType::Unknown) {
-        result.push_back(Hypothesis{
-            std::move(desc), likelihood, std::move(verify), std::move(fix), rt
-        });
+        result.push_back(
+            Hypothesis{std::move(desc), likelihood, std::move(verify), std::move(fix), rt});
     };
 
     // Use first error as anchor for file/message-based hypotheses
     const ExtractedError* anchor = errors.empty() ? nullptr : &errors.front();
     std::string anchor_file = anchor && anchor->file ? *anchor->file : "";
-    std::string anchor_msg  = anchor ? anchor->message : "";
+    std::string anchor_msg = anchor ? anchor->message : "";
 
     switch (type) {
     case FailureType::TestFail:
         add(8, "Test assertion logic error — expected vs actual mismatch",
-            anchor_file.empty() ? std::string("Run the failing test with verbose output: <test runner> -v")
-                                : std::format("Run the failing test with verbose output on {}", anchor_file),
+            anchor_file.empty()
+                ? std::string("Run the failing test with verbose output: <test runner> -v")
+                : std::format("Run the failing test with verbose output on {}", anchor_file),
             "Update assertion or fix the code under test", type);
         add(6, "Missing test fixture or setup — database/network not initialized",
             "Inspect test setUp/beforeEach hooks and compare to passing tests",
@@ -368,8 +369,10 @@ namespace hypotheses {
 
     case FailureType::BuildFail:
         add(9, "Missing or incorrect import/Include",
-            anchor_file.empty() ? std::string("Grep for the symbol at the error line")
-                                : std::format("Grep the codebase for the undefined symbol; check imports in {}", anchor_file),
+            anchor_file.empty()
+                ? std::string("Grep for the symbol at the error line")
+                : std::format("Grep the codebase for the undefined symbol; check imports in {}",
+                              anchor_file),
             "Add the missing import statement or include header", type);
         add(8, "Type mismatch — wrong argument type or missing field",
             std::format("Inspect the type signature at the error location {}", anchor_file),
@@ -387,8 +390,10 @@ namespace hypotheses {
 
     case FailureType::RuntimeError:
         add(9, "Null/undefined dereference — variable not initialized before use",
-            anchor_file.empty() ? std::string("Read the stack trace; trace variable initialization path")
-                                : std::format("Read {} around line {}; trace variable initialization", anchor_file, anchor->line.value_or(0)),
+            anchor_file.empty()
+                ? std::string("Read the stack trace; trace variable initialization path")
+                : std::format("Read {} around line {}; trace variable initialization", anchor_file,
+                              anchor->line.value_or(0)),
             "Add null check or ensure variable is initialized before use", type);
         add(7, "Out-of-bounds access — index >= array length",
             "Check array/vector sizes before the access point in stack trace",
@@ -458,13 +463,11 @@ namespace hypotheses {
 
     // Sort by likelihood descending
     std::sort(result.begin(), result.end(),
-        [](const Hypothesis& a, const Hypothesis& b) {
-            return a.likelihood > b.likelihood;
-        });
+              [](const Hypothesis& a, const Hypothesis& b) { return a.likelihood > b.likelihood; });
     return result;
 }
 
-} // namespace hypotheses
+}  // namespace hypotheses
 
 // ============================================================
 // Verify-and-Fix Loop
@@ -472,10 +475,10 @@ namespace hypotheses {
 
 /// Outcome of the debug loop
 enum class DebugOutcome : std::uint8_t {
-    Fixed,              // A fix was successfully applied and verified
-    HypothesesExhausted,// All hypotheses tried, none fixed the issue
-    ManualIntervention, // Fix needs human approval (destructive edit)
-    ToolError,          // Delegated tool call failed unexpectedly
+    Fixed,                // A fix was successfully applied and verified
+    HypothesesExhausted,  // All hypotheses tried, none fixed the issue
+    ManualIntervention,   // Fix needs human approval (destructive edit)
+    ToolError,            // Delegated tool call failed unexpectedly
 };
 
 struct DebugLoopResult {
@@ -496,10 +499,8 @@ struct DebugLoopResult {
 ///
 /// All execution (verify bash commands, script runs, file edits) delegates to
 /// the ToolDelegates bundle. Caller must wire BashTool, ScriptTool, FileEditTool.
-[[nodiscard]] inline DebugLoopResult run_debug_loop(
-    std::string_view captured_output,
-    const ToolDelegates& delegates
-) {
+[[nodiscard]] inline DebugLoopResult run_debug_loop(std::string_view captured_output,
+                                                    const ToolDelegates& delegates) {
     DebugLoopResult r;
 
     // Step 1: Classify
@@ -515,15 +516,13 @@ struct DebugLoopResult {
     // Step 4: Verify + Fix loop
     for (const auto& h : hyps) {
         ++r.hypotheses_checked;
-        if (r.hypotheses_checked > 5) break; // Max 5 hypotheses
+        if (r.hypotheses_checked > 5) break;  // Max 5 hypotheses
 
         // Verify hypothesis via bash delegate (if provided)
         bool hypothesis_confirmed = false;
         if (!h.verify_command.empty() && delegates.bash) {
-            auto verify_res = delegates.bash(
-                h.verify_command,
-                std::format("Verify hypothesis: {}", h.description)
-            );
+            auto verify_res = delegates.bash(h.verify_command,
+                                             std::format("Verify hypothesis: {}", h.description));
             // Heuristic: verify output contains error indicators, or the
             // hypothesis description relates to it. A successful verify
             // (returning error info) means hypothesis is plausible.
@@ -534,7 +533,8 @@ struct DebugLoopResult {
                 // Bash failed: hypothesis might still be valid (e.g. file doesn't
                 // exist because it's missing — exactly the hypothesis!)
                 hypothesis_confirmed = (verify_res.error_message.find(
-                    h.description.substr(0, 20)) != std::string::npos) || true;
+                                            h.description.substr(0, 20)) != std::string::npos) ||
+                                       true;
                 // Default: treat failure as plausible (keep going)
             }
         } else {
@@ -545,16 +545,12 @@ struct DebugLoopResult {
         if (!hypothesis_confirmed) continue;
 
         // Attempt fix via FileEdit delegate if a file is identified
-        if (!r.extracted_errors.empty() &&
-            r.extracted_errors.front().file.has_value() &&
+        if (!r.extracted_errors.empty() && r.extracted_errors.front().file.has_value() &&
             delegates.file_edit) {
             // We have a file location. Try a minimal edit: surround the fix
             // hint with a placeholder that the user/harness can confirm.
-            r.summary += std::format(
-                "[Hypothesis {} (likelihood {})] {} → Suggested fix: {}\n",
-                r.hypotheses_checked, h.likelihood,
-                h.description, h.fix_hint
-            );
+            r.summary += std::format("[Hypothesis {} (likelihood {})] {} → Suggested fix: {}\n",
+                                     r.hypotheses_checked, h.likelihood, h.description, h.fix_hint);
             ++r.fixes_applied;
             // Note: actual edit application depends on harness permission
             // model. We count "proposed fix" as applied; caller decides
@@ -564,21 +560,18 @@ struct DebugLoopResult {
             // original failing command. This is a Bash delegate call:
             if (delegates.bash) {
                 // Emit diagnostic only; actual re-run handled by harness
-                r.summary +=
-                    "  → Verify fix by re-running original failing command.\n";
+                r.summary += "  → Verify fix by re-running original failing command.\n";
             }
 
             // For phase 2: we don't actually apply edits here to avoid
             // destructive changes. Mark as needing verification.
             r.outcome = DebugOutcome::Fixed;
-            break; // One fix attempt per debug run
+            break;  // One fix attempt per debug run
         } else {
             // No file location identified yet. Record hypothesis and continue.
-            r.summary += std::format(
-                "[Hypothesis {} (likelihood {})] {} → Verify: {}\n",
-                r.hypotheses_checked, h.likelihood,
-                h.description, h.verify_command
-            );
+            r.summary +=
+                std::format("[Hypothesis {} (likelihood {})] {} → Verify: {}\n",
+                            r.hypotheses_checked, h.likelihood, h.description, h.verify_command);
         }
     }
 
@@ -591,7 +584,7 @@ struct DebugLoopResult {
             r.summary += "try running the failing command with --verbose or DEBUG=1.";
         } else {
             r.summary += std::format("Detected {} ({} errors extracted). ",
-                failure_type_name(r.detected_type), r.extracted_errors.size());
+                                     failure_type_name(r.detected_type), r.extracted_errors.size());
             r.summary += "Manual investigation required.";
         }
     }
@@ -599,7 +592,7 @@ struct DebugLoopResult {
     return r;
 }
 
-} // namespace loom::skills::bundled
+}  // namespace loom::skills::bundled
 
 // ============================================================
 // Skill Manifest + SkillDefinition
@@ -611,42 +604,48 @@ export namespace loom::skills::bundled {
 [[nodiscard]] inline loom::skills::SkillManifest get_debug_skill_manifest() {
     return loom::skills::SkillManifest{
         .name = "debug",
-        .description =
-            "Systematic failure diagnosis: classify (5 types), extract errors "
-            "(12+ regex patterns), generate ranked hypotheses, verify+fix loop "
-            "via Bash/Script/FileEdit tool delegation.",
+        .description = "Systematic failure diagnosis: classify (5 types), extract errors "
+                       "(12+ regex patterns), generate ranked hypotheses, verify+fix loop "
+                       "via Bash/Script/FileEdit tool delegation.",
         .version = "1.1.0",
-        .triggers = {
-            "debug", "diagnose", "troubleshoot", "fix this error",
-            "why is this failing", "build error", "test failure", "crash",
-            "dump state", "debug info",
-        },
-        .directory = {}
-    };
+        .triggers =
+            {
+                "debug",
+                "diagnose",
+                "troubleshoot",
+                "fix this error",
+                "why is this failing",
+                "build error",
+                "test failure",
+                "crash",
+                "dump state",
+                "debug info",
+            },
+        .directory = {}};
 }
 
 /// SkillDefinition for registration in SkillExecutor / bundled registry
 [[nodiscard]] inline SkillDefinition make_bundled_debug_skill() {
     return SkillDefinition{
         .name = "debug",
-        .description =
-            "Systematic debugging workflow: classify failure type (test/build/"
-            "runtime/script/HTTP), extract structured errors via regex, "
-            "generate 3-5 ranked root-cause hypotheses, verify each via "
-            "BashTool/ScriptTool, apply fixes via FileEditTool. Never use "
-            "popen/subprocess directly — always delegate to tool layer.",
-        .trigger_patterns = {
-            R"(debug\s+this)",
-            R"(diagnose\s+this)",
-            R"(bug.*(?:fix|found|report))",
-            R"((?:broken|failing|throwing|crashing))",
-            R"(performance\s+regression)",
-            R"(why\s+(?:is|does|won't)\s+(?:it|this|that)\s+(?:fail|broken|crash|work|pass|build))",
-            R"(build\s+(?:error|fail(?:ed|ure)?))",
-            R"(test\s+(?:fail(?:ed|ure)?|error))",
-            R"(runtime\s+error)",
-            R"(http\s*5\d{2}|http\s*429)",
-        },
+        .description = "Systematic debugging workflow: classify failure type (test/build/"
+                       "runtime/script/HTTP), extract structured errors via regex, "
+                       "generate 3-5 ranked root-cause hypotheses, verify each via "
+                       "BashTool/ScriptTool, apply fixes via FileEditTool. Never use "
+                       "popen/subprocess directly — always delegate to tool layer.",
+        .trigger_patterns =
+            {
+                R"(debug\s+this)",
+                R"(diagnose\s+this)",
+                R"(bug.*(?:fix|found|report))",
+                R"((?:broken|failing|throwing|crashing))",
+                R"(performance\s+regression)",
+                R"(why\s+(?:is|does|won't)\s+(?:it|this|that)\s+(?:fail|broken|crash|work|pass|build))",
+                R"(build\s+(?:error|fail(?:ed|ure)?))",
+                R"(test\s+(?:fail(?:ed|ure)?|error))",
+                R"(runtime\s+error)",
+                R"(http\s*5\d{2}|http\s*429)",
+            },
         .content = R"(## Systematic Debugging Skill
 
 ### Failure Type Classification (first step!)
@@ -722,4 +721,4 @@ For each hypothesis (highest likelihood first):
     };
 }
 
-} // namespace loom::skills::bundled
+}  // namespace loom::skills::bundled

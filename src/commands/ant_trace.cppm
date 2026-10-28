@@ -1,5 +1,6 @@
 module;
 #include <unistd.h>
+
 #include <cstdlib>
 export module loom.commands.ant_trace;
 
@@ -8,25 +9,31 @@ import std;
 export namespace loom::commands::ant_trace {
 namespace fs = std::filesystem;
 
-struct CommandResponse { bool ok{true}; std::string message; };
-[[nodiscard]] inline auto name() -> std::string_view { return "ant_trace"; }
+struct CommandResponse {
+    bool ok{true};
+    std::string message;
+};
+
+[[nodiscard]] inline auto name() -> std::string_view {
+    return "ant_trace";
+}
 
 [[nodiscard]] inline auto run(std::string_view target = {}) -> CommandResponse {
     std::error_code ec;
     const auto cwd = fs::current_path(ec);
     const bool profile_enabled = std::getenv("LOOM_PROFILE_STARTUP") != nullptr;
-    const bool debug_enabled = std::getenv("DEBUG") != nullptr || std::getenv("LOOM_DEBUG") != nullptr;
-    return {.ok = true, .message = std::format(
-        "ANT trace snapshot\n"
-        "Target: {}\n"
-        "PID: {}\n"
-        "CWD: {}\n"
-        "Startup profiling: {}\n"
-        "Debug logging: {}",
-        target.empty() ? "current-session" : std::string(target),
-        static_cast<long>(::getpid()),
-        ec ? "<unavailable>" : cwd.string(),
-        profile_enabled ? "enabled" : "disabled",
-        debug_enabled ? "enabled" : "disabled")};
+    const bool debug_enabled =
+        std::getenv("DEBUG") != nullptr || std::getenv("LOOM_DEBUG") != nullptr;
+    return {.ok = true,
+            .message = std::format(
+                "ANT trace snapshot\n"
+                "Target: {}\n"
+                "PID: {}\n"
+                "CWD: {}\n"
+                "Startup profiling: {}\n"
+                "Debug logging: {}",
+                target.empty() ? "current-session" : std::string(target),
+                static_cast<long>(::getpid()), ec ? "<unavailable>" : cwd.string(),
+                profile_enabled ? "enabled" : "disabled", debug_enabled ? "enabled" : "disabled")};
 }
-}
+}  // namespace loom::commands::ant_trace

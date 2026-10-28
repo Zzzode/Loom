@@ -19,8 +19,8 @@
 /// This replaces the stub implementation that wrote a minimal JSON profile.
 module;
 
-#include <cstdlib>
 #include <cstdint>
+#include <cstdlib>
 
 export module loom.commands.init_verifiers;
 
@@ -49,10 +49,14 @@ enum class VerifierTarget : std::uint8_t {
 
 [[nodiscard]] constexpr std::string_view target_name(VerifierTarget t) noexcept {
     switch (t) {
-        case VerifierTarget::GithubActions: return "GitHub Actions";
-        case VerifierTarget::GitLabCI:      return "GitLab CI";
-        case VerifierTarget::Jenkins:       return "Jenkins";
-        case VerifierTarget::Shell:         return "Shell script";
+    case VerifierTarget::GithubActions:
+        return "GitHub Actions";
+    case VerifierTarget::GitLabCI:
+        return "GitLab CI";
+    case VerifierTarget::Jenkins:
+        return "Jenkins";
+    case VerifierTarget::Shell:
+        return "Shell script";
     }
     return "unknown";
 }
@@ -62,16 +66,13 @@ enum class VerifierTarget : std::uint8_t {
 [[nodiscard]] inline VerifierTarget detect_target(const fs::path& repo_root) {
     // 1) Environment hints from CI runners
     if (std::getenv("GITHUB_ACTIONS")) return VerifierTarget::GithubActions;
-    if (std::getenv("GITLAB_CI"))     return VerifierTarget::GitLabCI;
-    if (std::getenv("JENKINS_HOME"))   return VerifierTarget::Jenkins;
+    if (std::getenv("GITLAB_CI")) return VerifierTarget::GitLabCI;
+    if (std::getenv("JENKINS_HOME")) return VerifierTarget::Jenkins;
 
     // 2) Filesystem hints
-    if (fs::exists(repo_root / ".github" / "workflows"))
-        return VerifierTarget::GithubActions;
-    if (fs::exists(repo_root / ".gitlab-ci.yml"))
-        return VerifierTarget::GitLabCI;
-    if (fs::exists(repo_root / "Jenkinsfile"))
-        return VerifierTarget::Jenkins;
+    if (fs::exists(repo_root / ".github" / "workflows")) return VerifierTarget::GithubActions;
+    if (fs::exists(repo_root / ".gitlab-ci.yml")) return VerifierTarget::GitLabCI;
+    if (fs::exists(repo_root / "Jenkinsfile")) return VerifierTarget::Jenkins;
 
     // 3) Default to portable shell script
     return VerifierTarget::Shell;
@@ -84,8 +85,8 @@ enum class VerifierTarget : std::uint8_t {
 struct RepoContext {
     std::string project_name;
     std::string default_branch;
-    std::string repo_full;       // owner/repo
-    std::string package_manager; // npm, pnpm, yarn, bun, cargo, go, pip, make
+    std::string repo_full;        // owner/repo
+    std::string package_manager;  // npm, pnpm, yarn, bun, cargo, go, pip, make
 };
 
 /// Resolve project-level metadata for template substitution.
@@ -93,21 +94,40 @@ struct RepoContext {
     RepoContext ctx;
 
     // Project name — from package.json, Cargo.toml, go.mod, pyproject.toml, or dirname
-    if (fs::exists(root / "package.json"))  { ctx.package_manager = "npm"; }
-    if (fs::exists(root / "pnpm-lock.yaml")) { ctx.package_manager = "pnpm"; }
-    if (fs::exists(root / "yarn.lock"))     { ctx.package_manager = "yarn"; }
-    if (fs::exists(root / "bun.lockb"))     { ctx.package_manager = "bun"; }
-    if (fs::exists(root / "Cargo.toml"))    { ctx.package_manager = "cargo"; }
-    if (fs::exists(root / "go.mod"))        { ctx.package_manager = "go"; }
-    if (fs::exists(root / "pyproject.toml")){ ctx.package_manager = "pip"; }
-    if (fs::exists(root / "Makefile"))      { ctx.package_manager = "make"; }
+    if (fs::exists(root / "package.json")) {
+        ctx.package_manager = "npm";
+    }
+    if (fs::exists(root / "pnpm-lock.yaml")) {
+        ctx.package_manager = "pnpm";
+    }
+    if (fs::exists(root / "yarn.lock")) {
+        ctx.package_manager = "yarn";
+    }
+    if (fs::exists(root / "bun.lockb")) {
+        ctx.package_manager = "bun";
+    }
+    if (fs::exists(root / "Cargo.toml")) {
+        ctx.package_manager = "cargo";
+    }
+    if (fs::exists(root / "go.mod")) {
+        ctx.package_manager = "go";
+    }
+    if (fs::exists(root / "pyproject.toml")) {
+        ctx.package_manager = "pip";
+    }
+    if (fs::exists(root / "Makefile")) {
+        ctx.package_manager = "make";
+    }
 
     // Project name = current directory name by default
-    if (auto pn = root.filename().string(); !pn.empty()) ctx.project_name = pn;
-    else ctx.project_name = "project";
+    if (auto pn = root.filename().string(); !pn.empty())
+        ctx.project_name = pn;
+    else
+        ctx.project_name = "project";
 
     // Default branch: git symbolic-ref HEAD origin or fallback to "main"
-    if (auto br = loom::utils::exec_sync("git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null")) {
+    if (auto br = loom::utils::exec_sync(
+            "git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null")) {
         auto slash = br->rfind('/');
         ctx.default_branch = (slash != std::string::npos) ? br->substr(slash + 1) : *br;
         // Trim trailing newline already done by exec_sync
@@ -128,10 +148,8 @@ struct RepoContext {
 }
 
 /// Replace all `{{KEY}}` placeholders in a template string.
-[[nodiscard]] inline std::string substitute_template(
-    std::string_view tmpl,
-    const RepoContext& ctx
-) {
+[[nodiscard]] inline std::string substitute_template(std::string_view tmpl,
+                                                     const RepoContext& ctx) {
     auto replace = [](std::string& s, std::string_view key, std::string_view value) {
         std::string token = std::format("{{{{{}}}}}", key);
         std::size_t pos = 0;
@@ -142,9 +160,9 @@ struct RepoContext {
     };
 
     std::string result(tmpl);
-    replace(result, "PROJECT_NAME",    ctx.project_name);
-    replace(result, "DEFAULT_BRANCH",  ctx.default_branch);
-    replace(result, "REPO_FULL",       ctx.repo_full);
+    replace(result, "PROJECT_NAME", ctx.project_name);
+    replace(result, "DEFAULT_BRANCH", ctx.default_branch);
+    replace(result, "REPO_FULL", ctx.repo_full);
     replace(result, "PACKAGE_MANAGER", ctx.package_manager);
     return result;
 }
@@ -521,35 +539,33 @@ struct TemplateOutcome {
     std::string content;
 };
 
-[[nodiscard]] inline TemplateOutcome render_template(
-    VerifierTarget target,
-    const RepoContext& ctx
-) {
+[[nodiscard]] inline TemplateOutcome render_template(VerifierTarget target,
+                                                     const RepoContext& ctx) {
     switch (target) {
-        case VerifierTarget::GithubActions:
-            return TemplateOutcome{
-                .label = std::string(target_name(target)),
-                .rel_path = fs::path(".github") / "workflows" / "cc-verifier.yml",
-                .content = substitute_template(template_github_actions(), ctx),
-            };
-        case VerifierTarget::GitLabCI:
-            return TemplateOutcome{
-                .label = std::string(target_name(target)),
-                .rel_path = ".gitlab-ci-cc-verifier.yml",
-                .content = substitute_template(template_gitlab_ci(), ctx),
-            };
-        case VerifierTarget::Jenkins:
-            return TemplateOutcome{
-                .label = std::string(target_name(target)),
-                .rel_path = "Jenkinsfile.verifier",
-                .content = substitute_template(template_jenkins(), ctx),
-            };
-        case VerifierTarget::Shell:
-            return TemplateOutcome{
-                .label = std::string(target_name(target)),
-                .rel_path = fs::path("scripts") / "run-verifiers.sh",
-                .content = substitute_template(template_shell(), ctx),
-            };
+    case VerifierTarget::GithubActions:
+        return TemplateOutcome{
+            .label = std::string(target_name(target)),
+            .rel_path = fs::path(".github") / "workflows" / "cc-verifier.yml",
+            .content = substitute_template(template_github_actions(), ctx),
+        };
+    case VerifierTarget::GitLabCI:
+        return TemplateOutcome{
+            .label = std::string(target_name(target)),
+            .rel_path = ".gitlab-ci-cc-verifier.yml",
+            .content = substitute_template(template_gitlab_ci(), ctx),
+        };
+    case VerifierTarget::Jenkins:
+        return TemplateOutcome{
+            .label = std::string(target_name(target)),
+            .rel_path = "Jenkinsfile.verifier",
+            .content = substitute_template(template_jenkins(), ctx),
+        };
+    case VerifierTarget::Shell:
+        return TemplateOutcome{
+            .label = std::string(target_name(target)),
+            .rel_path = fs::path("scripts") / "run-verifiers.sh",
+            .content = substitute_template(template_shell(), ctx),
+        };
     }
     // Unreachable
     return {};
@@ -566,32 +582,35 @@ public:
         return CommandDefinition{
             .name = "init-verifiers",
             .description = "Generate CI/CD verifier configuration for this repo",
-            .args = {
-                CommandArg{
-                    .name = "--type",
-                    .description = "CI target: github|gitlab|jenkins|shell (default: auto-detect)",
-                    .type = ArgType::Choice,
-                    .required = false,
-                    .choices = {"github", "gitlab", "jenkins", "shell"},
-                    .default_value = {},
+            .args =
+                {
+                    CommandArg{
+                        .name = "--type",
+                        .description =
+                            "CI target: github|gitlab|jenkins|shell (default: auto-detect)",
+                        .type = ArgType::Choice,
+                        .required = false,
+                        .choices = {"github", "gitlab", "jenkins", "shell"},
+                        .default_value = {},
+                    },
+                    CommandArg{
+                        .name = "--apply",
+                        .description = "Write files to disk (default: preview only)",
+                        .type = ArgType::None,
+                        .required = false,
+                        .choices = {},
+                        .default_value = {},
+                    },
+                    CommandArg{
+                        .name = "--all",
+                        .description =
+                            "Generate all four targets at once instead of auto-selecting one",
+                        .type = ArgType::None,
+                        .required = false,
+                        .choices = {},
+                        .default_value = {},
+                    },
                 },
-                CommandArg{
-                    .name = "--apply",
-                    .description = "Write files to disk (default: preview only)",
-                    .type = ArgType::None,
-                    .required = false,
-                    .choices = {},
-                    .default_value = {},
-                },
-                CommandArg{
-                    .name = "--all",
-                    .description = "Generate all four targets at once instead of auto-selecting one",
-                    .type = ArgType::None,
-                    .required = false,
-                    .choices = {},
-                    .default_value = {},
-                },
-            },
             .category = "configuration",
             .aliases = {"verifiers", "create-verifiers"},
             .hidden = false,
@@ -609,19 +628,25 @@ public:
         bool generate_all = false;
         std::optional<VerifierTarget> explicit_target;
         for (const auto& arg : ctx.args) {
-            if (arg == "--apply") apply = true;
-            else if (arg == "--all") generate_all = true;
+            if (arg == "--apply")
+                apply = true;
+            else if (arg == "--all")
+                generate_all = true;
             else if (arg.starts_with("--type=")) {
                 auto val = arg.substr(7);
-                if      (val == "github")  explicit_target = VerifierTarget::GithubActions;
-                else if (val == "gitlab")  explicit_target = VerifierTarget::GitLabCI;
-                else if (val == "jenkins") explicit_target = VerifierTarget::Jenkins;
-                else if (val == "shell")   explicit_target = VerifierTarget::Shell;
+                if (val == "github")
+                    explicit_target = VerifierTarget::GithubActions;
+                else if (val == "gitlab")
+                    explicit_target = VerifierTarget::GitLabCI;
+                else if (val == "jenkins")
+                    explicit_target = VerifierTarget::Jenkins;
+                else if (val == "shell")
+                    explicit_target = VerifierTarget::Shell;
                 else {
                     return std::unexpected(Error::make(
                         ErrorCode::InvalidInput,
-                        std::format("--type='{}' is not valid. Use github|gitlab|jenkins|shell.", val)
-                    ));
+                        std::format("--type='{}' is not valid. Use github|gitlab|jenkins|shell.",
+                                    val)));
                 }
             }
         }
@@ -629,7 +654,8 @@ public:
         // --- No flags: inject an analysis prompt ---
         if (!apply && !generate_all && !explicit_target) {
             return CommandResult::inject(
-                "Analyze this project and determine what verification infrastructure would be most valuable.\n"
+                "Analyze this project and determine what verification infrastructure would be most "
+                "valuable.\n"
                 "Consider: testing framework, CI/CD pipeline, linting, type checking.\n"
                 "Look at the project structure to identify:\n"
                 "- What language/framework is used\n"
@@ -637,15 +663,17 @@ public:
                 "- Build system\n"
                 "- Package manager\n\n"
                 "Then recommend and optionally create appropriate verifier configurations.\n"
-                "Use the Bash tool to inspect the project (e.g. ls, find, cat package.json, etc.)."
-            );
+                "Use the Bash tool to inspect the project (e.g. ls, find, cat package.json, "
+                "etc.).");
         }
 
         // --- Detect repo root and context ---
         auto root_res = loom::utils::exec_sync("git rev-parse --show-toplevel");
         fs::path repo_root;
-        if (root_res && !root_res->empty()) repo_root = *root_res;
-        else repo_root = fs::current_path();
+        if (root_res && !root_res->empty())
+            repo_root = *root_res;
+        else
+            repo_root = fs::current_path();
 
         auto repo_ctx = detect_repo_context(repo_root);
 
@@ -664,8 +692,7 @@ public:
 
         // --- Render + apply ---
         std::ostringstream out;
-        out << std::format("# Verifier configuration — {} ({} mode)\n\n",
-                           repo_ctx.project_name,
+        out << std::format("# Verifier configuration — {} ({} mode)\n\n", repo_ctx.project_name,
                            apply ? "apply" : "preview");
         out << std::format("Default branch: `{}`   Repo: `{}`   Package manager: `{}`\n\n",
                            repo_ctx.default_branch, repo_ctx.repo_full, repo_ctx.package_manager);
@@ -694,13 +721,14 @@ public:
                 // Make shell script executable
                 if (t == VerifierTarget::Shell) {
                     fs::permissions(full,
-                        fs::perms::owner_all | fs::perms::group_read | fs::perms::group_exec
-                        | fs::perms::others_read | fs::perms::others_exec,
-                        fs::perm_options::add, ec);
+                                    fs::perms::owner_all | fs::perms::group_read |
+                                        fs::perms::group_exec | fs::perms::others_read |
+                                        fs::perms::others_exec,
+                                    fs::perm_options::add, ec);
                 }
 
-                out << std::format("> **Written**: `{}` ({} bytes)\n\n",
-                                   rendered.rel_path.string(), fs::file_size(full, ec));
+                out << std::format("> **Written**: `{}` ({} bytes)\n\n", rendered.rel_path.string(),
+                                   fs::file_size(full, ec));
             } else {
                 out << "```yaml\n" << rendered.content << "\n```\n\n";
             }
@@ -726,8 +754,7 @@ public:
         std::vector<std::string> suggestions;
         static constexpr std::array<std::string_view, 7> flags = {
             "--type=github", "--type=gitlab", "--type=jenkins", "--type=shell",
-            "--apply", "--all", "--help"
-        };
+            "--apply",       "--all",         "--help"};
         for (auto f : flags) {
             if (f.starts_with(partial)) suggestions.emplace_back(f);
         }
@@ -735,4 +762,4 @@ public:
     }
 };
 
-} // namespace loom::commands
+}  // namespace loom::commands

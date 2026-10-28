@@ -10,7 +10,6 @@ import loom.utils.error;
 import loom.serdes.json;
 import loom.tools.tool;
 
-
 export namespace loom::tools {
 
 // Todo item status
@@ -22,10 +21,14 @@ enum class TodoStatus {
 
 constexpr auto todo_status_name(TodoStatus s) -> std::string_view {
     switch (s) {
-        case TodoStatus::Pending:    return "pending";
-        case TodoStatus::InProgress: return "in_progress";
-        case TodoStatus::Completed:  return "completed";
-        default:                     return "unknown";
+    case TodoStatus::Pending:
+        return "pending";
+    case TodoStatus::InProgress:
+        return "in_progress";
+    case TodoStatus::Completed:
+        return "completed";
+    default:
+        return "unknown";
     }
 }
 
@@ -38,10 +41,14 @@ enum class Priority {
 
 constexpr auto priority_name(Priority p) -> std::string_view {
     switch (p) {
-        case Priority::High:   return "high";
-        case Priority::Medium: return "medium";
-        case Priority::Low:    return "low";
-        default:               return "unknown";
+    case Priority::High:
+        return "high";
+    case Priority::Medium:
+        return "medium";
+    case Priority::Low:
+        return "low";
+    default:
+        return "unknown";
     }
 }
 
@@ -68,14 +75,22 @@ enum class TodoError {
 
 constexpr auto format_error(TodoError err) -> std::string_view {
     switch (err) {
-        case TodoError::IdEmpty:             return "Todo item ID is empty";
-        case TodoError::ContentEmpty:        return "Todo item content is empty";
-        case TodoError::TooManyItems:        return "Maximum number of todo items (10) reached";
-        case TodoError::ItemNotFound:        return "Todo item not found";
-        case TodoError::DuplicateId:         return "Todo item with this ID already exists";
-        case TodoError::MultipleInProgress:  return "Only one item can be in_progress at a time";
-        case TodoError::InvalidTransition:   return "Invalid status transition";
-        default:                             return "Unknown todo error";
+    case TodoError::IdEmpty:
+        return "Todo item ID is empty";
+    case TodoError::ContentEmpty:
+        return "Todo item content is empty";
+    case TodoError::TooManyItems:
+        return "Maximum number of todo items (10) reached";
+    case TodoError::ItemNotFound:
+        return "Todo item not found";
+    case TodoError::DuplicateId:
+        return "Todo item with this ID already exists";
+    case TodoError::MultipleInProgress:
+        return "Only one item can be in_progress at a time";
+    case TodoError::InvalidTransition:
+        return "Invalid status transition";
+    default:
+        return "Unknown todo error";
     }
 }
 
@@ -141,9 +156,9 @@ public:
         }
 
         // Check only one in_progress constraint
-        size_t in_progress_count = static_cast<size_t>(std::count_if(request.items.begin(), request.items.end(), [](const auto& item) {
-            return item.status == TodoStatus::InProgress;
-        }));
+        size_t in_progress_count = static_cast<size_t>(
+            std::count_if(request.items.begin(), request.items.end(),
+                          [](const auto& item) { return item.status == TodoStatus::InProgress; }));
         if (in_progress_count > 1) {
             return std::unexpected(TodoError::MultipleInProgress);
         }
@@ -202,9 +217,10 @@ public:
         }
 
         // Final constraint validation on the resulting list
-        size_t in_progress = static_cast<size_t>(std::count_if(items.begin(), items.end(), [](const auto& item) {
-            return item.status == TodoStatus::InProgress;
-        }));
+        size_t in_progress =
+            static_cast<size_t>(std::count_if(items.begin(), items.end(), [](const auto& item) {
+                return item.status == TodoStatus::InProgress;
+            }));
         if (in_progress > 1) {
             return std::unexpected(TodoError::MultipleInProgress);
         }
@@ -222,7 +238,8 @@ public:
     }
 
     // Get all current items
-    [[nodiscard]] auto get_items(std::optional<std::string_view> scope = std::nullopt) const -> std::vector<TodoItem> {
+    [[nodiscard]] auto get_items(std::optional<std::string_view> scope = std::nullopt) const
+        -> std::vector<TodoItem> {
         std::scoped_lock lock(mutex_);
         auto it = items_by_scope_.find(scope ? std::string(*scope) : std::string(kDefaultScope));
         if (it == items_by_scope_.end()) return {};
@@ -230,25 +247,34 @@ public:
     }
 
     // Get items sorted for display (in_progress > pending > completed, then by priority)
-    [[nodiscard]] auto get_sorted_items(std::optional<std::string_view> scope = std::nullopt) const -> std::vector<TodoItem> {
+    [[nodiscard]] auto get_sorted_items(std::optional<std::string_view> scope = std::nullopt) const
+        -> std::vector<TodoItem> {
         auto sorted = get_items(scope);
         std::sort(sorted.begin(), sorted.end(), [](const auto& a, const auto& b) {
             // Status order: in_progress(0) > pending(1) > completed(2)
             auto status_rank = [](TodoStatus s) -> int {
                 switch (s) {
-                    case TodoStatus::InProgress: return 0;
-                    case TodoStatus::Pending:    return 1;
-                    case TodoStatus::Completed:  return 2;
-                    default: return 3;
+                case TodoStatus::InProgress:
+                    return 0;
+                case TodoStatus::Pending:
+                    return 1;
+                case TodoStatus::Completed:
+                    return 2;
+                default:
+                    return 3;
                 }
             };
             // Priority order: high(0) > medium(1) > low(2)
             auto priority_rank = [](Priority p) -> int {
                 switch (p) {
-                    case Priority::High:   return 0;
-                    case Priority::Medium: return 1;
-                    case Priority::Low:    return 2;
-                    default: return 3;
+                case Priority::High:
+                    return 0;
+                case Priority::Medium:
+                    return 1;
+                case Priority::Low:
+                    return 2;
+                default:
+                    return 3;
                 }
             };
 
@@ -313,7 +339,8 @@ public:
     }},
     "required": ["todos"]
   }}
-}})", name, description);
+}})",
+                           name, description);
     }
 
 private:
@@ -406,7 +433,8 @@ using JsonVal = loom::utils::json::JsonVal;
     return parsed;
 }
 
-[[nodiscard]] std::expected<TodoWriteRequest, std::string> parse_request(std::string_view raw_json) {
+[[nodiscard]] std::expected<TodoWriteRequest, std::string>
+parse_request(std::string_view raw_json) {
     auto doc = loom::utils::json::parse(raw_json);
     if (!doc) return std::unexpected(doc.error().format());
 
@@ -447,7 +475,7 @@ using JsonVal = loom::utils::json::JsonVal;
     return request;
 }
 
-} // namespace detail
+}  // namespace detail
 
 /// Factory: create TodoWriteTool wrapped as ITool for registry integration
 [[nodiscard]] auto make_todo_write_tool() -> std::unique_ptr<loom::core::ITool> {
@@ -455,69 +483,70 @@ using JsonVal = loom::utils::json::JsonVal;
         loom::core::ToolDefinition def_{
             .name = std::string(TodoWriteTool::name),
             .description = std::string(TodoWriteTool::description),
-            .input_schema = loom::core::InputSchema{
-                .properties = {
-                    loom::core::SchemaProperty{
-                        .name = "todos",
-                        .type = "array",
-                        .description = "Array of todo items with id, content, status, priority",
-                        .required = true,
-                        .default_value = std::nullopt,
-                        .enum_values = std::nullopt
-                    },
-                    loom::core::SchemaProperty{
-                        .name = "merge",
-                        .type = "boolean",
-                        .description = "Merge with existing list by id (true) or replace all (false)",
-                        .required = false,
-                        .default_value = "false",
-                        .enum_values = std::nullopt
-                    },
-                    loom::core::SchemaProperty{
-                        .name = "agent_id",
-                        .type = "string",
-                        .description = "Runtime scope id injected for sub-agent todo isolation",
-                        .required = false,
-                        .default_value = std::nullopt,
-                        .enum_values = std::nullopt
-                    }
-                }
-            },
+            .input_schema =
+                loom::core::InputSchema{
+                    .properties =
+                        {
+                            loom::core::SchemaProperty{
+                                .name = "todos",
+                                .type = "array",
+                                .description =
+                                    "Array of todo items with id, content, status, priority",
+                                .required = true,
+                                .default_value = std::nullopt,
+                                .enum_values = std::nullopt},
+                            loom::core::SchemaProperty{
+                                .name = "merge",
+                                .type = "boolean",
+                                .description =
+                                    "Merge with existing list by id (true) or replace all (false)",
+                                .required = false,
+                                .default_value = "false",
+                                .enum_values = std::nullopt},
+                            loom::core::SchemaProperty{
+                                .name = "agent_id",
+                                .type = "string",
+                                .description =
+                                    "Runtime scope id injected for sub-agent todo isolation",
+                                .required = false,
+                                .default_value = std::nullopt,
+                                .enum_values = std::nullopt}}},
             .permission = loom::core::ToolPermission::ReadOnly,
-            .category = "task_management"
-        };
+            .category = "task_management"};
 
         const loom::core::ToolDefinition& definition() const override { return def_; }
 
-        std::expected<loom::core::ToolResult, loom::core::Error> execute(const loom::core::ToolInput& input) override {
+        std::expected<loom::core::ToolResult, loom::core::Error>
+        execute(const loom::core::ToolInput& input) override {
             auto request = detail::parse_request(input.json());
             if (!request) {
-                return std::unexpected(loom::core::Error::make(
-                    loom::core::ErrorCode::InvalidInput,
-                    request.error()));
+                return std::unexpected(
+                    loom::core::Error::make(loom::core::ErrorCode::InvalidInput, request.error()));
             }
 
             auto result = todo_write_store().execute(std::move(*request));
             if (result) {
-                auto msg = std::format("Todo list updated: {} total, {} added, {} updated, {} removed",
-                    result->total_items, result->items_added, result->items_updated, result->items_removed);
+                auto msg =
+                    std::format("Todo list updated: {} total, {} added, {} updated, {} removed",
+                                result->total_items, result->items_added, result->items_updated,
+                                result->items_removed);
                 if (!result->completed_items.empty()) {
-                    msg += std::format("\nTasks {}/{} completed", result->total_items, result->total_items);
+                    msg += std::format("\nTasks {}/{} completed", result->total_items,
+                                       result->total_items);
                     for (const auto& item : result->completed_items)
                         msg += "\n✓ " + item.content;
                 }
                 return loom::core::ToolResult::success(std::move(msg));
             }
-            return std::unexpected(loom::core::Error::make(
-                loom::core::ErrorCode::ToolExecutionFailed,
-                std::string(format_error(result.error()))));
+            return std::unexpected(
+                loom::core::Error::make(loom::core::ErrorCode::ToolExecutionFailed,
+                                        std::string(format_error(result.error()))));
         }
 
-        bool check_permission(const loom::core::ToolInput&) const override {
-            return true;
-        }
+        bool check_permission(const loom::core::ToolInput&) const override { return true; }
     };
+
     return std::make_unique<Adapter>();
 }
 
-} // namespace loom::tools
+}  // namespace loom::tools

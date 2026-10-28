@@ -19,7 +19,8 @@ namespace loom::state::selectors {
 // ============================================================
 
 /// Get the prompt suggestion text
-[[nodiscard]] std::optional<std::string_view> get_prompt_suggestion_text(const AppState& state) noexcept {
+[[nodiscard]] std::optional<std::string_view>
+get_prompt_suggestion_text(const AppState& state) noexcept {
     if (state.prompt_suggestion.text) {
         return *state.prompt_suggestion.text;
     }
@@ -27,7 +28,8 @@ namespace loom::state::selectors {
 }
 
 /// Get the prompt suggestion prompt ID
-[[nodiscard]] std::optional<std::string_view> get_prompt_suggestion_prompt_id(const AppState& state) noexcept {
+[[nodiscard]] std::optional<std::string_view>
+get_prompt_suggestion_prompt_id(const AppState& state) noexcept {
     if (state.prompt_suggestion.prompt_id) {
         return *state.prompt_suggestion.prompt_id;
     }
@@ -93,7 +95,8 @@ namespace loom::state::selectors {
 }
 
 /// Get the skill improvement suggestion skill name
-[[nodiscard]] std::optional<std::string_view> get_skill_improvement_skill_name(const AppState& state) noexcept {
+[[nodiscard]] std::optional<std::string_view>
+get_skill_improvement_skill_name(const AppState& state) noexcept {
     if (state.skill_improvement.suggestion) {
         return state.skill_improvement.suggestion->skill_name;
     }
@@ -143,4 +146,4 @@ namespace loom::state::selectors {
     return state.pending_sandbox_request.has_value();
 }
 
-} // namespace loom::state::selectors
+}  // namespace loom::state::selectors

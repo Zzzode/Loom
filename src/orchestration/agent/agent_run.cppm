@@ -1,10 +1,10 @@
 module;
 
+#include <cctype>
 #include <cmath>
+#include <cstdint>
 #include <cstdio>
 #include <cstdlib>
-#include <cctype>
-#include <cstdint>
 
 export module loom.orchestration.agent.run;
 
@@ -38,86 +38,83 @@ export namespace loom::tools::agent::run_ {
 
 namespace fs = std::filesystem;
 
-using loom::core::Tool;
-using loom::core::ToolInput;
-using loom::core::ToolResult;
-using loom::core::ToolDefinition;
-using loom::core::ToolPermission;
 using loom::core::InputSchema;
 using loom::core::SchemaProperty;
-using loom::utils::Result;
-using loom::services::api::MessagesClient;
-using loom::services::api::CreateMessageRequest;
-using loom::services::api::Message;
+using loom::core::Tool;
+using loom::core::ToolDefinition;
+using loom::core::ToolInput;
+using loom::core::ToolPermission;
+using loom::core::ToolResult;
 using loom::services::api::ContentBlock;
 using loom::services::api::ContentBlockType;
-using loom::services::api::StreamParser;
-using loom::services::api::StreamEventType;
+using loom::services::api::CreateMessageRequest;
+using loom::services::api::Message;
+using loom::services::api::MessagesClient;
 using loom::services::api::StreamContentBlockType;
-using loom::tools::agent::utils::AgentToolRequest;
+using loom::services::api::StreamEventType;
+using loom::services::api::StreamParser;
+using loom::tools::agent::utils::add_agent_memory_tools;
+using loom::tools::agent::utils::agent_schema_property;
 using loom::tools::agent::utils::AgentConfig;
 using loom::tools::agent::utils::AgentExecutionPlan;
-using loom::tools::agent::utils::AgentMcpToolBinding;
 using loom::tools::agent::utils::AgentInlineMcpServerRuntimeState;
 using loom::tools::agent::utils::AgentMcpCleanupGuard;
-using loom::tools::agent::utils::normalize_agent_cwd;
-using loom::tools::agent::utils::agent_schema_property;
-using loom::tools::agent::utils::resolve_agent_model;
-using loom::tools::agent::utils::prepend_initial_prompt;
-using loom::tools::agent::utils::built_in_system_prompt;
-using loom::tools::agent::utils::next_agent_id;
-using loom::tools::agent::utils::load_preloaded_skill_messages;
-using loom::tools::agent::utils::format_agent_mcp_context_message;
-using loom::tools::agent::utils::connect_agent_mcp_servers;
+using loom::tools::agent::utils::AgentMcpToolBinding;
+using loom::tools::agent::utils::AgentToolRequest;
 using loom::tools::agent::utils::append_unique_agent_mcp_server;
-using loom::tools::agent::utils::prepare_agent_inline_mcp_servers;
 using loom::tools::agent::utils::available_mcp_servers_with_tools;
-using loom::tools::agent::utils::missing_required_mcp_servers;
-using loom::tools::agent::utils::join_fields;
+using loom::tools::agent::utils::built_in_system_prompt;
+using loom::tools::agent::utils::connect_agent_mcp_servers;
 using loom::tools::agent::utils::effective_agent_permission_mode;
 using loom::tools::agent::utils::filter_incomplete_tool_calls;
-using loom::tools::agent::utils::is_auto_memory_enabled;
-using loom::tools::agent::utils::json_int;
 using loom::tools::agent::utils::fork_context_messages_from_entries;
-using loom::tools::agent::utils::add_agent_memory_tools;
-using loom::tools::agent::utils::load_agent_memory_prompt;
-using loom::tools::agent::utils::format_critical_system_reminder;
+using loom::tools::agent::utils::format_agent_mcp_context_message;
 using loom::tools::agent::utils::format_agent_runtime_context;
+using loom::tools::agent::utils::format_critical_system_reminder;
+using loom::tools::agent::utils::is_auto_memory_enabled;
+using loom::tools::agent::utils::join_fields;
+using loom::tools::agent::utils::json_int;
+using loom::tools::agent::utils::load_agent_memory_prompt;
+using loom::tools::agent::utils::load_preloaded_skill_messages;
+using loom::tools::agent::utils::missing_required_mcp_servers;
+using loom::tools::agent::utils::next_agent_id;
+using loom::tools::agent::utils::normalize_agent_cwd;
+using loom::tools::agent::utils::prepare_agent_inline_mcp_servers;
+using loom::tools::agent::utils::prepend_initial_prompt;
+using loom::tools::agent::utils::resolve_agent_model;
+using loom::utils::Result;
 
 using loom::tools::agent::fork_::forked_messages_from_parent_assistant_entries;
 using loom::tools::agent::resume_::hydrate_resume_plan_from_existing_record;
 
-[[nodiscard]] inline std::expected<AgentExecutionPlan, std::string> build_agent_execution_plan(
-    const AgentToolRequest& request,
-    const AgentConfig& config,
-    const std::optional<std::string>& parent_model = std::nullopt
-) {
+[[nodiscard]] inline std::expected<AgentExecutionPlan, std::string>
+build_agent_execution_plan(const AgentToolRequest& request, const AgentConfig& config,
+                           const std::optional<std::string>& parent_model = std::nullopt) {
     auto normalized_cwd = normalize_agent_cwd(request.cwd);
     if (!normalized_cwd) return std::unexpected(normalized_cwd.error());
 
     const auto agents = loom::tools::agent_runtime::get_all_agent_definitions(
-        normalized_cwd->has_value() ? std::optional<fs::path>{fs::path{**normalized_cwd}} : std::nullopt);
+        normalized_cwd->has_value() ? std::optional<fs::path>{fs::path{**normalized_cwd}}
+                                    : std::nullopt);
 
     // migrated edge case: use resolve_agent_type (std::expected wrapper) so
     // callers get a richer error category. Failure modes are translated to
     // descriptive strings; previous code used the simpler "not found" surface.
-    auto resolved_definition = loom::tools::agent_runtime::resolve_agent_type(request.subagent_type, agents);
+    auto resolved_definition =
+        loom::tools::agent_runtime::resolve_agent_type(request.subagent_type, agents);
     if (!resolved_definition) {
-        const auto error_kind = loom::tools::agent_runtime::resolution_error_name(resolved_definition.error());
+        const auto error_kind =
+            loom::tools::agent_runtime::resolution_error_name(resolved_definition.error());
         return std::unexpected(std::format(
-            "Agent type '{}' not found ({}). Available agents: {}",
-            request.subagent_type,
-            error_kind,
-            loom::tools::agent_runtime::format_agent_type_list(agents)));
+            "Agent type '{}' not found ({}). Available agents: {}", request.subagent_type,
+            error_kind, loom::tools::agent_runtime::format_agent_type_list(agents)));
     }
     loom::tools::agent_runtime::AgentDefinition definition = std::move(*resolved_definition);
 
     auto inline_mcp_servers = prepare_agent_inline_mcp_servers(definition.inline_mcp_servers);
     if (!inline_mcp_servers) {
-        return std::unexpected(std::format(
-            "Failed to configure MCP servers for agent '{}': {}",
-            definition.agent_type,
-            inline_mcp_servers.error()));
+        return std::unexpected(std::format("Failed to configure MCP servers for agent '{}': {}",
+                                           definition.agent_type, inline_mcp_servers.error()));
     }
     AgentMcpCleanupGuard inline_mcp_plan_cleanup{
         .agent_id = {},
@@ -134,8 +131,8 @@ using loom::tools::agent::resume_::hydrate_resume_plan_from_existing_record;
     plan.model = request.model.value_or(definition_model.value_or(
         resolve_agent_model(parent_model).value_or(config.default_model)));
     plan.system_prompt = definition.system_prompt.empty()
-        ? built_in_system_prompt(definition.agent_type)
-        : definition.system_prompt;
+                             ? built_in_system_prompt(definition.agent_type)
+                             : definition.system_prompt;
     if (request.parent_system_prompt && !request.parent_system_prompt->empty()) {
         plan.system_prompt = *request.parent_system_prompt;
         plan.system_prompt_overridden = true;
@@ -148,7 +145,8 @@ using loom::tools::agent::resume_::hydrate_resume_plan_from_existing_record;
         std::ifstream input(user_memory);
         const std::string content((std::istreambuf_iterator<char>(input)), {});
         if (!content.empty())
-            plan.system_prompt += std::format("\n\n<context name=\"UserMemory\">\n{}\n</context>", content);
+            plan.system_prompt +=
+                std::format("\n\n<context name=\"UserMemory\">\n{}\n</context>", content);
     }
     plan.preloaded_skill_messages = load_preloaded_skill_messages(definition);
     plan.agent_mcp_servers = definition.mcp_servers;
@@ -161,13 +159,14 @@ using loom::tools::agent::resume_::hydrate_resume_plan_from_existing_record;
     }
     if (!definition.required_mcp_servers.empty()) {
         const auto available_servers = available_mcp_servers_with_tools();
-        const auto missing = missing_required_mcp_servers(definition.required_mcp_servers, available_servers);
+        const auto missing =
+            missing_required_mcp_servers(definition.required_mcp_servers, available_servers);
         if (!missing.empty()) {
-            return std::unexpected(std::format(
-                "Agent '{}' requires MCP servers matching: {}. MCP servers with tools: {}. Use /mcp to configure and authenticate the required MCP servers.",
-                definition.agent_type,
-                join_fields(missing),
-                available_servers.empty() ? "none" : join_fields(available_servers)));
+            return std::unexpected(
+                std::format("Agent '{}' requires MCP servers matching: {}. MCP servers with tools: "
+                            "{}. Use /mcp to configure and authenticate the required MCP servers.",
+                            definition.agent_type, join_fields(missing),
+                            available_servers.empty() ? "none" : join_fields(available_servers)));
         }
     }
     plan.inline_mcp_server_states = std::move(inline_mcp_plan_cleanup.inline_servers);
@@ -181,18 +180,19 @@ using loom::tools::agent::resume_::hydrate_resume_plan_from_existing_record;
     plan.exact_tools = request.exact_tools;
     plan.use_exact_tools = request.use_exact_tools;
     plan.fork_context_messages = forked_messages_from_parent_assistant_entries(
-        request.prompt,
-        request.parent_assistant_message_entries);
+        request.prompt, request.parent_assistant_message_entries);
     if (!plan.fork_context_messages.empty()) {
         plan.fork_child_context = true;
         plan.fork_context_includes_prompt = true;
         plan.fork_request_anchor = plan.fork_context_messages.size() - 1;
     }
     auto explicit_replay = utils::replay_agent_context(request.fork_context_entries);
-    auto explicit_fork_context_messages = utils::resume_messages_from_sidechain_entries(request.fork_context_entries);
+    auto explicit_fork_context_messages =
+        utils::resume_messages_from_sidechain_entries(request.fork_context_entries);
     if (!plan.fork_request_anchor && explicit_replay.request_anchor &&
         *explicit_replay.request_anchor < explicit_replay.messages.size()) {
-        const auto anchor_content = utils::message_json_object(explicit_replay.messages[*explicit_replay.request_anchor]);
+        const auto anchor_content =
+            utils::message_json_object(explicit_replay.messages[*explicit_replay.request_anchor]);
         for (std::size_t index = 0; index < explicit_fork_context_messages.size(); ++index)
             if (utils::message_json_object(explicit_fork_context_messages[index]) == anchor_content)
                 plan.fork_request_anchor = plan.fork_context_messages.size() + index;
@@ -208,13 +208,18 @@ using loom::tools::agent::resume_::hydrate_resume_plan_from_existing_record;
     // filterIncompleteToolCalls applied to fork_context_messages.
     if (!plan.fork_context_messages.empty()) {
         std::optional<std::string> anchor_content;
-        if (plan.fork_request_anchor && *plan.fork_request_anchor < plan.fork_context_messages.size())
-            anchor_content = utils::message_json_object(plan.fork_context_messages[*plan.fork_request_anchor]);
-        plan.fork_context_messages = filter_incomplete_tool_calls(std::move(plan.fork_context_messages));
+        if (plan.fork_request_anchor &&
+            *plan.fork_request_anchor < plan.fork_context_messages.size())
+            anchor_content =
+                utils::message_json_object(plan.fork_context_messages[*plan.fork_request_anchor]);
+        plan.fork_context_messages =
+            filter_incomplete_tool_calls(std::move(plan.fork_context_messages));
         plan.fork_request_anchor.reset();
-        if (anchor_content) for (std::size_t index = 0; index < plan.fork_context_messages.size(); ++index)
-            if (utils::message_json_object(plan.fork_context_messages[index]) == *anchor_content)
-                plan.fork_request_anchor = index;
+        if (anchor_content)
+            for (std::size_t index = 0; index < plan.fork_context_messages.size(); ++index)
+                if (utils::message_json_object(plan.fork_context_messages[index]) ==
+                    *anchor_content)
+                    plan.fork_request_anchor = index;
     }
     if (!plan.fork_child_context) {
         if (auto existing = loom::tools::agent_runtime::native_agent_store().get(plan.agent_id);
@@ -224,16 +229,13 @@ using loom::tools::agent::resume_::hydrate_resume_plan_from_existing_record;
     }
     plan.name = request.name;
     plan.team_name = request.team_name;
-    plan.mode = effective_agent_permission_mode(
-        request.mode,
-        definition.permission_mode,
-        config.parent_permission_mode);
+    plan.mode = effective_agent_permission_mode(request.mode, definition.permission_mode,
+                                                config.parent_permission_mode);
     plan.isolation = request.isolation.or_else([&] { return definition.isolation; });
     if (plan.isolation && !loom::tools::agent_runtime::valid_agent_isolation(*plan.isolation)) {
         return std::unexpected(std::format(
             "Unsupported isolation mode '{}'. Valid options for this environment: {}",
-            *plan.isolation,
-            loom::tools::agent_runtime::valid_agent_isolation_options()));
+            *plan.isolation, loom::tools::agent_runtime::valid_agent_isolation_options()));
     }
     plan.working_dir = *normalized_cwd;
     plan.frontmatter_hooks = definition.hooks;
@@ -241,10 +243,9 @@ using loom::tools::agent::resume_::hydrate_resume_plan_from_existing_record;
     plan.memory = definition.memory;
     if (plan.memory && is_auto_memory_enabled()) {
         add_agent_memory_tools(plan.allowed_tools);
-        plan.system_prompt = std::format(
-            "{}\n\n{}",
-            plan.system_prompt,
-            load_agent_memory_prompt(plan.agent_type, *plan.memory, plan.working_dir));
+        plan.system_prompt =
+            std::format("{}\n\n{}", plan.system_prompt,
+                        load_agent_memory_prompt(plan.agent_type, *plan.memory, plan.working_dir));
     }
     plan.color = definition.color;
     plan.omit_loom_md = definition.omit_loom_md;
@@ -255,19 +256,18 @@ using loom::tools::agent::resume_::hydrate_resume_plan_from_existing_record;
     const auto runtime_context = format_agent_runtime_context(plan);
     if (!plan.system_prompt_overridden) {
         plan.system_prompt = plan.system_prompt.empty()
-            ? runtime_context
-            : std::format("{}\n\n{}", plan.system_prompt, runtime_context);
+                                 ? runtime_context
+                                 : std::format("{}\n\n{}", plan.system_prompt, runtime_context);
     }
     if (plan.critical_system_reminder && !plan.system_prompt_overridden) {
-        plan.system_prompt += "\n\n" + format_critical_system_reminder(*plan.critical_system_reminder);
+        plan.system_prompt +=
+            "\n\n" + format_critical_system_reminder(*plan.critical_system_reminder);
     }
     return plan;
 }
 
-[[nodiscard]] inline ToolResult execute_agent_sleep_tool(
-    std::string_view agent_id,
-    const ToolInput& input
-) {
+[[nodiscard]] inline ToolResult execute_agent_sleep_tool(std::string_view agent_id,
+                                                         const ToolInput& input) {
     auto parsed = loom::utils::json::parse(input.json());
     if (!parsed || !parsed->root().is_obj()) {
         return ToolResult::error("sleep requires a JSON object input");
@@ -275,16 +275,14 @@ using loom::tools::agent::resume_::hydrate_resume_plan_from_existing_record;
 
     auto root = parsed->root();
     const auto seconds = std::clamp(
-        json_int(root, "duration")
-            .or_else([&] { return json_int(root, "seconds"); })
-            .value_or(1),
-        1,
-        static_cast<int>(SleepTool::kMaxDuration.count()));
+        json_int(root, "duration").or_else([&] { return json_int(root, "seconds"); }).value_or(1),
+        1, static_cast<int>(SleepTool::kMaxDuration.count()));
     auto reason = json_string(root, "reason").value_or("scheduled wait");
 
     auto signal = std::make_shared<AbortSignal>();
     // Pre-check: if cancel was already requested before we got here, abort immediately.
-    if (loom::tools::agent_runtime::native_agent_store().is_cancel_requested(std::string(agent_id))) {
+    if (loom::tools::agent_runtime::native_agent_store().is_cancel_requested(
+            std::string(agent_id))) {
         signal->abort();
     }
     std::atomic_bool finished{false};
@@ -312,16 +310,14 @@ using loom::tools::agent::resume_::hydrate_resume_plan_from_existing_record;
         return ToolResult::error(std::string(format_error(result.error())));
     }
     if (result->was_cancelled) {
-        return ToolResult::error(std::format(
-            "Sleep cancelled after {} ms", result->actual_duration.count()));
+        return ToolResult::error(
+            std::format("Sleep cancelled after {} ms", result->actual_duration.count()));
     }
     return ToolResult::success(std::format("Slept for {} ms", result->actual_duration.count()));
 }
 
-[[nodiscard]] inline ToolResult execute_agent_web_fetch_tool(
-    std::string_view agent_id,
-    const ToolInput& input
-) {
+[[nodiscard]] inline ToolResult execute_agent_web_fetch_tool(std::string_view agent_id,
+                                                             const ToolInput& input) {
     auto parsed_url = loom::tools::web_fetch::detail::parse_url(input.json());
     if (!parsed_url) {
         return ToolResult::error(parsed_url.error());
@@ -333,8 +329,7 @@ using loom::tools::agent::resume_::hydrate_resume_plan_from_existing_record;
     }
 
     auto result = loom::tools::web_fetch::detail::run_curl_with_cancel(
-        url,
-        [agent_id = std::string(agent_id)] {
+        url, [agent_id = std::string(agent_id)] {
             return loom::tools::agent_runtime::native_agent_store().is_cancel_requested(agent_id);
         });
     if (!result) return ToolResult::error(result.error());
@@ -347,4 +342,4 @@ using loom::tools::agent::resume_::hydrate_resume_plan_from_existing_record;
     return ToolResult::success(std::move(result->output));
 }
 
-} // namespace loom::tools::agent::run_
+}  // namespace loom::tools::agent::run_

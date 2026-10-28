@@ -43,16 +43,12 @@ namespace acsrc = loom::ui::autocomplete_sources;
     return 4;
 }
 
-[[nodiscard]] bool AppAdapter::is_visible_skills_menu_source(
-    std::string_view source) {
-    return source == "project" ||
-           source == "user" ||
-           source == "plugin" ||
-           source == "mcp";
+[[nodiscard]] bool AppAdapter::is_visible_skills_menu_source(std::string_view source) {
+    return source == "project" || source == "user" || source == "plugin" || source == "mcp";
 }
 
-[[nodiscard]] std::size_t AppAdapter::skills_menu_token_estimate(
-    const acsrc::SkillSuggestionData& skill) {
+[[nodiscard]] std::size_t
+AppAdapter::skills_menu_token_estimate(const acsrc::SkillSuggestionData& skill) {
     std::string frontmatter = skill.name;
     if (!skill.description.empty()) {
         frontmatter.push_back(' ');
@@ -72,28 +68,26 @@ namespace acsrc = loom::ui::autocomplete_sources;
     return path;
 }
 
-[[nodiscard]] std::string AppAdapter::skill_source_group_title(
-    const acsrc::SkillSuggestionData& skill) {
+[[nodiscard]] std::string
+AppAdapter::skill_source_group_title(const acsrc::SkillSuggestionData& skill) {
     if (skill.source == "project") {
         return skill.source_detail.empty()
-            ? "Project skills"
-            : "Project skills (" + collapse_home_path(skill.source_detail) + ")";
+                   ? "Project skills"
+                   : "Project skills (" + collapse_home_path(skill.source_detail) + ")";
     }
     if (skill.source == "user") return "User skills (~/.loom/skills)";
     if (skill.source == "plugin") {
-        return skill.source_detail.empty()
-            ? "Plugin skills"
-            : "Plugin skills (" + skill.source_detail + ")";
+        return skill.source_detail.empty() ? "Plugin skills"
+                                           : "Plugin skills (" + skill.source_detail + ")";
     }
     if (skill.source == "mcp") return "MCP skills";
     return "Other skills";
 }
 
-[[nodiscard]] std::string AppAdapter::FormatSkillsMenuOutput(
-    std::vector<acsrc::SkillSuggestionData> skills) {
-    std::erase_if(skills, [](const auto& skill) {
-        return !is_visible_skills_menu_source(skill.source);
-    });
+[[nodiscard]] std::string
+AppAdapter::FormatSkillsMenuOutput(std::vector<acsrc::SkillSuggestionData> skills) {
+    std::erase_if(skills,
+                  [](const auto& skill) { return !is_visible_skills_menu_source(skill.source); });
 
     std::ranges::sort(skills, [](const auto& a, const auto& b) {
         const int ao = skill_source_order(a.source);
@@ -107,10 +101,7 @@ namespace acsrc = loom::ui::autocomplete_sources;
 
     std::string out;
     out += "Skills\n";
-    out += std::format(
-        "{} skill{}\n",
-        skills.size(),
-        skills.size() == 1 ? "" : "s");
+    out += std::format("{} skill{}\n", skills.size(), skills.size() == 1 ? "" : "s");
 
     if (skills.empty()) {
         out += "\nNo skills found.\n";
@@ -130,9 +121,7 @@ namespace acsrc = loom::ui::autocomplete_sources;
         }
 
         out += skill.name;
-        out += std::format(
-            " · ~{} description tokens",
-            skills_menu_token_estimate(skill));
+        out += std::format(" · ~{} description tokens", skills_menu_token_estimate(skill));
         out += "\n";
     }
     return out;
@@ -144,8 +133,7 @@ void AppAdapter::OpenSkillsMenu() {
     screen_state_->active_local_jsx_command = true;
     screen_state_->active_local_jsx_command_name = "skills";
     screen_state_->active_local_jsx_command_args.clear();
-    screen_state_->active_local_jsx_content =
-        FormatSkillsMenuOutput(std::move(skills));
+    screen_state_->active_local_jsx_content = FormatSkillsMenuOutput(std::move(skills));
     screen_state_->messages_store.scroll_offset = 0;
     screen_state_->messages_store.scroll_pinned_to_bottom = false;
     // RFC 0008: opening the skills menu scrolls away from bottom;
@@ -154,4 +142,4 @@ void AppAdapter::OpenSkillsMenu() {
     PostRenderEvent();
 }
 
-} // namespace loom::ui
+}  // namespace loom::ui

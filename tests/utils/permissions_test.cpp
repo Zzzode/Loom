@@ -1,6 +1,5 @@
 #include <gtest/gtest.h>
 
-
 import std;
 import loom.process.shell.shell_rule_matching;
 import loom.process.shell.shell_parser;
@@ -159,7 +158,8 @@ TEST(Permissions, DangerousPatternClassifierReportsRiskLevel) {
 
     EXPECT_EQ(classifier.classify("ls -la"), loom::utils::permissions::RiskLevel::Safe);
     EXPECT_EQ(classifier.classify("mkdir build"), loom::utils::permissions::RiskLevel::Moderate);
-    EXPECT_EQ(classifier.classify("rm -rf /tmp/cache"), loom::utils::permissions::RiskLevel::Dangerous);
+    EXPECT_EQ(classifier.classify("rm -rf /tmp/cache"),
+              loom::utils::permissions::RiskLevel::Dangerous);
     EXPECT_EQ(classifier.classify(":(){:|:&};:"), loom::utils::permissions::RiskLevel::Dangerous);
     EXPECT_NE(classifier.describe_risk("rm -rf /tmp/cache").find("DANGEROUS"), std::string::npos);
 }
@@ -183,8 +183,13 @@ TEST(Permissions, RuleSetYoloModeOverridesDangerousCommandChecks) {
 
 TEST(Permissions, RuleSetPathRulesUseGlobPatterns) {
     loom::utils::permissions::RuleSet rules;
-    rules.add_rule({.pattern = "/home/user/*.cpp", .action = loom::utils::permissions::Action::Allow, .scope = loom::utils::permissions::Scope::Path, .priority = 10});
+    rules.add_rule({.pattern = "/home/user/*.cpp",
+                    .action = loom::utils::permissions::Action::Allow,
+                    .scope = loom::utils::permissions::Scope::Path,
+                    .priority = 10});
 
-    EXPECT_EQ(rules.evaluate_path("/home/user/src/main.cpp"), loom::utils::permissions::Action::Allow);
-    EXPECT_EQ(rules.evaluate_path("/home/user/src/main.py"), loom::utils::permissions::Action::Deny);
+    EXPECT_EQ(rules.evaluate_path("/home/user/src/main.cpp"),
+              loom::utils::permissions::Action::Allow);
+    EXPECT_EQ(rules.evaluate_path("/home/user/src/main.py"),
+              loom::utils::permissions::Action::Deny);
 }

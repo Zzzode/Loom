@@ -57,18 +57,25 @@ namespace loom::test::bridge {
 
 class ScopedEnvVar {
 public:
-    explicit ScopedEnvVar(const char* name) : name_(name) {
+    explicit ScopedEnvVar(const char* name)
+        : name_(name) {
         if (auto* value = std::getenv(name)) previous_ = value;
         unsetenv(name);
     }
-    ScopedEnvVar(const char* name, std::string_view value) : name_(name) {
+
+    ScopedEnvVar(const char* name, std::string_view value)
+        : name_(name) {
         if (auto* previous = std::getenv(name)) previous_ = previous;
         setenv(name_, std::string(value).c_str(), 1);
     }
+
     ~ScopedEnvVar() {
-        if (previous_) setenv(name_, previous_->c_str(), 1);
-        else unsetenv(name_);
+        if (previous_)
+            setenv(name_, previous_->c_str(), 1);
+        else
+            unsetenv(name_);
     }
+
     ScopedEnvVar(const ScopedEnvVar&) = delete;
     ScopedEnvVar& operator=(const ScopedEnvVar&) = delete;
 
@@ -78,7 +85,8 @@ private:
 };
 
 inline std::filesystem::path unique_temp_file(std::string_view suffix) {
-    return std::filesystem::temp_directory_path() / (loom::bridge::generate_session_id() + std::string(suffix));
+    return std::filesystem::temp_directory_path() /
+           (loom::bridge::generate_session_id() + std::string(suffix));
 }
 
 inline std::string extract_json_string_field(std::string_view json, std::string_view key) {
@@ -101,7 +109,8 @@ inline bool bridge_test_send_all(int fd, std::string_view data) {
 }
 
 inline std::string bridge_test_base64_encode(const unsigned char* data, std::size_t len) {
-    static constexpr char table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    static constexpr char table[] =
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
     std::string out;
     out.reserve(((len + 2) / 3) * 4);
     for (std::size_t i = 0; i < len; i += 3) {
@@ -117,14 +126,16 @@ inline std::string bridge_test_base64_encode(const unsigned char* data, std::siz
 }
 
 inline std::string bridge_test_base64url_encode(std::string_view data) {
-    auto encoded = bridge_test_base64_encode(
-        reinterpret_cast<const unsigned char*>(data.data()),
-        data.size());
+    auto encoded =
+        bridge_test_base64_encode(reinterpret_cast<const unsigned char*>(data.data()), data.size());
     for (char& ch : encoded) {
-        if (ch == '+') ch = '-';
-        else if (ch == '/') ch = '_';
+        if (ch == '+')
+            ch = '-';
+        else if (ch == '/')
+            ch = '_';
     }
-    while (!encoded.empty() && encoded.back() == '=') encoded.pop_back();
+    while (!encoded.empty() && encoded.back() == '=')
+        encoded.pop_back();
     return encoded;
 }
 
@@ -196,9 +207,7 @@ public:
             port_ = ntohs(addr.sin_port);
         }
         running_.store(true);
-        accept_thread_ = std::jthread([this](std::stop_token stop) {
-            accept_loop(stop);
-        });
+        accept_thread_ = std::jthread([this](std::stop_token stop) { accept_loop(stop); });
     }
 
     ~LocalBridgeWebSocketServer() {
@@ -220,11 +229,12 @@ public:
     }
 
     [[nodiscard]] bool ready() const noexcept { return listen_fd_ >= 0 && port_ != 0; }
+
     [[nodiscard]] std::uint16_t port() const noexcept { return port_; }
 
-    [[nodiscard]] std::optional<std::vector<std::string>> wait_for_frames(
-        std::size_t count,
-        std::chrono::milliseconds timeout = std::chrono::seconds(3)) {
+    [[nodiscard]] std::optional<std::vector<std::string>>
+    wait_for_frames(std::size_t count,
+                    std::chrono::milliseconds timeout = std::chrono::seconds(3)) {
         std::unique_lock lock(mutex_);
         if (!cv_.wait_for(lock, timeout, [this, count] { return frames_.size() >= count; })) {
             return std::nullopt;
@@ -273,7 +283,8 @@ private:
         auto value_start = headers.find(':', pos);
         if (value_start == std::string_view::npos) return {};
         ++value_start;
-        while (value_start < headers.size() && headers[value_start] == ' ') ++value_start;
+        while (value_start < headers.size() && headers[value_start] == ' ')
+            ++value_start;
         auto value_end = headers.find("\r\n", value_start);
         if (value_end == std::string_view::npos) return {};
         return std::string(headers.substr(value_start, value_end - value_start));
@@ -305,7 +316,8 @@ private:
             unsigned char ext[8]{};
             if (!read_exact(fd, reinterpret_cast<char*>(ext), 8)) return std::nullopt;
             len = 0;
-            for (unsigned char byte : ext) len = (len << 8) | byte;
+            for (unsigned char byte : ext)
+                len = (len << 8) | byte;
         }
 
         std::array<unsigned char, 4> mask{};
@@ -349,12 +361,11 @@ private:
         auto headers = read_http_headers(fd);
         if (!headers) return;
         const auto key = header_value(*headers, "Sec-WebSocket-Key");
-        const auto response = std::format(
-            "HTTP/1.1 101 Switching Protocols\r\n"
-            "Upgrade: websocket\r\n"
-            "Connection: Upgrade\r\n"
-            "Sec-WebSocket-Accept: {}\r\n\r\n",
-            bridge_test_accept_key(key));
+        const auto response = std::format("HTTP/1.1 101 Switching Protocols\r\n"
+                                          "Upgrade: websocket\r\n"
+                                          "Connection: Upgrade\r\n"
+                                          "Sec-WebSocket-Accept: {}\r\n\r\n",
+                                          bridge_test_accept_key(key));
         if (!bridge_test_send_all(fd, response)) return;
 
         bool sent_inbound = false;
@@ -370,7 +381,8 @@ private:
             cv_.notify_all();
             if (!sent_inbound) {
                 sent_inbound = true;
-                send_text_frame(fd,
+                send_text_frame(
+                    fd,
                     R"({"id":"srv-1","type":"event","method":"server/pong","payload":{"ok":true},"priority":"normal"})");
             }
         }
@@ -421,9 +433,7 @@ public:
             port_ = ntohs(addr.sin_port);
         }
         running_.store(true);
-        accept_thread_ = std::jthread([this](std::stop_token stop) {
-            accept_loop(stop);
-        });
+        accept_thread_ = std::jthread([this](std::stop_token stop) { accept_loop(stop); });
     }
 
     ~LocalBridgeApiHttpServer() {
@@ -440,11 +450,12 @@ public:
     }
 
     [[nodiscard]] bool ready() const noexcept { return listen_fd_ >= 0 && port_ != 0; }
+
     [[nodiscard]] std::string base_url() const { return std::format("http://127.0.0.1:{}", port_); }
 
-    [[nodiscard]] std::optional<std::vector<LocalBridgeApiRequest>> wait_for_requests(
-        std::size_t count,
-        std::chrono::milliseconds timeout = std::chrono::seconds(3)) {
+    [[nodiscard]] std::optional<std::vector<LocalBridgeApiRequest>>
+    wait_for_requests(std::size_t count,
+                      std::chrono::milliseconds timeout = std::chrono::seconds(3)) {
         std::unique_lock lock(mutex_);
         if (!cv_.wait_for(lock, timeout, [this, count] { return requests_.size() >= count; })) {
             return std::nullopt;
@@ -530,20 +541,18 @@ private:
     }
 
     static bool send_response(int fd, int status, std::string_view reason, std::string_view body) {
-        const auto response = std::format(
-            "HTTP/1.1 {} {}\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{}",
-            status,
-            reason,
-            body.size(),
-            body);
+        const auto response =
+            std::format("HTTP/1.1 {} {}\r\nContent-Type: application/json\r\nContent-Length: "
+                        "{}\r\nConnection: close\r\n\r\n{}",
+                        status, reason, body.size(), body);
         return bridge_test_send_all(fd, response);
     }
 
     static bool send_sse_response(int fd, std::string_view body) {
-        const auto response = std::format(
-            "HTTP/1.1 200 OK\r\nContent-Type: text/event-stream\r\nCache-Control: no-cache\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{}",
-            body.size(),
-            body);
+        const auto response =
+            std::format("HTTP/1.1 200 OK\r\nContent-Type: text/event-stream\r\nCache-Control: "
+                        "no-cache\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{}",
+                        body.size(), body);
         return bridge_test_send_all(fd, response);
     }
 
@@ -582,7 +591,8 @@ private:
         cv_.notify_all();
 
         if (request->method == "POST" && request->path == "/v1/environments/bridge") {
-            send_response(fd, 201, "Created",
+            send_response(
+                fd, 201, "Created",
                 R"({"environment_id":"env_backend_1","environment_secret":"env_secret_1"})");
             return;
         }
@@ -591,7 +601,8 @@ private:
             return;
         }
         if (request->method == "GET" && request->path == "/bridge/poll") {
-            send_response(fd, 200, "OK",
+            send_response(
+                fd, 200, "OK",
                 R"({"messages":[{"id":"poll-1","type":"event","method":"server/poll","payload":{"ok":true},"priority":"high","correlation_id":"corr-1"}]})");
             return;
         }
@@ -606,65 +617,86 @@ private:
             }
         }
         if (request->method == "GET" &&
-            request->path == "/v1/environments/env_backend_1/work/poll?reclaim_older_than_ms=12345") {
-            send_response(fd, 200, "OK",
+            request->path ==
+                "/v1/environments/env_backend_1/work/poll?reclaim_older_than_ms=12345") {
+            send_response(
+                fd, 200, "OK",
                 std::format(
                     R"({{"id":"work_1","secret":"{}","data":{{"type":"session","id":"session_1"}}}})",
                     work_secret()));
             return;
         }
-        if (request->method == "GET" && request->path == "/v1/environments/env_backend_1/work/poll") {
-            send_response(fd, 200, "OK",
+        if (request->method == "GET" &&
+            request->path == "/v1/environments/env_backend_1/work/poll") {
+            send_response(
+                fd, 200, "OK",
                 std::format(
                     R"({{"id":"work_1","secret":"{}","data":{{"type":"session","id":"session_1"}}}})",
                     work_secret()));
             return;
         }
-        if (request->method == "POST" && request->path == "/v1/environments/env_backend_1/work/work_1/ack") {
+        if (request->method == "POST" &&
+            request->path == "/v1/environments/env_backend_1/work/work_1/ack") {
             send_response(fd, 200, "OK", R"({"ok":true})");
             return;
         }
-        if (request->method == "POST" && request->path == "/v1/code/sessions/session_1/worker/register") {
+        if (request->method == "POST" &&
+            request->path == "/v1/code/sessions/session_1/worker/register") {
             send_response(fd, 200, "OK", R"({"worker_epoch":"42"})");
             return;
         }
-        if (request->method == "POST" && request->path == "/v1/code/sessions/session_1/worker/events") {
+        if (request->method == "POST" &&
+            request->path == "/v1/code/sessions/session_1/worker/events") {
             send_response(fd, 201, "Created", R"({"ok":true})");
             return;
         }
-        if (request->method == "GET" && request->path == "/v1/code/sessions/session_1/worker/events/stream") {
+        if (request->method == "GET" &&
+            request->path == "/v1/code/sessions/session_1/worker/events/stream") {
             const int count = next_sse_stream_count();
             if (count == 1) {
-                send_sse_response(fd,
-                    "id: 1\n"
-                    "event: client_event\n"
-                    "data: {\"event_id\":\"evt_daemon_product_1\",\"sequence_num\":1,\"event_type\":\"user\",\"source\":\"test\",\"created_at\":\"2026-06-07T00:00:01Z\",\"payload\":{\"type\":\"user\",\"message\":{\"role\":\"user\",\"content\":\"run native daemon bridge product e2e\"},\"parent_tool_use_id\":null,\"session_id\":\"session_1\"}}\n\n");
+                send_sse_response(
+                    fd, "id: 1\n"
+                        "event: client_event\n"
+                        "data: "
+                        "{\"event_id\":\"evt_daemon_product_1\",\"sequence_num\":1,\"event_type\":"
+                        "\"user\",\"source\":\"test\",\"created_at\":\"2026-06-07T00:00:01Z\","
+                        "\"payload\":{\"type\":\"user\",\"message\":{\"role\":\"user\",\"content\":"
+                        "\"run native daemon bridge product "
+                        "e2e\"},\"parent_tool_use_id\":null,\"session_id\":\"session_1\"}}\n\n");
                 return;
             }
-            send_sse_response(fd,
+            send_sse_response(
+                fd,
                 "id: 2\n"
                 "event: client_event\n"
-                "data: {\"event_id\":\"evt_daemon_product_keepalive\",\"sequence_num\":2,\"event_type\":\"keep_alive\",\"source\":\"test\",\"created_at\":\"2026-06-07T00:00:02Z\",\"payload\":{\"type\":\"keep_alive\",\"session_id\":\"session_1\"}}\n\n");
+                "data: "
+                "{\"event_id\":\"evt_daemon_product_keepalive\",\"sequence_num\":2,\"event_type\":"
+                "\"keep_alive\",\"source\":\"test\",\"created_at\":\"2026-06-07T00:00:02Z\","
+                "\"payload\":{\"type\":\"keep_alive\",\"session_id\":\"session_1\"}}\n\n");
             return;
         }
         if (request->method == "PUT" && request->path == "/v1/code/sessions/session_1/worker") {
             send_response(fd, 200, "OK", R"({"ok":true})");
             return;
         }
-        if (request->method == "POST" && request->path == "/v1/code/sessions/session_1/worker/heartbeat") {
+        if (request->method == "POST" &&
+            request->path == "/v1/code/sessions/session_1/worker/heartbeat") {
             send_response(fd, 200, "OK", R"({"ok":true})");
             return;
         }
-        if (request->method == "POST" && request->path == "/v1/code/sessions/session_1/worker/events/delivery") {
+        if (request->method == "POST" &&
+            request->path == "/v1/code/sessions/session_1/worker/events/delivery") {
             send_response(fd, 200, "OK", R"({"ok":true})");
             return;
         }
         if (request->method == "POST" && request->path == "/v1/messages") {
-            send_response(fd, 200, "OK",
+            send_response(
+                fd, 200, "OK",
                 R"({"id":"msg_bridge_daemon_product","type":"message","role":"assistant","model":"loom-test","content":[{"type":"text","text":"native daemon bridge product reply"}],"stop_reason":"end_turn","usage":{"input_tokens":6,"output_tokens":8}})");
             return;
         }
-        if (request->method == "POST" && request->path == "/v1/environments/env_backend_1/work/work_1/heartbeat") {
+        if (request->method == "POST" &&
+            request->path == "/v1/environments/env_backend_1/work/work_1/heartbeat") {
             int status = 0;
             std::string reason;
             std::string body;
@@ -672,7 +704,8 @@ private:
                 send_response(fd, status, reason, body);
                 return;
             }
-            send_response(fd, 200, "OK",
+            send_response(
+                fd, 200, "OK",
                 R"({"lease_extended":true,"state":"active","last_heartbeat":"2026-06-07T00:00:00Z","ttl_seconds":30})");
             return;
         }
@@ -684,11 +717,13 @@ private:
             send_response(fd, 200, "OK", R"({"ok":true})");
             return;
         }
-        if (request->method == "POST" && request->path == "/v1/environments/env_backend_1/work/work_1/stop") {
+        if (request->method == "POST" &&
+            request->path == "/v1/environments/env_backend_1/work/work_1/stop") {
             send_response(fd, 200, "OK", R"({"ok":true})");
             return;
         }
-        if (request->method == "DELETE" && request->path == "/v1/environments/bridge/env_backend_1") {
+        if (request->method == "DELETE" &&
+            request->path == "/v1/environments/bridge/env_backend_1") {
             send_response(fd, 204, "No Content", "");
             return;
         }
@@ -719,4 +754,4 @@ private:
     int sse_stream_count_ = 0;
 };
 
-} // namespace loom::test::bridge
+}  // namespace loom::test::bridge

@@ -18,9 +18,9 @@ import loom.process.bash.bash_execution;
 export namespace loom::tools::script_typecheck {
 
 namespace fs = std::filesystem;
+using loom::utils::bash::execute_command;
 using loom::utils::bash::ExecutionResult;
 using loom::utils::bash::ShellSessionConfig;
-using loom::utils::bash::execute_command;
 using loom::utils::json::JsonVal;
 using loom::utils::json::parse;
 
@@ -39,10 +39,10 @@ struct ScriptTypeDiagnostic {
 };
 
 struct TypecheckOptions {
-    std::string code;                       ///< Source text to type-check
-    int preamble_line_count{0};             ///< Lines of hidden preamble to subtract
-    int max_diagnostics{100};               ///< Hard cap on returned diagnostics
-    std::optional<fs::path> working_dir;    ///< Optional cwd for node_modules resolution
+    std::string code;                     ///< Source text to type-check
+    int preamble_line_count{0};           ///< Lines of hidden preamble to subtract
+    int max_diagnostics{100};             ///< Hard cap on returned diagnostics
+    std::optional<fs::path> working_dir;  ///< Optional cwd for node_modules resolution
     std::chrono::seconds timeout{30};
 };
 
@@ -54,7 +54,7 @@ struct TypecheckResult {
     int total_diagnostic_count{0};
     std::vector<ScriptTypeDiagnostic> diagnostics;
     bool truncated{false};
-    std::string runner_error;               ///< Non-empty when subprocess itself failed
+    std::string runner_error;  ///< Non-empty when subprocess itself failed
 };
 
 // ---------------------------------------------------------------------------
@@ -66,18 +66,24 @@ namespace detail {
 auto severity_from_ts_category(int category) noexcept -> Severity {
     // ts.DiagnosticCategory: Warning=0, Error=1, Message=2, Suggestion=3
     switch (category) {
-        case 1:  return Severity::Error;
-        case 0:  return Severity::Warning;
-        default: return Severity::Info;
+    case 1:
+        return Severity::Error;
+    case 0:
+        return Severity::Warning;
+    default:
+        return Severity::Info;
     }
 }
 
 constexpr auto diagnostic_rank(Severity s) noexcept -> int {
     // Errors first, then warnings, then info (same order as TS diagnosticRank)
     switch (s) {
-        case Severity::Error:   return 0;
-        case Severity::Warning: return 1;
-        case Severity::Info:    return 2;
+    case Severity::Error:
+        return 0;
+    case Severity::Warning:
+        return 1;
+    case Severity::Info:
+        return 2;
     }
     return 2;
 }
@@ -105,7 +111,8 @@ bool is_virtual_file_path(std::string_view path) {
     // Normalise Windows backslashes
     std::string normalized;
     normalized.reserve(path.size());
-    for (char c : path) normalized.push_back(c == '\\' ? '/' : c);
+    for (char c : path)
+        normalized.push_back(c == '\\' ? '/' : c);
     return normalized == kVirtualFile;
 }
 
@@ -115,19 +122,33 @@ auto js_string_escape(std::string_view s) -> std::string {
     out.reserve(s.size() + 8);
     for (char c : s) {
         switch (c) {
-            case '\\': out += "\\\\"; break;
-            case '"':  out += "\\\""; break;
-            case '\n': out += "\\n";  break;
-            case '\r': out += "\\r";  break;
-            case '\t': out += "\\t";  break;
-            case '\b': out += "\\b";  break;
-            case '\f': out += "\\f";  break;
-            default:
-                if (static_cast<unsigned char>(c) < 0x20) {
-                    out += std::format("\\x{:02x}", static_cast<unsigned char>(c));
-                } else {
-                    out.push_back(c);
-                }
+        case '\\':
+            out += "\\\\";
+            break;
+        case '"':
+            out += "\\\"";
+            break;
+        case '\n':
+            out += "\\n";
+            break;
+        case '\r':
+            out += "\\r";
+            break;
+        case '\t':
+            out += "\\t";
+            break;
+        case '\b':
+            out += "\\b";
+            break;
+        case '\f':
+            out += "\\f";
+            break;
+        default:
+            if (static_cast<unsigned char>(c) < 0x20) {
+                out += std::format("\\x{:02x}", static_cast<unsigned char>(c));
+            } else {
+                out.push_back(c);
+            }
         }
     }
     return out;
@@ -244,18 +265,13 @@ const MAX_DIAGNOSTICS = {};
     }}));
 }});
 )js",
-        kVirtualFile,
-        js_string_escape(opts.code),
-        opts.preamble_line_count,
-        std::max(1, opts.max_diagnostics)
-    );
+                       kVirtualFile, js_string_escape(opts.code), opts.preamble_line_count,
+                       std::max(1, opts.max_diagnostics));
 }
 
 /// Execute the generated runner script via bun (preferred) or node.
-auto run_via_subprocess(
-    std::string_view runner_script,
-    const TypecheckOptions& opts
-) -> ExecutionResult {
+auto run_via_subprocess(std::string_view runner_script, const TypecheckOptions& opts)
+    -> ExecutionResult {
     // Use bash to echo the script into `bun -` (stdin execution) so we don't
     // need to create temporary files.  If bun isn't available, fall back to
     // `node -`.
@@ -266,9 +282,9 @@ auto run_via_subprocess(
     }
     // Escape for single-quoted shell heredoc: just use printf.
     // Simpler: write to a real tempfile then execute it.
-    auto tmp = fs::temp_directory_path() /
-        std::format("loom_tc_{}.mjs",
-            std::chrono::steady_clock::now().time_since_epoch().count());
+    auto tmp =
+        fs::temp_directory_path() /
+        std::format("loom_tc_{}.mjs", std::chrono::steady_clock::now().time_since_epoch().count());
 
     {
         std::ofstream out(tmp, std::ios::binary);
@@ -276,10 +292,8 @@ auto run_via_subprocess(
     }
 
     // Try bun first, fall back to node.
-    std::string cmd = std::format(
-        "(bun {} 2>/dev/null || node {} 2>&1)",
-        tmp.string(), tmp.string()
-    );
+    std::string cmd =
+        std::format("(bun {} 2>/dev/null || node {} 2>&1)", tmp.string(), tmp.string());
 
     auto result = execute_command(cmd, cfg);
 
@@ -295,7 +309,7 @@ auto run_via_subprocess(
     return *result;
 }
 
-} // namespace detail
+}  // namespace detail
 
 // ---------------------------------------------------------------------------
 // Public API
@@ -324,12 +338,10 @@ auto run_script_typecheck(const TypecheckOptions& opts) -> TypecheckResult {
         out.passed = false;
         out.error_count = 1;
         out.total_diagnostic_count = 1;
-        out.runner_error = exec.stderr_output.empty()
-            ? exec.stdout_output
-            : exec.stderr_output;
+        out.runner_error = exec.stderr_output.empty() ? exec.stdout_output : exec.stderr_output;
         if (out.runner_error.empty()) {
-            out.runner_error = "typecheck subprocess exited with code "
-                + std::to_string(exec.exit_code);
+            out.runner_error =
+                "typecheck subprocess exited with code " + std::to_string(exec.exit_code);
         }
         out.diagnostics.push_back(ScriptTypeDiagnostic{
             .severity = Severity::Error,
@@ -347,15 +359,14 @@ auto run_script_typecheck(const TypecheckOptions& opts) -> TypecheckResult {
         out.passed = false;
         out.error_count = 1;
         out.total_diagnostic_count = 1;
-        out.runner_error = std::format(
-            "failed to parse tsc JSON output: {}",
-            doc.error().message()
-        );
+        out.runner_error =
+            std::format("failed to parse tsc JSON output: {}", doc.error().message());
         out.diagnostics.push_back(ScriptTypeDiagnostic{
             .severity = Severity::Error,
             .code = -1,
             .message = out.runner_error,
-            .line = 1, .column = 1,
+            .line = 1,
+            .column = 1,
         });
         return out;
     }
@@ -372,16 +383,17 @@ auto run_script_typecheck(const TypecheckOptions& opts) -> TypecheckResult {
             .severity = Severity::Error,
             .code = -1,
             .message = out.runner_error,
-            .line = 1, .column = 1,
+            .line = 1,
+            .column = 1,
         });
         return out;
     }
 
-    out.passed                 = root.get("passed").as_bool();
-    out.error_count            = static_cast<int>(root.get("errorCount").as_int());
-    out.warning_count          = static_cast<int>(root.get("warningCount").as_int());
+    out.passed = root.get("passed").as_bool();
+    out.error_count = static_cast<int>(root.get("errorCount").as_int());
+    out.warning_count = static_cast<int>(root.get("warningCount").as_int());
     out.total_diagnostic_count = static_cast<int>(root.get("totalDiagnosticCount").as_int());
-    out.truncated              = root.get("truncated").as_bool();
+    out.truncated = root.get("truncated").as_bool();
 
     auto diag_arr = root.get("diagnostics");
     if (diag_arr.is_arr()) {
@@ -391,30 +403,33 @@ auto run_script_typecheck(const TypecheckOptions& opts) -> TypecheckResult {
             // category-based severity fallback if "severity" string missing
             if (auto sev = item.get("severity"); sev.is_str()) {
                 auto s = sev.as_str();
-                if (s == "error")      d.severity = Severity::Error;
-                else if (s == "warning") d.severity = Severity::Warning;
-                else                     d.severity = Severity::Info;
+                if (s == "error")
+                    d.severity = Severity::Error;
+                else if (s == "warning")
+                    d.severity = Severity::Warning;
+                else
+                    d.severity = Severity::Info;
             } else {
                 d.severity = detail::severity_from_ts_category(
                     static_cast<int>(item.get("category").as_int()));
             }
-            d.code    = static_cast<int>(item.get("code").as_int());
+            d.code = static_cast<int>(item.get("code").as_int());
             d.message = detail::extract_message_text(item.get("message"));
-            d.line    = std::max(1, static_cast<int>(item.get("line").as_int()));
-            d.column  = std::max(1, static_cast<int>(item.get("column").as_int()));
+            d.line = std::max(1, static_cast<int>(item.get("line").as_int()));
+            d.column = std::max(1, static_cast<int>(item.get("column").as_int()));
             out.diagnostics.push_back(std::move(d));
         });
     }
 
     // --- Canonical sort (errors → warnings → info, then by position) ------
     std::stable_sort(out.diagnostics.begin(), out.diagnostics.end(),
-        [](const ScriptTypeDiagnostic& a, const ScriptTypeDiagnostic& b) {
-            const int ra = detail::diagnostic_rank(a.severity);
-            const int rb = detail::diagnostic_rank(b.severity);
-            if (ra != rb) return ra < rb;
-            if (a.line != b.line) return a.line < b.line;
-            return a.column < b.column;
-        });
+                     [](const ScriptTypeDiagnostic& a, const ScriptTypeDiagnostic& b) {
+                         const int ra = detail::diagnostic_rank(a.severity);
+                         const int rb = detail::diagnostic_rank(b.severity);
+                         if (ra != rb) return ra < rb;
+                         if (a.line != b.line) return a.line < b.line;
+                         return a.column < b.column;
+                     });
 
     return out;
 }
@@ -422,10 +437,7 @@ auto run_script_typecheck(const TypecheckOptions& opts) -> TypecheckResult {
 /// Type-check a list of on-disk files via `bunx tsc --noEmit --pretty false`.
 /// Produces tsc's textual output first, then re-parses with yyjson when
 /// `--json` is available on the project's tsc version.
-auto typecheck_files(
-    const std::vector<fs::path>& files,
-    TypecheckOptions opts
-) -> TypecheckResult {
+auto typecheck_files(const std::vector<fs::path>& files, TypecheckOptions opts) -> TypecheckResult {
     TypecheckResult out;
     const auto start = std::chrono::steady_clock::now();
 
@@ -537,19 +549,17 @@ const MAX_DIAGNOSTICS = {};
     totalDiagnosticCount: 1, truncated: false
 }})));
 )js",
-        file_list_js,
-        std::max(1, opts.max_diagnostics)
-    );
+                                     file_list_js, std::max(1, opts.max_diagnostics));
 
-    auto tmp = fs::temp_directory_path() /
-        std::format("loom_tcf_{}.mjs",
-            std::chrono::steady_clock::now().time_since_epoch().count());
-    { std::ofstream(tmp, std::ios::binary) << runner; }
+    auto tmp =
+        fs::temp_directory_path() /
+        std::format("loom_tcf_{}.mjs", std::chrono::steady_clock::now().time_since_epoch().count());
+    {
+        std::ofstream(tmp, std::ios::binary) << runner;
+    }
 
-    std::string cmd = std::format(
-        "(bun {} 2>/dev/null || node {} 2>&1)",
-        tmp.string(), tmp.string()
-    );
+    std::string cmd =
+        std::format("(bun {} 2>/dev/null || node {} 2>&1)", tmp.string(), tmp.string());
     auto exec_result = execute_command(cmd, cfg);
     std::error_code ec;
     fs::remove(tmp, ec);
@@ -559,9 +569,8 @@ const MAX_DIAGNOSTICS = {};
         out.error_count = 1;
         out.total_diagnostic_count = 1;
         out.runner_error = exec_result.error();
-        out.diagnostics.push_back(ScriptTypeDiagnostic{
-            Severity::Error, -1, out.runner_error, 1, 1
-        });
+        out.diagnostics.push_back(
+            ScriptTypeDiagnostic{Severity::Error, -1, out.runner_error, 1, 1});
         out.duration = std::chrono::duration_cast<std::chrono::milliseconds>(
             std::chrono::steady_clock::now() - start);
         return out;
@@ -579,11 +588,9 @@ const MAX_DIAGNOSTICS = {};
         out.passed = false;
         out.error_count = 1;
         out.total_diagnostic_count = 1;
-        out.runner_error = std::format(
-            "typecheck JSON parse failure: {}", doc.error().message());
-        out.diagnostics.push_back(ScriptTypeDiagnostic{
-            Severity::Error, -1, out.runner_error, 1, 1
-        });
+        out.runner_error = std::format("typecheck JSON parse failure: {}", doc.error().message());
+        out.diagnostics.push_back(
+            ScriptTypeDiagnostic{Severity::Error, -1, out.runner_error, 1, 1});
         return out;
     }
     auto root = doc->root();
@@ -592,11 +599,11 @@ const MAX_DIAGNOSTICS = {};
         out.runner_error = std::string(e.as_str());
     }
 
-    out.passed                 = root.get("passed").as_bool();
-    out.error_count            = static_cast<int>(root.get("errorCount").as_int());
-    out.warning_count          = static_cast<int>(root.get("warningCount").as_int());
+    out.passed = root.get("passed").as_bool();
+    out.error_count = static_cast<int>(root.get("errorCount").as_int());
+    out.warning_count = static_cast<int>(root.get("warningCount").as_int());
     out.total_diagnostic_count = static_cast<int>(root.get("totalDiagnosticCount").as_int());
-    out.truncated              = root.get("truncated").as_bool();
+    out.truncated = root.get("truncated").as_bool();
 
     auto diag_arr = root.get("diagnostics");
     if (diag_arr.is_arr()) {
@@ -604,25 +611,28 @@ const MAX_DIAGNOSTICS = {};
             if (!item.is_obj()) return;
             ScriptTypeDiagnostic d;
             auto s = item.get_string("severity");
-            if (s == "error")      d.severity = Severity::Error;
-            else if (s == "warning") d.severity = Severity::Warning;
-            else                     d.severity = Severity::Info;
-            d.code    = static_cast<int>(item.get("code").as_int());
+            if (s == "error")
+                d.severity = Severity::Error;
+            else if (s == "warning")
+                d.severity = Severity::Warning;
+            else
+                d.severity = Severity::Info;
+            d.code = static_cast<int>(item.get("code").as_int());
             d.message = detail::extract_message_text(item.get("message"));
-            d.line    = std::max(1, static_cast<int>(item.get("line").as_int()));
-            d.column  = std::max(1, static_cast<int>(item.get("column").as_int()));
+            d.line = std::max(1, static_cast<int>(item.get("line").as_int()));
+            d.column = std::max(1, static_cast<int>(item.get("column").as_int()));
             out.diagnostics.push_back(std::move(d));
         });
     }
 
     std::stable_sort(out.diagnostics.begin(), out.diagnostics.end(),
-        [](const ScriptTypeDiagnostic& a, const ScriptTypeDiagnostic& b) {
-            const int ra = detail::diagnostic_rank(a.severity);
-            const int rb = detail::diagnostic_rank(b.severity);
-            if (ra != rb) return ra < rb;
-            if (a.line != b.line) return a.line < b.line;
-            return a.column < b.column;
-        });
+                     [](const ScriptTypeDiagnostic& a, const ScriptTypeDiagnostic& b) {
+                         const int ra = detail::diagnostic_rank(a.severity);
+                         const int rb = detail::diagnostic_rank(b.severity);
+                         if (ra != rb) return ra < rb;
+                         if (a.line != b.line) return a.line < b.line;
+                         return a.column < b.column;
+                     });
 
     return out;
 }
@@ -641,4 +651,4 @@ auto filter_errors(const TypecheckResult& r) -> std::vector<ScriptTypeDiagnostic
     return out;
 }
 
-} // namespace loom::tools::script_typecheck
+}  // namespace loom::tools::script_typecheck

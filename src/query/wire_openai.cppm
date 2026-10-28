@@ -82,10 +82,9 @@ namespace json = loom::utils::json;
 /// inlined — it would be charged as prompt tokens with no way for the model
 /// to interpret it.
 [[nodiscard]] inline std::string document_placeholder(const DocumentBlock& doc) {
-    return std::format(
-        "[document: media_type={}, {} base64 chars omitted — the "
-        "OpenAI-compatible wire format has no document content part]",
-        doc.media_type, doc.data.size());
+    return std::format("[document: media_type={}, {} base64 chars omitted — the "
+                       "OpenAI-compatible wire format has no document content part]",
+                       doc.media_type, doc.data.size());
 }
 
 /// Placeholder text emitted for an image nested inside a tool result: the
@@ -94,12 +93,10 @@ namespace json = loom::utils::json;
 /// base64 blob, again to avoid paying tokens for bytes the model cannot read
 /// in this position. Images in *user* messages are unaffected — those become
 /// proper `image_url` parts with a data URL.
-[[nodiscard]] inline std::string tool_image_placeholder(
-    const ToolResultContentItem& item) {
-    return std::format(
-        "[image: media_type={}, {} base64 chars omitted — images are not "
-        "representable inside an OpenAI tool-role message]",
-        item.media_type, item.data.size());
+[[nodiscard]] inline std::string tool_image_placeholder(const ToolResultContentItem& item) {
+    return std::format("[image: media_type={}, {} base64 chars omitted — images are not "
+                       "representable inside an OpenAI tool-role message]",
+                       item.media_type, item.data.size());
 }
 
 /// `data:<media_type>;base64,<payload>` data URL for an image part.
@@ -109,8 +106,7 @@ namespace json = loom::utils::json;
 }
 
 /// One `{"type":"text","text":...}` content part.
-[[nodiscard]] inline json::JsonMutVal text_part(json::JsonMutDoc& doc,
-                                                std::string_view text) {
+[[nodiscard]] inline json::JsonMutVal text_part(json::JsonMutDoc& doc, std::string_view text) {
     auto obj = doc.object();
     obj.add("type", doc.string("text"));
     obj.add("text", doc.string(text));
@@ -118,8 +114,7 @@ namespace json = loom::utils::json;
 }
 
 /// One `{"type":"image_url","image_url":{"url":...}}` content part.
-[[nodiscard]] inline json::JsonMutVal image_part(json::JsonMutDoc& doc,
-                                                 std::string_view media_type,
+[[nodiscard]] inline json::JsonMutVal image_part(json::JsonMutDoc& doc, std::string_view media_type,
                                                  std::string_view data) {
     auto obj = doc.object();
     obj.add("type", doc.string("image_url"));
@@ -132,9 +127,8 @@ namespace json = loom::utils::json;
 /// Attach a raw JSON document under `key`, falling back to `fallback_json`
 /// when the text does not parse. `JsonMutVal::add` must never receive an
 /// invalid value, so validity is checked on every path.
-inline void add_raw_json(json::JsonMutDoc& doc, json::JsonMutVal& obj,
-                         std::string_view key, const std::string& text,
-                         std::string_view fallback_json) {
+inline void add_raw_json(json::JsonMutDoc& doc, json::JsonMutVal& obj, std::string_view key,
+                         const std::string& text, std::string_view fallback_json) {
     if (!text.empty()) {
         if (auto parsed = json::parse(text)) {
             obj.add(key, doc.copy_val(parsed->root()));
@@ -151,8 +145,7 @@ inline void add_raw_json(json::JsonMutDoc& doc, json::JsonMutVal& obj,
 }
 
 /// An empty but permissive JSON Schema, used when a tool schema is unusable.
-inline constexpr std::string_view kEmptyObjectSchema =
-    R"({"type":"object","properties":{}})";
+inline constexpr std::string_view kEmptyObjectSchema = R"({"type":"object","properties":{}})";
 
 /// Map an OpenAI `finish_reason` onto the engine's stop_reason vocabulary.
 /// "tool_calls" -> "tool_use" is what makes the agent loop continue;
@@ -168,8 +161,7 @@ inline constexpr std::string_view kEmptyObjectSchema =
 }
 
 /// Text for one tool-result content item.
-[[nodiscard]] inline std::string tool_result_item_text(
-    const ToolResultContentItem& item) {
+[[nodiscard]] inline std::string tool_result_item_text(const ToolResultContentItem& item) {
     if (item.type == "image") return tool_image_placeholder(item);
     return item.text;
 }
@@ -194,8 +186,7 @@ inline constexpr std::string_view kEmptyObjectSchema =
 
 /// Flatten a ToolResultMessage's blocks (the engine's tool-result message
 /// variant) to the tool role's single string.
-[[nodiscard]] inline std::string tool_result_message_text(
-    const ToolResultMessage& msg) {
+[[nodiscard]] inline std::string tool_result_message_text(const ToolResultMessage& msg) {
     std::string out;
     for (const auto& block : msg.content) {
         if (const auto* text = std::get_if<TextBlock>(&block)) {
@@ -203,10 +194,9 @@ inline constexpr std::string_view kEmptyObjectSchema =
             if (!out.empty()) out += '\n';
             out += text->text;
         } else if (const auto* image = std::get_if<ImageBlock>(&block)) {
-            out += std::format(
-                "\n[image: media_type={}, {} base64 chars omitted — images are "
-                "not representable inside an OpenAI tool-role message]",
-                image->media_type, image->data.size());
+            out += std::format("\n[image: media_type={}, {} base64 chars omitted — images are "
+                               "not representable inside an OpenAI tool-role message]",
+                               image->media_type, image->data.size());
         } else if (const auto* document = std::get_if<DocumentBlock>(&block)) {
             if (!out.empty()) out += '\n';
             out += document_placeholder(*document);
@@ -232,8 +222,8 @@ inline constexpr std::string_view kEmptyObjectSchema =
 
 /// Build one `{"role":"tool","tool_call_id":...,"content":...}` message from
 /// an engine ToolResultMessage.
-[[nodiscard]] inline json::JsonMutVal tool_role_message(
-    json::JsonMutDoc& doc, const ToolResultMessage& msg) {
+[[nodiscard]] inline json::JsonMutVal tool_role_message(json::JsonMutDoc& doc,
+                                                        const ToolResultMessage& msg) {
     auto obj = doc.object();
     obj.add("role", doc.string("tool"));
     obj.add("tool_call_id", doc.string(msg.tool_use_id.value));
@@ -246,8 +236,7 @@ inline constexpr std::string_view kEmptyObjectSchema =
 /// One `{"id":...,"type":"function","function":{"name":...,"arguments":...}}`
 /// entry for an assistant message's tool_calls array. `arguments` is a JSON
 /// *string* on the OpenAI wire, not a nested object.
-[[nodiscard]] inline json::JsonMutVal tool_call_entry(json::JsonMutDoc& doc,
-                                                      std::string_view id,
+[[nodiscard]] inline json::JsonMutVal tool_call_entry(json::JsonMutDoc& doc, std::string_view id,
                                                       std::string_view name,
                                                       std::string_view input_json) {
     auto entry = doc.object();
@@ -262,8 +251,8 @@ inline constexpr std::string_view kEmptyObjectSchema =
 
 /// Per-block classification used while serializing one engine message.
 struct MessageParts {
-    json::JsonMutVal content = {};    ///< array of content parts (may be empty)
-    json::JsonMutVal tool_calls = {}; ///< array of tool_calls (may be empty)
+    json::JsonMutVal content = {};     ///< array of content parts (may be empty)
+    json::JsonMutVal tool_calls = {};  ///< array of tool_calls (may be empty)
     /// Tool results that must leave the current message and become their own
     /// role:"tool" messages, in order.
     std::vector<json::JsonMutVal> tool_messages;
@@ -280,9 +269,9 @@ struct MessageParts {
 ///                      turn; a text note otherwise (user turns cannot carry
 ///                      tool calls on this wire)
 ///   ToolResultBlock -> its own role:"tool" message (possibly several)
-[[nodiscard]] inline MessageParts split_message(
-    json::JsonMutDoc& doc, const std::vector<ContentBlock>& content,
-    bool assistant_turn) {
+[[nodiscard]] inline MessageParts split_message(json::JsonMutDoc& doc,
+                                                const std::vector<ContentBlock>& content,
+                                                bool assistant_turn) {
     MessageParts parts;
     parts.content = doc.array();
     parts.tool_calls = doc.array();
@@ -305,9 +294,8 @@ struct MessageParts {
                     } else {
                         // A tool_use inside a user turn is not expressible:
                         // OpenAI only allows tool_calls on assistant messages.
-                        parts.content.append(text_part(
-                            doc,
-                            std::format("[tool_use:{} {}]", b.name, b.input_json)));
+                        parts.content.append(
+                            text_part(doc, std::format("[tool_use:{} {}]", b.name, b.input_json)));
                     }
                 } else if constexpr (std::is_same_v<T, ToolResultBlock>) {
                     // Tool results never stay in the containing message: each
@@ -329,8 +317,7 @@ struct MessageParts {
 }
 
 /// Append the flat wire messages for one engine Message to `out`.
-inline void append_message(json::JsonMutDoc& doc, const Message& msg,
-                           json::JsonMutVal& out) {
+inline void append_message(json::JsonMutDoc& doc, const Message& msg, json::JsonMutVal& out) {
     std::visit(
         [&](const auto& m) {
             using T = std::remove_cvref_t<decltype(m)>;
@@ -346,8 +333,7 @@ inline void append_message(json::JsonMutDoc& doc, const Message& msg,
                 auto msg_obj = doc.object();
                 msg_obj.add("role", doc.string("assistant"));
                 auto tool_calls = doc.array();
-                tool_calls.append(tool_call_entry(
-                    doc, m.id.value, m.tool_name, m.tool_input_json));
+                tool_calls.append(tool_call_entry(doc, m.id.value, m.tool_name, m.tool_input_json));
                 msg_obj.add("tool_calls", tool_calls);
                 out.append(msg_obj);
             } else if constexpr (std::is_same_v<T, UserMessage>) {
@@ -404,7 +390,7 @@ inline void append_message(json::JsonMutDoc& doc, const Message& msg,
         msg);
 }
 
-} // namespace detail
+}  // namespace detail
 
 // =========================================================================
 // OpenAiWireBackend
@@ -423,18 +409,15 @@ public:
     /// @param extra_headers   caller-supplied headers (typically
     ///                        `Authorization: Bearer <key>`). They are added
     ///                        after the defaults and may override them.
-    explicit OpenAiWireBackend(
-        std::string base_url,
-        std::vector<std::pair<std::string, std::string>> extra_headers = {})
-        : base_url_(std::move(base_url)),
-          extra_headers_(std::move(extra_headers)) {}
+    explicit OpenAiWireBackend(std::string base_url,
+                               std::vector<std::pair<std::string, std::string>> extra_headers = {})
+        : base_url_(std::move(base_url))
+        , extra_headers_(std::move(extra_headers)) {}
 
-    [[nodiscard]] WireApi api() const noexcept override {
-        return WireApi::OpenAi;
-    }
+    [[nodiscard]] WireApi api() const noexcept override { return WireApi::OpenAi; }
 
-    [[nodiscard]] std::expected<PreparedRequest, std::string> prepare(
-        const RequestInput& input) const override {
+    [[nodiscard]] std::expected<PreparedRequest, std::string>
+    prepare(const RequestInput& input) const override {
         std::string base = base_url_;
         // Trim trailing slashes so "http://host/" and "http://host" agree.
         const auto last_keep = base.find_last_not_of('/');
@@ -444,8 +427,7 @@ public:
             base.clear();
         }
         if (base.empty()) {
-            return std::unexpected(
-                "OpenAI wire backend has no base URL configured");
+            return std::unexpected("OpenAI wire backend has no base URL configured");
         }
 
         detail::json::JsonMutDoc doc;
@@ -539,7 +521,8 @@ public:
         doc.set_root(root);
 
         PreparedRequest prepared;
-        prepared.url = base + (base.ends_with("/v1") ? "/chat/completions" : "/v1/chat/completions");
+        prepared.url =
+            base + (base.ends_with("/v1") ? "/chat/completions" : "/v1/chat/completions");
         prepared.body = doc.to_string();
 
         prepared.headers.emplace_back("Content-Type", "application/json");
@@ -551,18 +534,16 @@ public:
         return prepared;
     }
 
-    [[nodiscard]] std::expected<ParsedResponse, std::string> parse_response(
-        std::string_view body) const override {
+    [[nodiscard]] std::expected<ParsedResponse, std::string>
+    parse_response(std::string_view body) const override {
         auto parsed = detail::json::parse(body);
         if (!parsed) {
-            return std::unexpected(std::format(
-                "OpenAI response is not valid JSON: {}",
-                parsed.error().format()));
+            return std::unexpected(
+                std::format("OpenAI response is not valid JSON: {}", parsed.error().format()));
         }
         auto root = parsed->root();
         if (!root.is_obj()) {
-            return std::unexpected(
-                "OpenAI response is not a JSON object");
+            return std::unexpected("OpenAI response is not a JSON object");
         }
 
         ParsedResponse result;
@@ -579,21 +560,18 @@ public:
 
         const auto choices = root.get("choices");
         if (!choices.is_arr() || choices.size() == 0) {
-            return std::unexpected(
-                "OpenAI response contains no choices");
+            return std::unexpected("OpenAI response contains no choices");
         }
         const auto choice = choices.at(0);
 
         const auto finish = choice.get("finish_reason");
         if (finish.is_str() && !finish.as_str().empty()) {
-            result.message.stop_reason =
-                detail::map_finish_reason(finish.as_str());
+            result.message.stop_reason = detail::map_finish_reason(finish.as_str());
         }
 
         const auto message = choice.get("message");
         if (!message.is_obj()) {
-            return std::unexpected(
-                "OpenAI response choice has no message object");
+            return std::unexpected("OpenAI response choice has no message object");
         }
 
         // `content` may be a string or (rarely) an array of parts; both are
@@ -634,10 +612,8 @@ public:
                 // the tool layer rather than a hard parse failure here.
                 const auto arguments = function.get("arguments");
                 std::string arguments_json =
-                    arguments.is_str() ? std::string(arguments.as_str())
-                                       : std::string{};
-                if (arguments_json.empty() ||
-                    !detail::json::parse(arguments_json)) {
+                    arguments.is_str() ? std::string(arguments.as_str()) : std::string{};
+                if (arguments_json.empty() || !detail::json::parse(arguments_json)) {
                     arguments_json = "{}";
                 }
                 block.input_json = std::move(arguments_json);
@@ -647,10 +623,10 @@ public:
 
         const auto usage = root.get("usage");
         if (usage.is_obj()) {
-            result.usage.input_tokens = static_cast<std::uint32_t>(
-                usage.get("prompt_tokens").as_int());
-            result.usage.output_tokens = static_cast<std::uint32_t>(
-                usage.get("completion_tokens").as_int());
+            result.usage.input_tokens =
+                static_cast<std::uint32_t>(usage.get("prompt_tokens").as_int());
+            result.usage.output_tokens =
+                static_cast<std::uint32_t>(usage.get("completion_tokens").as_int());
             // LOSSY: cache_read_tokens / cache_creation_tokens have no OpenAI
             // equivalent and are left at 0.
         }
@@ -668,8 +644,8 @@ public:
     /// starts update metadata without discarding earlier arguments. A finish
     /// reason and [DONE] can both emit MessageStop; an empty reason never
     /// overwrites the previous non-empty reason. Close blocks once per turn.
-    [[nodiscard]] std::vector<StreamDelta> parse_stream_event(
-        std::string_view event_name, std::string_view data) const override {
+    [[nodiscard]] std::vector<StreamDelta>
+    parse_stream_event(std::string_view event_name, std::string_view data) const override {
         (void)event_name;  // OpenAI frames carry no event name
 
         std::vector<StreamDelta> deltas;
@@ -697,8 +673,7 @@ public:
         if (!parsed) {
             StreamDelta error;
             error.kind = StreamDelta::Kind::Error;
-            error.text = std::format("malformed OpenAI stream frame: {}",
-                                     std::string(data));
+            error.text = std::format("malformed OpenAI stream frame: {}", std::string(data));
             deltas.push_back(std::move(error));
             return deltas;
         }
@@ -710,9 +685,8 @@ public:
             StreamDelta error;
             error.kind = StreamDelta::Kind::Error;
             const auto message = error_obj.get("message");
-            error.text = message.is_str()
-                             ? std::string(message.as_str())
-                             : std::string("OpenAI stream error");
+            error.text = message.is_str() ? std::string(message.as_str())
+                                          : std::string("OpenAI stream error");
             const auto code = error_obj.get("code");
             const auto type = error_obj.get("type");
             if (code.is_str()) error.text += " (" + std::string(code.as_str()) + ")";
@@ -748,7 +722,8 @@ public:
                         if (!id_sv.empty() || !name_sv.empty()) {
                             StreamDelta start;
                             start.kind = StreamDelta::Kind::ToolUseStart;
-                            start.tool_index = static_cast<std::uint32_t>(call.get("index").as_int());
+                            start.tool_index =
+                                static_cast<std::uint32_t>(call.get("index").as_int());
                             start.tool_id = std::string(id_sv);
                             start.tool_name = std::string(name_sv);
                             deltas.push_back(std::move(start));
@@ -756,11 +731,10 @@ public:
                         const auto arguments = function.get("arguments");
                         if (arguments.is_str() && !arguments.as_str().empty()) {
                             StreamDelta fragment;
-                            fragment.kind =
-                                StreamDelta::Kind::ToolUseInputDelta;
-                            fragment.tool_index = static_cast<std::uint32_t>(call.get("index").as_int());
-                            fragment.partial_json =
-                                std::string(arguments.as_str());
+                            fragment.kind = StreamDelta::Kind::ToolUseInputDelta;
+                            fragment.tool_index =
+                                static_cast<std::uint32_t>(call.get("index").as_int());
+                            fragment.partial_json = std::string(arguments.as_str());
                             deltas.push_back(std::move(fragment));
                         }
                     });
@@ -783,10 +757,10 @@ public:
         if (usage.is_obj()) {
             StreamDelta usage_delta;
             usage_delta.kind = StreamDelta::Kind::Usage;
-            usage_delta.usage.input_tokens = static_cast<std::uint32_t>(
-                usage.get("prompt_tokens").as_int());
-            usage_delta.usage.output_tokens = static_cast<std::uint32_t>(
-                usage.get("completion_tokens").as_int());
+            usage_delta.usage.input_tokens =
+                static_cast<std::uint32_t>(usage.get("prompt_tokens").as_int());
+            usage_delta.usage.output_tokens =
+                static_cast<std::uint32_t>(usage.get("completion_tokens").as_int());
             deltas.push_back(std::move(usage_delta));
         }
 
@@ -800,8 +774,7 @@ public:
 
     /// "tool_calls" is OpenAI's "the model wants tools executed"; "tool_use" is
     /// accepted too so a value normalized by the engine keeps working.
-    [[nodiscard]] bool stop_reason_is_tool_use(
-        std::string_view stop_reason) const override {
+    [[nodiscard]] bool stop_reason_is_tool_use(std::string_view stop_reason) const override {
         return stop_reason == "tool_use" || stop_reason == "tool_calls";
     }
 
@@ -810,4 +783,4 @@ private:
     std::vector<std::pair<std::string, std::string>> extra_headers_;
 };
 
-} // namespace loom::query::wire
+}  // namespace loom::query::wire

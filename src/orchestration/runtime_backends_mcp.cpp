@@ -23,11 +23,13 @@ using loom::core::ToolResult;
 
 [[nodiscard]] Result<ToolResult> list_mcp_resources_backend(const ToolInput& input) {
     auto json = input.json();
-    auto server = loom::tools::detail::json_string(json, "server_name")
-        .or_else([&] { return loom::tools::detail::json_string(json, "server"); });
+    auto server = loom::tools::detail::json_string(json, "server_name").or_else([&] {
+        return loom::tools::detail::json_string(json, "server");
+    });
     loom::tools::ListMcpResourcesTool tool;
     auto resources = tool.execute(server);
-    if (!resources) return ToolResult::error(std::string(loom::tools::format_error(resources.error())));
+    if (!resources)
+        return ToolResult::error(std::string(loom::tools::format_error(resources.error())));
     std::string out = "MCP resources:\n";
     for (const auto& resource : *resources) {
         out += std::format("- {} ({})\n", resource.uri, resource.mime_type);
@@ -38,11 +40,14 @@ using loom::core::ToolResult;
 
 [[nodiscard]] Result<ToolResult> read_mcp_resource_backend(const ToolInput& input) {
     auto json = input.json();
-    auto server = loom::tools::detail::json_string(json, "server_name")
-        .or_else([&] { return loom::tools::detail::json_string(json, "server"); });
-    auto uri = loom::tools::detail::json_string(json, "resource_uri")
-        .or_else([&] { return loom::tools::detail::json_string(json, "uri"); });
-    if (!server || !uri) return ToolResult::error("read_mcp_resource requires server_name and resource_uri");
+    auto server = loom::tools::detail::json_string(json, "server_name").or_else([&] {
+        return loom::tools::detail::json_string(json, "server");
+    });
+    auto uri = loom::tools::detail::json_string(json, "resource_uri").or_else([&] {
+        return loom::tools::detail::json_string(json, "uri");
+    });
+    if (!server || !uri)
+        return ToolResult::error("read_mcp_resource requires server_name and resource_uri");
     loom::tools::ReadMcpResourceTool tool;
     auto result = tool.execute(*server, *uri);
     if (!result) return ToolResult::error(std::string(loom::tools::format_error(result.error())));
@@ -51,15 +56,18 @@ using loom::core::ToolResult;
 
 [[nodiscard]] Result<ToolResult> mcp_backend(const ToolInput& input) {
     auto json = input.json();
-    auto server = loom::tools::detail::json_string(json, "server_name")
-        .or_else([&] { return loom::tools::detail::json_string(json, "server"); });
-    auto tool = loom::tools::detail::json_string(json, "tool_name")
-        .or_else([&] { return loom::tools::detail::json_string(json, "tool"); });
+    auto server = loom::tools::detail::json_string(json, "server_name").or_else([&] {
+        return loom::tools::detail::json_string(json, "server");
+    });
+    auto tool = loom::tools::detail::json_string(json, "tool_name").or_else([&] {
+        return loom::tools::detail::json_string(json, "tool");
+    });
     if (!server || !tool) return ToolResult::error("mcp requires server_name and tool_name");
     loom::tools::McpTool mcp_tool;
-    auto arguments = loom::tools::detail::json_raw_value(json, "arguments")
-        .or_else([&] { return loom::tools::detail::json_raw_value(json, "input"); })
-        .value_or("{}");
+    auto arguments =
+        loom::tools::detail::json_raw_value(json, "arguments")
+            .or_else([&] { return loom::tools::detail::json_raw_value(json, "input"); })
+            .value_or("{}");
     auto result = mcp_tool.execute(loom::tools::McpToolRequest{
         .server_name = *server,
         .tool_name = *tool,
@@ -73,23 +81,26 @@ using loom::core::ToolResult;
 
 [[nodiscard]] Result<ToolResult> mcp_auth_backend(const ToolInput& input) {
     auto json = input.json();
-    auto server = loom::tools::detail::json_string(json, "server_name")
-        .or_else([&] { return loom::tools::detail::json_string(json, "server"); });
+    auto server = loom::tools::detail::json_string(json, "server_name").or_else([&] {
+        return loom::tools::detail::json_string(json, "server");
+    });
     if (!server) return ToolResult::error("mcp_auth requires server_name");
-    auto code = loom::tools::detail::json_string(json, "auth_code")
-        .or_else([&] { return loom::tools::detail::json_string(json, "code"); });
-    auto wait_for_callback =
-        loom::tools::detail::json_bool(json, "wait_for_callback", false) ||
-        loom::tools::detail::json_bool(json, "waitForCallback", false);
-    auto authorization_url_file = loom::tools::detail::json_string(json, "authorization_url_file")
-        .or_else([&] { return loom::tools::detail::json_string(json, "authorizationUrlFile"); });
+    auto code = loom::tools::detail::json_string(json, "auth_code").or_else([&] {
+        return loom::tools::detail::json_string(json, "code");
+    });
+    auto wait_for_callback = loom::tools::detail::json_bool(json, "wait_for_callback", false) ||
+                             loom::tools::detail::json_bool(json, "waitForCallback", false);
+    auto authorization_url_file =
+        loom::tools::detail::json_string(json, "authorization_url_file").or_else([&] {
+            return loom::tools::detail::json_string(json, "authorizationUrlFile");
+        });
     loom::tools::McpAuthTool tool;
     auto result = tool.execute(*server, code, wait_for_callback, authorization_url_file);
     if (!result) return ToolResult::error(std::string(loom::tools::format_error(result.error())));
     return ToolResult::success(*result);
 }
 
-} // namespace loom::orchestration::detail
+}  // namespace loom::orchestration::detail
 
 namespace loom::tools {
 
@@ -125,8 +136,7 @@ namespace loom::tools {
 // Fed to QueryEngineConfig::mcp_input_schema_provider so the request
 // serializer emits the servers' real (possibly nested) JSON schemas rather
 // than the empty simplified schema stored on the tool defs.
-[[nodiscard]] std::unordered_map<std::string, std::string>
-collect_mcp_input_schemas() {
+[[nodiscard]] std::unordered_map<std::string, std::string> collect_mcp_input_schemas() {
     std::unordered_map<std::string, std::string> schemas;
     for (const auto& server : loom::tools::NativeMcpRuntime::instance().all_statuses()) {
         for (const auto& tool : server.tools) {
@@ -138,4 +148,4 @@ collect_mcp_input_schemas() {
     return schemas;
 }
 
-} // namespace loom::tools
+}  // namespace loom::tools

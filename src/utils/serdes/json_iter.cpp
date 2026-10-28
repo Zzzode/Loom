@@ -4,9 +4,9 @@
 // interface.
 module;
 
-#include <cstddef>
-
 #include <yyjson.h>
+
+#include <cstddef>
 
 module loom.serdes.json;
 
@@ -54,4 +54,4 @@ void JsonMutVal::iter_obj_impl(IterObjCb cb, void* ctx) const {
     }
 }
 
-} // namespace loom::utils::json
+}  // namespace loom::utils::json

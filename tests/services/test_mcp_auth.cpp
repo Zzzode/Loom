@@ -1,20 +1,21 @@
 /// @file test_mcp_auth.cpp
 /// @brief Service layer tests split from test_services.cpp.
 
-#include <cctype>
-#include <cstdint>
-#include <cstdlib>
-#include <atomic>
 #include <arpa/inet.h>
 #include <fcntl.h>
 #include <netinet/in.h>
 #include <signal.h>
+#include <sys/file.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/time.h>
-#include <sys/file.h>
 #include <sys/wait.h>
 #include <unistd.h>
+
+#include <atomic>
+#include <cctype>
+#include <cstdint>
+#include <cstdlib>
 #ifdef __APPLE__
 #include <CommonCrypto/CommonDigest.h>
 #else
@@ -23,9 +24,8 @@
 
 #include <gtest/gtest.h>
 #include <httplib.h>
+
 #include <limits>
-
-
 
 import std;
 import loom.cli.ccr_client;
@@ -84,7 +84,7 @@ namespace {
 
 [[nodiscard]] bool c13_ancestry_clean(const fs::path& base) {
     std::error_code ec;
-    for (auto d = base; ; d = d.parent_path()) {
+    for (auto d = base;; d = d.parent_path()) {
         if (fs::exists(d / ".git", ec)) return false;
         if (d.parent_path() == d || d.parent_path().empty()) return true;
     }
@@ -94,14 +94,12 @@ namespace {
     std::error_code ec;
     for (const char* var : {"XDG_RUNTIME_DIR", "TMPDIR"}) {
         if (const char* v = std::getenv(var);
-            v != nullptr && fs::is_directory(v, ec) && !ec &&
-            c13_ancestry_clean(v)) {
+            v != nullptr && fs::is_directory(v, ec) && !ec && c13_ancestry_clean(v)) {
             return fs::path(v);
         }
         ec.clear();
     }
-    if (fs::is_directory("/dev/shm", ec) && !ec &&
-        c13_ancestry_clean("/dev/shm")) {
+    if (fs::is_directory("/dev/shm", ec) && !ec && c13_ancestry_clean("/dev/shm")) {
         return fs::path("/dev/shm");
     }
     if (c13_ancestry_clean(fs::temp_directory_path())) {
@@ -119,10 +117,8 @@ namespace {
         const fs::path root =
             base_dir /
             (std::string(name) + std::to_string(::getpid()) + "_" +
-             std::to_string(counter.fetch_add(1,
-                 std::memory_order_relaxed)) + "_" +
-             std::to_string(std::chrono::system_clock::now()
-                                 .time_since_epoch().count()));
+             std::to_string(counter.fetch_add(1, std::memory_order_relaxed)) + "_" +
+             std::to_string(std::chrono::system_clock::now().time_since_epoch().count()));
         std::error_code create_ec;
         fs::create_directories(root, create_ec);
         std::error_code probe_ec;
@@ -141,7 +137,8 @@ struct EnvironmentGuard {
     std::string name;
     std::optional<std::string> previous;
 
-    EnvironmentGuard(std::string key, const std::string& value) : name(std::move(key)) {
+    EnvironmentGuard(std::string key, const std::string& value)
+        : name(std::move(key)) {
         if (const char* existing = std::getenv(name.c_str())) {
             previous = existing;
         }
@@ -190,15 +187,16 @@ std::optional<std::string> test_query_param(std::string_view url, std::string_vi
     auto query_start = url.find('?');
     if (query_start == std::string_view::npos) return std::nullopt;
     auto fragment_start = url.find('#', query_start);
-    auto query = url.substr(
-        query_start + 1,
-        fragment_start == std::string_view::npos ? std::string_view::npos : fragment_start - query_start - 1);
+    auto query = url.substr(query_start + 1, fragment_start == std::string_view::npos
+                                                 ? std::string_view::npos
+                                                 : fragment_start - query_start - 1);
     std::string pattern(key);
     pattern.push_back('=');
     std::size_t pos = 0;
     while (pos < query.size()) {
         auto next = query.find('&', pos);
-        auto part = query.substr(pos, next == std::string_view::npos ? std::string_view::npos : next - pos);
+        auto part =
+            query.substr(pos, next == std::string_view::npos ? std::string_view::npos : next - pos);
         if (part.starts_with(pattern)) return test_url_decode(part.substr(pattern.size()));
         if (next == std::string_view::npos) break;
         pos = next + 1;
@@ -229,7 +227,9 @@ public:
               "revocation_endpoint": "{0}/revoke",
               "revocation_endpoint_auth_methods_supported": ["client_secret_post"],
               "scope": "tools"
-            }})", base_url()), "application/json");
+            }})",
+                                        base_url()),
+                            "application/json");
         });
 
         server_.Post("/token", [this](const httplib::Request& req, httplib::Response& res) {
@@ -253,7 +253,8 @@ public:
               "refresh_token": "callback-refresh",
               "expires_in": 3600,
               "scope": "tools"
-            })", "application/json");
+            })",
+                            "application/json");
         });
 
         server_.Post("/revoke", [this](const httplib::Request& req, httplib::Response& res) {
@@ -268,9 +269,7 @@ public:
         });
 
         port_ = server_.bind_to_any_port("127.0.0.1");
-        thread_ = std::thread([this] {
-            server_.listen_after_bind();
-        });
+        thread_ = std::thread([this] { server_.listen_after_bind(); });
         server_.wait_until_ready();
     }
 
@@ -279,17 +278,11 @@ public:
         if (thread_.joinable()) thread_.join();
     }
 
-    [[nodiscard]] bool ready() const {
-        return port_ > 0;
-    }
+    [[nodiscard]] bool ready() const { return port_ > 0; }
 
-    [[nodiscard]] std::string base_url() const {
-        return std::format("http://127.0.0.1:{}", port_);
-    }
+    [[nodiscard]] std::string base_url() const { return std::format("http://127.0.0.1:{}", port_); }
 
-    [[nodiscard]] std::string metadata_url() const {
-        return base_url() + "/metadata";
-    }
+    [[nodiscard]] std::string metadata_url() const { return base_url() + "/metadata"; }
 
     [[nodiscard]] std::string token_request_body() const {
         std::lock_guard lock(mutex_);
@@ -306,16 +299,16 @@ public:
         return revoke_authorization_headers_;
     }
 
-    [[nodiscard]] bool wait_for_revoke_requests(
-        std::size_t count,
-        std::chrono::milliseconds timeout = std::chrono::seconds(3)) {
+    [[nodiscard]] bool
+    wait_for_revoke_requests(std::size_t count,
+                             std::chrono::milliseconds timeout = std::chrono::seconds(3)) {
         std::unique_lock lock(mutex_);
-        return cv_.wait_for(lock, timeout, [this, count] {
-            return revoke_request_bodies_.size() >= count;
-        });
+        return cv_.wait_for(lock, timeout,
+                            [this, count] { return revoke_request_bodies_.size() >= count; });
     }
 
-    [[nodiscard]] bool wait_for_token_request(std::chrono::milliseconds timeout = std::chrono::seconds(3)) {
+    [[nodiscard]] bool
+    wait_for_token_request(std::chrono::milliseconds timeout = std::chrono::seconds(3)) {
         std::unique_lock lock(mutex_);
         return cv_.wait_for(lock, timeout, [this] { return token_request_count_ > 0; });
     }
@@ -337,32 +330,33 @@ public:
     LocalXaaIdpServer() {
         // PRM discovery (RFC 9728): GET /mcp/.well-known/oauth-protected-resource
         server_.Get("/mcp/.well-known/oauth-protected-resource",
-            [this](const httplib::Request& req, httplib::Response& res) {
-            (void)req;
-            {
-                std::lock_guard lock(mutex_);
-                ++prm_request_count_;
-            }
-            cv_.notify_all();
-            auto base = base_url();
-            auto body = std::format(R"({{
+                    [this](const httplib::Request& req, httplib::Response& res) {
+                        (void)req;
+                        {
+                            std::lock_guard lock(mutex_);
+                            ++prm_request_count_;
+                        }
+                        cv_.notify_all();
+                        auto base = base_url();
+                        auto body = std::format(R"({{
                 "resource": "{}/mcp",
                 "authorization_servers": ["{}"]
-            }})", base, base);
-            res.set_content(body, "application/json");
-        });
+            }})",
+                                                base, base);
+                        res.set_content(body, "application/json");
+                    });
 
         // AS metadata (RFC 8414): GET /.well-known/oauth-authorization-server
         server_.Get("/.well-known/oauth-authorization-server",
-            [this](const httplib::Request& req, httplib::Response& res) {
-            (void)req;
-            {
-                std::lock_guard lock(mutex_);
-                ++as_metadata_request_count_;
-            }
-            cv_.notify_all();
-            auto base = base_url();
-            auto body = std::format(R"({{
+                    [this](const httplib::Request& req, httplib::Response& res) {
+                        (void)req;
+                        {
+                            std::lock_guard lock(mutex_);
+                            ++as_metadata_request_count_;
+                        }
+                        cv_.notify_all();
+                        auto base = base_url();
+                        auto body = std::format(R"({{
                 "issuer": "{}",
                 "token_endpoint": "{}/token",
                 "grant_types_supported": [
@@ -370,18 +364,19 @@ public:
                     "urn:ietf:params:oauth:grant-type:token-exchange"
                 ],
                 "token_endpoint_auth_methods_supported": ["client_secret_basic"]
-            }})", base, base);
-            res.set_content(body, "application/json");
-        });
+            }})",
+                                                base, base);
+                        res.set_content(body, "application/json");
+                    });
 
         // Token endpoint: handles both RFC 8693 (token-exchange) and RFC 7523 (jwt-bearer)
-        server_.Post("/token",
-            [this](const httplib::Request& req, httplib::Response& res) {
+        server_.Post("/token", [this](const httplib::Request& req, httplib::Response& res) {
             auto body = req.body;
             {
                 std::lock_guard lock(mutex_);
-                if (body.find("grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Atoken-exchange")
-                    != std::string::npos) {
+                if (body.find(
+                        "grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Atoken-exchange") !=
+                    std::string::npos) {
                     // RFC 8693 Token Exchange (id_token → ID-JAG)
                     ++token_exchange_count_;
                     token_exchange_body_ = body;
@@ -400,9 +395,10 @@ public:
                         "issued_token_type": "urn:ietf:params:oauth:token-type:id-jag",
                         "expires_in": 3600,
                         "scope": "openid profile mcp"
-                    })", "application/json");
-                } else if (body.find("grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer")
-                    != std::string::npos) {
+                    })",
+                                    "application/json");
+                } else if (body.find("grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-"
+                                     "bearer") != std::string::npos) {
                     // RFC 7523 JWT Bearer Grant (ID-JAG → access_token)
                     ++jwt_bearer_count_;
                     jwt_bearer_body_ = body;
@@ -415,7 +411,8 @@ public:
                         "token_type": "Bearer",
                         "expires_in": 3600,
                         "scope": "openid profile mcp"
-                    })", "application/json");
+                    })",
+                                    "application/json");
                 } else {
                     res.status = 400;
                     res.set_content(R"({"error":"unsupported_grant_type"})", "application/json");
@@ -424,9 +421,7 @@ public:
         });
 
         port_ = server_.bind_to_any_port("127.0.0.1");
-        thread_ = std::thread([this] {
-            server_.listen_after_bind();
-        });
+        thread_ = std::thread([this] { server_.listen_after_bind(); });
         server_.wait_until_ready();
     }
 
@@ -435,13 +430,9 @@ public:
         if (thread_.joinable()) thread_.join();
     }
 
-    [[nodiscard]] bool ready() const {
-        return port_ > 0;
-    }
+    [[nodiscard]] bool ready() const { return port_ > 0; }
 
-    [[nodiscard]] std::string base_url() const {
-        return std::format("http://127.0.0.1:{}", port_);
-    }
+    [[nodiscard]] std::string base_url() const { return std::format("http://127.0.0.1:{}", port_); }
 
     // ── Request counters and bodies for test assertions ──────────────────
 
@@ -480,11 +471,10 @@ public:
         return jwt_bearer_auth_header_;
     }
 
-    [[nodiscard]] bool wait_for_jwt_bearer(std::chrono::milliseconds timeout = std::chrono::seconds(3)) {
+    [[nodiscard]] bool
+    wait_for_jwt_bearer(std::chrono::milliseconds timeout = std::chrono::seconds(3)) {
         std::unique_lock lock(mutex_);
-        return cv_.wait_for(lock, timeout, [this] {
-            return jwt_bearer_count_ > 0;
-        });
+        return cv_.wait_for(lock, timeout, [this] { return jwt_bearer_count_ > 0; });
     }
 
 private:
@@ -509,9 +499,9 @@ struct C17IdpTokenCacheGuard {
     fs::path cache_file;
 
     explicit C17IdpTokenCacheGuard(fs::path new_home)
-        : home(std::move(new_home)),
-          home_guard("HOME", home.string()),
-          cache_file(home / ".config" / "loom" / "xaa" / "idp_tokens.json") {}
+        : home(std::move(new_home))
+        , home_guard("HOME", home.string())
+        , cache_file(home / ".config" / "loom" / "xaa" / "idp_tokens.json") {}
 
     ~C17IdpTokenCacheGuard() {
         std::error_code ec;
@@ -522,12 +512,15 @@ struct C17IdpTokenCacheGuard {
 
 struct UmaskGuard022 {
     mode_t previous;
-    UmaskGuard022() : previous(::umask(022)) {}
+
+    UmaskGuard022()
+        : previous(::umask(022)) {}
+
     ~UmaskGuard022() { ::umask(previous); }
 };
 
 [[nodiscard]] mode_t mode_bits(const fs::path& path) {
-    struct ::stat st {};
+    struct ::stat st{};
     return (::stat(path.c_str(), &st) == 0) ? static_cast<mode_t>(st.st_mode & 07777u)
                                             : static_cast<mode_t>(0);
 }
@@ -556,14 +549,13 @@ struct UmaskGuard022 {
     return out;
 }
 
-[[nodiscard]] std::string c20_extract_query_param(
-    std::string_view url, std::string_view key) {
+[[nodiscard]] std::string c20_extract_query_param(std::string_view url, std::string_view key) {
     auto pos = url.find(key);
     if (pos == std::string_view::npos) return {};
     auto start = pos + key.size();
     auto end = url.find('&', start);
-    auto value = url.substr(start,
-        end == std::string_view::npos ? std::string_view::npos : end - start);
+    auto value =
+        url.substr(start, end == std::string_view::npos ? std::string_view::npos : end - start);
     return c20_url_decode(value);
 }
 
@@ -571,8 +563,8 @@ struct UmaskGuard022 {
     auto colon = redirect_uri.rfind(':');
     if (colon == std::string_view::npos) return 0;
     auto slash = redirect_uri.find('/', colon + 1);
-    auto port_str = redirect_uri.substr(colon + 1,
-        slash == std::string_view::npos ? std::string_view::npos : slash - colon - 1);
+    auto port_str = redirect_uri.substr(
+        colon + 1, slash == std::string_view::npos ? std::string_view::npos : slash - colon - 1);
     int port = 0;
     for (char c : port_str) {
         if (c < '0' || c > '9') return 0;
@@ -583,35 +575,38 @@ struct UmaskGuard022 {
 
 class C20C1MockIdpServer {
 public:
-    explicit C20C1MockIdpServer(std::string secret) : secret_(std::move(secret)) {
+    explicit C20C1MockIdpServer(std::string secret)
+        : secret_(std::move(secret)) {
         server_.Get("/.well-known/openid-configuration",
-            [this](const httplib::Request&, httplib::Response& res) {
-                auto base = base_url();
-                res.set_content(std::format(R"({{
+                    [this](const httplib::Request&, httplib::Response& res) {
+                        auto base = base_url();
+                        res.set_content(std::format(R"({{
                     "issuer": "{}",
                     "authorization_endpoint": "{}/authorize",
                     "token_endpoint": "{}/token",
                     "token_endpoint_auth_methods_supported": ["client_secret_basic", "client_secret_post"]
-                }})", base, base, base), "application/json");
-            });
-        server_.Post("/token",
-            [this](const httplib::Request&, httplib::Response& res) {
-                res.status = 400;
-                res.set_content(std::format(
-                    R"({{"error":"invalid_request","client_secret":"{}"}})", secret_),
-                    "application/json");
-            });
+                }})",
+                                                    base, base, base),
+                                        "application/json");
+                    });
+        server_.Post("/token", [this](const httplib::Request&, httplib::Response& res) {
+            res.status = 400;
+            res.set_content(
+                std::format(R"({{"error":"invalid_request","client_secret":"{}"}})", secret_),
+                "application/json");
+        });
         port_ = server_.bind_to_any_port("127.0.0.1");
         thread_ = std::thread([this] { server_.listen_after_bind(); });
         server_.wait_until_ready();
     }
+
     ~C20C1MockIdpServer() {
         server_.stop();
         if (thread_.joinable()) thread_.join();
     }
-    [[nodiscard]] std::string base_url() const {
-        return std::format("http://127.0.0.1:{}", port_);
-    }
+
+    [[nodiscard]] std::string base_url() const { return std::format("http://127.0.0.1:{}", port_); }
+
 private:
     httplib::Server server_;
     int port_{0};
@@ -621,25 +616,28 @@ private:
 
 class C20MockTokenEndpoint {
 public:
-    explicit C20MockTokenEndpoint(std::string secret) : secret_(std::move(secret)) {
-        server_.Post("/token",
-            [this](const httplib::Request&, httplib::Response& res) {
-                res.status = 400;
-                res.set_content(std::format(
-                    R"({{"error":"invalid_request","client_secret":"{}"}})", secret_),
-                    "application/json");
-            });
+    explicit C20MockTokenEndpoint(std::string secret)
+        : secret_(std::move(secret)) {
+        server_.Post("/token", [this](const httplib::Request&, httplib::Response& res) {
+            res.status = 400;
+            res.set_content(
+                std::format(R"({{"error":"invalid_request","client_secret":"{}"}})", secret_),
+                "application/json");
+        });
         port_ = server_.bind_to_any_port("127.0.0.1");
         thread_ = std::thread([this] { server_.listen_after_bind(); });
         server_.wait_until_ready();
     }
+
     ~C20MockTokenEndpoint() {
         server_.stop();
         if (thread_.joinable()) thread_.join();
     }
+
     [[nodiscard]] std::string url() const {
         return std::format("http://127.0.0.1:{}/token", port_);
     }
+
 private:
     httplib::Server server_;
     int port_{0};
@@ -647,7 +645,7 @@ private:
     std::string secret_;
 };
 
-} // namespace
+}  // namespace
 
 TEST(McpAuth, RevokesOAuthTokensViaMetadataEndpointAndClearsLocalStorage) {
     LocalOAuthRevocationServer server;
@@ -678,7 +676,9 @@ TEST(McpAuth, RevokesOAuthTokensViaMetadataEndpointAndClearsLocalStorage) {
     const auto token_path = root / "loom" / "mcp" / (sanitize_key(server_key) + ".json");
     fs::create_directories(token_path.parent_path());
     const auto expires_at = std::chrono::duration_cast<std::chrono::seconds>(
-        std::chrono::system_clock::now().time_since_epoch()).count() + 3600;
+                                std::chrono::system_clock::now().time_since_epoch())
+                                .count() +
+                            3600;
     {
         std::ofstream token_file(token_path);
         token_file << std::format(R"({{
@@ -691,7 +691,8 @@ TEST(McpAuth, RevokesOAuthTokensViaMetadataEndpointAndClearsLocalStorage) {
           "client_id": "client-1",
           "client_secret": "secret-1",
           "discovery_state": {{}}
-        }})", *auth_config.url, expires_at);
+        }})",
+                                  *auth_config.url, expires_at);
     }
 
     auto revoked = loom::services::mcp::revoke_server_tokens("revoke-fixture", auth_config);
@@ -721,7 +722,8 @@ TEST(McpAuth, CompletesOAuthBrowserCallbackFlowAndStoresTokens) {
     ASSERT_TRUE(server.ready());
 
     const auto suffix = std::chrono::system_clock::now().time_since_epoch().count();
-    const auto root = fs::temp_directory_path() / ("loom_mcp_oauth_callback_" + std::to_string(suffix));
+    const auto root =
+        fs::temp_directory_path() / ("loom_mcp_oauth_callback_" + std::to_string(suffix));
     fs::remove_all(root);
     fs::create_directories(root);
     EnvironmentGuard xdg_config_guard("XDG_CONFIG_HOME", root.string());
@@ -741,8 +743,7 @@ TEST(McpAuth, CompletesOAuthBrowserCallbackFlowAndStoresTokens) {
     bool flow_done = false;
     std::jthread flow_thread([&](std::stop_token) {
         auto result = loom::services::mcp::perform_mcp_oauth_flow(
-            "callback-fixture",
-            auth_config,
+            "callback-fixture", auth_config,
             [&](const std::string& url) {
                 {
                     std::lock_guard lock(mutex);
@@ -750,8 +751,7 @@ TEST(McpAuth, CompletesOAuthBrowserCallbackFlowAndStoresTokens) {
                 }
                 cv.notify_all();
             },
-            std::nullopt,
-            true);
+            std::nullopt, true);
         {
             std::lock_guard lock(mutex);
             if (!result) flow_error = result.error().message();
@@ -763,10 +763,10 @@ TEST(McpAuth, CompletesOAuthBrowserCallbackFlowAndStoresTokens) {
     std::string captured_url;
     {
         std::unique_lock lock(mutex);
-        ASSERT_TRUE(cv.wait_for(lock, std::chrono::seconds(3), [&] {
-            return auth_url.has_value() || flow_done;
-        }));
-        ASSERT_TRUE(auth_url.has_value()) << flow_error.value_or("OAuth flow ended before authorization URL");
+        ASSERT_TRUE(cv.wait_for(lock, std::chrono::seconds(3),
+                                [&] { return auth_url.has_value() || flow_done; }));
+        ASSERT_TRUE(auth_url.has_value())
+            << flow_error.value_or("OAuth flow ended before authorization URL");
         captured_url = *auth_url;
     }
 
@@ -782,8 +782,8 @@ TEST(McpAuth, CompletesOAuthBrowserCallbackFlowAndStoresTokens) {
     auto callback_port = localhost_url_port(*redirect_uri);
     ASSERT_TRUE(callback_port.has_value()) << *redirect_uri;
     httplib::Client callback_client(std::format("http://localhost:{}", *callback_port));
-    auto callback_response = callback_client.Get(
-        std::format("/oauth/callback?code=callback-code&state={}", *state));
+    auto callback_response =
+        callback_client.Get(std::format("/oauth/callback?code=callback-code&state={}", *state));
     ASSERT_TRUE(callback_response);
     EXPECT_EQ(callback_response->status, 200);
 
@@ -855,21 +855,15 @@ TEST(McpAuth, PerformsXaaIdpLoginAndStoresTokens) {
 
     bool authorization_url_called = false;
     auto result = loom::services::mcp::perform_mcp_oauth_flow(
-        "xaa-fixture",
-        auth_config,
-        [&](const std::string&) {
-            authorization_url_called = true;
-        },
-        std::nullopt,
-        true);
+        "xaa-fixture", auth_config, [&](const std::string&) { authorization_url_called = true; },
+        std::nullopt, true);
     ASSERT_TRUE(result.has_value()) << result.error().message();
 
     // No browser consent screen should have been shown — id_token was provided
     EXPECT_FALSE(authorization_url_called);
 
     // Verify the full XAA pipeline executed
-    EXPECT_GE(server.prm_request_count(), 1)
-        << "PRM discovery should have been called";
+    EXPECT_GE(server.prm_request_count(), 1) << "PRM discovery should have been called";
     EXPECT_GE(server.as_metadata_request_count(), 1)
         << "AS metadata discovery should have been called";
     EXPECT_GE(server.token_exchange_count(), 1)
@@ -881,10 +875,11 @@ TEST(McpAuth, PerformsXaaIdpLoginAndStoresTokens) {
     const auto exchange_body = server.token_exchange_body();
     EXPECT_NE(exchange_body.find("subject_token=fake-id-token-for-testing"), std::string::npos)
         << exchange_body;
-    EXPECT_NE(exchange_body.find("client_id=idp-client-1"), std::string::npos)
+    EXPECT_NE(exchange_body.find("client_id=idp-client-1"), std::string::npos) << exchange_body;
+    EXPECT_NE(exchange_body.find(
+                  "requested_token_type=urn%3Aietf%3Aparams%3Aoauth%3Atoken-type%3Aid-jag"),
+              std::string::npos)
         << exchange_body;
-    EXPECT_NE(exchange_body.find("requested_token_type=urn%3Aietf%3Aparams%3Aoauth%3Atoken-type%3Aid-jag"),
-        std::string::npos) << exchange_body;
 
     // Verify the jwt-bearer grant used HTTP Basic auth with AS credentials
     const auto auth_header = server.jwt_bearer_auth_header();
@@ -915,7 +910,8 @@ TEST(McpAuth, PerformsXaaIdpLoginAndStoresTokens) {
 
 TEST(McpAuth, XaaEnabledServerRequiresConfiguredIdpConnection) {
     const auto suffix = std::chrono::system_clock::now().time_since_epoch().count();
-    const auto root = fs::temp_directory_path() / ("loom_mcp_xaa_missing_idp_" + std::to_string(suffix));
+    const auto root =
+        fs::temp_directory_path() / ("loom_mcp_xaa_missing_idp_" + std::to_string(suffix));
     fs::remove_all(root);
     fs::create_directories(root);
     EnvironmentGuard home_guard("HOME", root.string());
@@ -931,17 +927,12 @@ TEST(McpAuth, XaaEnabledServerRequiresConfiguredIdpConnection) {
     };
 
     auto result = loom::services::mcp::perform_mcp_oauth_flow(
-        "xaa-missing-idp",
-        auth_config,
-        [](const std::string&) {},
-        std::nullopt,
-        true);
+        "xaa-missing-idp", auth_config, [](const std::string&) {}, std::nullopt, true);
     ASSERT_FALSE(result.has_value());
     EXPECT_NE(result.error().message().find("configured IdP connection"), std::string::npos);
 
     fs::remove_all(root);
 }
-
 
 // ===========================================================================
 // RFC-0001 B followup c17 — the /mcp xaa login path must forward the
@@ -961,14 +952,12 @@ TEST(McpAuth, XaaEnabledServerRequiresConfiguredIdpConnection) {
 
 namespace xaa_login = loom::services::mcp;
 
-
-
 // The configured port reaches the IdpLoginOptions that acquire_idp_id_token()
 // consumes (and therefore the loopback listener), instead of being dropped.
 
 TEST(XaaIdpLoginC17, ConfiguredPortReachesListenerOptions) {
-    auto opts = xaa_login::build_login_options(
-        "https://idp.example.com", "loom-cli", std::optional<int>{8765});
+    auto opts = xaa_login::build_login_options("https://idp.example.com", "loom-cli",
+                                               std::optional<int>{8765});
     ASSERT_TRUE(opts.callback_port.has_value());
     EXPECT_EQ(*opts.callback_port, 8765);
 
@@ -984,18 +973,15 @@ TEST(XaaIdpLoginC17, ConfiguredPortReachesListenerOptions) {
     EXPECT_EQ(opts.idp_client_id, "loom-cli");
 }
 
-
 // Absent port -> nullopt in the options; the resolver then picks a port via
 // find_available_oauth_port(), i.e. the pre-c17 random behavior.
 
 TEST(XaaIdpLoginC17, AbsentPortSelectsRandomPort) {
     const char* old_env = std::getenv("MCP_OAUTH_CALLBACK_PORT");
-    std::optional<std::string> saved = old_env ? std::optional<std::string>(old_env)
-                                               : std::nullopt;
+    std::optional<std::string> saved = old_env ? std::optional<std::string>(old_env) : std::nullopt;
     unsetenv("MCP_OAUTH_CALLBACK_PORT");
 
-    auto opts = xaa_login::build_login_options(
-        "https://idp.example.com", "loom-cli", std::nullopt);
+    auto opts = xaa_login::build_login_options("https://idp.example.com", "loom-cli", std::nullopt);
     EXPECT_FALSE(opts.callback_port.has_value());
 
     auto resolved = xaa_login::resolve_login_callback_port(opts);
@@ -1006,10 +992,11 @@ TEST(XaaIdpLoginC17, AbsentPortSelectsRandomPort) {
     const bool is_fallback = **resolved == xaa_login::kRedirectPortFallback;
     EXPECT_TRUE(in_ephemeral || is_fallback) << "got port " << **resolved;
 
-    if (saved) setenv("MCP_OAUTH_CALLBACK_PORT", saved->c_str(), 1);
-    else       unsetenv("MCP_OAUTH_CALLBACK_PORT");
+    if (saved)
+        setenv("MCP_OAUTH_CALLBACK_PORT", saved->c_str(), 1);
+    else
+        unsetenv("MCP_OAUTH_CALLBACK_PORT");
 }
-
 
 // Out-of-range int -> IGNORED (nullopt), never truncated. A static_cast would
 // wrap 65596 -> 60, 70000 -> 4464 and 65536 -> 0, each of which binds a port
@@ -1021,15 +1008,15 @@ TEST(XaaIdpLoginC17, AbsentPortSelectsRandomPort) {
 TEST(XaaIdpLoginC17, OutOfRangePortIgnoredNotTruncated) {
     // Negative int -> ignored. (Defensive: the /mcp xaa setup parser, the only
     // writer, already rejects <= 0 before it can be stored.)
-    EXPECT_FALSE(xaa_login::build_login_options(
-        "https://idp.example.com", "loom-cli", std::optional<int>{-1})
-        .callback_port.has_value());
+    EXPECT_FALSE(xaa_login::build_login_options("https://idp.example.com", "loom-cli",
+                                                std::optional<int>{-1})
+                     .callback_port.has_value());
 
     // Above uint16_t: 65536 would truncate to 0 and 70000 to 4464. Both are
     // ignored, and the resolver falls back to the random/fallback path.
     for (int bad : {65536, 70000, std::numeric_limits<int>::max()}) {
-        auto opts = xaa_login::build_login_options(
-            "https://idp.example.com", "loom-cli", std::optional<int>{bad});
+        auto opts = xaa_login::build_login_options("https://idp.example.com", "loom-cli",
+                                                   std::optional<int>{bad});
         EXPECT_FALSE(opts.callback_port.has_value()) << "bad port " << bad;
 
         auto resolved = xaa_login::resolve_login_callback_port(opts);
@@ -1039,18 +1026,18 @@ TEST(XaaIdpLoginC17, OutOfRangePortIgnoredNotTruncated) {
     }
 }
 
-
 // Boundaries are kept: 1 and 65535 are both valid fixed ports.
 
 TEST(XaaIdpLoginC17, BoundaryPortsAccepted) {
-    EXPECT_EQ(*xaa_login::build_login_options(
-        "https://idp.example.com", "loom-cli", std::optional<int>{1}).callback_port,
-        1);
-    EXPECT_EQ(*xaa_login::build_login_options(
-        "https://idp.example.com", "loom-cli", std::optional<int>{65535}).callback_port,
-        65535);
+    EXPECT_EQ(*xaa_login::build_login_options("https://idp.example.com", "loom-cli",
+                                              std::optional<int>{1})
+                   .callback_port,
+              1);
+    EXPECT_EQ(*xaa_login::build_login_options("https://idp.example.com", "loom-cli",
+                                              std::optional<int>{65535})
+                   .callback_port,
+              65535);
 }
-
 
 // The pure counter-test for the above: validated_callback_port() is the single
 // narrowing decision point (and it is constexpr, so it stays cheap).
@@ -1065,7 +1052,6 @@ TEST(XaaIdpLoginC17, ValidatedCallbackPortAcceptsOnlyUsableTcpPorts) {
     EXPECT_EQ(*xaa_login::validated_callback_port(65535), 65535u);
 }
 
-
 // perform_xaa_login() accepts the port as its 4th argument and keeps the old
 // 3-argument call shape compiling (scope and callback_port both default). The
 // 3-arg shape is checked by an actual call at a 3-argument call site; the
@@ -1073,15 +1059,12 @@ TEST(XaaIdpLoginC17, ValidatedCallbackPortAcceptsOnlyUsableTcpPorts) {
 
 TEST(XaaIdpLoginC17, PerformXaaLoginKeepsBackwardCompatibleSignature) {
     using LoginFn = std::expected<xaa_login::XaaLoginResult, std::string> (*)(
-        std::string_view, std::string_view, std::optional<std::string_view>,
-        std::optional<int>);
-    static_assert(std::is_same_v<LoginFn,
-        decltype(&xaa_login::perform_xaa_login)>);
-    static_assert(std::is_same_v<
-        decltype(&xaa_login::perform_xaa_login),
-        std::expected<xaa_login::XaaLoginResult, std::string> (*)(
-            std::string_view, std::string_view, std::optional<std::string_view>,
-            std::optional<int>)>);
+        std::string_view, std::string_view, std::optional<std::string_view>, std::optional<int>);
+    static_assert(std::is_same_v<LoginFn, decltype(&xaa_login::perform_xaa_login)>);
+    static_assert(std::is_same_v<decltype(&xaa_login::perform_xaa_login),
+                                 std::expected<xaa_login::XaaLoginResult, std::string> (*)(
+                                     std::string_view, std::string_view,
+                                     std::optional<std::string_view>, std::optional<int>)>);
     (void)static_cast<LoginFn>(&xaa_login::perform_xaa_login);
 
     // A 3-argument call site still compiles and resolves against the same
@@ -1090,11 +1073,10 @@ TEST(XaaIdpLoginC17, PerformXaaLoginKeepsBackwardCompatibleSignature) {
                                    std::optional<std::string_view> c) {
         return xaa_login::perform_xaa_login(a, b, c);
     };
-    static_assert(std::is_invocable_v<decltype(three_arg_call),
-        std::string_view, std::string_view, std::optional<std::string_view>>);
+    static_assert(std::is_invocable_v<decltype(three_arg_call), std::string_view, std::string_view,
+                                      std::optional<std::string_view>>);
     SUCCEED();
 }
-
 
 // A cached id_token short-circuits acquire_idp_id_token() before any port is
 // selected: the port is not consulted, so a fixed port cannot make a cached
@@ -1109,9 +1091,10 @@ TEST(XaaIdpLoginC17, CachedIdTokenShortCircuitsBeforePortUse) {
     // same file shape detail::write_cached_idp_token() writes.
     const auto cache_dir = root / ".config" / "loom" / "xaa";
     fs::create_directories(cache_dir);
-    const std::int64_t future_ms =
-        std::chrono::duration_cast<std::chrono::milliseconds>(
-            std::chrono::system_clock::now().time_since_epoch()).count() + 3'600'000;
+    const std::int64_t future_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+                                       std::chrono::system_clock::now().time_since_epoch())
+                                       .count() +
+                                   3'600'000;
     {
         std::ofstream out(cache_dir / "idp_tokens.json", std::ios::binary);
         out << R"JSON({"mcpXaaIdp":{"https://idp.invalid":{"idToken":"cached-id-token-c17","expiresAt":)JSON"
@@ -1122,8 +1105,8 @@ TEST(XaaIdpLoginC17, CachedIdTokenShortCircuitsBeforePortUse) {
     // against the unreachable issuer and is exactly what we are proving is
     // NOT reached). A fixed callback port is passed on purpose: it must not
     // be used, because the cache hit returns before port selection.
-    auto result = xaa_login::perform_xaa_login(
-        "https://idp.invalid", "loom-cli", std::nullopt, std::optional<int>{8765});
+    auto result = xaa_login::perform_xaa_login("https://idp.invalid", "loom-cli", std::nullopt,
+                                               std::optional<int>{8765});
     ASSERT_TRUE(result.has_value()) << result.error();
     EXPECT_EQ(result->id_token, "cached-id-token-c17");
     EXPECT_EQ(result->access_token, "cached-id-token-c17");
@@ -1131,7 +1114,6 @@ TEST(XaaIdpLoginC17, CachedIdTokenShortCircuitsBeforePortUse) {
 
     fs::remove_all(root);
 }
-
 
 // ---------------------------------------------------------------------------
 // c17a — the callback port is a SINGLE store again: settings.xaaIdp.callbackPort,
@@ -1145,7 +1127,6 @@ TEST(XaaIdpLoginC17, CachedIdTokenShortCircuitsBeforePortUse) {
 // not invent one. This pins the removal of the c17 surface.
 template <typename T>
 concept HasCallbackPort = requires(T c) { c.callback_port; };
-
 
 TEST(XaaConfigC17a, XaaIdpFileCallbackPortLineIsIgnored) {
     const auto root = c13_make_temp_root("loom_c17a_xaa_cfg_");
@@ -1166,13 +1147,12 @@ TEST(XaaConfigC17a, XaaIdpFileCallbackPortLineIsIgnored) {
     auto cfg = loom::services::mcp::get_xaa_config("any");
     ASSERT_TRUE(cfg.has_value());
     static_assert(!HasCallbackPort<loom::services::mcp::XaaConfig>,
-        "XaaConfig::callback_port must be removed; the port is injected from "
-        "settings.xaaIdp.callbackPort by the composition layer");
+                  "XaaConfig::callback_port must be removed; the port is injected from "
+                  "settings.xaaIdp.callbackPort by the composition layer");
 
     fs::remove(root / ".loom" / "xaa-idp.txt");
     fs::remove_all(root);
 }
-
 
 // ===========================================================================
 // RFC-0001 B followup c17a — findings from the c17 review.
@@ -1234,14 +1214,11 @@ TEST(XaaIdpLoginC17a, ClientSecretForwardedWhenStored) {
         auto resolved = xaa_login::resolve_login_client_secret(issuer);
         ASSERT_TRUE(resolved.has_value());
         EXPECT_EQ(*resolved, "s3cr3t-c17a");
-        EXPECT_FALSE(
-            xaa_login::resolve_login_client_secret("https://other.invalid")
-                .has_value());
+        EXPECT_FALSE(xaa_login::resolve_login_client_secret("https://other.invalid").has_value());
     }
 
     fs::remove_all(root);
 }
-
 
 // The secret and the fixed callback port are resolved together and independently:
 // storing one must not disturb the other, and an out-of-range port is still
@@ -1255,21 +1232,18 @@ TEST(XaaIdpLoginC17a, SecretAndPortResolveIndependently) {
     const std::string issuer = "https://idp.example.com";
     xaa_login::save_idp_client_secret(issuer, "both-c17a");
 
-    auto opts = xaa_login::build_login_options(
-        issuer, "loom-cli", std::optional<int>{8765});
+    auto opts = xaa_login::build_login_options(issuer, "loom-cli", std::optional<int>{8765});
     ASSERT_TRUE(opts.idp_client_secret.has_value());
     EXPECT_EQ(*opts.idp_client_secret, "both-c17a");
     ASSERT_TRUE(opts.callback_port.has_value());
     EXPECT_EQ(*opts.callback_port, 8765u);
 
-    auto bad = xaa_login::build_login_options(
-        issuer, "loom-cli", std::optional<int>{70000});
-    ASSERT_TRUE(bad.idp_client_secret.has_value());   // secret still forwarded
-    EXPECT_FALSE(bad.callback_port.has_value());      // bad port still ignored
+    auto bad = xaa_login::build_login_options(issuer, "loom-cli", std::optional<int>{70000});
+    ASSERT_TRUE(bad.idp_client_secret.has_value());  // secret still forwarded
+    EXPECT_FALSE(bad.callback_port.has_value());     // bad port still ignored
 
     fs::remove_all(root);
 }
-
 
 // Regression, found while making the c17a forwarding reachable: both XAA store
 // writers allocate the root object but (before this fix) never called
@@ -1298,8 +1272,7 @@ TEST(XaaIdpLoginC17a, FreshStoreWritesSecretAndToken) {
     // unreachable IdP means no login can cache a token here, so seed via the
     // external-token entry point, which is what `/mcp xaa login --id-token`
     // uses and which parses the JWT exp claim).
-    xaa_login::save_idp_id_token_from_jwt("https://idp.example.com",
-                                          "header.payload.sig");
+    xaa_login::save_idp_id_token_from_jwt("https://idp.example.com", "header.payload.sig");
     auto cached = xaa_login::get_cached_idp_id_token("https://idp.example.com");
     ASSERT_TRUE(cached.has_value());
     EXPECT_EQ(*cached, "header.payload.sig");
@@ -1309,7 +1282,6 @@ TEST(XaaIdpLoginC17a, FreshStoreWritesSecretAndToken) {
 
     fs::remove_all(root);
 }
-
 
 // authenticate_xaa() (the --xaa runtime login entry) gained the injected
 // callback port as its 5th parameter, so the composition layer can thread
@@ -1321,40 +1293,35 @@ TEST(XaaIdpLoginC17a, AuthenticateXaaAcceptsInjectedCallbackPort) {
     using AuthFn = loom::services::mcp::Result<loom::services::mcp::XaaResult> (*)(
         const loom::services::mcp::XaaConfig&, std::string_view,
         std::function<void(const std::string&)>, bool, std::optional<int>);
-    static_assert(std::is_same_v<AuthFn,
-        decltype(&loom::services::mcp::authenticate_xaa)>);
+    static_assert(std::is_same_v<AuthFn, decltype(&loom::services::mcp::authenticate_xaa)>);
 
-    const auto four_arg_call = [](const loom::services::mcp::XaaConfig& c,
-                                  std::string_view url,
-                                  std::function<void(const std::string&)> cb,
-                                  bool skip) {
+    const auto four_arg_call = [](const loom::services::mcp::XaaConfig& c, std::string_view url,
+                                  std::function<void(const std::string&)> cb, bool skip) {
         return loom::services::mcp::authenticate_xaa(c, url, std::move(cb), skip);
     };
-    static_assert(std::is_invocable_v<decltype(four_arg_call),
-        const loom::services::mcp::XaaConfig&, std::string_view,
-        std::function<void(const std::string&)>, bool>);
+    static_assert(
+        std::is_invocable_v<decltype(four_arg_call), const loom::services::mcp::XaaConfig&,
+                            std::string_view, std::function<void(const std::string&)>, bool>);
     SUCCEED();
 }
-
 
 // The resolved single-store port is what the login seam would bind: the value
 // the CLI-writable store carries reaches build_login_options() and resolves to
 // that exact port (not a random one). Pairs with the CLI end-to-end test below.
 
 TEST(XaaIdpLoginC17a, ResolvedStorePortReachesLoginSeam) {
-    auto opts = xaa_login::build_login_options(
-        "https://idp.example.com", "loom-cli", std::optional<int>{19485});
+    auto opts = xaa_login::build_login_options("https://idp.example.com", "loom-cli",
+                                               std::optional<int>{19485});
     auto resolved = xaa_login::resolve_login_callback_port(opts);
     ASSERT_TRUE(resolved.has_value()) << resolved.error().message();
     ASSERT_TRUE(resolved->has_value());
     EXPECT_EQ(**resolved, 19485u);
 
     // Unset store -> random/fallback port (pre-c17 behavior preserved).
-    auto unset = xaa_login::build_login_options(
-        "https://idp.example.com", "loom-cli", std::nullopt);
+    auto unset =
+        xaa_login::build_login_options("https://idp.example.com", "loom-cli", std::nullopt);
     EXPECT_FALSE(unset.callback_port.has_value());
 }
-
 
 // FINDING 1, full chain: with the REAL production core-settings loader
 // installed (loom.commands.mcp.core_settings_loader, which is the one place
@@ -1412,7 +1379,6 @@ TEST(XaaIdpLoginC17a, ProductionLoaderPropagatesXaaCallbackPort) {
     fs2::current_path(previous_cwd, ec);
     fs2::remove_all(root);
 }
-
 
 // RFC-0001 B followup c17a — REGRESSION for the review's MAJOR: the XAA
 // callback port must survive the PRODUCTION ordering. McpCommand calls
@@ -1472,7 +1438,6 @@ TEST(XaaIdpLoginC17a, PortSurvivesSyncBeforeReadProductionOrdering) {
     fs2::remove_all(root);
 }
 
-
 // RFC-0001 B followup c17a — the store holds an IdP client secret and a
 // cached id_token; both writers now route through
 // loom.utils.atomic_replace_file(OwnerOnly) and force the containing xaa/ dir
@@ -1480,7 +1445,6 @@ TEST(XaaIdpLoginC17a, PortSurvivesSyncBeforeReadProductionOrdering) {
 // 0644 file / 0755 dir under umask 022. These tests run under umask 022 (the
 // common default) for umask-independence: the mode must come from the code,
 // not the umask.
-
 
 // Fresh store: the file is created 0600 and its parent dir 0700, regardless
 // of the process umask.
@@ -1505,7 +1469,6 @@ TEST(XaaIdpLoginC17a, StoreIsOwnerOnlyOnFreshWrite) {
 
     fs::remove_all(root);
 }
-
 
 // A pre-existing 0644 store (the pre-c17a world) is TIGHTENED to 0600 on the
 // next write — the mode is corrected, not merely applied at creation.
@@ -1537,7 +1500,6 @@ TEST(XaaIdpLoginC17a, ExistingWideStoreTightenedToOwnerOnly) {
     fs::remove_all(root);
 }
 
-
 // A pre-existing stricter mode (0400) is replaced by exactly 0600 — never a
 // wider mode, and the read path still works; and the store dir is 0700.
 
@@ -1565,7 +1527,6 @@ TEST(XaaIdpLoginC17a, StricterExistingModeNotLoosened) {
 
     fs::remove_all(root);
 }
-
 
 // A symlinked store leaf is REFUSED (no clobber-follow): atomic_replace_file's
 // leaf gate rejects it, so the symlink target is left untouched and the
@@ -1598,7 +1559,6 @@ TEST(XaaIdpLoginC17a, SymlinkedStoreLeafRefused) {
     fs::remove_all(root);
 }
 
-
 // FINDING 1, is_xaa gate: the configured port is forwarded ONLY for an
 // XAA-configured server. xaa_login_callback_port_for() is the extracted pure
 // seam McpAuthTool consults; inverting or deleting the gate (e.g. returning
@@ -1612,8 +1572,8 @@ TEST(XaaIdpLoginC17a, CallbackPortForwardedOnlyForXaaServers) {
     // The negative case: a NON-XAA OAuth server must NOT be pinned to it, even
     // when a port is configured — otherwise a plain OAuth login would bind the
     // IdP port.
-    EXPECT_FALSE(loom::tools::xaa_login_callback_port_for(false, std::optional<int>{19485})
-                     .has_value());
+    EXPECT_FALSE(
+        loom::tools::xaa_login_callback_port_for(false, std::optional<int>{19485}).has_value());
     // No configured port -> nullopt either way (random port preserved).
     EXPECT_FALSE(loom::tools::xaa_login_callback_port_for(true, std::nullopt).has_value());
     EXPECT_FALSE(loom::tools::xaa_login_callback_port_for(false, std::nullopt).has_value());
@@ -1622,7 +1582,6 @@ TEST(XaaIdpLoginC17a, CallbackPortForwardedOnlyForXaaServers) {
     loom::tools::set_core_settings_mcp_loader(nullptr);
     EXPECT_FALSE(loom::tools::native_mcp_xaa_callback_port().has_value());
 }
-
 
 // ===========================================================================
 // RFC-0001 followup c20 — the IdP client secret is a SINGLE store again: the
@@ -1634,15 +1593,12 @@ TEST(XaaIdpLoginC17a, CallbackPortForwardedOnlyForXaaServers) {
 // redacts the echoed body (shared detail::redact_tokens with the C2 leg).
 // ===========================================================================
 
-
-
 // Test 2: a `idp_client_secret` line in a legacy / hand-edited
 // ~/.loom/xaa-idp.txt is inert: read_xaa_config_file() no longer parses it.
 // The FIELD still exists on XaaConfig (consumed on both legs, populated from
 // the store via the seam); only the file parse is gone.
 template <typename T>
 concept HasIdpClientSecret = requires(T c) { c.idp_client_secret; };
-
 
 TEST(XaaConfigC20, XaaIdpFileClientSecretLineIsIgnored) {
     const auto root = c13_make_temp_root("loom_c20_xaa_cfg_");
@@ -1665,13 +1621,12 @@ TEST(XaaConfigC20, XaaIdpFileClientSecretLineIsIgnored) {
     // !HasCallbackPort check): it is consumed on both legs and is populated
     // from the hardened store by the composition seam.
     static_assert(HasIdpClientSecret<loom::services::mcp::XaaConfig>,
-        "XaaConfig::idp_client_secret must exist; it is populated from the "
-        "hardened store by the composition seam");
+                  "XaaConfig::idp_client_secret must exist; it is populated from the "
+                  "hardened store by the composition seam");
 
     fs::remove(root / ".loom" / "xaa-idp.txt");
     fs::remove_all(root);
 }
-
 
 // Test 7: the is_xaa gate for BOTH the port and the secret. xaa_login_secrets_for()
 // is the extracted pure seam McpAuthTool consults; inverting or deleting the
@@ -1679,8 +1634,8 @@ TEST(XaaConfigC20, XaaIdpFileClientSecretLineIsIgnored) {
 
 TEST(XaaIdpLoginC20, SecretForwardedOnlyForXaaServers) {
     // Positive: an XAA server gets both the port and the secret.
-    auto [port, secret] = loom::tools::xaa_login_secrets_for(
-        true, std::optional<int>{19485}, std::optional<std::string>{"s3cr3t"});
+    auto [port, secret] = loom::tools::xaa_login_secrets_for(true, std::optional<int>{19485},
+                                                             std::optional<std::string>{"s3cr3t"});
     EXPECT_EQ(port, std::optional<int>{19485});
     ASSERT_TRUE(secret.has_value());
     EXPECT_EQ(*secret, "s3cr3t");
@@ -1699,7 +1654,6 @@ TEST(XaaIdpLoginC20, SecretForwardedOnlyForXaaServers) {
     EXPECT_FALSE(p3.has_value());
     EXPECT_FALSE(s3.has_value());
 }
-
 
 // Test 5 (C1 leg): the OIDC login token-exchange error path redacts the
 
@@ -1759,7 +1713,6 @@ TEST(XaaIdpLoginC20, LegacyMigrationSkippedWhenIssuerEmpty) {
     fs2::remove_all(root);
 }
 
-
 // Test 5 (C1 leg): the OIDC login token-exchange error path redacts the
 // echoed body. Drives acquire_idp_id_token() with a mock IdP that returns 400
 // with the secret in a JSON client_secret field; the error must not contain
@@ -1796,13 +1749,12 @@ TEST(XaaIdpLoginC20, NoSecretBytesInC1TokenExchangeError) {
             addr.sin_family = AF_INET;
             addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
             addr.sin_port = htons(static_cast<uint16_t>(port));
-            if (::connect(sock, reinterpret_cast<struct sockaddr*>(&addr),
-                          sizeof(addr)) < 0) {
+            if (::connect(sock, reinterpret_cast<struct sockaddr*>(&addr), sizeof(addr)) < 0) {
                 ::close(sock);
                 return;
             }
-            std::string req = "GET /callback?code=test-auth-code&state=" + state
-                + " HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n";
+            std::string req = "GET /callback?code=test-auth-code&state=" + state +
+                              " HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n";
             ::send(sock, req.c_str(), req.size(), 0);
             ::close(sock);
         }).detach();
@@ -1811,14 +1763,11 @@ TEST(XaaIdpLoginC20, NoSecretBytesInC1TokenExchangeError) {
     auto result = xaa_login::acquire_idp_id_token(opts);
     ASSERT_FALSE(result.has_value());
     const auto& msg = result.error().message();
-    EXPECT_EQ(msg.find(secret), std::string::npos)
-        << "secret leaked into C1 error: " << msg;
-    EXPECT_NE(msg.find("[REDACTED]"), std::string::npos)
-        << "redaction wrap did not run: " << msg;
+    EXPECT_EQ(msg.find(secret), std::string::npos) << "secret leaked into C1 error: " << msg;
+    EXPECT_NE(msg.find("[REDACTED]"), std::string::npos) << "redaction wrap did not run: " << msg;
 
     fs::remove_all(root);
 }
-
 
 // Test 5 (C2 leg): the RFC 8693 token-exchange error path redacts the echoed
 // body (the existing C2 wrap, now sharing detail::redact_tokens with C1).
@@ -1828,19 +1777,16 @@ TEST(XaaIdpLoginC20, NoSecretBytesInC2TokenExchangeError) {
     C20MockTokenEndpoint server(secret);
 
     try {
-        (void)xaa_login::request_jwt_authorization_grant(
-            server.url(),
-            "audience", "resource", "fake-id-token", "idp-client-1",
-            std::optional<std::string_view>{secret});
+        (void)xaa_login::request_jwt_authorization_grant(server.url(), "audience", "resource",
+                                                         "fake-id-token", "idp-client-1",
+                                                         std::optional<std::string_view>{secret});
         FAIL() << "expected XaaTokenExchangeError";
     } catch (const xaa_login::XaaTokenExchangeError& e) {
         const std::string msg = e.what();
-        EXPECT_EQ(msg.find(secret), std::string::npos)
-            << "secret leaked into C2 error: " << msg;
+        EXPECT_EQ(msg.find(secret), std::string::npos) << "secret leaked into C2 error: " << msg;
         EXPECT_NE(msg.find("[REDACTED]"), std::string::npos) << msg;
     }
 }
-
 
 // Test 8: end-to-end on the --xaa path. A secret stored in the hardened store
 // (via save_idp_client_secret, the writer `/mcp xaa setup --client-secret`
@@ -1889,13 +1835,10 @@ TEST(McpAuth, XaaRuntimePathUsesHardenedStoreSecret) {
     };
 
     auto result = loom::services::mcp::perform_mcp_oauth_flow(
-        "xaa-c20-e2e",
-        auth_config,
-        [](const std::string&) {},
-        std::nullopt,
-        true,  // skip_browser_open
+        "xaa-c20-e2e", auth_config, [](const std::string&) {}, std::nullopt,
+        true,          // skip_browser_open
         std::nullopt,  // xaa_callback_port
-        *stored  // xaa_idp_client_secret — from the hardened store
+        *stored        // xaa_idp_client_secret — from the hardened store
     );
     ASSERT_TRUE(result.has_value()) << result.error().message();
 

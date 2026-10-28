@@ -22,12 +22,12 @@
 ///   - loom.tools.agent_runtime::AgentDefinition  (data model, readonly)
 module;
 
-#include <cstdint>
-
-#include <ftxui/dom/elements.hpp>
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/event.hpp>
+#include <ftxui/dom/elements.hpp>
+
+#include <cstdint>
 
 export module loom.ui.features.agents.agent_cards;
 
@@ -44,20 +44,20 @@ import loom.ui.widgets.spinner_animations;
 export namespace loom::ui::agents::cards {
 using namespace ftxui;
 
-using shared::AgentStatus;
 using shared::AgentAvatar;
-using shared::StatusDot;
-using shared::StatusDotOptions;
+using shared::AgentStatus;
 using shared::RoleTags;
-using shared::RunStatsBar;
 using shared::RunStats;
-using shared::ToolChipsElement;
-using shared::ToolChipsOptions;
-using shared::StepTimeline;
-using shared::TimelineStep;
+using shared::RunStatsBar;
 using shared::SharedAnimState;
 using shared::status_color;
 using shared::status_label;
+using shared::StatusDot;
+using shared::StatusDotOptions;
+using shared::StepTimeline;
+using shared::TimelineStep;
+using shared::ToolChipsElement;
+using shared::ToolChipsOptions;
 
 // ============================================================
 // Types
@@ -75,9 +75,9 @@ struct AgentCardData {
     std::string description;       ///< 1-liner shown on Mini/Card
     std::string description_long;  ///< Block shown on LargeCard
 
-    std::vector<std::string> role_tags;   ///< e.g. {"coder", "reviewer"}
-    std::vector<std::string> tools;       ///< Enabled tool names
-    std::vector<std::string> env_vars;    ///< KEY=VALUE summary
+    std::vector<std::string> role_tags;  ///< e.g. {"coder", "reviewer"}
+    std::vector<std::string> tools;      ///< Enabled tool names
+    std::vector<std::string> env_vars;   ///< KEY=VALUE summary
 
     AgentStatus status = AgentStatus::Idle;
     RunStats stats{};
@@ -94,9 +94,9 @@ struct AgentCardData {
 
 /// Which card variant to render.
 enum class CardSize {
-    Mini,   ///< 1-line inline
-    Normal, ///< Grid 25% card
-    Large,  ///< Single-column detail preview
+    Mini,    ///< 1-line inline
+    Normal,  ///< Grid 25% card
+    Large,   ///< Single-column detail preview
 };
 
 // ============================================================
@@ -105,43 +105,51 @@ enum class CardSize {
 
 /// Render a labeled status badge used by Card and LargeCard headers.
 /// Running state reuses kDotsAnimation from spinner_animations.cppm.
-[[nodiscard]] inline Element StatusBadge(
-    AgentStatus status, uint32_t frame = 0)
-{
+[[nodiscard]] inline Element StatusBadge(AgentStatus status, uint32_t frame = 0) {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
     Color c = status_color(status);
     std::string glyph;
 
     switch (status) {
-        case AgentStatus::Running:
-            glyph = std::string(loom::ui::components::get_spinner_frame(
-                loom::ui::components::kDotsAnimation, frame));
-            break;
-        case AgentStatus::Idle:      glyph = std::string(loom::ui::design::figures::kBullet); break;
-        case AgentStatus::Scheduled: glyph = std::string(loom::ui::design::figures::kBullet); break;
-        case AgentStatus::Errored:   glyph = std::string(loom::ui::design::figures::kCross); break;
-        case AgentStatus::Disabled:  glyph = std::string(loom::ui::design::figures::kEffortLow); break;
+    case AgentStatus::Running:
+        glyph = std::string(
+            loom::ui::components::get_spinner_frame(loom::ui::components::kDotsAnimation, frame));
+        break;
+    case AgentStatus::Idle:
+        glyph = std::string(loom::ui::design::figures::kBullet);
+        break;
+    case AgentStatus::Scheduled:
+        glyph = std::string(loom::ui::design::figures::kBullet);
+        break;
+    case AgentStatus::Errored:
+        glyph = std::string(loom::ui::design::figures::kCross);
+        break;
+    case AgentStatus::Disabled:
+        glyph = std::string(loom::ui::design::figures::kEffortLow);
+        break;
     }
 
     std::string label(status_label(status));
     auto box = hbox({
-        text(" " + glyph + " "),
-        text(label) | color(status == AgentStatus::Errored ? pal.danger : pal.muted),
-        text(" "),
-    }) | color(c) | borderLight;
+                   text(" " + glyph + " "),
+                   text(label) | color(status == AgentStatus::Errored ? pal.danger : pal.muted),
+                   text(" "),
+               }) |
+               color(c) | borderLight;
 
-    if (status == AgentStatus::Errored)  box = box | color(pal.danger);
+    if (status == AgentStatus::Errored) box = box | color(pal.danger);
     return box;
 }
 
 /// Footer button used by Card and LargeCard.
-[[nodiscard]] inline Element FooterButton(
-    std::string_view label, Color col, bool disabled = false)
-{
+[[nodiscard]] inline Element FooterButton(std::string_view label, Color col,
+                                          bool disabled = false) {
     using ftxui::color;
     auto txt = text(std::format(" {} ", label)) | bold;
-    if (disabled) txt = txt | dim;
-    else          txt = txt | color(loom::ui::design::theme::current_theme().palette->text);
+    if (disabled)
+        txt = txt | dim;
+    else
+        txt = txt | color(loom::ui::design::theme::current_theme().palette->text);
     return txt | borderLight | color(col);
 }
 
@@ -149,11 +157,8 @@ enum class CardSize {
 // MiniCard — 1-line inline row
 // ============================================================
 
-[[nodiscard]] inline Element MiniCard(
-    const AgentCardData& agent,
-    bool selected = false,
-    uint32_t anim_frame = 0)
-{
+[[nodiscard]] inline Element MiniCard(const AgentCardData& agent, bool selected = false,
+                                      uint32_t anim_frame = 0) {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
     // color dot (from agent_type hash)
     Color accent = pal.muted;
@@ -161,7 +166,8 @@ enum class CardSize {
         auto opt = loom::tools::agent_color_manager::get_agent_color(agent.agent_type);
         if (opt) accent = shared::agent_color_to_ftxui(*opt);
     }
-    auto color_dot = text(" " + std::string(loom::ui::design::figures::kBullet) + " ") | color(accent);
+    auto color_dot =
+        text(" " + std::string(loom::ui::design::figures::kBullet) + " ") | color(accent);
 
     // status dot (spinner if running)
     StatusDotOptions sd_opts;
@@ -170,7 +176,8 @@ enum class CardSize {
     auto status_dot = StatusDot(sd_opts);
 
     // Name and readable secondary description.
-    auto name_txt = text(agent.name) | color(agent.status == AgentStatus::Disabled ? pal.muted : pal.text) | bold;
+    auto name_txt = text(agent.name) |
+                    color(agent.status == AgentStatus::Disabled ? pal.muted : pal.text) | bold;
     if (agent.status == AgentStatus::Disabled) name_txt = name_txt | strikethrough;
 
     Element desc = text("");
@@ -186,9 +193,11 @@ enum class CardSize {
         desc | size(WIDTH, LESS_THAN, 60) | flex,
     });
 
-    if (selected) row = row | bgcolor(
-        loom::ui::design::theme::current_theme().variant == loom::ui::design::theme::ThemeVariant::Monochrome
-            ? pal.message_actions_background : pal.surface_tint_4);
+    if (selected)
+        row = row | bgcolor(loom::ui::design::theme::current_theme().variant ==
+                                    loom::ui::design::theme::ThemeVariant::Monochrome
+                                ? pal.message_actions_background
+                                : pal.surface_tint_4);
     return row;
 }
 
@@ -196,18 +205,14 @@ enum class CardSize {
 // Card — 25% grid card (avatar + name + role + tools + 3 btn footer)
 // ============================================================
 
-[[nodiscard]] inline Element Card(
-    const AgentCardData& agent,
-    bool selected = false,
-    uint32_t anim_frame = 0)
-{
+[[nodiscard]] inline Element Card(const AgentCardData& agent, bool selected = false,
+                                  uint32_t anim_frame = 0) {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
     // --- Header: avatar + name + role + status badge ---
     shared::AvatarOptions av_opts;
     av_opts.name = agent.name;
     av_opts.agent_type = agent.agent_type;
-    av_opts.force_general = !agent.is_subagent
-                            && agent.agent_type == "general-purpose";
+    av_opts.force_general = !agent.is_subagent && agent.agent_type == "general-purpose";
     av_opts.size_cells = 3;
 
     auto header = hbox({
@@ -219,9 +224,8 @@ enum class CardSize {
                 filler(),
                 StatusBadge(agent.status, anim_frame),
             }),
-            agent.role_tags.empty()
-                ? text(agent.agent_type) | color(pal.muted)
-                : RoleTags(agent.role_tags, 2),
+            agent.role_tags.empty() ? text(agent.agent_type) | color(pal.muted)
+                                    : RoleTags(agent.role_tags, 2),
         }) | flex,
     });
 
@@ -237,26 +241,29 @@ enum class CardSize {
 
     // --- Footer: Run / Edit / Delete ---
     auto footer = hbox({
-        FooterButton("Run",  pal.success),
+        FooterButton("Run", pal.success),
         text(" "),
         FooterButton("Edit", pal.info),
         text(" "),
-        FooterButton("Del",  pal.danger),
+        FooterButton("Del", pal.danger),
         filler(),
         text(std::format("{} runs", agent.stats.run_count)) | color(pal.muted),
     });
 
     auto box = vbox({
-        header,
-        separator() | dim,
-        tools_block,
-        separator() | dim,
-        footer,
-    }) | borderRounded | size(WIDTH, GREATER_THAN, 32);
+                   header,
+                   separator() | dim,
+                   tools_block,
+                   separator() | dim,
+                   footer,
+               }) |
+               borderRounded | size(WIDTH, GREATER_THAN, 32);
 
-    if (selected) box = box | bgcolor(
-        loom::ui::design::theme::current_theme().variant == loom::ui::design::theme::ThemeVariant::Monochrome
-            ? pal.message_actions_background : pal.surface_tint_4);
+    if (selected)
+        box = box | bgcolor(loom::ui::design::theme::current_theme().variant ==
+                                    loom::ui::design::theme::ThemeVariant::Monochrome
+                                ? pal.message_actions_background
+                                : pal.surface_tint_4);
 
     // Colorize the border with the agent color if available.
     if (!agent.agent_type.empty()) {
@@ -271,18 +278,14 @@ enum class CardSize {
 // LargeCard — single-column detail preview
 // ============================================================
 
-[[nodiscard]] inline Element LargeCard(
-    const AgentCardData& agent,
-    bool selected = false,
-    uint32_t anim_frame = 0)
-{
+[[nodiscard]] inline Element LargeCard(const AgentCardData& agent, bool selected = false,
+                                       uint32_t anim_frame = 0) {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
     // --- Header: big avatar + name + multi role tags + model override ---
     shared::AvatarOptions av_opts;
     av_opts.name = agent.name;
     av_opts.agent_type = agent.agent_type;
-    av_opts.force_general = !agent.is_subagent
-                            && agent.agent_type == "general-purpose";
+    av_opts.force_general = !agent.is_subagent && agent.agent_type == "general-purpose";
     av_opts.size_cells = 4;
 
     Elements name_line = {
@@ -316,7 +319,8 @@ enum class CardSize {
     if (!agent.description_long.empty()) {
         auto lines = shared::wrap_lines(agent.description_long, 5, 80);
         Elements row_el;
-        for (auto& ln : lines) row_el.push_back(text(ln) | color(pal.muted));
+        for (auto& ln : lines)
+            row_el.push_back(text(ln) | color(pal.muted));
         desc = vbox(std::move(row_el));
     } else if (!agent.description.empty()) {
         desc = text(agent.description) | color(pal.muted);
@@ -360,8 +364,7 @@ enum class CardSize {
     }
     int env_hidden = static_cast<int>(agent.env_vars.size()) - env_count;
     if (env_hidden > 0) {
-        env_rows.push_back(
-            text(std::format("  ... +{} more", env_hidden)) | color(pal.muted));
+        env_rows.push_back(text(std::format("  ... +{} more", env_hidden)) | color(pal.muted));
     }
     if (env_rows.empty()) env_rows.push_back(text("  (none)") | color(pal.muted));
     auto env_col = vbox({
@@ -383,36 +386,37 @@ enum class CardSize {
 
     // --- 4-button footer ---
     auto footer = hbox({
-        FooterButton("▶ Run",   pal.success),
+        FooterButton("▶ Run", pal.success),
         text(" "),
-        FooterButton("✎ Edit",  pal.info),
+        FooterButton("✎ Edit", pal.info),
         text(" "),
-        FooterButton("⎘ Dup",   pal.warning),
+        FooterButton("⎘ Dup", pal.warning),
         text(" "),
-        FooterButton("⌫ Del",   pal.danger),
+        FooterButton("⌫ Del", pal.danger),
         filler(),
-        agent.last_run_at
-            ? text("last: " + *agent.last_run_at) | color(pal.muted)
-            : text("") | dim,
+        agent.last_run_at ? text("last: " + *agent.last_run_at) | color(pal.muted) : text("") | dim,
     });
 
     auto box = vbox({
-        header,
-        separator() | dim,
-        desc,
-        separator() | dim,
-        tools_block,
-        separator() | dim,
-        config_cols,
-        separator() | dim,
-        stats_bar,
-        separator() | dim,
-        footer,
-    }) | borderRounded;
+                   header,
+                   separator() | dim,
+                   desc,
+                   separator() | dim,
+                   tools_block,
+                   separator() | dim,
+                   config_cols,
+                   separator() | dim,
+                   stats_bar,
+                   separator() | dim,
+                   footer,
+               }) |
+               borderRounded;
 
-    if (selected) box = box | bgcolor(
-        loom::ui::design::theme::current_theme().variant == loom::ui::design::theme::ThemeVariant::Monochrome
-            ? pal.message_actions_background : pal.surface_tint_4);
+    if (selected)
+        box = box | bgcolor(loom::ui::design::theme::current_theme().variant ==
+                                    loom::ui::design::theme::ThemeVariant::Monochrome
+                                ? pal.message_actions_background
+                                : pal.surface_tint_4);
 
     if (!agent.agent_type.empty()) {
         auto opt = loom::tools::agent_color_manager::get_agent_color(agent.agent_type);
@@ -437,12 +441,9 @@ struct AgentCardCallbacks {
 
 /// Create a single interactive agent card. `size` picks the variant; the
 /// component handles 'r' (run), 'e' (edit), 'd' (delete), Enter (open).
-[[nodiscard]] inline Component AgentCardComponent(
-    AgentCardData agent,
-    CardSize size,
-    std::shared_ptr<SharedAnimState> anim,
-    AgentCardCallbacks callbacks = {})
-{
+[[nodiscard]] inline Component AgentCardComponent(AgentCardData agent, CardSize size,
+                                                  std::shared_ptr<SharedAnimState> anim,
+                                                  AgentCardCallbacks callbacks = {}) {
     struct Internal {
         AgentCardData data;
         CardSize size;
@@ -458,37 +459,41 @@ struct AgentCardCallbacks {
     s->cbs = std::move(callbacks);
 
     return Renderer([s] {
-        uint32_t f = s->anim ? s->anim->frame : 0;
-        switch (s->size) {
-            case CardSize::Mini:   return MiniCard(s->data, s->selected, f);
-            case CardSize::Normal: return Card(s->data, s->selected, f);
-            case CardSize::Large:  return LargeCard(s->data, s->selected, f);
-        }
-        return text("");
-    }) | CatchEvent([s](Event event) -> bool {
-        const std::string& id = s->data.id;
-        if (event == Event::Return) {
-            if (s->cbs.on_open_detail) s->cbs.on_open_detail(id);
-            return true;
-        }
-        if (event == Event::Character('r')) {
-            if (s->cbs.on_run) s->cbs.on_run(id);
-            return true;
-        }
-        if (event == Event::Character('e')) {
-            if (s->cbs.on_edit) s->cbs.on_edit(id);
-            return true;
-        }
-        if (event == Event::Character('d')) {
-            if (s->cbs.on_delete) s->cbs.on_delete(id);
-            return true;
-        }
-        if (event == Event::Character('D')) {
-            if (s->cbs.on_duplicate) s->cbs.on_duplicate(id);
-            return true;
-        }
-        return false;
-    });
+               uint32_t f = s->anim ? s->anim->frame : 0;
+               switch (s->size) {
+               case CardSize::Mini:
+                   return MiniCard(s->data, s->selected, f);
+               case CardSize::Normal:
+                   return Card(s->data, s->selected, f);
+               case CardSize::Large:
+                   return LargeCard(s->data, s->selected, f);
+               }
+               return text("");
+           }) |
+           CatchEvent([s](Event event) -> bool {
+               const std::string& id = s->data.id;
+               if (event == Event::Return) {
+                   if (s->cbs.on_open_detail) s->cbs.on_open_detail(id);
+                   return true;
+               }
+               if (event == Event::Character('r')) {
+                   if (s->cbs.on_run) s->cbs.on_run(id);
+                   return true;
+               }
+               if (event == Event::Character('e')) {
+                   if (s->cbs.on_edit) s->cbs.on_edit(id);
+                   return true;
+               }
+               if (event == Event::Character('d')) {
+                   if (s->cbs.on_delete) s->cbs.on_delete(id);
+                   return true;
+               }
+               if (event == Event::Character('D')) {
+                   if (s->cbs.on_duplicate) s->cbs.on_duplicate(id);
+                   return true;
+               }
+               return false;
+           });
 }
 
-} // namespace loom::ui::agents::cards
+}  // namespace loom::ui::agents::cards

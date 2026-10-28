@@ -4,7 +4,6 @@
 /// one's MCP connection endpoint, transport, and workspace.
 module;
 
-
 export module loom.commands.ide;
 
 import std;
@@ -33,9 +32,7 @@ public:
         };
     }
 
-    [[nodiscard]] static VoidResult validate(const CommandContext&) {
-        return {};
-    }
+    [[nodiscard]] static VoidResult validate(const CommandContext&) { return {}; }
 
     [[nodiscard]] static Result<CommandResult> execute(const CommandContext&) {
         loom::utils::ide::IdeLockfileScanner scanner;
@@ -46,8 +43,8 @@ public:
                 "No running IDE detected.\n\n"
                 "To connect an IDE:\n"
                 "  - Install the Loom extension in VS Code / Cursor / Windsurf / JetBrains,\n"
-                "  - or launch your editor from a Loom session so it writes a lockfile to "
-                + scanner.lockfile_dir().string() + ".");
+                "  - or launch your editor from a Loom session so it writes a lockfile to " +
+                scanner.lockfile_dir().string() + ".");
         }
 
         std::string out = std::format("Detected {} running IDE(s):\n\n", lockfiles.size());
@@ -67,9 +64,7 @@ public:
         return CommandResult::success(std::move(out));
     }
 
-    [[nodiscard]] static std::vector<std::string> complete(std::string_view) {
-        return {};
-    }
+    [[nodiscard]] static std::vector<std::string> complete(std::string_view) { return {}; }
 };
 
-} // namespace loom::commands
+}  // namespace loom::commands

@@ -7,7 +7,6 @@ import std;
 
 export namespace loom::utils {
 
-
 template <typename T>
 [[nodiscard]] std::vector<std::vector<T>> chunk(const std::vector<T>& vec, size_t chunk_size) {
     if (chunk_size == 0) return {};
@@ -16,14 +15,12 @@ template <typename T>
     for (size_t i = 0; i < vec.size(); i += chunk_size) {
         auto end = std::min(i + chunk_size, vec.size());
         result.emplace_back(vec.begin() + static_cast<ptrdiff_t>(i),
-                           vec.begin() + static_cast<ptrdiff_t>(end));
+                            vec.begin() + static_cast<ptrdiff_t>(end));
     }
     return result;
 }
 
-
-template <typename T>
-[[nodiscard]] std::vector<T> unique(const std::vector<T>& vec) {
+template <typename T> [[nodiscard]] std::vector<T> unique(const std::vector<T>& vec) {
     std::vector<T> result;
     result.reserve(vec.size());
     std::unordered_set<T> seen;
@@ -36,8 +33,7 @@ template <typename T>
 }
 
 // Alias for unique().
-template <typename T>
-[[nodiscard]] std::vector<T> uniq(const std::vector<T>& vec) {
+template <typename T> [[nodiscard]] std::vector<T> uniq(const std::vector<T>& vec) {
     return unique(vec);
 }
 
@@ -69,12 +65,12 @@ template <typename T, typename SeparatorFn>
     return result;
 }
 
-
 template <typename T>
 [[nodiscard]] std::vector<T> flatten(const std::vector<std::vector<T>>& nested) {
     std::vector<T> result;
     size_t total = 0;
-    for (const auto& inner : nested) total += inner.size();
+    for (const auto& inner : nested)
+        total += inner.size();
     result.reserve(total);
     for (const auto& inner : nested) {
         result.insert(result.end(), inner.begin(), inner.end());
@@ -82,34 +78,27 @@ template <typename T>
     return result;
 }
 
-
-template <typename T>
-[[nodiscard]] bool includes(std::span<const T> s, const T& value) {
+template <typename T> [[nodiscard]] bool includes(std::span<const T> s, const T& value) {
     return std::find(s.begin(), s.end(), value) != s.end();
 }
 
-
 template <typename T>
 [[nodiscard]] std::optional<size_t> find_index(std::span<const T> s,
-                                                std::function<bool(const T&)> predicate) {
+                                               std::function<bool(const T&)> predicate) {
     for (size_t i = 0; i < s.size(); ++i) {
         if (predicate(s[i])) return i;
     }
     return std::nullopt;
 }
 
-
-template <typename T>
-[[nodiscard]] std::vector<T> take(std::span<const T> s, size_t n) {
+template <typename T> [[nodiscard]] std::vector<T> take(std::span<const T> s, size_t n) {
     auto count = std::min(n, s.size());
     return std::vector<T>(s.begin(), s.begin() + static_cast<ptrdiff_t>(count));
 }
 
-
-template <typename T>
-[[nodiscard]] std::vector<T> drop(std::span<const T> s, size_t n) {
+template <typename T> [[nodiscard]] std::vector<T> drop(std::span<const T> s, size_t n) {
     if (n >= s.size()) return {};
     return std::vector<T>(s.begin() + static_cast<ptrdiff_t>(n), s.end());
 }
 
-} // namespace loom::utils
+}  // namespace loom::utils

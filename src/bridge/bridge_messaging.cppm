@@ -10,10 +10,11 @@
 module;
 
 #include <unistd.h>
-#include <cstring>
+
+#include <cstdint>
 #include <cstdio>
 #include <cstdlib>
-#include <cstdint>
+#include <cstring>
 
 export module loom.bridge.bridge_messaging;
 
@@ -42,8 +43,7 @@ class BoundedUUIDSet {
 public:
     explicit BoundedUUIDSet(std::size_t capacity)
         : capacity_(capacity)
-        , ring_(capacity)
-    {}
+        , ring_(capacity) {}
 
     /// Add a UUID. If the set is at capacity, the oldest entry is
     /// evicted first. Duplicate adds are no-ops.
@@ -59,14 +59,13 @@ public:
     }
 
     /// Check whether a UUID is present.
-    [[nodiscard]] bool has(const std::string& uuid) const {
-        return set_.contains(uuid);
-    }
+    [[nodiscard]] bool has(const std::string& uuid) const { return set_.contains(uuid); }
 
     /// Remove all entries.
     void clear() {
         set_.clear();
-        for (auto& slot : ring_) slot.reset();
+        for (auto& slot : ring_)
+            slot.reset();
         write_idx_ = 0;
     }
 };
@@ -93,6 +92,7 @@ struct SDKControlRequest {
         std::optional<std::string> mode;
         std::optional<int64_t> max_thinking_tokens;
     } request;
+
     std::string request_id;
 };
 
@@ -100,12 +100,8 @@ struct SDKControlRequest {
 struct UnknownMessage {};
 
 /// The discriminated union returned by the ingress parser.
-using ParsedMessage = std::variant<
-    SDKMessage,
-    SDKControlResponse,
-    SDKControlRequest,
-    UnknownMessage
->;
+using ParsedMessage =
+    std::variant<SDKMessage, SDKControlResponse, SDKControlRequest, UnknownMessage>;
 
 // =========================================================================
 // Type guards — operate on a parsed JsonVal
@@ -124,8 +120,8 @@ using ParsedMessage = std::variant<
     if (!root.valid() || !root.is_obj()) return false;
     auto type_val = root.get("type");
     if (!type_val.is_str()) return false;
-    return type_val.as_str() == std::string_view("control_response")
-        && root.get("response").valid();
+    return type_val.as_str() == std::string_view("control_response") &&
+           root.get("response").valid();
 }
 
 /// True when the JSON value is a control_request.
@@ -133,9 +129,8 @@ using ParsedMessage = std::variant<
     if (!root.valid() || !root.is_obj()) return false;
     auto type_val = root.get("type");
     if (!type_val.is_str()) return false;
-    return type_val.as_str() == std::string_view("control_request")
-        && root.get("request_id").valid()
-        && root.get("request").valid();
+    return type_val.as_str() == std::string_view("control_request") &&
+           root.get("request_id").valid() && root.get("request").valid();
 }
 
 // =========================================================================
@@ -145,7 +140,7 @@ using ParsedMessage = std::variant<
 /// Bridge-eligible message descriptor. Light-weight analog that carries
 /// only the fields needed for eligibility filtering.
 struct BridgeEligibleMessage {
-    std::string type;                // "user", "assistant", "system"
+    std::string type;                    // "user", "assistant", "system"
     std::optional<std::string> subtype;  // e.g. "local_command"
     bool is_virtual = false;
 };
@@ -160,9 +155,8 @@ struct BridgeEligibleMessage {
     if ((m.type == "user" || m.type == "assistant") && m.is_virtual) {
         return false;
     }
-    return m.type == "user"
-        || m.type == "assistant"
-        || (m.type == "system" && m.subtype == "local_command");
+    return m.type == "user" || m.type == "assistant" ||
+           (m.type == "system" && m.subtype == "local_command");
 }
 
 // =========================================================================
@@ -176,9 +170,11 @@ struct TitleCandidate {
     bool is_meta = false;
     bool is_tool_use_result = false;
     bool is_compact_summary = false;
+
     struct Origin {
         std::string kind{};  // "human", "task_notification", etc.
     };
+
     std::optional<Origin> origin{};
     /// Content: either a raw string or a vector of text blocks.
     std::optional<std::variant<std::string, std::vector<TextBlock>>> content{};
@@ -231,10 +227,13 @@ struct TitleCandidate {
             using T = std::decay_t<decltype(alt)>;
             if constexpr (std::is_same_v<T, loom::server::control::ControlSetModelRequest>) {
                 req.request.model = alt.model;
-            } else if constexpr (std::is_same_v<T, loom::server::control::ControlSetPermissionModeRequest>) {
-                req.request.mode = std::string(
-                    loom::server::control::permission_mode_to_str(alt.mode));
-            } else if constexpr (std::is_same_v<T, loom::server::control::ControlSetMaxThinkingTokensRequest>) {
+            } else if constexpr (std::is_same_v<
+                                     T, loom::server::control::ControlSetPermissionModeRequest>) {
+                req.request.mode =
+                    std::string(loom::server::control::permission_mode_to_str(alt.mode));
+            } else if constexpr (std::is_same_v<
+                                     T,
+                                     loom::server::control::ControlSetMaxThinkingTokensRequest>) {
                 if (alt.max_thinking_tokens)
                     req.request.max_thinking_tokens = *alt.max_thinking_tokens;
             }
@@ -317,15 +316,13 @@ using ControlRequestCallback = std::function<void(const SDKControlRequest&)>;
 /// @param on_permission_response Handler for control_response messages.
 /// @param on_control_request   Handler for control_request messages.
 /// @param debug_log            Optional debug logger (receives log lines).
-inline void handle_ingress_message(
-    const std::string& data,
-    BoundedUUIDSet& recent_posted_uuids,
-    BoundedUUIDSet& recent_inbound_uuids,
-    const InboundMessageCallback& on_inbound_message,
-    const PermissionResponseCallback& on_permission_response = nullptr,
-    const ControlRequestCallback& on_control_request = nullptr,
-    const std::function<void(const std::string&)>& debug_log = nullptr
-) {
+inline void
+handle_ingress_message(const std::string& data, BoundedUUIDSet& recent_posted_uuids,
+                       BoundedUUIDSet& recent_inbound_uuids,
+                       const InboundMessageCallback& on_inbound_message,
+                       const PermissionResponseCallback& on_permission_response = nullptr,
+                       const ControlRequestCallback& on_control_request = nullptr,
+                       const std::function<void(const std::string&)>& debug_log = nullptr) {
     auto log = [&debug_log](const std::string& msg) {
         if (debug_log) debug_log(msg);
     };
@@ -364,8 +361,7 @@ inline void handle_ingress_message(
 
         // Check for UUID to detect echoes of our own messages
         if (msg.uuid && recent_posted_uuids.has(*msg.uuid)) {
-            log(std::format("[bridge:repl] Ignoring echo: type={} uuid={}",
-                            msg.type, *msg.uuid));
+            log(std::format("[bridge:repl] Ignoring echo: type={} uuid={}", msg.type, *msg.uuid));
             return;
         }
 
@@ -377,8 +373,7 @@ inline void handle_ingress_message(
             return;
         }
 
-        log(std::format("[bridge:repl] Ingress message type={}{}",
-                        msg.type,
+        log(std::format("[bridge:repl] Ingress message type={}{}", msg.type,
                         msg.uuid ? std::format(" uuid={}", *msg.uuid) : std::string{}));
 
         if (msg.type == "user") {
@@ -387,8 +382,7 @@ inline void handle_ingress_message(
                 on_inbound_message(msg);
             }
         } else {
-            log(std::format("[bridge:repl] Ignoring non-user inbound message: type={}",
-                            msg.type));
+            log(std::format("[bridge:repl] Ignoring non-user inbound message: type={}", msg.type));
         }
     } catch (const std::exception& err) {
         log(std::format("[bridge:repl] Failed to parse ingress message: {}", err.what()));
@@ -429,12 +423,10 @@ inline constexpr std::string_view OUTBOUND_ONLY_ERROR =
 /// Delegates to loom.server.control_protocol ser/de so the wire format
 /// is defined in exactly one place.
 [[nodiscard]] inline std::string build_control_response_event(
-    const std::string& session_id,
-    const std::string& request_id,
-    const std::string& subtype,       // "success" or "error"
-    const std::string& response_json, // inner "response" object (may be "{}")
-    const std::optional<std::string>& error = std::nullopt
-) {
+    const std::string& session_id, const std::string& request_id,
+    const std::string& subtype,        // "success" or "error"
+    const std::string& response_json,  // inner "response" object (may be "{}")
+    const std::optional<std::string>& error = std::nullopt) {
     loom::server::control::ControlResponse envelope;
     envelope.session_id = session_id;
     if (subtype == "error" && error) {
@@ -457,11 +449,10 @@ inline constexpr std::string_view OUTBOUND_ONLY_ERROR =
 /// set_model) and for turn-level coordination (interrupt,
 /// set_max_thinking_tokens). If we don't respond, the server hangs
 /// and kills the WS after ~10-14s.
-inline void handle_server_control_request(
-    const SDKControlRequest& request,
-    const ServerControlRequestHandlers& handlers,
-    const std::function<void(const std::string&)>& debug_log = nullptr
-) {
+inline void
+handle_server_control_request(const SDKControlRequest& request,
+                              const ServerControlRequestHandlers& handlers,
+                              const std::function<void(const std::string&)>& debug_log = nullptr) {
     auto log = [&debug_log](const std::string& msg) {
         if (debug_log) debug_log(msg);
     };
@@ -477,12 +468,9 @@ inline void handle_server_control_request(
     // doesn't see false success. initialize must still succeed
     // (server kills the connection otherwise).
     if (handlers.outbound_only && request.request.subtype != "initialize") {
-        response_event = build_control_response_event(
-            handlers.session_id,
-            request.request_id,
-            "error",
-            "{}",
-            std::string(OUTBOUND_ONLY_ERROR));
+        response_event =
+            build_control_response_event(handlers.session_id, request.request_id, "error", "{}",
+                                         std::string(OUTBOUND_ONLY_ERROR));
         handlers.write_event(response_event);
         log(std::format("[bridge:repl] Rejected {} (outbound-only) request_id={}",
                         request.request.subtype, request.request_id));
@@ -497,61 +485,41 @@ inline void handle_server_control_request(
         init_resp.available_output_styles = {"normal"};
         init_resp.pid = ::getpid();
         auto payload = loom::server::control::ControlInitializeResponse_to_json(init_resp);
-        response_event = build_control_response_event(
-            handlers.session_id,
-            request.request_id,
-            "success",
-            payload);
+        response_event = build_control_response_event(handlers.session_id, request.request_id,
+                                                      "success", payload);
 
     } else if (request.request.subtype == "set_model") {
         if (handlers.on_set_model) {
             handlers.on_set_model(request.request.model);
         }
-        response_event = build_control_response_event(
-            handlers.session_id,
-            request.request_id,
-            "success",
-            "{}");
+        response_event =
+            build_control_response_event(handlers.session_id, request.request_id, "success", "{}");
 
     } else if (request.request.subtype == "set_max_thinking_tokens") {
         if (handlers.on_set_max_thinking_tokens) {
             handlers.on_set_max_thinking_tokens(request.request.max_thinking_tokens);
         }
-        response_event = build_control_response_event(
-            handlers.session_id,
-            request.request_id,
-            "success",
-            "{}");
+        response_event =
+            build_control_response_event(handlers.session_id, request.request_id, "success", "{}");
 
     } else if (request.request.subtype == "set_permission_mode") {
         // The callback returns a policy verdict so we can send an
         // error control_response without importing mode-gate logic
         // here (bootstrap-isolation).
         if (handlers.on_set_permission_mode) {
-            auto [ok, err_msg] = handlers.on_set_permission_mode(
-                request.request.mode.value_or(""));
+            auto [ok, err_msg] = handlers.on_set_permission_mode(request.request.mode.value_or(""));
             if (ok) {
-                response_event = build_control_response_event(
-                    handlers.session_id,
-                    request.request_id,
-                    "success",
-                    "{}");
+                response_event = build_control_response_event(handlers.session_id,
+                                                              request.request_id, "success", "{}");
             } else {
                 response_event = build_control_response_event(
-                    handlers.session_id,
-                    request.request_id,
-                    "error",
-                    "{}",
-                    err_msg);
+                    handlers.session_id, request.request_id, "error", "{}", err_msg);
             }
         } else {
             // No callback registered (daemon context) — return an
             // error rather than a silent false-success.
             response_event = build_control_response_event(
-                handlers.session_id,
-                request.request_id,
-                "error",
-                "{}",
+                handlers.session_id, request.request_id, "error", "{}",
                 std::string("set_permission_mode is not supported in this context "
                             "(onSetPermissionMode callback not registered)"));
         }
@@ -560,28 +528,22 @@ inline void handle_server_control_request(
         if (handlers.on_interrupt) {
             handlers.on_interrupt();
         }
-        response_event = build_control_response_event(
-            handlers.session_id,
-            request.request_id,
-            "success",
-            "{}");
+        response_event =
+            build_control_response_event(handlers.session_id, request.request_id, "success", "{}");
 
     } else {
         // Unknown subtype — respond with error so the server doesn't
         // hang waiting for a reply that never comes.
         response_event = build_control_response_event(
-            handlers.session_id,
-            request.request_id,
-            "error",
-            "{}",
+            handlers.session_id, request.request_id, "error", "{}",
             std::format("REPL bridge does not handle control_request subtype: {}",
                         request.request.subtype));
     }
 
     handlers.write_event(response_event);
     // Determine result subtype for logging
-    auto result_subtype = (response_event.find("\"subtype\":\"success\"") != std::string::npos)
-        ? "success" : "error";
+    auto result_subtype =
+        (response_event.find("\"subtype\":\"success\"") != std::string::npos) ? "success" : "error";
     log(std::format("[bridge:repl] Sent control_response for {} request_id={} result={}",
                     request.request.subtype, request.request_id, result_subtype));
 }
@@ -627,17 +589,25 @@ struct SDKResultSuccess {
     };
     std::string uuid;
     uuid.reserve(36);
-    uuid += hex(); uuid += hex(); uuid += '-';
-    uuid += hex(); uuid += '-';
-    uuid += '4'; uuid += hex().substr(1); uuid += '-';
+    uuid += hex();
+    uuid += hex();
+    uuid += '-';
+    uuid += hex();
+    uuid += '-';
+    uuid += '4';
+    uuid += hex().substr(1);
+    uuid += '-';
     // Variant bit: 10xx
     auto variant_byte = static_cast<unsigned char>(rd());
     variant_byte = (variant_byte & 0x3f) | 0x80;
     char vbuf[3];
     std::snprintf(vbuf, sizeof(vbuf), "%02x", variant_byte);
     uuid += vbuf;
-    uuid += hex().substr(1); uuid += '-';
-    uuid += hex(); uuid += hex(); uuid += hex();
+    uuid += hex().substr(1);
+    uuid += '-';
+    uuid += hex();
+    uuid += hex();
+    uuid += hex();
     return uuid;
 }
 
@@ -666,20 +636,11 @@ struct SDKResultSuccess {
 [[nodiscard]] inline std::string serialize_result_message(const SDKResultSuccess& msg) {
     return std::format(
         R"({{"type":"{}","subtype":"{}","duration_ms":{},"duration_api_ms":{},"is_error":{},"num_turns":{},"result":"{}","stop_reason":{},"total_cost_usd":{},"usage":{},"modelUsage":{},"permission_denials":{},"session_id":"{}","uuid":"{}"}})",
-        msg.type,
-        msg.subtype,
-        msg.duration_ms,
-        msg.duration_api_ms,
-        msg.is_error ? "true" : "false",
-        msg.num_turns,
-        msg.result,
-        msg.stop_reason ? std::format("\"{}\"", *msg.stop_reason) : "null",
-        msg.total_cost_usd,
-        msg.usage_json,
-        msg.model_usage_json,
-        msg.permission_denials_json,
-        msg.session_id,
+        msg.type, msg.subtype, msg.duration_ms, msg.duration_api_ms,
+        msg.is_error ? "true" : "false", msg.num_turns, msg.result,
+        msg.stop_reason ? std::format("\"{}\"", *msg.stop_reason) : "null", msg.total_cost_usd,
+        msg.usage_json, msg.model_usage_json, msg.permission_denials_json, msg.session_id,
         msg.uuid);
 }
 
-} // namespace loom::bridge
+}  // namespace loom::bridge

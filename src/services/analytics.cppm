@@ -20,8 +20,8 @@
 /// worth having.
 module;
 
-#include <cstdlib>
 #include <cstdint>
+#include <cstdlib>
 export module loom.services.analytics;
 
 import std;
@@ -63,6 +63,7 @@ struct AnalyticsEvent {
 class LocalAnalytics {
 public:
     LocalAnalytics() = default;
+
     explicit LocalAnalytics(std::filesystem::path path)
         : path_override_(std::move(path)) {}
 
@@ -96,14 +97,13 @@ public:
 private:
     /// Build the NDJSON line. Goes through the JSON builder rather than
     /// string concatenation so escaping is the library's problem, not ours.
-    [[nodiscard]] static std::string serialize_event(
-        std::string_view name,
-        std::chrono::system_clock::time_point timestamp,
-        const std::vector<std::pair<std::string, std::string>>& properties) {
+    [[nodiscard]] static std::string
+    serialize_event(std::string_view name, std::chrono::system_clock::time_point timestamp,
+                    const std::vector<std::pair<std::string, std::string>>& properties) {
         loom::utils::json::JsonBuilder builder;
-        const auto seconds = std::chrono::duration_cast<std::chrono::milliseconds>(
-                                 timestamp.time_since_epoch())
-                                 .count();
+        const auto seconds =
+            std::chrono::duration_cast<std::chrono::milliseconds>(timestamp.time_since_epoch())
+                .count();
         builder.str("event", name);
         builder.num("ts_ms", static_cast<int64_t>(seconds));
 

@@ -15,11 +15,13 @@ public:
         std::unique_lock lock(mutex_);
         cv_.wait(lock, [this] { return open_; });
     }
+
     void Open() {
         std::lock_guard lock(mutex_);
         open_ = true;
         cv_.notify_all();
     }
+
 private:
     std::mutex mutex_;
     std::condition_variable cv_;
@@ -28,6 +30,7 @@ private:
 
 struct OpenOnExit {
     Gate& gate;
+
     ~OpenOnExit() { gate.Open(); }
 };
 
@@ -38,16 +41,18 @@ public:
         ++count_;
         cv_.notify_all();
     }
+
     bool WaitFor(int count) {
         std::unique_lock lock(mutex_);
         return cv_.wait_for(lock, 2s, [this, count] { return count_ >= count; });
     }
+
 private:
     std::mutex mutex_;
     std::condition_variable cv_;
     int count_ = 0;
 };
-}
+}  // namespace
 
 TEST(StatuslineCoordinator, ImmutableInputAndResultStayBehindUiHandoff) {
     Gate release;
@@ -60,17 +65,18 @@ TEST(StatuslineCoordinator, ImmutableInputAndResultStayBehindUiHandoff) {
     std::string observed_input;
     StatuslineCoordinator coordinator;
     OpenOnExit unblock{release};
-    coordinator.Start([&](std::string_view command, std::string json,
-                          int timeout_ms, std::string& output) {
-        execution_thread = std::this_thread::get_id();
-        observed_command = command;
-        observed_input = json;
-        EXPECT_EQ(timeout_ms, 5000);
-        entered.set_value();
-        release.Wait();
-        output = "ready";
-        return true;
-    }, [&] { notifications.Post(); }, 0);
+    coordinator.Start(
+        [&](std::string_view command, std::string json, int timeout_ms, std::string& output) {
+            execution_thread = std::this_thread::get_id();
+            observed_command = command;
+            observed_input = json;
+            EXPECT_EQ(timeout_ms, 5000);
+            entered.set_value();
+            release.Wait();
+            output = "ready";
+            return true;
+        },
+        [&] { notifications.Post(); }, 0);
 
     std::string command = "status-command";
     std::string input = R"({"model":"original"})";
@@ -96,15 +102,16 @@ TEST(StatuslineCoordinator, NewRequestDiscardsInFlightResult) {
     std::atomic<int> calls{0};
     StatuslineCoordinator coordinator;
     OpenOnExit unblock{release};
-    coordinator.Start([&](std::string_view, std::string json, int,
-                          std::string& output) {
-        if (++calls == 1) {
-            entered.set_value();
-            release.Wait();
-        }
-        output = std::move(json);
-        return true;
-    }, [&] { notifications.Post(); }, 0);
+    coordinator.Start(
+        [&](std::string_view, std::string json, int, std::string& output) {
+            if (++calls == 1) {
+                entered.set_value();
+                release.Wait();
+            }
+            output = std::move(json);
+            return true;
+        },
+        [&] { notifications.Post(); }, 0);
     coordinator.TriggerUpdate("cmd", "old");
     ASSERT_EQ(started.wait_for(2s), std::future_status::ready);
     coordinator.TriggerUpdate("cmd", "new");
@@ -122,14 +129,15 @@ TEST(StatuslineCoordinator, ClearingCommandInvalidatesInFlightResult) {
     std::atomic<int> calls{0};
     StatuslineCoordinator coordinator;
     OpenOnExit unblock{release};
-    coordinator.Start([&](std::string_view, std::string, int,
-                          std::string& output) {
-        ++calls;
-        entered.set_value();
-        release.Wait();
-        output = "stale";
-        return true;
-    }, [&] { notifications.Post(); }, 0);
+    coordinator.Start(
+        [&](std::string_view, std::string, int, std::string& output) {
+            ++calls;
+            entered.set_value();
+            release.Wait();
+            output = "stale";
+            return true;
+        },
+        [&] { notifications.Post(); }, 0);
     coordinator.TriggerUpdate("cmd", "input");
     ASSERT_EQ(started.wait_for(2s), std::future_status::ready);
     coordinator.TriggerUpdate({}, {});
@@ -142,11 +150,12 @@ TEST(StatuslineCoordinator, ClearingCommandInvalidatesInFlightResult) {
 TEST(StatuslineCoordinator, NewRequestInvalidatesUndrainedResult) {
     Notifications notifications;
     StatuslineCoordinator coordinator;
-    coordinator.Start([](std::string_view, std::string json, int,
-                         std::string& output) {
-        output = std::move(json);
-        return true;
-    }, [&] { notifications.Post(); }, 0);
+    coordinator.Start(
+        [](std::string_view, std::string json, int, std::string& output) {
+            output = std::move(json);
+            return true;
+        },
+        [&] { notifications.Post(); }, 0);
     coordinator.TriggerUpdate("cmd", "old");
     ASSERT_TRUE(notifications.WaitFor(1));
     coordinator.TriggerUpdate({}, {});
@@ -160,13 +169,14 @@ TEST(StatuslineCoordinator, MemoUsesIntactInputAndCachesOutput) {
     Notifications notifications;
     std::atomic<int> calls{0};
     StatuslineCoordinator coordinator;
-    coordinator.Start([&](std::string_view command, std::string json, int,
-                          std::string& output) {
-        ++calls;
-        output = std::string(command) + ":" + json;
-        json.clear();
-        return true;
-    }, [&] { notifications.Post(); }, 0);
+    coordinator.Start(
+        [&](std::string_view command, std::string json, int, std::string& output) {
+            ++calls;
+            output = std::string(command) + ":" + json;
+            json.clear();
+            return true;
+        },
+        [&] { notifications.Post(); }, 0);
     coordinator.TriggerUpdate("cmd", "input");
     ASSERT_TRUE(notifications.WaitFor(1));
     EXPECT_EQ(coordinator.TakeResult(), std::optional<std::string>{"cmd:input"});
@@ -185,11 +195,12 @@ TEST(StatuslineCoordinator, MemoUsesIntactInputAndCachesOutput) {
 TEST(StatuslineCoordinator, FailureStagesEmptyResult) {
     Notifications notifications;
     StatuslineCoordinator coordinator;
-    coordinator.Start([](std::string_view, std::string, int,
-                         std::string& output) {
-        output = "partial failure";
-        return false;
-    }, [&] { notifications.Post(); }, 0);
+    coordinator.Start(
+        [](std::string_view, std::string, int, std::string& output) {
+            output = "partial failure";
+            return false;
+        },
+        [&] { notifications.Post(); }, 0);
     coordinator.TriggerUpdate("cmd", "input");
     ASSERT_TRUE(notifications.WaitFor(1));
     EXPECT_EQ(coordinator.TakeResult(), std::optional<std::string>{""});
@@ -203,14 +214,15 @@ TEST(StatuslineCoordinator, StopJoinsExecutingWorkerAndSuppressesResult) {
     std::atomic<int> renders{0};
     StatuslineCoordinator coordinator;
     OpenOnExit unblock{release};
-    coordinator.Start([&](std::string_view, std::string, int,
-                          std::string& output) {
-        entered.set_value();
-        release.Wait();
-        output = "finished";
-        completed.store(true);
-        return true;
-    }, [&] { ++renders; }, 0);
+    coordinator.Start(
+        [&](std::string_view, std::string, int, std::string& output) {
+            entered.set_value();
+            release.Wait();
+            output = "finished";
+            completed.store(true);
+            return true;
+        },
+        [&] { ++renders; }, 0);
     coordinator.TriggerUpdate("cmd", "input");
     ASSERT_EQ(started.wait_for(2s), std::future_status::ready);
     std::promise<void> stopping;
@@ -234,7 +246,6 @@ TEST(StatuslineCoordinator, StopJoinsExecutingWorkerAndSuppressesResult) {
     coordinator.Stop();
 }
 
-
 TEST(PermissionCoordinator, ShutdownStaysCancelledAfterLateResetAndResponse) {
     loom::ui::PermissionCoordinator permission;
     permission.add_always_allowed("Bash");
@@ -242,7 +253,8 @@ TEST(PermissionCoordinator, ShutdownStaysCancelledAfterLateResetAndResponse) {
     const auto tool_token = permission.begin_permission_request();
     EXPECT_EQ(tool_token, 0);
     EXPECT_FALSE(permission.resolve_permission(tool_token, true));
-    auto tool = std::async(std::launch::async, [&] { return permission.wait_permission_response(tool_token); });
+    auto tool = std::async(std::launch::async,
+                           [&] { return permission.wait_permission_response(tool_token); });
     EXPECT_EQ(tool.wait_for(2s), std::future_status::ready);
     EXPECT_FALSE(tool.get());
     EXPECT_FALSE(permission.is_always_allowed("Bash"));
@@ -250,7 +262,9 @@ TEST(PermissionCoordinator, ShutdownStaysCancelledAfterLateResetAndResponse) {
     const auto elicitation_token = permission.begin_elicitation_request();
     EXPECT_EQ(elicitation_token, 0);
     EXPECT_FALSE(permission.resolve_elicitation(elicitation_token, true));
-    auto elicitation = std::async(std::launch::async, [&] { return permission.wait_elicitation_response(elicitation_token); });
+    auto elicitation = std::async(std::launch::async, [&] {
+        return permission.wait_elicitation_response(elicitation_token);
+    });
     EXPECT_EQ(elicitation.wait_for(2s), std::future_status::ready);
     EXPECT_FALSE(elicitation.get());
 

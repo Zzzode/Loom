@@ -1,7 +1,7 @@
 module;
 
-#include <cmath>
 #include <cctype>
+#include <cmath>
 
 export module loom.text.semantic_number;
 
@@ -47,4 +47,4 @@ export namespace loom::utils::semantic_number {
     return std::nullopt;
 }
 
-} // namespace loom::utils::semantic_number
+}  // namespace loom::utils::semantic_number

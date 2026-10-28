@@ -1,16 +1,17 @@
 // LSP Server Instance Module
 module;
-#include <cerrno>
-#include <cctype>
-#include <cstring>
 #include <fcntl.h>
 #include <poll.h>
 #include <signal.h>
 #include <sys/wait.h>
 #include <unistd.h>
-#include <cstdlib>
+
+#include <cctype>
+#include <cerrno>
 #include <cstddef>
 #include <cstdint>
+#include <cstdlib>
+#include <cstring>
 
 export module loom.services.lsp.LSPServerInstance;
 
@@ -23,8 +24,8 @@ import loom.services.lsp.diagnostic_registry;
 
 export namespace loom::services::lsp {
 
-using loom::utils::Result;
 using loom::services::lsp::ScopedLspServerConfig;
+using loom::utils::Result;
 
 // Forward declarations
 struct LSPServerInstance;
@@ -58,25 +59,22 @@ struct LSPServerInstance {
     std::shared_ptr<DiagnosticRegistry> diagnostic_registry;
 
     // External notification handler.
-    using NotificationHandler = std::function<void(
-        std::string_view method, std::string_view params_json)>;
+    using NotificationHandler =
+        std::function<void(std::string_view method, std::string_view params_json)>;
     uint64_t on_notification(std::string method, NotificationHandler handler);
 
     // Test/poll-less seam: run the exact production notification path.
-    void deliver_notification(std::string json) {
-        handle_notification(std::move(json));
-    }
-    
+    void deliver_notification(std::string json) { handle_notification(std::move(json)); }
+
     // Start the server
     Result<void> start();
-    
+
     // Stop the server
     Result<void> stop();
-    
+
     // Send a request
-    template<typename T>
-    Result<T> send_request(const std::string& method, const std::any& params);
-    
+    template <typename T> Result<T> send_request(const std::string& method, const std::any& params);
+
     // Send a notification
     Result<void> send_notification(const std::string& method, const std::any& params);
 
@@ -105,10 +103,9 @@ private:
 };
 
 // Create an LSP server instance
-Result<std::unique_ptr<LSPServerInstance>> create_lsp_server_instance(
-    const std::string& name,
-    const ScopedLspServerConfig& config) {
-    
+Result<std::unique_ptr<LSPServerInstance>>
+create_lsp_server_instance(const std::string& name, const ScopedLspServerConfig& config) {
+
     auto instance = std::make_unique<LSPServerInstance>();
     instance->name = name;
     instance->config = config;
@@ -121,17 +118,15 @@ Result<void> LSPServerInstance::start() {
         return {};
     }
     if (config.command.empty()) {
-        return std::unexpected(loom::utils::Error(
-            loom::utils::ErrorCode::invalid_argument,
-            "LSP server command is empty"));
+        return std::unexpected(loom::utils::Error(loom::utils::ErrorCode::invalid_argument,
+                                                  "LSP server command is empty"));
     }
-    
+
     int stdin_pipe[2]{};
     int stdout_pipe[2]{};
     if (pipe(stdin_pipe) != 0 || pipe(stdout_pipe) != 0) {
-        return std::unexpected(loom::utils::Error(
-            loom::utils::ErrorCode::network_error,
-            "Failed to create LSP process pipes"));
+        return std::unexpected(loom::utils::Error(loom::utils::ErrorCode::network_error,
+                                                  "Failed to create LSP process pipes"));
     }
 
     pid = fork();
@@ -140,9 +135,9 @@ Result<void> LSPServerInstance::start() {
         close(stdin_pipe[1]);
         close(stdout_pipe[0]);
         close(stdout_pipe[1]);
-        return std::unexpected(loom::utils::Error(
-            loom::utils::ErrorCode::network_error,
-            std::string("Failed to fork LSP server: ") + std::strerror(errno)));
+        return std::unexpected(
+            loom::utils::Error(loom::utils::ErrorCode::network_error,
+                               std::string("Failed to fork LSP server: ") + std::strerror(errno)));
     }
 
     if (pid == 0) {
@@ -215,7 +210,7 @@ Result<void> LSPServerInstance::stop() {
     }
 
     state = ServerInstanceState::Stopping;
-    
+
     (void)send_notification("exit", std::string{"null"});
     if (stdin_fd >= 0) {
         close(stdin_fd);
@@ -238,19 +233,17 @@ Result<void> LSPServerInstance::stop() {
 }
 
 // Send a request
-template<typename T>
+template <typename T>
 Result<T> LSPServerInstance::send_request(const std::string& method, const std::any& params) {
     if (!is_running) {
-        return std::unexpected(loom::utils::Error(loom::utils::ErrorCode::unavailable, "LSP server not connected"));
+        return std::unexpected(
+            loom::utils::Error(loom::utils::ErrorCode::unavailable, "LSP server not connected"));
     }
 
     const auto id = next_request_id++;
     auto params_json = params_to_json(params);
-    auto message = std::format(
-        R"({{"jsonrpc":"2.0","id":{},"method":"{}","params":{}}})",
-        id,
-        method,
-        params_json.empty() ? "{}" : params_json);
+    auto message = std::format(R"({{"jsonrpc":"2.0","id":{},"method":"{}","params":{}}})", id,
+                               method, params_json.empty() ? "{}" : params_json);
     auto sent = send_message(message);
     if (!sent) return std::unexpected(sent.error());
 
@@ -279,45 +272,47 @@ Result<T> LSPServerInstance::send_request(const std::string& method, const std::
                 std::string message = "LSP request failed";
                 auto error_message = error_node.get("message");
                 if (error_message.is_str()) message = std::string(error_message.as_str());
-                return std::unexpected(loom::utils::Error(loom::utils::ErrorCode::network_error, std::move(message)));
+                return std::unexpected(
+                    loom::utils::Error(loom::utils::ErrorCode::network_error, std::move(message)));
             }
 
             auto result_node = root.get("result");
             return result_node.valid() ? result_node.to_string() : std::string{"null"};
         }
-        return std::unexpected(loom::utils::Error(
-            loom::utils::ErrorCode::timeout,
-            "Timed out waiting for matching LSP response"));
+        return std::unexpected(loom::utils::Error(loom::utils::ErrorCode::timeout,
+                                                  "Timed out waiting for matching LSP response"));
     }
     // Guard against silent default-construct no-ops for unsupported T.
     // Today only T=std::string is materialised (lsp_tool.cppm send_request +
     // LSPServerInstance::start initialise). Any future T must grow a branch
     // above; failing to compile is preferable to silently returning T{}.
     static_assert(std::is_same_v<T, std::string>,
-        "LSPServerInstance::send_request currently only supports T=std::string; "
-        "add a matching `if constexpr` branch for new types instead of relying "
-        "on a default-constructed no-op.");
+                  "LSPServerInstance::send_request currently only supports T=std::string; "
+                  "add a matching `if constexpr` branch for new types instead of relying "
+                  "on a default-constructed no-op.");
     return T{};
 }
 
 // Send a notification
-Result<void> LSPServerInstance::send_notification(const std::string& method, const std::any& params) {
+Result<void> LSPServerInstance::send_notification(const std::string& method,
+                                                  const std::any& params) {
     if (!is_running) {
-        return std::unexpected(loom::utils::Error(loom::utils::ErrorCode::unavailable, "LSP server not connected"));
+        return std::unexpected(
+            loom::utils::Error(loom::utils::ErrorCode::unavailable, "LSP server not connected"));
     }
-    
+
     auto params_json = params_to_json(params);
-    auto message = params_json.empty()
-        ? std::format(R"({{"jsonrpc":"2.0","method":"{}"}})", method)
-        : std::format(R"({{"jsonrpc":"2.0","method":"{}","params":{}}})", method, params_json);
+    auto message =
+        params_json.empty()
+            ? std::format(R"({{"jsonrpc":"2.0","method":"{}"}})", method)
+            : std::format(R"({{"jsonrpc":"2.0","method":"{}","params":{}}})", method, params_json);
     return send_message(message);
 }
 
 Result<void> LSPServerInstance::send_message(std::string_view json) {
     if (stdin_fd < 0) {
-        return std::unexpected(loom::utils::Error(
-            loom::utils::ErrorCode::unavailable,
-            "LSP server stdin is closed"));
+        return std::unexpected(
+            loom::utils::Error(loom::utils::ErrorCode::unavailable, "LSP server stdin is closed"));
     }
     std::string frame = std::format("Content-Length: {}\r\n\r\n", json.size());
     frame.append(json);
@@ -326,9 +321,9 @@ Result<void> LSPServerInstance::send_message(std::string_view json) {
     while (!remaining.empty()) {
         auto written = write(stdin_fd, remaining.data(), remaining.size());
         if (written <= 0) {
-            return std::unexpected(loom::utils::Error(
-                loom::utils::ErrorCode::network_error,
-                std::string("Failed to write LSP message: ") + std::strerror(errno)));
+            return std::unexpected(loom::utils::Error(loom::utils::ErrorCode::network_error,
+                                                      std::string("Failed to write LSP message: ") +
+                                                          std::strerror(errno)));
         }
         remaining.remove_prefix(static_cast<size_t>(written));
     }
@@ -337,9 +332,8 @@ Result<void> LSPServerInstance::send_message(std::string_view json) {
 
 Result<std::string> LSPServerInstance::read_message(std::chrono::milliseconds timeout) {
     if (stdout_fd < 0) {
-        return std::unexpected(loom::utils::Error(
-            loom::utils::ErrorCode::unavailable,
-            "LSP server stdout is closed"));
+        return std::unexpected(
+            loom::utils::Error(loom::utils::ErrorCode::unavailable, "LSP server stdout is closed"));
     }
 
     auto read_available = [&](std::string& buffer) -> Result<void> {
@@ -351,14 +345,13 @@ Result<std::string> LSPServerInstance::read_message(std::chrono::milliseconds ti
                 continue;
             }
             if (n == 0) {
-                return std::unexpected(loom::utils::Error(
-                    loom::utils::ErrorCode::unavailable,
-                    "LSP server closed stdout"));
+                return std::unexpected(loom::utils::Error(loom::utils::ErrorCode::unavailable,
+                                                          "LSP server closed stdout"));
             }
             if (errno == EAGAIN || errno == EWOULDBLOCK) return {};
-            return std::unexpected(loom::utils::Error(
-                loom::utils::ErrorCode::network_error,
-                std::string("Failed to read LSP response: ") + std::strerror(errno)));
+            return std::unexpected(loom::utils::Error(loom::utils::ErrorCode::network_error,
+                                                      std::string("Failed to read LSP response: ") +
+                                                          std::strerror(errno)));
         }
     };
 
@@ -369,13 +362,16 @@ Result<std::string> LSPServerInstance::read_message(std::chrono::milliseconds ti
         auto length_pos = header.find("Content-Length:");
         if (length_pos == std::string::npos) return std::nullopt;
         length_pos += std::string_view("Content-Length:").size();
-        while (length_pos < header.size() && header[length_pos] == ' ') ++length_pos;
+        while (length_pos < header.size() && header[length_pos] == ' ')
+            ++length_pos;
         auto length_end = length_pos;
-        while (length_end < header.size() && std::isdigit(static_cast<unsigned char>(header[length_end]))) {
+        while (length_end < header.size() &&
+               std::isdigit(static_cast<unsigned char>(header[length_end]))) {
             ++length_end;
         }
         if (length_end == length_pos) return std::nullopt;
-        auto length = static_cast<size_t>(std::stoull(header.substr(length_pos, length_end - length_pos)));
+        auto length =
+            static_cast<size_t>(std::stoull(header.substr(length_pos, length_end - length_pos)));
         auto content_start = header_end + 4;
         if (inbound_buffer.size() < content_start + length) return std::nullopt;
         auto message = inbound_buffer.substr(content_start, length);
@@ -393,18 +389,17 @@ Result<std::string> LSPServerInstance::read_message(std::chrono::milliseconds ti
         auto poll_timeout = static_cast<int>(std::max<int64_t>(1, remaining.count()));
         auto ready = ::poll(&fd, 1, poll_timeout);
         if (ready < 0) {
-            return std::unexpected(loom::utils::Error(
-                loom::utils::ErrorCode::network_error,
-                std::string("Failed to poll LSP response: ") + std::strerror(errno)));
+            return std::unexpected(loom::utils::Error(loom::utils::ErrorCode::network_error,
+                                                      std::string("Failed to poll LSP response: ") +
+                                                          std::strerror(errno)));
         }
         if (ready == 0) break;
         auto read_result = read_available(inbound_buffer);
         if (!read_result) return std::unexpected(read_result.error());
     }
 
-    return std::unexpected(loom::utils::Error(
-        loom::utils::ErrorCode::timeout,
-        "Timed out waiting for LSP response"));
+    return std::unexpected(
+        loom::utils::Error(loom::utils::ErrorCode::timeout, "Timed out waiting for LSP response"));
 }
 
 Result<void> LSPServerInstance::poll(std::chrono::milliseconds timeout) {
@@ -412,7 +407,8 @@ Result<void> LSPServerInstance::poll(std::chrono::milliseconds timeout) {
     while (std::chrono::steady_clock::now() < deadline) {
         auto remaining = std::chrono::duration_cast<std::chrono::milliseconds>(
             deadline - std::chrono::steady_clock::now());
-        auto message = read_message(std::min(std::chrono::milliseconds{50}, std::max(std::chrono::milliseconds{1}, remaining)));
+        auto message = read_message(std::min(std::chrono::milliseconds{50},
+                                             std::max(std::chrono::milliseconds{1}, remaining)));
         if (!message) {
             if (message.error().code() == loom::utils::ErrorCode::timeout) return {};
             return std::unexpected(message.error());
@@ -422,8 +418,7 @@ Result<void> LSPServerInstance::poll(std::chrono::milliseconds timeout) {
     return {};
 }
 
-uint64_t LSPServerInstance::on_notification(
-    std::string method, NotificationHandler handler) {
+uint64_t LSPServerInstance::on_notification(std::string method, NotificationHandler handler) {
     std::lock_guard lock(notification_handlers_mutex_);
     const uint64_t id = ++next_notification_id_;
     notification_handlers_.emplace_back(std::move(method), std::move(handler));
@@ -445,11 +440,9 @@ std::string LSPServerInstance::uri_encode(std::string_view value) {
     std::string out;
     out.reserve(value.size());
     for (unsigned char ch : value) {
-        bool safe =
-            (ch >= 'A' && ch <= 'Z') ||
-            (ch >= 'a' && ch <= 'z') ||
-            (ch >= '0' && ch <= '9') ||
-            ch == '-' || ch == '_' || ch == '.' || ch == '~' || ch == '/';
+        bool safe = (ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') ||
+                    (ch >= '0' && ch <= '9') || ch == '-' || ch == '_' || ch == '.' || ch == '~' ||
+                    ch == '/';
         if (safe) {
             out.push_back(static_cast<char>(ch));
         } else {
@@ -470,7 +463,8 @@ std::string LSPServerInstance::build_initialize_params() const {
     loom::utils::json::JsonMutDoc doc;
     auto root = doc.object();
 
-    auto workspace_path = config.workspace_folder.value_or(std::filesystem::current_path().string());
+    auto workspace_path =
+        config.workspace_folder.value_or(std::filesystem::current_path().string());
     auto workspace_uri = path_to_file_uri(workspace_path);
     auto workspace_name = std::filesystem::path(workspace_path).filename().string();
     if (workspace_name.empty()) {
@@ -483,9 +477,8 @@ std::string LSPServerInstance::build_initialize_params() const {
 
     auto initialization_options = doc.raw_json(
         config.initialization_options_json.empty() ? "{}" : config.initialization_options_json);
-    root.add(
-        "initializationOptions",
-        initialization_options.valid() ? initialization_options : doc.object());
+    root.add("initializationOptions",
+             initialization_options.valid() ? initialization_options : doc.object());
 
     auto workspace_folders = doc.array();
     auto workspace_folder = doc.object();
@@ -659,4 +652,4 @@ void LSPServerInstance::handle_notification(const std::string& json) {
     }
 }
 
-} // namespace loom::services::lsp
+}  // namespace loom::services::lsp

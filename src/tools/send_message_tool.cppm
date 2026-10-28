@@ -6,7 +6,6 @@ export module loom.tools.send_message;
 
 import std;
 
-
 export namespace loom::tools {
 
 // Error types for send message operations
@@ -23,15 +22,24 @@ enum class SendMessageError {
 
 constexpr auto format_error(SendMessageError err) -> std::string_view {
     switch (err) {
-        case SendMessageError::TargetEmpty:    return "Target agent ID is empty";
-        case SendMessageError::MessageEmpty:   return "Message content is empty";
-        case SendMessageError::TargetNotFound: return "Target agent not found";
-        case SendMessageError::QueueFull:      return "Message queue is full";
-        case SendMessageError::DeliveryFailed: return "Message delivery failed";
-        case SendMessageError::Timeout:        return "Message delivery timed out";
-        case SendMessageError::InvalidFormat:  return "Invalid message format";
-        case SendMessageError::SelfMessage:    return "Cannot send message to self";
-        default:                               return "Unknown send message error";
+    case SendMessageError::TargetEmpty:
+        return "Target agent ID is empty";
+    case SendMessageError::MessageEmpty:
+        return "Message content is empty";
+    case SendMessageError::TargetNotFound:
+        return "Target agent not found";
+    case SendMessageError::QueueFull:
+        return "Message queue is full";
+    case SendMessageError::DeliveryFailed:
+        return "Message delivery failed";
+    case SendMessageError::Timeout:
+        return "Message delivery timed out";
+    case SendMessageError::InvalidFormat:
+        return "Invalid message format";
+    case SendMessageError::SelfMessage:
+        return "Cannot send message to self";
+    default:
+        return "Unknown send message error";
     }
 }
 
@@ -45,11 +53,16 @@ enum class MessagePriority {
 
 constexpr auto message_priority_name(MessagePriority p) -> std::string_view {
     switch (p) {
-        case MessagePriority::Low:    return "low";
-        case MessagePriority::Normal: return "normal";
-        case MessagePriority::High:   return "high";
-        case MessagePriority::Urgent: return "urgent";
-        default:                      return "unknown";
+    case MessagePriority::Low:
+        return "low";
+    case MessagePriority::Normal:
+        return "normal";
+    case MessagePriority::High:
+        return "high";
+    case MessagePriority::Urgent:
+        return "urgent";
+    default:
+        return "unknown";
     }
 }
 
@@ -63,11 +76,16 @@ enum class DeliveryStatus {
 
 constexpr auto delivery_status_name(DeliveryStatus s) -> std::string_view {
     switch (s) {
-        case DeliveryStatus::Queued:    return "queued";
-        case DeliveryStatus::Delivered: return "delivered";
-        case DeliveryStatus::Read:      return "read";
-        case DeliveryStatus::Failed:    return "failed";
-        default:                        return "unknown";
+    case DeliveryStatus::Queued:
+        return "queued";
+    case DeliveryStatus::Delivered:
+        return "delivered";
+    case DeliveryStatus::Read:
+        return "read";
+    case DeliveryStatus::Failed:
+        return "failed";
+    default:
+        return "unknown";
     }
 }
 
@@ -119,6 +137,7 @@ public:
     }
 
     [[nodiscard]] size_t size() const { return messages_.size(); }
+
     [[nodiscard]] bool empty() const { return messages_.empty(); }
 
     // Get all pending messages (non-destructive)
@@ -150,9 +169,7 @@ public:
     }
 
     // Unregister an agent
-    void unregister_agent(const std::string& agent_id) {
-        queues_.erase(agent_id);
-    }
+    void unregister_agent(const std::string& agent_id) { queues_.erase(agent_id); }
 
     // Route a message to target agent's queue
     auto route(AgentMessage msg) -> std::expected<DeliveryConfirmation, SendMessageError> {
@@ -165,12 +182,10 @@ public:
         auto enqueue_result = it->second->enqueue(std::move(msg));
         if (!enqueue_result) return std::unexpected(enqueue_result.error());
 
-        return DeliveryConfirmation{
-            .message_id = msg_id,
-            .status = DeliveryStatus::Delivered,
-            .timestamp = std::chrono::system_clock::now(),
-            .error_detail = std::nullopt
-        };
+        return DeliveryConfirmation{.message_id = msg_id,
+                                    .status = DeliveryStatus::Delivered,
+                                    .timestamp = std::chrono::system_clock::now(),
+                                    .error_detail = std::nullopt};
     }
 
     // Get queue for an agent
@@ -193,24 +208,24 @@ private:
 class SendMessageTool {
 public:
     static constexpr std::string_view name = "send_message";
-    static constexpr std::string_view description = "Send a message to another agent for coordination";
+    static constexpr std::string_view description =
+        "Send a message to another agent for coordination";
     static constexpr size_t kMaxMessageSize = 100 * 1024;  // 100KB
 
     explicit SendMessageTool(std::string self_agent_id = "main")
-        : self_id_(std::move(self_agent_id))
-    {
+        : self_id_(std::move(self_agent_id)) {
         // Ensure self is registered
         MessageRouter::instance().register_agent(self_id_);
     }
 
     // Validate message before sending
     auto validate(const std::string& target, const std::string& content) const
-        -> std::expected<void, SendMessageError>
-    {
+        -> std::expected<void, SendMessageError> {
         if (target.empty()) return std::unexpected(SendMessageError::TargetEmpty);
         if (content.empty()) return std::unexpected(SendMessageError::MessageEmpty);
         if (target == self_id_) return std::unexpected(SendMessageError::SelfMessage);
-        if (content.size() > kMaxMessageSize) return std::unexpected(SendMessageError::InvalidFormat);
+        if (content.size() > kMaxMessageSize)
+            return std::unexpected(SendMessageError::InvalidFormat);
         return {};
     }
 
@@ -218,24 +233,21 @@ public:
     auto execute(std::string target, std::string content,
                  MessagePriority priority = MessagePriority::Normal,
                  std::optional<std::string> reply_to = std::nullopt)
-        -> std::expected<DeliveryConfirmation, SendMessageError>
-    {
+        -> std::expected<DeliveryConfirmation, SendMessageError> {
         if (auto valid = validate(target, content); !valid) {
             return std::unexpected(valid.error());
         }
 
-        AgentMessage msg{
-            .id = generate_message_id(),
-            .from_agent = self_id_,
-            .to_agent = target,
-            .content = std::move(content),
-            .priority = priority,
-            .status = DeliveryStatus::Queued,
-            .sent_at = std::chrono::system_clock::now(),
-            .delivered_at = std::nullopt,
-            .reply_to = std::move(reply_to),
-            .metadata = {}
-        };
+        AgentMessage msg{.id = generate_message_id(),
+                         .from_agent = self_id_,
+                         .to_agent = target,
+                         .content = std::move(content),
+                         .priority = priority,
+                         .status = DeliveryStatus::Queued,
+                         .sent_at = std::chrono::system_clock::now(),
+                         .delivered_at = std::nullopt,
+                         .reply_to = std::move(reply_to),
+                         .metadata = {}};
 
         return MessageRouter::instance().route(std::move(msg));
     }
@@ -269,7 +281,8 @@ public:
     }},
     "required": ["target_agent", "content"]
   }}
-}})", name, description);
+}})",
+                           name, description);
     }
 
 private:
@@ -281,4 +294,4 @@ private:
     }
 };
 
-} // namespace loom::tools
+}  // namespace loom::tools

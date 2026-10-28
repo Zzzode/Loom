@@ -19,16 +19,21 @@ protected:
     void SetUp() override {
         // Each discovered test runs in its own process; a unique directory also
         // isolates concurrent presets and keeps artifacts out of the checkout.
-        root_ = fs::temp_directory_path() / ("loom-pare-test-" +
-            std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
+        root_ = fs::temp_directory_path() /
+                ("loom-pare-test-" +
+                 std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
         fs::create_directories(root_);
         fs::current_path(root_);
         Write("cases.json", R"({"version":"2.0","cases":[
             {"id":"first","name":"First","prompt":"Reply ok","assertion":{"type":"exact","expected":"ok"}},
             {"id":"second","name":"Second","prompt":"Reply ok again","assertion":{"type":"exact","expected":"ok"}}
         ]})");
-        Write("baseline.sh", "printf '%s\\n' '{\"result\":\"ok\",\"usage\":{\"input_tokens\":180,\"output_tokens\":20}}'\n");
-        Write("candidate.sh", "printf '%s\\n' '{\"result\":\"ok\",\"usage\":{\"input_tokens\":80,\"output_tokens\":20}}'\n");
+        Write("baseline.sh",
+              "printf '%s\\n' "
+              "'{\"result\":\"ok\",\"usage\":{\"input_tokens\":180,\"output_tokens\":20}}'\n");
+        Write("candidate.sh",
+              "printf '%s\\n' "
+              "'{\"result\":\"ok\",\"usage\":{\"input_tokens\":80,\"output_tokens\":20}}'\n");
     }
 
     void TearDown() override {
@@ -103,16 +108,21 @@ TEST_F(PareBenchmark, CliPrintsUnversionedEvaluationMetrics) {
     Write("config.json", R"({"cases":"cases.json","runs_per_case":2,"workspace_mode":"current",
         "baseline":{"command":"/bin/sh","args":["baseline.sh"]},
         "candidate":{"command":"/bin/sh","args":["candidate.sh"]}})");
+
     struct CaptureOutput {
         std::ostringstream output;
         std::streambuf* saved = std::cout.rdbuf(output.rdbuf());
+
         ~CaptureOutput() { std::cout.rdbuf(saved); }
     } capture;
+
     const char* argv[] = {"pare-benchmark", "--config", "config.json"};
     EXPECT_EQ(pare::cli_main(3, argv), 0);
     const auto output = capture.output.str();
-    EXPECT_NE(output.find("Evaluation metrics: runs_per_case=2 evaluated=2 skipped=0 unavailable=0"), std::string::npos);
+    EXPECT_NE(
+        output.find("Evaluation metrics: runs_per_case=2 evaluated=2 skipped=0 unavailable=0"),
+        std::string::npos);
     EXPECT_NE(output.find("weighted_token_reduction=50%"), std::string::npos);
     EXPECT_EQ(output.find("V2 metrics:"), std::string::npos);
 }
-} // namespace
+}  // namespace

@@ -25,9 +25,8 @@ bool TmuxBackend::is_running_inside() const {
 
 CreatePaneResult TmuxBackend::create_teammate_pane(std::string_view name, AgentColor color) {
     std::lock_guard lock(pane_creation_mutex_);
-    auto result = is_running_inside()
-        ? create_pane_with_leader(name, color)
-        : create_pane_external(name, color);
+    auto result = is_running_inside() ? create_pane_with_leader(name, color)
+                                      : create_pane_external(name, color);
     if (!result.pane_id.empty()) {
         set_pane_title(result.pane_id, name, color, !is_running_inside());
         set_pane_border_color(result.pane_id, color, !is_running_inside());
@@ -35,48 +34,36 @@ CreatePaneResult TmuxBackend::create_teammate_pane(std::string_view name, AgentC
     return result;
 }
 
-void TmuxBackend::send_command_to_pane(
-    const PaneId& pane_id,
-    std::string_view command,
-    bool use_external_session
-) {
+void TmuxBackend::send_command_to_pane(const PaneId& pane_id, std::string_view command,
+                                       bool use_external_session) {
     (void)use_external_session;
     if (pane_id.empty() || command.empty()) return;
     auto cmd = "tmux send-keys -t " + detail::shell_quote(pane_id) + " " +
-        detail::shell_quote(command) + " Enter >/dev/null 2>&1";
+               detail::shell_quote(command) + " Enter >/dev/null 2>&1";
     (void)detail::run_shell(cmd);
 }
 
-void TmuxBackend::set_pane_border_color(
-    const PaneId& pane_id,
-    AgentColor color,
-    bool use_external_session
-) {
+void TmuxBackend::set_pane_border_color(const PaneId& pane_id, AgentColor color,
+                                        bool use_external_session) {
     (void)use_external_session;
     if (pane_id.empty()) return;
-    auto cmd = "tmux select-pane -t " + detail::shell_quote(pane_id) +
-        " -P '" + std::string(get_tmux_color(color)) + "' >/dev/null 2>&1";
+    auto cmd = "tmux select-pane -t " + detail::shell_quote(pane_id) + " -P '" +
+               std::string(get_tmux_color(color)) + "' >/dev/null 2>&1";
     (void)detail::run_shell(cmd);
 }
 
-void TmuxBackend::set_pane_title(
-    const PaneId& pane_id,
-    std::string_view name,
-    AgentColor color,
-    bool use_external_session
-) {
+void TmuxBackend::set_pane_title(const PaneId& pane_id, std::string_view name, AgentColor color,
+                                 bool use_external_session) {
     (void)color;
     (void)use_external_session;
     if (pane_id.empty()) return;
-    auto cmd = "tmux select-pane -t " + detail::shell_quote(pane_id) +
-        " -T " + detail::shell_quote(name) + " >/dev/null 2>&1";
+    auto cmd = "tmux select-pane -t " + detail::shell_quote(pane_id) + " -T " +
+               detail::shell_quote(name) + " >/dev/null 2>&1";
     (void)detail::run_shell(cmd);
 }
 
-void TmuxBackend::enable_pane_border_status(
-    std::optional<std::string_view> window_target,
-    bool use_external_session
-) {
+void TmuxBackend::enable_pane_border_status(std::optional<std::string_view> window_target,
+                                            bool use_external_session) {
     (void)use_external_session;
     std::string target = window_target ? " -t " + detail::shell_quote(*window_target) : "";
     (void)detail::run_shell("tmux set-option" + target + " pane-border-status top >/dev/null 2>&1");
@@ -97,9 +84,8 @@ bool TmuxBackend::kill_pane(const PaneId& pane_id, bool use_external_session) {
     return detail::run_shell(cmd) == 0;
 }
 
-std::optional<std::string> TmuxBackend::capture_pane_text(
-    const PaneId& pane_id, int tail_lines, bool use_external_session
-) {
+std::optional<std::string> TmuxBackend::capture_pane_text(const PaneId& pane_id, int tail_lines,
+                                                          bool use_external_session) {
     // TODO: external swarm sessions run on a -L loom-swarm-<pid> socket;
     // the current implementation shells out on the default socket
     // everywhere (see create_pane_external), so honor the same
@@ -115,20 +101,17 @@ std::optional<std::string> TmuxBackend::capture_pane_text(
 bool TmuxBackend::hide_pane(const PaneId& pane_id, bool use_external_session) {
     (void)use_external_session;
     if (pane_id.empty()) return false;
-    auto cmd = "tmux break-pane -d -s " + detail::shell_quote(pane_id) +
-        " -t " + detail::shell_quote(HIDDEN_SESSION_NAME) + " >/dev/null 2>&1";
+    auto cmd = "tmux break-pane -d -s " + detail::shell_quote(pane_id) + " -t " +
+               detail::shell_quote(HIDDEN_SESSION_NAME) + " >/dev/null 2>&1";
     return detail::run_shell(cmd) == 0;
 }
 
-bool TmuxBackend::show_pane(
-    const PaneId& pane_id,
-    std::string_view target_window_or_pane,
-    bool use_external_session
-) {
+bool TmuxBackend::show_pane(const PaneId& pane_id, std::string_view target_window_or_pane,
+                            bool use_external_session) {
     (void)use_external_session;
     if (pane_id.empty()) return false;
-    auto cmd = "tmux join-pane -s " + detail::shell_quote(pane_id) +
-        " -t " + detail::shell_quote(target_window_or_pane) + " >/dev/null 2>&1";
+    auto cmd = "tmux join-pane -s " + detail::shell_quote(pane_id) + " -t " +
+               detail::shell_quote(target_window_or_pane) + " >/dev/null 2>&1";
     return detail::run_shell(cmd) == 0;
 }
 
@@ -143,13 +126,12 @@ CreatePaneResult TmuxBackend::create_pane_with_leader(std::string_view name, Age
         detail::read_shell_output("tmux display-message -p '#{pane_id}' 2>/dev/null");
     if (leader_pane.empty()) return {};
 
-    const auto window_target =
-        detail::read_shell_output("tmux display-message -p '#{session_name}:#{window_id}' 2>/dev/null");
+    const auto window_target = detail::read_shell_output(
+        "tmux display-message -p '#{session_name}:#{window_id}' 2>/dev/null");
 
-    auto split = [&](std::string target, const std::string& flag,
-                     bool with_size) {
-        std::string cmd = "tmux split-window -t " + detail::shell_quote(target) +
-                          " " + flag + " -P -F '#{pane_id}'";
+    auto split = [&](std::string target, const std::string& flag, bool with_size) {
+        std::string cmd = "tmux split-window -t " + detail::shell_quote(target) + " " + flag +
+                          " -P -F '#{pane_id}'";
         if (with_size) cmd += " -l 70%";
         cmd += " 2>/dev/null";
         return detail::read_shell_output(cmd);
@@ -157,18 +139,22 @@ CreatePaneResult TmuxBackend::create_pane_with_leader(std::string_view name, Age
 
     // Panes in the current window; pane 0 is the leader, the rest are
     // teammates already spawned.
-    auto list_raw = window_target.empty()
-        ? detail::read_shell_output("tmux list-panes -F '#{pane_id}' 2>/dev/null")
-        : detail::read_shell_output("tmux list-panes -t " +
-                                    detail::shell_quote(window_target) +
-                                    " -F '#{pane_id}' 2>/dev/null");
+    auto list_raw =
+        window_target.empty()
+            ? detail::read_shell_output("tmux list-panes -F '#{pane_id}' 2>/dev/null")
+            : detail::read_shell_output("tmux list-panes -t " + detail::shell_quote(window_target) +
+                                        " -F '#{pane_id}' 2>/dev/null");
     std::vector<std::string> panes;
     {
         std::string acc;
         for (char c : list_raw) {
             if (c == '\n') {
-                if (!acc.empty()) { panes.push_back(acc); acc.clear(); }
-            } else acc += c;
+                if (!acc.empty()) {
+                    panes.push_back(acc);
+                    acc.clear();
+                }
+            } else
+                acc += c;
         }
         if (!acc.empty()) panes.push_back(acc);
     }
@@ -181,8 +167,7 @@ CreatePaneResult TmuxBackend::create_pane_with_leader(std::string_view name, Age
         const std::size_t teammate_count = panes.size() - 1;  // exclude leader
         const bool split_vertical = (teammate_count % 2 == 1);
         const std::size_t target_index =
-            std::min(static_cast<std::size_t>((teammate_count - 1) / 2),
-                     panes.size() - 1);
+            std::min(static_cast<std::size_t>((teammate_count - 1) / 2), panes.size() - 1);
         pane = split(panes[target_index], split_vertical ? "-v" : "-h",
                      /*with_size=*/false);
     }
@@ -224,8 +209,8 @@ CreatePaneResult TmuxBackend::create_pane_external(std::string_view name, AgentC
     std::size_t pane_count = 0;
     std::vector<std::string> existing_panes;
     if (session_exists) {
-        const auto windows = split_lines(detail::read_shell_output(
-            detail::tmux_list_windows_argv(session).join_shell()));
+        const auto windows = split_lines(
+            detail::read_shell_output(detail::tmux_list_windows_argv(session).join_shell()));
         for (const auto& line : windows) {
             if (line == window) window_exists = true;
         }
@@ -237,19 +222,19 @@ CreatePaneResult TmuxBackend::create_pane_external(std::string_view name, AgentC
     }
 
     // 3. Pure re-attach decision.
-    const auto plan = detail::plan_external_swarm_view(
-        session_exists, window_exists, pane_count, first_pane_used_external_);
+    const auto plan = detail::plan_external_swarm_view(session_exists, window_exists, pane_count,
+                                                       first_pane_used_external_);
 
     // 4. Create the missing session/window; both print the fresh pane id via
     // -P -F '#{pane_id}'. Reusing an existing window starts from pane 0.
     std::string pane;
     if (plan.action == detail::ExternalSessionAction::CreateSession) {
-        pane = detail::read_shell_output(
-            detail::tmux_new_session_argv(session, window).join_shell());
+        pane =
+            detail::read_shell_output(detail::tmux_new_session_argv(session, window).join_shell());
         pane_count = 1;
     } else if (plan.action == detail::ExternalSessionAction::CreateWindow) {
-        pane = detail::read_shell_output(
-            detail::tmux_new_window_argv(session, window).join_shell());
+        pane =
+            detail::read_shell_output(detail::tmux_new_window_argv(session, window).join_shell());
         pane_count = 1;
     } else if (!existing_panes.empty()) {
         pane = existing_panes.front();
@@ -266,13 +251,12 @@ CreatePaneResult TmuxBackend::create_pane_external(std::string_view name, AgentC
     } else {
         // External windows have no leader pane: every live pane is a teammate,
         // so index against the full pane list (TS createTeammatePaneExternal).
-        auto panes = split_lines(detail::read_shell_output(
-            detail::tmux_list_panes_argv(window_target).join_shell()));
+        auto panes = split_lines(
+            detail::read_shell_output(detail::tmux_list_panes_argv(window_target).join_shell()));
         if (panes.empty()) return {};
         pane_count = panes.size();
         const bool vertical = (pane_count % 2 == 1);
-        const std::size_t target_index =
-            std::min((pane_count - 1) / 2, pane_count - 1);
+        const std::size_t target_index = std::min((pane_count - 1) / 2, pane_count - 1);
         pane = detail::read_shell_output(
             detail::tmux_split_window_argv(panes[target_index], vertical).join_shell());
         if (pane.empty()) return {};
@@ -283,27 +267,37 @@ CreatePaneResult TmuxBackend::create_pane_external(std::string_view name, AgentC
 }
 
 void TmuxBackend::rebalance_with_leader(std::string_view window_target) {
-    auto cmd = "tmux select-layout -t " + detail::shell_quote(window_target) + " even-horizontal >/dev/null 2>&1";
+    auto cmd = "tmux select-layout -t " + detail::shell_quote(window_target) +
+               " even-horizontal >/dev/null 2>&1";
     (void)detail::run_shell(cmd);
 }
 
 void TmuxBackend::rebalance_tiled(std::string_view window_target) {
-    auto cmd = "tmux select-layout -t " + detail::shell_quote(window_target) + " tiled >/dev/null 2>&1";
+    auto cmd =
+        "tmux select-layout -t " + detail::shell_quote(window_target) + " tiled >/dev/null 2>&1";
     (void)detail::run_shell(cmd);
 }
 
 std::string_view TmuxBackend::get_tmux_color(AgentColor color) {
     switch (color) {
-        case AgentColor::Red: return "red";
-        case AgentColor::Blue: return "blue";
-        case AgentColor::Green: return "green";
-        case AgentColor::Yellow: return "yellow";
-        case AgentColor::Purple: return "magenta";
-        case AgentColor::Orange: return "colour208";
-        case AgentColor::Pink: return "colour205";
-        case AgentColor::Cyan: return "cyan";
+    case AgentColor::Red:
+        return "red";
+    case AgentColor::Blue:
+        return "blue";
+    case AgentColor::Green:
+        return "green";
+    case AgentColor::Yellow:
+        return "yellow";
+    case AgentColor::Purple:
+        return "magenta";
+    case AgentColor::Orange:
+        return "colour208";
+    case AgentColor::Pink:
+        return "colour205";
+    case AgentColor::Cyan:
+        return "cyan";
     }
     return "white";
 }
 
-} // namespace loom::utils::swarm_backends
+}  // namespace loom::utils::swarm_backends

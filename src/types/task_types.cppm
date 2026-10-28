@@ -7,13 +7,13 @@
 // their canonical source of truth.
 module;
 
+#include <yyjson.h>
+
 #include <cctype>
+#include <cstddef>
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
-
-#include <yyjson.h>
-#include <cstddef>
 
 export module loom.task_types;
 
@@ -99,12 +99,18 @@ namespace detail {
 
 inline const char* status_str(TaskStatus s) {
     switch (s) {
-        case TaskStatus::Open: return "open";
-        case TaskStatus::InProgress: return "in_progress";
-        case TaskStatus::Done: return "done";
-        case TaskStatus::Blocked: return "blocked";
-        case TaskStatus::Cancelled: return "cancelled";
-        case TaskStatus::Archived: return "archived";
+    case TaskStatus::Open:
+        return "open";
+    case TaskStatus::InProgress:
+        return "in_progress";
+    case TaskStatus::Done:
+        return "done";
+    case TaskStatus::Blocked:
+        return "blocked";
+    case TaskStatus::Cancelled:
+        return "cancelled";
+    case TaskStatus::Archived:
+        return "archived";
     }
     return "open";
 }
@@ -121,10 +127,14 @@ inline TaskStatus status_from(std::string_view s) {
 
 inline const char* priority_str(TaskPriority p) {
     switch (p) {
-        case TaskPriority::Low: return "low";
-        case TaskPriority::Normal: return "normal";
-        case TaskPriority::High: return "high";
-        case TaskPriority::Critical: return "critical";
+    case TaskPriority::Low:
+        return "low";
+    case TaskPriority::Normal:
+        return "normal";
+    case TaskPriority::High:
+        return "high";
+    case TaskPriority::Critical:
+        return "critical";
     }
     return "normal";
 }
@@ -137,7 +147,7 @@ inline TaskPriority priority_from(std::string_view s) {
     return TaskPriority::Normal;
 }
 
-} // namespace detail
+}  // namespace detail
 
 inline std::string task_to_json(const Task& t) {
     loom::utils::json::JsonMutDoc doc;
@@ -148,13 +158,15 @@ inline std::string task_to_json(const Task& t) {
     root.add("description", doc.string(t.description));
     root.add("status", doc.string(detail::status_str(t.status)));
     root.add("priority", doc.string(detail::priority_str(t.priority)));
-    if (!t.assignee_agent_id.empty()) root.add("assignee_agent_id", doc.string(t.assignee_agent_id));
+    if (!t.assignee_agent_id.empty())
+        root.add("assignee_agent_id", doc.string(t.assignee_agent_id));
     if (!t.parent_id.empty()) root.add("parent_id", doc.string(t.parent_id));
 
     // subtasks
     {
         auto arr = doc.array();
-        for (const auto& s : t.subtask_ids) arr.append(doc.string(s));
+        for (const auto& s : t.subtask_ids)
+            arr.append(doc.string(s));
         root.add("subtask_ids", arr);
     }
 
@@ -166,7 +178,8 @@ inline std::string task_to_json(const Task& t) {
     // metadata
     {
         auto obj = doc.object();
-        for (const auto& [k, v] : t.metadata) obj.add(k, doc.string(v));
+        for (const auto& [k, v] : t.metadata)
+            obj.add(k, doc.string(v));
         root.add("metadata", obj);
     }
 
@@ -215,8 +228,7 @@ inline std::expected<Task, std::string> task_from_json(std::string_view s) {
 // Graph helper
 // ---------------------------------------------------------------------------
 
-inline bool is_descendant_of(const std::unordered_map<TaskId, Task>& index,
-                             const TaskId& parent,
+inline bool is_descendant_of(const std::unordered_map<TaskId, Task>& index, const TaskId& parent,
                              const TaskId& child) {
     if (parent == child) return false;
     std::unordered_set<std::string> seen;
@@ -224,7 +236,7 @@ inline bool is_descendant_of(const std::unordered_map<TaskId, Task>& index,
     while (!cur.empty()) {
         auto it = index.find(cur);
         if (it == index.end()) return false;
-        if (!seen.insert(cur).second) return false; // cycle guard
+        if (!seen.insert(cur).second) return false;  // cycle guard
         if (it->second.parent_id == parent) return true;
         cur = it->second.parent_id;
     }
@@ -239,9 +251,11 @@ inline std::optional<std::string> validate_task_create(const TaskCreateParams& p
     // Trim title for emptiness check.
     auto is_ws = [](unsigned char c) { return std::isspace(c) != 0; };
     size_t start = 0;
-    while (start < p.title.size() && is_ws(static_cast<unsigned char>(p.title[start]))) ++start;
+    while (start < p.title.size() && is_ws(static_cast<unsigned char>(p.title[start])))
+        ++start;
     size_t end = p.title.size();
-    while (end > start && is_ws(static_cast<unsigned char>(p.title[end - 1]))) --end;
+    while (end > start && is_ws(static_cast<unsigned char>(p.title[end - 1])))
+        --end;
     if (start == end) return "task title must not be empty";
     if ((end - start) > 1024) return "task title too long (max 1024 chars)";
     if (p.description.size() > 1024 * 1024) return "task description too large";
@@ -265,7 +279,8 @@ inline std::string generate_task_id() {
     static thread_local std::mt19937 rng(std::random_device{}());
     std::uniform_int_distribution<int> dist(0, 255);
     unsigned char buf[kLen / 2];
-    for (size_t i = 0; i < sizeof(buf); ++i) buf[i] = static_cast<unsigned char>(dist(rng));
+    for (size_t i = 0; i < sizeof(buf); ++i)
+        buf[i] = static_cast<unsigned char>(dist(rng));
 #endif
 
     std::string out;
@@ -277,4 +292,4 @@ inline std::string generate_task_id() {
     return out;
 }
 
-} // namespace loom::tasks
+}  // namespace loom::tasks

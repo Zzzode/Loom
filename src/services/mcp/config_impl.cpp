@@ -51,8 +51,8 @@ void append_string_map(JsonVal value, std::map<std::string, std::string>& out) {
     return TransportType::Stdio;
 }
 
-[[nodiscard]] std::optional<ServerConfig>
-parse_single_server(std::string name, JsonVal value, ConfigScope scope) {
+[[nodiscard]] std::optional<ServerConfig> parse_single_server(std::string name, JsonVal value,
+                                                              ConfigScope scope) {
     if (!value.is_obj()) return std::nullopt;
 
     ServerConfig config;
@@ -63,31 +63,33 @@ parse_single_server(std::string name, JsonVal value, ConfigScope scope) {
     config.transport = *transport;
     config.command = json_string(value, "command").value_or(std::string{});
     config.url = json_string(value, "url").value_or(std::string{});
-	config.headers_helper = json_string(value, "headersHelper")
-	    .or_else([&] { return json_string(value, "headers_helper"); })
-	    .value_or(std::string{});
-	append_string_array(value.get("args"), config.args);
-	append_string_map(value.get("env"), config.env);
-	append_string_map(value.get("headers"), config.headers);
-	if (auto oauth = value.get("oauth"); oauth.is_obj()) {
-	    McpOAuthConfig oauth_config;
-	    oauth_config.auth_server_metadata_url = json_string(oauth, "authServerMetadataUrl")
-	        .or_else([&] { return json_string(oauth, "auth_server_metadata_url"); });
-	    if (auto callback_port = oauth.get("callbackPort"); callback_port.is_num()) {
-	        oauth_config.callback_port = static_cast<int>(callback_port.as_int());
-	    } else if (auto callback_port = oauth.get("callback_port"); callback_port.is_num()) {
-	        oauth_config.callback_port = static_cast<int>(callback_port.as_int());
-	    }
-	    oauth_config.client_id = json_string(oauth, "clientId")
-	        .or_else([&] { return json_string(oauth, "client_id"); });
-	    if (auto xaa = oauth.get("xaa"); xaa.is_bool()) {
-	        oauth_config.xaa = xaa.as_bool();
-	    }
-	    config.oauth = std::move(oauth_config);
-	}
-	if (auto timeout = value.get("timeout"); timeout.is_num()) {
-	    config.timeout = std::chrono::milliseconds{timeout.as_int()};
-	}
+    config.headers_helper = json_string(value, "headersHelper")
+                                .or_else([&] { return json_string(value, "headers_helper"); })
+                                .value_or(std::string{});
+    append_string_array(value.get("args"), config.args);
+    append_string_map(value.get("env"), config.env);
+    append_string_map(value.get("headers"), config.headers);
+    if (auto oauth = value.get("oauth"); oauth.is_obj()) {
+        McpOAuthConfig oauth_config;
+        oauth_config.auth_server_metadata_url =
+            json_string(oauth, "authServerMetadataUrl").or_else([&] {
+                return json_string(oauth, "auth_server_metadata_url");
+            });
+        if (auto callback_port = oauth.get("callbackPort"); callback_port.is_num()) {
+            oauth_config.callback_port = static_cast<int>(callback_port.as_int());
+        } else if (auto callback_port = oauth.get("callback_port"); callback_port.is_num()) {
+            oauth_config.callback_port = static_cast<int>(callback_port.as_int());
+        }
+        oauth_config.client_id =
+            json_string(oauth, "clientId").or_else([&] { return json_string(oauth, "client_id"); });
+        if (auto xaa = oauth.get("xaa"); xaa.is_bool()) {
+            oauth_config.xaa = xaa.as_bool();
+        }
+        config.oauth = std::move(oauth_config);
+    }
+    if (auto timeout = value.get("timeout"); timeout.is_num()) {
+        config.timeout = std::chrono::milliseconds{timeout.as_int()};
+    }
     if (auto auto_start = value.get("autoStart"); auto_start.is_bool()) {
         config.auto_start = auto_start.as_bool();
     }
@@ -104,18 +106,21 @@ parse_single_server(std::string name, JsonVal value, ConfigScope scope) {
     return config;
 }
 
-} // namespace
+}  // namespace
 
 std::expected<void, std::string> ServerConfig::validate() const {
     if (name.empty()) {
         return std::unexpected("Server name is required");
     }
     if (transport == TransportType::Stdio && command.empty()) {
-        return std::unexpected(std::format("Server '{}': command is required for stdio transport", name));
+        return std::unexpected(
+            std::format("Server '{}': command is required for stdio transport", name));
     }
     if ((transport == TransportType::Sse || transport == TransportType::Http ||
-         transport == TransportType::StreamableHttp) && url.empty()) {
-        return std::unexpected(std::format("Server '{}': url is required for SSE/HTTP transport", name));
+         transport == TransportType::StreamableHttp) &&
+        url.empty()) {
+        return std::unexpected(
+            std::format("Server '{}': url is required for SSE/HTTP transport", name));
     }
     return {};
 }
@@ -183,8 +188,7 @@ ConfigParser::parse_file(const std::filesystem::path& path, ConfigScope scope) {
         return std::unexpected(ConfigError::PermissionDenied);
     }
 
-    std::string content((std::istreambuf_iterator<char>(file)),
-                        std::istreambuf_iterator<char>());
+    std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
 
     return parse_json(content, scope);
 }
@@ -236,10 +240,18 @@ std::expected<McpConfig, ConfigError> ConfigLoader::load_scope(ConfigScope scope
     std::filesystem::path path;
 
     switch (scope) {
-        case ConfigScope::Global: path = ConfigPaths::global_config(); break;
-        case ConfigScope::User: path = ConfigPaths::user_config(); break;
-        case ConfigScope::Project: path = ConfigPaths::project_config(project_root_); break;
-        case ConfigScope::Local: path = ConfigPaths::local_config(project_root_); break;
+    case ConfigScope::Global:
+        path = ConfigPaths::global_config();
+        break;
+    case ConfigScope::User:
+        path = ConfigPaths::user_config();
+        break;
+    case ConfigScope::Project:
+        path = ConfigPaths::project_config(project_root_);
+        break;
+    case ConfigScope::Local:
+        path = ConfigPaths::local_config(project_root_);
+        break;
     }
 
     auto result = ConfigParser::parse_file(path, scope);
@@ -251,4 +263,4 @@ std::expected<McpConfig, ConfigError> ConfigLoader::load_scope(ConfigScope scope
     return config;
 }
 
-} // namespace loom::services::mcp
+}  // namespace loom::services::mcp

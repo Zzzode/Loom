@@ -21,14 +21,14 @@ import loom.teams.swarm.helpers;
 
 export namespace loom::tools::agent_color_manager {
 
-using loom::utils::swarm_backends::AgentColor;
 using loom::utils::swarm_backends::agent_color_name;
+using loom::utils::swarm_backends::AgentColor;
 using loom::utils::swarm_helpers::TeammateLayoutManager;
 
 /// The 8 named agent colors (same order as the TS `AGENT_COLORS` array).
 inline constexpr AgentColor AGENT_COLOR_PALETTE[] = {
-    AgentColor::Red,    AgentColor::Blue,   AgentColor::Green,  AgentColor::Yellow,
-    AgentColor::Purple, AgentColor::Orange, AgentColor::Pink,   AgentColor::Cyan,
+    AgentColor::Red,    AgentColor::Blue,   AgentColor::Green, AgentColor::Yellow,
+    AgentColor::Purple, AgentColor::Orange, AgentColor::Pink,  AgentColor::Cyan,
 };
 
 /// Number of entries in AGENT_COLOR_PALETTE.
@@ -38,15 +38,16 @@ inline constexpr size_t PALETTE_SIZE = sizeof(AGENT_COLOR_PALETTE) / sizeof(AGEN
 [[nodiscard]] inline std::optional<AgentColor> parse_color_name(std::string_view name) {
     std::string lower;
     lower.reserve(name.size());
-    for (unsigned char ch : name) lower.push_back(static_cast<char>(std::tolower(ch)));
-    if (lower == "red")    return AgentColor::Red;
-    if (lower == "blue")   return AgentColor::Blue;
-    if (lower == "green")  return AgentColor::Green;
+    for (unsigned char ch : name)
+        lower.push_back(static_cast<char>(std::tolower(ch)));
+    if (lower == "red") return AgentColor::Red;
+    if (lower == "blue") return AgentColor::Blue;
+    if (lower == "green") return AgentColor::Green;
     if (lower == "yellow") return AgentColor::Yellow;
     if (lower == "purple") return AgentColor::Purple;
     if (lower == "orange") return AgentColor::Orange;
-    if (lower == "pink")   return AgentColor::Pink;
-    if (lower == "cyan")   return AgentColor::Cyan;
+    if (lower == "pink") return AgentColor::Pink;
+    if (lower == "cyan") return AgentColor::Cyan;
     return std::nullopt;
 }
 
@@ -100,10 +101,7 @@ private:
 }
 
 /// Explicitly assign (or clear) a color for an agent type.
-inline void set_agent_color(
-    std::string_view agent_type,
-    std::optional<AgentColor> color
-) {
+inline void set_agent_color(std::string_view agent_type, std::optional<AgentColor> color) {
     AgentColorMap::set(agent_type, color);
 }
 
@@ -120,16 +118,24 @@ inline void set_agent_color(
 [[nodiscard]] inline std::string_view to_theme_color_key(AgentColor color) {
     // Matches the TypeScript `AGENT_COLOR_TO_THEME_COLOR` mapping.
     switch (color) {
-        case AgentColor::Red:    return "red_FOR_SUBAGENTS_ONLY";
-        case AgentColor::Blue:   return "blue_FOR_SUBAGENTS_ONLY";
-        case AgentColor::Green:  return "green_FOR_SUBAGENTS_ONLY";
-        case AgentColor::Yellow: return "yellow_FOR_SUBAGENTS_ONLY";
-        case AgentColor::Purple: return "purple_FOR_SUBAGENTS_ONLY";
-        case AgentColor::Orange: return "orange_FOR_SUBAGENTS_ONLY";
-        case AgentColor::Pink:   return "pink_FOR_SUBAGENTS_ONLY";
-        case AgentColor::Cyan:   return "cyan_FOR_SUBAGENTS_ONLY";
+    case AgentColor::Red:
+        return "red_FOR_SUBAGENTS_ONLY";
+    case AgentColor::Blue:
+        return "blue_FOR_SUBAGENTS_ONLY";
+    case AgentColor::Green:
+        return "green_FOR_SUBAGENTS_ONLY";
+    case AgentColor::Yellow:
+        return "yellow_FOR_SUBAGENTS_ONLY";
+    case AgentColor::Purple:
+        return "purple_FOR_SUBAGENTS_ONLY";
+    case AgentColor::Orange:
+        return "orange_FOR_SUBAGENTS_ONLY";
+    case AgentColor::Pink:
+        return "pink_FOR_SUBAGENTS_ONLY";
+    case AgentColor::Cyan:
+        return "cyan_FOR_SUBAGENTS_ONLY";
     }
     return "default_FOR_SUBAGENTS_ONLY";
 }
 
-} // namespace loom::tools::agent_color_manager
+}  // namespace loom::tools::agent_color_manager

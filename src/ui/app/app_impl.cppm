@@ -10,7 +10,6 @@
 // those accessors and never see AppImpl.
 module;
 
-
 export module loom.ui.app.app:impl;
 
 import std;
@@ -26,12 +25,14 @@ namespace loom::ui {
 struct AppImpl {
     std::unique_ptr<ProgramStatusReporter> program_status;
     std::uint64_t program_status_generation = 0;
+
     struct UiActions {
         std::mutex mutex;
         std::vector<std::function<void()>> pending;
         std::function<void()> notify;
         bool closed = false;
     };
+
     // The shared handoff survives copied external callbacks. Closing it
     // makes those callbacks no-ops without exposing AppAdapter's lifetime.
     std::shared_ptr<UiActions> ui_actions = std::make_shared<UiActions>();
@@ -53,12 +54,11 @@ struct AppImpl {
     loom::vim::VimStateMachine vim_sm_;
 
     // Ctrl-C double-press handler (800ms window).
-    loom::hooks::ExitHandler exit_handler_{loom::hooks::ExitHandlerConfig{
-        .require_double_press = true,
-        .cleanup_timeout_ms = 5000,
-        .save_on_exit = true,
-        .double_press_window = std::chrono::milliseconds{800}}};
-
+    loom::hooks::ExitHandler exit_handler_{
+        loom::hooks::ExitHandlerConfig{.require_double_press = true,
+                                       .cleanup_timeout_ms = 5000,
+                                       .save_on_exit = true,
+                                       .double_press_window = std::chrono::milliseconds{800}}};
 };
 
 AppAdapter::UiDispatcher AppAdapter::ui_dispatcher() {
@@ -76,7 +76,8 @@ void AppAdapter::DrainUiActions() {
         std::lock_guard lk(impl_->ui_actions->mutex);
         pending.swap(impl_->ui_actions->pending);
     }
-    for (auto& action : pending) action();
+    for (auto& action : pending)
+        action();
 }
 
 void AppAdapter::CloseUiActions() {
@@ -104,13 +105,27 @@ std::optional<std::string> AppAdapter::vim_statusline_label() const {
     if (!impl_ || !impl_->vim_enabled_) return std::nullopt;
     std::string label;
     switch (impl_->vim_sm_.get_mode()) {
-        case loom::vim::VimMode::Normal:     label = "NORMAL"; break;
-        case loom::vim::VimMode::Insert:     label = "INSERT"; break;
-        case loom::vim::VimMode::Visual:     label = "VISUAL"; break;
-        case loom::vim::VimMode::VisualLine: label = "VISUAL LINE"; break;
-        case loom::vim::VimMode::Command:    label = "COMMAND"; break;
-        case loom::vim::VimMode::Replace:    label = "REPLACE"; break;
-        default:                           label = "INSERT"; break;
+    case loom::vim::VimMode::Normal:
+        label = "NORMAL";
+        break;
+    case loom::vim::VimMode::Insert:
+        label = "INSERT";
+        break;
+    case loom::vim::VimMode::Visual:
+        label = "VISUAL";
+        break;
+    case loom::vim::VimMode::VisualLine:
+        label = "VISUAL LINE";
+        break;
+    case loom::vim::VimMode::Command:
+        label = "COMMAND";
+        break;
+    case loom::vim::VimMode::Replace:
+        label = "REPLACE";
+        break;
+    default:
+        label = "INSERT";
+        break;
     }
     return label;
 }
@@ -125,8 +140,7 @@ void AppAdapter::reset_exit_handler() {
 }
 
 bool AppAdapter::handle_ctrl_c() {
-    return impl_ && impl_->exit_handler_.handle_signal(
-                        loom::hooks::ExitReason::ctrl_c);
+    return impl_ && impl_->exit_handler_.handle_signal(loom::hooks::ExitReason::ctrl_c);
 }
 
 // ── AppStore accessors (keep AppStore/AppState out of the interface) ────────
@@ -146,16 +160,24 @@ void AppImplDeleter::operator()(AppImpl* p) const noexcept {
 
 // Type-erased collaborator accessors (casts live in the impl units that
 // already import the owning modules).
-void* AppAdapter::engine_raw() const noexcept { return impl_ ? impl_->engine_ : nullptr; }
-void* AppAdapter::lifecycle_hooks_raw() const noexcept { return impl_ ? impl_->lifecycle_hooks_ : nullptr; }
-void* AppAdapter::cmd_registry_raw() const noexcept { return impl_ ? impl_->cmd_registry_ : nullptr; }
+void* AppAdapter::engine_raw() const noexcept {
+    return impl_ ? impl_->engine_ : nullptr;
+}
+
+void* AppAdapter::lifecycle_hooks_raw() const noexcept {
+    return impl_ ? impl_->lifecycle_hooks_ : nullptr;
+}
+
+void* AppAdapter::cmd_registry_raw() const noexcept {
+    return impl_ ? impl_->cmd_registry_ : nullptr;
+}
+
 std::filesystem::path AppAdapter::sessions_dir() const noexcept {
     return impl_ ? impl_->sessions_dir_ : loom::constants::paths::sessions_dir();
 }
 
 // Construct the backing state. Called from the out-of-line constructor.
-void AppAdapter::construct_impl(void* engine, void* lifecycle_hooks,
-                                void* cmd_registry,
+void AppAdapter::construct_impl(void* engine, void* lifecycle_hooks, void* cmd_registry,
                                 std::optional<std::filesystem::path> sessions_dir) {
     impl_.reset(new AppImpl());
     impl_->ui_actions->notify = [this] { PostRenderEvent(); };

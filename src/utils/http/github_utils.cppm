@@ -1,10 +1,11 @@
 module;
 
-#include <cstdio>
+#include <httplib.h>
+
 #include <cstddef>
 #include <cstdint>
+#include <cstdio>
 #include <cstdlib>
-#include <httplib.h>
 
 export module loom.net.http.github_utils;
 
@@ -21,14 +22,17 @@ namespace github_detail {
     std::string output;
     FILE* pipe = loom::utils::bash::popen_spawn(std::string(command).c_str());
     if (!pipe) return {};
-    while (fgets(buffer.data(), static_cast<int>(buffer.size()), pipe) != nullptr) output += buffer.data();
+    while (fgets(buffer.data(), static_cast<int>(buffer.size()), pipe) != nullptr)
+        output += buffer.data();
     (void)loom::utils::bash::pclose_spawn(pipe);
-    while (!output.empty() && (output.back() == '\n' || output.back() == '\r')) output.pop_back();
+    while (!output.empty() && (output.back() == '\n' || output.back() == '\r'))
+        output.pop_back();
     return output;
 }
 
 [[nodiscard]] inline std::optional<std::string> parse_repo_full_name(std::string remote) {
-    while (!remote.empty() && (remote.back() == '\n' || remote.back() == '\r')) remote.pop_back();
+    while (!remote.empty() && (remote.back() == '\n' || remote.back() == '\r'))
+        remote.pop_back();
     auto strip_suffix = [](std::string s) {
         if (s.ends_with(".git")) s.resize(s.size() - 4);
         return s;
@@ -53,26 +57,28 @@ struct ApiResponse {
     std::string body;
     std::string link_header;
 
-    [[nodiscard]] bool is_ok() const {
-        return status >= 200 && status < 300;
-    }
+    [[nodiscard]] bool is_ok() const { return status >= 200 && status < 300; }
 };
 
-[[nodiscard]] inline std::optional<std::string> next_path_from_link_header(std::string_view link_header) {
+[[nodiscard]] inline std::optional<std::string>
+next_path_from_link_header(std::string_view link_header) {
     std::size_t start = 0;
     while (start < link_header.size()) {
         auto end = link_header.find(',', start);
         if (end == std::string_view::npos) end = link_header.size();
         auto part = link_header.substr(start, end - start);
-        if (part.find("rel=\"next\"") != std::string_view::npos || part.find("rel=next") != std::string_view::npos) {
+        if (part.find("rel=\"next\"") != std::string_view::npos ||
+            part.find("rel=next") != std::string_view::npos) {
             auto left = part.find('<');
             auto right = part.find('>', left == std::string_view::npos ? 0 : left + 1);
-            if (left != std::string_view::npos && right != std::string_view::npos && right > left + 1) {
+            if (left != std::string_view::npos && right != std::string_view::npos &&
+                right > left + 1) {
                 std::string url(part.substr(left + 1, right - left - 1));
                 if (url.starts_with('/')) return url;
 
                 auto base = api_base_url();
-                while (!base.empty() && base.back() == '/') base.pop_back();
+                while (!base.empty() && base.back() == '/')
+                    base.pop_back();
                 if (url.starts_with(base)) {
                     auto path = url.substr(base.size());
                     return path.empty() ? std::string("/") : path;
@@ -97,12 +103,11 @@ struct ApiResponse {
     };
 }
 
-[[nodiscard]] inline std::expected<ApiResponse, std::string> get_api(
-    std::string_view path,
-    std::string_view token
-) {
+[[nodiscard]] inline std::expected<ApiResponse, std::string> get_api(std::string_view path,
+                                                                     std::string_view token) {
     auto base = api_base_url();
-    while (!base.empty() && base.back() == '/') base.pop_back();
+    while (!base.empty() && base.back() == '/')
+        base.pop_back();
     httplib::Client client(base);
     client.set_connection_timeout(5, 0);
     client.set_read_timeout(5, 0);
@@ -117,7 +122,7 @@ struct ApiResponse {
     };
 }
 
-} // namespace github_detail
+}  // namespace github_detail
 
 enum class GitHubAuthStatus { authenticated, token_expired, not_configured, rate_limited };
 
@@ -129,7 +134,7 @@ struct GitHubUser {
 };
 
 struct GitHubRepo {
-    std::string full_name;       // owner/repo
+    std::string full_name;  // owner/repo
     std::string default_branch;
     bool is_fork{false};
     bool is_private{false};
@@ -138,7 +143,7 @@ struct GitHubRepo {
 struct PullRequest {
     int number;
     std::string title;
-    std::string state;           // open, closed, merged
+    std::string state;  // open, closed, merged
     std::string head_branch;
     std::string base_branch;
     std::string author;
@@ -165,14 +170,15 @@ namespace github_detail {
     return GitHubAuthStatus::authenticated;
 }
 
-    [[nodiscard]] inline std::optional<PrComment> parse_issue_comment(json::JsonVal item) {
+[[nodiscard]] inline std::optional<PrComment> parse_issue_comment(json::JsonVal item) {
     if (!item.is_obj()) return std::nullopt;
     auto id = item.get("id");
     auto body = item.get("body");
     if (!id.is_num() || !body.is_str()) return std::nullopt;
     auto user = item.get("user");
     std::string author = "unknown";
-    if (user.is_obj() && user.get("login").is_str()) author = std::string(user.get("login").as_str());
+    if (user.is_obj() && user.get("login").is_str())
+        author = std::string(user.get("login").as_str());
     return PrComment{
         .id = static_cast<int>(id.as_int()),
         .author = std::move(author),
@@ -193,7 +199,7 @@ namespace github_detail {
     if (line.is_num()) parsed->line = static_cast<int>(line.as_int());
     return parsed;
 }
-} // namespace github_detail
+}  // namespace github_detail
 
 class GitHubUtils {
     std::string token_;
@@ -209,13 +215,15 @@ class GitHubUtils {
         return {};
     }
 
-    [[nodiscard]] auto get_api(std::string_view path) -> std::expected<github_detail::ApiResponse, std::string> {
+    [[nodiscard]] auto get_api(std::string_view path)
+        -> std::expected<github_detail::ApiResponse, std::string> {
         if (auto auth = ensure_auth(); !auth) return std::unexpected(auth.error());
         auto response = github_detail::get_api(path, token_);
         if (!response) return std::unexpected(response.error());
         if (!response->is_ok()) {
             auth_status_ = github_detail::auth_status_for_response(response->status);
-            return std::unexpected(std::format("GitHub API request failed with status {}", response->status));
+            return std::unexpected(
+                std::format("GitHub API request failed with status {}", response->status));
         }
         return *response;
     }
@@ -234,21 +242,26 @@ class GitHubUtils {
     }
 
 public:
-
     [[nodiscard]] auto check_auth() -> GitHubAuthStatus {
 
-        if (auto* t = std::getenv("GH_TOKEN"); t && t[0]) { token_ = t; auth_status_ = GitHubAuthStatus::authenticated; }
-        else if (auto* t2 = std::getenv("GITHUB_TOKEN"); t2 && t2[0]) { token_ = t2; auth_status_ = GitHubAuthStatus::authenticated; }
-        else { auth_status_ = GitHubAuthStatus::not_configured; }
+        if (auto* t = std::getenv("GH_TOKEN"); t && t[0]) {
+            token_ = t;
+            auth_status_ = GitHubAuthStatus::authenticated;
+        } else if (auto* t2 = std::getenv("GITHUB_TOKEN"); t2 && t2[0]) {
+            token_ = t2;
+            auth_status_ = GitHubAuthStatus::authenticated;
+        } else {
+            auth_status_ = GitHubAuthStatus::not_configured;
+        }
         return auth_status_;
     }
-    
 
     [[nodiscard]] auto get_current_user() -> std::expected<GitHubUser, std::string> {
         auto response = get_api("/user");
         if (!response) return std::unexpected(response.error());
         auto parsed = json::parse(response->body);
-        if (!parsed || !parsed->root().is_obj()) return std::unexpected("GitHub API returned invalid user JSON");
+        if (!parsed || !parsed->root().is_obj())
+            return std::unexpected("GitHub API returned invalid user JSON");
         auto root = parsed->root();
         auto login = root.get("login");
         if (!login.is_str() || login.as_str().empty()) {
@@ -257,33 +270,39 @@ public:
         GitHubUser user;
         user.login = std::string(login.as_str());
         auto name = root.get("name");
-        user.name = name.is_str() && !name.as_str().empty() ? std::string(name.as_str()) : user.login;
+        user.name =
+            name.is_str() && !name.as_str().empty() ? std::string(name.as_str()) : user.login;
         auto email = root.get("email");
         user.email = email.is_str() ? std::string(email.as_str()) : std::string{};
         auto avatar = root.get("avatar_url");
         user.avatar_url = avatar.is_str() ? std::string(avatar.as_str()) : std::string{};
         return user;
     }
-    
 
     [[nodiscard]] static auto detect_repo() -> std::optional<GitHubRepo> {
         auto remote = github_detail::run_command("git config --get remote.origin.url 2>/dev/null");
         auto full_name = github_detail::parse_repo_full_name(remote);
         if (!full_name) return std::nullopt;
-        auto branch = github_detail::run_command("git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null");
-        if (auto slash = branch.find('/'); slash != std::string::npos) branch = branch.substr(slash + 1);
+        auto branch = github_detail::run_command(
+            "git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null");
+        if (auto slash = branch.find('/'); slash != std::string::npos)
+            branch = branch.substr(slash + 1);
         if (branch.empty()) branch = "main";
         return GitHubRepo{.full_name = *full_name, .default_branch = branch};
     }
-    
 
     [[nodiscard]] auto get_current_pr() -> std::optional<PullRequest> {
         auto branch = github_detail::run_command("git rev-parse --abbrev-ref HEAD 2>/dev/null");
         if (branch.empty()) return std::nullopt;
         auto author = std::getenv("USER") ? std::getenv("USER") : "local";
-        return PullRequest{.number = 0, .title = "Local branch " + branch, .state = "local", .head_branch = branch, .base_branch = "", .author = author, .created_at = std::chrono::system_clock::now()};
+        return PullRequest{.number = 0,
+                           .title = "Local branch " + branch,
+                           .state = "local",
+                           .head_branch = branch,
+                           .base_branch = "",
+                           .author = author,
+                           .created_at = std::chrono::system_clock::now()};
     }
-    
 
     [[nodiscard]] auto get_pr_comments(int pr_number) -> std::vector<PrComment> {
         if (pr_number <= 0) return {};
@@ -296,30 +315,25 @@ public:
                 auto parsed = json::parse(response.body);
                 if (!parsed || !parsed->root().is_arr()) continue;
                 parsed->root().iter([&](json::JsonVal item) {
-                    auto comment = review_comments
-                        ? github_detail::parse_review_comment(item)
-                        : github_detail::parse_issue_comment(item);
+                    auto comment = review_comments ? github_detail::parse_review_comment(item)
+                                                   : github_detail::parse_issue_comment(item);
                     if (comment) comments.push_back(std::move(*comment));
                 });
             }
         };
 
-        append_comments(
-            std::format("/repos/{}/issues/{}/comments", repo->full_name, pr_number),
-            false);
-        append_comments(
-            std::format("/repos/{}/pulls/{}/comments", repo->full_name, pr_number),
-            true);
+        append_comments(std::format("/repos/{}/issues/{}/comments", repo->full_name, pr_number),
+                        false);
+        append_comments(std::format("/repos/{}/pulls/{}/comments", repo->full_name, pr_number),
+                        true);
         return comments;
     }
-    
+
     [[nodiscard]] auto is_authenticated() const -> bool {
         return auth_status_ == GitHubAuthStatus::authenticated;
     }
 
-    [[nodiscard]] auto auth_status() const -> GitHubAuthStatus {
-        return auth_status_;
-    }
+    [[nodiscard]] auto auth_status() const -> GitHubAuthStatus { return auth_status_; }
 };
 
-} // namespace loom::utils
+}  // namespace loom::utils

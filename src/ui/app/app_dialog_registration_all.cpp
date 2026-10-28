@@ -8,8 +8,7 @@ import loom.ui.dialogs.system;
 import loom.ui.dialogs.all_renderers;
 
 namespace loom::ui::app_dialogs {
-void register_all_dialog_renderers(
-    loom::ui::dialogs::system::DialogRendererRegistry& registry) {
+void register_all_dialog_renderers(loom::ui::dialogs::system::DialogRendererRegistry& registry) {
     loom::ui::dialogs::all_renderers::register_all_renderers(registry);
 }
 }  // namespace loom::ui::app_dialogs

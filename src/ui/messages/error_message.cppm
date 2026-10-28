@@ -8,12 +8,7 @@ export namespace loom::ui::messages {
 
 // ─── Error types ─────────────────────────────────────────────────────
 
-enum class ErrorSeverity {
-    Info,
-    Warning,
-    Error,
-    Fatal
-};
+enum class ErrorSeverity { Info, Warning, Error, Fatal };
 
 struct ErrorContext {
     std::string file;
@@ -32,14 +27,7 @@ struct ErrorMessageData {
 
 // ─── System message types ────────────────────────────────────────────
 
-enum class SystemMessageType {
-    Info,
-    Warning,
-    RateLimit,
-    ModelSwitch,
-    SessionStart,
-    SessionEnd
-};
+enum class SystemMessageType { Info, Warning, RateLimit, ModelSwitch, SessionStart, SessionEnd };
 
 struct SystemMessageData {
     SystemMessageType type;
@@ -51,10 +39,14 @@ struct SystemMessageData {
 
 inline std::string_view get_severity_icon(ErrorSeverity severity) {
     switch (severity) {
-        case ErrorSeverity::Info:    return "i";
-        case ErrorSeverity::Warning: return "!";
-        case ErrorSeverity::Error:   return "x";
-        case ErrorSeverity::Fatal:   return "X";
+    case ErrorSeverity::Info:
+        return "i";
+    case ErrorSeverity::Warning:
+        return "!";
+    case ErrorSeverity::Error:
+        return "x";
+    case ErrorSeverity::Fatal:
+        return "X";
     }
     return "?";
 }
@@ -77,11 +69,10 @@ inline std::string format_stack_trace(std::string_view trace) {
 /// @param on_clear   — optional clear-session callback; when set alongside a
 ///                     session-expired / auth error, a "[c] Clear session" hint
 ///                     is appended.
-inline std::string render_error_message(
-    const ErrorMessageData& data,
-    std::optional<std::function<void()>> on_retry = std::nullopt,
-    std::optional<std::function<void()>> on_clear = std::nullopt)
-{
+inline std::string
+render_error_message(const ErrorMessageData& data,
+                     std::optional<std::function<void()>> on_retry = std::nullopt,
+                     std::optional<std::function<void()>> on_clear = std::nullopt) {
     std::string result;
     result += get_severity_icon(data.severity);
     result += " ";
@@ -122,18 +113,29 @@ inline std::string render_error_message(
 /// @param on_retry   — optional retry callback; when set, a "[r] Retry" hint
 ///                     is appended.  Useful for rate-limit / transient system
 ///                     messages where retrying the last action makes sense.
-inline std::string render_system_message(
-    const SystemMessageData& data,
-    std::optional<std::function<void()>> on_retry = std::nullopt)
-{
+inline std::string
+render_system_message(const SystemMessageData& data,
+                      std::optional<std::function<void()>> on_retry = std::nullopt) {
     std::string result = "-- ";
     switch (data.type) {
-        case SystemMessageType::Info:         result += "i "; break;
-        case SystemMessageType::Warning:      result += "! "; break;
-        case SystemMessageType::RateLimit:    result += "T "; break;
-        case SystemMessageType::ModelSwitch:  result += "M "; break;
-        case SystemMessageType::SessionStart: result += "> "; break;
-        case SystemMessageType::SessionEnd:   result += "| "; break;
+    case SystemMessageType::Info:
+        result += "i ";
+        break;
+    case SystemMessageType::Warning:
+        result += "! ";
+        break;
+    case SystemMessageType::RateLimit:
+        result += "T ";
+        break;
+    case SystemMessageType::ModelSwitch:
+        result += "M ";
+        break;
+    case SystemMessageType::SessionStart:
+        result += "> ";
+        break;
+    case SystemMessageType::SessionEnd:
+        result += "| ";
+        break;
     }
     result += data.content;
     if (data.details.has_value()) {
@@ -156,4 +158,4 @@ inline std::string render_rate_limit_message(int retry_after_seconds) {
     return result;
 }
 
-} // namespace loom::ui::messages
+}  // namespace loom::ui::messages

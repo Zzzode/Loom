@@ -21,8 +21,7 @@ import std;
 
 namespace loom::utils::parse_int_detail {
 
-template <typename T>
-struct ParseResult {
+template <typename T> struct ParseResult {
     const char* ptr;
     std::errc ec;
 };
@@ -30,13 +29,15 @@ struct ParseResult {
 /// Signed integer parse.
 template <typename T>
     requires std::is_signed_v<T> && std::is_integral_v<T>
-[[nodiscard]] inline ParseResult<T> from_chars_int(const char* first,
-                                                    const char* last,
-                                                    T& value) noexcept {
+[[nodiscard]] inline ParseResult<T> from_chars_int(const char* first, const char* last,
+                                                   T& value) noexcept {
     if (first == last) return {first, std::errc::invalid_argument};
     const char* p = first;
     bool negative = false;
-    if (*p == '-') { negative = true; ++p; }
+    if (*p == '-') {
+        negative = true;
+        ++p;
+    }
     if (p == last) return {first, std::errc::invalid_argument};
 
     using U = std::make_unsigned_t<T>;
@@ -58,17 +59,15 @@ template <typename T>
     }
     // Negate in the unsigned domain (wraps mod 2^N), then cast: 2^63 becomes
     // LLONG_MIN, which is well-defined for the two's-complement cast in C++20+.
-    value = negative ? static_cast<T>(U{0} - magnitude)
-                     : static_cast<T>(magnitude);
+    value = negative ? static_cast<T>(U{0} - magnitude) : static_cast<T>(magnitude);
     return {last, std::errc{}};
 }
 
 /// Unsigned integer parse.
 template <typename T>
     requires std::is_unsigned_v<T> && std::is_integral_v<T>
-[[nodiscard]] inline ParseResult<T> from_chars_int(const char* first,
-                                                    const char* last,
-                                                    T& value) noexcept {
+[[nodiscard]] inline ParseResult<T> from_chars_int(const char* first, const char* last,
+                                                   T& value) noexcept {
     if (first == last) return {first, std::errc::invalid_argument};
     const char* p = first;
     T magnitude = 0;
@@ -87,7 +86,7 @@ template <typename T>
     return {last, std::errc{}};
 }
 
-} // namespace loom::utils::parse_int_detail
+}  // namespace loom::utils::parse_int_detail
 
 export namespace loom::utils {
 
@@ -95,9 +94,8 @@ export namespace loom::utils {
 /// Returns {ptr, errc} with std::from_chars semantics.
 template <typename T>
     requires std::is_integral_v<T>
-[[nodiscard]] inline auto from_chars(const char* first, const char* last,
-                                     T& value) noexcept {
+[[nodiscard]] inline auto from_chars(const char* first, const char* last, T& value) noexcept {
     return parse_int_detail::from_chars_int(first, last, value);
 }
 
-} // namespace loom::utils
+}  // namespace loom::utils

@@ -1,11 +1,12 @@
 /// @file test_terminal_output.cpp
 /// @brief Length-aware stdout delivery and write/flush error reporting.
 
-#include <cstdio>
-#include <cstdlib>
 #include <fcntl.h>
 #include <gtest/gtest.h>
 #include <unistd.h>
+
+#include <cstdio>
+#include <cstdlib>
 
 import std;
 import loom.terminal.output;
@@ -89,19 +90,26 @@ void expect_output_failure(bool buffered, std::string_view message) {
         }
         const auto result = output::write_control_sequence("\033]52;c;dGVzdA==\a");
         expected_failure = !result.has_value() &&
-            result.error().code() == loom::utils::ErrorCode::io_error &&
-            result.error().message() == message;
+                           result.error().code() == loom::utils::ErrorCode::io_error &&
+                           result.error().message() == message;
     }
     std::_Exit(expected_failure ? 0 : 1);
 }
 
 }  // namespace
 
-TEST(TerminalOutput, EmptyBytes) { expect_output(std::string_view{}); }
-TEST(TerminalOutput, ExactControlBytes) { expect_output("\033]52;c;YQ==\a"); }
+TEST(TerminalOutput, EmptyBytes) {
+    expect_output(std::string_view{});
+}
+
+TEST(TerminalOutput, ExactControlBytes) {
+    expect_output("\033]52;c;YQ==\a");
+}
+
 TEST(TerminalOutput, EmbeddedNullIsNotTruncated) {
     expect_output(std::string_view("a\0b", 3));
 }
+
 TEST(TerminalOutput, WritesOnlyStringViewRange) {
     const std::string bytes = "prefix\033]2;Loom\033\\suffix";
     expect_output(std::string_view(bytes).substr(6, 10));
@@ -112,6 +120,7 @@ TEST(TerminalOutputDeathTest, ReportsWriteFailure) {
     EXPECT_EXIT(expect_output_failure(false, "Terminal output: fwrite failed"),
                 testing::ExitedWithCode(0), "");
 }
+
 TEST(TerminalOutputDeathTest, ReportsFlushFailure) {
     EXPECT_EXIT(expect_output_failure(true, "Terminal output: fflush failed"),
                 testing::ExitedWithCode(0), "");

@@ -1,12 +1,13 @@
 module;
 
+#include <netdb.h>
+#include <sys/socket.h>
 #include <unistd.h>
+
 #include <cstddef>
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
-#include <sys/socket.h>
-#include <netdb.h>
 
 export module loom.plugins.marketplace;
 
@@ -23,17 +24,19 @@ enum class PluginSource { official_marketplace, community, local, git };
 struct SemVer {
     int major{0}, minor{0}, patch{0};
     std::string prerelease;
-    
+
     [[nodiscard]] auto to_string() const -> std::string {
         auto s = std::to_string(major) + "." + std::to_string(minor) + "." + std::to_string(patch);
         if (!prerelease.empty()) s += "-" + prerelease;
         return s;
     }
+
     [[nodiscard]] auto operator>(const SemVer& o) const -> bool {
         if (major != o.major) return major > o.major;
         if (minor != o.minor) return minor > o.minor;
         return patch > o.patch;
     }
+
     auto operator<=>(const SemVer&) const = default;
 };
 
@@ -72,7 +75,9 @@ struct MarketplaceQuery {
     std::string keyword;
     std::optional<PluginSource> source_filter;
     std::optional<std::string> tag_filter;
+
     enum SortBy { relevance, downloads, rating, recent } sort{relevance};
+
     size_t limit{20};
     size_t offset{0};
 };
@@ -104,6 +109,7 @@ namespace detail {
 struct HttpResponse {
     int status_code = 0;
     std::string body;
+
     bool ok() const { return status_code >= 200 && status_code < 300; }
 };
 
@@ -120,10 +126,12 @@ inline HttpResponse http_get(std::string_view host, uint16_t port, std::string_v
     for (auto* rp = res; rp; rp = rp->ai_next) {
         fd = ::socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
         if (fd < 0) continue;
-        struct timeval tv{}; tv.tv_sec = 30;
+        struct timeval tv{};
+        tv.tv_sec = 30;
         setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
         if (::connect(fd, rp->ai_addr, rp->ai_addrlen) == 0) break;
-        ::close(fd); fd = -1;
+        ::close(fd);
+        fd = -1;
     }
     freeaddrinfo(res);
     if (fd < 0) return {0, "Connection failed"};
@@ -132,7 +140,8 @@ inline HttpResponse http_get(std::string_view host, uint16_t port, std::string_v
     std::string req = "GET " + std::string(path) + " HTTP/1.1\r\n";
     req += "Host: " + std::string(host) + "\r\n";
     req += "Connection: close\r\n";
-    for (auto& [k,v] : headers) req += k + ": " + v + "\r\n";
+    for (auto& [k, v] : headers)
+        req += k + ": " + v + "\r\n";
     req += "\r\n";
     ::send(fd, req.data(), req.size(), 0);
 
@@ -150,7 +159,7 @@ inline HttpResponse http_get(std::string_view host, uint16_t port, std::string_v
     HttpResponse resp;
     auto sp = raw.find(' ');
     if (sp != std::string::npos) {
-        resp.status_code = std::atoi(raw.substr(sp+1, 3).c_str());
+        resp.status_code = std::atoi(raw.substr(sp + 1, 3).c_str());
     }
     // Find body after \r\n\r\n
     auto body_start = raw.find("\r\n\r\n");
@@ -219,7 +228,7 @@ inline std::optional<PluginMeta> parse_manifest(const std::filesystem::path& man
     return meta;
 }
 
-} // namespace detail
+}  // namespace detail
 
 class MarketplaceClient {
     // No plugin marketplace is hosted for this build; set
@@ -230,14 +239,15 @@ class MarketplaceClient {
     }()};
     uint16_t api_port_{443};
     std::string api_base_path_{"/api/v1"};
-    
+
     // Cached registry data
     mutable std::vector<PluginMeta> cache_;
     mutable std::chrono::steady_clock::time_point cache_time_;
     static constexpr auto CACHE_TTL = std::chrono::minutes(5);
 
 public:
-    void set_api_endpoint(std::string host, uint16_t port = 443, std::string base_path = "/api/v1") {
+    void set_api_endpoint(std::string host, uint16_t port = 443,
+                          std::string base_path = "/api/v1") {
         api_host_ = std::move(host);
         api_port_ = port;
         api_base_path_ = std::move(base_path);
@@ -283,7 +293,7 @@ public:
             meta.author = extract("author");
             auto ver = extract("version");
             if (!ver.empty()) {
-                int mj=0, mn=0, pt=0;
+                int mj = 0, mn = 0, pt = 0;
                 std::sscanf(ver.c_str(), "%d.%d.%d", &mj, &mn, &pt);
                 meta.version = SemVer{mj, mn, pt, {}};
             }
@@ -312,7 +322,6 @@ public:
         }
         return filtered;
     }
-    
 
     [[nodiscard]] auto get_details(std::string_view plugin_id) -> std::optional<PluginMeta> {
         for (const auto& plugin : get_featured()) {
@@ -320,7 +329,6 @@ public:
         }
         return std::nullopt;
     }
-    
 
     [[nodiscard]] auto get_featured() -> std::vector<PluginMeta> {
         auto now = std::chrono::steady_clock::now();
@@ -332,23 +340,20 @@ public:
             return *result;
         }
         // Fallback to built-in list if registry is unreachable
-        return {PluginMeta{
-            .id = "code-review",
-            .name = "Code Review",
-            .description = "Review code changes and surface high-confidence issues",
-            .author = "Loom",
-            .version = SemVer{1, 0, 0, {}},
-            .min_host_version = SemVer{0, 0, 0, {}},
-            .source = PluginSource::official_marketplace,
-            .tags = {},
-            .homepage_url = {},
-            .repository_url = {},
-            .download_count = 1,
-            .rating = 5.0,
-            .published_at = std::chrono::system_clock::time_point{}
-        }};
+        return {PluginMeta{.id = "code-review",
+                           .name = "Code Review",
+                           .description = "Review code changes and surface high-confidence issues",
+                           .author = "Loom",
+                           .version = SemVer{1, 0, 0, {}},
+                           .min_host_version = SemVer{0, 0, 0, {}},
+                           .source = PluginSource::official_marketplace,
+                           .tags = {},
+                           .homepage_url = {},
+                           .repository_url = {},
+                           .download_count = 1,
+                           .rating = 5.0,
+                           .published_at = std::chrono::system_clock::time_point{}}};
     }
-    
 
     [[nodiscard]] auto download_archive(std::string_view plugin_id, const SemVer& version)
         -> std::expected<std::string, std::string> {
@@ -375,7 +380,7 @@ public:
         return (nl != std::string::npos) ? resp.body.substr(0, nl) : resp.body;
     }
 
-    [[nodiscard]] auto check_updates(const std::vector<std::pair<std::string, SemVer>>& installed) 
+    [[nodiscard]] auto check_updates(const std::vector<std::pair<std::string, SemVer>>& installed)
         -> std::vector<std::pair<std::string, SemVer>> {
         std::vector<std::pair<std::string, SemVer>> updates;
         auto registry = get_featured();
@@ -395,29 +400,26 @@ class PluginInstallManager {
     std::filesystem::path plugins_dir_;
     std::vector<InstalledPlugin> installed_;
     MarketplaceClient marketplace_;
-    
+
 public:
-    explicit PluginInstallManager(std::filesystem::path dir) : plugins_dir_(std::move(dir)) {
+    explicit PluginInstallManager(std::filesystem::path dir)
+        : plugins_dir_(std::move(dir)) {
         std::filesystem::create_directories(plugins_dir_);
     }
-    
 
-    [[nodiscard]] auto install(std::string_view plugin_id, InstallOptions opts = {}) 
+    [[nodiscard]] auto install(std::string_view plugin_id, InstallOptions opts = {})
         -> std::expected<InstallResult, std::string> {
         auto start = std::chrono::steady_clock::now();
-        
 
         auto meta = marketplace_.get_details(plugin_id);
         if (!meta) return std::unexpected("plugin not found: " + std::string(plugin_id));
-        
+
         auto target_version = opts.specific_version.value_or(meta->version);
-        
 
         auto archive_result = marketplace_.download_archive(plugin_id, target_version);
         if (!archive_result) {
             return std::unexpected("download failed: " + archive_result.error());
         }
-        
 
         auto expected_checksum = marketplace_.get_checksum(plugin_id, target_version);
         if (expected_checksum.has_value()) {
@@ -428,20 +430,19 @@ public:
                 }
             }
         }
-        
 
         auto install_path = plugins_dir_ / std::string(plugin_id);
         if (std::filesystem::exists(install_path)) {
             std::filesystem::remove_all(install_path);
         }
-        
+
         if (!detail::extract_plugin_bundle(*archive_result, install_path)) {
             // Extraction failed — try treating it as raw manifest
             std::filesystem::create_directories(install_path);
             std::ofstream out(install_path / "manifest.json");
             out << *archive_result;
         }
-        
+
         // 5. Validate manifest exists
         auto manifest_path = install_path / "manifest.json";
         if (std::filesystem::exists(manifest_path)) {
@@ -450,49 +451,44 @@ public:
                 meta->version = target_version;
             }
         }
-        
 
-        InstalledPlugin p{
-            .meta = *meta,
-            .status = opts.auto_enable ? PluginStatus::enabled : PluginStatus::installed,
-            .install_path = install_path,
-            .installed_at = std::chrono::system_clock::now(),
-            .available_update = std::nullopt,
-            .settings = {}
-        };
-        
+        InstalledPlugin p{.meta = *meta,
+                          .status =
+                              opts.auto_enable ? PluginStatus::enabled : PluginStatus::installed,
+                          .install_path = install_path,
+                          .installed_at = std::chrono::system_clock::now(),
+                          .available_update = std::nullopt,
+                          .settings = {}};
+
         // Remove existing entry if upgrading
-        std::erase_if(installed_, [&](const auto& existing) { return existing.meta.id == plugin_id; });
+        std::erase_if(installed_,
+                      [&](const auto& existing) { return existing.meta.id == plugin_id; });
         installed_.push_back(std::move(p));
-        
+
         auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
             std::chrono::steady_clock::now() - start);
         return InstallResult{true, std::string(plugin_id), std::nullopt, elapsed};
     }
-    
 
     [[nodiscard]] auto uninstall(std::string_view plugin_id) -> std::expected<void, std::string> {
         auto it = std::find_if(installed_.begin(), installed_.end(),
-            [&](const auto& p) { return p.meta.id == plugin_id; });
+                               [&](const auto& p) { return p.meta.id == plugin_id; });
         if (it == installed_.end()) return std::unexpected("plugin not installed");
         std::filesystem::remove_all(it->install_path);
         installed_.erase(it);
         return {};
     }
-    
 
-    [[nodiscard]] auto update(std::string_view plugin_id) -> std::expected<InstallResult, std::string> {
+    [[nodiscard]] auto update(std::string_view plugin_id)
+        -> std::expected<InstallResult, std::string> {
         auto it = std::find_if(installed_.begin(), installed_.end(),
-            [&](const auto& p) { return p.meta.id == plugin_id; });
+                               [&](const auto& p) { return p.meta.id == plugin_id; });
         if (it == installed_.end()) return std::unexpected("plugin not installed");
 
-        return install(plugin_id, {
-            .auto_enable = (it->status == PluginStatus::enabled),
-            .trust_unverified = false,
-            .specific_version = std::nullopt
-        });
+        return install(plugin_id, {.auto_enable = (it->status == PluginStatus::enabled),
+                                   .trust_unverified = false,
+                                   .specific_version = std::nullopt});
     }
-    
 
     [[nodiscard]] auto update_all() -> std::vector<InstallResult> {
         std::vector<InstallResult> results;
@@ -503,35 +499,34 @@ public:
         }
         return results;
     }
-    
 
     void enable(std::string_view id) { set_status(id, PluginStatus::enabled); }
-    void disable(std::string_view id) { set_status(id, PluginStatus::disabled); }
-    
 
-    [[nodiscard]] auto get_installed() const -> const std::vector<InstalledPlugin>& { return installed_; }
-    
+    void disable(std::string_view id) { set_status(id, PluginStatus::disabled); }
+
+    [[nodiscard]] auto get_installed() const -> const std::vector<InstalledPlugin>& {
+        return installed_;
+    }
 
     [[nodiscard]] auto get_updatable() const -> std::vector<const InstalledPlugin*> {
         std::vector<const InstalledPlugin*> result;
-        for (const auto& p : installed_) if (p.available_update) result.push_back(&p);
+        for (const auto& p : installed_)
+            if (p.available_update) result.push_back(&p);
         return result;
     }
-    
 
     [[nodiscard]] static auto get_trust_level(const PluginMeta& meta) -> TrustLevel {
         if (meta.source == PluginSource::official_marketplace) return TrustLevel::official;
-        if (meta.source == PluginSource::community && meta.download_count > 1000) return TrustLevel::verified;
+        if (meta.source == PluginSource::community && meta.download_count > 1000)
+            return TrustLevel::verified;
         if (meta.source == PluginSource::community) return TrustLevel::community;
         return TrustLevel::untrusted;
     }
-    
 
     [[nodiscard]] auto get_policy(std::string_view plugin_id) const -> PluginPolicy {
         (void)plugin_id;
         return PluginPolicy{};
     }
-    
 
     void scan_installed() {
         if (!std::filesystem::exists(plugins_dir_)) return;
@@ -540,36 +535,36 @@ public:
             if (!entry.is_directory()) continue;
             auto id = entry.path().filename().string();
             installed_.push_back(InstalledPlugin{
-                .meta = PluginMeta{
-                    .id = id,
-                    .name = id,
-                    .description = {},
-                    .author = {},
-                    .version = SemVer{0, 0, 0, {}},
-                    .min_host_version = SemVer{0, 0, 0, {}},
-                    .source = PluginSource::local,
-                    .tags = {},
-                    .homepage_url = {},
-                    .repository_url = {},
-                    .download_count = 0,
-                    .rating = 0.0,
-                    .published_at = std::chrono::system_clock::time_point{}
-                },
+                .meta = PluginMeta{.id = id,
+                                   .name = id,
+                                   .description = {},
+                                   .author = {},
+                                   .version = SemVer{0, 0, 0, {}},
+                                   .min_host_version = SemVer{0, 0, 0, {}},
+                                   .source = PluginSource::local,
+                                   .tags = {},
+                                   .homepage_url = {},
+                                   .repository_url = {},
+                                   .download_count = 0,
+                                   .rating = 0.0,
+                                   .published_at = std::chrono::system_clock::time_point{}},
                 .status = PluginStatus::installed,
                 .install_path = entry.path(),
                 .installed_at = std::chrono::system_clock::now(),
                 .available_update = std::nullopt,
-                .settings = {}
-            });
+                .settings = {}});
         }
     }
 
 private:
     void set_status(std::string_view id, PluginStatus status) {
         for (auto& p : installed_) {
-            if (p.meta.id == id) { p.status = status; break; }
+            if (p.meta.id == id) {
+                p.status = status;
+                break;
+            }
         }
     }
 };
 
-} // namespace loom::plugins
+}  // namespace loom::plugins

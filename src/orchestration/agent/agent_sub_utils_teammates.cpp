@@ -14,14 +14,12 @@ namespace loom::tools::agent::utils {
 
 [[nodiscard]] loom::tools::MemberRole teammate_role_for_agent_type(std::string_view agent_type) {
     auto lower = std::string(agent_type);
-    std::ranges::transform(lower, lower.begin(), [](unsigned char ch) {
-        return static_cast<char>(std::tolower(ch));
-    });
+    std::ranges::transform(lower, lower.begin(),
+                           [](unsigned char ch) { return static_cast<char>(std::tolower(ch)); });
     if (lower.find("leader") != std::string::npos || lower.find("lead") != std::string::npos) {
         return loom::tools::MemberRole::Leader;
     }
-    if (lower.find("review") != std::string::npos ||
-        lower.find("verify") != std::string::npos ||
+    if (lower.find("review") != std::string::npos || lower.find("verify") != std::string::npos ||
         lower.find("verification") != std::string::npos ||
         lower.find("validator") != std::string::npos) {
         return loom::tools::MemberRole::Reviewer;
@@ -29,14 +27,12 @@ namespace loom::tools::agent::utils {
     return loom::tools::MemberRole::Worker;
 }
 
-[[nodiscard]] std::optional<loom::utils::swarm_backends::AgentColor> teammate_agent_color(
-    const std::optional<std::string>& color
-) {
+[[nodiscard]] std::optional<loom::utils::swarm_backends::AgentColor>
+teammate_agent_color(const std::optional<std::string>& color) {
     if (!color || color->empty()) return std::nullopt;
     auto lower = *color;
-    std::ranges::transform(lower, lower.begin(), [](unsigned char ch) {
-        return static_cast<char>(std::tolower(ch));
-    });
+    std::ranges::transform(lower, lower.begin(),
+                           [](unsigned char ch) { return static_cast<char>(std::tolower(ch)); });
     using loom::utils::swarm_backends::AgentColor;
     if (lower == "red") return AgentColor::Red;
     if (lower == "blue") return AgentColor::Blue;
@@ -68,20 +64,15 @@ namespace loom::tools::agent::utils {
     return output;
 }
 
-void update_teammate_completion_status(
-    const AgentExecutionPlan& plan,
-    bool success,
-    const std::string& result_text
-) {
+void update_teammate_completion_status(const AgentExecutionPlan& plan, bool success,
+                                       const std::string& result_text) {
     if (!plan.team_name || plan.team_name->empty()) return;
-    auto stored_result = result_text.empty()
-        ? std::optional<std::string>{}
-        : std::optional<std::string>{result_text};
+    auto stored_result = result_text.empty() ? std::optional<std::string>{}
+                                             : std::optional<std::string>{result_text};
     (void)loom::tools::global_team_store().update_member_status(
-        *plan.team_name,
-        plan.agent_id,
+        *plan.team_name, plan.agent_id,
         success ? loom::tools::MemberStatus::Done : loom::tools::MemberStatus::Error,
         std::move(stored_result));
 }
 
-} // namespace loom::tools::agent::utils
+}  // namespace loom::tools::agent::utils

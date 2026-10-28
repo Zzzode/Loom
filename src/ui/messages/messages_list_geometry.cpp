@@ -47,12 +47,9 @@ constexpr int kMaxRowHeight = 1000;
 /// result is the maximum vertical space the content COULD take inside a
 /// 36-col reserved left-gutter message envelope; 36 is subtracted from
 /// term_cols to account for the fixed avatar column.
-[[nodiscard]] auto estimate_content_lines(
-    std::string_view text,
-    int term_cols,
-    int envelope_gutter_cols) -> int {
-    const int content_cols =
-        std::max(20, term_cols - envelope_gutter_cols);
+[[nodiscard]] auto estimate_content_lines(std::string_view text, int term_cols,
+                                          int envelope_gutter_cols) -> int {
+    const int content_cols = std::max(20, term_cols - envelope_gutter_cols);
     int lines = 1;
     int current = 0;
     for (char c : text) {
@@ -84,8 +81,7 @@ constexpr int kMaxRowHeight = 1000;
 /// line) code blocks preserve line breaks (joined with \n, not space) so
 /// the estimator counts each code line as a separate row — matching the
 /// renderer's render_code_block which emits one vbox row per source line.
-[[nodiscard]] auto normalize_markdown_breaks(std::string_view text)
-    -> std::string {
+[[nodiscard]] auto normalize_markdown_breaks(std::string_view text) -> std::string {
     std::string result;
     result.reserve(text.size());
     std::size_t pos = 0;
@@ -165,10 +161,8 @@ constexpr int kMaxRowHeight = 1000;
         if (!seen_content || result.empty()) return;
         while (!result.empty() && result.back() == ' ')
             result.pop_back();
-        if (!result.empty() && result.back() != '\n')
-            result += '\n';
-        if (result.size() < 2 ||
-            result[result.size() - 1] != '\n' ||
+        if (!result.empty() && result.back() != '\n') result += '\n';
+        if (result.size() < 2 || result[result.size() - 1] != '\n' ||
             result[result.size() - 2] != '\n') {
             result += '\n';
         }
@@ -176,9 +170,8 @@ constexpr int kMaxRowHeight = 1000;
 
     while (pos < text.size()) {
         const std::size_t nl = text.find('\n', pos);
-        std::string_view line = (nl == std::string_view::npos)
-            ? text.substr(pos)
-            : text.substr(pos, nl - pos);
+        std::string_view line =
+            (nl == std::string_view::npos) ? text.substr(pos) : text.substr(pos, nl - pos);
         const bool last_line = (nl == std::string_view::npos);
 
         // ── Fenced code block ──────────────────────────────────────────
@@ -191,8 +184,7 @@ constexpr int kMaxRowHeight = 1000;
                 // a blank row between consecutive block tokens).
                 ensure_block_boundary();
             } else {
-                if (!result.empty() && result.back() != '\n')
-                    result += '\n';
+                if (!result.empty() && result.back() != '\n') result += '\n';
                 result += line;
                 seen_content = true;
                 after_blank = false;
@@ -207,15 +199,14 @@ constexpr int kMaxRowHeight = 1000;
             if (is_blank_line(line)) {
                 // Peek ahead: include blank only if next non-blank line
                 // is also indented (part of the code block).
-                std::size_t peek = last_line ? std::string_view::npos
-                                              : nl + 1;
+                std::size_t peek = last_line ? std::string_view::npos : nl + 1;
                 bool include_blank = false;
                 bool end_code = false;
                 while (peek < text.size()) {
                     const std::size_t pnl = text.find('\n', peek);
                     std::string_view pline = (pnl == std::string_view::npos)
-                        ? text.substr(peek)
-                        : text.substr(peek, pnl - peek);
+                                                 ? text.substr(peek)
+                                                 : text.substr(peek, pnl - peek);
                     if (!is_blank_line(pline)) {
                         if (leading_spaces(pline) >= 4)
                             include_blank = true;
@@ -223,11 +214,9 @@ constexpr int kMaxRowHeight = 1000;
                             end_code = true;
                         break;
                     }
-                    peek = (pnl == std::string_view::npos)
-                        ? std::string_view::npos : pnl + 1;
+                    peek = (pnl == std::string_view::npos) ? std::string_view::npos : pnl + 1;
                 }
-                if (peek == std::string_view::npos)
-                    end_code = true;
+                if (peek == std::string_view::npos) end_code = true;
 
                 if (end_code) {
                     // End code block.  The blank line is a paragraph
@@ -279,10 +268,8 @@ constexpr int kMaxRowHeight = 1000;
             }
             while (!result.empty() && result.back() == ' ')
                 result.pop_back();
-            if (!result.empty() && result.back() != '\n')
-                result += '\n';
-            if (result.size() < 2 ||
-                result[result.size() - 1] != '\n' ||
+            if (!result.empty() && result.back() != '\n') result += '\n';
+            if (result.size() < 2 || result[result.size() - 1] != '\n' ||
                 result[result.size() - 2] != '\n') {
                 result += '\n';
             }
@@ -320,8 +307,7 @@ constexpr int kMaxRowHeight = 1000;
         if ((after_blank || first_content) && leading_spaces(line) >= 4) {
             in_indented_code = true;
             after_blank = false;
-            if (!result.empty() && result.back() != '\n')
-                result += '\n';
+            if (!result.empty() && result.back() != '\n') result += '\n';
             result += line.substr(4);
             if (last_line) break;
             pos = nl + 1;
@@ -339,9 +325,7 @@ constexpr int kMaxRowHeight = 1000;
 
         bool hard = false;
         if (!last_line) {
-            if (line.size() >= 2 &&
-                line[line.size() - 1] == ' ' &&
-                line[line.size() - 2] == ' ') {
+            if (line.size() >= 2 && line[line.size() - 1] == ' ' && line[line.size() - 2] == ' ') {
                 hard = true;
                 while (!line.empty() && line.back() == ' ')
                     line.remove_suffix(1);
@@ -366,8 +350,7 @@ constexpr int kMaxRowHeight = 1000;
             break;
         }
     }
-    while (result.size() >= 2 &&
-           result[result.size() - 1] == '\n' &&
+    while (result.size() >= 2 && result[result.size() - 1] == '\n' &&
            result[result.size() - 2] == '\n') {
         result.pop_back();
         result.pop_back();
@@ -380,13 +363,10 @@ constexpr int kMaxRowHeight = 1000;
 /// with CommonMark soft/hard break semantics; produces >=
 /// estimate_content_lines for the same text.  Used for AssistantText
 /// where the faithful renderer wraps at word boundaries.
-[[nodiscard]] auto estimate_content_lines_word(
-    std::string_view text,
-    int term_cols,
-    int envelope_gutter_cols) -> int {
+[[nodiscard]] auto estimate_content_lines_word(std::string_view text, int term_cols,
+                                               int envelope_gutter_cols) -> int {
     const std::string normalized = normalize_markdown_breaks(text);
-    const int content_cols =
-        std::max(20, term_cols - envelope_gutter_cols);
+    const int content_cols = std::max(20, term_cols - envelope_gutter_cols);
     int lines = 0;
     std::size_t pos = 0;
     while (pos < normalized.size()) {
@@ -398,13 +378,18 @@ constexpr int kMaxRowHeight = 1000;
         std::size_t i = 0;
         bool has_content = false;
         while (i < line.size()) {
-            while (i < line.size() && line[i] == ' ') ++i;
+            while (i < line.size() && line[i] == ' ')
+                ++i;
             if (i >= line.size()) break;
             std::size_t word_end = i;
-            while (word_end < line.size() && line[word_end] != ' ') ++word_end;
+            while (word_end < line.size() && line[word_end] != ' ')
+                ++word_end;
             const int word_len = static_cast<int>(word_end - i);
             if (word_len > content_cols) {
-                if (current > 0) { ++lines; current = 0; }
+                if (current > 0) {
+                    ++lines;
+                    current = 0;
+                }
                 lines += (word_len + content_cols - 1) / content_cols;
             } else {
                 if (current > 0 && current + 1 + word_len > content_cols) {
@@ -432,10 +417,8 @@ constexpr int kMaxRowHeight = 1000;
 /// Estimate visual height for one messages_list::VisibleRow.  Adds 1 line
 /// for the envelope's top-accent + role-header row and 1 for trailing
 /// separator (except for 1-line rows where it collapses).
-[[nodiscard]] auto estimate_row_height(
-    const VisibleRow& vr,
-    const MessagesListInput& input,
-    int term_cols) -> int {
+[[nodiscard]] auto estimate_row_height(const VisibleRow& vr, const MessagesListInput& input,
+                                       int term_cols) -> int {
     using K = VisibleRow::Kind;
     if (vr.kind == K::CompactGroup) {
         // Collapsed "📦 27 messages collapsed (📦 8 tool turns, +++12 ---7)"
@@ -451,225 +434,217 @@ constexpr int kMaxRowHeight = 1000;
     }
     // Payload rows — dispatch by MessageShape content length.
     if (vr.row_idx >= input.rows.size()) return 2;
-    const std::string preview =
-        detail::lowered(detail::payload_preview(input.rows[vr.row_idx]));
-    const MessageShape shape =
-        vr.row_idx < input.shapes.size()
-            ? input.shapes[vr.row_idx]
-            : MessageShape::SystemTaskAssignment;
+    const std::string preview = detail::lowered(detail::payload_preview(input.rows[vr.row_idx]));
+    const MessageShape shape = vr.row_idx < input.shapes.size()
+                                   ? input.shapes[vr.row_idx]
+                                   : MessageShape::SystemTaskAssignment;
 
     using S = MessageShape;
     int content_lines = 1;
     switch (shape) {
-        case S::AssistantThinking:
-        case S::AssistantRedactedThinking: {
-            // Collapsed thinking renders a 1-line label ("∴ Thought for
-            // Xs <summary> (ctrl+o to expand)").  Expanded thinking
-            // (streaming tail, within the 3s collapse grace, or transcript
-            // mode) renders the full body — potentially dozens of lines.
-            // Estimate from the actual content when expanded so the
-            // virtual-list JumpHandle geometry matches the rendered height;
-            // a 2-line estimate for a 30-line expanded row causes the
-            // visible slice + spacers to be wildly wrong (content
-            // overlapping / "compressed" during streaming).
-            const bool is_expanded =
-                (vr.row_idx == input.streaming_tail_row) ||
-                input.is_transcript_mode ||
-                was_recently_streaming(vr.row_idx);
-            if (is_expanded) {
-                if (auto* opts = std::get_if<thinking_message::ThinkingMessageOptions>(
-                        &input.rows[vr.row_idx])) {
-                    std::string full_text = opts->data.raw_text;
-                    if (full_text.empty() && !opts->data.sections.empty()) {
-                        for (const auto& s : opts->data.sections) {
-                            if (!full_text.empty()) full_text.push_back('\n');
-                            full_text += s.content;
-                        }
-                    }
-                    if (!full_text.empty()) {
-                        // label (1) + body + top/bottom margin (2)
-                        content_lines =
-                            estimate_content_lines(full_text, term_cols, 4) + 3;
-                    } else {
-                        content_lines = 2;
-                    }
-                } else {
-                    content_lines = 2;
-                }
-            } else {
-                content_lines = 2;
-            }
-            break;
-        }
-        case S::AssistantToolUse:
-        case S::AssistantGroupedTools: {
-            if (auto* topts = std::get_if<tool_use_message::ToolUseRenderOptions>(
+    case S::AssistantThinking:
+    case S::AssistantRedactedThinking: {
+        // Collapsed thinking renders a 1-line label ("∴ Thought for
+        // Xs <summary> (ctrl+o to expand)").  Expanded thinking
+        // (streaming tail, within the 3s collapse grace, or transcript
+        // mode) renders the full body — potentially dozens of lines.
+        // Estimate from the actual content when expanded so the
+        // virtual-list JumpHandle geometry matches the rendered height;
+        // a 2-line estimate for a 30-line expanded row causes the
+        // visible slice + spacers to be wildly wrong (content
+        // overlapping / "compressed" during streaming).
+        const bool is_expanded = (vr.row_idx == input.streaming_tail_row) ||
+                                 input.is_transcript_mode || was_recently_streaming(vr.row_idx);
+        if (is_expanded) {
+            if (auto* opts = std::get_if<thinking_message::ThinkingMessageOptions>(
                     &input.rows[vr.row_idx])) {
-                const auto& call = topts->call;
-                // Resolved built-in tools render as just a 1-line header
-                // (● ToolName (command)) — no Input/Output sections.
-                const bool is_resolved =
-                    (call.status == tool_use_message::ToolStatus::Success ||
-                     call.status == tool_use_message::ToolStatus::Error ||
-                     call.status == tool_use_message::ToolStatus::Cancelled);
-                if (is_resolved) {
-                    content_lines = 1;
-                } else {
-                    // Running/Pending: header + progress line
-                    content_lines = 2;
-                }
-            } else if (auto* gopts = std::get_if<tool_use_message::GroupedToolsOptions>(
-                           &input.rows[vr.row_idx])) {
-                int visible = std::min(
-                    static_cast<int>(gopts->calls.size()),
-                    gopts->max_visible_preview);
-                content_lines = 2 + visible;
-            } else {
-                content_lines = 2;
-            }
-            break;
-        }
-        case S::UserToolResult:
-        case S::UserBashOutput: {
-            // payload_preview returns just tool_name
-            // (e.g. "Bash") — 1 line.  Actual tool result output can be
-            // dozens of lines.  Extract real output from ToolResultOptions.
-            if (auto* ropts = std::get_if<ToolResultOptions>(
-                    &input.rows[vr.row_idx])) {
-                std::string full_text;
-                if (ropts->content_items && !ropts->content_items->empty()) {
-                    // Structured content items (MCP tools): concatenate text.
-                    for (const auto& item : *ropts->content_items) {
-                        if (item.type == "text") {
-                            if (!full_text.empty()) full_text += '\n';
-                            full_text += item.text;
-                        } else if (item.type == "image") {
-                            if (!full_text.empty()) full_text += '\n';
-                            full_text += "[Image]";
-                        }
+                std::string full_text = opts->data.raw_text;
+                if (full_text.empty() && !opts->data.sections.empty()) {
+                    for (const auto& s : opts->data.sections) {
+                        if (!full_text.empty()) full_text.push_back('\n');
+                        full_text += s.content;
                     }
-                } else if (ropts->output && !ropts->output->empty()) {
-                    full_text = *ropts->output;
-                } else if (ropts->error_message && !ropts->error_message->empty()) {
-                    full_text = *ropts->error_message;
                 }
                 if (!full_text.empty()) {
-                    content_lines = estimate_content_lines(full_text, term_cols, 4);
+                    // label (1) + body + top/bottom margin (2)
+                    content_lines = estimate_content_lines(full_text, term_cols, 4) + 3;
                 } else {
-                    content_lines = 2;  // minimal: header + "(no output)"
+                    content_lines = 2;
                 }
-                // +1 for header row (status icon + tool name + duration)
-                content_lines += 1;
-                if (ropts->is_truncated) content_lines += 1;  // "(output truncated)"
             } else {
-                // Fallback for UserBashOutput (BashIOEntry variant)
-                content_lines = estimate_content_lines(preview, term_cols, 4);
+                content_lines = 2;
             }
-            break;
+        } else {
+            content_lines = 2;
         }
-        case S::UserLocalCommandOutput:
-            // Command output (e.g. /help, /theme list) can be dozens of
-            // lines.  payload_preview returns just "local-command" for this
-            // variant, so we must count actual output lines from the payload.
-            if (auto* opts = std::get_if<local_cmd::LocalCommandOptions>(
-                    &input.rows[vr.row_idx])) {
-                // Each OutputLine is one display row; add header + footer.
-                content_lines = static_cast<int>(opts->data.lines.size()) + 3;
+        break;
+    }
+    case S::AssistantToolUse:
+    case S::AssistantGroupedTools: {
+        if (auto* topts =
+                std::get_if<tool_use_message::ToolUseRenderOptions>(&input.rows[vr.row_idx])) {
+            const auto& call = topts->call;
+            // Resolved built-in tools render as just a 1-line header
+            // (● ToolName (command)) — no Input/Output sections.
+            const bool is_resolved = (call.status == tool_use_message::ToolStatus::Success ||
+                                      call.status == tool_use_message::ToolStatus::Error ||
+                                      call.status == tool_use_message::ToolStatus::Cancelled);
+            if (is_resolved) {
+                content_lines = 1;
             } else {
-                content_lines = estimate_content_lines(preview, term_cols, 4);
+                // Running/Pending: header + progress line
+                content_lines = 2;
             }
-            break;
-        case S::UserLocalJsxOutput:
-            // JSX overlay output (e.g. /skills, /agents) renders each line
-            // as a separate text() row — one display row per \n.  The
-            // payload is UserTextMessageData whose content_preview carries
-            // the full text, so estimate_content_lines counts correctly.
-            content_lines = estimate_content_lines(preview, term_cols, 0);
-            break;
-        case S::SystemText:
-            // Faithful SystemText's summary is a single-line event for every
-            // subtype, preceded by the per-message top margin. This includes
-            // Plain /resume events as well as background notifications.
+        } else if (auto* gopts = std::get_if<tool_use_message::GroupedToolsOptions>(
+                       &input.rows[vr.row_idx])) {
+            int visible =
+                std::min(static_cast<int>(gopts->calls.size()), gopts->max_visible_preview);
+            content_lines = 2 + visible;
+        } else {
             content_lines = 2;
-            break;
-        case S::SystemRateLimit:
-        case S::SystemPlanApproval:
-        case S::SystemHookProgress:
-        case S::SystemShutdown:
-        case S::SystemAdvisor:
-        case S::SystemTaskAssignment:
-        case S::SystemAPIError:
-        case S::SystemCollapsedContent:
-        case S::SystemCompactBoundary:
-            content_lines = 1 + estimate_content_lines(preview, term_cols, 4) / 2;
-            break;
-        case S::UserBashInput:
-            // "> echo hello" prompt-style — short.
-            content_lines = 2;
-            break;
-        case S::UserImage:
-            content_lines = 4;   // label + metadata + source (no fake thumbnail)
-            break;
-        case S::UserAttachments:
-            content_lines = 3;   // grid header + 1 row of thumbs
-            break;
-        case S::UserText:
-        case S::UserPrompt: {
-            // Match the user renderer's actual body width and Unicode cells.
-            const std::string truncated =
-                ::loom::ui::messages::TruncateUserPromptText(preview);
-            content_lines = 1 + static_cast<int>(
+        }
+        break;
+    }
+    case S::UserToolResult:
+    case S::UserBashOutput: {
+        // payload_preview returns just tool_name
+        // (e.g. "Bash") — 1 line.  Actual tool result output can be
+        // dozens of lines.  Extract real output from ToolResultOptions.
+        if (auto* ropts = std::get_if<ToolResultOptions>(&input.rows[vr.row_idx])) {
+            std::string full_text;
+            if (ropts->content_items && !ropts->content_items->empty()) {
+                // Structured content items (MCP tools): concatenate text.
+                for (const auto& item : *ropts->content_items) {
+                    if (item.type == "text") {
+                        if (!full_text.empty()) full_text += '\n';
+                        full_text += item.text;
+                    } else if (item.type == "image") {
+                        if (!full_text.empty()) full_text += '\n';
+                        full_text += "[Image]";
+                    }
+                }
+            } else if (ropts->output && !ropts->output->empty()) {
+                full_text = *ropts->output;
+            } else if (ropts->error_message && !ropts->error_message->empty()) {
+                full_text = *ropts->error_message;
+            }
+            if (!full_text.empty()) {
+                content_lines = estimate_content_lines(full_text, term_cols, 4);
+            } else {
+                content_lines = 2;  // minimal: header + "(no output)"
+            }
+            // +1 for header row (status icon + tool name + duration)
+            content_lines += 1;
+            if (ropts->is_truncated) content_lines += 1;  // "(output truncated)"
+        } else {
+            // Fallback for UserBashOutput (BashIOEntry variant)
+            content_lines = estimate_content_lines(preview, term_cols, 4);
+        }
+        break;
+    }
+    case S::UserLocalCommandOutput:
+        // Command output (e.g. /help, /theme list) can be dozens of
+        // lines.  payload_preview returns just "local-command" for this
+        // variant, so we must count actual output lines from the payload.
+        if (auto* opts = std::get_if<local_cmd::LocalCommandOptions>(&input.rows[vr.row_idx])) {
+            // Each OutputLine is one display row; add header + footer.
+            content_lines = static_cast<int>(opts->data.lines.size()) + 3;
+        } else {
+            content_lines = estimate_content_lines(preview, term_cols, 4);
+        }
+        break;
+    case S::UserLocalJsxOutput:
+        // JSX overlay output (e.g. /skills, /agents) renders each line
+        // as a separate text() row — one display row per \n.  The
+        // payload is UserTextMessageData whose content_preview carries
+        // the full text, so estimate_content_lines counts correctly.
+        content_lines = estimate_content_lines(preview, term_cols, 0);
+        break;
+    case S::SystemText:
+        // Faithful SystemText's summary is a single-line event for every
+        // subtype, preceded by the per-message top margin. This includes
+        // Plain /resume events as well as background notifications.
+        content_lines = 2;
+        break;
+    case S::SystemRateLimit:
+    case S::SystemPlanApproval:
+    case S::SystemHookProgress:
+    case S::SystemShutdown:
+    case S::SystemAdvisor:
+    case S::SystemTaskAssignment:
+    case S::SystemAPIError:
+    case S::SystemCollapsedContent:
+    case S::SystemCompactBoundary:
+        content_lines = 1 + estimate_content_lines(preview, term_cols, 4) / 2;
+        break;
+    case S::UserBashInput:
+        // "> echo hello" prompt-style — short.
+        content_lines = 2;
+        break;
+    case S::UserImage:
+        content_lines = 4;  // label + metadata + source (no fake thumbnail)
+        break;
+    case S::UserAttachments:
+        content_lines = 3;  // grid header + 1 row of thumbs
+        break;
+    case S::UserText:
+    case S::UserPrompt: {
+        // Match the user renderer's actual body width and Unicode cells.
+        const std::string truncated = ::loom::ui::messages::TruncateUserPromptText(preview);
+        content_lines =
+            1 +
+            static_cast<int>(
                 ::loom::ui::messages::wrap_detail::WrappedPromptLines(
-                    truncated, term_cols -
-                    ::loom::ui::messages::wrap_detail::kPromptChromeColumns).size());
-            break;
-        }
-        case S::UserCommand:
-            // Compact 1-line chip ("/command args") — no truncation,
-            // no wrapping.  RenderUserCommandMessage collapses to
-            // content width.
-            content_lines = 1;
-            break;
-        case S::AssistantText:
-            // Faithful renderer reserves 2 cols for the "●" bullet glyph;
-            // the body wraps at term_cols-2 via Markdown flexbox
-            // word-boundary wrapping.  Use the word-wrap estimator (not
-            // hard-wrap) to match — hard-wrap underestimates for text
-            // with spaces, making the last line unreachable at bottom.
-            content_lines = 1 + estimate_content_lines_word(preview, term_cols, 2);
-            break;
-        default:
-            content_lines = 1 + estimate_content_lines(preview, term_cols, 36);
-            break;
+                    truncated, term_cols - ::loom::ui::messages::wrap_detail::kPromptChromeColumns)
+                    .size());
+        break;
+    }
+    case S::UserCommand:
+        // Compact 1-line chip ("/command args") — no truncation,
+        // no wrapping.  RenderUserCommandMessage collapses to
+        // content width.
+        content_lines = 1;
+        break;
+    case S::AssistantText:
+        // Faithful renderer reserves 2 cols for the "●" bullet glyph;
+        // the body wraps at term_cols-2 via Markdown flexbox
+        // word-boundary wrapping.  Use the word-wrap estimator (not
+        // hard-wrap) to match — hard-wrap underestimates for text
+        // with spaces, making the last line unreachable at bottom.
+        content_lines = 1 + estimate_content_lines_word(preview, term_cols, 2);
+        break;
+    default:
+        content_lines = 1 + estimate_content_lines(preview, term_cols, 36);
+        break;
     }
     // +1 line for envelope header (avatar + role pill) unless the shape
     // uses the faithful renderer which bypasses that envelope entirely.
     switch (shape) {
-        case S::AssistantThinking:
-        case S::AssistantRedactedThinking:
-        case S::AssistantText:
-        case S::UserText:
-        case S::UserPrompt:
-        case S::UserCommand:
-        case S::UserLocalJsxOutput:
-        case S::SystemText:
-        case S::SystemRateLimit:
-        case S::SystemPlanApproval:
-        case S::SystemHookProgress:
-        case S::SystemShutdown:
-        case S::SystemAdvisor:
-        case S::SystemTaskAssignment:
-        case S::SystemAPIError:
-        case S::SystemCompactBoundary:
-        case S::SystemCollapsedContent:
-            break;   // faithful renderer: no avatar/role-pill header
-        default:
-            content_lines += 1;
+    case S::AssistantThinking:
+    case S::AssistantRedactedThinking:
+    case S::AssistantText:
+    case S::UserText:
+    case S::UserPrompt:
+    case S::UserCommand:
+    case S::UserLocalJsxOutput:
+    case S::SystemText:
+    case S::SystemRateLimit:
+    case S::SystemPlanApproval:
+    case S::SystemHookProgress:
+    case S::SystemShutdown:
+    case S::SystemAdvisor:
+    case S::SystemTaskAssignment:
+    case S::SystemAPIError:
+    case S::SystemCompactBoundary:
+    case S::SystemCollapsedContent:
+        break;  // faithful renderer: no avatar/role-pill header
+    default:
+        content_lines += 1;
     }
     return std::clamp(content_lines, 1, kMaxRowHeight);
 }
 
-} // namespace detail
+}  // namespace detail
 
 /// Convert a messages_list `VisibleRow` vector into the format consumed by
 /// VirtualMessageList.  Each entry carries:
@@ -678,12 +653,9 @@ constexpr int kMaxRowHeight = 1000;
 ///   - search_key       lowered preview text (for scroll_search callback)
 ///   - type_hint        0 = Payload, 1 = CompactGroup
 ///   - backend_index    round-trip key for render_row callback
-[[nodiscard]] auto visible_rows_to_virtual(
-    const std::vector<VisibleRow>& visible,
-    const MessagesListInput& input,
-    int term_cols)
-    -> std::vector<loom::ui::messages::virtual_list::VisibleRow>
-{
+[[nodiscard]] auto visible_rows_to_virtual(const std::vector<VisibleRow>& visible,
+                                           const MessagesListInput& input, int term_cols)
+    -> std::vector<loom::ui::messages::virtual_list::VisibleRow> {
     namespace vl = loom::ui::messages::virtual_list;
     std::vector<vl::VisibleRow> out;
     out.reserve(visible.size());
@@ -695,33 +667,33 @@ constexpr int kMaxRowHeight = 1000;
         // decode_virtual_backend_index.  Bit 63 = CompactGroup,
         // bit 62 = TranscriptCapDivider, bit 61 = CompressedChain,
         // neither = Payload.
-        constexpr std::uint64_t kGroupBit  = std::uint64_t(1) << 63;
-        constexpr std::uint64_t kCapBit    = std::uint64_t(1) << 62;
-        constexpr std::uint64_t kChainBit  = std::uint64_t(1) << 61;
+        constexpr std::uint64_t kGroupBit = std::uint64_t(1) << 63;
+        constexpr std::uint64_t kCapBit = std::uint64_t(1) << 62;
+        constexpr std::uint64_t kChainBit = std::uint64_t(1) << 61;
         std::uint64_t backend;
         int type_hint;
 
         if (vr.kind == VisibleRow::Kind::CompactGroup) {
-            backend   = kGroupBit | static_cast<std::uint64_t>(vr.group_idx);
+            backend = kGroupBit | static_cast<std::uint64_t>(vr.group_idx);
             type_hint = 1;
         } else if (vr.kind == VisibleRow::Kind::TranscriptCapDivider) {
-            backend   = kCapBit | static_cast<std::uint64_t>(vr.hidden_count);
+            backend = kCapBit | static_cast<std::uint64_t>(vr.hidden_count);
             type_hint = 2;
         } else if (vr.kind == VisibleRow::Kind::CompressedChain) {
-            backend   = kChainBit | static_cast<std::uint64_t>(vr.group_count);
+            backend = kChainBit | static_cast<std::uint64_t>(vr.group_count);
             type_hint = 3;
         } else {
-            backend   = static_cast<std::uint64_t>(vr.row_idx);
+            backend = static_cast<std::uint64_t>(vr.row_idx);
             type_hint = 0;
         }
 
         vl::VisibleRow row{
-            .row_id                 = static_cast<std::uint64_t>(i) + 1,
+            .row_id = static_cast<std::uint64_t>(i) + 1,
             .estimated_height_lines = est,
-            .height_measured        = false,
-            .search_key             = {},
-            .type_hint              = type_hint,
-            .backend_index          = backend,
+            .height_measured = false,
+            .search_key = {},
+            .type_hint = type_hint,
+            .backend_index = backend,
         };
         if (row.type_hint == 0 && vr.row_idx < input.rows.size()) {
             // Populate search_key using the cached lowered rich text.
@@ -731,12 +703,10 @@ constexpr int kMaxRowHeight = 1000;
             //
             // The search callback is the same one used by build_visible_rows
             // search filter.
-            const MessageShape shape =
-                vr.row_idx < input.shapes.size()
-                    ? input.shapes[vr.row_idx]
-                    : MessageShape::SystemTaskAssignment;
-            row.search_key = detail::get_cached_lowered_search_text(
-                input, vr.row_idx, shape);
+            const MessageShape shape = vr.row_idx < input.shapes.size()
+                                           ? input.shapes[vr.row_idx]
+                                           : MessageShape::SystemTaskAssignment;
+            row.search_key = detail::get_cached_lowered_search_text(input, vr.row_idx, shape);
         }
         out.push_back(std::move(row));
     }
@@ -747,37 +717,35 @@ constexpr int kMaxRowHeight = 1000;
 /// messages_list::VisibleRow.  `out` is filled in place; returns true if
 /// decode succeeded, false if the key was malformed (out is reset to a
 /// safe payload(0) sentinel on failure).
-[[nodiscard]] bool decode_virtual_backend_index(
-    std::uint64_t backend_index,
-    VisibleRow& out) noexcept
-{
+[[nodiscard]] bool decode_virtual_backend_index(std::uint64_t backend_index,
+                                                VisibleRow& out) noexcept {
     constexpr std::uint64_t kGroupBit = std::uint64_t(1) << 63;
-    constexpr std::uint64_t kCapBit   = std::uint64_t(1) << 62;
+    constexpr std::uint64_t kCapBit = std::uint64_t(1) << 62;
     constexpr std::uint64_t kChainBit = std::uint64_t(1) << 61;
     if ((backend_index & kGroupBit) != 0) {
-        out.kind      = VisibleRow::Kind::CompactGroup;
+        out.kind = VisibleRow::Kind::CompactGroup;
         out.group_idx = backend_index & (~kGroupBit);
-        out.row_idx   = 0;
+        out.row_idx = 0;
         return true;
     }
     if ((backend_index & kCapBit) != 0) {
-        out.kind         = VisibleRow::Kind::TranscriptCapDivider;
+        out.kind = VisibleRow::Kind::TranscriptCapDivider;
         out.hidden_count = backend_index & (~kCapBit);
-        out.row_idx      = 0;
-        out.group_idx    = 0;
+        out.row_idx = 0;
+        out.group_idx = 0;
         return true;
     }
     if ((backend_index & kChainBit) != 0) {
-        out.kind        = VisibleRow::Kind::CompressedChain;
+        out.kind = VisibleRow::Kind::CompressedChain;
         out.group_count = backend_index & (~kChainBit);
-        out.row_idx     = 0;
-        out.group_idx   = 0;
+        out.row_idx = 0;
+        out.group_idx = 0;
         return true;
     }
-    out.kind    = VisibleRow::Kind::Payload;
+    out.kind = VisibleRow::Kind::Payload;
     out.row_idx = static_cast<std::size_t>(backend_index);
     out.group_idx = 0;
     return true;
 }
 
-} // namespace loom::ui::messages_list
+}  // namespace loom::ui::messages_list

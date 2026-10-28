@@ -23,19 +23,19 @@ using loom::vim::VimMode;
 /// Bundled vim editing state.  One instance per input widget.
 struct VimController {
     // ── Mode ────────────────────────────────────────────────────────
-    VimMode mode = VimMode::Insert;       ///< Current editing mode.
+    VimMode mode = VimMode::Insert;  ///< Current editing mode.
 
     // ── Pending operators ───────────────────────────────────────────
-    std::string pending_operator;         ///< "d", "y", or "c" waiting for motion/2nd key.
-    bool pending_g = false;               ///< True after 'g', waiting for 2nd key (gg/gj/gk).
-    bool pending_replace = false;         ///< True after 'r', waiting for replacement char.
+    std::string pending_operator;  ///< "d", "y", or "c" waiting for motion/2nd key.
+    bool pending_g = false;        ///< True after 'g', waiting for 2nd key (gg/gj/gk).
+    bool pending_replace = false;  ///< True after 'r', waiting for replacement char.
 
     // ── Registers ───────────────────────────────────────────────────
-    std::string unnamed_register;         ///< Default yank register (").
-    bool yank_is_linewise = false;        ///< Last yank was linewise (yy/dd).
+    std::string unnamed_register;   ///< Default yank register (").
+    bool yank_is_linewise = false;  ///< Last yank was linewise (yy/dd).
 
     // ── Counts / repeats ────────────────────────────────────────────
-    int count_prefix = 0;                 ///< Numeric prefix for commands (e.g. 3dw).
+    int count_prefix = 0;  ///< Numeric prefix for commands (e.g. 3dw).
 
     // ── Helper accessors ────────────────────────────────────────────
     /// True when in a navigation mode (Normal, Visual*, Command).
@@ -44,14 +44,11 @@ struct VimController {
     }
 
     /// True when in an editing mode (Insert, Replace).
-    [[nodiscard]] bool is_editing() const noexcept {
-        return loom::vim::is_editing_mode(mode);
-    }
+    [[nodiscard]] bool is_editing() const noexcept { return loom::vim::is_editing_mode(mode); }
 
     /// True when in any visual mode (Visual, VisualLine, VisualBlock).
     [[nodiscard]] bool is_visual() const noexcept {
-        return mode == VimMode::Visual ||
-               mode == VimMode::VisualLine ||
+        return mode == VimMode::Visual || mode == VimMode::VisualLine ||
                mode == VimMode::VisualBlock;
     }
 
@@ -78,4 +75,4 @@ struct VimController {
     }
 };
 
-} // namespace loom::vim
+}  // namespace loom::vim

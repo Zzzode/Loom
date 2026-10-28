@@ -3,7 +3,6 @@
 /// Migrated from src/tools/AgentTool/constants.ts
 module;
 
-
 export module loom.tools.agent_constants;
 
 import std;
@@ -29,4 +28,4 @@ inline constexpr std::string_view VERIFICATION_AGENT_TYPE = "verification";
     return oneshot.contains(agent_type);
 }
 
-} // namespace loom::tools::agent
+}  // namespace loom::tools::agent

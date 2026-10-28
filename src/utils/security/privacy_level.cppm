@@ -20,7 +20,7 @@ namespace detail {
     return it != env.end() && !it->second.empty();
 }
 
-} // namespace detail
+}  // namespace detail
 
 [[nodiscard]] inline PrivacyLevel get_privacy_level(const EnvLike& env) {
     if (detail::has_truthy_js_env_value(env, "LOOM_DISABLE_NONESSENTIAL_TRAFFIC")) {
@@ -40,11 +40,12 @@ namespace detail {
     return get_privacy_level(env) != PrivacyLevel::Default;
 }
 
-[[nodiscard]] inline std::optional<std::string> get_essential_traffic_only_reason(const EnvLike& env) {
+[[nodiscard]] inline std::optional<std::string>
+get_essential_traffic_only_reason(const EnvLike& env) {
     if (detail::has_truthy_js_env_value(env, "LOOM_DISABLE_NONESSENTIAL_TRAFFIC")) {
         return std::string("LOOM_DISABLE_NONESSENTIAL_TRAFFIC");
     }
     return std::nullopt;
 }
 
-} // namespace loom::utils::privacy
+}  // namespace loom::utils::privacy

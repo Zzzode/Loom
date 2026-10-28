@@ -3,7 +3,6 @@
 /// Renames the current session.
 module;
 
-
 export module loom.commands.rename;
 
 import std;
@@ -23,35 +22,32 @@ public:
         return CommandDefinition{
             .name = "rename",
             .description = "Rename the current session",
-            .args = {
-                CommandArg{.name = "name", .description = "New name for the session",
-                           .type = ArgType::Text, .required = false},
-            },
+            .args =
+                {
+                    CommandArg{.name = "name",
+                               .description = "New name for the session",
+                               .type = ArgType::Text,
+                               .required = false},
+                },
             .category = "session",
             .aliases = {},
             .hidden = false,
         };
     }
 
-    [[nodiscard]] VoidResult validate(const CommandContext&) {
-        return {};
-    }
+    [[nodiscard]] VoidResult validate(const CommandContext&) { return {}; }
 
     [[nodiscard]] Result<CommandResult> execute(const CommandContext& ctx) {
         if (ctx.args.empty()) {
-            return CommandResult::success(
-                "Please provide a name for the session.\n"
-                "Usage: /rename <new name>");
+            return CommandResult::success("Please provide a name for the session.\n"
+                                          "Usage: /rename <new name>");
         }
-        
+
         const auto& new_name = ctx.args[0];
-        return CommandResult::success(
-            std::format("Session renamed to: {}", new_name));
+        return CommandResult::success(std::format("Session renamed to: {}", new_name));
     }
 
-    [[nodiscard]] std::vector<std::string> complete(std::string_view) {
-        return {};
-    }
+    [[nodiscard]] std::vector<std::string> complete(std::string_view) { return {}; }
 };
 
-} // namespace loom::commands
+}  // namespace loom::commands

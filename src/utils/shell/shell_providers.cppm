@@ -3,9 +3,9 @@
 //         shellProvider.ts, resolveDefaultShell.ts
 module;
 
+#include <cstddef>
 #include <cstdio>
 #include <cstdlib>
-#include <cstddef>
 
 export module loom.process.shell.shell_providers;
 
@@ -31,8 +31,10 @@ enum class ShellType {
 /// Convert ShellType to string
 [[nodiscard]] inline std::string_view shell_type_name(ShellType type) {
     switch (type) {
-        case ShellType::Bash: return "bash";
-        case ShellType::PowerShell: return "powershell";
+    case ShellType::Bash:
+        return "bash";
+    case ShellType::PowerShell:
+        return "powershell";
     }
     return "unknown";
 }
@@ -75,12 +77,12 @@ public:
 
     /// Build the full command string including all shell-specific setup.
     /// For bash: source snapshot, session env, disable extglob, eval-wrap, pwd tracking.
-    [[nodiscard]] virtual ExecCommandResult build_exec_command(
-        std::string_view command, const BuildExecOptions& opts) = 0;
+    [[nodiscard]] virtual ExecCommandResult build_exec_command(std::string_view command,
+                                                               const BuildExecOptions& opts) = 0;
 
     /// Shell args for spawn (e.g., ["-c", "-l", cmd] for bash)
-    [[nodiscard]] virtual std::vector<std::string> get_spawn_args(
-        std::string_view command_string) const = 0;
+    [[nodiscard]] virtual std::vector<std::string>
+    get_spawn_args(std::string_view command_string) const = 0;
 
     /// Extra env vars for this shell type.
     /// May perform initialization (e.g., tmux socket setup for bash).
@@ -112,11 +114,13 @@ public:
     }
 
     [[nodiscard]] ShellType type() const override { return ShellType::Bash; }
+
     [[nodiscard]] const std::string& shell_path() const override { return shell_path_; }
+
     [[nodiscard]] bool detached() const override { return true; }
 
-    [[nodiscard]] ExecCommandResult build_exec_command(
-        std::string_view command, const BuildExecOptions& opts) override {
+    [[nodiscard]] ExecCommandResult build_exec_command(std::string_view command,
+                                                       const BuildExecOptions& opts) override {
 
         std::string tmp_dir = get_tmp_dir();
         std::string cwd_file_path;
@@ -134,8 +138,7 @@ public:
 
         // Source snapshot (if available)
         if (snapshot_path_ && fs::exists(*snapshot_path_)) {
-            parts.push_back("source " + shell_quote(*snapshot_path_) +
-                           " 2>/dev/null || true");
+            parts.push_back("source " + shell_quote(*snapshot_path_) + " 2>/dev/null || true");
             last_snapshot_valid_ = true;
         } else {
             last_snapshot_valid_ = false;
@@ -172,11 +175,11 @@ public:
         };
     }
 
-    [[nodiscard]] std::vector<std::string> get_spawn_args(
-        std::string_view command_string) const override {
+    [[nodiscard]] std::vector<std::string>
+    get_spawn_args(std::string_view command_string) const override {
         std::vector<std::string> args;
         if (!last_snapshot_valid_) {
-            args.emplace_back("-l"); // Use login shell if no snapshot
+            args.emplace_back("-l");  // Use login shell if no snapshot
         }
         args.emplace_back("-c");
         args.emplace_back(command_string);
@@ -195,14 +198,15 @@ public:
 
 private:
     /// Create a shell snapshot file for fast initialization
-    [[nodiscard]] static std::optional<std::string> create_shell_snapshot(
-        const std::string& shell) {
+    [[nodiscard]] static std::optional<std::string>
+    create_shell_snapshot(const std::string& shell) {
         if (shell.empty() || !fs::exists(shell)) return std::nullopt;
 
         auto stamp = std::chrono::steady_clock::now().time_since_epoch().count();
-        auto path = fs::temp_directory_path() / ("loom-shell-snapshot-" + std::to_string(stamp) + ".sh");
-        std::string command = shell_quote(shell) + " -l -c " +
-            shell_quote("export -p") + " > " + shell_quote(path.string()) + " 2>/dev/null";
+        auto path =
+            fs::temp_directory_path() / ("loom-shell-snapshot-" + std::to_string(stamp) + ".sh");
+        std::string command = shell_quote(shell) + " -l -c " + shell_quote("export -p") + " > " +
+                              shell_quote(path.string()) + " 2>/dev/null";
         int status = std::system(command.c_str());
         std::error_code ec;
         if (status != 0 || !fs::exists(path, ec) || fs::file_size(path, ec) == 0) {
@@ -231,8 +235,10 @@ private:
     [[nodiscard]] static std::string shell_quote(std::string_view sv) {
         std::string result = "'";
         for (char c : sv) {
-            if (c == '\'') result += "'\\''";
-            else result += c;
+            if (c == '\'')
+                result += "'\\''";
+            else
+                result += c;
         }
         result += '\'';
         return result;
@@ -244,8 +250,8 @@ private:
     }
 
     /// Format with shell prefix
-    [[nodiscard]] static std::string format_shell_prefix(
-        const std::string& prefix, const std::string& command) {
+    [[nodiscard]] static std::string format_shell_prefix(const std::string& prefix,
+                                                         const std::string& command) {
         return prefix + " " + shell_quote(command);
     }
 
@@ -281,11 +287,13 @@ public:
         : shell_path_(std::move(shell_path)) {}
 
     [[nodiscard]] ShellType type() const override { return ShellType::PowerShell; }
+
     [[nodiscard]] const std::string& shell_path() const override { return shell_path_; }
+
     [[nodiscard]] bool detached() const override { return false; }
 
-    [[nodiscard]] ExecCommandResult build_exec_command(
-        std::string_view command, const BuildExecOptions& opts) override {
+    [[nodiscard]] ExecCommandResult build_exec_command(std::string_view command,
+                                                       const BuildExecOptions& opts) override {
 
         std::string tmp_dir = get_tmp_dir();
         std::string cwd_file_path;
@@ -299,9 +307,9 @@ public:
         std::string ps_command = std::string(command);
 
         // Add cwd tracking
-        std::string command_string =
-            ps_command + "; (Get-Location).Path | Out-File -FilePath '" +
-            escape_powershell_single_quoted(cwd_file_path) + "' -Encoding UTF8 -NoNewline";
+        std::string command_string = ps_command + "; (Get-Location).Path | Out-File -FilePath '" +
+                                     escape_powershell_single_quoted(cwd_file_path) +
+                                     "' -Encoding UTF8 -NoNewline";
 
         return {
             .command_string = std::move(command_string),
@@ -309,8 +317,8 @@ public:
         };
     }
 
-    [[nodiscard]] std::vector<std::string> get_spawn_args(
-        std::string_view command_string) const override {
+    [[nodiscard]] std::vector<std::string>
+    get_spawn_args(std::string_view command_string) const override {
         return {
             "-NoProfile",
             "-NonInteractive",
@@ -356,38 +364,37 @@ private:
 struct PowershellDetection {
     /// Check if PowerShell Core (pwsh) is available
     [[nodiscard]] static bool is_pwsh_available() {
-        return fs::exists("/usr/local/bin/pwsh") ||
-               fs::exists("/usr/bin/pwsh") ||
+        return fs::exists("/usr/local/bin/pwsh") || fs::exists("/usr/bin/pwsh") ||
                which("pwsh").has_value();
     }
 
     /// Check if Windows PowerShell is available
     [[nodiscard]] static bool is_windows_powershell_available() {
-        #ifdef _WIN32
+#ifdef _WIN32
         return which("powershell.exe").has_value();
-        #else
+#else
         return false;
-        #endif
+#endif
     }
 
     /// Get the path to the preferred PowerShell executable
     [[nodiscard]] static std::optional<std::string> get_powershell_path() {
         // Prefer pwsh (cross-platform) over powershell.exe (Windows-only)
         if (auto path = which("pwsh")) return path;
-        #ifdef _WIN32
+#ifdef _WIN32
         if (auto path = which("powershell.exe")) return path;
-        #endif
+#endif
         return std::nullopt;
     }
 
 private:
     [[nodiscard]] static std::optional<std::string> which(std::string_view name) {
         if (name.empty()) return std::nullopt;
-        #ifdef _WIN32
+#ifdef _WIN32
         std::string cmd = "where " + std::string(name) + " 2>NUL";
-        #else
+#else
         std::string cmd = "which " + std::string(name) + " 2>/dev/null";
-        #endif
+#endif
         FILE* pipe = loom::utils::bash::popen_spawn(cmd.c_str());
         if (!pipe) return std::nullopt;
         char buffer[512]{};
@@ -397,7 +404,8 @@ private:
         }
         loom::utils::bash::pclose_spawn(pipe);
         // Trim trailing whitespace/newlines
-        while (!result.empty() && (result.back() == '\n' || result.back() == '\r' || result.back() == ' ')) {
+        while (!result.empty() &&
+               (result.back() == '\n' || result.back() == '\r' || result.back() == ' ')) {
             result.pop_back();
         }
         if (result.empty()) return std::nullopt;
@@ -422,17 +430,17 @@ private:
         if (fs::exists(shell)) return shell;
     }
 
-    // 3. Platform defaults
-    #ifdef _WIN32
+// 3. Platform defaults
+#ifdef _WIN32
     // On Windows, prefer PowerShell Core > Windows PowerShell > cmd.exe
     if (auto ps = PowershellDetection::get_powershell_path()) return *ps;
     return "cmd.exe";
-    #else
+#else
     // On Unix, fallback to /bin/bash
     if (fs::exists("/bin/bash")) return "/bin/bash";
     if (fs::exists("/bin/sh")) return "/bin/sh";
     return "/bin/sh";
-    #endif
+#endif
 }
 
 /// Determine the shell type from a shell path
@@ -441,21 +449,19 @@ private:
         shell_path.find("powershell") != std::string_view::npos) {
         return ShellType::PowerShell;
     }
-    return ShellType::Bash; // Default: treat as bash-compatible
+    return ShellType::Bash;  // Default: treat as bash-compatible
 }
 
 /// Create the appropriate shell provider for the given shell path
-[[nodiscard]] inline std::unique_ptr<ShellProvider> create_provider(
-    const std::string& shell_path,
-    bool skip_snapshot = false) {
+[[nodiscard]] inline std::unique_ptr<ShellProvider> create_provider(const std::string& shell_path,
+                                                                    bool skip_snapshot = false) {
     auto type = detect_shell_type(shell_path);
     switch (type) {
-        case ShellType::PowerShell:
-            return std::make_unique<PowershellProvider>(shell_path);
-        case ShellType::Bash:
-            return std::make_unique<BashProvider>(
-                shell_path,
-                BashProvider::Options{.skip_snapshot = skip_snapshot});
+    case ShellType::PowerShell:
+        return std::make_unique<PowershellProvider>(shell_path);
+    case ShellType::Bash:
+        return std::make_unique<BashProvider>(
+            shell_path, BashProvider::Options{.skip_snapshot = skip_snapshot});
     }
     return std::make_unique<BashProvider>(shell_path);
 }
@@ -465,4 +471,4 @@ private:
     return create_provider(resolve_default_shell());
 }
 
-} // namespace loom::utils::shell_providers
+}  // namespace loom::utils::shell_providers

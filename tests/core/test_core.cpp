@@ -2,8 +2,9 @@
 /// @brief Core C++ module smoke tests aligned with current module names/APIs.
 
 #include <gtest/gtest.h>
-#include <cstdint>
+
 #include <climits>
+#include <cstdint>
 
 import std;
 import loom.types.types;
@@ -42,13 +43,11 @@ TEST(UtilsYaml, ScalarsParseStrictlyWithoutFromChars) {
     EXPECT_EQ(std::get<std::int64_t>(std::get<uy::YamlMap>(pos.data).at("v").data), 42);
 
     auto neg = uy::parse_yaml("v: -7");
-    EXPECT_EQ(std::get<std::int64_t>(
-        std::get<uy::YamlMap>(neg.data).at("v").data), -7);
+    EXPECT_EQ(std::get<std::int64_t>(std::get<uy::YamlMap>(neg.data).at("v").data), -7);
 
     // Floats parse as double.
     auto dbl = uy::parse_yaml("v: 1.5");
-    EXPECT_DOUBLE_EQ(std::get<double>(
-        std::get<uy::YamlMap>(dbl.data).at("v").data), 1.5);
+    EXPECT_DOUBLE_EQ(std::get<double>(std::get<uy::YamlMap>(dbl.data).at("v").data), 1.5);
 
     // Non-numeric / partial-garbage stay strings. (Leading whitespace after
     // the colon is trimmed by parse_block before reaching parse_scalar, so it
@@ -157,11 +156,11 @@ TEST(CoreConfig, StatusLineSegmentsRoundTrip) {
 
         const auto& sl = reloaded.settings().status_line;
         EXPECT_TRUE(sl.segments.at("cwd"));
-        EXPECT_TRUE(sl.segments.at("git"));    // flipped
+        EXPECT_TRUE(sl.segments.at("git"));  // flipped
         EXPECT_TRUE(sl.segments.at("model"));
         EXPECT_TRUE(sl.segments.at("tokens"));
         EXPECT_FALSE(sl.segments.at("cost"));
-        EXPECT_FALSE(sl.segments.at("tasks")); // flipped
+        EXPECT_FALSE(sl.segments.at("tasks"));  // flipped
         EXPECT_FALSE(sl.segments.at("agent"));
     }
 
@@ -174,10 +173,8 @@ TEST(CoreConfig, StatusLineSegmentsRoundTrip) {
 // pins the collection + drain contract.
 TEST(CoreConfig, SoftTierParseWarningCollectedForDrain) {
     namespace fs = std::filesystem;
-    const auto suffix =
-        std::chrono::system_clock::now().time_since_epoch().count();
-    const auto root =
-        fs::temp_directory_path() / ("loom_core_c22_diag_" + std::to_string(suffix));
+    const auto suffix = std::chrono::system_clock::now().time_since_epoch().count();
+    const auto root = fs::temp_directory_path() / ("loom_core_c22_diag_" + std::to_string(suffix));
     fs::remove_all(root);
     fs::create_directories(root);
 
@@ -190,8 +187,7 @@ TEST(CoreConfig, SoftTierParseWarningCollectedForDrain) {
     }
 
     {
-        loom::core::ConfigManager manager(user_path,
-                                        project_path, local_path);
+        loom::core::ConfigManager manager(user_path, project_path, local_path);
         // Quiet load: no stderr print, but the diagnostic is collected for
         // the TUI composition root to drain into a toast.
         ASSERT_TRUE(manager.load(loom::core::LoadOptions{.quiet = true}).has_value());
@@ -225,11 +221,9 @@ TEST(CoreConfig, TierFilesChangedDetectsExternalEdit) {
         seed << "{\"model\":{\"default_model\":\"v1\"}}";
     }
     {
-        loom::core::ConfigManager manager(user_path,
-                                        project_path, local_path);
+        loom::core::ConfigManager manager(user_path, project_path, local_path);
         ASSERT_TRUE(manager.load().has_value());
-        EXPECT_FALSE(manager.tier_files_changed())
-            << "no change right after load";
+        EXPECT_FALSE(manager.tier_files_changed()) << "no change right after load";
 
         // Same-size rewrite (v1 -> v2): only the content hash differs.
         {
@@ -249,8 +243,7 @@ TEST(CoreConfig, TierFilesChangedDetectsExternalEdit) {
 
         // Delete: exists flips false.
         fs::remove(project_path);
-        EXPECT_TRUE(manager.tier_files_changed())
-            << "delete must flip exists";
+        EXPECT_TRUE(manager.tier_files_changed()) << "delete must flip exists";
 
         // Recreate with DIFFERENT content: exists flips back and the hash
         // differs from the load-time snapshot.

@@ -17,7 +17,7 @@ import loom.tools.agent_runtime;
 // Genuinely used for loom::utils::PERSISTED_OUTPUT_TAG / ..._CLOSING_TAG /
 // TOOL_RESULT_CLEARED_MESSAGE: namespace-scope constexpr string_views the
 // dead-import heuristic does not harvest.
-import loom.tools.support.tool_helpers;  // arch-check: keep-import
+import loom.tools.support.tool_helpers; // arch-check: keep-import
 import loom.platform.env.env_utils;
 
 namespace loom::core {
@@ -46,9 +46,8 @@ namespace loom::core {
     return false;
 }
 
-[[nodiscard]] std::uint32_t QueryEngine::env_uint_or_default(
-    std::initializer_list<const char*> names,
-    std::uint32_t fallback) {
+[[nodiscard]] std::uint32_t
+QueryEngine::env_uint_or_default(std::initializer_list<const char*> names, std::uint32_t fallback) {
     for (const char* name : names) {
         const char* raw = std::getenv(name);
         if (raw == nullptr || *raw == '\0') continue;
@@ -69,36 +68,33 @@ namespace loom::core {
 }
 
 [[nodiscard]] std::uint32_t QueryEngine::time_based_microcompact_gap_minutes() {
-    return env_uint_or_default({
-        "LOOM_TIME_BASED_MICROCOMPACT_GAP_MINUTES",
-        "LOOM_TIME_BASED_MICROCOMPACT_GAP_MINUTES",
-    }, 60);
+    return env_uint_or_default(
+        {
+            "LOOM_TIME_BASED_MICROCOMPACT_GAP_MINUTES",
+            "LOOM_TIME_BASED_MICROCOMPACT_GAP_MINUTES",
+        },
+        60);
 }
 
 [[nodiscard]] std::uint32_t QueryEngine::time_based_microcompact_keep_recent() {
-    return std::max<std::uint32_t>(1, env_uint_or_default({
-        "LOOM_TIME_BASED_MICROCOMPACT_KEEP_RECENT",
-        "LOOM_TIME_BASED_MICROCOMPACT_KEEP_RECENT",
-    }, 5));
+    return std::max<std::uint32_t>(1, env_uint_or_default(
+                                          {
+                                              "LOOM_TIME_BASED_MICROCOMPACT_KEEP_RECENT",
+                                              "LOOM_TIME_BASED_MICROCOMPACT_KEEP_RECENT",
+                                          },
+                                          5));
 }
 
 [[nodiscard]] bool QueryEngine::is_time_based_microcompact_tool(std::string_view tool_name) {
     const auto name = lowercase_ascii(tool_name);
     static const std::unordered_set<std::string> compactable = {
-        "bash",
-        "powershell",
-        "glob",
-        "grep",
-        "read",
-        "webfetch",
-        "websearch",
-        "edit",
-        "write",
+        "bash", "powershell", "glob", "grep", "read", "webfetch", "websearch", "edit", "write",
     };
     return compactable.contains(name);
 }
 
-[[nodiscard]] std::unordered_set<std::string> QueryEngine::unbounded_tool_result_budget_names() const {
+[[nodiscard]] std::unordered_set<std::string>
+QueryEngine::unbounded_tool_result_budget_names() const {
     std::unordered_set<std::string> names;
     if (!tool_registry_) return names;
     for (const auto& definition : tool_registry_->get_visible_definitions()) {
@@ -109,8 +105,8 @@ namespace loom::core {
     return names;
 }
 
-[[nodiscard]] std::unordered_map<std::string, std::string> QueryEngine::tool_name_by_tool_use_id(
-    const std::vector<Message>& messages) {
+[[nodiscard]] std::unordered_map<std::string, std::string>
+QueryEngine::tool_name_by_tool_use_id(const std::vector<Message>& messages) {
     std::unordered_map<std::string, std::string> names;
     for (const auto& message : messages) {
         if (const auto* assistant = std::get_if<AssistantMessage>(&message)) {
@@ -130,8 +126,8 @@ namespace loom::core {
     return names;
 }
 
-[[nodiscard]] std::optional<std::string> QueryEngine::tool_result_plain_text_content(
-    const ToolResultMessage& message) {
+[[nodiscard]] std::optional<std::string>
+QueryEngine::tool_result_plain_text_content(const ToolResultMessage& message) {
     std::string text;
     for (const auto& block : message.content) {
         if (const auto* text_block = std::get_if<TextBlock>(&block)) {
@@ -146,8 +142,8 @@ namespace loom::core {
     return text;
 }
 
-[[nodiscard]] std::optional<std::string> QueryEngine::tool_result_text_for_budget(
-    const ToolResultMessage& message) {
+[[nodiscard]] std::optional<std::string>
+QueryEngine::tool_result_text_for_budget(const ToolResultMessage& message) {
     auto text = tool_result_plain_text_content(message);
     if (!text || tool_result_already_replaced(*text)) {
         return std::nullopt;
@@ -270,16 +266,16 @@ void QueryEngine::apply_time_based_microcompact() {
     }
 }
 
-[[nodiscard]] std::filesystem::path QueryEngine::query_tool_result_path(std::string_view tool_use_id) const {
-    return loom::tools::agent_runtime::runtime_state_dir() /
-        "tool-results" /
-        (loom::tools::agent_runtime::safe_agent_filename(session_id_.str()) + "-" +
+[[nodiscard]] std::filesystem::path
+QueryEngine::query_tool_result_path(std::string_view tool_use_id) const {
+    return loom::tools::agent_runtime::runtime_state_dir() / "tool-results" /
+           (loom::tools::agent_runtime::safe_agent_filename(session_id_.str()) + "-" +
             loom::tools::agent_runtime::safe_agent_filename(tool_use_id) + ".txt");
 }
 
-[[nodiscard]] std::optional<std::string> QueryEngine::build_query_tool_result_replacement(
-    const QueryToolResultBudgetCandidate& candidate,
-    std::string_view content) const {
+[[nodiscard]] std::optional<std::string>
+QueryEngine::build_query_tool_result_replacement(const QueryToolResultBudgetCandidate& candidate,
+                                                 std::string_view content) const {
     auto path = query_tool_result_path(candidate.tool_use_id);
     std::error_code ec;
     std::filesystem::create_directories(path.parent_path(), ec);
@@ -297,10 +293,8 @@ void QueryEngine::apply_time_based_microcompact() {
     replacement.reserve(preview_len + path.string().size() + 192);
     replacement += loom::utils::PERSISTED_OUTPUT_TAG;
     replacement += "\n";
-    replacement += std::format(
-        "Output too large ({} bytes). Full output saved to: {}\n\n",
-        content.size(),
-        path.string());
+    replacement += std::format("Output too large ({} bytes). Full output saved to: {}\n\n",
+                               content.size(), path.string());
     replacement += std::format("Preview (first {} bytes):\n", preview_len);
     replacement += content.substr(0, preview_len);
     replacement += content.size() > preview_len ? "\n...\n" : "\n";
@@ -308,7 +302,8 @@ void QueryEngine::apply_time_based_microcompact() {
     return replacement;
 }
 
-void QueryEngine::replace_tool_result_message_locked(std::size_t message_index, std::string replacement) {
+void QueryEngine::replace_tool_result_message_locked(std::size_t message_index,
+                                                     std::string replacement) {
     auto* tool_result = std::get_if<ToolResultMessage>(&conversation_[message_index]);
     if (!tool_result) return;
     const auto existing = tool_result_plain_text_content(*tool_result);
@@ -342,7 +337,8 @@ void QueryEngine::apply_tool_result_budget() {
     const auto tool_names = tool_name_by_tool_use_id(conversation_);
     const auto skip_tool_names = unbounded_tool_result_budget_names();
 
-    for (const auto& candidates : collect_tool_result_budget_candidates_by_message(conversation_, tool_names)) {
+    for (const auto& candidates :
+         collect_tool_result_budget_candidates_by_message(conversation_, tool_names)) {
         std::vector<QueryToolResultBudgetCandidate> fresh;
         std::size_t frozen_size = 0;
         std::size_t fresh_size = 0;
@@ -387,7 +383,8 @@ void QueryEngine::apply_tool_result_budget() {
         }
 
         for (const auto& candidate : selected) {
-            auto* tool_result = std::get_if<ToolResultMessage>(&conversation_[candidate.message_index]);
+            auto* tool_result =
+                std::get_if<ToolResultMessage>(&conversation_[candidate.message_index]);
             if (!tool_result) continue;
             auto text = tool_result_text_for_budget(*tool_result);
             content_replacement_seen_ids_.insert(candidate.tool_use_id);
@@ -439,15 +436,13 @@ void QueryEngine::replay_snip_boundaries() {
 }
 
 [[nodiscard]] std::string QueryEngine::message_id_value(const Message& message) {
-    return std::visit([](const auto& value) {
-        return value.id.value;
-    }, message);
+    return std::visit([](const auto& value) { return value.id.value; }, message);
 }
 
-[[nodiscard]] std::optional<CompactPreservedSegment> QueryEngine::compact_preserved_segment(
-    std::vector<Message>::const_iterator first,
-    std::vector<Message>::const_iterator last,
-    std::string_view anchor_id) {
+[[nodiscard]] std::optional<CompactPreservedSegment>
+QueryEngine::compact_preserved_segment(std::vector<Message>::const_iterator first,
+                                       std::vector<Message>::const_iterator last,
+                                       std::string_view anchor_id) {
     if (first == last) return std::nullopt;
     return CompactPreservedSegment{
         .head_uuid = message_id_value(*first),
@@ -456,13 +451,12 @@ void QueryEngine::replay_snip_boundaries() {
     };
 }
 
-[[nodiscard]] bool QueryEngine::is_tool_enabled_for_query(
-    std::string_view tool_name,
-    const QueryOptions& options) {
+[[nodiscard]] bool QueryEngine::is_tool_enabled_for_query(std::string_view tool_name,
+                                                          const QueryOptions& options) {
     if (options.enabled_tools.empty()) return true;
     return std::ranges::any_of(options.enabled_tools, [tool_name](const std::string& enabled) {
         return enabled == tool_name;
     });
 }
 
-} // namespace loom::core
+}  // namespace loom::core

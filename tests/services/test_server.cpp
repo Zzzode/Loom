@@ -1,20 +1,21 @@
 /// @file test_server.cpp
 /// @brief Service layer tests split from test_services.cpp.
 
-#include <cctype>
-#include <cstdint>
-#include <cstdlib>
-#include <atomic>
 #include <arpa/inet.h>
 #include <fcntl.h>
 #include <netinet/in.h>
 #include <signal.h>
+#include <sys/file.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/time.h>
-#include <sys/file.h>
 #include <sys/wait.h>
 #include <unistd.h>
+
+#include <atomic>
+#include <cctype>
+#include <cstdint>
+#include <cstdlib>
 #ifdef __APPLE__
 #include <CommonCrypto/CommonDigest.h>
 #else
@@ -23,9 +24,8 @@
 
 #include <gtest/gtest.h>
 #include <httplib.h>
+
 #include <limits>
-
-
 
 import std;
 import loom.cli.ccr_client;
@@ -86,7 +86,8 @@ namespace {
 struct CurrentPathGuard {
     fs::path previous;
 
-    explicit CurrentPathGuard(const fs::path& next) : previous(fs::current_path()) {
+    explicit CurrentPathGuard(const fs::path& next)
+        : previous(fs::current_path()) {
         fs::current_path(next);
     }
 
@@ -100,7 +101,8 @@ struct EnvironmentGuard {
     std::string name;
     std::optional<std::string> previous;
 
-    EnvironmentGuard(std::string key, const std::string& value) : name(std::move(key)) {
+    EnvironmentGuard(std::string key, const std::string& value)
+        : name(std::move(key)) {
         if (const char* existing = std::getenv(name.c_str())) {
             previous = existing;
         }
@@ -128,11 +130,10 @@ bool send_all(int fd, std::string_view data) {
 
 class LocalMessagesServer {
 public:
-    explicit LocalMessagesServer(
-        std::vector<std::string> response_bodies = {},
-        std::vector<int> response_statuses = {})
-        : response_bodies_(std::move(response_bodies)),
-          response_statuses_(std::move(response_statuses)) {
+    explicit LocalMessagesServer(std::vector<std::string> response_bodies = {},
+                                 std::vector<int> response_statuses = {})
+        : response_bodies_(std::move(response_bodies))
+        , response_statuses_(std::move(response_statuses)) {
         listen_fd_ = ::socket(AF_INET, SOCK_STREAM, 0);
         if (listen_fd_ < 0) return;
         int yes = 1;
@@ -159,9 +160,7 @@ public:
         }
 
         running_.store(true);
-        accept_thread_ = std::jthread([this](std::stop_token stop) {
-            accept_loop(stop);
-        });
+        accept_thread_ = std::jthread([this](std::stop_token stop) { accept_loop(stop); });
     }
 
     ~LocalMessagesServer() {
@@ -175,12 +174,10 @@ public:
 
     [[nodiscard]] std::uint16_t port() const noexcept { return port_; }
 
-    [[nodiscard]] std::string base_url() const {
-        return std::format("http://127.0.0.1:{}", port_);
-    }
+    [[nodiscard]] std::string base_url() const { return std::format("http://127.0.0.1:{}", port_); }
 
-    [[nodiscard]] std::optional<std::string> wait_for_body(
-        std::chrono::milliseconds timeout = std::chrono::seconds(3)) {
+    [[nodiscard]] std::optional<std::string>
+    wait_for_body(std::chrono::milliseconds timeout = std::chrono::seconds(3)) {
         std::unique_lock lock(mutex_);
         if (!cv_.wait_for(lock, timeout, [this] { return request_body_.has_value(); })) {
             return std::nullopt;
@@ -188,8 +185,8 @@ public:
         return request_body_;
     }
 
-    [[nodiscard]] std::optional<std::string> wait_for_headers(
-        std::chrono::milliseconds timeout = std::chrono::seconds(3)) {
+    [[nodiscard]] std::optional<std::string>
+    wait_for_headers(std::chrono::milliseconds timeout = std::chrono::seconds(3)) {
         std::unique_lock lock(mutex_);
         if (!cv_.wait_for(lock, timeout, [this] { return request_headers_.has_value(); })) {
             return std::nullopt;
@@ -197,11 +194,12 @@ public:
         return request_headers_;
     }
 
-    [[nodiscard]] std::optional<std::vector<std::string>> wait_for_bodies(
-        std::size_t count,
-        std::chrono::milliseconds timeout = std::chrono::seconds(3)) {
+    [[nodiscard]] std::optional<std::vector<std::string>>
+    wait_for_bodies(std::size_t count,
+                    std::chrono::milliseconds timeout = std::chrono::seconds(3)) {
         std::unique_lock lock(mutex_);
-        if (!cv_.wait_for(lock, timeout, [this, count] { return request_bodies_.size() >= count; })) {
+        if (!cv_.wait_for(lock, timeout,
+                          [this, count] { return request_bodies_.size() >= count; })) {
             return std::nullopt;
         }
         return request_bodies_;
@@ -212,7 +210,8 @@ private:
         while (!stop.stop_requested() && running_.load()) {
             sockaddr_in client_addr{};
             socklen_t client_len = sizeof(client_addr);
-            int client_fd = ::accept(listen_fd_, reinterpret_cast<sockaddr*>(&client_addr), &client_len);
+            int client_fd =
+                ::accept(listen_fd_, reinterpret_cast<sockaddr*>(&client_addr), &client_len);
             if (client_fd < 0) {
                 if (!running_.load()) break;
                 continue;
@@ -266,7 +265,8 @@ private:
         // Capacity discovery is not a model turn: do not publish an empty
         // business body or consume a scripted POST response for this GET.
         if (request.headers.starts_with("GET ")) {
-            send_all(fd, "HTTP/1.1 404 Not Found\r\nContent-Length: 0\r\nConnection: close\r\n\r\n");
+            send_all(fd,
+                     "HTTP/1.1 404 Not Found\r\nContent-Length: 0\r\nConnection: close\r\n\r\n");
             return;
         }
         auto body = request.body;
@@ -288,19 +288,18 @@ private:
         int response_status = 200;
         std::string response_reason = "OK";
         if (!response_statuses_.empty()) {
-            response_status = response_statuses_[std::min(request_index, response_statuses_.size() - 1)];
+            response_status =
+                response_statuses_[std::min(request_index, response_statuses_.size() - 1)];
             if (response_status == 413) {
                 response_reason = "Payload Too Large";
             } else if (response_status >= 400) {
                 response_reason = "Error";
             }
         }
-        const auto response = std::format(
-            "HTTP/1.1 {} {}\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{}",
-            response_status,
-            response_reason,
-            response_body.size(),
-            response_body);
+        const auto response =
+            std::format("HTTP/1.1 {} {}\r\nContent-Type: application/json\r\nContent-Length: "
+                        "{}\r\nConnection: close\r\n\r\n{}",
+                        response_status, response_reason, response_body.size(), response_body);
         send_all(fd, response);
     }
 
@@ -353,9 +352,7 @@ public:
         }
 
         running_.store(true);
-        accept_thread_ = std::jthread([this](std::stop_token stop) {
-            accept_loop(stop);
-        });
+        accept_thread_ = std::jthread([this](std::stop_token stop) { accept_loop(stop); });
     }
 
     ~LocalCcrHttpServer() {
@@ -369,13 +366,11 @@ public:
 
     [[nodiscard]] bool ready() const noexcept { return listen_fd_ >= 0 && port_ != 0; }
 
-    [[nodiscard]] std::string base_url() const {
-        return std::format("http://127.0.0.1:{}", port_);
-    }
+    [[nodiscard]] std::string base_url() const { return std::format("http://127.0.0.1:{}", port_); }
 
-    [[nodiscard]] std::optional<std::vector<LocalCcrHttpRequest>> wait_for_requests(
-        std::size_t count,
-        std::chrono::milliseconds timeout = std::chrono::seconds(3)) {
+    [[nodiscard]] std::optional<std::vector<LocalCcrHttpRequest>>
+    wait_for_requests(std::size_t count,
+                      std::chrono::milliseconds timeout = std::chrono::seconds(3)) {
         std::unique_lock lock(mutex_);
         if (!cv_.wait_for(lock, timeout, [this, count] { return requests_.size() >= count; })) {
             return std::nullopt;
@@ -388,7 +383,8 @@ private:
         while (!stop.stop_requested() && running_.load()) {
             sockaddr_in client_addr{};
             socklen_t client_len = sizeof(client_addr);
-            int client_fd = ::accept(listen_fd_, reinterpret_cast<sockaddr*>(&client_addr), &client_len);
+            int client_fd =
+                ::accept(listen_fd_, reinterpret_cast<sockaddr*>(&client_addr), &client_len);
             if (client_fd < 0) {
                 if (!running_.load()) break;
                 continue;
@@ -442,20 +438,18 @@ private:
     }
 
     static bool send_response(int fd, int status, std::string_view reason, std::string_view body) {
-        const auto response = std::format(
-            "HTTP/1.1 {} {}\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{}",
-            status,
-            reason,
-            body.size(),
-            body);
+        const auto response =
+            std::format("HTTP/1.1 {} {}\r\nContent-Type: application/json\r\nContent-Length: "
+                        "{}\r\nConnection: close\r\n\r\n{}",
+                        status, reason, body.size(), body);
         return send_all(fd, response);
     }
 
     static bool send_sse_response(int fd, std::string_view body) {
-        const auto response = std::format(
-            "HTTP/1.1 200 OK\r\nContent-Type: text/event-stream\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{}",
-            body.size(),
-            body);
+        const auto response =
+            std::format("HTTP/1.1 200 OK\r\nContent-Type: text/event-stream\r\nContent-Length: "
+                        "{}\r\nConnection: close\r\n\r\n{}",
+                        body.size(), body);
         return send_all(fd, response);
     }
 
@@ -477,7 +471,8 @@ private:
             send_response(fd, 201, "Created", R"({"id":"remote-session-1"})");
             return;
         }
-        if (request->method == "POST" && request->path == "/api/sessions/remote-session-1/messages") {
+        if (request->method == "POST" &&
+            request->path == "/api/sessions/remote-session-1/messages") {
             send_response(fd, 200, "OK", R"({"content":"remote-ok"})");
             return;
         }
@@ -485,15 +480,15 @@ private:
             send_response(fd, 201, "Created", R"({"ok":true})");
             return;
         }
-        if (request->method == "POST" && request->path == "/api/sessions/remote-session-1/messages?stream=true") {
-            send_sse_response(fd,
-                "event: message\r\n"
-                "data: {\"delta\":\"one\"}\r\n"
-                "\r\n"
-                "data: {\"delta\":\"two\"}\r\n"
-                "\r\n"
-                "data: [DONE]\r\n"
-                "\r\n");
+        if (request->method == "POST" &&
+            request->path == "/api/sessions/remote-session-1/messages?stream=true") {
+            send_sse_response(fd, "event: message\r\n"
+                                  "data: {\"delta\":\"one\"}\r\n"
+                                  "\r\n"
+                                  "data: {\"delta\":\"two\"}\r\n"
+                                  "\r\n"
+                                  "data: [DONE]\r\n"
+                                  "\r\n");
             return;
         }
         if (request->method == "DELETE" && request->path == "/api/sessions/remote-session-1") {
@@ -573,12 +568,10 @@ int direct_connect_open_socket(std::uint16_t port) {
     return fd;
 }
 
-std::optional<DirectConnectHttpResponse> direct_connect_http_request(
-    std::uint16_t port,
-    std::string_view method,
-    std::string_view target,
-    std::string_view body = {}
-) {
+std::optional<DirectConnectHttpResponse> direct_connect_http_request(std::uint16_t port,
+                                                                     std::string_view method,
+                                                                     std::string_view target,
+                                                                     std::string_view body = {}) {
     const int fd = direct_connect_open_socket(port);
     if (fd < 0) return std::nullopt;
 
@@ -642,11 +635,13 @@ std::optional<DirectConnectWsFrame> direct_connect_read_ws_frame(int fd) {
         unsigned char ext[8]{};
         if (!direct_connect_read_exact(fd, reinterpret_cast<char*>(ext), 8)) return std::nullopt;
         len = 0;
-        for (unsigned char byte : ext) len = (len << 8) | byte;
+        for (unsigned char byte : ext)
+            len = (len << 8) | byte;
     }
 
     std::array<unsigned char, 4> mask{};
-    if (masked && !direct_connect_read_exact(fd, reinterpret_cast<char*>(mask.data()), mask.size())) {
+    if (masked &&
+        !direct_connect_read_exact(fd, reinterpret_cast<char*>(mask.data()), mask.size())) {
         return std::nullopt;
     }
 
@@ -680,7 +675,8 @@ bool direct_connect_send_client_text_frame(int fd, std::string_view payload) {
     }
 
     constexpr std::array<unsigned char, 4> mask{0x11, 0x22, 0x33, 0x44};
-    for (auto byte : mask) frame.push_back(static_cast<char>(byte));
+    for (auto byte : mask)
+        frame.push_back(static_cast<char>(byte));
     for (std::size_t i = 0; i < payload.size(); ++i) {
         frame.push_back(static_cast<char>(payload[i] ^ mask[i % mask.size()]));
     }
@@ -692,16 +688,13 @@ std::optional<int> direct_connect_open_websocket(std::uint16_t port, std::string
     if (fd < 0) return std::nullopt;
 
     const std::string key = "dGhlIHNhbXBsZSBub25jZQ==";
-    const auto request = std::format(
-        "GET {} HTTP/1.1\r\n"
-        "Host: 127.0.0.1:{}\r\n"
-        "Upgrade: websocket\r\n"
-        "Connection: Upgrade\r\n"
-        "Sec-WebSocket-Key: {}\r\n"
-        "Sec-WebSocket-Version: 13\r\n\r\n",
-        path,
-        port,
-        key);
+    const auto request = std::format("GET {} HTTP/1.1\r\n"
+                                     "Host: 127.0.0.1:{}\r\n"
+                                     "Upgrade: websocket\r\n"
+                                     "Connection: Upgrade\r\n"
+                                     "Sec-WebSocket-Key: {}\r\n"
+                                     "Sec-WebSocket-Version: 13\r\n\r\n",
+                                     path, port, key);
     if (!send_all(fd, request)) {
         ::close(fd);
         return std::nullopt;
@@ -736,37 +729,29 @@ std::string direct_connect_trim_json_line(std::string payload) {
     return payload;
 }
 
-bool direct_connect_send_permission_response(
-    int fd,
-    std::string_view request_id,
-    std::string_view behavior,
-    std::string_view extra_response_fields_json = {}
-) {
+bool direct_connect_send_permission_response(int fd, std::string_view request_id,
+                                             std::string_view behavior,
+                                             std::string_view extra_response_fields_json = {}) {
     const auto payload = std::format(
         R"({{"type":"control_response","response":{{"subtype":"success","request_id":"{}","response":{{"behavior":"{}"{}}}}}}})",
-        request_id,
-        behavior,
-        extra_response_fields_json);
+        request_id, behavior, extra_response_fields_json);
     return direct_connect_send_client_text_frame(fd, payload);
 }
 
-bool direct_connect_send_permission_error_response(
-    int fd,
-    std::string_view request_id,
-    std::string_view error
-) {
+bool direct_connect_send_permission_error_response(int fd, std::string_view request_id,
+                                                   std::string_view error) {
     const auto payload = std::format(
         R"({{"type":"control_response","response":{{"subtype":"error","request_id":"{}","error":"{}"}}}})",
-        request_id,
-        error);
+        request_id, error);
     return direct_connect_send_client_text_frame(fd, payload);
 }
 
-} // namespace
+}  // namespace
 
 TEST(ServerRoutes, MessageSessionsAndCompactUsePersistentState) {
     const auto suffix = std::chrono::system_clock::now().time_since_epoch().count();
-    const auto root = fs::temp_directory_path() / ("loom_server_routes_test_" + std::to_string(suffix));
+    const auto root =
+        fs::temp_directory_path() / ("loom_server_routes_test_" + std::to_string(suffix));
     const auto sessions_dir = root / "sessions";
     fs::remove_all(root);
     fs::create_directories(sessions_dir);
@@ -781,7 +766,8 @@ TEST(ServerRoutes, MessageSessionsAndCompactUsePersistentState) {
     loom::server::reset_route_state_for_testing();
     loom::server::set_sessions_dir_for_testing(sessions_dir);
     auto routes = loom::server::get_default_routes();
-    auto find_route = [&](std::string_view method, std::string_view path) -> const loom::server::Route* {
+    auto find_route = [&](std::string_view method,
+                          std::string_view path) -> const loom::server::Route* {
         auto it = std::ranges::find_if(routes, [&](const auto& route) {
             return route.method == method && route.path == path;
         });
@@ -795,7 +781,8 @@ TEST(ServerRoutes, MessageSessionsAndCompactUsePersistentState) {
     ASSERT_NE(sessions_route, nullptr);
     ASSERT_NE(compact_route, nullptr);
 
-    auto first_response = message_route->handler({{"content", "hello server route"}, {"model", "test-model"}});
+    auto first_response =
+        message_route->handler({{"content", "hello server route"}, {"model", "test-model"}});
     auto first_json = loom::utils::json::parse(first_response);
     ASSERT_TRUE(first_json.has_value()) << first_response;
     auto session_id_value = first_json->root().get("session_id");
@@ -806,10 +793,8 @@ TEST(ServerRoutes, MessageSessionsAndCompactUsePersistentState) {
     EXPECT_EQ(first_json->root().get_string("model"), "loom-test");
 
     for (int i = 0; i < 4; ++i) {
-        auto response = message_route->handler({
-            {"session_id", session_id},
-            {"content", "follow up " + std::to_string(i)}
-        });
+        auto response = message_route->handler(
+            {{"session_id", session_id}, {"content", "follow up " + std::to_string(i)}});
         auto parsed = loom::utils::json::parse(response);
         ASSERT_TRUE(parsed.has_value()) << response;
         EXPECT_EQ(parsed->root().get_string("session_id"), session_id);
@@ -878,9 +863,8 @@ TEST(ServerRoutes, MessageSessionsAndCompactUsePersistentState) {
     ASSERT_TRUE(boundary_json.has_value()) << compacted_lines.front();
     EXPECT_EQ(boundary_json->root().get_string("role"), "system");
     EXPECT_EQ(boundary_json->root().get_string("subtype"), "compact_boundary");
-    EXPECT_EQ(
-        boundary_json->root().get_string("id"),
-        compact_json->root().get_string("compact_boundary_id"));
+    EXPECT_EQ(boundary_json->root().get_string("id"),
+              compact_json->root().get_string("compact_boundary_id"));
     auto boundary_metadata = boundary_json->root().get("compact_metadata");
     ASSERT_TRUE(boundary_metadata.is_obj());
     EXPECT_EQ(boundary_metadata.get("messages_before").as_int(), 10);
@@ -893,14 +877,14 @@ TEST(ServerRoutes, MessageSessionsAndCompactUsePersistentState) {
     EXPECT_NE(boundary_content.find("follow up 0"), std::string::npos);
     EXPECT_NE(boundary_content.find("Preserve these details"), std::string::npos);
 
-	loom::server::reset_route_state_for_testing();
-	fs::remove_all(root);
+    loom::server::reset_route_state_for_testing();
+    fs::remove_all(root);
 }
 
 TEST(ServerRoutes, MessageRoutePersistsHumanXmlOriginAcrossAssemblyRestore) {
     const auto suffix = std::chrono::steady_clock::now().time_since_epoch().count();
-    const auto root = fs::temp_directory_path() /
-        ("loom_server_human_xml_origin_" + std::to_string(suffix));
+    const auto root =
+        fs::temp_directory_path() / ("loom_server_human_xml_origin_" + std::to_string(suffix));
     const auto sessions_dir = root / "sessions";
     fs::create_directories(sessions_dir);
 
@@ -980,7 +964,8 @@ TEST(ServerRoutes, MessageRoutePersistsHumanXmlOriginAcrossAssemblyRestore) {
 
 TEST(ServerRoutes, MessageRoutePublishesAssistantAndResultIngressEvents) {
     const auto suffix = std::chrono::system_clock::now().time_since_epoch().count();
-    const auto root = fs::temp_directory_path() / ("loom_server_routes_ingress_test_" + std::to_string(suffix));
+    const auto root =
+        fs::temp_directory_path() / ("loom_server_routes_ingress_test_" + std::to_string(suffix));
     const auto sessions_dir = root / "sessions";
     fs::remove_all(root);
     fs::create_directories(sessions_dir);
@@ -996,18 +981,17 @@ TEST(ServerRoutes, MessageRoutePublishesAssistantAndResultIngressEvents) {
     CurrentPathGuard cwd_guard(root);
 
     const auto now = std::chrono::system_clock::now();
-    ASSERT_TRUE(loom::session::save_session_metadata(
-        sessions_dir,
-        loom::session::SessionMetadata{
-            .session_id = "session_1",
-            .model = "direct-ingress-test-model",
-            .cwd = root,
-            .created_at = now,
-            .last_active = now,
-            .message_count = 0,
-            .title = std::string("Ingress route test"),
-            .is_archived = false,
-        }));
+    ASSERT_TRUE(loom::session::save_session_metadata(sessions_dir,
+                                                     loom::session::SessionMetadata{
+                                                         .session_id = "session_1",
+                                                         .model = "direct-ingress-test-model",
+                                                         .cwd = root,
+                                                         .created_at = now,
+                                                         .last_active = now,
+                                                         .message_count = 0,
+                                                         .title = std::string("Ingress route test"),
+                                                         .is_archived = false,
+                                                     }));
 
     loom::services::api::close_ingress();
     auto created = loom::services::api::create_ingress(loom::services::api::IngressConfig{
@@ -1026,10 +1010,7 @@ TEST(ServerRoutes, MessageRoutePublishesAssistantAndResultIngressEvents) {
     });
     ASSERT_NE(it, routes.end());
 
-    auto response = it->handler({
-        {"session_id", "session_1"},
-        {"content", "hello ingress route"}
-    });
+    auto response = it->handler({{"session_id", "session_1"}, {"content", "hello ingress route"}});
     auto parsed = loom::utils::json::parse(response);
     ASSERT_TRUE(parsed.has_value()) << response;
     EXPECT_EQ(parsed->root().get_string("status"), "completed");
@@ -1041,7 +1022,8 @@ TEST(ServerRoutes, MessageRoutePublishesAssistantAndResultIngressEvents) {
     ASSERT_EQ(requests->size(), 2u);
     EXPECT_EQ((*requests)[0].method, "POST");
     EXPECT_EQ((*requests)[0].path, "/v1/sessions/session_1/events");
-    EXPECT_NE((*requests)[0].headers.find("Authorization: Bearer session-route-token"), std::string::npos);
+    EXPECT_NE((*requests)[0].headers.find("Authorization: Bearer session-route-token"),
+              std::string::npos);
     EXPECT_NE((*requests)[0].body.find(R"("events":[)"), std::string::npos);
     EXPECT_NE((*requests)[0].body.find(R"("type":"assistant")"), std::string::npos);
     EXPECT_NE((*requests)[0].body.find(R"("role":"assistant")"), std::string::npos);
@@ -1050,7 +1032,8 @@ TEST(ServerRoutes, MessageRoutePublishesAssistantAndResultIngressEvents) {
 
     EXPECT_EQ((*requests)[1].method, "POST");
     EXPECT_EQ((*requests)[1].path, "/v1/sessions/session_1/events");
-    EXPECT_NE((*requests)[1].headers.find("Authorization: Bearer session-route-token"), std::string::npos);
+    EXPECT_NE((*requests)[1].headers.find("Authorization: Bearer session-route-token"),
+              std::string::npos);
     EXPECT_NE((*requests)[1].body.find(R"("type":"result")"), std::string::npos);
     EXPECT_NE((*requests)[1].body.find(R"("subtype":"success")"), std::string::npos);
     EXPECT_NE((*requests)[1].body.find(R"("result":"ok")"), std::string::npos);
@@ -1078,7 +1061,8 @@ TEST(ServerRoutes, MessageRoutePublishesAssistantAndResultIngressEvents) {
 
 TEST(ServerMain, DirectConnectSessionsAndWebSocketUsePersistentRoutes) {
     const auto suffix = std::chrono::system_clock::now().time_since_epoch().count();
-    const auto root = fs::temp_directory_path() / ("loom_server_main_test_" + std::to_string(suffix));
+    const auto root =
+        fs::temp_directory_path() / ("loom_server_main_test_" + std::to_string(suffix));
     const auto sessions_dir = root / "sessions";
     fs::remove_all(root);
     fs::create_directories(sessions_dir);
@@ -1104,7 +1088,8 @@ TEST(ServerMain, DirectConnectSessionsAndWebSocketUsePersistentRoutes) {
     ASSERT_NE(server_port, 0);
 
     const auto create_body = std::format(R"({{"cwd":"{}"}})", root.string());
-    auto create_response = direct_connect_http_request(server_port, "POST", "/sessions", create_body);
+    auto create_response =
+        direct_connect_http_request(server_port, "POST", "/sessions", create_body);
     ASSERT_TRUE(create_response.has_value());
     ASSERT_EQ(create_response->status, 200) << create_response->body;
     auto create_json = loom::utils::json::parse(create_response->body);
@@ -1114,9 +1099,8 @@ TEST(ServerMain, DirectConnectSessionsAndWebSocketUsePersistentRoutes) {
     EXPECT_NE(
         std::string(create_json->root().get_string("ws_url")).find("/sessions/ws/" + session_id),
         std::string::npos);
-    EXPECT_EQ(
-        std::string(create_json->root().get_string("work_dir")),
-        fs::weakly_canonical(root).string());
+    EXPECT_EQ(std::string(create_json->root().get_string("work_dir")),
+              fs::weakly_canonical(root).string());
 
     auto initial_metadata = loom::session::load_session_metadata(sessions_dir, session_id);
     ASSERT_TRUE(initial_metadata.has_value());
@@ -1126,11 +1110,8 @@ TEST(ServerMain, DirectConnectSessionsAndWebSocketUsePersistentRoutes) {
     ASSERT_TRUE(ws_fd.has_value());
 
     const std::vector<std::string> prompts{
-        "hello direct connect",
-        "follow up direct connect 1",
-        "follow up direct connect 2",
-        "follow up direct connect 3",
-        "follow up direct connect 4",
+        "hello direct connect",       "follow up direct connect 1", "follow up direct connect 2",
+        "follow up direct connect 3", "follow up direct connect 4",
     };
     for (const auto& prompt : prompts) {
         const auto user_payload = std::format(
@@ -1141,7 +1122,8 @@ TEST(ServerMain, DirectConnectSessionsAndWebSocketUsePersistentRoutes) {
         auto assistant_frame = direct_connect_read_ws_frame(*ws_fd);
         ASSERT_TRUE(assistant_frame.has_value());
         ASSERT_EQ(assistant_frame->opcode, 0x1);
-        auto assistant_json = loom::utils::json::parse(direct_connect_trim_json_line(assistant_frame->payload));
+        auto assistant_json =
+            loom::utils::json::parse(direct_connect_trim_json_line(assistant_frame->payload));
         ASSERT_TRUE(assistant_json.has_value()) << assistant_frame->payload;
         EXPECT_EQ(assistant_json->root().get_string("type"), "assistant");
         EXPECT_EQ(assistant_json->root().get_string("session_id"), session_id);
@@ -1153,7 +1135,8 @@ TEST(ServerMain, DirectConnectSessionsAndWebSocketUsePersistentRoutes) {
         auto result_frame = direct_connect_read_ws_frame(*ws_fd);
         ASSERT_TRUE(result_frame.has_value());
         ASSERT_EQ(result_frame->opcode, 0x1);
-        auto result_json = loom::utils::json::parse(direct_connect_trim_json_line(result_frame->payload));
+        auto result_json =
+            loom::utils::json::parse(direct_connect_trim_json_line(result_frame->payload));
         ASSERT_TRUE(result_json.has_value()) << result_frame->payload;
         EXPECT_EQ(result_json->root().get_string("type"), "result");
         EXPECT_EQ(result_json->root().get_string("subtype"), "success");
@@ -1166,7 +1149,8 @@ TEST(ServerMain, DirectConnectSessionsAndWebSocketUsePersistentRoutes) {
     ASSERT_TRUE(direct_connect_send_client_text_frame(*ws_fd, interrupt_payload));
     auto control_frame = direct_connect_read_ws_frame(*ws_fd);
     ASSERT_TRUE(control_frame.has_value());
-    auto control_json = loom::utils::json::parse(direct_connect_trim_json_line(control_frame->payload));
+    auto control_json =
+        loom::utils::json::parse(direct_connect_trim_json_line(control_frame->payload));
     ASSERT_TRUE(control_json.has_value()) << control_frame->payload;
     EXPECT_EQ(control_json->root().get_string("type"), "control_response");
     auto control_response = control_json->root().get("response");
@@ -1186,9 +1170,9 @@ TEST(ServerMain, DirectConnectSessionsAndWebSocketUsePersistentRoutes) {
     EXPECT_NE(
         std::string(request_messages.at(0).get_string("content")).find("hello direct connect"),
         std::string::npos);
-    EXPECT_NE(
-        std::string(request_messages.at(8).get_string("content")).find("follow up direct connect 4"),
-        std::string::npos);
+    EXPECT_NE(std::string(request_messages.at(8).get_string("content"))
+                  .find("follow up direct connect 4"),
+              std::string::npos);
 
     auto sessions_response = direct_connect_http_request(server_port, "GET", "/sessions?limit=5");
     ASSERT_TRUE(sessions_response.has_value());
@@ -1203,7 +1187,8 @@ TEST(ServerMain, DirectConnectSessionsAndWebSocketUsePersistentRoutes) {
     EXPECT_EQ(sessions.at(0).get("message_count").as_int(), 10);
 
     const auto compact_body = std::format(R"({{"session_id":"{}"}})", session_id);
-    auto compact_response = direct_connect_http_request(server_port, "POST", "/compact", compact_body);
+    auto compact_response =
+        direct_connect_http_request(server_port, "POST", "/compact", compact_body);
     ASSERT_TRUE(compact_response.has_value());
     ASSERT_EQ(compact_response->status, 200) << compact_response->body;
     auto compact_json = loom::utils::json::parse(compact_response->body);
@@ -1232,9 +1217,8 @@ TEST(ServerMain, DirectConnectSessionsAndWebSocketUsePersistentRoutes) {
     ASSERT_TRUE(boundary_json.has_value()) << lines.front();
     EXPECT_EQ(boundary_json->root().get_string("role"), "system");
     EXPECT_EQ(boundary_json->root().get_string("subtype"), "compact_boundary");
-    EXPECT_EQ(
-        boundary_json->root().get_string("id"),
-        compact_json->root().get_string("compact_boundary_id"));
+    EXPECT_EQ(boundary_json->root().get_string("id"),
+              compact_json->root().get_string("compact_boundary_id"));
     auto boundary_metadata = boundary_json->root().get("compact_metadata");
     ASSERT_TRUE(boundary_metadata.is_obj());
     EXPECT_EQ(boundary_metadata.get("messages_before").as_int(), 10);
@@ -1249,13 +1233,14 @@ TEST(ServerMain, DirectConnectSessionsAndWebSocketUsePersistentRoutes) {
     EXPECT_NE(lines.back().find("ok"), std::string::npos);
 
     direct_server.stop();
-	loom::server::reset_route_state_for_testing();
-	fs::remove_all(root);
+    loom::server::reset_route_state_for_testing();
+    fs::remove_all(root);
 }
 
 TEST(ServerMain, DirectConnectInterruptCancelsActiveMessageRoute) {
     const auto suffix = std::chrono::system_clock::now().time_since_epoch().count();
-    const auto root = fs::temp_directory_path() / ("loom_server_interrupt_cancel_test_" + std::to_string(suffix));
+    const auto root =
+        fs::temp_directory_path() / ("loom_server_interrupt_cancel_test_" + std::to_string(suffix));
     const auto sessions_dir = root / "sessions";
     fs::remove_all(root);
     fs::create_directories(sessions_dir);
@@ -1308,7 +1293,8 @@ TEST(ServerMain, DirectConnectInterruptCancelsActiveMessageRoute) {
     ASSERT_NE(server_port, 0);
 
     const auto create_body = std::format(R"({{"cwd":"{}"}})", root.string());
-    auto create_response = direct_connect_http_request(server_port, "POST", "/sessions", create_body);
+    auto create_response =
+        direct_connect_http_request(server_port, "POST", "/sessions", create_body);
     ASSERT_TRUE(create_response.has_value());
     ASSERT_EQ(create_response->status, 200) << create_response->body;
     auto create_json = loom::utils::json::parse(create_response->body);
@@ -1318,14 +1304,14 @@ TEST(ServerMain, DirectConnectInterruptCancelsActiveMessageRoute) {
 
     auto ws_fd = direct_connect_open_websocket(server_port, "/sessions/ws/" + session_id);
     ASSERT_TRUE(ws_fd.has_value());
-    const auto user_payload = R"({"type":"user","message":{"role":"user","content":"start long direct route"},"parent_tool_use_id":null,"session_id":""})";
+    const auto user_payload =
+        R"({"type":"user","message":{"role":"user","content":"start long direct route"},"parent_tool_use_id":null,"session_id":""})";
     ASSERT_TRUE(direct_connect_send_client_text_frame(*ws_fd, user_payload));
 
     {
         std::unique_lock lock(executor_mutex);
-        ASSERT_TRUE(executor_cv.wait_for(lock, std::chrono::seconds(1), [&] {
-            return executor_started;
-        }));
+        ASSERT_TRUE(
+            executor_cv.wait_for(lock, std::chrono::seconds(1), [&] { return executor_started; }));
     }
 
     const std::string interrupt_payload =
@@ -1334,7 +1320,8 @@ TEST(ServerMain, DirectConnectInterruptCancelsActiveMessageRoute) {
 
     auto control_frame = direct_connect_read_ws_frame(*ws_fd);
     ASSERT_TRUE(control_frame.has_value());
-    auto control_json = loom::utils::json::parse(direct_connect_trim_json_line(control_frame->payload));
+    auto control_json =
+        loom::utils::json::parse(direct_connect_trim_json_line(control_frame->payload));
     ASSERT_TRUE(control_json.has_value()) << control_frame->payload;
     EXPECT_EQ(control_json->root().get_string("type"), "control_response");
     auto control_response = control_json->root().get("response");
@@ -1358,13 +1345,14 @@ TEST(ServerMain, DirectConnectInterruptCancelsActiveMessageRoute) {
     ::shutdown(*ws_fd, SHUT_RDWR);
     ::close(*ws_fd);
     direct_server.stop();
-	loom::server::reset_route_state_for_testing();
-	fs::remove_all(root);
+    loom::server::reset_route_state_for_testing();
+    fs::remove_all(root);
 }
 
 TEST(ServerMain, DirectConnectPermissionControlCanAllowAndDenyToolUse) {
     const auto suffix = std::chrono::system_clock::now().time_since_epoch().count();
-    const auto root = fs::temp_directory_path() / ("loom_direct_permission_test_" + std::to_string(suffix));
+    const auto root =
+        fs::temp_directory_path() / ("loom_direct_permission_test_" + std::to_string(suffix));
     const auto sessions_dir = root / "sessions";
     fs::remove_all(root);
     fs::create_directories(root);
@@ -1447,7 +1435,8 @@ TEST(ServerMain, DirectConnectPermissionControlCanAllowAndDenyToolUse) {
     ASSERT_NE(server_port, 0);
 
     const auto create_body = std::format(R"({{"cwd":"{}"}})", root.string());
-    auto create_response = direct_connect_http_request(server_port, "POST", "/sessions", create_body);
+    auto create_response =
+        direct_connect_http_request(server_port, "POST", "/sessions", create_body);
     ASSERT_TRUE(create_response.has_value());
     ASSERT_EQ(create_response->status, 200) << create_response->body;
     auto create_json = loom::utils::json::parse(create_response->body);
@@ -1458,12 +1447,12 @@ TEST(ServerMain, DirectConnectPermissionControlCanAllowAndDenyToolUse) {
     auto ws_fd = direct_connect_open_websocket(server_port, "/sessions/ws/" + session_id);
     ASSERT_TRUE(ws_fd.has_value());
 
-    auto send_prompt_with_permission = [&](std::string_view prompt,
-                                           std::string_view behavior,
+    auto send_prompt_with_permission = [&](std::string_view prompt, std::string_view behavior,
                                            std::string_view expected_tool_use_id,
                                            std::string_view expected_file_path,
                                            std::string_view expected_text,
-                                           std::string_view extra_response_fields_or_error_message = {}) {
+                                           std::string_view extra_response_fields_or_error_message =
+                                               {}) {
         const auto user_payload = std::format(
             R"({{"type":"user","message":{{"role":"user","content":"{}"}},"parent_tool_use_id":null,"session_id":""}})",
             prompt);
@@ -1473,7 +1462,8 @@ TEST(ServerMain, DirectConnectPermissionControlCanAllowAndDenyToolUse) {
         for (int attempt = 0; attempt < 4; ++attempt) {
             auto permission_frame = direct_connect_read_ws_frame(*ws_fd);
             ASSERT_TRUE(permission_frame.has_value());
-            auto parsed = loom::utils::json::parse(direct_connect_trim_json_line(permission_frame->payload));
+            auto parsed =
+                loom::utils::json::parse(direct_connect_trim_json_line(permission_frame->payload));
             ASSERT_TRUE(parsed.has_value()) << permission_frame->payload;
             if (parsed->root().get_string("type") == "control_request") {
                 permission_json.emplace(std::move(*parsed));
@@ -1492,20 +1482,16 @@ TEST(ServerMain, DirectConnectPermissionControlCanAllowAndDenyToolUse) {
         EXPECT_EQ(request.get("input").get_string("file_path"), expected_file_path);
         if (behavior == std::string_view("error")) {
             ASSERT_TRUE(direct_connect_send_permission_error_response(
-                *ws_fd,
-                request_id,
-                extra_response_fields_or_error_message));
+                *ws_fd, request_id, extra_response_fields_or_error_message));
         } else {
             ASSERT_TRUE(direct_connect_send_permission_response(
-                *ws_fd,
-                request_id,
-                behavior,
-                extra_response_fields_or_error_message));
+                *ws_fd, request_id, behavior, extra_response_fields_or_error_message));
         }
 
         auto assistant_frame = direct_connect_read_ws_frame(*ws_fd);
         ASSERT_TRUE(assistant_frame.has_value());
-        auto assistant_json = loom::utils::json::parse(direct_connect_trim_json_line(assistant_frame->payload));
+        auto assistant_json =
+            loom::utils::json::parse(direct_connect_trim_json_line(assistant_frame->payload));
         ASSERT_TRUE(assistant_json.has_value()) << assistant_frame->payload;
         EXPECT_EQ(assistant_json->root().get_string("type"), "assistant");
         auto assistant_content = assistant_json->root().get("message").get("content");
@@ -1515,12 +1501,13 @@ TEST(ServerMain, DirectConnectPermissionControlCanAllowAndDenyToolUse) {
 
         auto result_frame = direct_connect_read_ws_frame(*ws_fd);
         ASSERT_TRUE(result_frame.has_value());
-        auto result_json = loom::utils::json::parse(direct_connect_trim_json_line(result_frame->payload));
+        auto result_json =
+            loom::utils::json::parse(direct_connect_trim_json_line(result_frame->payload));
         ASSERT_TRUE(result_json.has_value()) << result_frame->payload;
         EXPECT_EQ(result_json->root().get_string("type"), "result");
         EXPECT_EQ(result_json->root().get_string("subtype"), "success");
-	        EXPECT_EQ(result_json->root().get_string("result"), expected_text);
-	    };
+        EXPECT_EQ(result_json->root().get_string("result"), expected_text);
+    };
 
     auto send_prompt_without_permission = [&](std::string_view prompt,
                                               std::string_view expected_text) {
@@ -1531,7 +1518,8 @@ TEST(ServerMain, DirectConnectPermissionControlCanAllowAndDenyToolUse) {
 
         auto assistant_frame = direct_connect_read_ws_frame(*ws_fd);
         ASSERT_TRUE(assistant_frame.has_value());
-        auto assistant_json = loom::utils::json::parse(direct_connect_trim_json_line(assistant_frame->payload));
+        auto assistant_json =
+            loom::utils::json::parse(direct_connect_trim_json_line(assistant_frame->payload));
         ASSERT_TRUE(assistant_json.has_value()) << assistant_frame->payload;
         EXPECT_EQ(assistant_json->root().get_string("type"), "assistant");
         auto assistant_content = assistant_json->root().get("message").get("content");
@@ -1541,46 +1529,31 @@ TEST(ServerMain, DirectConnectPermissionControlCanAllowAndDenyToolUse) {
 
         auto result_frame = direct_connect_read_ws_frame(*ws_fd);
         ASSERT_TRUE(result_frame.has_value());
-        auto result_json = loom::utils::json::parse(direct_connect_trim_json_line(result_frame->payload));
+        auto result_json =
+            loom::utils::json::parse(direct_connect_trim_json_line(result_frame->payload));
         ASSERT_TRUE(result_json.has_value()) << result_frame->payload;
         EXPECT_EQ(result_json->root().get_string("type"), "result");
         EXPECT_EQ(result_json->root().get_string("subtype"), "success");
         EXPECT_EQ(result_json->root().get_string("result"), expected_text);
     };
 
+    send_prompt_with_permission("read with permission allow", "allow", "toolu_read_allow",
+                                allowed_file.string(), "read allowed");
     send_prompt_with_permission(
-        "read with permission allow",
-        "allow",
-        "toolu_read_allow",
-        allowed_file.string(),
-        "read allowed");
-    send_prompt_with_permission(
-        "read with permission updated input",
-        "allow",
-        "toolu_read_update",
-        original_file.string(),
-	        "read updated",
-	        std::format(
-	            R"(,"updatedInput":{{"file_path":"{}"}},"updatedPermissions":[{{"type":"addRules","rules":[{{"toolName":"Read","ruleContent":"{}"}}],"behavior":"allow","destination":"session"}},{{"type":"addDirectories","directories":["{}"],"destination":"session"}}])",
-	            updated_file.string(),
-	            original_file.string(),
-	            allowed_dir.string()));
-	    send_prompt_without_permission("read with cached permission update", "read cached");
-    send_prompt_without_permission("read with cached directory permission", "read directory cached");
-	    send_prompt_with_permission(
-	        "read with permission deny",
-        "deny",
-        "toolu_read_deny",
-        denied_file.string(),
-        "read denied",
-        R"(,"message":"denied by direct permission test")");
-    send_prompt_with_permission(
-        "read with permission error response",
-        "error",
-        "toolu_read_error",
-        errored_file.string(),
-        "read permission error",
-        "client callback failed direct permission test");
+        "read with permission updated input", "allow", "toolu_read_update", original_file.string(),
+        "read updated",
+        std::format(
+            R"(,"updatedInput":{{"file_path":"{}"}},"updatedPermissions":[{{"type":"addRules","rules":[{{"toolName":"Read","ruleContent":"{}"}}],"behavior":"allow","destination":"session"}},{{"type":"addDirectories","directories":["{}"],"destination":"session"}}])",
+            updated_file.string(), original_file.string(), allowed_dir.string()));
+    send_prompt_without_permission("read with cached permission update", "read cached");
+    send_prompt_without_permission("read with cached directory permission",
+                                   "read directory cached");
+    send_prompt_with_permission("read with permission deny", "deny", "toolu_read_deny",
+                                denied_file.string(), "read denied",
+                                R"(,"message":"denied by direct permission test")");
+    send_prompt_with_permission("read with permission error response", "error", "toolu_read_error",
+                                errored_file.string(), "read permission error",
+                                "client callback failed direct permission test");
 
     auto request_bodies = server.wait_for_bodies(12);
     ASSERT_TRUE(request_bodies.has_value());
@@ -1592,7 +1565,8 @@ TEST(ServerMain, DirectConnectPermissionControlCanAllowAndDenyToolUse) {
     EXPECT_NE((*request_bodies)[7].find("directory permission content"), std::string::npos);
     EXPECT_NE((*request_bodies)[9].find("denied by direct permission test"), std::string::npos);
     EXPECT_EQ((*request_bodies)[9].find("Permission denied for tool: Read"), std::string::npos);
-    EXPECT_NE((*request_bodies)[11].find("client callback failed direct permission test"), std::string::npos);
+    EXPECT_NE((*request_bodies)[11].find("client callback failed direct permission test"),
+              std::string::npos);
     EXPECT_EQ((*request_bodies)[11].find("Permission denied for tool: Read"), std::string::npos);
 
     ::shutdown(*ws_fd, SHUT_RDWR);
@@ -1604,7 +1578,8 @@ TEST(ServerMain, DirectConnectPermissionControlCanAllowAndDenyToolUse) {
 
 TEST(ServerMain, DirectConnectToolLoopPersistsTeamCreateAndSendMessage) {
     const auto suffix = std::chrono::system_clock::now().time_since_epoch().count();
-    const auto root = fs::temp_directory_path() / ("loom_direct_team_tool_test_" + std::to_string(suffix));
+    const auto root =
+        fs::temp_directory_path() / ("loom_direct_team_tool_test_" + std::to_string(suffix));
     const auto sessions_dir = root / "sessions";
     fs::remove_all(root);
     fs::create_directories(root);
@@ -1639,7 +1614,8 @@ TEST(ServerMain, DirectConnectToolLoopPersistsTeamCreateAndSendMessage) {
     ASSERT_NE(server_port, 0);
 
     const auto create_body = std::format(R"({{"cwd":"{}"}})", root.string());
-    auto create_response = direct_connect_http_request(server_port, "POST", "/sessions", create_body);
+    auto create_response =
+        direct_connect_http_request(server_port, "POST", "/sessions", create_body);
     ASSERT_TRUE(create_response.has_value());
     ASSERT_EQ(create_response->status, 200) << create_response->body;
     auto create_json = loom::utils::json::parse(create_response->body);
@@ -1659,13 +1635,10 @@ TEST(ServerMain, DirectConnectToolLoopPersistsTeamCreateAndSendMessage) {
             if (parsed->root().get_string("type") == "control_request") {
                 auto request_id_value = parsed->root().get("request_id");
                 auto request = parsed->root().get("request");
-                if (request_id_value.is_str() &&
-                    request.is_obj() &&
+                if (request_id_value.is_str() && request.is_obj() &&
                     request.get_string("subtype") == "can_use_tool") {
                     EXPECT_TRUE(direct_connect_send_permission_response(
-                        *ws_fd,
-                        std::string(request_id_value.as_str()),
-                        "allow"));
+                        *ws_fd, std::string(request_id_value.as_str()), "allow"));
                     continue;
                 }
             }
@@ -1681,7 +1654,8 @@ TEST(ServerMain, DirectConnectToolLoopPersistsTeamCreateAndSendMessage) {
 
         auto assistant_frame = read_non_permission_frame();
         ASSERT_TRUE(assistant_frame.has_value());
-        auto assistant_json = loom::utils::json::parse(direct_connect_trim_json_line(assistant_frame->payload));
+        auto assistant_json =
+            loom::utils::json::parse(direct_connect_trim_json_line(assistant_frame->payload));
         ASSERT_TRUE(assistant_json.has_value()) << assistant_frame->payload;
         EXPECT_EQ(assistant_json->root().get_string("type"), "assistant");
         EXPECT_EQ(assistant_json->root().get_string("session_id"), session_id);
@@ -1692,7 +1666,8 @@ TEST(ServerMain, DirectConnectToolLoopPersistsTeamCreateAndSendMessage) {
 
         auto result_frame = read_non_permission_frame();
         ASSERT_TRUE(result_frame.has_value());
-        auto result_json = loom::utils::json::parse(direct_connect_trim_json_line(result_frame->payload));
+        auto result_json =
+            loom::utils::json::parse(direct_connect_trim_json_line(result_frame->payload));
         ASSERT_TRUE(result_json.has_value()) << result_frame->payload;
         EXPECT_EQ(result_json->root().get_string("type"), "result");
         EXPECT_EQ(result_json->root().get_string("subtype"), "success");
@@ -1742,10 +1717,15 @@ TEST(ServerMain, DirectConnectToolLoopPersistsTeamCreateAndSendMessage) {
     ASSERT_TRUE(reviewer_record->team_name.has_value());
     EXPECT_EQ(*reviewer_record->team_name, "Direct Team");
     ASSERT_EQ(reviewer_record->pending_messages.size(), 2u);
-    EXPECT_NE(reviewer_record->pending_messages.front().find("Inspect direct connect team migration"), std::string::npos);
-    EXPECT_NE(reviewer_record->pending_messages.back().find("Please review direct connect team output"), std::string::npos);
+    EXPECT_NE(
+        reviewer_record->pending_messages.front().find("Inspect direct connect team migration"),
+        std::string::npos);
+    EXPECT_NE(
+        reviewer_record->pending_messages.back().find("Please review direct connect team output"),
+        std::string::npos);
 
-    auto inbox = loom::utils::read_inbox("reviewer-one", std::optional<std::string_view>{"Direct Team"});
+    auto inbox =
+        loom::utils::read_inbox("reviewer-one", std::optional<std::string_view>{"Direct Team"});
     ASSERT_TRUE(inbox.has_value()) << inbox.error();
     ASSERT_EQ(inbox->size(), 1u);
     EXPECT_EQ(inbox->front().from, "team-lead");
@@ -1781,7 +1761,8 @@ TEST(ServerTypes, RoundtripSerde) {
 
     const std::string json = loom::server::to_json(s);
     auto parsed = loom::server::ServerSession_from_json(json);
-    ASSERT_TRUE(parsed.has_value()) << "parse error: " << (parsed.has_value() ? std::string{} : parsed.error());
+    ASSERT_TRUE(parsed.has_value())
+        << "parse error: " << (parsed.has_value() ? std::string{} : parsed.error());
     const auto& p = *parsed;
     EXPECT_EQ(p.id, s.id);
     EXPECT_EQ(p.token, s.token);
@@ -1801,7 +1782,7 @@ TEST(ServerTypes, RolesScopes) {
     loom::server::ServerSession s;
     s.role = loom::server::Role::Admin;
     s.scopes = {"read", "write"};
-    s.expires_ms = 0;   // never expires
+    s.expires_ms = 0;  // never expires
     s.revoked = false;
 
     EXPECT_TRUE(s.has_scope("read"));

@@ -3,7 +3,6 @@
 /// Tags the current session.
 module;
 
-
 export module loom.commands.tag;
 
 import std;
@@ -23,40 +22,37 @@ public:
         return CommandDefinition{
             .name = "tag",
             .description = "Toggle a searchable tag on the current session",
-            .args = {
-                CommandArg{.name = "tag-name", .description = "Name of the tag to add/remove",
-                           .type = ArgType::Text, .required = false},
-            },
+            .args =
+                {
+                    CommandArg{.name = "tag-name",
+                               .description = "Name of the tag to add/remove",
+                               .type = ArgType::Text,
+                               .required = false},
+                },
             .category = "session",
             .aliases = {},
             .hidden = false,
         };
     }
 
-    [[nodiscard]] VoidResult validate(const CommandContext&) {
-        return {};
-    }
+    [[nodiscard]] VoidResult validate(const CommandContext&) { return {}; }
 
     [[nodiscard]] Result<CommandResult> execute(const CommandContext& ctx) {
         if (ctx.args.empty()) {
-            return CommandResult::success(
-                "Usage: /tag <tag-name>\n\n"
-                "Toggle a searchable tag on the current session.\n"
-                "Run the same command again to remove the tag.\n"
-                "\nExamples:\n"
-                "  /tag bugfix        # Add tag\n"
-                "  /tag bugfix        # Remove tag (toggle)\n"
-                "  /tag feature-auth");
+            return CommandResult::success("Usage: /tag <tag-name>\n\n"
+                                          "Toggle a searchable tag on the current session.\n"
+                                          "Run the same command again to remove the tag.\n"
+                                          "\nExamples:\n"
+                                          "  /tag bugfix        # Add tag\n"
+                                          "  /tag bugfix        # Remove tag (toggle)\n"
+                                          "  /tag feature-auth");
         }
-        
+
         const auto& tag_name = ctx.args[0];
-        return CommandResult::success(
-            std::format("Tagged session with #{}", tag_name));
+        return CommandResult::success(std::format("Tagged session with #{}", tag_name));
     }
 
-    [[nodiscard]] std::vector<std::string> complete(std::string_view) {
-        return {};
-    }
+    [[nodiscard]] std::vector<std::string> complete(std::string_view) { return {}; }
 };
 
-} // namespace loom::commands
+}  // namespace loom::commands

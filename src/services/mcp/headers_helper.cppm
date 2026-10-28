@@ -2,7 +2,6 @@ module;
 
 #include <cstddef>
 
-
 export module loom.services.mcp.headers_helper;
 
 import std;
@@ -33,8 +32,7 @@ inline HeaderMap merge_headers(const HeaderMap& defaults, const HeaderMap& custo
 }
 
 /// Extract a specific header value (case-insensitive key)
-inline std::optional<std::string> get_header(
-    const HeaderMap& headers, std::string_view key) {
+inline std::optional<std::string> get_header(const HeaderMap& headers, std::string_view key) {
     std::string lower_key(key);
     for (auto& c : lower_key) {
         if (c >= 'A' && c <= 'Z') c = c - 'A' + 'a';
@@ -57,7 +55,10 @@ inline std::optional<int> parse_oauth_port(std::string_view url_or_config) {
     // Try format: just a number
     bool all_digits = true;
     for (char c : url_or_config) {
-        if (c < '0' || c > '9') { all_digits = false; break; }
+        if (c < '0' || c > '9') {
+            all_digits = false;
+            break;
+        }
     }
     if (all_digits && !url_or_config.empty()) {
         int port = 0;
@@ -104,26 +105,19 @@ std::string trim_header_helper_output(std::string_view value);
 
 std::optional<HeaderMap> parse_header_helper_json(std::string_view output);
 
-std::optional<std::string> run_headers_helper_command(
-    std::string_view server_name,
-    std::string_view server_url,
-    std::string_view command,
-    std::chrono::milliseconds timeout = std::chrono::milliseconds(10000)
-);
+std::optional<std::string>
+run_headers_helper_command(std::string_view server_name, std::string_view server_url,
+                           std::string_view command,
+                           std::chrono::milliseconds timeout = std::chrono::milliseconds(10000));
 
-std::optional<HeaderMap> get_mcp_headers_from_helper(
-    std::string_view server_name,
-    std::string_view server_url,
-    std::string_view helper_command,
-    std::chrono::milliseconds timeout = std::chrono::milliseconds(10000)
-);
+std::optional<HeaderMap>
+get_mcp_headers_from_helper(std::string_view server_name, std::string_view server_url,
+                            std::string_view helper_command,
+                            std::chrono::milliseconds timeout = std::chrono::milliseconds(10000));
 
-HeaderMap get_mcp_server_headers(
-    std::string_view server_name,
-    const HeaderMap& static_headers,
-    std::string_view server_url,
-    std::string_view helper_command,
-    std::chrono::milliseconds timeout = std::chrono::milliseconds(10000)
-);
+HeaderMap
+get_mcp_server_headers(std::string_view server_name, const HeaderMap& static_headers,
+                       std::string_view server_url, std::string_view helper_command,
+                       std::chrono::milliseconds timeout = std::chrono::milliseconds(10000));
 
-} // namespace loom::services::mcp
+}  // namespace loom::services::mcp

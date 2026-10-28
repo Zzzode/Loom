@@ -21,29 +21,40 @@ namespace fs = std::filesystem;
     escaped.reserve(value.size());
     for (unsigned char ch : value) {
         switch (ch) {
-            case '\\': escaped += R"(\\)"; break;
-            case '"': escaped += R"(\")"; break;
-            case '\b': escaped += R"(\b)"; break;
-            case '\f': escaped += R"(\f)"; break;
-            case '\n': escaped += R"(\n)"; break;
-            case '\r': escaped += R"(\r)"; break;
-            case '\t': escaped += R"(\t)"; break;
-            default:
-                if (ch < 0x20) {
-                    escaped += std::format(R"(\u{:04x})", static_cast<unsigned int>(ch));
-                } else {
-                    escaped.push_back(static_cast<char>(ch));
-                }
-                break;
+        case '\\':
+            escaped += R"(\\)";
+            break;
+        case '"':
+            escaped += R"(\")";
+            break;
+        case '\b':
+            escaped += R"(\b)";
+            break;
+        case '\f':
+            escaped += R"(\f)";
+            break;
+        case '\n':
+            escaped += R"(\n)";
+            break;
+        case '\r':
+            escaped += R"(\r)";
+            break;
+        case '\t':
+            escaped += R"(\t)";
+            break;
+        default:
+            if (ch < 0x20) {
+                escaped += std::format(R"(\u{:04x})", static_cast<unsigned int>(ch));
+            } else {
+                escaped.push_back(static_cast<char>(ch));
+            }
+            break;
         }
     }
     return escaped;
 }
 
-std::string inject_agent_id_into_tool_input(
-    std::string_view raw_json,
-    std::string_view agent_id
-) {
+std::string inject_agent_id_into_tool_input(std::string_view raw_json, std::string_view agent_id) {
     if (agent_id.empty()) return std::string(raw_json);
 
     auto doc = loom::utils::json::parse(raw_json);
@@ -55,7 +66,8 @@ std::string inject_agent_id_into_tool_input(
     }
 
     std::size_t open_brace = 0;
-    while (open_brace < raw_json.size() && std::isspace(static_cast<unsigned char>(raw_json[open_brace]))) {
+    while (open_brace < raw_json.size() &&
+           std::isspace(static_cast<unsigned char>(raw_json[open_brace]))) {
         ++open_brace;
     }
     if (open_brace >= raw_json.size() || raw_json[open_brace] != '{') {
@@ -79,19 +91,12 @@ std::string inject_agent_id_into_tool_input(
     return scoped;
 }
 
-std::string inject_agent_id_into_todo_input(
-    std::string_view raw_json,
-    std::string_view agent_id
-) {
+std::string inject_agent_id_into_todo_input(std::string_view raw_json, std::string_view agent_id) {
     return inject_agent_id_into_tool_input(raw_json, agent_id);
 }
 
-void append_json_string_field(
-    std::string& out,
-    std::string_view name,
-    std::string_view value,
-    bool& first
-) {
+void append_json_string_field(std::string& out, std::string_view name, std::string_view value,
+                              bool& first) {
     if (!first) out += ',';
     first = false;
     out += '"';
@@ -101,80 +106,51 @@ void append_json_string_field(
     out += '"';
 }
 
-void append_json_optional_string_field(
-    std::string& out,
-    std::string_view name,
-    const std::optional<std::string>& value,
-    bool& first
-) {
+void append_json_optional_string_field(std::string& out, std::string_view name,
+                                       const std::optional<std::string>& value, bool& first) {
     if (value && !value->empty()) append_json_string_field(out, name, *value, first);
 }
 
-[[nodiscard]] SchemaProperty agent_schema_property(
-    std::string name,
-    std::string type,
-    std::string description,
-    bool required
-) {
-    return SchemaProperty{
-        std::move(name),
-        std::move(type),
-        std::move(description),
-        required,
-        std::nullopt,
-        std::nullopt
-    };
+[[nodiscard]] SchemaProperty agent_schema_property(std::string name, std::string type,
+                                                   std::string description, bool required) {
+    return SchemaProperty{std::move(name), std::move(type), std::move(description),
+                          required,        std::nullopt,    std::nullopt};
 }
 
-[[nodiscard]] std::optional<std::string> json_string(
-    loom::utils::json::JsonVal root,
-    std::string_view key
-) {
+[[nodiscard]] std::optional<std::string> json_string(loom::utils::json::JsonVal root,
+                                                     std::string_view key) {
     auto value = root.get(key);
     if (!value.is_str()) return std::nullopt;
     return std::string(value.as_str());
 }
 
-[[nodiscard]] bool json_bool(
-    loom::utils::json::JsonVal root,
-    std::string_view key,
-    bool fallback
-) {
+[[nodiscard]] bool json_bool(loom::utils::json::JsonVal root, std::string_view key, bool fallback) {
     auto value = root.get(key);
     return value.is_bool() ? value.as_bool() : fallback;
 }
 
-[[nodiscard]] std::optional<int> json_int(
-    loom::utils::json::JsonVal root,
-    std::string_view key
-) {
+[[nodiscard]] std::optional<int> json_int(loom::utils::json::JsonVal root, std::string_view key) {
     auto value = root.get(key);
     if (!value.is_num()) return std::nullopt;
     return static_cast<int>(value.as_int());
 }
 
-[[nodiscard]] bool has_non_empty_string(
-    loom::utils::json::JsonVal root,
-    std::string_view key
-) {
+[[nodiscard]] bool has_non_empty_string(loom::utils::json::JsonVal root, std::string_view key) {
     auto value = root.get(key);
     return value.is_str() && !value.as_str().empty();
 }
 
-[[nodiscard]] std::optional<std::string> resolve_agent_relative_path(
-    const std::optional<std::string>& working_dir,
-    std::string_view value
-) {
+[[nodiscard]] std::optional<std::string>
+resolve_agent_relative_path(const std::optional<std::string>& working_dir, std::string_view value) {
     if (!working_dir || working_dir->empty() || value.empty()) return std::nullopt;
     fs::path path{std::string(value)};
     if (path.is_absolute()) return path.lexically_normal().string();
     return (fs::path{*working_dir} / path).lexically_normal().string();
 }
 
-[[nodiscard]] std::string json_object_with_string_overrides(
-    std::string_view raw_json,
-    const std::unordered_map<std::string, std::string>& overrides
-) {
+[[nodiscard]] std::string
+json_object_with_string_overrides(std::string_view raw_json,
+                                  const std::unordered_map<std::string, std::string>& overrides) {
     if (overrides.empty()) return std::string(raw_json);
     auto parsed = loom::utils::json::parse(raw_json);
     if (!parsed || !parsed->root().is_obj()) return std::string(raw_json);
@@ -216,10 +192,8 @@ void append_json_optional_string_field(
     return out;
 }
 
-[[nodiscard]] std::vector<std::string> json_string_array_field(
-    loom::utils::json::JsonVal root,
-    std::string_view key
-) {
+[[nodiscard]] std::vector<std::string> json_string_array_field(loom::utils::json::JsonVal root,
+                                                               std::string_view key) {
     return json_string_array(root.get(key));
 }
 
@@ -242,7 +216,8 @@ void append_json_optional_string_field(
     return saw_content_block && !saw_message;
 }
 
-[[nodiscard]] std::string assistant_content_array_json_to_message_json(std::string_view content_json) {
+[[nodiscard]] std::string
+assistant_content_array_json_to_message_json(std::string_view content_json) {
     std::string out = R"({"role":"assistant","content":)";
     out += content_json;
     out += '}';
@@ -277,10 +252,8 @@ void append_json_optional_string_field(
     return entries;
 }
 
-[[nodiscard]] std::vector<std::string> json_message_entries_field(
-    loom::utils::json::JsonVal root,
-    std::string_view key
-) {
+[[nodiscard]] std::vector<std::string> json_message_entries_field(loom::utils::json::JsonVal root,
+                                                                  std::string_view key) {
     return json_message_entries(root.get(key));
 }
 
@@ -290,13 +263,13 @@ void append_json_optional_string_field(
     auto root = doc->root();
     if (!root.valid() || !root.is_obj()) return true;
 
-    auto type = json_string(root, "subagent_type").or_else([&] { return json_string(root, "skill"); });
+    auto type =
+        json_string(root, "subagent_type").or_else([&] { return json_string(root, "skill"); });
     return !type || type->empty();
 }
 
-[[nodiscard]] std::expected<AgentToolRequest, std::string> parse_agent_tool_request(
-    const ToolInput& input
-) {
+[[nodiscard]] std::expected<AgentToolRequest, std::string>
+parse_agent_tool_request(const ToolInput& input) {
     auto doc = loom::utils::json::parse(input.json());
     if (!doc) return std::unexpected(std::string(doc.error().format()));
 
@@ -304,34 +277,43 @@ void append_json_optional_string_field(
     if (!root.is_obj()) return std::unexpected("Agent input must be a JSON object");
 
     AgentToolRequest request;
-    if (auto prompt = json_string(root, "prompt").or_else([&] { return json_string(root, "task"); })) {
+    if (auto prompt =
+            json_string(root, "prompt").or_else([&] { return json_string(root, "task"); })) {
         request.prompt = *prompt;
     }
     request.description = json_string(root, "description");
-    if (auto subagent = json_string(root, "subagent_type").or_else([&] { return json_string(root, "skill"); })) {
+    if (auto subagent = json_string(root, "subagent_type").or_else([&] {
+            return json_string(root, "skill");
+        })) {
         if (!subagent->empty()) request.subagent_type = *subagent;
     }
     request.model = resolve_agent_model(json_string(root, "model"));
     request.run_in_background = json_bool(root, "run_in_background", false);
-    request.agent_id_override = json_string(root, "agent_id").or_else([&] { return json_string(root, "agentId"); });
-    request.resume_existing = json_bool(root, "resume_existing", false) ||
-        json_bool(root, "resumeExisting", false);
-    request.query_source = json_string(root, "query_source").or_else([&] { return json_string(root, "querySource"); });
-    request.fork_child_context = json_bool(root, "fork_child", false) ||
-        json_bool(root, "forkChild", false) ||
+    request.agent_id_override =
+        json_string(root, "agent_id").or_else([&] { return json_string(root, "agentId"); });
+    request.resume_existing =
+        json_bool(root, "resume_existing", false) || json_bool(root, "resumeExisting", false);
+    request.query_source =
+        json_string(root, "query_source").or_else([&] { return json_string(root, "querySource"); });
+    request.fork_child_context =
+        json_bool(root, "fork_child", false) || json_bool(root, "forkChild", false) ||
         (request.query_source && query_source_is_fork_child(*request.query_source)) ||
         text_contains_fork_boilerplate(request.prompt);
-    request.parent_system_prompt = json_string(root, "parent_system_prompt")
-        .or_else([&] { return json_string(root, "parentSystemPrompt"); })
-        .or_else([&] { return json_string(root, "override_system_prompt"); })
-        .or_else([&] { return json_string(root, "system_prompt_override"); });
+    request.parent_system_prompt =
+        json_string(root, "parent_system_prompt")
+            .or_else([&] { return json_string(root, "parentSystemPrompt"); })
+            .or_else([&] { return json_string(root, "override_system_prompt"); })
+            .or_else([&] { return json_string(root, "system_prompt_override"); });
     request.exact_tools = json_string_array_field(root, "exact_tools");
-    if (request.exact_tools.empty()) request.exact_tools = json_string_array_field(root, "exactTools");
-    if (request.exact_tools.empty()) request.exact_tools = json_string_array_field(root, "available_tools");
-    if (request.exact_tools.empty()) request.exact_tools = json_string_array_field(root, "availableTools");
+    if (request.exact_tools.empty())
+        request.exact_tools = json_string_array_field(root, "exactTools");
+    if (request.exact_tools.empty())
+        request.exact_tools = json_string_array_field(root, "available_tools");
+    if (request.exact_tools.empty())
+        request.exact_tools = json_string_array_field(root, "availableTools");
     request.use_exact_tools = json_bool(root, "use_exact_tools", false) ||
-        json_bool(root, "useExactTools", false) ||
-        !request.exact_tools.empty();
+                              json_bool(root, "useExactTools", false) ||
+                              !request.exact_tools.empty();
     request.fork_context_entries = json_string_array_field(root, "fork_context");
     if (request.fork_context_entries.empty()) {
         request.fork_context_entries = json_string_array_field(root, "forkContext");
@@ -342,42 +324,47 @@ void append_json_optional_string_field(
     if (request.fork_context_entries.empty()) {
         request.fork_context_entries = json_string_array_field(root, "forkContextMessages");
     }
-    request.parent_assistant_message_entries = json_message_entries_field(root, "parent_assistant_message");
+    request.parent_assistant_message_entries =
+        json_message_entries_field(root, "parent_assistant_message");
     if (request.parent_assistant_message_entries.empty()) {
-        request.parent_assistant_message_entries = json_message_entries_field(root, "parentAssistantMessage");
+        request.parent_assistant_message_entries =
+            json_message_entries_field(root, "parentAssistantMessage");
     }
     if (request.parent_assistant_message_entries.empty()) {
-        request.parent_assistant_message_entries = json_message_entries_field(root, "assistant_message");
+        request.parent_assistant_message_entries =
+            json_message_entries_field(root, "assistant_message");
     }
     if (request.parent_assistant_message_entries.empty()) {
-        request.parent_assistant_message_entries = json_message_entries_field(root, "assistantMessage");
+        request.parent_assistant_message_entries =
+            json_message_entries_field(root, "assistantMessage");
     }
     if (request.parent_assistant_message_entries.empty()) {
-        request.parent_assistant_message_entries = json_message_entries_field(root, "live_parent_assistant_message");
+        request.parent_assistant_message_entries =
+            json_message_entries_field(root, "live_parent_assistant_message");
     }
     if (request.parent_assistant_message_entries.empty()) {
-        request.parent_assistant_message_entries = json_message_entries_field(root, "liveParentAssistantMessage");
+        request.parent_assistant_message_entries =
+            json_message_entries_field(root, "liveParentAssistantMessage");
     }
     if (!request.parent_assistant_message_entries.empty()) request.fork_child_context = true;
     request.name = json_string(root, "name");
-    request.team_name = json_string(root, "team_name").or_else([&] { return json_string(root, "teamName"); });
+    request.team_name =
+        json_string(root, "team_name").or_else([&] { return json_string(root, "teamName"); });
     request.mode = json_string(root, "mode")
-        .or_else([&] { return json_string(root, "permission_mode"); })
-        .or_else([&] { return json_string(root, "permissionMode"); });
+                       .or_else([&] { return json_string(root, "permission_mode"); })
+                       .or_else([&] { return json_string(root, "permissionMode"); });
     request.isolation = json_string(root, "isolation");
     request.cwd = json_string(root, "cwd");
     return request;
 }
 
-[[nodiscard]] std::string apply_agent_tool_execution_context_to_input(
-    std::string_view tool_name,
-    std::string_view raw_json,
-    const AgentExecutionPlan& plan
-) {
-    auto scoped_json = (is_todo_write_tool_name(tool_name) ||
-                        is_agent_scoped_shell_tool_name(tool_name))
-        ? inject_agent_id_into_tool_input(raw_json, plan.agent_id)
-        : std::string(raw_json);
+[[nodiscard]] std::string
+apply_agent_tool_execution_context_to_input(std::string_view tool_name, std::string_view raw_json,
+                                            const AgentExecutionPlan& plan) {
+    auto scoped_json =
+        (is_todo_write_tool_name(tool_name) || is_agent_scoped_shell_tool_name(tool_name))
+            ? inject_agent_id_into_tool_input(raw_json, plan.agent_id)
+            : std::string(raw_json);
     if (!plan.working_dir || plan.working_dir->empty()) return scoped_json;
 
     auto parsed = loom::utils::json::parse(scoped_json);
@@ -443,7 +430,8 @@ void append_json_optional_string_field(
         out += json_escape_string(name);
         out += R"(":)";
     };
-    auto append_string_field = [&](std::string_view name, std::string_view value, bool& first_field) {
+    auto append_string_field = [&](std::string_view name, std::string_view value,
+                                   bool& first_field) {
         append_field_prefix(name, first_field);
         out += '"';
         out += json_escape_string(value);
@@ -454,51 +442,50 @@ void append_json_optional_string_field(
         begin_block();
         bool first_field = true;
         switch (block.type) {
-            case ContentBlockType::Text:
-                append_string_field("type", "text", first_field);
-                append_string_field("text", block.text, first_field);
-                break;
-            case ContentBlockType::ToolUse:
-                append_string_field("type", "tool_use", first_field);
-                append_string_field("id", block.tool_use_id, first_field);
-                append_string_field("name", block.tool_name, first_field);
-                append_field_prefix("input", first_field);
-                out += normalized_tool_input_json(block.tool_input_json);
-                break;
-            case ContentBlockType::ToolResult:
-                append_string_field("type", "tool_result", first_field);
-                append_string_field("tool_use_id", block.tool_use_id, first_field);
-                if (block.is_error) {
-                    append_field_prefix("is_error", first_field);
-                    out += "true";
-                }
-                append_field_prefix("content", first_field);
-                out += R"([{"type":"text","text":")";
-                out += json_escape_string(block.text);
-                out += R"("}])";
-                break;
-            case ContentBlockType::Image:
-            case ContentBlockType::Document:
-                append_string_field(
-                    "type",
-                    block.type == ContentBlockType::Image ? "image" : "document",
-                    first_field);
-                append_field_prefix("source", first_field);
-                out += R"({"type":"base64","media_type":")";
-                out += json_escape_string(block.media_type);
-                out += R"(","data":")";
-                out += json_escape_string(block.image_data);
-                out += R"("})";
-                break;
-            case ContentBlockType::Thinking:
-                append_string_field("type", "thinking", first_field);
-                append_string_field("thinking", block.thinking, first_field);
-                if (!block.signature.empty()) append_string_field("signature", block.signature, first_field);
-                break;
-            case ContentBlockType::RedactedThinking:
-                append_string_field("type", "redacted_thinking", first_field);
-                append_string_field("data", block.thinking, first_field);
-                break;
+        case ContentBlockType::Text:
+            append_string_field("type", "text", first_field);
+            append_string_field("text", block.text, first_field);
+            break;
+        case ContentBlockType::ToolUse:
+            append_string_field("type", "tool_use", first_field);
+            append_string_field("id", block.tool_use_id, first_field);
+            append_string_field("name", block.tool_name, first_field);
+            append_field_prefix("input", first_field);
+            out += normalized_tool_input_json(block.tool_input_json);
+            break;
+        case ContentBlockType::ToolResult:
+            append_string_field("type", "tool_result", first_field);
+            append_string_field("tool_use_id", block.tool_use_id, first_field);
+            if (block.is_error) {
+                append_field_prefix("is_error", first_field);
+                out += "true";
+            }
+            append_field_prefix("content", first_field);
+            out += R"([{"type":"text","text":")";
+            out += json_escape_string(block.text);
+            out += R"("}])";
+            break;
+        case ContentBlockType::Image:
+        case ContentBlockType::Document:
+            append_string_field(
+                "type", block.type == ContentBlockType::Image ? "image" : "document", first_field);
+            append_field_prefix("source", first_field);
+            out += R"({"type":"base64","media_type":")";
+            out += json_escape_string(block.media_type);
+            out += R"(","data":")";
+            out += json_escape_string(block.image_data);
+            out += R"("})";
+            break;
+        case ContentBlockType::Thinking:
+            append_string_field("type", "thinking", first_field);
+            append_string_field("thinking", block.thinking, first_field);
+            if (!block.signature.empty())
+                append_string_field("signature", block.signature, first_field);
+            break;
+        case ContentBlockType::RedactedThinking:
+            append_string_field("type", "redacted_thinking", first_field);
+            append_string_field("data", block.thinking, first_field);
+            break;
         }
         out += '}';
     }
@@ -506,10 +493,8 @@ void append_json_optional_string_field(
     return out;
 }
 
-[[nodiscard]] std::string json_string_member(
-    loom::utils::json::JsonVal object,
-    std::string_view key
-) {
+[[nodiscard]] std::string json_string_member(loom::utils::json::JsonVal object,
+                                             std::string_view key) {
     if (!object.valid() || !object.is_obj()) return {};
     auto value = object.get(key);
     return value.is_str() ? std::string(value.as_str()) : std::string{};
@@ -557,7 +542,8 @@ void append_json_optional_string_field(
             .type = ContentBlockType::ToolUse,
             .tool_use_id = json_string_member(block, "id"),
             .tool_name = json_string_member(block, "name"),
-            .tool_input_json = block.get("input").valid() ? block.get("input").to_string() : std::string{"{}"},
+            .tool_input_json =
+                block.get("input").valid() ? block.get("input").to_string() : std::string{"{}"},
         };
     }
     if (type == "tool_result") {
@@ -638,4 +624,4 @@ void append_json_optional_string_field(
     return out;
 }
 
-} // namespace loom::tools::agent::utils
+}  // namespace loom::tools::agent::utils

@@ -20,9 +20,9 @@
 module;
 
 #include <cctype>
-#include <cstdlib>
-#include <cstdint>
 #include <cmath>
+#include <cstdint>
+#include <cstdlib>
 
 export module loom.commands.review.ultrareview;
 
@@ -56,8 +56,8 @@ struct DiffFileMeta {
 struct ReviewRound {
     std::uint32_t round_index{0};
     std::vector<std::string> focus_files;  ///< File paths this round focuses on
-    std::string prompt;                     ///< Prompt to send for this round
-    std::string focus_goal;                 ///< Short description (for progress)
+    std::string prompt;                    ///< Prompt to send for this round
+    std::string focus_goal;                ///< Short description (for progress)
 };
 
 /// Complete ultrareview plan — N rounds partitioned by concern & file size.
@@ -82,22 +82,24 @@ struct ReviewPlan {
 /// Used to group related files into the same round for consistency checking.
 [[nodiscard]] inline std::string_view concern_bucket(std::string_view ext) {
     // Security / crypto sensitive files
-    static constexpr std::array security_exts = {"pem", "key", "crt", "pfx", "env", "yml", "yaml", "json"};
+    static constexpr std::array security_exts = {"pem", "key", "crt",  "pfx",
+                                                 "env", "yml", "yaml", "json"};
     // Frontend / UI files
-    static constexpr std::array frontend_exts = {"tsx", "jsx", "vue", "svelte", "html", "css", "scss", "less"};
+    static constexpr std::array frontend_exts = {"tsx",  "jsx", "vue",  "svelte",
+                                                 "html", "css", "scss", "less"};
     // Backend / API files
-    static constexpr std::array backend_exts = {"ts", "js", "go", "rs", "java", "kt", "py", "rb", "php", "cs", "c", "h"};
+    static constexpr std::array backend_exts = {"ts", "js", "go",  "rs", "java", "kt",
+                                                "py", "rb", "php", "cs", "c",    "h"};
     // Build / infra
-    static constexpr std::array build_exts = {"cpp", "cxx", "cc", "hpp", "cmake", "mk", "lock", "toml"};
+    static constexpr std::array build_exts = {"cpp",   "cxx", "cc",   "hpp",
+                                              "cmake", "mk",  "lock", "toml"};
 
-    auto in = [](auto& arr, std::string_view v) {
-        return std::ranges::find(arr, v) != arr.end();
-    };
+    auto in = [](auto& arr, std::string_view v) { return std::ranges::find(arr, v) != arr.end(); };
 
     if (in(security_exts, ext)) return "security";
     if (in(frontend_exts, ext)) return "frontend";
-    if (in(backend_exts,  ext)) return "backend";
-    if (in(build_exts,   ext)) return "build";
+    if (in(backend_exts, ext)) return "backend";
+    if (in(build_exts, ext)) return "build";
     return "misc";
 }
 
@@ -131,9 +133,7 @@ struct ReviewPlan {
 
     // Sort buckets largest-first so the heaviest work happens early
     std::vector<std::pair<std::string, std::vector<DiffFileMeta>>> sorted_buckets(
-        std::make_move_iterator(buckets.begin()),
-        std::make_move_iterator(buckets.end())
-    );
+        std::make_move_iterator(buckets.begin()), std::make_move_iterator(buckets.end()));
     std::ranges::sort(sorted_buckets, [](const auto& a, const auto& b) {
         return a.second.size() > b.second.size();
     });
@@ -171,7 +171,8 @@ struct ReviewPlan {
             "  3. Missing error handling for new public functions\n"
             "  4. Potential security-relevant surface changes\n\n"
             "Representative files to focus on:\n";
-        for (const auto& p : top_paths) prompt += "  - " + p + "\n";
+        for (const auto& p : top_paths)
+            prompt += "  - " + p + "\n";
         prompt += "\nOutput a list of high-level concerns only.";
 
         plan.rounds.push_back({idx++, top_paths, std::move(prompt), "architecture"});
@@ -181,11 +182,12 @@ struct ReviewPlan {
     for (auto& [bucket_name, chunk] : chunks) {
         std::vector<std::string> paths;
         paths.reserve(chunk.size());
-        for (auto& f : chunk) paths.push_back(f.path);
+        for (auto& f : chunk)
+            paths.push_back(f.path);
 
         std::string prompt;
-        prompt += std::format("## UltraReview Round {} — Deep review ({} focus: {} files)\n\n",
-                              idx, bucket_name, chunk.size());
+        prompt += std::format("## UltraReview Round {} — Deep review ({} focus: {} files)\n\n", idx,
+                              bucket_name, chunk.size());
         prompt += "You are a senior engineer doing a focused, deep review of these files.\n\n";
         prompt += "Review criteria:\n";
         if (bucket_name == "security") {
@@ -208,9 +210,11 @@ struct ReviewPlan {
             prompt += "  - Logic correctness, edge-case handling, off-by-one\n";
             prompt += "  - Input validation and null/None handling\n";
         }
-        prompt += "\nFor each finding provide: file, line, severity, description, suggested fix.\n\n";
+        prompt +=
+            "\nFor each finding provide: file, line, severity, description, suggested fix.\n\n";
         prompt += "Files in this round:\n";
-        for (const auto& p : paths) prompt += "  - " + p + "\n";
+        for (const auto& p : paths)
+            prompt += "  - " + p + "\n";
         prompt += "\nFocus ONLY on the files above. Skip files that are not in this list.";
 
         plan.rounds.push_back({idx++, paths, std::move(prompt), bucket_name});
@@ -262,13 +266,13 @@ struct ReviewPlan {
 /// Run `git diff --numstat` against a base ref and return per-file meta.
 /// If base_ref is empty, uses `origin/HEAD...HEAD` (branch mode).
 /// If base_ref is a number, interpreted as a PR number and fetched via gh API.
-[[nodiscard]] inline Result<std::vector<DiffFileMeta>> collect_diff_meta(
-    std::string_view base_ref_or_pr
-) {
+[[nodiscard]] inline Result<std::vector<DiffFileMeta>>
+collect_diff_meta(std::string_view base_ref_or_pr) {
     std::string cmd;
     if (base_ref_or_pr.empty()) {
         cmd = "git diff --numstat origin/HEAD...HEAD";
-    } else if (std::ranges::all_of(base_ref_or_pr, [](unsigned char c) { return std::isdigit(c); })) {
+    } else if (std::ranges::all_of(base_ref_or_pr,
+                                   [](unsigned char c) { return std::isdigit(c); })) {
         // PR number -> ask gh CLI
         cmd = std::format("gh pr diff {} --numstat", base_ref_or_pr);
     } else {
@@ -280,10 +284,9 @@ struct ReviewPlan {
         // Try a fallback: plain git diff HEAD for local-only changes
         out = loom::utils::exec_sync("git diff --numstat HEAD");
         if (!out) {
-            return std::unexpected(Error::make(
-                ErrorCode::ToolExecutionFailed,
-                std::format("Cannot collect diff stats: {}", out.error())
-            ));
+            return std::unexpected(
+                Error::make(ErrorCode::ToolExecutionFailed,
+                            std::format("Cannot collect diff stats: {}", out.error())));
         }
     }
 
@@ -316,27 +319,30 @@ struct ReviewPlan {
 /// UltraReviewCommand implements the `/ultrareview [PR#]` slash command.
 class UltraReviewCommand {
     // Session-scope overage confirmation flag (mirrors TS sessionOverageConfirmed).
-    inline static bool s_session_overage_confirmed = false;  // NOLINT(cppcoreguidelines-avoid-non-const-global-variables)
+    inline static bool s_session_overage_confirmed =
+        false;  // NOLINT(cppcoreguidelines-avoid-non-const-global-variables)
 
 public:
     [[nodiscard]] static CommandDefinition definition() {
         return CommandDefinition{
             .name = "ultrareview",
             .description = "Deep multi-round code review (cloud-executed bughunter)",
-            .args = {
-                CommandArg{
-                    .name = "target",
-                    .description = "PR number, PR URL, or branch name (default: compare to origin/HEAD)",
-                    .type = ArgType::Text,
-                    .required = false,
+            .args =
+                {
+                    CommandArg{
+                        .name = "target",
+                        .description =
+                            "PR number, PR URL, or branch name (default: compare to origin/HEAD)",
+                        .type = ArgType::Text,
+                        .required = false,
+                    },
+                    CommandArg{
+                        .name = "--local",
+                        .description = "Accepted for compatibility; reviews are always local",
+                        .type = ArgType::None,
+                        .required = false,
+                    },
                 },
-                CommandArg{
-                    .name = "--local",
-                    .description = "Accepted for compatibility; reviews are always local",
-                    .type = ArgType::None,
-                    .required = false,
-                },
-            },
             .category = "git",
             .aliases = {"ur", "deep-review"},
             .hidden = !is_ultrareview_enabled(),
@@ -345,11 +351,10 @@ public:
 
     [[nodiscard]] static VoidResult validate(const CommandContext&) {
         if (!is_ultrareview_enabled()) {
-            return std::unexpected(Error::make(
-                ErrorCode::InvalidRequest,
-                "Ultrareview is not enabled for this account. Enable Extra Usage at "
-                "your account billing settings to continue."
-            ));
+            return std::unexpected(
+                Error::make(ErrorCode::InvalidRequest,
+                            "Ultrareview is not enabled for this account. Enable Extra Usage at "
+                            "your account billing settings to continue."));
         }
 
         // There is no overage gate. Ultrareview is a LOCAL multi-round review
@@ -364,7 +369,8 @@ public:
         std::string target;
         bool force_local = false;
         for (std::size_t i = 0; i < ctx.args.size(); ++i) {
-            if (ctx.args[i] == "--local") force_local = true;
+            if (ctx.args[i] == "--local")
+                force_local = true;
             else if (!ctx.args[i].starts_with("-")) {
                 if (!target.empty()) target += ' ';
                 target += ctx.args[i];
@@ -376,9 +382,8 @@ public:
         if (!files) return std::unexpected(files.error());
 
         if (files->empty()) {
-            return CommandResult::fail(
-                "No changed files detected. Make commits or stage some changes before running ultrareview."
-            );
+            return CommandResult::fail("No changed files detected. Make commits or stage some "
+                                       "changes before running ultrareview.");
         }
 
         // 2) Generate N-round review plan
@@ -394,8 +399,7 @@ public:
         // Build the composite prompt
         std::ostringstream prompt;
         prompt << "# UltraReview — Deep Code Review\n\n";
-        prompt << std::format("Changed files: {} total ({}+ / {}- lines)\n",
-                              plan.all_files.size(),
+        prompt << std::format("Changed files: {} total ({}+ / {}- lines)\n", plan.all_files.size(),
                               plan.total_additions, plan.total_deletions);
         if (!note.empty()) prompt << note << "\n";
         (void)force_local;
@@ -403,8 +407,8 @@ public:
 
         prompt << "## Execution plan\n\n";
         for (const auto& r : plan.rounds) {
-            prompt << std::format("  - Round {} ({}): {} file(s)\n",
-                                  r.round_index, r.focus_goal, r.focus_files.size());
+            prompt << std::format("  - Round {} ({}): {} file(s)\n", r.round_index, r.focus_goal,
+                                  r.focus_files.size());
         }
         prompt << "\n## Per-round prompts\n\n";
         for (const auto& r : plan.rounds) {
@@ -438,4 +442,4 @@ public:
     }
 };
 
-} // namespace loom::commands
+}  // namespace loom::commands

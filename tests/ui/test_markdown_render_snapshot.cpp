@@ -19,6 +19,8 @@
 /// correctness is covered by Layer 2; this layer focuses on text content
 /// and layout stability.
 
+#include <ftxui/dom/elements.hpp>
+#include <ftxui/screen/screen.hpp>
 #include <gtest/gtest.h>
 
 #include <array>
@@ -28,9 +30,6 @@
 #include <iterator>
 #include <string>
 #include <string_view>
-
-#include <ftxui/dom/elements.hpp>
-#include <ftxui/screen/screen.hpp>
 
 import std;
 
@@ -61,8 +60,8 @@ constexpr int kSnapshotHeight = 500;
             if (next == '[') {
                 // CSI: ESC [ ... final byte (0x40-0x7E)
                 i += 2;
-                while (i < text.size() &&
-                       !(text[i] >= 0x40 && text[i] <= 0x7e)) ++i;
+                while (i < text.size() && !(text[i] >= 0x40 && text[i] <= 0x7e))
+                    ++i;
                 if (i < text.size()) ++i;  // skip final byte
                 continue;
             }
@@ -70,9 +69,14 @@ constexpr int kSnapshotHeight = 500;
                 // OSC: ESC ] ... BEL or ESC-backslash
                 i += 2;
                 while (i < text.size()) {
-                    if (text[i] == '\x07') { ++i; break; }
-                    if (text[i] == '\x1b' && i + 1 < text.size() &&
-                        text[i + 1] == '\\') { i += 2; break; }
+                    if (text[i] == '\x07') {
+                        ++i;
+                        break;
+                    }
+                    if (text[i] == '\x1b' && i + 1 < text.size() && text[i + 1] == '\\') {
+                        i += 2;
+                        break;
+                    }
                     ++i;
                 }
                 continue;
@@ -96,8 +100,7 @@ constexpr int kSnapshotHeight = 500;
     for (std::size_t i = 0; i < clean.size(); ++i) {
         if (clean[i] == '\n') {
             while (!line.empty() &&
-                   (line.back() == ' ' || line.back() == '\t' ||
-                    line.back() == '\r'))
+                   (line.back() == ' ' || line.back() == '\t' || line.back() == '\r'))
                 line.pop_back();
             result += line;
             result += '\n';
@@ -107,9 +110,7 @@ constexpr int kSnapshotHeight = 500;
         }
     }
     // Last line (Screen::ToString may not end with \n)
-    while (!line.empty() &&
-           (line.back() == ' ' || line.back() == '\t' ||
-            line.back() == '\r'))
+    while (!line.empty() && (line.back() == ' ' || line.back() == '\t' || line.back() == '\r'))
         line.pop_back();
     result += line;
 
@@ -123,17 +124,16 @@ constexpr int kSnapshotHeight = 500;
 // ── Golden file path ────────────────────────────────────────────────
 
 [[nodiscard]] fs::path golden_path(std::string_view name) {
-    return fs::path(LOOM_TESTS_DIR) / "fixtures" /
-           "render_snapshots" / (std::string(name) + ".txt");
+    return fs::path(LOOM_TESTS_DIR) / "fixtures" / "render_snapshots" /
+           (std::string(name) + ".txt");
 }
 
 // ── Snapshot comparison ─────────────────────────────────────────────
 
 void expect_snapshot(std::string_view name, std::string_view markdown) {
     auto el = ui::render_markdown(markdown);
-    auto screen = ftxui::Screen::Create(
-        ftxui::Dimension::Fixed(kSnapshotWidth),
-        ftxui::Dimension::Fixed(kSnapshotHeight));
+    auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(kSnapshotWidth),
+                                        ftxui::Dimension::Fixed(kSnapshotHeight));
     ftxui::Render(screen, el);
 
     std::string actual = normalize_snapshot(screen.ToString());
@@ -156,16 +156,13 @@ void expect_snapshot(std::string_view name, std::string_view markdown) {
 
     // Read expected
     std::ifstream in(path);
-    std::string expected((std::istreambuf_iterator<char>(in)),
-                          std::istreambuf_iterator<char>());
+    std::string expected((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
     // Writer adds a trailing newline; strip it for comparison
-    if (!expected.empty() && expected.back() == '\n')
-        expected.pop_back();
+    if (!expected.empty() && expected.back() == '\n') expected.pop_back();
 
-    EXPECT_EQ(expected, actual)
-        << "Snapshot mismatch for: " << name
-        << "\nIf this is intentional, regenerate with:\n"
-        << "  LOOM_UPDATE_SNAPSHOTS=1 ctest -R MarkdownRenderSnapshot";
+    EXPECT_EQ(expected, actual) << "Snapshot mismatch for: " << name
+                                << "\nIf this is intentional, regenerate with:\n"
+                                << "  LOOM_UPDATE_SNAPSHOTS=1 ctest -R MarkdownRenderSnapshot";
 }
 
 // ── Test cases ──────────────────────────────────────────────────────
@@ -181,36 +178,30 @@ struct SnapshotCase {
 // enough to wrap at 80 columns, and no long URLs or code lines.  These
 // Additional Mermaid cases cover terminal-native graph layout.
 constexpr std::array<SnapshotCase, 8> kCases = {{
-    {"cjk",
-     "这是一段中文文本，用于测试终端渲染器对 CJK 字符的处理。\n"
-     "Chinese text should render correctly in the terminal.\n"},
+    {"cjk", "这是一段中文文本，用于测试终端渲染器对 CJK 字符的处理。\n"
+            "Chinese text should render correctly in the terminal.\n"},
 
-    {"paragraph_wrap",
-     "This is a longer paragraph that should wrap at the 80-column boundary. "
-     "The quick brown fox jumps over the lazy dog. Pack my box with five "
-     "dozen liquor jugs. How vexingly quick daft zebras jump!\n"},
+    {"paragraph_wrap", "This is a longer paragraph that should wrap at the 80-column boundary. "
+                       "The quick brown fox jumps over the lazy dog. Pack my box with five "
+                       "dozen liquor jugs. How vexingly quick daft zebras jump!\n"},
 
-    {"long_url",
-     "Check out https://example.com/very/long/path/that/might/wrap/or/not "
-     "for details.\n"},
+    {"long_url", "Check out https://example.com/very/long/path/that/might/wrap/or/not "
+                 "for details.\n"},
 
-    {"code_block_long",
-     "```\n"
-     "this is a very long code line that should not wrap at the 80-column boundary because code blocks do not wrap\n"
-     "```\n"},
-    {"mermaid_flowchart",
-     "```mermaid\nflowchart TD\nA[Start] --> B{Ready?}\n"
-     "B -->|yes| C[Finish]\nB -->|no| D[Retry]\n```\n"},
+    {"code_block_long", "```\n"
+                        "this is a very long code line that should not wrap at the 80-column "
+                        "boundary because code blocks do not wrap\n"
+                        "```\n"},
+    {"mermaid_flowchart", "```mermaid\nflowchart TD\nA[Start] --> B{Ready?}\n"
+                          "B -->|yes| C[Finish]\nB -->|no| D[Retry]\n```\n"},
     {"mermaid_sequence",
      "```mermaid\nsequenceDiagram\nparticipant C as Client\n"
      "participant S as Server\nC->>S: Request\nS-->>C: Response\nS->>S: Work\n```\n"},
-    {"mermaid_directions",
-     "```mermaid\nflowchart LR\nA[Origin] --> B[Target]\n```\n\n"
-     "```mermaid\nflowchart RL\nA[Origin] --> B[Target]\n```\n\n"
-     "```mermaid\nflowchart BT\nA[Origin] --> B[Target]\n```\n"},
-    {"mermaid_cycles",
-     "```mermaid\nflowchart TD\nA[First] --> B[Second]\nB -->|back| A\n```\n\n"
-     "```mermaid\nflowchart LR\nA[Loop] -->|again| A\n```\n"},
+    {"mermaid_directions", "```mermaid\nflowchart LR\nA[Origin] --> B[Target]\n```\n\n"
+                           "```mermaid\nflowchart RL\nA[Origin] --> B[Target]\n```\n\n"
+                           "```mermaid\nflowchart BT\nA[Origin] --> B[Target]\n```\n"},
+    {"mermaid_cycles", "```mermaid\nflowchart TD\nA[First] --> B[Second]\nB -->|back| A\n```\n\n"
+                       "```mermaid\nflowchart LR\nA[Loop] -->|again| A\n```\n"},
 }};
 
 // ── Conformance fixture snapshot runner ─────────────────────────────
@@ -221,10 +212,8 @@ constexpr std::array<SnapshotCase, 8> kCases = {{
 //
 // Skip <IGNORE> crash-test examples (any output is acceptable per spec).
 
-void run_conformance_snapshot(const char* fixture_name,
-                               std::string_view prefix) {
-    const auto path =
-        fs::path(LOOM_TESTS_DIR) / "fixtures" / fixture_name;
+void run_conformance_snapshot(const char* fixture_name, std::string_view prefix) {
+    const auto path = fs::path(LOOM_TESTS_DIR) / "fixtures" / fixture_name;
     auto doc = loom::utils::json::parse_file_string(path.string());
     if (!doc) {
         FAIL() << "Failed to load fixture " << fixture_name;
@@ -244,17 +233,15 @@ void run_conformance_snapshot(const char* fixture_name,
 
         // GFM spec uses <IGNORE> for crash-test examples — any output is
         // acceptable, so no golden file to compare against.
-        if (expected_html == "<IGNORE>\n" || expected_html == "<IGNORE>")
-            continue;
+        if (expected_html == "<IGNORE>\n" || expected_html == "<IGNORE>") continue;
 
         const std::string name = std::format("{}_{}", prefix, example);
-        SCOPED_TRACE(std::string(prefix) + " example " +
-                     std::to_string(example));
+        SCOPED_TRACE(std::string(prefix) + " example " + std::to_string(example));
         expect_snapshot(name, markdown);
     }
 }
 
-} // namespace
+}  // namespace
 
 // ── Parameterized test ─────────────────────────────────────────────
 
@@ -265,12 +252,10 @@ TEST_P(MarkdownRenderSnapshot, MatchesGolden) {
     expect_snapshot(c.name, c.markdown);
 }
 
-INSTANTIATE_TEST_SUITE_P(
-    TerminalSpecific, MarkdownRenderSnapshot,
-    ::testing::ValuesIn(kCases),
-    [](const ::testing::TestParamInfo<SnapshotCase>& info) {
-        return std::string(info.param.name);
-    });
+INSTANTIATE_TEST_SUITE_P(TerminalSpecific, MarkdownRenderSnapshot, ::testing::ValuesIn(kCases),
+                         [](const ::testing::TestParamInfo<SnapshotCase>& info) {
+                             return std::string(info.param.name);
+                         });
 
 // ── Conformance fixture snapshots ───────────────────────────────────
 // Golden file snapshots for every example in the CommonMark + GFM spec

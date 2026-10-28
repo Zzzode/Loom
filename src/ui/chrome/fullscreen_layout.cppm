@@ -51,9 +51,9 @@
 
 module;
 
-#include <ftxui/dom/elements.hpp>
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
+#include <ftxui/dom/elements.hpp>
 export module loom.ui.chrome.fullscreen_layout;
 
 import std;
@@ -65,9 +65,9 @@ import loom.ui.foundation.design_figures;
 export namespace loom::ui::layout::fullscreen {
 
 using namespace ftxui;
-using Theme   = loom::ui::design::theme::Theme;
+using Theme = loom::ui::design::theme::Theme;
 using Palette = loom::ui::design::tokens::Palette;
-using Role    = loom::ui::design::tokens::Role;
+using Role = loom::ui::design::tokens::Role;
 namespace figures_ns = loom::ui::design::figures;
 
 // ─── Constants ──────────────────────────────────────────────────────────────
@@ -83,14 +83,18 @@ inline constexpr int kModalTranscriptPeek = 2;
 namespace compel_detail {
 
 class ComponentHolderNode : public Node {
- public:
+public:
     Component held_;
+
     ComponentHolderNode(Component c, Element el)
-        : Node(Elements{std::move(el)}), held_(std::move(c)) {}
+        : Node(Elements{std::move(el)})
+        , held_(std::move(c)) {}
+
     void ComputeRequirement() override {
         Node::ComputeRequirement();
         requirement_ = children_[0]->requirement();
     }
+
     void SetBox(Box box) override {
         Node::SetBox(box);
         children_[0]->SetBox(box);
@@ -108,8 +112,7 @@ class ComponentHolderNode : public Node {
 [[nodiscard]] inline Element CompEl(Component c) {
     if (!c) return emptyElement();
     Element el = c->Render();
-    return std::make_shared<compel_detail::ComponentHolderNode>(
-        std::move(c), std::move(el));
+    return std::make_shared<compel_detail::ComponentHolderNode>(std::move(c), std::move(el));
 }
 
 // ─── Sticky prompt 3-state model ──────────────────────────────────────────
@@ -254,17 +257,19 @@ struct FullscreenLayoutSlots {
 /// `Box box_` (used by reflect/OnEvent) is a UAF after the Component is
 /// dropped (see CompEl note above / commit bd507bc).
 class StickyPromptHeaderComponent : public ComponentBase {
- public:
+public:
     using OnClickFn = std::function<void()>;
 
     StickyPromptHeaderComponent(std::string text, OnClickFn on_click)
-        : text_(std::move(text)), on_click_(std::move(on_click)) {}
+        : text_(std::move(text))
+        , on_click_(std::move(on_click)) {}
 
     Element Render() override {
         const auto& pal = active_palette();
-        const Color bg = hovered_
-            ? loom::ui::design::tokens::token_by_role(pal, Role::UserMessageBackgroundHover)
-            : loom::ui::design::tokens::token_by_role(pal, Role::UserMessageBackground);
+        const Color bg =
+            hovered_
+                ? loom::ui::design::tokens::token_by_role(pal, Role::UserMessageBackgroundHover)
+                : loom::ui::design::tokens::token_by_role(pal, Role::UserMessageBackground);
         const Color fg = loom::ui::design::tokens::token_by_role(pal, Role::Muted);
         // The `figures.pointer` prefix (▶ U+25B6).
         // NOTE: figures_ns::kPointer is constexpr string_view; std::string
@@ -276,14 +281,13 @@ class StickyPromptHeaderComponent : public ComponentBase {
         // screen rasteriser when it overflows.  The "…" character is still
         // prepended to the trailing space as a visual sentinel.
         return hbox({
-            text(" "),
-            text(pointer) | color(fg),
-            text(" "),
-            text(text_) | color(fg) | xflex_shrink,
-            text(" "),
-        }) | bgcolor(bg)
-           | reflect(box_)
-           | size(HEIGHT, EQUAL, 1);
+                   text(" "),
+                   text(pointer) | color(fg),
+                   text(" "),
+                   text(text_) | color(fg) | xflex_shrink,
+                   text(" "),
+               }) |
+               bgcolor(bg) | reflect(box_) | size(HEIGHT, EQUAL, 1);
     }
 
     bool OnEvent(Event event) override {
@@ -317,7 +321,7 @@ class StickyPromptHeaderComponent : public ComponentBase {
 
     bool Focusable() const override { return static_cast<bool>(on_click_); }
 
- private:
+private:
     std::string text_;
     OnClickFn on_click_;
     bool hovered_ = false;
@@ -328,10 +332,8 @@ class StickyPromptHeaderComponent : public ComponentBase {
 /// in CompEl so it is safe to drop into an Element tree.
 /// `<StickyPromptHeader>` element rendered inside the scrollwrap vbox
 /// above the ScrollBox.
-[[nodiscard]] inline Element StickyPromptHeader(std::string text,
-    std::function<void()> on_click) {
-    auto c = Make<StickyPromptHeaderComponent>(std::move(text),
-                                                std::move(on_click));
+[[nodiscard]] inline Element StickyPromptHeader(std::string text, std::function<void()> on_click) {
+    auto c = Make<StickyPromptHeaderComponent>(std::move(text), std::move(on_click));
     return CompEl(std::move(c));
 }
 
@@ -342,21 +344,19 @@ class StickyPromptHeaderComponent : public ComponentBase {
 /// regardless of scroll position (NOT at the scroll tail).  In FTXUI the
 /// caller wraps this element in vbox({filler(), pill}) inside a dbox to
 /// achieve the same overlay anchoring (see ComposeFullscreen).
-[[nodiscard]] inline Element NewMessagesPill(int count, bool actionable,
-                                             Box* hit_box = nullptr) {
+[[nodiscard]] inline Element NewMessagesPill(int count, bool actionable, Box* hit_box = nullptr) {
     // count > 0 → "N new message(s)"; 0 → "Jump to bottom".
-    std::string label = count > 0
-        ? std::to_string(count) + " new message" + (count == 1 ? "" : "s")
-        : std::string("Jump to bottom");
+    std::string label = count > 0 ? std::to_string(count) + " new message" + (count == 1 ? "" : "s")
+                                  : std::string("Jump to bottom");
     // kArrowDown is a string_view holding the arrow-down glyph (↓ U+2193),
     // so materialize it to std::string for concatenation with const char[].
     label += " " + std::string(figures_ns::kArrowDown);
 
     const auto& pal = active_palette();
-    const Color bg_normal = loom::ui::design::tokens::token_by_role(
-        pal, Role::UserMessageBackground);
-    const Color bg_hover = loom::ui::design::tokens::token_by_role(
-        pal, Role::UserMessageBackgroundHover);
+    const Color bg_normal =
+        loom::ui::design::tokens::token_by_role(pal, Role::UserMessageBackground);
+    const Color bg_hover =
+        loom::ui::design::tokens::token_by_role(pal, Role::UserMessageBackgroundHover);
     const Color fg = loom::ui::design::tokens::token_by_role(pal, Role::Muted);
 
     // This Element is rendered inside a stateless tree, so an embedded FTXUI
@@ -370,10 +370,11 @@ class StickyPromptHeaderComponent : public ComponentBase {
     // a repin.
     if (hit_box) label_el = std::move(label_el) | reflect(*hit_box);
     Element pill = hbox({
-        filler(),
-        std::move(label_el),
-        filler(),
-    }) | size(HEIGHT, EQUAL, 1);
+                       filler(),
+                       std::move(label_el),
+                       filler(),
+                   }) |
+                   size(HEIGHT, EQUAL, 1);
     return pill;
 }
 
@@ -385,22 +386,24 @@ class StickyPromptHeaderComponent : public ComponentBase {
     int max_h = std::max(4, term_rows - kModalTranscriptPeek);
     // ▔ (U+2594) divider spanning the full width.
     // Build as UTF-8 so the multibyte sequence stays intact.
-    static constexpr char kPeekDiv[] = "\xE2\x96\x94";   // ▔
+    static constexpr char kPeekDiv[] = "\xE2\x96\x94";  // ▔
     std::string divider;
     int n = std::max(1, term_cols);
     divider.reserve(static_cast<std::size_t>(n) * 3);
-    for (int i = 0; i < n; ++i) divider.append(kPeekDiv);
+    for (int i = 0; i < n; ++i)
+        divider.append(kPeekDiv);
     // The divider uses the permission color.
     const auto& pal = active_palette();
     const Color perm = loom::ui::design::tokens::token_by_role(pal, Role::Permission);
     return vbox({
-        text(divider) | color(perm),
-        // Body kept at natural height — the outer size(LESS_THAN, max_h)
-        // caps it and the bottom-anchor filler above absorbs slack.  Do
-        // NOT flex here: a windowed dialog border compresses badly under
-        // flex when the anchor region is taller than the dialog.
-        std::move(body),
-    }) | size(HEIGHT, LESS_THAN, max_h);
+               text(divider) | color(perm),
+               // Body kept at natural height — the outer size(LESS_THAN, max_h)
+               // caps it and the bottom-anchor filler above absorbs slack.  Do
+               // NOT flex here: a windowed dialog border compresses badly under
+               // flex when the anchor region is taller than the dialog.
+               std::move(body),
+           }) |
+           size(HEIGHT, LESS_THAN, max_h);
 }
 
 // ─── Main composer ──────────────────────────────────────────────────────────
@@ -444,12 +447,10 @@ class StickyPromptHeaderComponent : public ComponentBase {
 [[nodiscard]] inline Element ComposeFullscreen(FullscreenLayoutSlots s) {
     // ── 3-state sticky resolution ──
     const bool overlay_present = s.overlay.has_value() && *s.overlay;
-    const bool sticky_active =
-        !s.hide_sticky && s.sticky_prompt.has_value();
+    const bool sticky_active = !s.hide_sticky && s.sticky_prompt.has_value();
     // header_visible = sticky_active && !clicked && !overlay_present
-    const bool header_visible = sticky_active && !s.sticky_clicked
-                             && !overlay_present
-                             && !s.sticky_prompt->text.empty();
+    const bool header_visible =
+        sticky_active && !s.sticky_clicked && !overlay_present && !s.sticky_prompt->text.empty();
     // collapsed-padding = sticky_active && !overlay_present
     // padding_top = collapsed ? 0 : 1
     const int padding_top = (sticky_active && !overlay_present) ? 0 : 1;
@@ -462,12 +463,9 @@ class StickyPromptHeaderComponent : public ComponentBase {
         auto prompt = *s.sticky_prompt;
         std::function<void()> cb = nullptr;
         if (s.on_sticky_click) {
-            cb = [prompt, cb = std::move(s.on_sticky_click)] {
-                cb(prompt);
-            };
+            cb = [prompt, cb = std::move(s.on_sticky_click)] { cb(prompt); };
         }
-        scroll_children.push_back(
-            StickyPromptHeader(std::move(prompt.text), std::move(cb)));
+        scroll_children.push_back(StickyPromptHeader(std::move(prompt.text), std::move(cb)));
     }
 
     // 2. ScrollBox top-padding row.  The ScrollBox wraps scrollable+overlay
@@ -479,8 +477,7 @@ class StickyPromptHeaderComponent : public ComponentBase {
     //    (RGB 32,33,36 vs terminal black 0,0,0) that some users perceived
     //    as a faint "白条" below the logo.
     if (padding_top > 0) {
-        scroll_children.push_back(text("")
-            | size(HEIGHT, EQUAL, padding_top));
+        scroll_children.push_back(text("") | size(HEIGHT, EQUAL, padding_top));
     }
 
     // 3. The scrollable transcript — fills remaining height.
@@ -517,10 +514,8 @@ class StickyPromptHeaderComponent : public ComponentBase {
     // pill before bottom-float; since both are absolute and non-overlapping
     // the order is cosmetic, but we keep the ordering (bottom-float on top).
 
-    const bool pill_should_show =
-        !s.hide_pill && s.pill_visible && !overlay_present;
-    const bool float_should_show =
-        s.bottom_float.has_value() && *s.bottom_float;
+    const bool pill_should_show = !s.hide_pill && s.pill_visible && !overlay_present;
+    const bool float_should_show = s.bottom_float.has_value() && *s.bottom_float;
 
     if (pill_should_show || float_should_show) {
         Elements overlay_layers;
@@ -531,7 +526,7 @@ class StickyPromptHeaderComponent : public ComponentBase {
         if (float_should_show) {
             overlay_layers.push_back(vbox({
                 filler(),
-                hbox({ filler(), std::move(*s.bottom_float) }),
+                hbox({filler(), std::move(*s.bottom_float)}),
             }));
         }
 
@@ -542,11 +537,10 @@ class StickyPromptHeaderComponent : public ComponentBase {
         if (pill_should_show) {
             overlay_layers.push_back(vbox({
                 filler(),
-                NewMessagesPill(
-                    s.new_message_count,
-                    /*actionable=*/s.pill_hit_box != nullptr ||
-                        static_cast<bool>(s.on_pill_click),
-                    s.pill_hit_box),
+                NewMessagesPill(s.new_message_count,
+                                /*actionable=*/s.pill_hit_box != nullptr ||
+                                    static_cast<bool>(s.on_pill_click),
+                                s.pill_hit_box),
             }));
         }
 
@@ -559,9 +553,8 @@ class StickyPromptHeaderComponent : public ComponentBase {
     //    Wraps {SuggestionsOverlay, DialogOverlay, bottom} in a column
     //    with fixed height and max-height 50%.
     int bottom_max_h = std::max(4, s.term_rows / 2);
-    Element bottom_slot = s.bottom
-        ? (std::move(s.bottom) | size(HEIGHT, LESS_THAN, bottom_max_h))
-        : (filler() | size(HEIGHT, EQUAL, 0));
+    Element bottom_slot = s.bottom ? (std::move(s.bottom) | size(HEIGHT, LESS_THAN, bottom_max_h))
+                                   : (filler() | size(HEIGHT, EQUAL, 0));
 
     // ── normal-flow base: [pinned header (non-scroll)] + scrollwrap + bottom ──
     Elements normal_flow;
@@ -575,12 +568,13 @@ class StickyPromptHeaderComponent : public ComponentBase {
     if (s.modal && *s.modal) {
         Element pane = ModalPane(std::move(*s.modal), s.term_cols, s.term_rows);
         Element modal_overlay = vbox({
-            filler(),
-            std::move(pane),
-        }) | size(HEIGHT, EQUAL, s.term_rows);
-        return dbox({ std::move(base), std::move(modal_overlay) });
+                                    filler(),
+                                    std::move(pane),
+                                }) |
+                                size(HEIGHT, EQUAL, s.term_rows);
+        return dbox({std::move(base), std::move(modal_overlay)});
     }
     return base;
 }
 
-} // namespace loom::ui::layout::fullscreen
+}  // namespace loom::ui::layout::fullscreen

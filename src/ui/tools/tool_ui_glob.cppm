@@ -5,7 +5,6 @@
 /// LICENCE:  Exported.  Imported by the tool UI registry initialization.
 module;
 
-
 export module loom.ui.tools.glob;
 
 import std;
@@ -53,9 +52,7 @@ namespace detail {
 [[nodiscard]] inline ToolUIFunctions make_glob_ui() {
     ToolUIFunctions fns;
 
-    fns.user_facing_name = [](std::string_view) {
-        return std::string{"Search"};
-    };
+    fns.user_facing_name = [](std::string_view) { return std::string{"Search"}; };
 
     fns.message = [](std::string_view input_json) {
         std::string pattern = detail::extract_pattern(input_json);
@@ -75,12 +72,9 @@ namespace detail {
         return std::string{"matching files…"};
     };
 
-    fns.tag = [](std::string_view) -> std::optional<std::string> {
-        return std::nullopt;
-    };
+    fns.tag = [](std::string_view) -> std::optional<std::string> { return std::nullopt; };
 
-    fns.progress = [](std::string_view input_json,
-                       std::string_view partial_result) {
+    fns.progress = [](std::string_view input_json, std::string_view partial_result) {
         if (!partial_result.empty()) {
             std::size_t count = 0;
             for (char c : partial_result) {
@@ -100,18 +94,14 @@ namespace detail {
         return std::string{"Globbing files…"};
     };
 
-    fns.queued = [](std::string_view) {
-        return std::string{"Waiting to glob…"};
-    };
+    fns.queued = [](std::string_view) { return std::string{"Waiting to glob…"}; };
 
     fns.is_transparent_wrapper = false;
 
     // Reuses Grep's render — shows filenames.join. durationMs/numFiles
     // are "Found 3 files in 12ms" chrome (under-count, fine).
-    fns.extract_search_text = [](
-        std::string_view output_text,
-        std::string_view /*error_text*/) -> std::optional<std::string>
-    {
+    fns.extract_search_text = [](std::string_view output_text,
+                                 std::string_view /*error_text*/) -> std::optional<std::string> {
         return std::string{output_text};
     };
 

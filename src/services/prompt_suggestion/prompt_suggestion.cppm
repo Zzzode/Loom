@@ -19,11 +19,11 @@
 ///     until an LLM fork path exists; do NOT claim parity with the LLM path.
 module;
 
-#include <cstdint>
-#include <cstddef>
-#include <cstring>
-#include <cmath>
 #include <cctype>
+#include <cmath>
+#include <cstddef>
+#include <cstdint>
+#include <cstring>
 
 export module loom.services.prompt_suggestion;
 
@@ -37,10 +37,10 @@ export namespace loom::services::prompt_suggestion {
 using loom::core::Error;
 using loom::core::ErrorCode;
 using loom::core::TokenUsage;
+using loom::utils::contains_ignore_case;
+using loom::utils::starts_with_ignore_case;
 using loom::utils::to_lower;
 using loom::utils::trim;
-using loom::utils::starts_with_ignore_case;
-using loom::utils::contains_ignore_case;
 
 // ============================================================
 // Static tool sets (WRITE_TOOLS / SAFE_READ_ONLY_TOOLS)
@@ -64,8 +64,8 @@ inline constexpr std::array<std::string_view, 7> SAFE_READ_ONLY_TOOLS = {
 // Single words the model is allowed to suggest despite the 2-word minimum. These are
 // valid user commands in the REPL context (affirmatives, actions, negation).
 inline constexpr std::array<std::string_view, 17> ALLOWED_SINGLE_WORDS = {
-    "yes", "yeah", "yep", "yea", "yup", "sure", "ok", "okay",
-    "push", "commit", "deploy", "stop", "continue", "check", "exit", "quit", "no"};
+    "yes",    "yeah",   "yep",  "yea",      "yup",   "sure", "ok",   "okay", "push",
+    "commit", "deploy", "stop", "continue", "check", "exit", "quit", "no"};
 
 // ============================================================
 // Suppress/filter reason enums (for testability + future telemetry)
@@ -151,13 +151,14 @@ struct Suggestion {
     auto operator<=>(const Suggestion& other) const noexcept {
         return other.confidence <=> confidence;
     }
+
     bool operator==(const Suggestion& other) const noexcept {
         return confidence == other.confidence;
     }
 };
 
 struct ConversationTurn {
-    std::string role;      // user / assistant
+    std::string role;  // user / assistant
     std::string content;
     std::chrono::system_clock::time_point timestamp{};
 };
@@ -195,8 +196,12 @@ namespace detail {
     bool in_word = false;
     for (char c : t) {
         const bool ws = c == ' ' || c == '\t' || c == '\n' || c == '\r' || c == '\f' || c == '\v';
-        if (!ws && !in_word) { in_word = true; ++words; }
-        else if (ws) { in_word = false; }
+        if (!ws && !in_word) {
+            in_word = true;
+            ++words;
+        } else if (ws) {
+            in_word = false;
+        }
     }
     return words;
 }
@@ -221,8 +226,7 @@ namespace detail {
         }
     }
     // "stay silent" / "stays silent" / "staying silent"
-    for (auto stem : {std::string_view{"stay silent"},
-                      std::string_view{"stays silent"},
+    for (auto stem : {std::string_view{"stay silent"}, std::string_view{"stays silent"},
                       std::string_view{"staying silent"}}) {
         for (std::size_t i = lower.find(stem); i != std::string_view::npos;
              i = lower.find(stem, i + 1)) {
@@ -239,9 +243,11 @@ namespace detail {
 [[nodiscard]] inline bool matches_bare_silence_wrapped(std::string_view lower) {
     // Strip leading and trailing non-word chars, then check for "silence".
     std::size_t start = 0;
-    while (start < lower.size() && !is_word_char(lower[start])) ++start;
+    while (start < lower.size() && !is_word_char(lower[start]))
+        ++start;
     std::size_t end = lower.size();
-    while (end > start && !is_word_char(lower[end - 1])) --end;
+    while (end > start && !is_word_char(lower[end - 1]))
+        --end;
     return lower.substr(start, end - start) == "silence";
 }
 
@@ -250,7 +256,10 @@ namespace detail {
     // /^\w+:\s/ — one or more word chars, colon, whitespace.
     std::size_t i = 0;
     std::size_t word_end = 0;
-    while (i < text.size() && is_word_char(text[i])) { ++i; ++word_end; }
+    while (i < text.size() && is_word_char(text[i])) {
+        ++i;
+        ++word_end;
+    }
     if (word_end == 0) return false;
     if (i >= text.size() || text[i] != ':') return false;
     ++i;
@@ -280,34 +289,31 @@ namespace detail {
 // applied to mixed-case input).
 [[nodiscard]] inline bool matches_loom_voice(std::string_view text) {
     static constexpr std::string_view prefixes[] = {
-        "let me", "i'll", "i've", "i'm", "i can", "i would", "i think", "i notice",
-        "here's", "here is", "here are", "that's", "this is", "this will",
-        "you can", "you should", "you could", "sure,", "of course", "certainly",
+        "let me",   "i'll",       "i've",      "i'm",      "i can",     "i would",   "i think",
+        "i notice", "here's",     "here is",   "here are", "that's",    "this is",   "this will",
+        "you can",  "you should", "you could", "sure,",    "of course", "certainly",
     };
-    return std::ranges::any_of(prefixes, [&](std::string_view p) {
-        return starts_with_ignore_case(text, p);
-    });
+    return std::ranges::any_of(
+        prefixes, [&](std::string_view p) { return starts_with_ignore_case(text, p); });
 }
 
 // Replicates the evaluative keyword alternation (tested on the lowercased string).
 [[nodiscard]] inline bool matches_evaluative(std::string_view lower) {
     static constexpr std::string_view words[] = {
-        "thanks", "thank you", "looks good", "sounds good", "that works",
-        "that worked", "that's all", "nice", "great", "perfect", "makes sense",
-        "awesome", "excellent",
+        "thanks",      "thank you",  "looks good", "sounds good", "that works",
+        "that worked", "that's all", "nice",       "great",       "perfect",
+        "makes sense", "awesome",    "excellent",
     };
-    return std::ranges::any_of(words, [&](std::string_view w) {
-        return contains_ignore_case(lower, w);
-    });
+    return std::ranges::any_of(words,
+                               [&](std::string_view w) { return contains_ignore_case(lower, w); });
 }
 
-} // namespace detail
+}  // namespace detail
 
 // Returns the matched filter reason, or nullopt if the suggestion passes all rules.
 // Mirrors the exact rule ORDER so the first match wins.
-[[nodiscard]] inline std::optional<SuggestionFilterReason> should_filter_reason(
-    std::string_view suggestion)
-{
+[[nodiscard]] inline std::optional<SuggestionFilterReason>
+should_filter_reason(std::string_view suggestion) {
     if (suggestion.empty()) return SuggestionFilterReason::empty;
 
     const std::string lower = to_lower(suggestion);
@@ -319,8 +325,7 @@ namespace detail {
     // meta_text
     if (lower == "nothing found" || lower == "nothing found." ||
         starts_with_ignore_case(lower, "nothing to suggest") ||
-        starts_with_ignore_case(lower, "no suggestion") ||
-        detail::matches_silence_phrases(lower) ||
+        starts_with_ignore_case(lower, "no suggestion") || detail::matches_silence_phrases(lower) ||
         detail::matches_bare_silence_wrapped(lower)) {
         return SuggestionFilterReason::meta_text;
     }
@@ -356,7 +361,8 @@ namespace detail {
     if (suggestion.size() >= 100) return SuggestionFilterReason::too_long;
 
     // multiple_sentences
-    if (detail::matches_multiple_sentences(suggestion)) return SuggestionFilterReason::multiple_sentences;
+    if (detail::matches_multiple_sentences(suggestion))
+        return SuggestionFilterReason::multiple_sentences;
 
     // has_formatting (newline, single asterisk, or double asterisk)
     if (suggestion.find('\n') != std::string_view::npos ||
@@ -470,37 +476,54 @@ inline constexpr double CLAMP_HI = 1.0;
 // reasonable prior over what a user might type next given common dev-workflow states.
 [[nodiscard]] inline std::vector<Candidate> build_candidate_pool() {
     return {
-        {"run the tests", "Verify changes with the test suite", 0.55,
-            {"test", "tests", "bug", "fix", "fail", "failing", "broken", "regression"},
-            false, false, true},
-        {"commit the changes", "Stage and commit recent edits", 0.45,
-            {"commit", "push", "diff", "staged", "edit", "write", "merge", "pr"},
-            false, false, true},
-        {"try it out", "Run the change to see it work", 0.35,
-            {"build", "compile", "implement", "done", "added", "feature"},
-            false, false, true},
-        {"review the changes", "Inspect recent edits", 0.30,
-            {"edit", "write", "diff", "change"},
-            false, true, true},
-        {"go ahead", "Proceed with the proposed plan", 0.35,
-            {"plan", "proceed", "continue", "next"},
-            false, false, true},
-        {"yes", "Confirm", 0.30,
-            {"confirm", "ok", "ready"},
-            false, false, false},
+        {"run the tests",
+         "Verify changes with the test suite",
+         0.55,
+         {"test", "tests", "bug", "fix", "fail", "failing", "broken", "regression"},
+         false,
+         false,
+         true},
+        {"commit the changes",
+         "Stage and commit recent edits",
+         0.45,
+         {"commit", "push", "diff", "staged", "edit", "write", "merge", "pr"},
+         false,
+         false,
+         true},
+        {"try it out",
+         "Run the change to see it work",
+         0.35,
+         {"build", "compile", "implement", "done", "added", "feature"},
+         false,
+         false,
+         true},
+        {"review the changes",
+         "Inspect recent edits",
+         0.30,
+         {"edit", "write", "diff", "change"},
+         false,
+         true,
+         true},
+        {"go ahead",
+         "Proceed with the proposed plan",
+         0.35,
+         {"plan", "proceed", "continue", "next"},
+         false,
+         false,
+         true},
+        {"yes", "Confirm", 0.30, {"confirm", "ok", "ready"}, false, false, false},
     };
 }
 
 // Concatenate the last N turns' content into a single lowercased haystack, recording a
 // per-turn recency weight so we can boost keyword hits from the most recent turn.
 struct ContentHaystack {
-    std::string text;                       // lowercased concatenation
-    std::vector<double> turn_weights;       // weight per character span (parallel to text)
+    std::string text;                  // lowercased concatenation
+    std::vector<double> turn_weights;  // weight per character span (parallel to text)
 };
 
-[[nodiscard]] inline ContentHaystack build_haystack(
-    const std::vector<ConversationTurn>& turns, std::size_t lookback)
-{
+[[nodiscard]] inline ContentHaystack build_haystack(const std::vector<ConversationTurn>& turns,
+                                                    std::size_t lookback) {
     ContentHaystack hs;
     if (turns.empty()) return hs;
     const std::size_t start = turns.size() > lookback ? turns.size() - lookback : 0;
@@ -517,9 +540,8 @@ struct ContentHaystack {
 }
 
 // Highest recency weight among haystack positions where `kw` occurs (case-insensitive).
-[[nodiscard]] inline double best_keyword_weight(
-    const ContentHaystack& hs, std::string_view kw_lower)
-{
+[[nodiscard]] inline double best_keyword_weight(const ContentHaystack& hs,
+                                                std::string_view kw_lower) {
     if (kw_lower.empty() || hs.text.size() < kw_lower.size()) return 0.0;
     double best = 0.0;
     for (std::size_t i = hs.text.find(kw_lower); i != std::string::npos;
@@ -529,13 +551,12 @@ struct ContentHaystack {
     return best;
 }
 
-} // namespace detail
+}  // namespace detail
 
 // Pure: given a request, produce ranked suggestions. Deterministic for a given input
 // (sorted by score desc with text ascending as a stable tiebreak).
-[[nodiscard]] inline std::vector<Suggestion> rank_candidate_suggestions(
-    const SuggestionRequest& request)
-{
+[[nodiscard]] inline std::vector<Suggestion>
+rank_candidate_suggestions(const SuggestionRequest& request) {
     std::vector<Suggestion> results;
     if (request.recent_turns.empty()) return results;
 
@@ -545,8 +566,7 @@ struct ContentHaystack {
         request.recent_turns, [](const ConversationTurn& t) { return t.role == "assistant"; });
     if (assistant_turns < 1) return results;
 
-    const bool last_is_assistant =
-        request.recent_turns.back().role == "assistant";
+    const bool last_is_assistant = request.recent_turns.back().role == "assistant";
 
     // Failed-last-shell-command detection. Strongly boosts the fix-command candidate and
     // dims everything else. (Caller is expected to also surface the dedicated ShellHistory
@@ -560,7 +580,11 @@ struct ContentHaystack {
     // Turn-count prior: early conversations (< 3 turns) slightly favor elaboration.
     const bool early = request.recent_turns.size() < 3;
 
-    struct Scored { detail::Candidate cand; double score; };
+    struct Scored {
+        detail::Candidate cand;
+        double score;
+    };
+
     std::vector<Scored> scored;
     scored.reserve(8);
 
@@ -582,7 +606,8 @@ struct ContentHaystack {
 
         // (5) Open-files boost for review candidates.
         if (cand.benefits_from_open_files && !request.open_files.empty()) {
-            score += 0.05 + std::min<double>(0.05, 0.02 * static_cast<double>(request.open_files.size()));
+            score += 0.05 +
+                     std::min<double>(0.05, 0.02 * static_cast<double>(request.open_files.size()));
         }
 
         // (6) Early-conversation: dim action candidates slightly, they imply work has happened.
@@ -616,8 +641,9 @@ struct ContentHaystack {
     });
 
     // Dedupe by text (keep highest score; sort already places it first).
-    results.erase(std::unique(results.begin(), results.end(),
-        [](const Suggestion& a, const Suggestion& b) { return a.text == b.text; }),
+    results.erase(
+        std::unique(results.begin(), results.end(),
+                    [](const Suggestion& a, const Suggestion& b) { return a.text == b.text; }),
         results.end());
 
     if (results.size() > request.max_suggestions) {
@@ -644,20 +670,30 @@ enum class PermissionMode : std::uint8_t {
 
 // CompletionBoundary variant. 'complete' is included for completeness but is
 // only ever produced by the agent loop, never by the pure classifier.
-struct CompletionBoundaryBash { std::string command; };
-struct CompletionBoundaryEdit { std::string tool_name; std::string file_path; };
-struct CompletionBoundaryDeniedTool { std::string tool_name; std::string detail; };
-struct CompletionBoundaryComplete { std::uint64_t output_tokens{0}; };
+struct CompletionBoundaryBash {
+    std::string command;
+};
 
-using CompletionBoundary = std::variant<
-    CompletionBoundaryBash,
-    CompletionBoundaryEdit,
-    CompletionBoundaryDeniedTool,
-    CompletionBoundaryComplete>;
+struct CompletionBoundaryEdit {
+    std::string tool_name;
+    std::string file_path;
+};
+
+struct CompletionBoundaryDeniedTool {
+    std::string tool_name;
+    std::string detail;
+};
+
+struct CompletionBoundaryComplete {
+    std::uint64_t output_tokens{0};
+};
+
+using CompletionBoundary = std::variant<CompletionBoundaryBash, CompletionBoundaryEdit,
+                                        CompletionBoundaryDeniedTool, CompletionBoundaryComplete>;
 
 enum class BoundaryDecision : std::uint8_t {
-    Allow,                  // proceed (read tool, or write tool in accept-edits mode)
-    Stop,                   // record a CompletionBoundary and abort (edit/bash/denied)
+    Allow,  // proceed (read tool, or write tool in accept-edits mode)
+    Stop,   // record a CompletionBoundary and abort (edit/bash/denied)
 };
 
 struct BoundaryVerdict {
@@ -675,11 +711,41 @@ struct BoundaryVerdict {
     if (t.empty()) return false;
     const std::string lower = to_lower(t);
     static constexpr std::string_view mutating[] = {
-        "rm ", "rm\t", "mv ", "cp ", "mkdir ", "rmdir ", "touch ", "chmod ", "chown ",
-        "cat >", "echo ", "cd ", "git commit", "git push", "git add", "git merge",
-        "git rebase", "git reset", "git checkout -", "npm install", "npm run",
-        "yarn ", "pnpm ", "bun ", "make ", "cargo ", "pip install", "brew ",
-        "sudo ", "kill ", "killall", "shutdown", "reboot", ">", ">>",
+        "rm ",
+        "rm\t",
+        "mv ",
+        "cp ",
+        "mkdir ",
+        "rmdir ",
+        "touch ",
+        "chmod ",
+        "chown ",
+        "cat >",
+        "echo ",
+        "cd ",
+        "git commit",
+        "git push",
+        "git add",
+        "git merge",
+        "git rebase",
+        "git reset",
+        "git checkout -",
+        "npm install",
+        "npm run",
+        "yarn ",
+        "pnpm ",
+        "bun ",
+        "make ",
+        "cargo ",
+        "pip install",
+        "brew ",
+        "sudo ",
+        "kill ",
+        "killall",
+        "shutdown",
+        "reboot",
+        ">",
+        ">>",
     };
     for (auto m : mutating) {
         if (lower.starts_with(m)) return false;
@@ -689,11 +755,9 @@ struct BoundaryVerdict {
 
 // Pure decision core. input_json is the raw JSON string of the tool input
 // (file_path / path / notebook_path / command / url fields).
-[[nodiscard]] inline BoundaryVerdict classify_completion_boundary(
-    std::string_view tool_name,
-    std::string_view input_json,
-    PermissionMode mode)
-{
+[[nodiscard]] inline BoundaryVerdict classify_completion_boundary(std::string_view tool_name,
+                                                                  std::string_view input_json,
+                                                                  PermissionMode mode) {
     BoundaryVerdict v;
 
     const bool write = is_write_tool(tool_name);
@@ -701,18 +765,17 @@ struct BoundaryVerdict {
 
     if (write) {
         const bool can_auto_accept =
-            mode == PermissionMode::AcceptEdits ||
-            mode == PermissionMode::BypassPermissions ||
+            mode == PermissionMode::AcceptEdits || mode == PermissionMode::BypassPermissions ||
             (mode == PermissionMode::Plan /* isBypassPermissionsModeAvailable is unknown */);
         if (!can_auto_accept) {
             v.decision = BoundaryDecision::Stop;
             v.boundary = CompletionBoundaryEdit{
                 .tool_name = std::string(tool_name),
-                .file_path = {}, // would be parsed from input_json in the side-effecting path
+                .file_path = {},  // would be parsed from input_json in the side-effecting path
             };
             return v;
         }
-        v.decision = BoundaryDecision::Allow; // caller would copy-on-write
+        v.decision = BoundaryDecision::Allow;  // caller would copy-on-write
         return v;
     }
 
@@ -768,24 +831,23 @@ struct BoundaryVerdict {
 // ============================================================
 
 struct ContentBlock {
-    std::string type;             // text / thinking / redacted_thinking / tool_use / tool_result
-    std::optional<std::string> id;        // tool_use.id
-    std::optional<std::string> tool_use_id; // tool_result.tool_use_id
-    std::optional<bool> is_error;         // tool_result.is_error
-    std::optional<std::string> text;      // text.text
+    std::string type;               // text / thinking / redacted_thinking / tool_use / tool_result
+    std::optional<std::string> id;  // tool_use.id
+    std::optional<std::string> tool_use_id;  // tool_result.tool_use_id
+    std::optional<bool> is_error;            // tool_result.is_error
+    std::optional<std::string> text;         // text.text
 };
 
 struct SimplifiedMessage {
-    std::string role;                          // user / assistant / system
-    std::vector<ContentBlock> content;         // may be empty (string-content messages omitted)
-    bool is_api_error{false};                  // assistant message marked as API error
+    std::string role;                   // user / assistant / system
+    std::vector<ContentBlock> content;  // may be empty (string-content messages omitted)
+    bool is_api_error{false};           // assistant message marked as API error
 };
 
 // Count tool_result blocks that are not errors across
 // user messages with array content.
-[[nodiscard]] inline std::size_t count_tools_in_messages(
-    const std::vector<SimplifiedMessage>& messages)
-{
+[[nodiscard]] inline std::size_t
+count_tools_in_messages(const std::vector<SimplifiedMessage>& messages) {
     std::size_t count = 0;
     for (const auto& msg : messages) {
         if (msg.role != "user") continue;
@@ -806,9 +868,8 @@ inline constexpr std::string_view INTERRUPT_MESSAGE = "[Request interrupted]";
 inline constexpr std::string_view INTERRUPT_MESSAGE_FOR_TOOL_USE =
     "[Request interrupted by user for tool use]";
 
-[[nodiscard]] inline std::vector<SimplifiedMessage> prepare_messages_for_injection(
-    const std::vector<SimplifiedMessage>& messages)
-{
+[[nodiscard]] inline std::vector<SimplifiedMessage>
+prepare_messages_for_injection(const std::vector<SimplifiedMessage>& messages) {
     // Successful tool_use ids = tool_result ids that are not errors and don't carry the
     // interrupt sentinel in their text content.
     std::unordered_set<std::string> successful_ids;
@@ -873,9 +934,8 @@ class PromptSuggestionService {
 public:
     PromptSuggestionService() = default;
 
-    [[nodiscard]] std::expected<std::vector<Suggestion>, Error> suggest(
-        const SuggestionRequest& request) const
-    {
+    [[nodiscard]] std::expected<std::vector<Suggestion>, Error>
+    suggest(const SuggestionRequest& request) const {
         std::vector<Suggestion> results;
 
         collect_context_suggestions(request, results);
@@ -901,6 +961,7 @@ public:
     }
 
     using SuggestionGenerator = std::function<std::vector<Suggestion>(const SuggestionRequest&)>;
+
     void register_generator(std::string name, SuggestionGenerator gen) {
         custom_generators_[std::move(name)] = std::move(gen);
     }
@@ -919,10 +980,8 @@ private:
     std::size_t max_history_size_{500};
     std::unordered_map<std::string, SuggestionGenerator> custom_generators_;
 
-    void collect_context_suggestions(
-        const SuggestionRequest& request,
-        std::vector<Suggestion>& out) const
-    {
+    void collect_context_suggestions(const SuggestionRequest& request,
+                                     std::vector<Suggestion>& out) const {
         if (request.recent_turns.empty()) return;
         const auto& last = request.recent_turns.back();
 
@@ -946,10 +1005,8 @@ private:
         }
     }
 
-    void collect_file_suggestions(
-        const SuggestionRequest& request,
-        std::vector<Suggestion>& out) const
-    {
+    void collect_file_suggestions(const SuggestionRequest& request,
+                                  std::vector<Suggestion>& out) const {
         for (const auto& file : request.open_files | std::views::take(3)) {
             out.push_back({
                 .text = std::format("Review {}", file),
@@ -964,10 +1021,8 @@ private:
 
     // Now uses the deterministic ranker: generates multiple ranked candidates from
     // conversation signals and appends the survivors (already gated + deduped + capped).
-    void collect_speculative_suggestions(
-        const SuggestionRequest& request,
-        std::vector<Suggestion>& out) const
-    {
+    void collect_speculative_suggestions(const SuggestionRequest& request,
+                                         std::vector<Suggestion>& out) const {
         auto ranked = rank_candidate_suggestions(request);
         for (auto& s : ranked) {
             out.push_back(std::move(s));
@@ -990,4 +1045,4 @@ private:
     }
 };
 
-} // namespace loom::services::prompt_suggestion
+}  // namespace loom::services::prompt_suggestion

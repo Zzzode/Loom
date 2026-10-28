@@ -54,4 +54,4 @@ struct Options {
 
 [[nodiscard]] ftxui::Component CreateBrowser(Options options);
 
-} // namespace loom::ui::agents::instances
+}  // namespace loom::ui::agents::instances

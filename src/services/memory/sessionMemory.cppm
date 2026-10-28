@@ -25,25 +25,25 @@ struct MemoryItem {
 class SessionMemoryService {
 public:
     SessionMemoryService();
-    
+
     // Add a memory item
     Result<void> add_memory(const MemoryItem& item);
-    
+
     // Get a memory item by ID
     Result<MemoryItem> get_memory(const std::string& id);
-    
+
     // Get all memories
     Result<std::vector<MemoryItem>> get_all_memories();
-    
+
     // Search memories by content
     Result<std::vector<MemoryItem>> search_memories(const std::string& query);
-    
+
     // Delete a memory
     Result<void> delete_memory(const std::string& id);
-    
+
     // Clear all memories
     Result<void> clear_all();
-    
+
 private:
     std::unordered_map<std::string, MemoryItem> memories_;
     std::mutex mutex_;
@@ -64,7 +64,8 @@ Result<MemoryItem> SessionMemoryService::get_memory(const std::string& id) {
     std::lock_guard<std::mutex> lock(mutex_);
     auto it = memories_.find(id);
     if (it == memories_.end()) {
-        return std::unexpected(loom::utils::Error(loom::utils::ErrorCode::not_found, "memory item not found"));
+        return std::unexpected(
+            loom::utils::Error(loom::utils::ErrorCode::not_found, "memory item not found"));
     }
     return it->second;
 }
@@ -84,13 +85,13 @@ Result<std::vector<MemoryItem>> SessionMemoryService::get_all_memories() {
 Result<std::vector<MemoryItem>> SessionMemoryService::search_memories(const std::string& query) {
     std::lock_guard<std::mutex> lock(mutex_);
     std::vector<MemoryItem> result;
-    
+
     for (const auto& [id, item] : memories_) {
         if (item.content.find(query) != std::string::npos) {
             result.push_back(item);
         }
     }
-    
+
     return result;
 }
 
@@ -108,4 +109,4 @@ Result<void> SessionMemoryService::clear_all() {
     return {};
 }
 
-} // namespace loom::services::memory
+}  // namespace loom::services::memory

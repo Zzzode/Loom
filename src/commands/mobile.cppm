@@ -4,7 +4,6 @@
 /// platform argument is supplied.
 module;
 
-
 export module loom.commands.mobile;
 
 import std;
@@ -32,7 +31,7 @@ inline void open_in_browser(std::string_view url) {
 #endif
 }
 
-} // namespace loom::commands
+}  // namespace loom::commands
 
 export namespace loom::commands {
 
@@ -44,8 +43,10 @@ public:
         return CommandDefinition{
             .name = "mobile",
             .description = "Show or open the Loom mobile app download links",
-            .args = {CommandArg{.name = "platform", .description = "ios | android (omit for both)",
-                                .type = ArgType::Choice, .required = false,
+            .args = {CommandArg{.name = "platform",
+                                .description = "ios | android (omit for both)",
+                                .type = ArgType::Choice,
+                                .required = false,
                                 .choices = {"ios", "android"}}},
             .category = "integrations",
             .aliases = {"ios", "android"},
@@ -57,8 +58,9 @@ public:
         if (!ctx.args.empty()) {
             const auto& a = ctx.args[0];
             if (a != "ios" && a != "android") {
-                return std::unexpected(Error::make(ErrorCode::InvalidRequest,
-                    std::format("Usage: /mobile [ios|android] (got '{}')", a)));
+                return std::unexpected(
+                    Error::make(ErrorCode::InvalidRequest,
+                                std::format("Usage: /mobile [ios|android] (got '{}')", a)));
             }
         }
         return {};
@@ -88,4 +90,4 @@ public:
     }
 };
 
-} // namespace loom::commands
+}  // namespace loom::commands

@@ -24,13 +24,13 @@ import std;
 // via leading-`::` qualified names `::loom::core::ImageBlock`, which the
 // dead-import detector's prefix-chain cannot resolve — same blind spot as
 // repl_screen.cppm's identical import, hence the keep-import marker.
-import loom.types.types;                  // arch-check: keep-import
-import loom.ui.messages.messages_list;    // UnseenDivider
-import loom.ui.messages.virtual_list;     // JumpHandle / VirtualListState
-import loom.ui.chrome.fullscreen_layout;  // StickyPrompt
+import loom.types.types;                 // arch-check: keep-import
+import loom.ui.messages.messages_list;   // UnseenDivider
+import loom.ui.messages.virtual_list;    // JumpHandle / VirtualListState
+import loom.ui.chrome.fullscreen_layout; // StickyPrompt
 // RFC 0031 E6b: complete type for the MessagesListInput mermaid cache member
 // cleared by reset_virtual_renderer_state below (visual ranks below screens).
-import loom.ui.visual.mermaid;  // arch-check: keep-import — named only through MessagesListInput's by-value LayoutRowsCache member (.clear())
+import loom.ui.visual.mermaid; // arch-check: keep-import — named only through MessagesListInput's by-value LayoutRowsCache member (.clear())
 
 export namespace loom::ui::repl_screen {
 
@@ -157,8 +157,7 @@ struct MessagesStore {
     std::optional<int> rendered_content_height_lines;
     /// Actual yframe geometry from the last rendered frame. An invalid
     /// viewport means no transcript has been laid out yet.
-    std::vector<std::shared_ptr<loom::ui::messages_list::SelectionRowGeometry>>
-        selection_rows;
+    std::vector<std::shared_ptr<loom::ui::messages_list::SelectionRowGeometry>> selection_rows;
     /// Invalidates cached selection cells when projected message sources change.
     std::uint64_t selection_revision = 0;
     ftxui::Box selection_viewport_box{.x_min = 0, .x_max = -1, .y_min = 0, .y_max = -1};
@@ -180,8 +179,7 @@ struct MessagesStore {
     // search against the JumpHandle instead of the crude EstimateTranscriptRows.
     bool virtual_list_active = false;
     loom::ui::messages::virtual_list::JumpHandle virtual_jh;
-    std::shared_ptr<loom::ui::messages::virtual_list::VirtualListState>
-        virtual_list_state;
+    std::shared_ptr<loom::ui::messages::virtual_list::VirtualListState> virtual_list_state;
 
     /// Hysteresis state for the virtual renderer threshold (RFC 0008).
     /// Persisted across frames so the mode does not oscillate when
@@ -294,10 +292,9 @@ inline void reset_virtual_renderer_state(MessagesStore& store) {
     // committed-row layout rows must never survive across it.
     store.render_input.mermaid_rows_cache.clear();
     store.rendered_content_height_lines.reset();
-    store.virtual_renderer_mode =
-        ::loom::ui::messages_list::VirtualRendererMode::Static;
+    store.virtual_renderer_mode = ::loom::ui::messages_list::VirtualRendererMode::Static;
     store.virtual_mode_switch_count = 0;
     store.force_bottom_after_mode_switch = false;
 }
 
-}  // namespace loom::ui
+}  // namespace loom::ui::repl_screen

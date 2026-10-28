@@ -5,7 +5,6 @@
 /// LICENCE:  Exported.  Imported by the tool UI registry initialization.
 module;
 
-
 export module loom.ui.tools.grep;
 
 import std;
@@ -52,7 +51,7 @@ namespace detail {
 
 /// Truncate pattern for display.
 [[nodiscard]] inline std::string display_pattern(std::string_view pattern,
-                                                  std::size_t max_len = 40) {
+                                                 std::size_t max_len = 40) {
     if (pattern.size() <= max_len) return std::string{pattern};
     return std::string(pattern.substr(0, max_len)) + "\xE2\x80\xA6";  // …
 }
@@ -66,9 +65,7 @@ namespace detail {
 [[nodiscard]] inline ToolUIFunctions make_grep_ui() {
     ToolUIFunctions fns;
 
-    fns.user_facing_name = [](std::string_view) {
-        return std::string{"Search"};
-    };
+    fns.user_facing_name = [](std::string_view) { return std::string{"Search"}; };
 
     fns.message = [](std::string_view input_json) {
         std::string pattern = detail::extract_pattern(input_json);
@@ -90,12 +87,9 @@ namespace detail {
         return result;
     };
 
-    fns.tag = [](std::string_view) -> std::optional<std::string> {
-        return std::nullopt;
-    };
+    fns.tag = [](std::string_view) -> std::optional<std::string> { return std::nullopt; };
 
-    fns.progress = [](std::string_view input_json,
-                       std::string_view partial_result) {
+    fns.progress = [](std::string_view input_json, std::string_view partial_result) {
         if (!partial_result.empty()) {
             // Count lines in partial output as a rough match count
             std::size_t lines = 0;
@@ -113,18 +107,14 @@ namespace detail {
         return std::string{"Searching files…"};
     };
 
-    fns.queued = [](std::string_view) {
-        return std::string{"Waiting to search…"};
-    };
+    fns.queued = [](std::string_view) { return std::string{"Waiting to search…"}; };
 
     fns.is_transparent_wrapper = false;
 
     // SearchResultSummary shows content (mode=content) or filenames.join.
     // numFiles/numLines/numMatches are chrome — fine to skip.
-    fns.extract_search_text = [](
-        std::string_view output_text,
-        std::string_view /*error_text*/) -> std::optional<std::string>
-    {
+    fns.extract_search_text = [](std::string_view output_text,
+                                 std::string_view /*error_text*/) -> std::optional<std::string> {
         return std::string{output_text};
     };
 

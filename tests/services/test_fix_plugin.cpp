@@ -11,12 +11,13 @@
 // it. Written so that, once linked against loom_utils, it exercises the ported
 // logic without touching the network (directory/file sources only).
 
-#include <cstdlib>
 #include <gtest/gtest.h>
+
+#include <cstdlib>
 #ifdef _WIN32
-#  include <process.h>
+#include <process.h>
 #else
-#  include <unistd.h>
+#include <unistd.h>
 #endif
 
 import std;
@@ -40,24 +41,27 @@ public:
         // at 0 — two processes then pick the same dir and clobber each
         // other's known_marketplaces.json (the EmptyConfigWhenAbsent /
         // FetchDirectorySource flake).
-        dir_ = std::filesystem::temp_directory_path()
-            / ("loom_fix_plugin_"
+        dir_ = std::filesystem::temp_directory_path() / ("loom_fix_plugin_"
 #ifdef _WIN32
-               + std::to_string(::_getpid())
+                                                         + std::to_string(::_getpid())
 #else
-               + std::to_string(::getpid())
+                                                         + std::to_string(::getpid())
 #endif
-               + "_" + std::to_string(counter_++));
+                                                         + "_" + std::to_string(counter_++));
         std::filesystem::create_directories(dir_);
         prev_ = std::getenv("LOOM_PLUGINS_DIR");
         set_env("LOOM_PLUGINS_DIR", dir_.string());
     }
+
     ~TempPluginsEnv() {
-        if (prev_) set_env("LOOM_PLUGINS_DIR", prev_);
-        else unset_env("LOOM_PLUGINS_DIR");
+        if (prev_)
+            set_env("LOOM_PLUGINS_DIR", prev_);
+        else
+            unset_env("LOOM_PLUGINS_DIR");
         std::error_code ec;
         std::filesystem::remove_all(dir_, ec);
     }
+
     const std::filesystem::path& dir() const { return dir_; }
 
 private:
@@ -68,6 +72,7 @@ private:
         setenv(k, v.c_str(), 1);
 #endif
     }
+
     static void unset_env(const char* k) {
 #ifdef _WIN32
         _putenv_s(k, "");
@@ -75,6 +80,7 @@ private:
         unsetenv(k);
 #endif
     }
+
     std::filesystem::path dir_;
     const char* prev_ = nullptr;
     static std::size_t counter_;
@@ -87,7 +93,7 @@ void write_file(const std::filesystem::path& p, const std::string& body) {
     std::ofstream(p, std::ios::binary) << body;
 }
 
-} // namespace
+}  // namespace
 
 // H2: validate_file on a valid plugin.json returns success=true with no errors.
 TEST(PluginValidationFix, ValidPluginManifestPasses) {
@@ -135,7 +141,8 @@ TEST(PluginValidationFix, PathTraversalFlagged) {
 // H2: a marketplace.json is detected via the "plugins" array and validated.
 TEST(PluginValidationFix, MarketplaceWithDuplicateNamesFails) {
     auto tmp = std::filesystem::temp_directory_path() / "loom_marketplace.json";
-    write_file(tmp,
+    write_file(
+        tmp,
         R"({"name":"mkt","plugins":[{"name":"a","source":"./a"},{"name":"a","source":"./b"}]})");
     auto r = pv::validate_file(tmp);
     EXPECT_FALSE(r.success);
@@ -163,8 +170,8 @@ TEST(PluginMarketplaceFix, ConfigRoundTrip) {
     ASSERT_TRUE(loaded.has_value()) << loaded.error();
     ASSERT_EQ(loaded->size(), 1u);
     ASSERT_TRUE(loaded->contains("test-mkt"));
-    EXPECT_EQ(std::get<mp::GitHubMarketplaceSource>(
-                  (*loaded)["test-mkt"].source).repo, "owner/repo");
+    EXPECT_EQ(std::get<mp::GitHubMarketplaceSource>((*loaded)["test-mkt"].source).repo,
+              "owner/repo");
     EXPECT_EQ((*loaded)["test-mkt"].cache_path.value(), (env.dir() / "cache").string());
 }
 
@@ -191,7 +198,7 @@ TEST(PluginMarketplaceFix, FetchDirectorySource) {
     // Build a directory marketplace with .claude-plugin/marketplace.json.
     auto mkt_dir = env.dir() / "src_marketplace";
     write_file(mkt_dir / ".claude-plugin" / "marketplace.json",
-        R"({"name":"dir-mkt","description":"d","plugins":[{"name":"p1","source":"./p1"}]})");
+               R"({"name":"dir-mkt","description":"d","plugins":[{"name":"p1","source":"./p1"}]})");
 
     mp::KnownMarketplacesFile cfg;
     mp::KnownMarketplace km;
@@ -213,7 +220,7 @@ TEST(PluginMarketplaceFix, CacheOnlyRead) {
     TempPluginsEnv env;
     auto mkt_dir = env.dir() / "src_marketplace2";
     write_file(mkt_dir / ".claude-plugin" / "marketplace.json",
-        R"({"name":"co-mkt","plugins":[{"name":"p2","source":"./p2"}]})");
+               R"({"name":"co-mkt","plugins":[{"name":"p2","source":"./p2"}]})");
     mp::KnownMarketplacesFile cfg;
     mp::KnownMarketplace km;
     km.source = mp::DirectoryMarketplaceSource{mkt_dir.string()};

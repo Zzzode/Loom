@@ -53,9 +53,9 @@ using namespace std::string_view_literals;
 // ---------------------------------------------------------------------------
 enum class EnterpriseProvider {
     FirstParty = 0,
-    Foundry    = 1,
-    Vertex     = 2,
-    Bedrock    = 3,
+    Foundry = 1,
+    Vertex = 2,
+    Bedrock = 3,
 };
 
 // ---------------------------------------------------------------------------
@@ -63,14 +63,14 @@ enum class EnterpriseProvider {
 // startup; environment variables are not re-read mid-session.
 // ---------------------------------------------------------------------------
 [[nodiscard]] inline EnterpriseProvider detect_active_provider() {
-    using loom::utils::env::is_env_truthy;
     using loom::utils::env::get_env;
+    using loom::utils::env::is_env_truthy;
     auto bedrock = is_env_truthy("LOOM_USE_BEDROCK");
-    auto vertex  = is_env_truthy("LOOM_USE_VERTEX");
+    auto vertex = is_env_truthy("LOOM_USE_VERTEX");
     auto foundry = is_env_truthy("LOOM_USE_FOUNDRY");
     // Priority: Bedrock > Vertex > Foundry > FirstParty
     if (bedrock) return EnterpriseProvider::Bedrock;
-    if (vertex)  return EnterpriseProvider::Vertex;
+    if (vertex) return EnterpriseProvider::Vertex;
     if (foundry) return EnterpriseProvider::Foundry;
     return EnterpriseProvider::FirstParty;
 }
@@ -115,15 +115,15 @@ struct ResolvedAuth {
     using loom::utils::env::get_env;
     if (auto u = get_env("LOOM_BEDROCK_BASE_URL"); u && !u->empty()) {
         auto r = *u;
-        while (!r.empty() && r.back() == '/') r.pop_back();
+        while (!r.empty() && r.back() == '/')
+            r.pop_back();
         return r;
     }
-    return std::string("https://bedrock-runtime.") + std::string(region) +
-           ".amazonaws.com";
+    return std::string("https://bedrock-runtime.") + std::string(region) + ".amazonaws.com";
 }
 
-[[nodiscard]] inline std::string bedrock_path_for_model(
-    std::string_view provider_model_id, bool streaming) {
+[[nodiscard]] inline std::string bedrock_path_for_model(std::string_view provider_model_id,
+                                                        bool streaming) {
     using namespace loom::utils::http;
     // The model identifier itself is URL-encoded for the path (it may contain
     // '/' characters in cross-region inference ARNs, so we encode it safely).
@@ -139,7 +139,8 @@ struct ResolvedAuth {
 // ---------------------------------------------------------------------------
 class EnterpriseAuthContext {
 public:
-    EnterpriseAuthContext() : provider_(detect_active_provider()) {
+    EnterpriseAuthContext()
+        : provider_(detect_active_provider()) {
         if (provider_ == EnterpriseProvider::Bedrock) {
             bedrock_mode_ = aws::detect_bedrock_mode();
             bedrock_region_ = aws::resolve_region();
@@ -174,10 +175,8 @@ public:
     //          layer (User-Agent, x-app, session-id, anthropic-version).  These
     //          are re-passed through the signer so SigV4 covers them.
     [[nodiscard]] Result<ResolvedAuth> resolve_auth_for_request(
-        std::string_view canonical_first_party_id,
-        std::string_view method,
-        std::string_view request_body_bytes,
-        bool streaming,
+        std::string_view canonical_first_party_id, std::string_view method,
+        std::string_view request_body_bytes, bool streaming,
         const std::vector<std::pair<std::string, std::string>>& extra_agnostic_headers) {
         ResolvedAuth out;
         out.provider = provider_;
@@ -186,22 +185,22 @@ public:
         case EnterpriseProvider::FirstParty:
             return resolve_first_party(canonical_first_party_id, std::move(out));
         case EnterpriseProvider::Bedrock:
-            return resolve_bedrock(canonical_first_party_id, method,
-                                   request_body_bytes, streaming,
+            return resolve_bedrock(canonical_first_party_id, method, request_body_bytes, streaming,
                                    extra_agnostic_headers, std::move(out));
         case EnterpriseProvider::Vertex:
             return resolve_vertex(canonical_first_party_id, std::move(out));
         case EnterpriseProvider::Foundry:
             return resolve_foundry(canonical_first_party_id, std::move(out));
         }
-        return std::unexpected(Error(
-            loom::utils::ErrorCode::internal_error,
-            "Unknown enterprise provider"));
+        return std::unexpected(
+            Error(loom::utils::ErrorCode::internal_error, "Unknown enterprise provider"));
     }
 
     // Accessors for tests / logging.
     [[nodiscard]] std::string_view bedrock_region() const noexcept { return bedrock_region_; }
-    [[nodiscard]] std::string_view vertex_region()  const noexcept { return vertex_region_; }
+
+    [[nodiscard]] std::string_view vertex_region() const noexcept { return vertex_region_; }
+
     [[nodiscard]] const std::string& foundry_base_url() const noexcept { return foundry_base_url_; }
 
 private:
@@ -225,24 +224,21 @@ private:
     // -----------------------------------------------------------------------
     // Per-provider resolution helpers.
     // -----------------------------------------------------------------------
-    Result<ResolvedAuth> resolve_first_party(
-        std::string_view canonical_id, ResolvedAuth out) {
-        using loom::utils::env::get_env;
-        using loom::utils::Provider;
+    Result<ResolvedAuth> resolve_first_party(std::string_view canonical_id, ResolvedAuth out) {
         using loom::utils::get_api_base_url;
+        using loom::utils::Provider;
+        using loom::utils::env::get_env;
         out.base_url = get_api_base_url(Provider::Messages);
         out.model_id = std::string(canonical_id);
         out.endpoint_host = extract_host_from_url(out.base_url);
         return out;
     }
 
-    Result<ResolvedAuth> resolve_bedrock(
-        std::string_view canonical_id,
-        std::string_view method,
-        std::string_view body_bytes,
-        bool streaming,
-        const std::vector<std::pair<std::string, std::string>>& extra_headers,
-        ResolvedAuth out) {
+    Result<ResolvedAuth>
+    resolve_bedrock(std::string_view canonical_id, std::string_view method,
+                    std::string_view body_bytes, bool streaming,
+                    const std::vector<std::pair<std::string, std::string>>& extra_headers,
+                    ResolvedAuth out) {
         out.base_url = bedrock_base_url(bedrock_region_);
         out.model_id = std::string(canonical_id);
         out.bedrock_path = bedrock_path_for_model(out.model_id, streaming);
@@ -250,8 +246,7 @@ private:
 
         // Bearer bypass (highest priority).
         if (bedrock_mode_.bearer_token) {
-            out.headers.emplace_back("Authorization",
-                                     "Bearer " + *bedrock_mode_.bearer_token);
+            out.headers.emplace_back("Authorization", "Bearer " + *bedrock_mode_.bearer_token);
             return out;
         }
         // Skip auth — proxy/no-op.
@@ -263,17 +258,16 @@ private:
             cached_aws_creds_ = aws::resolve_default_credentials();
         }
         if (!cached_aws_creds_ || !cached_aws_creds_->valid()) {
-            return std::unexpected(Error(
-                loom::utils::ErrorCode::permission_denied,
-                "AWS Bedrock: no valid credentials after the full chain. "
-                "Set AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY, configure "
-                "~/.aws/credentials, attach an IAM role to the EC2 instance, "
-                "or set the `awsAuthRefresh` / `awsCredentialExport` setting."));
+            return std::unexpected(
+                Error(loom::utils::ErrorCode::permission_denied,
+                      "AWS Bedrock: no valid credentials after the full chain. "
+                      "Set AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY, configure "
+                      "~/.aws/credentials, attach an IAM role to the EC2 instance, "
+                      "or set the `awsAuthRefresh` / `awsCredentialExport` setting."));
         }
-        auto signed_r = aws::sign_request(
-            method, out.endpoint_host, out.bedrock_path,
-            /*query=*/{}, body_bytes, extra_headers,
-            *cached_aws_creds_, bedrock_region_, "bedrock");
+        auto signed_r = aws::sign_request(method, out.endpoint_host, out.bedrock_path,
+                                          /*query=*/{}, body_bytes, extra_headers,
+                                          *cached_aws_creds_, bedrock_region_, "bedrock");
         if (!signed_r) return std::unexpected(signed_r.error());
         // Attach Authorization + all headers the signer canonicalized (host,
         // x-amz-date, x-amz-content-sha256, x-amz-security-token).
@@ -287,8 +281,7 @@ private:
         return out;
     }
 
-    Result<ResolvedAuth> resolve_vertex(std::string_view canonical_id,
-                                         ResolvedAuth out) {
+    Result<ResolvedAuth> resolve_vertex(std::string_view canonical_id, ResolvedAuth out) {
         // Model string — pass through the canonical model ID.
         out.model_id = std::string(canonical_id);
         // Resolve project_id: cached provider ->last_project_id, else env,
@@ -299,11 +292,16 @@ private:
         }
         if (project_id.empty()) {
             using loom::utils::env::get_env;
-            if (auto p = get_env("GOOGLE_CLOUD_PROJECT"); p && !p->empty()) project_id = *p;
-            else if (auto p = get_env("GCLOUD_PROJECT"); p && !p->empty()) project_id = *p;
-            else if (auto p = get_env("google_cloud_project"); p && !p->empty()) project_id = *p;
-            else if (auto p = get_env("gcloud_project"); p && !p->empty()) project_id = *p;
-            else if (vertex_mode_.fallback_project_id) project_id = *vertex_mode_.fallback_project_id;
+            if (auto p = get_env("GOOGLE_CLOUD_PROJECT"); p && !p->empty())
+                project_id = *p;
+            else if (auto p = get_env("GCLOUD_PROJECT"); p && !p->empty())
+                project_id = *p;
+            else if (auto p = get_env("google_cloud_project"); p && !p->empty())
+                project_id = *p;
+            else if (auto p = get_env("gcloud_project"); p && !p->empty())
+                project_id = *p;
+            else if (vertex_mode_.fallback_project_id)
+                project_id = *vertex_mode_.fallback_project_id;
         }
         if (project_id.empty()) {
             // Last-ditch: try fetching metadata token (fills project_id too).
@@ -313,11 +311,11 @@ private:
             }
         }
         if (project_id.empty()) {
-            return std::unexpected(Error(
-                loom::utils::ErrorCode::internal_error,
-                "GCP Vertex: no project_id resolved.  Set GOOGLE_CLOUD_PROJECT, "
-                "GCLOUD_PROJECT, or LOOM_VERTEX_PROJECT_ID, attach a GKE "
-                "Workload Identity, or set `gcpAuthRefresh` in settings."));
+            return std::unexpected(
+                Error(loom::utils::ErrorCode::internal_error,
+                      "GCP Vertex: no project_id resolved.  Set GOOGLE_CLOUD_PROJECT, "
+                      "GCLOUD_PROJECT, or LOOM_VERTEX_PROJECT_ID, attach a GKE "
+                      "Workload Identity, or set `gcpAuthRefresh` in settings."));
         }
         out.base_url = gcp::make_vertex_base_url(vertex_region_, project_id);
         out.endpoint_host = extract_host_from_url(out.base_url);
@@ -327,39 +325,34 @@ private:
         auto tok = gcp_provider_->get_token();
         if (!tok) return std::unexpected(tok.error());
 
-        out.headers.emplace_back("Authorization",
-                                 "Bearer " + tok->token);
+        out.headers.emplace_back("Authorization", "Bearer " + tok->token);
         if (tok->quota_from_adc && !tok->quota_project.empty()) {
             out.headers.emplace_back("x-goog-user-project", tok->quota_project);
         }
         return out;
     }
 
-    Result<ResolvedAuth> resolve_foundry(std::string_view canonical_id,
-                                          ResolvedAuth out) {
+    Result<ResolvedAuth> resolve_foundry(std::string_view canonical_id, ResolvedAuth out) {
         using namespace azure;
         out.model_id = std::string(canonical_id);
 
         if (foundry_base_url_.empty()) {
-            return std::unexpected(Error(
-                loom::utils::ErrorCode::internal_error,
-                "Azure Foundry: no endpoint.  Set LOOM_FOUNDRY_BASE_URL "
-                "or LOOM_FOUNDRY_RESOURCE."));
+            return std::unexpected(Error(loom::utils::ErrorCode::internal_error,
+                                         "Azure Foundry: no endpoint.  Set LOOM_FOUNDRY_BASE_URL "
+                                         "or LOOM_FOUNDRY_RESOURCE."));
         }
         out.base_url = foundry_base_url_;
         out.endpoint_host = extract_host_from_url(out.base_url);
 
         // API-key mode — short-circuit.
         if (foundry_mode_.api_key) {
-            out.headers.emplace_back("Ocp-Apim-Subscription-Key",
-                                     *foundry_mode_.api_key);
+            out.headers.emplace_back("Ocp-Apim-Subscription-Key", *foundry_mode_.api_key);
             return out;
         }
         if (foundry_mode_.skip_auth) return out;
         if (!azure_cred_) {
-            return std::unexpected(Error(
-                loom::utils::ErrorCode::internal_error,
-                "Azure Foundry: credential provider not initialized."));
+            return std::unexpected(Error(loom::utils::ErrorCode::internal_error,
+                                         "Azure Foundry: credential provider not initialized."));
         }
         auto tok = azure_cred_->get_token(kFoundryDefaultScope);
         if (!tok) return std::unexpected(tok.error());
@@ -373,19 +366,17 @@ private:
     // and sanity checks.
     static std::string extract_host_from_url(std::string_view url) {
         auto scheme_end = url.find("://");
-        std::string_view remainder = (scheme_end != std::string_view::npos)
-            ? url.substr(scheme_end + 3)
-            : url;
+        std::string_view remainder =
+            (scheme_end != std::string_view::npos) ? url.substr(scheme_end + 3) : url;
         auto slash = remainder.find('/');
         auto host = remainder.substr(0, slash);
         // Strip optional :port.
         auto colon = host.rfind(':');
-        if (colon != std::string_view::npos &&
-            host.find(']') == std::string_view::npos) {
+        if (colon != std::string_view::npos && host.find(']') == std::string_view::npos) {
             host = host.substr(0, colon);
         }
         return std::string(host);
     }
 };
 
-} // namespace loom::services::auth::byoc
+}  // namespace loom::services::auth::byoc

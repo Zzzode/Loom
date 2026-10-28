@@ -7,10 +7,11 @@
 /// 2. The child process gets an empty signal mask (SIGPIPE not inherited
 ///    from the worker thread).
 
-#include <csignal>
 #include <gtest/gtest.h>
 #include <sys/wait.h>
 #include <unistd.h>
+
+#include <csignal>
 
 import std;
 import loom.platform.clipboard_job;
@@ -37,10 +38,8 @@ std::string find_cmd(std::string_view name) {
     return path ? path->string() : std::string{};
 }
 
-std::shared_ptr<const clip::JobInput> make_input(
-    std::string text,
-    std::string backend_path,
-    std::vector<std::string> argv) {
+std::shared_ptr<const clip::JobInput> make_input(std::string text, std::string backend_path,
+                                                 std::vector<std::string> argv) {
     auto input = std::make_shared<clip::JobInput>();
     input->text = std::make_shared<const std::string>(std::move(text));
     input->backend_path = std::move(backend_path);
@@ -68,15 +67,13 @@ TEST(ClipboardSigpipe, WorkerSurvivesBackendExitingEarly) {
     std::string large_text(1024 * 1024, 'x');  // 1MB
     auto input = make_input(std::move(large_text), true_cmd, {"true"});
     auto cancel = std::make_shared<clip::CancellationState>();
-    auto job = std::make_unique<clip::ClipboardJob>(
-        input, cancel,
-        [&](clip::CopyResult r) {
-            {
-                std::lock_guard lock(result_mutex);
-                result = std::move(r);
-            }
-            cv.notify_one();
-        });
+    auto job = std::make_unique<clip::ClipboardJob>(input, cancel, [&](clip::CopyResult r) {
+        {
+            std::lock_guard lock(result_mutex);
+            result = std::move(r);
+        }
+        cv.notify_one();
+    });
 
     // The job should complete (not crash from SIGPIPE).
     EXPECT_TRUE(wait_for([&] {
@@ -138,15 +135,13 @@ TEST(ClipboardSigpipe, ChildSignalMaskIsEmpty) {
     // If SIGPIPE is default: killed by signal 13 (NativeFailed).
     auto input = make_input("", sh, {"sh", "-c", "kill -PIPE $$"});
     auto cancel = std::make_shared<clip::CancellationState>();
-    auto job = std::make_unique<clip::ClipboardJob>(
-        input, cancel,
-        [&](clip::CopyResult r) {
-            {
-                std::lock_guard lock(result_mutex);
-                result = std::move(r);
-            }
-            cv.notify_one();
-        });
+    auto job = std::make_unique<clip::ClipboardJob>(input, cancel, [&](clip::CopyResult r) {
+        {
+            std::lock_guard lock(result_mutex);
+            result = std::move(r);
+        }
+        cv.notify_one();
+    });
 
     EXPECT_TRUE(wait_for([&] {
         std::lock_guard lock(result_mutex);

@@ -14,12 +14,9 @@ import loom.keybindings.schema;
 
 export namespace loom::keybindings {
 
-[[nodiscard]] inline Keybinding default_binding(
-    std::string_view id,
-    std::string_view key,
-    std::string_view command,
-    std::string_view when = {})
-{
+[[nodiscard]] inline Keybinding default_binding(std::string_view id, std::string_view key,
+                                                std::string_view command,
+                                                std::string_view when = {}) {
     Keybinding binding;
     binding.id = std::string(id);
     binding.keys = {parse_key_chord(key)};
@@ -31,14 +28,14 @@ export namespace loom::keybindings {
 /// Reserved shortcuts that cannot be overridden by user bindings
 [[nodiscard]] inline const std::unordered_set<std::string>& reserved_shortcuts() {
     static const std::unordered_set<std::string> shortcuts = {
-        "ctrl+c",     // Interrupt/cancel
-        "ctrl+d",     // EOF/exit
-        "ctrl+z",     // Suspend (Unix)
-        "ctrl+\\",    // Quit
-        "ctrl+l",     // Clear (terminal)
-        "enter",      // Submit
-        "escape",     // Cancel/dismiss
-        "tab",        // Autocomplete
+        "ctrl+c",   // Interrupt/cancel
+        "ctrl+d",   // EOF/exit
+        "ctrl+z",   // Suspend (Unix)
+        "ctrl+\\",  // Quit
+        "ctrl+l",   // Clear (terminal)
+        "enter",    // Submit
+        "escape",   // Cancel/dismiss
+        "tab",      // Autocomplete
     };
     return shortcuts;
 }
@@ -51,16 +48,16 @@ export namespace loom::keybindings {
         default_binding("navigate.down", "down", "navigate_down"),
         default_binding("navigate.page_up", "pageup", "page_up"),
         default_binding("navigate.page_down", "pagedown", "page_down"),
-        
+
         // Editing
         default_binding("edit.submit", "enter", "submit", "inputFocused"),
         default_binding("edit.newline", "shift+enter", "insert_newline", "inputFocused"),
         default_binding("edit.cancel", "escape", "cancel"),
-        
+
         // Task management
         default_binding("task.background", "ctrl+b", "background_task"),
         default_binding("task.interrupt", "ctrl+c", "interrupt"),
-        
+
         // Overlays
         default_binding("overlay.help", "ctrl+/", "show_help"),
         default_binding("overlay.tasks", "ctrl+t", "show_tasks"),
@@ -75,4 +72,4 @@ export namespace loom::keybindings {
     return reserved_shortcuts().contains(lower);
 }
 
-} // namespace loom::keybindings
+}  // namespace loom::keybindings

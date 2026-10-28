@@ -8,8 +8,14 @@ import loom.process.exec_sync;
 export namespace loom::commands::bughunter {
 namespace fs = std::filesystem;
 
-struct CommandResponse { bool ok{true}; std::string message; };
-[[nodiscard]] inline auto name() -> std::string_view { return "bughunter"; }
+struct CommandResponse {
+    bool ok{true};
+    std::string message;
+};
+
+[[nodiscard]] inline auto name() -> std::string_view {
+    return "bughunter";
+}
 
 [[nodiscard]] inline auto run(std::string_view target = {}) -> CommandResponse {
     const auto diagnostics = loom::services::diagnostic::collect_diagnostics(
@@ -18,21 +24,20 @@ struct CommandResponse { bool ok{true}; std::string message; };
     std::error_code ec;
     const bool target_exists = fs::exists(target_path, ec);
     const auto git_status = loom::utils::exec_sync("git status --short");
-    const auto cmake_presets = fs::exists("cpp_migration/CMakePresets.json", ec) ||
-                               fs::exists("CMakePresets.json", ec);
+    const auto cmake_presets =
+        fs::exists("cpp_migration/CMakePresets.json", ec) || fs::exists("CMakePresets.json", ec);
 
-    return {.ok = true, .message = std::format(
-        "Bughunter diagnostic snapshot\n"
-        "Target: {} ({})\n"
-        "OS: {}\n"
-        "Memory: {} bytes\n"
-        "Git status: {}\n"
-        "CMake presets: {}",
-        target_path.string(),
-        target_exists ? "exists" : "missing",
-        diagnostics.os_version,
-        diagnostics.memory_usage_bytes,
-        git_status ? (git_status->empty() ? "clean" : "dirty") : "not a git repository",
-        cmake_presets ? "present" : "missing")};
+    return {.ok = true,
+            .message = std::format("Bughunter diagnostic snapshot\n"
+                                   "Target: {} ({})\n"
+                                   "OS: {}\n"
+                                   "Memory: {} bytes\n"
+                                   "Git status: {}\n"
+                                   "CMake presets: {}",
+                                   target_path.string(), target_exists ? "exists" : "missing",
+                                   diagnostics.os_version, diagnostics.memory_usage_bytes,
+                                   git_status ? (git_status->empty() ? "clean" : "dirty")
+                                              : "not a git repository",
+                                   cmake_presets ? "present" : "missing")};
 }
-}
+}  // namespace loom::commands::bughunter

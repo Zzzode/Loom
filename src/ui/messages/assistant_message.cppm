@@ -10,15 +10,7 @@ export namespace loom::ui::messages {
 
 // ─── Content block types ─────────────────────────────────────────────
 
-enum class ContentBlockType {
-    Text,
-    Code,
-    ToolUse,
-    ToolResult,
-    Thinking,
-    Image,
-    Error
-};
+enum class ContentBlockType { Text, Code, ToolUse, ToolResult, Thinking, Image, Error };
 
 struct TextBlock {
     std::string content;
@@ -87,38 +79,35 @@ inline std::string render_streaming_indicator(bool active) {
 }
 
 inline std::string format_token_count(std::uint64_t input, std::uint64_t output) {
-    return "\n[tokens: " + std::to_string(input) + " in / "
-         + std::to_string(output) + " out]";
+    return "\n[tokens: " + std::to_string(input) + " in / " + std::to_string(output) + " out]";
 }
 
-inline std::string render_content_block(
-    const ContentBlock& block,
-    const MessageRenderConfig& config = {}
-) {
-    return std::visit([&](const auto& b) -> std::string {
-        using T = std::decay_t<decltype(b)>;
-        if constexpr (std::is_same_v<T, TextBlock>) {
-            return b.content;
-        } else if constexpr (std::is_same_v<T, CodeBlock>) {
-            std::string rendered = "```" + b.language + "\n";
-            rendered += truncate_code_block(b.code, config.max_code_lines);
-            rendered += "\n```";
-            return rendered;
-        } else if constexpr (std::is_same_v<T, ThinkingBlock>) {
-            if (config.collapse_thinking || b.collapsed) {
-                return "[thinking collapsed]";
+inline std::string render_content_block(const ContentBlock& block,
+                                        const MessageRenderConfig& config = {}) {
+    return std::visit(
+        [&](const auto& b) -> std::string {
+            using T = std::decay_t<decltype(b)>;
+            if constexpr (std::is_same_v<T, TextBlock>) {
+                return b.content;
+            } else if constexpr (std::is_same_v<T, CodeBlock>) {
+                std::string rendered = "```" + b.language + "\n";
+                rendered += truncate_code_block(b.code, config.max_code_lines);
+                rendered += "\n```";
+                return rendered;
+            } else if constexpr (std::is_same_v<T, ThinkingBlock>) {
+                if (config.collapse_thinking || b.collapsed) {
+                    return "[thinking collapsed]";
+                }
+                return b.content;
             }
-            return b.content;
-        }
-    }, block);
+        },
+        block);
 }
 
 // ─── Rendering functions ─────────────────────────────────────────────
 
-inline std::string render_assistant_message(
-    const AssistantMessageData& data,
-    const MessageRenderConfig& config = {}
-) {
+inline std::string render_assistant_message(const AssistantMessageData& data,
+                                            const MessageRenderConfig& config = {}) {
     std::string result;
     for (const auto& block : data.blocks) {
         result += render_content_block(block, config);
@@ -132,4 +121,4 @@ inline std::string render_assistant_message(
     return result;
 }
 
-} // namespace loom::ui::messages
+}  // namespace loom::ui::messages

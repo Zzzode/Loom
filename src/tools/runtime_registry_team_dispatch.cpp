@@ -10,7 +10,7 @@ module loom.tools.runtime_registry;
 import std;
 
 import loom.types.tool_types;
-import loom.tools.tool;  // arch-check: keep-import (ToolRegistry; raw strings blind the parser)
+import loom.tools.tool; // arch-check: keep-import (ToolRegistry; raw strings blind the parser)
 import loom.serdes.json;
 import loom.tools.team;
 import loom.tools.send_message;
@@ -28,32 +28,37 @@ using loom::core::ToolResult;
 
 namespace json = loom::utils::json;
 
-[[nodiscard]] Result<ToolResult> execute_team_create_runtime_tool(
-    const ToolInput& input,
-    ToolRegistry* registry
-) {
+[[nodiscard]] Result<ToolResult> execute_team_create_runtime_tool(const ToolInput& input,
+                                                                  ToolRegistry* registry) {
     auto parsed = loom::utils::json::parse(input.json());
     if (!parsed || !parsed->root().is_obj()) {
         return ToolResult::error("team_create input must be a JSON object");
     }
     auto root = parsed->root();
     TeamCreateTool tool;
-    auto team = runtime_json_string(root, "team_name").or_else([&] { return runtime_json_string(root, "name"); })
-        .value_or(std::format("team-{}", std::chrono::steady_clock::now().time_since_epoch().count()));
-    auto id = runtime_json_string(root, "team_id").or_else([&] { return runtime_json_string(root, "id"); }).value_or(team);
+    auto team = runtime_json_string(root, "team_name")
+                    .or_else([&] { return runtime_json_string(root, "name"); })
+                    .value_or(std::format(
+                        "team-{}", std::chrono::steady_clock::now().time_since_epoch().count()));
+    auto id = runtime_json_string(root, "team_id")
+                  .or_else([&] { return runtime_json_string(root, "id"); })
+                  .value_or(team);
     auto members = runtime_team_shared::parse_team_members(root);
     auto member_start_options = runtime_team_shared::parse_team_member_start_options(root);
     auto tasks = runtime_team_shared::parse_team_tasks(root);
-    const bool start_native_agents = runtime_json_bool(root, "start_native_agents")
-        .or_else([&] { return runtime_json_bool(root, "start_agents"); })
-        .or_else([&] { return runtime_json_bool(root, "run_agents"); })
-        .value_or(false);
+    const bool start_native_agents =
+        runtime_json_bool(root, "start_native_agents")
+            .or_else([&] { return runtime_json_bool(root, "start_agents"); })
+            .or_else([&] { return runtime_json_bool(root, "run_agents"); })
+            .value_or(false);
     const auto default_cwd = runtime_json_string(root, "cwd");
-    const auto default_mode = runtime_json_string(root, "mode")
-        .or_else([&] { return runtime_json_string(root, "permission_mode"); });
+    const auto default_mode = runtime_json_string(root, "mode").or_else([&] {
+        return runtime_json_string(root, "permission_mode");
+    });
     const auto default_isolation = runtime_json_string(root, "isolation");
     if (start_native_agents && !registry) {
-        return ToolResult::error("team_create start_native_agents requires an attached runtime registry");
+        return ToolResult::error(
+            "team_create start_native_agents requires an attached runtime registry");
     }
     if (start_native_agents && !runtime_has_agent_api_credentials()) {
         return ToolResult::error("team_create start_native_agents requires API credentials");
@@ -66,8 +71,7 @@ namespace json = loom::utils::json;
     // team_create (not just the --team-name launch flag); without this,
     // the live teammate projection / pane observer / leader permission
     // inbox never activate because get_team_name() stays empty.
-    if (std::getenv("LOOM_TEAM_NAME") == nullptr &&
-        !result->name.empty()) {
+    if (std::getenv("LOOM_TEAM_NAME") == nullptr && !result->name.empty()) {
         ::setenv("LOOM_TEAM_NAME", result->name.c_str(), 1);
         // task-list resolution also tracks the leader team.
         loom::utils::set_leader_team_name(result->name);
@@ -94,8 +98,8 @@ namespace json = loom::utils::json;
         if (assigned_to && !assigned_to->empty()) {
             auto assigned = global_team_store().assign_task(result->id, task_id, *assigned_to);
             if (!assigned) return ToolResult::error(std::string(format_error(assigned.error())));
-            auto assignment_message =
-                detail::format_team_task_assignment_message(result->name, task_id, task_description);
+            auto assignment_message = detail::format_team_task_assignment_message(
+                result->name, task_id, task_description);
             member_start_prompts[*assigned_to] = assignment_message;
             if (!start_native_agents) {
                 loom::tools::agent_runtime::native_agent_store().mark_running(*assigned_to);
@@ -103,8 +107,7 @@ namespace json = loom::utils::json;
                     *assigned_to,
                     std::format("team task assigned {}: {}", task_id, task_description));
                 loom::tools::agent_runtime::native_agent_store().enqueue_pending_message(
-                    *assigned_to,
-                    assignment_message);
+                    *assigned_to, assignment_message);
             }
             ++task_assignments_enqueued;
         }
@@ -114,63 +117,62 @@ namespace json = loom::utils::json;
     auto artifacts = detail::ensure_team_runtime_artifacts(
         created_team->name,
         std::span<const TeamMember>(created_team->members.data(), created_team->members.size()),
-        std::span<const SharedTaskItem>(created_team->task_list.data(), created_team->task_list.size()),
+        std::span<const SharedTaskItem>(created_team->task_list.data(),
+                                        created_team->task_list.size()),
         *created_team);
     if (!artifacts) return ToolResult::error(artifacts.error());
     std::size_t native_agents_started = 0;
     if (start_native_agents) {
         for (const auto& member : created_team->members) {
             auto options_it = member_start_options.find(member.agent_id);
-            const auto* options = options_it == member_start_options.end() ? nullptr : &options_it->second;
-            auto prompt = options && options->prompt && !options->prompt->empty()
-                ? *options->prompt
-                : [&] {
+            const auto* options =
+                options_it == member_start_options.end() ? nullptr : &options_it->second;
+            auto prompt =
+                options && options->prompt && !options->prompt->empty() ? *options->prompt : [&] {
                     auto assigned_prompt = member_start_prompts.find(member.agent_id);
-                    if (assigned_prompt != member_start_prompts.end()) return assigned_prompt->second;
-                    return std::format(
-                        "You are teammate {} on team {}. Coordinate with the team lead and wait for assigned work.",
-                        member.agent_id,
-                        created_team->name);
+                    if (assigned_prompt != member_start_prompts.end())
+                        return assigned_prompt->second;
+                    return std::format("You are teammate {} on team {}. Coordinate with the team "
+                                       "lead and wait for assigned work.",
+                                       member.agent_id, created_team->name);
                 }();
-            auto agent_input = ToolInput::from_json(detail::build_team_member_agent_start_input_json(
-                member,
-                created_team->name,
-                prompt,
-                options,
-                default_cwd,
-                default_mode,
-                default_isolation));
+            auto agent_input =
+                ToolInput::from_json(detail::build_team_member_agent_start_input_json(
+                    member, created_team->name, prompt, options, default_cwd, default_mode,
+                    default_isolation));
             agent_input.parent_model = input.parent_model;
             agent_input.api_context = input.api_context;
             agent_input.parent_session_id = input.parent_session_id;
             auto started = registry->execute("Agent", agent_input);
             if (!started) {
-                auto error = "failed to start team member " + member.agent_id + ": " + started.error().message;
-                (void)global_team_store().update_member_status(created_team->id, member.agent_id, MemberStatus::Error, error);
+                auto error = "failed to start team member " + member.agent_id + ": " +
+                             started.error().message;
+                (void)global_team_store().update_member_status(created_team->id, member.agent_id,
+                                                               MemberStatus::Error, error);
                 return ToolResult::error(error);
             }
             if (started->is_error) {
-                auto error = "failed to start team member " + member.agent_id + ": " + detail::runtime_tool_result_text(*started);
-                (void)global_team_store().update_member_status(created_team->id, member.agent_id, MemberStatus::Error, error);
+                auto error = "failed to start team member " + member.agent_id + ": " +
+                             detail::runtime_tool_result_text(*started);
+                (void)global_team_store().update_member_status(created_team->id, member.agent_id,
+                                                               MemberStatus::Error, error);
                 return ToolResult::error(error);
             }
             ++native_agents_started;
         }
         if (auto refreshed_team = global_team_store().get(created_team->id)) {
             auto native_records = detail::collect_team_native_agents(
-                refreshed_team->id,
-                refreshed_team->name,
-                std::span<const TeamMember>(refreshed_team->members.data(), refreshed_team->members.size()));
+                refreshed_team->id, refreshed_team->name,
+                std::span<const TeamMember>(refreshed_team->members.data(),
+                                            refreshed_team->members.size()));
             auto runtime_states = detail::team_config_runtime_states_from_native_records(
                 std::span<const loom::tools::agent_runtime::NativeAgentRecord>(
-                    native_records.data(),
-                    native_records.size()));
+                    native_records.data(), native_records.size()));
             artifacts->team_config_written = detail::write_team_config_file(
-                artifacts->team_file_path,
-                *refreshed_team,
-                runtime_states);
+                artifacts->team_file_path, *refreshed_team, runtime_states);
             if (!artifacts->team_config_written) {
-                return ToolResult::error("failed to refresh team config after starting native agents");
+                return ToolResult::error(
+                    "failed to refresh team config after starting native agents");
             }
         }
     }
@@ -191,8 +193,10 @@ namespace json = loom::utils::json;
 }
 
 [[nodiscard]] Result<ToolResult> execute_team_delete_runtime_tool(std::string_view json) {
-    auto team = json_string(json, "team_id").or_else([&] { return json_string(json, "id"); })
-        .or_else([&] { return json_string(json, "team_name"); }).or_else([&] { return json_string(json, "name"); });
+    auto team = json_string(json, "team_id")
+                    .or_else([&] { return json_string(json, "id"); })
+                    .or_else([&] { return json_string(json, "team_name"); })
+                    .or_else([&] { return json_string(json, "name"); });
     if (!team) return ToolResult::error("team_delete requires team_id");
     auto resolved = global_team_store().get_by_id_or_name(*team);
     if (!resolved) return ToolResult::error(std::string(format_error(resolved.error())));
@@ -200,40 +204,31 @@ namespace json = loom::utils::json;
     const auto team_name = resolved->name;
     const auto members = resolved->members;
     auto native_records = detail::collect_team_native_agents(
-        team_id,
-        team_name,
-        std::span<const TeamMember>(members.data(), members.size()));
-    auto cleanup = detail::cleanup_team_runtime_artifacts(
-        team_id,
-        team_name,
-        std::span<const agent_runtime::NativeAgentRecord>(native_records.data(), native_records.size()));
+        team_id, team_name, std::span<const TeamMember>(members.data(), members.size()));
+    auto cleanup =
+        detail::cleanup_team_runtime_artifacts(team_id, team_name,
+                                               std::span<const agent_runtime::NativeAgentRecord>(
+                                                   native_records.data(), native_records.size()));
     TeamDeleteTool tool;
     auto result = tool.execute(team_id);
     if (!result) return ToolResult::error(std::string(format_error(result.error())));
-    return ToolResult::success(std::format(
-        "Deleted team {} ({})\n"
-        "native_agents_seen: {}\n"
-        "cancelled_agents: {}\n"
-        "teammate_terminations: {}\n"
-        "teammate_kills: {}\n"
-        "background_shell_tasks_stopped: {}\n"
-        "transcript_artifacts_removed: {}\n"
-        "worktree_cleanup_attempts: {}\n"
-        "worktrees_removed: {}\n"
-        "worktrees_retained: {}\n"
-        "team_dirs_removed: {}",
-        team_name,
-        team_id,
-        cleanup.native_agents_seen,
-        cleanup.cancelled_agents,
-        cleanup.teammate_terminations,
-        cleanup.teammate_kills,
-        cleanup.background_shell_tasks_stopped,
-        cleanup.transcript_artifacts_removed,
-        cleanup.worktree_cleanup_attempts,
-        cleanup.worktrees_removed,
-        cleanup.worktrees_retained,
-        cleanup.team_dirs_removed));
+    return ToolResult::success(
+        std::format("Deleted team {} ({})\n"
+                    "native_agents_seen: {}\n"
+                    "cancelled_agents: {}\n"
+                    "teammate_terminations: {}\n"
+                    "teammate_kills: {}\n"
+                    "background_shell_tasks_stopped: {}\n"
+                    "transcript_artifacts_removed: {}\n"
+                    "worktree_cleanup_attempts: {}\n"
+                    "worktrees_removed: {}\n"
+                    "worktrees_retained: {}\n"
+                    "team_dirs_removed: {}",
+                    team_name, team_id, cleanup.native_agents_seen, cleanup.cancelled_agents,
+                    cleanup.teammate_terminations, cleanup.teammate_kills,
+                    cleanup.background_shell_tasks_stopped, cleanup.transcript_artifacts_removed,
+                    cleanup.worktree_cleanup_attempts, cleanup.worktrees_removed,
+                    cleanup.worktrees_retained, cleanup.team_dirs_removed));
 }
 
-} // namespace loom::tools::detail
+}  // namespace loom::tools::detail

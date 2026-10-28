@@ -26,12 +26,12 @@
 /// RenderCostThreshold / HandleCostThresholdEvent.
 module;
 
-#include <cstdio>
+#include <ftxui/component/event.hpp>
+#include <ftxui/dom/elements.hpp>
+
 #include <cmath>
 #include <cstdint>
-
-#include <ftxui/dom/elements.hpp>
-#include <ftxui/component/event.hpp>
+#include <cstdio>
 
 export module loom.ui.dialogs.cost_threshold_dialog;
 
@@ -54,8 +54,7 @@ using namespace ftxui;
 inline const std::string kDocsUrl = loom::constants::product::doc_url("/docs/en/costs");
 
 /// Body paragraph immediately above the external link.
-inline constexpr std::string_view kBodyParagraph =
-    "Learn more about how to monitor your spending:";
+inline constexpr std::string_view kBodyParagraph = "Learn more about how to monitor your spending:";
 
 /// Label for the single Select option.
 inline constexpr std::string_view kOkButtonLabel = "Got it, thanks!";
@@ -90,13 +89,12 @@ struct CostThresholdState {
 // ---------------------------------------------------------------------------
 
 /// Build a render/event state from a payload.
-[[nodiscard]] inline CostThresholdState state_from_payload(
-    const CostThresholdPayload& p) {
+[[nodiscard]] inline CostThresholdState state_from_payload(const CostThresholdPayload& p) {
     return CostThresholdState{
         .dollars_spent = p.dollars_spent,
-        .model_name    = p.model_name,
+        .model_name = p.model_name,
         .selected_index = 0,
-        .on_done       = p.on_done,
+        .on_done = p.on_done,
     };
 }
 
@@ -107,8 +105,7 @@ struct CostThresholdState {
     const long whole = std::lround(dollars_spent);
     // Use std::to_string; for non-negative values (spend is always
     // non-negative) this matches sprintf("%lld") perfectly.
-    return "You've spent $" + std::to_string(whole) +
-           " on the API this session.";
+    return "You've spent $" + std::to_string(whole) + " on the API this session.";
 }
 
 // ---------------------------------------------------------------------------
@@ -142,8 +139,7 @@ struct CostThresholdState {
     body_rows.push_back(text(std::string(kBodyParagraph)));
     body_rows.push_back(text(std::string(kDocsUrl)) | color(pal.info));
     if (st.model_name && !st.model_name->empty()) {
-        body_rows.push_back(
-            text("(model: " + *st.model_name + ")") | dim);
+        body_rows.push_back(text("(model: " + *st.model_name + ")") | dim);
     }
 
     // ── Single-option CustomSelect clone ────────────────────────
@@ -152,35 +148,35 @@ struct CostThresholdState {
     //    selected_index is always 0.
     const bool selected = (st.selected_index == 0);
     auto option_row = hbox({
-        text(selected ? "● " : "○ ") |
-            (selected ? bold | color(pal.warning) : dim),
-        text(std::string(kOkButtonLabel)) |
-            (selected ? bold | color(pal.text) : dim),
+        text(selected ? "● " : "○ ") | (selected ? bold | color(pal.warning) : dim),
+        text(std::string(kOkButtonLabel)) | (selected ? bold | color(pal.text) : dim),
     });
 
     // ── Keyboard byline ─────────────────────────────────────────
     auto byline = hbox({
-        text("Enter") | bold | dim,
-        text(" acknowledge") | dim,
-        text("  ") | dim,
-        text("Esc") | bold | dim,
-        text(" dismiss") | dim,
-    }) | dim;
+                      text("Enter") | bold | dim,
+                      text(" acknowledge") | dim,
+                      text("  ") | dim,
+                      text("Esc") | bold | dim,
+                      text(" dismiss") | dim,
+                  }) |
+                  dim;
 
     // ── Assemble inner content ──────────────────────────────────
     auto inner = vbox({
-        text(title) | bold | color(pal.warning),
-        separator(),
-        vbox(std::move(body_rows)) | color(pal.muted),
-        separator(),
-        std::move(option_row),
-        separator(),
-        std::move(byline),
-    }) | size(WIDTH, GREATER_THAN, 58);
+                     text(title) | bold | color(pal.warning),
+                     separator(),
+                     vbox(std::move(body_rows)) | color(pal.muted),
+                     separator(),
+                     std::move(option_row),
+                     separator(),
+                     std::move(byline),
+                 }) |
+                 size(WIDTH, GREATER_THAN, 58);
 
     // ── Wrap in titled window ───────────────────────────────────
-    return window(text(" Cost Threshold ") | color(pal.warning),
-                  std::move(inner)) | color(pal.warning);
+    return window(text(" Cost Threshold ") | color(pal.warning), std::move(inner)) |
+           color(pal.warning);
 }
 
 // ---------------------------------------------------------------------------
@@ -205,8 +201,7 @@ struct CostThresholdState {
 /// leak through to the prompt input — the dialog has focus.
 ///
 /// Returns true if the event was consumed.
-inline bool HandleCostThresholdEvent(CostThresholdState& st,
-                                     const Event& ev) {
+inline bool HandleCostThresholdEvent(CostThresholdState& st, const Event& ev) {
     // ── Definite dismissals ─────────────────────────────────────
     if (ev == Event::Return || ev == Event::Escape ||
         (ev.is_character() && ev.character() == " ")) {
@@ -215,9 +210,8 @@ inline bool HandleCostThresholdEvent(CostThresholdState& st,
     }
 
     // ── Arrow keys + Tab: swallow so they never reach the parent ─
-    if (ev == Event::ArrowUp || ev == Event::ArrowDown ||
-        ev == Event::ArrowLeft || ev == Event::ArrowRight ||
-        ev == Event::Tab || ev == Event::TabReverse) {
+    if (ev == Event::ArrowUp || ev == Event::ArrowDown || ev == Event::ArrowLeft ||
+        ev == Event::ArrowRight || ev == Event::Tab || ev == Event::TabReverse) {
         return true;
     }
 
@@ -225,22 +219,26 @@ inline bool HandleCostThresholdEvent(CostThresholdState& st,
     if (ev.is_character() && !ev.character().empty()) {
         const char c = ev.character()[0];
         switch (c) {
-            case 'g': case 'G':   // mnemonic: "Got it, thanks!"
-            case 'y': case 'Y':   // mnemonic: "acknowledge"
-            case 'o': case 'O':   // mnemonic: "OK"
-            case 'k': case 'K':   // mnemonic: "OK"
-                if (st.on_done) st.on_done();
-                return true;
-            default:
-                // Consume any other character so that stray keystrokes do
-                // not leak through to the prompt input.  The dialog has
-                // focus; any key other than the ones explicitly handled
-                // should not do anything destructive.
-                return true;
+        case 'g':
+        case 'G':  // mnemonic: "Got it, thanks!"
+        case 'y':
+        case 'Y':  // mnemonic: "acknowledge"
+        case 'o':
+        case 'O':  // mnemonic: "OK"
+        case 'k':
+        case 'K':  // mnemonic: "OK"
+            if (st.on_done) st.on_done();
+            return true;
+        default:
+            // Consume any other character so that stray keystrokes do
+            // not leak through to the prompt input.  The dialog has
+            // focus; any key other than the ones explicitly handled
+            // should not do anything destructive.
+            return true;
         }
     }
 
     return false;
 }
 
-} // namespace loom::ui::dialogs::cost_threshold
+}  // namespace loom::ui::dialogs::cost_threshold

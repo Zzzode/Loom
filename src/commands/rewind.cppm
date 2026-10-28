@@ -3,7 +3,6 @@
 /// Rewinds code and/or conversation to an earlier checkpoint.
 module;
 
-
 export module loom.commands.rewind;
 
 import std;
@@ -30,15 +29,15 @@ public:
         };
     }
 
-    [[nodiscard]] VoidResult validate(const CommandContext&) {
-        return {};
-    }
+    [[nodiscard]] VoidResult validate(const CommandContext&) { return {}; }
 
     [[nodiscard]] Result<CommandResult> execute(const CommandContext& ctx) {
         if (ctx.args.empty()) {
-            return CommandResult::success("Opening checkpoint selector for code and conversation rewind.");
+            return CommandResult::success(
+                "Opening checkpoint selector for code and conversation rewind.");
         }
-        return CommandResult::success(std::format("Opening checkpoint selector at hint '{}'.", ctx.args.front()));
+        return CommandResult::success(
+            std::format("Opening checkpoint selector at hint '{}'.", ctx.args.front()));
     }
 
     [[nodiscard]] std::vector<std::string> complete(std::string_view partial) {
@@ -50,4 +49,4 @@ public:
     }
 };
 
-} // namespace loom::commands
+}  // namespace loom::commands

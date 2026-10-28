@@ -20,20 +20,21 @@ import loom.ui.features.plugins.plugin_marketplace_browse;
 namespace {
 namespace theme = loom::ui::design::theme;
 namespace figs = loom::ui::design::figures;
+
 struct RestoreTheme {
     theme::Theme original = theme::current_theme();
+
     ~RestoreTheme() { theme::set_theme(original); }
 };
 
 ftxui::Screen Paint(ftxui::Element element, int width = 80, int height = 20) {
-    auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(width),
-                                      ftxui::Dimension::Fixed(height));
+    auto screen =
+        ftxui::Screen::Create(ftxui::Dimension::Fixed(width), ftxui::Dimension::Fixed(height));
     ftxui::Render(screen, std::move(element));
     return screen;
 }
 
-void ExpectGlyphColor(const ftxui::Screen& screen, std::string_view glyph,
-                      ftxui::Color expected) {
+void ExpectGlyphColor(const ftxui::Screen& screen, std::string_view glyph, ftxui::Color expected) {
     for (int y = 0; y < screen.dimy(); ++y) {
         for (int x = 0; x < screen.dimx(); ++x) {
             if (screen.PixelAt(x, y).character == glyph) {
@@ -45,10 +46,10 @@ void ExpectGlyphColor(const ftxui::Screen& screen, std::string_view glyph,
     ADD_FAILURE() << "Missing glyph: " << glyph;
 }
 
-constexpr auto kVariants = std::array{
-    theme::ThemeVariant::Light, theme::ThemeVariant::DarkDaltonized,
-    theme::ThemeVariant::Monochrome};
-}
+constexpr auto kVariants =
+    std::array{theme::ThemeVariant::Light, theme::ThemeVariant::DarkDaltonized,
+               theme::ThemeVariant::Monochrome};
+}  // namespace
 
 TEST(ThemeWidgetsFeatures, NotificationSeverityUsesThemeAndExistingFigures) {
     RestoreTheme restore;
@@ -60,12 +61,14 @@ TEST(ThemeWidgetsFeatures, NotificationSeverityUsesThemeAndExistingFigures) {
             loom::ui::NotificationData data;
             data.level = level;
             data.title = "Notice";
-            const auto expected = level == Level::Info ? pal.info
-                : level == Level::Success ? pal.success
-                : level == Level::Warning ? pal.warning : pal.danger;
-            const auto figure = level == Level::Info ? figs::kInfo
-                : level == Level::Success ? figs::kTick
-                : level == Level::Warning ? figs::kWarning : figs::kCross;
+            const auto expected = level == Level::Info      ? pal.info
+                                  : level == Level::Success ? pal.success
+                                  : level == Level::Warning ? pal.warning
+                                                            : pal.danger;
+            const auto figure = level == Level::Info      ? figs::kInfo
+                                : level == Level::Success ? figs::kTick
+                                : level == Level::Warning ? figs::kWarning
+                                                          : figs::kCross;
             const auto screen = Paint(loom::ui::render_notification(data), 30, 3);
             ExpectGlyphColor(screen, figure, expected);
         }
@@ -78,10 +81,11 @@ TEST(ThemeWidgetsFeatures, StatsHeatmapUsesSurfaceAndExistingGradient) {
         theme::set_theme(variant);
         const auto& pal = *theme::current_theme().palette;
         std::vector<ui::components::DailyActivity> activity;
-        for (int count = 0; count <= 5; ++count) activity.push_back({"date", count});
+        for (int count = 0; count <= 5; ++count)
+            activity.push_back({"date", count});
         auto screen = Paint(ui::components::detail::RenderActivityHeatmap(activity), 30, 1);
-        const auto colors = std::array{pal.surface_tint_1, pal.stats_green_1,
-            pal.stats_green_2, pal.stats_green_3, pal.stats_green_4, pal.stats_green_5};
+        const auto colors = std::array{pal.surface_tint_1, pal.stats_green_1, pal.stats_green_2,
+                                       pal.stats_green_3,  pal.stats_green_4, pal.stats_green_5};
         for (int i = 0; i < 6; ++i) {
             EXPECT_EQ(screen.PixelAt(10 + i, 0).foreground_color, colors[i]);
             EXPECT_EQ(screen.PixelAt(10 + i, 0).character, figs::kSquare);
@@ -174,8 +178,9 @@ TEST(ThemeWidgetsFeatures, AgentColorsFollowSubagentTokensAndForkFigure) {
         EXPECT_EQ(agents::status_color(agents::AgentStatus::Errored), pal.danger);
         for (const auto status : {agents::AgentStatus::Idle, agents::AgentStatus::Scheduled,
                                   agents::AgentStatus::Errored}) {
-            const auto figure = status == agents::AgentStatus::Idle ? figs::kCircle
-                : status == agents::AgentStatus::Scheduled ? figs::kEllipsis : figs::kCross;
+            const auto figure = status == agents::AgentStatus::Idle        ? figs::kCircle
+                                : status == agents::AgentStatus::Scheduled ? figs::kEllipsis
+                                                                           : figs::kCross;
             const auto dot = Paint(agents::StatusDot({.status = status}), 10, 1);
             EXPECT_NE(dot.ToString().find(figure), std::string::npos);
         }
@@ -246,11 +251,11 @@ TEST(ThemeWidgetsFeatures, HeldDiffUsesReadableForegroundAndKeepsLinePrefixes) {
     removed.kind = loom::ui::DiffLineKind::Removed;
     removed.content = "removed line";
     const std::vector<loom::ui::DiffLine> lines{added, removed};
-    auto component = ftxui::Renderer([lines] {
-        return loom::ui::render_diff_view("diff.cpp", lines);
-    });
-    for (const auto variant : {theme::ThemeVariant::Dark, theme::ThemeVariant::Light,
-            theme::ThemeVariant::DarkDaltonized, theme::ThemeVariant::Monochrome}) {
+    auto component =
+        ftxui::Renderer([lines] { return loom::ui::render_diff_view("diff.cpp", lines); });
+    for (const auto variant :
+         {theme::ThemeVariant::Dark, theme::ThemeVariant::Light,
+          theme::ThemeVariant::DarkDaltonized, theme::ThemeVariant::Monochrome}) {
         theme::set_theme(variant);
         const auto& pal = *theme::current_theme().palette;
         const auto screen = Paint(component->Render(), 40, 8);

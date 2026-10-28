@@ -12,7 +12,6 @@ module;
 /// module.  All follow the same pattern: extract a key field from the input
 /// JSON for the message summary, with appropriate user-facing names.
 
-
 export module loom.ui.tools.longtail;
 
 import std;
@@ -27,8 +26,7 @@ namespace detail {
 
 /// Extract a top-level string field from JSON by key name.
 /// Lightweight string extraction — no full JSON parser needed.
-[[nodiscard]] inline std::string extract_string_field(std::string_view json,
-                                                      std::string_view key) {
+[[nodiscard]] inline std::string extract_string_field(std::string_view json, std::string_view key) {
     auto pos = json.find("\"" + std::string(key) + "\"");
     if (pos == std::string_view::npos) return {};
     auto colon = json.find(':', pos);
@@ -41,8 +39,7 @@ namespace detail {
 }
 
 /// Extract a top-level integer/numeric field from JSON by key name.
-[[nodiscard]] inline std::string extract_number_field(std::string_view json,
-                                                      std::string_view key) {
+[[nodiscard]] inline std::string extract_number_field(std::string_view json, std::string_view key) {
     auto pos = json.find("\"" + std::string(key) + "\"");
     if (pos == std::string_view::npos) return {};
     auto colon = json.find(':', pos);
@@ -53,22 +50,20 @@ namespace detail {
         ++start;
     if (start >= json.size()) return {};
     auto end = start;
-    while (end < json.size() &&
-           ((json[end] >= '0' && json[end] <= '9') || json[end] == '.' ||
-            json[end] == '-' || json[end] == 'e' || json[end] == 'E'))
+    while (end < json.size() && ((json[end] >= '0' && json[end] <= '9') || json[end] == '.' ||
+                                 json[end] == '-' || json[end] == 'e' || json[end] == 'E'))
         ++end;
     if (end == start) return {};
     return std::string(json.substr(start, end - start));
 }
 
 /// Truncate a string to max_len, adding ellipsis if needed.
-[[nodiscard]] inline std::string truncate(std::string_view s,
-                                          std::size_t max_len = 60) {
+[[nodiscard]] inline std::string truncate(std::string_view s, std::size_t max_len = 60) {
     if (s.size() <= max_len) return std::string(s);
     return std::string(s.substr(0, max_len - 1)) + "\xE2\x80\xA6";
 }
 
-} // namespace detail
+}  // namespace detail
 
 // ============================================================
 // Helper: make simple tool UI with name + single field extraction
@@ -82,34 +77,26 @@ namespace detail {
 /// - no tag
 /// - progress = "Running…"
 /// - queued = "Waiting…"
-[[nodiscard]] inline ToolUIFunctions make_simple_tool_ui(
-    std::string user_facing_name,
-    std::string default_msg,
-    std::optional<std::string> field_for_message = std::nullopt,
-    bool is_transparent_wrapper = false)
-{
+[[nodiscard]] inline ToolUIFunctions
+make_simple_tool_ui(std::string user_facing_name, std::string default_msg,
+                    std::optional<std::string> field_for_message = std::nullopt,
+                    bool is_transparent_wrapper = false) {
     ToolUIFunctions fns;
-    fns.user_facing_name = [name = std::move(user_facing_name)](std::string_view) {
-        return name;
-    };
+    fns.user_facing_name = [name = std::move(user_facing_name)](std::string_view) { return name; };
 
     if (field_for_message) {
         auto field = *field_for_message;
         fns.message = [field = std::move(field),
-                        fallback = std::move(default_msg)](std::string_view input) {
+                       fallback = std::move(default_msg)](std::string_view input) {
             auto val = detail::extract_string_field(input, field);
             if (!val.empty()) return detail::truncate(val);
             return fallback;
         };
     } else {
-        fns.message = [msg = std::move(default_msg)](std::string_view) {
-            return msg;
-        };
+        fns.message = [msg = std::move(default_msg)](std::string_view) { return msg; };
     }
 
-    fns.tag = [](std::string_view) -> std::optional<std::string> {
-        return std::nullopt;
-    };
+    fns.tag = [](std::string_view) -> std::optional<std::string> { return std::nullopt; };
 
     fns.progress = [name = std::string{}](std::string_view, std::string_view) {
         // Default for tools without custom progress
@@ -125,17 +112,15 @@ namespace detail {
     // Simple tools (SendUserMessage, SendUserFile, etc.) — their output
     // IS visible on screen (the result body is rendered).  Index the
     // output for search so users can find what they sent.
-    fns.extract_search_text = [](
-        std::string_view output_text,
-        std::string_view /*error_text*/) -> std::optional<std::string>
-    {
+    fns.extract_search_text = [](std::string_view output_text,
+                                 std::string_view /*error_text*/) -> std::optional<std::string> {
         return std::string{output_text};
     };
 
     return fns;
 }
 
-} // namespace detail
+}  // namespace detail
 
 // ============================================================
 // ComputerUse
@@ -155,10 +140,10 @@ namespace detail {
     fns.is_transparent_wrapper = false;
     // ComputerUse — shows action descriptions and screenshot metadata.
     // Output IS visible; index it.
-    fns.extract_search_text = [](
-        std::string_view output_text,
-        std::string_view /*error_text*/) -> std::optional<std::string>
-    { return std::string{output_text}; };
+    fns.extract_search_text = [](std::string_view output_text,
+                                 std::string_view /*error_text*/) -> std::optional<std::string> {
+        return std::string{output_text};
+    };
     return fns;
 }
 
@@ -184,10 +169,10 @@ namespace detail {
     fns.queued = [](std::string_view) { return std::string{"Waiting to run…"}; };
     fns.is_transparent_wrapper = false;
     // WebBrowser — renders page content/actions. Output IS visible.
-    fns.extract_search_text = [](
-        std::string_view output_text,
-        std::string_view /*error_text*/) -> std::optional<std::string>
-    { return std::string{output_text}; };
+    fns.extract_search_text = [](std::string_view output_text,
+                                 std::string_view /*error_text*/) -> std::optional<std::string> {
+        return std::string{output_text};
+    };
     return fns;
 }
 
@@ -204,14 +189,16 @@ namespace detail {
         return std::string{"asking user…"};
     };
     fns.tag = [](std::string_view) -> std::optional<std::string> { return std::nullopt; };
-    fns.progress = [](std::string_view, std::string_view) { return std::string{"Waiting for user…"}; };
+    fns.progress = [](std::string_view, std::string_view) {
+        return std::string{"Waiting for user…"};
+    };
     fns.queued = [](std::string_view) { return std::string{"Waiting to ask…"}; };
     fns.is_transparent_wrapper = false;
     // AskUserQuestion — renders user's answer. Output IS visible.
-    fns.extract_search_text = [](
-        std::string_view output_text,
-        std::string_view /*error_text*/) -> std::optional<std::string>
-    { return std::string{output_text}; };
+    fns.extract_search_text = [](std::string_view output_text,
+                                 std::string_view /*error_text*/) -> std::optional<std::string> {
+        return std::string{output_text};
+    };
     return fns;
 }
 
@@ -451,7 +438,9 @@ namespace detail {
         return std::string{"task output…"};
     };
     fns.tag = [](std::string_view) -> std::optional<std::string> { return std::nullopt; };
-    fns.progress = [](std::string_view, std::string_view) { return std::string{"Reading output…"}; };
+    fns.progress = [](std::string_view, std::string_view) {
+        return std::string{"Reading output…"};
+    };
     fns.queued = [](std::string_view) { return std::string{"Waiting to read output…"}; };
     fns.is_transparent_wrapper = false;
     return fns;
@@ -466,9 +455,7 @@ namespace detail {
         if (!id.empty()) return "stop #" + id;
         return std::string{"stopping task…"};
     };
-    fns.tag = [](std::string_view) -> std::optional<std::string> {
-        return std::string{"stop"};
-    };
+    fns.tag = [](std::string_view) -> std::optional<std::string> { return std::string{"stop"}; };
     fns.progress = [](std::string_view, std::string_view) { return std::string{"Stopping task…"}; };
     fns.queued = [](std::string_view) { return std::string{"Waiting to stop task…"}; };
     fns.is_transparent_wrapper = false;
@@ -503,7 +490,9 @@ namespace detail {
         return std::string{"listing MCP resources…"};
     };
     fns.tag = [](std::string_view) -> std::optional<std::string> { return "MCP"; };
-    fns.progress = [](std::string_view, std::string_view) { return std::string{"Listing resources…"}; };
+    fns.progress = [](std::string_view, std::string_view) {
+        return std::string{"Listing resources…"};
+    };
     fns.queued = [](std::string_view) { return std::string{"Waiting to list…"}; };
     fns.is_transparent_wrapper = false;
     return fns;
@@ -518,7 +507,9 @@ namespace detail {
         return std::string{"reading MCP resource…"};
     };
     fns.tag = [](std::string_view) -> std::optional<std::string> { return "MCP"; };
-    fns.progress = [](std::string_view, std::string_view) { return std::string{"Reading resource…"}; };
+    fns.progress = [](std::string_view, std::string_view) {
+        return std::string{"Reading resource…"};
+    };
     fns.queued = [](std::string_view) { return std::string{"Waiting to read…"}; };
     fns.is_transparent_wrapper = false;
     return fns;
@@ -682,4 +673,4 @@ inline void register_longtail_tool_uis() {
     reg.register_tool_ui("RemoteTrigger", make_remote_trigger_ui());
 }
 
-} // namespace loom::ui::tools::longtail_ui
+}  // namespace loom::ui::tools::longtail_ui

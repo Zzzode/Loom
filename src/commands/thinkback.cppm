@@ -1,6 +1,6 @@
 module;
-#include <cstdlib>
 #include <cstddef>
+#include <cstdlib>
 
 export module loom.commands.thinkback;
 
@@ -11,17 +11,16 @@ export namespace loom::commands {
 using time_point = std::chrono::system_clock::time_point;
 
 auto thinking_history_path() -> std::filesystem::path {
-    if (const char* home = std::getenv("HOME")) return std::filesystem::path{home} / ".loom" / "thinking-history.txt";
+    if (const char* home = std::getenv("HOME"))
+        return std::filesystem::path{home} / ".loom" / "thinking-history.txt";
     return std::filesystem::path{".loom"} / "thinking-history.txt";
 }
-
 
 struct ThinkingEntry {
     time_point ts;
     std::string content;
     int tokens;
 };
-
 
 auto get_thinking_history() -> std::vector<ThinkingEntry> {
     std::vector<ThinkingEntry> history;
@@ -32,7 +31,9 @@ auto get_thinking_history() -> std::vector<ThinkingEntry> {
         std::string ticks;
         std::string tokens;
         std::string content;
-        if (!std::getline(ss, ticks, '|') || !std::getline(ss, tokens, '|') || !std::getline(ss, content)) continue;
+        if (!std::getline(ss, ticks, '|') || !std::getline(ss, tokens, '|') ||
+            !std::getline(ss, content))
+            continue;
         history.push_back(ThinkingEntry{
             .ts = time_point{std::chrono::system_clock::duration{std::stoll(ticks)}},
             .content = content,
@@ -42,7 +43,6 @@ auto get_thinking_history() -> std::vector<ThinkingEntry> {
     return history;
 }
 
-
 auto replay_thinking(size_t index) -> std::string {
     auto history = get_thinking_history();
     if (index >= history.size()) {
@@ -50,7 +50,6 @@ auto replay_thinking(size_t index) -> std::string {
     }
     return history[index].content;
 }
-
 
 auto export_thinking_log() -> std::string {
     auto history = get_thinking_history();
@@ -67,9 +66,8 @@ auto export_thinking_log() -> std::string {
     return log;
 }
 
-
 auto clear_thinking_history() -> void {
     std::filesystem::remove(thinking_history_path());
 }
 
-} // namespace loom::commands
+}  // namespace loom::commands

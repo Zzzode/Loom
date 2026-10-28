@@ -1,10 +1,10 @@
 module;
 
+#include <cctype>
 #include <cmath>
+#include <cstdint>
 #include <cstdio>
 #include <cstdlib>
-#include <cctype>
-#include <cstdint>
 
 export module loom.orchestration.agent.fork;
 
@@ -25,22 +25,20 @@ export namespace loom::tools::agent::fork_ {
 namespace fs = std::filesystem;
 
 using loom::core::Tool;
+using loom::core::ToolDefinition;
 using loom::core::ToolInput;
 using loom::core::ToolResult;
-using loom::core::ToolDefinition;
-using loom::services::api::Message;
 using loom::services::api::ContentBlock;
 using loom::services::api::ContentBlockType;
+using loom::services::api::Message;
+using loom::tools::agent::utils::agent_tool_input_omits_agent_type;
 using loom::tools::agent::utils::AgentExecutionPlan;
 using loom::tools::agent::utils::message_from_json_value;
-using loom::tools::agent::utils::text_contains_fork_boilerplate;
 using loom::tools::agent::utils::message_json_object;
-using loom::tools::agent::utils::agent_tool_input_omits_agent_type;
+using loom::tools::agent::utils::text_contains_fork_boilerplate;
 
-[[nodiscard]] inline std::vector<Message> forked_messages_from_parent_assistant(
-    std::string_view directive,
-    Message assistant_message
-) {
+[[nodiscard]] inline std::vector<Message>
+forked_messages_from_parent_assistant(std::string_view directive, Message assistant_message) {
     assistant_message.role = "assistant";
 
     std::vector<ContentBlock> tool_uses;
@@ -72,10 +70,9 @@ using loom::tools::agent::utils::agent_tool_input_omits_agent_type;
     return {std::move(assistant_message), std::move(missing_tool_results)};
 }
 
-[[nodiscard]] inline std::vector<Message> forked_messages_from_parent_assistant_entries(
-    std::string_view directive,
-    const std::vector<std::string>& entries
-) {
+[[nodiscard]] inline std::vector<Message>
+forked_messages_from_parent_assistant_entries(std::string_view directive,
+                                              const std::vector<std::string>& entries) {
     for (const auto& entry : entries) {
         auto parsed = loom::utils::json::parse(entry);
         if (!parsed) continue;
@@ -98,20 +95,16 @@ using loom::tools::agent::utils::agent_tool_input_omits_agent_type;
     });
 }
 
-[[nodiscard]] inline bool should_reject_fork_child_agent_call(
-    const AgentExecutionPlan& plan,
-    std::string_view tool_name,
-    std::string_view tool_input_json
-) {
+[[nodiscard]] inline bool should_reject_fork_child_agent_call(const AgentExecutionPlan& plan,
+                                                              std::string_view tool_name,
+                                                              std::string_view tool_input_json) {
     if (!plan.fork_child_context) return false;
     if (tool_name != "Agent") return false;
     return agent_tool_input_omits_agent_type(tool_input_json);
 }
 
-[[nodiscard]] inline bool exact_tools_allow_tool(
-    const AgentExecutionPlan& plan,
-    std::string_view tool_name
-) {
+[[nodiscard]] inline bool exact_tools_allow_tool(const AgentExecutionPlan& plan,
+                                                 std::string_view tool_name) {
     if (!plan.use_exact_tools) return true;
     if (plan.exact_tools.empty()) return true;
     return std::ranges::contains(plan.exact_tools, tool_name);
@@ -139,9 +132,8 @@ using loom::tools::agent::utils::agent_tool_input_omits_agent_type;
     return std::ranges::contains(keys, key);
 }
 
-[[nodiscard]] inline std::vector<std::string> exact_tool_names_from_api_tools(
-    const std::vector<loom::services::api::ToolDefinition>& tools
-) {
+[[nodiscard]] inline std::vector<std::string>
+exact_tool_names_from_api_tools(const std::vector<loom::services::api::ToolDefinition>& tools) {
     std::vector<std::string> names;
     names.reserve(tools.size());
     for (const auto& tool : tools) {
@@ -152,11 +144,9 @@ using loom::tools::agent::utils::agent_tool_input_omits_agent_type;
 }
 
 [[nodiscard]] inline std::string build_implicit_fork_agent_input_json(
-    std::string_view raw_json,
-    const AgentExecutionPlan& parent_plan,
+    std::string_view raw_json, const AgentExecutionPlan& parent_plan,
     const Message& parent_assistant_message,
-    const std::vector<loom::services::api::ToolDefinition>& parent_tools
-) {
+    const std::vector<loom::services::api::ToolDefinition>& parent_tools) {
     auto parsed = loom::utils::json::parse(raw_json);
     if (!parsed || !parsed->root().is_obj()) return std::string(raw_json);
 
@@ -192,4 +182,4 @@ using loom::tools::agent::utils::agent_tool_input_omits_agent_type;
     return doc.to_string();
 }
 
-} // namespace loom::tools::agent::fork_
+}  // namespace loom::tools::agent::fork_

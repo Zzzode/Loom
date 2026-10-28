@@ -32,9 +32,12 @@ struct BashIOEntry {
 [[nodiscard]] inline Element render_bash_io(const BashIOEntry& entry) {
     auto stream_color = [&]() -> Color {
         switch (entry.stream) {
-            case BashStream::Stdout: return loom::ui::design::theme::current_theme().palette->text;
-            case BashStream::Stderr: return loom::ui::design::theme::current_theme().palette->danger;
-            case BashStream::Stdin: return loom::ui::design::theme::current_theme().palette->info;
+        case BashStream::Stdout:
+            return loom::ui::design::theme::current_theme().palette->text;
+        case BashStream::Stderr:
+            return loom::ui::design::theme::current_theme().palette->danger;
+        case BashStream::Stdin:
+            return loom::ui::design::theme::current_theme().palette->info;
         }
         return loom::ui::design::theme::current_theme().palette->text;
     }();
@@ -43,8 +46,11 @@ struct BashIOEntry {
     elements.push_back(text(entry.content) | color(stream_color));
 
     if (entry.exit_code) {
-        auto code_color = *entry.exit_code == 0 ? loom::ui::design::theme::current_theme().palette->success : loom::ui::design::theme::current_theme().palette->danger;
-        elements.push_back(text(std::format("exit code: {}", *entry.exit_code)) | color(code_color) | dim);
+        auto code_color = *entry.exit_code == 0
+                              ? loom::ui::design::theme::current_theme().palette->success
+                              : loom::ui::design::theme::current_theme().palette->danger;
+        elements.push_back(text(std::format("exit code: {}", *entry.exit_code)) |
+                           color(code_color) | dim);
     }
 
     return vbox(elements);
@@ -59,4 +65,4 @@ struct BashIOEntry {
     return vbox(elements);
 }
 
-} // namespace loom::ui::messages
+}  // namespace loom::ui::messages

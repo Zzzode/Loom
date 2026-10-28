@@ -15,13 +15,14 @@ export namespace loom::skills::remember {
     return SkillDefinition{
         .name = "remember",
         .description = "Store and recall facts, preferences, and context across sessions",
-        .trigger_patterns = {
-            R"(remember\s+(?:this|that))",
-            R"(don'?t\s+forget)",
-            R"(save.*(?:preference|context|fact))",
-            R"(recall.*(?:earlier|before|previous))",
-            R"(what\s+did\s+(?:i|we)\s+(?:say|decide))",
-        },
+        .trigger_patterns =
+            {
+                R"(remember\s+(?:this|that))",
+                R"(don'?t\s+forget)",
+                R"(save.*(?:preference|context|fact))",
+                R"(recall.*(?:earlier|before|previous))",
+                R"(what\s+did\s+(?:i|we)\s+(?:say|decide))",
+            },
         .content = R"(## Remember Skill
 
 ### Purpose
@@ -54,4 +55,4 @@ Memories are stored in ~/.loom/memories.json and LOOM.md.
     };
 }
 
-} // namespace loom::skills::remember
+}  // namespace loom::skills::remember

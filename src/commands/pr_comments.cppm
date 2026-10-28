@@ -3,11 +3,18 @@ module;
 export module loom.commands.pr_comments;
 
 import std;
+
 export namespace loom::commands::pr_comments {
 
-struct CommandResponse { bool ok{true}; bool inject{false}; std::string message; };
+struct CommandResponse {
+    bool ok{true};
+    bool inject{false};
+    std::string message;
+};
 
-[[nodiscard]] inline auto name() -> std::string_view { return "pr-comments"; }
+[[nodiscard]] inline auto name() -> std::string_view {
+    return "pr-comments";
+}
 
 [[nodiscard]] inline auto run(std::string_view pr = {}) -> CommandResponse {
     std::string prompt = "Fetch and summarize the PR comments for the current branch.\n\n";
@@ -25,4 +32,4 @@ struct CommandResponse { bool ok{true}; bool inject{false}; std::string message;
     return {.ok = true, .inject = true, .message = std::move(prompt)};
 }
 
-}
+}  // namespace loom::commands::pr_comments

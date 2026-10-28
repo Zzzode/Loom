@@ -63,8 +63,10 @@ BackendDetectionResult BackendRegistry::detect_and_get_backend() {
 
 std::shared_ptr<PaneBackend> BackendRegistry::get_backend_by_type(PaneBackendType type) {
     switch (type) {
-        case PaneBackendType::Tmux: return std::make_shared<TmuxBackend>();
-        case PaneBackendType::ITerm2: return std::make_shared<ITermBackend>();
+    case PaneBackendType::Tmux:
+        return std::make_shared<TmuxBackend>();
+    case PaneBackendType::ITerm2:
+        return std::make_shared<ITermBackend>();
     }
     return std::make_shared<TmuxBackend>();
 }
@@ -77,7 +79,8 @@ bool BackendRegistry::is_in_process_enabled() {
     if (mode == TeammateMode::InProcess) return true;
     if (mode == TeammateMode::Tmux) return false;
     if (in_process_fallback_active_) return true;
-    if (EnvironmentDetection::is_inside_tmux() || EnvironmentDetection::is_in_iterm2()) return false;
+    if (EnvironmentDetection::is_inside_tmux() || EnvironmentDetection::is_in_iterm2())
+        return false;
     return !EnvironmentDetection::is_tmux_available();
 }
 
@@ -92,7 +95,8 @@ std::shared_ptr<TeammateExecutor> BackendRegistry::get_in_process_backend() {
 std::shared_ptr<TeammateExecutor> BackendRegistry::get_teammate_executor(bool prefer_in_process) {
     if (prefer_in_process || is_in_process_enabled()) return get_in_process_backend();
     auto detection = detect_and_get_backend();
-    if (detection.backend_type == BackendType::InProcess || detection.needs_it2_setup || !cached_backend_) {
+    if (detection.backend_type == BackendType::InProcess || detection.needs_it2_setup ||
+        !cached_backend_) {
         mark_in_process_fallback();
         return get_in_process_backend();
     }
@@ -107,4 +111,4 @@ std::string BackendRegistry::get_tmux_install_instructions() {
     return "Install tmux or set LOOM_TEAMMATE_BACKEND=in-process to use in-process teammates.";
 }
 
-} // namespace loom::utils::swarm_backends
+}  // namespace loom::utils::swarm_backends

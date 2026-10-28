@@ -22,10 +22,10 @@
 // ───────────────────────────────────────────────────────────────────────────────
 module;
 
-#include <cstdint>
-
 #include <ftxui/dom/elements.hpp>
+
 #include <cstddef>
+#include <cstdint>
 
 export module loom.ui.visual.file_edit_tool_diff;
 
@@ -66,8 +66,10 @@ struct DiffData {
 ///   Dashed top/bottom borders in subtle colour, no left/right borders.
 ///   Placeholder shows dim "…", otherwise children.
 [[nodiscard]] Element diff_frame(Element content, bool placeholder = false) {
-    auto top = separatorDashed() | color(loom::ui::design::theme::current_theme().palette->border_subtle);
-    auto bot = separatorDashed() | color(loom::ui::design::theme::current_theme().palette->border_subtle);
+    auto top =
+        separatorDashed() | color(loom::ui::design::theme::current_theme().palette->border_subtle);
+    auto bot =
+        separatorDashed() | color(loom::ui::design::theme::current_theme().palette->border_subtle);
 
     if (placeholder) {
         content = text("…") | dim;
@@ -84,14 +86,13 @@ struct DiffData {
 /// Renders a list of hunks with dimmed "..." separators between them.
 /// Mirrors StructuredDiffList which uses intersperse(hunks, …) with
 /// dim "..." separators.
-[[nodiscard]] Element structured_diff_list(
-    const std::vector<sd::StructuredPatchHunk>& hunks,
-    const sd::DiffSyntaxTheme& theme,
-    [[maybe_unused]] std::string_view file_path,
-    bool show_line_numbers = true)
-{
+[[nodiscard]] Element structured_diff_list(const std::vector<sd::StructuredPatchHunk>& hunks,
+                                           const sd::DiffSyntaxTheme& theme,
+                                           [[maybe_unused]] std::string_view file_path,
+                                           bool show_line_numbers = true) {
     if (hunks.empty()) {
-        return text("  (no changes)") | color(loom::ui::design::theme::current_theme().palette->muted);
+        return text("  (no changes)") |
+               color(loom::ui::design::theme::current_theme().palette->muted);
     }
 
     // Compute gutter width across all hunks for consistent alignment.
@@ -113,8 +114,8 @@ struct DiffData {
 
         // Hunk lines
         for (const auto& line : hunk.lines) {
-            elements.push_back(sd::RenderStructuredDiffLine(
-                line, theme, show_line_numbers, gutter_width, /*selected=*/false));
+            elements.push_back(sd::RenderStructuredDiffLine(line, theme, show_line_numbers,
+                                                            gutter_width, /*selected=*/false));
         }
 
         // Ellipsis separator between hunks
@@ -131,14 +132,11 @@ struct DiffData {
 /// Normalize an edit: find the actual old_string in file content (handling
 /// curly-quote normalization etc.) and preserve quote style in new_string.
 /// Mirrors normalizeEdit().
-[[nodiscard]] inline fe::FileEdit normalize_edit(
-    std::string_view file_content,
-    const fe::FileEdit& edit)
-{
+[[nodiscard]] inline fe::FileEdit normalize_edit(std::string_view file_content,
+                                                 const fe::FileEdit& edit) {
     std::string actual_old = fe::find_actual_string(file_content, edit.old_string)
-        .value_or(std::string(edit.old_string));
-    std::string actual_new = fe::preserve_quote_style(
-        edit.old_string, actual_old, edit.new_string);
+                                 .value_or(std::string(edit.old_string));
+    std::string actual_new = fe::preserve_quote_style(edit.old_string, actual_old, edit.new_string);
     return {
         .old_string = std::move(actual_old),
         .new_string = std::move(actual_new),
@@ -152,11 +150,9 @@ struct DiffData {
 /// Mirrors the core of loadDiffData() — the synchronous computation part.
 /// Returns the structured diff hunks with word-level annotations, plus the
 /// first line of the file for shebang-based language detection.
-[[nodiscard]] inline std::expected<DiffData, std::string> compute_diff_data(
-    [[maybe_unused]] std::string_view file_path,
-    std::string_view file_content,
-    const std::vector<fe::FileEdit>& edits)
-{
+[[nodiscard]] inline std::expected<DiffData, std::string>
+compute_diff_data([[maybe_unused]] std::string_view file_path, std::string_view file_content,
+                  const std::vector<fe::FileEdit>& edits) {
     if (edits.empty()) {
         return std::unexpected("No edits provided");
     }
@@ -237,13 +233,10 @@ struct DiffData {
 /// @param terminal_width available terminal width (for line wrapping)
 /// @param placeholder  if true, show the dimmed "…" placeholder instead
 /// @param theme        optional syntax theme override
-[[nodiscard]] inline Element render_file_edit_tool_diff(
-    const FileEditToolDiffProps& props,
-    std::string_view file_content,
-    [[maybe_unused]] int terminal_width,
-    bool placeholder = false,
-    std::optional<sd::DiffSyntaxTheme> theme = std::nullopt)
-{
+[[nodiscard]] inline Element
+render_file_edit_tool_diff(const FileEditToolDiffProps& props, std::string_view file_content,
+                           [[maybe_unused]] int terminal_width, bool placeholder = false,
+                           std::optional<sd::DiffSyntaxTheme> theme = std::nullopt) {
     if (placeholder) {
         return diff_frame(text(""), /*placeholder=*/true);
     }
@@ -251,7 +244,8 @@ struct DiffData {
     auto data = compute_diff_data(props.file_path, file_content, props.edits);
     if (!data.has_value()) {
         // Fallback: show error message inside frame
-        return diff_frame(text("  " + data.error()) | color(loom::ui::design::theme::current_theme().palette->danger));
+        return diff_frame(text("  " + data.error()) |
+                          color(loom::ui::design::theme::current_theme().palette->danger));
     }
 
     auto theme_val = theme.value_or(sd::default_theme());
@@ -266,14 +260,13 @@ struct DiffData {
 /// caller already has a patch and wants to avoid recomputation).
 /// Mirrors the path where FileEditToolUpdatedMessage passes structuredPatch
 /// directly to StructuredDiffList.
-[[nodiscard]] inline Element render_file_edit_diff_from_hunks(
-    [[maybe_unused]] std::string_view file_path,
-    const std::vector<sd::StructuredPatchHunk>& hunks,
-    std::optional<sd::DiffSyntaxTheme> theme = std::nullopt)
-{
+[[nodiscard]] inline Element
+render_file_edit_diff_from_hunks([[maybe_unused]] std::string_view file_path,
+                                 const std::vector<sd::StructuredPatchHunk>& hunks,
+                                 std::optional<sd::DiffSyntaxTheme> theme = std::nullopt) {
     auto theme_val = theme.value_or(sd::default_theme());
     auto body = structured_diff_list(hunks, theme_val, file_path);
     return diff_frame(std::move(body));
 }
 
-} // namespace loom::ui::components::file_edit_tool_diff
+}  // namespace loom::ui::components::file_edit_tool_diff

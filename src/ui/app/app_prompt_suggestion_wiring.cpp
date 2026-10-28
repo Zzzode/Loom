@@ -32,7 +32,8 @@ void wire_prompt_suggestion_hook(void* hooks_v, void* engine_v,
                                  std::function<void(std::optional<std::string>)> publish) {
     auto& hooks = *static_cast<loom::hooks::LifecycleHookRegistry*>(hooks_v);
     auto* engine = static_cast<core::QueryEngine*>(engine_v);
-    hooks.on_query_end([engine, publish = std::move(publish)](const loom::hooks::QueryEndEvent& ev) {
+    hooks.on_query_end([engine,
+                        publish = std::move(publish)](const loom::hooks::QueryEndEvent& ev) {
         if (!ev.success) {
             publish(std::nullopt);
             return;
@@ -40,27 +41,28 @@ void wire_prompt_suggestion_hook(void* hooks_v, void* engine_v,
         try {
             loom::services::prompt_suggestion::SuggestionRequest req;
             for (const auto& msg : engine->get_conversation()) {
-                std::visit([&](const auto& m) {
-                    using M = std::remove_cvref_t<decltype(m)>;
-                    std::string role;
-                    if constexpr (std::is_same_v<M, loom::core::UserMessage>)
-                        role = "user";
-                    else if constexpr (std::is_same_v<M, loom::core::AssistantMessage> ||
-                                       std::is_same_v<M, loom::core::ToolUseMessage>)
-                        role = "assistant";
-                    else
-                        return;  // System / ToolResult skipped
-                    std::string body;
-                    for (const auto& blk : m.content) {
-                        if (auto* tb = std::get_if<loom::core::TextBlock>(&blk)) {
-                            if (!body.empty()) body.push_back('\n');
-                            body += tb->text;
+                std::visit(
+                    [&](const auto& m) {
+                        using M = std::remove_cvref_t<decltype(m)>;
+                        std::string role;
+                        if constexpr (std::is_same_v<M, loom::core::UserMessage>)
+                            role = "user";
+                        else if constexpr (std::is_same_v<M, loom::core::AssistantMessage> ||
+                                           std::is_same_v<M, loom::core::ToolUseMessage>)
+                            role = "assistant";
+                        else
+                            return;  // System / ToolResult skipped
+                        std::string body;
+                        for (const auto& blk : m.content) {
+                            if (auto* tb = std::get_if<loom::core::TextBlock>(&blk)) {
+                                if (!body.empty()) body.push_back('\n');
+                                body += tb->text;
+                            }
                         }
-                    }
-                    if (body.empty()) return;
-                    req.recent_turns.push_back(
-                        {std::move(role), std::move(body), m.timestamp});
-                }, msg);
+                        if (body.empty()) return;
+                        req.recent_turns.push_back({std::move(role), std::move(body), m.timestamp});
+                    },
+                    msg);
             }
             req.max_suggestions = 1;
             req.include_speculative = true;

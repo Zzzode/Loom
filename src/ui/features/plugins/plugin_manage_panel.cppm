@@ -6,14 +6,14 @@
 /// (Phase 2 C1).  No direct plugin engine reads.
 module;
 
-#include <cstdint>
-#include <cstddef>
-
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/event.hpp>
 #include <ftxui/dom/elements.hpp>
+
 #include <cctype>
+#include <cstddef>
+#include <cstdint>
 
 export module loom.ui.features.plugins.plugin_manage_panel;
 
@@ -34,22 +34,29 @@ using namespace ftxui;
 inline Decorator padding(int top, int right, int bottom, int left) {
     return [=](Element e) -> Element {
         Elements rows;
-        for (int i = 0; i < top; ++i) rows.push_back(text(""));
+        for (int i = 0; i < top; ++i)
+            rows.push_back(text(""));
         {
             Elements left_pad, right_pad;
-            for (int i = 0; i < left; ++i) left_pad.push_back(text(" "));
-            for (int i = 0; i < right; ++i) right_pad.push_back(text(" "));
+            for (int i = 0; i < left; ++i)
+                left_pad.push_back(text(" "));
+            for (int i = 0; i < right; ++i)
+                right_pad.push_back(text(" "));
             rows.push_back(hbox({
                 hbox(std::move(left_pad)),
                 std::move(e),
                 hbox(std::move(right_pad)),
             }));
         }
-        for (int i = 0; i < bottom; ++i) rows.push_back(text(""));
+        for (int i = 0; i < bottom; ++i)
+            rows.push_back(text(""));
         return vbox(std::move(rows));
     };
 }
-inline Decorator padding(int all) { return padding(all, all, all, all); }
+
+inline Decorator padding(int all) {
+    return padding(all, all, all, all);
+}
 
 namespace ui = loom::commands::plugin_ui;
 namespace pp = loom::commands::plugin;
@@ -85,15 +92,15 @@ struct ManagePanelInputs {
 
     // Routed-action hints
     std::optional<std::string> target_plugin;
-    TargetAction               preselect_action = TargetAction::None;
+    TargetAction preselect_action = TargetAction::None;
 
     // Callbacks (consumer-provided; never invoked from render code)
     std::function<void(std::string_view id, bool enable)> on_toggle;
-    std::function<void(std::string_view id)>               on_uninstall;
-    std::function<void(std::string_view id)>               on_update;
-    std::function<void(std::string_view id)>               on_configure;
-    std::function<void()>                                  on_install_new;   // → install flow
-    std::function<void(const ui::ViewState& next)>         on_navigate;
+    std::function<void(std::string_view id)> on_uninstall;
+    std::function<void(std::string_view id)> on_update;
+    std::function<void(std::string_view id)> on_configure;
+    std::function<void()> on_install_new;  // → install flow
+    std::function<void(const ui::ViewState& next)> on_navigate;
 };
 
 // =========================================================================
@@ -102,54 +109,51 @@ struct ManagePanelInputs {
 
 namespace detail {
 
-[[nodiscard]] inline Element RenderToolbar(
-    std::string_view search_text,
-    StatusFilter filter,
-    SortKey sort,
-    std::size_t visible_count,
-    std::size_t total_count)
-{
+[[nodiscard]] inline Element RenderToolbar(std::string_view search_text, StatusFilter filter,
+                                           SortKey sort, std::size_t visible_count,
+                                           std::size_t total_count) {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
-    static constexpr const char* filter_labels[] = {
-        "All", "Enabled", "Disabled", "By Author"
-    };
-    static constexpr const char* sort_labels[] = {
-        "Name", "Installed", "Scope", "Author"
-    };
+    static constexpr const char* filter_labels[] = {"All", "Enabled", "Disabled", "By Author"};
+    static constexpr const char* sort_labels[] = {"Name", "Installed", "Scope", "Author"};
     auto filter_label = filter_labels[(unsigned)filter];
-    auto sort_label   = sort_labels[(unsigned)sort];
+    auto sort_label = sort_labels[(unsigned)sort];
 
     return hbox({
-        text(" " + std::string(loom::ui::design::figures::kInfo) + " ") | color(pal.muted),
-        text(std::string{search_text.empty() ? "Search installed plugins… (press /)"
-                                             : search_text})
-             | color(search_text.empty() ? pal.muted : pal.text),
-        text("│") | (loom::ui::design::theme::current_theme().a11y.reduced_motion ? nothing : blink) | (search_text.empty() ? dim : color(pal.info)),
-        filler(),
-        text("Filter:") | color(pal.muted),
-        text(" " + std::string{filter_label} + " ") | color(pal.info) | borderLight,
-        text("  Sort:") | color(pal.muted),
-        text(" " + std::string{sort_label} + " ") | color(pal.primary) | borderLight,
-        text("  "),
-        text(" [+] Install ") | bold | color(pal.success) | bgcolor(pal.success_tint_bg),
-        text(" "),
-        text(std::format("{}/{}", visible_count, total_count)) | color(pal.muted),
-    }) | padding(0, 1, 0, 0);
+               text(" " + std::string(loom::ui::design::figures::kInfo) + " ") | color(pal.muted),
+               text(std::string{search_text.empty() ? "Search installed plugins… (press /)"
+                                                    : search_text}) |
+                   color(search_text.empty() ? pal.muted : pal.text),
+               text("│") |
+                   (loom::ui::design::theme::current_theme().a11y.reduced_motion ? nothing
+                                                                                 : blink) |
+                   (search_text.empty() ? dim : color(pal.info)),
+               filler(),
+               text("Filter:") | color(pal.muted),
+               text(" " + std::string{filter_label} + " ") | color(pal.info) | borderLight,
+               text("  Sort:") | color(pal.muted),
+               text(" " + std::string{sort_label} + " ") | color(pal.primary) | borderLight,
+               text("  "),
+               text(" [+] Install ") | bold | color(pal.success) | bgcolor(pal.success_tint_bg),
+               text(" "),
+               text(std::format("{}/{}", visible_count, total_count)) | color(pal.muted),
+           }) |
+           padding(0, 1, 0, 0);
 }
 
 // Render a single installed plugin row.
-[[nodiscard]] inline Element RenderInstalledRow(
-    const InstalledCellData& p, bool selected, bool is_target)
-{
+[[nodiscard]] inline Element RenderInstalledRow(const InstalledCellData& p, bool selected,
+                                                bool is_target) {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
     auto name_color = p.enabled ? pal.text : pal.muted;
 
     Elements left;
-    left.push_back(text(selected ? std::string(loom::ui::design::figures::kPointerSmall) + " " : (is_target ? "★ " : "  "))
-                   | color(is_target ? pal.warning : pal.info));
+    left.push_back(text(selected ? std::string(loom::ui::design::figures::kPointerSmall) + " "
+                                 : (is_target ? "★ " : "  ")) |
+                   color(is_target ? pal.warning : pal.info));
     // Status dot
-    left.push_back(text(p.enabled ? std::string(loom::ui::design::figures::kBullet) + " " : std::string(loom::ui::design::figures::kEffortLow) + " ")
-                   | color(p.has_error ? pal.danger : (p.enabled ? pal.success : pal.muted)));
+    left.push_back(text(p.enabled ? std::string(loom::ui::design::figures::kBullet) + " "
+                                  : std::string(loom::ui::design::figures::kEffortLow) + " ") |
+                   color(p.has_error ? pal.danger : (p.enabled ? pal.success : pal.muted)));
     // Name + marketplace
     left.push_back(text(p.name) | bold | color(selected ? pal.text : name_color));
     left.push_back(text(" @") | dim);
@@ -158,17 +162,20 @@ namespace detail {
         left.push_back(text("  v" + *p.version) | color(pal.muted));
     }
     if (p.has_pending_update) {
-        left.push_back(text(" " + std::string(loom::ui::design::figures::kArrowUp)) | color(pal.warning) | bold);
+        left.push_back(text(" " + std::string(loom::ui::design::figures::kArrowUp)) |
+                       color(pal.warning) | bold);
     }
     if (p.has_error) {
-        left.push_back(text(" " + std::string(loom::ui::design::figures::kCross)) | color(pal.danger));
+        left.push_back(text(" " + std::string(loom::ui::design::figures::kCross)) |
+                       color(pal.danger));
     }
 
     Elements right;
     right.push_back(filler());
     // Tool/command counts
     if (p.tool_count || p.command_count) {
-        right.push_back(text(std::format("{} tools · {} commands", p.tool_count, p.command_count)) | color(pal.muted));
+        right.push_back(text(std::format("{} tools · {} commands", p.tool_count, p.command_count)) |
+                        color(pal.muted));
         right.push_back(text(" "));
     }
     // Scope chip
@@ -212,8 +219,7 @@ namespace detail {
     }));
     rows.push_back(hbox({
         text("  Status:      ") | color(pal.muted),
-        text(p.enabled ? "● ENABLED" : "○ DISABLED")
-             | color(p.enabled ? pal.success : pal.muted),
+        text(p.enabled ? "● ENABLED" : "○ DISABLED") | color(p.enabled ? pal.success : pal.muted),
     }));
     if (p.last_updated) {
         rows.push_back(hbox({
@@ -228,22 +234,22 @@ namespace detail {
         text(std::format("{}", p.tool_count)) | color(pal.warning),
         text("   Commands: ") | color(pal.muted),
         text(std::format("{}", p.command_count)) | color(pal.warning),
-        p.has_config_options
-            ? text("   • Has options") | color(pal.info)
-            : text(""),
+        p.has_config_options ? text("   • Has options") | color(pal.info) : text(""),
     }));
 
     if (p.has_pending_update) {
         rows.push_back(text(""));
         rows.push_back(hbox({
-            text("  " + std::string(loom::ui::design::figures::kArrowUp) + " ") | color(pal.warning) | bold,
+            text("  " + std::string(loom::ui::design::figures::kArrowUp) + " ") |
+                color(pal.warning) | bold,
             text("Update available") | color(pal.warning),
         }));
     }
     if (p.has_error) {
         rows.push_back(text(""));
         rows.push_back(hbox({
-            text("  " + std::string(loom::ui::design::figures::kCross) + " ") | color(pal.danger) | bold,
+            text("  " + std::string(loom::ui::design::figures::kCross) + " ") | color(pal.danger) |
+                bold,
             text("Plugin has load errors — check the Errors tab") | color(pal.danger),
         }));
     }
@@ -252,28 +258,29 @@ namespace detail {
     rows.push_back(text(""));
     rows.push_back(text(" Actions:") | color(pal.muted));
     rows.push_back(hbox({
-        text(" [") | dim,
-        text("Space") | bold | color(pal.info),
-        text("]") | dim,
-        text(p.enabled ? " Disable " : " Enable "),
-        text(" [") | dim,
-        text("c") | bold | color(pal.info),
-        text("]") | dim,
-        text(" Config  "),
-        text("[") | dim,
-        text("u") | bold | color(pal.info),
-        text("]") | dim,
-        text(" Update  "),
-        text("[") | dim,
-        text("x") | bold | color(pal.info),
-        text("]") | dim,
-        text(" Uninstall"),
-    }) | color(pal.muted));
+                       text(" [") | dim,
+                       text("Space") | bold | color(pal.info),
+                       text("]") | dim,
+                       text(p.enabled ? " Disable " : " Enable "),
+                       text(" [") | dim,
+                       text("c") | bold | color(pal.info),
+                       text("]") | dim,
+                       text(" Config  "),
+                       text("[") | dim,
+                       text("u") | bold | color(pal.info),
+                       text("]") | dim,
+                       text(" Update  "),
+                       text("[") | dim,
+                       text("x") | bold | color(pal.info),
+                       text("]") | dim,
+                       text(" Uninstall"),
+                   }) |
+                   color(pal.muted));
 
     return vbox(std::move(rows)) | borderLight | color(pal.info);
 }
 
-} // namespace detail
+}  // namespace detail
 
 // =========================================================================
 // Factory — full interactive manage panel
@@ -283,14 +290,14 @@ struct ManageState {
     ManagePanelInputs inputs;
 
     // ── List state ──────────────────────────────────────────────────────
-    std::string              search_text;
-    StatusFilter             filter = StatusFilter::All;
-    SortKey                  sort   = SortKey::Name;
-    std::vector<std::size_t> filtered_indices;   // → into inputs.installed
-    pp::Paginator            paginator{0, 8};
+    std::string search_text;
+    StatusFilter filter = StatusFilter::All;
+    SortKey sort = SortKey::Name;
+    std::vector<std::size_t> filtered_indices;  // → into inputs.installed
+    pp::Paginator paginator{0, 8};
 
     // ── Selection ───────────────────────────────────────────────────────
-    int  selected_page_index = 0;    // index within filtered page (0..7)
+    int selected_page_index = 0;  // index within filtered page (0..7)
     bool searching = false;
 };
 
@@ -308,10 +315,16 @@ inline void RecomputeFiltered(ManageState& s) {
 
         // Status filter
         switch (s.filter) {
-            case StatusFilter::Enabled:  if (!p.enabled) continue; break;
-            case StatusFilter::Disabled: if (p.enabled)  continue; break;
-            case StatusFilter::ByAuthor: /* all authors, show grouped */ break;
-            case StatusFilter::All:      break;
+        case StatusFilter::Enabled:
+            if (!p.enabled) continue;
+            break;
+        case StatusFilter::Disabled:
+            if (p.enabled) continue;
+            break;
+        case StatusFilter::ByAuthor: /* all authors, show grouped */
+            break;
+        case StatusFilter::All:
+            break;
         }
 
         // Text filter (case-insensitive contains on name/marketplace/desc)
@@ -333,28 +346,26 @@ inline void RecomputeFiltered(ManageState& s) {
 
     // Sort
     switch (s.sort) {
-        case SortKey::Name:
-            std::ranges::sort(s.filtered_indices, [&](std::size_t a, std::size_t b) {
-                return all[a].name < all[b].name;
-            });
-            break;
-        case SortKey::InstalledTime:
-            std::ranges::sort(s.filtered_indices, [&](std::size_t a, std::size_t b) {
-                return all[a].last_updated.value_or("") > all[b].last_updated.value_or("");
-            });
-            break;
-        case SortKey::Scope:
-            std::ranges::sort(s.filtered_indices, [&](std::size_t a, std::size_t b) {
-                if (all[a].scope != all[b].scope) return all[a].scope < all[b].scope;
-                return all[a].name < all[b].name;
-            });
-            break;
-        case SortKey::Author:
-            // Author not in InstalledCellData — fallback to scope then name
-            std::ranges::sort(s.filtered_indices, [&](std::size_t a, std::size_t b) {
-                return all[a].name < all[b].name;
-            });
-            break;
+    case SortKey::Name:
+        std::ranges::sort(s.filtered_indices,
+                          [&](std::size_t a, std::size_t b) { return all[a].name < all[b].name; });
+        break;
+    case SortKey::InstalledTime:
+        std::ranges::sort(s.filtered_indices, [&](std::size_t a, std::size_t b) {
+            return all[a].last_updated.value_or("") > all[b].last_updated.value_or("");
+        });
+        break;
+    case SortKey::Scope:
+        std::ranges::sort(s.filtered_indices, [&](std::size_t a, std::size_t b) {
+            if (all[a].scope != all[b].scope) return all[a].scope < all[b].scope;
+            return all[a].name < all[b].name;
+        });
+        break;
+    case SortKey::Author:
+        // Author not in InstalledCellData — fallback to scope then name
+        std::ranges::sort(s.filtered_indices,
+                          [&](std::size_t a, std::size_t b) { return all[a].name < all[b].name; });
+        break;
     }
 
     s.paginator = pp::Paginator{s.filtered_indices.size(), 8};
@@ -365,9 +376,8 @@ inline void RecomputeFiltered(ManageState& s) {
     if (s.inputs.target_plugin) {
         for (std::size_t i = 0; i < s.filtered_indices.size(); ++i) {
             if (all[s.filtered_indices[i]].name == *s.inputs.target_plugin ||
-                (all[s.filtered_indices[i]].name + "@" +
-                 all[s.filtered_indices[i]].marketplace) == *s.inputs.target_plugin)
-            {
+                (all[s.filtered_indices[i]].name + "@" + all[s.filtered_indices[i]].marketplace) ==
+                    *s.inputs.target_plugin) {
                 s.paginator.set_selected_index(i);
                 const auto page_start = s.paginator.start_index();
                 s.selected_page_index = (int)(i - page_start);
@@ -383,193 +393,201 @@ inline void RecomputeFiltered(ManageState& s) {
     RecomputeFiltered(*state);
 
     // Sub-component: search input (toggled via '/')
-    Component search_input = Input(&state->search_text,
-                                   "Search installed plugins…");
+    Component search_input = Input(&state->search_text, "Search installed plugins…");
     auto search_with_filter = search_input | CatchEvent([state](Event) {
-        RecomputeFiltered(*state);
-        return false;
-    });
+                                  RecomputeFiltered(*state);
+                                  return false;
+                              });
 
     return Renderer([state, search_with_filter] {
-        const auto& pal = *loom::ui::design::theme::current_theme().palette;
-        const auto snap = state->paginator.snapshot();
-        auto toolbar = detail::RenderToolbar(
-            state->search_text, state->filter, state->sort,
-            snap.end_index - snap.start_index, state->filtered_indices.size());
+               const auto& pal = *loom::ui::design::theme::current_theme().palette;
+               const auto snap = state->paginator.snapshot();
+               auto toolbar = detail::RenderToolbar(state->search_text, state->filter, state->sort,
+                                                    snap.end_index - snap.start_index,
+                                                    state->filtered_indices.size());
 
-        // Build list
-        Elements list_rows;
-        if (state->filtered_indices.empty()) {
-            list_rows.push_back(text("  No plugins match the current filters.")
-                                | color(pal.warning) | center);
-        } else {
-            for (std::size_t i = snap.start_index; i < snap.end_index; ++i) {
-                const int page_i = (int)(i - snap.start_index);
-                const bool selected = (page_i == state->selected_page_index);
-                const bool is_target = state->inputs.target_plugin.has_value() &&
-                    (state->inputs.installed[state->filtered_indices[i]].name ==
-                     *state->inputs.target_plugin);
-                list_rows.push_back(detail::RenderInstalledRow(
-                    state->inputs.installed[state->filtered_indices[i]],
-                    selected, is_target));
-                if (page_i + 1 < (int)(snap.end_index - snap.start_index))
-                    list_rows.push_back(separator() | dim);
-            }
-        }
+               // Build list
+               Elements list_rows;
+               if (state->filtered_indices.empty()) {
+                   list_rows.push_back(text("  No plugins match the current filters.") |
+                                       color(pal.warning) | center);
+               } else {
+                   for (std::size_t i = snap.start_index; i < snap.end_index; ++i) {
+                       const int page_i = (int)(i - snap.start_index);
+                       const bool selected = (page_i == state->selected_page_index);
+                       const bool is_target =
+                           state->inputs.target_plugin.has_value() &&
+                           (state->inputs.installed[state->filtered_indices[i]].name ==
+                            *state->inputs.target_plugin);
+                       list_rows.push_back(detail::RenderInstalledRow(
+                           state->inputs.installed[state->filtered_indices[i]], selected,
+                           is_target));
+                       if (page_i + 1 < (int)(snap.end_index - snap.start_index))
+                           list_rows.push_back(separator() | dim);
+                   }
+               }
 
-        // Pagination footer
-        Elements page_bits{
-            text(std::format(" {}-{} / {}  ",
-                             snap.scroll_position.current == 0 ? 0 : (int)snap.start_index + 1,
-                             (int)snap.end_index, (int)snap.scroll_position.total))
-                | color(pal.muted),
-        };
-        if (snap.scroll_position.can_scroll_up)
-            page_bits.push_back(text("PgUp ") | color(pal.info));
-        page_bits.push_back(text("|") | dim);
-        if (snap.scroll_position.can_scroll_down)
-            page_bits.push_back(text(" PgDn") | color(pal.info));
+               // Pagination footer
+               Elements page_bits{
+                   text(std::format(" {}-{} / {}  ",
+                                    snap.scroll_position.current == 0 ? 0
+                                                                      : (int)snap.start_index + 1,
+                                    (int)snap.end_index, (int)snap.scroll_position.total)) |
+                       color(pal.muted),
+               };
+               if (snap.scroll_position.can_scroll_up)
+                   page_bits.push_back(text("PgUp ") | color(pal.info));
+               page_bits.push_back(text("|") | dim);
+               if (snap.scroll_position.can_scroll_down)
+                   page_bits.push_back(text(" PgDn") | color(pal.info));
 
-        auto list_panel = vbox({
-            toolbar,
-            separator(),
-            state->searching
-                ? hbox({search_with_filter->Render()})
-                : text(""),
-            state->searching ? separator() : text(""),
-            vbox(std::move(list_rows)) | flex | yframe | vscroll_indicator,
-            separator(),
-            hbox(std::move(page_bits)),
-        }) | border | size(WIDTH, EQUAL, 58);
+               auto list_panel =
+                   vbox({
+                       toolbar,
+                       separator(),
+                       state->searching ? hbox({search_with_filter->Render()}) : text(""),
+                       state->searching ? separator() : text(""),
+                       vbox(std::move(list_rows)) | flex | yframe | vscroll_indicator,
+                       separator(),
+                       hbox(std::move(page_bits)),
+                   }) |
+                   border | size(WIDTH, EQUAL, 58);
 
-        // Detail panel
-        Element detail;
-        if (!state->filtered_indices.empty()) {
-            const auto page_idx = (std::size_t)std::max(0, state->selected_page_index);
-            const auto actual_i = state->paginator.start_index() + page_idx;
-            if (actual_i < state->filtered_indices.size()) {
-                detail = detail::RenderDetailPane(
-                    state->inputs.installed[state->filtered_indices[actual_i]]);
-            }
-        }
-        if (!detail) {
-            detail = text(" No plugin selected\n\n\n Use ↑/↓ or j/k to browse.\n"
-                          " Press / to search, F to filter, S to sort.")
-                | color(pal.muted) | center | borderLight;
-        }
+               // Detail panel
+               Element detail;
+               if (!state->filtered_indices.empty()) {
+                   const auto page_idx = (std::size_t)std::max(0, state->selected_page_index);
+                   const auto actual_i = state->paginator.start_index() + page_idx;
+                   if (actual_i < state->filtered_indices.size()) {
+                       detail = detail::RenderDetailPane(
+                           state->inputs.installed[state->filtered_indices[actual_i]]);
+                   }
+               }
+               if (!detail) {
+                   detail = text(" No plugin selected\n\n\n Use ↑/↓ or j/k to browse.\n"
+                                 " Press / to search, F to filter, S to sort.") |
+                            color(pal.muted) | center | borderLight;
+               }
 
-        return hbox({
-            std::move(list_panel),
-            text(" "),
-            std::move(detail) | flex,
-        });
-    }) | CatchEvent([state, search_input](Event event) -> bool {
-        // Search mode
-        if (state->searching) {
-            if (event == Event::Escape) {
-                state->searching = false;
-                state->search_text.clear();
-                RecomputeFiltered(*state);
-                return true;
-            }
-            if (event == Event::Return) {
-                state->searching = false;
-                return true;
-            }
-            // Forward to search input
-            return search_input->OnEvent(event);
-        }
+               return hbox({
+                   std::move(list_panel),
+                   text(" "),
+                   std::move(detail) | flex,
+               });
+           }) |
+           CatchEvent([state, search_input](Event event) -> bool {
+               // Search mode
+               if (state->searching) {
+                   if (event == Event::Escape) {
+                       state->searching = false;
+                       state->search_text.clear();
+                       RecomputeFiltered(*state);
+                       return true;
+                   }
+                   if (event == Event::Return) {
+                       state->searching = false;
+                       return true;
+                   }
+                   // Forward to search input
+                   return search_input->OnEvent(event);
+               }
 
-        if (event == Event::Character('/')) {
-            state->searching = true;
-            search_input->TakeFocus();
-            return true;
-        }
+               if (event == Event::Character('/')) {
+                   state->searching = true;
+                   search_input->TakeFocus();
+                   return true;
+               }
 
-        // Filter cycle: F → All → Enabled → Disabled → ByAuthor
-        if (event == Event::Character('f') || event == Event::Character('F')) {
-            state->filter = (StatusFilter)(((unsigned)state->filter + 1) % 4);
-            RecomputeFiltered(*state);
-            return true;
-        }
+               // Filter cycle: F → All → Enabled → Disabled → ByAuthor
+               if (event == Event::Character('f') || event == Event::Character('F')) {
+                   state->filter = (StatusFilter)(((unsigned)state->filter + 1) % 4);
+                   RecomputeFiltered(*state);
+                   return true;
+               }
 
-        // Sort cycle: S → Name → Installed → Scope → Author
-        if (event == Event::Character('s') || event == Event::Character('S')) {
-            state->sort = (SortKey)(((unsigned)state->sort + 1) % 4);
-            RecomputeFiltered(*state);
-            return true;
-        }
+               // Sort cycle: S → Name → Installed → Scope → Author
+               if (event == Event::Character('s') || event == Event::Character('S')) {
+                   state->sort = (SortKey)(((unsigned)state->sort + 1) % 4);
+                   RecomputeFiltered(*state);
+                   return true;
+               }
 
-        // Install new → call on_install_new
-        if (event == Event::Character('+') || event == Event::Character('i') ||
-            event == Event::Character('I'))
-        {
-            if (state->inputs.on_install_new) state->inputs.on_install_new();
-            return true;
-        }
+               // Install new → call on_install_new
+               if (event == Event::Character('+') || event == Event::Character('i') ||
+                   event == Event::Character('I')) {
+                   if (state->inputs.on_install_new) state->inputs.on_install_new();
+                   return true;
+               }
 
-        // Nav: up/down within the filtered page
-        const auto page_size = (int)state->paginator.max_visible();
-        if (event == Event::ArrowUp || event == Event::Character('k')) {
-            if (state->selected_page_index > 0) {
-                --state->selected_page_index;
-            } else if (state->paginator.snapshot().scroll_position.can_scroll_up) {
-                state->paginator.prev_page();
-                state->selected_page_index = page_size - 1;
-            }
-            return true;
-        }
-        if (event == Event::ArrowDown || event == Event::Character('j')) {
-            if (state->selected_page_index + 1 <
-                (int)(state->paginator.end_index() - state->paginator.start_index()))
-            {
-                ++state->selected_page_index;
-            } else if (state->paginator.snapshot().scroll_position.can_scroll_down) {
-                state->paginator.next_page();
-                state->selected_page_index = 0;
-            }
-            return true;
-        }
-        if (event == Event::PageUp)   { state->paginator.prev_page(); state->selected_page_index = 0; return true; }
-        if (event == Event::PageDown) { state->paginator.next_page(); state->selected_page_index = 0; return true; }
+               // Nav: up/down within the filtered page
+               const auto page_size = (int)state->paginator.max_visible();
+               if (event == Event::ArrowUp || event == Event::Character('k')) {
+                   if (state->selected_page_index > 0) {
+                       --state->selected_page_index;
+                   } else if (state->paginator.snapshot().scroll_position.can_scroll_up) {
+                       state->paginator.prev_page();
+                       state->selected_page_index = page_size - 1;
+                   }
+                   return true;
+               }
+               if (event == Event::ArrowDown || event == Event::Character('j')) {
+                   if (state->selected_page_index + 1 <
+                       (int)(state->paginator.end_index() - state->paginator.start_index())) {
+                       ++state->selected_page_index;
+                   } else if (state->paginator.snapshot().scroll_position.can_scroll_down) {
+                       state->paginator.next_page();
+                       state->selected_page_index = 0;
+                   }
+                   return true;
+               }
+               if (event == Event::PageUp) {
+                   state->paginator.prev_page();
+                   state->selected_page_index = 0;
+                   return true;
+               }
+               if (event == Event::PageDown) {
+                   state->paginator.next_page();
+                   state->selected_page_index = 0;
+                   return true;
+               }
 
-        if (state->filtered_indices.empty()) return false;
+               if (state->filtered_indices.empty()) return false;
 
-        const auto page_idx = (std::size_t)std::max(0, state->selected_page_index);
-        const auto actual_i = state->paginator.start_index() + page_idx;
-        if (actual_i >= state->filtered_indices.size()) return false;
-        const auto& p = state->inputs.installed[state->filtered_indices[actual_i]];
-        std::string id = p.name + "@" + p.marketplace;
+               const auto page_idx = (std::size_t)std::max(0, state->selected_page_index);
+               const auto actual_i = state->paginator.start_index() + page_idx;
+               if (actual_i >= state->filtered_indices.size()) return false;
+               const auto& p = state->inputs.installed[state->filtered_indices[actual_i]];
+               std::string id = p.name + "@" + p.marketplace;
 
-        // Space: toggle enable
-        if (event == Event::Character(' ')) {
-            if (state->inputs.on_toggle) state->inputs.on_toggle(id, !p.enabled);
-            // Mutate local state so re-render reflects the change immediately
-            // (consumer will re-supply updated data on next frame)
-            const_cast<InstalledCellData&>(p).enabled = !p.enabled;
-            return true;
-        }
+               // Space: toggle enable
+               if (event == Event::Character(' ')) {
+                   if (state->inputs.on_toggle) state->inputs.on_toggle(id, !p.enabled);
+                   // Mutate local state so re-render reflects the change immediately
+                   // (consumer will re-supply updated data on next frame)
+                   const_cast<InstalledCellData&>(p).enabled = !p.enabled;
+                   return true;
+               }
 
-        // c: configure
-        if (event == Event::Character('c') || event == Event::Character('C')) {
-            if (state->inputs.on_configure) state->inputs.on_configure(id);
-            return true;
-        }
+               // c: configure
+               if (event == Event::Character('c') || event == Event::Character('C')) {
+                   if (state->inputs.on_configure) state->inputs.on_configure(id);
+                   return true;
+               }
 
-        // u: update
-        if (event == Event::Character('u') || event == Event::Character('U')) {
-            if (state->inputs.on_update) state->inputs.on_update(id);
-            return true;
-        }
+               // u: update
+               if (event == Event::Character('u') || event == Event::Character('U')) {
+                   if (state->inputs.on_update) state->inputs.on_update(id);
+                   return true;
+               }
 
-        // x: uninstall
-        if (event == Event::Character('x') || event == Event::Character('X')) {
-            if (state->inputs.on_uninstall) state->inputs.on_uninstall(id);
-            return true;
-        }
+               // x: uninstall
+               if (event == Event::Character('x') || event == Event::Character('X')) {
+                   if (state->inputs.on_uninstall) state->inputs.on_uninstall(id);
+                   return true;
+               }
 
-        return false;
-    });
+               return false;
+           });
 }
 
-} // namespace loom::ui::plugins::plugin_manage_panel
+}  // namespace loom::ui::plugins::plugin_manage_panel

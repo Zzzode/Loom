@@ -22,15 +22,14 @@ namespace {
 // Small helper: record every message + exit event, with a CV to wait on N
 // messages being delivered.
 struct Recorder {
-    std::mutex                                 mtx;
-    std::condition_variable                    cv;
-    std::vector<JsonRpcMessage>                messages;
-    bool                                       exit_fired = false;
-    int                                        exit_code  = -9999;
-    std::string                                exit_error;
+    std::mutex mtx;
+    std::condition_variable cv;
+    std::vector<JsonRpcMessage> messages;
+    bool exit_fired = false;
+    int exit_code = -9999;
+    std::string exit_error;
 
-    StdioTransport make_transport(size_t wait_for_n = 1,
-                                  std::chrono::milliseconds max_wait = 5s) {
+    StdioTransport make_transport(size_t wait_for_n = 1, std::chrono::milliseconds max_wait = 5s) {
         StdioTransport t;
         t.on_incoming_message = [this, wait_for_n](JsonRpcMessage m) {
             std::lock_guard<std::mutex> l(mtx);
@@ -40,7 +39,7 @@ struct Recorder {
         t.on_exit = [this](int c, std::string e) {
             std::lock_guard<std::mutex> l(mtx);
             exit_fired = true;
-            exit_code  = c;
+            exit_code = c;
             exit_error = std::move(e);
             cv.notify_all();
         };
@@ -50,11 +49,11 @@ struct Recorder {
 
     bool wait_messages(size_t n, std::chrono::milliseconds timeout = 3s) {
         std::unique_lock<std::mutex> l(mtx);
-        return cv.wait_for(l, timeout, [&]{ return messages.size() >= n; });
+        return cv.wait_for(l, timeout, [&] { return messages.size() >= n; });
     }
 };
 
-} // namespace
+}  // namespace
 
 // ===========================================================================
 // TEST 1: Mock echo server — Start + SendJsonRpc + parse response
@@ -67,8 +66,8 @@ TEST(McpStdio, EchoServerRoundTrip) {
     EXPECT_GT(t.ChildPid(), 0);
 
     // Build a minimal JSON-RPC request.
-    const std::string body = loom::services::mcp::stdio::BuildInitializeRequest(
-        42, "loom-cpp", "1.0.0");
+    const std::string body =
+        loom::services::mcp::stdio::BuildInitializeRequest(42, "loom-cpp", "1.0.0");
     ASSERT_TRUE(t.SendJsonRpc(body));
 
     // The echo server echoes back the line verbatim.
@@ -96,7 +95,8 @@ TEST(McpStdio, SendRawJsonRoundTrip) {
     StdioTransport t = rec.make_transport(1);
     ASSERT_TRUE(t.Start(MockEchoSpec()));
 
-    const std::string req = R"({"jsonrpc":"2.0","id":7,"method":"ping","params":{"hello":"world"}})";
+    const std::string req =
+        R"({"jsonrpc":"2.0","id":7,"method":"ping","params":{"hello":"world"}})";
     ASSERT_TRUE(t.SendJsonRpc(req));
     ASSERT_TRUE(rec.wait_messages(1, 3s));
 
@@ -119,8 +119,7 @@ TEST(McpStdio, ThreeMessagesInOrder) {
 
     for (int i = 1; i <= 3; ++i) {
         char body[128];
-        std::snprintf(body, sizeof(body),
-                      R"({"jsonrpc":"2.0","id":%d,"method":"m%d"})", i, i);
+        std::snprintf(body, sizeof(body), R"({"jsonrpc":"2.0","id":%d,"method":"m%d"})", i, i);
         ASSERT_TRUE(t.SendJsonRpc(std::string_view(body)));
         // Short yield to allow the reader thread to drain (not strictly
         // required but keeps macOS CI from coalescing the writes).
@@ -157,7 +156,7 @@ TEST(McpStdio, StopKillsChildAndFiresExit) {
     // Poll the exit signal with a timeout.
     {
         std::unique_lock<std::mutex> l(rec.mtx);
-        EXPECT_TRUE(rec.cv.wait_for(l, 2s, [&]{ return rec.exit_fired; }))
+        EXPECT_TRUE(rec.cv.wait_for(l, 2s, [&] { return rec.exit_fired; }))
             << "on_exit should fire during Stop";
     }
     EXPECT_TRUE(rec.exit_fired);
@@ -177,7 +176,7 @@ TEST(McpStdio, WatchdogKillsSilentChild) {
     StdioServerSpec spec;
     // Sleep far longer than the watchdog.  Watchdog should end it in 200ms.
     spec.command = "/bin/sleep";
-    spec.args    = {"60"};
+    spec.args = {"60"};
     spec.timeout_ms = 200;
 
     auto t0 = std::chrono::steady_clock::now();
@@ -185,7 +184,7 @@ TEST(McpStdio, WatchdogKillsSilentChild) {
 
     {
         std::unique_lock<std::mutex> l(rec.mtx);
-        rec.cv.wait_for(l, 5s, [&]{ return rec.exit_fired; });
+        rec.cv.wait_for(l, 5s, [&] { return rec.exit_fired; });
     }
     auto dt = std::chrono::steady_clock::now() - t0;
 
@@ -251,8 +250,10 @@ TEST(McpStdio, EnvOverrideInheritedByChild) {
     StdioServerSpec spec;
     // `env` overrides then `printenv MCP_TEST_VAR`
     spec.command = "/bin/sh";
-    spec.args    = {"-c", "echo \"{\\\"jsonrpc\\\":\\\"2.0\\\",\\\"id\\\":1,\\\"method\\\":\\\"echo\\\",\\\"params\\\":{\\\"v\\\":\\\"$MCP_TEST_VAR\\\"}}\""};
-    spec.env     = {{"MCP_TEST_VAR", "hello_from_env"}};
+    spec.args = {"-c", "echo "
+                       "\"{\\\"jsonrpc\\\":\\\"2.0\\\",\\\"id\\\":1,\\\"method\\\":\\\"echo\\\","
+                       "\\\"params\\\":{\\\"v\\\":\\\"$MCP_TEST_VAR\\\"}}\""};
+    spec.env = {{"MCP_TEST_VAR", "hello_from_env"}};
 
     ASSERT_TRUE(t.Start(spec));
     // The shell script echoes a single JSON line then exits.

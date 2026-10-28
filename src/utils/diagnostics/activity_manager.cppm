@@ -26,13 +26,16 @@ public:
     using RecordFn = std::function<void(double, ActivityType)>;
 
     explicit ActivityManager(NowFn get_now, RecordFn record_active_time)
-        : get_now_(std::move(get_now)), record_active_time_(std::move(record_active_time)), last_cli_recorded_time_(get_now_()) {}
+        : get_now_(std::move(get_now))
+        , record_active_time_(std::move(record_active_time))
+        , last_cli_recorded_time_(get_now_()) {}
 
     void record_user_activity() {
         if (!is_cli_active_ && last_user_activity_time_ != 0) {
             const auto now = get_now_();
             const double elapsed = static_cast<double>(now - last_user_activity_time_) / 1000.0;
-            if (elapsed > 0 && elapsed < user_activity_timeout_ms_ / 1000.0 && record_active_time_) {
+            if (elapsed > 0 && elapsed < user_activity_timeout_ms_ / 1000.0 &&
+                record_active_time_) {
                 record_active_time_(elapsed, ActivityType::User);
             }
         }
@@ -66,7 +69,8 @@ public:
 
     [[nodiscard]] ActivityStates get_activity_states() const {
         const auto now = get_now_();
-        const double since_user_activity = static_cast<double>(now - last_user_activity_time_) / 1000.0;
+        const double since_user_activity =
+            static_cast<double>(now - last_user_activity_time_) / 1000.0;
         return ActivityStates{
             .is_user_active = since_user_activity < user_activity_timeout_ms_ / 1000.0,
             .is_cli_active = is_cli_active_,
@@ -84,4 +88,4 @@ private:
     bool is_cli_active_ = false;
 };
 
-} // namespace loom::utils::activity_manager
+}  // namespace loom::utils::activity_manager

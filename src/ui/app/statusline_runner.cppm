@@ -21,7 +21,6 @@
 
 module;
 
-
 export module loom.ui.app.statusline_runner;
 
 import std;
@@ -33,7 +32,7 @@ export namespace loom::utils::statusline {
 
 using namespace std::chrono;
 namespace hooks_ns = loom::utils::hooks_execution;
-namespace json_ns  = loom::utils::json;
+namespace json_ns = loom::utils::json;
 
 // =========================================================================
 // StatusLineCommandInput
@@ -81,7 +80,7 @@ struct StatusLineContextWindowInfo {
 };
 
 struct StatusLineVimInfo {
-    std::string mode;   // "INSERT", "NORMAL", "VISUAL", etc.
+    std::string mode;  // "INSERT", "NORMAL", "VISUAL", etc.
 };
 
 struct StatusLineAgentInfo {
@@ -220,21 +219,27 @@ struct StatusLineCommandInput {
         cw.add("context_window_size", doc.number(input.context_window.context_window_size));
         if (input.context_window.current_context_tokens) {
             cw.add("current_context_tokens",
-                doc.raw_json(std::to_string(*input.context_window.current_context_tokens)));
+                   doc.raw_json(std::to_string(*input.context_window.current_context_tokens)));
         } else {
             cw.add("current_context_tokens", doc.null());
         }
         if (input.context_window.current_context_is_estimated) {
-            cw.add("current_context_is_estimated", doc.boolean(*input.context_window.current_context_is_estimated));
+            cw.add("current_context_is_estimated",
+                   doc.boolean(*input.context_window.current_context_is_estimated));
         } else {
             cw.add("current_context_is_estimated", doc.null());
         }
         if (input.context_window.current_usage) {
             auto current = doc.object();
-            current.add("input_tokens", doc.number(input.context_window.current_usage->input_tokens));
-            current.add("output_tokens", doc.number(input.context_window.current_usage->output_tokens));
-            current.add("cache_creation_input_tokens", doc.number(input.context_window.current_usage->cache_creation_input_tokens));
-            current.add("cache_read_input_tokens", doc.number(input.context_window.current_usage->cache_read_input_tokens));
+            current.add("input_tokens",
+                        doc.number(input.context_window.current_usage->input_tokens));
+            current.add("output_tokens",
+                        doc.number(input.context_window.current_usage->output_tokens));
+            current.add(
+                "cache_creation_input_tokens",
+                doc.number(input.context_window.current_usage->cache_creation_input_tokens));
+            current.add("cache_read_input_tokens",
+                        doc.number(input.context_window.current_usage->cache_read_input_tokens));
             cw.add("current_usage", std::move(current));
         } else {
             cw.add("current_usage", doc.null());
@@ -256,9 +261,7 @@ struct StatusLineCommandInput {
     root.add("exceeds_200k_tokens", doc.boolean(input.exceeds_200k_tokens));
 
     // rate_limits (optional)
-    if (input.rate_limits &&
-        (input.rate_limits->five_hour || input.rate_limits->seven_day))
-    {
+    if (input.rate_limits && (input.rate_limits->five_hour || input.rate_limits->seven_day)) {
         auto rl = doc.object();
         if (input.rate_limits->five_hour) {
             auto fh = doc.object();
@@ -317,8 +320,8 @@ struct StatusLineCommandInput {
 /// Result of executing a statusline command.
 struct StatusLineResult {
     bool success = false;
-    std::string output;      ///< Trimmed stdout (may contain ANSI codes)
-    std::string error;       ///< Error message (on failure)
+    std::string output;  ///< Trimmed stdout (may contain ANSI codes)
+    std::string error;   ///< Error message (on failure)
     milliseconds elapsed{0};
 };
 
@@ -335,11 +338,9 @@ struct StatusLineResult {
 ///   - Trims output and removes blank lines
 ///   - Non-zero exit → empty output (success=false)
 ///   - Timeout → empty output
-[[nodiscard]] inline StatusLineResult execute_statusline_command_json(
-    std::string_view command,
-    std::string json_input,
-    int timeout_ms = 5000)
-{
+[[nodiscard]] inline StatusLineResult execute_statusline_command_json(std::string_view command,
+                                                                      std::string json_input,
+                                                                      int timeout_ms = 5000) {
     StatusLineResult result;
     if (command.empty()) {
         result.error = "empty command";
@@ -349,10 +350,8 @@ struct StatusLineResult {
     auto t0 = steady_clock::now();
 
     // Run via bash -c, matching execCommandHook shell behavior.
-    auto cmd_result = hooks_ns::CommandHookRunner::run_raw(
-        "bash", {"-c", std::string(command)},
-        timeout_ms, {},
-        json_input);
+    auto cmd_result = hooks_ns::CommandHookRunner::run_raw("bash", {"-c", std::string(command)},
+                                                           timeout_ms, {}, json_input);
 
     result.elapsed = duration_cast<milliseconds>(steady_clock::now() - t0);
 
@@ -421,13 +420,10 @@ struct StatusLineResult {
 }
 
 /// Convenience overload: serialize the input struct, then execute.
-[[nodiscard]] inline StatusLineResult execute_statusline_command(
-    std::string_view command,
-    const StatusLineCommandInput& input,
-    int timeout_ms = 5000)
-{
-    return execute_statusline_command_json(
-        command, to_json(input), timeout_ms);
+[[nodiscard]] inline StatusLineResult
+execute_statusline_command(std::string_view command, const StatusLineCommandInput& input,
+                           int timeout_ms = 5000) {
+    return execute_statusline_command_json(command, to_json(input), timeout_ms);
 }
 
-} // namespace loom::utils::statusline
+}  // namespace loom::utils::statusline

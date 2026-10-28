@@ -6,9 +6,9 @@ module;
 
 #include <cctype>
 #include <climits>
+#include <cstdint>
 #include <cstdlib>
 #include <cstring>
-#include <cstdint>
 
 // (sys/stat.h functionality provided by <filesystem>)
 
@@ -29,12 +29,12 @@ export import loom.skills.skill;
 export namespace loom::skills {
 
 namespace fs = std::filesystem;
-using loom::utils::YamlValue;
-using loom::utils::YamlMap;
 using loom::utils::YamlArray;
+using loom::utils::YamlMap;
+using loom::utils::YamlValue;
 using loom::utils::log::debug;
-using loom::utils::log::warning;
 using loom::utils::log::log_error;
+using loom::utils::log::warning;
 
 // =========================================================================
 // LoadedFrom enum
@@ -82,24 +82,24 @@ struct FrontmatterData {
     std::optional<std::string> argument_hint;
     std::optional<std::string> when_to_use;
     std::optional<std::string> version;
-    std::optional<std::string> model;          // 'inherit' or model name
-    std::optional<std::string> user_invocable; // 'true'/'false' string
-    std::optional<std::string> effort;         // 'low','medium','high','max' or int
-    std::optional<std::string> context;        // 'inline' or 'fork'
-    std::optional<std::string> agent;          // Agent type for fork context
-    std::optional<std::string> shell;          // 'bash' or 'powershell'
-    std::optional<std::string> paths;          // Comma-separated or YAML list
+    std::optional<std::string> model;           // 'inherit' or model name
+    std::optional<std::string> user_invocable;  // 'true'/'false' string
+    std::optional<std::string> effort;          // 'low','medium','high','max' or int
+    std::optional<std::string> context;         // 'inline' or 'fork'
+    std::optional<std::string> agent;           // Agent type for fork context
+    std::optional<std::string> shell;           // 'bash' or 'powershell'
+    std::optional<std::string> paths;           // Comma-separated or YAML list
     std::optional<std::string> hide_from_slash_command_tool;
-    std::optional<std::string> skills;         // Comma-separated skill names to preload
-    std::optional<std::string> type;           // Memory type: user/feedback/project/reference
-    std::optional<std::string> name;           // Display name override
-    std::optional<std::string> allowed_tools;  // Comma-separated tool list
-    std::optional<std::string> arguments;      // Argument names (space/comma separated)
-    std::optional<YamlValue> hooks_yaml;       // Raw hooks YAML for validation
-    std::optional<YamlValue> paths_yaml;       // Raw paths YAML (array form)
-    std::optional<YamlValue> allowed_tools_yaml; // Raw allowed-tools YAML (array)
-    std::optional<YamlValue> arguments_yaml;   // Raw arguments YAML (array)
-    std::map<std::string, YamlValue> extra;    // Catch-all for unknown keys
+    std::optional<std::string> skills;            // Comma-separated skill names to preload
+    std::optional<std::string> type;              // Memory type: user/feedback/project/reference
+    std::optional<std::string> name;              // Display name override
+    std::optional<std::string> allowed_tools;     // Comma-separated tool list
+    std::optional<std::string> arguments;         // Argument names (space/comma separated)
+    std::optional<YamlValue> hooks_yaml;          // Raw hooks YAML for validation
+    std::optional<YamlValue> paths_yaml;          // Raw paths YAML (array form)
+    std::optional<YamlValue> allowed_tools_yaml;  // Raw allowed-tools YAML (array)
+    std::optional<YamlValue> arguments_yaml;      // Raw arguments YAML (array)
+    std::map<std::string, YamlValue> extra;       // Catch-all for unknown keys
 };
 
 // =========================================================================
@@ -116,11 +116,11 @@ struct ParsedSkillFrontmatterFields {
     std::vector<std::string> argument_names;
     std::optional<std::string> when_to_use;
     std::optional<std::string> version;
-    std::optional<std::string> model;        // Undefined means 'inherit'
+    std::optional<std::string> model;  // Undefined means 'inherit'
     bool disable_model_invocation = false;
     bool user_invocable = true;
-    std::optional<std::string> hooks_json;   // Serialized hooks settings (simplified)
-    std::optional<std::string> execution_context; // 'fork' or undefined
+    std::optional<std::string> hooks_json;         // Serialized hooks settings (simplified)
+    std::optional<std::string> execution_context;  // 'fork' or undefined
     std::optional<std::string> agent;
     std::optional<loom::utils::EffortLevel> effort;
     std::optional<FrontmatterShell> shell;
@@ -132,9 +132,9 @@ struct ParsedSkillFrontmatterFields {
 
 /// A fully-loaded skill command ready for registration in the command system.
 struct SkillCommand {
-    std::string type = "prompt";             // Always "prompt" for skills
-    std::string name;                        // Unique skill name
-    std::string description;                 // Human-readable description
+    std::string type = "prompt";  // Always "prompt" for skills
+    std::string name;             // Unique skill name
+    std::string description;      // Human-readable description
     bool has_user_specified_description = false;
     std::vector<std::string> allowed_tools;  // Tools allowed in !` blocks
     std::optional<std::string> argument_hint;
@@ -144,10 +144,10 @@ struct SkillCommand {
     std::optional<std::string> model;
     bool disable_model_invocation = false;
     bool user_invocable = true;
-    std::optional<std::string> context;      // 'inline' or 'fork'
+    std::optional<std::string> context;  // 'inline' or 'fork'
     std::optional<std::string> agent;
     std::optional<loom::utils::EffortLevel> effort;
-    std::optional<std::vector<std::string>> paths; // Conditional activation paths
+    std::optional<std::vector<std::string>> paths;  // Conditional activation paths
     std::size_t content_length = 0;
     bool is_hidden = false;
     std::string progress_message = "running";
@@ -156,36 +156,32 @@ struct SkillCommand {
     // Source tracking
     SettingSource source = SettingSource::ProjectSettings;
     LoadedFrom loaded_from = LoadedFrom::Skills;
-    std::optional<fs::path> skill_root;      // Base directory for the skill
-    std::optional<std::string> hooks_json;   // Hooks settings
+    std::optional<fs::path> skill_root;     // Base directory for the skill
+    std::optional<std::string> hooks_json;  // Hooks settings
     std::optional<FrontmatterShell> shell;
 
     // The markdown content of the skill (kept here for simpler execution flow)
     std::string markdown_content;
 
     /// Get the user-facing display name
-    std::string user_facing_name() const {
-        return display_name.value_or(name);
-    }
+    std::string user_facing_name() const { return display_name.value_or(name); }
 
     /// Generate the prompt content for this skill with argument substitution.
-    std::string get_prompt_for_command(
-        std::optional<std::string_view> args,
-        const std::optional<std::string>& session_id = std::nullopt,
-        const std::vector<std::string>& allowed_tools_override = {}) const
-    {
-        (void)allowed_tools_override; // Reserved for future shell-block execution
+    std::string
+    get_prompt_for_command(std::optional<std::string_view> args,
+                           const std::optional<std::string>& session_id = std::nullopt,
+                           const std::vector<std::string>& allowed_tools_override = {}) const {
+        (void)allowed_tools_override;  // Reserved for future shell-block execution
         std::string final_content;
         if (skill_root.has_value()) {
-            final_content = "Base directory for this skill: " +
-                           skill_root->string() + "\n\n" + markdown_content;
+            final_content = "Base directory for this skill: " + skill_root->string() + "\n\n" +
+                            markdown_content;
         } else {
             final_content = markdown_content;
         }
 
         // Substitute arguments ($name, $ARGUMENTS, $1, etc.)
-        const auto& arg_names_vec = arg_names.value_or(
-            std::vector<std::string>{});
+        const auto& arg_names_vec = arg_names.value_or(std::vector<std::string>{});
         if (args.has_value()) {
             final_content = loom::utils::argument_substitution::substitute_arguments(
                 final_content, *args, true, arg_names_vec);
@@ -231,7 +227,7 @@ struct SkillWithPath {
     SkillCommand skill;
     fs::path file_path;
 };
-} // namespace detail
+}  // namespace detail
 
 // =========================================================================
 // Utility: getConfigHomeDir
@@ -280,9 +276,8 @@ std::vector<std::string> get_additional_directories_for_loom_md() {
     std::size_t pos = 0;
     while (pos < dirs_str.size()) {
         auto sep = dirs_str.find(':', pos);
-        std::string segment = (sep == std::string::npos)
-            ? dirs_str.substr(pos)
-            : dirs_str.substr(pos, sep - pos);
+        std::string segment =
+            (sep == std::string::npos) ? dirs_str.substr(pos) : dirs_str.substr(pos, sep - pos);
         if (!segment.empty()) {
             result.push_back(segment);
         }
@@ -298,17 +293,14 @@ std::vector<std::string> get_additional_directories_for_loom_md() {
 /// Check if a setting source is enabled
 bool is_setting_source_enabled(SettingSource source) {
     switch (source) {
-        case SettingSource::PolicySettings:
-            return !loom::utils::is_env_truthy(
-                std::getenv("LOOM_DISABLE_POLICY_SKILLS"));
-        case SettingSource::UserSettings:
-            return !loom::utils::is_env_truthy(
-                std::getenv("LOOM_DISABLE_USER_SKILLS"));
-        case SettingSource::ProjectSettings:
-            return !loom::utils::is_env_truthy(
-                std::getenv("LOOM_DISABLE_PROJECT_SKILLS"));
-        default:
-            return true;
+    case SettingSource::PolicySettings:
+        return !loom::utils::is_env_truthy(std::getenv("LOOM_DISABLE_POLICY_SKILLS"));
+    case SettingSource::UserSettings:
+        return !loom::utils::is_env_truthy(std::getenv("LOOM_DISABLE_USER_SKILLS"));
+    case SettingSource::ProjectSettings:
+        return !loom::utils::is_env_truthy(std::getenv("LOOM_DISABLE_PROJECT_SKILLS"));
+    default:
+        return true;
     }
 }
 
@@ -319,8 +311,7 @@ bool is_setting_source_enabled(SettingSource source) {
 /// Check if a surface is restricted to plugin-only skills
 bool is_restricted_to_plugin_only(std::string_view /*surface*/) {
     // Checks the pluginOnlyPolicy setting via an env var.
-    return loom::utils::is_env_truthy(
-        std::getenv("LOOM_PLUGIN_ONLY_SKILLS"));
+    return loom::utils::is_env_truthy(std::getenv("LOOM_PLUGIN_ONLY_SKILLS"));
 }
 
 // =========================================================================
@@ -330,17 +321,17 @@ bool is_restricted_to_plugin_only(std::string_view /*surface*/) {
 /// Returns a loom config directory path for a given source
 std::string get_skills_path(SettingSource source, std::string_view dir) {
     switch (source) {
-        case SettingSource::PolicySettings: {
-            auto managed = get_managed_file_path();
-            if (managed.empty()) return "";
-            return managed + "/.loom/" + std::string(dir);
-        }
-        case SettingSource::UserSettings:
-            return get_config_home_dir() + "/" + std::string(dir);
-        case SettingSource::ProjectSettings:
-            return ".loom/" + std::string(dir);
-        default:
-            return "";
+    case SettingSource::PolicySettings: {
+        auto managed = get_managed_file_path();
+        if (managed.empty()) return "";
+        return managed + "/.loom/" + std::string(dir);
+    }
+    case SettingSource::UserSettings:
+        return get_config_home_dir() + "/" + std::string(dir);
+    case SettingSource::ProjectSettings:
+        return ".loom/" + std::string(dir);
+    default:
+        return "";
     }
 }
 
@@ -351,9 +342,7 @@ std::string get_skills_path(SettingSource source, std::string_view dir) {
 /// Traverse from cwd up to git root (or home), collecting .loom/subdir dirs.
 /// Walks up to git root to prevent parent directory skills from leaking
 /// into projects.
-std::vector<std::string> get_project_dirs_up_to_home(
-    std::string_view subdir, const fs::path& cwd)
-{
+std::vector<std::string> get_project_dirs_up_to_home(std::string_view subdir, const fs::path& cwd) {
     std::vector<std::string> dirs;
     fs::path current = fs::absolute(cwd);
     fs::path home;
@@ -391,7 +380,7 @@ std::vector<std::string> get_project_dirs_up_to_home(
         if (!git_root.empty() && fs::equivalent(current, git_root)) break;
 
         auto parent = current.parent_path();
-        if (parent == current) break; // Reached filesystem root
+        if (parent == current) break;  // Reached filesystem root
         current = parent;
     }
 
@@ -418,9 +407,8 @@ std::optional<std::string> get_file_identity(const fs::path& file_path) {
 
 /// Extract a description from markdown content (first non-empty line,
 /// stripping header markers). Limited to ~100 chars.
-std::string extract_description_from_markdown(
-    std::string_view content, std::string_view default_label = "Skill")
-{
+std::string extract_description_from_markdown(std::string_view content,
+                                              std::string_view default_label = "Skill") {
     std::size_t pos = 0;
     while (pos < content.size()) {
         auto line_end = content.find('\n', pos);
@@ -436,8 +424,7 @@ std::string extract_description_from_markdown(
             // Strip header markers (# ## ###)
             if (trimmed.starts_with("#")) {
                 auto after_hash = trimmed.find_first_not_of('#');
-                if (after_hash != std::string_view::npos &&
-                    trimmed[after_hash] == ' ') {
+                if (after_hash != std::string_view::npos && trimmed[after_hash] == ' ') {
                     trimmed = trimmed.substr(after_hash + 1);
                 }
             }
@@ -470,9 +457,8 @@ bool parse_boolean_frontmatter(const std::optional<std::string>& value) {
 // =========================================================================
 
 /// Parse and validate the shell: frontmatter field.
-std::optional<FrontmatterShell> parse_shell_frontmatter(
-    const std::optional<std::string>& value, std::string_view source)
-{
+std::optional<FrontmatterShell> parse_shell_frontmatter(const std::optional<std::string>& value,
+                                                        std::string_view source) {
     if (!value.has_value()) return std::nullopt;
     std::string normalized;
     normalized.reserve(value->size());
@@ -489,8 +475,8 @@ std::optional<FrontmatterShell> parse_shell_frontmatter(
     if (normalized == "bash") return FrontmatterShell::Bash;
     if (normalized == "powershell") return FrontmatterShell::Powershell;
 
-    warning("[skills] Frontmatter 'shell: " + *value + "' in " +
-            std::string(source) + " is not recognized. Valid values: bash, powershell. "
+    warning("[skills] Frontmatter 'shell: " + *value + "' in " + std::string(source) +
+            " is not recognized. Valid values: bash, powershell. "
             "Falling back to bash.");
     return std::nullopt;
 }
@@ -500,9 +486,8 @@ std::optional<FrontmatterShell> parse_shell_frontmatter(
 // =========================================================================
 
 /// Parse an effort value from frontmatter ('low','medium','high','max' or int)
-std::optional<loom::utils::EffortLevel> parse_effort_value(
-    const std::optional<std::string>& value)
-{
+std::optional<loom::utils::EffortLevel>
+parse_effort_value(const std::optional<std::string>& value) {
     if (!value.has_value()) return std::nullopt;
     std::string v;
     v.reserve(value->size());
@@ -539,10 +524,8 @@ std::optional<loom::utils::EffortLevel> parse_effort_value(
 
 /// Split comma-separated paths, respecting brace patterns.
 /// Also accepts a YAML array (via the paths_yaml field).
-std::vector<std::string> split_path_in_frontmatter(
-    const std::optional<std::string>& paths_str,
-    const std::optional<YamlValue>& paths_yaml)
-{
+std::vector<std::string> split_path_in_frontmatter(const std::optional<std::string>& paths_str,
+                                                   const std::optional<YamlValue>& paths_yaml) {
     // If YAML array form exists, use that
     if (paths_yaml.has_value() && paths_yaml->is_array()) {
         std::vector<std::string> result;
@@ -605,9 +588,7 @@ std::vector<std::string> split_path_in_frontmatter(
                 while (alt_pos <= alternatives.size()) {
                     auto comma = alternatives.find(',', alt_pos);
                     std::string alt = alternatives.substr(
-                        alt_pos, comma == std::string::npos
-                                     ? std::string::npos
-                                     : comma - alt_pos);
+                        alt_pos, comma == std::string::npos ? std::string::npos : comma - alt_pos);
                     // Trim alt
                     auto as = alt.find_first_not_of(" \t");
                     if (as != std::string::npos) {
@@ -632,10 +613,9 @@ std::vector<std::string> split_path_in_frontmatter(
 // =========================================================================
 
 /// Parse allowed-tools from frontmatter (string or array)
-std::vector<std::string> parse_slash_command_tools_from_frontmatter(
-    const std::optional<std::string>& tools_str,
-    const std::optional<YamlValue>& tools_yaml)
-{
+std::vector<std::string>
+parse_slash_command_tools_from_frontmatter(const std::optional<std::string>& tools_str,
+                                           const std::optional<YamlValue>& tools_yaml) {
     // If YAML array form exists, use that
     if (tools_yaml.has_value() && tools_yaml->is_array()) {
         std::vector<std::string> result;
@@ -654,9 +634,8 @@ std::vector<std::string> parse_slash_command_tools_from_frontmatter(
     std::size_t pos = 0;
     while (pos < tools_str->size()) {
         auto comma = tools_str->find(',', pos);
-        std::string segment = (comma == std::string::npos)
-            ? tools_str->substr(pos)
-            : tools_str->substr(pos, comma - pos);
+        std::string segment = (comma == std::string::npos) ? tools_str->substr(pos)
+                                                           : tools_str->substr(pos, comma - pos);
         // Trim
         auto s = segment.find_first_not_of(" \t");
         if (s != std::string::npos) {
@@ -673,10 +652,9 @@ std::vector<std::string> parse_slash_command_tools_from_frontmatter(
 // =========================================================================
 
 /// Parse argument names from frontmatter (string or array)
-std::vector<std::string> parse_argument_names_from_frontmatter(
-    const std::optional<std::string>& args_str,
-    const std::optional<YamlValue>& args_yaml)
-{
+std::vector<std::string>
+parse_argument_names_from_frontmatter(const std::optional<std::string>& args_str,
+                                      const std::optional<YamlValue>& args_yaml) {
     // If YAML array form exists, use that
     if (args_yaml.has_value() && args_yaml->is_array()) {
         std::vector<std::string> result;
@@ -699,9 +677,7 @@ std::vector<std::string> parse_argument_names_from_frontmatter(
 // =========================================================================
 
 /// Parse a user-specified model from frontmatter. Returns nullopt for 'inherit'.
-std::optional<std::string> parse_user_specified_model(
-    const std::optional<std::string>& model_str)
-{
+std::optional<std::string> parse_user_specified_model(const std::optional<std::string>& model_str) {
     if (!model_str.has_value()) return std::nullopt;
     if (*model_str == "inherit") return std::nullopt;
     return model_str;
@@ -730,7 +706,7 @@ std::optional<std::string> yaml_to_string(const YamlValue& val) {
     return std::nullopt;
 }
 
-} // namespace detail
+}  // namespace detail
 
 /// Parse rich frontmatter from a markdown file.
 /// Uses the YAML parser for full YAML support (arrays, nested objects).
@@ -767,24 +743,42 @@ FrontmatterData parse_frontmatter_rich(std::string_view content) {
         auto simple = loom::utils::parse_frontmatter(content);
         // Copy simple metadata into FrontmatterData
         for (const auto& [key, value] : simple.metadata) {
-            if (key == "description") data.description = value;
-            else if (key == "argument-hint") data.argument_hint = value;
-            else if (key == "when_to_use") data.when_to_use = value;
-            else if (key == "version") data.version = value;
-            else if (key == "model") data.model = value;
-            else if (key == "user-invocable") data.user_invocable = value;
-            else if (key == "effort") data.effort = value;
-            else if (key == "context") data.context = value;
-            else if (key == "agent") data.agent = value;
-            else if (key == "shell") data.shell = value;
-            else if (key == "paths") data.paths = value;
-            else if (key == "hide-from-slash-command-tool") data.hide_from_slash_command_tool = value;
-            else if (key == "skills") data.skills = value;
-            else if (key == "type") data.type = value;
-            else if (key == "name") data.name = value;
-            else if (key == "allowed-tools") data.allowed_tools = value;
-            else if (key == "arguments") data.arguments = value;
-            else data.extra[key] = YamlValue(value);
+            if (key == "description")
+                data.description = value;
+            else if (key == "argument-hint")
+                data.argument_hint = value;
+            else if (key == "when_to_use")
+                data.when_to_use = value;
+            else if (key == "version")
+                data.version = value;
+            else if (key == "model")
+                data.model = value;
+            else if (key == "user-invocable")
+                data.user_invocable = value;
+            else if (key == "effort")
+                data.effort = value;
+            else if (key == "context")
+                data.context = value;
+            else if (key == "agent")
+                data.agent = value;
+            else if (key == "shell")
+                data.shell = value;
+            else if (key == "paths")
+                data.paths = value;
+            else if (key == "hide-from-slash-command-tool")
+                data.hide_from_slash_command_tool = value;
+            else if (key == "skills")
+                data.skills = value;
+            else if (key == "type")
+                data.type = value;
+            else if (key == "name")
+                data.name = value;
+            else if (key == "allowed-tools")
+                data.allowed_tools = value;
+            else if (key == "arguments")
+                data.arguments = value;
+            else
+                data.extra[key] = YamlValue(value);
         }
         return data;
     }
@@ -831,11 +825,11 @@ FrontmatterData parse_frontmatter_rich(std::string_view content) {
 
     // Store extra fields
     static const std::unordered_set<std::string> known_keys = {
-        "description", "argument-hint", "when_to_use", "version", "model",
-        "user-invocable", "effort", "context", "agent", "shell", "paths",
-        "hide-from-slash-command-tool", "skills", "type", "name",
-        "allowed-tools", "arguments", "hooks"
-    };
+        "description", "argument-hint",  "when_to_use", "version",
+        "model",       "user-invocable", "effort",      "context",
+        "agent",       "shell",          "paths",       "hide-from-slash-command-tool",
+        "skills",      "type",           "name",        "allowed-tools",
+        "arguments",   "hooks"};
     for (const auto& [key, value] : map) {
         if (known_keys.find(key) == known_keys.end()) {
             data.extra[key] = value;
@@ -851,9 +845,8 @@ FrontmatterData parse_frontmatter_rich(std::string_view content) {
 
 /// Parse and validate hooks from frontmatter.
 /// Returns serialized hooks JSON or nullopt if not defined/invalid.
-std::optional<std::string> parse_hooks_from_frontmatter(
-    const FrontmatterData& fm, std::string_view skill_name)
-{
+std::optional<std::string> parse_hooks_from_frontmatter(const FrontmatterData& fm,
+                                                        std::string_view skill_name) {
     if (!fm.hooks_yaml.has_value()) return std::nullopt;
 
     // Simplified: serialize the hooks YAML to a string for later use.
@@ -883,16 +876,15 @@ std::optional<std::vector<std::string>> parse_skill_paths(const FrontmatterData&
     }
 
     // Filter empty
-    patterns.erase(
-        std::remove_if(patterns.begin(), patterns.end(),
-            [](const std::string& s) { return s.empty(); }),
-        patterns.end());
+    patterns.erase(std::remove_if(patterns.begin(), patterns.end(),
+                                  [](const std::string& s) { return s.empty(); }),
+                   patterns.end());
 
     if (patterns.empty()) return std::nullopt;
 
     // If all patterns are ** (match-all), treat as no paths
     bool all_match_all = std::all_of(patterns.begin(), patterns.end(),
-        [](const std::string& p) { return p == "**"; });
+                                     [](const std::string& p) { return p == "**"; });
     if (all_match_all) return std::nullopt;
 
     return patterns;
@@ -903,12 +895,10 @@ std::optional<std::vector<std::string>> parse_skill_paths(const FrontmatterData&
 // =========================================================================
 
 /// Parse all skill frontmatter fields. Caller supplies resolved name.
-ParsedSkillFrontmatterFields parse_skill_frontmatter_fields(
-    const FrontmatterData& frontmatter,
-    const std::string& markdown_content,
-    std::string_view resolved_name,
-    bool is_legacy_command = false)
-{
+ParsedSkillFrontmatterFields parse_skill_frontmatter_fields(const FrontmatterData& frontmatter,
+                                                            const std::string& markdown_content,
+                                                            std::string_view resolved_name,
+                                                            bool is_legacy_command = false) {
     ParsedSkillFrontmatterFields result;
 
     // Description: use frontmatter if available, else extract from markdown
@@ -918,8 +908,7 @@ ParsedSkillFrontmatterFields parse_skill_frontmatter_fields(
         result.description = *frontmatter.description;
         result.has_user_specified_description = true;
     } else {
-        result.description = extract_description_from_markdown(
-            markdown_content, fallback_label);
+        result.description = extract_description_from_markdown(markdown_content, fallback_label);
         result.has_user_specified_description = false;
     }
 
@@ -936,9 +925,8 @@ ParsedSkillFrontmatterFields parse_skill_frontmatter_fields(
     // effort
     result.effort = parse_effort_value(frontmatter.effort);
     if (frontmatter.effort.has_value() && !result.effort.has_value()) {
-        debug("[skills] Skill " + std::string(resolved_name) +
-              " has invalid effort '" + *frontmatter.effort +
-              "'. Valid options: low, medium, high, max or an integer");
+        debug("[skills] Skill " + std::string(resolved_name) + " has invalid effort '" +
+              *frontmatter.effort + "'. Valid options: low, medium, high, max or an integer");
     }
 
     // display name
@@ -952,8 +940,8 @@ ParsedSkillFrontmatterFields parse_skill_frontmatter_fields(
     result.argument_hint = frontmatter.argument_hint;
 
     // argument names
-    result.argument_names = parse_argument_names_from_frontmatter(
-        frontmatter.arguments, frontmatter.arguments_yaml);
+    result.argument_names =
+        parse_argument_names_from_frontmatter(frontmatter.arguments, frontmatter.arguments_yaml);
 
     // when_to_use
     result.when_to_use = frontmatter.when_to_use;
@@ -982,8 +970,7 @@ ParsedSkillFrontmatterFields parse_skill_frontmatter_fields(
     result.agent = frontmatter.agent;
 
     // shell
-    result.shell = parse_shell_frontmatter(
-        frontmatter.shell, resolved_name);
+    result.shell = parse_shell_frontmatter(frontmatter.shell, resolved_name);
 
     return result;
 }
@@ -994,15 +981,11 @@ ParsedSkillFrontmatterFields parse_skill_frontmatter_fields(
 
 /// Create a SkillCommand from parsed data.
 /// Builds the SkillCommand with all fields and the prompt-generation logic.
-SkillCommand create_skill_command(
-    std::string_view skill_name,
-    const ParsedSkillFrontmatterFields& fields,
-    const std::string& markdown_content,
-    SettingSource source,
-    LoadedFrom loaded_from,
-    std::optional<fs::path> base_dir,
-    std::optional<std::vector<std::string>> paths)
-{
+SkillCommand create_skill_command(std::string_view skill_name,
+                                  const ParsedSkillFrontmatterFields& fields,
+                                  const std::string& markdown_content, SettingSource source,
+                                  LoadedFrom loaded_from, std::optional<fs::path> base_dir,
+                                  std::optional<std::vector<std::string>> paths) {
     SkillCommand cmd;
     cmd.type = "prompt";
     cmd.name = std::string(skill_name);
@@ -1044,9 +1027,8 @@ SkillCommand create_skill_command(
 
 /// Load skills from a /skills/ directory path.
 /// Only supports directory format: skill-name/SKILL.md
-std::vector<detail::SkillWithPath> load_skills_from_skills_dir(
-    const fs::path& base_path, SettingSource source)
-{
+std::vector<detail::SkillWithPath> load_skills_from_skills_dir(const fs::path& base_path,
+                                                               SettingSource source) {
     std::vector<detail::SkillWithPath> results;
 
     if (!fs::exists(base_path) || !fs::is_directory(base_path)) {
@@ -1081,9 +1063,8 @@ std::vector<detail::SkillWithPath> load_skills_from_skills_dir(
                 continue;
             }
 
-            std::string content(
-                (std::istreambuf_iterator<char>(file)),
-                std::istreambuf_iterator<char>());
+            std::string content((std::istreambuf_iterator<char>(file)),
+                                std::istreambuf_iterator<char>());
             file.close();
 
             // Parse frontmatter
@@ -1096,20 +1077,17 @@ std::vector<detail::SkillWithPath> load_skills_from_skills_dir(
             // Use directory name as skill name
             std::string skill_name = skill_dir_path.filename().string();
 
-            auto parsed = parse_skill_frontmatter_fields(
-                fm_data, markdown_content, skill_name);
+            auto parsed = parse_skill_frontmatter_fields(fm_data, markdown_content, skill_name);
             auto paths = parse_skill_paths(fm_data);
 
             results.push_back(detail::SkillWithPath{
-                .skill = create_skill_command(
-                    skill_name, parsed, markdown_content,
-                    source, LoadedFrom::Skills,
-                    skill_dir_path, std::move(paths)),
+                .skill = create_skill_command(skill_name, parsed, markdown_content, source,
+                                              LoadedFrom::Skills, skill_dir_path, std::move(paths)),
                 .file_path = skill_file_path,
             });
         } catch (const std::exception& e) {
-            log_error(std::string("[skills] Error loading skill from ") +
-                      entry.path().string() + ": " + e.what());
+            log_error(std::string("[skills] Error loading skill from ") + entry.path().string() +
+                      ": " + e.what());
         }
     }
 
@@ -1128,8 +1106,7 @@ bool is_skill_file(const fs::path& file_path) {
     std::string lower;
     lower.reserve(filename.size());
     for (char c : filename) {
-        lower.push_back(static_cast<char>(
-            std::tolower(static_cast<unsigned char>(c))));
+        lower.push_back(static_cast<char>(std::tolower(static_cast<unsigned char>(c))));
     }
     return lower == "skill.md";
 }
@@ -1156,9 +1133,7 @@ std::string build_namespace(const fs::path& target_dir, const fs::path& base_dir
 }
 
 /// Get command name for a SKILL.md format file
-std::string get_skill_command_name(
-    const fs::path& file_path, const fs::path& base_dir)
-{
+std::string get_skill_command_name(const fs::path& file_path, const fs::path& base_dir) {
     auto skill_directory = file_path.parent_path();
     auto parent_of_skill_dir = skill_directory.parent_path();
     auto command_base_name = skill_directory.filename().string();
@@ -1167,9 +1142,7 @@ std::string get_skill_command_name(
 }
 
 /// Get command name for a regular .md file
-std::string get_regular_command_name(
-    const fs::path& file_path, const fs::path& base_dir)
-{
+std::string get_regular_command_name(const fs::path& file_path, const fs::path& base_dir) {
     auto file_name = file_path.filename().string();
     auto file_directory = file_path.parent_path();
     // Remove .md extension
@@ -1182,7 +1155,7 @@ std::string get_regular_command_name(
     return ns.empty() ? command_base_name : ns + ":" + command_base_name;
 }
 
-} // namespace detail
+}  // namespace detail
 
 // =========================================================================
 // loadSkillsFromCommandsDir
@@ -1190,9 +1163,7 @@ std::string get_regular_command_name(
 
 /// Load skills from legacy /commands/ directories.
 /// Supports both directory format (SKILL.md) and single .md file format.
-std::vector<detail::SkillWithPath> load_skills_from_commands_dir(
-    const fs::path& cwd)
-{
+std::vector<detail::SkillWithPath> load_skills_from_commands_dir(const fs::path& cwd) {
     std::vector<detail::SkillWithPath> skills;
 
     // Walk up from cwd to find .loom/commands directories
@@ -1205,11 +1176,8 @@ std::vector<detail::SkillWithPath> load_skills_from_commands_dir(
         // Collect all markdown files, grouped by directory
         std::map<fs::path, std::vector<fs::path>> files_by_dir;
         std::error_code ec;
-        for (auto it = fs::recursive_directory_iterator(
-                 commands_dir, ec);
-             !ec && it != fs::recursive_directory_iterator();
-             it.increment(ec))
-        {
+        for (auto it = fs::recursive_directory_iterator(commands_dir, ec);
+             !ec && it != fs::recursive_directory_iterator(); it.increment(ec)) {
             if (it->path().extension() == ".md" && it->is_regular_file()) {
                 files_by_dir[it->path().parent_path()].push_back(it->path());
             }
@@ -1232,8 +1200,7 @@ std::vector<detail::SkillWithPath> load_skills_from_commands_dir(
             if (!skill_files.empty()) {
                 // SKILL.md takes precedence
                 if (skill_files.size() > 1) {
-                    debug("[skills] Multiple skill files found in " +
-                          dir.string() + ", using " +
+                    debug("[skills] Multiple skill files found in " + dir.string() + ", using " +
                           skill_files[0].filename().string());
                 }
                 files_to_process.push_back(skill_files[0]);
@@ -1246,24 +1213,21 @@ std::vector<detail::SkillWithPath> load_skills_from_commands_dir(
                     std::ifstream file(file_path);
                     if (!file.is_open()) continue;
 
-                    std::string content(
-                        (std::istreambuf_iterator<char>(file)),
-                        std::istreambuf_iterator<char>());
+                    std::string content((std::istreambuf_iterator<char>(file)),
+                                        std::istreambuf_iterator<char>());
                     file.close();
 
                     bool is_skill_format = detail::is_skill_file(file_path);
                     auto skill_directory = is_skill_format
-                        ? std::optional<fs::path>(file_path.parent_path())
-                        : std::nullopt;
+                                               ? std::optional<fs::path>(file_path.parent_path())
+                                               : std::nullopt;
 
                     // Determine command name
                     std::string cmd_name;
                     if (is_skill_format) {
-                        cmd_name = detail::get_skill_command_name(
-                            file_path, commands_dir);
+                        cmd_name = detail::get_skill_command_name(file_path, commands_dir);
                     } else {
-                        cmd_name = detail::get_regular_command_name(
-                            file_path, commands_dir);
+                        cmd_name = detail::get_regular_command_name(file_path, commands_dir);
                     }
 
                     // Parse frontmatter
@@ -1271,16 +1235,13 @@ std::vector<detail::SkillWithPath> load_skills_from_commands_dir(
                     auto stripped = loom::utils::strip_frontmatter(content);
                     std::string md_content(stripped);
 
-                    auto parsed = parse_skill_frontmatter_fields(
-                        fm_data, md_content, cmd_name,
-                        /*is_legacy_command=*/true);
+                    auto parsed = parse_skill_frontmatter_fields(fm_data, md_content, cmd_name,
+                                                                 /*is_legacy_command=*/true);
 
                     skills.push_back(detail::SkillWithPath{
                         .skill = create_skill_command(
-                            cmd_name, parsed, md_content,
-                            SettingSource::ProjectSettings,
-                            LoadedFrom::CommandsDeprecated,
-                            skill_directory, std::nullopt),
+                            cmd_name, parsed, md_content, SettingSource::ProjectSettings,
+                            LoadedFrom::CommandsDeprecated, skill_directory, std::nullopt),
                         .file_path = file_path,
                     });
                 } catch (const std::exception& e) {
@@ -1327,7 +1288,7 @@ inline SkillDirCache& skill_dir_cache() {
     return cache;
 }
 
-} // namespace detail
+}  // namespace detail
 
 // =========================================================================
 // isPathGitignored
@@ -1340,7 +1301,7 @@ bool is_path_gitignored(const fs::path& path, const fs::path& repo_root) {
         loom::utils::GitignoreFilter filter(repo_root);
         return filter.is_ignored(path);
     } catch (...) {
-        return false; // Fail open
+        return false;  // Fail open
     }
 }
 
@@ -1398,8 +1359,10 @@ std::vector<SkillCommand> get_skill_dir_commands_locked(const fs::path& cwd) {
     if (is_bare) {
         if (additional_dirs.empty() || !project_settings_enabled) {
             debug("[bare] Skipping skill dir discovery (" +
-                  std::string(additional_dirs.empty() ? "no --add-dir" :
-                  "projectSettings disabled or skillsLocked") + ")");
+                  std::string(additional_dirs.empty()
+                                  ? "no --add-dir"
+                                  : "projectSettings disabled or skillsLocked") +
+                  ")");
             cache.cached = std::vector<SkillCommand>{};
             cache.cached_cwd = abs_cwd;
             return {};
@@ -1408,9 +1371,8 @@ std::vector<SkillCommand> get_skill_dir_commands_locked(const fs::path& cwd) {
         // Only load from explicit --add-dir paths
         std::vector<SkillCommand> result;
         for (const auto& dir : additional_dirs) {
-            auto add_skills = load_skills_from_skills_dir(
-                fs::path(dir) / ".loom" / "skills",
-                SettingSource::ProjectSettings);
+            auto add_skills = load_skills_from_skills_dir(fs::path(dir) / ".loom" / "skills",
+                                                          SettingSource::ProjectSettings);
             for (auto& swp : add_skills) {
                 result.push_back(std::move(swp.skill));
             }
@@ -1420,8 +1382,7 @@ std::vector<SkillCommand> get_skill_dir_commands_locked(const fs::path& cwd) {
         return result;
     }
 
-    debug("[skills] Loading from: managed=" + managed_skills_dir +
-          ", user=" + user_skills_dir +
+    debug("[skills] Loading from: managed=" + managed_skills_dir + ", user=" + user_skills_dir +
           ", project count=" + std::to_string(project_skills_dirs.size()));
 
     // Load from all sources
@@ -1431,41 +1392,43 @@ std::vector<SkillCommand> get_skill_dir_commands_locked(const fs::path& cwd) {
     if (is_setting_source_enabled(SettingSource::PolicySettings) &&
         !loom::utils::is_env_truthy(std::getenv("LOOM_DISABLE_POLICY_SKILLS")) &&
         !managed_skills_dir.empty()) {
-        auto managed = load_skills_from_skills_dir(
-            managed_skills_dir, SettingSource::PolicySettings);
-        for (auto& s : managed) all_skills_with_paths.push_back(std::move(s));
+        auto managed =
+            load_skills_from_skills_dir(managed_skills_dir, SettingSource::PolicySettings);
+        for (auto& s : managed)
+            all_skills_with_paths.push_back(std::move(s));
     }
 
     // 2. User skills
     if (is_setting_source_enabled(SettingSource::UserSettings) && !skills_locked) {
-        auto user = load_skills_from_skills_dir(
-            user_skills_dir, SettingSource::UserSettings);
-        for (auto& s : user) all_skills_with_paths.push_back(std::move(s));
+        auto user = load_skills_from_skills_dir(user_skills_dir, SettingSource::UserSettings);
+        for (auto& s : user)
+            all_skills_with_paths.push_back(std::move(s));
     }
 
     // 3. Project skills (from all .loom/skills dirs up to git root)
     if (project_settings_enabled) {
         for (const auto& dir : project_skills_dirs) {
-            auto project = load_skills_from_skills_dir(
-                dir, SettingSource::ProjectSettings);
-            for (auto& s : project) all_skills_with_paths.push_back(std::move(s));
+            auto project = load_skills_from_skills_dir(dir, SettingSource::ProjectSettings);
+            for (auto& s : project)
+                all_skills_with_paths.push_back(std::move(s));
         }
     }
 
     // 4. Additional dirs (--add-dir)
     if (project_settings_enabled) {
         for (const auto& dir : additional_dirs) {
-            auto add_skills = load_skills_from_skills_dir(
-                fs::path(dir) / ".loom" / "skills",
-                SettingSource::ProjectSettings);
-            for (auto& s : add_skills) all_skills_with_paths.push_back(std::move(s));
+            auto add_skills = load_skills_from_skills_dir(fs::path(dir) / ".loom" / "skills",
+                                                          SettingSource::ProjectSettings);
+            for (auto& s : add_skills)
+                all_skills_with_paths.push_back(std::move(s));
         }
     }
 
     // 5. Legacy commands
     if (!skills_locked) {
         auto legacy = load_skills_from_commands_dir(cwd);
-        for (auto& s : legacy) all_skills_with_paths.push_back(std::move(s));
+        for (auto& s : legacy)
+            all_skills_with_paths.push_back(std::move(s));
     }
 
     // Deduplicate by resolved path (handles symlinks)
@@ -1521,8 +1484,7 @@ std::vector<SkillCommand> get_skill_dir_commands_locked(const fs::path& cwd) {
               " conditional skills stored (activated when matching files are touched)");
     }
 
-    debug("[skills] Loaded " + std::to_string(deduplicated_skills.size()) +
-          " unique skills (" +
+    debug("[skills] Loaded " + std::to_string(deduplicated_skills.size()) + " unique skills (" +
           std::to_string(unconditional_skills.size()) + " unconditional, " +
           std::to_string(new_conditional_skills.size()) + " conditional)");
 
@@ -1591,7 +1553,7 @@ inline void emit_skills_loaded() {
         }
     }
 }
-} // namespace detail
+}  // namespace detail
 
 // =========================================================================
 // discoverSkillDirsForPaths
@@ -1600,9 +1562,8 @@ inline void emit_skills_loaded() {
 /// Discover skill directories by walking up from file paths to cwd.
 /// Only discovers directories below cwd (cwd-level skills are loaded at startup).
 /// Returns newly discovered directories, sorted deepest first.
-std::vector<fs::path> discover_skill_dirs_for_paths(
-    const std::vector<fs::path>& file_paths, const fs::path& cwd)
-{
+std::vector<fs::path> discover_skill_dirs_for_paths(const std::vector<fs::path>& file_paths,
+                                                    const fs::path& cwd) {
     auto& state = detail::dynamic_state();
     std::lock_guard lock(state.mutex);
 
@@ -1629,8 +1590,7 @@ std::vector<fs::path> discover_skill_dirs_for_paths(
             std::string skill_dir_str = skill_dir.string();
 
             // Skip if already checked
-            if (state.dynamic_skill_dirs.find(skill_dir_str) ==
-                state.dynamic_skill_dirs.end()) {
+            if (state.dynamic_skill_dirs.find(skill_dir_str) == state.dynamic_skill_dirs.end()) {
                 state.dynamic_skill_dirs.insert(skill_dir_str);
 
                 if (fs::exists(skill_dir) && fs::is_directory(skill_dir)) {
@@ -1638,24 +1598,22 @@ std::vector<fs::path> discover_skill_dirs_for_paths(
                     if (!is_path_gitignored(current_dir, resolved_cwd)) {
                         new_dirs.push_back(skill_dir);
                     } else {
-                        debug("[skills] Skipped gitignored skills dir: " +
-                              skill_dir_str);
+                        debug("[skills] Skipped gitignored skills dir: " + skill_dir_str);
                     }
                 }
             }
 
             // Move to parent
             auto parent = current_dir.parent_path();
-            if (parent == current_dir) break; // Reached root
+            if (parent == current_dir) break;  // Reached root
             current_dir = parent;
         }
     }
 
     // Sort by path depth (deepest first) so skills closer to file take precedence
-    std::sort(new_dirs.begin(), new_dirs.end(),
-        [](const fs::path& a, const fs::path& b) {
-            return a.string().size() > b.string().size();
-        });
+    std::sort(new_dirs.begin(), new_dirs.end(), [](const fs::path& a, const fs::path& b) {
+        return a.string().size() > b.string().size();
+    });
 
     return new_dirs;
 }
@@ -1669,7 +1627,8 @@ std::vector<fs::path> discover_skill_dirs_for_paths(
 void add_skill_directories(const std::vector<fs::path>& dirs) {
     if (!is_setting_source_enabled(SettingSource::ProjectSettings) ||
         is_restricted_to_plugin_only("skills")) {
-        debug("[skills] Dynamic skill discovery skipped: projectSettings disabled or plugin-only policy");
+        debug("[skills] Dynamic skill discovery skipped: projectSettings disabled or plugin-only "
+              "policy");
         return;
     }
 
@@ -1681,8 +1640,7 @@ void add_skill_directories(const std::vector<fs::path>& dirs) {
     std::vector<std::vector<detail::SkillWithPath>> loaded_skills;
     loaded_skills.reserve(dirs.size());
     for (const auto& dir : dirs) {
-        loaded_skills.push_back(load_skills_from_skills_dir(
-            dir, SettingSource::ProjectSettings));
+        loaded_skills.push_back(load_skills_from_skills_dir(dir, SettingSource::ProjectSettings));
     }
 
     std::size_t total_new = 0;
@@ -1711,8 +1669,8 @@ void add_skill_directories(const std::vector<fs::path>& dirs) {
     }
 
     if (total_new > 0) {
-        debug("[skills] Dynamically discovered " + std::to_string(total_new) +
-              " skills from " + std::to_string(dirs.size()) + " directories");
+        debug("[skills] Dynamically discovered " + std::to_string(total_new) + " skills from " +
+              std::to_string(dirs.size()) + " directories");
     }
 
     // Notify listeners
@@ -1751,9 +1709,9 @@ bool matches_simple_glob(const std::string& path, const std::string& pattern);
 /// Activate conditional skills whose path patterns match the given file paths.
 /// Activated skills are moved to dynamic skills map.
 /// Returns newly activated skill names.
-std::vector<std::string> activate_conditional_skills_for_paths(
-    const std::vector<fs::path>& file_paths, const fs::path& cwd)
-{
+std::vector<std::string>
+activate_conditional_skills_for_paths(const std::vector<fs::path>& file_paths,
+                                      const fs::path& cwd) {
     auto& state = detail::dynamic_state();
     std::lock_guard lock(state.mutex);
 
@@ -1766,8 +1724,7 @@ std::vector<std::string> activate_conditional_skills_for_paths(
     auto conditional_copy = state.conditional_skills;
 
     for (auto& [name, skill] : conditional_copy) {
-        if (skill.type != "prompt" || !skill.paths.has_value() ||
-            skill.paths->empty()) {
+        if (skill.type != "prompt" || !skill.paths.has_value() || skill.paths->empty()) {
             continue;
         }
 
@@ -1796,8 +1753,7 @@ std::vector<std::string> activate_conditional_skills_for_paths(
             state.conditional_skills.erase(name);
             state.activated_conditional_skill_names.insert(name);
             activated.push_back(name);
-            debug("[skills] Activated conditional skill '" + name +
-                  "' (matched file path)");
+            debug("[skills] Activated conditional skill '" + name + "' (matched file path)");
         }
     }
 
@@ -1848,11 +1804,12 @@ bool matches_simple_glob_impl(const std::string& path, const std::string& patter
 
     while (si < path.size()) {
         if (pi < pattern.size() && (pattern[pi] == path[si] || pattern[pi] == '?')) {
-            ++pi; ++si;
+            ++pi;
+            ++si;
         } else if (pi < pattern.size() && pattern[pi] == '*') {
             // Check for **
             bool double_star = (pi + 1 < pattern.size() && pattern[pi + 1] == '*');
-            if (double_star) ++pi; // skip second *
+            if (double_star) ++pi;  // skip second *
             star_p = pi++;
             star_s = si;
         } else if (star_p != std::string::npos) {
@@ -1863,11 +1820,12 @@ bool matches_simple_glob_impl(const std::string& path, const std::string& patter
         }
     }
 
-    while (pi < pattern.size() && pattern[pi] == '*') ++pi;
+    while (pi < pattern.size() && pattern[pi] == '*')
+        ++pi;
     return pi == pattern.size();
 }
 
-} // namespace detail
+}  // namespace detail
 
 /// Public glob matching function used by activate_conditional_skills_for_paths.
 /// Supports ** (matches path separators), * (matches within segment), ? (single char).
@@ -1919,7 +1877,7 @@ struct McpSkillBuilderRegistrar {
 // Static initializer - runs at module load
 inline McpSkillBuilderRegistrar g_mcp_registrar;
 
-} // namespace detail
+}  // namespace detail
 
 // =========================================================================
 // estimateSkillFrontmatterTokens
@@ -2064,13 +2022,11 @@ public:
 
     /// Find a skill by name across all sources.
     /// Returns nullopt if not found.
-    std::optional<SkillDefinition> find_skill(
-        std::string_view name,
-        const fs::path& cwd = fs::current_path())
-    {
+    std::optional<SkillDefinition> find_skill(std::string_view name,
+                                              const fs::path& cwd = fs::current_path()) {
         auto skills = all_skills(cwd);
         auto it = std::ranges::find_if(skills,
-            [name](const SkillDefinition& s) { return s.name == name; });
+                                       [name](const SkillDefinition& s) { return s.name == name; });
         if (it != skills.end()) return *it;
         return std::nullopt;
     }
@@ -2079,10 +2035,8 @@ public:
     /// new skills found.  Calls discover_skill_dirs_for_paths() +
     /// add_skill_directories() internally.
     /// Called by file-operation hooks (Read/Write/Edit).
-    void discover_for_paths(
-        const std::vector<fs::path>& file_paths,
-        const fs::path& cwd = fs::current_path())
-    {
+    void discover_for_paths(const std::vector<fs::path>& file_paths,
+                            const fs::path& cwd = fs::current_path()) {
         if (file_paths.empty()) return;
 
         auto new_dirs = discover_skill_dirs_for_paths(file_paths, cwd);
@@ -2116,14 +2070,10 @@ public:
     }
 
     /// Get the number of dynamically-discovered skills (for diagnostics).
-    std::size_t dynamic_skill_count() {
-        return get_dynamic_skills().size();
-    }
+    std::size_t dynamic_skill_count() { return get_dynamic_skills().size(); }
 
     /// Get the number of pending conditional skills (for diagnostics).
-    std::size_t conditional_skill_count() {
-        return get_conditional_skill_count();
-    }
+    std::size_t conditional_skill_count() { return get_conditional_skill_count(); }
 
     /// Register bundled skill definitions (called once at init).
     /// Public so bundled.cppm can populate the registry at startup.
@@ -2170,16 +2120,16 @@ private:
 
         // Sort: bundled first, then alphabetical within groups
         std::sort(result.begin(), result.end(),
-            [](const SkillDefinition& a, const SkillDefinition& b) {
-                auto order = [](const SkillDefinition& s) {
-                    if (s.is_builtin) return 3;
-                    return 0;
-                };
-                int ao = order(a);
-                int bo = order(b);
-                if (ao != bo) return ao < bo;
-                return a.name < b.name;
-            });
+                  [](const SkillDefinition& a, const SkillDefinition& b) {
+                      auto order = [](const SkillDefinition& s) {
+                          if (s.is_builtin) return 3;
+                          return 0;
+                      };
+                      int ao = order(a);
+                      int bo = order(b);
+                      if (ao != bo) return ao < bo;
+                      return a.name < b.name;
+                  });
 
         cached_all_ = std::move(result);
     }
@@ -2202,11 +2152,9 @@ namespace detail {
 /// RAII registrar that sets the file-access hook on construction.
 struct FileAccessHookRegistrar {
     FileAccessHookRegistrar() {
-        loom::skills::set_file_access_hook(
-            [](const fs::path& file_path, const fs::path& cwd) {
-                SkillRegistry::instance().discover_for_paths(
-                    {file_path}, cwd);
-            });
+        loom::skills::set_file_access_hook([](const fs::path& file_path, const fs::path& cwd) {
+            SkillRegistry::instance().discover_for_paths({file_path}, cwd);
+        });
     }
 };
 
@@ -2214,6 +2162,6 @@ struct FileAccessHookRegistrar {
 // The hook is set once and persists for the process lifetime.
 inline const FileAccessHookRegistrar g_file_access_hook_registrar{};
 
-} // namespace detail
+}  // namespace detail
 
-} // namespace loom::skills
+}  // namespace loom::skills

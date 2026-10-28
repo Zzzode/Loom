@@ -29,16 +29,16 @@ export module loom.query.assembly;
 
 import std;
 
-import loom.types.types;       // loom::core::Result
-import loom.config.config;     // loom::core::Settings
+import loom.types.types;        // loom::core::Result
+import loom.config.config;      // loom::core::Settings
 import loom.query.query_engine; // loom::core::QueryEngineConfig, QueryEngine
-import loom.serdes.json;       // loom::utils::json::JsonVal (parse_session_message_value)
+import loom.serdes.json;        // loom::utils::json::JsonVal (parse_session_message_value)
 // ToolRegistry is needed for the register_extra_tools field type; the
 // detector does not harvest the class name past loom.tools.tool's
 // concept/requires blocks (same marker as runtime_message_delivery.cppm).
-import loom.tools.tool;  // arch-check: keep-import
+import loom.tools.tool;             // arch-check: keep-import
 import loom.hooks.tool_permissions; // loom::hooks::AskUserResponseFn
-import loom.tools.agent_types; // loom::tools::AgentLivePermissionCheckFn
+import loom.tools.agent_types;      // loom::tools::AgentLivePermissionCheckFn
 
 export namespace loom::query {
 
@@ -51,7 +51,7 @@ struct AssemblyOverrides {
     std::optional<std::string> requested_model;
     std::optional<std::string> api_key;  // bypasses settings.network.api_key
     std::optional<std::string> base_url;
-    std::optional<std::string> wire_api; // "messages" | "openai"
+    std::optional<std::string> wire_api;  // "messages" | "openai"
     std::optional<std::string> cwd;
 };
 
@@ -61,15 +61,15 @@ struct AssemblyOverrides {
 /// direct-connect Messages API path (server_routes.cppm:733-735); a harness
 /// with a loopback/gateway base_url supplies a placeholder key and bypasses
 /// the check. This is the single resolution path for both callers.
-[[nodiscard]] loom::core::Result<loom::core::QueryEngineConfig> resolve_engine_config(
-    const loom::core::Settings& settings, const AssemblyOverrides& overrides);
+[[nodiscard]] loom::core::Result<loom::core::QueryEngineConfig>
+resolve_engine_config(const loom::core::Settings& settings, const AssemblyOverrides& overrides);
 
 struct AssemblyConfig {
-    loom::core::QueryEngineConfig engine;        // resolved via resolve_engine_config
-    std::optional<std::filesystem::path> sessions_dir;     // enable session storage
+    loom::core::QueryEngineConfig engine;               // resolved via resolve_engine_config
+    std::optional<std::filesystem::path> sessions_dir;  // enable session storage
     std::optional<std::filesystem::path> dump_prompts_dir;
-    std::vector<std::string> prior_message_lines;          // resume seed (parsed at rank 10)
-    std::shared_ptr<std::atomic_bool> cancel_flag;          // external abort
+    std::vector<std::string> prior_message_lines;   // resume seed (parsed at rank 10)
+    std::shared_ptr<std::atomic_bool> cancel_flag;  // external abort
     /// Test seam: register extra tools (e.g. a mock permission-gated tool)
     /// into the registry before the config.tools snapshot is taken.
     std::function<void(loom::core::ToolRegistry&)> register_extra_tools;
@@ -101,8 +101,8 @@ private:
 
     explicit AssemblyHandle(std::unique_ptr<Impl> impl) noexcept;
 
-    friend loom::core::Result<AssemblyHandle> assemble(
-        const AssemblyConfig& config, const AssemblyCallbacks& callbacks);
+    friend loom::core::Result<AssemblyHandle> assemble(const AssemblyConfig& config,
+                                                       const AssemblyCallbacks& callbacks);
 };
 
 /// Assemble-only: take the resolved config -> build ToolPermissionHook ->
@@ -116,8 +116,8 @@ private:
 /// (server_routes.cppm:804-810), so MCP tool discovery is preserved in the
 /// re-expressed server route and not dropped by an implementer reading this
 /// sketch literally.
-[[nodiscard]] loom::core::Result<AssemblyHandle> assemble(
-    const AssemblyConfig& config, const AssemblyCallbacks& callbacks);
+[[nodiscard]] loom::core::Result<AssemblyHandle> assemble(const AssemblyConfig& config,
+                                                          const AssemblyCallbacks& callbacks);
 
 /// Parse one messages.jsonl document into a loom::core::Message. The same
 /// reader assemble() uses for prior_message_lines, exported so
@@ -131,7 +131,7 @@ private:
 /// loom::core::Message (5-member variant) with no existing converter — see
 /// the P3-assembly deviation note. `index` seeds a fallback id when the
 /// document has none.
-[[nodiscard]] std::optional<loom::core::Message> parse_session_message_value(
-    loom::utils::json::JsonVal root, std::size_t index = 0);
+[[nodiscard]] std::optional<loom::core::Message>
+parse_session_message_value(loom::utils::json::JsonVal root, std::size_t index = 0);
 
-} // namespace loom::query
+}  // namespace loom::query

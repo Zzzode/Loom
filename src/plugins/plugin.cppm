@@ -3,9 +3,9 @@
 /// Plugins extend CLI functionality with tools, commands, and hooks.
 module;
 
-#include <cstdint>
-
 #include <uv.h>
+
+#include <cstdint>
 
 export module loom.plugins.plugin;
 
@@ -15,9 +15,9 @@ import loom.types.types;
 
 export namespace loom::plugins {
 
-using loom::core::Result;
 using loom::core::Error;
 using loom::core::ErrorCode;
+using loom::core::Result;
 using loom::core::VoidResult;
 
 // ============================================================
@@ -26,20 +26,19 @@ using loom::core::VoidResult;
 
 /// Static plugin metadata loaded from manifest
 struct PluginDefinition {
-    std::string name;           // Unique plugin identifier
-    std::string version;        // SemVer version string
-    std::string author;         // Author name or org
-    std::string description;    // Human-readable description
-    std::string entry_point;    // Path to plugin executable/script
+    std::string name;                       // Unique plugin identifier
+    std::string version;                    // SemVer version string
+    std::string author;                     // Author name or org
+    std::string description;                // Human-readable description
+    std::string entry_point;                // Path to plugin executable/script
     std::optional<std::string> homepage;    // URL for docs
     std::optional<std::string> license;     // SPDX identifier
     std::vector<std::string> dependencies;  // Required plugin dependencies
 
     /// Serialize definition to JSON
     [[nodiscard]] std::string to_json() const {
-        return std::format(
-            R"({{"name":"{}","version":"{}","author":"{}","description":"{}"}})",
-            name, version, author, description);
+        return std::format(R"({{"name":"{}","version":"{}","author":"{}","description":"{}"}})",
+                           name, version, author, description);
     }
 };
 
@@ -70,13 +69,13 @@ struct PluginCapabilities {
 
 /// Plugin process lifecycle states
 enum class PluginState : std::uint8_t {
-    Unloaded,       // Not yet loaded
-    Loaded,         // Manifest parsed, not started
-    Initializing,   // Init message sent, awaiting response
-    Running,        // Fully operational
-    Stopping,       // Stop requested, waiting for cleanup
-    Stopped,        // Gracefully terminated
-    Error,          // Crashed or unresponsive
+    Unloaded,      // Not yet loaded
+    Loaded,        // Manifest parsed, not started
+    Initializing,  // Init message sent, awaiting response
+    Running,       // Fully operational
+    Stopping,      // Stop requested, waiting for cleanup
+    Stopped,       // Gracefully terminated
+    Error,         // Crashed or unresponsive
 };
 
 // ============================================================
@@ -105,11 +104,11 @@ struct PluginInstance {
     PluginState state = PluginState::Unloaded;
 
     // Process management
-    uv_process_t process{};         // libuv process handle
-    uv_pipe_t stdin_pipe{};         // Pipe to plugin stdin
-    uv_pipe_t stdout_pipe{};        // Pipe from plugin stdout
-    std::string output_buffer;      // Accumulated stdout data
-    std::uint32_t pid = 0;          // OS process ID
+    uv_process_t process{};     // libuv process handle
+    uv_pipe_t stdin_pipe{};     // Pipe to plugin stdin
+    uv_pipe_t stdout_pipe{};    // Pipe from plugin stdout
+    std::string output_buffer;  // Accumulated stdout data
+    std::uint32_t pid = 0;      // OS process ID
 
     // Communication state
     std::uint64_t last_response_at = 0;  // Last response timestamp
@@ -127,9 +126,9 @@ struct PluginInstance {
 
 /// JSON-RPC message sent to/from plugin process
 struct PluginMessage {
-    std::string id;          // Request ID for correlation
-    std::string method;      // RPC method name
-    std::string params_json; // JSON-encoded parameters
+    std::string id;           // Request ID for correlation
+    std::string method;       // RPC method name
+    std::string params_json;  // JSON-encoded parameters
     bool is_response = false;
     std::optional<std::string> result_json;
     std::optional<std::string> error_message;
@@ -151,7 +150,8 @@ class PluginManager {
     std::function<void(const std::string&, PluginState)> on_state_change_;
 
 public:
-    explicit PluginManager(uv_loop_t* loop) : loop_(loop) {}
+    explicit PluginManager(uv_loop_t* loop)
+        : loop_(loop) {}
 
     ~PluginManager() { shutdown_all(); }
 
@@ -160,15 +160,13 @@ public:
     PluginManager& operator=(const PluginManager&) = delete;
 
     /// Add a directory to search for plugins
-    void add_search_path(std::string path) {
-        search_paths_.push_back(std::move(path));
-    }
+    void add_search_path(std::string path) { search_paths_.push_back(std::move(path)); }
 
     /// Register a plugin from its definition (does not start it)
     [[nodiscard]] VoidResult register_plugin(PluginDefinition def) {
         if (plugins_.contains(def.name)) {
-            return std::unexpected(Error::make(ErrorCode::InternalError,
-                std::format("Plugin '{}' already registered", def.name)));
+            return std::unexpected(Error::make(
+                ErrorCode::InternalError, std::format("Plugin '{}' already registered", def.name)));
         }
 
         auto instance = std::make_unique<PluginInstance>();
@@ -182,12 +180,12 @@ public:
     [[nodiscard]] VoidResult init_plugin(std::string_view name) {
         auto* inst = find_instance(name);
         if (!inst) {
-            return std::unexpected(Error::make(ErrorCode::InternalError,
-                std::format("Plugin '{}' not found", name)));
+            return std::unexpected(
+                Error::make(ErrorCode::InternalError, std::format("Plugin '{}' not found", name)));
         }
         if (inst->state != PluginState::Loaded) {
-            return std::unexpected(Error::make(ErrorCode::InternalError,
-                std::format("Plugin '{}' not in Loaded state", name)));
+            return std::unexpected(Error::make(
+                ErrorCode::InternalError, std::format("Plugin '{}' not in Loaded state", name)));
         }
 
         // Spawn plugin process
@@ -198,14 +196,12 @@ public:
         notify_state(inst->definition.name, PluginState::Initializing);
 
         // Send initialization message
-        send_to_plugin(*inst, PluginMessage{
-            .id = std::to_string(next_request_id_++),
-            .method = "initialize",
-            .params_json = inst->definition.to_json(),
-            .is_response = false,
-            .result_json = std::nullopt,
-            .error_message = std::nullopt
-        });
+        send_to_plugin(*inst, PluginMessage{.id = std::to_string(next_request_id_++),
+                                            .method = "initialize",
+                                            .params_json = inst->definition.to_json(),
+                                            .is_response = false,
+                                            .result_json = std::nullopt,
+                                            .error_message = std::nullopt});
 
         return {};
     }
@@ -214,8 +210,8 @@ public:
     [[nodiscard]] VoidResult start_plugin(std::string_view name) {
         auto* inst = find_instance(name);
         if (!inst) {
-            return std::unexpected(Error::make(ErrorCode::InternalError,
-                std::format("Plugin '{}' not found", name)));
+            return std::unexpected(
+                Error::make(ErrorCode::InternalError, std::format("Plugin '{}' not found", name)));
         }
 
         inst->state = PluginState::Running;
@@ -227,22 +223,20 @@ public:
     [[nodiscard]] VoidResult stop_plugin(std::string_view name) {
         auto* inst = find_instance(name);
         if (!inst) {
-            return std::unexpected(Error::make(ErrorCode::InternalError,
-                std::format("Plugin '{}' not found", name)));
+            return std::unexpected(
+                Error::make(ErrorCode::InternalError, std::format("Plugin '{}' not found", name)));
         }
 
         inst->state = PluginState::Stopping;
         notify_state(inst->definition.name, PluginState::Stopping);
 
         // Send shutdown notification then kill process
-        send_to_plugin(*inst, PluginMessage{
-            .id = std::to_string(next_request_id_++),
-            .method = "shutdown",
-            .params_json = "{}",
-            .is_response = false,
-            .result_json = std::nullopt,
-            .error_message = std::nullopt
-        });
+        send_to_plugin(*inst, PluginMessage{.id = std::to_string(next_request_id_++),
+                                            .method = "shutdown",
+                                            .params_json = "{}",
+                                            .is_response = false,
+                                            .result_json = std::nullopt,
+                                            .error_message = std::nullopt});
 
         // Force kill after timeout via libuv timer (simplified: immediate kill)
         if (inst->pid > 0) {
@@ -263,23 +257,20 @@ public:
     }
 
     /// Send an RPC call to a plugin
-    [[nodiscard]] VoidResult call_plugin(std::string_view name,
-                                          std::string method,
-                                          std::string params_json) {
+    [[nodiscard]] VoidResult call_plugin(std::string_view name, std::string method,
+                                         std::string params_json) {
         auto* inst = find_instance(name);
         if (!inst || !inst->is_healthy()) {
             return std::unexpected(Error::make(ErrorCode::InternalError,
-                std::format("Plugin '{}' not running", name)));
+                                               std::format("Plugin '{}' not running", name)));
         }
 
-        send_to_plugin(*inst, PluginMessage{
-            .id = std::to_string(next_request_id_++),
-            .method = std::move(method),
-            .params_json = std::move(params_json),
-            .is_response = false,
-            .result_json = std::nullopt,
-            .error_message = std::nullopt
-        });
+        send_to_plugin(*inst, PluginMessage{.id = std::to_string(next_request_id_++),
+                                            .method = std::move(method),
+                                            .params_json = std::move(params_json),
+                                            .is_response = false,
+                                            .result_json = std::nullopt,
+                                            .error_message = std::nullopt});
         return {};
     }
 
@@ -339,8 +330,8 @@ private:
         int r = uv_spawn(loop_, &inst.process, &opts);
         if (r != 0) {
             return std::unexpected(Error::make(ErrorCode::InternalError,
-                std::format("Failed to spawn plugin '{}': {}",
-                    inst.definition.name, uv_strerror(r))));
+                                               std::format("Failed to spawn plugin '{}': {}",
+                                                           inst.definition.name, uv_strerror(r))));
         }
 
         inst.pid = inst.process.pid;
@@ -350,16 +341,16 @@ private:
     /// Send a JSON-RPC message to a plugin via its stdin pipe
     void send_to_plugin(PluginInstance& inst, const PluginMessage& msg) {
         // Format as JSON-RPC line-delimited message
-        std::string json = std::format(
-            R"({{"jsonrpc":"2.0","id":"{}","method":"{}","params":{}}})""\n",
-            msg.id, msg.method, msg.params_json);
+        std::string json = std::format(R"({{"jsonrpc":"2.0","id":"{}","method":"{}","params":{}}})"
+                                       "\n",
+                                       msg.id, msg.method, msg.params_json);
 
         auto* req = new uv_write_t;
         auto* buf_data = new std::string(std::move(json));
         uv_buf_t buf = uv_buf_init(buf_data->data(), static_cast<unsigned int>(buf_data->size()));
         req->data = buf_data;
-        uv_write(req, reinterpret_cast<uv_stream_t*>(&inst.stdin_pipe),
-                 &buf, 1, on_plugin_write_done);
+        uv_write(req, reinterpret_cast<uv_stream_t*>(&inst.stdin_pipe), &buf, 1,
+                 on_plugin_write_done);
         ++inst.pending_requests;
     }
 
@@ -392,14 +383,10 @@ class PluginRegistry {
 
 public:
     /// Register a plugin definition
-    void install(PluginDefinition def) {
-        installed_[def.name] = std::move(def);
-    }
+    void install(PluginDefinition def) { installed_[def.name] = std::move(def); }
 
     /// Unregister a plugin
-    void uninstall(std::string_view name) {
-        installed_.erase(std::string(name));
-    }
+    void uninstall(std::string_view name) { installed_.erase(std::string(name)); }
 
     /// Check if a plugin is installed
     [[nodiscard]] bool is_installed(std::string_view name) const {
@@ -426,4 +413,4 @@ public:
     [[nodiscard]] std::size_t size() const noexcept { return installed_.size(); }
 };
 
-} // namespace loom::plugins
+}  // namespace loom::plugins

@@ -27,15 +27,21 @@ namespace permission_components = loom::ui::permissions::components;
 namespace rules = loom::ui::permissions::rule_list;
 namespace scope = loom::ui::permissions::scope_editor;
 namespace wizard = loom::ui::plugins::plugin_install_flow;
-constexpr auto kAll = std::array{th::ThemeVariant::Dark, th::ThemeVariant::Light,
-    th::ThemeVariant::DarkDaltonized, th::ThemeVariant::LightDaltonized,
-    th::ThemeVariant::Monochrome, th::ThemeVariant::LightAnsi, th::ThemeVariant::DarkAnsi};
+constexpr auto kAll =
+    std::array{th::ThemeVariant::Dark,           th::ThemeVariant::Light,
+               th::ThemeVariant::DarkDaltonized, th::ThemeVariant::LightDaltonized,
+               th::ThemeVariant::Monochrome,     th::ThemeVariant::LightAnsi,
+               th::ThemeVariant::DarkAnsi};
+
 bool IsRgb(th::ThemeVariant variant) {
-    return variant == th::ThemeVariant::Dark || variant == th::ThemeVariant::Light
-        || variant == th::ThemeVariant::DarkDaltonized || variant == th::ThemeVariant::LightDaltonized;
+    return variant == th::ThemeVariant::Dark || variant == th::ThemeVariant::Light ||
+           variant == th::ThemeVariant::DarkDaltonized ||
+           variant == th::ThemeVariant::LightDaltonized;
 }
+
 struct RestoreTheme {
     th::Theme old = th::current_theme();
+
     ~RestoreTheme() { th::set_theme(old); }
 };
 
@@ -69,8 +75,8 @@ void ExpectRgbContrast(ftxui::Color foreground, ftxui::Color background) {
 
 ftxui::Screen Paint(ftxui::Element element, int width = 120, int height = 12,
                     ftxui::Color canvas = ftxui::Color::Default) {
-    auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(width),
-                                      ftxui::Dimension::Fixed(height));
+    auto screen =
+        ftxui::Screen::Create(ftxui::Dimension::Fixed(width), ftxui::Dimension::Fixed(height));
     ftxui::Render(screen, std::move(element) | ftxui::bgcolor(canvas));
     return screen;
 }
@@ -80,7 +86,8 @@ std::optional<ftxui::Pixel> Word(const ftxui::Screen& screen, std::string_view w
         for (int x = 0; x + static_cast<int>(word.size()) <= screen.dimx(); ++x) {
             bool match = true;
             for (std::size_t i = 0; i < word.size(); ++i) {
-                if (screen.PixelAt(x + static_cast<int>(i), y).character != std::string(1, word[i])) {
+                if (screen.PixelAt(x + static_cast<int>(i), y).character !=
+                    std::string(1, word[i])) {
                     match = false;
                     break;
                 }
@@ -99,9 +106,8 @@ std::optional<ftxui::Pixel> Word(const ftxui::Screen& screen, std::string_view w
     return std::nullopt;
 }
 
-void ExpectWord(const ftxui::Screen& screen, std::string_view word,
-                ftxui::Color foreground, ftxui::Color background,
-                bool numeric = false) {
+void ExpectWord(const ftxui::Screen& screen, std::string_view word, ftxui::Color foreground,
+                ftxui::Color background, bool numeric = false) {
     const auto pixel = Word(screen, word);
     ASSERT_TRUE(pixel.has_value());
     EXPECT_EQ(pixel->foreground_color, foreground) << word;
@@ -109,13 +115,15 @@ void ExpectWord(const ftxui::Screen& screen, std::string_view word,
     EXPECT_NE(pixel->foreground_color, pixel->background_color) << word;
     if (numeric) ExpectRgbContrast(pixel->foreground_color, pixel->background_color);
 }
+
 // Dim is retained for completed history and unavailable actions only.
 std::optional<ftxui::Pixel> HistoricalWord(const ftxui::Screen& screen, std::string_view word) {
     for (int y = 0; y < screen.dimy(); ++y) {
         for (int x = 0; x + static_cast<int>(word.size()) <= screen.dimx(); ++x) {
             bool match = true;
             for (std::size_t i = 0; i < word.size(); ++i)
-                if (screen.PixelAt(x + static_cast<int>(i), y).character != std::string(1, word[i])) match = false;
+                if (screen.PixelAt(x + static_cast<int>(i), y).character != std::string(1, word[i]))
+                    match = false;
             if (match) return screen.PixelAt(x, y);
         }
     }
@@ -131,16 +139,19 @@ TEST(TextContrastControls, CurrentAgentStatusLabelsKeepReadableTextAndStatusGlyp
         th::set_theme(variant);
         const auto& pal = *th::current_theme().palette;
         for (const auto status : {agents::AgentStatus::Idle, agents::AgentStatus::Running,
-                agents::AgentStatus::Scheduled, agents::AgentStatus::Errored, agents::AgentStatus::Disabled}) {
+                                  agents::AgentStatus::Scheduled, agents::AgentStatus::Errored,
+                                  agents::AgentStatus::Disabled}) {
             SCOPED_TRACE(agents::status_label(status));
             const auto foreground = status == agents::AgentStatus::Errored ? pal.danger : pal.muted;
             auto screen = Paint(cards::StatusBadge(status), 50, 3, pal.background);
-            ExpectWord(screen, agents::status_label(status), foreground, pal.background, IsRgb(variant));
+            ExpectWord(screen, agents::status_label(status), foreground, pal.background,
+                       IsRgb(variant));
             agents::StatusDotOptions options;
             options.status = status;
             options.with_label = true;
             screen = Paint(agents::StatusDot(options), 50, 1, pal.background);
-            ExpectWord(screen, agents::status_label(status), foreground, pal.background, IsRgb(variant));
+            ExpectWord(screen, agents::status_label(status), foreground, pal.background,
+                       IsRgb(variant));
         }
     }
 }
@@ -152,7 +163,8 @@ TEST(TextContrastControls, AgentRoleCountsStatsAndToolSummariesAreReadableOnCard
         th::set_theme(variant);
         const auto& pal = *th::current_theme().palette;
         const auto card_background = variant == th::ThemeVariant::Monochrome
-            ? pal.message_actions_background : pal.surface_tint_4;
+                                         ? pal.message_actions_background
+                                         : pal.surface_tint_4;
         for (const auto canvas : {pal.background, card_background}) {
             agents::RunStats stats;
             stats.run_count = 17;
@@ -194,7 +206,8 @@ TEST(TextContrastControls, AgentCardCurrentMetadataUsesActualNormalAndSelectedSu
         agent.last_run_at = "Yesterday";
         for (const bool selected : {false, true}) {
             const auto selected_background = variant == th::ThemeVariant::Monochrome
-                ? pal.message_actions_background : pal.surface_tint_4;
+                                                 ? pal.message_actions_background
+                                                 : pal.surface_tint_4;
             const auto canvas = selected ? selected_background : pal.background;
             const auto mini = Paint(cards::MiniCard(agent, selected), 140, 1, pal.background);
             ExpectWord(mini, "CurrentAgent", pal.text, canvas, IsRgb(variant));
@@ -203,7 +216,8 @@ TEST(TextContrastControls, AgentCardCurrentMetadataUsesActualNormalAndSelectedSu
             ExpectWord(card, "CurrentRole", pal.info, canvas, IsRgb(variant));
             const auto large = Paint(cards::LargeCard(agent, selected), 160, 40, pal.background);
             ExpectWord(large, "CurrentRole", pal.info, canvas, IsRgb(variant));
-            for (const auto word : {"LongDescription", "model:", "CurrentPolicy", "enabled", "ENV_METADATA", "Yesterday", "running"})
+            for (const auto word : {"LongDescription", "model:", "CurrentPolicy", "enabled",
+                                    "ENV_METADATA", "Yesterday", "running"})
                 ExpectWord(large, word, pal.muted, canvas, IsRgb(variant));
             ExpectWord(large, "Permissions", pal.info, canvas, IsRgb(variant));
             ExpectWord(large, "CurrentModel", pal.info, canvas, IsRgb(variant));
@@ -218,7 +232,8 @@ TEST(TextContrastControls, ActiveTimelineMetadataIsReadableWhileCompletedHistory
         SCOPED_TRACE(th::variant_name(variant));
         th::set_theme(variant);
         const auto& pal = *th::current_theme().palette;
-        for (const auto status : {agents::AgentStatus::Running, agents::AgentStatus::Scheduled, agents::AgentStatus::Errored}) {
+        for (const auto status : {agents::AgentStatus::Running, agents::AgentStatus::Scheduled,
+                                  agents::AgentStatus::Errored}) {
             agents::TimelineStep step;
             step.index = 23;
             step.tool_name = "ActiveTool";
@@ -232,7 +247,8 @@ TEST(TextContrastControls, ActiveTimelineMetadataIsReadableWhileCompletedHistory
             const auto screen = Paint(agents::StepTimeline(options), 120, 8, pal.background);
             for (const auto word : {"23", "1.5s", "CurrentPreview", "expand"})
                 ExpectWord(screen, word, pal.muted, pal.background, IsRgb(variant));
-            ExpectWord(screen, "CurrentState", status == agents::AgentStatus::Errored ? pal.danger : pal.muted,
+            ExpectWord(screen, "CurrentState",
+                       status == agents::AgentStatus::Errored ? pal.danger : pal.muted,
                        pal.background, IsRgb(variant));
         }
         agents::TimelineStep completed;
@@ -245,7 +261,8 @@ TEST(TextContrastControls, ActiveTimelineMetadataIsReadableWhileCompletedHistory
         const auto pixel = HistoricalWord(history, "HistoricalPreview");
         ASSERT_TRUE(pixel.has_value());
         EXPECT_TRUE(pixel->dim);
-        const auto disabled = Paint(cards::FooterButton("Unavailable", pal.info, true), 40, 3, pal.background);
+        const auto disabled =
+            Paint(cards::FooterButton("Unavailable", pal.info, true), 40, 3, pal.background);
         const auto inactive = HistoricalWord(disabled, "Unavailable");
         ASSERT_TRUE(inactive.has_value());
         EXPECT_TRUE(inactive->dim);
@@ -269,7 +286,9 @@ TEST(TextContrastControls, PermissionRuleMetadataRemainsReadableThroughHoverSele
             for (const bool hovered : {false, true}) {
                 for (const bool selected : {false, true}) {
                     const auto canvas = selected ? pal.perm_rule_bg_info : pal.background;
-                    const auto screen = Paint(rules::render::RuleRow(rule, 17, hovered, selected, false), 160, 1, pal.background);
+                    const auto screen =
+                        Paint(rules::render::RuleRow(rule, 17, hovered, selected, false), 160, 1,
+                              pal.background);
                     for (const auto word : {"17", "Glob", "Session"})
                         ExpectWord(screen, word, pal.muted, canvas, IsRgb(variant));
                     const auto pixel = Word(screen, "Session");
@@ -288,7 +307,8 @@ TEST(TextContrastControls, PermissionPickersAndToolbarKeepReadableInstructionsAn
         th::set_theme(variant);
         const auto& pal = *th::current_theme().palette;
         constexpr std::array<std::string_view, 3> names{"First", "Second", "Third"};
-        const auto picker = Paint(rules::render::MiniPicker(1, pal.info, names), 80, 1, pal.background);
+        const auto picker =
+            Paint(rules::render::MiniPicker(1, pal.info, names), 80, 1, pal.background);
         ExpectWord(picker, "First", pal.muted, pal.background, IsRgb(variant));
         ExpectWord(picker, "Second", pal.info, pal.background, IsRgb(variant));
         const auto selected = Word(picker, "Second");
@@ -313,15 +333,23 @@ TEST(TextContrastControls, WorkspaceDefaultPolicyUsesReadableFilledBackground) {
         const auto& pal = *th::current_theme().palette;
         using Policy = loom::utils::permissions_engine::WorkspaceEntry::Policy;
         for (const bool inherited : {false, true}) {
-            const auto screen = Paint(rules::ui_tabs_detail::WorkspacePolicyBadge(Policy::Default, inherited), 40, 1, pal.background);
-            ExpectWord(screen, "DEFAULT", pal.muted, pal.message_actions_background, IsRgb(variant));
+            const auto screen =
+                Paint(rules::ui_tabs_detail::WorkspacePolicyBadge(Policy::Default, inherited), 40,
+                      1, pal.background);
+            ExpectWord(screen, "DEFAULT", pal.muted, pal.message_actions_background,
+                       IsRgb(variant));
         }
-        const bool ansi = variant == th::ThemeVariant::LightAnsi || variant == th::ThemeVariant::DarkAnsi;
+        const bool ansi =
+            variant == th::ThemeVariant::LightAnsi || variant == th::ThemeVariant::DarkAnsi;
         for (const auto policy : {Policy::Allow, Policy::Deny}) {
             const bool allow = policy == Policy::Allow;
-            const auto background = ansi ? pal.background : allow ? pal.success_tint_bg : pal.danger_tint_bg;
-            const auto screen = Paint(rules::ui_tabs_detail::WorkspacePolicyBadge(policy, false), 40, 1, pal.background);
-            ExpectWord(screen, allow ? "ALLOW" : "DENY", allow ? pal.success : pal.danger, background, IsRgb(variant));
+            const auto background = ansi    ? pal.background
+                                    : allow ? pal.success_tint_bg
+                                            : pal.danger_tint_bg;
+            const auto screen = Paint(rules::ui_tabs_detail::WorkspacePolicyBadge(policy, false),
+                                      40, 1, pal.background);
+            ExpectWord(screen, allow ? "ALLOW" : "DENY", allow ? pal.success : pal.danger,
+                       background, IsRgb(variant));
         }
     }
 }
@@ -347,8 +375,10 @@ TEST(TextContrastControls, ScopeEditorCurrentRowsAndActionsPreserveSelectionWith
         for (const bool selected : {false, true}) {
             state.al_cursor = selected ? 0 : 1;
             const auto allowlist = Paint(scope::RenderAllowlistTab(state), 160, 10, pal.background);
-            ExpectWord(allowlist, "[R]", permission_components::PathScopeColor(
-                permission_components::PathScope::Read), pal.background, IsRgb(variant));
+            ExpectWord(
+                allowlist, "[R]",
+                permission_components::PathScopeColor(permission_components::PathScope::Read),
+                pal.background, IsRgb(variant));
             const auto scope_badge = Word(allowlist, "[R]");
             ASSERT_TRUE(scope_badge.has_value());
             EXPECT_EQ(scope_badge->inverted, selected);
@@ -356,7 +386,8 @@ TEST(TextContrastControls, ScopeEditorCurrentRowsAndActionsPreserveSelectionWith
             ExpectWord(allowlist, "Add entry", pal.muted, pal.background, IsRgb(variant));
             ExpectWord(allowlist, "import", pal.muted, pal.background, IsRgb(variant));
             state.pa_cursor = selected ? 0 : 1;
-            const auto preapprovals = Paint(scope::RenderPreapprovalTab(state), 160, 10, pal.background);
+            const auto preapprovals =
+                Paint(scope::RenderPreapprovalTab(state), 160, 10, pal.background);
             ExpectWord(preapprovals, "ReadAction", pal.muted, pal.background, IsRgb(variant));
             ExpectWord(preapprovals, "Session", pal.muted, pal.background, IsRgb(variant));
             ExpectWord(preapprovals, "New-rule wizard", pal.muted, pal.background, IsRgb(variant));
@@ -376,7 +407,8 @@ TEST(TextContrastControls, ScopeWizardAndDangerousPathInstructionsAreReadable) {
         scope::EditorState state;
         state.show_wizard = true;
         state.wizard.step = 2;
-        const auto wizard_screen = Paint(scope::RenderPreapprovalTab(state), 160, 20, pal.background);
+        const auto wizard_screen =
+            Paint(scope::RenderPreapprovalTab(state), 160, 20, pal.background);
         ExpectWord(wizard_screen, "Path pattern:", pal.muted, pal.background, IsRgb(variant));
         ExpectWord(wizard_screen, "cancel", pal.muted, pal.background, IsRgb(variant));
         scope::DangerousPathRow dangerous;
@@ -397,9 +429,12 @@ TEST(TextContrastControls, InstallSourceStepKeepsNormalSelectedSubtitlesAndNavig
         const auto& pal = *th::current_theme().palette;
         wizard::SourceStepData data;
         for (int selected = 0; selected < 4; ++selected) {
-            const auto screen = Paint(wizard::detail::RenderSourceStep(data, selected), 160, 30, pal.background);
-            ExpectWord(screen, "Browse available", pal.muted, selected == 0 ? pal.surface_tint_3 : pal.background, IsRgb(variant));
-            ExpectWord(screen, "Clone from", pal.muted, selected == 3 ? pal.surface_tint_3 : pal.background, IsRgb(variant));
+            const auto screen =
+                Paint(wizard::detail::RenderSourceStep(data, selected), 160, 30, pal.background);
+            ExpectWord(screen, "Browse available", pal.muted,
+                       selected == 0 ? pal.surface_tint_3 : pal.background, IsRgb(variant));
+            ExpectWord(screen, "Clone from", pal.muted,
+                       selected == 3 ? pal.surface_tint_3 : pal.background, IsRgb(variant));
             ExpectWord(screen, "Navigation:", pal.muted, pal.background, IsRgb(variant));
             ExpectWord(screen, "focus input", pal.muted, pal.background, IsRgb(variant));
         }
@@ -421,12 +456,14 @@ TEST(TextContrastControls, InstallReviewMetadataAndTrustWarningUseActualFilledPa
         data.license = "MIT";
         data.permissions = {"file:read", "file:write", "bash:unsafe"};
         const auto screen = Paint(wizard::detail::RenderReviewStep(data), 160, 40, pal.background);
-        for (const auto word : {"Verify", "1.2.3", "CurrentAuthor", "ReviewDescription", "License:"})
+        for (const auto word :
+             {"Verify", "1.2.3", "CurrentAuthor", "ReviewDescription", "License:"})
             ExpectWord(screen, word, pal.muted, pal.background, IsRgb(variant));
         ExpectWord(screen, "file:read", pal.info, pal.background, IsRgb(variant));
         ExpectWord(screen, "file:write", pal.warning, pal.background, IsRgb(variant));
         ExpectWord(screen, "bash:unsafe", pal.danger, pal.background, IsRgb(variant));
-        const bool ansi = variant == th::ThemeVariant::LightAnsi || variant == th::ThemeVariant::DarkAnsi;
+        const bool ansi =
+            variant == th::ThemeVariant::LightAnsi || variant == th::ThemeVariant::DarkAnsi;
         const auto warning_background = ansi ? pal.background : pal.warning_tint_bg;
         ExpectWord(screen, "trust reminder", pal.warning, warning_background, IsRgb(variant));
         ExpectWord(screen, "Make sure", pal.muted, warning_background, IsRgb(variant));
@@ -441,8 +478,9 @@ TEST(TextContrastControls, InstallTrustStepRequiredHintAndVerifiedStatusStayRead
         const auto& pal = *th::current_theme().palette;
         wizard::TrustStepData data;
         data.is_verified = true;
-        const auto screen = Paint(wizard::detail::RenderTrustStep(data,
-            ftxui::text("TrustPanel") | ftxui::color(pal.text)), 160, 15, pal.background);
+        const auto screen = Paint(wizard::detail::RenderTrustStep(data, ftxui::text("TrustPanel") |
+                                                                            ftxui::color(pal.text)),
+                                  160, 15, pal.background);
         ExpectWord(screen, "Required", pal.muted, pal.background, IsRgb(variant));
         ExpectWord(screen, "verified", pal.success, pal.background, IsRgb(variant));
         ExpectWord(screen, "TrustPanel", pal.text, pal.background, IsRgb(variant));
@@ -482,7 +520,8 @@ TEST(TextContrastControls, InstallCompletionAndFailureRecoveryInstructionsStayRe
         data.post_install_hint = "NextInstruction";
         data.first_run_hotkey = "Ctrl-P";
         auto screen = Paint(wizard::detail::RenderCompleteStep(data), 160, 30, pal.background);
-        for (const auto word : {"ready", "2.3.4", "scope:", "NextInstruction", "configure", "start using"})
+        for (const auto word :
+             {"ready", "2.3.4", "scope:", "NextInstruction", "configure", "start using"})
             ExpectWord(screen, word, pal.muted, pal.background, IsRgb(variant));
         ExpectWord(screen, "Ctrl-P", pal.warning, pal.background, IsRgb(variant));
         data.success = false;
@@ -493,19 +532,21 @@ TEST(TextContrastControls, InstallCompletionAndFailureRecoveryInstructionsStayRe
     }
 }
 
-
 TEST(TextContrastControls, EveryPathScopeLabelIsReadableWithoutDim) {
     RestoreTheme restore;
     for (const auto variant : kAll) {
         SCOPED_TRACE(th::variant_name(variant));
         th::set_theme(variant);
         const auto& pal = *th::current_theme().palette;
-        for (const auto value : {permission_components::PathScope::Read, permission_components::PathScope::Write,
-                permission_components::PathScope::Execute, permission_components::PathScope::Network,
-                permission_components::PathScope::All}) {
-            const auto screen = Paint(permission_components::PathScopeBadge(value), 20, 1, pal.background);
+        for (const auto value :
+             {permission_components::PathScope::Read, permission_components::PathScope::Write,
+              permission_components::PathScope::Execute, permission_components::PathScope::Network,
+              permission_components::PathScope::All}) {
+            const auto screen =
+                Paint(permission_components::PathScopeBadge(value), 20, 1, pal.background);
             ExpectWord(screen, permission_components::PathScopeLabel(value),
-                permission_components::PathScopeColor(value), pal.background, IsRgb(variant));
+                       permission_components::PathScopeColor(value), pal.background,
+                       IsRgb(variant));
         }
     }
 }
@@ -515,10 +556,13 @@ TEST(TextContrastControls, ResolvedAgentAvatarEightColorsAndNormalAvatarKeepRead
     using AgentColor = loom::utils::swarm_backends::AgentColor;
     constexpr std::string_view key = "contrast-test-avatar";
     const auto previous = colors::get_agent_color(key);
+
     struct RestoreColor {
         std::optional<AgentColor> old;
+
         ~RestoreColor() { colors::set_agent_color("contrast-test-avatar", old); }
     } restore_color{previous};
+
     for (const auto variant : kAll) {
         SCOPED_TRACE(th::variant_name(variant));
         th::set_theme(variant);
@@ -526,11 +570,13 @@ TEST(TextContrastControls, ResolvedAgentAvatarEightColorsAndNormalAvatarKeepRead
         agents::AvatarOptions options;
         options.name = "Avatar";
         options.agent_type = std::string{key};
-        for (const auto hue : {AgentColor::Red, AgentColor::Blue, AgentColor::Green, AgentColor::Yellow,
-                AgentColor::Purple, AgentColor::Orange, AgentColor::Pink, AgentColor::Cyan}) {
+        for (const auto hue :
+             {AgentColor::Red, AgentColor::Blue, AgentColor::Green, AgentColor::Yellow,
+              AgentColor::Purple, AgentColor::Orange, AgentColor::Pink, AgentColor::Cyan}) {
             colors::set_agent_color(key, hue);
             const auto screen = Paint(agents::AgentAvatar(options), 20, 3, pal.background);
-            ExpectWord(screen, "A", pal.inverse_text, agents::agent_color_to_ftxui(hue), IsRgb(variant));
+            ExpectWord(screen, "A", pal.inverse_text, agents::agent_color_to_ftxui(hue),
+                       IsRgb(variant));
         }
         options.force_general = true;
         const auto normal = Paint(agents::AgentAvatar(options), 20, 3, pal.background);
@@ -550,7 +596,8 @@ TEST(TextContrastControls, AgentWizardBasicDescriptionRoleHintAndColorNavigation
         auto component = agent_wizard::StepBasic(draft);
         const auto screen = Paint(component->Render(), 160, 50, pal.background);
         const auto name_background = variant == th::ThemeVariant::Monochrome
-            ? pal.message_actions_background : pal.surface_tint_2;
+                                         ? pal.message_actions_background
+                                         : pal.surface_tint_2;
         ExpectWord(screen, "WizardAgent", pal.info, name_background, IsRgb(variant));
         ExpectWord(screen, "WizardDescription", pal.muted, pal.background, IsRgb(variant));
         ExpectWord(screen, "select below", pal.muted, pal.background, IsRgb(variant));
@@ -559,7 +606,8 @@ TEST(TextContrastControls, AgentWizardBasicDescriptionRoleHintAndColorNavigation
     }
 }
 
-TEST(TextContrastControls, AgentWizardToolsAndPathSummariesKeepCurrentEmptyAndOverflowMetadataReadable) {
+TEST(TextContrastControls,
+     AgentWizardToolsAndPathSummariesKeepCurrentEmptyAndOverflowMetadataReadable) {
     RestoreTheme restore;
     for (const auto variant : kAll) {
         SCOPED_TRACE(th::variant_name(variant));
@@ -598,7 +646,8 @@ TEST(TextContrastControls, AgentWizardPermissionChoicesSummaryAndReadinessRemain
         SCOPED_TRACE(th::variant_name(variant));
         th::set_theme(variant);
         const auto& pal = *th::current_theme().palette;
-        const bool ansi = variant == th::ThemeVariant::LightAnsi || variant == th::ThemeVariant::DarkAnsi;
+        const bool ansi =
+            variant == th::ThemeVariant::LightAnsi || variant == th::ThemeVariant::DarkAnsi;
         for (const bool ready : {false, true}) {
             auto draft = std::make_shared<agent_wizard::WizardDraft>();
             draft->name = "ConfiguredAgent";
@@ -607,16 +656,17 @@ TEST(TextContrastControls, AgentWizardPermissionChoicesSummaryAndReadinessRemain
             draft->confirmed = ready;
             auto component = agent_wizard::StepPermissions(draft);
             const auto screen = Paint(component->Render(), 160, 50, pal.background);
-            for (const auto word : {"Auto-allow", "Auto-deny", "Name:", "Description:", "Prompt:", "chars", "reviewed", "toggle confirm"})
+            for (const auto word : {"Auto-allow", "Auto-deny", "Name:", "Description:", "Prompt:",
+                                    "chars", "reviewed", "toggle confirm"})
                 ExpectWord(screen, word, pal.muted, pal.background, IsRgb(variant));
             ExpectWord(screen, "ConfiguredDescription", pal.text, pal.background, IsRgb(variant));
             ExpectWord(screen, "Ask (default)", pal.warning, pal.background, IsRgb(variant));
             if (ready) {
                 ExpectWord(screen, "Ready to create", pal.success,
-                    ansi ? pal.background : pal.success_tint_bg, IsRgb(variant));
+                           ansi ? pal.background : pal.success_tint_bg, IsRgb(variant));
             } else {
                 ExpectWord(screen, "Tick the confirmation", pal.warning,
-                    ansi ? pal.background : pal.warning_tint_bg, IsRgb(variant));
+                           ansi ? pal.background : pal.warning_tint_bg, IsRgb(variant));
             }
         }
     }

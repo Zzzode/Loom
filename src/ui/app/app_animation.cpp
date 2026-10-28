@@ -35,7 +35,8 @@ void AppAdapter::StartUiAnimationTicker() {
             // Thinking collapse is a one-shot transition, not a query ticker.
             auto deadline = thinking_collapse_deadline_ms_.load();
             const auto now_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
-                std::chrono::steady_clock::now().time_since_epoch()).count();
+                                    std::chrono::steady_clock::now().time_since_epoch())
+                                    .count();
             if (deadline != 0 && now_ms >= deadline &&
                 thinking_collapse_deadline_ms_.compare_exchange_strong(deadline, 0)) {
                 advanced = true;
@@ -77,4 +78,4 @@ void AppAdapter::PostRenderEvent() {
     }
 }
 
-} // namespace loom::ui
+}  // namespace loom::ui

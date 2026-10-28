@@ -17,8 +17,7 @@ class TempHome {
 public:
     TempHome() {
         root_ = fs::temp_directory_path() /
-                ("loom-paths-" + std::to_string(::getpid()) + "-" +
-                 std::to_string(counter_++));
+                ("loom-paths-" + std::to_string(::getpid()) + "-" + std::to_string(counter_++));
         fs::create_directories(root_);
         if (const char* prev = std::getenv("HOME")) prev_home_ = prev;
         if (const char* prev = std::getenv("LOOM_CONFIG_DIR")) prev_config_ = prev;
@@ -27,10 +26,14 @@ public:
     }
 
     ~TempHome() {
-        if (prev_home_) ::setenv("HOME", prev_home_->c_str(), 1);
-        else ::unsetenv("HOME");
-        if (prev_config_) ::setenv("LOOM_CONFIG_DIR", prev_config_->c_str(), 1);
-        else ::unsetenv("LOOM_CONFIG_DIR");
+        if (prev_home_)
+            ::setenv("HOME", prev_home_->c_str(), 1);
+        else
+            ::unsetenv("HOME");
+        if (prev_config_)
+            ::setenv("LOOM_CONFIG_DIR", prev_config_->c_str(), 1);
+        else
+            ::unsetenv("LOOM_CONFIG_DIR");
         std::error_code ec;
         fs::remove_all(root_, ec);
     }
@@ -39,8 +42,7 @@ public:
     TempHome& operator=(const TempHome&) = delete;
 
     /// Create the directory (and a memory file in it, when given).
-    void make_config_dir(const std::string& name,
-                         const std::string& memory_file = {}) {
+    void make_config_dir(const std::string& name, const std::string& memory_file = {}) {
         auto dir = root_ / name;
         fs::create_directories(dir);
         if (!memory_file.empty()) {
@@ -48,9 +50,7 @@ public:
         }
     }
 
-    [[nodiscard]] fs::path at(const std::string& name) const {
-        return root_ / name;
-    }
+    [[nodiscard]] fs::path at(const std::string& name) const { return root_ / name; }
 
 private:
     fs::path root_;
@@ -130,8 +130,7 @@ TEST(PathsMemoryFile, MemoryFileInPrefersLoomMd) {
     std::ofstream(dir / "LOOM.md") << "loom";
     auto found = loom::constants::paths::memory_file_in(dir);
     ASSERT_TRUE(found.has_value());
-    EXPECT_EQ(found->filename(), "LOOM.md")
-        << "all three exist, so the highest-priority name wins";
+    EXPECT_EQ(found->filename(), "LOOM.md") << "all three exist, so the highest-priority name wins";
 }
 
 TEST(PathsMemoryFile, MemoryFileInFallsThroughToAgentsThenClaude) {
@@ -147,8 +146,7 @@ TEST(PathsMemoryFile, MemoryFileInFallsThroughToAgentsThenClaude) {
     std::ofstream(dir / "AGENTS.md") << "agents";
     found = loom::constants::paths::memory_file_in(dir);
     ASSERT_TRUE(found.has_value());
-    EXPECT_EQ(found->filename(), "AGENTS.md")
-        << "AGENTS.md outranks CLAUDE.md once it appears";
+    EXPECT_EQ(found->filename(), "AGENTS.md") << "AGENTS.md outranks CLAUDE.md once it appears";
 
     std::ofstream(dir / "LOOM.md") << "loom";
     found = loom::constants::paths::memory_file_in(dir);
@@ -178,8 +176,7 @@ TEST(PathsMemoryFile, NearestDirectoryWinsEvenOnAWeakerFileName) {
 
     auto found = loom::constants::paths::find_memory_file(nested);
     ASSERT_TRUE(found.has_value());
-    EXPECT_EQ(*found, nested / "CLAUDE.md")
-        << "proximity must beat name priority";
+    EXPECT_EQ(*found, nested / "CLAUDE.md") << "proximity must beat name priority";
 }
 
 TEST(PathsMemoryFile, WalksUpUntilItFindsAnyMemoryFile) {
@@ -208,8 +205,7 @@ TEST(PathsMemoryFile, ProjectPathNamesThePreferredFileWhenNoneExists) {
     TempHome home;
     auto proj = home.at("fresh");
     fs::create_directories(proj);
-    EXPECT_EQ(loom::constants::paths::project_memory_path(proj),
-              proj / "LOOM.md");
+    EXPECT_EQ(loom::constants::paths::project_memory_path(proj), proj / "LOOM.md");
 }
 
 TEST(PathsMemoryFile, ProjectPathReportsTheExistingFileWhenOneDoes) {
@@ -217,23 +213,20 @@ TEST(PathsMemoryFile, ProjectPathReportsTheExistingFileWhenOneDoes) {
     auto proj = home.at("legacy");
     fs::create_directories(proj);
     std::ofstream(proj / "CLAUDE.md") << "existing";
-    EXPECT_EQ(loom::constants::paths::project_memory_path(proj),
-              proj / "CLAUDE.md");
+    EXPECT_EQ(loom::constants::paths::project_memory_path(proj), proj / "CLAUDE.md");
 }
 
 TEST(PathsMemoryFile, UserMemoryPathFindsTheNewMemoryInDotLoom) {
     TempHome home;
     home.make_config_dir(".loom", "LOOM.md");
-    EXPECT_EQ(loom::constants::paths::user_memory_path(),
-              home.at(".loom") / "LOOM.md")
+    EXPECT_EQ(loom::constants::paths::user_memory_path(), home.at(".loom") / "LOOM.md")
         << ".loom is the higher rung, so its memory wins";
 }
 
 TEST(PathsMemoryFile, UserMemoryPathNamesThePreferredFileWhenNoneExists) {
     TempHome home;
     home.make_config_dir(".loom");
-    EXPECT_EQ(loom::constants::paths::user_memory_path(),
-              home.at(".loom") / "LOOM.md");
+    EXPECT_EQ(loom::constants::paths::user_memory_path(), home.at(".loom") / "LOOM.md");
 }
 
 TEST(PathsMemoryFile, RecognisesOnlyTheThreeCascadeNames) {
@@ -309,16 +302,14 @@ TEST(PathsSettingsHomeRead, PrefersDotLoomSettingsFileWhenBothExist) {
     home.make_config_dir(".agents");
     std::ofstream(home.at(".loom") / "settings.json") << "{}";
     std::ofstream(home.at(".agents") / "settings.json") << "{}";
-    EXPECT_EQ(loom::constants::paths::settings_home_read(),
-              home.at(".loom") / "settings.json");
+    EXPECT_EQ(loom::constants::paths::settings_home_read(), home.at(".loom") / "settings.json");
 }
 
 TEST(PathsSettingsHomeRead, FallsToDotAgentsWhenDotLoomSettingsAbsent) {
     TempHome home;
     home.make_config_dir(".agents");
     std::ofstream(home.at(".agents") / "settings.json") << "{}";
-    EXPECT_EQ(loom::constants::paths::settings_home_read(),
-              home.at(".agents") / "settings.json");
+    EXPECT_EQ(loom::constants::paths::settings_home_read(), home.at(".agents") / "settings.json");
 }
 
 // The key distinction from config_home_read(): the ~/.loom DIRECTORY may
@@ -330,15 +321,13 @@ TEST(PathsSettingsHomeRead, DotLoomDirExistsButNoSettingsFileFallsToDotAgents) {
     home.make_config_dir(".loom");  // directory exists, but no settings.json
     home.make_config_dir(".agents");
     std::ofstream(home.at(".agents") / "settings.json") << "{}";
-    EXPECT_EQ(loom::constants::paths::settings_home_read(),
-              home.at(".agents") / "settings.json")
+    EXPECT_EQ(loom::constants::paths::settings_home_read(), home.at(".agents") / "settings.json")
         << "directory-level existence must not shadow the file-level fallback";
 }
 
 TEST(PathsSettingsHomeRead, ReturnsWritePathWhenNoSettingsFileExists) {
     TempHome home;
-    EXPECT_EQ(loom::constants::paths::settings_home_read(),
-              home.at(".loom") / "settings.json")
+    EXPECT_EQ(loom::constants::paths::settings_home_read(), home.at(".loom") / "settings.json")
         << "preferred write path when no settings file exists yet";
 }
 
@@ -351,8 +340,7 @@ TEST(PathsSettingsHomeRead, LoomConfigDirOverrideIsUnconditional) {
     fs::create_directories(elsewhere);
     ::setenv("LOOM_CONFIG_DIR", elsewhere.c_str(), 1);
     // No settings.json in the override dir, but it must still be returned.
-    EXPECT_EQ(loom::constants::paths::settings_home_read(),
-              elsewhere / "settings.json")
+    EXPECT_EQ(loom::constants::paths::settings_home_read(), elsewhere / "settings.json")
         << "LOOM_CONFIG_DIR must not fall through to HOME paths";
 }
 
@@ -365,8 +353,7 @@ TEST(PathsSettingsHomeRead, LoomConfigDirOverrideDoesNotLeakHostConfig) {
     auto isolated = home.at("isolated");
     fs::create_directories(isolated);
     ::setenv("LOOM_CONFIG_DIR", isolated.c_str(), 1);
-    EXPECT_EQ(loom::constants::paths::settings_home_read(),
-              isolated / "settings.json")
+    EXPECT_EQ(loom::constants::paths::settings_home_read(), isolated / "settings.json")
         << "host ~/.agents must not leak into an isolated config";
 }
 
@@ -376,14 +363,12 @@ TEST(PathsSettingsHomeRead, LoomConfigDirOverrideDoesNotLeakHostConfig) {
 TEST(PathsReadWriteSplit, UserMemoryPathPrefersInteropButSeedsOurOwnDir) {
     TempHome home;
     home.make_config_dir(".agents", "AGENTS.md");
-    EXPECT_EQ(loom::constants::paths::user_memory_path(),
-              home.at(".agents") / "AGENTS.md")
+    EXPECT_EQ(loom::constants::paths::user_memory_path(), home.at(".agents") / "AGENTS.md")
         << "an existing interop memory is read";
 
     TempHome empty;
     empty.make_config_dir(".agents");  // exists, but holds no memory file
-    EXPECT_EQ(loom::constants::paths::user_memory_path(),
-              empty.at(".loom") / "LOOM.md")
+    EXPECT_EQ(loom::constants::paths::user_memory_path(), empty.at(".loom") / "LOOM.md")
         << "with no memory anywhere, name the file under our own dir";
 }
 

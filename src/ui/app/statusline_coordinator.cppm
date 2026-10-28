@@ -11,20 +11,19 @@ export namespace loom::ui {
 /// snapshots and drains results; callbacks never read or write screen state.
 class StatuslineCoordinator {
 public:
-    using ExecuteCommandFn = std::function<bool(
-        std::string_view cmd, std::string json, int timeout_ms,
-        std::string& output)>;
+    using ExecuteCommandFn = std::function<bool(std::string_view cmd, std::string json,
+                                                int timeout_ms, std::string& output)>;
     using PostRenderFn = std::function<void()>;
 
     StatuslineCoordinator() = default;
+
     ~StatuslineCoordinator() { Stop(); }
 
     StatuslineCoordinator(const StatuslineCoordinator&) = delete;
     StatuslineCoordinator& operator=(const StatuslineCoordinator&) = delete;
 
     /// Start on the UI thread, then submit the initial request explicitly.
-    void Start(ExecuteCommandFn execute_command, PostRenderFn post_render,
-               int debounce_ms = 300) {
+    void Start(ExecuteCommandFn execute_command, PostRenderFn post_render, int debounce_ms = 300) {
         execute_command_ = std::move(execute_command);
         post_render_ = std::move(post_render);
         debounce_ms_ = debounce_ms;
@@ -36,8 +35,7 @@ public:
     void TriggerUpdate(std::string command, std::string input_json) {
         {
             std::lock_guard lk(mutex_);
-            pending_ = Request{std::move(command), std::move(input_json),
-                               ++generation_};
+            pending_ = Request{std::move(command), std::move(input_json), ++generation_};
             result_.reset();
         }
         cv_.notify_one();
@@ -62,9 +60,7 @@ public:
         }
     }
 
-    [[nodiscard]] bool is_running() const noexcept {
-        return running_.load();
-    }
+    [[nodiscard]] bool is_running() const noexcept { return running_.load(); }
 
 private:
     struct Request {
@@ -78,15 +74,11 @@ private:
             Request request;
             {
                 std::unique_lock lk(mutex_);
-                cv_.wait(lk, [this, &st] {
-                    return pending_.has_value() || st.stop_requested();
-                });
+                cv_.wait(lk, [this, &st] { return pending_.has_value() || st.stop_requested(); });
                 if (st.stop_requested()) break;
-                const auto deadline = std::chrono::steady_clock::now() +
-                    std::chrono::milliseconds(debounce_ms_);
-                cv_.wait_until(lk, deadline, [&st] {
-                    return st.stop_requested();
-                });
+                const auto deadline =
+                    std::chrono::steady_clock::now() + std::chrono::milliseconds(debounce_ms_);
+                cv_.wait_until(lk, deadline, [&st] { return st.stop_requested(); });
                 if (st.stop_requested()) break;
                 request = std::move(*pending_);
                 pending_.reset();
@@ -96,17 +88,17 @@ private:
             if (!request.command.empty()) {
                 const auto now = std::chrono::steady_clock::now();
                 const bool memo_hit = request.command == last_cmd_ &&
-                    request.input_json == last_input_json_ &&
-                    last_run_ != std::chrono::steady_clock::time_point{} &&
-                    now - last_run_ < std::chrono::seconds(30);
+                                      request.input_json == last_input_json_ &&
+                                      last_run_ != std::chrono::steady_clock::time_point{} &&
+                                      now - last_run_ < std::chrono::seconds(30);
                 if (memo_hit) {
                     output = last_output_;
                 } else {
                     running_.store(true);
                     // Keep the request input intact for the memo dependency
                     // tuple; ExecuteCommandFn takes its own string by value.
-                    const bool ok = execute_command_(request.command,
-                        request.input_json, 5000, output);
+                    const bool ok =
+                        execute_command_(request.command, request.input_json, 5000, output);
                     running_.store(false);
                     if (!ok) output.clear();
                     last_cmd_ = request.command;

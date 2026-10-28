@@ -3,7 +3,6 @@
 /// Configures the advisor model for enhanced assistance.
 module;
 
-
 export module loom.commands.advisor;
 
 import std;
@@ -25,10 +24,13 @@ public:
         return CommandDefinition{
             .name = "advisor",
             .description = "Configure the advisor model",
-            .args = {
-                CommandArg{.name = "model", .description = "Model name to use as advisor, or 'off' to disable",
-                           .type = ArgType::Text, .required = false},
-            },
+            .args =
+                {
+                    CommandArg{.name = "model",
+                               .description = "Model name to use as advisor, or 'off' to disable",
+                               .type = ArgType::Text,
+                               .required = false},
+                },
             .category = "configuration",
             .aliases = {},
             .hidden = false,
@@ -39,9 +41,8 @@ public:
         if (!ctx.args.empty()) {
             const auto& arg = ctx.args[0];
             if (arg.empty()) {
-                return std::unexpected(Error::make(
-                    ErrorCode::InvalidRequest,
-                    "Model name cannot be empty"));
+                return std::unexpected(
+                    Error::make(ErrorCode::InvalidRequest, "Model name cannot be empty"));
             }
         }
         return {};
@@ -63,9 +64,7 @@ public:
     [[nodiscard]] std::vector<std::string> complete(std::string_view partial) {
         std::vector<std::string> suggestions;
 
-        static constexpr std::array models = {
-            "off", "unset"
-        };
+        static constexpr std::array models = {"off", "unset"};
 
         for (const auto& model : models) {
             if (std::string_view(model).starts_with(partial)) {
@@ -82,8 +81,8 @@ private:
         const auto* state = static_cast<const AppState*>(ctx.get_app_state());
 
         if (state && state->advisor_model.has_value()) {
-            return CommandResult::success(
-                std::format("Advisor: {}\nUse \"/advisor off\" to disable.", *state->advisor_model));
+            return CommandResult::success(std::format(
+                "Advisor: {}\nUse \"/advisor off\" to disable.", *state->advisor_model));
         }
         return CommandResult::success(
             "Advisor: not set\nUse \"/advisor <model>\" to enable (e.g., \"/advisor opus\").");
@@ -96,7 +95,7 @@ private:
     }
 
     [[nodiscard]] static Result<CommandResult> set_advisor_model(const CommandContext& ctx,
-                                                                  std::string_view model) {
+                                                                 std::string_view model) {
         if (model.empty()) {
             return CommandResult::fail("Invalid model name");
         }
@@ -104,9 +103,8 @@ private:
         using loom::state::ActionType;
         std::string model_str{model};
         ctx.dispatch_action(static_cast<int>(ActionType::SetAdvisorModel), &model_str);
-        return CommandResult::success(
-            std::format("Advisor set to {}.", model));
+        return CommandResult::success(std::format("Advisor set to {}.", model));
     }
 };
 
-} // namespace loom::commands
+}  // namespace loom::commands

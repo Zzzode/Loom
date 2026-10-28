@@ -7,8 +7,8 @@
 
 module;
 
-#include <cstdint>
 #include <cstddef>
+#include <cstdint>
 
 export module loom.commands.plugin_pagination_util;
 
@@ -30,11 +30,12 @@ struct PaginationSnapshot {
 
     // Scroll position info (for UI display).
     struct ScrollPosition {
-        std::size_t current = 1;    // 1-based index of selected item
-        std::size_t total = 0;      // total items
+        std::size_t current = 1;  // 1-based index of selected item
+        std::size_t total = 0;    // total items
         bool can_scroll_up = false;
         bool can_scroll_down = false;
     };
+
     ScrollPosition scroll_position{};
 };
 
@@ -43,13 +44,11 @@ struct PaginationSnapshot {
 class Paginator {
 public:
     /// Initialize with the number of items and visible window size.
-    explicit Paginator(std::size_t total_items,
-                       std::size_t max_visible = DEFAULT_MAX_VISIBLE,
+    explicit Paginator(std::size_t total_items, std::size_t max_visible = DEFAULT_MAX_VISIBLE,
                        std::size_t selected_index = 0)
-        : total_items_(total_items),
-          max_visible_(max_visible == 0 ? DEFAULT_MAX_VISIBLE : max_visible),
-          selected_index_(std::min(selected_index, total_items == 0 ? 0 : total_items - 1))
-    {
+        : total_items_(total_items)
+        , max_visible_(max_visible == 0 ? DEFAULT_MAX_VISIBLE : max_visible)
+        , selected_index_(std::min(selected_index, total_items == 0 ? 0 : total_items - 1)) {
         recompute_offset();
     }
 
@@ -97,7 +96,7 @@ public:
         scroll_offset_ = page * max_visible_;
         // Move selection into the new window if it's outside.
         if (selected_index_ < scroll_offset_) selected_index_ = scroll_offset_;
-        if (selected_index_ >= end_index())  selected_index_ = end_index() - 1;
+        if (selected_index_ >= end_index()) selected_index_ = end_index() - 1;
     }
 
     /// Advance the window forward by one full page.
@@ -116,8 +115,8 @@ public:
     /// Returns true if the selection actually changed.
     bool handle_selection_delta(int delta) {
         if (total_items_ == 0) return false;
-        const auto new_index = static_cast<std::size_t>(
-            std::max(0, static_cast<int>(selected_index_) + delta));
+        const auto new_index =
+            static_cast<std::size_t>(std::max(0, static_cast<int>(selected_index_) + delta));
         const auto clamped = std::min(new_index, total_items_ - 1);
         if (clamped == selected_index_) return false;
         set_selected_index(clamped);
@@ -129,9 +128,12 @@ public:
     bool handle_page_navigation(char direction) {
         if (!needs_pagination()) return false;
         const auto page_before = current_page();
-        if (direction == 'L' || direction == '<' || direction == -1) prev_page();
-        else if (direction == 'R' || direction == '>' || direction == 1) next_page();
-        else return false;
+        if (direction == 'L' || direction == '<' || direction == -1)
+            prev_page();
+        else if (direction == 'R' || direction == '>' || direction == 1)
+            next_page();
+        else
+            return false;
         return current_page() != page_before;
     }
 
@@ -158,15 +160,23 @@ public:
 
     // -- Direct accessors -----------------------------------------------------
 
-    [[nodiscard]] std::size_t total_items()  const noexcept { return total_items_; }
-    [[nodiscard]] std::size_t max_visible()  const noexcept { return max_visible_; }
-    [[nodiscard]] bool        needs_pagination() const noexcept { return total_items_ > max_visible_; }
-    [[nodiscard]] std::size_t start_index()  const noexcept { return scroll_offset_; }
-    [[nodiscard]] std::size_t end_index()    const noexcept { return std::min(scroll_offset_ + max_visible_, total_items_); }
-    [[nodiscard]] std::size_t total_pages()  const noexcept {
+    [[nodiscard]] std::size_t total_items() const noexcept { return total_items_; }
+
+    [[nodiscard]] std::size_t max_visible() const noexcept { return max_visible_; }
+
+    [[nodiscard]] bool needs_pagination() const noexcept { return total_items_ > max_visible_; }
+
+    [[nodiscard]] std::size_t start_index() const noexcept { return scroll_offset_; }
+
+    [[nodiscard]] std::size_t end_index() const noexcept {
+        return std::min(scroll_offset_ + max_visible_, total_items_);
+    }
+
+    [[nodiscard]] std::size_t total_pages() const noexcept {
         if (total_items_ == 0) return 1;
         return (total_items_ + max_visible_ - 1) / max_visible_;
     }
+
     [[nodiscard]] std::size_t current_page() const noexcept {
         return scroll_offset_ / max_visible_;
     }
@@ -180,7 +190,10 @@ private:
     /// After the selection changes, adjust scroll_offset_ so that the
     /// selected item always remains inside the visible window.
     void recompute_offset() noexcept {
-        if (!needs_pagination()) { scroll_offset_ = 0; return; }
+        if (!needs_pagination()) {
+            scroll_offset_ = 0;
+            return;
+        }
 
         if (selected_index_ < scroll_offset_) {
             // selected moved above the window -> scroll up.
@@ -193,11 +206,10 @@ private:
             return;
         }
         // selected is still inside the window, but clamp offset to valid range.
-        const std::size_t max_offset = total_items_ > max_visible_
-                                     ? total_items_ - max_visible_
-                                     : 0;
+        const std::size_t max_offset =
+            total_items_ > max_visible_ ? total_items_ - max_visible_ : 0;
         if (scroll_offset_ > max_offset) scroll_offset_ = max_offset;
     }
 };
 
-} // namespace loom::commands::plugin
+}  // namespace loom::commands::plugin

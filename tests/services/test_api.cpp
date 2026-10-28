@@ -1,21 +1,22 @@
 /// @file test_api.cpp
 /// @brief Service layer tests split from test_services.cpp.
 
-#include <cctype>
-#include <cerrno>
-#include <cstdint>
-#include <cstdlib>
-#include <atomic>
 #include <arpa/inet.h>
 #include <fcntl.h>
 #include <netinet/in.h>
 #include <signal.h>
+#include <sys/file.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/time.h>
-#include <sys/file.h>
 #include <sys/wait.h>
 #include <unistd.h>
+
+#include <atomic>
+#include <cctype>
+#include <cerrno>
+#include <cstdint>
+#include <cstdlib>
 #ifdef __APPLE__
 #include <CommonCrypto/CommonDigest.h>
 #else
@@ -24,9 +25,8 @@
 
 #include <gtest/gtest.h>
 #include <httplib.h>
+
 #include <limits>
-
-
 
 import std;
 import loom.cli.ccr_client;
@@ -87,7 +87,8 @@ struct EnvironmentGuard {
     std::string name;
     std::optional<std::string> previous;
 
-    EnvironmentGuard(std::string key, const std::string& value) : name(std::move(key)) {
+    EnvironmentGuard(std::string key, const std::string& value)
+        : name(std::move(key)) {
         if (const char* existing = std::getenv(name.c_str())) {
             previous = existing;
         }
@@ -103,7 +104,7 @@ struct EnvironmentGuard {
     }
 };
 
-} // namespace
+}  // namespace
 
 namespace {
 
@@ -112,16 +113,17 @@ namespace {
 class StreamingRequestPeer {
 public:
     explicit StreamingRequestPeer(bool send_body = false, bool denied = false)
-        : accepted_(accepted_signal_.get_future()),
-          closed_(closed_signal_.get_future()),
-          response_gate_(response_signal_.get_future().share()) {
+        : accepted_(accepted_signal_.get_future())
+        , closed_(closed_signal_.get_future())
+        , response_gate_(response_signal_.get_future().share()) {
         listener_ = socket(AF_INET, SOCK_STREAM, 0);
         if (listener_ < 0) return;
         sockaddr_in address{};
         address.sin_family = AF_INET;
         address.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
         if (bind(listener_, reinterpret_cast<sockaddr*>(&address), sizeof(address)) != 0 ||
-            listen(listener_, 1) != 0) return;
+            listen(listener_, 1) != 0)
+            return;
         socklen_t length = sizeof(address);
         if (getsockname(listener_, reinterpret_cast<sockaddr*>(&address), &length) != 0) return;
         port_ = ntohs(address.sin_port);
@@ -177,11 +179,18 @@ public:
     }
 
     int port() const { return port_; }
+
     std::string url() const { return std::format("http://127.0.0.1:{}", port_); }
-    bool wait_for_request() { return accepted_.wait_for(std::chrono::seconds(5)) == std::future_status::ready; }
-    bool wait_for_close() {
-        return closed_.wait_for(std::chrono::seconds(5)) == std::future_status::ready && closed_.get();
+
+    bool wait_for_request() {
+        return accepted_.wait_for(std::chrono::seconds(5)) == std::future_status::ready;
     }
+
+    bool wait_for_close() {
+        return closed_.wait_for(std::chrono::seconds(5)) == std::future_status::ready &&
+               closed_.get();
+    }
+
     void release_response() {
         if (!released_.exchange(true)) response_signal_.set_value();
     }
@@ -198,6 +207,7 @@ private:
             response.remove_prefix(static_cast<size_t>(count));
         }
     }
+
     void close_peer(int peer) {
         std::scoped_lock lock(peer_mutex_);
         peer_ = -1;
@@ -227,7 +237,7 @@ loom::services::api::CreateMessageRequest lifecycle_stream_request() {
     return request;
 }
 
-} // namespace
+}  // namespace
 
 TEST(ApiStreamingLifecycle, DroppingLastConsumerCancelsBeforeResponseHeaders) {
     EnvironmentGuard bedrock("LOOM_USE_BEDROCK", "0");
@@ -243,7 +253,8 @@ TEST(ApiStreamingLifecycle, DroppingLastConsumerCancelsBeforeResponseHeaders) {
     ASSERT_TRUE(stream);
     ASSERT_TRUE(peer.wait_for_request());
     auto consumer_copy = *stream;
-    stream = std::unexpected(loom::utils::Error(loom::utils::ErrorCode::cancelled, "consumer released"));
+    stream =
+        std::unexpected(loom::utils::Error(loom::utils::ErrorCode::cancelled, "consumer released"));
     // The surviving consumer remains usable; only its final release cancels.
     EXPECT_FALSE(consumer_copy.is_finished());
     consumer_copy = loom::services::api::StreamParser{};
@@ -272,7 +283,8 @@ TEST(ApiStreamingLifecycle, DroppingLastConsumerCancelsStalledBody) {
         if (!saw_ping) std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
     ASSERT_TRUE(saw_ping);
-    stream = std::unexpected(loom::utils::Error(loom::utils::ErrorCode::cancelled, "consumer released"));
+    stream =
+        std::unexpected(loom::utils::Error(loom::utils::ErrorCode::cancelled, "consumer released"));
     EXPECT_TRUE(peer.wait_for_close());
 }
 
@@ -313,7 +325,8 @@ TEST(ApiStreamingLifecycle, ConcurrentClientAndConsumerDestructionWithPendingEnt
     std::barrier teardown(3);
     std::thread destroy_consumer([&] {
         teardown.arrive_and_wait();
-        stream = std::unexpected(loom::utils::Error(loom::utils::ErrorCode::cancelled, "consumer released"));
+        stream = std::unexpected(
+            loom::utils::Error(loom::utils::ErrorCode::cancelled, "consumer released"));
     });
     std::thread destroy_client([&] {
         teardown.arrive_and_wait();
@@ -387,7 +400,8 @@ TEST(ApiErrors, ClientMapsJsonHttpErrorsToStructuredMessages) {
         std::optional<std::string>{"req_123"});
 
     EXPECT_EQ(error.code(), loom::utils::ErrorCode::invalid_argument);
-    EXPECT_NE(error.message().find("HTTP 400 invalid_request_error: prompt is too long"), std::string::npos);
+    EXPECT_NE(error.message().find("HTTP 400 invalid_request_error: prompt is too long"),
+              std::string::npos);
     EXPECT_NE(error.message().find("req_123"), std::string::npos);
 }
 
@@ -406,9 +420,9 @@ TEST(ApiErrors, ClientErrorDetailsDriveRetryClassification) {
     using loom::services::api::errors::ErrorClassifier;
 
     auto invalid_error = loom::services::api::MessagesClient::error_from_http_response(
-        400,
-        R"({"error":{"type":"invalid_request_error","message":"bad tool schema"}})");
-    auto invalid_details = loom::services::api::MessagesClient::error_details_from_error(invalid_error);
+        400, R"({"error":{"type":"invalid_request_error","message":"bad tool schema"}})");
+    auto invalid_details =
+        loom::services::api::MessagesClient::error_details_from_error(invalid_error);
 
     EXPECT_EQ(invalid_details.category, ApiErrorCategory::InvalidRequest);
     EXPECT_EQ(invalid_details.http_status, 400);
@@ -418,7 +432,8 @@ TEST(ApiErrors, ClientErrorDetailsDriveRetryClassification) {
     auto rate_limit_error = loom::services::api::MessagesClient::error_from_http_response(
         429,
         R"({"error":{"type":"rate_limit_error","message":"too many requests","retry_after_seconds":7}})");
-    auto rate_limit_details = loom::services::api::MessagesClient::error_details_from_error(rate_limit_error);
+    auto rate_limit_details =
+        loom::services::api::MessagesClient::error_details_from_error(rate_limit_error);
 
     EXPECT_EQ(rate_limit_details.category, ApiErrorCategory::RateLimited);
     EXPECT_EQ(rate_limit_details.retry_after_seconds, std::optional<int>{7});
@@ -456,7 +471,8 @@ TEST(ApiMicrocompact, BuildsThinkingAndToolContextManagementStrategies) {
     EXPECT_EQ(context->edits[2].type, "clear_tool_uses_20250919");
     EXPECT_TRUE(std::ranges::contains(context->edits[2].exclude_tools, std::string{"Edit"}));
     EXPECT_TRUE(std::ranges::contains(context->edits[2].exclude_tools, std::string{"Write"}));
-    EXPECT_TRUE(std::ranges::contains(context->edits[2].exclude_tools, std::string{"NotebookEdit"}));
+    EXPECT_TRUE(
+        std::ranges::contains(context->edits[2].exclude_tools, std::string{"NotebookEdit"}));
 }
 
 TEST(ApiClient, MessageFromTextCreatesSingleTextBlock) {
@@ -494,18 +510,13 @@ TEST(ApiClient, RequestSerializerPreservesToolUseInputJson) {
     request.messages.push_back(loom::services::api::Message{
         .role = "assistant",
         .content = {
-            loom::services::api::ContentBlock{
-                .type = loom::services::api::ContentBlockType::Text,
-                .text = "I will read a file."
-            },
+            loom::services::api::ContentBlock{.type = loom::services::api::ContentBlockType::Text,
+                                              .text = "I will read a file."},
             loom::services::api::ContentBlock{
                 .type = loom::services::api::ContentBlockType::ToolUse,
                 .tool_use_id = "toolu_1",
                 .tool_name = "Read",
-                .tool_input_json = R"({"file_path":"README.md","limit":20})"
-            }
-        }
-    });
+                .tool_input_json = R"({"file_path":"README.md","limit":20})"}}});
 
     auto serialized = loom::services::api::RequestSerializer::serialize(request);
     auto parsed = loom::utils::json::parse(serialized);
@@ -529,18 +540,13 @@ TEST(ApiClient, RequestSerializerPreservesImageAndDocumentBlocks) {
     request.messages.push_back(loom::services::api::Message{
         .role = "user",
         .content = {
-            loom::services::api::ContentBlock{
-                .type = loom::services::api::ContentBlockType::Image,
-                .media_type = "image/png",
-                .image_data = "iVBORw0KGgo="
-            },
-            loom::services::api::ContentBlock{
-                .type = loom::services::api::ContentBlockType::Document,
-                .media_type = "application/pdf",
-                .image_data = "JVBERi0xLjQ="
-            }
-        }
-    });
+            loom::services::api::ContentBlock{.type = loom::services::api::ContentBlockType::Image,
+                                              .media_type = "image/png",
+                                              .image_data = "iVBORw0KGgo="},
+            loom::services::api::ContentBlock{.type =
+                                                  loom::services::api::ContentBlockType::Document,
+                                              .media_type = "application/pdf",
+                                              .image_data = "JVBERi0xLjQ="}}});
 
     auto serialized = loom::services::api::RequestSerializer::serialize(request);
     auto parsed = loom::utils::json::parse(serialized);
@@ -647,7 +653,8 @@ TEST(ApiStreaming, TerminalPublicationDoesNotDrainFramesAfterAnEarlierEmptyPoll)
     ASSERT_TRUE(first);
     ASSERT_FALSE(first->has_value());
     // Model the producer publishing its final frames between the two consumer polls.
-    parser.feed("event: message_delta\ndata: {\"delta\":{\"stop_reason\":\"end_turn\"},\"usage\":{\"output_tokens\":47}}\n\n"
+    parser.feed("event: message_delta\ndata: "
+                "{\"delta\":{\"stop_reason\":\"end_turn\"},\"usage\":{\"output_tokens\":47}}\n\n"
                 "event: message_stop\ndata: {}\n\n");
     parser.finish();
     ASSERT_TRUE(parser.is_finished());
@@ -673,10 +680,19 @@ TEST(ApiClient, ToolResultSerializerEmitsOnlyTrueErrorFlags) {
     EXPECT_FALSE(ContentBlock{}.is_error);
     CreateMessageRequest request;
     request.model = "typed-outcome";
-    request.messages.push_back(Message{.role = "user", .content = {
-        ContentBlock{.type = ContentBlockType::ToolResult, .text = "completed", .tool_use_id = "completed"},
-        ContentBlock{.type = ContentBlockType::ToolResult, .text = "failed", .tool_use_id = "failed", .is_error = true},
-        ContentBlock{.type = ContentBlockType::ToolResult, .text = "legacy success", .tool_use_id = "legacy", .is_error = false}}});
+    request.messages.push_back(
+        Message{.role = "user",
+                .content = {ContentBlock{.type = ContentBlockType::ToolResult,
+                                         .text = "completed",
+                                         .tool_use_id = "completed"},
+                            ContentBlock{.type = ContentBlockType::ToolResult,
+                                         .text = "failed",
+                                         .tool_use_id = "failed",
+                                         .is_error = true},
+                            ContentBlock{.type = ContentBlockType::ToolResult,
+                                         .text = "legacy success",
+                                         .tool_use_id = "legacy",
+                                         .is_error = false}}});
     const auto serialized = RequestSerializer::serialize(request);
     const auto parsed = loom::utils::json::parse(serialized);
     ASSERT_TRUE(parsed);

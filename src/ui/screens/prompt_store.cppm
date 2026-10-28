@@ -24,8 +24,8 @@ import std;
 // leading-`::` qualified names `::loom::core::ImageBlock`, which the
 // dead-import detector's prefix-chain cannot resolve — same blind spot as
 // messages_store.cppm's identical import, hence the keep-import marker.
-import loom.types.types;                  // arch-check: keep-import
-import loom.ui.foundation.ui_types;       // loom::ui::common::PromptInputMode
+import loom.types.types;            // arch-check: keep-import
+import loom.ui.foundation.ui_types; // loom::ui::common::PromptInputMode
 
 export namespace loom::ui::repl_screen {
 
@@ -66,8 +66,7 @@ struct PromptStore {
     /// Unified canonical input mode (PromptInputMode). The vim modes
     /// (VimInsert/VimNormal/VimVisual) are values of this unified enum, so
     /// the old per-mode vim state folded into this single field.
-    loom::ui::common::PromptInputMode input_mode =
-        loom::ui::common::PromptInputMode::Normal;
+    loom::ui::common::PromptInputMode input_mode = loom::ui::common::PromptInputMode::Normal;
 
     // GAP 2: stashed-prompt-restore-logic-missing — see StashedPrompt above.
     std::optional<StashedPrompt> stashed_prompt;
@@ -107,4 +106,4 @@ struct PromptStore {
     std::optional<ftxui::Color> teammate_prefix_color;
 };
 
-}  // namespace loom::ui
+}  // namespace loom::ui::repl_screen

@@ -13,9 +13,7 @@ export namespace loom::ui::dialogs::modal_renderers {
 using loom::ui::dialogs::default_renderers::register_default_renderers;
 
 /// Named registration entry-point matching the module name.
-template <typename... Args>
-inline void register_modal_renderers(Args&&... args) {
-    loom::ui::dialogs::default_renderers::register_default_renderers(
-        std::forward<Args>(args)...);
+template <typename... Args> inline void register_modal_renderers(Args&&... args) {
+    loom::ui::dialogs::default_renderers::register_default_renderers(std::forward<Args>(args)...);
 }
 }  // namespace loom::ui::dialogs::modal_renderers

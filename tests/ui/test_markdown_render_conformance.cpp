@@ -20,6 +20,8 @@
 /// Images, Raw HTML, HTML blocks, Disallowed Raw HTML, Link reference
 /// definitions, <IGNORE> crash-test examples.
 
+#include <ftxui/dom/elements.hpp>
+#include <ftxui/screen/screen.hpp>
 #include <gtest/gtest.h>
 
 #include <algorithm>
@@ -32,9 +34,6 @@
 #include <string_view>
 #include <utility>
 #include <vector>
-
-#include <ftxui/dom/elements.hpp>
-#include <ftxui/screen/screen.hpp>
 
 import std;
 
@@ -55,8 +54,7 @@ namespace {
 // This is a simplified parser sufficient for the well-formed HTML in the
 // conformance fixtures — not a general-purpose HTML parser.
 
-[[nodiscard]] std::string decode_numeric_entity(std::string_view digits,
-                                                  bool hex) {
+[[nodiscard]] std::string decode_numeric_entity(std::string_view digits, bool hex) {
     unsigned long codepoint = 0;
     try {
         codepoint = std::stoul(std::string(digits), nullptr, hex ? 16 : 10);
@@ -96,25 +94,20 @@ namespace {
             std::string tag_name;
             for (char c : tag) {
                 if (c == ' ' || c == '\t' || c == '/' || c == '>') break;
-                tag_name += static_cast<char>(
-                    std::tolower(static_cast<unsigned char>(c)));
+                tag_name += static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
             }
 
             // Block-level tags → newline
-            if (tag_name == "p" || tag_name == "h1" || tag_name == "h2" ||
-                tag_name == "h3" || tag_name == "h4" || tag_name == "h5" ||
-                tag_name == "h6" || tag_name == "blockquote" ||
-                tag_name == "ul" || tag_name == "ol" || tag_name == "li" ||
-                tag_name == "table" || tag_name == "tr" || tag_name == "td" ||
-                tag_name == "th" || tag_name == "hr" || tag_name == "div" ||
-                tag_name == "br" || tag_name == "pre" || tag_name == "/pre" ||
-                tag_name == "/p" || tag_name == "/h1" || tag_name == "/h2" ||
-                tag_name == "/h3" || tag_name == "/h4" || tag_name == "/h5" ||
-                tag_name == "/h6" || tag_name == "/blockquote" ||
-                tag_name == "/ul" || tag_name == "/ol" || tag_name == "/li" ||
-                tag_name == "/table" || tag_name == "/tr" ||
-                tag_name == "/td" || tag_name == "/th" ||
-                tag_name == "/div") {
+            if (tag_name == "p" || tag_name == "h1" || tag_name == "h2" || tag_name == "h3" ||
+                tag_name == "h4" || tag_name == "h5" || tag_name == "h6" ||
+                tag_name == "blockquote" || tag_name == "ul" || tag_name == "ol" ||
+                tag_name == "li" || tag_name == "table" || tag_name == "tr" || tag_name == "td" ||
+                tag_name == "th" || tag_name == "hr" || tag_name == "div" || tag_name == "br" ||
+                tag_name == "pre" || tag_name == "/pre" || tag_name == "/p" || tag_name == "/h1" ||
+                tag_name == "/h2" || tag_name == "/h3" || tag_name == "/h4" || tag_name == "/h5" ||
+                tag_name == "/h6" || tag_name == "/blockquote" || tag_name == "/ul" ||
+                tag_name == "/ol" || tag_name == "/li" || tag_name == "/table" ||
+                tag_name == "/tr" || tag_name == "/td" || tag_name == "/th" || tag_name == "/div") {
                 out += '\n';
             }
 
@@ -133,20 +126,24 @@ namespace {
             // Decode entity
             const auto semi = html.find(';', i);
             if (semi != std::string_view::npos && semi - i < 12) {
-                const std::string_view entity(html.data() + i + 1,
-                                              semi - i - 1);
+                const std::string_view entity(html.data() + i + 1, semi - i - 1);
                 std::string decoded;
-                if (entity == "amp") decoded = "&";
-                else if (entity == "lt") decoded = "<";
-                else if (entity == "gt") decoded = ">";
-                else if (entity == "quot") decoded = "\"";
-                else if (entity == "apos" || entity == "#39") decoded = "'";
-                else if (entity == "nbsp") decoded = " ";
+                if (entity == "amp")
+                    decoded = "&";
+                else if (entity == "lt")
+                    decoded = "<";
+                else if (entity == "gt")
+                    decoded = ">";
+                else if (entity == "quot")
+                    decoded = "\"";
+                else if (entity == "apos" || entity == "#39")
+                    decoded = "'";
+                else if (entity == "nbsp")
+                    decoded = " ";
                 else if (entity.size() > 1 && entity[0] == '#') {
-                    decoded = decode_numeric_entity(
-                        entity.substr(1),
-                        entity.size() > 1 &&
-                            (entity[1] == 'x' || entity[1] == 'X'));
+                    decoded = decode_numeric_entity(entity.substr(1),
+                                                    entity.size() > 1 &&
+                                                        (entity[1] == 'x' || entity[1] == 'X'));
                 } else {
                     // Unknown entity — keep as-is
                     decoded = std::string(html.substr(i, semi - i + 1));
@@ -161,11 +158,9 @@ namespace {
             // Text content: preserve whitespace in <pre>, collapse elsewhere
             if (in_pre) {
                 out += html[i];
-            } else if (html[i] == ' ' || html[i] == '\t' ||
-                       html[i] == '\n' || html[i] == '\r' ||
+            } else if (html[i] == ' ' || html[i] == '\t' || html[i] == '\n' || html[i] == '\r' ||
                        html[i] == '\f' || html[i] == '\v') {
-                if (!out.empty() && out.back() != ' ' &&
-                    out.back() != '\n') {
+                if (!out.empty() && out.back() != ' ' && out.back() != '\n') {
                     out += ' ';
                 }
             } else {
@@ -196,8 +191,7 @@ namespace {
                 // CSI: ESC [ ... final byte (0x40–0x7E)
                 i += 2;
                 while (i < text.size()) {
-                    const unsigned char c =
-                        static_cast<unsigned char>(text[i]);
+                    const unsigned char c = static_cast<unsigned char>(text[i]);
                     ++i;
                     if (c >= 0x40 && c <= 0x7E) break;
                 }
@@ -209,8 +203,7 @@ namespace {
                         ++i;
                         break;
                     }
-                    if (text[i] == '\x1b' && i + 1 < text.size() &&
-                        text[i + 1] == '\\') {
+                    if (text[i] == '\x1b' && i + 1 < text.size() && text[i + 1] == '\\') {
                         i += 2;
                         break;
                     }
@@ -234,8 +227,7 @@ namespace {
     std::string out;
     bool last_was_space = true;  // trim leading
     for (char c : text) {
-        if (c == ' ' || c == '\t' || c == '\n' || c == '\r' ||
-            c == '\f' || c == '\v') {
+        if (c == ' ' || c == '\t' || c == '\n' || c == '\r' || c == '\f' || c == '\v') {
             if (!last_was_space) {
                 out += ' ';
                 last_was_space = true;
@@ -245,7 +237,8 @@ namespace {
             last_was_space = false;
         }
     }
-    while (!out.empty() && out.back() == ' ') out.pop_back();
+    while (!out.empty() && out.back() == ' ')
+        out.pop_back();
     return out;
 }
 
@@ -257,14 +250,12 @@ namespace {
     std::vector<std::string> words;
     std::size_t start = 0;
     while (start < text.size()) {
-        while (start < text.size() &&
-               std::isspace(static_cast<unsigned char>(text[start]))) {
+        while (start < text.size() && std::isspace(static_cast<unsigned char>(text[start]))) {
             ++start;
         }
         if (start >= text.size()) break;
         std::size_t end = start;
-        while (end < text.size() &&
-               !std::isspace(static_cast<unsigned char>(text[end]))) {
+        while (end < text.size() && !std::isspace(static_cast<unsigned char>(text[end]))) {
             ++end;
         }
         words.emplace_back(text.substr(start, end - start));
@@ -278,8 +269,8 @@ struct ContainmentResult {
     std::string missing_word;
 };
 
-[[nodiscard]] ContainmentResult check_text_contains_words(
-    std::string_view actual, std::string_view expected) {
+[[nodiscard]] ContainmentResult check_text_contains_words(std::string_view actual,
+                                                          std::string_view expected) {
     const auto words = split_words(expected);
     std::size_t pos = 0;
     for (const auto& word : words) {
@@ -294,12 +285,11 @@ struct ContainmentResult {
 
 // ── Render to Screen ────────────────────────────────────────────────
 
-[[nodiscard]] ftxui::Screen render_to_screen(
-    std::string_view markdown, int width = 200, int height = 200) {
+[[nodiscard]] ftxui::Screen render_to_screen(std::string_view markdown, int width = 200,
+                                             int height = 200) {
     auto element = loom::ui::render_markdown(markdown);
-    auto screen = ftxui::Screen::Create(
-        ftxui::Dimension::Fixed(width),
-        ftxui::Dimension::Fixed(height));
+    auto screen =
+        ftxui::Screen::Create(ftxui::Dimension::Fixed(width), ftxui::Dimension::Fixed(height));
     ftxui::Render(screen, element);
     return screen;
 }
@@ -311,10 +301,18 @@ struct ContainmentResult {
     out.reserve(s.size());
     for (char c : s) {
         switch (c) {
-            case '\n': out += "\\n"; break;
-            case '\t': out += "\\t"; break;
-            case '\r': out += "\\r"; break;
-            default:   out += c; break;
+        case '\n':
+            out += "\\n";
+            break;
+        case '\t':
+            out += "\\t";
+            break;
+        case '\r':
+            out += "\\r";
+            break;
+        default:
+            out += c;
+            break;
         }
     }
     // Truncate very long strings
@@ -329,29 +327,23 @@ struct ContainmentResult {
 
 [[nodiscard]] bool is_skippable_section(std::string_view section) {
     // Sections where HTML and terminal rendering fundamentally differ
-    if (section == "Images" ||
-        section == "Raw HTML" ||
-        section == "HTML blocks" ||
-        section == "Disallowed Raw HTML (extension)" ||
-        section == "Link reference definitions" ||
-        section == "HTML tag filter" ||
-        section == "Embedded HTML") {
+    if (section == "Images" || section == "Raw HTML" || section == "HTML blocks" ||
+        section == "Disallowed Raw HTML (extension)" || section == "Link reference definitions" ||
+        section == "HTML tag filter" || section == "Embedded HTML") {
         return true;
     }
     // Table sections: the FTXUI table renderer adds border characters
     // (┌─┬─┐│├─┼─┤) that break word matching.  Table content correctness
     // is covered by the layout tests in test_markdown_render_styles.cpp.
-    if (section.starts_with("Table") ||
-        section == "Embedded pipes" ||
+    if (section.starts_with("Table") || section == "Embedded pipes" ||
         section == "Sequential cells" ||
         section == "a table can be recognised when separated from a "
-                     "paragraph of text without an empty line") {
+                   "paragraph of text without an empty line") {
         return true;
     }
     // Footnote sections: the terminal renderer intentionally skips
     // footnote definitions (they are HTML-only back-reference targets).
-    if (section.starts_with("Footnote") ||
-        section.starts_with("When a footnote")) {
+    if (section.starts_with("Footnote") || section.starts_with("When a footnote")) {
         return true;
     }
     return false;
@@ -378,8 +370,8 @@ struct RenderSuiteReport {
     std::map<std::string, std::pair<int, int>> by_section;
 };
 
-[[nodiscard]] RenderSuiteReport run_render_suite(
-    const std::string& path, std::string_view name, int floor) {
+[[nodiscard]] RenderSuiteReport run_render_suite(const std::string& path, std::string_view name,
+                                                 int floor) {
     RenderSuiteReport report;
     report.name = std::string(name);
     report.floor = floor;
@@ -432,8 +424,7 @@ struct RenderSuiteReport {
             ++section_stats.first;  // passed
         } else {
             report.failures.push_back(
-                {example, section, markdown, expected, actual,
-                 result.missing_word});
+                {example, section, markdown, expected, actual, result.missing_word});
         }
     }
     return report;
@@ -441,15 +432,11 @@ struct RenderSuiteReport {
 
 // ── Report printer ──────────────────────────────────────────────────
 
-void print_render_report(const RenderSuiteReport& report,
-                          std::size_t max_failures) {
-    const double pct =
-        report.total ? (100.0 * report.passed / report.total) : 0.0;
-    std::cout << "\n── " << report.name << " ── " << report.passed << '/'
-              << report.total << " passed (" << std::fixed
-              << std::setprecision(1) << pct << "%), "
-              << report.skipped << " skipped (floor: " << report.floor
-              << ")\n";
+void print_render_report(const RenderSuiteReport& report, std::size_t max_failures) {
+    const double pct = report.total ? (100.0 * report.passed / report.total) : 0.0;
+    std::cout << "\n── " << report.name << " ── " << report.passed << '/' << report.total
+              << " passed (" << std::fixed << std::setprecision(1) << pct << "%), "
+              << report.skipped << " skipped (floor: " << report.floor << ")\n";
 
     // Sections with failures, worst first
     std::vector<std::pair<std::string, std::pair<int, int>>> weak;
@@ -458,31 +445,25 @@ void print_render_report(const RenderSuiteReport& report,
             weak.push_back({section, stats});
         }
     }
-    std::sort(weak.begin(), weak.end(),
-              [](const auto& a, const auto& b) {
-                  return (a.second.first - a.second.second) <
-                         (b.second.first - b.second.second);
-              });
+    std::sort(weak.begin(), weak.end(), [](const auto& a, const auto& b) {
+        return (a.second.first - a.second.second) < (b.second.first - b.second.second);
+    });
     for (const auto& [section, stats] : weak) {
-        std::cout << "  " << section << ": " << stats.first << '/'
-                  << stats.second << '\n';
+        std::cout << "  " << section << ": " << stats.first << '/' << stats.second << '\n';
     }
 
     // Print failures
     const std::size_t shown = std::min(report.failures.size(), max_failures);
     for (std::size_t i = 0; i < shown; ++i) {
         const auto& f = report.failures[i];
-        std::cout << "  FAIL example " << f.example << " (" << f.section
-                  << "): missing word '" << f.missing_word << "'\n"
+        std::cout << "  FAIL example " << f.example << " (" << f.section << "): missing word '"
+                  << f.missing_word << "'\n"
                   << "    markdown: " << escape_for_print(f.markdown) << '\n'
-                  << "    expected: " << escape_for_print(f.expected_text)
-                  << '\n'
-                  << "    actual:   " << escape_for_print(f.actual_text)
-                  << '\n';
+                  << "    expected: " << escape_for_print(f.expected_text) << '\n'
+                  << "    actual:   " << escape_for_print(f.actual_text) << '\n';
     }
     if (report.failures.size() > max_failures) {
-        std::cout << "  … and " << (report.failures.size() - max_failures)
-                  << " more failures\n";
+        std::cout << "  … and " << (report.failures.size() - max_failures) << " more failures\n";
     }
 }
 
@@ -496,25 +477,22 @@ constexpr int kGfmExtensionsRenderFloor = 12;
 }  // namespace
 
 TEST(MarkdownRenderConformance, CommonMarkTextContent) {
-    auto report = run_render_suite(
-        fixture_path("commonmark_spec.json"), "CommonMark 0.31.2 (render)",
-        kCommonMarkRenderFloor);
+    auto report = run_render_suite(fixture_path("commonmark_spec.json"),
+                                   "CommonMark 0.31.2 (render)", kCommonMarkRenderFloor);
     print_render_report(report, 25);
     EXPECT_GE(report.passed, kCommonMarkRenderFloor);
 }
 
 TEST(MarkdownRenderConformance, GfmTextContent) {
-    auto report = run_render_suite(
-        fixture_path("gfm_spec.json"), "GFM core (render)",
-        kGfmRenderFloor);
+    auto report =
+        run_render_suite(fixture_path("gfm_spec.json"), "GFM core (render)", kGfmRenderFloor);
     print_render_report(report, 25);
     EXPECT_GE(report.passed, kGfmRenderFloor);
 }
 
 TEST(MarkdownRenderConformance, GfmExtensionsTextContent) {
-    auto report = run_render_suite(
-        fixture_path("gfm_extensions.json"), "GFM extensions (render)",
-        kGfmExtensionsRenderFloor);
+    auto report = run_render_suite(fixture_path("gfm_extensions.json"), "GFM extensions (render)",
+                                   kGfmExtensionsRenderFloor);
     print_render_report(report, 30);
     EXPECT_GE(report.passed, kGfmExtensionsRenderFloor);
 }

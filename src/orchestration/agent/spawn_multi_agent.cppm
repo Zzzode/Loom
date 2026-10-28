@@ -2,7 +2,6 @@ module;
 
 #include <cstddef>
 
-
 export module loom.orchestration.agent.spawn_multi_agent;
 
 import std;
@@ -20,36 +19,49 @@ namespace detail {
     out.reserve(value.size() + 8);
     for (char ch : value) {
         switch (ch) {
-            case '\\': out += R"(\\)"; break;
-            case '"': out += R"(\")"; break;
-            case '\n': out += R"(\n)"; break;
-            case '\r': out += R"(\r)"; break;
-            case '\t': out += R"(\t)"; break;
-            default: out.push_back(ch); break;
+        case '\\':
+            out += R"(\\)";
+            break;
+        case '"':
+            out += R"(\")";
+            break;
+        case '\n':
+            out += R"(\n)";
+            break;
+        case '\r':
+            out += R"(\r)";
+            break;
+        case '\t':
+            out += R"(\t)";
+            break;
+        default:
+            out.push_back(ch);
+            break;
         }
     }
     return out;
 }
 
-[[nodiscard]] inline std::string agent_type_to_subagent_type(
-    AgentType type,
-    std::string_view fallback_name = {}
-) {
+[[nodiscard]] inline std::string agent_type_to_subagent_type(AgentType type,
+                                                             std::string_view fallback_name = {}) {
     switch (type) {
-        case AgentType::Explore: return "Explore";
-        case AgentType::Plan: return "Plan";
-        case AgentType::Verify: return "verification";
-        case AgentType::GeneralPurpose: return "general-purpose";
-        case AgentType::Custom:
-            return fallback_name.empty() ? std::string{"general-purpose"} : std::string{fallback_name};
+    case AgentType::Explore:
+        return "Explore";
+    case AgentType::Plan:
+        return "Plan";
+    case AgentType::Verify:
+        return "verification";
+    case AgentType::GeneralPurpose:
+        return "general-purpose";
+    case AgentType::Custom:
+        return fallback_name.empty() ? std::string{"general-purpose"} : std::string{fallback_name};
     }
     return "general-purpose";
 }
 
-[[nodiscard]] inline std::string agent_prompt(
-    const MultiAgentAgentConfig& agent_config,
-    const std::optional<std::string>& coordinator_prompt
-) {
+[[nodiscard]] inline std::string
+agent_prompt(const MultiAgentAgentConfig& agent_config,
+             const std::optional<std::string>& coordinator_prompt) {
     if (coordinator_prompt && !coordinator_prompt->empty()) return *coordinator_prompt;
     return "Run the assigned multi-agent task as '" + agent_config.name + "'.";
 }
@@ -64,18 +76,17 @@ namespace detail {
 }
 
 [[nodiscard]] inline auto failed_agent_result(std::string message) -> MultiAgentResult {
-    return MultiAgentResult{.output = std::move(message), .turns_used = 0, .tokens_used = 0, .completed = false};
+    return MultiAgentResult{
+        .output = std::move(message), .turns_used = 0, .tokens_used = 0, .completed = false};
 }
 
-[[nodiscard]] inline auto execute_agent_tool(
-    const MultiAgentAgentConfig& agent_config,
-    std::string prompt,
-    std::string working_dir,
-    const std::shared_ptr<loom::core::ToolRegistry>& registry,
-    std::shared_ptr<const loom::core::ApiExecutionContext> api_context,
-    std::optional<std::string> parent_model,
-    AgentLivePermissionCheckFn permission_check
-) -> MultiAgentResult {
+[[nodiscard]] inline auto
+execute_agent_tool(const MultiAgentAgentConfig& agent_config, std::string prompt,
+                   std::string working_dir,
+                   const std::shared_ptr<loom::core::ToolRegistry>& registry,
+                   std::shared_ptr<const loom::core::ApiExecutionContext> api_context,
+                   std::optional<std::string> parent_model,
+                   AgentLivePermissionCheckFn permission_check) -> MultiAgentResult {
     if (!registry) return failed_agent_result("Non-team agents require a tool registry.");
     loom::tools::agent::AgentConfig runtime_config{};
     runtime_config.max_turns = agent_config.max_turns.value_or(runtime_config.max_turns);
@@ -87,11 +98,11 @@ namespace detail {
         runtime_config.allowed_tools.push_back("Agent(" + subagent_type + ")");
     }
 
-    loom::tools::agent::AgentTool tool(runtime_config, 0, registry.get(), std::move(permission_check), true);
+    loom::tools::agent::AgentTool tool(runtime_config, 0, registry.get(),
+                                       std::move(permission_check), true);
     std::ostringstream input;
-    input << R"({"prompt":")" << json_escape(prompt)
-        << R"(","subagent_type":")" << json_escape(subagent_type)
-        << R"(","run_in_background":false)";
+    input << R"({"prompt":")" << json_escape(prompt) << R"(","subagent_type":")"
+          << json_escape(subagent_type) << R"(","run_in_background":false)";
     if (!agent_config.system_prompt.empty()) {
         input << R"(,"override_system_prompt":")" << json_escape(agent_config.system_prompt) << '"';
     }
@@ -132,25 +143,20 @@ namespace detail {
     return ".";
 }
 
-[[nodiscard]] inline std::string teammate_prompt(
-    const MultiAgentAgentConfig& agent_config,
-    const std::optional<std::string>& coordinator_prompt
-) {
+[[nodiscard]] inline std::string
+teammate_prompt(const MultiAgentAgentConfig& agent_config,
+                const std::optional<std::string>& coordinator_prompt) {
     if (coordinator_prompt && !coordinator_prompt->empty()) return *coordinator_prompt;
     return "You have been spawned as teammate '" + agent_config.name + "'.";
 }
 
-[[nodiscard]] inline auto spawn_teammate_agent(
-    const MultiAgentAgentConfig& agent_config,
-    std::string_view team_name,
-    std::string prompt,
-    std::string working_dir,
-    bool prefer_in_process,
-    const std::shared_ptr<loom::core::ToolRegistry>& registry,
-    std::shared_ptr<const loom::core::ApiExecutionContext> api_context,
-    std::optional<std::string> parent_model,
-    AgentLivePermissionCheckFn permission_check
-) -> MultiAgentResult {
+[[nodiscard]] inline auto
+spawn_teammate_agent(const MultiAgentAgentConfig& agent_config, std::string_view team_name,
+                     std::string prompt, std::string working_dir, bool prefer_in_process,
+                     const std::shared_ptr<loom::core::ToolRegistry>& registry,
+                     std::shared_ptr<const loom::core::ApiExecutionContext> api_context,
+                     std::optional<std::string> parent_model,
+                     AgentLivePermissionCheckFn permission_check) -> MultiAgentResult {
     if (agent_config.name.empty()) {
         return failed_agent_result("Agent name is required for teammate spawn.");
     }
@@ -169,13 +175,13 @@ namespace detail {
         runtime_config.allowed_tools.push_back("Agent(" + subagent_type + ")");
     }
 
-    loom::tools::agent::AgentTool tool(runtime_config, 0, registry.get(), std::move(permission_check), true);
+    loom::tools::agent::AgentTool tool(runtime_config, 0, registry.get(),
+                                       std::move(permission_check), true);
     std::ostringstream input;
-    input << R"({"prompt":")" << json_escape(prompt)
-        << R"(","subagent_type":")" << json_escape(subagent_type)
-        << R"(","run_in_background":true)"
-        << R"(,"name":")" << json_escape(agent_config.name)
-        << R"(","team_name":")" << json_escape(team_name) << '"';
+    input << R"({"prompt":")" << json_escape(prompt) << R"(","subagent_type":")"
+          << json_escape(subagent_type) << R"(","run_in_background":true)"
+          << R"(,"name":")" << json_escape(agent_config.name) << R"(","team_name":")"
+          << json_escape(team_name) << '"';
     if (!agent_config.system_prompt.empty()) {
         input << R"(,"override_system_prompt":")" << json_escape(agent_config.system_prompt) << '"';
     }
@@ -202,11 +208,14 @@ namespace detail {
     auto output = tool_result_text(*result);
     // Team backends return launch receipts, not the eventual remote result.
     return MultiAgentResult{
-        .output = std::move(output), .turns_used = 0, .tokens_used = 0,
-        .completed = false, .started = !result->is_error,
+        .output = std::move(output),
+        .turns_used = 0,
+        .tokens_used = 0,
+        .completed = false,
+        .started = !result->is_error,
     };
 }
-}
+}  // namespace detail
 
 struct MultiAgentConfig {
     std::vector<MultiAgentAgentConfig> agents;
@@ -224,30 +233,27 @@ struct MultiAgentConfig {
     AgentLivePermissionCheckFn permission_check = {};
 };
 
-inline auto spawn_agents(const MultiAgentConfig& config) -> std::vector<std::future<MultiAgentResult>> {
+inline auto spawn_agents(const MultiAgentConfig& config)
+    -> std::vector<std::future<MultiAgentResult>> {
     std::vector<std::future<MultiAgentResult>> futures;
     futures.reserve(config.agents.size());
 
     for (const auto& agent_config : config.agents) {
         const bool teammate = config.team_name && !config.team_name->empty();
-        auto prompt = teammate
-            ? detail::teammate_prompt(agent_config, config.coordinator_prompt)
-            : detail::agent_prompt(agent_config, config.coordinator_prompt);
-        futures.push_back(std::async(config.parallel ? std::launch::async : std::launch::deferred,
-            [agent_config,
-             prompt = std::move(prompt),
-             team_name = config.team_name,
-             working_dir = config.working_dir,
-             prefer_in_process = config.prefer_in_process,
-             registry = config.registry,
-             api_context = config.api_context,
+        auto prompt = teammate ? detail::teammate_prompt(agent_config, config.coordinator_prompt)
+                               : detail::agent_prompt(agent_config, config.coordinator_prompt);
+        futures.push_back(std::async(
+            config.parallel ? std::launch::async : std::launch::deferred,
+            [agent_config, prompt = std::move(prompt), team_name = config.team_name,
+             working_dir = config.working_dir, prefer_in_process = config.prefer_in_process,
+             registry = config.registry, api_context = config.api_context,
              parent_model = config.parent_model,
              permission_check = config.permission_check]() mutable -> MultiAgentResult {
                 if (team_name && !team_name->empty()) {
                     return detail::spawn_teammate_agent(
                         agent_config, *team_name, std::move(prompt), std::move(working_dir),
-                        prefer_in_process, registry, std::move(api_context), std::move(parent_model),
-                        std::move(permission_check));
+                        prefer_in_process, registry, std::move(api_context),
+                        std::move(parent_model), std::move(permission_check));
                 }
                 return detail::execute_agent_tool(
                     agent_config, std::move(prompt), std::move(working_dir), registry,
@@ -258,7 +264,8 @@ inline auto spawn_agents(const MultiAgentConfig& config) -> std::vector<std::fut
     return futures;
 }
 
-inline auto wait_all(std::span<std::future<MultiAgentResult>> futures) -> std::vector<MultiAgentResult> {
+inline auto wait_all(std::span<std::future<MultiAgentResult>> futures)
+    -> std::vector<MultiAgentResult> {
     std::vector<MultiAgentResult> results;
     results.reserve(futures.size());
 
@@ -302,13 +309,11 @@ inline auto merge_agent_results(std::span<const MultiAgentResult> results) -> st
     }
 
     oss << "---\n";
-    oss << "**Summary**: " << started_count << "/" << results.size()
-        << " agents started, " << completed_count << "/" << results.size()
-        << " agents completed, "
-        << total_turns << " total turns, "
-        << total_tokens << " total tokens\n";
+    oss << "**Summary**: " << started_count << "/" << results.size() << " agents started, "
+        << completed_count << "/" << results.size() << " agents completed, " << total_turns
+        << " total turns, " << total_tokens << " total tokens\n";
 
     return oss.str();
 }
 
-} // namespace loom::tools
+}  // namespace loom::tools

@@ -7,11 +7,11 @@
 // (the textual FTXUI includes keep the reduced-BMI writer happy).
 module;
 
-#include <ftxui/dom/elements.hpp>
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
-#include <ftxui/screen/string.hpp>
+#include <ftxui/dom/elements.hpp>
 #include <ftxui/screen/screen.hpp>  // ftxui::Screen::Cursor
+#include <ftxui/screen/string.hpp>
 
 module loom.ui.screens.repl_screen;
 
@@ -48,17 +48,16 @@ using namespace ftxui;
 // reusability by standalone TextInputImpl and dialog widgets.  This thin
 // adapter projects ReplScreenState onto PlaceholderContext.
 
-[[nodiscard]] std::optional<std::string> ComputePlaceholder(
-    const ReplScreenState& s) {
+[[nodiscard]] std::optional<std::string> ComputePlaceholder(const ReplScreenState& s) {
     namespace ph = loom::ui::placeholder;
 
     ph::PlaceholderContext ctx;
-    ctx.input_text                    = s.input_text;
-    ctx.input_mode                    = s.prompt_store.input_mode;
-    ctx.submit_count                  = s.prompt_store.submit_count;
-    ctx.queued_hint_shown_count       = s.prompt_store.queued_command_hint_shown_count;
-    ctx.has_editable_queued           = s.prompt_store.has_editable_queued_commands;
-    ctx.prompt_suggestion_enabled     = s.prompt_store.prompt_suggestion_enabled;
+    ctx.input_text = s.input_text;
+    ctx.input_mode = s.prompt_store.input_mode;
+    ctx.submit_count = s.prompt_store.submit_count;
+    ctx.queued_hint_shown_count = s.prompt_store.queued_command_hint_shown_count;
+    ctx.has_editable_queued = s.prompt_store.has_editable_queued_commands;
+    ctx.prompt_suggestion_enabled = s.prompt_store.prompt_suggestion_enabled;
     ctx.autocomplete_suggestions_empty = s.autocomplete_suggestions.empty();
 
     if (s.prompt_store.viewing_agent_name.has_value()) {
@@ -72,11 +71,11 @@ using namespace ftxui;
 }
 
 // Project into a held input widget; visual wrapping never changes the buffer.
-[[nodiscard]] Element RenderPromptInput(const ReplScreenState& s,
-                                                  int term_cols, int max_input_rows) {
-    namespace uic   = ::ui::components;
-    namespace vim   = loom::ui::prompt::vim_input;
-    namespace figs  = loom::ui::design::figures;
+[[nodiscard]] Element RenderPromptInput(const ReplScreenState& s, int term_cols,
+                                        int max_input_rows) {
+    namespace uic = ::ui::components;
+    namespace vim = loom::ui::prompt::vim_input;
+    namespace figs = loom::ui::design::figures;
 
     // --- 1. Prompt glyph + accent colour (unified) ---------
     //
@@ -121,8 +120,8 @@ using namespace ftxui;
     // Text-derived mode when text is present, state-toggle when empty.
     // state-toggle when empty.  See effective_is_bash() for rationale.
     const bool is_bash_mode = effective_is_bash(s);
-    std::string prefix_str;     // passed into TextInputOptions.prefix;
-    Color       prefix_color;   // applied to the prefix inside renderInputArea.
+    std::string prefix_str;  // passed into TextInputOptions.prefix;
+    Color prefix_color;      // applied to the prefix inside renderInputArea.
 
     // Step 1a: pick glyph.
     // Priority:
@@ -132,13 +131,11 @@ using namespace ftxui;
     // When a viewing agent is active, the prefix is ALWAYS ❯ (never !),
     // matching the ordering where the viewing-agent check is evaluated
     // BEFORE the bash-mode check.
-    const bool has_viewing_agent = s.prompt_store.viewing_agent_name.has_value()
-        && !s.prompt_store.viewing_agent_name->empty();
+    const bool has_viewing_agent = s.prompt_store.viewing_agent_name.has_value() &&
+                                   !s.prompt_store.viewing_agent_name->empty();
     const bool show_bash_glyph = is_bash_mode && !has_viewing_agent;
-    prefix_str += show_bash_glyph
-        ? std::string(figs::kBashGlyph)
-        : std::string(figs::kPointer);
-    prefix_str += " ";   // trailing NBSP/space — 2 display cells total.
+    prefix_str += show_bash_glyph ? std::string(figs::kBashGlyph) : std::string(figs::kPointer);
+    prefix_str += " ";  // trailing NBSP/space — 2 display cells total.
 
     // Step 1b: pick color.
     //
@@ -186,11 +183,11 @@ using namespace ftxui;
     } else {
         opts.placeholder = s.prompt_store.input_placeholder;
     }
-    opts.prefix       = std::move(prefix_str);   // ← RENDERED INSIDE now (BUG-2 fix)
+    opts.prefix = std::move(prefix_str);  // ← RENDERED INSIDE now (BUG-2 fix)
     opts.prefix_bold = false;
-    opts.prefix_color = prefix_color;            // ← new field: explicit color for prefix
-    opts.argument_hint      = s.pending_argument_hint;  // SL-03
-    opts.inline_ghost_text = s.pending_ghost_text;      // SL-05
+    opts.prefix_color = prefix_color;               // ← new field: explicit color for prefix
+    opts.argument_hint = s.pending_argument_hint;   // SL-03
+    opts.inline_ghost_text = s.pending_ghost_text;  // SL-05
     const auto& impl = s.prompt_render_input;
     impl->update_render_options(opts);
     if (impl->text() != s.input_text) impl->set_text(s.input_text);
@@ -260,29 +257,30 @@ using namespace ftxui;
     // border colour: bash_border in Bash mode (rgb(255,0,135) pink),
     // prompt_border otherwise (grey).
     const Color frame_color = is_bash_mode ? pal.bash_border : pal.prompt_border;
-    Element top_rule    = separator() | color(frame_color);
+    Element top_rule = separator() | color(frame_color);
     Element bottom_rule = separator() | color(frame_color);
 
     // Native caret shares the widget's wrapped, scrolled coordinates.
     namespace dc = loom::ui::common::declared_cursor;
     const auto [caret_col, caret_row] = impl->visual_cursor_position();
-    const int rel_y = 1 + (vim_badge ? 1 : 0)
-        + (s.prompt_store.stashed_prompt.has_value() ? 1 : 0) + caret_row;
+    const int rel_y =
+        1 + (vim_badge ? 1 : 0) + (s.prompt_store.stashed_prompt.has_value() ? 1 : 0) + caret_row;
     const int rel_x = 1 + caret_col;
 
     auto result = vbox({
-        std::move(top_rule),
-        content,
-        std::move(bottom_rule),
-    }) | size(WIDTH, EQUAL, std::max(term_cols, 1));
+                      std::move(top_rule),
+                      content,
+                      std::move(bottom_rule),
+                  }) |
+                  size(WIDTH, EQUAL, std::max(term_cols, 1));
 
     // Apply declared_cursor so the hidden native cursor parks at the caret
     // position.  This overrides cursor_reset()'s
     // bottom-right parking.  Shape=Hidden because the visible caret is drawn
     // by TextInputImpl itself (inverted glyph), not the terminal cursor.
-    return std::move(result) | dc::declared_cursor(
-        /*active=*/true, rel_x, rel_y,
-        ftxui::Screen::Cursor::Shape::Hidden);
+    return std::move(result) |
+           dc::declared_cursor(
+               /*active=*/true, rel_x, rel_y, ftxui::Screen::Cursor::Shape::Hidden);
 }
 
 [[nodiscard]] std::string pad_to_columns(std::string text, int width) {
@@ -309,11 +307,9 @@ using namespace ftxui;
 /// @param term_rows   Terminal height in rows (for adaptive maxVisibleItems).
 /// @param max_visible_items  Optional caller budget; -1 retains the default,
 ///                           zero renders no popup. Selection stays state-owned.
-[[nodiscard]] Element RenderPromptSuggestions(const ReplScreenState& s,
-                                                     int term_cols,
-                                                     bool is_overlay,
-                                                     int term_rows,
-                                                     int max_visible_items) {
+[[nodiscard]] Element RenderPromptSuggestions(const ReplScreenState& s, int term_cols,
+                                              bool is_overlay, int term_rows,
+                                              int max_visible_items) {
     if (s.autocomplete_suggestions.empty() || max_visible_items == 0) return Element{};
 
     // maxVisibleItems differs between overlay (fixed 5) and inline
@@ -321,18 +317,14 @@ using namespace ftxui;
     constexpr int kOverlayMaxItems = 5;
     const int kInlineMaxItems = std::min(6, std::max(1, term_rows - 3));
     const int default_max = is_overlay ? kOverlayMaxItems : kInlineMaxItems;
-    const int kMaxVisibleItems = max_visible_items < 0 ? default_max
-        : std::min(default_max, max_visible_items);
+    const int kMaxVisibleItems =
+        max_visible_items < 0 ? default_max : std::min(default_max, max_visible_items);
 
     const int total = static_cast<int>(s.autocomplete_suggestions.size());
-    const int selected = std::clamp(
-        s.autocomplete_index < 0 ? 0 : s.autocomplete_index,
-        0,
-        total - 1);
+    const int selected =
+        std::clamp(s.autocomplete_index < 0 ? 0 : s.autocomplete_index, 0, total - 1);
     const int visible = std::min(kMaxVisibleItems, total);
-    const int start = std::max(
-        0,
-        std::min(selected - visible / 2, total - visible));
+    const int start = std::max(0, std::min(selected - visible / 2, total - visible));
     const int end = std::min(start + visible, total);
 
     int widest = 0;
@@ -346,9 +338,7 @@ using namespace ftxui;
             // to the name column so labels
             // align vertically when some rows have icons and others don't.
             const int icon_w = item.icon.empty() ? 0 : string_width(item.icon) + 1;
-            widest = std::max(
-                widest,
-                icon_w + string_width(item.display_text));
+            widest = std::max(widest, icon_w + string_width(item.display_text));
         }
     }
     const int max_name_width = std::max(10, term_cols * 2 / 5);
@@ -373,14 +363,22 @@ using namespace ftxui;
         // Colored dot for agent/teammate suggestions.
         if (!item.color_name.empty()) {
             auto agent_color = [&]() -> Color {
-                if (item.color_name == "red") return loom::ui::design::theme::current_theme().palette->subagent_red;
-                if (item.color_name == "blue") return loom::ui::design::theme::current_theme().palette->subagent_blue;
-                if (item.color_name == "green") return loom::ui::design::theme::current_theme().palette->subagent_green;
-                if (item.color_name == "yellow") return loom::ui::design::theme::current_theme().palette->subagent_yellow;
-                if (item.color_name == "purple") return loom::ui::design::theme::current_theme().palette->subagent_purple;
-                if (item.color_name == "orange") return loom::ui::design::theme::current_theme().palette->subagent_orange;
-                if (item.color_name == "pink") return loom::ui::design::theme::current_theme().palette->subagent_pink;
-                if (item.color_name == "cyan") return loom::ui::design::theme::current_theme().palette->subagent_cyan;
+                if (item.color_name == "red")
+                    return loom::ui::design::theme::current_theme().palette->subagent_red;
+                if (item.color_name == "blue")
+                    return loom::ui::design::theme::current_theme().palette->subagent_blue;
+                if (item.color_name == "green")
+                    return loom::ui::design::theme::current_theme().palette->subagent_green;
+                if (item.color_name == "yellow")
+                    return loom::ui::design::theme::current_theme().palette->subagent_yellow;
+                if (item.color_name == "purple")
+                    return loom::ui::design::theme::current_theme().palette->subagent_purple;
+                if (item.color_name == "orange")
+                    return loom::ui::design::theme::current_theme().palette->subagent_orange;
+                if (item.color_name == "pink")
+                    return loom::ui::design::theme::current_theme().palette->subagent_pink;
+                if (item.color_name == "cyan")
+                    return loom::ui::design::theme::current_theme().palette->subagent_cyan;
                 return Color{};
             }();
             label_parts.push_back(text("● ") | color(agent_color) | bold);

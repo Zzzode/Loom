@@ -34,12 +34,10 @@ using std::operator""sv;
 
 /// Pattern to match "Shell cwd was reset to <path>" message at line start or
 /// after a newline, anchored at end-of-string or end-of-line.
-constexpr std::string_view kShellCwdResetPatternLiteral =
-    "(?:^|\\n)(Shell cwd was reset to .+)$";
+constexpr std::string_view kShellCwdResetPatternLiteral = "(?:^|\\n)(Shell cwd was reset to .+)$";
 
 /// Sandbox-violations tag name as produced by the sandbox layer.
-constexpr std::string_view kSandboxViolationsTag =
-    loom::constants::xml::SANDBOX_VIOLATIONS_TAG;
+constexpr std::string_view kSandboxViolationsTag = loom::constants::xml::SANDBOX_VIOLATIONS_TAG;
 
 // ---------------------------------------------------------------------------
 // BashResultInfo — structured view of a BashTool execution result.
@@ -58,10 +56,10 @@ struct BashResultInfo {
     bool is_image = false;            // stdout is a data:image/...;base64,... URI
     bool no_output_expected = false;  // from silent-command detection
     bool background = false;          // started via run_in_background
-    std::optional<std::string> return_code_interpretation; // from command_semantics
-    std::optional<std::string> cwd_reset_warning;          // extracted from stderr
-    std::optional<std::string> sandbox_violations;         // extracted from stderr
-    std::optional<std::string> interrupted_reason;         // e.g. "timed out"
+    std::optional<std::string> return_code_interpretation;  // from command_semantics
+    std::optional<std::string> cwd_reset_warning;           // extracted from stderr
+    std::optional<std::string> sandbox_violations;          // extracted from stderr
+    std::optional<std::string> interrupted_reason;          // e.g. "timed out"
 };
 
 // ---------------------------------------------------------------------------
@@ -77,14 +75,13 @@ struct ExtractedStderr {
 /// Strip <sandbox_violations>...</sandbox_violations> block from stderr.
 /// Returns cleaned stderr and, if found, the raw violations content.
 inline auto extract_sandbox_violations(std::string_view stderr_sv)
-    -> std::pair<std::string, std::optional<std::string>>
-{
+    -> std::pair<std::string, std::optional<std::string>> {
     const std::string open_tag = std::format("<{}>", kSandboxViolationsTag);
     const std::string close_tag = std::format("</{}>", kSandboxViolationsTag);
-    const auto open  = stderr_sv.find(open_tag);
+    const auto open = stderr_sv.find(open_tag);
     const auto close = stderr_sv.find(close_tag);
     if (open == std::string_view::npos || close == std::string_view::npos || close < open) {
-        return { std::string(stderr_sv), std::nullopt };
+        return {std::string(stderr_sv), std::nullopt};
     }
 
     const auto content_start = open + open_tag.size();
@@ -98,40 +95,41 @@ inline auto extract_sandbox_violations(std::string_view stderr_sv)
     if (after_close < stderr_sv.size()) cleaned.append(stderr_sv.substr(after_close));
 
     // Trim leading/trailing whitespace on cleaned output
-    while (!cleaned.empty() && std::isspace(static_cast<unsigned char>(cleaned.front()))) cleaned.erase(cleaned.begin());
-    while (!cleaned.empty() && std::isspace(static_cast<unsigned char>(cleaned.back())))  cleaned.pop_back();
+    while (!cleaned.empty() && std::isspace(static_cast<unsigned char>(cleaned.front())))
+        cleaned.erase(cleaned.begin());
+    while (!cleaned.empty() && std::isspace(static_cast<unsigned char>(cleaned.back())))
+        cleaned.pop_back();
 
-    return { std::move(cleaned), std::move(violations) };
+    return {std::move(cleaned), std::move(violations)};
 }
 
 /// Extract the "Shell cwd was reset to ..." warning line from stderr, removing
 /// it from the cleaned output so it can be rendered with a dedicated style.
 inline auto extract_cwd_reset_warning(std::string_view stderr_sv)
-    -> std::pair<std::string, std::optional<std::string>>
-{
+    -> std::pair<std::string, std::optional<std::string>> {
     try {
-        const std::regex pattern(std::string(kShellCwdResetPatternLiteral),
-                                 std::regex::multiline);
+        const std::regex pattern(std::string(kShellCwdResetPatternLiteral), std::regex::multiline);
         std::string input(stderr_sv);
         std::smatch match;
         if (!std::regex_search(input, match, pattern) || match.size() < 2) {
-            return { std::string(stderr_sv), std::nullopt };
+            return {std::string(stderr_sv), std::nullopt};
         }
 
         std::string warning(match[1].first, match[1].second);
         // Remove the full match from stderr and trim
-        std::string cleaned = std::regex_replace(
-            input, pattern, "",
-            std::regex_constants::format_first_only);
+        std::string cleaned =
+            std::regex_replace(input, pattern, "", std::regex_constants::format_first_only);
 
         // Trim
-        while (!cleaned.empty() && std::isspace(static_cast<unsigned char>(cleaned.front()))) cleaned.erase(cleaned.begin());
-        while (!cleaned.empty() && std::isspace(static_cast<unsigned char>(cleaned.back())))  cleaned.pop_back();
+        while (!cleaned.empty() && std::isspace(static_cast<unsigned char>(cleaned.front())))
+            cleaned.erase(cleaned.begin());
+        while (!cleaned.empty() && std::isspace(static_cast<unsigned char>(cleaned.back())))
+            cleaned.pop_back();
 
-        return { std::move(cleaned), std::move(warning) };
+        return {std::move(cleaned), std::move(warning)};
     } catch (const std::regex_error&) {
         // Fallback on malformed regex (shouldn't happen, but be safe).
-        return { std::string(stderr_sv), std::nullopt };
+        return {std::string(stderr_sv), std::nullopt};
     }
 }
 
@@ -140,11 +138,11 @@ inline auto extract_cwd_reset_warning(std::string_view stderr_sv)
 /// extracted meta-strings the UI layer needs to render separately.
 inline auto extract_all_stderr_meta(std::string_view stderr_sv) -> ExtractedStderr {
     auto [no_violations, violations] = extract_sandbox_violations(stderr_sv);
-    auto [cleaned, cwd_warning]      = extract_cwd_reset_warning(no_violations);
+    auto [cleaned, cwd_warning] = extract_cwd_reset_warning(no_violations);
     return {
-        .cleaned_stderr       = std::move(cleaned),
-        .sandbox_violations   = std::move(violations),
-        .cwd_reset_warning    = std::move(cwd_warning),
+        .cleaned_stderr = std::move(cleaned),
+        .sandbox_violations = std::move(violations),
+        .cwd_reset_warning = std::move(cwd_warning),
     };
 }
 
@@ -165,8 +163,7 @@ inline auto format_exit_code(int code, bool interrupted = false) -> std::string 
     if (code == 0) {
         return std::string("exit 0  ") + loom::utils::ansi::green("OK");
     }
-    return std::string("exit ") + std::to_string(code) + "  " +
-           loom::utils::ansi::red("FAILED");
+    return std::string("exit ") + std::to_string(code) + "  " + loom::utils::ansi::red("FAILED");
 }
 
 /// Format a millisecond duration into short human-readable form:
@@ -196,7 +193,8 @@ inline auto format_duration_ms(std::uint64_t ms) -> std::string {
 constexpr auto count_lines(std::string_view s) -> std::uint64_t {
     if (s.empty()) return 0;
     std::uint64_t n = 1;
-    for (char c : s) if (c == '\n') ++n;
+    for (char c : s)
+        if (c == '\n') ++n;
     return n;
 }
 
@@ -207,27 +205,22 @@ constexpr auto count_lines(std::string_view s) -> std::uint64_t {
 ///
 /// migrated: combines TS formatOutput (content cap) + detail::truncate_output
 /// from bash_tool.cppm (half+half), with added line-level awareness.
-inline auto truncate_output_block(
-    std::string_view text,
-    std::size_t max_lines,
-    std::size_t max_chars
-) -> std::string
-{
+inline auto truncate_output_block(std::string_view text, std::size_t max_lines,
+                                  std::size_t max_chars) -> std::string {
     if (text.empty()) return {};
 
     const std::uint64_t total_lines = count_lines(text);
-    const std::size_t  total_chars  = text.size();
+    const std::size_t total_chars = text.size();
 
     // Fast path: everything fits
-    if (total_lines <= static_cast<std::uint64_t>(max_lines) &&
-        total_chars <= max_chars) {
+    if (total_lines <= static_cast<std::uint64_t>(max_lines) && total_chars <= max_chars) {
         return std::string(text);
     }
 
     // Decide how many characters to actually keep. Use half+half strategy so
     // the user sees both the start (command echo / headers) and end (errors).
     const std::size_t char_cap = std::min(max_chars, total_chars);
-    const std::size_t half     = char_cap / 2;
+    const std::size_t half = char_cap / 2;
 
     // Find head boundary: walk back half bytes, then snap to line boundary
     // so we don't split a line mid-stream unless we really have to.
@@ -249,17 +242,13 @@ inline auto truncate_output_block(
         tail_start = head_end;
     }
 
-    const auto omitted_lines = total_lines > max_lines
-        ? total_lines - max_lines
-        : 0;
-    const auto omitted_chars = total_chars > char_cap
-        ? total_chars - char_cap
-        : 0;
+    const auto omitted_lines = total_lines > max_lines ? total_lines - max_lines : 0;
+    const auto omitted_chars = total_chars > char_cap ? total_chars - char_cap : 0;
 
     std::string notice;
     if (omitted_lines > 0 && omitted_chars > 0) {
-        notice = std::format("\n\n... [{} lines / {} bytes truncated] ...\n\n",
-                             omitted_lines, omitted_chars);
+        notice = std::format("\n\n... [{} lines / {} bytes truncated] ...\n\n", omitted_lines,
+                             omitted_chars);
     } else if (omitted_lines > 0) {
         notice = std::format("\n\n... [{} lines truncated] ...\n\n", omitted_lines);
     } else if (omitted_chars > 0) {
@@ -294,9 +283,8 @@ inline auto build_result_header(const BashResultInfo& info) -> std::vector<std::
         }
         // Prefer sanitized (no secrets) command display. Caller can override by
         // pre-sanitizing info.command; we do a best-effort simple trim here.
-        oss << loom::utils::ansi::bold(info.command.empty()
-                    ? std::string("<empty command>")
-                    : info.command);
+        oss << loom::utils::ansi::bold(info.command.empty() ? std::string("<empty command>")
+                                                            : info.command);
         lines.push_back(oss.str());
     }
 
@@ -310,17 +298,15 @@ inline auto build_result_header(const BashResultInfo& info) -> std::vector<std::
 
         // Output-size summary (useful for collapsed cards)
         const auto fmt_bytes = [](std::uint64_t n) { return loom::utils::format_bytes(n); };
-        oss << "  " << loom::utils::ansi::dim(
-            std::format("stdout {} ({} line{})",
-                        fmt_bytes(info.stdout_bytes),
-                        info.stdout_lines,
-                        info.stdout_lines == 1 ? "" : "s"));
+        oss << "  "
+            << loom::utils::ansi::dim(std::format("stdout {} ({} line{})",
+                                                  fmt_bytes(info.stdout_bytes), info.stdout_lines,
+                                                  info.stdout_lines == 1 ? "" : "s"));
         if (info.stderr_bytes > 0) {
-            oss << "  " << loom::utils::ansi::red(loom::utils::ansi::dim(
-                std::format("stderr {} ({} line{})",
-                            fmt_bytes(info.stderr_bytes),
-                            info.stderr_lines,
-                            info.stderr_lines == 1 ? "" : "s")));
+            oss << "  "
+                << loom::utils::ansi::red(loom::utils::ansi::dim(
+                       std::format("stderr {} ({} line{})", fmt_bytes(info.stderr_bytes),
+                                   info.stderr_lines, info.stderr_lines == 1 ? "" : "s")));
         }
 
         lines.push_back(oss.str());
@@ -328,14 +314,14 @@ inline auto build_result_header(const BashResultInfo& info) -> std::vector<std::
 
     // Line 3: interrupted reason, if any
     if (info.interrupted && info.interrupted_reason) {
-        lines.push_back(loom::utils::ansi::yellow(
-            std::format("note: {}", *info.interrupted_reason)));
+        lines.push_back(
+            loom::utils::ansi::yellow(std::format("note: {}", *info.interrupted_reason)));
     }
 
     // Line 4: return-code interpretation / semantic message
     if (info.return_code_interpretation) {
-        lines.push_back(loom::utils::ansi::dim(
-            std::format("note: {}", *info.return_code_interpretation)));
+        lines.push_back(
+            loom::utils::ansi::dim(std::format("note: {}", *info.return_code_interpretation)));
     }
 
     // NOTE: cwd_reset_warning / sandbox_violations / stdout / stderr bodies are
@@ -351,39 +337,33 @@ inline auto build_result_header(const BashResultInfo& info) -> std::vector<std::
 //    for the caller). Useful at the bash_tool.cppm format_result boundary.
 // ---------------------------------------------------------------------------
 
-inline auto make_result_info(
-    std::string command,
-    int exit_code,
-    std::uint64_t duration_ms,
-    std::string_view stdout_sv,
-    std::string_view stderr_sv,
-    bool interrupted = false,
-    bool is_image = false,
-    bool no_output_expected = false,
-    bool background = false,
-    std::optional<std::string> return_code_interpretation = std::nullopt,
-    std::optional<std::string> interrupted_reason = std::nullopt
-) -> BashResultInfo {
+inline auto make_result_info(std::string command, int exit_code, std::uint64_t duration_ms,
+                             std::string_view stdout_sv, std::string_view stderr_sv,
+                             bool interrupted = false, bool is_image = false,
+                             bool no_output_expected = false, bool background = false,
+                             std::optional<std::string> return_code_interpretation = std::nullopt,
+                             std::optional<std::string> interrupted_reason = std::nullopt)
+    -> BashResultInfo {
     BashResultInfo info;
-    info.command                      = std::move(command);
-    info.exit_code                    = exit_code;
-    info.duration_ms                  = duration_ms;
-    info.stdout_bytes                 = stdout_sv.size();
-    info.stderr_bytes                 = stderr_sv.size();
-    info.stdout_lines                 = count_lines(stdout_sv);
-    info.stderr_lines                 = count_lines(stderr_sv);
-    info.interrupted                  = interrupted;
-    info.is_image                     = is_image;
-    info.no_output_expected           = no_output_expected;
-    info.background                   = background;
-    info.return_code_interpretation   = std::move(return_code_interpretation);
-    info.interrupted_reason           = std::move(interrupted_reason);
+    info.command = std::move(command);
+    info.exit_code = exit_code;
+    info.duration_ms = duration_ms;
+    info.stdout_bytes = stdout_sv.size();
+    info.stderr_bytes = stderr_sv.size();
+    info.stdout_lines = count_lines(stdout_sv);
+    info.stderr_lines = count_lines(stderr_sv);
+    info.interrupted = interrupted;
+    info.is_image = is_image;
+    info.no_output_expected = no_output_expected;
+    info.background = background;
+    info.return_code_interpretation = std::move(return_code_interpretation);
+    info.interrupted_reason = std::move(interrupted_reason);
 
     // Extract metadata from stderr so UI layer doesn't have to.
     auto meta = extract_all_stderr_meta(stderr_sv);
-    info.cwd_reset_warning  = std::move(meta.cwd_reset_warning);
+    info.cwd_reset_warning = std::move(meta.cwd_reset_warning);
     info.sandbox_violations = std::move(meta.sandbox_violations);
     return info;
 }
 
-} // namespace loom::tools::bash
+}  // namespace loom::tools::bash

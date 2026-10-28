@@ -4,8 +4,8 @@
 module;
 
 #include <cstdint>
-#include <cstdlib>
 #include <cstdio>
+#include <cstdlib>
 
 #ifdef __APPLE__
 #include <mach/mach.h>
@@ -14,6 +14,7 @@ module;
 #elif defined(__linux__)
 #include <sys/sysinfo.h>
 #include <sys/utsname.h>
+
 #include <ctime>
 #endif
 
@@ -27,10 +28,10 @@ namespace fs = std::filesystem;
 
 /// Diagnostic dump level
 enum class DumpLevel : std::uint8_t {
-    Minimal,    // Only version and basic state
-    Standard,   // + memory, OS info
-    Verbose,    // + plugins, MCP servers
-    Full        // + environment variables, all config
+    Minimal,   // Only version and basic state
+    Standard,  // + memory, OS info
+    Verbose,   // + plugins, MCP servers
+    Full       // + environment variables, all config
 };
 
 /// System diagnostic information
@@ -53,8 +54,8 @@ struct DiagnosticInfo {
 #ifdef __APPLE__
     struct mach_task_basic_info info{};
     mach_msg_type_number_t count = MACH_TASK_BASIC_INFO_COUNT;
-    if (task_info(mach_task_self(), MACH_TASK_BASIC_INFO,
-                  reinterpret_cast<task_info_t>(&info), &count) == KERN_SUCCESS) {
+    if (task_info(mach_task_self(), MACH_TASK_BASIC_INFO, reinterpret_cast<task_info_t>(&info),
+                  &count) == KERN_SUCCESS) {
         return info.resident_size;
     }
     return 0;
@@ -62,9 +63,9 @@ struct DiagnosticInfo {
     std::ifstream statm("/proc/self/statm");
     if (statm.is_open()) {
         std::uint64_t pages = 0;
-        statm >> pages; // total program size
-        statm >> pages; // resident set
-        return pages * 4096; // Assume 4KB page size
+        statm >> pages;       // total program size
+        statm >> pages;       // resident set
+        return pages * 4096;  // Assume 4KB page size
     }
     return 0;
 #else
@@ -216,9 +217,8 @@ struct DiagnosticInfo {
 
 /// Dump diagnostics to a file
 /// Returns true on success
-[[nodiscard]] inline bool dump_diagnostics_to_file(
-    std::string_view output_path,
-    DumpLevel level = DumpLevel::Standard) {
+[[nodiscard]] inline bool dump_diagnostics_to_file(std::string_view output_path,
+                                                   DumpLevel level = DumpLevel::Standard) {
 
     fs::path path(output_path);
 
@@ -236,13 +236,12 @@ struct DiagnosticInfo {
 }
 
 /// Dump diagnostics to the default location and return the path
-[[nodiscard]] inline std::optional<std::string> dump_diagnostics_auto(
-    DumpLevel level = DumpLevel::Standard) {
+[[nodiscard]] inline std::optional<std::string>
+dump_diagnostics_auto(DumpLevel level = DumpLevel::Standard) {
 
     const char* home = std::getenv("HOME");
-    fs::path dir = home
-        ? fs::path(home) / ".loom" / "diagnostics"
-        : fs::temp_directory_path() / "loom-diagnostics";
+    fs::path dir = home ? fs::path(home) / ".loom" / "diagnostics"
+                        : fs::temp_directory_path() / "loom-diagnostics";
 
     std::error_code ec;
     fs::create_directories(dir, ec);
@@ -254,8 +253,8 @@ struct DiagnosticInfo {
     localtime_r(&time_t, &tm_buf);
 
     auto filename = std::format("diag_{:04d}{:02d}{:02d}_{:02d}{:02d}{:02d}.txt",
-        tm_buf.tm_year + 1900, tm_buf.tm_mon + 1, tm_buf.tm_mday,
-        tm_buf.tm_hour, tm_buf.tm_min, tm_buf.tm_sec);
+                                tm_buf.tm_year + 1900, tm_buf.tm_mon + 1, tm_buf.tm_mday,
+                                tm_buf.tm_hour, tm_buf.tm_min, tm_buf.tm_sec);
 
     auto filepath = dir / filename;
     if (dump_diagnostics_to_file(filepath.string(), level)) {
@@ -264,4 +263,4 @@ struct DiagnosticInfo {
     return std::nullopt;
 }
 
-} // namespace loom::services::diagnostic
+}  // namespace loom::services::diagnostic

@@ -1,8 +1,10 @@
 // RFC 0020: completion grace is UI state; completed task data outlives it.
-#include <cstdlib>
-#include <gtest/gtest.h>
 #include <ftxui/component/component.hpp>
 #include <ftxui/screen/screen.hpp>
+#include <gtest/gtest.h>
+
+#include <cstdlib>
+
 #include "test_ui_helpers.h"
 
 import std;
@@ -26,8 +28,8 @@ protected:
     void SetUp() override {
         tools::clear_all_todos_for_testing();
         storage = std::filesystem::temp_directory_path() /
-            ("loom-todo-completion-" + std::to_string(
-                std::chrono::steady_clock::now().time_since_epoch().count()));
+                  ("loom-todo-completion-" +
+                   std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
         loom::core::QueryEngineConfig config;
         config.cwd = std::filesystem::temp_directory_path().string();
         config.context_window.auto_compact = false;
@@ -35,6 +37,7 @@ protected:
         app = ftxui::Make<ui::AppAdapter>(engine.get(), nullptr, &commands, storage, [] {});
         At(0ms);
     }
+
     void TearDown() override {
         app.reset();
         engine.reset();
@@ -43,13 +46,15 @@ protected:
         std::error_code ignored;
         std::filesystem::remove_all(storage, ignored);
     }
+
     void At(std::chrono::milliseconds offset) {
         ui::clock::set_steady_now_for_testing(std::chrono::steady_clock::time_point(100s) + offset);
     }
+
     void Write(tools::TodoStatus status, std::string content = "Inspect source") {
         tools::TodoWriteRequest request;
         for (const auto& [id, label] : std::vector<std::pair<std::string, std::string>>{
-                {"a", std::move(content)}, {"b", "Run native checks"}, {"c", "Record results"}}) {
+                 {"a", std::move(content)}, {"b", "Run native checks"}, {"c", "Record results"}}) {
             tools::TodoItem item;
             item.id = id;
             item.content = label;
@@ -59,15 +64,18 @@ protected:
         auto result = tools::todo_write_store().execute(std::move(request));
         ASSERT_TRUE(result);
     }
+
     void Drain() { (void)app->Render(); }
+
     const auto& State() { return ui::test_seams(app).screen_state_for_testing()->todo_store; }
+
     loom::core::ToolRegistry registry;
     loom::commands::AppCommandRegistry commands;
     std::unique_ptr<loom::core::QueryEngine> engine;
     std::shared_ptr<ui::AppAdapter> app;
     std::filesystem::path storage;
 };
-}
+}  // namespace
 
 TEST_F(TodoCompletion, IdleCompletionCollapsesAtGraceBoundaryWithoutDeletingData) {
     Write(tools::TodoStatus::InProgress);
@@ -126,17 +134,19 @@ TEST_F(TodoCompletion, CompletionRenderUsesOneSummaryRowAfterGrace) {
         auto element = ui::todos::RenderTodoPanel(State().items, columns, 4, collapsed);
         element->ComputeRequirement();
         EXPECT_EQ(element->requirement().min_y, collapsed ? 1 : 4);
-        auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(columns),
-            ftxui::Dimension::Fixed(4));
+        auto screen =
+            ftxui::Screen::Create(ftxui::Dimension::Fixed(columns), ftxui::Dimension::Fixed(4));
         ftxui::Render(screen, element);
         auto text = strip_ansi(screen.ToString());
         EXPECT_NE(text.find("Tasks 3/3 completed"), std::string::npos);
         EXPECT_EQ(text.find("Inspect source") != std::string::npos, !collapsed);
     };
-    for (int columns : {35, 75, 115}) render(columns, false);
+    for (int columns : {35, 75, 115})
+        render(columns, false);
     At(3s);
     Drain();
-    for (int columns : {35, 75, 115}) render(columns, State().completed_collapsed);
+    for (int columns : {35, 75, 115})
+        render(columns, State().completed_collapsed);
 }
 
 TEST_F(TodoCompletion, ClearResetsDefaultCompletionWithoutClearingAgentTasks) {

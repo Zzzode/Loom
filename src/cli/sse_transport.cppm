@@ -3,19 +3,19 @@
 /// Implements proper SSE frame parsing per W3C spec, exponential backoff reconnect,
 /// liveness timeout, and Last-Event-ID tracking for resume on reconnect.
 module;
-#include <cerrno>
-#include <cstring>
-#include <cstdlib>
-#include <sys/socket.h>
-#include <netdb.h>
 #include <arpa/inet.h>
-#include <unistd.h>
-
+#include <netdb.h>
 #include <openssl/err.h>
 #include <openssl/ssl.h>
 #include <openssl/x509v3.h>
+#include <sys/socket.h>
+#include <unistd.h>
+
+#include <cerrno>
 #include <cstddef>
 #include <cstdint>
+#include <cstdlib>
+#include <cstring>
 
 export module loom.cli.sse_transport;
 
@@ -34,7 +34,7 @@ struct SSEReconnectPolicy {
     std::chrono::milliseconds max_delay{30000};
     double backoff_multiplier{2.0};
     double jitter_factor{0.25};
-    uint32_t max_retries{60};               // ~10 minutes with 30s cap
+    uint32_t max_retries{60};                   // ~10 minutes with 30s cap
     std::chrono::seconds liveness_timeout{45};  // no data → reconnect
 };
 
@@ -43,9 +43,9 @@ struct SSEReconnectPolicy {
 // ============================================================
 
 struct SSEEvent {
-    std::string event;  // event type ("message" if unspecified)
-    std::string data;   // concatenated data lines
-    std::string id;     // last event id
+    std::string event;                               // event type ("message" if unspecified)
+    std::string data;                                // concatenated data lines
+    std::string id;                                  // last event id
     std::optional<std::chrono::milliseconds> retry;  // server-suggested retry
 };
 
@@ -58,7 +58,7 @@ enum class SSEState : uint8_t {
     connecting,
     connected,
     reconnecting,
-    closed       // user-initiated close, no reconnect
+    closed  // user-initiated close, no reconnect
 };
 
 // ============================================================
@@ -77,6 +77,7 @@ struct SSETlsSession {
     SSETlsSession() = default;
     SSETlsSession(const SSETlsSession&) = delete;
     SSETlsSession& operator=(const SSETlsSession&) = delete;
+
     ~SSETlsSession() {
         if (ssl) {
             SSL_shutdown(ssl);
@@ -97,7 +98,10 @@ public:
     using ErrorCallback = std::function<void(std::string_view error)>;
 
     SSETransport() = default;
-    explicit SSETransport(SSEReconnectPolicy policy) : policy_(std::move(policy)) {}
+
+    explicit SSETransport(SSEReconnectPolicy policy)
+        : policy_(std::move(policy)) {}
+
     ~SSETransport() { close(); }
 
     // Non-copyable, non-movable (owns thread)
@@ -108,7 +112,7 @@ public:
 
     /// Establish SSE connection. Starts background reader thread with auto-reconnect.
     std::expected<void, std::string> connect(std::string_view url,
-                                              std::map<std::string, std::string> headers = {}) {
+                                             std::map<std::string, std::string> headers = {}) {
         if (state_.load() != SSEState::disconnected && state_.load() != SSEState::closed) {
             return std::unexpected("Already connected or connecting");
         }
@@ -126,9 +130,7 @@ public:
         retry_count_ = 0;
 
         // Start reader thread
-        reader_thread_ = std::jthread([this](std::stop_token stop) {
-            connection_loop(stop);
-        });
+        reader_thread_ = std::jthread([this](std::stop_token stop) { connection_loop(stop); });
 
         return {};
     }
@@ -170,6 +172,7 @@ public:
     // ─── Accessors ───────────────────────────────────────────
 
     [[nodiscard]] bool is_connected() const { return state_.load() == SSEState::connected; }
+
     [[nodiscard]] SSEState state() const { return state_.load(); }
 
     [[nodiscard]] std::optional<std::string> get_last_event_id() const {
@@ -225,7 +228,8 @@ private:
 
         auto slash_pos = sv.find('/');
         auto host_part = (slash_pos != std::string_view::npos) ? sv.substr(0, slash_pos) : sv;
-        url_parts_.path = (slash_pos != std::string_view::npos) ? std::string(sv.substr(slash_pos)) : "/";
+        url_parts_.path =
+            (slash_pos != std::string_view::npos) ? std::string(sv.substr(slash_pos)) : "/";
 
         auto colon_pos = host_part.find(':');
         if (colon_pos != std::string_view::npos) {
@@ -361,8 +365,7 @@ private:
         while (sent < data.size()) {
             ssize_t n = 0;
             if (tls_ && tls_->ssl) {
-                n = SSL_write(tls_->ssl, data.data() + sent,
-                              static_cast<int>(data.size() - sent));
+                n = SSL_write(tls_->ssl, data.data() + sent, static_cast<int>(data.size() - sent));
                 if (n <= 0) return false;
             } else {
                 n = ::send(fd, data.data() + sent, data.size() - sent, 0);
@@ -391,11 +394,9 @@ private:
         // payloads would be worse than no transport at all.
         SSL_CTX_set_verify(tls_->ctx, SSL_VERIFY_PEER, nullptr);
         SSL_CTX_set_default_verify_paths(tls_->ctx);
-        if (const char* ca_env = std::getenv("LOOM_CA_BUNDLE");
-            ca_env && *ca_env) {
+        if (const char* ca_env = std::getenv("LOOM_CA_BUNDLE"); ca_env && *ca_env) {
             SSL_CTX_load_verify_locations(tls_->ctx, ca_env, nullptr);
-        } else if (const char* ssl_cert = std::getenv("SSL_CERT_FILE");
-                   ssl_cert && *ssl_cert) {
+        } else if (const char* ssl_cert = std::getenv("SSL_CERT_FILE"); ssl_cert && *ssl_cert) {
             SSL_CTX_load_verify_locations(tls_->ctx, ssl_cert, nullptr);
         }
 
@@ -411,9 +412,8 @@ private:
         // against the certificate's IP SANs, not its DNS names.
         SSL_set_tlsext_host_name(tls_->ssl, url_parts_.host.c_str());
         unsigned char ip_buf[16] = {0};
-        const bool is_ip_literal =
-            ::inet_pton(AF_INET, url_parts_.host.c_str(), ip_buf) == 1 ||
-            ::inet_pton(AF_INET6, url_parts_.host.c_str(), ip_buf) == 1;
+        const bool is_ip_literal = ::inet_pton(AF_INET, url_parts_.host.c_str(), ip_buf) == 1 ||
+                                   ::inet_pton(AF_INET6, url_parts_.host.c_str(), ip_buf) == 1;
         if (is_ip_literal) {
             X509_VERIFY_PARAM* param = SSL_get0_param(tls_->ssl);
             X509_VERIFY_PARAM_set1_ip_asc(param, url_parts_.host.c_str());
@@ -546,12 +546,11 @@ private:
                             }
 
                             // Dispatch event
-                            SSEEvent event{
-                                .event = current_event.empty() ? "message" : current_event,
-                                .data = current_data,
-                                .id = current_id,
-                                .retry = current_retry
-                            };
+                            SSEEvent event{.event =
+                                               current_event.empty() ? "message" : current_event,
+                                           .data = current_data,
+                                           .id = current_id,
+                                           .retry = current_retry};
 
                             enqueue_event(std::move(event));
                         }
@@ -562,8 +561,8 @@ private:
                         current_retry.reset();
                     } else {
                         // Parse field
-                        parse_sse_line(line_buf, current_event, current_data,
-                                      current_id, current_retry);
+                        parse_sse_line(line_buf, current_event, current_data, current_id,
+                                       current_retry);
                         line_buf.clear();
                     }
                 } else if (c == '\r') {
@@ -578,10 +577,8 @@ private:
 
     // ─── SSE Line Parser ─────────────────────────────────────
 
-    static void parse_sse_line(const std::string& line,
-                               std::string& event, std::string& data,
-                               std::string& id,
-                               std::optional<std::chrono::milliseconds>& retry) {
+    static void parse_sse_line(const std::string& line, std::string& event, std::string& data,
+                               std::string& id, std::optional<std::chrono::milliseconds>& retry) {
         // Lines starting with ':' are comments — ignore
         if (line.empty() || line[0] == ':') return;
 
@@ -614,7 +611,10 @@ private:
             // Must be all digits
             bool all_digits = !value.empty();
             for (char c : value) {
-                if (c < '0' || c > '9') { all_digits = false; break; }
+                if (c < '0' || c > '9') {
+                    all_digits = false;
+                    break;
+                }
             }
             if (all_digits) {
                 retry = std::chrono::milliseconds(std::atoi(std::string(value).c_str()));
@@ -636,19 +636,14 @@ private:
         // Exponential backoff with jitter
         auto delay = current_delay_;
         current_delay_ = std::chrono::milliseconds(
-            std::min<int64_t>(
-                static_cast<int64_t>(delay.count() * policy_.backoff_multiplier),
-                policy_.max_delay.count()
-            )
-        );
+            std::min<int64_t>(static_cast<int64_t>(delay.count() * policy_.backoff_multiplier),
+                              policy_.max_delay.count()));
 
         // Add jitter
         std::mt19937 rng(std::random_device{}());
         std::uniform_real_distribution<double> dist(1.0 - policy_.jitter_factor,
-                                                     1.0 + policy_.jitter_factor);
-        auto jittered = std::chrono::milliseconds(
-            static_cast<int64_t>(delay.count() * dist(rng))
-        );
+                                                    1.0 + policy_.jitter_factor);
+        auto jittered = std::chrono::milliseconds(static_cast<int64_t>(delay.count() * dist(rng)));
 
         // Sleep in small increments so we can respond to stop requests
         auto end_time = std::chrono::steady_clock::now() + jittered;
@@ -724,4 +719,4 @@ private:
     ErrorCallback error_cb_;
 };
 
-} // namespace loom::cli
+}  // namespace loom::cli

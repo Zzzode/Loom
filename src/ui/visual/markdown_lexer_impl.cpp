@@ -142,8 +142,7 @@ static constexpr NamedEntity kNamedEntities[] = {
     const auto* begin = std::begin(kNamedEntities);
     const auto* end = std::end(kNamedEntities);
     const auto it = std::lower_bound(
-        begin, end, name,
-        [](const NamedEntity& e, std::string_view n) { return e.name < n; });
+        begin, end, name, [](const NamedEntity& e, std::string_view n) { return e.name < n; });
     if (it != end && it->name == name) return it->utf8;
     return {};
 }
@@ -159,8 +158,7 @@ static constexpr NamedEntity kNamedEntities[] = {
 //   Hex:     &#xHH; — 1-6 hex digits (x or X).  0 or > 0x10FFFF → U+FFFD.
 //   More than 7 decimal / 6 hex digits is not a valid entity (the fixtures
 //   leave &#87654321; and &#abcdef0; undecoded).
-[[nodiscard]] std::string decode_entity(std::string_view text,
-                                        std::size_t pos,
+[[nodiscard]] std::string decode_entity(std::string_view text, std::size_t pos,
                                         std::size_t& consumed) {
     consumed = 0;
     if (pos >= text.size() || text[pos] != '&') return {};
@@ -186,23 +184,23 @@ static constexpr NamedEntity kNamedEntities[] = {
             ++p;
         }
         const std::size_t digit_count = p - digit_start;
-        if (digit_count == 0 || p >= text.size() || text[p] != ';')
-            return {};
+        if (digit_count == 0 || p >= text.size() || text[p] != ';') return {};
         if (is_hex ? digit_count > 6 : digit_count > 7) return {};
 
         unsigned long long value = 0;
         for (std::size_t i = digit_start; i < p; ++i) {
             const char ch = text[i];
             int digit;
-            if (ch >= '0' && ch <= '9') digit = ch - '0';
-            else if (ch >= 'a' && ch <= 'f') digit = ch - 'a' + 10;
-            else digit = ch - 'A' + 10;
-            value = value * (is_hex ? 16 : 10) +
-                    static_cast<unsigned long long>(digit);
+            if (ch >= '0' && ch <= '9')
+                digit = ch - '0';
+            else if (ch >= 'a' && ch <= 'f')
+                digit = ch - 'a' + 10;
+            else
+                digit = ch - 'A' + 10;
+            value = value * (is_hex ? 16 : 10) + static_cast<unsigned long long>(digit);
         }
         consumed = p - pos + 1;  // include the ';'
-        if (value == 0 || value > 0x10FFFF)
-            return utf8_encode(0xFFFD);
+        if (value == 0 || value > 0x10FFFF) return utf8_encode(0xFFFD);
         return utf8_encode(static_cast<char32_t>(value));
     }
 
@@ -234,8 +232,10 @@ static constexpr NamedEntity kNamedEntities[] = {
     const char marker = line[i];
     if (marker != '=' && marker != '-') return 0;
     ++i;
-    while (i < line.size() && line[i] == marker) ++i;
-    while (i < line.size() && line[i] == ' ') ++i;  // trailing spaces
+    while (i < line.size() && line[i] == marker)
+        ++i;
+    while (i < line.size() && line[i] == ' ')
+        ++i;                        // trailing spaces
     if (i < line.size()) return 0;  // non-space, non-marker character
     return marker == '=' ? 1 : 2;
 }
@@ -265,8 +265,7 @@ static constexpr NamedEntity kNamedEntities[] = {
 // §4.5).  The closing fence may have up to 3 leading spaces, must use
 // the same character, be at least `fence_len` long, and have only
 // whitespace after.
-[[nodiscard]] bool is_closing_fence(std::string_view line, char fence_char,
-                                    std::size_t fence_len) {
+[[nodiscard]] bool is_closing_fence(std::string_view line, char fence_char, std::size_t fence_len) {
     std::size_t i = 0;
     int leading = 0;
     while (i < line.size() && line[i] == ' ' && leading < 3) {
@@ -294,12 +293,10 @@ static constexpr NamedEntity kNamedEntities[] = {
     std::string out;
     out.reserve(uri.size());
     for (unsigned char ch : uri) {
-        if ((ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') ||
-            (ch >= '0' && ch <= '9') || ch == '-' || ch == '.' ||
-            ch == '_' || ch == '~' || ch == ':' || ch == '/' ||
-            ch == '?' || ch == '#' || ch == '@' || ch == '!' ||
-            ch == '$' || ch == '&' || ch == '\'' || ch == '(' ||
-            ch == ')' || ch == '*' || ch == '+' || ch == ',' ||
+        if ((ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') || (ch >= '0' && ch <= '9') ||
+            ch == '-' || ch == '.' || ch == '_' || ch == '~' || ch == ':' || ch == '/' ||
+            ch == '?' || ch == '#' || ch == '@' || ch == '!' || ch == '$' || ch == '&' ||
+            ch == '\'' || ch == '(' || ch == ')' || ch == '*' || ch == '+' || ch == ',' ||
             ch == ';' || ch == '=' || ch == '%') {
             out += static_cast<char>(ch);
         } else {
@@ -315,10 +312,8 @@ static constexpr NamedEntity kNamedEntities[] = {
 // must be '<').  Returns the link URL and sets consumed to the number of
 // characters consumed, or returns empty string / consumed=0 if not an
 // autolink.  The link text is the raw content between < and >.
-[[nodiscard]] std::string parse_autolink(std::string_view text,
-                                         std::size_t pos,
-                                         std::size_t& consumed,
-                                         std::string& link_text) {
+[[nodiscard]] std::string parse_autolink(std::string_view text, std::size_t pos,
+                                         std::size_t& consumed, std::string& link_text) {
     consumed = 0;
     if (pos >= text.size() || text[pos] != '<') return {};
     const std::size_t close = text.find('>', pos + 1);
@@ -333,16 +328,14 @@ static constexpr NamedEntity kNamedEntities[] = {
     // URI autolink: scheme 2+ alnum starting with letter, then ':'
     {
         std::size_t sp = 0;
-        if (content.size() >= 2 &&
-            ((content[0] >= 'A' && content[0] <= 'Z') ||
-             (content[0] >= 'a' && content[0] <= 'z'))) {
+        if (content.size() >= 2 && ((content[0] >= 'A' && content[0] <= 'Z') ||
+                                    (content[0] >= 'a' && content[0] <= 'z'))) {
             sp = 1;
             while (sp < content.size() &&
                    ((content[sp] >= 'A' && content[sp] <= 'Z') ||
                     (content[sp] >= 'a' && content[sp] <= 'z') ||
-                    (content[sp] >= '0' && content[sp] <= '9') ||
-                    content[sp] == '+' || content[sp] == '.' ||
-                    content[sp] == '-')) {
+                    (content[sp] >= '0' && content[sp] <= '9') || content[sp] == '+' ||
+                    content[sp] == '.' || content[sp] == '-')) {
                 ++sp;
             }
             if (sp >= 2 && sp < content.size() && content[sp] == ':') {
@@ -356,20 +349,17 @@ static constexpr NamedEntity kNamedEntities[] = {
     // Email autolink: local@domain with at least one '.' in the domain
     {
         const std::size_t at = content.find('@');
-        if (at != std::string_view::npos && at > 0 &&
-            at < content.size() - 1) {
+        if (at != std::string_view::npos && at > 0 && at < content.size() - 1) {
             const std::string_view local = content.substr(0, at);
             const std::string_view domain = content.substr(at + 1);
             // Local part: allowed characters (no backslash)
             bool local_ok = true;
             for (char ch : local) {
                 if (!((ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') ||
-                      (ch >= '0' && ch <= '9') || ch == '.' || ch == '!' ||
-                      ch == '#' || ch == '$' || ch == '%' || ch == '&' ||
-                      ch == '\'' || ch == '*' || ch == '+' || ch == '-' ||
-                      ch == '/' || ch == '=' || ch == '?' || ch == '^' ||
-                      ch == '_' || ch == '`' || ch == '{' || ch == '|' ||
-                      ch == '}' || ch == '~')) {
+                      (ch >= '0' && ch <= '9') || ch == '.' || ch == '!' || ch == '#' ||
+                      ch == '$' || ch == '%' || ch == '&' || ch == '\'' || ch == '*' || ch == '+' ||
+                      ch == '-' || ch == '/' || ch == '=' || ch == '?' || ch == '^' || ch == '_' ||
+                      ch == '`' || ch == '{' || ch == '|' || ch == '}' || ch == '~')) {
                     local_ok = false;
                     break;
                 }
@@ -400,14 +390,14 @@ static constexpr NamedEntity kNamedEntities[] = {
 // Backtick strings that form a code span are skipped over; unmatched
 // backtick strings are literal text and the scan continues through them.
 // Returns npos if not found.
-[[nodiscard]] std::size_t find_outside_code_spans(std::string_view text,
-                                                   std::size_t start,
-                                                   char ch) {
+[[nodiscard]] std::size_t find_outside_code_spans(std::string_view text, std::size_t start,
+                                                  char ch) {
     std::size_t pos = start;
     while (pos < text.size()) {
         if (text[pos] == '`') {
             std::size_t bt_end = pos + 1;
-            while (bt_end < text.size() && text[bt_end] == '`') ++bt_end;
+            while (bt_end < text.size() && text[bt_end] == '`')
+                ++bt_end;
             const std::size_t bt_len = bt_end - pos;
             std::size_t search = bt_end;
             bool found_close = false;
@@ -415,7 +405,8 @@ static constexpr NamedEntity kNamedEntities[] = {
                 const auto close = text.find('`', search);
                 if (close == std::string_view::npos) break;
                 std::size_t ce = close + 1;
-                while (ce < text.size() && text[ce] == '`') ++ce;
+                while (ce < text.size() && text[ce] == '`')
+                    ++ce;
                 if (ce - close == bt_len) {
                     pos = ce;  // skip over the code span
                     found_close = true;
@@ -445,8 +436,7 @@ static constexpr NamedEntity kNamedEntities[] = {
 // Used for image alt text and link text that may contain nested brackets
 // (CommonMark §6.6).  Brackets inside HTML tags and autolinks are literal
 // (examples 524, 526: ](baz) inside <bar attr="..."> is not a link dest).
-[[nodiscard]] std::size_t find_matching_bracket(std::string_view text,
-                                                  std::size_t open) {
+[[nodiscard]] std::size_t find_matching_bracket(std::string_view text, std::size_t open) {
     if (open >= text.size() || text[open] != '[') return std::string_view::npos;
     int depth = 1;
     std::size_t pos = open + 1;
@@ -458,7 +448,8 @@ static constexpr NamedEntity kNamedEntities[] = {
         if (text[pos] == '`') {
             // Skip code spans — brackets inside code spans are literal.
             std::size_t bt_end = pos + 1;
-            while (bt_end < text.size() && text[bt_end] == '`') ++bt_end;
+            while (bt_end < text.size() && text[bt_end] == '`')
+                ++bt_end;
             const std::size_t bt_len = bt_end - pos;
             std::size_t search = bt_end;
             while (search < text.size()) {
@@ -468,7 +459,8 @@ static constexpr NamedEntity kNamedEntities[] = {
                     break;
                 }
                 std::size_t ce = close + 1;
-                while (ce < text.size() && text[ce] == '`') ++ce;
+                while (ce < text.size() && text[ce] == '`')
+                    ++ce;
                 if (ce - close == bt_len) {
                     pos = ce;
                     break;
@@ -482,10 +474,9 @@ static constexpr NamedEntity kNamedEntities[] = {
             // literal (CommonMark §6.6 examples 524, 526).
             if (pos + 1 < text.size()) {
                 const char next = text[pos + 1];
-                const bool looks_like_tag =
-                    (next >= 'a' && next <= 'z') ||
-                    (next >= 'A' && next <= 'Z') || next == '/' ||
-                    next == '!' || next == '?';
+                const bool looks_like_tag = (next >= 'a' && next <= 'z') ||
+                                            (next >= 'A' && next <= 'Z') || next == '/' ||
+                                            next == '!' || next == '?';
                 if (looks_like_tag) {
                     const auto close = text.find('>', pos + 1);
                     if (close != std::string_view::npos) {
@@ -512,10 +503,8 @@ static constexpr NamedEntity kNamedEntities[] = {
 // 546-548: [ref[] and [ref[bar]] are invalid labels; example 549:
 // [ref\[] is valid because the [ is escaped).  Returns the position of
 // the ']', or npos if the label is invalid.
-[[nodiscard]] std::size_t find_label_end(std::string_view text,
-                                          std::size_t open) {
-    if (open >= text.size() || text[open] != '[')
-        return std::string_view::npos;
+[[nodiscard]] std::size_t find_label_end(std::string_view text, std::size_t open) {
+    if (open >= text.size() || text[open] != '[') return std::string_view::npos;
     for (std::size_t i = open + 1; i < text.size(); ++i) {
         if (text[i] == '\\' && i + 1 < text.size()) {
             ++i;  // skip escaped char
@@ -544,7 +533,8 @@ static constexpr NamedEntity kNamedEntities[] = {
         if (content[pos] == '`') {
             // Skip code spans — brackets inside code spans are literal.
             std::size_t bt_end = pos + 1;
-            while (bt_end < content.size() && content[bt_end] == '`') ++bt_end;
+            while (bt_end < content.size() && content[bt_end] == '`')
+                ++bt_end;
             const std::size_t bt_len = bt_end - pos;
             std::size_t search = bt_end;
             while (search < content.size()) {
@@ -554,7 +544,8 @@ static constexpr NamedEntity kNamedEntities[] = {
                     break;
                 }
                 std::size_t ce = close + 1;
-                while (ce < content.size() && content[ce] == '`') ++ce;
+                while (ce < content.size() && content[ce] == '`')
+                    ++ce;
                 if (ce - close == bt_len) {
                     pos = ce;
                     break;
@@ -571,10 +562,9 @@ static constexpr NamedEntity kNamedEntities[] = {
             // skipped, so ](...) after it is still found.
             if (pos + 1 < content.size()) {
                 const char next = content[pos + 1];
-                const bool looks_like_tag =
-                    (next >= 'a' && next <= 'z') ||
-                    (next >= 'A' && next <= 'Z') || next == '/' ||
-                    next == '!' || next == '?';
+                const bool looks_like_tag = (next >= 'a' && next <= 'z') ||
+                                            (next >= 'A' && next <= 'Z') || next == '/' ||
+                                            next == '!' || next == '?';
                 if (looks_like_tag) {
                     const auto close = content.find('>', pos + 1);
                     if (close != std::string_view::npos) {
@@ -607,41 +597,40 @@ static constexpr NamedEntity kNamedEntities[] = {
 // Extract plain text from inline tokens, stripping formatting markers.
 // Used for image alt text (CommonMark §6.6: alt attribute is the plain
 // text content of the image description).
-[[nodiscard]] std::string extract_plain_text(
-    const std::vector<InlineToken>& tokens) {
+[[nodiscard]] std::string extract_plain_text(const std::vector<InlineToken>& tokens) {
     std::string out;
     for (const auto& tok : tokens) {
         switch (tok.kind) {
-            case InlineTokenKind::Text:
-            case InlineTokenKind::Code:
-            case InlineTokenKind::Escape:
-            case InlineTokenKind::Math:
-            case InlineTokenKind::FootnoteRef:
+        case InlineTokenKind::Text:
+        case InlineTokenKind::Code:
+        case InlineTokenKind::Escape:
+        case InlineTokenKind::Math:
+        case InlineTokenKind::FootnoteRef:
+            out += tok.text;
+            break;
+        case InlineTokenKind::Bold:
+        case InlineTokenKind::Italic:
+        case InlineTokenKind::Strikethrough:
+            if (!tok.children.empty()) {
+                out += extract_plain_text(tok.children);
+            } else {
                 out += tok.text;
-                break;
-            case InlineTokenKind::Bold:
-            case InlineTokenKind::Italic:
-            case InlineTokenKind::Strikethrough:
-                if (!tok.children.empty()) {
-                    out += extract_plain_text(tok.children);
-                } else {
-                    out += tok.text;
-                }
-                break;
-            case InlineTokenKind::Link:
-                if (!tok.children.empty()) {
-                    out += extract_plain_text(tok.children);
-                } else {
-                    out += tok.text;
-                }
-                break;
-            case InlineTokenKind::Image:
-                // Nested images contribute their alt text
+            }
+            break;
+        case InlineTokenKind::Link:
+            if (!tok.children.empty()) {
+                out += extract_plain_text(tok.children);
+            } else {
                 out += tok.text;
-                break;
-            case InlineTokenKind::HtmlRaw:
-                // Raw HTML is stripped from alt text
-                break;
+            }
+            break;
+        case InlineTokenKind::Image:
+            // Nested images contribute their alt text
+            out += tok.text;
+            break;
+        case InlineTokenKind::HtmlRaw:
+            // Raw HTML is stripped from alt text
+            break;
         }
     }
     return out;
@@ -651,8 +640,8 @@ static constexpr NamedEntity kNamedEntities[] = {
 
 // Result of parsing an inline link's parenthesised destination + title.
 struct LinkTarget {
-    std::string dest;   // entity-decoded, percent-encoded destination
-    std::string title;  // entity-decoded title (empty if none)
+    std::string dest;     // entity-decoded, percent-encoded destination
+    std::string title;    // entity-decoded title (empty if none)
     std::size_t end = 0;  // index of the closing ')'
 };
 
@@ -665,28 +654,54 @@ struct LinkTarget {
 // CommonMark §2.4: only ASCII punctuation characters may be backslash-escaped.
 [[nodiscard]] bool is_escapable_ascii_punct(char c) {
     switch (c) {
-        case '!': case '"': case '#': case '$': case '%': case '&':
-        case '\'': case '(': case ')': case '*': case '+': case ',':
-        case '-': case '.': case '/': case ':': case ';': case '<':
-        case '=': case '>': case '?': case '@': case '[': case '\\':
-        case ']': case '^': case '_': case '`': case '{': case '|':
-        case '}': case '~':
-            return true;
-        default:
-            return false;
+    case '!':
+    case '"':
+    case '#':
+    case '$':
+    case '%':
+    case '&':
+    case '\'':
+    case '(':
+    case ')':
+    case '*':
+    case '+':
+    case ',':
+    case '-':
+    case '.':
+    case '/':
+    case ':':
+    case ';':
+    case '<':
+    case '=':
+    case '>':
+    case '?':
+    case '@':
+    case '[':
+    case '\\':
+    case ']':
+    case '^':
+    case '_':
+    case '`':
+    case '{':
+    case '|':
+    case '}':
+    case '~':
+        return true;
+    default:
+        return false;
     }
 }
 
-[[nodiscard]] std::optional<LinkTarget> parse_inline_link_target(
-    std::string_view text, std::size_t pos) {
+[[nodiscard]] std::optional<LinkTarget> parse_inline_link_target(std::string_view text,
+                                                                 std::size_t pos) {
     if (pos >= text.size() || text[pos] != '(') return std::nullopt;
 
     std::size_t i = pos + 1;
 
     // Skip whitespace before destination (spaces/tabs; CommonMark also
     // allows a line ending but the conformance fixtures don't need it).
-    while (i < text.size() && (text[i] == ' ' || text[i] == '\t' ||
-                                text[i] == '\n')) ++i;
+    while (i < text.size() && (text[i] == ' ' || text[i] == '\t' || text[i] == '\n'))
+        ++i;
 
     // ── Destination ──────────────────────────────────────────────
     std::string raw_dest;
@@ -705,7 +720,7 @@ struct LinkTarget {
             }
         }
         if (i >= text.size()) return std::nullopt;  // no closing '>'
-        ++i;  // skip '>'
+        ++i;                                        // skip '>'
     } else {
         // Plain destination: non-whitespace chars, backslash escapes
         // (any ASCII punctuation is escapable — CommonMark §2.4), and
@@ -713,8 +728,7 @@ struct LinkTarget {
         int paren_depth = 0;
         while (i < text.size()) {
             const char ch = text[i];
-            if (ch == '\\' && i + 1 < text.size() &&
-                is_escapable_ascii_punct(text[i + 1])) {
+            if (ch == '\\' && i + 1 < text.size() && is_escapable_ascii_punct(text[i + 1])) {
                 raw_dest += text[i + 1];
                 i += 2;
             } else if (ch == '\\') {
@@ -740,8 +754,8 @@ struct LinkTarget {
     }
 
     // Skip whitespace between destination and optional title.
-    while (i < text.size() && (text[i] == ' ' || text[i] == '\t' ||
-                                text[i] == '\n')) ++i;
+    while (i < text.size() && (text[i] == ' ' || text[i] == '\t' || text[i] == '\n'))
+        ++i;
 
     // ── Optional title ────────────────────────────────────────────
     std::string raw_title;
@@ -761,10 +775,9 @@ struct LinkTarget {
                 }
             }
             if (i >= text.size()) return std::nullopt;  // no closing quote
-            ++i;  // skip closing quote
+            ++i;                                        // skip closing quote
             // Skip whitespace after title.
-            while (i < text.size() &&
-                   (text[i] == ' ' || text[i] == '\t')) {
+            while (i < text.size() && (text[i] == ' ' || text[i] == '\t')) {
                 ++i;
             }
         }
@@ -809,19 +822,15 @@ struct LinkTarget {
 // When allow_nonascii, UTF-8 bytes (>= 0x80) are accepted as domain
 // characters (GFM ex 19: http://🍄.ga/).  Returns the position after
 // the domain, or npos if not a valid domain.
-[[nodiscard]] std::size_t parse_domain(std::string_view text,
-                                       std::size_t pos,
-                                       bool allow_short = false,
-                                       bool allow_nonascii = false) {
+[[nodiscard]] std::size_t parse_domain(std::string_view text, std::size_t pos,
+                                       bool allow_short = false, bool allow_nonascii = false) {
     std::size_t i = pos;
     bool first = true;
     bool has_dot = false;
     while (i < text.size()) {
         const unsigned char uc = static_cast<unsigned char>(text[i]);
-        if ((text[i] >= 'a' && text[i] <= 'z') ||
-            (text[i] >= 'A' && text[i] <= 'Z') ||
-            (text[i] >= '0' && text[i] <= '9') || text[i] == '-' ||
-            (first && text[i] == '_') ||
+        if ((text[i] >= 'a' && text[i] <= 'z') || (text[i] >= 'A' && text[i] <= 'Z') ||
+            (text[i] >= '0' && text[i] <= '9') || text[i] == '-' || (first && text[i] == '_') ||
             (allow_nonascii && uc >= 0x80)) {
             ++i;
         } else if (text[i] == '.') {
@@ -833,14 +842,11 @@ struct LinkTarget {
             // punctuation (e.g. "www.example.org." → domain is
             // "example.org", the final '.' is not part of it).
             if (i + 1 >= text.size()) break;
-            const unsigned char unc =
-                static_cast<unsigned char>(text[i + 1]);
+            const unsigned char unc = static_cast<unsigned char>(text[i + 1]);
             if (!((text[i + 1] >= 'a' && text[i + 1] <= 'z') ||
                   (text[i + 1] >= 'A' && text[i + 1] <= 'Z') ||
-                  (text[i + 1] >= '0' && text[i + 1] <= '9') ||
-                  text[i + 1] == '-' ||
-                  (!first && text[i + 1] == '_') ||
-                  (allow_nonascii && unc >= 0x80))) {
+                  (text[i + 1] >= '0' && text[i + 1] <= '9') || text[i + 1] == '-' ||
+                  (!first && text[i + 1] == '_') || (allow_nonascii && unc >= 0x80))) {
                 break;
             }
             first = false;
@@ -863,8 +869,7 @@ struct LinkTarget {
 // Check if text[pos..] starts with an HTML entity reference (&Name;
 // or &#NNN; / &#xHH;).  Used to terminate extended autolinks: a URL
 // ends before an entity reference so the HTML serializer can decode it.
-[[nodiscard]] bool starts_entity_ref(std::string_view text,
-                                     std::size_t pos) {
+[[nodiscard]] bool starts_entity_ref(std::string_view text, std::size_t pos) {
     if (pos >= text.size() || text[pos] != '&') return false;
     std::size_t i = pos + 1;
     if (i >= text.size()) return false;
@@ -873,8 +878,7 @@ struct LinkTarget {
         if (i < text.size() && (text[i] == 'x' || text[i] == 'X')) ++i;
         std::size_t digits = 0;
         while (i < text.size() &&
-               ((text[i] >= '0' && text[i] <= '9') ||
-                (text[i] >= 'a' && text[i] <= 'f') ||
+               ((text[i] >= '0' && text[i] <= '9') || (text[i] >= 'a' && text[i] <= 'f') ||
                 (text[i] >= 'A' && text[i] <= 'F'))) {
             ++i;
             ++digits;
@@ -884,8 +888,7 @@ struct LinkTarget {
     // Named entity: &Name;
     std::size_t len = 0;
     while (i < text.size() &&
-           ((text[i] >= 'a' && text[i] <= 'z') ||
-            (text[i] >= 'A' && text[i] <= 'Z') ||
+           ((text[i] >= 'a' && text[i] <= 'z') || (text[i] >= 'A' && text[i] <= 'Z') ||
             (text[i] >= '0' && text[i] <= '9'))) {
         ++i;
         ++len;
@@ -896,13 +899,11 @@ struct LinkTarget {
 // Parse the tail of a URL (path, query, fragment) after the domain.
 // The URL continues until whitespace, '<', or an entity reference.
 // Returns the position after the URL tail.
-[[nodiscard]] std::size_t parse_url_tail(std::string_view text,
-                                         std::size_t pos) {
+[[nodiscard]] std::size_t parse_url_tail(std::string_view text, std::size_t pos) {
     std::size_t i = pos;
     while (i < text.size()) {
         const char c = text[i];
-        if (c == ' ' || c == '\t' || c == '\n' || c == '\r' ||
-            c == '<') {
+        if (c == ' ' || c == '\t' || c == '\n' || c == '\r' || c == '<') {
             break;
         }
         if (c == '&' && starts_entity_ref(text, i)) {
@@ -921,14 +922,15 @@ struct LinkTarget {
 // balanced closing paren is part of the URL).  `'` and `"` are stripped
 // so "http://google.com" and 'http://google.com' don't include the
 // quote in the URL (GFM ex 19).
-[[nodiscard]] std::size_t strip_trailing_punct(std::string_view text,
-                                               std::size_t begin,
+[[nodiscard]] std::size_t strip_trailing_punct(std::string_view text, std::size_t begin,
                                                std::size_t end) {
     // Balance parens first
     int open = 0;
     for (std::size_t i = begin; i < end; ++i) {
-        if (text[i] == '(') ++open;
-        else if (text[i] == ')') --open;
+        if (text[i] == '(')
+            ++open;
+        else if (text[i] == ')')
+            --open;
     }
     while (open < 0 && end > begin && text[end - 1] == ')') {
         --end;
@@ -937,10 +939,8 @@ struct LinkTarget {
     // Strip trailing punctuation (note: ')' NOT in this list)
     while (end > begin) {
         const char c = text[end - 1];
-        if (c == '.' || c == ',' || c == ';' || c == ':' ||
-            c == '!' || c == '?' || c == ']' ||
-            c == '*' || c == '_' || c == '~' ||
-            c == '\'' || c == '"') {
+        if (c == '.' || c == ',' || c == ';' || c == ':' || c == '!' || c == '?' || c == ']' ||
+            c == '*' || c == '_' || c == '~' || c == '\'' || c == '"') {
             --end;
         } else {
             break;
@@ -951,23 +951,21 @@ struct LinkTarget {
 
 // Result of parsing an extended autolink.
 struct ExtAutolink {
-    std::string url;       // the href URL (with scheme for www)
-    std::string text;      // the link text
-    std::size_t end = 0;   // position after the matched text
+    std::string url;      // the href URL (with scheme for www)
+    std::string text;     // the link text
+    std::size_t end = 0;  // position after the matched text
 };
 
 // Parse an email address (local@domain) starting at text[pos].
 // The local part allows only alphanumeric + .+-_ (matching cmark-gfm's
 // postprocess_text).  Returns the position after the domain, or npos if
 // not a valid email.
-[[nodiscard]] std::size_t parse_email_address(std::string_view text,
-                                               std::size_t pos) {
+[[nodiscard]] std::size_t parse_email_address(std::string_view text, std::size_t pos) {
     std::size_t i = pos;
     while (i < text.size()) {
         const char c = text[i];
-        if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') ||
-            (c >= '0' && c <= '9') || c == '.' || c == '+' ||
-            c == '-' || c == '_') {
+        if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') ||
+            c == '.' || c == '+' || c == '-' || c == '_') {
             ++i;
         } else {
             break;
@@ -982,17 +980,14 @@ struct ExtAutolink {
             // segments) — the email is not valid.
             if (domain_end < text.size()) {
                 const char nc = text[domain_end];
-                if ((nc >= 'a' && nc <= 'z') ||
-                    (nc >= 'A' && nc <= 'Z') ||
-                    (nc >= '0' && nc <= '9') ||
-                    nc == '-' || nc == '_') {
+                if ((nc >= 'a' && nc <= 'z') || (nc >= 'A' && nc <= 'Z') ||
+                    (nc >= '0' && nc <= '9') || nc == '-' || nc == '_') {
                     return std::string_view::npos;
                 }
             }
             // Strip trailing '.' from the domain (it's trailing
             // punctuation, not part of the domain).
-            while (domain_end > i + 1 &&
-                   text[domain_end - 1] == '.') {
+            while (domain_end > i + 1 && text[domain_end - 1] == '.') {
                 --domain_end;
             }
             // Re-validate: domain must still have a period.
@@ -1008,11 +1003,10 @@ struct ExtAutolink {
 
 // Try to parse a GFM extended autolink (bare URL, email, mailto:, or
 // xmpp:) at text[pos].  Returns nullopt if no match.
-[[nodiscard]] std::optional<ExtAutolink> parse_extended_autolink(
-    std::string_view text, std::size_t pos) {
+[[nodiscard]] std::optional<ExtAutolink> parse_extended_autolink(std::string_view text,
+                                                                 std::size_t pos) {
     // ── WWW autolink: www.domain ──────────────────────────────
-    if (text.size() - pos >= 4 &&
-        text[pos] == 'w' && text[pos + 1] == 'w' &&
+    if (text.size() - pos >= 4 && text[pos] == 'w' && text[pos + 1] == 'w' &&
         text[pos + 2] == 'w' && text[pos + 3] == '.') {
         // WWW domains require a dot (allow_short=false) but may
         // contain non-ASCII characters (allow_nonascii=true).
@@ -1022,11 +1016,9 @@ struct ExtAutolink {
             url_end = strip_trailing_punct(text, pos, url_end);
             if (url_end > pos) {
                 ExtAutolink result;
-                result.url = percent_encode_nonascii(
-                    "http://" +
-                    std::string(text.substr(pos, url_end - pos)));
-                result.text =
-                    std::string(text.substr(pos, url_end - pos));
+                result.url = percent_encode_nonascii("http://" +
+                                                     std::string(text.substr(pos, url_end - pos)));
+                result.text = std::string(text.substr(pos, url_end - pos));
                 result.end = url_end;
                 return result;
             }
@@ -1041,23 +1033,18 @@ struct ExtAutolink {
     // extension section) expects "http://commonmark.org" autolinked.
     // We follow the GFM extension behavior (autolink) since the
     // conformance suite runs with gfm_extensions=true.
-    static constexpr std::string_view schemes[] = {
-        "http://", "https://", "ftp://"};
+    static constexpr std::string_view schemes[] = {"http://", "https://", "ftp://"};
     for (const auto& scheme : schemes) {
-        if (text.size() - pos >= scheme.size() &&
-            text.substr(pos, scheme.size()) == scheme) {
-            auto domain_end =
-                parse_domain(text, pos + scheme.size(), true, true);
+        if (text.size() - pos >= scheme.size() && text.substr(pos, scheme.size()) == scheme) {
+            auto domain_end = parse_domain(text, pos + scheme.size(), true, true);
             if (domain_end != std::string_view::npos) {
                 auto url_end = parse_url_tail(text, domain_end);
                 url_end = strip_trailing_punct(text, pos, url_end);
                 if (url_end > pos) {
                     ExtAutolink result;
-                    result.url = percent_encode_nonascii(
-                        std::string(
-                            text.substr(pos, url_end - pos)));
-                    result.text = std::string(
-                        text.substr(pos, url_end - pos));
+                    result.url =
+                        percent_encode_nonascii(std::string(text.substr(pos, url_end - pos)));
+                    result.text = std::string(text.substr(pos, url_end - pos));
                     result.end = url_end;
                     return result;
                 }
@@ -1069,17 +1056,13 @@ struct ExtAutolink {
     // The "mailto:" prefix is included in the link text and href.
     // The char before "mailto:" must not be alphanumeric (so
     // "mmmmailto:" doesn't match — GFM ex 19).
-    if (text.size() - pos >= 7 &&
-        text.substr(pos, 7) == "mailto:") {
-        if (pos == 0 ||
-            !std::isalnum(static_cast<unsigned char>(text[pos - 1]))) {
+    if (text.size() - pos >= 7 && text.substr(pos, 7) == "mailto:") {
+        if (pos == 0 || !std::isalnum(static_cast<unsigned char>(text[pos - 1]))) {
             auto email_end = parse_email_address(text, pos + 7);
             if (email_end != std::string_view::npos) {
                 ExtAutolink result;
-                result.url = "mailto:" + std::string(
-                    text.substr(pos + 7, email_end - pos - 7));
-                result.text = std::string(
-                    text.substr(pos, email_end - pos));
+                result.url = "mailto:" + std::string(text.substr(pos + 7, email_end - pos - 7));
+                result.text = std::string(text.substr(pos, email_end - pos));
                 result.end = email_end;
                 return result;
             }
@@ -1089,21 +1072,17 @@ struct ExtAutolink {
     // ── Xmpp autolink: xmpp:local@domain[/path] ───────────────
     // Like mailto: but the URL may include a path after the domain
     // (GFM ex 19: xmpp:user@domain/message).
-    if (text.size() - pos >= 5 &&
-        text.substr(pos, 5) == "xmpp:") {
-        if (pos == 0 ||
-            !std::isalnum(static_cast<unsigned char>(text[pos - 1]))) {
+    if (text.size() - pos >= 5 && text.substr(pos, 5) == "xmpp:") {
+        if (pos == 0 || !std::isalnum(static_cast<unsigned char>(text[pos - 1]))) {
             auto email_end = parse_email_address(text, pos + 5);
             if (email_end != std::string_view::npos) {
                 auto url_end = parse_url_tail(text, email_end);
                 url_end = strip_trailing_punct(text, pos, url_end);
                 if (url_end > pos) {
                     ExtAutolink result;
-                    result.url = percent_encode_nonascii(
-                        std::string(
-                            text.substr(pos, url_end - pos)));
-                    result.text = std::string(
-                        text.substr(pos, url_end - pos));
+                    result.url =
+                        percent_encode_nonascii(std::string(text.substr(pos, url_end - pos)));
+                    result.text = std::string(text.substr(pos, url_end - pos));
                     result.end = url_end;
                     return result;
                 }
@@ -1115,15 +1094,12 @@ struct ExtAutolink {
     // GFM autolinks bare email addresses (GFM ex 629-631).
     // The char before the email must not be alphanumeric (so
     // "abcfoo@bar.com" doesn't match).
-    if (pos == 0 ||
-        !std::isalnum(static_cast<unsigned char>(text[pos - 1]))) {
+    if (pos == 0 || !std::isalnum(static_cast<unsigned char>(text[pos - 1]))) {
         auto email_end = parse_email_address(text, pos);
         if (email_end != std::string_view::npos) {
             ExtAutolink result;
-            result.url = "mailto:" + std::string(
-                text.substr(pos, email_end - pos));
-            result.text = std::string(
-                text.substr(pos, email_end - pos));
+            result.url = "mailto:" + std::string(text.substr(pos, email_end - pos));
+            result.text = std::string(text.substr(pos, email_end - pos));
             result.end = email_end;
             return result;
         }
@@ -1138,14 +1114,13 @@ struct ExtAutolink {
 // on the tag name; these are escaped as text instead of passed through.
 [[nodiscard]] bool is_disallowed_html_tag(std::string_view name) {
     static constexpr std::array<std::string_view, 9> kDisallowed = {
-        "title", "textarea", "style", "xmp", "iframe",
+        "title",   "textarea", "style",  "xmp",      "iframe",
         "noembed", "noframes", "script", "plaintext"};
     for (const auto& d : kDisallowed) {
         if (name.size() == d.size()) {
             bool match = true;
             for (std::size_t j = 0; j < name.size(); ++j) {
-                if (std::tolower(static_cast<unsigned char>(name[j])) !=
-                    d[j]) {
+                if (std::tolower(static_cast<unsigned char>(name[j])) != d[j]) {
                     match = false;
                     break;
                 }
@@ -1161,12 +1136,10 @@ struct ExtAutolink {
 // found, or npos otherwise.  Sets `disallowed` for GFM-filtered tags.
 // Covers: comments, processing instructions, CDATA, declarations,
 // open tags, and closing tags.
-[[nodiscard]] std::size_t parse_inline_html(std::string_view text,
-                                            std::size_t pos,
+[[nodiscard]] std::size_t parse_inline_html(std::string_view text, std::size_t pos,
                                             bool& disallowed) {
     disallowed = false;
-    if (pos >= text.size() || text[pos] != '<')
-        return std::string_view::npos;
+    if (pos >= text.size() || text[pos] != '<') return std::string_view::npos;
 
     // HTML comment: <!-- ... -->
     // Content must not start with '>' or '->' (CommonMark §6.6).
@@ -1178,8 +1151,7 @@ struct ExtAutolink {
             if (text[pos + 4] == '>') {
                 return pos + 5;  // <!-->
             }
-            if (text[pos + 4] == '-' && pos + 5 < text.size() &&
-                text[pos + 5] == '>') {
+            if (text[pos + 4] == '-' && pos + 5 < text.size() && text[pos + 5] == '>') {
                 return pos + 6;  // <!--->
             }
         }
@@ -1204,8 +1176,7 @@ struct ExtAutolink {
 
     // Declaration: <! [A-Z]+ ... >
     if (pos + 1 < text.size() && text[pos + 1] == '!') {
-        if (pos + 2 < text.size() &&
-            text[pos + 2] >= 'A' && text[pos + 2] <= 'Z') {
+        if (pos + 2 < text.size() && text[pos + 2] >= 'A' && text[pos + 2] <= 'Z') {
             const auto end = text.find('>', pos + 3);
             if (end != std::string_view::npos) return end + 1;
         }
@@ -1215,17 +1186,14 @@ struct ExtAutolink {
     // Closing tag: </ tagname >
     if (pos + 1 < text.size() && text[pos + 1] == '/') {
         std::size_t i = pos + 2;
-        if (i >= text.size() ||
-            !std::isalpha(static_cast<unsigned char>(text[i])))
+        if (i >= text.size() || !std::isalpha(static_cast<unsigned char>(text[i])))
             return std::string_view::npos;
         const std::size_t name_start = i;
         while (i < text.size() &&
-               (std::isalnum(static_cast<unsigned char>(text[i])) ||
-                text[i] == '-'))
+               (std::isalnum(static_cast<unsigned char>(text[i])) || text[i] == '-'))
             ++i;
         const auto tag_name = text.substr(name_start, i - name_start);
-        while (i < text.size() &&
-               (text[i] == ' ' || text[i] == '\t' || text[i] == '\n'))
+        while (i < text.size() && (text[i] == ' ' || text[i] == '\t' || text[i] == '\n'))
             ++i;
         if (i < text.size() && text[i] == '>') {
             disallowed = is_disallowed_html_tag(tag_name);
@@ -1237,21 +1205,18 @@ struct ExtAutolink {
     // Open tag: < tagname attributes? >
     {
         std::size_t i = pos + 1;
-        if (i >= text.size() ||
-            !std::isalpha(static_cast<unsigned char>(text[i])))
+        if (i >= text.size() || !std::isalpha(static_cast<unsigned char>(text[i])))
             return std::string_view::npos;
         const std::size_t name_start = i;
         while (i < text.size() &&
-               (std::isalnum(static_cast<unsigned char>(text[i])) ||
-                text[i] == '-'))
+               (std::isalnum(static_cast<unsigned char>(text[i])) || text[i] == '-'))
             ++i;
         const auto tag_name = text.substr(name_start, i - name_start);
 
         while (i < text.size()) {
             // Skip whitespace
             const std::size_t ws_start = i;
-            while (i < text.size() &&
-                   (text[i] == ' ' || text[i] == '\t' || text[i] == '\n'))
+            while (i < text.size() && (text[i] == ' ' || text[i] == '\t' || text[i] == '\n'))
                 ++i;
             const bool skipped_ws = i > ws_start;
             if (i >= text.size()) return std::string_view::npos;
@@ -1276,14 +1241,13 @@ struct ExtAutolink {
             if (!skipped_ws) return std::string_view::npos;
 
             // Attribute name: starts with letter, '_', or ':'
-            if (!std::isalpha(static_cast<unsigned char>(text[i])) &&
-                text[i] != '_' && text[i] != ':')
+            if (!std::isalpha(static_cast<unsigned char>(text[i])) && text[i] != '_' &&
+                text[i] != ':')
                 return std::string_view::npos;
             ++i;
             while (i < text.size() &&
-                   (std::isalnum(static_cast<unsigned char>(text[i])) ||
-                    text[i] == '_' || text[i] == '.' || text[i] == ':' ||
-                    text[i] == '-'))
+                   (std::isalnum(static_cast<unsigned char>(text[i])) || text[i] == '_' ||
+                    text[i] == '.' || text[i] == ':' || text[i] == '-'))
                 ++i;
 
             // Attribute value specification: optional whitespace + '='
@@ -1291,35 +1255,32 @@ struct ExtAutolink {
             // skipping whitespace so a boolean attribute (no '=') leaves
             // the whitespace for the next attribute's separator.
             const std::size_t save = i;
-            while (i < text.size() &&
-                   (text[i] == ' ' || text[i] == '\t' || text[i] == '\n'))
+            while (i < text.size() && (text[i] == ' ' || text[i] == '\t' || text[i] == '\n'))
                 ++i;
 
             if (i < text.size() && text[i] == '=') {
                 ++i;
-                while (i < text.size() &&
-                       (text[i] == ' ' || text[i] == '\t' ||
-                        text[i] == '\n'))
+                while (i < text.size() && (text[i] == ' ' || text[i] == '\t' || text[i] == '\n'))
                     ++i;
                 if (i >= text.size()) return std::string_view::npos;
 
                 if (text[i] == '"') {
                     ++i;
-                    while (i < text.size() && text[i] != '"') ++i;
+                    while (i < text.size() && text[i] != '"')
+                        ++i;
                     if (i >= text.size()) return std::string_view::npos;
                     ++i;
                 } else if (text[i] == '\'') {
                     ++i;
-                    while (i < text.size() && text[i] != '\'') ++i;
+                    while (i < text.size() && text[i] != '\'')
+                        ++i;
                     if (i >= text.size()) return std::string_view::npos;
                     ++i;
                 } else {
                     // Unquoted: no whitespace, ", ', =, <, >, or `
-                    while (i < text.size() && text[i] != ' ' &&
-                           text[i] != '\t' && text[i] != '\n' &&
-                           text[i] != '"' && text[i] != '\'' &&
-                           text[i] != '=' && text[i] != '<' &&
-                           text[i] != '>' && text[i] != '`')
+                    while (i < text.size() && text[i] != ' ' && text[i] != '\t' &&
+                           text[i] != '\n' && text[i] != '"' && text[i] != '\'' && text[i] != '=' &&
+                           text[i] != '<' && text[i] != '>' && text[i] != '`')
                         ++i;
                 }
             } else {
@@ -1374,8 +1335,7 @@ struct ExtAutolink {
             return U'\xFFFD';
         }
         pos += 3;
-        return static_cast<char32_t>(((b0 & 0x0F) << 12) |
-                                      ((b1 & 0x3F) << 6) | (b2 & 0x3F));
+        return static_cast<char32_t>(((b0 & 0x0F) << 12) | ((b1 & 0x3F) << 6) | (b2 & 0x3F));
     }
     if (pos + 3 >= text.size()) {
         ++pos;
@@ -1384,15 +1344,13 @@ struct ExtAutolink {
     const auto b1 = static_cast<unsigned char>(text[pos + 1]);
     const auto b2 = static_cast<unsigned char>(text[pos + 2]);
     const auto b3 = static_cast<unsigned char>(text[pos + 3]);
-    if ((b1 & 0xC0) != 0x80 || (b2 & 0xC0) != 0x80 ||
-        (b3 & 0xC0) != 0x80) {
+    if ((b1 & 0xC0) != 0x80 || (b2 & 0xC0) != 0x80 || (b3 & 0xC0) != 0x80) {
         ++pos;
         return U'\xFFFD';
     }
     pos += 4;
-    return static_cast<char32_t>(((b0 & 0x07) << 18) |
-                                  ((b1 & 0x3F) << 12) |
-                                  ((b2 & 0x3F) << 6) | (b3 & 0x3F));
+    return static_cast<char32_t>(((b0 & 0x07) << 18) | ((b1 & 0x3F) << 12) | ((b2 & 0x3F) << 6) |
+                                 (b3 & 0x3F));
 }
 
 // Append a Unicode codepoint to `out` as UTF-8.
@@ -1467,7 +1425,8 @@ void encode_utf8(char32_t cp, std::string& out) {
         }
     }
     // Trim trailing space
-    while (!out.empty() && out.back() == ' ') out.pop_back();
+    while (!out.empty() && out.back() == ' ')
+        out.pop_back();
     return out;
 }
 
@@ -1483,15 +1442,14 @@ struct ParsedLinkRefDef {
     int lines_consumed = 1;
 };
 
-[[nodiscard]] std::optional<ParsedLinkRefDef> try_parse_link_ref_def(
-    const std::vector<std::string>& lines, std::size_t start) {
+[[nodiscard]] std::optional<ParsedLinkRefDef>
+try_parse_link_ref_def(const std::vector<std::string>& lines, std::size_t start) {
     if (start >= lines.size()) return std::nullopt;
     // Up to 3 spaces indent
     std::size_t pos = 0;
     while (pos < lines[start].size() && lines[start][pos] == ' ' && pos < 3)
         ++pos;
-    if (pos >= lines[start].size() || lines[start][pos] != '[')
-        return std::nullopt;
+    if (pos >= lines[start].size() || lines[start][pos] != '[') return std::nullopt;
 
     // Find closing ']' for the label.  Labels end with the first ']'
     // that is not backslash-escaped, and must not contain unescaped '['
@@ -1517,18 +1475,16 @@ struct ParsedLinkRefDef {
         if (!has_unescaped_bracket) {
             // Join lines until ']' is found or a blank line is hit.
             std::string joined = lines[start];
-            for (std::size_t li = start + 1;
-                 li < lines.size() && label_lines < 10; ++li) {
+            for (std::size_t li = start + 1; li < lines.size() && label_lines < 10; ++li) {
                 const std::string& l = lines[li];
-                if (l.empty() ||
-                    l.find_first_not_of(" \t") == std::string::npos) {
+                if (l.empty() || l.find_first_not_of(" \t") == std::string::npos) {
                     break;  // blank line terminates the label
                 }
                 joined += '\n';
                 joined += l;
                 close = find_label_end(joined, pos);
-                if (close != std::string_view::npos &&
-                    close + 1 < joined.size() && joined[close + 1] == ':') {
+                if (close != std::string_view::npos && close + 1 < joined.size() &&
+                    joined[close + 1] == ':') {
                     label = joined.substr(pos + 1, close - pos - 1);
                     label_lines = static_cast<int>(li - start + 1);
                     break;
@@ -1546,8 +1502,7 @@ struct ParsedLinkRefDef {
     std::size_t after_colon;
     if (label_lines == 1) {
         raw = lines[start];
-        if (close + 1 >= raw.size() || raw[close + 1] != ':')
-            return std::nullopt;
+        if (close + 1 >= raw.size() || raw[close + 1] != ':') return std::nullopt;
         after_colon = close + 2;
     } else {
         const std::size_t last_line_idx = start + label_lines - 1;
@@ -1560,8 +1515,7 @@ struct ParsedLinkRefDef {
         // close is in joined coordinates; convert to last-line coords.
         if (close < last_line_offset) return std::nullopt;
         std::size_t colon_in_line = close + 1 - last_line_offset;
-        if (colon_in_line >= raw.size() || raw[colon_in_line] != ':')
-            return std::nullopt;
+        if (colon_in_line >= raw.size() || raw[colon_in_line] != ':') return std::nullopt;
         after_colon = colon_in_line + 1;
     }
     if (label.empty()) return std::nullopt;
@@ -1570,8 +1524,7 @@ struct ParsedLinkRefDef {
 
     // Parse URL after ':' — may be on the same line or the next line
     std::size_t url_start = after_colon;
-    while (url_start < raw.size() &&
-           (raw[url_start] == ' ' || raw[url_start] == '\t')) {
+    while (url_start < raw.size() && (raw[url_start] == ' ' || raw[url_start] == '\t')) {
         ++url_start;
     }
 
@@ -1596,8 +1549,8 @@ struct ParsedLinkRefDef {
             // Bare URL: read until whitespace (but not past a newline —
             // a bare URL cannot span lines in the joined string).
             std::size_t url_end = url_start;
-            while (url_end < raw.size() && raw[url_end] != ' ' &&
-                   raw[url_end] != '\t' && raw[url_end] != '\n') {
+            while (url_end < raw.size() && raw[url_end] != ' ' && raw[url_end] != '\t' &&
+                   raw[url_end] != '\n') {
                 ++url_end;
             }
             url = raw.substr(url_start, url_end - url_start);
@@ -1607,7 +1560,8 @@ struct ParsedLinkRefDef {
         // URL may be on the next line (any indentation, including 0 spaces)
         const std::string& next = lines[start + label_lines];
         std::size_t next_pos = 0;
-        while (next_pos < next.size() && next[next_pos] == ' ') ++next_pos;
+        while (next_pos < next.size() && next[next_pos] == ' ')
+            ++next_pos;
         if (next_pos < next.size()) {
             url_line = &next;
             url_start = next_pos;
@@ -1621,8 +1575,7 @@ struct ParsedLinkRefDef {
                 after_url = url_end + 1;
             } else {
                 std::size_t url_end = next_pos;
-                while (url_end < next.size() && next[url_end] != ' ' &&
-                       next[url_end] != '\t') {
+                while (url_end < next.size() && next[url_end] != ' ' && next[url_end] != '\t') {
                     ++url_end;
                 }
                 url = next.substr(next_pos, url_end - next_pos);
@@ -1637,8 +1590,7 @@ struct ParsedLinkRefDef {
     }
     // Empty URLs are valid when wrapped in <> (CommonMark §4.7 example 200).
     // Bare empty URLs (nothing after ':') are not.
-    if (url.empty() && url_start < url_line->size() &&
-        (*url_line)[url_start] != '<') {
+    if (url.empty() && url_start < url_line->size() && (*url_line)[url_start] != '<') {
         return std::nullopt;
     }
 
@@ -1647,8 +1599,7 @@ struct ParsedLinkRefDef {
     std::string unescaped_url;
     unescaped_url.reserve(url.size());
     for (std::size_t i = 0; i < url.size(); ++i) {
-        if (url[i] == '\\' && i + 1 < url.size() &&
-            is_escapable_ascii_punct(url[i + 1])) {
+        if (url[i] == '\\' && i + 1 < url.size() && is_escapable_ascii_punct(url[i + 1])) {
             unescaped_url += url[i + 1];
             ++i;
         } else {
@@ -1668,8 +1619,7 @@ struct ParsedLinkRefDef {
 
     // Skip whitespace on the URL's line
     while (title_start < title_line->size() &&
-           ((*title_line)[title_start] == ' ' ||
-            (*title_line)[title_start] == '\t')) {
+           ((*title_line)[title_start] == ' ' || (*title_line)[title_start] == '\t')) {
         ++title_start;
         had_ws_after_url = true;
     }
@@ -1677,8 +1627,7 @@ struct ParsedLinkRefDef {
     // Try to parse a title starting at (line_idx, tpos).  If the closing
     // quote is on a later line, the title content includes the newlines.
     // Returns the number of lines consumed (0 = failure).
-    auto try_parse_title_at = [&](std::size_t line_idx,
-                                   std::size_t tpos) -> int {
+    auto try_parse_title_at = [&](std::size_t line_idx, std::size_t tpos) -> int {
         if (line_idx >= lines.size()) return 0;
         const std::string& line = lines[line_idx];
         if (tpos >= line.size()) return 0;
@@ -1741,8 +1690,7 @@ struct ParsedLinkRefDef {
 
     if (had_ws_after_url && title_start < title_line->size()) {
         // Title on the same line as URL
-        int consumed = try_parse_title_at(start + lines_consumed - 1,
-                                          title_start);
+        int consumed = try_parse_title_at(start + lines_consumed - 1, title_start);
         if (consumed == 0) {
             // Non-whitespace after URL that's not a valid title
             return std::nullopt;
@@ -1758,12 +1706,12 @@ struct ParsedLinkRefDef {
         if (next_line_idx < lines.size()) {
             const std::string& next = lines[next_line_idx];
             std::size_t next_pos = 0;
-            while (next_pos < next.size() && next[next_pos] == ' ') ++next_pos;
+            while (next_pos < next.size() && next[next_pos] == ' ')
+                ++next_pos;
             if (next_pos < next.size()) {
                 int consumed = try_parse_title_at(next_line_idx, next_pos);
                 if (consumed > 0) {
-                    lines_consumed = static_cast<int>(next_line_idx - start) +
-                                     consumed;
+                    lines_consumed = static_cast<int>(next_line_idx - start) + consumed;
                 }
             }
         }
@@ -1803,19 +1751,19 @@ struct ParsedLinkRefDef {
 // ref defs with label "^label" when GFM extensions are enabled.
 [[nodiscard]] bool is_footnote_def_line(std::string_view line) {
     std::size_t pos = 0;
-    while (pos < line.size() && line[pos] == ' ' && pos < 3) ++pos;
+    while (pos < line.size() && line[pos] == ' ' && pos < 3)
+        ++pos;
     if (pos + 1 >= line.size() || line[pos] != '[' || line[pos + 1] != '^') {
         return false;
     }
     std::size_t label_end = pos + 2;
-    while (label_end < line.size() && line[label_end] != ']' &&
-           line[label_end] != ' ' && line[label_end] != '\t' &&
-           line[label_end] != '\r' && line[label_end] != '\n') {
+    while (label_end < line.size() && line[label_end] != ']' && line[label_end] != ' ' &&
+           line[label_end] != '\t' && line[label_end] != '\r' && line[label_end] != '\n') {
         ++label_end;
     }
     if (label_end == pos + 2) return false;  // empty label
-    return label_end < line.size() && line[label_end] == ']' &&
-           label_end + 1 < line.size() && line[label_end + 1] == ':';
+    return label_end < line.size() && line[label_end] == ']' && label_end + 1 < line.size() &&
+           line[label_end + 1] == ':';
 }
 
 // Pre-scan the document for link reference definitions.
@@ -1828,8 +1776,7 @@ struct ParsedLinkRefDef {
 // When gfm_extensions is true, lines matching the footnote def pattern
 // are skipped (they are consumed by scan_footnote_defs instead).
 [[nodiscard]] std::pair<LinkRefMap, std::unordered_set<std::size_t>>
-scan_link_ref_defs(const std::vector<std::string>& lines,
-                   bool gfm_extensions = false) {
+scan_link_ref_defs(const std::vector<std::string>& lines, bool gfm_extensions = false) {
     LinkRefMap refs;
     std::unordered_set<std::size_t> consumed;
     bool in_code_fence = false;
@@ -1842,19 +1789,19 @@ scan_link_ref_defs(const std::vector<std::string>& lines,
 
     auto is_block_start = [](const std::string& line) -> bool {
         std::size_t pos = 0;
-        while (pos < line.size() && line[pos] == ' ' && pos < 3) ++pos;
+        while (pos < line.size() && line[pos] == ' ' && pos < 3)
+            ++pos;
         if (pos >= line.size()) return false;
         char c = line[pos];
-        if (c == '#') return true;  // ATX heading
-        if (c == '>') return true;  // blockquote
+        if (c == '#') return true;              // ATX heading
+        if (c == '>') return true;              // blockquote
         if (c == '`' || c == '~') return true;  // code fence
         if (c == '-' || c == '*' || c == '+') {
             // List item or thematic break
-            return pos + 1 < line.size() &&
-                   (line[pos + 1] == ' ' || line[pos + 1] == '\t');
+            return pos + 1 < line.size() && (line[pos + 1] == ' ' || line[pos + 1] == '\t');
         }
         if (c >= '0' && c <= '9') return true;  // ordered list
-        if (c == '[') return true;  // potential definition
+        if (c == '[') return true;              // potential definition
         return false;
     };
 
@@ -1865,11 +1812,11 @@ scan_link_ref_defs(const std::vector<std::string>& lines,
         // Track code fences
         {
             std::size_t pos = 0;
-            while (pos < raw.size() && raw[pos] == ' ' && pos < 3) ++pos;
+            while (pos < raw.size() && raw[pos] == ' ' && pos < 3)
+                ++pos;
             if (pos < raw.size() && (raw[pos] == '`' || raw[pos] == '~')) {
                 std::size_t fence_len = 0;
-                while (pos + fence_len < raw.size() &&
-                       raw[pos + fence_len] == raw[pos]) {
+                while (pos + fence_len < raw.size() && raw[pos + fence_len] == raw[pos]) {
                     ++fence_len;
                 }
                 if (fence_len >= 3) {
@@ -1906,7 +1853,8 @@ scan_link_ref_defs(const std::vector<std::string>& lines,
         // Only scan lines that start with '[' (after up to 3 spaces),
         // or lines inside blockquotes that start with '[' after the '> '.
         std::size_t pos = 0;
-        while (pos < raw.size() && raw[pos] == ' ' && pos < 3) ++pos;
+        while (pos < raw.size() && raw[pos] == ' ' && pos < 3)
+            ++pos;
         // Check for blockquote marker: up to 3 spaces, then '>'
         std::size_t bq_content_pos = pos;
         bool in_blockquote = false;
@@ -1917,15 +1865,13 @@ scan_link_ref_defs(const std::vector<std::string>& lines,
                 ++bq_content_pos;  // skip one optional space after '>'
             }
         }
-        if (!in_blockquote &&
-            (pos >= raw.size() || raw[pos] != '[')) {
+        if (!in_blockquote && (pos >= raw.size() || raw[pos] != '[')) {
             // Not a potential definition — check if it's a block-level
             // construct or a text line
             prev_was_text = !is_block_start(raw);
             continue;
         }
-        if (in_blockquote &&
-            (bq_content_pos >= raw.size() || raw[bq_content_pos] != '[')) {
+        if (in_blockquote && (bq_content_pos >= raw.size() || raw[bq_content_pos] != '[')) {
             // Blockquote line but not a definition — check block start
             prev_was_text = !is_block_start(raw);
             continue;
@@ -1947,7 +1893,8 @@ scan_link_ref_defs(const std::vector<std::string>& lines,
             while (j < lines.size()) {
                 const std::string& bl = lines[j];
                 std::size_t bp = 0;
-                while (bp < bl.size() && bl[bp] == ' ' && bp < 3) ++bp;
+                while (bp < bl.size() && bl[bp] == ' ' && bp < 3)
+                    ++bp;
                 if (bp >= bl.size() || bl[bp] != '>') break;
                 std::size_t content_start = bp + 1;
                 if (content_start < bl.size() && bl[content_start] == ' ') {
@@ -1961,8 +1908,7 @@ scan_link_ref_defs(const std::vector<std::string>& lines,
             // GFM footnote defs inside blockquotes are consumed by
             // scan_footnote_defs (via recursive lex_blocks), not as
             // link ref defs with label "^label".
-            if (gfm_extensions && !bq_lines.empty() &&
-                is_footnote_def_line(bq_lines[0])) {
+            if (gfm_extensions && !bq_lines.empty() && is_footnote_def_line(bq_lines[0])) {
                 prev_was_text = false;
                 continue;
             }
@@ -2017,8 +1963,7 @@ struct FootnoteDefEntry {
 // Labels cannot contain whitespace or ']'.  Continuation lines are blank
 // or indented >= 4 spaces (4 consumed, matching cmark's block prefix).
 // First definition wins for duplicate labels (lines still consumed).
-[[nodiscard]] std::pair<std::vector<FootnoteDefEntry>,
-                        std::unordered_set<std::size_t>>
+[[nodiscard]] std::pair<std::vector<FootnoteDefEntry>, std::unordered_set<std::size_t>>
 scan_footnote_defs(const std::vector<std::string>& lines) {
     std::vector<FootnoteDefEntry> entries;
     std::unordered_set<std::size_t> consumed;
@@ -2033,11 +1978,11 @@ scan_footnote_defs(const std::vector<std::string>& lines) {
         // Track code fences (same pattern as scan_link_ref_defs)
         {
             std::size_t pos = 0;
-            while (pos < raw.size() && raw[pos] == ' ' && pos < 3) ++pos;
+            while (pos < raw.size() && raw[pos] == ' ' && pos < 3)
+                ++pos;
             if (pos < raw.size() && (raw[pos] == '`' || raw[pos] == '~')) {
                 std::size_t fence_len = 0;
-                while (pos + fence_len < raw.size() &&
-                       raw[pos + fence_len] == raw[pos]) {
+                while (pos + fence_len < raw.size() && raw[pos + fence_len] == raw[pos]) {
                     ++fence_len;
                 }
                 if (fence_len >= 3) {
@@ -2066,27 +2011,24 @@ scan_footnote_defs(const std::vector<std::string>& lines) {
 
         // Up to 3 leading spaces, then '[^'
         std::size_t pos = 0;
-        while (pos < raw.size() && raw[pos] == ' ' && pos < 3) ++pos;
-        if (pos + 1 >= raw.size() || raw[pos] != '[' ||
-            raw[pos + 1] != '^') {
+        while (pos < raw.size() && raw[pos] == ' ' && pos < 3)
+            ++pos;
+        if (pos + 1 >= raw.size() || raw[pos] != '[' || raw[pos + 1] != '^') {
             continue;
         }
 
         // Scan label: one or more chars excluding ']', space, tab, newline
         std::size_t label_start = pos + 2;
         std::size_t label_end = label_start;
-        while (label_end < raw.size() && raw[label_end] != ']' &&
-               raw[label_end] != ' ' && raw[label_end] != '\t' &&
-               raw[label_end] != '\r' && raw[label_end] != '\n') {
+        while (label_end < raw.size() && raw[label_end] != ']' && raw[label_end] != ' ' &&
+               raw[label_end] != '\t' && raw[label_end] != '\r' && raw[label_end] != '\n') {
             ++label_end;
         }
         if (label_end == label_start) continue;  // empty label
         if (label_end >= raw.size() || raw[label_end] != ']') continue;
-        if (label_end + 1 >= raw.size() || raw[label_end + 1] != ':')
-            continue;
+        if (label_end + 1 >= raw.size() || raw[label_end + 1] != ':') continue;
 
-        std::string raw_label =
-            raw.substr(label_start, label_end - label_start);
+        std::string raw_label = raw.substr(label_start, label_end - label_start);
 
         // First content line: remainder after ']:', skipping spaces/tabs
         std::size_t content_start = label_end + 2;
@@ -2140,6 +2082,7 @@ scan_footnote_defs(const std::vector<std::string>& lines) {
     }
     return {std::move(entries), std::move(consumed)};
 }
+
 // Unicode-aware flanking rules.  Covers the CommonMark conformance
 // suite (which uses ASCII + NBSP + a few Unicode punctuation chars).
 //
@@ -2150,28 +2093,26 @@ scan_footnote_defs(const std::vector<std::string>& lines) {
 
 // Check if a Unicode codepoint is whitespace (CommonMark §2.2).
 [[nodiscard]] bool is_md_whitespace_cp(char32_t cp) {
-    if (cp < 0x80)
-        return std::isspace(static_cast<unsigned char>(cp)) != 0;
-    return cp == 0x00A0 ||  // NO-BREAK SPACE
-           cp == 0x1680 ||  // OGHAM SPACE MARK
+    if (cp < 0x80) return std::isspace(static_cast<unsigned char>(cp)) != 0;
+    return cp == 0x00A0 ||                    // NO-BREAK SPACE
+           cp == 0x1680 ||                    // OGHAM SPACE MARK
            (cp >= 0x2000 && cp <= 0x200A) ||  // EN QUAD..HAIR SPACE
-           cp == 0x2028 ||  // LINE SEPARATOR
-           cp == 0x2029 ||  // PARAGRAPH SEPARATOR
-           cp == 0x202F ||  // NARROW NO-BREAK SPACE
-           cp == 0x205F ||  // MEDIUM MATHEMATICAL SPACE
-           cp == 0x3000;    // IDEOGRAPHIC SPACE
+           cp == 0x2028 ||                    // LINE SEPARATOR
+           cp == 0x2029 ||                    // PARAGRAPH SEPARATOR
+           cp == 0x202F ||                    // NARROW NO-BREAK SPACE
+           cp == 0x205F ||                    // MEDIUM MATHEMATICAL SPACE
+           cp == 0x3000;                      // IDEOGRAPHIC SPACE
 }
 
 // Check if a Unicode codepoint is punctuation (Unicode P category).
 // This is a simplified range check covering the characters used in the
 // CommonMark conformance suite, not a full Unicode database lookup.
 [[nodiscard]] bool is_md_punct_cp(char32_t cp) {
-    if (cp < 0x80)
-        return std::ispunct(static_cast<unsigned char>(cp)) != 0;
+    if (cp < 0x80) return std::ispunct(static_cast<unsigned char>(cp)) != 0;
     // Latin-1 Supplement punctuation (Po/Ps/Pe/Pd/Pi/Pf)
     if (cp >= 0x00A1 && cp <= 0x00BF) {
-        constexpr char32_t kLatin1Punct[] = {
-            0x00A1, 0x00A3, 0x00A7, 0x00AB, 0x00B6, 0x00B7, 0x00BB, 0x00BF};
+        constexpr char32_t kLatin1Punct[] = {0x00A1, 0x00A3, 0x00A7, 0x00AB,
+                                             0x00B6, 0x00B7, 0x00BB, 0x00BF};
         for (char32_t p : kLatin1Punct)
             if (cp == p) return true;
         return false;
@@ -2192,12 +2133,10 @@ scan_footnote_defs(const std::vector<std::string>& lines) {
 
 // Decode the UTF-8 codepoint immediately before `before_pos`.
 // Returns U+0000 if before_pos is 0.
-[[nodiscard]] char32_t decode_utf8_before(std::string_view text,
-                                           std::size_t before_pos) {
+[[nodiscard]] char32_t decode_utf8_before(std::string_view text, std::size_t before_pos) {
     if (before_pos == 0) return U'\0';
     std::size_t start = before_pos - 1;
-    while (start > 0 &&
-           (static_cast<unsigned char>(text[start]) & 0xC0) == 0x80) {
+    while (start > 0 && (static_cast<unsigned char>(text[start]) & 0xC0) == 0x80) {
         --start;
     }
     std::size_t pos = start;
@@ -2208,8 +2147,7 @@ scan_footnote_defs(const std::vector<std::string>& lines) {
     return std::ispunct(static_cast<unsigned char>(c));
 }
 
-[[nodiscard]] bool is_left_flanking(std::string_view text, std::size_t pos,
-                                    std::size_t run_len) {
+[[nodiscard]] bool is_left_flanking(std::string_view text, std::size_t pos, std::size_t run_len) {
     if (pos + run_len >= text.size()) return false;  // followed by end
     std::size_t next_pos = pos + run_len;
     const char32_t next = decode_utf8(text, next_pos);
@@ -2222,8 +2160,7 @@ scan_footnote_defs(const std::vector<std::string>& lines) {
     return is_md_whitespace_cp(prev) || is_md_punct_cp(prev);
 }
 
-[[nodiscard]] bool is_right_flanking(std::string_view text, std::size_t pos,
-                                     std::size_t run_len) {
+[[nodiscard]] bool is_right_flanking(std::string_view text, std::size_t pos, std::size_t run_len) {
     if (pos == 0) return false;  // preceded by start
     const char32_t prev = decode_utf8_before(text, pos);
     if (is_md_whitespace_cp(prev)) return false;
@@ -2237,14 +2174,12 @@ scan_footnote_defs(const std::vector<std::string>& lines) {
 }
 
 // Can a '*' delimiter run at pos open emphasis?
-[[nodiscard]] bool star_can_open(std::string_view text, std::size_t pos,
-                                 std::size_t run_len) {
+[[nodiscard]] bool star_can_open(std::string_view text, std::size_t pos, std::size_t run_len) {
     return is_left_flanking(text, pos, run_len);
 }
 
 // Can a '*' delimiter run at pos close emphasis?
-[[nodiscard]] bool star_can_close(std::string_view text, std::size_t pos,
-                                  std::size_t run_len) {
+[[nodiscard]] bool star_can_close(std::string_view text, std::size_t pos, std::size_t run_len) {
     return is_right_flanking(text, pos, run_len);
 }
 
@@ -2292,8 +2227,8 @@ scan_footnote_defs(const std::vector<std::string>& lines) {
 namespace {
 
 struct DelimiterRun {
-    char marker;          // '*' or '_'
-    std::size_t length;   // current delimiter count (decremented on match)
+    char marker;              // '*' or '_'
+    std::size_t length;       // current delimiter count (decremented on match)
     std::size_t orig_length;  // original count before any matching (Rule 10)
     bool can_open;
     bool can_close;
@@ -2302,16 +2237,14 @@ struct DelimiterRun {
 struct InlineItem {
     enum class Kind { Text, Token, Delimiter };
     Kind kind = Kind::Text;
-    std::string text;           // for Text
-    InlineToken token;          // for Token
-    DelimiterRun delim;         // for Delimiter
+    std::string text;    // for Text
+    InlineToken token;   // for Token
+    DelimiterRun delim;  // for Delimiter
 };
 
 // Compute the flanking properties of a delimiter run at `pos`.
-[[nodiscard]] DelimiterRun make_delimiter_run(char marker,
-                                               std::string_view text,
-                                               std::size_t pos,
-                                               std::size_t length) {
+[[nodiscard]] DelimiterRun make_delimiter_run(char marker, std::string_view text, std::size_t pos,
+                                              std::size_t length) {
     DelimiterRun run;
     run.marker = marker;
     run.length = length;
@@ -2328,9 +2261,7 @@ struct InlineItem {
 
 // Find the maximal run of `marker` characters starting at `pos`.
 // Returns the length of the run.
-[[nodiscard]] std::size_t count_delimiter_run(std::string_view text,
-                                               std::size_t pos,
-                                               char marker) {
+[[nodiscard]] std::size_t count_delimiter_run(std::string_view text, std::size_t pos, char marker) {
     std::size_t length = 0;
     while (pos + length < text.size() && text[pos + length] == marker) {
         ++length;
@@ -2374,10 +2305,9 @@ void process_delimiter_stack(std::vector<InlineItem>& items) {
                 // do not match.  (This is the "odd match" condition from
                 // the reference implementation — it prevents intraword
                 // emphasis like foo*bar*baz from matching.)
-                const bool odd_match =
-                    (closer.can_open || opener.can_close) &&
-                    (closer.orig_length % 3 != 0) &&
-                    ((opener.orig_length + closer.orig_length) % 3 == 0);
+                const bool odd_match = (closer.can_open || opener.can_close) &&
+                                       (closer.orig_length % 3 != 0) &&
+                                       ((opener.orig_length + closer.orig_length) % 3 == 0);
                 if (odd_match) continue;
 
                 // Match found!  Determine how many delimiter characters to use.
@@ -2391,9 +2321,8 @@ void process_delimiter_stack(std::vector<InlineItem>& items) {
 
                 // Create the emphasis token.
                 InlineToken emphasis_tok;
-                emphasis_tok.kind = (use_count == 2)
-                    ? InlineTokenKind::Bold
-                    : InlineTokenKind::Italic;
+                emphasis_tok.kind =
+                    (use_count == 2) ? InlineTokenKind::Bold : InlineTokenKind::Italic;
 
                 // Collect the items between the opener and closer as children.
                 std::vector<InlineToken> children;
@@ -2401,8 +2330,7 @@ void process_delimiter_stack(std::vector<InlineItem>& items) {
                     const auto& child = items[j];
                     if (child.kind == InlineItem::Kind::Text) {
                         if (!child.text.empty()) {
-                            children.push_back(
-                                {InlineTokenKind::Text, child.text, {}, {}, {}});
+                            children.push_back({InlineTokenKind::Text, child.text, {}, {}, {}});
                         }
                     } else if (child.kind == InlineItem::Kind::Token) {
                         children.push_back(child.token);
@@ -2410,16 +2338,16 @@ void process_delimiter_stack(std::vector<InlineItem>& items) {
                         // Delimiter runs between the opener and closer are
                         // literal text — only the matched opener/closer
                         // characters are removed (CommonMark §6.1.1).
-                        children.push_back(
-                            {InlineTokenKind::Text,
-                             std::string(child.delim.length, child.delim.marker),
-                             {}, {}, {}});
+                        children.push_back({InlineTokenKind::Text,
+                                            std::string(child.delim.length, child.delim.marker),
+                                            {},
+                                            {},
+                                            {}});
                     }
                 }
 
                 // If children is a single Text token, use its text directly.
-                if (children.size() == 1 &&
-                    children[0].kind == InlineTokenKind::Text) {
+                if (children.size() == 1 && children[0].kind == InlineTokenKind::Text) {
                     emphasis_tok.text = std::move(children[0].text);
                 } else if (!children.empty()) {
                     emphasis_tok.children = std::move(children);
@@ -2440,9 +2368,8 @@ void process_delimiter_stack(std::vector<InlineItem>& items) {
                 // stack — they can't match anymore (the closer has been
                 // found and consumed).  This prevents stale stack entries
                 // from matching later closers (CommonMark §6.1.1 Rule 12).
-                stack.erase(
-                    stack.begin() + static_cast<std::ptrdiff_t>(stack_idx) + 1,
-                    stack.end());
+                stack.erase(stack.begin() + static_cast<std::ptrdiff_t>(stack_idx) + 1,
+                            stack.end());
 
                 // Handle the opener: if it has remaining delimiters, keep
                 // it as a delimiter item (it can match a later closer).
@@ -2450,8 +2377,7 @@ void process_delimiter_stack(std::vector<InlineItem>& items) {
                 if (opener.length == 0) {
                     items[opener_idx].kind = InlineItem::Kind::Text;
                     items[opener_idx].text.clear();
-                    stack.erase(
-                        stack.begin() + static_cast<std::ptrdiff_t>(stack_idx));
+                    stack.erase(stack.begin() + static_cast<std::ptrdiff_t>(stack_idx));
                 }
                 // If opener.length > 0, it stays on the stack as a delimiter.
 
@@ -2470,9 +2396,8 @@ void process_delimiter_stack(std::vector<InlineItem>& items) {
                     InlineItem remaining_item;
                     remaining_item.kind = InlineItem::Kind::Delimiter;
                     remaining_item.delim = closer;
-                    items.insert(
-                        items.begin() + static_cast<std::ptrdiff_t>(i + 1),
-                        remaining_item);
+                    items.insert(items.begin() + static_cast<std::ptrdiff_t>(i + 1),
+                                 remaining_item);
 
                     // Update stack indices (all indices > i shifted by 1).
                     for (auto& idx : stack) {
@@ -2499,53 +2424,48 @@ void process_delimiter_stack(std::vector<InlineItem>& items) {
             // re-process it (don't advance to the next item).  This handles
             // cases like ***foo*** where the closer matches ** for bold and
             // then * for italic.
-            if (found_match && closer.length > 0 &&
-                items[i].kind == InlineItem::Kind::Delimiter) {
+            if (found_match && closer.length > 0 && items[i].kind == InlineItem::Kind::Delimiter) {
                 continue;
             }
         }
 
         // If the delimiter can open, push it onto the stack.
-        if (items[i].kind == InlineItem::Kind::Delimiter &&
-            items[i].delim.can_open) {
+        if (items[i].kind == InlineItem::Kind::Delimiter && items[i].delim.can_open) {
             stack.push_back(i);
         }
         ++i;
     }
 
     // Second pass: remove consumed items (empty text items).
-    items.erase(
-        std::remove_if(items.begin(), items.end(),
-                       [](const InlineItem& item) {
-                           return item.kind == InlineItem::Kind::Text &&
-                                  item.text.empty();
-                       }),
-        items.end());
+    items.erase(std::remove_if(items.begin(), items.end(),
+                               [](const InlineItem& item) {
+                                   return item.kind == InlineItem::Kind::Text && item.text.empty();
+                               }),
+                items.end());
 }
 
 // Convert the item list to a token list.
-[[nodiscard]] std::vector<InlineToken> items_to_tokens(
-    const std::vector<InlineItem>& items) {
+[[nodiscard]] std::vector<InlineToken> items_to_tokens(const std::vector<InlineItem>& items) {
     std::vector<InlineToken> tokens;
     tokens.reserve(items.size());
     for (const auto& item : items) {
         switch (item.kind) {
-            case InlineItem::Kind::Text:
-                if (!item.text.empty()) {
-                    tokens.push_back(
-                        {InlineTokenKind::Text, item.text, {}, {}, {}});
-                }
-                break;
-            case InlineItem::Kind::Token:
-                tokens.push_back(item.token);
-                break;
-            case InlineItem::Kind::Delimiter:
-                // Unmatched delimiter — literal text.
-                tokens.push_back(
-                    {InlineTokenKind::Text,
-                     std::string(item.delim.length, item.delim.marker),
-                     {}, {}, {}});
-                break;
+        case InlineItem::Kind::Text:
+            if (!item.text.empty()) {
+                tokens.push_back({InlineTokenKind::Text, item.text, {}, {}, {}});
+            }
+            break;
+        case InlineItem::Kind::Token:
+            tokens.push_back(item.token);
+            break;
+        case InlineItem::Kind::Delimiter:
+            // Unmatched delimiter — literal text.
+            tokens.push_back({InlineTokenKind::Text,
+                              std::string(item.delim.length, item.delim.marker),
+                              {},
+                              {},
+                              {}});
+            break;
         }
     }
     return tokens;
@@ -2553,9 +2473,8 @@ void process_delimiter_stack(std::vector<InlineItem>& items) {
 
 }  // namespace
 
-[[nodiscard]] std::vector<InlineToken> tokenize_inline(
-    std::string_view text, const LinkRefMap* link_refs,
-    bool gfm_extensions) {
+[[nodiscard]] std::vector<InlineToken>
+tokenize_inline(std::string_view text, const LinkRefMap* link_refs, bool gfm_extensions) {
     // Build an item list (text + tokens + delimiter runs), then run the
     // CommonMark delimiter stack algorithm on it (§6.1.1) to match
     // emphasis openers/closers.  This replaces the old forward-scanning
@@ -2570,11 +2489,10 @@ void process_delimiter_stack(std::vector<InlineItem>& items) {
 
     auto flush_buffer = [&]() {
         if (!buffer.empty()) {
-            items.push_back(InlineItem{
-                .kind = InlineItem::Kind::Text,
-                .text = std::move(buffer),
-                .token = {},
-                .delim = {}});
+            items.push_back(InlineItem{.kind = InlineItem::Kind::Text,
+                                       .text = std::move(buffer),
+                                       .token = {},
+                                       .delim = {}});
             buffer.clear();
         }
     };
@@ -2582,10 +2500,7 @@ void process_delimiter_stack(std::vector<InlineItem>& items) {
     // Push a fully-formed token (link, code, image, etc.) as an item.
     auto push_token = [&](InlineToken tok) {
         items.push_back(InlineItem{
-            .kind = InlineItem::Kind::Token,
-            .text = {},
-            .token = std::move(tok),
-            .delim = {}});
+            .kind = InlineItem::Kind::Token, .text = {}, .token = std::move(tok), .delim = {}});
     };
 
     for (std::size_t i = 0; i < text.size(); ++i) {
@@ -2601,8 +2516,7 @@ void process_delimiter_stack(std::vector<InlineItem>& items) {
             auto url = parse_autolink(text, i, consumed, link_text);
             if (consumed > 0) {
                 flush_buffer();
-                push_token({InlineTokenKind::Link,
-                                  std::move(link_text), std::move(url), {}, {}});
+                push_token({InlineTokenKind::Link, std::move(link_text), std::move(url), {}, {}});
                 i += consumed - 1;
                 continue;
             }
@@ -2619,8 +2533,7 @@ void process_delimiter_stack(std::vector<InlineItem>& items) {
                 if (disallowed) {
                     tag_text.replace(0, 1, "&lt;");
                 }
-                push_token({InlineTokenKind::HtmlRaw,
-                                  std::move(tag_text), {}, {}, {}});
+                push_token({InlineTokenKind::HtmlRaw, std::move(tag_text), {}, {}, {}});
                 i = html_end - 1;
                 continue;
             }
@@ -2640,14 +2553,13 @@ void process_delimiter_stack(std::vector<InlineItem>& items) {
         // the HTML/FTXUI renderers escape it as ordinary text).
         if (c == '\\' && i + 1 < text.size()) {
             char next = text[i + 1];
-            if (next == '!' || next == '"' || next == '#' || next == '$' ||
-                next == '%' || next == '&' || next == '\'' || next == '(' ||
-                next == ')' || next == '*' || next == '+' || next == ',' ||
-                next == '-' || next == '.' || next == '/' || next == ':' ||
-                next == ';' || next == '<' || next == '=' || next == '>' ||
-                next == '?' || next == '@' || next == '[' || next == '\\' ||
-                next == ']' || next == '^' || next == '_' || next == '`' ||
-                next == '{' || next == '|' || next == '}' || next == '~') {
+            if (next == '!' || next == '"' || next == '#' || next == '$' || next == '%' ||
+                next == '&' || next == '\'' || next == '(' || next == ')' || next == '*' ||
+                next == '+' || next == ',' || next == '-' || next == '.' || next == '/' ||
+                next == ':' || next == ';' || next == '<' || next == '=' || next == '>' ||
+                next == '?' || next == '@' || next == '[' || next == '\\' || next == ']' ||
+                next == '^' || next == '_' || next == '`' || next == '{' || next == '|' ||
+                next == '}' || next == '~') {
                 buffer += next;
                 i += 1;
                 continue;
@@ -2689,8 +2601,7 @@ void process_delimiter_stack(std::vector<InlineItem>& items) {
                 if (close == std::string_view::npos) break;
                 // Count the maximal run of tildes at close.
                 std::size_t close_run = 0;
-                while (close + close_run < text.size() &&
-                       text[close + close_run] == '~') {
+                while (close + close_run < text.size() && text[close + close_run] == '~') {
                     ++close_run;
                 }
                 // 3+ tildes at close are literal — skip past them.
@@ -2698,14 +2609,11 @@ void process_delimiter_stack(std::vector<InlineItem>& items) {
                     search = close + close_run;
                     continue;
                 }
-                if (close_run == tilde_len && close > i + tilde_len &&
-                    text[close - 1] != ' ' && text[close - 1] != '\t' &&
-                    text[close - 1] != '\n') {
+                if (close_run == tilde_len && close > i + tilde_len && text[close - 1] != ' ' &&
+                    text[close - 1] != '\t' && text[close - 1] != '\n') {
                     flush_buffer();
-                    auto content =
-                        text.substr(i + tilde_len, close - i - tilde_len);
-                    push_token({InlineTokenKind::Strikethrough,
-                                      std::string(content), {}, {}, {}});
+                    auto content = text.substr(i + tilde_len, close - i - tilde_len);
+                    push_token({InlineTokenKind::Strikethrough, std::string(content), {}, {}, {}});
                     i = close + close_run - 1;
                     matched = true;
                     break;
@@ -2740,7 +2648,8 @@ void process_delimiter_stack(std::vector<InlineItem>& items) {
                 const auto pos = text.find('`', search);
                 if (pos == std::string_view::npos) break;
                 std::size_t end = pos + 1;
-                while (end < text.size() && text[end] == '`') ++end;
+                while (end < text.size() && text[end] == '`')
+                    ++end;
                 if (end - pos == bt_len) {
                     found = true;
                     close_start = pos;
@@ -2751,8 +2660,7 @@ void process_delimiter_stack(std::vector<InlineItem>& items) {
             }
             if (found) {
                 flush_buffer();
-                std::string code(
-                    text.substr(bt_open_end, close_start - bt_open_end));
+                std::string code(text.substr(bt_open_end, close_start - bt_open_end));
                 // Newlines → spaces (CommonMark: line endings in code spans
                 // are treated as spaces)
                 for (char& ch : code) {
@@ -2760,8 +2668,7 @@ void process_delimiter_stack(std::vector<InlineItem>& items) {
                 }
                 // Strip one surrounding space if both present (and the
                 // content isn't all spaces)
-                if (code.size() >= 2 && code.front() == ' ' &&
-                    code.back() == ' ') {
+                if (code.size() >= 2 && code.front() == ' ' && code.back() == ' ') {
                     bool all_spaces = true;
                     for (char ch : code) {
                         if (ch != ' ') {
@@ -2773,8 +2680,7 @@ void process_delimiter_stack(std::vector<InlineItem>& items) {
                         code = code.substr(1, code.size() - 2);
                     }
                 }
-                push_token(
-                    {InlineTokenKind::Code, std::move(code), {}, {}, {}});
+                push_token({InlineTokenKind::Code, std::move(code), {}, {}, {}});
                 i = close_end - 1;
                 continue;
             }
@@ -2796,10 +2702,7 @@ void process_delimiter_stack(std::vector<InlineItem>& items) {
             flush_buffer();
             auto run = make_delimiter_run(c, text, i, run_len);
             items.push_back(InlineItem{
-                .kind = InlineItem::Kind::Delimiter,
-                .text = {},
-                .token = {},
-                .delim = run});
+                .kind = InlineItem::Kind::Delimiter, .text = {}, .token = {}, .delim = run});
             i += run_len - 1;  // -1: loop increments i
             continue;
         }
@@ -2808,15 +2711,14 @@ void process_delimiter_stack(std::vector<InlineItem>& items) {
         // avoid matching $$...$$ block math inline — that's handled in
         // lex_blocks).  Closing $ must not be preceded by whitespace.
         // Mirrors marked-katex-extension / marked-math behavior.
-        if (c == '$' && i + 1 < text.size() && text[i + 1] != '$' &&
-            text[i + 1] != ' ' && text[i + 1] != '\t') {
+        if (c == '$' && i + 1 < text.size() && text[i + 1] != '$' && text[i + 1] != ' ' &&
+            text[i + 1] != '\t') {
             flush_buffer();
             auto end = text.find('$', i + 1);
-            if (end != std::string_view::npos && end > i + 1 &&
-                text[end - 1] != ' ' && text[end - 1] != '\t') {
+            if (end != std::string_view::npos && end > i + 1 && text[end - 1] != ' ' &&
+                text[end - 1] != '\t') {
                 auto math = text.substr(i + 1, end - i - 1);
-                push_token({InlineTokenKind::Math,
-                                  std::string(math), {}, {}, {}});
+                push_token({InlineTokenKind::Math, std::string(math), {}, {}, {}});
                 i = end;
                 continue;
             }
@@ -2831,19 +2733,18 @@ void process_delimiter_stack(std::vector<InlineItem>& items) {
             auto bracket_end = find_matching_bracket(text, i + 1);
             if (bracket_end != std::string_view::npos) {
                 // Inline image: ![alt](url)
-                if (bracket_end + 1 < text.size() &&
-                    text[bracket_end + 1] == '(') {
-                    auto target =
-                        parse_inline_link_target(text, bracket_end + 1);
+                if (bracket_end + 1 < text.size() && text[bracket_end + 1] == '(') {
+                    auto target = parse_inline_link_target(text, bracket_end + 1);
                     if (target) {
                         flush_buffer();
                         auto raw_alt = text.substr(i + 2, bracket_end - i - 2);
                         auto alt_tokens = tokenize_inline(raw_alt);
                         auto alt_text = extract_plain_text(alt_tokens);
                         push_token({InlineTokenKind::Image,
-                                          std::move(alt_text),
-                                          std::move(target->dest),
-                                          std::move(target->title), {}});
+                                    std::move(alt_text),
+                                    std::move(target->dest),
+                                    std::move(target->title),
+                                    {}});
                         i = target->end;
                         continue;
                     }
@@ -2854,28 +2755,23 @@ void process_delimiter_stack(std::vector<InlineItem>& items) {
                     auto raw_alt = text.substr(i + 2, bracket_end - i - 2);
 
                     // ![alt][label] or ![alt][] — collapsed/shortcut reference
-                    if (bracket_end + 1 < text.size() &&
-                        text[bracket_end + 1] == '[') {
+                    if (bracket_end + 1 < text.size() && text[bracket_end + 1] == '[') {
                         // Labels must not contain unescaped '[' (examples 546-548).
-                        auto label_end = find_label_end(
-                            text, bracket_end + 1);
+                        auto label_end = find_label_end(text, bracket_end + 1);
                         if (label_end != std::string_view::npos) {
-                            auto label = text.substr(
-                                bracket_end + 2,
-                                label_end - bracket_end - 2);
-                            std::string normalized = label.empty()
-                                ? normalize_label(raw_alt)
-                                : normalize_label(label);
+                            auto label = text.substr(bracket_end + 2, label_end - bracket_end - 2);
+                            std::string normalized =
+                                label.empty() ? normalize_label(raw_alt) : normalize_label(label);
                             auto it = link_refs->find(normalized);
                             if (it != link_refs->end()) {
                                 flush_buffer();
                                 auto alt_tokens = tokenize_inline(raw_alt);
                                 auto alt_text = extract_plain_text(alt_tokens);
-                                push_token(
-                                    {InlineTokenKind::Image,
-                                     std::move(alt_text),
-                                     it->second.url,
-                                     it->second.title, {}});
+                                push_token({InlineTokenKind::Image,
+                                            std::move(alt_text),
+                                            it->second.url,
+                                            it->second.title,
+                                            {}});
                                 i = label_end;
                                 continue;
                             }
@@ -2884,19 +2780,18 @@ void process_delimiter_stack(std::vector<InlineItem>& items) {
 
                     // ![alt] — full reference (label = alt)
                     if (bracket_end + 1 >= text.size() ||
-                        (text[bracket_end + 1] != '(' &&
-                         text[bracket_end + 1] != '[')) {
+                        (text[bracket_end + 1] != '(' && text[bracket_end + 1] != '[')) {
                         auto normalized = normalize_label(raw_alt);
                         auto it = link_refs->find(normalized);
                         if (it != link_refs->end()) {
                             flush_buffer();
                             auto alt_tokens = tokenize_inline(raw_alt);
                             auto alt_text = extract_plain_text(alt_tokens);
-                            push_token(
-                                {InlineTokenKind::Image,
-                                 std::move(alt_text),
-                                 it->second.url,
-                                 it->second.title, {}});
+                            push_token({InlineTokenKind::Image,
+                                        std::move(alt_text),
+                                        it->second.url,
+                                        it->second.title,
+                                        {}});
                             i = bracket_end;
                             continue;
                         }
@@ -2912,102 +2807,98 @@ void process_delimiter_stack(std::vector<InlineItem>& items) {
         if (c == '[') {
             auto bracket_end = find_matching_bracket(text, i);
             if (bracket_end != std::string_view::npos) {
-                auto link_text =
-                    text.substr(i + 1, bracket_end - i - 1);
+                auto link_text = text.substr(i + 1, bracket_end - i - 1);
 
                 // CommonMark §6.6: links may not contain other links.
                 // If the link text contains a complete link, the outer
                 // [...] is NOT a link — the inner link is used instead.
                 if (!contains_complete_link(link_text)) {
-                // Inline link: [text](url)
-                bool inline_link_failed = false;
-                if (bracket_end + 1 < text.size() &&
-                    text[bracket_end + 1] == '(') {
-                    auto target =
-                        parse_inline_link_target(text, bracket_end + 1);
-                    if (target) {
-                        flush_buffer();
-                        InlineToken tok{InlineTokenKind::Link,
-                                        std::string(link_text),
-                                        std::move(target->dest),
-                                        std::move(target->title), {}};
-                        // Tokenize link text so formatting (emphasis,
-                        // code, etc.) inside links is parsed.
-                        tok.children = tokenize_inline(tok.text);
-                        push_token(std::move(tok));
-                        i = target->end;
-                        continue;
+                    // Inline link: [text](url)
+                    bool inline_link_failed = false;
+                    if (bracket_end + 1 < text.size() && text[bracket_end + 1] == '(') {
+                        auto target = parse_inline_link_target(text, bracket_end + 1);
+                        if (target) {
+                            flush_buffer();
+                            InlineToken tok{InlineTokenKind::Link,
+                                            std::string(link_text),
+                                            std::move(target->dest),
+                                            std::move(target->title),
+                                            {}};
+                            // Tokenize link text so formatting (emphasis,
+                            // code, etc.) inside links is parsed.
+                            tok.children = tokenize_inline(tok.text);
+                            push_token(std::move(tok));
+                            i = target->end;
+                            continue;
+                        }
+                        inline_link_failed = true;
                     }
-                    inline_link_failed = true;
-                }
 
-                // Reference links (only when a definition map is available)
-                if (link_refs) {
-                    // [text][label] or [text][] — collapsed/shortcut reference
-                    if (bracket_end + 1 < text.size() &&
-                        text[bracket_end + 1] == '[') {
-                        // Labels must not contain unescaped '[' (examples 546-548).
-                        auto label_end = find_label_end(
-                            text, bracket_end + 1);
-                        if (label_end != std::string_view::npos) {
-                            auto label = text.substr(
-                                bracket_end + 2,
-                                label_end - bracket_end - 2);
-                            std::string normalized = label.empty()
-                                ? normalize_label(link_text)
-                                : normalize_label(label);
+                    // Reference links (only when a definition map is available)
+                    if (link_refs) {
+                        // [text][label] or [text][] — collapsed/shortcut reference
+                        if (bracket_end + 1 < text.size() && text[bracket_end + 1] == '[') {
+                            // Labels must not contain unescaped '[' (examples 546-548).
+                            auto label_end = find_label_end(text, bracket_end + 1);
+                            if (label_end != std::string_view::npos) {
+                                auto label =
+                                    text.substr(bracket_end + 2, label_end - bracket_end - 2);
+                                std::string normalized = label.empty() ? normalize_label(link_text)
+                                                                       : normalize_label(label);
+                                auto it = link_refs->find(normalized);
+                                if (it != link_refs->end()) {
+                                    flush_buffer();
+                                    InlineToken tok{InlineTokenKind::Link,
+                                                    std::string(link_text),
+                                                    it->second.url,
+                                                    it->second.title,
+                                                    {}};
+                                    tok.children = tokenize_inline(tok.text);
+                                    push_token(std::move(tok));
+                                    i = label_end;
+                                    continue;
+                                }
+                            }
+                        }
+
+                        // [text] — full reference (label = text).  Tried when
+                        // not followed by '(' or '[' (those are handled above),
+                        // OR when the inline link was tried but failed
+                        // (CommonMark §6.6 example 568: [foo](not a link)
+                        // falls back to [foo] reference).
+                        if (inline_link_failed || bracket_end + 1 >= text.size() ||
+                            (text[bracket_end + 1] != '(' && text[bracket_end + 1] != '[')) {
+                            auto normalized = normalize_label(link_text);
                             auto it = link_refs->find(normalized);
                             if (it != link_refs->end()) {
                                 flush_buffer();
                                 InlineToken tok{InlineTokenKind::Link,
                                                 std::string(link_text),
                                                 it->second.url,
-                                                it->second.title, {}};
+                                                it->second.title,
+                                                {}};
                                 tok.children = tokenize_inline(tok.text);
                                 push_token(std::move(tok));
-                                i = label_end;
+                                i = bracket_end;
                                 continue;
                             }
                         }
                     }
 
-                    // [text] — full reference (label = text).  Tried when
-                    // not followed by '(' or '[' (those are handled above),
-                    // OR when the inline link was tried but failed
-                    // (CommonMark §6.6 example 568: [foo](not a link)
-                    // falls back to [foo] reference).
-                    if (inline_link_failed ||
-                        bracket_end + 1 >= text.size() ||
-                        (text[bracket_end + 1] != '(' &&
-                         text[bracket_end + 1] != '[')) {
-                        auto normalized = normalize_label(link_text);
-                        auto it = link_refs->find(normalized);
-                        if (it != link_refs->end()) {
-                            flush_buffer();
-                            InlineToken tok{InlineTokenKind::Link,
-                                            std::string(link_text),
-                                            it->second.url,
-                                            it->second.title, {}};
-                            tok.children = tokenize_inline(tok.text);
-                            push_token(std::move(tok));
-                            i = bracket_end;
-                            continue;
-                        }
+                    // GFM footnotes: [^label] — fallback after ALL link attempts
+                    // fail (cmark-gfm inlines.c handle_close_bracket noMatch path).
+                    // The label must start with '^' and have content after it.
+                    // [^] (empty) is NOT a footnote ref.
+                    if (gfm_extensions && link_text.size() >= 2 && link_text[0] == '^') {
+                        flush_buffer();
+                        push_token({InlineTokenKind::FootnoteRef,
+                                    std::string(link_text.substr(1)),
+                                    {},
+                                    {},
+                                    {}});
+                        i = bracket_end;
+                        continue;
                     }
-                }
-
-                // GFM footnotes: [^label] — fallback after ALL link attempts
-                // fail (cmark-gfm inlines.c handle_close_bracket noMatch path).
-                // The label must start with '^' and have content after it.
-                // [^] (empty) is NOT a footnote ref.
-                if (gfm_extensions && link_text.size() >= 2 &&
-                    link_text[0] == '^') {
-                    flush_buffer();
-                    push_token({InlineTokenKind::FootnoteRef,
-                                std::string(link_text.substr(1)), {}, {}, {}});
-                    i = bracket_end;
-                    continue;
-                }
                 }  // end !contains_complete_link
             }
         }
@@ -3020,9 +2911,8 @@ void process_delimiter_stack(std::vector<InlineItem>& items) {
         if (gfm_extensions && !in_angle_literal) {
             if (auto ext = parse_extended_autolink(text, i)) {
                 flush_buffer();
-                push_token({InlineTokenKind::Link,
-                                  std::move(ext->text),
-                                  std::move(ext->url), {}, {}});
+                push_token(
+                    {InlineTokenKind::Link, std::move(ext->text), std::move(ext->url), {}, {}});
                 i = ext->end - 1;
                 continue;
             }
@@ -3067,8 +2957,7 @@ void process_delimiter_stack(std::vector<InlineItem>& items) {
 // NOT inside a code span.  Used by split_table_row so that escaped pipes
 // and pipes in code spans are literal cell content, not separators
 // (GFM tables spec).
-[[nodiscard]] std::size_t find_table_pipe(std::string_view line,
-                                           std::size_t start) {
+[[nodiscard]] std::size_t find_table_pipe(std::string_view line, std::size_t start) {
     std::size_t i = start;
     while (i < line.size()) {
         if (line[i] == '\\' && i + 1 < line.size() && line[i + 1] == '|') {
@@ -3077,7 +2966,8 @@ void process_delimiter_stack(std::vector<InlineItem>& items) {
             // Skip a matched code span; unmatched backticks are literal.
             const std::size_t bt_start = i;
             std::size_t bt_end = i + 1;
-            while (bt_end < line.size() && line[bt_end] == '`') ++bt_end;
+            while (bt_end < line.size() && line[bt_end] == '`')
+                ++bt_end;
             const std::size_t bt_len = bt_end - bt_start;
             std::size_t search = bt_end;
             bool closed = false;
@@ -3085,7 +2975,8 @@ void process_delimiter_stack(std::vector<InlineItem>& items) {
                 const auto close = line.find('`', search);
                 if (close == std::string_view::npos) break;
                 std::size_t ce = close + 1;
-                while (ce < line.size() && line[ce] == '`') ++ce;
+                while (ce < line.size() && line[ce] == '`')
+                    ++ce;
                 if (ce - close == bt_len) {
                     i = ce;
                     closed = true;
@@ -3109,8 +3000,7 @@ void process_delimiter_stack(std::vector<InlineItem>& items) {
 [[nodiscard]] std::vector<std::string> split_table_row(std::string_view line) {
     // Strip an optional leading/trailing pipe, but only if unescaped.
     if (!line.empty() && line.front() == '|') line.remove_prefix(1);
-    if (line.size() >= 2 && line[line.size() - 1] == '|' &&
-        line[line.size() - 2] != '\\') {
+    if (line.size() >= 2 && line[line.size() - 1] == '|' && line[line.size() - 2] != '\\') {
         line.remove_suffix(1);
     }
 
@@ -3118,16 +3008,14 @@ void process_delimiter_stack(std::vector<InlineItem>& items) {
     std::size_t start = 0;
     while (start <= line.size()) {
         auto end = find_table_pipe(line, start);
-        auto cell = end == std::string_view::npos
-            ? line.substr(start)
-            : line.substr(start, end - start);
+        auto cell =
+            end == std::string_view::npos ? line.substr(start) : line.substr(start, end - start);
         // Unescape \| — escaped pipes are literal cell content, not
         // separators (GFM tables spec, example 200).
         std::string unescaped;
         unescaped.reserve(cell.size());
         for (std::size_t j = 0; j < cell.size(); ++j) {
-            if (cell[j] == '\\' && j + 1 < cell.size() &&
-                cell[j + 1] == '|') {
+            if (cell[j] == '\\' && j + 1 < cell.size() && cell[j + 1] == '|') {
                 unescaped += '|';
                 ++j;
             } else {
@@ -3160,17 +3048,21 @@ void process_delimiter_stack(std::vector<InlineItem>& items) {
 
 // Parse per-column alignment from a separator row's cells.
 // 0=none(default ---), 1=left(:---), 2=center(:---:), 3=right(---:).
-[[nodiscard]] std::vector<std::int8_t> parse_table_align(
-    const std::vector<std::string>& sep_cells) {
+[[nodiscard]] std::vector<std::int8_t>
+parse_table_align(const std::vector<std::string>& sep_cells) {
     std::vector<std::int8_t> align;
     align.reserve(sep_cells.size());
     for (const auto& cell : sep_cells) {
         const bool left = !cell.empty() && cell.front() == ':';
         const bool right = !cell.empty() && cell.back() == ':';
-        if (left && right)      align.push_back(2);  // center
-        else if (right)         align.push_back(3);  // right
-        else if (left)          align.push_back(1);  // left
-        else                    align.push_back(0);  // none (default)
+        if (left && right)
+            align.push_back(2);  // center
+        else if (right)
+            align.push_back(3);  // right
+        else if (left)
+            align.push_back(1);  // left
+        else
+            align.push_back(0);  // none (default)
     }
     return align;
 }
@@ -3188,8 +3080,7 @@ void process_delimiter_stack(std::vector<InlineItem>& items) {
     if (c == '#' || c == '>') return true;
     if (c == '`' || c == '~') return true;
     // List item: -, *, + followed by space
-    if ((c == '-' || c == '*' || c == '+') &&
-        pos + 1 < line.size() &&
+    if ((c == '-' || c == '*' || c == '+') && pos + 1 < line.size() &&
         (line[pos + 1] == ' ' || line[pos + 1] == '\t'))
         return true;
     // Ordered list: digits + . or ) + space
@@ -3197,8 +3088,7 @@ void process_delimiter_stack(std::vector<InlineItem>& items) {
         std::size_t j = pos;
         while (j < line.size() && line[j] >= '0' && line[j] <= '9')
             ++j;
-        if (j < line.size() && (line[j] == '.' || line[j] == ')') &&
-            j + 1 < line.size() &&
+        if (j < line.size() && (line[j] == '.' || line[j] == ')') && j + 1 < line.size() &&
             (line[j + 1] == ' ' || line[j + 1] == '\t'))
             return true;
     }
@@ -3220,12 +3110,12 @@ void process_delimiter_stack(std::vector<InlineItem>& items) {
 
 // List marker detection result (CommonMark §5.2).
 struct ListMarker {
-    bool ordered = false;       // true for ordered, false for unordered
-    int number = 0;             // ordered list: the item number
-    int content_indent = 0;     // column after marker + effective spaces
-    int base_indent = 0;        // leading spaces before the marker
-    char marker_char = 0;       // '-', '+', '*', or '.' / ')' for ordered
-    std::string_view content;   // text from content_indent column to EOL
+    bool ordered = false;      // true for ordered, false for unordered
+    int number = 0;            // ordered list: the item number
+    int content_indent = 0;    // column after marker + effective spaces
+    int base_indent = 0;       // leading spaces before the marker
+    char marker_char = 0;      // '-', '+', '*', or '.' / ')' for ordered
+    std::string_view content;  // text from content_indent column to EOL
 };
 
 // Detect a list marker at the start of an expanded (tab-expanded) line.
@@ -3237,11 +3127,11 @@ struct ListMarker {
 // The first line's content starts at the content_indent column (not after
 // all spaces), so 5+ spaces after the marker produce leading spaces in the
 // content (which may form an indented code block).
-[[nodiscard]] std::optional<ListMarker> detect_list_marker(
-    std::string_view expanded) {
+[[nodiscard]] std::optional<ListMarker> detect_list_marker(std::string_view expanded) {
     // Up to 3 leading spaces (4+ is indented code, not a list item)
     std::size_t pos = 0;
-    while (pos < expanded.size() && expanded[pos] == ' ' && pos < 3) ++pos;
+    while (pos < expanded.size() && expanded[pos] == ' ' && pos < 3)
+        ++pos;
     if (pos >= expanded.size()) return std::nullopt;
 
     ListMarker m;
@@ -3250,16 +3140,14 @@ struct ListMarker {
 
     if (c == '-' || c == '+' || c == '*') {
         // Marker at EOL is valid (empty list item, CommonMark §5.2)
-        if (pos + 1 < expanded.size() &&
-            expanded[pos + 1] != ' ' && expanded[pos + 1] != '\t')
+        if (pos + 1 < expanded.size() && expanded[pos + 1] != ' ' && expanded[pos + 1] != '\t')
             return std::nullopt;
         m.ordered = false;
         m.marker_char = c;
         const int effective = [&] {
             if (pos + 1 >= expanded.size()) return 1;  // EOL
             std::size_t cs = pos + 1;
-            while (cs < expanded.size() &&
-                   (expanded[cs] == ' ' || expanded[cs] == '\t'))
+            while (cs < expanded.size() && (expanded[cs] == ' ' || expanded[cs] == '\t'))
                 ++cs;
             // Only spaces to EOL → treat as EOL (CommonMark §5.2: the
             // content indentation is the marker column + 2 for ul, +3 ol).
@@ -3270,22 +3158,19 @@ struct ListMarker {
         m.content_indent = m.base_indent + 1 + effective;
         // Content starts at content_indent column (may have leading spaces
         // if 5+ spaces after marker — those form an indented code block).
-        m.content = expanded.substr(
-            std::min(static_cast<std::size_t>(m.content_indent),
-                     expanded.size()));
+        m.content =
+            expanded.substr(std::min(static_cast<std::size_t>(m.content_indent), expanded.size()));
         return m;
     }
 
     if (c >= '0' && c <= '9') {
         const std::size_t num_start = pos;
-        while (pos < expanded.size() &&
-               expanded[pos] >= '0' && expanded[pos] <= '9')
+        while (pos < expanded.size() && expanded[pos] >= '0' && expanded[pos] <= '9')
             ++pos;
         if (pos == num_start || pos >= expanded.size()) return std::nullopt;
         if (expanded[pos] != '.' && expanded[pos] != ')') return std::nullopt;
         // Marker at EOL is valid (empty list item)
-        if (pos + 1 < expanded.size() &&
-            expanded[pos + 1] != ' ' && expanded[pos + 1] != '\t')
+        if (pos + 1 < expanded.size() && expanded[pos + 1] != ' ' && expanded[pos + 1] != '\t')
             return std::nullopt;
         // Up to 9 digits (CommonMark: 10+ digits is not a list marker)
         const auto num_str = expanded.substr(num_start, pos - num_start);
@@ -3293,14 +3178,14 @@ struct ListMarker {
         m.ordered = true;
         m.marker_char = expanded[pos];
         int num = 0;
-        for (char ch : num_str) num = num * 10 + (ch - '0');
+        for (char ch : num_str)
+            num = num * 10 + (ch - '0');
         m.number = num;
         const int marker_width = static_cast<int>(pos - num_start) + 1;
         const int effective = [&] {
             if (pos + 1 >= expanded.size()) return 1;  // EOL
             std::size_t cs = pos + 1;
-            while (cs < expanded.size() &&
-                   (expanded[cs] == ' ' || expanded[cs] == '\t'))
+            while (cs < expanded.size() && (expanded[cs] == ' ' || expanded[cs] == '\t'))
                 ++cs;
             // Only spaces to EOL → treat as EOL
             if (cs >= expanded.size()) return 1;
@@ -3308,33 +3193,29 @@ struct ListMarker {
             return (spaces_after > 4) ? 1 : std::max(spaces_after, 1);
         }();
         m.content_indent = m.base_indent + marker_width + effective;
-        m.content = expanded.substr(
-            std::min(static_cast<std::size_t>(m.content_indent),
-                     expanded.size()));
+        m.content =
+            expanded.substr(std::min(static_cast<std::size_t>(m.content_indent), expanded.size()));
         return m;
     }
 
     return std::nullopt;
 }
 
-[[nodiscard]] std::optional<std::pair<int, std::string>>
-parse_ordered_list(std::string_view line) {
+[[nodiscard]] std::optional<std::pair<int, std::string>> parse_ordered_list(std::string_view line) {
     // Skip leading whitespace to support indented (nested) list items.
     std::size_t pos = 0;
-    while (pos < line.size() &&
-           (line[pos] == ' ' || line[pos] == '\t')) ++pos;
+    while (pos < line.size() && (line[pos] == ' ' || line[pos] == '\t'))
+        ++pos;
 
     std::size_t num_start = pos;
-    while (pos < line.size() &&
-           std::isdigit(static_cast<unsigned char>(line[pos]))) ++pos;
+    while (pos < line.size() && std::isdigit(static_cast<unsigned char>(line[pos])))
+        ++pos;
     if (pos == num_start || pos >= line.size() || line[pos] != '.') return std::nullopt;
-    if (pos + 1 >= line.size() ||
-        !std::isspace(static_cast<unsigned char>(line[pos + 1]))) {
+    if (pos + 1 >= line.size() || !std::isspace(static_cast<unsigned char>(line[pos + 1]))) {
         return std::nullopt;
     }
     std::size_t text_start = pos + 2;
-    while (text_start < line.size() &&
-           std::isspace(static_cast<unsigned char>(line[text_start]))) {
+    while (text_start < line.size() && std::isspace(static_cast<unsigned char>(line[text_start]))) {
         ++text_start;
     }
     int num = 0;
@@ -3350,9 +3231,8 @@ parse_ordered_list(std::string_view line) {
     std::size_t start = 0;
     while (start < source.size()) {
         auto end = source.find('\n', start);
-        lines.emplace_back(end == std::string_view::npos
-                           ? source.substr(start)
-                           : source.substr(start, end - start));
+        lines.emplace_back(end == std::string_view::npos ? source.substr(start)
+                                                         : source.substr(start, end - start));
         start = (end == std::string_view::npos) ? source.size() : end + 1;
     }
     return lines;
@@ -3362,16 +3242,12 @@ parse_ordered_list(std::string_view line) {
 // Returns 0 if not a task item; otherwise returns the number of chars
 // to skip (the marker + trailing space) and sets `checked`.
 // A task marker is "[ ] " (unchecked) or "[x] " / "[X] " (checked).
-[[nodiscard]] std::size_t parse_task_marker(std::string_view content,
-                                            bool& checked) {
-    if (content.size() >= 3 && content[0] == '[' &&
-        content[2] == ']' &&
-        (content[1] == ' ' || content[1] == 'x' ||
-         content[1] == 'X')) {
+[[nodiscard]] std::size_t parse_task_marker(std::string_view content, bool& checked) {
+    if (content.size() >= 3 && content[0] == '[' && content[2] == ']' &&
+        (content[1] == ' ' || content[1] == 'x' || content[1] == 'X')) {
         checked = (content[1] != ' ');
         // Must be followed by a space (or end of content)
-        if (content.size() == 3 || content[3] == ' ' ||
-            content[3] == '\t') {
+        if (content.size() == 3 || content[3] == ' ' || content[3] == '\t') {
             return content.size() > 3 ? 4 : 3;
         }
     }
@@ -3384,15 +3260,14 @@ parse_ordered_list(std::string_view line) {
 // incomplete tag of one of these types starts an HTML block that ends
 // at a blank line.
 constexpr std::string_view kBlockHtmlTags[] = {
-    "address", "article", "aside", "base", "basefont", "blockquote",
-    "body", "caption", "center", "col", "colgroup", "dd", "details",
-    "dialog", "dir", "div", "dl", "dt", "fieldset", "figcaption",
-    "figure", "footer", "form", "frame", "frameset", "h1", "h2",
-    "h3", "h4", "h5", "h6", "head", "header", "hr", "html",
-    "iframe", "legend", "li", "link", "main", "menu", "menuitem",
-    "nav", "noframes", "ol", "optgroup", "option", "p", "param",
-    "section", "summary", "table", "tbody", "td", "tfoot", "th",
-    "thead", "title", "tr", "track", "ul",
+    "address",  "article",  "aside",    "base",       "basefont", "blockquote", "body",   "caption",
+    "center",   "col",      "colgroup", "dd",         "details",  "dialog",     "dir",    "div",
+    "dl",       "dt",       "fieldset", "figcaption", "figure",   "footer",     "form",   "frame",
+    "frameset", "h1",       "h2",       "h3",         "h4",       "h5",         "h6",     "head",
+    "header",   "hr",       "html",     "iframe",     "legend",   "li",         "link",   "main",
+    "menu",     "menuitem", "nav",      "noframes",   "ol",       "optgroup",   "option", "p",
+    "param",    "section",  "summary",  "table",      "tbody",    "td",         "tfoot",  "th",
+    "thead",    "title",    "tr",       "track",      "ul",
 };
 
 // Check if a tag name is a block-level HTML tag (case-insensitive).
@@ -3405,7 +3280,10 @@ constexpr std::string_view kBlockHtmlTags[] = {
                 char b = tag[i];
                 if (a >= 'A' && a <= 'Z') a += 32;
                 if (b >= 'A' && b <= 'Z') b += 32;
-                if (a != b) { match = false; break; }
+                if (a != b) {
+                    match = false;
+                    break;
+                }
             }
             if (match) return true;
         }
@@ -3422,8 +3300,8 @@ struct ParsedHtmlTag {
     bool is_closing = false;
 };
 
-[[nodiscard]] std::optional<ParsedHtmlTag> parse_html_tag_name(
-    std::string_view line, std::size_t pos) {
+[[nodiscard]] std::optional<ParsedHtmlTag> parse_html_tag_name(std::string_view line,
+                                                               std::size_t pos) {
     if (pos >= line.size()) return std::nullopt;
     bool is_closing = false;
     if (line[pos] == '/') {
@@ -3432,8 +3310,7 @@ struct ParsedHtmlTag {
     }
     std::size_t start = pos;
     while (pos < line.size() &&
-           (std::isalnum(static_cast<unsigned char>(line[pos])) ||
-            line[pos] == '-')) {
+           (std::isalnum(static_cast<unsigned char>(line[pos])) || line[pos] == '-')) {
         ++pos;
     }
     if (pos == start) return std::nullopt;
@@ -3452,14 +3329,15 @@ struct ParsedHtmlBlock {
     int lines_consumed = 1;
 };
 
-[[nodiscard]] std::optional<ParsedHtmlBlock> try_parse_html_block(
-    const std::vector<std::string>& lines, std::size_t start,
-    bool can_interrupt_paragraph) {
+[[nodiscard]] std::optional<ParsedHtmlBlock>
+try_parse_html_block(const std::vector<std::string>& lines, std::size_t start,
+                     bool can_interrupt_paragraph) {
     if (start >= lines.size()) return std::nullopt;
     const std::string& raw = lines[start];
     // Up to 3 spaces indent
     std::size_t pos = 0;
-    while (pos < raw.size() && raw[pos] == ' ' && pos < 3) ++pos;
+    while (pos < raw.size() && raw[pos] == ' ' && pos < 3)
+        ++pos;
     if (pos >= raw.size() || raw[pos] != '<') return std::nullopt;
 
     std::string_view rest(raw.data() + pos, raw.size() - pos);
@@ -3475,8 +3353,8 @@ struct ParsedHtmlBlock {
                 if (c >= 'A' && c <= 'Z') c += 32;
                 lower_name += c;
             }
-            if (lower_name == "script" || lower_name == "pre" ||
-                lower_name == "style" || lower_name == "textarea") {
+            if (lower_name == "script" || lower_name == "pre" || lower_name == "style" ||
+                lower_name == "textarea") {
                 // Find the closing tag
                 std::string close_tag = "</" + lower_name;
                 std::string content = raw;
@@ -3486,14 +3364,12 @@ struct ParsedHtmlBlock {
                     // Check if there's content after the closing tag
                     auto close_pos = rest.find(close_tag);
                     auto after_close = rest.find('>', close_pos);
-                    if (after_close != std::string_view::npos &&
-                        after_close + 1 < rest.size()) {
+                    if (after_close != std::string_view::npos && after_close + 1 < rest.size()) {
                         // There's content after the closing tag — check
                         // if it's just whitespace
                         bool only_ws = true;
                         for (std::size_t i = after_close + 1; i < rest.size(); ++i) {
-                            if (rest[i] != ' ' && rest[i] != '\t' &&
-                                rest[i] != '\r') {
+                            if (rest[i] != ' ' && rest[i] != '\t' && rest[i] != '\r') {
                                 only_ws = false;
                                 break;
                             }
@@ -3514,8 +3390,7 @@ struct ParsedHtmlBlock {
                         content += '\n';
                         content += lines[start];
                         ++lines_consumed;
-                        if (lines[start].find(close_tag) !=
-                            std::string_view::npos) {
+                        if (lines[start].find(close_tag) != std::string_view::npos) {
                             break;
                         }
                         ++start;
@@ -3627,10 +3502,9 @@ struct ParsedHtmlBlock {
             // (incomplete).  Reject other characters (e.g. `<divx>` is
             // not a block-level tag).
             std::size_t after_name = tag->end_pos;
-            if (after_name >= rest.size() ||
-                rest[after_name] == ' ' || rest[after_name] == '\t' ||
-                rest[after_name] == '\n' || rest[after_name] == '\r' ||
-                rest[after_name] == '>' || rest[after_name] == '/') {
+            if (after_name >= rest.size() || rest[after_name] == ' ' || rest[after_name] == '\t' ||
+                rest[after_name] == '\n' || rest[after_name] == '\r' || rest[after_name] == '>' ||
+                rest[after_name] == '/') {
                 std::string content = raw;
                 int lines_consumed = 1;
                 ++start;
@@ -3670,8 +3544,7 @@ struct ParsedHtmlBlock {
             // Check that nothing follows the tag (except whitespace)
             bool only_ws = true;
             for (std::size_t i = tag_end; i < rest.size(); ++i) {
-                if (rest[i] != ' ' && rest[i] != '\t' &&
-                    rest[i] != '\r') {
+                if (rest[i] != ' ' && rest[i] != '\t' && rest[i] != '\r') {
                     only_ws = false;
                     break;
                 }
@@ -3709,11 +3582,12 @@ struct ParsedHtmlBlock {
 // underlines, and deeply-indented list items cannot interrupt paragraphs.
 [[nodiscard]] bool can_interrupt_paragraph(const std::string& line) {
     std::size_t pos = 0;
-    while (pos < line.size() && line[pos] == ' ' && pos < 3) ++pos;
+    while (pos < line.size() && line[pos] == ' ' && pos < 3)
+        ++pos;
     if (pos >= line.size()) return false;  // blank line
     char c = line[pos];
-    if (c == '#') return true;  // ATX heading
-    if (c == '>') return true;  // blockquote
+    if (c == '#') return true;              // ATX heading
+    if (c == '>') return true;              // blockquote
     if (c == '`' || c == '~') return true;  // code fence
     if (c == '<') {
         // HTML block type 6 (block-level tag) can interrupt a paragraph.
@@ -3740,20 +3614,18 @@ struct ParsedHtmlBlock {
         }
         if (only_marker_and_ws && count >= 3) return true;  // thematic break
         // List item: marker followed by space
-        return pos + 1 < line.size() &&
-               (line[pos + 1] == ' ' || line[pos + 1] == '\t');
+        return pos + 1 < line.size() && (line[pos + 1] == ' ' || line[pos + 1] == '\t');
     }
-    if (c == '+' ) {
+    if (c == '+') {
         // List item only (no thematic break with '+')
-        return pos + 1 < line.size() &&
-               (line[pos + 1] == ' ' || line[pos + 1] == '\t');
+        return pos + 1 < line.size() && (line[pos + 1] == ' ' || line[pos + 1] == '\t');
     }
     if (c >= '0' && c <= '9') {
         // Ordered list item: digits followed by '.' or ')' and space
         std::size_t p = pos;
-        while (p < line.size() && line[p] >= '0' && line[p] <= '9') ++p;
-        if (p < line.size() && (line[p] == '.' || line[p] == ')') &&
-            p + 1 < line.size() &&
+        while (p < line.size() && line[p] >= '0' && line[p] <= '9')
+            ++p;
+        if (p < line.size() && (line[p] == '.' || line[p] == ')') && p + 1 < line.size() &&
             (line[p + 1] == ' ' || line[p + 1] == '\t')) {
             return true;
         }
@@ -3767,17 +3639,17 @@ struct ParsedHtmlBlock {
 // determine if the quote buffer's last line is a paragraph continuation.
 [[nodiscard]] bool starts_block_construct(const std::string& line) {
     std::size_t pos = 0;
-    while (pos < line.size() && line[pos] == ' ') ++pos;
+    while (pos < line.size() && line[pos] == ' ')
+        ++pos;
     if (pos >= line.size()) return false;  // blank line
-    if (pos >= 4) return true;  // indented code block
+    if (pos >= 4) return true;             // indented code block
     char c = line[pos];
     if (c == '#') return true;
     if (c == '>') return true;
     if (c == '`' || c == '~') return true;
     if (c == '<') return true;
     if (c == '-' || c == '*' || c == '+') {
-        return pos + 1 < line.size() &&
-               (line[pos + 1] == ' ' || line[pos + 1] == '\t');
+        return pos + 1 < line.size() && (line[pos + 1] == ' ' || line[pos + 1] == '\t');
     }
     if (c >= '0' && c <= '9') return true;
     if (c == '[') return true;  // potential link ref def
@@ -3794,7 +3666,8 @@ struct ParsedHtmlBlock {
     // (CommonMark §5.1 example 292: "> 1. > Blockquote\ncontinued here.").
     while (true) {
         std::size_t pos = 0;
-        while (pos < l.size() && l[pos] == ' ' && pos < 3) ++pos;
+        while (pos < l.size() && l[pos] == ' ' && pos < 3)
+            ++pos;
         if (pos < l.size() && l[pos] == '>') {
             l = l.substr(pos + 1);
             if (!l.empty() && l[0] == ' ') l = l.substr(1);
@@ -3809,16 +3682,14 @@ struct ParsedHtmlBlock {
         break;
     }
     // Trim trailing whitespace
-    while (!l.empty() &&
-           (l.back() == ' ' || l.back() == '\t' || l.back() == '\r')) {
+    while (!l.empty() && (l.back() == ' ' || l.back() == '\t' || l.back() == '\r')) {
         l.pop_back();
     }
     return !l.empty() && !starts_block_construct(l);
 }
 
-[[nodiscard]] std::vector<BlockToken> lex_blocks(std::string_view source,
-                                                   bool gfm_extensions,
-                                                   bool in_blockquote) {
+[[nodiscard]] std::vector<BlockToken> lex_blocks(std::string_view source, bool gfm_extensions,
+                                                 bool in_blockquote) {
     std::vector<BlockToken> tokens;
     auto lines = split_lines(source);
 
@@ -3838,9 +3709,9 @@ struct ParsedHtmlBlock {
     // to all inline content, so we collect them before the main loop.
     // Footnote-consumed lines are merged into ref_lines so the main loop
     // skips them via the existing ref_lines.contains() checks.
-    auto [link_refs, ref_lines] =
-        scan_link_ref_defs(lines, gfm_extensions);
-    for (auto idx : fn_consumed) ref_lines.insert(idx);
+    auto [link_refs, ref_lines] = scan_link_ref_defs(lines, gfm_extensions);
+    for (auto idx : fn_consumed)
+        ref_lines.insert(idx);
 
     // Current paragraph accumulator (raw lines joined by space)
     std::string para_buffer;
@@ -3863,16 +3734,15 @@ struct ParsedHtmlBlock {
     std::vector<std::vector<BlockToken>> list_items;
     std::vector<int> list_depths;
     std::vector<std::int8_t> task_state;  // GFM task list items
-    int list_base_indent = 0;   // leading whitespace of list items
-    int list_start_number = 1;  // first item's number (ordered lists)
-    bool list_loose = false;    // blank lines within/between items
-    char list_marker_char = 0;  // '-', '+', '*', or '.' / ')' for ordered
+    int list_base_indent = 0;             // leading whitespace of list items
+    int list_start_number = 1;            // first item's number (ordered lists)
+    bool list_loose = false;              // blank lines within/between items
+    char list_marker_char = 0;            // '-', '+', '*', or '.' / ')' for ordered
 
     auto flush_list = [&]() {
         if (!list_items.empty()) {
             BlockToken tok;
-            tok.kind = in_ulist ? BlockTokenKind::UnorderedList
-                                : BlockTokenKind::OrderedList;
+            tok.kind = in_ulist ? BlockTokenKind::UnorderedList : BlockTokenKind::OrderedList;
             tok.list_items = std::move(list_items);
             tok.list_depths = std::move(list_depths);
             tok.task_state = std::move(task_state);
@@ -3901,8 +3771,7 @@ struct ParsedHtmlBlock {
             // outside the blockquote (CommonMark §4.7 example 218).
             // Scan the blockquote content and merge new definitions.
             auto quote_lines = split_lines(quote_buffer);
-            auto [quote_refs, quote_consumed] =
-                scan_link_ref_defs(quote_lines, gfm_extensions);
+            auto [quote_refs, quote_consumed] = scan_link_ref_defs(quote_lines, gfm_extensions);
             for (auto& [label, def] : quote_refs) {
                 if (!link_refs.contains(label)) {
                     link_refs[label] = std::move(def);
@@ -3940,15 +3809,13 @@ struct ParsedHtmlBlock {
             if (in_ulist || in_olist) {
                 std::size_t j = i + 1;
                 while (j < lines.size() &&
-                       (is_blank_line(expand_tabs(lines[j])) ||
-                        ref_lines.contains(j)))
+                       (is_blank_line(expand_tabs(lines[j])) || ref_lines.contains(j)))
                     ++j;
                 if (j < lines.size()) {
                     auto next_marker = detect_list_marker(expand_tabs(lines[j]));
                     // CommonMark §5.2: a list marker may be indented 0-3
                     // spaces from the list's base indentation.
-                    if (next_marker &&
-                        next_marker->base_indent >= list_base_indent &&
+                    if (next_marker && next_marker->base_indent >= list_base_indent &&
                         next_marker->base_indent <= list_base_indent + 3) {
                         // Same list — blank lines between items make it
                         // loose (CommonMark §5.3).
@@ -3975,8 +3842,7 @@ struct ParsedHtmlBlock {
         // blockquote markers are not misinterpreted as other constructs.
         {
             std::size_t bq_pos = 0;
-            while (bq_pos < expanded.size() && expanded[bq_pos] == ' ' &&
-                   bq_pos < 3) {
+            while (bq_pos < expanded.size() && expanded[bq_pos] == ' ' && bq_pos < 3) {
                 ++bq_pos;
             }
             if (bq_pos < expanded.size() && expanded[bq_pos] == '>') {
@@ -3986,8 +3852,7 @@ struct ParsedHtmlBlock {
                 in_quote = true;
                 std::size_t content_start = bq_pos + 1;
                 // Skip one optional space after '>'
-                if (content_start < expanded.size() &&
-                    expanded[content_start] == ' ') {
+                if (content_start < expanded.size() && expanded[content_start] == ' ') {
                     ++content_start;
                 }
                 quote_buffer += expanded.substr(content_start);
@@ -4008,16 +3873,14 @@ struct ParsedHtmlBlock {
             if (!quote_buffer.empty()) {
                 std::size_t last_nl = quote_buffer.rfind('\n');
                 std::string last_line = (last_nl == std::string::npos)
-                    ? quote_buffer
-                    : quote_buffer.substr(last_nl + 1);
+                                            ? quote_buffer
+                                            : quote_buffer.substr(last_nl + 1);
                 // Trim trailing whitespace
-                while (!last_line.empty() &&
-                       (last_line.back() == ' ' || last_line.back() == '\t' ||
-                        last_line.back() == '\r')) {
+                while (!last_line.empty() && (last_line.back() == ' ' || last_line.back() == '\t' ||
+                                              last_line.back() == '\r')) {
                     last_line.pop_back();
                 }
-                last_is_paragraph = !last_line.empty() &&
-                                    is_quote_paragraph_line(last_line);
+                last_is_paragraph = !last_line.empty() && is_quote_paragraph_line(last_line);
             }
             if (last_is_paragraph && !can_interrupt_paragraph(expanded)) {
                 // Preserve the original indentation so the recursive
@@ -4039,12 +3902,10 @@ struct ParsedHtmlBlock {
         // least as long as the opening fence.
         {
             std::size_t lead = 0;
-            while (lead < expanded.size() && expanded[lead] == ' ' &&
-                   lead < 3) {
+            while (lead < expanded.size() && expanded[lead] == ' ' && lead < 3) {
                 ++lead;
             }
-            if (lead < expanded.size() &&
-                (expanded[lead] == '`' || expanded[lead] == '~')) {
+            if (lead < expanded.size() && (expanded[lead] == '`' || expanded[lead] == '~')) {
                 const char fence_char = expanded[lead];
                 std::size_t fence_len = 0;
                 while (lead + fence_len < expanded.size() &&
@@ -4053,14 +3914,12 @@ struct ParsedHtmlBlock {
                 }
                 if (fence_len >= 3) {
                     // Info string is everything after the fence.
-                    std::string_view info_sv(
-                        expanded.data() + lead + fence_len,
-                        expanded.size() - lead - fence_len);
+                    std::string_view info_sv(expanded.data() + lead + fence_len,
+                                             expanded.size() - lead - fence_len);
                     // For backtick fences, the info string may not
                     // contain a backtick (ambiguous with a code span).
                     bool valid = true;
-                    if (fence_char == '`' &&
-                        info_sv.find('`') != std::string_view::npos) {
+                    if (fence_char == '`' && info_sv.find('`') != std::string_view::npos) {
                         valid = false;
                     }
                     if (valid) {
@@ -4084,16 +3943,14 @@ struct ParsedHtmlBlock {
                             std::string unescaped;
                             unescaped.reserve(info.size());
                             for (std::size_t k = 0; k < info.size(); ++k) {
-                                if (info[k] == '\\' &&
-                                    k + 1 < info.size()) {
+                                if (info[k] == '\\' && k + 1 < info.size()) {
                                     unescaped += info[k + 1];
                                     ++k;
                                 } else {
                                     unescaped += info[k];
                                 }
                             }
-                            if (auto sp = unescaped.find_first_of(" \t");
-                                sp != std::string::npos) {
+                            if (auto sp = unescaped.find_first_of(" \t"); sp != std::string::npos) {
                                 unescaped = unescaped.substr(0, sp);
                             }
                             lang = decode_entities(unescaped);
@@ -4106,13 +3963,11 @@ struct ParsedHtmlBlock {
                         while (i < lines.size()) {
                             const auto& cline = lines[i];
                             const std::string cexp = expand_tabs(cline);
-                            if (is_closing_fence(cexp, fence_char,
-                                                 fence_len)) {
+                            if (is_closing_fence(cexp, fence_char, fence_len)) {
                                 break;
                             }
                             if (has_content) code += '\n';
-                            code += remove_indent(
-                                cline, static_cast<int>(lead));
+                            code += remove_indent(cline, static_cast<int>(lead));
                             has_content = true;
                             ++i;
                         }
@@ -4198,8 +4053,7 @@ struct ParsedHtmlBlock {
             auto sep_cells = split_table_row(expand_tabs(lines[i + 1]));
             // GFM: the delimiter row must have the same cell count as the
             // header row, else this is not a table.
-            if (!header_cells.empty() &&
-                header_cells.size() == sep_cells.size()) {
+            if (!header_cells.empty() && header_cells.size() == sep_cells.size()) {
                 flush_paragraph();
                 flush_list();
                 flush_quote();
@@ -4211,8 +4065,7 @@ struct ParsedHtmlBlock {
                 tok.table_link_refs = link_refs;
                 const std::size_t col_count = tok.table_headers.size();
                 i += 2;
-                while (i < lines.size() &&
-                       !is_table_interrupt(lines[i])) {
+                while (i < lines.size() && !is_table_interrupt(lines[i])) {
                     auto row = split_table_row(expand_tabs(lines[i]));
                     // Pad short rows with empty cells; truncate long rows.
                     row.resize(col_count);
@@ -4231,21 +4084,18 @@ struct ParsedHtmlBlock {
         {
             std::size_t hpos = 0;
             int hindent = 0;
-            while (hpos < expanded.size() && expanded[hpos] == ' ' &&
-                   hindent < 3) {
+            while (hpos < expanded.size() && expanded[hpos] == ' ' && hindent < 3) {
                 ++hpos;
                 ++hindent;
             }
             if (hpos < expanded.size() && expanded[hpos] == '#') {
                 int level = 0;
-                while (hpos < expanded.size() && expanded[hpos] == '#' &&
-                       level < 6) {
+                while (hpos < expanded.size() && expanded[hpos] == '#' && level < 6) {
                     ++hpos;
                     ++level;
                 }
                 // Require end-of-line or whitespace after the # run
-                if (hpos >= expanded.size() || expanded[hpos] == ' ' ||
-                    expanded[hpos] == '\t') {
+                if (hpos >= expanded.size() || expanded[hpos] == ' ' || expanded[hpos] == '\t') {
                     flush_paragraph();
                     flush_list();
                     flush_quote();
@@ -4261,10 +4111,12 @@ struct ParsedHtmlBlock {
                     if (!heading_text.empty()) {
                         // Trim trailing spaces first
                         std::size_t end = heading_text.size();
-                        while (end > 0 && heading_text[end - 1] == ' ') --end;
+                        while (end > 0 && heading_text[end - 1] == ' ')
+                            --end;
                         // Walk back over trailing #s
                         std::size_t p = end;
-                        while (p > 0 && heading_text[p - 1] == '#') --p;
+                        while (p > 0 && heading_text[p - 1] == '#')
+                            --p;
                         if (p < end) {
                             // Closing sequence found.  If the whole text
                             // is #s, the heading is empty; otherwise the
@@ -4330,8 +4182,7 @@ struct ParsedHtmlBlock {
         // by a blank line).
         {
             int indent = 0;
-            while (indent < static_cast<int>(expanded.size()) &&
-                   expanded[indent] == ' ') {
+            while (indent < static_cast<int>(expanded.size()) && expanded[indent] == ' ') {
                 ++indent;
             }
             if (indent >= 4 && !in_para && !in_ulist && !in_olist && !in_quote) {
@@ -4344,8 +4195,7 @@ struct ParsedHtmlBlock {
                 while (i < lines.size()) {
                     const std::string exp2 = expand_tabs(lines[i]);
                     int ind2 = 0;
-                    while (ind2 < static_cast<int>(exp2.size()) &&
-                           exp2[ind2] == ' ') {
+                    while (ind2 < static_cast<int>(exp2.size()) && exp2[ind2] == ' ') {
                         ++ind2;
                     }
                     if (ind2 >= 4) {
@@ -4357,12 +4207,12 @@ struct ParsedHtmlBlock {
                         // include only if followed by another indented
                         // line (part of the code block).
                         std::size_t j = i + 1;
-                        while (j < lines.size() && is_blank_line(lines[j])) ++j;
+                        while (j < lines.size() && is_blank_line(lines[j]))
+                            ++j;
                         if (j < lines.size()) {
                             const std::string exp3 = expand_tabs(lines[j]);
                             int ind3 = 0;
-                            while (ind3 < static_cast<int>(exp3.size()) &&
-                                   exp3[ind3] == ' ') {
+                            while (ind3 < static_cast<int>(exp3.size()) && exp3[ind3] == ' ') {
                                 ++ind3;
                             }
                             if (ind3 >= 4) {
@@ -4408,16 +4258,12 @@ struct ParsedHtmlBlock {
                 if (in_para) {
                     const bool has_content =
                         !marker->content.empty() &&
-                        marker->content.find_first_not_of(" \t") !=
-                            std::string_view::npos;
-                    can_interrupt =
-                        has_content &&
-                        (!marker->ordered || marker->number == 1);
+                        marker->content.find_first_not_of(" \t") != std::string_view::npos;
+                    can_interrupt = has_content && (!marker->ordered || marker->number == 1);
                 }
                 // 4+ spaces indent and not in a list context → indented code
                 // block, not a list item (CommonMark §4.4).
-                if (can_interrupt &&
-                    (marker->base_indent < 4 || in_ulist || in_olist)) {
+                if (can_interrupt && (marker->base_indent < 4 || in_ulist || in_olist)) {
                     flush_paragraph();
                     flush_quote();
 
@@ -4451,8 +4297,7 @@ struct ParsedHtmlBlock {
                     ++i;  // move to next line
                     while (i < lines.size()) {
                         const auto& cont_line = lines[i];
-                        const std::string cont_expanded =
-                            expand_tabs(cont_line);
+                        const std::string cont_expanded = expand_tabs(cont_line);
 
                         if (is_blank_line(cont_expanded)) {
                             // Empty list item (marker at EOL, no content):
@@ -4470,15 +4315,12 @@ struct ParsedHtmlBlock {
 
                             // Blank line — peek ahead to decide
                             std::size_t j = i + 1;
-                            while (j < lines.size() &&
-                                   is_blank_line(expand_tabs(lines[j])))
+                            while (j < lines.size() && is_blank_line(expand_tabs(lines[j])))
                                 ++j;
                             if (j < lines.size()) {
-                                const std::string next_expanded =
-                                    expand_tabs(lines[j]);
+                                const std::string next_expanded = expand_tabs(lines[j]);
                                 int next_indent = 0;
-                                while (next_indent <
-                                           static_cast<int>(next_expanded.size()) &&
+                                while (next_indent < static_cast<int>(next_expanded.size()) &&
                                        next_expanded[next_indent] == ' ')
                                     ++next_indent;
 
@@ -4491,19 +4333,15 @@ struct ParsedHtmlBlock {
                                     if (ref_lines.contains(j)) {
                                         std::size_t k = j + 1;
                                         while (k < lines.size() &&
-                                               (is_blank_line(
-                                                    expand_tabs(lines[k])) ||
+                                               (is_blank_line(expand_tabs(lines[k])) ||
                                                 ref_lines.contains(k)))
                                             ++k;
                                         if (k < lines.size()) {
                                             auto after_ref =
-                                                detect_list_marker(
-                                                    expand_tabs(lines[k]));
+                                                detect_list_marker(expand_tabs(lines[k]));
                                             if (after_ref &&
-                                                after_ref->base_indent >=
-                                                    list_base_indent &&
-                                                after_ref->base_indent <=
-                                                    list_base_indent + 3) {
+                                                after_ref->base_indent >= list_base_indent &&
+                                                after_ref->base_indent <= list_base_indent + 3) {
                                                 list_loose = true;
                                                 break;
                                             }
@@ -4521,12 +4359,9 @@ struct ParsedHtmlBlock {
                                 }
 
                                 // New list marker at compatible base indent?
-                                auto next_marker =
-                                    detect_list_marker(next_expanded);
-                                if (next_marker &&
-                                    next_marker->base_indent >= list_base_indent &&
-                                    next_marker->base_indent <=
-                                        list_base_indent + 3) {
+                                auto next_marker = detect_list_marker(next_expanded);
+                                if (next_marker && next_marker->base_indent >= list_base_indent &&
+                                    next_marker->base_indent <= list_base_indent + 3) {
                                     // New item in same list — blank line
                                     // between items makes the list loose.
                                     list_loose = true;
@@ -4538,16 +4373,14 @@ struct ParsedHtmlBlock {
                         }
 
                         int cont_indent = 0;
-                        while (cont_indent <
-                                   static_cast<int>(cont_expanded.size()) &&
+                        while (cont_indent < static_cast<int>(cont_expanded.size()) &&
                                cont_expanded[cont_indent] == ' ')
                             ++cont_indent;
 
                         if (cont_indent >= content_indent) {
                             // Indented continuation
                             item_content += '\n';
-                            item_content +=
-                                cont_expanded.substr(content_indent);
+                            item_content += cont_expanded.substr(content_indent);
                             ++i;
                             continue;
                         }
@@ -4560,10 +4393,8 @@ struct ParsedHtmlBlock {
                         // item but is NOT a paragraph-interrupting construct.
                         {
                             auto next_marker = detect_list_marker(cont_expanded);
-                            if (next_marker &&
-                                next_marker->base_indent >= list_base_indent &&
-                                next_marker->base_indent <=
-                                    list_base_indent + 3) {
+                            if (next_marker && next_marker->base_indent >= list_base_indent &&
+                                next_marker->base_indent <= list_base_indent + 3) {
                                 break;  // new item — end current item
                             }
                         }
@@ -4583,27 +4414,23 @@ struct ParsedHtmlBlock {
                     }
 
                     // Parse item content as sub-blocks
-                    auto sub_blocks =
-                        lex_blocks(item_content, gfm_extensions);
+                    auto sub_blocks = lex_blocks(item_content, gfm_extensions);
 
                     // GFM task list marker: check first paragraph's text
                     std::int8_t task = -1;
-                    if (!sub_blocks.empty() &&
-                        sub_blocks[0].kind == BlockTokenKind::Paragraph &&
+                    if (!sub_blocks.empty() && sub_blocks[0].kind == BlockTokenKind::Paragraph &&
                         !sub_blocks[0].inlines.empty()) {
                         const auto& first_tok = sub_blocks[0].inlines[0];
                         if (first_tok.kind == InlineTokenKind::Text) {
                             bool checked = false;
-                            if (auto skip = parse_task_marker(first_tok.text,
-                                                              checked)) {
+                            if (auto skip = parse_task_marker(first_tok.text, checked)) {
                                 task = checked ? 1 : 0;
                                 // Remove the marker from the text
-                                auto& text = const_cast<std::string&>(
-                                    sub_blocks[0].inlines[0].text);
+                                auto& text =
+                                    const_cast<std::string&>(sub_blocks[0].inlines[0].text);
                                 text = text.substr(skip);
                                 if (text.empty()) {
-                                    sub_blocks[0].inlines.erase(
-                                        sub_blocks[0].inlines.begin());
+                                    sub_blocks[0].inlines.erase(sub_blocks[0].inlines.begin());
                                 }
                             }
                         }
@@ -4613,8 +4440,7 @@ struct ParsedHtmlBlock {
                     // when they separate two block-level elements (CommonMark
                     // §5.3).  Blank lines inside a single code block do not.
                     // Check size BEFORE moving sub_blocks.
-                    bool item_is_loose =
-                        item_has_blank && sub_blocks.size() >= 2;
+                    bool item_is_loose = item_has_blank && sub_blocks.size() >= 2;
                     // Distinguish blank lines between sub-blocks (loose) from
                     // blank lines inside a nested list item (tight).  If the
                     // line after the first blank line is indented ≥ the last
@@ -4625,8 +4451,7 @@ struct ParsedHtmlBlock {
                     if (item_is_loose) {
                         const auto content_lines = split_lines(item_content);
                         std::size_t first_blank_idx = content_lines.size();
-                        for (std::size_t cl = 0; cl < content_lines.size();
-                             ++cl) {
+                        for (std::size_t cl = 0; cl < content_lines.size(); ++cl) {
                             if (is_blank_line(content_lines[cl])) {
                                 first_blank_idx = cl;
                                 break;
@@ -4634,12 +4459,9 @@ struct ParsedHtmlBlock {
                         }
                         if (first_blank_idx < content_lines.size()) {
                             int last_marker_content_indent = -1;
-                            for (std::size_t cl = 0; cl < first_blank_idx;
-                                 ++cl) {
-                                if (auto m = detect_list_marker(
-                                        expand_tabs(content_lines[cl]))) {
-                                    last_marker_content_indent =
-                                        m->content_indent;
+                            for (std::size_t cl = 0; cl < first_blank_idx; ++cl) {
+                                if (auto m = detect_list_marker(expand_tabs(content_lines[cl]))) {
+                                    last_marker_content_indent = m->content_indent;
                                 }
                             }
                             if (last_marker_content_indent >= 0) {
@@ -4648,16 +4470,12 @@ struct ParsedHtmlBlock {
                                        is_blank_line(content_lines[after]))
                                     ++after;
                                 if (after < content_lines.size()) {
-                                    const auto after_expanded =
-                                        expand_tabs(content_lines[after]);
+                                    const auto after_expanded = expand_tabs(content_lines[after]);
                                     int after_indent = 0;
-                                    while (after_indent <
-                                               static_cast<int>(
-                                                   after_expanded.size()) &&
+                                    while (after_indent < static_cast<int>(after_expanded.size()) &&
                                            after_expanded[after_indent] == ' ')
                                         ++after_indent;
-                                    if (after_indent >=
-                                        last_marker_content_indent) {
+                                    if (after_indent >= last_marker_content_indent) {
                                         item_is_loose = false;
                                     }
                                 }
@@ -4687,8 +4505,7 @@ struct ParsedHtmlBlock {
             // Strip leading spaces from continuation lines (CommonMark:
             // leading whitespace on paragraph continuation lines is removed).
             std::size_t first_non_space = 0;
-            while (first_non_space < expanded.size() &&
-                   expanded[first_non_space] == ' ') {
+            while (first_non_space < expanded.size() && expanded[first_non_space] == ' ') {
                 ++first_non_space;
             }
             para_buffer += expanded.substr(first_non_space);
@@ -4697,8 +4514,7 @@ struct ParsedHtmlBlock {
             // Strip up to 3 leading spaces of indentation (CommonMark:
             // paragraphs may have up to 3 spaces of initial indentation).
             std::size_t first_non_space = 0;
-            while (first_non_space < expanded.size() &&
-                   first_non_space < 3 &&
+            while (first_non_space < expanded.size() && first_non_space < 3 &&
                    expanded[first_non_space] == ' ') {
                 ++first_non_space;
             }
@@ -4725,5 +4541,5 @@ struct ParsedHtmlBlock {
 
     return tokens;
 }
-} // namespace detail
-} // namespace loom::ui
+}  // namespace detail
+}  // namespace loom::ui

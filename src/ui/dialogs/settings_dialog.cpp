@@ -13,20 +13,21 @@ namespace loom::ui::dialogs::settings_dialog {
 [[nodiscard]] Element SettingsText(const std::string& value, int columns) {
     if (columns <= 0) return text(value);
     const auto alpha = [](std::string_view glyph) {
-        return glyph.size() == 1 && ((glyph[0] >= 'a' && glyph[0] <= 'z') ||
-                                     (glyph[0] >= 'A' && glyph[0] <= 'Z'));
+        return glyph.size() == 1 &&
+               ((glyph[0] >= 'a' && glyph[0] <= 'z') || (glyph[0] >= 'A' && glyph[0] <= 'Z'));
     };
     const auto scheme_character = [&](std::string_view glyph) {
-        return alpha(glyph) || (glyph.size() == 1 &&
-            ((glyph[0] >= '0' && glyph[0] <= '9') || glyph[0] == '+' ||
-             glyph[0] == '-' || glyph[0] == '.'));
+        return alpha(glyph) ||
+               (glyph.size() == 1 && ((glyph[0] >= '0' && glyph[0] <= '9') || glyph[0] == '+' ||
+                                      glyph[0] == '-' || glyph[0] == '.'));
     };
     const auto separator = [](std::string_view glyph) {
-        return glyph.size() == 1 && std::string_view("/?&=#").find(glyph[0]) != std::string_view::npos;
+        return glyph.size() == 1 &&
+               std::string_view("/?&=#").find(glyph[0]) != std::string_view::npos;
     };
     const auto hex = [](std::string_view glyph) {
         return glyph.size() == 1 &&
-            std::string_view("0123456789abcdefABCDEF").find(glyph[0]) != std::string_view::npos;
+               std::string_view("0123456789abcdefABCDEF").find(glyph[0]) != std::string_view::npos;
     };
     Elements lines;
     std::size_t start = 0;
@@ -48,7 +49,10 @@ namespace loom::ui::dialogs::settings_dialog {
             cells += width;
         };
         for (std::size_t first = 0; first < glyphs.size();) {
-            if (glyphs[first].empty()) { ++first; continue; }
+            if (glyphs[first].empty()) {
+                ++first;
+                continue;
+            }
             if (glyphs[first] == " ") {
                 spaces += ' ';
                 ++first;
@@ -67,9 +71,10 @@ namespace loom::ui::dialogs::settings_dialog {
             }
             // Recognize only a lexical scheme:// prefix, not arbitrary prose.
             auto colon = first;
-            while (colon < last && scheme_character(glyphs[colon])) ++colon;
-            const bool uri = alpha(glyphs[first]) && colon + 2 < last &&
-                glyphs[colon] == ":" && glyphs[colon + 1] == "/" && glyphs[colon + 2] == "/";
+            while (colon < last && scheme_character(glyphs[colon]))
+                ++colon;
+            const bool uri = alpha(glyphs[first]) && colon + 2 < last && glyphs[colon] == ":" &&
+                             glyphs[colon + 1] == "/" && glyphs[colon + 2] == "/";
             if (uri) {
                 while (last < glyphs.size() && glyphs[last] != " ") {
                     word_cells += string_width(glyphs[last]);
@@ -83,7 +88,8 @@ namespace loom::ui::dialogs::settings_dialog {
                 cells = 0;
                 spaces.clear();  // A soft break replaces separating spaces.
             }
-            for ([[maybe_unused]] char space : spaces) append(" ");
+            for ([[maybe_unused]] char space : spaces)
+                append(" ");
             spaces.clear();
             if (uri && word_cells > columns) {
                 while (first < last) {
@@ -125,7 +131,8 @@ namespace loom::ui::dialogs::settings_dialog {
                     if (!glyphs[first].empty()) append(glyphs[first]);
             }
         }
-        for ([[maybe_unused]] char space : spaces) append(" ");
+        for ([[maybe_unused]] char space : spaces)
+            append(" ");
         lines.push_back(text(line));
         if (end == std::string::npos) break;
         start = end + 1;
@@ -192,4 +199,4 @@ void SettingsLayoutNode::Check(Status* status) {
     status->need_iteration |= columns_ != computed_columns_ || rows_ != computed_rows_;
 }
 
-} // namespace loom::ui::dialogs::settings_dialog
+}  // namespace loom::ui::dialogs::settings_dialog

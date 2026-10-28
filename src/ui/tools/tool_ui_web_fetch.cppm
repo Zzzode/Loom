@@ -54,8 +54,7 @@ namespace detail {
 }
 
 /// Truncate URL for display (show host + first part of path).
-[[nodiscard]] inline std::string display_url(std::string_view url,
-                                              std::size_t max_len = 50) {
+[[nodiscard]] inline std::string display_url(std::string_view url, std::size_t max_len = 50) {
     if (url.size() <= max_len) return std::string{url};
     // Show scheme + host + start of path + ellipsis
     std::string hostname = extract_hostname(url);
@@ -79,9 +78,7 @@ namespace detail {
 [[nodiscard]] inline ToolUIFunctions make_web_fetch_ui() {
     ToolUIFunctions fns;
 
-    fns.user_facing_name = [](std::string_view) {
-        return std::string{"Fetch"};
-    };
+    fns.user_facing_name = [](std::string_view) { return std::string{"Fetch"}; };
 
     fns.message = [](std::string_view input_json) {
         std::string url = detail::extract_url(input_json);
@@ -91,12 +88,9 @@ namespace detail {
         return std::string{"web page…"};
     };
 
-    fns.tag = [](std::string_view) -> std::optional<std::string> {
-        return std::nullopt;
-    };
+    fns.tag = [](std::string_view) -> std::optional<std::string> { return std::nullopt; };
 
-    fns.progress = [](std::string_view input_json,
-                       std::string_view partial_result) {
+    fns.progress = [](std::string_view input_json, std::string_view partial_result) {
         std::string url = detail::extract_url(input_json);
         std::string hostname = detail::extract_hostname(url);
         if (!hostname.empty()) {
@@ -108,19 +102,15 @@ namespace detail {
         return std::string{"Fetching web page…"};
     };
 
-    fns.queued = [](std::string_view) {
-        return std::string{"Waiting to fetch…"};
-    };
+    fns.queued = [](std::string_view) { return std::string{"Waiting to fetch…"}; };
 
     fns.is_transparent_wrapper = false;
 
     // The fetched page content (markdown-converted HTML) is visible on
     // screen, so we index it for search.  This is the default for tools
     // that render their output body.
-    fns.extract_search_text = [](
-        std::string_view output_text,
-        std::string_view /*error_text*/) -> std::optional<std::string>
-    {
+    fns.extract_search_text = [](std::string_view output_text,
+                                 std::string_view /*error_text*/) -> std::optional<std::string> {
         return std::string{output_text};
     };
 

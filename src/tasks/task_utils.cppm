@@ -12,11 +12,7 @@ export namespace loom::utils {
 // ─── Task Status & Schema ────────────────────────────────────────────────────
 
 /// Task status enumeration
-enum class TaskStatus {
-    pending,
-    in_progress,
-    completed
-};
+enum class TaskStatus { pending, in_progress, completed };
 
 /// Convert task status to string representation
 std::string_view task_status_to_string(TaskStatus status);
@@ -69,17 +65,14 @@ inline void clear_leader_team_name() {
 }
 
 /// Create a new task. Returns the assigned task ID.
-std::expected<std::string, std::string> create_task(
-    std::string_view subject,
-    std::string_view description,
-    std::string_view active_form);
+std::expected<std::string, std::string>
+create_task(std::string_view subject, std::string_view description, std::string_view active_form);
 
 /// Update an existing task's fields
-std::expected<void, std::string> update_task(
-    std::string_view task_id,
-    std::optional<TaskStatus> status,
-    std::optional<std::string_view> subject,
-    std::optional<std::string_view> description);
+std::expected<void, std::string> update_task(std::string_view task_id,
+                                             std::optional<TaskStatus> status,
+                                             std::optional<std::string_view> subject,
+                                             std::optional<std::string_view> description);
 
 /// Get a task by ID
 std::expected<Task, std::string> get_task(std::string_view task_id);
@@ -98,7 +91,7 @@ std::string sanitize_path_component(std::string_view input);
 /// Represents a queued command to be processed
 struct QueuedCommand {
     std::string value;
-    std::string mode;             // e.g., "prompt", "bash", "task-notification"
+    std::string mode;                     // e.g., "prompt", "bash", "task-notification"
     std::optional<std::string> agent_id;  // If set, targeted at a subagent
 };
 
@@ -133,11 +126,9 @@ struct RetryConfig {
 
 /// Execute a function with retry logic and exponential backoff.
 /// Returns the successful result or the last error.
-template<typename T>
-std::expected<T, std::string> with_retry(
-    std::function<std::expected<T, std::string>()> fn,
-    const RetryConfig& config)
-{
+template <typename T>
+std::expected<T, std::string> with_retry(std::function<std::expected<T, std::string>()> fn,
+                                         const RetryConfig& config) {
     std::expected<T, std::string> last_result = std::unexpected("No attempts made");
     auto delay = config.initial_delay;
 
@@ -159,8 +150,7 @@ std::expected<T, std::string> with_retry(
 }
 
 /// Void specialization for retry
-std::expected<void, std::string> with_retry_void(
-    std::function<std::expected<void, std::string>()> fn,
-    const RetryConfig& config);
+std::expected<void, std::string>
+with_retry_void(std::function<std::expected<void, std::string>()> fn, const RetryConfig& config);
 
-} // namespace loom::utils
+}  // namespace loom::utils

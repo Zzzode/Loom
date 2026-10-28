@@ -4,7 +4,7 @@
 // recompiles this smaller object only.
 module;
 
-#include <cctype> // std::tolower / std::isspace / std::isalnum
+#include <cctype>  // std::tolower / std::isspace / std::isalnum
 
 module loom.tools.runtime_registry;
 
@@ -50,48 +50,49 @@ namespace fs = std::filesystem;
     return val.as_bool();
 }
 
-[[nodiscard]] std::optional<std::string> runtime_json_string(loom::utils::json::JsonVal obj, std::string_view key) {
+[[nodiscard]] std::optional<std::string> runtime_json_string(loom::utils::json::JsonVal obj,
+                                                             std::string_view key) {
     auto val = obj.get(key);
     if (!val.is_str()) return std::nullopt;
     return std::string(val.as_str());
 }
 
-[[nodiscard]] std::optional<int> runtime_json_int(loom::utils::json::JsonVal obj, std::string_view key) {
+[[nodiscard]] std::optional<int> runtime_json_int(loom::utils::json::JsonVal obj,
+                                                  std::string_view key) {
     auto val = obj.get(key);
     if (!val.is_num()) return std::nullopt;
     return static_cast<int>(val.as_int());
 }
 
-[[nodiscard]] std::optional<bool> runtime_json_bool(loom::utils::json::JsonVal obj, std::string_view key) {
+[[nodiscard]] std::optional<bool> runtime_json_bool(loom::utils::json::JsonVal obj,
+                                                    std::string_view key) {
     auto val = obj.get(key);
     if (!val.is_bool()) return std::nullopt;
     return val.as_bool();
 }
 
-[[nodiscard]] std::optional<bool> runtime_json_semantic_bool(
-    loom::utils::json::JsonVal obj,
-    std::string_view key
-) {
+[[nodiscard]] std::optional<bool> runtime_json_semantic_bool(loom::utils::json::JsonVal obj,
+                                                             std::string_view key) {
     auto val = obj.get(key);
     if (val.is_bool()) return val.as_bool();
     if (!val.is_str()) return std::nullopt;
     std::string normalized(val.as_str());
-    std::ranges::transform(normalized, normalized.begin(), [](unsigned char ch) {
-        return static_cast<char>(std::tolower(ch));
-    });
-    if (normalized == "true" || normalized == "yes" || normalized == "y" ||
-        normalized == "1" || normalized == "approve" || normalized == "approved") {
+    std::ranges::transform(normalized, normalized.begin(),
+                           [](unsigned char ch) { return static_cast<char>(std::tolower(ch)); });
+    if (normalized == "true" || normalized == "yes" || normalized == "y" || normalized == "1" ||
+        normalized == "approve" || normalized == "approved") {
         return true;
     }
-    if (normalized == "false" || normalized == "no" || normalized == "n" ||
-        normalized == "0" || normalized == "reject" || normalized == "rejected" ||
-        normalized == "deny" || normalized == "denied") {
+    if (normalized == "false" || normalized == "no" || normalized == "n" || normalized == "0" ||
+        normalized == "reject" || normalized == "rejected" || normalized == "deny" ||
+        normalized == "denied") {
         return false;
     }
     return std::nullopt;
 }
 
-[[nodiscard]] std::vector<std::string> runtime_json_event_array(loom::utils::json::JsonVal obj, std::string_view key) {
+[[nodiscard]] std::vector<std::string> runtime_json_event_array(loom::utils::json::JsonVal obj,
+                                                                std::string_view key) {
     std::vector<std::string> values;
     auto node = obj.get(key);
     if (!node.is_arr()) return values;
@@ -105,7 +106,8 @@ namespace fs = std::filesystem;
     return values;
 }
 
-[[nodiscard]] std::vector<std::string> json_string_array(std::string_view json, std::string_view key) {
+[[nodiscard]] std::vector<std::string> json_string_array(std::string_view json,
+                                                         std::string_view key) {
     std::vector<std::string> values;
     auto parsed = loom::utils::json::parse(json);
     if (!parsed || !parsed->root().is_obj()) return values;
@@ -131,14 +133,16 @@ namespace fs = std::filesystem;
     return values;
 }
 
-[[nodiscard]] std::optional<std::string> json_raw_value(std::string_view json, std::string_view key) {
+[[nodiscard]] std::optional<std::string> json_raw_value(std::string_view json,
+                                                        std::string_view key) {
     auto key_text = std::format("\"{}\"", key);
     auto key_pos = json.find(key_text);
     if (key_pos == std::string_view::npos) return std::nullopt;
     auto colon = json.find(':', key_pos + key_text.size());
     if (colon == std::string_view::npos) return std::nullopt;
     auto pos = colon + 1;
-    while (pos < json.size() && std::isspace(static_cast<unsigned char>(json[pos]))) ++pos;
+    while (pos < json.size() && std::isspace(static_cast<unsigned char>(json[pos])))
+        ++pos;
     if (pos >= json.size()) return std::nullopt;
 
     const auto start = pos;
@@ -151,9 +155,12 @@ namespace fs = std::filesystem;
         while (pos < json.size()) {
             const char c = json[pos];
             if (in_string) {
-                if (escaping) escaping = false;
-                else if (c == '\\') escaping = true;
-                else if (c == '"') in_string = false;
+                if (escaping)
+                    escaping = false;
+                else if (c == '\\')
+                    escaping = true;
+                else if (c == '"')
+                    in_string = false;
             } else if (c == '"') {
                 in_string = true;
             } else if (c == open) {
@@ -165,24 +172,29 @@ namespace fs = std::filesystem;
             }
             ++pos;
         }
-    return std::nullopt;
-}
+        return std::nullopt;
+    }
 
     if (json[pos] == '"') {
         ++pos;
         bool escaping = false;
         while (pos < json.size()) {
             const char c = json[pos];
-            if (escaping) escaping = false;
-            else if (c == '\\') escaping = true;
-            else if (c == '"') return std::string(json.substr(start, pos - start + 1));
+            if (escaping)
+                escaping = false;
+            else if (c == '\\')
+                escaping = true;
+            else if (c == '"')
+                return std::string(json.substr(start, pos - start + 1));
             ++pos;
         }
         return std::nullopt;
     }
 
-    while (pos < json.size() && json[pos] != ',' && json[pos] != '}') ++pos;
-    while (pos > start && std::isspace(static_cast<unsigned char>(json[pos - 1]))) --pos;
+    while (pos < json.size() && json[pos] != ',' && json[pos] != '}')
+        ++pos;
+    while (pos > start && std::isspace(static_cast<unsigned char>(json[pos - 1])))
+        --pos;
     return std::string(json.substr(start, pos - start));
 }
 
@@ -199,10 +211,8 @@ namespace fs = std::filesystem;
     return value;
 }
 
-[[nodiscard]] std::optional<std::size_t> resolve_notebook_cell_index(
-    const Notebook& notebook,
-    std::optional<std::string> cell_id
-) {
+[[nodiscard]] std::optional<std::size_t>
+resolve_notebook_cell_index(const Notebook& notebook, std::optional<std::string> cell_id) {
     if (!cell_id || cell_id->empty()) return std::nullopt;
     for (std::size_t i = 0; i < notebook.cells.size(); ++i) {
         if (notebook.cells[i].id && *notebook.cells[i].id == *cell_id) {
@@ -233,21 +243,23 @@ namespace fs = std::filesystem;
     std::ifstream input(file);
     std::vector<std::string> lines;
     std::string line;
-    while (std::getline(input, line)) lines.push_back(line);
+    while (std::getline(input, line))
+        lines.push_back(line);
     return lines;
 }
 
-[[nodiscard]] std::string word_at_position(const std::vector<std::string>& lines, int line_no, int character) {
+[[nodiscard]] std::string word_at_position(const std::vector<std::string>& lines, int line_no,
+                                           int character) {
     if (line_no < 0 || static_cast<std::size_t>(line_no) >= lines.size()) return {};
     const auto& line = lines[static_cast<std::size_t>(line_no)];
     auto pos = std::clamp(character, 0, static_cast<int>(line.size()));
-    auto is_word = [](char c) {
-        return std::isalnum(static_cast<unsigned char>(c)) || c == '_';
-    };
+    auto is_word = [](char c) { return std::isalnum(static_cast<unsigned char>(c)) || c == '_'; };
     int begin = pos;
-    while (begin > 0 && is_word(line[static_cast<std::size_t>(begin - 1)])) --begin;
+    while (begin > 0 && is_word(line[static_cast<std::size_t>(begin - 1)]))
+        --begin;
     int end = pos;
-    while (end < static_cast<int>(line.size()) && is_word(line[static_cast<std::size_t>(end)])) ++end;
+    while (end < static_cast<int>(line.size()) && is_word(line[static_cast<std::size_t>(end)]))
+        ++end;
     if (end <= begin) return {};
     return line.substr(static_cast<std::size_t>(begin), static_cast<std::size_t>(end - begin));
 }
@@ -255,14 +267,13 @@ namespace fs = std::filesystem;
 [[nodiscard]] bool is_source_file(const fs::path& path) {
     auto ext = path.extension().string();
     static const std::vector<std::string> exts = {
-        ".c", ".cc", ".cpp", ".cxx", ".h", ".hpp", ".hh",
-        ".m", ".mm", ".ts", ".tsx", ".js", ".jsx", ".py",
-        ".rs", ".go", ".java", ".kt", ".swift", ".cppm"
-    };
+        ".c",   ".cc", ".cpp", ".cxx", ".h",  ".hpp", ".hh",   ".m",  ".mm",    ".ts",
+        ".tsx", ".js", ".jsx", ".py",  ".rs", ".go",  ".java", ".kt", ".swift", ".cppm"};
     return std::ranges::find(exts, ext) != exts.end();
 }
 
-[[nodiscard]] std::optional<loom::tools::BrowserAction> parse_browser_action(std::string_view action) {
+[[nodiscard]] std::optional<loom::tools::BrowserAction>
+parse_browser_action(std::string_view action) {
     using loom::tools::BrowserAction;
     if (action == "navigate") return BrowserAction::Navigate;
     if (action == "click") return BrowserAction::Click;
@@ -297,4 +308,4 @@ namespace fs = std::filesystem;
     return fields;
 }
 
-} // namespace loom::tools::detail
+}  // namespace loom::tools::detail

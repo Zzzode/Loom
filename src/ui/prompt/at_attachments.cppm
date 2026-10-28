@@ -14,8 +14,7 @@ module;
 export module loom.ui.prompt.at_attachments;
 
 import std;
-import loom.types.types;  // arch-check: keep-import
-
+import loom.types.types; // arch-check: keep-import
 
 export namespace loom::ui::prompt::at_attachments {
 
@@ -29,8 +28,8 @@ inline constexpr std::size_t kMaxInlineFileBytes = 256 * 1024;
 
 /// AT-04: expand a raw @-mention path (~, ./, ../, /) against cwd. Returns
 /// nullopt for empty/unresolvable input.
-[[nodiscard]] inline std::optional<fs::path> expand_at_path(
-    std::string_view raw, const fs::path& cwd) {
+[[nodiscard]] inline std::optional<fs::path> expand_at_path(std::string_view raw,
+                                                            const fs::path& cwd) {
     if (raw.empty()) return std::nullopt;
     std::string s(raw);
     if (s.starts_with('~')) {
@@ -55,24 +54,22 @@ struct MaterializeResult {
 // AT-10/AT-11: defined in at_attachments_impl.cpp (impl unit) to keep the heavy
 // loom.tools.agent_runtime + loom.orchestration.tools.mcp imports out of this module's BMI (clang
 // 2GB source-location budget — app.cppm transitively imports this module).
-[[nodiscard]] std::optional<core::ContentBlock> try_attach_agent(
-    std::string_view name, const fs::path& cwd);
-[[nodiscard]] std::optional<core::ContentBlock> try_attach_mcp_resource(
-    std::string_view server, std::string_view uri);
+[[nodiscard]] std::optional<core::ContentBlock> try_attach_agent(std::string_view name,
+                                                                 const fs::path& cwd);
+[[nodiscard]] std::optional<core::ContentBlock> try_attach_mcp_resource(std::string_view server,
+                                                                        std::string_view uri);
 
 /// AT-02: scan @a input for file mentions (@path, @"quoted path"), read each
 /// readable file, and return TextBlock attachments. Non-file mentions (agents,
 /// MCP server:uri) naturally fail the regular-file check and are skipped, so
 /// this stays out of the way of AT-10/AT-11.
-[[nodiscard]] inline MaterializeResult materialize_at_mentions(
-    std::string_view input, std::string_view cwd_text) {
+[[nodiscard]] inline MaterializeResult materialize_at_mentions(std::string_view input,
+                                                               std::string_view cwd_text) {
     MaterializeResult result;
     result.text = std::string(input);
     if (input.empty()) return result;
 
-    const fs::path cwd = cwd_text.empty()
-        ? fs::current_path()
-        : fs::path(std::string(cwd_text));
+    const fs::path cwd = cwd_text.empty() ? fs::current_path() : fs::path(std::string(cwd_text));
 
     std::set<fs::path> already_attached;  // dedupe within one submit
 
@@ -111,8 +108,8 @@ struct MaterializeResult {
         // unknown/slow server). A token with a colon never falls through to file.
         if (const auto colon = raw_path.find(':');
             colon != std::string::npos && colon > 0 && colon + 1 < raw_path.size()) {
-            if (auto mcp_block = try_attach_mcp_resource(
-                    raw_path.substr(0, colon), raw_path.substr(colon + 1))) {
+            if (auto mcp_block = try_attach_mcp_resource(raw_path.substr(0, colon),
+                                                         raw_path.substr(colon + 1))) {
                 result.blocks.push_back(*std::move(mcp_block));
             }
             continue;
@@ -132,10 +129,10 @@ struct MaterializeResult {
         const auto size = fs::file_size(abs, ec);
         if (ec) continue;
         if (size > kMaxInlineFileBytes) {
-            result.blocks.push_back(core::ContentBlock{core::TextBlock{
-                std::format("The user attached the file `{}` but it is too large "
-                            "to inline ({} bytes > {} limit).",
-                            rel, size, kMaxInlineFileBytes)}});
+            result.blocks.push_back(core::ContentBlock{
+                core::TextBlock{std::format("The user attached the file `{}` but it is too large "
+                                            "to inline ({} bytes > {} limit).",
+                                            rel, size, kMaxInlineFileBytes)}});
             continue;
         }
 
@@ -144,10 +141,10 @@ struct MaterializeResult {
         std::ostringstream ss;
         ss << f.rdbuf();
 
-        result.blocks.push_back(core::ContentBlock{core::TextBlock{
-            std::format("The user attached this file:\n<file path=\"{}\">\n{}\n"
-                        "</file>",
-                        rel, ss.str())}});
+        result.blocks.push_back(core::ContentBlock{
+            core::TextBlock{std::format("The user attached this file:\n<file path=\"{}\">\n{}\n"
+                                        "</file>",
+                                        rel, ss.str())}});
     }
     return result;
 }

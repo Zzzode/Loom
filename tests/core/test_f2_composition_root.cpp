@@ -22,11 +22,11 @@
 /// through the dialogs-side adapter (the dialogs half of the inversion);
 /// the trust_dialog import is hidden inside the composition-root impl unit.
 
-#include <gtest/gtest.h>
+#include <ftxui/component/component.hpp>
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/dom/node.hpp>
 #include <ftxui/screen/screen.hpp>
-#include <ftxui/component/component.hpp>
+#include <gtest/gtest.h>
 
 import std;
 import loom.ui.dialogs.system;
@@ -48,8 +48,7 @@ namespace app_dlg = loom::ui::app_dialogs;
 /// Render an FTXUI Element to a fixed-size screen and return the text with
 /// ANSI escape sequences stripped (for content assertions).
 std::string render_element_text(ftxui::Element element, int w = 100, int h = 30) {
-    auto screen = ftxui::Screen::Create(
-        ftxui::Dimension::Fixed(w), ftxui::Dimension::Fixed(h));
+    auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(w), ftxui::Dimension::Fixed(h));
     ftxui::Render(screen, element);
     std::string raw = screen.ToString();
     std::string out;
@@ -57,7 +56,8 @@ std::string render_element_text(ftxui::Element element, int w = 100, int h = 30)
     for (std::size_t i = 0; i < raw.size();) {
         if (raw[i] == '\033' && i + 1 < raw.size() && raw[i + 1] == '[') {
             i += 2;
-            while (i < raw.size() && (raw[i] < 0x40 || raw[i] > 0x7E)) ++i;
+            while (i < raw.size() && (raw[i] < 0x40 || raw[i] > 0x7E))
+                ++i;
             if (i < raw.size()) ++i;
             continue;
         }
@@ -80,12 +80,9 @@ std::string render_element_text(ftxui::Element element, int w = 100, int h = 30)
 // It proves the miss path: resolve_dialog_factory returns a null factory for
 // every unregistered ViewKind.
 TEST(F2FeatureDialogProtocol, MissReturnsNullBeforeRegistration) {
-    EXPECT_FALSE(static_cast<bool>(
-        fdp::resolve_dialog_factory(fdp::ViewKind::AgentWizard)));
-    EXPECT_FALSE(static_cast<bool>(
-        fdp::resolve_dialog_factory(fdp::ViewKind::PluginInstall)));
-    EXPECT_FALSE(static_cast<bool>(
-        fdp::resolve_dialog_factory(fdp::ViewKind::PluginTrust)));
+    EXPECT_FALSE(static_cast<bool>(fdp::resolve_dialog_factory(fdp::ViewKind::AgentWizard)));
+    EXPECT_FALSE(static_cast<bool>(fdp::resolve_dialog_factory(fdp::ViewKind::PluginInstall)));
+    EXPECT_FALSE(static_cast<bool>(fdp::resolve_dialog_factory(fdp::ViewKind::PluginTrust)));
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -224,9 +221,7 @@ TEST(F2FeatureDialogProtocol, AdapterConvertsNeutralRequestToWizard) {
     step.title = "Adapter Step";
     step.description = "F2 adapter test";
     step.create_content = []() -> ftxui::Component {
-        return ftxui::Renderer([] {
-            return ftxui::text("F2 adapter step body");
-        });
+        return ftxui::Renderer([] { return ftxui::text("F2 adapter step body"); });
     };
     request.steps.push_back(std::move(step));
 

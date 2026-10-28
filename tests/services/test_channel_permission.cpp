@@ -1,20 +1,21 @@
 /// @file test_channel_permission.cpp
 /// @brief Service layer tests split from test_services.cpp.
 
-#include <cctype>
-#include <cstdint>
-#include <cstdlib>
-#include <atomic>
 #include <arpa/inet.h>
 #include <fcntl.h>
 #include <netinet/in.h>
 #include <signal.h>
+#include <sys/file.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/time.h>
-#include <sys/file.h>
 #include <sys/wait.h>
 #include <unistd.h>
+
+#include <atomic>
+#include <cctype>
+#include <cstdint>
+#include <cstdlib>
 #ifdef __APPLE__
 #include <CommonCrypto/CommonDigest.h>
 #else
@@ -23,9 +24,8 @@
 
 #include <gtest/gtest.h>
 #include <httplib.h>
+
 #include <limits>
-
-
 
 import std;
 import loom.cli.ccr_client;
@@ -86,7 +86,8 @@ struct EnvironmentGuard {
     std::string name;
     std::optional<std::string> previous;
 
-    EnvironmentGuard(std::string key, const std::string& value) : name(std::move(key)) {
+    EnvironmentGuard(std::string key, const std::string& value)
+        : name(std::move(key)) {
         if (const char* existing = std::getenv(name.c_str())) {
             previous = existing;
         }
@@ -108,14 +109,12 @@ struct TestMcpClient {
     loom::services::mcp::ServerCapabilities capabilities;
 };
 
-} // namespace
-
+}  // namespace
 
 // ============================================================================
 // ChannelPermission — short request ID generation
 // ============================================================================
 // TS REF: src/services/mcp/channelPermissions.ts:140-152
-
 
 TEST(ChannelPermission, ShortRequestIdIsFiveLetters) {
     using namespace loom::services::mcp;
@@ -152,10 +151,9 @@ TEST(ChannelPermission, ShortRequestIdAvoidsBlockedSubstrings) {
         auto id = short_request_id(tool_use_id);
         // Verify no blocked substring is present
         constexpr std::array<std::string_view, 24> blocked = {
-            "fuck",  "shit",  "cunt",  "cock",  "dick",  "twat",  "piss",
-            "crap",  "bitch", "whore", "ass",   "tit",   "cum",   "fag",
-            "dyke",  "nig",   "kike",  "rape",  "nazi",  "damn",  "poo",
-            "pee",   "wank",  "anus",
+            "fuck",  "shit",  "cunt", "cock", "dick", "twat", "piss", "crap",
+            "bitch", "whore", "ass",  "tit",  "cum",  "fag",  "dyke", "nig",
+            "kike",  "rape",  "nazi", "damn", "poo",  "pee",  "wank", "anus",
         };
         for (auto bad : blocked) {
             EXPECT_EQ(id.find(bad), std::string::npos)
@@ -164,12 +162,10 @@ TEST(ChannelPermission, ShortRequestIdAvoidsBlockedSubstrings) {
     }
 }
 
-
 // ============================================================================
 // ChannelPermission — truncate_for_preview
 // ============================================================================
 // TS REF: src/services/mcp/channelPermissions.ts:160-167
-
 
 TEST(ChannelPermission, TruncateForPreviewShort) {
     using namespace loom::services::mcp;
@@ -191,12 +187,10 @@ TEST(ChannelPermission, TruncateForPreviewEmpty) {
     EXPECT_EQ(result, "(unserializable)");
 }
 
-
 // ============================================================================
 // ChannelPermission — parse_permission_reply
 // ============================================================================
 // TS REF: src/services/mcp/channelPermissions.ts:75
-
 
 TEST(ChannelPermission, ParseReplyYesLowercase) {
     using namespace loom::services::mcp;
@@ -261,16 +255,14 @@ TEST(ChannelPermission, ParseReplyRejectsExtraText) {
 
 TEST(ChannelPermission, ParseReplyRejectsWrongIdLength) {
     using namespace loom::services::mcp;
-    EXPECT_FALSE(parse_permission_reply("yes tbxk").has_value());   // 4 chars
-    EXPECT_FALSE(parse_permission_reply("yes tbxkqq").has_value()); // 6 chars
+    EXPECT_FALSE(parse_permission_reply("yes tbxk").has_value());    // 4 chars
+    EXPECT_FALSE(parse_permission_reply("yes tbxkqq").has_value());  // 6 chars
 }
-
 
 // ============================================================================
 // ChannelPermission — ChannelPermissionCallbacks
 // ============================================================================
 // TS REF: src/services/mcp/channelPermissions.ts:46-61, 209-240
-
 
 TEST(ChannelPermission, CallbacksResolveAllow) {
     using namespace loom::services::mcp;
@@ -296,9 +288,8 @@ TEST(ChannelPermission, CallbacksResolveDeny) {
     using namespace loom::services::mcp;
     auto cbs = create_channel_permission_callbacks();
     ChannelPermissionBehavior received{};
-    cbs->on_response("abcde", [&](const ChannelPermissionResponse& resp) {
-        received = resp.behavior;
-    });
+    cbs->on_response("abcde",
+                     [&](const ChannelPermissionResponse& resp) { received = resp.behavior; });
     cbs->resolve("abcde", ChannelPermissionBehavior::Deny, "test");
     EXPECT_EQ(received, ChannelPermissionBehavior::Deny);
 }
@@ -313,9 +304,8 @@ TEST(ChannelPermission, CallbacksUnsubscribePreventsResolve) {
     using namespace loom::services::mcp;
     auto cbs = create_channel_permission_callbacks();
     bool called = false;
-    auto unsub = cbs->on_response("tbxkq", [&](const ChannelPermissionResponse&) {
-        called = true;
-    });
+    auto unsub =
+        cbs->on_response("tbxkq", [&](const ChannelPermissionResponse&) { called = true; });
     unsub();  // unsubscribe
     EXPECT_FALSE(cbs->resolve("tbxkq", ChannelPermissionBehavior::Allow, "test"));
     EXPECT_FALSE(called);
@@ -325,9 +315,7 @@ TEST(ChannelPermission, CallbacksCaseInsensitiveMatching) {
     using namespace loom::services::mcp;
     auto cbs = create_channel_permission_callbacks();
     bool called = false;
-    cbs->on_response("TBXKQ", [&](const ChannelPermissionResponse&) {
-        called = true;
-    });
+    cbs->on_response("TBXKQ", [&](const ChannelPermissionResponse&) { called = true; });
     // Resolve with different case
     EXPECT_TRUE(cbs->resolve("tbxkq", ChannelPermissionBehavior::Allow, "test"));
     EXPECT_TRUE(called);
@@ -337,9 +325,7 @@ TEST(ChannelPermission, CallbacksResolveDeletesBeforeCalling) {
     using namespace loom::services::mcp;
     auto cbs = create_channel_permission_callbacks();
     int call_count = 0;
-    cbs->on_response("tbxkq", [&](const ChannelPermissionResponse&) {
-        ++call_count;
-    });
+    cbs->on_response("tbxkq", [&](const ChannelPermissionResponse&) { ++call_count; });
     // First resolve succeeds
     EXPECT_TRUE(cbs->resolve("tbxkq", ChannelPermissionBehavior::Allow, "test"));
     // Second resolve on same ID fails (already consumed)
@@ -351,9 +337,9 @@ TEST(ChannelPermission, CallbacksPendingCount) {
     using namespace loom::services::mcp;
     auto cbs = create_channel_permission_callbacks();
     EXPECT_EQ(cbs->pending_count(), 0u);
-    auto u1 = cbs->on_response("aaaaa", [](auto){});
+    auto u1 = cbs->on_response("aaaaa", [](auto) {});
     EXPECT_EQ(cbs->pending_count(), 1u);
-    auto u2 = cbs->on_response("bbbbb", [](auto){});
+    auto u2 = cbs->on_response("bbbbb", [](auto) {});
     EXPECT_EQ(cbs->pending_count(), 2u);
     u1();
     EXPECT_EQ(cbs->pending_count(), 1u);
@@ -361,12 +347,10 @@ TEST(ChannelPermission, CallbacksPendingCount) {
     EXPECT_EQ(cbs->pending_count(), 0u);
 }
 
-
 // ============================================================================
 // ChannelPermission — filter_permission_relay_clients
 // ============================================================================
 // TS REF: src/services/mcp/channelPermissions.ts:177-194
-
 
 TEST(ChannelPermission, FilterRelayRequiresConnected) {
     using namespace loom::services::mcp;
@@ -379,8 +363,8 @@ TEST(ChannelPermission, FilterRelayRequiresConnected) {
     clients[1].capabilities.experimental["loom/channel"] = "true";
     clients[1].capabilities.experimental["loom/channel/permission"] = "true";
 
-    auto filtered = filter_permission_relay_clients<TestMcpClient>(
-        clients, [](auto) { return true; });
+    auto filtered =
+        filter_permission_relay_clients<TestMcpClient>(clients, [](auto) { return true; });
     ASSERT_EQ(filtered.size(), 1u);
     EXPECT_EQ(filtered[0].name, "telegram");
 }
@@ -415,8 +399,8 @@ TEST(ChannelPermission, FilterRelayRequiresBothCapabilities) {
     clients[1].capabilities.experimental["loom/channel"] = "true";
     clients[2].capabilities.experimental["loom/channel/permission"] = "true";
 
-    auto filtered = filter_permission_relay_clients<TestMcpClient>(
-        clients, [](auto) { return true; });
+    auto filtered =
+        filter_permission_relay_clients<TestMcpClient>(clients, [](auto) { return true; });
     ASSERT_EQ(filtered.size(), 1u);
     EXPECT_EQ(filtered[0].name, "both");
 }
@@ -424,88 +408,73 @@ TEST(ChannelPermission, FilterRelayRequiresBothCapabilities) {
 TEST(ChannelPermission, FilterRelayEmptyInput) {
     using namespace loom::services::mcp;
     std::vector<TestMcpClient> clients;
-    auto filtered = filter_permission_relay_clients<TestMcpClient>(
-        clients, [](auto) { return true; });
+    auto filtered =
+        filter_permission_relay_clients<TestMcpClient>(clients, [](auto) { return true; });
     EXPECT_TRUE(filtered.empty());
 }
-
 
 // ============================================================================
 // ChannelPermission — ChannelPermissionStore
 // ============================================================================
 // TS REF: conceptual extension (persistent permission rules)
 
-
 TEST(ChannelPermission, StoreDefaultIsPrompt) {
     using namespace loom::services::mcp;
     ChannelPermissionStore store;
     // No rules loaded → default to Prompt
-    EXPECT_EQ(store.check_permission("any_server", "any_tool"),
-              ChannelPermission::Prompt);
+    EXPECT_EQ(store.check_permission("any_server", "any_tool"), ChannelPermission::Prompt);
 }
 
 TEST(ChannelPermission, StoreGlobalRuleApplies) {
     using namespace loom::services::mcp;
     ChannelPermissionStore store;
-    store.set_permission(ChannelPermissionStore::make_global_rule(
-        ChannelPermission::Allowed));
-    EXPECT_EQ(store.check_permission("server_a", "tool_x"),
-              ChannelPermission::Allowed);
-    EXPECT_EQ(store.check_permission("server_b", "tool_y"),
-              ChannelPermission::Allowed);
+    store.set_permission(ChannelPermissionStore::make_global_rule(ChannelPermission::Allowed));
+    EXPECT_EQ(store.check_permission("server_a", "tool_x"), ChannelPermission::Allowed);
+    EXPECT_EQ(store.check_permission("server_b", "tool_y"), ChannelPermission::Allowed);
 }
 
 TEST(ChannelPermission, StoreServerRuleOverridesGlobal) {
     using namespace loom::services::mcp;
     ChannelPermissionStore store;
-    store.set_permission(ChannelPermissionStore::make_global_rule(
-        ChannelPermission::Prompt));
-    store.set_permission(ChannelPermissionStore::make_server_rule(
-        "trusted_server", ChannelPermission::Allowed));
-    EXPECT_EQ(store.check_permission("trusted_server", "any_tool"),
-              ChannelPermission::Allowed);
-    EXPECT_EQ(store.check_permission("other_server", "any_tool"),
-              ChannelPermission::Prompt);
+    store.set_permission(ChannelPermissionStore::make_global_rule(ChannelPermission::Prompt));
+    store.set_permission(
+        ChannelPermissionStore::make_server_rule("trusted_server", ChannelPermission::Allowed));
+    EXPECT_EQ(store.check_permission("trusted_server", "any_tool"), ChannelPermission::Allowed);
+    EXPECT_EQ(store.check_permission("other_server", "any_tool"), ChannelPermission::Prompt);
 }
 
 TEST(ChannelPermission, StoreToolRuleOverridesServer) {
     using namespace loom::services::mcp;
     ChannelPermissionStore store;
-    store.set_permission(ChannelPermissionStore::make_server_rule(
-        "my_server", ChannelPermission::Allowed));
-    store.set_permission(ChannelPermissionStore::make_tool_rule(
-        "my_server", "dangerous_tool", ChannelPermission::Denied));
-    EXPECT_EQ(store.check_permission("my_server", "safe_tool"),
-              ChannelPermission::Allowed);
-    EXPECT_EQ(store.check_permission("my_server", "dangerous_tool"),
-              ChannelPermission::Denied);
+    store.set_permission(
+        ChannelPermissionStore::make_server_rule("my_server", ChannelPermission::Allowed));
+    store.set_permission(ChannelPermissionStore::make_tool_rule("my_server", "dangerous_tool",
+                                                                ChannelPermission::Denied));
+    EXPECT_EQ(store.check_permission("my_server", "safe_tool"), ChannelPermission::Allowed);
+    EXPECT_EQ(store.check_permission("my_server", "dangerous_tool"), ChannelPermission::Denied);
 }
 
 TEST(ChannelPermission, StoreMostSpecificWins) {
     using namespace loom::services::mcp;
     ChannelPermissionStore store;
-    store.set_permission(ChannelPermissionStore::make_global_rule(
-        ChannelPermission::Prompt));
-    store.set_permission(ChannelPermissionStore::make_server_rule(
-        "srv", ChannelPermission::Allowed));
-    store.set_permission(ChannelPermissionStore::make_tool_rule(
-        "srv", "tool", ChannelPermission::Denied));
+    store.set_permission(ChannelPermissionStore::make_global_rule(ChannelPermission::Prompt));
+    store.set_permission(
+        ChannelPermissionStore::make_server_rule("srv", ChannelPermission::Allowed));
+    store.set_permission(
+        ChannelPermissionStore::make_tool_rule("srv", "tool", ChannelPermission::Denied));
     // Tool rule (score 3) > Server rule (score 2) > Global rule (score 1)
-    EXPECT_EQ(store.check_permission("srv", "tool"),
-              ChannelPermission::Denied);
+    EXPECT_EQ(store.check_permission("srv", "tool"), ChannelPermission::Denied);
 }
 
 TEST(ChannelPermission, StoreRemoveRule) {
     using namespace loom::services::mcp;
     ChannelPermissionStore store;
-    store.set_permission(ChannelPermissionStore::make_server_rule(
-        "srv", ChannelPermission::Allowed));
-    EXPECT_EQ(store.check_permission("srv", "tool"),
-              ChannelPermission::Allowed);
+    store.set_permission(
+        ChannelPermissionStore::make_server_rule("srv", ChannelPermission::Allowed));
+    EXPECT_EQ(store.check_permission("srv", "tool"), ChannelPermission::Allowed);
     bool removed = store.remove_rule(ChannelPermissionScope::Server, "srv", "");
     EXPECT_TRUE(removed);
-    EXPECT_EQ(store.check_permission("srv", "tool"),
-              ChannelPermission::Prompt);
+    EXPECT_EQ(store.check_permission("srv", "tool"), ChannelPermission::Prompt);
 }
 
 TEST(ChannelPermission, StoreRemoveNonexistentReturnsFalse) {
@@ -517,23 +486,21 @@ TEST(ChannelPermission, StoreRemoveNonexistentReturnsFalse) {
 TEST(ChannelPermission, StoreUpsertSameIdentity) {
     using namespace loom::services::mcp;
     ChannelPermissionStore store;
-    store.set_permission(ChannelPermissionStore::make_server_rule(
-        "srv", ChannelPermission::Allowed));
+    store.set_permission(
+        ChannelPermissionStore::make_server_rule("srv", ChannelPermission::Allowed));
     // Setting same identity again should update, not duplicate
-    store.set_permission(ChannelPermissionStore::make_server_rule(
-        "srv", ChannelPermission::Denied));
+    store.set_permission(
+        ChannelPermissionStore::make_server_rule("srv", ChannelPermission::Denied));
     EXPECT_EQ(store.rule_count(), 1u);
-    EXPECT_EQ(store.check_permission("srv", "tool"),
-              ChannelPermission::Denied);
+    EXPECT_EQ(store.check_permission("srv", "tool"), ChannelPermission::Denied);
 }
 
 TEST(ChannelPermission, StoreGetAllRules) {
     using namespace loom::services::mcp;
     ChannelPermissionStore store;
-    store.set_permission(ChannelPermissionStore::make_global_rule(
-        ChannelPermission::Prompt));
-    store.set_permission(ChannelPermissionStore::make_server_rule(
-        "srv", ChannelPermission::Allowed));
+    store.set_permission(ChannelPermissionStore::make_global_rule(ChannelPermission::Prompt));
+    store.set_permission(
+        ChannelPermissionStore::make_server_rule("srv", ChannelPermission::Allowed));
     auto rules = store.get_all_rules();
     EXPECT_EQ(rules.size(), 2u);
 }
@@ -546,27 +513,23 @@ TEST(ChannelPermission, StorePersistenceRoundtrip) {
     const auto tmp_file =
         fs::temp_directory_path() /
         ("loom_chanperm_roundtrip_" +
-         std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()) +
-         ".json");
-    EnvironmentGuard env_override(
-        "LOOM_CHANNEL_PERMISSIONS_FILE", tmp_file.string());
+         std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()) + ".json");
+    EnvironmentGuard env_override("LOOM_CHANNEL_PERMISSIONS_FILE", tmp_file.string());
     // Create a store, set rules, save
     {
         ChannelPermissionStore store;
-        store.set_permission(ChannelPermissionStore::make_server_rule(
-            "test_server", ChannelPermission::Allowed));
-        store.set_permission(ChannelPermissionStore::make_tool_rule(
-            "test_server", "dangerous", ChannelPermission::Denied));
+        store.set_permission(
+            ChannelPermissionStore::make_server_rule("test_server", ChannelPermission::Allowed));
+        store.set_permission(ChannelPermissionStore::make_tool_rule("test_server", "dangerous",
+                                                                    ChannelPermission::Denied));
         store.save();
     }
     // Load into a new store and verify
     {
         ChannelPermissionStore store;
         store.load();
-        EXPECT_EQ(store.check_permission("test_server", "safe"),
-                  ChannelPermission::Allowed);
-        EXPECT_EQ(store.check_permission("test_server", "dangerous"),
-                  ChannelPermission::Denied);
+        EXPECT_EQ(store.check_permission("test_server", "safe"), ChannelPermission::Allowed);
+        EXPECT_EQ(store.check_permission("test_server", "dangerous"), ChannelPermission::Denied);
     }
     // Cleanup: remove the test file
     std::error_code ec;
@@ -578,27 +541,22 @@ TEST(ChannelPermission, StoreFactoryCreatesLoaded) {
     const auto tmp_file =
         fs::temp_directory_path() /
         ("loom_chanperm_factory_" +
-         std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()) +
-         ".json");
-    EnvironmentGuard env_override(
-        "LOOM_CHANNEL_PERMISSIONS_FILE", tmp_file.string());
+         std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()) + ".json");
+    EnvironmentGuard env_override("LOOM_CHANNEL_PERMISSIONS_FILE", tmp_file.string());
     std::error_code ec;
     fs::remove(tmp_file, ec);
 
     auto store = create_channel_permission_store();
     ASSERT_NE(store, nullptr);
     // Should have loaded from disk (empty rules → default Prompt)
-    EXPECT_EQ(store->check_permission("any", "tool"),
-              ChannelPermission::Prompt);
+    EXPECT_EQ(store->check_permission("any", "tool"), ChannelPermission::Prompt);
     EXPECT_EQ(store->rule_count(), 0u);
     fs::remove(tmp_file, ec);
 }
 
-
 // ============================================================================
 // ChannelPermission — string conversion utilities
 // ============================================================================
-
 
 TEST(ChannelPermission, PermissionToString) {
     using namespace loom::services::mcp;
@@ -614,11 +572,9 @@ TEST(ChannelPermission, ScopeToString) {
     EXPECT_EQ(channel_permission_scope_to_string(ChannelPermissionScope::Tool), "Tool");
 }
 
-
 // ============================================================================
 // ChannelPermission — feature gate
 // ============================================================================
-
 
 TEST(ChannelPermission, FeatureGateDefaultsToFalse) {
     using namespace loom::services::mcp;

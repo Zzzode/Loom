@@ -20,7 +20,8 @@ namespace fs = std::filesystem;
 
 [[nodiscard]] AgentWorktreeCleanupResult cleanup_agent_worktree(std::string_view agent_id) {
     auto record = loom::tools::agent_runtime::native_agent_store().get(agent_id);
-    if (!record || !record->worktree_path || !record->worktree_git_root || !record->worktree_branch) {
+    if (!record || !record->worktree_path || !record->worktree_git_root ||
+        !record->worktree_branch) {
         return {};
     }
 
@@ -46,8 +47,8 @@ namespace fs = std::filesystem;
         result.changed = true;
         result.message = "worktree status could not be inspected; preserving worktree";
         loom::tools::agent_runtime::native_agent_store().append_transcript(
-            agent_id,
-            "system: retained worktree at " + worktree_path.string() + " because status inspection failed");
+            agent_id, "system: retained worktree at " + worktree_path.string() +
+                          " because status inspection failed");
         return result;
     }
     if (!status.output.empty()) {
@@ -65,8 +66,8 @@ namespace fs = std::filesystem;
             result.changed = true;
             result.message = "worktree HEAD could not be inspected; preserving worktree";
             loom::tools::agent_runtime::native_agent_store().append_transcript(
-                agent_id,
-                "system: retained worktree at " + worktree_path.string() + " because HEAD inspection failed");
+                agent_id, "system: retained worktree at " + worktree_path.string() +
+                              " because HEAD inspection failed");
             return result;
         }
         if (head.output != *record->worktree_base_commit) {
@@ -80,25 +81,26 @@ namespace fs = std::filesystem;
     }
 
     auto removed = loom::utils::git::run_git_command(
-        "worktree remove --force " + loom::tools::runtime_shared_utils::shell_quote(worktree_path.string()),
+        "worktree remove --force " +
+            loom::tools::runtime_shared_utils::shell_quote(worktree_path.string()),
         git_root);
     if (!removed.success) {
         result.changed = true;
         result.message = "worktree removal failed; preserving metadata";
         loom::tools::agent_runtime::native_agent_store().append_transcript(
-            agent_id,
-            "system: failed to remove worktree at " + worktree_path.string() + ": " + removed.output);
+            agent_id, "system: failed to remove worktree at " + worktree_path.string() + ": " +
+                          removed.output);
         return result;
     }
 
-    (void)loom::utils::git::run_git_command("branch -D " + loom::tools::runtime_shared_utils::shell_quote(branch), git_root);
+    (void)loom::utils::git::run_git_command(
+        "branch -D " + loom::tools::runtime_shared_utils::shell_quote(branch), git_root);
     loom::tools::agent_runtime::native_agent_store().mark_worktree_cleaned(agent_id);
     loom::tools::agent_runtime::native_agent_store().append_transcript(
-        agent_id,
-        "system: cleaned worktree " + worktree_path.string() + " and branch " + branch);
+        agent_id, "system: cleaned worktree " + worktree_path.string() + " and branch " + branch);
     result.removed = true;
     result.message = "worktree removed";
     return result;
 }
 
-} // namespace loom::tools::agent
+}  // namespace loom::tools::agent

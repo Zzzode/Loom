@@ -25,7 +25,7 @@ import std;
 
 import loom.ui.foundation.theme_provider;
 
-import loom.ui.foundation.ui_types;  // PromptInputMode
+import loom.ui.foundation.ui_types; // PromptInputMode
 
 export namespace loom::ui::placeholder {
 
@@ -43,12 +43,8 @@ inline constexpr int kQueueHintMaxShowCount = 3;
 /// We use a static list sufficient for the placeholder UX without requiring
 /// git access at render time.
 inline constexpr std::array<std::string_view, 6> kExampleCommands = {
-    "fix lint errors",
-    "how do I log an error?",
-    "write a test for main",
-    "refactor main.cpp",
-    "explain this code",
-    "/help",
+    "fix lint errors",   "how do I log an error?", "write a test for main",
+    "refactor main.cpp", "explain this code",      "/help",
 };
 
 // ── Context struct ────────────────────────────────────────────────────────
@@ -62,8 +58,7 @@ struct PlaceholderContext {
 
     /// Current input mode (Normal / Bash / VimInsert / etc).
     /// AI suggestion override (L0) only applies in Normal mode.
-    loom::ui::common::PromptInputMode input_mode =
-        loom::ui::common::PromptInputMode::Normal;
+    loom::ui::common::PromptInputMode input_mode = loom::ui::common::PromptInputMode::Normal;
 
     /// Viewing agent/teammate name.  When set and input is empty,
     /// placeholder becomes "Message @{name}..." (L2).
@@ -102,15 +97,13 @@ struct PlaceholderContext {
 /// submit_count so the example changes occasionally but doesn't flicker
 /// on every re-render.  We approximate with submit_count modulo.
 [[nodiscard]] inline std::string GetExamplePlaceholder(int submit_count) {
-    const std::size_t idx =
-        static_cast<std::size_t>(submit_count) % kExampleCommands.size();
+    const std::size_t idx = static_cast<std::size_t>(submit_count) % kExampleCommands.size();
     return std::string("Try \"") + std::string(kExampleCommands[idx]) + "\"";
 }
 
 /// Compute the contextual placeholder via the 4-tier cascade + AI override.
 /// Returns std::nullopt when no placeholder should be shown.
-[[nodiscard]] inline std::optional<std::string> ComputePlaceholder(
-    const PlaceholderContext& ctx) {
+[[nodiscard]] inline std::optional<std::string> ComputePlaceholder(const PlaceholderContext& ctx) {
 
     // ── L1: input non-empty → no placeholder ──────────────────────────────
     if (!ctx.input_text.empty()) return std::nullopt;
@@ -121,28 +114,23 @@ struct PlaceholderContext {
     // NOTE: next_action_suggestion starting with '/' is a slash-command
     // suggestion handled by autocomplete separately — don't use as placeholder.
     if (ctx.input_mode == loom::ui::common::PromptInputMode::Normal &&
-        ctx.next_action_suggestion.has_value() &&
-        !ctx.next_action_suggestion->empty() &&
-        ctx.next_action_suggestion->front() != '/' &&
-        ctx.autocomplete_suggestions_empty &&
+        ctx.next_action_suggestion.has_value() && !ctx.next_action_suggestion->empty() &&
+        ctx.next_action_suggestion->front() != '/' && ctx.autocomplete_suggestions_empty &&
         !ctx.viewing_agent_name.has_value()) {
         return std::string(*ctx.next_action_suggestion);
     }
 
     // ── L2: viewing teammate → "Message @{name}..." ──────────────────────
-    if (ctx.viewing_agent_name.has_value() &&
-        !ctx.viewing_agent_name->empty()) {
+    if (ctx.viewing_agent_name.has_value() && !ctx.viewing_agent_name->empty()) {
         std::string display_name(*ctx.viewing_agent_name);
         if (static_cast<int>(display_name.size()) > kMaxTeammateNameLength) {
-            display_name =
-                display_name.substr(0, kMaxTeammateNameLength - 3) + "...";
+            display_name = display_name.substr(0, kMaxTeammateNameLength - 3) + "...";
         }
         return "Message @" + display_name + "…";
     }
 
     // ── L3: queued commands hint ─────────────────────────────────────────
-    if (ctx.has_editable_queued &&
-        ctx.queued_hint_shown_count < kQueueHintMaxShowCount) {
+    if (ctx.has_editable_queued && ctx.queued_hint_shown_count < kQueueHintMaxShowCount) {
         return "Press up to edit queued messages";
     }
 
@@ -170,14 +158,12 @@ struct RenderedPlaceholder {
 
 /// Helper: extract the first UTF-8 code point from a string.
 /// Returns the first char + its byte length (1 for ASCII, more for multibyte).
-[[nodiscard]] inline std::pair<std::string, std::size_t> FirstUtf8Codepoint(
-    std::string_view s) {
+[[nodiscard]] inline std::pair<std::string, std::size_t> FirstUtf8Codepoint(std::string_view s) {
     if (s.empty()) return {"", 0};
     std::string result{s[0]};
     std::size_t len = 1;
     // Continuation bytes: 0x80–0xBF
-    while (len < s.size() &&
-           (static_cast<unsigned char>(s[len]) & 0xC0) == 0x80) {
+    while (len < s.size() && (static_cast<unsigned char>(s[len]) & 0xC0) == 0x80) {
         result.push_back(s[len]);
         ++len;
     }
@@ -193,14 +179,10 @@ struct RenderedPlaceholder {
 /// @param terminal_focus  Whether the terminal itself is focused.
 /// @param prefix       Optional prefix text to prepend (e.g. "❯ ").
 /// @param prefix_color Optional color for the prefix glyph.
-[[nodiscard]] inline RenderedPlaceholder RenderPlaceholder(
-    std::optional<std::string_view> placeholder,
-    std::string_view value,
-    bool show_cursor,
-    bool focused,
-    bool terminal_focus = true,
-    std::string_view prefix = "",
-    std::optional<Color> prefix_color = std::nullopt) {
+[[nodiscard]] inline RenderedPlaceholder
+RenderPlaceholder(std::optional<std::string_view> placeholder, std::string_view value,
+                  bool show_cursor, bool focused, bool terminal_focus = true,
+                  std::string_view prefix = "", std::optional<Color> prefix_color = std::nullopt) {
 
     const bool has_text = placeholder.has_value() && !placeholder->empty();
     const bool show_placeholder = value.empty() && has_text;
@@ -229,8 +211,9 @@ struct RenderedPlaceholder {
                                color(loom::ui::design::theme::current_theme().palette->text));
             const std::string rest(placeholder->substr(byte_len));
             if (!rest.empty()) {
-                ph_parts.push_back(ftxui::text(rest) | dim |
-                                   color(loom::ui::design::theme::current_theme().palette->suggestion));
+                ph_parts.push_back(
+                    ftxui::text(rest) | dim |
+                    color(loom::ui::design::theme::current_theme().palette->suggestion));
             }
         } else {
             // Empty placeholder with cursor: show solid block.

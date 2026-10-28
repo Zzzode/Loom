@@ -4,7 +4,6 @@
 module;
 #include <cstdlib>
 
-
 export module loom.constants.product;
 
 import std;
@@ -47,30 +46,27 @@ export namespace loom::constants::product {
 }
 
 /// Check if a session is in staging environment
-[[nodiscard]] inline bool is_remote_session_staging(
-    std::optional<std::string_view> session_id = std::nullopt,
-    std::optional<std::string_view> ingress_url = std::nullopt
-) {
+[[nodiscard]] inline bool
+is_remote_session_staging(std::optional<std::string_view> session_id = std::nullopt,
+                          std::optional<std::string_view> ingress_url = std::nullopt) {
     if (session_id && session_id->find("_staging_") != std::string_view::npos) return true;
     if (ingress_url && ingress_url->find("staging") != std::string_view::npos) return true;
     return false;
 }
 
 /// Check if a session is in local-dev environment
-[[nodiscard]] inline bool is_remote_session_local(
-    std::optional<std::string_view> session_id = std::nullopt,
-    std::optional<std::string_view> ingress_url = std::nullopt
-) {
+[[nodiscard]] inline bool
+is_remote_session_local(std::optional<std::string_view> session_id = std::nullopt,
+                        std::optional<std::string_view> ingress_url = std::nullopt) {
     if (session_id && session_id->find("_local_") != std::string_view::npos) return true;
     if (ingress_url && ingress_url->find("localhost") != std::string_view::npos) return true;
     return false;
 }
 
 /// Get the base URL for Loom AI based on environment
-[[nodiscard]] inline std::string get_remote_base_url(
-    std::optional<std::string_view> session_id = std::nullopt,
-    std::optional<std::string_view> ingress_url = std::nullopt
-) {
+[[nodiscard]] inline std::string
+get_remote_base_url(std::optional<std::string_view> session_id = std::nullopt,
+                    std::optional<std::string_view> ingress_url = std::nullopt) {
     (void)session_id;
     (void)ingress_url;
     // One user-configurable base; no vendor hosts are baked in. Empty means
@@ -79,12 +75,11 @@ export namespace loom::constants::product {
 }
 
 /// Get the full session URL for a remote session
-[[nodiscard]] inline std::string get_remote_session_url(
-    std::string_view session_id,
-    std::optional<std::string_view> ingress_url = std::nullopt
-) {
+[[nodiscard]] inline std::string
+get_remote_session_url(std::string_view session_id,
+                       std::optional<std::string_view> ingress_url = std::nullopt) {
     auto base = get_remote_base_url(session_id, ingress_url);
     return base + "/code/" + std::string(session_id);
 }
 
-} // namespace loom::constants::product
+}  // namespace loom::constants::product

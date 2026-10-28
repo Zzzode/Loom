@@ -13,13 +13,13 @@
 /// (the glyph helpers are declared here and defined in the buffer unit).
 module;
 
-#include <cstdint>
-
-#include <ftxui/dom/elements.hpp>
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/event.hpp>
+#include <ftxui/dom/elements.hpp>
+
 #include <cstddef>
+#include <cstdint>
 
 export module loom.ui.widgets.text_input;
 
@@ -29,9 +29,9 @@ import loom.ui.foundation.design_figures;
 
 import loom.ui.foundation.theme_provider;
 
-import loom.ui.foundation.ui_types;  // unified PromptInputMode canonical enum
-import loom.ui.prompt.prompt_paste_handler;  // PastePreview struct (GAP 1)
-import loom.vim.vim_controller;  // unified VimController state container
+import loom.ui.foundation.ui_types;         // unified PromptInputMode canonical enum
+import loom.ui.prompt.prompt_paste_handler; // PastePreview struct (GAP 1)
+import loom.vim.vim_controller;             // unified VimController state container
 
 export namespace ui::components {
 using namespace ftxui;
@@ -42,23 +42,23 @@ using namespace ftxui;
 
 /// Category of an autocomplete suggestion (exposed for external wiring)
 enum class SuggestionCategory : std::uint8_t {
-    Command,        // Slash commands (/help, /clear, etc.)
-    File,           // File paths
-    Directory,      // Directory paths
-    History,        // Previous inputs
-    Agent,          // Agent / team members
-    MCPResource,    // MCP server resource
-    Shell,          // Shell / one-shot
-    SlackChannel,   // Slack channel
-    CustomTitle,    // Section header / label
+    Command,       // Slash commands (/help, /clear, etc.)
+    File,          // File paths
+    Directory,     // Directory paths
+    History,       // Previous inputs
+    Agent,         // Agent / team members
+    MCPResource,   // MCP server resource
+    Shell,         // Shell / one-shot
+    SlackChannel,  // Slack channel
+    CustomTitle,   // Section header / label
     None,
 };
 
 /// A single autocomplete / suggestion item
 struct Suggestion {
-    std::string text;            // Inserted into buffer on accept
-    std::string display_text;    // Shown in dropdown
-    std::string description;     // Secondary description
+    std::string text;          // Inserted into buffer on accept
+    std::string display_text;  // Shown in dropdown
+    std::string description;   // Secondary description
     SuggestionCategory category = SuggestionCategory::None;
     std::optional<std::string> tag;   // E.g. "[skill]", "[agent]"
     std::optional<std::string> icon;  // Override category icon
@@ -93,7 +93,7 @@ struct PromptContext {
     // --- mode indicators ---
     PromptInputMode prompt_mode = PromptInputMode::Normal;
     PermissionMode permission = PermissionMode::Default;
-    std::string effort_level;        // "", "low", "medium", "high", "ultra"
+    std::string effort_level;  // "", "low", "medium", "high", "ultra"
     std::optional<std::string> active_agent;
     std::optional<std::string> swarm_banner;
     bool is_loading = false;
@@ -103,10 +103,10 @@ struct PromptContext {
     bool show_sandbox_hint = false;
     bool show_mode_cycle_hint = true;
     // --- counters ---
-    std::int64_t token_count = 0;      // session token usage (verbose)
-    std::int64_t char_count = 0;       // derived from input length
+    std::int64_t token_count = 0;  // session token usage (verbose)
+    std::int64_t char_count = 0;   // derived from input length
     std::int64_t line_count = 1;
-    std::int64_t input_tokens_estimate = 0; // rough token estimate for current buffer
+    std::int64_t input_tokens_estimate = 0;  // rough token estimate for current buffer
     // --- status ---
     bool is_above_warning_threshold = false;
     bool api_key_invalid = false;
@@ -244,7 +244,7 @@ bool is_utf8_continuation(unsigned char c);
 int glyph_forward(const std::string& s, int byte_pos);
 int glyph_back(const std::string& s, int byte_pos);
 
-} // namespace detail
+}  // namespace detail
 
 // ============================================================
 // Suggestion helper utilities
@@ -254,24 +254,35 @@ namespace suggest_util {
 /// Get the display icon for a suggestion category.
 inline const char* category_icon(SuggestionCategory cat) {
     switch (cat) {
-        case SuggestionCategory::Command:      return loom::ui::design::figures::kLightningBolt.data();
-        case SuggestionCategory::File:         return loom::ui::design::figures::kSquareSmall.data();
-        case SuggestionCategory::Directory:    return loom::ui::design::figures::kTriangleRightSmall.data();
-        case SuggestionCategory::History:      return loom::ui::design::figures::kRefreshArrow.data();
-        case SuggestionCategory::Agent:        return loom::ui::design::figures::kDiamond.data();
-        case SuggestionCategory::MCPResource:  return loom::ui::design::figures::kCircleDouble.data();
-        case SuggestionCategory::Shell:        return "$ ";
-        case SuggestionCategory::SlackChannel: return "#";
-        case SuggestionCategory::CustomTitle:  return loom::ui::design::figures::kDiamond.data();
-        case SuggestionCategory::None:         return "";
-        default:                               return "";
+    case SuggestionCategory::Command:
+        return loom::ui::design::figures::kLightningBolt.data();
+    case SuggestionCategory::File:
+        return loom::ui::design::figures::kSquareSmall.data();
+    case SuggestionCategory::Directory:
+        return loom::ui::design::figures::kTriangleRightSmall.data();
+    case SuggestionCategory::History:
+        return loom::ui::design::figures::kRefreshArrow.data();
+    case SuggestionCategory::Agent:
+        return loom::ui::design::figures::kDiamond.data();
+    case SuggestionCategory::MCPResource:
+        return loom::ui::design::figures::kCircleDouble.data();
+    case SuggestionCategory::Shell:
+        return "$ ";
+    case SuggestionCategory::SlackChannel:
+        return "#";
+    case SuggestionCategory::CustomTitle:
+        return loom::ui::design::figures::kDiamond.data();
+    case SuggestionCategory::None:
+        return "";
+    default:
+        return "";
     }
 }
 
 /// Get the accent color for a suggestion category.
 Color category_color(SuggestionCategory cat);
 
-} // namespace suggest_util
+}  // namespace suggest_util
 
 // ============================================================
 // TextInputImpl — Extended editor core
@@ -286,7 +297,9 @@ public:
     // Text / state accessors
     // ------------------------------------------------------------
     void set_text(const std::string& t);
+
     const std::string& text() const { return text_; }
+
     int cursor() const { return cursor_; }
 
     /// Update render-only option fields in place (placeholder, prefix,
@@ -295,14 +308,14 @@ public:
     /// component.  Does NOT touch text, cursor, history, undo state, vim
     /// state, or any callback — edit/event semantics are unchanged.
     void update_render_options(const RenderOptions& opts) noexcept {
-        options_.columns           = opts.columns;
-        options_.max_visible_rows  = opts.max_visible_rows;
-        options_.placeholder       = opts.placeholder;
-        options_.prefix            = opts.prefix;
+        options_.columns = opts.columns;
+        options_.max_visible_rows = opts.max_visible_rows;
+        options_.placeholder = opts.placeholder;
+        options_.prefix = opts.prefix;
         options_.inline_ghost_text = opts.inline_ghost_text;
-        options_.argument_hint     = opts.argument_hint;
-        options_.prefix_color      = opts.prefix_color;
-        options_.prefix_bold       = opts.prefix_bold;
+        options_.argument_hint = opts.argument_hint;
+        options_.prefix_color = opts.prefix_color;
+        options_.prefix_bold = opts.prefix_bold;
     }
 
     // ------------------------------------------------------------
@@ -323,51 +336,55 @@ public:
     [[nodiscard]] std::pair<int, int> visual_cursor_position() const;
     /// Move to the adjacent display row, preserving the current cell column.
     bool move_visual_row(int direction);
+
     bool has_selection() const {
         return sel_start_ >= 0 && sel_end_ >= 0 && sel_start_ != sel_end_;
     }
+
     std::pair<int, int> selection() const {
         if (!has_selection()) return {-1, -1};
-        return {std::min(sel_start_, sel_end_),
-                std::max(sel_start_, sel_end_)};
+        return {std::min(sel_start_, sel_end_), std::max(sel_start_, sel_end_)};
     }
+
     int history_index() const { return static_cast<int>(history_index_); }
 
     PromptContext& mutable_context() { return options_.context; }
+
     const PromptContext& context() const { return options_.context; }
 
     // ------------------------------------------------------------
     // Vim mode accessors
     // ------------------------------------------------------------
     /// Current vim mode (only meaningful when options_.vim_mode is set).
-    [[nodiscard]] loom::ui::common::VimMode vim_mode() const {
-        return vim_.mode;
-    }
+    [[nodiscard]] loom::ui::common::VimMode vim_mode() const { return vim_.mode; }
+
     /// Explicitly set the vim mode (e.g. from /vim command).
     void set_vim_mode(loom::ui::common::VimMode m) {
         vim_.mode = m;
         vim_.pending_operator.clear();
     }
+
     /// Returns true when vim mode is enabled and currently in a navigation mode
     /// (Normal, Visual, VisualLine, VisualBlock, Command).
     [[nodiscard]] bool vim_is_navigation() const {
-        return options_.vim_mode.has_value() &&
-               loom::ui::common::is_navigation_mode(vim_.mode);
+        return options_.vim_mode.has_value() && loom::ui::common::is_navigation_mode(vim_.mode);
     }
+
     /// Returns the yank register content (for status display / debugging).
-    [[nodiscard]] const std::string& vim_register() const {
-        return vim_.unnamed_register;
-    }
+    [[nodiscard]] const std::string& vim_register() const { return vim_.unnamed_register; }
+
     /// Returns the pending operator string ("d", "y", or "").
-    [[nodiscard]] const std::string& vim_pending_operator() const {
-        return vim_.pending_operator;
-    }
+    [[nodiscard]] const std::string& vim_pending_operator() const { return vim_.pending_operator; }
 
     // ------------------------------------------------------------
     // History
     // ------------------------------------------------------------
     void add_to_history(const std::string& entry);
-    void clear_history() { history_.clear(); history_index_ = std::string::npos; }
+
+    void clear_history() {
+        history_.clear();
+        history_index_ = std::string::npos;
+    }
 
     // ------------------------------------------------------------
     // Core editing primitives (public for test / external driver)
@@ -380,9 +397,12 @@ public:
     void move_cursor(int delta, bool extend_selection);
     void move_home(bool extend);
     void move_end(bool extend);
+
     void move_top(bool extend) { apply_move(0, extend); }
+
     void move_bottom(bool extend);
     void select_all();
+
     void clear_selection() { sel_start_ = sel_end_ = -1; }
 
     void undo();
@@ -409,12 +429,16 @@ public:
     // Suggestions
     // ------------------------------------------------------------
     const std::vector<Suggestion>& suggestions() const { return suggestions_; }
+
     bool suggestions_visible() const { return showing_suggestions_; }
+
     int selected_suggestion() const { return selected_suggestion_; }
+
     void update_suggestions_from_provider();
     void accept_suggestion();
     void select_previous_suggestion();
     void select_next_suggestion();
+
     void hide_suggestions() { showing_suggestions_ = false; }
 
     // ------------------------------------------------------------
@@ -442,9 +466,7 @@ public:
     void ConfirmPaste();
 
     /// Cancel the pending paste preview (discard the paste content).
-    void CancelPaste() {
-        paste_preview_.reset();
-    }
+    void CancelPaste() { paste_preview_.reset(); }
 
     /// Render the paste preview confirmation overlay.
     /// Shows line count + "(large paste - press Enter to confirm)" + a
@@ -471,8 +493,7 @@ public:
     /// Render a suggestions dropdown from an externally-supplied list.
     /// `selected` is clamped to [0, suggestions.size()-1]; -1 disables.
     /// Used by repl_screen to surface autocomplete_suggestions inline.
-    Element RenderSuggestionsFromListPub(const std::vector<Suggestion>& sugs,
-                                         int selected);
+    Element RenderSuggestionsFromListPub(const std::vector<Suggestion>& sugs, int selected);
 
 private:
     // ------------------------------------------------------------
@@ -490,9 +511,9 @@ private:
     void submit_internal(bool hard);
 
     void push_undo();
-    detail::BufferSnapshot snapshot() const {
-        return {text_, cursor_, sel_start_, sel_end_};
-    }
+
+    detail::BufferSnapshot snapshot() const { return {text_, cursor_, sel_start_, sel_end_}; }
+
     void load_snapshot(const detail::BufferSnapshot& s);
     void refresh_blink();
 
@@ -619,8 +640,7 @@ private:
 /// Create a Prompt-level TextInput component wrapping TextInputImpl.
 /// Exposes the internal impl via shared_ptr so parent components can
 /// call PasteText() / TickBlink() / access context().
-inline std::shared_ptr<TextInputImpl> MakeTextInputCore(
-    const TextInputOptions& options = {}) {
+inline std::shared_ptr<TextInputImpl> MakeTextInputCore(const TextInputOptions& options = {}) {
     return std::make_shared<TextInputImpl>(options);
 }
 
@@ -630,4 +650,4 @@ inline std::shared_ptr<TextInputImpl> MakeTextInputCore(
 Component TextInput(const TextInputOptions& options = {},
                     std::shared_ptr<TextInputImpl>* out_impl = nullptr);
 
-} // namespace ui::components
+}  // namespace ui::components

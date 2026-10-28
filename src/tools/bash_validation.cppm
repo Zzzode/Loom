@@ -14,7 +14,6 @@
 
 module;
 
-
 export module loom.tools.bash_validation;
 
 import std;
@@ -29,30 +28,25 @@ export namespace loom::tools::bash_validation {
 
 // ── Re-exported types ──────────────────────────────────────────────────────
 
-using PermissionMode     = mode_validation::PermissionMode;
+using PermissionMode = mode_validation::PermissionMode;
 using PermissionBehavior = mode_validation::PermissionBehavior;
-using PermissionResult   = mode_validation::PermissionResult;
-using DecisionReason     = mode_validation::DecisionReason;
+using PermissionResult = mode_validation::PermissionResult;
+using DecisionReason = mode_validation::DecisionReason;
 using DecisionReasonType = mode_validation::DecisionReasonType;
 
-using FileOperationType  = path_validation::FileOperationType;
-using PathCommand        = path_validation::PathCommand;
+using FileOperationType = path_validation::FileOperationType;
+using PathCommand = path_validation::PathCommand;
 using PathPermissionContext = path_validation::PathPermissionContext;
-using PathPermissionResult  = path_validation::PathPermissionResult;
-using PermissionUpdate      = path_validation::PermissionUpdate;
-using PermissionUpdateType  = path_validation::PermissionUpdateType;
+using PathPermissionResult = path_validation::PathPermissionResult;
+using PermissionUpdate = path_validation::PermissionUpdate;
+using PermissionUpdateType = path_validation::PermissionUpdateType;
 
-using SandboxInput          = sandbox::SandboxInput;
-using SandboxRuntimeConfig  = sandbox::SandboxRuntimeConfig;
+using SandboxInput = sandbox::SandboxInput;
+using SandboxRuntimeConfig = sandbox::SandboxRuntimeConfig;
 
 // ── Back-compat envelope types (original stub API preserved) ───────────────
 
-enum class ValidationMode {
-    Normal,
-    ReadOnly,
-    Restricted,
-    Sandbox
-};
+enum class ValidationMode { Normal, ReadOnly, Restricted, Sandbox };
 
 struct EnvelopeResult {
     bool valid;
@@ -68,46 +62,43 @@ struct PathValidationContext {
 // ── Envelope implementations (delegate to the real logic) ──────────────────
 
 /// Validate a command against a ValidationMode (aggregate wrapper).
-inline EnvelopeResult validate_mode(std::string_view command,
-                                     ValidationMode mode) {
+inline EnvelopeResult validate_mode(std::string_view command, ValidationMode mode) {
     PermissionMode pm = PermissionMode::kDefault;
     switch (mode) {
-        case ValidationMode::ReadOnly:
-        case ValidationMode::Restricted: {
-            auto rr = readonly_validation::check_read_only_constraints(command, false);
-            if (rr.behavior == PermissionBehavior::kAllow) return {true, std::nullopt};
-            if (rr.message) return {false, *rr.message};
-            return {false, "command is not read-only"};
-        }
-        case ValidationMode::Sandbox: {
-            bool sb = sandbox::should_use_sandbox(
-                std::optional<std::string>(std::string(command)), false);
-            if (!sb) return {true, "command excluded from sandbox"};
-            return {true, std::nullopt};
-        }
-        case ValidationMode::Normal:
-        default:
-            // Mode-specific (acceptEdits) handling.
-            auto mr = mode_validation::check_permission_mode(command, pm);
-            return {mr.behavior != PermissionBehavior::kDeny, mr.message};
+    case ValidationMode::ReadOnly:
+    case ValidationMode::Restricted: {
+        auto rr = readonly_validation::check_read_only_constraints(command, false);
+        if (rr.behavior == PermissionBehavior::kAllow) return {true, std::nullopt};
+        if (rr.message) return {false, *rr.message};
+        return {false, "command is not read-only"};
+    }
+    case ValidationMode::Sandbox: {
+        bool sb =
+            sandbox::should_use_sandbox(std::optional<std::string>(std::string(command)), false);
+        if (!sb) return {true, "command excluded from sandbox"};
+        return {true, std::nullopt};
+    }
+    case ValidationMode::Normal:
+    default:
+        // Mode-specific (acceptEdits) handling.
+        auto mr = mode_validation::check_permission_mode(command, pm);
+        return {mr.behavior != PermissionBehavior::kDeny, mr.message};
     }
 }
 
 /// Validate paths in a command string — wraps check_path_constraints.
-inline EnvelopeResult validate_paths(std::string_view command,
-                                     const PathValidationContext& ctx) {
+inline EnvelopeResult validate_paths(std::string_view command, const PathValidationContext& ctx) {
     std::vector<std::filesystem::path> dirs;
     dirs.reserve(ctx.allowed_paths.size());
-    for (auto& p : ctx.allowed_paths) dirs.emplace_back(p);
+    for (auto& p : ctx.allowed_paths)
+        dirs.emplace_back(p);
     path_validation::PathPermissionContext ppc{
-        .cwd = ctx.working_dir.empty()
-            ? std::filesystem::current_path()
-            : std::filesystem::path(ctx.working_dir),
+        .cwd = ctx.working_dir.empty() ? std::filesystem::current_path()
+                                       : std::filesystem::path(ctx.working_dir),
         .allowed_dirs = std::move(dirs),
     };
     auto r = path_validation::check_path_constraints(command, ppc, false);
-    if (r.behavior == PermissionBehavior::kAsk ||
-        r.behavior == PermissionBehavior::kDeny) {
+    if (r.behavior == PermissionBehavior::kAsk || r.behavior == PermissionBehavior::kDeny) {
         return {false, r.message};
     }
     return {true, std::nullopt};
@@ -135,4 +126,4 @@ inline EnvelopeResult validate_sed_command(std::string_view sed_expr) {
     return {true, std::nullopt};
 }
 
-} // namespace loom::tools::bash_validation
+}  // namespace loom::tools::bash_validation

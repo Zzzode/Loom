@@ -5,6 +5,7 @@
 module;
 
 #include <unistd.h>
+
 #include <cstdint>
 
 export module loom.types.types;
@@ -19,8 +20,7 @@ export namespace loom::core {
 // ============================================================
 
 /// Generic strong type tag to prevent mixing different ID types
-template <typename Tag>
-struct StrongId {
+template <typename Tag> struct StrongId {
     std::string value;
 
     auto operator<=>(const StrongId&) const = default;
@@ -35,8 +35,11 @@ struct StrongId {
 
 // Tag types for strong IDs
 struct ConversationIdTag {};
+
 struct SessionIdTag {};
+
 struct MessageIdTag {};
+
 struct ToolUseIdTag {};
 
 /// Unique conversation identifier
@@ -63,10 +66,14 @@ enum class Role : std::uint8_t {
 /// Convert Role to its string representation
 [[nodiscard]] constexpr std::string_view role_to_string(Role role) noexcept {
     switch (role) {
-        case Role::User:      return "user";
-        case Role::Assistant: return "assistant";
-        case Role::System:    return "system";
-        case Role::Tool:      return "tool";
+    case Role::User:
+        return "user";
+    case Role::Assistant:
+        return "assistant";
+    case Role::System:
+        return "system";
+    case Role::Tool:
+        return "tool";
     }
     return "unknown";
 }
@@ -83,8 +90,8 @@ struct TextBlock {
 /// Represents a tool invocation request from the assistant
 struct ToolUseBlock {
     ToolUseId id;
-    std::string name;           // Tool name (e.g., "Read", "Write")
-    std::string input_json;     // JSON-encoded tool input parameters
+    std::string name;        // Tool name (e.g., "Read", "Write")
+    std::string input_json;  // JSON-encoded tool input parameters
 };
 
 /// A single content item within a tool result.
@@ -102,7 +109,7 @@ struct ToolResultContentItem {
 struct ToolResultBlock {
     ToolUseId tool_use_id;
     std::variant<std::string, std::vector<ToolResultContentItem>> content;
-    bool is_error = false;      // Whether the tool execution failed
+    bool is_error = false;  // Whether the tool execution failed
 };
 
 /// Flatten a ToolResultBlock's content to a single string for backward-compat
@@ -134,37 +141,38 @@ struct ToolResultBlock {
 /// entire UI layer.
 enum class ImageBlockSource : std::uint8_t {
     Unknown,
-    File,        // @file reference or drag-and-drop
-    Clipboard,   // ctrl+v / cmd+v clipboard paste
-    Base64,      // Inline base64 payload from programmatic sources
+    File,       // @file reference or drag-and-drop
+    Clipboard,  // ctrl+v / cmd+v clipboard paste
+    Base64,     // Inline base64 payload from programmatic sources
 };
 
 /// Base64 image content block.
 struct ImageBlock {
-    std::string media_type;                       // e.g. "image/png"
-    std::string data;                             // base64 encoded bytes
-    std::optional<std::size_t> width;             // pixels, if known at capture
-    std::optional<std::size_t> height;            // pixels, if known at capture
-    std::optional<std::size_t> size_bytes;        // raw payload size (before base64)
-    std::optional<std::string> file_name;         // e.g. "Screenshot 2026-06-30.png"
-    std::optional<std::string> source_path;       // absolute path, if from file
+    std::string media_type;                  // e.g. "image/png"
+    std::string data;                        // base64 encoded bytes
+    std::optional<std::size_t> width;        // pixels, if known at capture
+    std::optional<std::size_t> height;       // pixels, if known at capture
+    std::optional<std::size_t> size_bytes;   // raw payload size (before base64)
+    std::optional<std::string> file_name;    // e.g. "Screenshot 2026-06-30.png"
+    std::optional<std::string> source_path;  // absolute path, if from file
     ImageBlockSource source = ImageBlockSource::Unknown;
 };
 
 /// Base64 document content block.
 struct DocumentBlock {
-    std::string media_type;      // e.g. application/pdf
-    std::string data;            // base64 encoded bytes
+    std::string media_type;  // e.g. application/pdf
+    std::string data;        // base64 encoded bytes
 };
 
 /// Extended thinking block from the model
 struct ThinkingBlock {
-    std::string thinking;       // Internal reasoning text
-    std::string signature;      // Cryptographic signature for verification
+    std::string thinking;   // Internal reasoning text
+    std::string signature;  // Cryptographic signature for verification
 };
 
 /// Union of all possible content block types
-using ContentBlock = std::variant<TextBlock, ToolUseBlock, ToolResultBlock, ImageBlock, DocumentBlock, ThinkingBlock>;
+using ContentBlock = std::variant<TextBlock, ToolUseBlock, ToolResultBlock, ImageBlock,
+                                  DocumentBlock, ThinkingBlock>;
 
 // ============================================================
 // Message types
@@ -186,8 +194,8 @@ struct UserMessage : MessageBase {
 /// Response from the assistant (may contain tool use blocks)
 struct AssistantMessage : MessageBase {
     static constexpr Role role = Role::Assistant;
-    std::optional<std::string> stop_reason;   // "end_turn", "tool_use", "max_tokens"
-    std::optional<std::string> model;         // Model used for this response
+    std::optional<std::string> stop_reason;  // "end_turn", "tool_use", "max_tokens"
+    std::optional<std::string> model;        // Model used for this response
 };
 
 /// System prompt message
@@ -209,8 +217,8 @@ struct SnipMetadata {
 
 struct SystemMessage : MessageBase {
     static constexpr Role role = Role::System;
-    std::optional<std::string> cache_control; // Cache policy for this prompt
-    std::optional<std::string> subtype;       // e.g. compact_boundary
+    std::optional<std::string> cache_control;  // Cache policy for this prompt
+    std::optional<std::string> subtype;        // e.g. compact_boundary
     std::optional<CompactMetadata> compact_metadata;
     std::optional<SnipMetadata> snip_metadata;
 };
@@ -226,18 +234,13 @@ struct ToolUseMessage : MessageBase {
 struct ToolResultMessage : MessageBase {
     static constexpr Role role = Role::Tool;
     ToolUseId tool_use_id;
-    std::string tool_name;   ///< Name of the tool that produced this result
+    std::string tool_name;  ///< Name of the tool that produced this result
     bool is_error = false;
 };
 
 /// Union type for any conversation message
-using Message = std::variant<
-    UserMessage,
-    AssistantMessage,
-    SystemMessage,
-    ToolUseMessage,
-    ToolResultMessage
->;
+using Message =
+    std::variant<UserMessage, AssistantMessage, SystemMessage, ToolUseMessage, ToolResultMessage>;
 
 /// Extract the role from any message variant
 [[nodiscard]] inline Role get_role(const Message& msg) {
@@ -250,15 +253,13 @@ using Message = std::variant<
 
 /// Tracks API token consumption for a request
 struct TokenUsage {
-    std::uint32_t input_tokens = 0;         // Prompt tokens consumed
-    std::uint32_t output_tokens = 0;        // Completion tokens generated
-    std::uint32_t cache_creation_tokens = 0; // Tokens used for cache creation
-    std::uint32_t cache_read_tokens = 0;    // Tokens read from cache
+    std::uint32_t input_tokens = 0;           // Prompt tokens consumed
+    std::uint32_t output_tokens = 0;          // Completion tokens generated
+    std::uint32_t cache_creation_tokens = 0;  // Tokens used for cache creation
+    std::uint32_t cache_read_tokens = 0;      // Tokens read from cache
 
     /// Total tokens consumed in this request
-    [[nodiscard]] std::uint32_t total() const noexcept {
-        return input_tokens + output_tokens;
-    }
+    [[nodiscard]] std::uint32_t total() const noexcept { return input_tokens + output_tokens; }
 
     /// Accumulate another usage record into this one
     TokenUsage& operator+=(const TokenUsage& other) noexcept {
@@ -283,13 +284,13 @@ struct StreamStart {
 /// A content block has started (index identifies position)
 struct ContentBlockStart {
     std::uint32_t index;
-    ContentBlock block;         // Initial block state
+    ContentBlock block;  // Initial block state
 };
 
 /// Incremental text delta within a content block
 struct ContentBlockDelta {
     std::uint32_t index;
-    std::string delta_text;     // Appended text fragment
+    std::string delta_text;  // Appended text fragment
 };
 
 /// A content block has been fully received
@@ -299,22 +300,22 @@ struct ContentBlockStop {
 
 /// Tool execution has started (used for live result preview / progress UI)
 struct ToolExecutionStart {
-    std::string tool_use_id;      ///< Tool use ID from the model
-    std::string tool_name;        ///< Tool name (e.g. "Bash", "Edit")
-    std::string input_json;       ///< Tool input parameters (JSON)
+    std::string tool_use_id;  ///< Tool use ID from the model
+    std::string tool_name;    ///< Tool name (e.g. "Bash", "Edit")
+    std::string input_json;   ///< Tool input parameters (JSON)
 };
 
 /// Tool execution progress update (partial result preview)
 struct ToolExecutionProgress {
-    std::string tool_use_id;      ///< Tool use ID
-    std::string partial_result;   ///< Accumulated (or latest) partial result text
+    std::string tool_use_id;     ///< Tool use ID
+    std::string partial_result;  ///< Accumulated (or latest) partial result text
 };
 
 /// Tool execution has completed
 struct ToolExecutionEnd {
-    std::string tool_use_id;      ///< Tool use ID
-    std::string result;           ///< Final result
-    bool is_error = false;        ///< Whether the execution failed
+    std::string tool_use_id;  ///< Tool use ID
+    std::string result;       ///< Final result
+    bool is_error = false;    ///< Whether the execution failed
 };
 
 /// The entire message stream is complete
@@ -330,17 +331,9 @@ struct StreamError {
 };
 
 /// Union of all streaming events
-using StreamEvent = std::variant<
-    StreamStart,
-    ContentBlockStart,
-    ContentBlockDelta,
-    ContentBlockStop,
-    ToolExecutionStart,
-    ToolExecutionProgress,
-    ToolExecutionEnd,
-    StreamEnd,
-    StreamError
->;
+using StreamEvent = std::variant<StreamStart, ContentBlockStart, ContentBlockDelta,
+                                 ContentBlockStop, ToolExecutionStart, ToolExecutionProgress,
+                                 ToolExecutionEnd, StreamEnd, StreamError>;
 
 // ============================================================
 // Error types using std::expected
@@ -348,9 +341,9 @@ using StreamEvent = std::variant<
 
 /// Error severity levels
 enum class ErrorSeverity : std::uint8_t {
-    Warning,    // Non-fatal, operation may continue
-    Error,      // Operation failed but system is stable
-    Fatal,      // Unrecoverable, session must terminate
+    Warning,  // Non-fatal, operation may continue
+    Error,    // Operation failed but system is stable
+    Fatal,    // Unrecoverable, session must terminate
 };
 
 /// Categorized error codes for the engine
@@ -398,8 +391,8 @@ struct Error {
     ErrorCode code;
     ErrorSeverity severity = ErrorSeverity::Error;
     std::string message{};
-    std::optional<std::string> detail{};       // Extended diagnostic info
-    std::optional<std::string> suggestion{};   // Suggested remediation
+    std::optional<std::string> detail{};      // Extended diagnostic info
+    std::optional<std::string> suggestion{};  // Suggested remediation
 
     /// Create a simple error with message
     [[nodiscard]] static Error make(ErrorCode code, std::string message) {
@@ -421,8 +414,7 @@ struct Error {
 };
 
 /// Standard result type used throughout the engine
-template <typename T>
-using Result = std::expected<T, Error>;
+template <typename T> using Result = std::expected<T, Error>;
 
 /// Void result for operations that either succeed or fail
 using VoidResult = std::expected<void, Error>;
@@ -443,4 +435,4 @@ concept JsonDeserializable = requires(std::string_view json) {
     { T::from_json(json) } -> std::same_as<Result<T>>;
 };
 
-} // namespace loom::core
+}  // namespace loom::core

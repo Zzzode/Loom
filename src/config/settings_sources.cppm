@@ -13,42 +13,54 @@ enum class SettingSource : unsigned char {
 };
 
 inline constexpr std::array<SettingSource, 5> setting_sources = {
-    SettingSource::UserSettings,
-    SettingSource::ProjectSettings,
-    SettingSource::LocalSettings,
-    SettingSource::FlagSettings,
-    SettingSource::PolicySettings,
+    SettingSource::UserSettings, SettingSource::ProjectSettings, SettingSource::LocalSettings,
+    SettingSource::FlagSettings, SettingSource::PolicySettings,
 };
 
 [[nodiscard]] inline std::string_view to_string(SettingSource source) noexcept {
     switch (source) {
-        case SettingSource::UserSettings: return "userSettings";
-        case SettingSource::ProjectSettings: return "projectSettings";
-        case SettingSource::LocalSettings: return "localSettings";
-        case SettingSource::FlagSettings: return "flagSettings";
-        case SettingSource::PolicySettings: return "policySettings";
+    case SettingSource::UserSettings:
+        return "userSettings";
+    case SettingSource::ProjectSettings:
+        return "projectSettings";
+    case SettingSource::LocalSettings:
+        return "localSettings";
+    case SettingSource::FlagSettings:
+        return "flagSettings";
+    case SettingSource::PolicySettings:
+        return "policySettings";
     }
     return "userSettings";
 }
 
 [[nodiscard]] inline std::string_view get_setting_source_name(SettingSource source) noexcept {
     switch (source) {
-        case SettingSource::UserSettings: return "user";
-        case SettingSource::ProjectSettings: return "project";
-        case SettingSource::LocalSettings: return "project, gitignored";
-        case SettingSource::FlagSettings: return "cli flag";
-        case SettingSource::PolicySettings: return "managed";
+    case SettingSource::UserSettings:
+        return "user";
+    case SettingSource::ProjectSettings:
+        return "project";
+    case SettingSource::LocalSettings:
+        return "project, gitignored";
+    case SettingSource::FlagSettings:
+        return "cli flag";
+    case SettingSource::PolicySettings:
+        return "managed";
     }
     return "user";
 }
 
 [[nodiscard]] inline std::string_view get_source_display_name(SettingSource source) noexcept {
     switch (source) {
-        case SettingSource::UserSettings: return "User";
-        case SettingSource::ProjectSettings: return "Project";
-        case SettingSource::LocalSettings: return "Local";
-        case SettingSource::FlagSettings: return "Flag";
-        case SettingSource::PolicySettings: return "Managed";
+    case SettingSource::UserSettings:
+        return "User";
+    case SettingSource::ProjectSettings:
+        return "Project";
+    case SettingSource::LocalSettings:
+        return "Local";
+    case SettingSource::FlagSettings:
+        return "Flag";
+    case SettingSource::PolicySettings:
+        return "Managed";
     }
     return "User";
 }
@@ -71,7 +83,8 @@ inline constexpr std::array<SettingSource, 5> setting_sources = {
     return "";
 }
 
-[[nodiscard]] inline std::string_view get_display_name_capitalized(std::string_view source) noexcept {
+[[nodiscard]] inline std::string_view
+get_display_name_capitalized(std::string_view source) noexcept {
     if (source == "userSettings") return "User settings";
     if (source == "projectSettings") return "Shared project settings";
     if (source == "localSettings") return "Project local settings";
@@ -86,7 +99,8 @@ inline constexpr std::array<SettingSource, 5> setting_sources = {
 [[nodiscard]] inline std::string trim_copy(std::string_view value) {
     auto first = value.begin();
     auto last = value.end();
-    while (first != last && (*first == ' ' || *first == '\t' || *first == '\r' || *first == '\n')) ++first;
+    while (first != last && (*first == ' ' || *first == '\t' || *first == '\r' || *first == '\n'))
+        ++first;
     while (first != last) {
         auto prev = last;
         --prev;
@@ -96,7 +110,8 @@ inline constexpr std::array<SettingSource, 5> setting_sources = {
     return std::string(first, last);
 }
 
-[[nodiscard]] inline std::expected<std::vector<SettingSource>, std::string> parse_setting_sources_flag(std::string_view flag) {
+[[nodiscard]] inline std::expected<std::vector<SettingSource>, std::string>
+parse_setting_sources_flag(std::string_view flag) {
     if (flag.empty()) return std::vector<SettingSource>{};
 
     std::vector<SettingSource> result;
@@ -106,10 +121,15 @@ inline constexpr std::array<SettingSource, 5> setting_sources = {
         const auto end = comma == std::string_view::npos ? flag.size() : comma;
         const auto name = trim_copy(flag.substr(start, end - start));
 
-        if (name == "user") result.push_back(SettingSource::UserSettings);
-        else if (name == "project") result.push_back(SettingSource::ProjectSettings);
-        else if (name == "local") result.push_back(SettingSource::LocalSettings);
-        else return std::unexpected("Invalid setting source: " + name + ". Valid options are: user, project, local");
+        if (name == "user")
+            result.push_back(SettingSource::UserSettings);
+        else if (name == "project")
+            result.push_back(SettingSource::ProjectSettings);
+        else if (name == "local")
+            result.push_back(SettingSource::LocalSettings);
+        else
+            return std::unexpected("Invalid setting source: " + name +
+                                   ". Valid options are: user, project, local");
 
         if (comma == std::string_view::npos) break;
         start = comma + 1;
@@ -117,4 +137,4 @@ inline constexpr std::array<SettingSource, 5> setting_sources = {
     return result;
 }
 
-} // namespace loom::utils::settings_sources
+}  // namespace loom::utils::settings_sources

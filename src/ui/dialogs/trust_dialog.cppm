@@ -27,12 +27,12 @@
 
 module;
 
-#include <cstdint>
-
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/event.hpp>
 #include <ftxui/dom/elements.hpp>
+
+#include <cstdint>
 
 export module loom.ui.dialogs.trust_dialog;
 
@@ -62,8 +62,8 @@ using tu::SensitiveMatch;
 using tu::TrustChoice;
 
 // Re-exported constants.
-using tu::kHighTierCountdownSeconds;
 using tu::kCriticalConfirmWord;
+using tu::kHighTierCountdownSeconds;
 
 // =========================================================================
 // Extra types (carried over from original skeleton)
@@ -86,7 +86,7 @@ struct WorkspaceTrustProps {
     std::function<void(TrustChoice)> on_done;
     std::string workspace_path;
     SecuritySources sources;
-    std::vector<std::string> commands; // slash/skill commands with bash
+    std::vector<std::string> commands;  // slash/skill commands with bash
 };
 
 /// Props for the fully-general tiered trust dialog.
@@ -124,80 +124,78 @@ namespace detail {
 [[nodiscard]] inline Color risk_color(tu::RiskLevel level) {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
     switch (level) {
-        case tu::RiskLevel::Low:      return pal.success;
-        case tu::RiskLevel::Medium:   return pal.warning;
-        case tu::RiskLevel::High:     return pal.danger;
-        case tu::RiskLevel::Critical: return pal.danger;
+    case tu::RiskLevel::Low:
+        return pal.success;
+    case tu::RiskLevel::Medium:
+        return pal.warning;
+    case tu::RiskLevel::High:
+        return pal.danger;
+    case tu::RiskLevel::Critical:
+        return pal.danger;
     }
     return pal.text;
 }
 
 [[nodiscard]] inline std::string_view risk_icon(tu::RiskLevel level) {
     switch (level) {
-        case tu::RiskLevel::Low:      return loom::ui::design::figures::kInfo;
-        case tu::RiskLevel::Medium:   return loom::ui::design::figures::kWarning;
-        case tu::RiskLevel::High:     return loom::ui::design::figures::kWarning;
-        case tu::RiskLevel::Critical: return loom::ui::design::figures::kCross;
+    case tu::RiskLevel::Low:
+        return loom::ui::design::figures::kInfo;
+    case tu::RiskLevel::Medium:
+        return loom::ui::design::figures::kWarning;
+    case tu::RiskLevel::High:
+        return loom::ui::design::figures::kWarning;
+    case tu::RiskLevel::Critical:
+        return loom::ui::design::figures::kCross;
     }
     return loom::ui::design::figures::kBullet;
 }
 
 [[nodiscard]] inline bool has_any_concerns(const SecuritySources& src) {
-    return src.has_mcp_servers || src.has_hooks || src.has_bash_execution
-        || src.has_api_key_helper || src.has_aws_commands
-        || src.has_gcp_commands || src.has_otel_headers_helper
-        || src.has_dangerous_env_vars;
+    return src.has_mcp_servers || src.has_hooks || src.has_bash_execution ||
+           src.has_api_key_helper || src.has_aws_commands || src.has_gcp_commands ||
+           src.has_otel_headers_helper || src.has_dangerous_env_vars;
 }
 
-[[nodiscard]] inline std::vector<std::string> list_concerns(
-    const SecuritySources& src)
-{
+[[nodiscard]] inline std::vector<std::string> list_concerns(const SecuritySources& src) {
     std::vector<std::string> concerns;
-    if (src.has_mcp_servers)         concerns.emplace_back("MCP servers configured");
-    if (src.has_hooks)               concerns.emplace_back("Hooks defined");
-    if (src.has_bash_execution)      concerns.emplace_back("Bash command execution");
-    if (src.has_api_key_helper)      concerns.emplace_back("API key helper commands");
-    if (src.has_aws_commands)        concerns.emplace_back("AWS CLI commands");
-    if (src.has_gcp_commands)        concerns.emplace_back("GCP CLI commands");
+    if (src.has_mcp_servers) concerns.emplace_back("MCP servers configured");
+    if (src.has_hooks) concerns.emplace_back("Hooks defined");
+    if (src.has_bash_execution) concerns.emplace_back("Bash command execution");
+    if (src.has_api_key_helper) concerns.emplace_back("API key helper commands");
+    if (src.has_aws_commands) concerns.emplace_back("AWS CLI commands");
+    if (src.has_gcp_commands) concerns.emplace_back("GCP CLI commands");
     if (src.has_otel_headers_helper) concerns.emplace_back("OTEL headers helper");
-    if (src.has_dangerous_env_vars)  concerns.emplace_back("Dangerous environment variables");
+    if (src.has_dangerous_env_vars) concerns.emplace_back("Dangerous environment variables");
     return concerns;
 }
 
-} // namespace detail
+}  // namespace detail
 
 // =========================================================================
 // Rendering: individual sections
 // =========================================================================
 
 /// Render the coloured title-bar strip.
-[[nodiscard]] inline Element RenderTitleBar(tu::RiskLevel level,
-                                            std::string_view custom_title)
-{
-    const auto title = custom_title.empty()
-        ? tu::get_risk_title(level)
-        : std::string{custom_title};
+[[nodiscard]] inline Element RenderTitleBar(tu::RiskLevel level, std::string_view custom_title) {
+    const auto title = custom_title.empty() ? tu::get_risk_title(level) : std::string{custom_title};
     return hbox({
-        text(std::string{detail::risk_icon(level)} + " "),
-        text(title) | bold | color(detail::risk_color(level)),
-    }) | borderEmpty;
+               text(std::string{detail::risk_icon(level)} + " "),
+               text(title) | bold | color(detail::risk_color(level)),
+           }) |
+           borderEmpty;
 }
 
 /// Render the action summary (one-liner under the title).
-[[nodiscard]] inline Element RenderSummary(const tu::RiskSummary& summary,
-                                           tu::RiskLevel level)
-{
+[[nodiscard]] inline Element RenderSummary(const tu::RiskSummary& summary, tu::RiskLevel level) {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
-    return paragraph(tu::get_trust_message(level, summary))
-         | color(pal.text) | size(WIDTH, LESS_THAN, 78);
+    return paragraph(tu::get_trust_message(level, summary)) | color(pal.text) |
+           size(WIDTH, LESS_THAN, 78);
 }
 
 /// Render the plugin info panel (name, version, author, homepage, etc.)
-[[nodiscard]] inline Element RenderPluginPanel(const PluginDefinition& def,
-                                               bool is_update,
+[[nodiscard]] inline Element RenderPluginPanel(const PluginDefinition& def, bool is_update,
                                                bool has_signature,
-                                               const std::string& marketplace_domain)
-{
+                                               const std::string& marketplace_domain) {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
     Elements rows;
     rows.push_back(hbox({
@@ -222,29 +220,24 @@ namespace detail {
     }
     rows.push_back(hbox({
         text("Install type: ") | bold,
-        text(is_update ? "UPDATE" : "NEW INSTALL")
-            | color(is_update ? pal.warning : pal.success),
+        text(is_update ? "UPDATE" : "NEW INSTALL") | color(is_update ? pal.warning : pal.success),
         text("  • Signed: ") | bold,
-        text(has_signature ? "yes" : "NO")
-            | color(has_signature ? pal.success : pal.danger),
+        text(has_signature ? "yes" : "NO") | color(has_signature ? pal.success : pal.danger),
     }));
     if (!marketplace_domain.empty()) {
         const bool safe = tu::is_known_safe_domain(marketplace_domain);
         rows.push_back(hbox({
             text("Marketplace: ") | bold,
-            text(marketplace_domain)
-                | color(safe ? pal.text : pal.warning),
-            text(safe ? "  [trusted]" : "  [NOT OFFICIAL — verify source]")
-                | color(safe ? pal.success : pal.danger),
+            text(marketplace_domain) | color(safe ? pal.text : pal.warning),
+            text(safe ? "  [trusted]" : "  [NOT OFFICIAL — verify source]") |
+                color(safe ? pal.success : pal.danger),
         }));
     }
     return vbox(std::move(rows)) | borderLight;
 }
 
 /// Render the sensitive-path list (inside a collapsible-like panel).
-[[nodiscard]] inline Element RenderSensitivePaths(
-    const std::vector<SensitiveMatch>& matches)
-{
+[[nodiscard]] inline Element RenderSensitivePaths(const std::vector<SensitiveMatch>& matches) {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
     if (matches.empty()) return text("");
 
@@ -278,10 +271,8 @@ namespace detail {
 }
 
 /// Render the workspace-trust path banner.
-[[nodiscard]] inline Element RenderWorkspaceBanner(
-    std::string_view workspace_path,
-    const SecuritySources& src)
-{
+[[nodiscard]] inline Element RenderWorkspaceBanner(std::string_view workspace_path,
+                                                   const SecuritySources& src) {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
     Elements parts;
     parts.push_back(hbox({
@@ -289,12 +280,12 @@ namespace detail {
         text(std::string{workspace_path}) | bold,
     }));
     parts.push_back(text(""));
-    parts.push_back(paragraph(
-        "Quick safety check: Is this a project you created or one you trust? "
-        "(Like your own code, a well-known open source project, or work from "
-        "your team). If not, take a moment to review what's in this folder "
-        "first."));
-    parts.push_back(text("Loom'll be able to read, edit, and execute files here.") | color(pal.muted));
+    parts.push_back(paragraph("Quick safety check: Is this a project you created or one you trust? "
+                              "(Like your own code, a well-known open source project, or work from "
+                              "your team). If not, take a moment to review what's in this folder "
+                              "first."));
+    parts.push_back(text("Loom'll be able to read, edit, and execute files here.") |
+                    color(pal.muted));
 
     if (detail::has_any_concerns(src)) {
         parts.push_back(text(""));
@@ -327,7 +318,7 @@ struct DialogState {
     // Critical tier: "I understand" checkbox + YES input
     bool understand_risk = false;
     std::string yes_input;
-    bool show_second_confirm = false; // true → input box visible
+    bool show_second_confirm = false;  // true → input box visible
 
     // High tier: countdown (seconds remaining)
     int countdown_remaining = 0;
@@ -341,46 +332,47 @@ struct DialogState {
 /// (Secondary checkboxes / inputs are not counted here.)
 [[nodiscard]] inline int tier_button_count(tu::RiskLevel level) {
     switch (level) {
-        case tu::RiskLevel::Low:      return 2; // Allow / Cancel
-        case tu::RiskLevel::Medium:   return 3; // Allow once / Always / Cancel
-        case tu::RiskLevel::High:     return 4; // Allow once / Always / View / Cancel
-        case tu::RiskLevel::Critical: return 2; // Enable anyway / Cancel
+    case tu::RiskLevel::Low:
+        return 2;  // Allow / Cancel
+    case tu::RiskLevel::Medium:
+        return 3;  // Allow once / Always / Cancel
+    case tu::RiskLevel::High:
+        return 4;  // Allow once / Always / View / Cancel
+    case tu::RiskLevel::Critical:
+        return 2;  // Enable anyway / Cancel
     }
     return 2;
 }
 
 /// Build button labels (index matches selection indices for the tier).
-[[nodiscard]] inline std::vector<std::string> tier_button_labels(
-    tu::RiskLevel level, bool has_paths_to_view)
-{
+[[nodiscard]] inline std::vector<std::string> tier_button_labels(tu::RiskLevel level,
+                                                                 bool has_paths_to_view) {
     using tu::RiskLevel;
     switch (level) {
-        case RiskLevel::Low:
-            return {"Allow", "Cancel"};
-        case RiskLevel::Medium:
-            return {"Allow once", "Always allow this", "Cancel"};
-        case RiskLevel::High:
-            return has_paths_to_view
-                ? std::vector<std::string>{"Allow once", "Always allow", "View file", "Cancel"}
-                : std::vector<std::string>{"Allow once", "Always allow", "Skip (no file)", "Cancel"};
-        case RiskLevel::Critical:
-            return {"Enable anyway", "Cancel"};
+    case RiskLevel::Low:
+        return {"Allow", "Cancel"};
+    case RiskLevel::Medium:
+        return {"Allow once", "Always allow this", "Cancel"};
+    case RiskLevel::High:
+        return has_paths_to_view
+                   ? std::vector<std::string>{"Allow once", "Always allow", "View file", "Cancel"}
+                   : std::vector<std::string>{"Allow once", "Always allow", "Skip (no file)",
+                                              "Cancel"};
+    case RiskLevel::Critical:
+        return {"Enable anyway", "Cancel"};
     }
     return {"OK", "Cancel"};
 }
 
 /// Render a single button row.
-[[nodiscard]] inline Element RenderButtonRow(
-    const std::vector<std::string>& labels,
-    int selected,
-    tu::RiskLevel level,
-    bool allow_disabled = false)
-{
+[[nodiscard]] inline Element RenderButtonRow(const std::vector<std::string>& labels, int selected,
+                                             tu::RiskLevel level, bool allow_disabled = false) {
     Elements parts;
     const int n = static_cast<int>(labels.size());
     for (int i = 0; i < n; ++i) {
         const bool is_sel = (i == selected);
-        auto label = text((is_sel ? (std::string{loom::ui::design::figures::kPlay} + " ") : "  ") + labels[i] + " ");
+        auto label = text((is_sel ? (std::string{loom::ui::design::figures::kPlay} + " ") : "  ") +
+                          labels[i] + " ");
         if (is_sel) label = label | bold | color(detail::risk_color(level));
         if (allow_disabled && i == 0 && level == tu::RiskLevel::High) {
             // High tier: primary Allow is dimmed until countdown expires.
@@ -404,34 +396,36 @@ struct DialogState {
     }
     return hbox({
         text((" " + std::string{loom::ui::design::figures::kEllipsis} + " ")) | color(pal.warning),
-        text(std::format(
-            "Please review carefully. Allow enabled in {} second{}…",
-            s.countdown_remaining,
-            s.countdown_remaining == 1 ? "" : "s")) | color(pal.warning),
+        text(std::format("Please review carefully. Allow enabled in {} second{}…",
+                         s.countdown_remaining, s.countdown_remaining == 1 ? "" : "s")) |
+            color(pal.warning),
     });
 }
 
 /// Render the critical-tier checkbox + YES input.
 [[nodiscard]] inline Element RenderCriticalGates(const DialogState& s) {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
-    const Color gate = s.understand_risk ? loom::ui::design::theme::current_theme().palette->success : loom::ui::design::theme::current_theme().palette->danger;
+    const Color gate = s.understand_risk ? loom::ui::design::theme::current_theme().palette->success
+                                         : loom::ui::design::theme::current_theme().palette->danger;
     Elements parts;
     parts.push_back(hbox({
         text(s.understand_risk ? "☑ " : "☐ ") | bold | color(gate),
-        text("I understand the risk of proceeding.")
-            | color(s.understand_risk ? pal.text : pal.danger),
+        text("I understand the risk of proceeding.") |
+            color(s.understand_risk ? pal.text : pal.danger),
     }));
     if (s.show_second_confirm || s.understand_risk) {
         parts.push_back(hbox({
             text(" Type ") | color(pal.muted),
             text(std::string{tu::kCriticalConfirmWord}) | bold | color(pal.danger),
             text(" to confirm: ") | color(pal.muted),
-            text(s.yes_input.empty() ? std::string{"(empty)"} : s.yes_input)
-                | color(s.yes_input == tu::kCriticalConfirmWord ? pal.success : pal.danger),
-            text("│") | (loom::ui::design::theme::current_theme().a11y.reduced_motion ? nothing : blink),
+            text(s.yes_input.empty() ? std::string{"(empty)"} : s.yes_input) |
+                color(s.yes_input == tu::kCriticalConfirmWord ? pal.success : pal.danger),
+            text("│") |
+                (loom::ui::design::theme::current_theme().a11y.reduced_motion ? nothing : blink),
         }));
-        parts.push_back(text(
-            " (Esc / Cancel aborts. Typing anything other than YES is rejected.)") | color(pal.muted));
+        parts.push_back(
+            text(" (Esc / Cancel aborts. Typing anything other than YES is rejected.)") |
+            color(pal.muted));
     }
     return vbox(std::move(parts));
 }
@@ -440,18 +434,15 @@ struct DialogState {
 // Full dialog renderer
 // =========================================================================
 
-[[nodiscard]] inline Element RenderTrustDialogFull(
-    const std::shared_ptr<DialogState>& s)
-{
+[[nodiscard]] inline Element RenderTrustDialogFull(const std::shared_ptr<DialogState>& s) {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
     const auto level = s->props.forced_level;
     const auto& summary = s->props.summary;
     const auto labels = tier_button_labels(level, !s->props.paths.empty());
 
     // Determine if critical-tier gating is satisfied.
-    const bool critical_ok =
-        s->props.forced_level != tu::RiskLevel::Critical
-        || (s->understand_risk && s->yes_input == tu::kCriticalConfirmWord);
+    const bool critical_ok = s->props.forced_level != tu::RiskLevel::Critical ||
+                             (s->understand_risk && s->yes_input == tu::kCriticalConfirmWord);
 
     // Resolve workspace path for the legacy banner.
     std::string workspace_path;
@@ -467,11 +458,9 @@ struct DialogState {
     if (s->props.action == ActionType::WorkspaceTrust) {
         body.push_back(RenderWorkspaceBanner(workspace_path, {}));
     } else if (s->props.plugin.has_value()) {
-        body.push_back(RenderPluginPanel(
-            *s->props.plugin,
-            s->props.plugin_is_update,
-            s->props.plugin_has_signature,
-            s->props.marketplace_domain));
+        body.push_back(RenderPluginPanel(*s->props.plugin, s->props.plugin_is_update,
+                                         s->props.plugin_has_signature,
+                                         s->props.marketplace_domain));
         body.push_back(text(""));
     }
 
@@ -519,9 +508,8 @@ struct DialogState {
     }
 
     // Buttons
-    const bool allow_disabled =
-        (level == tu::RiskLevel::High && s->countdown_remaining > 0)
-        || (level == tu::RiskLevel::Critical && !critical_ok);
+    const bool allow_disabled = (level == tu::RiskLevel::High && s->countdown_remaining > 0) ||
+                                (level == tu::RiskLevel::Critical && !critical_ok);
 
     body.push_back(RenderButtonRow(labels, s->selected, level, allow_disabled));
     body.push_back(text(""));
@@ -529,28 +517,28 @@ struct DialogState {
         text("Security guide") | color(pal.info) | underlined,
     }));
     body.push_back(hbox({
-        text("Enter") | bold,
-        text(" to confirm · "),
-        text("Esc") | bold,
-        text(" to cancel · "),
-        text("↑/↓ j/k") | bold,
-        text(" navigate · "),
-        text("D") | bold,
-        text(" details · "),
-        text("Space") | bold,
-        text(" toggle checkbox"),
-    }) | color(pal.muted));
+                       text("Enter") | bold,
+                       text(" to confirm · "),
+                       text("Esc") | bold,
+                       text(" to cancel · "),
+                       text("↑/↓ j/k") | bold,
+                       text(" navigate · "),
+                       text("D") | bold,
+                       text(" details · "),
+                       text("Space") | bold,
+                       text(" toggle checkbox"),
+                   }) |
+                   color(pal.muted));
 
     const auto col = detail::risk_color(level);
-    return window(
-        hbox({
-            text(" ") | ftxui::color(col),
-            text(std::string{detail::risk_icon(level)} + " "),
-            text(tu::get_risk_title(level)) | bold | ftxui::color(col),
-            text(" "),
-        }),
-        vbox(std::move(body)) | xflex
-    ) | ftxui::color(col) | size(WIDTH, LESS_THAN, 86);
+    return window(hbox({
+                      text(" ") | ftxui::color(col),
+                      text(std::string{detail::risk_icon(level)} + " "),
+                      text(tu::get_risk_title(level)) | bold | ftxui::color(col),
+                      text(" "),
+                  }),
+                  vbox(std::move(body)) | xflex) |
+           ftxui::color(col) | size(WIDTH, LESS_THAN, 86);
 }
 
 // =========================================================================
@@ -587,8 +575,7 @@ inline void emit_choice(std::shared_ptr<DialogState> s, TrustChoice choice) {
 // =========================================================================
 
 /// Build a fully-general tiered trust dialog.
-[[nodiscard]] inline Component MakeTrustDialogComponent(TrustDialogProps props)
-{
+[[nodiscard]] inline Component MakeTrustDialogComponent(TrustDialogProps props) {
     // --- Pre-compute risk tier + sensitive paths --------------------------
     if (props.summary.sensitive_paths.empty() && !props.paths.empty()) {
         props.summary.sensitive_paths = tu::scan_paths_for_sensitive(props.paths);
@@ -596,16 +583,16 @@ inline void emit_choice(std::shared_ptr<DialogState> s, TrustChoice choice) {
 
     // Plugin path: re-derive risk summary using plugin_risk_summary().
     if (props.plugin.has_value() && props.plugin_caps.has_value()) {
-        props.summary = tu::plugin_risk_summary(
-            *props.plugin, *props.plugin_caps,
-            props.marketplace_domain,
-            /*is_first_install*/ !props.plugin_is_update,
-            /*is_update*/ props.plugin_is_update,
-            /*has_signature*/ props.plugin_has_signature);
+        props.summary =
+            tu::plugin_risk_summary(*props.plugin, *props.plugin_caps, props.marketplace_domain,
+                                    /*is_first_install*/ !props.plugin_is_update,
+                                    /*is_update*/ props.plugin_is_update,
+                                    /*has_signature*/ props.plugin_has_signature);
         // Re-scan paths if caller supplied any (e.g. plugin entrypoint).
         if (!props.paths.empty()) {
             auto extra = tu::scan_paths_for_sensitive(props.paths);
-            for (auto& m : extra) props.summary.sensitive_paths.push_back(std::move(m));
+            for (auto& m : extra)
+                props.summary.sensitive_paths.push_back(std::move(m));
         }
     }
 
@@ -631,15 +618,15 @@ inline void emit_choice(std::shared_ptr<DialogState> s, TrustChoice choice) {
     // on every keystroke by recording a start instant and recomputing the
     // remaining seconds lazily inside the renderer closure.
     auto countdown_start = std::make_shared<std::chrono::steady_clock::time_point>(
-        is_high ? std::chrono::steady_clock::now()
-                : std::chrono::steady_clock::time_point{});
+        is_high ? std::chrono::steady_clock::now() : std::chrono::steady_clock::time_point{});
 
     auto base = Renderer([state, is_high, countdown_start] {
         // High tier: lazily recompute the countdown each frame. This avoids
         // needing a background thread or FTXUI's animation primitives.
         if (is_high && state->countdown_active) {
             const auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(
-                std::chrono::steady_clock::now() - *countdown_start).count();
+                                     std::chrono::steady_clock::now() - *countdown_start)
+                                     .count();
             const int remaining =
                 std::max(0, tu::kHighTierCountdownSeconds - static_cast<int>(elapsed));
             state->countdown_remaining = remaining;
@@ -650,78 +637,80 @@ inline void emit_choice(std::shared_ptr<DialogState> s, TrustChoice choice) {
 
     const int btn_count = tier_button_count(state->props.forced_level);
 
-    auto final_component = base | CatchEvent([state, btn_count, is_high](Event event) -> bool {
-        // Navigation
-        if (event == Event::ArrowUp || event == Event::Character('k')) {
-            state->selected = std::max(0, state->selected - 1);
-            return true;
-        }
-        if (event == Event::ArrowDown || event == Event::Character('j')) {
-            state->selected = std::min(btn_count - 1, state->selected + 1);
-            return true;
-        }
-        // Toggle details panel
-        if (event == Event::Character('d') || event == Event::Character('D')) {
-            state->show_details = !state->show_details;
-            return true;
-        }
-        // Toggle current-tier checkbox(es)
-        if (event == Event::Character(' ')) {
-            toggle_selected_gate(*state);
-            return true;
-        }
-        // Critical tier: typed input for YES confirmation
-        if (state->props.forced_level == tu::RiskLevel::Critical &&
-            (state->understand_risk || state->show_second_confirm))
-        {
-            if (event.is_character()) {
-                const char c = event.character()[0];
-                // Accept Y/E/S — build up the string exactly up to length 3
-                if (state->yes_input.size() < 3) {
-                    state->yes_input.push_back(c);
+    auto final_component =
+        base | CatchEvent([state, btn_count, is_high](Event event) -> bool {
+            // Navigation
+            if (event == Event::ArrowUp || event == Event::Character('k')) {
+                state->selected = std::max(0, state->selected - 1);
+                return true;
+            }
+            if (event == Event::ArrowDown || event == Event::Character('j')) {
+                state->selected = std::min(btn_count - 1, state->selected + 1);
+                return true;
+            }
+            // Toggle details panel
+            if (event == Event::Character('d') || event == Event::Character('D')) {
+                state->show_details = !state->show_details;
+                return true;
+            }
+            // Toggle current-tier checkbox(es)
+            if (event == Event::Character(' ')) {
+                toggle_selected_gate(*state);
+                return true;
+            }
+            // Critical tier: typed input for YES confirmation
+            if (state->props.forced_level == tu::RiskLevel::Critical &&
+                (state->understand_risk || state->show_second_confirm)) {
+                if (event.is_character()) {
+                    const char c = event.character()[0];
+                    // Accept Y/E/S — build up the string exactly up to length 3
+                    if (state->yes_input.size() < 3) {
+                        state->yes_input.push_back(c);
+                    }
+                    return true;
                 }
-                return true;
+                if (event == Event::Backspace) {
+                    if (!state->yes_input.empty()) state->yes_input.pop_back();
+                    return true;
+                }
             }
-            if (event == Event::Backspace) {
-                if (!state->yes_input.empty()) state->yes_input.pop_back();
-                return true;
+            // Countdown redraw (any custom event or periodic redraw)
+            if (is_high && state->countdown_active) {
+                // Any animation-frame-like event triggers a re-render via the
+                // Renderer closure; nothing extra needed here.
             }
-        }
-        // Countdown redraw (any custom event or periodic redraw)
-        if (is_high && state->countdown_active) {
-            // Any animation-frame-like event triggers a re-render via the
-            // Renderer closure; nothing extra needed here.
-        }
-        // Confirm
-        if (event == Event::Return) {
-            // Safety gate checks
-            const auto level = state->props.forced_level;
+            // Confirm
+            if (event == Event::Return) {
+                // Safety gate checks
+                const auto level = state->props.forced_level;
 
-            if (level == tu::RiskLevel::High && state->countdown_remaining > 0) {
-                // Cannot accept while countdown is running.
-                return true;
-            }
-            if (level == tu::RiskLevel::Critical) {
-                if (!state->understand_risk) return true;
-                if (state->yes_input != tu::kCriticalConfirmWord) return true;
-            }
+                if (level == tu::RiskLevel::High && state->countdown_remaining > 0) {
+                    // Cannot accept while countdown is running.
+                    return true;
+                }
+                if (level == tu::RiskLevel::Critical) {
+                    if (!state->understand_risk) return true;
+                    if (state->yes_input != tu::kCriticalConfirmWord) return true;
+                }
 
-            // Map selection → choice
-            TrustChoice choice = TrustChoice::Cancel;
-            switch (level) {
+                // Map selection → choice
+                TrustChoice choice = TrustChoice::Cancel;
+                switch (level) {
                 case tu::RiskLevel::Low:
-                    choice = (state->selected == 0) ? TrustChoice::AllowOnce
-                                                    : TrustChoice::Cancel;
+                    choice = (state->selected == 0) ? TrustChoice::AllowOnce : TrustChoice::Cancel;
                     break;
                 case tu::RiskLevel::Medium:
-                    if (state->selected == 0)       choice = TrustChoice::AllowOnce;
-                    else if (state->selected == 1)  choice = TrustChoice::AlwaysAllow;
-                    else                            choice = TrustChoice::Cancel;
+                    if (state->selected == 0)
+                        choice = TrustChoice::AllowOnce;
+                    else if (state->selected == 1)
+                        choice = TrustChoice::AlwaysAllow;
+                    else
+                        choice = TrustChoice::Cancel;
                     break;
                 case tu::RiskLevel::High:
                     if (state->selected == 0) {
-                        choice = state->always_allow ? TrustChoice::AlwaysAllow
-                                                     : TrustChoice::AllowOnce;
+                        choice =
+                            state->always_allow ? TrustChoice::AlwaysAllow : TrustChoice::AllowOnce;
                     } else if (state->selected == 1) {
                         choice = TrustChoice::AlwaysAllow;
                     } else if (state->selected == 2) {
@@ -731,20 +720,20 @@ inline void emit_choice(std::shared_ptr<DialogState> s, TrustChoice choice) {
                     }
                     break;
                 case tu::RiskLevel::Critical:
-                    choice = (state->selected == 0) ? TrustChoice::EnableAnyway
-                                                    : TrustChoice::Cancel;
+                    choice =
+                        (state->selected == 0) ? TrustChoice::EnableAnyway : TrustChoice::Cancel;
                     break;
+                }
+                emit_choice(state, choice);
+                return true;
             }
-            emit_choice(state, choice);
-            return true;
-        }
-        // Cancel
-        if (event == Event::Escape) {
-            emit_choice(state, TrustChoice::Cancel);
-            return true;
-        }
-        return false;
-    });
+            // Cancel
+            if (event == Event::Escape) {
+                emit_choice(state, TrustChoice::Cancel);
+                return true;
+            }
+            return false;
+        });
 
     return final_component;
 }
@@ -758,25 +747,23 @@ inline void emit_choice(std::shared_ptr<DialogState> s, TrustChoice choice) {
 /// plugins/plugin.cppm) and the TrustLevel model from
 /// commands/plugin/plugin_trust.cppm to short-circuit when the plugin is
 /// already verified.
-[[nodiscard]] inline Component MakePluginTrustDialog(
-    const PluginDefinition& def,
-    const PluginCapabilities& caps,
-    std::function<void(TrustChoice)> on_done,
-    std::string_view marketplace_domain = "",
-    bool is_update = false,
-    bool has_signature = true)
-{
-    using loom::commands::TrustLevel;
+[[nodiscard]] inline Component MakePluginTrustDialog(const PluginDefinition& def,
+                                                     const PluginCapabilities& caps,
+                                                     std::function<void(TrustChoice)> on_done,
+                                                     std::string_view marketplace_domain = "",
+                                                     bool is_update = false,
+                                                     bool has_signature = true) {
     using loom::commands::get_trust_level;
+    using loom::commands::TrustLevel;
 
     // Short-circuit via the existing plugin-trust model (DO NOT re-implement
     // the trust model).
     const TrustLevel tl = get_trust_level(def.name);
-    const bool permissions_unsafe = std::any_of(
-        caps.tools.begin(), caps.tools.end(),
-        [](const auto& t) { return t.find("bash") != std::string::npos
-                                  || t.find("exec") != std::string::npos
-                                  || t.find("unsafe") != std::string::npos; });
+    const bool permissions_unsafe =
+        std::any_of(caps.tools.begin(), caps.tools.end(), [](const auto& t) {
+            return t.find("bash") != std::string::npos || t.find("exec") != std::string::npos ||
+                   t.find("unsafe") != std::string::npos;
+        });
 
     TrustDialogProps props;
     props.on_done = std::move(on_done);
@@ -799,28 +786,24 @@ inline void emit_choice(std::shared_ptr<DialogState> s, TrustChoice choice) {
 }
 
 /// Factory: path access / write trust dialog.
-[[nodiscard]] inline Component MakePathTrustDialog(
-    ActionType action,
-    const std::vector<std::string>& paths,
-    std::function<void(TrustChoice)> on_done,
-    std::string_view action_label = "")
-{
+[[nodiscard]] inline Component MakePathTrustDialog(ActionType action,
+                                                   const std::vector<std::string>& paths,
+                                                   std::function<void(TrustChoice)> on_done,
+                                                   std::string_view action_label = "") {
     TrustDialogProps props;
     props.on_done = std::move(on_done);
     props.action = action;
     props.paths = paths;
-    props.action_label = action_label.empty()
-        ? (action == ActionType::PathWrite ? "Modify file(s)" : "Access file(s)")
-        : std::string{action_label};
+    props.action_label = action_label.empty() ? (action == ActionType::PathWrite ? "Modify file(s)"
+                                                                                 : "Access file(s)")
+                                              : std::string{action_label};
 
     props.summary.action_summary = [&] {
         if (paths.empty()) return std::string{"This action touches no files."};
         const auto head = tu::format_list_with_and(paths, 3);
-        return std::format(
-            "{} will {} {}",
-            action_label.empty() ? "The agent" : std::string{action_label},
-            action == ActionType::PathWrite ? "write to" : "read",
-            head);
+        return std::format("{} will {} {}",
+                           action_label.empty() ? "The agent" : std::string{action_label},
+                           action == ActionType::PathWrite ? "write to" : "read", head);
     }();
 
     return MakeTrustDialogComponent(std::move(props));
@@ -828,20 +811,19 @@ inline void emit_choice(std::shared_ptr<DialogState> s, TrustChoice choice) {
 
 /// Back-compat factory: the original two-option workspace trust dialog.
 /// Used by bootstrap before the first query.
-[[nodiscard]] inline Component MakeWorkspaceTrustDialog(WorkspaceTrustProps props)
-{
+[[nodiscard]] inline Component MakeWorkspaceTrustDialog(WorkspaceTrustProps props) {
     TrustDialogProps generic;
     generic.on_done = std::move(props.on_done);
     generic.action = ActionType::WorkspaceTrust;
     generic.workspace_path_storage = std::make_shared<std::string>(std::move(props.workspace_path));
 
     RiskSummary summary;
-    summary.action_summary = std::format(
-        "Loom wants access to the workspace at {}.",
-        *generic.workspace_path_storage);
+    summary.action_summary =
+        std::format("Loom wants access to the workspace at {}.", *generic.workspace_path_storage);
 
     const auto concerns = detail::list_concerns(props.sources);
-    for (const auto& c : concerns) summary.risk_factors.push_back(c);
+    for (const auto& c : concerns)
+        summary.risk_factors.push_back(c);
     for (const auto& cmd : props.commands) {
         summary.risk_factors.push_back("Command has bash capability: " + cmd);
     }
@@ -856,4 +838,4 @@ inline void emit_choice(std::shared_ptr<DialogState> s, TrustChoice choice) {
     return MakeTrustDialogComponent(std::move(generic));
 }
 
-} // namespace loom::ui::trust_dialog
+}  // namespace loom::ui::trust_dialog

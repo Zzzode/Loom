@@ -23,7 +23,9 @@ using loom::core::ToolResult;
 namespace fs = std::filesystem;
 
 [[nodiscard]] Result<ToolResult> execute_skill_tool(const ToolInput& input) {
-    auto name = json_string(input.json(), "name").or_else([&] { return json_string(input.json(), "skill"); });
+    auto name = json_string(input.json(), "name").or_else([&] {
+        return json_string(input.json(), "skill");
+    });
     if (!name || name->empty()) return ToolResult::error("skill requires name");
 
     // Terminal fallback for when no orchestration-installed SkillLoader
@@ -106,7 +108,8 @@ namespace fs = std::filesystem;
         names.push_back("sleep");
     }
     if constexpr (features::kTaskTools) {
-        for (const auto* t : {"task_create", "task_get", "task_list", "task_output", "task_stop", "task_update"}) {
+        for (const auto* t :
+             {"task_create", "task_get", "task_list", "task_output", "task_stop", "task_update"}) {
             names.push_back(t);
         }
     }
@@ -157,7 +160,7 @@ namespace fs = std::filesystem;
     return ToolResult::success(out);
 }
 
-} // namespace loom::tools::detail
+}  // namespace loom::tools::detail
 
 namespace loom::tools {
 
@@ -165,4 +168,4 @@ namespace loom::tools {
     return detail::runtime_tool_names_impl();
 }
 
-} // namespace loom::tools
+}  // namespace loom::tools

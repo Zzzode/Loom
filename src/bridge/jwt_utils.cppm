@@ -10,8 +10,8 @@ export namespace loom::bridge {
 
 // JWT payload structure (decoded claims)
 struct JwtPayload {
-    std::string sub;       // Subject
-    std::string iss;       // Issuer
+    std::string sub;                            // Subject
+    std::string iss;                            // Issuer
     std::chrono::system_clock::time_point exp;  // Expiration
     std::chrono::system_clock::time_point iat;  // Issued at
     std::map<std::string, std::string> claims;  // Additional claims
@@ -25,11 +25,14 @@ inline std::expected<std::string, std::string> base64url_decode(std::string_view
     // Convert base64url to standard base64
     std::string b64(input);
     for (char& c : b64) {
-        if (c == '-') c = '+';
-        else if (c == '_') c = '/';
+        if (c == '-')
+            c = '+';
+        else if (c == '_')
+            c = '/';
     }
     // Add padding
-    while (b64.size() % 4 != 0) b64 += '=';
+    while (b64.size() % 4 != 0)
+        b64 += '=';
 
     // Decode
     std::string result;
@@ -60,7 +63,8 @@ inline std::optional<std::string> extract_json_string(std::string_view json, std
 
     pos += search.size();
     // Skip whitespace and colon
-    while (pos < json.size() && (json[pos] == ' ' || json[pos] == ':')) ++pos;
+    while (pos < json.size() && (json[pos] == ' ' || json[pos] == ':'))
+        ++pos;
 
     if (pos >= json.size()) return std::nullopt;
 
@@ -123,13 +127,15 @@ std::expected<JwtPayload, std::string> decode_jwt(std::string_view token) {
         try {
             long long exp_ts = std::stoll(*exp);
             result.exp = std::chrono::system_clock::from_time_t(static_cast<time_t>(exp_ts));
-        } catch (...) {}
+        } catch (...) {
+        }
     }
     if (auto iat = extract_json_string(payload_json, "iat")) {
         try {
             long long iat_ts = std::stoll(*iat);
             result.iat = std::chrono::system_clock::from_time_t(static_cast<time_t>(iat_ts));
-        } catch (...) {}
+        } catch (...) {
+        }
     }
 
     // Store all claims in the map
@@ -143,7 +149,7 @@ std::expected<JwtPayload, std::string> decode_jwt(std::string_view token) {
 bool is_jwt_expired(std::string_view token) {
     auto decoded = decode_jwt(token);
     if (!decoded.has_value()) {
-        return true; // Invalid tokens are considered expired
+        return true;  // Invalid tokens are considered expired
     }
 
     auto now = std::chrono::system_clock::now();
@@ -170,4 +176,4 @@ std::optional<std::string> get_jwt_claim(std::string_view token, std::string_vie
     return std::nullopt;
 }
 
-} // namespace loom::bridge
+}  // namespace loom::bridge

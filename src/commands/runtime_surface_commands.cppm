@@ -59,8 +59,7 @@ namespace detail {
     return value;
 }
 
-template <typename Response>
-[[nodiscard]] CommandResult from_response(Response response) {
+template <typename Response> [[nodiscard]] CommandResult from_response(Response response) {
     if constexpr (requires { response.inject; }) {
         if (response.inject) return CommandResult::inject(std::move(response.message));
     }
@@ -72,45 +71,63 @@ class BasicCommand {
 public:
     [[nodiscard]] VoidResult validate(const CommandContext&) { return {}; }
 
-    [[nodiscard]] std::vector<std::string> complete(std::string_view) {
-        return {};
-    }
+    [[nodiscard]] std::vector<std::string> complete(std::string_view) { return {}; }
 };
 
-} // namespace detail
+}  // namespace detail
 
 #define LOOM_RUNTIME_HELPER_COMMAND(TYPE_NAME, COMMAND_NAME, DESCRIPTION, CATEGORY, QUALIFIED_RUN) \
-class TYPE_NAME final : public detail::BasicCommand { \
-public: \
-    [[nodiscard]] static CommandDefinition definition() { \
-        return CommandDefinition{ \
-            .name = COMMAND_NAME, \
-            .description = DESCRIPTION, \
-            .args = {CommandArg{.name = "args", .description = "Command arguments", .type = ArgType::Text, .required = false}}, \
-            .category = CATEGORY, \
-        }; \
-    } \
-    [[nodiscard]] Result<CommandResult> execute(const CommandContext& ctx) { \
-        return detail::from_response(QUALIFIED_RUN(detail::join_args(ctx.args))); \
-    } \
-};
+    class TYPE_NAME final : public detail::BasicCommand {                                          \
+    public:                                                                                        \
+        [[nodiscard]] static CommandDefinition definition() {                                      \
+            return CommandDefinition{                                                              \
+                .name = COMMAND_NAME,                                                              \
+                .description = DESCRIPTION,                                                        \
+                .args = {CommandArg{.name = "args",                                                \
+                                    .description = "Command arguments",                            \
+                                    .type = ArgType::Text,                                         \
+                                    .required = false}},                                           \
+                .category = CATEGORY,                                                              \
+            };                                                                                     \
+        }                                                                                          \
+        [[nodiscard]] Result<CommandResult> execute(const CommandContext& ctx) {                   \
+            return detail::from_response(QUALIFIED_RUN(detail::join_args(ctx.args)));              \
+        }                                                                                          \
+    };
 
-LOOM_RUNTIME_HELPER_COMMAND(AntTraceCommand, "ant-trace", "Inspect internal trace diagnostics", "diagnostics", ant_trace::run)
-LOOM_RUNTIME_HELPER_COMMAND(AutofixPrCommand, "autofix-pr", "Generate fixes for pull request feedback", "git", autofix_pr::run)
-LOOM_RUNTIME_HELPER_COMMAND(BackfillSessionsCommand, "backfill-sessions", "Backfill local session metadata", "session", backfill_sessions::run)
-LOOM_RUNTIME_HELPER_COMMAND(BreakCacheCommand, "break-cache", "Clear internal caches", "diagnostics", break_cache::run)
-LOOM_RUNTIME_HELPER_COMMAND(BridgeCommand, "bridge", "Manage IDE bridge state", "bridge", bridge::run)
-LOOM_RUNTIME_HELPER_COMMAND(BughunterCommand, "bughunter", "Run bug hunting diagnostics", "diagnostics", bughunter::run)
-LOOM_RUNTIME_HELPER_COMMAND(CommitPushPrCommand, "commit-push-pr", "Commit, push, and prepare a pull request", "git", commit_push_pr::run)
-LOOM_RUNTIME_HELPER_COMMAND(CreateMovedToPluginCommand, "create-moved-to-plugin-command", "Create a moved-to-plugin command shim", "plugins", create_moved_to_plugin_command::run)
-LOOM_RUNTIME_HELPER_COMMAND(DebugToolCallCommand, "debug-tool-call", "Debug a tool call payload", "diagnostics", debug_tool_call::run)
-LOOM_RUNTIME_HELPER_COMMAND(MockLimitsCommand, "mock-limits", "Configure mock rate limits", "usage", mock_limits::run)
-LOOM_RUNTIME_HELPER_COMMAND(OnboardingCommand, "onboarding", "Run onboarding checks", "setup", onboarding::run)
-LOOM_RUNTIME_HELPER_COMMAND(OutputStyleCommand, "output-style", "Manage output style", "config", output_style::run)
-LOOM_RUNTIME_HELPER_COMMAND(PerfIssueCommand, "perf-issue", "Collect performance issue diagnostics", "diagnostics", perf_issue::run)
-LOOM_RUNTIME_HELPER_COMMAND(PrCommentsCommand, "pr-comments", "Inspect pull request comments", "git", pr_comments::run)
-LOOM_RUNTIME_HELPER_COMMAND(ReloadPluginsCommand, "reload-plugins", "Reload installed plugins", "plugins", reload_plugins::run)
-LOOM_RUNTIME_HELPER_COMMAND(ResetLimitsCommand, "reset-limits", "Reset local mock limits", "usage", reset_limits::run)
+LOOM_RUNTIME_HELPER_COMMAND(AntTraceCommand, "ant-trace", "Inspect internal trace diagnostics",
+                            "diagnostics", ant_trace::run)
+LOOM_RUNTIME_HELPER_COMMAND(AutofixPrCommand, "autofix-pr",
+                            "Generate fixes for pull request feedback", "git", autofix_pr::run)
+LOOM_RUNTIME_HELPER_COMMAND(BackfillSessionsCommand, "backfill-sessions",
+                            "Backfill local session metadata", "session", backfill_sessions::run)
+LOOM_RUNTIME_HELPER_COMMAND(BreakCacheCommand, "break-cache", "Clear internal caches",
+                            "diagnostics", break_cache::run)
+LOOM_RUNTIME_HELPER_COMMAND(BridgeCommand, "bridge", "Manage IDE bridge state", "bridge",
+                            bridge::run)
+LOOM_RUNTIME_HELPER_COMMAND(BughunterCommand, "bughunter", "Run bug hunting diagnostics",
+                            "diagnostics", bughunter::run)
+LOOM_RUNTIME_HELPER_COMMAND(CommitPushPrCommand, "commit-push-pr",
+                            "Commit, push, and prepare a pull request", "git", commit_push_pr::run)
+LOOM_RUNTIME_HELPER_COMMAND(CreateMovedToPluginCommand, "create-moved-to-plugin-command",
+                            "Create a moved-to-plugin command shim", "plugins",
+                            create_moved_to_plugin_command::run)
+LOOM_RUNTIME_HELPER_COMMAND(DebugToolCallCommand, "debug-tool-call", "Debug a tool call payload",
+                            "diagnostics", debug_tool_call::run)
+LOOM_RUNTIME_HELPER_COMMAND(MockLimitsCommand, "mock-limits", "Configure mock rate limits", "usage",
+                            mock_limits::run)
+LOOM_RUNTIME_HELPER_COMMAND(OnboardingCommand, "onboarding", "Run onboarding checks", "setup",
+                            onboarding::run)
+LOOM_RUNTIME_HELPER_COMMAND(OutputStyleCommand, "output-style", "Manage output style", "config",
+                            output_style::run)
+LOOM_RUNTIME_HELPER_COMMAND(PerfIssueCommand, "perf-issue", "Collect performance issue diagnostics",
+                            "diagnostics", perf_issue::run)
+LOOM_RUNTIME_HELPER_COMMAND(PrCommentsCommand, "pr-comments", "Inspect pull request comments",
+                            "git", pr_comments::run)
+LOOM_RUNTIME_HELPER_COMMAND(ReloadPluginsCommand, "reload-plugins", "Reload installed plugins",
+                            "plugins", reload_plugins::run)
+LOOM_RUNTIME_HELPER_COMMAND(ResetLimitsCommand, "reset-limits", "Reset local mock limits", "usage",
+                            reset_limits::run)
 
 /// /statusline — open the built-in status bar segment toggle dialog.
 /// Replaces the old shell-PS1 integration text printer; the dialog lets
@@ -128,13 +145,15 @@ public:
     }
 
     [[nodiscard]] Result<CommandResult> execute(const CommandContext&) {
-        return CommandResult{true, "Opening status bar settings...",
-                             "UI:statusline", CommandStatus::Succeeded};
+        return CommandResult{true, "Opening status bar settings...", "UI:statusline",
+                             CommandStatus::Succeeded};
     }
 };
 
-LOOM_RUNTIME_HELPER_COMMAND(TerminalSetupCommand, "terminal-setup", "Configure terminal integration", "terminal", terminal_setup::run)
-LOOM_RUNTIME_HELPER_COMMAND(ThinkbackPlayCommand, "thinkback-play", "Replay thinking history", "thinking", thinkback_play::run)
+LOOM_RUNTIME_HELPER_COMMAND(TerminalSetupCommand, "terminal-setup",
+                            "Configure terminal integration", "terminal", terminal_setup::run)
+LOOM_RUNTIME_HELPER_COMMAND(ThinkbackPlayCommand, "thinkback-play", "Replay thinking history",
+                            "thinking", thinkback_play::run)
 
 #undef LOOM_RUNTIME_HELPER_COMMAND
 
@@ -144,14 +163,18 @@ public:
         return CommandDefinition{
             .name = "exit",
             .description = "Exit the application",
-            .args = {CommandArg{.name = "--force", .description = "Exit without confirmation", .type = ArgType::None, .required = false}},
+            .args = {CommandArg{.name = "--force",
+                                .description = "Exit without confirmation",
+                                .type = ArgType::None,
+                                .required = false}},
             .category = "system",
             .aliases = {"quit", "q"},
         };
     }
 
     [[nodiscard]] Result<CommandResult> execute(const CommandContext& ctx) {
-        const bool force = !ctx.args.empty() && (ctx.args.front() == "--force" || ctx.args.front() == "-f");
+        const bool force =
+            !ctx.args.empty() && (ctx.args.front() == "--force" || ctx.args.front() == "-f");
         execute_exit(force);
         return CommandResult::exit();
     }
@@ -163,16 +186,22 @@ public:
         return CommandDefinition{
             .name = "rate-limit-options",
             .description = "Show rate limit options",
-            .args = {CommandArg{.name = "mode", .description = "status or optimize", .type = ArgType::Choice, .required = false, .choices = {"status", "optimize"}}},
+            .args = {CommandArg{.name = "mode",
+                                .description = "status or optimize",
+                                .type = ArgType::Choice,
+                                .required = false,
+                                .choices = {"status", "optimize"}}},
             .category = "usage",
         };
     }
 
     [[nodiscard]] Result<CommandResult> execute(const CommandContext& ctx) {
-        if (!ctx.args.empty() && (ctx.args.front() == "optimize" || ctx.args.front() == "suggest")) {
+        if (!ctx.args.empty() &&
+            (ctx.args.front() == "optimize" || ctx.args.front() == "suggest")) {
             return CommandResult::success(suggest_rate_limit_optimization());
         }
-        return CommandResult::success(show_rate_limit_status() + "\n" + suggest_rate_limit_optimization());
+        return CommandResult::success(show_rate_limit_status() + "\n" +
+                                      suggest_rate_limit_optimization());
     }
 };
 
@@ -182,23 +211,33 @@ public:
         return CommandDefinition{
             .name = "privacy-settings",
             .description = "Manage privacy settings",
-            .args = {CommandArg{.name = "action", .description = "show or set", .type = ArgType::Text, .required = false}},
+            .args = {CommandArg{.name = "action",
+                                .description = "show or set",
+                                .type = ArgType::Text,
+                                .required = false}},
             .category = "settings",
         };
     }
 
     [[nodiscard]] Result<CommandResult> execute(const CommandContext& ctx) {
-        if (ctx.args.empty() || ctx.args.front() == "show") return CommandResult::success(show_privacy_info());
-        if (ctx.args.front() != "set") return CommandResult::fail("Unknown privacy-settings action: " + ctx.args.front());
+        if (ctx.args.empty() || ctx.args.front() == "show")
+            return CommandResult::success(show_privacy_info());
+        if (ctx.args.front() != "set")
+            return CommandResult::fail("Unknown privacy-settings action: " + ctx.args.front());
         auto settings = get_privacy_settings();
         for (std::size_t i = 1; i + 1 < ctx.args.size(); i += 2) {
             const auto& key = ctx.args[i];
             const auto& value = ctx.args[i + 1];
-            if (key == "telemetry") settings.telemetry = value == "true" || value == "1";
-            else if (key == "crash_reports") settings.crash_reports = value == "true" || value == "1";
-            else if (key == "usage_stats") settings.usage_stats = value == "true" || value == "1";
-            else if (key == "data_retention") settings.data_retention = value;
-            else return CommandResult::fail("Unknown privacy setting: " + key);
+            if (key == "telemetry")
+                settings.telemetry = value == "true" || value == "1";
+            else if (key == "crash_reports")
+                settings.crash_reports = value == "true" || value == "1";
+            else if (key == "usage_stats")
+                settings.usage_stats = value == "true" || value == "1";
+            else if (key == "data_retention")
+                settings.data_retention = value;
+            else
+                return CommandResult::fail("Unknown privacy setting: " + key);
         }
         set_privacy_settings(settings);
         return CommandResult::success(show_privacy_info());
@@ -211,7 +250,11 @@ public:
         return CommandDefinition{
             .name = "sandbox-toggle",
             .description = "Toggle sandbox mode",
-            .args = {CommandArg{.name = "action", .description = "status, info, or toggle", .type = ArgType::Choice, .required = false, .choices = {"status", "info", "toggle"}}},
+            .args = {CommandArg{.name = "action",
+                                .description = "status, info, or toggle",
+                                .type = ArgType::Choice,
+                                .required = false,
+                                .choices = {"status", "info", "toggle"}}},
             .category = "security",
         };
     }
@@ -219,7 +262,8 @@ public:
     [[nodiscard]] Result<CommandResult> execute(const CommandContext& ctx) {
         if (ctx.args.empty() || ctx.args.front() == "toggle") {
             auto enabled = toggle_sandbox();
-            return CommandResult::success(std::format("Sandbox {}", enabled ? "enabled" : "disabled"));
+            return CommandResult::success(
+                std::format("Sandbox {}", enabled ? "enabled" : "disabled"));
         }
         if (ctx.args.front() == "status") return CommandResult::success(get_sandbox_status());
         if (ctx.args.front() == "info") return CommandResult::success(show_sandbox_info());
@@ -233,13 +277,17 @@ public:
         return CommandDefinition{
             .name = "thinkback",
             .description = "Inspect thinking history",
-            .args = {CommandArg{.name = "action", .description = "export, clear, or replay", .type = ArgType::Text, .required = false}},
+            .args = {CommandArg{.name = "action",
+                                .description = "export, clear, or replay",
+                                .type = ArgType::Text,
+                                .required = false}},
             .category = "thinking",
         };
     }
 
     [[nodiscard]] Result<CommandResult> execute(const CommandContext& ctx) {
-        if (ctx.args.empty() || ctx.args.front() == "export") return CommandResult::success(export_thinking_log());
+        if (ctx.args.empty() || ctx.args.front() == "export")
+            return CommandResult::success(export_thinking_log());
         if (ctx.args.front() == "clear") {
             clear_thinking_history();
             return CommandResult::success("Thinking history cleared");
@@ -256,4 +304,4 @@ public:
     }
 };
 
-} // namespace loom::commands
+}  // namespace loom::commands

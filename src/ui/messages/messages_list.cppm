@@ -76,8 +76,6 @@
 
 module;
 
-#include <cstdint>
-
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/event.hpp>
@@ -85,24 +83,27 @@ module;
 #include <ftxui/screen/box.hpp>
 #include <ftxui/screen/color.hpp>
 
+#include <cstdint>
+
 export module loom.ui.messages.messages_list;
 
 import std;
 
 // ─── Strict re-uses (no type / colour duplication) ──────────────────────
 import loom.ui.messages.message_row;
-import loom.ui.messages.virtual_list;   // P0-3: VirtualMessageList types + factory
+import loom.ui.messages.virtual_list; // P0-3: VirtualMessageList types + factory
 // StreamingMarkdown is named by the MessagesListInput::streaming_md member.
 // Per-message-type variant owner modules (user_text_message, tool_use_message,
 // …) are imported ONLY by the module implementation units that name their
 // alternatives — messages_list_search.cpp (the std::visit closure) and
 // messages_list_payload_row.cpp (faithful dispatch) — keeping them out of
 // this interface's BMI.
-import loom.ui.visual.markdown;   // arch-check: keep-import — StreamingMarkdown* member (global-qualified; checker sees only unqualified uses)
+import loom.ui.visual.markdown; // arch-check: keep-import — StreamingMarkdown* member (global-qualified; checker sees only unqualified uses)
 // RFC 0031 E6b: complete type for the per-list Mermaid layout-rows cache
 // member below (visual ranks below messages; no upward edge).
 import loom.ui.visual.mermaid;
-import loom.ui.foundation.theme_provider;  // palette tokens for role colors
+import loom.ui.foundation.theme_provider; // palette tokens for role colors
+
 // =========================================================================
 // Palette helpers — read from the current theme's palette tokens.
 // =========================================================================
@@ -113,31 +114,87 @@ namespace thm = loom::ui::design::theme;
 
 using ftxui::Color;
 
-inline auto role_bg_user()        -> Color { return thm::current_theme().palette->role_bg_user; }
-inline auto role_bg_assistant()   -> Color { return thm::current_theme().palette->role_bg_assistant; }
-inline auto role_bg_system()      -> Color { return thm::current_theme().palette->role_bg_system; }
-inline auto role_bg_tool()        -> Color { return thm::current_theme().palette->role_bg_tool; }
-inline auto role_bg_thinking()    -> Color { return thm::current_theme().palette->role_bg_thinking; }
+inline auto role_bg_user() -> Color {
+    return thm::current_theme().palette->role_bg_user;
+}
 
-inline auto role_pill_user()      -> Color { return thm::current_theme().palette->role_pill_user; }
-inline auto role_pill_assistant() -> Color { return thm::current_theme().palette->role_pill_assistant; }
-inline auto role_pill_system()    -> Color { return thm::current_theme().palette->role_pill_system; }
-inline auto role_pill_tool()      -> Color { return thm::current_theme().palette->role_pill_tool; }
-inline auto role_pill_thinking()  -> Color { return thm::current_theme().palette->role_pill_thinking; }
+inline auto role_bg_assistant() -> Color {
+    return thm::current_theme().palette->role_bg_assistant;
+}
 
-inline auto accent_top_user()     -> Color { return role_pill_user(); }
-inline auto accent_top_assistant()-> Color { return role_pill_assistant(); }
-inline auto accent_top_system()   -> Color { return role_pill_system(); }
-inline auto accent_top_tool()     -> Color { return role_pill_tool(); }
-inline auto accent_top_error()    -> Color { return thm::current_theme().palette->message_error_accent; }
-inline auto accent_top_redacted() -> Color { return thm::current_theme().palette->message_redacted_accent; }
+inline auto role_bg_system() -> Color {
+    return thm::current_theme().palette->role_bg_system;
+}
 
-inline auto selected_bg()         -> Color { return thm::current_theme().palette->message_list_selected_bg; }
-inline auto muted_fg()            -> Color { return thm::current_theme().palette->message_list_muted_fg; }
-inline auto empty_state_fg()      -> Color { return thm::current_theme().palette->message_list_empty_state_fg; }
-inline auto streaming_fg()        -> Color { return thm::current_theme().palette->message_list_streaming_fg; }
+inline auto role_bg_tool() -> Color {
+    return thm::current_theme().palette->role_bg_tool;
+}
 
-} // namespace loom::ui::messages_list::palette
+inline auto role_bg_thinking() -> Color {
+    return thm::current_theme().palette->role_bg_thinking;
+}
+
+inline auto role_pill_user() -> Color {
+    return thm::current_theme().palette->role_pill_user;
+}
+
+inline auto role_pill_assistant() -> Color {
+    return thm::current_theme().palette->role_pill_assistant;
+}
+
+inline auto role_pill_system() -> Color {
+    return thm::current_theme().palette->role_pill_system;
+}
+
+inline auto role_pill_tool() -> Color {
+    return thm::current_theme().palette->role_pill_tool;
+}
+
+inline auto role_pill_thinking() -> Color {
+    return thm::current_theme().palette->role_pill_thinking;
+}
+
+inline auto accent_top_user() -> Color {
+    return role_pill_user();
+}
+
+inline auto accent_top_assistant() -> Color {
+    return role_pill_assistant();
+}
+
+inline auto accent_top_system() -> Color {
+    return role_pill_system();
+}
+
+inline auto accent_top_tool() -> Color {
+    return role_pill_tool();
+}
+
+inline auto accent_top_error() -> Color {
+    return thm::current_theme().palette->message_error_accent;
+}
+
+inline auto accent_top_redacted() -> Color {
+    return thm::current_theme().palette->message_redacted_accent;
+}
+
+inline auto selected_bg() -> Color {
+    return thm::current_theme().palette->message_list_selected_bg;
+}
+
+inline auto muted_fg() -> Color {
+    return thm::current_theme().palette->message_list_muted_fg;
+}
+
+inline auto empty_state_fg() -> Color {
+    return thm::current_theme().palette->message_list_empty_state_fg;
+}
+
+inline auto streaming_fg() -> Color {
+    return thm::current_theme().palette->message_list_streaming_fg;
+}
+
+}  // namespace loom::ui::messages_list::palette
 
 // =========================================================================
 export namespace loom::ui::messages_list {
@@ -145,9 +202,9 @@ export namespace loom::ui::messages_list {
 using namespace ftxui;
 using namespace messages;  // UI4: MessageShape, MessageRowPayload, …
 
-using ::loom::ui::messages::MessageShape;
-using ::loom::ui::messages::MessageRowPayload;
 using ::loom::ui::messages::MessageRowCallbacks;
+using ::loom::ui::messages::MessageRowPayload;
+using ::loom::ui::messages::MessageShape;
 using ::loom::ui::messages::RenderMessageRowByType;
 
 // =========================================================================
@@ -155,11 +212,11 @@ using ::loom::ui::messages::RenderMessageRowByType;
 // =========================================================================
 
 struct Filters {
-    bool show_system   = true;
-    bool show_tool_in  = true;
+    bool show_system = true;
+    bool show_tool_in = true;
     bool show_tool_out = true;
     bool show_thinking = true;
-    bool show_compact  = true;   // if false, collapsed groups render as rows
+    bool show_compact = true;  // if false, collapsed groups render as rows
 };
 
 // ---------------------------------------------------------------------------
@@ -179,17 +236,13 @@ struct Filters {
 namespace brief_detail {
 
 /// Tool names that constitute the "brief" tool chain.
-inline constexpr std::string_view kBriefToolNames[] = {
-    "Brief", "SendUserMessage", "SendUserFile"
-};
+inline constexpr std::string_view kBriefToolNames[] = {"Brief", "SendUserMessage", "SendUserFile"};
 
 /// For dropTextInBriefTurns (default mode, not brief-only), only turns that
 /// called Brief or SendUserMessage should have their assistant text dropped.
 /// SendUserFile delivers a file without replacement text, so dropping text
 /// for file-only turns would leave the user with no context.
-inline constexpr std::string_view kDropTextToolNames[] = {
-    "Brief", "SendUserMessage"
-};
+inline constexpr std::string_view kDropTextToolNames[] = {"Brief", "SendUserMessage"};
 
 [[nodiscard]] bool is_brief_tool_name(std::string_view name);
 
@@ -203,9 +256,7 @@ inline constexpr std::string_view kDropTextToolNames[] = {
 }  // namespace brief_detail
 
 /// Returns true if the row at index `i` should be VISIBLE in brief mode.
-auto passes_brief_filter(
-    MessageShape shape,
-    const MessageRowPayload& payload) -> bool;
+auto passes_brief_filter(MessageShape shape, const MessageRowPayload& payload) -> bool;
 
 // ---------------------------------------------------------------------------
 // dropTextInBriefTurns.
@@ -221,9 +272,9 @@ auto passes_brief_filter(
 //
 // Returns a vector<bool> mask (true = KEEP the row, false = DROP it).
 // ---------------------------------------------------------------------------
-[[nodiscard]] std::vector<bool> compute_drop_text_mask(
-    const std::vector<MessageShape>& shapes,
-    const std::vector<MessageRowPayload>& payloads);
+[[nodiscard]] std::vector<bool>
+compute_drop_text_mask(const std::vector<MessageShape>& shapes,
+                       const std::vector<MessageRowPayload>& payloads);
 
 // ---------------------------------------------------------------------------
 // Expand-key computation
@@ -232,16 +283,12 @@ auto passes_brief_filter(
 // and its corresponding tool_result share the same key and expand together.
 // For other rows, returns the uuid (or empty string if not available).
 // ---------------------------------------------------------------------------
-[[nodiscard]] std::string compute_expand_key(
-    MessageShape shape,
-    const MessageRowPayload& payload,
-    std::string_view uuid);
+[[nodiscard]] std::string compute_expand_key(MessageShape shape, const MessageRowPayload& payload,
+                                             std::string_view uuid);
 
 /// Returns true if the row supports click-to-expand: tool results that are
 /// truncated, collapsed read/search groups, or advisor tool results.
-[[nodiscard]] bool is_row_clickable(
-    MessageShape shape,
-    const MessageRowPayload& payload);
+[[nodiscard]] bool is_row_clickable(MessageShape shape, const MessageRowPayload& payload);
 
 /// In-transcript "N new messages" divider anchor + count.  When set, the
 /// renderer inserts a muted separator line BEFORE the first renderable row
@@ -274,8 +321,8 @@ struct UnseenDivider {
 // ---------------------------------------------------------------------------
 struct RowClickTracker {
     std::vector<std::unique_ptr<Box>> boxes;
-    std::vector<std::string>          expand_keys;  // parallel to boxes
-    std::size_t                       cursor = 0;
+    std::vector<std::string> expand_keys;  // parallel to boxes
+    std::size_t cursor = 0;
 
     /// Reset the per-frame cursor.  Call once at the start of each render.
     void begin_frame() noexcept;
@@ -289,8 +336,7 @@ struct RowClickTracker {
     void end_frame() noexcept;
 
     /// Return the expand key at screen position (x, y), or nullopt.
-    [[nodiscard]] auto hit_test(int x, int y) const noexcept
-        -> std::optional<std::string>;
+    [[nodiscard]] auto hit_test(int x, int y) const noexcept -> std::optional<std::string>;
 };
 
 /// Which renderer path the message list used this frame.
@@ -319,10 +365,9 @@ inline constexpr std::size_t kScrollMermaidCacheBytes = 512u << 10;
 /// Static→Virtual when visible > kVirtualEnterThreshold.
 /// Virtual→Static when visible < kVirtualExitThreshold.
 /// Within the band, the previous mode is retained (no oscillation).
-[[nodiscard]] constexpr auto decide_virtual_renderer_mode(
-    VirtualRendererMode prev,
-    std::size_t visible) noexcept -> VirtualRendererMode
-{
+[[nodiscard]] constexpr auto decide_virtual_renderer_mode(VirtualRendererMode prev,
+                                                          std::size_t visible) noexcept
+    -> VirtualRendererMode {
     if (prev == VirtualRendererMode::Virtual) {
         return visible < kVirtualExitThreshold ? VirtualRendererMode::Static
                                                : VirtualRendererMode::Virtual;
@@ -347,57 +392,57 @@ struct ChainTiming {
 struct MessagesListInput {
     std::vector<MessageRowPayload> rows;
     /// Parallel to `rows`.  The dispatcher needs both shape and payload.
-    std::vector<MessageShape>       shapes;
+    std::vector<MessageShape> shapes;
     /// Parallel to `rows`.  Used by the UnseenDivider prefix-match anchor
     /// (24-char prefix match).  Empty strings are allowed —
     /// rows without a uuid simply never match the divider anchor.
-    std::vector<std::string>        uuids;
+    std::vector<std::string> uuids;
 
-    std::optional<std::size_t>      selected_row_idx;
+    std::optional<std::size_t> selected_row_idx;
     /// Row at which the spinner + blinking "generating…" cursor is drawn.
     /// When == rows.size() the tail is NOT rendered (not streaming).
-    std::size_t                     streaming_tail_row = 0;
+    std::size_t streaming_tail_row = 0;
 
     /// Compact groups as half-open [start, end) intervals over `rows`.
     /// When show_compact=true each group appears as a SINGLE collapsed row
     /// ("📦 N messages collapsed …"); when false the inner rows render.
     std::vector<std::pair<std::size_t, std::size_t>> compact_boundary_groups;
 
-    Filters                         filters;
-    std::string                     search_query;   // case-insensitive
-    std::optional<std::size_t>      jump_to_row_on_init;
-    bool                            pin_to_bottom = false;
-    int                             scroll_offset = 0;
-    int                             viewport_rows = 40;
+    Filters filters;
+    std::string search_query;  // case-insensitive
+    std::optional<std::size_t> jump_to_row_on_init;
+    bool pin_to_bottom = false;
+    int scroll_offset = 0;
+    int viewport_rows = 40;
     /// Terminal column width used by the virtual-path height estimator.
     /// Set by the caller from query_terminal_size(); defaults to 80 for
     /// tests and dialogs that don't track real terminal dimensions.
-    int                             term_cols = 80;
+    int term_cols = 80;
 
     /// When true, only brief-tool calls + their results + real user input
     /// are shown; assistant text, thinking, and non-brief tools are hidden.
-    bool                            is_brief_mode = false;
+    bool is_brief_mode = false;
 
     /// When true, bypass brief/dropText filters and show ALL message types.
     /// Capped at last 30 messages unless show_all_in_transcript is also true.
-    bool                            is_transcript_mode = false;
+    bool is_transcript_mode = false;
 
     /// When true AND is_transcript_mode, lifts the 30-message cap so ALL
     /// messages are rendered.  Toggled by user (Ctrl+E in transcript mode).
-    bool                            show_all_in_transcript = false;
+    bool show_all_in_transcript = false;
 
     /// When true, skips chain compression (Step 2.5) entirely.  Used by
     /// tests that need to verify individual tool/thinking row rendering.
     /// Independent native Agent views use individual cards; Main defaults false.
-    bool                            disable_chain_compression = false;
+    bool disable_chain_compression = false;
 
     /// True while a query is actively streaming.  When set, the last
     /// compressible chain renders as a LIVE status row (spinner + elapsed
     /// timer + tool activity) instead of a static summary.  Synced from
     /// AppAdapter::query_running_ via ReplScreenState.
-    bool                            query_running = false;
+    bool query_running = false;
     /// Style only: never changes lifecycle, geometry, disclosure or wake timing.
-    bool                            emphasize_work = true;
+    bool emphasize_work = true;
 
     /// Raw-stage lifecycle, updated even when compression is bypassed. Keys
     /// describe material boundaries, not temporary streaming-message UUIDs.
@@ -412,7 +457,7 @@ struct MessagesListInput {
     /// render_payload_row passes this to RenderAssistantTextMessageFaithful
     /// so the body uses repeated-frame caching instead of full re-parse.
     /// Nullptr = not streaming / use plain render_markdown.
-    ::loom::ui::StreamingMarkdown*    streaming_md = nullptr;
+    ::loom::ui::StreamingMarkdown* streaming_md = nullptr;
 
     /// RFC 0031 E6b: per-message-list cache of laid-out Mermaid rows used by
     /// COMMITTED rows on every window paint (the virtual-scroll repeat path).
@@ -421,14 +466,14 @@ struct MessagesListInput {
     /// MessagesStore::render_input and cleared at session/document reset via
     /// reset_virtual_renderer_state(). `mutable`: row rendering takes a const
     /// input reference and the cache is logical memoization state.
-    mutable ::loom::ui::mermaid::LayoutRowsCache
-        mermaid_rows_cache{kScrollMermaidCacheEntries, kScrollMermaidCacheBytes};
+    mutable ::loom::ui::mermaid::LayoutRowsCache mermaid_rows_cache{kScrollMermaidCacheEntries,
+                                                                    kScrollMermaidCacheBytes};
 
     /// Optional pointer to a RowClickTracker that the renderer populates
     /// with screen-space boxes of clickable rows (thinking blocks, etc.).
     /// The event handler uses it to map mouse clicks → row indices for
     /// click-to-expand.  Nullptr = no mouse tracking (golden tests, dialogs).
-    RowClickTracker*                row_click_tracker = nullptr;
+    RowClickTracker* row_click_tracker = nullptr;
 
     /// Optional raw row boxes for selection. Virtual prefix sums estimate
     /// heights, so a selection is anchored by visible row index + local line.
@@ -442,7 +487,7 @@ struct MessagesListInput {
     std::unordered_set<std::string> expanded_keys;
 
     /// When set, a colored divider line is inserted before the matching row.
-    std::optional<UnseenDivider>    unseen_divider;
+    std::optional<UnseenDivider> unseen_divider;
 
     /// Per-row cache of lowered searchable text.  Indexed by row_idx (parallel
     /// to rows[]).  `mutable` so the cache can be populated through const-ref
@@ -502,22 +547,21 @@ struct MessagesListInput {
 enum class ActionKind { Copy, Regenerate, Delete };
 
 struct MessagesListCallbacks {
-    std::function<void(std::size_t)>                       on_select;
-    std::function<void(std::size_t, ActionKind)>           on_action;
-    std::function<void(std::size_t)>                       on_toggle_compact_group;
-    std::function<void(std::size_t, std::size_t)>          on_click_attachment;
-    std::function<void(const std::string&)>                on_search_changed;
+    std::function<void(std::size_t)> on_select;
+    std::function<void(std::size_t, ActionKind)> on_action;
+    std::function<void(std::size_t)> on_toggle_compact_group;
+    std::function<void(std::size_t, std::size_t)> on_click_attachment;
+    std::function<void(const std::string&)> on_search_changed;
     /// Called when the user presses Enter/Space on a clickable row to toggle
     /// its expanded state.  The key is the expandKey (tool_name for tool rows,
     /// uuid for others) so tool_use + tool_result expand together.
-    std::function<void(const std::string& expand_key)>     on_toggle_expand;
+    std::function<void(const std::string& expand_key)> on_toggle_expand;
 };
+
 /// Returns true if the row at index `i` is currently "expanded" (user has
 /// toggled it open via Enter/Space).  Expanded rows render with verbose=true
 /// showing full content instead of truncated summaries.
-[[nodiscard]] bool is_row_expanded(
-    const MessagesListInput& input,
-    std::size_t row_idx);
+[[nodiscard]] bool is_row_expanded(const MessagesListInput& input, std::size_t row_idx);
 
 // =========================================================================
 // 2)  Preview-text extractor (works on every MessageRowPayload alternative)
@@ -556,15 +600,14 @@ namespace search_detail {
 
 /// Extract a string field value from a JSON object string.
 /// Lightweight — no full JSON parser needed for known field names.
-[[nodiscard]] std::string extract_json_field(
-    std::string_view json, std::string_view field_name);
+[[nodiscard]] std::string extract_json_field(std::string_view json, std::string_view field_name);
 
 /// Extract searchable text from a tool-use input JSON string.
 /// Extracts known field names that render_tool_use_message
 /// shows as the primary argument (command, pattern, file_path, etc.).
 [[nodiscard]] std::string tool_use_search_text(std::string_view input_json);
 
-} // namespace search_detail
+}  // namespace search_detail
 
 /// Rich searchable text for indexing.  Returns detailed content from tool
 /// results (file contents, bash output, grep matches) for search matching.
@@ -573,9 +616,8 @@ namespace search_detail {
 /// @param p       The message row payload variant.
 /// @param shape   The message shape (for dispatch optimization).
 /// @return Lowercase-rich searchable text (NOT lowered — caller lowers).
-[[nodiscard]] auto extract_search_text(
-    const MessageRowPayload& p,
-    MessageShape shape) -> std::string;
+[[nodiscard]] auto extract_search_text(const MessageRowPayload& p, MessageShape shape)
+    -> std::string;
 
 // =========================================================================
 // 2c)  Cached lowered search text accessor
@@ -588,10 +630,9 @@ namespace search_detail {
 //
 // Cache is keyed by row_idx (parallel to input.rows) — messages are
 // append-only and immutable, so a cached entry is always valid.
-[[nodiscard]] auto get_cached_lowered_search_text(
-    const MessagesListInput& input,
-    std::size_t row_idx,
-    MessageShape shape) -> std::string;
+[[nodiscard]] auto get_cached_lowered_search_text(const MessagesListInput& input,
+                                                  std::size_t row_idx, MessageShape shape)
+    -> std::string;
 
 /// Returns true for message SHAPEs that belong to each filter category
 /// (system / tool_use / tool_result / thinking / compacted).
@@ -599,7 +640,7 @@ auto shape_category(MessageShape s) -> std::string_view;
 
 auto passes_filters(MessageShape s, const Filters& f) -> bool;
 
-} // namespace detail
+}  // namespace detail
 
 // =========================================================================
 // 3)  Visible-row representation
@@ -624,34 +665,35 @@ struct VisibleRow {
     std::size_t row_idx = 0;
 
     // For Kind::CompactGroup — index into compact_boundary_groups, plus stats
-    std::size_t group_idx       = 0;
-    std::size_t group_count     = 0;   // number of original rows in group
-    std::size_t tool_turns      = 0;   // tool calls in group/chain
-    std::size_t additions       = 0;
-    std::size_t deletions       = 0;
+    std::size_t group_idx = 0;
+    std::size_t group_count = 0;  // number of original rows in group
+    std::size_t tool_turns = 0;   // tool calls in group/chain
+    std::size_t additions = 0;
+    std::size_t deletions = 0;
 
     // For Kind::TranscriptCapDivider — number of messages hidden by the cap.
     // For Kind::CompressedChain — group_count = thinking blocks in chain,
     // tool_turns = tool calls in chain, chain_tool_breakdown = per-tool-type
     // counts, chain_elapsed = observed stage wall time, chain_is_live =
     // true while the query is still streaming (renders as a live status row).
-    std::size_t hidden_count    = 0;
+    std::size_t hidden_count = 0;
 
     // For Kind::CompressedChain — rich summary data.
-    bool                            chain_is_live = false;
-    bool                            chain_emphasize_work = true;
-    bool                            chain_has_tool_activity = false;
+    bool chain_is_live = false;
+    bool chain_emphasize_work = true;
+    bool chain_has_tool_activity = false;
     std::optional<std::chrono::milliseconds> chain_elapsed = std::nullopt;
     std::vector<std::pair<std::string, std::size_t>> chain_tool_breakdown = {};
     /// One bounded detail row while tool work is live; no output bodies.
-    std::string                     chain_current_activity = {};
+    std::string chain_current_activity = {};
     /// UUID of the chain's anchor row (first row in the chain).
     /// Used as the expand/collapse key: "chain:" + chain_uuid.
-    std::string                     chain_uuid = {};
+    std::string chain_uuid = {};
     /// True when this chain header represents an expanded chain (the
     /// individual rows follow as payload).  Clicking the header collapses.
-    bool                            chain_is_expanded = false;
+    bool chain_is_expanded = false;
 };
+
 // =========================================================================
 // 4)  build_visible_rows  —  pure O(N) over input.rows
 // =========================================================================
@@ -685,20 +727,16 @@ namespace detail {
 /// result is the maximum vertical space the content COULD take inside a
 /// 36-col reserved left-gutter message envelope; 36 is subtracted from
 /// term_cols to account for the fixed avatar column.
-[[nodiscard]] auto estimate_content_lines(
-    std::string_view text,
-    int term_cols,
-    int envelope_gutter_cols = 36) -> int;
+[[nodiscard]] auto estimate_content_lines(std::string_view text, int term_cols,
+                                          int envelope_gutter_cols = 36) -> int;
 
 /// Estimate visual height for one messages_list::VisibleRow.  Adds 1 line
 /// for the envelope's top-accent + role-header row and 1 for trailing
 /// separator (except for 1-line rows where it collapses).
-[[nodiscard]] auto estimate_row_height(
-    const VisibleRow& vr,
-    const MessagesListInput& input,
-    int term_cols) -> int;
+[[nodiscard]] auto estimate_row_height(const VisibleRow& vr, const MessagesListInput& input,
+                                       int term_cols) -> int;
 
-} // namespace detail
+}  // namespace detail
 
 /// Convert a messages_list `VisibleRow` vector into the format consumed by
 /// VirtualMessageList.  Each entry carries:
@@ -707,19 +745,16 @@ namespace detail {
 ///   - search_key       lowered preview text (for scroll_search callback)
 ///   - type_hint        0 = Payload, 1 = CompactGroup
 ///   - backend_index    round-trip key for render_row callback
-[[nodiscard]] auto visible_rows_to_virtual(
-    const std::vector<VisibleRow>& visible,
-    const MessagesListInput& input,
-    int term_cols = 80)
+[[nodiscard]] auto visible_rows_to_virtual(const std::vector<VisibleRow>& visible,
+                                           const MessagesListInput& input, int term_cols = 80)
     -> std::vector<loom::ui::messages::virtual_list::VisibleRow>;
 
 /// Decode the backend_index set by `visible_rows_to_virtual` back into a
 /// messages_list::VisibleRow.  `out` is filled in place; returns true if
 /// decode succeeded, false if the key was malformed (out is reset to a
 /// safe payload(0) sentinel on failure).
-[[nodiscard]] bool decode_virtual_backend_index(
-    std::uint64_t backend_index,
-    VisibleRow& out) noexcept;
+[[nodiscard]] bool decode_virtual_backend_index(std::uint64_t backend_index,
+                                                VisibleRow& out) noexcept;
 
 // =========================================================================
 // 3c) Render path: P0-3 VirtualMessageList when visible_rows > threshold
@@ -729,11 +764,9 @@ namespace detail {
 // exit at visible < 60.  The 20-entry band prevents mode oscillation
 // when visible.size() fluctuates near the boundary during streaming.
 
-[[nodiscard]] auto render_messages_list_virtual(
-    const MessagesListInput& input_const,
-    std::size_t frame_count,
-    int viewport_rows,
-    int scroll_top_lines) -> Element;
+[[nodiscard]] auto render_messages_list_virtual(const MessagesListInput& input_const,
+                                                std::size_t frame_count, int viewport_rows,
+                                                int scroll_top_lines) -> Element;
 
 // =========================================================================
 // 5)  Message envelope  (role chrome + avatar)
@@ -761,12 +794,11 @@ enum class EnvelopeStatusBadge { None, Running, Error, Done, Redacted };
 
 struct RenderEnvelopeOptions {
     MessageShape shape;
-    std::chrono::system_clock::time_point timestamp =
-        std::chrono::system_clock::now();
+    std::chrono::system_clock::time_point timestamp = std::chrono::system_clock::now();
     EnvelopeStatusBadge status = EnvelopeStatusBadge::None;
     bool show_dismiss = false;
-    bool is_selected  = false;
-    std::size_t frame_count = 0;          // for spinner glyph
+    bool is_selected = false;
+    std::size_t frame_count = 0;  // for spinner glyph
 };
 
 namespace detail {
@@ -778,11 +810,10 @@ auto role_bg_color(MessageShape s) -> Color;
 auto accent_top_color(const RenderEnvelopeOptions& o) -> Color;
 auto spinner_glyph(std::size_t frame) -> const char*;
 
-} // namespace detail
+}  // namespace detail
 
-[[nodiscard]] auto render_message_envelope(
-    const RenderEnvelopeOptions& opts,
-    Element inner_content) -> Element;
+[[nodiscard]] auto render_message_envelope(const RenderEnvelopeOptions& opts, Element inner_content)
+    -> Element;
 
 // =========================================================================
 // 6)  Per-visible-row element builders
@@ -818,9 +849,9 @@ namespace detail {
 /// behaviour: a divider placed inside a collapsed group still shows up, and
 /// clicking "expand" reveals the group contents with the divider still
 /// sitting before the exact row that was unseen).
-[[nodiscard]] auto find_divider_before_visible_index(
-    const MessagesListInput& input,
-    const std::vector<VisibleRow>& visible) -> std::size_t;
+[[nodiscard]] auto find_divider_before_visible_index(const MessagesListInput& input,
+                                                     const std::vector<VisibleRow>& visible)
+    -> std::size_t;
 
 /// Renders the unseen divider: a left-titled separator with a margin
 /// line above.
@@ -834,15 +865,11 @@ namespace detail {
 [[nodiscard]] auto render_transcript_cap_divider(std::size_t hidden_count) -> Element;
 
 /// Decide the envelope status badge purely from MessageShape + stream state.
-auto derive_status_badge(MessageShape s, std::size_t row_idx,
-                         std::size_t streaming_tail)
+auto derive_status_badge(MessageShape s, std::size_t row_idx, std::size_t streaming_tail)
     -> EnvelopeStatusBadge;
 
-auto render_payload_row(const MessagesListInput& input,
-                        std::size_t row_idx,
-                        bool is_selected,
-                        std::size_t frame_count,
-                        bool add_margin) -> Element;
+auto render_payload_row(const MessagesListInput& input, std::size_t row_idx, bool is_selected,
+                        std::size_t frame_count, bool add_margin) -> Element;
 
 /// Return true if the thinking row at `row_idx` was the streaming tail
 /// within the 3s collapse grace — i.e. it should still be rendered
@@ -851,22 +878,19 @@ auto render_payload_row(const MessagesListInput& input,
 /// thinking rows correctly in the virtual-list geometry.
 [[nodiscard]] bool was_recently_streaming(std::size_t row_idx);
 
-auto render_compact_group_row(const VisibleRow& vr,
-                              bool is_selected) -> Element;
+auto render_compact_group_row(const VisibleRow& vr, bool is_selected) -> Element;
 
 /// Render a stage header and, while tools are live, one current-activity row.
 /// Elapsed has the same observed wall-time meaning expanded or collapsed.
-auto render_compressed_chain_row(const VisibleRow& vr,
-                                 bool is_selected,
-                                 std::size_t frame_count = 0,
-                                 int term_cols = 80) -> Element;
+auto render_compressed_chain_row(const VisibleRow& vr, bool is_selected,
+                                 std::size_t frame_count = 0, int term_cols = 80) -> Element;
 
 /// Returns a lowercase copy of the search query (if any) — used to highlight
 /// matched substrings in render output.  (Currently used for the empty-state
 /// copy; real per-row substring highlighting is a UI17 deliverable.)
 auto render_empty_state(const std::string& search_query) -> Element;
 
-} // namespace detail
+}  // namespace detail
 
 // =========================================================================
 // 7)  STATIC RENDER  (render_messages_list_view)
@@ -875,7 +899,7 @@ auto render_empty_state(const std::string& search_query) -> Element;
 /// selection/action pipeline.  Still applies filters + compact collapsing
 /// + streaming tail rendering + scroll frame.
 
-constexpr std::size_t kMaxRenderedLastN = 80;   // last-N render cap
+constexpr std::size_t kMaxRenderedLastN = 80;  // last-N render cap
 
 /// @param wrap_in_yframe When true (default), wraps the message rows in
 ///        yframe | vscroll_indicator | flex.  When false, returns just the
@@ -887,13 +911,12 @@ constexpr std::size_t kMaxRenderedLastN = 80;   // last-N render cap
 ///        filler so it absorbs remaining viewport
 ///        space without competing with yframe|flex for parent allocation.
 ///        Golden tests leave this empty.
-[[nodiscard]] auto render_messages_list_view(
-    const MessagesListInput& input_const,
-    std::size_t frame_count = 0,
-    std::size_t render_last_n = kMaxRenderedLastN,
-    Elements trailing_elements = {},
-    bool wrap_in_yframe = true,
-    Elements leading_elements = {}) -> Element;
+[[nodiscard]] auto render_messages_list_view(const MessagesListInput& input_const,
+                                             std::size_t frame_count = 0,
+                                             std::size_t render_last_n = kMaxRenderedLastN,
+                                             Elements trailing_elements = {},
+                                             bool wrap_in_yframe = true,
+                                             Elements leading_elements = {}) -> Element;
 
 // =========================================================================
 // Test seams
@@ -903,4 +926,4 @@ constexpr std::size_t kMaxRenderedLastN = 80;   // last-N render cap
 // state across tests. For testing only.
 void clear_thinking_stream_last_seen_for_testing();
 
-} // namespace loom::ui::messages_list
+}  // namespace loom::ui::messages_list

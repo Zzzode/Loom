@@ -7,9 +7,10 @@
 module;
 
 #include <unistd.h>
+
+#include <cctype>
 #include <cstdint>
 #include <cstdlib>
-#include <cctype>
 
 export module loom.commands.keybindings_cmd;
 
@@ -34,18 +35,18 @@ using namespace loom::core;
 
 /// Row for the keybindings list table.
 struct KeybindingListRow {
-    std::string id;                 // e.g., "task.background"
-    std::string keys_display;       // e.g., "Ctrl+B" (human-readable)
-    std::string command;            // e.g., "background_task"
-    std::string when;               // e.g., "Global" or "inputFocused"
-    std::string source;             // "builtin" | "user" | "plugin"
-    bool is_reserved = false;       // whether this chord is reserved
+    std::string id;            // e.g., "task.background"
+    std::string keys_display;  // e.g., "Ctrl+B" (human-readable)
+    std::string command;       // e.g., "background_task"
+    std::string when;          // e.g., "Global" or "inputFocused"
+    std::string source;        // "builtin" | "user" | "plugin"
+    bool is_reserved = false;  // whether this chord is reserved
 };
 
 /// Row for the keybinding search result table.
 struct KeybindingSearchRow : public KeybindingListRow {
-    double match_score = 0.0;       // 0.0 - 1.0 (higher = better match)
-    std::string matched_field;      // "id" | "command" | "keys" | "when"
+    double match_score = 0.0;   // 0.0 - 1.0 (higher = better match)
+    std::string matched_field;  // "id" | "command" | "keys" | "when"
 };
 
 // ============================================================================
@@ -61,24 +62,25 @@ public:
         return CommandDefinition{
             .name = "keybindings",
             .description = "Manage keyboard shortcuts (list, search, reset, export, set)",
-            .args = {
-                CommandArg{
-                    .name = "action",
-                    .description = "list | search | reset | export | set",
-                    .type = ArgType::Choice,
-                    .required = false,
-                    .choices = {"list", "search", "reset", "export", "set"},
-                    .default_value = {},
+            .args =
+                {
+                    CommandArg{
+                        .name = "action",
+                        .description = "list | search | reset | export | set",
+                        .type = ArgType::Choice,
+                        .required = false,
+                        .choices = {"list", "search", "reset", "export", "set"},
+                        .default_value = {},
+                    },
+                    CommandArg{
+                        .name = "target",
+                        .description = "Pattern (search), KEY (set), or empty for default",
+                        .type = ArgType::Text,
+                        .required = false,
+                        .choices = {},
+                        .default_value = {},
+                    },
                 },
-                CommandArg{
-                    .name = "target",
-                    .description = "Pattern (search), KEY (set), or empty for default",
-                    .type = ArgType::Text,
-                    .required = false,
-                    .choices = {},
-                    .default_value = {},
-                },
-            },
             .category = "tools",
             .aliases = {"kb", "keys"},
             .hidden = false,
@@ -89,20 +91,19 @@ public:
         if (ctx.args.empty()) return {};  // default: template + editor open
 
         auto action = ctx.args[0];
-        static constexpr std::array valid = {
-            "list", "search", "reset", "export", "set"};
+        static constexpr std::array valid = {"list", "search", "reset", "export", "set"};
         if (std::ranges::find(valid, action) == valid.end()) {
-            return std::unexpected(Error::make(ErrorCode::InvalidRequest,
-                std::format("Invalid action: '{}'. Use: list|search|reset|export|set",
-                    action)));
+            return std::unexpected(Error::make(
+                ErrorCode::InvalidRequest,
+                std::format("Invalid action: '{}'. Use: list|search|reset|export|set", action)));
         }
         if (action == "search" && ctx.args.size() < 2) {
-            return std::unexpected(Error::make(ErrorCode::InvalidRequest,
-                "Usage: /keybindings search <pattern>"));
+            return std::unexpected(
+                Error::make(ErrorCode::InvalidRequest, "Usage: /keybindings search <pattern>"));
         }
         if (action == "set" && ctx.args.size() < 3) {
-            return std::unexpected(Error::make(ErrorCode::InvalidRequest,
-                "Usage: /keybindings set <KEY_CHORD> <ACTION> [WHEN]"));
+            return std::unexpected(Error::make(
+                ErrorCode::InvalidRequest, "Usage: /keybindings set <KEY_CHORD> <ACTION> [WHEN]"));
         }
         return {};
     }
@@ -110,19 +111,18 @@ public:
     [[nodiscard]] Result<CommandResult> execute(const CommandContext& ctx) {
         // Feature gate
         if (!loom::keybindings::is_keybinding_customization_enabled()) {
-            return CommandResult::success(
-                "Keybinding customization is not enabled. "
-                "This feature is currently in preview. "
-                "Set LOOM_KEYBINDINGS=1 to enable.");
+            return CommandResult::success("Keybinding customization is not enabled. "
+                                          "This feature is currently in preview. "
+                                          "Set LOOM_KEYBINDINGS=1 to enable.");
         }
 
         if (ctx.args.empty()) {
             return execute_default_open_editor();
         }
         auto action = std::string(ctx.args[0]);
-        if (action == "list")   return execute_list();
+        if (action == "list") return execute_list();
         if (action == "search") return execute_search(ctx.args[1]);
-        if (action == "reset")  return execute_reset();
+        if (action == "reset") return execute_reset();
         if (action == "export") return execute_export();
         if (action == "set") {
             // set <KEY_CHORD> <ACTION> [WHEN]
@@ -130,25 +130,21 @@ public:
             std::string action_id = ctx.args[2];
             std::optional<std::string> when_clause;
             if (ctx.args.size() >= 4) when_clause = ctx.args[3];
-            return execute_set(std::move(key_chord), std::move(action_id),
-                               std::move(when_clause));
+            return execute_set(std::move(key_chord), std::move(action_id), std::move(when_clause));
         }
-        return CommandResult::fail(
-            std::format("Unknown keybindings action: {}", action));
+        return CommandResult::fail(std::format("Unknown keybindings action: {}", action));
     }
 
     [[nodiscard]] std::vector<std::string> complete(std::string_view partial) {
         std::vector<std::string> suggestions;
         for (auto s : {"list", "search", "reset", "export", "set"}) {
-            if (std::string_view(s).starts_with(partial))
-                suggestions.emplace_back(s);
+            if (std::string_view(s).starts_with(partial)) suggestions.emplace_back(s);
         }
         // Also suggest known action IDs from defaults
         auto defaults = loom::keybindings::get_default_bindings();
         std::unordered_set<std::string> seen;
         for (const auto& b : defaults) {
-            if (seen.insert(b.command).second &&
-                b.command.starts_with(partial)) {
+            if (seen.insert(b.command).second && b.command.starts_with(partial)) {
                 suggestions.push_back(b.command);
             }
         }
@@ -190,15 +186,14 @@ public:
     }
 
     /// Search keybindings by pattern (substring match across fields).
-    [[nodiscard]] static std::vector<KeybindingSearchRow> search_binding_rows(
-        std::string_view pattern) {
+    [[nodiscard]] static std::vector<KeybindingSearchRow>
+    search_binding_rows(std::string_view pattern) {
         auto all = list_binding_rows();
         std::vector<KeybindingSearchRow> matches;
         if (pattern.empty()) return matches;
 
         std::string pat_lower(pattern);
-        std::transform(pat_lower.begin(), pat_lower.end(),
-                       pat_lower.begin(), ::tolower);
+        std::transform(pat_lower.begin(), pat_lower.end(), pat_lower.begin(), ::tolower);
 
         for (const auto& r : all) {
             KeybindingSearchRow sr;
@@ -209,8 +204,8 @@ public:
                 std::transform(v.begin(), v.end(), v.begin(), ::tolower);
                 auto pos = v.find(pat_lower);
                 if (pos != std::string::npos) {
-                    double score = 1.0 - (static_cast<double>(pos) /
-                        std::max(std::size_t{1}, v.size()));
+                    double score =
+                        1.0 - (static_cast<double>(pos) / std::max(std::size_t{1}, v.size()));
                     if (score > sr.match_score) {
                         sr.match_score = score;
                         sr.matched_field = std::string(field_name);
@@ -227,9 +222,8 @@ public:
             }
         }
         // Sort by score (descending)
-        std::ranges::sort(matches, [](const auto& a, const auto& b) {
-            return a.match_score > b.match_score;
-        });
+        std::ranges::sort(
+            matches, [](const auto& a, const auto& b) { return a.match_score > b.match_score; });
         return matches;
     }
 
@@ -238,22 +232,21 @@ private:
 
     [[nodiscard]] static bool is_default_id(std::string_view id) {
         auto defaults = loom::keybindings::get_default_bindings();
-        return std::ranges::any_of(defaults,
-            [id](const auto& b) { return b.id == id; });
+        return std::ranges::any_of(defaults, [id](const auto& b) { return b.id == id; });
     }
 
     [[nodiscard]] static bool is_chord_reserved(const loom::keybindings::KeyChord& chord) {
         std::string repr;
-        if (chord.modifiers.ctrl)  repr += "ctrl+";
-        if (chord.modifiers.alt)   repr += "alt+";
+        if (chord.modifiers.ctrl) repr += "ctrl+";
+        if (chord.modifiers.alt) repr += "alt+";
         if (chord.modifiers.shift) repr += "shift+";
-        if (chord.modifiers.meta)  repr += "meta+";
+        if (chord.modifiers.meta) repr += "meta+";
         repr += chord.key;
         return loom::keybindings::is_reserved(repr);
     }
 
-    [[nodiscard]] static std::string format_keys_for_display(
-        const std::vector<loom::keybindings::KeyChord>& keys) {
+    [[nodiscard]] static std::string
+    format_keys_for_display(const std::vector<loom::keybindings::KeyChord>& keys) {
         if (keys.empty()) return "(unbound)";
         // For most keybindings there's just one chord; format it nicely.
         std::string out;
@@ -264,13 +257,12 @@ private:
         return out;
     }
 
-    [[nodiscard]] static std::string format_single_chord(
-        const loom::keybindings::KeyChord& chord) {
+    [[nodiscard]] static std::string format_single_chord(const loom::keybindings::KeyChord& chord) {
         std::string out;
-        if (chord.modifiers.ctrl)  out += "Ctrl+";
-        if (chord.modifiers.alt)   out += "Alt+";
+        if (chord.modifiers.ctrl) out += "Ctrl+";
+        if (chord.modifiers.alt) out += "Alt+";
         if (chord.modifiers.shift) out += "Shift+";
-        if (chord.modifiers.meta)  out += "Cmd+";
+        if (chord.modifiers.meta) out += "Cmd+";
         // Capitalize first letter of key for display
         std::string k = chord.key;
         if (!k.empty() && k.size() == 1) {
@@ -297,9 +289,9 @@ private:
         std::error_code ec;
         fs::create_directories(path.parent_path(), ec);
         if (ec) {
-            return std::unexpected(Error::make(ErrorCode::InternalError,
-                std::format("Failed to create {}: {}",
-                    path.parent_path().string(), ec.message())));
+            return std::unexpected(Error::make(
+                ErrorCode::InternalError,
+                std::format("Failed to create {}: {}", path.parent_path().string(), ec.message())));
         }
 
         // Write template with exclusive-create flag (EEXIST if file exists)
@@ -315,8 +307,8 @@ private:
                 probe.close();
                 std::ofstream create(path, std::ios::out | std::ios::trunc);
                 if (!create) {
-                    return std::unexpected(Error::make(ErrorCode::InternalError,
-                        std::format("Cannot write {}", path.string())));
+                    return std::unexpected(Error::make(
+                        ErrorCode::InternalError, std::format("Cannot write {}", path.string())));
                 }
                 create << loom::keybindings::generate_keybindings_template();
             }
@@ -334,17 +326,13 @@ private:
         std::string prefix = file_existed ? "Opened" : "Created";
         std::string msg;
         if (editor_error) {
-            msg = std::format(
-                "{} {}. Could not open in editor: {}.",
-                prefix, path.string(), *editor_error);
+            msg = std::format("{} {}. Could not open in editor: {}.", prefix, path.string(),
+                              *editor_error);
         } else {
-            msg = std::format(
-                "{} {} in your editor (${}).",
-                prefix, path.string(), editor_env);
+            msg = std::format("{} {} in your editor (${}).", prefix, path.string(), editor_env);
             if (!file_existed) {
-                msg = std::format(
-                    "Created {} with template. Opened in your editor (${}).",
-                    path.string(), editor_env);
+                msg = std::format("Created {} with template. Opened in your editor (${}).",
+                                  path.string(), editor_env);
             }
         }
         return CommandResult::success(std::move(msg));
@@ -356,34 +344,29 @@ private:
             return CommandResult::success("No keybindings loaded.");
         }
         std::string out = std::format("Keybindings ({} total):\n\n", rows.size());
-        out += std::format("  {:<24} {:<16} {:<22} {}\n",
-                           "ID", "Keys", "Command", "When");
+        out += std::format("  {:<24} {:<16} {:<22} {}\n", "ID", "Keys", "Command", "When");
         out += std::string(82, '-') + "\n";
         for (const auto& r : rows) {
-            out += std::format("  {:<24} {:<16} {:<22} {}",
-                r.id, r.keys_display, r.command, r.when);
+            out +=
+                std::format("  {:<24} {:<16} {:<22} {}", r.id, r.keys_display, r.command, r.when);
             if (r.is_reserved) out += " [reserved]";
             out += "\n";
         }
         return CommandResult::success(std::move(out));
     }
 
-    [[nodiscard]] static Result<CommandResult> execute_search(
-        std::string_view pattern) {
+    [[nodiscard]] static Result<CommandResult> execute_search(std::string_view pattern) {
         auto rows = search_binding_rows(pattern);
         if (rows.empty()) {
-            return CommandResult::success(std::format(
-                "No keybindings match '{}'.", pattern));
+            return CommandResult::success(std::format("No keybindings match '{}'.", pattern));
         }
-        std::string out = std::format(
-            "Search for '{}' ({} matches):\n\n", pattern, rows.size());
-        out += std::format("  {:<5} {:<22} {:<16} {:<20} {}\n",
-                           "Score", "ID", "Keys", "Command", "When");
+        std::string out = std::format("Search for '{}' ({} matches):\n\n", pattern, rows.size());
+        out += std::format("  {:<5} {:<22} {:<16} {:<20} {}\n", "Score", "ID", "Keys", "Command",
+                           "When");
         out += std::string(86, '-') + "\n";
         for (const auto& r : rows) {
-            out += std::format("  {:>4.0f}% {:<22} {:<16} {:<20} {} [{:?}]\n",
-                r.match_score, r.id, r.keys_display, r.command,
-                r.when, r.matched_field);
+            out += std::format("  {:>4.0f}% {:<22} {:<16} {:<20} {} [{:?}]\n", r.match_score, r.id,
+                               r.keys_display, r.command, r.when, r.matched_field);
         }
         return CommandResult::success(std::move(out));
     }
@@ -395,20 +378,18 @@ private:
         bool existed = fs::exists(path, ec);
         fs::remove(path, ec);
         if (ec && existed) {
-            return std::unexpected(Error::make(ErrorCode::InternalError,
-                std::format("Failed to remove {}: {}",
-                    path.string(), ec.message())));
+            return std::unexpected(
+                Error::make(ErrorCode::InternalError,
+                            std::format("Failed to remove {}: {}", path.string(), ec.message())));
         }
         // Invalidate loader cache
         loom::keybindings::get_loader().reset_for_testing();
 
         if (existed) {
-            return CommandResult::success(std::format(
-                "Reset keybindings to defaults. User file {} removed.",
-                path.string()));
+            return CommandResult::success(
+                std::format("Reset keybindings to defaults. User file {} removed.", path.string()));
         }
-        return CommandResult::success(
-            "Keybindings already at defaults (no user file found).");
+        return CommandResult::success("Keybindings already at defaults (no user file found).");
     }
 
     [[nodiscard]] static Result<CommandResult> execute_export() {
@@ -418,25 +399,17 @@ private:
         // Build a JSON export
         std::ostringstream out;
         out << "{\n";
-        out << std::format(
-            "  \"$schema\": \"{}\",\n",
-            loom::keybindings::keybindings_schema_url);
-        out << std::format(
-            "  \"$source\": \"exported from {}\",\n", path.string());
+        out << std::format("  \"$schema\": \"{}\",\n", loom::keybindings::keybindings_schema_url);
+        out << std::format("  \"$source\": \"exported from {}\",\n", path.string());
         out << "  \"bindings\": [\n";
         for (std::size_t i = 0; i < rows.size(); ++i) {
             const auto& r = rows[i];
             out << "    {\n";
-            out << std::format("      \"id\": \"{}\",\n",
-                json_escape(r.id));
-            out << std::format("      \"keys\": [\"{}\"],\n",
-                json_escape(r.keys_display));
-            out << std::format("      \"command\": \"{}\",\n",
-                json_escape(r.command));
-            out << std::format("      \"when\": \"{}\",\n",
-                json_escape(r.when));
-            out << std::format("      \"source\": \"{}\"\n",
-                json_escape(r.source));
+            out << std::format("      \"id\": \"{}\",\n", json_escape(r.id));
+            out << std::format("      \"keys\": [\"{}\"],\n", json_escape(r.keys_display));
+            out << std::format("      \"command\": \"{}\",\n", json_escape(r.command));
+            out << std::format("      \"when\": \"{}\",\n", json_escape(r.when));
+            out << std::format("      \"source\": \"{}\"\n", json_escape(r.source));
             out << "    }";
             if (i + 1 < rows.size()) out << ",";
             out << "\n";
@@ -446,23 +419,21 @@ private:
         return CommandResult::success(std::move(out).str());
     }
 
-    [[nodiscard]] static Result<CommandResult> execute_set(
-        std::string key_chord_str,
-        std::string action_id,
-        std::optional<std::string> when_clause) {
+    [[nodiscard]] static Result<CommandResult> execute_set(std::string key_chord_str,
+                                                           std::string action_id,
+                                                           std::optional<std::string> when_clause) {
         // 1. Parse the key chord
         auto chord = loom::keybindings::parse_key_chord(key_chord_str);
         if (chord.key.empty()) {
-            return CommandResult::fail(
-                std::format("Invalid key chord: '{}'", key_chord_str));
+            return CommandResult::fail(std::format("Invalid key chord: '{}'", key_chord_str));
         }
 
         // 2. Refuse to rebind reserved shortcuts
         if (is_chord_reserved(chord)) {
-            return CommandResult::fail(std::format(
-                "Refusing to set {}: this is a reserved shortcut "
-                "(interrupt/exit/suspend/clear/submit/dismiss/autocomplete).",
-                key_chord_str));
+            return CommandResult::fail(
+                std::format("Refusing to set {}: this is a reserved shortcut "
+                            "(interrupt/exit/suspend/clear/submit/dismiss/autocomplete).",
+                            key_chord_str));
         }
 
         // 3. Read current user keybindings.json
@@ -479,17 +450,13 @@ private:
         out << "  \"bindings\": [\n";
         // Always emit the new binding first
         out << "    {\n";
-        out << std::format("      \"id\": \"user.{}.{}\",\n",
-            json_escape(action_id),
-            std::to_string(
-                std::chrono::system_clock::now().time_since_epoch().count() % 100000));
-        out << std::format("      \"keys\": [\"{}\"],\n",
-            json_escape(key_chord_str));
-        out << std::format("      \"command\": \"{}\",\n",
-            json_escape(action_id));
+        out << std::format(
+            "      \"id\": \"user.{}.{}\",\n", json_escape(action_id),
+            std::to_string(std::chrono::system_clock::now().time_since_epoch().count() % 100000));
+        out << std::format("      \"keys\": [\"{}\"],\n", json_escape(key_chord_str));
+        out << std::format("      \"command\": \"{}\",\n", json_escape(action_id));
         if (when_clause) {
-            out << std::format("      \"when\": \"{}\",\n",
-                json_escape(*when_clause));
+            out << std::format("      \"when\": \"{}\",\n", json_escape(*when_clause));
         }
         out << "    }\n";
         out << "  ]\n";
@@ -499,7 +466,7 @@ private:
             std::ofstream write(path, std::ios::out | std::ios::trunc);
             if (!write) {
                 return std::unexpected(Error::make(ErrorCode::ConfigWriteError,
-                    std::format("Cannot write {}", path.string())));
+                                                   std::format("Cannot write {}", path.string())));
             }
             write << out.str();
         }
@@ -508,10 +475,8 @@ private:
         loom::keybindings::get_loader().reset_for_testing();
 
         return CommandResult::success(std::format(
-            "Keybinding set: {} → {}{} (written to {}).",
-            key_chord_str, action_id,
-            when_clause ? std::format(" @ {}", *when_clause) : std::string{},
-            path.string()));
+            "Keybinding set: {} → {}{} (written to {}).", key_chord_str, action_id,
+            when_clause ? std::format(" @ {}", *when_clause) : std::string{}, path.string()));
     }
 
     // ---- JSON escaping helper ---------------------------------------------
@@ -520,16 +485,28 @@ private:
         out.reserve(s.size() + 2);
         for (char c : s) {
             switch (c) {
-                case '"':  out += "\\\""; break;
-                case '\\': out += "\\\\"; break;
-                case '\n': out += "\\n"; break;
-                case '\r': out += "\\r"; break;
-                case '\t': out += "\\t"; break;
-                default:   out += c; break;
+            case '"':
+                out += "\\\"";
+                break;
+            case '\\':
+                out += "\\\\";
+                break;
+            case '\n':
+                out += "\\n";
+                break;
+            case '\r':
+                out += "\\r";
+                break;
+            case '\t':
+                out += "\\t";
+                break;
+            default:
+                out += c;
+                break;
             }
         }
         return out;
     }
 };
 
-} // namespace loom::commands
+}  // namespace loom::commands

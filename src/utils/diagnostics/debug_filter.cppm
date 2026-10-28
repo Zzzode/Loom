@@ -1,13 +1,12 @@
 module;
-#include <cstdlib>
 #include <cstddef>
+#include <cstdlib>
 
 export module loom.diagnostics.debug_filter;
 
 import std;
 
 export namespace loom::utils {
-
 
 class DebugFilter {
 public:
@@ -17,6 +16,7 @@ public:
     DebugFilter(DebugFilter&& other) noexcept
         : enable_patterns_(std::move(other.enable_patterns_))
         , disable_patterns_(std::move(other.disable_patterns_)) {}
+
     DebugFilter& operator=(DebugFilter&& other) noexcept {
         if (this != &other) {
             enable_patterns_ = std::move(other.enable_patterns_);
@@ -24,9 +24,9 @@ public:
         }
         return *this;
     }
+
     DebugFilter(const DebugFilter&) = delete;
     DebugFilter& operator=(const DebugFilter&) = delete;
-
 
     [[nodiscard]] static DebugFilter from_env() {
         DebugFilter filter;
@@ -36,7 +36,6 @@ public:
         }
         return filter;
     }
-
 
     void set_patterns(std::string_view patterns) {
         std::lock_guard lock(mutex_);
@@ -61,23 +60,18 @@ public:
         }
     }
 
-
     [[nodiscard]] bool matches(std::string_view ns) const {
         std::lock_guard lock(mutex_);
 
-
         if (enable_patterns_.empty() && disable_patterns_.empty()) return false;
-
 
         for (const auto& pat : disable_patterns_) {
             if (glob_match(ns, pat)) return false;
         }
 
-
         for (const auto& pat : enable_patterns_) {
             if (glob_match(ns, pat)) return true;
         }
-
 
         return enable_patterns_.empty();
     }
@@ -87,7 +81,6 @@ private:
     std::vector<std::string> disable_patterns_;
     mutable std::mutex mutex_;
 
-
     [[nodiscard]] static bool glob_match(std::string_view str, std::string_view pattern) {
         size_t si = 0, pi = 0;
         size_t star_pi = std::string_view::npos;
@@ -95,7 +88,8 @@ private:
 
         while (si < str.size()) {
             if (pi < pattern.size() && (pattern[pi] == str[si] || pattern[pi] == '?')) {
-                ++si; ++pi;
+                ++si;
+                ++pi;
             } else if (pi < pattern.size() && pattern[pi] == '*') {
                 star_pi = pi;
                 star_si = si;
@@ -108,11 +102,10 @@ private:
             }
         }
 
-
-        while (pi < pattern.size() && pattern[pi] == '*') ++pi;
+        while (pi < pattern.size() && pattern[pi] == '*')
+            ++pi;
         return pi == pattern.size();
     }
-
 
     [[nodiscard]] static std::string_view trim(std::string_view sv) {
         auto start = sv.find_first_not_of(" \t");
@@ -122,4 +115,4 @@ private:
     }
 };
 
-} // namespace loom::utils
+}  // namespace loom::utils

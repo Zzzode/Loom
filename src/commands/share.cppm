@@ -3,7 +3,6 @@
 /// Shares the current session.
 module;
 
-
 export module loom.commands.share;
 
 import std;
@@ -30,9 +29,7 @@ public:
         };
     }
 
-    [[nodiscard]] VoidResult validate(const CommandContext&) {
-        return {};
-    }
+    [[nodiscard]] VoidResult validate(const CommandContext&) { return {}; }
 
     [[nodiscard]] Result<CommandResult> execute(const CommandContext&) {
         return CommandResult::success(
@@ -41,9 +38,7 @@ public:
             "(<data-dir>/projects/<project>/<session-id>/messages.jsonl) and publish externally.");
     }
 
-    [[nodiscard]] std::vector<std::string> complete(std::string_view) {
-        return {};
-    }
+    [[nodiscard]] std::vector<std::string> complete(std::string_view) { return {}; }
 };
 
-} // namespace loom::commands
+}  // namespace loom::commands

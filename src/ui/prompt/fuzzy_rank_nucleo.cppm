@@ -82,9 +82,8 @@ struct NucleoScore {
     bool matched = false;
 };
 
-[[nodiscard]] inline NucleoScore nucleo_score(
-    std::string_view candidate_lower,
-    std::string_view query_lower) noexcept {
+[[nodiscard]] inline NucleoScore nucleo_score(std::string_view candidate_lower,
+                                              std::string_view query_lower) noexcept {
     NucleoScore result;
     if (query_lower.empty()) {
         return {.score = 0, .consecutive = 0, .matched = true};
@@ -136,9 +135,7 @@ struct NucleoScore {
 ///
 /// Hidden-command escape hatch (rank = -1000) is set directly at its call-site
 /// and never flows through here, so it is unaffected.
-[[nodiscard]] inline int fuzzy_rank_nucleo(
-    std::string_view candidate,
-    std::string_view query) {
+[[nodiscard]] inline int fuzzy_rank_nucleo(std::string_view candidate, std::string_view query) {
     if (query.empty()) return 1000;
     const auto c = lowercase_ascii(candidate);
     const auto q = lowercase_ascii(query);
@@ -154,8 +151,7 @@ struct NucleoScore {
     // "branch" ties (rank 1) with a prefix "h" in "help", and alphabetical
     // tiebreak then buries /help below /branch. Require q.size() > 1 so a
     // prefix hit outranks a non-prefix single-char substring.
-    const bool all_consecutive = q.size() > 1 &&
-        ns.consecutive + 1 >= static_cast<int>(q.size());
+    const bool all_consecutive = q.size() > 1 && ns.consecutive + 1 >= static_cast<int>(q.size());
 
     // Quality thresholds derived from the scoring constants: a pure contiguous
     // match with no bonuses sits at SCORE_MATCH * len; boundary/path bonuses
@@ -172,9 +168,7 @@ struct NucleoScore {
 /// AT-12: boolean fuzzy predicate matching app.cppm's `fuzzy_match_ascii`
 /// semantics (substring OR subsequence). Kept here so call-sites use a single
 /// consistent rank + match pair sourced from one nucleo pass.
-[[nodiscard]] inline bool fuzzy_match_nucleo(
-    std::string_view candidate,
-    std::string_view query) {
+[[nodiscard]] inline bool fuzzy_match_nucleo(std::string_view candidate, std::string_view query) {
     if (query.empty()) return true;
     return nucleo_score(lowercase_ascii(candidate), lowercase_ascii(query)).matched;
 }

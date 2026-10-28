@@ -1,6 +1,5 @@
 // Pare Benchmark Main Entry Point
 
-
 import std;
 import loom.benchmarks.pare.cli;
 

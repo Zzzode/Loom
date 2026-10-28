@@ -25,10 +25,9 @@ namespace loom::ui::repl_screen {
 using namespace ftxui;
 
 // Canonical work glyph, readable neutral label, decorative dot cadence.
-[[nodiscard]] Element RenderSpinner(
-    SpinnerMode m, const std::optional<std::string>& verb,
-    const std::optional<std::string>& tip,
-    int frame, std::optional<double> estimated_tps) {
+[[nodiscard]] Element RenderSpinner(SpinnerMode m, const std::optional<std::string>& verb,
+                                    const std::optional<std::string>& tip, int frame,
+                                    std::optional<double> estimated_tps) {
     if (m == SpinnerMode::Hidden) return text("");
     const auto& theme = loom::ui::design::theme::current_theme();
     const auto& pal = *theme.palette;
@@ -37,8 +36,8 @@ using namespace ftxui;
     // state here, so hash the mode + pid and sample the verbs list.
     using loom::constants::spinner_verbs::SPINNER_VERBS;
     static std::mt19937 rng{std::random_device{}()};
-    static thread_local std::uniform_int_distribution<std::size_t> dist(
-        0, SPINNER_VERBS.size() - 1);
+    static thread_local std::uniform_int_distribution<std::size_t> dist(0,
+                                                                        SPINNER_VERBS.size() - 1);
     static thread_local std::string_view cached_verb = SPINNER_VERBS[dist(rng)];
     // Re-sample when mode transitions from Hidden -> something (frame==0
     // from caller signals first visible frame of a new request).
@@ -50,8 +49,8 @@ using namespace ftxui;
     const std::string dots = std::string(static_cast<std::size_t>(dot_idx + 1), '.') +
                              std::string(static_cast<std::size_t>(3 - dot_idx - 1), ' ');
 
-    const auto glyph = theme.a11y.reduced_motion
-        ? figures::kBullet : figures::spinner_frame_glyph(std::max(0, frame));
+    const auto glyph = theme.a11y.reduced_motion ? figures::kBullet
+                                                 : figures::spinner_frame_glyph(std::max(0, frame));
 
     std::string_view selected_verb = verb ? std::string_view(*verb) : cached_verb;
     std::string label = std::string(selected_verb) + "\xE2\x80\xA6";  // …
@@ -59,11 +58,10 @@ using namespace ftxui;
         text(std::string(glyph)) | color(pal.primary),
         text(" "),
         text(label) | color(pal.muted),
-        text(dots)  | color(pal.muted) | dim,
+        text(dots) | color(pal.muted) | dim,
     };
     if (estimated_tps && std::isfinite(*estimated_tps) && *estimated_tps > 0.0)
-        p.push_back(text(std::format("  ~{:.1f} tok/s", *estimated_tps)) |
-                    color(pal.muted));
+        p.push_back(text(std::format("  ~{:.1f} tok/s", *estimated_tps)) | color(pal.muted));
     if (tip) p.push_back(text("  -- " + *tip) | color(pal.muted));
     return hbox(p);
 }
@@ -90,99 +88,95 @@ using namespace ftxui;
 // The caller may set s.debug_* / s.tmux_* / s.sandboxing_enabled fields to
 // drive notice activation; they default to off so the header renders the
 // same minimal 3-row look as the default-condensed branch.
-[[nodiscard]] Element RenderWelcomeHeader(const ReplScreenState& s,
-                                                 int /*spinner_frame*/,
-                                                 int term_cols,
-                                                 bool force_full_logo) {
+[[nodiscard]] Element RenderWelcomeHeader(const ReplScreenState& s, int /*spinner_frame*/,
+                                          int term_cols, bool force_full_logo) {
     namespace logo = loom::ui::logo;
 
     const std::string model_line = !s.chrome_store.model_display_name.empty()
-        ? s.chrome_store.model_display_name
-        : s.settings_model;
+                                       ? s.chrome_store.model_display_name
+                                       : s.settings_model;
 
     // Build the LogoOptions. Defaults mirror the component's initial
     // props (no onboarding, no release-notes → condensed branch).
     logo::LogoOptions opts;
-    opts.cwd                  = s.cwd;
-    opts.billing_type         = s.chrome_store.billing_type;
+    opts.cwd = s.cwd;
+    opts.billing_type = s.chrome_store.billing_type;
     // Agent name comes from initial settings.
-    opts.agent_name           = s.settings_agent_name.empty()
-                              ? std::nullopt
-                              : std::make_optional(s.settings_agent_name);
-    opts.model_display_name   = model_line;
-    opts.username             = s.chrome_store.user_display_name.empty()
-        ? std::nullopt
-        : std::make_optional(s.chrome_store.user_display_name);
-    opts.org_name             = std::nullopt;
-    opts.is_condensed_mode    = !force_full_logo && !s.chrome_store.show_onboarding;
-                                                                          // Early-return gate: condensed when
-                                                                          // no release notes, no onboarding,
-                                                                          // no full logo.
-    opts.show_onboarding     = s.chrome_store.show_onboarding;
-    opts.show_sandbox_status  = false;                    // TODO(engine-wire)
-    opts.show_guest_passes    = s.chrome_store.show_guest_passes_upsell;
-    opts.show_overage_credit  = s.chrome_store.show_overage_credit_upsell;
-    opts.is_debug_mode        = false;               // TODO(engine-wire)
-    opts.tmux_session         = std::nullopt;        // TODO(engine-wire)
-    opts.company_announcement = std::nullopt;        // TODO(engine-wire)
-    opts.emergency_tip        = std::nullopt;        // TODO(engine-wire)
+    opts.agent_name =
+        s.settings_agent_name.empty() ? std::nullopt : std::make_optional(s.settings_agent_name);
+    opts.model_display_name = model_line;
+    opts.username = s.chrome_store.user_display_name.empty()
+                        ? std::nullopt
+                        : std::make_optional(s.chrome_store.user_display_name);
+    opts.org_name = std::nullopt;
+    opts.is_condensed_mode = !force_full_logo && !s.chrome_store.show_onboarding;
+    // Early-return gate: condensed when
+    // no release notes, no onboarding,
+    // no full logo.
+    opts.show_onboarding = s.chrome_store.show_onboarding;
+    opts.show_sandbox_status = false;  // TODO(engine-wire)
+    opts.show_guest_passes = s.chrome_store.show_guest_passes_upsell;
+    opts.show_overage_credit = s.chrome_store.show_overage_credit_upsell;
+    opts.is_debug_mode = false;                // TODO(engine-wire)
+    opts.tmux_session = std::nullopt;          // TODO(engine-wire)
+    opts.company_announcement = std::nullopt;  // TODO(engine-wire)
+    opts.emergency_tip = std::nullopt;         // TODO(engine-wire)
     // StatusNotices: 6 definitions (memory/agent/subscriber/apikey/both/
     // jetbrains). All stubs inactive until engine wiring provides data.
-    opts.status_notices       = {};
+    opts.status_notices = {};
 
     // When force_full_logo is set and term_cols >= 70 (horizontal threshold),
     // build feeds for the right column.  The 4-branch feed priority chain
     // is resolved inside the logo module when feeds
     // is empty.  We only build explicit feeds for the DEFAULT branch (no
     // onboarding / no guest / no overage) so we can inject real data from
-    // s.chrome_store.recent_activity_lines and s.chrome_store.changelog_lines.  For the other branches,
-    // the module builds placeholder feeds until engine wiring provides real
-    // onboarding steps / guest pass counts / overage data.
+    // s.chrome_store.recent_activity_lines and s.chrome_store.changelog_lines.  For the other
+    // branches, the module builds placeholder feeds until engine wiring provides real onboarding
+    // steps / guest pass counts / overage data.
     std::vector<logo::FeedConfig> feeds;
-    const bool priority_branch_active = s.chrome_store.show_onboarding
-        || s.chrome_store.show_guest_passes_upsell || s.chrome_store.show_overage_credit_upsell;
+    const bool priority_branch_active = s.chrome_store.show_onboarding ||
+                                        s.chrome_store.show_guest_passes_upsell ||
+                                        s.chrome_store.show_overage_credit_upsell;
     if (force_full_logo && !priority_branch_active) {
-      {
-        logo::FeedConfig recent;
-        recent.title = "Recent activity";
-        if (s.chrome_store.recent_activity_lines.empty()) {
-          recent.empty_message =
-              "No recent conversations — start a new chat above";
-        } else {
-          recent.lines.reserve(s.chrome_store.recent_activity_lines.size());
-          for (const auto& a : s.chrome_store.recent_activity_lines) {
-            recent.lines.push_back(logo::FeedLine{
-                /*text=*/std::string(a),
-                /*timestamp=*/std::nullopt});
-          }
+        {
+            logo::FeedConfig recent;
+            recent.title = "Recent activity";
+            if (s.chrome_store.recent_activity_lines.empty()) {
+                recent.empty_message = "No recent conversations — start a new chat above";
+            } else {
+                recent.lines.reserve(s.chrome_store.recent_activity_lines.size());
+                for (const auto& a : s.chrome_store.recent_activity_lines) {
+                    recent.lines.push_back(logo::FeedLine{/*text=*/std::string(a),
+                                                          /*timestamp=*/std::nullopt});
+                }
+            }
+            feeds.push_back(std::move(recent));
         }
-        feeds.push_back(std::move(recent));
-      }
-      {
-        logo::FeedConfig whats_new;
-        whats_new.title = "What's new";
-        if (s.chrome_store.changelog_lines.empty()) {
-          whats_new.lines = {
-            logo::FeedLine{/*text=*/"Paste images into the prompt with Ctrl+V",
-                          /*timestamp=*/std::nullopt},
-            logo::FeedLine{/*text=*/"3-mode logo: condensed / compact / horizontal",
-                          /*timestamp=*/std::nullopt},
-            logo::FeedLine{/*text=*/"Bash sandboxing via /sandbox toggle",
-                          /*timestamp=*/std::nullopt},
-          };
-        } else {
-          whats_new.lines.reserve(s.chrome_store.changelog_lines.size());
-          for (const auto& c : s.chrome_store.changelog_lines) {
-            whats_new.lines.push_back(logo::FeedLine{
-                /*text=*/std::string(c), /*timestamp=*/std::nullopt});
-          }
+        {
+            logo::FeedConfig whats_new;
+            whats_new.title = "What's new";
+            if (s.chrome_store.changelog_lines.empty()) {
+                whats_new.lines = {
+                    logo::FeedLine{/*text=*/"Paste images into the prompt with Ctrl+V",
+                                   /*timestamp=*/std::nullopt},
+                    logo::FeedLine{/*text=*/"3-mode logo: condensed / compact / horizontal",
+                                   /*timestamp=*/std::nullopt},
+                    logo::FeedLine{/*text=*/"Bash sandboxing via /sandbox toggle",
+                                   /*timestamp=*/std::nullopt},
+                };
+            } else {
+                whats_new.lines.reserve(s.chrome_store.changelog_lines.size());
+                for (const auto& c : s.chrome_store.changelog_lines) {
+                    whats_new.lines.push_back(
+                        logo::FeedLine{/*text=*/std::string(c), /*timestamp=*/std::nullopt});
+                }
+            }
+            whats_new.footer = "Full changelog at /changelog";
+            feeds.push_back(std::move(whats_new));
         }
-        whats_new.footer = "Full changelog at /changelog";
-        feeds.push_back(std::move(whats_new));
-      }
     }
 
     return logo::render_logo(opts, term_cols, std::move(feeds));
-  }
+}
 
 }  // namespace loom::ui::repl_screen

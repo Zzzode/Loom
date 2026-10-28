@@ -9,9 +9,7 @@ export module loom.tools.powershell;
 import std;
 import loom.process.bash.bash_execution;
 
-
 export namespace loom::tools {
-
 
 enum class PowerShellError {
     CommandEmpty,
@@ -25,40 +23,39 @@ enum class PowerShellError {
 
 constexpr auto format_error(PowerShellError err) -> std::string_view {
     switch (err) {
-        case PowerShellError::CommandEmpty:           return "PowerShell command is empty";
-        case PowerShellError::DangerousCmdlet:       return "Dangerous cmdlet detected, needs approval";
-        case PowerShellError::ExecutionFailed:        return "PowerShell execution failed";
-        case PowerShellError::Timeout:               return "PowerShell command timed out";
-        case PowerShellError::EncodingError:         return "Output encoding conversion failed";
-        case PowerShellError::InvalidWorkingDirectory: return "Working directory does not exist";
-        case PowerShellError::NotAvailable:          return "PowerShell is not available on this system";
-        default:                                     return "Unknown PowerShell error";
+    case PowerShellError::CommandEmpty:
+        return "PowerShell command is empty";
+    case PowerShellError::DangerousCmdlet:
+        return "Dangerous cmdlet detected, needs approval";
+    case PowerShellError::ExecutionFailed:
+        return "PowerShell execution failed";
+    case PowerShellError::Timeout:
+        return "PowerShell command timed out";
+    case PowerShellError::EncodingError:
+        return "Output encoding conversion failed";
+    case PowerShellError::InvalidWorkingDirectory:
+        return "Working directory does not exist";
+    case PowerShellError::NotAvailable:
+        return "PowerShell is not available on this system";
+    default:
+        return "Unknown PowerShell error";
     }
 }
 
-
 inline constexpr std::array kDangerousCmdlets = {
-    std::string_view{"Remove-Item -Recurse"},
-    std::string_view{"Remove-Item -Force"},
-    std::string_view{"Format-Volume"},
-    std::string_view{"Format-Disk"},
-    std::string_view{"Stop-Process"},
-    std::string_view{"Stop-Computer"},
-    std::string_view{"Restart-Computer"},
-    std::string_view{"Clear-Disk"},
-    std::string_view{"Initialize-Disk"},
-    std::string_view{"Set-ExecutionPolicy Unrestricted"},
-    std::string_view{"Invoke-Expression"},
-    std::string_view{"Remove-Partition"},
+    std::string_view{"Remove-Item -Recurse"}, std::string_view{"Remove-Item -Force"},
+    std::string_view{"Format-Volume"},        std::string_view{"Format-Disk"},
+    std::string_view{"Stop-Process"},         std::string_view{"Stop-Computer"},
+    std::string_view{"Restart-Computer"},     std::string_view{"Clear-Disk"},
+    std::string_view{"Initialize-Disk"},      std::string_view{"Set-ExecutionPolicy Unrestricted"},
+    std::string_view{"Invoke-Expression"},    std::string_view{"Remove-Partition"},
 };
-
 
 enum class CmdletPermission {
     Allowed,
     NeedsApproval,
     Denied,
 };
-
 
 struct PowerShellConfig {
     std::string command;
@@ -67,7 +64,6 @@ struct PowerShellConfig {
     bool no_profile{true};
     bool non_interactive{true};
 };
-
 
 struct PowerShellResult {
     int exit_code{0};
@@ -168,9 +164,8 @@ inline void append_powershell_utf16le(std::string& output, char32_t code_point) 
             auto b1 = continuation(1);
             auto b2 = continuation(2);
             if (b1 && b2) {
-                const auto candidate = static_cast<char32_t>(
-                    ((b0 & 0x0f) << 12) | ((*b1 & 0x3f) << 6) | (*b2 & 0x3f)
-                );
+                const auto candidate =
+                    static_cast<char32_t>(((b0 & 0x0f) << 12) | ((*b1 & 0x3f) << 6) | (*b2 & 0x3f));
                 if (candidate >= 0x800 && (candidate < 0xd800 || candidate > 0xdfff)) {
                     code_point = candidate;
                     consumed = 3;
@@ -181,10 +176,9 @@ inline void append_powershell_utf16le(std::string& output, char32_t code_point) 
             auto b2 = continuation(2);
             auto b3 = continuation(3);
             if (b1 && b2 && b3) {
-                const auto candidate = static_cast<char32_t>(
-                    ((b0 & 0x07) << 18) | ((*b1 & 0x3f) << 12) |
-                    ((*b2 & 0x3f) << 6) | (*b3 & 0x3f)
-                );
+                const auto candidate =
+                    static_cast<char32_t>(((b0 & 0x07) << 18) | ((*b1 & 0x3f) << 12) |
+                                          ((*b2 & 0x3f) << 6) | (*b3 & 0x3f));
                 if (candidate >= 0x10000 && candidate <= 0x10ffff) {
                     code_point = candidate;
                     consumed = 4;
@@ -207,32 +201,29 @@ inline void append_powershell_utf16le(std::string& output, char32_t code_point) 
     return std::string(reinterpret_cast<const char*>(utf8_path.data()), utf8_path.size());
 }
 
-[[nodiscard]] inline std::string build_powershell_script(
-    const PowerShellConfig& config,
-    const std::filesystem::path& default_cwd
-) {
+[[nodiscard]] inline std::string build_powershell_script(const PowerShellConfig& config,
+                                                         const std::filesystem::path& default_cwd) {
     auto cwd = config.working_directory.empty() ? default_cwd : config.working_directory;
-    return "Set-Location -LiteralPath " + powershell_single_quote(powershell_path_string(cwd)) + "\n" + config.command;
+    return "Set-Location -LiteralPath " + powershell_single_quote(powershell_path_string(cwd)) +
+           "\n" + config.command;
 }
 
 [[nodiscard]] inline std::string build_powershell_process_command(
     const PowerShellConfig& config,
-    const std::filesystem::path& default_cwd = std::filesystem::current_path()
-) {
+    const std::filesystem::path& default_cwd = std::filesystem::current_path()) {
     std::string command = "powershell.exe";
     if (config.no_profile) command += " -NoProfile";
     if (config.non_interactive) command += " -NonInteractive";
-    command += " -EncodedCommand " + powershell_encoded_command(build_powershell_script(config, default_cwd));
+    command += " -EncodedCommand " +
+               powershell_encoded_command(build_powershell_script(config, default_cwd));
     return command;
 }
 
-
 class EncodingHandler {
 public:
-
-    static auto utf16le_to_utf8(std::span<const std::byte> input) -> std::expected<std::string, PowerShellError> {
+    static auto utf16le_to_utf8(std::span<const std::byte> input)
+        -> std::expected<std::string, PowerShellError> {
         if (input.empty()) return std::string{};
-
 
         if (input.size() % 2 != 0) {
             return std::unexpected(PowerShellError::EncodingError);
@@ -243,9 +234,8 @@ public:
 
         for (size_t i = 0; i + 1 < input.size(); i += 2) {
 
-            uint16_t code_unit = static_cast<uint16_t>(input[i]) |
-                                 (static_cast<uint16_t>(input[i + 1]) << 8);
-
+            uint16_t code_unit =
+                static_cast<uint16_t>(input[i]) | (static_cast<uint16_t>(input[i + 1]) << 8);
 
             if (code_unit < 0x80) {
                 result += static_cast<char>(code_unit);
@@ -261,22 +251,19 @@ public:
         return result;
     }
 
-
     static auto has_utf16_bom(std::span<const std::byte> data) -> bool {
-        return data.size() >= 2 &&
-               data[0] == std::byte{0xFF} && data[1] == std::byte{0xFE};
+        return data.size() >= 2 && data[0] == std::byte{0xFF} && data[1] == std::byte{0xFE};
     }
 };
-
 
 class PowerShellTool {
 public:
     static constexpr std::string_view name = "powershell";
-    static constexpr std::string_view description = "Execute PowerShell commands on Windows systems";
+    static constexpr std::string_view description =
+        "Execute PowerShell commands on Windows systems";
 
     explicit PowerShellTool(std::filesystem::path default_cwd = std::filesystem::current_path())
         : default_cwd_(std::move(default_cwd)) {}
-
 
     auto check_permission(std::string_view command) const -> CmdletPermission {
         if (command.empty()) return CmdletPermission::Denied;
@@ -288,7 +275,6 @@ public:
         }
         return CmdletPermission::Allowed;
     }
-
 
     auto validate(const PowerShellConfig& config) const -> std::expected<void, PowerShellError> {
         if (config.command.empty()) {
@@ -306,20 +292,17 @@ public:
         return {};
     }
 
-
     auto execute(PowerShellConfig config) -> std::expected<PowerShellResult, PowerShellError> {
         if (auto v = validate(config); !v) return std::unexpected(v.error());
 
         auto start_time = std::chrono::steady_clock::now();
 
-
         const auto ps_cmd = build_powershell_process_command(config, default_cwd_);
 
-
         auto pipe_cap = loom::utils::bash::exec_capture(ps_cmd.c_str());
-    if (!pipe_cap) return std::unexpected(PowerShellError::ExecutionFailed);
-    std::string output = std::move(pipe_cap->output);
-    auto status = pipe_cap->status;
+        if (!pipe_cap) return std::unexpected(PowerShellError::ExecutionFailed);
+        std::string output = std::move(pipe_cap->output);
+        auto status = pipe_cap->status;
 
         auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
             std::chrono::steady_clock::now() - start_time);
@@ -346,11 +329,12 @@ public:
     }},
     "required": ["command"]
   }}
-}})json", name, description);
+}})json",
+                           name, description);
     }
 
 private:
     std::filesystem::path default_cwd_;
 };
 
-} // namespace loom::tools
+}  // namespace loom::tools

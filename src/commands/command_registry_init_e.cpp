@@ -47,4 +47,4 @@ void register_group_e_commands(CommandRegistry& registry) {
     registry.register_command<ThinkbackPlayCommand>();
 }
 
-} // namespace loom::commands
+}  // namespace loom::commands

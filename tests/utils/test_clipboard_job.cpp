@@ -5,10 +5,11 @@
 /// as fake backends. Verifies spawn, write, wait, timeout, cancel, and
 /// process-group kill behavior.
 
-#include <chrono>
 #include <gtest/gtest.h>
 #include <sys/wait.h>
 #include <unistd.h>
+
+#include <chrono>
 
 import std;
 import loom.platform.clipboard_job;
@@ -33,10 +34,8 @@ bool wait_for(F&& cond, std::chrono::milliseconds timeout = std::chrono::seconds
 }
 
 /// Create a JobInput with the given backend command.
-std::shared_ptr<const clip::JobInput> make_input(
-    std::string text,
-    std::string backend_path,
-    std::vector<std::string> argv) {
+std::shared_ptr<const clip::JobInput> make_input(std::string text, std::string backend_path,
+                                                 std::vector<std::string> argv) {
     auto input = std::make_shared<clip::JobInput>();
     input->text = std::make_shared<const std::string>(std::move(text));
     input->backend_path = std::move(backend_path);
@@ -64,15 +63,13 @@ TEST(ClipboardJob, CatReadsAllInputAndExits0) {
 
     auto input = make_input("hello world", cat, {"cat"});
     auto cancel = std::make_shared<clip::CancellationState>();
-    auto job = std::make_unique<clip::ClipboardJob>(
-        input, cancel,
-        [&](clip::CopyResult r) {
-            {
-                std::lock_guard lock(result_mutex);
-                result = std::move(r);
-            }
-            cv.notify_one();
-        });
+    auto job = std::make_unique<clip::ClipboardJob>(input, cancel, [&](clip::CopyResult r) {
+        {
+            std::lock_guard lock(result_mutex);
+            result = std::move(r);
+        }
+        cv.notify_one();
+    });
 
     EXPECT_TRUE(wait_for([&] {
         std::lock_guard lock(result_mutex);
@@ -95,15 +92,13 @@ TEST(ClipboardJob, FalseExitsNonZero) {
 
     auto input = make_input("test", false_cmd, {"false"});
     auto cancel = std::make_shared<clip::CancellationState>();
-    auto job = std::make_unique<clip::ClipboardJob>(
-        input, cancel,
-        [&](clip::CopyResult r) {
-            {
-                std::lock_guard lock(result_mutex);
-                result = std::move(r);
-            }
-            cv.notify_one();
-        });
+    auto job = std::make_unique<clip::ClipboardJob>(input, cancel, [&](clip::CopyResult r) {
+        {
+            std::lock_guard lock(result_mutex);
+            result = std::move(r);
+        }
+        cv.notify_one();
+    });
 
     EXPECT_TRUE(wait_for([&] {
         std::lock_guard lock(result_mutex);
@@ -128,25 +123,24 @@ TEST(ClipboardJob, BackendThatDoesNotReadStdinTimesOut) {
 
     // Large text to ensure the write buffer fills up.
     std::string large_text(1024 * 1024, 'x');  // 1MB
-    auto input = make_input(std::move(large_text), sleep_cmd,
-                            {"sleep", "100"});
+    auto input = make_input(std::move(large_text), sleep_cmd, {"sleep", "100"});
     auto cancel = std::make_shared<clip::CancellationState>();
-    auto job = std::make_unique<clip::ClipboardJob>(
-        input, cancel,
-        [&](clip::CopyResult r) {
-            {
-                std::lock_guard lock(result_mutex);
-                result = std::move(r);
-            }
-            cv.notify_one();
-        });
+    auto job = std::make_unique<clip::ClipboardJob>(input, cancel, [&](clip::CopyResult r) {
+        {
+            std::lock_guard lock(result_mutex);
+            result = std::move(r);
+        }
+        cv.notify_one();
+    });
 
     // Wait for result with a generous watchdog (10s). The internal deadline
     // is 3s, so this should complete well within the watchdog.
-    EXPECT_TRUE(wait_for([&] {
-        std::lock_guard lock(result_mutex);
-        return result.has_value();
-    }, std::chrono::seconds(10)));
+    EXPECT_TRUE(wait_for(
+        [&] {
+            std::lock_guard lock(result_mutex);
+            return result.has_value();
+        },
+        std::chrono::seconds(10)));
 
     job->join();
     ASSERT_TRUE(result.has_value());
@@ -166,18 +160,15 @@ TEST(ClipboardJob, CancelDuringWaitKillsProcess) {
     std::optional<clip::CopyResult> result;
     std::condition_variable cv;
 
-    auto input = make_input("test data", sh,
-                            {"sh", "-c", "cat > /dev/null; sleep 100"});
+    auto input = make_input("test data", sh, {"sh", "-c", "cat > /dev/null; sleep 100"});
     auto cancel = std::make_shared<clip::CancellationState>();
-    auto job = std::make_unique<clip::ClipboardJob>(
-        input, cancel,
-        [&](clip::CopyResult r) {
-            {
-                std::lock_guard lock(result_mutex);
-                result = std::move(r);
-            }
-            cv.notify_one();
-        });
+    auto job = std::make_unique<clip::ClipboardJob>(input, cancel, [&](clip::CopyResult r) {
+        {
+            std::lock_guard lock(result_mutex);
+            result = std::move(r);
+        }
+        cv.notify_one();
+    });
 
     // Wait a bit for the job to start and consume stdin.
     std::this_thread::sleep_for(std::chrono::milliseconds(200));
@@ -186,10 +177,12 @@ TEST(ClipboardJob, CancelDuringWaitKillsProcess) {
     cancel->cancelled.store(true, std::memory_order_release);
 
     // The job should complete within ~1.1s (100ms poll + 500ms TERM + 500ms KILL).
-    EXPECT_TRUE(wait_for([&] {
-        std::lock_guard lock(result_mutex);
-        return result.has_value();
-    }, std::chrono::seconds(5)));
+    EXPECT_TRUE(wait_for(
+        [&] {
+            std::lock_guard lock(result_mutex);
+            return result.has_value();
+        },
+        std::chrono::seconds(5)));
 
     job->join();
     ASSERT_TRUE(result.has_value());
@@ -212,21 +205,21 @@ TEST(ClipboardJob, BackendExitsEarlyHandlesEpipe) {
     std::string large_text(1024 * 1024, 'x');  // 1MB
     auto input = make_input(std::move(large_text), true_cmd, {"true"});
     auto cancel = std::make_shared<clip::CancellationState>();
-    auto job = std::make_unique<clip::ClipboardJob>(
-        input, cancel,
-        [&](clip::CopyResult r) {
-            {
-                std::lock_guard lock(result_mutex);
-                result = std::move(r);
-            }
-            cv.notify_one();
-        });
+    auto job = std::make_unique<clip::ClipboardJob>(input, cancel, [&](clip::CopyResult r) {
+        {
+            std::lock_guard lock(result_mutex);
+            result = std::move(r);
+        }
+        cv.notify_one();
+    });
 
     // The job should complete (not crash from SIGPIPE) within the watchdog.
-    EXPECT_TRUE(wait_for([&] {
-        std::lock_guard lock(result_mutex);
-        return result.has_value();
-    }, std::chrono::seconds(10)));
+    EXPECT_TRUE(wait_for(
+        [&] {
+            std::lock_guard lock(result_mutex);
+            return result.has_value();
+        },
+        std::chrono::seconds(10)));
 
     job->join();
     ASSERT_TRUE(result.has_value());
@@ -249,15 +242,13 @@ TEST(ClipboardJob, EmptyTextSucceeds) {
 
     auto input = make_input("", cat, {"cat"});
     auto cancel = std::make_shared<clip::CancellationState>();
-    auto job = std::make_unique<clip::ClipboardJob>(
-        input, cancel,
-        [&](clip::CopyResult r) {
-            {
-                std::lock_guard lock(result_mutex);
-                result = std::move(r);
-            }
-            cv.notify_one();
-        });
+    auto job = std::make_unique<clip::ClipboardJob>(input, cancel, [&](clip::CopyResult r) {
+        {
+            std::lock_guard lock(result_mutex);
+            result = std::move(r);
+        }
+        cv.notify_one();
+    });
 
     EXPECT_TRUE(wait_for([&] {
         std::lock_guard lock(result_mutex);

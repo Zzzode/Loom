@@ -11,10 +11,10 @@
 // reduced-BMI writer happy, so `import std;` works.
 module;
 
+#include <ftxui/screen/color.hpp>
+
 #include <cctype>
 #include <cstddef>
-
-#include <ftxui/screen/color.hpp>
 
 module loom.ui.widgets.text_input;
 
@@ -37,8 +37,7 @@ namespace {
 // primary interface no longer names loom.text.parse_references. paste_text is
 // its only caller; maybe_apply_input_truncation calls the shared utility
 // directly, as it always did.
-loom::utils::TruncatedPasteResult truncate_paste_result(
-    std::string_view text, int paste_id) {
+loom::utils::TruncatedPasteResult truncate_paste_result(std::string_view text, int paste_id) {
     return loom::utils::maybe_truncate_paste(text, paste_id);
 }
 
@@ -49,31 +48,39 @@ namespace detail {
 bool is_utf8_continuation(unsigned char c) {
     return (c & 0xC0) == 0x80;
 }
+
 int glyph_forward(const std::string& s, int byte_pos) {
     int n = static_cast<int>(s.size());
     if (byte_pos >= n) return n;
     int p = byte_pos + 1;
-    while (p < n && is_utf8_continuation(static_cast<unsigned char>(s[p]))) ++p;
+    while (p < n && is_utf8_continuation(static_cast<unsigned char>(s[p])))
+        ++p;
     return p;
 }
+
 int glyph_back(const std::string& s, int byte_pos) {
     int p = byte_pos - 1;
-    while (p > 0 && is_utf8_continuation(static_cast<unsigned char>(s[p]))) --p;
+    while (p > 0 && is_utf8_continuation(static_cast<unsigned char>(s[p])))
+        --p;
     return std::max(0, p);
 }
 
 }  // namespace detail
 
 TextInputImpl::TextInputImpl(const TextInputOptions& options)
-    : options_(options), cursor_(0), sel_start_(-1), sel_end_(-1),
-      history_index_(std::string::npos),
-      showing_suggestions_(false), selected_suggestion_(0),
-      last_keystroke_ms_(std::chrono::steady_clock::now()),
-      blink_at_(std::chrono::steady_clock::now()),
-      blink_visible_(true),
-      search_mode_(false),
-      search_selected_(0),
-      paste_burst_in_progress_(false) {
+    : options_(options)
+    , cursor_(0)
+    , sel_start_(-1)
+    , sel_end_(-1)
+    , history_index_(std::string::npos)
+    , showing_suggestions_(false)
+    , selected_suggestion_(0)
+    , last_keystroke_ms_(std::chrono::steady_clock::now())
+    , blink_at_(std::chrono::steady_clock::now())
+    , blink_visible_(true)
+    , search_mode_(false)
+    , search_selected_(0)
+    , paste_burst_in_progress_(false) {
     vim_.mode = options.vim_mode.value_or(loom::ui::common::VimMode::Insert);
 }
 
@@ -118,8 +125,7 @@ void TextInputImpl::add_to_history(const std::string& entry) {
         auto it = std::find(history_.begin(), history_.end(), hist_entry);
         if (it != history_.end()) history_.erase(it);
         history_.push_back(hist_entry);
-        if (history_.size() > options_.max_history)
-            history_.pop_front();
+        if (history_.size() > options_.max_history) history_.pop_front();
     }
     history_index_ = std::string::npos;
 }
@@ -141,6 +147,7 @@ void TextInputImpl::insert_at_cursor(const std::string& s) {
     sel_start_ = sel_end_ = -1;
     recompute_derived();
 }
+
 void TextInputImpl::insert_char(char c) {
     if (options_.input_filter && !options_.input_filter(c)) return;
     push_undo();
@@ -150,6 +157,7 @@ void TextInputImpl::insert_char(char c) {
     sel_start_ = sel_end_ = -1;
     recompute_derived();
 }
+
 void TextInputImpl::insert_newline() {
     push_undo();
     if (has_selection()) delete_selection_internal();
@@ -158,6 +166,7 @@ void TextInputImpl::insert_newline() {
     sel_start_ = sel_end_ = -1;
     recompute_derived();
 }
+
 void TextInputImpl::backspace() {
     if (has_selection()) {
         push_undo();
@@ -172,6 +181,7 @@ void TextInputImpl::backspace() {
     cursor_ = prev;
     recompute_derived();
 }
+
 void TextInputImpl::delete_char() {
     if (has_selection()) {
         push_undo();
@@ -185,6 +195,7 @@ void TextInputImpl::delete_char() {
     text_.erase(text_.begin() + cursor_, text_.begin() + next);
     recompute_derived();
 }
+
 void TextInputImpl::move_cursor(int delta, bool extend_selection) {
     int new_cursor = std::clamp(cursor_ + delta, 0, static_cast<int>(text_.size()));
     if (extend_selection) {
@@ -197,23 +208,29 @@ void TextInputImpl::move_cursor(int delta, bool extend_selection) {
     }
     cursor_ = new_cursor;
 }
+
 void TextInputImpl::move_home(bool extend) {
     // line-aware: home = start of current line
     int n = static_cast<int>(text_.size());
     int pos = cursor_;
-    while (pos > 0 && text_[pos - 1] != '\n') --pos;
+    while (pos > 0 && text_[pos - 1] != '\n')
+        --pos;
     apply_move(pos, extend);
     (void)n;
 }
+
 void TextInputImpl::move_end(bool extend) {
     int n = static_cast<int>(text_.size());
     int pos = cursor_;
-    while (pos < n && text_[pos] != '\n') ++pos;
+    while (pos < n && text_[pos] != '\n')
+        ++pos;
     apply_move(pos, extend);
 }
+
 void TextInputImpl::move_bottom(bool extend) {
     apply_move(static_cast<int>(text_.size()), extend);
 }
+
 void TextInputImpl::select_all() {
     sel_start_ = 0;
     sel_end_ = cursor_ = static_cast<int>(text_.size());
@@ -227,6 +244,7 @@ void TextInputImpl::undo() {
     undo_stack_.pop_back();
     recompute_derived();
 }
+
 void TextInputImpl::redo() {
     if (!options_.enable_undo_redo) return;
     if (redo_stack_.empty()) return;
@@ -261,6 +279,7 @@ void TextInputImpl::navigate_history_up() {
     sel_start_ = sel_end_ = -1;
     recompute_derived();
 }
+
 void TextInputImpl::navigate_history_down() {
     if (history_.empty() || history_index_ == std::string::npos) return;
     if (history_index_ < history_.size() - 1) {
@@ -284,26 +303,26 @@ void TextInputImpl::update_suggestions_from_provider() {
         suggestions_.clear();
         return;
     }
-    suggestions_ = options_.get_suggestions(
-        text_, cursor_, options_.context);
+    suggestions_ = options_.get_suggestions(text_, cursor_, options_.context);
     showing_suggestions_ = !suggestions_.empty();
     selected_suggestion_ = 0;
 }
+
 void TextInputImpl::accept_suggestion() {
     if (!showing_suggestions_ || suggestions_.empty()) return;
     insert_suggestion(suggestions_[selected_suggestion_]);
     showing_suggestions_ = false;
 }
+
 void TextInputImpl::select_previous_suggestion() {
     if (suggestions_.empty()) return;
     selected_suggestion_ =
-        (selected_suggestion_ - 1 + (int)suggestions_.size()) %
-        (int)suggestions_.size();
+        (selected_suggestion_ - 1 + (int)suggestions_.size()) % (int)suggestions_.size();
 }
+
 void TextInputImpl::select_next_suggestion() {
     if (suggestions_.empty()) return;
-    selected_suggestion_ =
-        (selected_suggestion_ + 1) % (int)suggestions_.size();
+    selected_suggestion_ = (selected_suggestion_ + 1) % (int)suggestions_.size();
 }
 
 /// External paste entry point (used by async clipboard provider)
@@ -331,9 +350,8 @@ void TextInputImpl::ConfirmPaste() {
     // paste-id and the middle content that was elided.
     if (paste_preview_->is_large && !paste_preview_->placeholder_content.empty()) {
         if (options_.on_paste_truncated) {
-            options_.on_paste_truncated(
-                paste_preview_->paste_id,
-                paste_preview_->placeholder_content);
+            options_.on_paste_truncated(paste_preview_->paste_id,
+                                        paste_preview_->placeholder_content);
         }
     }
 
@@ -356,6 +374,7 @@ void TextInputImpl::apply_move(int pos, bool extend) {
     }
     cursor_ = pos;
 }
+
 void TextInputImpl::move_line_vertical(int delta, bool extend) {
     int cur_line, cur_col;
     compute_cursor_position(cur_line, cur_col);
@@ -372,20 +391,27 @@ void TextInputImpl::move_line_vertical(int delta, bool extend) {
     }
     // Compute byte offset up to line start
     int offset = 0;
-    for (int i = 0; i < target; ++i) offset += (int)lines[i].size() + 1;
+    for (int i = 0; i < target; ++i)
+        offset += (int)lines[i].size() + 1;
     int target_line_len = (int)lines[target].size();
     int land = offset + std::min(cur_col, target_line_len);
     apply_move(land, extend);
 }
+
 void TextInputImpl::compute_cursor_position(int& out_line, int& out_col) const {
     out_line = 0;
     int col = 0;
     for (int i = 0; i < cursor_; ++i) {
-        if (text_[i] == '\n') { ++out_line; col = 0; }
-        else { ++col; }
+        if (text_[i] == '\n') {
+            ++out_line;
+            col = 0;
+        } else {
+            ++col;
+        }
     }
     out_col = col;
 }
+
 std::vector<std::string_view> TextInputImpl::split_lines() const {
     std::vector<std::string_view> result;
     const char* p = text_.data();
@@ -403,12 +429,15 @@ std::vector<std::string_view> TextInputImpl::split_lines() const {
     result.emplace_back(line_start, p - line_start);
     return result;
 }
+
 int TextInputImpl::count_lines() const {
     if (text_.empty()) return 1;
     int n = 1;
-    for (char c : text_) if (c == '\n') ++n;
+    for (char c : text_)
+        if (c == '\n') ++n;
     return n;
 }
+
 void TextInputImpl::delete_selection_internal() {
     auto [a, b] = selection();
     if (a < 0 || b <= a) return;
@@ -416,6 +445,7 @@ void TextInputImpl::delete_selection_internal() {
     cursor_ = a;
     sel_start_ = sel_end_ = -1;
 }
+
 void TextInputImpl::paste_text(const std::string& paste) {
     // Normalise CR/LF -> LF
     std::string normalized;
@@ -438,7 +468,8 @@ void TextInputImpl::paste_text(const std::string& paste) {
     if (normalized.size() > kTruncationThreshold) {
         // Count lines in the full paste (for preview display)
         std::size_t line_count = 1;
-        for (char c : normalized) if (c == '\n') ++line_count;
+        for (char c : normalized)
+            if (c == '\n') ++line_count;
 
         // Build the truncated version (head 500 + placeholder ref + tail 500)
         // that will be inserted on confirmation.  Also capture the truncated
@@ -447,10 +478,10 @@ void TextInputImpl::paste_text(const std::string& paste) {
         const auto result = truncate_paste_result(normalized, paste_id);
 
         paste_preview_ = loom::ui::prompt::PastePreview{
-            .content             = result.truncated_text,
-            .line_count          = line_count,
-            .is_large            = true,
-            .paste_id            = paste_id,
+            .content = result.truncated_text,
+            .line_count = line_count,
+            .is_large = true,
+            .paste_id = paste_id,
             .placeholder_content = result.placeholder_content,
         };
         return;  // Don't insert yet — wait for confirmation
@@ -476,7 +507,8 @@ void TextInputImpl::insert_suggestion(const Suggestion& s) {
         if (stop > 1) {
             char prev = text_[stop - 1];
             if (prev == '/' || prev == '!' || prev == '@' || prev == '*' || prev == '&') {
-                --stop; break;
+                --stop;
+                break;
             }
         }
         --stop;
@@ -488,6 +520,7 @@ void TextInputImpl::insert_suggestion(const Suggestion& s) {
     recompute_derived();
     if (options_.on_change) options_.on_change(text_, options_.context);
 }
+
 void TextInputImpl::submit_internal(bool hard) {
     if (text_.empty()) return;
     add_to_history(text_);
@@ -517,25 +550,27 @@ void TextInputImpl::push_undo() {
     // De-dupe consecutive identical snapshots
     detail::BufferSnapshot now = snapshot();
     if (!undo_stack_.empty() && undo_stack_.back().text == now.text &&
-        undo_stack_.back().cursor == now.cursor) return;
+        undo_stack_.back().cursor == now.cursor)
+        return;
     undo_stack_.push_back(std::move(now));
     if (undo_stack_.size() > options_.max_undo_steps) undo_stack_.pop_front();
     redo_stack_.clear();
 }
+
 void TextInputImpl::load_snapshot(const detail::BufferSnapshot& s) {
     text_ = s.text;
     cursor_ = s.cursor;
     sel_start_ = s.sel_start;
     sel_end_ = s.sel_end;
 }
+
 void TextInputImpl::refresh_blink() {
     if (options_.cursor_blink_ms <= 0) {
         blink_visible_ = true;
         return;
     }
     auto now = std::chrono::steady_clock::now();
-    auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
-        now - blink_at_).count();
+    auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - blink_at_).count();
     if (elapsed >= options_.cursor_blink_ms) {
         blink_visible_ = !blink_visible_;
         blink_at_ = now;
@@ -648,11 +683,21 @@ void TextInputImpl::recompute_derived() {
             // bash_border color.
         } else {
             switch (text_[0]) {
-                case '/': ctx.prompt_mode = PromptInputMode::SlashCommand; break;
-                case '@': ctx.prompt_mode = PromptInputMode::FileRef; break;
-                case '*': ctx.prompt_mode = PromptInputMode::Agent; break;
-                case '&': ctx.prompt_mode = PromptInputMode::BgRun; break;
-                default:  ctx.prompt_mode = PromptInputMode::Normal; break;
+            case '/':
+                ctx.prompt_mode = PromptInputMode::SlashCommand;
+                break;
+            case '@':
+                ctx.prompt_mode = PromptInputMode::FileRef;
+                break;
+            case '*':
+                ctx.prompt_mode = PromptInputMode::Agent;
+                break;
+            case '&':
+                ctx.prompt_mode = PromptInputMode::BgRun;
+                break;
+            default:
+                ctx.prompt_mode = PromptInputMode::Normal;
+                break;
             }
         }
     } else {

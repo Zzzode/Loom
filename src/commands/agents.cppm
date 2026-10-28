@@ -3,7 +3,6 @@
 /// Manages agent configurations.
 module;
 
-
 export module loom.commands.agents;
 
 import std;
@@ -24,7 +23,7 @@ struct AgentsOptions {
 /// Metadata tags returned by agent commands.
 /// The UI layer reads these and switches modes accordingly.
 inline constexpr std::string_view kMetaCreateAgent = "CREATE_AGENT";
-inline constexpr std::string_view kMetaEditAgent   = "EDIT_AGENT";
+inline constexpr std::string_view kMetaEditAgent = "EDIT_AGENT";
 
 class AgentsCommand {
 public:
@@ -32,13 +31,29 @@ public:
         return CommandDefinition{
             .name = "agents",
             .description = "Manage agent configurations",
-            .args = {
-                CommandArg{.name = "list", .description = "List available agents", .type = ArgType::None, .required = false},
-                CommandArg{.name = "use", .description = "Select an agent to use", .type = ArgType::Text, .required = false},
-                CommandArg{.name = "configure", .description = "Configure an agent", .type = ArgType::Text, .required = false},
-                CommandArg{.name = "create", .description = "Create a new agent (wizard)", .type = ArgType::None, .required = false},
-                CommandArg{.name = "edit", .description = "Edit an agent (wizard)", .type = ArgType::Text, .required = false},
-            },
+            .args =
+                {
+                    CommandArg{.name = "list",
+                               .description = "List available agents",
+                               .type = ArgType::None,
+                               .required = false},
+                    CommandArg{.name = "use",
+                               .description = "Select an agent to use",
+                               .type = ArgType::Text,
+                               .required = false},
+                    CommandArg{.name = "configure",
+                               .description = "Configure an agent",
+                               .type = ArgType::Text,
+                               .required = false},
+                    CommandArg{.name = "create",
+                               .description = "Create a new agent (wizard)",
+                               .type = ArgType::None,
+                               .required = false},
+                    CommandArg{.name = "edit",
+                               .description = "Edit an agent (wizard)",
+                               .type = ArgType::Text,
+                               .required = false},
+                },
             .category = "agents",
             .argument_hint = "<list|use|configure|create|edit>",
         };
@@ -53,13 +68,15 @@ public:
         auto opts = parse_options(ctx.args);
 
         if (!opts.subcommand) {
-            return CommandResult::success("Available commands:\n  /agents list - List available agents\n  /agents use <agent> - Select an agent\n  /agents configure <agent> - Configure an agent\n  /agents create - Create a new agent (wizard)\n  /agents edit <agent> - Edit an agent (wizard)");
+            return CommandResult::success(
+                "Available commands:\n  /agents list - List available agents\n  /agents use "
+                "<agent> - Select an agent\n  /agents configure <agent> - Configure an agent\n  "
+                "/agents create - Create a new agent (wizard)\n  /agents edit <agent> - Edit an "
+                "agent (wizard)");
         }
 
         auto agents = loom::tools::agent_runtime::get_all_agent_definitions(
-            ctx.cwd.empty()
-                ? std::nullopt
-                : std::optional<std::filesystem::path>{ctx.cwd});
+            ctx.cwd.empty() ? std::nullopt : std::optional<std::filesystem::path>{ctx.cwd});
 
         if (*opts.subcommand == "list") {
             return CommandResult::success(format_agent_list(agents));
@@ -72,9 +89,7 @@ public:
             }
             return CommandResult::success(std::format(
                 "Agent '{}' is available from {}. Invoke it with Agent subagent_type='{}'.",
-                agent->agent_type,
-                agent->source,
-                agent->agent_type));
+                agent->agent_type, agent->source, agent->agent_type));
         }
 
         if (*opts.subcommand == "configure" && opts.agent_name) {
@@ -134,31 +149,29 @@ public:
     }
 
 private:
-    [[nodiscard]] static const loom::tools::agent_runtime::AgentDefinition* find_agent(
-        const std::vector<loom::tools::agent_runtime::AgentDefinition>& agents,
-        std::string_view agent_name
-    ) {
+    [[nodiscard]] static const loom::tools::agent_runtime::AgentDefinition*
+    find_agent(const std::vector<loom::tools::agent_runtime::AgentDefinition>& agents,
+               std::string_view agent_name) {
         for (const auto& agent : agents) {
             if (agent.agent_type == agent_name) return &agent;
         }
         return nullptr;
     }
 
-    [[nodiscard]] static std::string format_agent_list(
-        const std::vector<loom::tools::agent_runtime::AgentDefinition>& agents
-    ) {
+    [[nodiscard]] static std::string
+    format_agent_list(const std::vector<loom::tools::agent_runtime::AgentDefinition>& agents) {
         if (agents.empty()) return "No agents available.";
 
         std::string output = "Available agents:\n";
         for (const auto& agent : agents) {
-            output += std::format("  - {} [{}] {}\n", agent.agent_type, agent.source, agent.when_to_use);
+            output +=
+                std::format("  - {} [{}] {}\n", agent.agent_type, agent.source, agent.when_to_use);
         }
         return output;
     }
 
-    [[nodiscard]] static std::string format_agent_details(
-        const loom::tools::agent_runtime::AgentDefinition& agent
-    ) {
+    [[nodiscard]] static std::string
+    format_agent_details(const loom::tools::agent_runtime::AgentDefinition& agent) {
         std::ostringstream out;
         out << "Agent: " << agent.agent_type << "\n";
         out << "Source: " << agent.source << "\n";
@@ -194,4 +207,4 @@ private:
     }
 };
 
-} // namespace loom::commands
+}  // namespace loom::commands

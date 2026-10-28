@@ -38,11 +38,12 @@ struct ActivityHitTargets {
 /// headings and indented children within the caller-supplied row budget.
 /// The caller projects session-owned data; rendering never changes its order.
 [[nodiscard]] ftxui::Element RenderRuntimeAgentRow(const Instance& instance, int columns);
-[[nodiscard]] ftxui::Element RenderRuntimeAgentActivity(
-    const std::vector<Instance>& instances,
-    const std::vector<loom::ui::todos::TodoDisplayItem>& todos,
-    const std::vector<loom::ui::teams::live::LiveTeammate>& teams,
-    int columns, int budget, bool todos_collapsed = false,
-    std::string_view response_prefix = {}, ActivityHitTargets* hit_targets = nullptr);
+[[nodiscard]] ftxui::Element
+RenderRuntimeAgentActivity(const std::vector<Instance>& instances,
+                           const std::vector<loom::ui::todos::TodoDisplayItem>& todos,
+                           const std::vector<loom::ui::teams::live::LiveTeammate>& teams,
+                           int columns, int budget, bool todos_collapsed = false,
+                           std::string_view response_prefix = {},
+                           ActivityHitTargets* hit_targets = nullptr);
 
-} // namespace loom::ui::agents::runtime
+}  // namespace loom::ui::agents::runtime

@@ -14,12 +14,12 @@
 /// - Interactive MarkdownComponent with scroll support
 module;
 
-#include <cstdint>
-
-#include <ftxui/dom/elements.hpp>
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/event.hpp>
+#include <ftxui/dom/elements.hpp>
+
+#include <cstdint>
 
 export module loom.ui.visual.markdown;
 
@@ -69,11 +69,11 @@ enum class InlineTokenKind : std::uint8_t {
     Code,
     Link,
     Escape,
-    Math,       ///< Inline math: $...$ (LaTeX math expression)
-    Image,      ///< Image: ![alt](url "title")
+    Math,           ///< Inline math: $...$ (LaTeX math expression)
+    Image,          ///< Image: ![alt](url "title")
     Strikethrough,  ///< GFM strikethrough: ~~text~~ or ~text~
-    HtmlRaw,    ///< Raw HTML tag (CommonMark §6.6) — passed through to HTML
-    FootnoteRef,  ///< GFM footnote ref: [^label] (text field = label without '^')
+    HtmlRaw,        ///< Raw HTML tag (CommonMark §6.6) — passed through to HTML
+    FootnoteRef,    ///< GFM footnote ref: [^label] (text field = label without '^')
 };
 
 /// An inline formatting token
@@ -113,8 +113,8 @@ enum class BlockTokenKind : std::uint8_t {
     Blockquote,
     Table,
     HorizontalRule,
-    MathBlock,   ///< Block math: $$...$$ (LaTeX display math)
-    HtmlBlock,   ///< HTML block (CommonMark §4.6) — raw HTML passed through
+    MathBlock,    ///< Block math: $$...$$ (LaTeX display math)
+    HtmlBlock,    ///< HTML block (CommonMark §4.6) — raw HTML passed through
     FootnoteDef,  ///< GFM footnote definition (hoisted to footnotes section)
 };
 
@@ -183,8 +183,7 @@ namespace detail {
 [[nodiscard]] constexpr bool has_markdown_syntax(std::string_view s) {
     // Leading tabs or 4+ leading spaces may be indented code blocks.
     if (!s.empty() && s[0] == '\t') return true;
-    if (s.size() >= 4 && s[0] == ' ' && s[1] == ' ' &&
-        s[2] == ' ' && s[3] == ' ') {
+    if (s.size() >= 4 && s[0] == ' ' && s[1] == ' ' && s[2] == ' ' && s[3] == ' ') {
         return true;
     }
     // A code fence can follow an arbitrarily long plain-text preface.
@@ -192,18 +191,18 @@ namespace detail {
     const std::size_t source_len = s.size();
     for (std::size_t i = 0; i < source_len; ++i) {
         char c = s[i];
-        if (c == '#' || c == '*' || c == '`' || c == '|' ||
-            c == '[' || c == ']' || c == '<' || c == '>' || c == '-' ||
-            c == '_' || c == '~' || c == '$' || c == '\\' || c == '\t' ||
+        if (c == '#' || c == '*' || c == '`' || c == '|' || c == '[' || c == ']' || c == '<' ||
+            c == '>' || c == '-' || c == '_' || c == '~' || c == '$' || c == '\\' || c == '\t' ||
             c == '@') {
             return true;
         }
         // Ordered list marker: digit(s) followed by . or ) and space
         if (c >= '0' && c <= '9') {
             std::size_t j = i;
-            while (j < source_len && s[j] >= '0' && s[j] <= '9') ++j;
-            if (j < source_len && (s[j] == '.' || s[j] == ')') &&
-                j + 1 < source_len && (s[j + 1] == ' ' || s[j + 1] == '\t')) {
+            while (j < source_len && s[j] >= '0' && s[j] <= '9')
+                ++j;
+            if (j < source_len && (s[j] == '.' || s[j] == ')') && j + 1 < source_len &&
+                (s[j + 1] == ' ' || s[j + 1] == '\t')) {
                 return true;
             }
             // Do not rescan this run from every digit. Leave its following
@@ -212,19 +211,18 @@ namespace detail {
             continue;
         }
         // GFM extended autolinks: bare URLs (www., ://)
-        if (c == 'w' && i + 4 <= source_len &&
-            s[i + 1] == 'w' && s[i + 2] == 'w' && s[i + 3] == '.') {
+        if (c == 'w' && i + 4 <= source_len && s[i + 1] == 'w' && s[i + 2] == 'w' &&
+            s[i + 3] == '.') {
             return true;
         }
-        if (c == ':' && i + 3 <= source_len &&
-            s[i + 1] == '/' && s[i + 2] == '/') {
+        if (c == ':' && i + 3 <= source_len && s[i + 1] == '/' && s[i + 2] == '/') {
             return true;
         }
         // Potential entity reference: &Name; or &#NNN; / &#xHH;
         if (c == '&' && i + 1 < source_len) {
             char n = s[i + 1];
-            if ((n >= '0' && n <= '9') || (n >= 'a' && n <= 'z') ||
-                (n >= 'A' && n <= 'Z') || n == '#') {
+            if ((n >= '0' && n <= '9') || (n >= 'a' && n <= 'z') || (n >= 'A' && n <= 'Z') ||
+                n == '#') {
                 return true;
             }
         }
@@ -246,7 +244,7 @@ namespace detail {
     return false;
 }
 
-} // namespace detail
+}  // namespace detail
 
 // ============================================================
 // Inline Tokenizer
@@ -262,15 +260,15 @@ namespace detail {
 /// [text][]) are resolved against it (CommonMark §4.7 + §6.6).
 /// When gfm_extensions is false, GFM-only features (extended autolinks)
 /// are disabled (CommonMark mode).
-[[nodiscard]] std::vector<InlineToken> tokenize_inline(
-    std::string_view text, const LinkRefMap* link_refs = nullptr,
-    bool gfm_extensions = true);
+[[nodiscard]] std::vector<InlineToken> tokenize_inline(std::string_view text,
+                                                       const LinkRefMap* link_refs = nullptr,
+                                                       bool gfm_extensions = true);
 
 /// Normalize a label per CommonMark: Unicode case-fold, collapse whitespace.
 /// Used for footnote label lookup (case-insensitive) and link ref labels.
 [[nodiscard]] std::string normalize_label(std::string_view label);
 
-} // namespace detail
+}  // namespace detail
 
 // ============================================================
 // Table Parsing Helpers
@@ -284,7 +282,7 @@ namespace detail {
 
 [[nodiscard]] bool is_table_separator(std::string_view line);
 
-} // namespace detail
+}  // namespace detail
 
 // ============================================================
 // Ordered List Detection
@@ -297,10 +295,9 @@ namespace detail {
 /// the marked tokenizer's `indent` calculation.
 [[nodiscard]] int count_list_indent(std::string_view line);
 
-[[nodiscard]] std::optional<std::pair<int, std::string>>
-parse_ordered_list(std::string_view line);
+[[nodiscard]] std::optional<std::pair<int, std::string>> parse_ordered_list(std::string_view line);
 
-} // namespace detail
+}  // namespace detail
 
 // ============================================================
 // Block-Level Lexer
@@ -317,11 +314,10 @@ namespace detail {
 /// When in_blockquote is true, setext heading detection is disabled —
 /// a setext underline on a lazy continuation line is paragraph text,
 /// not a heading (CommonMark §4.3 example 93).
-[[nodiscard]] std::vector<BlockToken> lex_blocks(std::string_view source,
-                                                   bool gfm_extensions = true,
-                                                   bool in_blockquote = false);
+[[nodiscard]] std::vector<BlockToken>
+lex_blocks(std::string_view source, bool gfm_extensions = true, bool in_blockquote = false);
 
-} // namespace detail
+}  // namespace detail
 
 // ============================================================
 // LRU Token Cache
@@ -341,8 +337,13 @@ public:
     /// Insert a new entry, evicting LRU if at capacity.
     void put(std::string key, std::vector<BlockToken> tokens);
 
-    void clear() { map_.clear(); lru_.clear(); }
+    void clear() {
+        map_.clear();
+        lru_.clear();
+    }
+
     [[nodiscard]] std::size_t size() const { return lru_.size(); }
+
     [[nodiscard]] std::size_t max_size() const { return max_size_; }
 
 private:
@@ -359,7 +360,7 @@ private:
 /// Global token cache instance
 TokenCache& global_token_cache();
 
-} // namespace detail
+}  // namespace detail
 
 // ============================================================
 // GitHub Issue Reference Linkification
@@ -386,8 +387,7 @@ struct TextSegment {
 /// @param text  Plain text to scan for issue references.
 /// @return      Text segments: plain text interspersed with hyperlinked
 ///              issue references (url non-empty).
-[[nodiscard]] std::vector<TextSegment> linkify_issue_references(
-    std::string_view text);
+[[nodiscard]] std::vector<TextSegment> linkify_issue_references(std::string_view text);
 
 /// Split text into wrappable segments for flexbox layout.
 ///
@@ -413,11 +413,10 @@ struct TextSegment {
 /// trim_leading_space controls whether paragraph-leading spaces are dropped.
 /// Code spans and other content tokens where spaces are significant pass
 /// false so their leading spaces are preserved.
-[[nodiscard]] std::vector<std::string> split_for_wrapping(
-    std::string_view text, bool& at_paragraph_start,
-    bool trim_leading_space = true);
+[[nodiscard]] std::vector<std::string>
+split_for_wrapping(std::string_view text, bool& at_paragraph_start, bool trim_leading_space = true);
 
-} // namespace detail
+}  // namespace detail
 
 // ============================================================
 // Inline Rendering
@@ -435,11 +434,10 @@ namespace detail {
 ///   - text           -> linkifyIssueReferences(text)
 /// Strikethrough (del) is intentionally disabled (the `del` tokenizer is
 /// disabled in the marked configuration).
-[[nodiscard]] Element render_inlines(
-    const std::vector<InlineToken>& tokens,
-    const MarkdownOptions& opts);
+[[nodiscard]] Element render_inlines(const std::vector<InlineToken>& tokens,
+                                     const MarkdownOptions& opts);
 
-} // namespace detail
+}  // namespace detail
 
 // ============================================================
 // Block Rendering
@@ -457,8 +455,7 @@ namespace detail {
 /// prior divergent renderer added cyan/white coloring, which is not
 /// part of the spec.
 /// The trailing EOL+EOL becomes a blank line under the heading.
-[[nodiscard]] Element render_heading(const BlockToken& tok,
-                                     const MarkdownOptions& opts);
+[[nodiscard]] Element render_heading(const BlockToken& tok, const MarkdownOptions& opts);
 
 /// Render a code block.
 ///
@@ -476,8 +473,7 @@ namespace detail {
 /// We render the existing code_highlight tokenizer's per-line tokens with
 /// show_line_numbers=false and no surrounding frame, preserving the prior
 /// fix (no border) and achieving shiki/cli-highlight visual parity.
-[[nodiscard]] Element render_code_block(const BlockToken& tok,
-                                        const MarkdownOptions& opts);
+[[nodiscard]] Element render_code_block(const BlockToken& tok, const MarkdownOptions& opts);
 
 // ============================================================
 // List Numbering Helpers
@@ -508,7 +504,7 @@ namespace detail {
 /// @return       Label string without the trailing ". " (caller appends it).
 [[nodiscard]] std::string get_list_number(int depth, int n);
 
-} // namespace detail
+}  // namespace detail
 
 /// Render an unordered list.
 ///
@@ -518,8 +514,7 @@ namespace detail {
 /// items get `'  '.repeat(depth)` indentation prefix. The prior divergent
 /// renderer used a cyan `•` bullet and 2-space indent — neither is
 /// part of the spec.
-[[nodiscard]] Element render_ulist(const BlockToken& tok,
-                                   const MarkdownOptions& opts,
+[[nodiscard]] Element render_ulist(const BlockToken& tok, const MarkdownOptions& opts,
                                    int depth = 0);
 
 /// Render an ordered list.
@@ -535,8 +530,7 @@ namespace detail {
 /// produces nested `list` tokens each with their own item counter.
 ///
 /// Each item also gets `'  '.repeat(depth)` indentation prefix.
-[[nodiscard]] Element render_olist(const BlockToken& tok,
-                                   const MarkdownOptions& opts,
+[[nodiscard]] Element render_olist(const BlockToken& tok, const MarkdownOptions& opts,
                                    int depth = 0);
 
 /// Render a blockquote.
@@ -552,12 +546,10 @@ namespace detail {
 /// invisible on dark themes). The prior divergent
 /// renderer used a blue bar, a non-dim content, and a background color —
 /// all absent from the spec.
-[[nodiscard]] Element render_blockquote(const BlockToken& tok,
-                                        const MarkdownOptions& opts);
+[[nodiscard]] Element render_blockquote(const BlockToken& tok, const MarkdownOptions& opts);
 
 /// Render an HTML block as plain text in the terminal (tags stripped).
-[[nodiscard]] Element render_html_block(const BlockToken& tok,
-                                        const MarkdownOptions& opts);
+[[nodiscard]] Element render_html_block(const BlockToken& tok, const MarkdownOptions& opts);
 
 /// Check whether an element is an empty block (e.g. an HTML block that
 /// stripped to nothing).  Used by the block flow to skip empty blocks
@@ -587,8 +579,7 @@ namespace detail {
 /// (P0 bug: GFM separator line leaked as paragraph content). Using
 /// box-drawing ─ chars instead of ASCII hyphens prevents any spurious
 /// "---" substring match and matches the terminal-native output.
-[[nodiscard]] Element render_table(const BlockToken& tok,
-                                   const MarkdownOptions& opts);
+[[nodiscard]] Element render_table(const BlockToken& tok, const MarkdownOptions& opts);
 
 /// Render a horizontal rule.
 ///
@@ -598,7 +589,7 @@ namespace detail {
 /// absent from the spec.
 [[nodiscard]] Element render_hr(const MarkdownOptions& opts);
 
-} // namespace detail
+}  // namespace detail
 
 // ============================================================
 // Main Markdown Renderer
@@ -606,8 +597,7 @@ namespace detail {
 
 /// Parse and render a markdown document string to FTXUI elements.
 /// Uses token cache for repeated renders.
-[[nodiscard]] Element render_markdown(std::string_view source,
-                                      const MarkdownOptions& opts = {});
+[[nodiscard]] Element render_markdown(std::string_view source, const MarkdownOptions& opts = {});
 
 /// Convenience: render with dim_color = true
 [[nodiscard]] Element render_markdown_dim(std::string_view source);
@@ -624,7 +614,7 @@ namespace detail {
 /// Set gfm_extensions to false for CommonMark-only mode (no extended
 /// autolinks, no GFM-specific features).
 [[nodiscard]] std::string render_markdown_to_html(std::string_view source,
-                                                   bool gfm_extensions = true);
+                                                  bool gfm_extensions = true);
 
 // ============================================================
 // Streaming Markdown
@@ -672,13 +662,9 @@ public:
 
     bool OnEvent(Event event) override;
 
-    void set_content(std::string content) {
-        opts_.content = std::move(content);
-    }
+    void set_content(std::string content) { opts_.content = std::move(content); }
 
-    void set_options(MarkdownOptions render_opts) {
-        opts_.render_options = std::move(render_opts);
-    }
+    void set_options(MarkdownOptions render_opts) { opts_.render_options = std::move(render_opts); }
 
 private:
     MarkdownComponentOptions opts_;
@@ -702,4 +688,4 @@ void clear_markdown_cache();
 /// Get maximum cache size
 [[nodiscard]] std::size_t markdown_cache_max_size();
 
-} // namespace loom::ui
+}  // namespace loom::ui

@@ -24,43 +24,46 @@ public:
         return CommandDefinition{
             .name = "feedback",
             .description = "Submit feedback about Loom",
-            .args = {
-                CommandArg{.name = "text", .description = "Feedback text",
-                           .type = ArgType::Text, .required = false},
-            },
+            .args =
+                {
+                    CommandArg{.name = "text",
+                               .description = "Feedback text",
+                               .type = ArgType::Text,
+                               .required = false},
+                },
             .category = "support",
             .aliases = {"bug"},
             .hidden = false,
         };
     }
 
-    [[nodiscard]] VoidResult validate(const CommandContext&) {
-        return {};
-    }
+    [[nodiscard]] VoidResult validate(const CommandContext&) { return {}; }
 
     [[nodiscard]] Result<CommandResult> execute(const CommandContext& ctx) {
         if (ctx.args.empty()) {
-            return CommandResult::success(
-                "Please provide feedback text.\n"
-                "Usage: /feedback <your feedback here>");
+            return CommandResult::success("Please provide feedback text.\n"
+                                          "Usage: /feedback <your feedback here>");
         }
 
         auto path = feedback_path();
         std::error_code ec;
         std::filesystem::create_directories(path.parent_path(), ec);
         if (ec) {
-            return std::unexpected(Error::make(ErrorCode::ConfigWriteError,
-                std::format("Failed to create feedback directory: {}", ec.message())));
+            return std::unexpected(
+                Error::make(ErrorCode::ConfigWriteError,
+                            std::format("Failed to create feedback directory: {}", ec.message())));
         }
 
         std::ofstream out(path, std::ios::app);
         if (!out) {
-            return std::unexpected(Error::make(ErrorCode::ConfigWriteError,
-                std::format("Failed to open feedback log: {}", path.string())));
+            return std::unexpected(
+                Error::make(ErrorCode::ConfigWriteError,
+                            std::format("Failed to open feedback log: {}", path.string())));
         }
 
         const auto timestamp = std::chrono::duration_cast<std::chrono::seconds>(
-            std::chrono::system_clock::now().time_since_epoch()).count();
+                                   std::chrono::system_clock::now().time_since_epoch())
+                                   .count();
         out << timestamp << '\t';
         for (std::size_t i = 0; i < ctx.args.size(); ++i) {
             if (i > 0) out << ' ';
@@ -68,16 +71,14 @@ public:
         }
         out << '\n';
         if (!out) {
-            return std::unexpected(Error::make(ErrorCode::ConfigWriteError,
-                std::format("Failed to write feedback log: {}", path.string())));
+            return std::unexpected(
+                Error::make(ErrorCode::ConfigWriteError,
+                            std::format("Failed to write feedback log: {}", path.string())));
         }
-        return CommandResult::success(
-            "Thank you for your feedback! It has been recorded.");
+        return CommandResult::success("Thank you for your feedback! It has been recorded.");
     }
 
-    [[nodiscard]] std::vector<std::string> complete(std::string_view) {
-        return {};
-    }
+    [[nodiscard]] std::vector<std::string> complete(std::string_view) { return {}; }
 
 private:
     [[nodiscard]] static std::filesystem::path feedback_path() {
@@ -91,4 +92,4 @@ private:
     }
 };
 
-} // namespace loom::commands
+}  // namespace loom::commands

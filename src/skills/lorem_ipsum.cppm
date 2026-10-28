@@ -34,33 +34,199 @@ export namespace loom::skills::lorem_ipsum {
 // ============================================================
 constexpr std::array<std::string_view, 200> kOneTokenWords = {{
     // Articles & pronouns
-    "the","a","an","I","you","he","she","it","we","they",
-    "me","him","her","us","them","my","your","his","its","our",
-    "this","that","what","who",
+    "the",
+    "a",
+    "an",
+    "I",
+    "you",
+    "he",
+    "she",
+    "it",
+    "we",
+    "they",
+    "me",
+    "him",
+    "her",
+    "us",
+    "them",
+    "my",
+    "your",
+    "his",
+    "its",
+    "our",
+    "this",
+    "that",
+    "what",
+    "who",
     // Common verbs
-    "is","are","was","were","be","been","have","has","had",
-    "do","does","did","will","would","can","could","may","might",
-    "must","shall","should","make","made","get","got","go","went",
-    "come","came","see","saw","know","take","think","look","want",
-    "use","find","give","tell","work","call","try","ask","need",
-    "feel","seem","leave","put",
+    "is",
+    "are",
+    "was",
+    "were",
+    "be",
+    "been",
+    "have",
+    "has",
+    "had",
+    "do",
+    "does",
+    "did",
+    "will",
+    "would",
+    "can",
+    "could",
+    "may",
+    "might",
+    "must",
+    "shall",
+    "should",
+    "make",
+    "made",
+    "get",
+    "got",
+    "go",
+    "went",
+    "come",
+    "came",
+    "see",
+    "saw",
+    "know",
+    "take",
+    "think",
+    "look",
+    "want",
+    "use",
+    "find",
+    "give",
+    "tell",
+    "work",
+    "call",
+    "try",
+    "ask",
+    "need",
+    "feel",
+    "seem",
+    "leave",
+    "put",
     // Common nouns & adjectives
-    "time","year","day","way","man","thing","life","hand","part",
-    "place","case","point","fact","good","new","first","last","long",
-    "great","little","own","other","old","right","big","high","small",
-    "large","next","early","young","few","public","bad","same","able",
+    "time",
+    "year",
+    "day",
+    "way",
+    "man",
+    "thing",
+    "life",
+    "hand",
+    "part",
+    "place",
+    "case",
+    "point",
+    "fact",
+    "good",
+    "new",
+    "first",
+    "last",
+    "long",
+    "great",
+    "little",
+    "own",
+    "other",
+    "old",
+    "right",
+    "big",
+    "high",
+    "small",
+    "large",
+    "next",
+    "early",
+    "young",
+    "few",
+    "public",
+    "bad",
+    "same",
+    "able",
     // Prepositions & conjunctions
-    "in","on","at","to","for","of","with","from","by","about",
-    "like","through","over","before","between","under","since","without",
-    "and","or","but","if","than","because","as","until","while","so",
-    "though","both","each","when","where","why","how",
+    "in",
+    "on",
+    "at",
+    "to",
+    "for",
+    "of",
+    "with",
+    "from",
+    "by",
+    "about",
+    "like",
+    "through",
+    "over",
+    "before",
+    "between",
+    "under",
+    "since",
+    "without",
+    "and",
+    "or",
+    "but",
+    "if",
+    "than",
+    "because",
+    "as",
+    "until",
+    "while",
+    "so",
+    "though",
+    "both",
+    "each",
+    "when",
+    "where",
+    "why",
+    "how",
     // Common adverbs
-    "not","now","just","more","also","here","there","then","only","very",
-    "well","back","still","even","much","too","such","never","again",
-    "most","once","off","away","down","out","up",
+    "not",
+    "now",
+    "just",
+    "more",
+    "also",
+    "here",
+    "there",
+    "then",
+    "only",
+    "very",
+    "well",
+    "back",
+    "still",
+    "even",
+    "much",
+    "too",
+    "such",
+    "never",
+    "again",
+    "most",
+    "once",
+    "off",
+    "away",
+    "down",
+    "out",
+    "up",
     // Tech/common words
-    "test","code","data","file","line","text","word","number","system",
-    "program","set","run","value","name","type","state","end","start",
+    "test",
+    "code",
+    "data",
+    "file",
+    "line",
+    "text",
+    "word",
+    "number",
+    "system",
+    "program",
+    "set",
+    "run",
+    "value",
+    "name",
+    "type",
+    "state",
+    "end",
+    "start",
 }};
 
 static_assert(kOneTokenWords.size() == 200, "kOneTokenWords must be 200 entries (TS count)");
@@ -73,14 +239,11 @@ static_assert(kOneTokenWords.size() == 200, "kOneTokenWords must be 200 entries 
 // each occupy exactly one token).  Sentences are 10-20 words; paragraph
 // breaks happen ~20% of the time after a sentence completes.
 // ============================================================
-[[nodiscard]] inline std::string generate_by_tokens(
-    std::size_t target_tokens,
-    std::uint32_t seed = 0xDEADBEEFu)
-{
+[[nodiscard]] inline std::string generate_by_tokens(std::size_t target_tokens,
+                                                    std::uint32_t seed = 0xDEADBEEFu) {
     if (target_tokens == 0) return {};
     std::mt19937 rng(seed == 0 ? std::random_device{}() : seed);
-    std::uniform_int_distribution<std::size_t> word_dist(
-        0, kOneTokenWords.size() - 1);
+    std::uniform_int_distribution<std::size_t> word_dist(0, kOneTokenWords.size() - 1);
     std::uniform_int_distribution<int> sentence_len_dist(10, 20);
     std::uniform_real_distribution<double> para_break(0.0, 1.0);
 
@@ -103,10 +266,7 @@ static_assert(kOneTokenWords.size() == 200, "kOneTokenWords must be 200 entries 
             }
         }
         // Paragraph break every ~5 sentences on average (p = 0.20).
-        if (words_in_sentence > 0 &&
-            para_break(rng) < 0.20 &&
-            tokens < target_tokens)
-        {
+        if (words_in_sentence > 0 && para_break(rng) < 0.20 && tokens < target_tokens) {
             result += "\n\n";
         }
     }
@@ -121,16 +281,14 @@ static_assert(kOneTokenWords.size() == 200, "kOneTokenWords must be 200 entries 
 // Natural-language number parsing ("five" -> 5, "twenty-three" -> 23).
 // Covers 0..99 + common round words (hundred, thousand).
 // ============================================================
-[[nodiscard]] inline std::optional<std::size_t> parse_natural_number(
-    std::string_view text)
-{
+[[nodiscard]] inline std::optional<std::size_t> parse_natural_number(std::string_view text) {
     static const std::unordered_map<std::string_view, std::size_t> kSmall = {
-        {"zero",0},{"one",1},{"two",2},{"three",3},{"four",4},{"five",5},
-        {"six",6},{"seven",7},{"eight",8},{"nine",9},{"ten",10},
-        {"eleven",11},{"twelve",12},{"thirteen",13},{"fourteen",14},{"fifteen",15},
-        {"sixteen",16},{"seventeen",17},{"eighteen",18},{"nineteen",19},
-        {"twenty",20},{"thirty",30},{"forty",40},{"fifty",50},
-        {"sixty",60},{"seventy",70},{"eighty",80},{"ninety",90},
+        {"zero", 0},     {"one", 1},      {"two", 2},        {"three", 3},     {"four", 4},
+        {"five", 5},     {"six", 6},      {"seven", 7},      {"eight", 8},     {"nine", 9},
+        {"ten", 10},     {"eleven", 11},  {"twelve", 12},    {"thirteen", 13}, {"fourteen", 14},
+        {"fifteen", 15}, {"sixteen", 16}, {"seventeen", 17}, {"eighteen", 18}, {"nineteen", 19},
+        {"twenty", 20},  {"thirty", 30},  {"forty", 40},     {"fifty", 50},    {"sixty", 60},
+        {"seventy", 70}, {"eighty", 80},  {"ninety", 90},
     };
     // Trim + lowercase.
     std::string s;
@@ -139,14 +297,19 @@ static_assert(kOneTokenWords.size() == 200, "kOneTokenWords must be 200 entries 
     for (char ch : text) {
         unsigned char c = static_cast<unsigned char>(ch);
         if (std::isspace(c) || ch == '-') {
-            if (!prev_space) { s.push_back(' '); prev_space = true; }
+            if (!prev_space) {
+                s.push_back(' ');
+                prev_space = true;
+            }
         } else {
             s.push_back(static_cast<char>(std::tolower(c)));
             prev_space = false;
         }
     }
-    while (!s.empty() && s.front() == ' ') s.erase(s.begin());
-    while (!s.empty() && s.back()  == ' ') s.pop_back();
+    while (!s.empty() && s.front() == ' ')
+        s.erase(s.begin());
+    while (!s.empty() && s.back() == ' ')
+        s.pop_back();
     if (s.empty()) return std::nullopt;
 
     // Attempt direct match.
@@ -154,7 +317,7 @@ static_assert(kOneTokenWords.size() == 200, "kOneTokenWords must be 200 entries 
         auto it = kSmall.find(s);
         if (it != kSmall.end()) return it->second;
     }
-    if (s == "hundred")  return 100u;
+    if (s == "hundred") return 100u;
     if (s == "thousand") return 1000u;
 
     // Try splitting on ' ' or '-' -> additive: "twenty three" -> 23.
@@ -163,12 +326,14 @@ static_assert(kOneTokenWords.size() == 200, "kOneTokenWords must be 200 entries 
     while (start <= s.size()) {
         auto space = s.find(' ', start);
         std::string_view tok = std::string_view(s).substr(
-            start, (space == std::string::npos) ? (s.size() - start)
-                                                : (space - start));
+            start, (space == std::string::npos) ? (s.size() - start) : (space - start));
         auto it = kSmall.find(tok);
         if (it == kSmall.end()) {
-            if (tok == "hundred") { total *= 100; }
-            else { return std::nullopt; }
+            if (tok == "hundred") {
+                total *= 100;
+            } else {
+                return std::nullopt;
+            }
         } else {
             total += it->second;
         }
@@ -185,14 +350,12 @@ static_assert(kOneTokenWords.size() == 200, "kOneTokenWords must be 200 entries 
 // ============================================================
 
 /// Generate exactly `n` paragraphs; each paragraph is 4-8 sentences.
-[[nodiscard]] inline std::string generate_paragraphs(
-    std::size_t n, std::uint32_t seed = 0xBEEFu)
-{
+[[nodiscard]] inline std::string generate_paragraphs(std::size_t n, std::uint32_t seed = 0xBEEFu) {
     if (n == 0) return {};
     std::mt19937 rng(seed == 0 ? std::random_device{}() : seed);
     std::uniform_int_distribution<std::size_t> wd(0, kOneTokenWords.size() - 1);
-    std::uniform_int_distribution<int> sd(4, 8);   // sentences per paragraph
-    std::uniform_int_distribution<int> wps(10, 18); // words per sentence
+    std::uniform_int_distribution<int> sd(4, 8);     // sentences per paragraph
+    std::uniform_int_distribution<int> wps(10, 18);  // words per sentence
 
     std::string out;
     for (std::size_t p = 0; p < n; ++p) {
@@ -204,8 +367,8 @@ static_assert(kOneTokenWords.size() == 200, "kOneTokenWords must be 200 entries 
                 auto word = kOneTokenWords[wd(rng)];
                 // Capitalise first word of first sentence of each paragraph.
                 if (w == 0 && s == 0) {
-                    out.push_back(static_cast<char>(
-                        std::toupper(static_cast<unsigned char>(word.front()))));
+                    out.push_back(
+                        static_cast<char>(std::toupper(static_cast<unsigned char>(word.front()))));
                     out.append(word.substr(1).data(), word.size() - 1);
                 } else {
                     out.append(word.data(), word.size());
@@ -220,17 +383,13 @@ static_assert(kOneTokenWords.size() == 200, "kOneTokenWords must be 200 entries 
 }
 
 /// Generate approximately `n` words.
-[[nodiscard]] inline std::string generate_words(std::size_t n,
-                                                std::uint32_t seed = 0xCADEu)
-{
+[[nodiscard]] inline std::string generate_words(std::size_t n, std::uint32_t seed = 0xCADEu) {
     // 1 token ~= 1 word for this vocabulary.
     return generate_by_tokens(n, seed);
 }
 
 /// Generate approximately `n` characters of prose.
-[[nodiscard]] inline std::string generate_chars(std::size_t n,
-                                                std::uint32_t seed = 0xF00Du)
-{
+[[nodiscard]] inline std::string generate_chars(std::size_t n, std::uint32_t seed = 0xF00Du) {
     if (n == 0) return {};
     // ~5.3 chars/word average -> tokens = n/5.3 + buffer.
     const std::size_t est = (n * 10u + 52u) / 53u + 2u;
@@ -248,8 +407,7 @@ static_assert(kOneTokenWords.size() == 200, "kOneTokenWords must be 200 entries 
     for (std::size_t i = 0; i < keys; ++i) {
         auto k = kOneTokenWords[wd(rng)];
         auto v = kOneTokenWords[wd(rng)];
-        out += std::format("  \"{}_{}\": \"{}_{}\"{}\n",
-            k, i, v, i, (i + 1 == keys) ? "" : ",");
+        out += std::format("  \"{}_{}\": \"{}_{}\"{}\n", k, i, v, i, (i + 1 == keys) ? "" : ",");
     }
     out += "}";
     return out;
@@ -286,11 +444,8 @@ static_assert(kOneTokenWords.size() == 200, "kOneTokenWords must be 200 entries 
     std::uniform_int_distribution<int> nd(0, 999);
     std::string out = "id,name,category,value\n";
     for (std::size_t i = 1; i <= rows; ++i) {
-        out += std::format("{},{},{},{}\n",
-            i,
-            kOneTokenWords[wd(rng)],
-            kOneTokenWords[wd(rng)],
-            nd(rng));
+        out += std::format("{},{},{},{}\n", i, kOneTokenWords[wd(rng)], kOneTokenWords[wd(rng)],
+                           nd(rng));
     }
     return out;
 }
@@ -314,7 +469,7 @@ struct ParseResult {
     std::string error_message;
 };
 
-constexpr std::size_t kTokenCap = 500'000;   // TS: 500k safety cap
+constexpr std::size_t kTokenCap = 500'000;  // TS: 500k safety cap
 constexpr std::size_t kDefaultTokens = 10'000;
 
 [[nodiscard]] inline ParseResult run_from_args(std::string_view args) {
@@ -322,7 +477,7 @@ constexpr std::size_t kDefaultTokens = 10'000;
 
     std::string in(args);
     std::transform(in.begin(), in.end(), in.begin(),
-        [](unsigned char c){ return std::tolower(c); });
+                   [](unsigned char c) { return std::tolower(c); });
     // Trim whitespace
     while (!in.empty() && std::isspace(static_cast<unsigned char>(in.front())))
         in.erase(in.begin());
@@ -336,10 +491,9 @@ constexpr std::size_t kDefaultTokens = 10'000;
     }
 
     auto is_pure_num = [](std::string_view s) -> bool {
-        return !s.empty() &&
-               std::all_of(s.begin(), s.end(), [](unsigned char c){
-                   return std::isdigit(c) || c == ',' || c == '_';
-               });
+        return !s.empty() && std::all_of(s.begin(), s.end(), [](unsigned char c) {
+            return std::isdigit(c) || c == ',' || c == '_';
+        });
     };
     auto to_num = [](std::string_view s) -> std::size_t {
         std::size_t v = 0;
@@ -355,25 +509,21 @@ constexpr std::size_t kDefaultTokens = 10'000;
         const auto n = to_num(in);
         if (n == 0) {
             r.ok = false;
-            r.error_message =
-                "Invalid token count.  Please provide a positive number "
-                "(e.g., /lorem-ipsum 10000).";
+            r.error_message = "Invalid token count.  Please provide a positive number "
+                              "(e.g., /lorem-ipsum 10000).";
             return r;
         }
         const auto capped = std::min(n, kTokenCap);
         r.output = generate_by_tokens(capped);
         if (capped < n) {
-            r.output = std::format(
-                "Requested {} tokens, but capped at 500,000 for safety.\n\n{}",
-                n, r.output);
+            r.output = std::format("Requested {} tokens, but capped at 500,000 for safety.\n\n{}",
+                                   n, r.output);
         }
         return r;
     }
 
     // --- Variant 2: <N|natlang> paragraphs / words / chars / bytes ----
-    auto split_head = [](const std::string& s)
-        -> std::pair<std::string, std::string>
-    {
+    auto split_head = [](const std::string& s) -> std::pair<std::string, std::string> {
         // split on the first space
         auto sp = s.find(' ');
         if (sp == std::string::npos) return {s, ""};
@@ -384,9 +534,12 @@ constexpr std::size_t kDefaultTokens = 10'000;
     // Is head a natural-language number?
     std::size_t num = 0;
     bool have_num = false;
-    if (is_pure_num(head)) { num = to_num(head); have_num = true; }
-    else if (auto nn = parse_natural_number(head)) {
-        num = *nn; have_num = true;
+    if (is_pure_num(head)) {
+        num = to_num(head);
+        have_num = true;
+    } else if (auto nn = parse_natural_number(head)) {
+        num = *nn;
+        have_num = true;
     }
 
     auto keyword_match = [](std::string_view hay, std::string_view needle) {
@@ -410,14 +563,17 @@ constexpr std::size_t kDefaultTokens = 10'000;
     // --- Variant 3: json | json N | code | code N | csv | csv N -------
     if (in.starts_with("json")) {
         std::size_t k = 5;
-        if (have_num && tail.empty()) { /* head was nat-lang word like "json" -> no */ }
+        if (have_num && tail.empty()) { /* head was nat-lang word like "json" -> no */
+        }
         std::string_view rest(in);
         rest.remove_prefix(4);
         while (!rest.empty() && std::isspace(static_cast<unsigned char>(rest.front())))
             rest.remove_prefix(1);
         if (!rest.empty()) {
-            if (is_pure_num(rest)) k = to_num(rest);
-            else if (auto nn = parse_natural_number(rest)) k = *nn;
+            if (is_pure_num(rest))
+                k = to_num(rest);
+            else if (auto nn = parse_natural_number(rest))
+                k = *nn;
         }
         r.output = generate_json_placeholder(k);
         return r;
@@ -429,8 +585,10 @@ constexpr std::size_t kDefaultTokens = 10'000;
         while (!rest.empty() && std::isspace(static_cast<unsigned char>(rest.front())))
             rest.remove_prefix(1);
         if (!rest.empty()) {
-            if (is_pure_num(rest)) l = to_num(rest);
-            else if (auto nn = parse_natural_number(rest)) l = *nn;
+            if (is_pure_num(rest))
+                l = to_num(rest);
+            else if (auto nn = parse_natural_number(rest))
+                l = *nn;
         }
         r.output = generate_code_block(l);
         return r;
@@ -442,8 +600,10 @@ constexpr std::size_t kDefaultTokens = 10'000;
         while (!rest.empty() && std::isspace(static_cast<unsigned char>(rest.front())))
             rest.remove_prefix(1);
         if (!rest.empty()) {
-            if (is_pure_num(rest)) rows = to_num(rest);
-            else if (auto nn = parse_natural_number(rest)) rows = *nn;
+            if (is_pure_num(rest))
+                rows = to_num(rest);
+            else if (auto nn = parse_natural_number(rest))
+                rows = *nn;
         }
         r.output = generate_csv(rows);
         return r;
@@ -483,14 +643,15 @@ constexpr std::size_t kDefaultTokens = 10'000;
             "'5 paragraphs', '200 words', '500 chars', 'json 3', "
             "'code 40', 'csv 100'. "
             "[argument: token_count | 5 paragraphs | 200 words | json N | code N | csv N]",
-        .trigger_patterns = {
-            R"(lorem\s*ipsum)",
-            R"(placeholder\s+text)",
-            R"(dummy\s+(?:text|content))",
-            R"(filler\s+text)",
-            R"(/lorem)",
-            R"(generate\s+(?:lorem|placeholder))",
-        },
+        .trigger_patterns =
+            {
+                R"(lorem\s*ipsum)",
+                R"(placeholder\s+text)",
+                R"(dummy\s+(?:text|content))",
+                R"(filler\s+text)",
+                R"(/lorem)",
+                R"(generate\s+(?:lorem|placeholder))",
+            },
         .content =
             R"(## Lorem Ipsum Generator
 
@@ -520,4 +681,4 @@ approximation of the real API token consumption.
     };
 }
 
-} // namespace loom::skills::lorem_ipsum
+}  // namespace loom::skills::lorem_ipsum

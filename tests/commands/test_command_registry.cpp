@@ -3,9 +3,10 @@
 
 #include <gtest/gtest.h>
 #include <httplib.h>
-#include <cstdlib>
-#include <atomic>
 #include <unistd.h>
+
+#include <atomic>
+#include <cstdlib>
 
 import std;
 import loom.commands.command;
@@ -43,7 +44,7 @@ namespace fs = std::filesystem;
 /// would let the config gitignore appender reach it.
 [[nodiscard]] bool cmd_ancestry_clean(const fs::path& base) {
     std::error_code ec;
-    for (auto d = base; ; d = d.parent_path()) {
+    for (auto d = base;; d = d.parent_path()) {
         if (fs::exists(d / ".git", ec)) return false;
         if (d.parent_path() == d || d.parent_path().empty()) return true;
     }
@@ -53,14 +54,12 @@ namespace fs = std::filesystem;
     std::error_code ec;
     for (const char* var : {"XDG_RUNTIME_DIR", "TMPDIR"}) {
         if (const char* v = std::getenv(var);
-            v != nullptr && fs::is_directory(v, ec) && !ec &&
-            cmd_ancestry_clean(v)) {
+            v != nullptr && fs::is_directory(v, ec) && !ec && cmd_ancestry_clean(v)) {
             return fs::path(v);
         }
         ec.clear();
     }
-    if (fs::is_directory("/dev/shm", ec) && !ec &&
-        cmd_ancestry_clean("/dev/shm")) {
+    if (fs::is_directory("/dev/shm", ec) && !ec && cmd_ancestry_clean("/dev/shm")) {
         return fs::path("/dev/shm");
     }
     if (cmd_ancestry_clean(fs::temp_directory_path())) {
@@ -71,16 +70,13 @@ namespace fs = std::filesystem;
 
 [[nodiscard]] fs::path cmd_make_temp_root(std::string_view name) {
     static std::atomic<unsigned> counter{0};
-    const fs::path base_dir =
-        cmd_clean_temp_base().value_or(fs::temp_directory_path());
+    const fs::path base_dir = cmd_clean_temp_base().value_or(fs::temp_directory_path());
     for (int attempt = 0; attempt < 64; ++attempt) {
         const fs::path root =
             base_dir /
             (std::string(name) + std::to_string(::getpid()) + "_" +
-             std::to_string(counter.fetch_add(1,
-                 std::memory_order_relaxed)) + "_" +
-             std::to_string(std::chrono::system_clock::now()
-                                 .time_since_epoch().count()));
+             std::to_string(counter.fetch_add(1, std::memory_order_relaxed)) + "_" +
+             std::to_string(std::chrono::system_clock::now().time_since_epoch().count()));
         std::error_code create_ec;
         fs::create_directories(root, create_ec);
         std::error_code probe_ec;
@@ -93,7 +89,8 @@ struct EnvironmentGuard {
     std::string name;
     std::optional<std::string> previous;
 
-    EnvironmentGuard(std::string key, const std::string& value) : name(std::move(key)) {
+    EnvironmentGuard(std::string key, const std::string& value)
+        : name(std::move(key)) {
         if (const char* existing = std::getenv(name.c_str())) {
             previous = existing;
         }
@@ -113,7 +110,8 @@ struct EnvironmentUnsetGuard {
     std::string name;
     std::optional<std::string> previous;
 
-    explicit EnvironmentUnsetGuard(std::string key) : name(std::move(key)) {
+    explicit EnvironmentUnsetGuard(std::string key)
+        : name(std::move(key)) {
         if (const char* existing = std::getenv(name.c_str())) {
             previous = existing;
         }
@@ -140,8 +138,7 @@ loom::core::CommandContext ctx(std::vector<std::string> args = {}, std::string r
 /// Read a file's bytes (empty string when absent).
 [[nodiscard]] std::string cmd_read_file(const fs::path& p) {
     std::ifstream in(p, std::ios::binary);
-    return std::string((std::istreambuf_iterator<char>(in)),
-                       std::istreambuf_iterator<char>());
+    return std::string((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
 }
 
 std::vector<loom::core::Message> compact_runtime_messages(void* state) {
@@ -152,20 +149,19 @@ std::vector<loom::core::Message> compact_runtime_messages(void* state) {
 loom::core::VoidResult compact_runtime_apply(void* state) {
     auto* engine = static_cast<loom::core::QueryEngine*>(state);
     if (!engine) {
-        return std::unexpected(loom::core::Error::make(
-            loom::core::ErrorCode::InternalError,
-            "No active query engine is available for compaction"));
+        return std::unexpected(
+            loom::core::Error::make(loom::core::ErrorCode::InternalError,
+                                    "No active query engine is available for compaction"));
     }
     auto compacted = engine->compact_conversation();
     if (!compacted) {
-        return std::unexpected(loom::core::Error::make(
-            loom::core::ErrorCode::InternalError,
-            compacted.error().format()));
+        return std::unexpected(loom::core::Error::make(loom::core::ErrorCode::InternalError,
+                                                       compacted.error().format()));
     }
     return loom::core::VoidResult{};
 }
 
-} // namespace
+}  // namespace
 
 TEST(CommandRegistry, ParsesSlashCommandsAndArguments) {
     auto parsed = loom::core::CommandRegistry::parse("/config get model");
@@ -200,9 +196,12 @@ TEST(CommandRegistry, RegistersTypedCommandsAndCompletesNames) {
 }
 
 TEST(AppCommandRegistry, ReportsCommandPermissionLevels) {
-    EXPECT_EQ(loom::commands::command_permission("help"), loom::commands::CommandPermission::ReadOnly);
-    EXPECT_EQ(loom::commands::command_permission("clear"), loom::commands::CommandPermission::ReadWrite);
-    EXPECT_EQ(loom::commands::command_permission("unknown"), loom::commands::CommandPermission::None);
+    EXPECT_EQ(loom::commands::command_permission("help"),
+              loom::commands::CommandPermission::ReadOnly);
+    EXPECT_EQ(loom::commands::command_permission("clear"),
+              loom::commands::CommandPermission::ReadWrite);
+    EXPECT_EQ(loom::commands::command_permission("unknown"),
+              loom::commands::CommandPermission::None);
 }
 
 TEST(AppCommandRegistry, DispatchesMigratedRuntimeCommands) {
@@ -259,7 +258,7 @@ TEST(AppCommandRegistry, McpAddFlagValuesConsumedExactlyOnce) {
     const auto root = cmd_make_temp_root("loom_cmd_c6_flags_");
     fs::remove_all(root);
     const auto home = root / "home";
-    const auto cfg  = root / "cfg";
+    const auto cfg = root / "cfg";
     const auto work = root / "work";
     fs::create_directories(home);
     fs::create_directories(cfg);
@@ -282,8 +281,7 @@ TEST(AppCommandRegistry, McpAddFlagValuesConsumedExactlyOnce) {
         loom::commands::AppCommandRegistry registry;
 
         // stdio scoped add: the scope value must not become a phantom arg.
-        auto scoped = registry.execute(
-            "/mcp add s1 node serve.js --scope project", ctx());
+        auto scoped = registry.execute("/mcp add s1 node serve.js --scope project", ctx());
         ASSERT_TRUE(scoped.has_value());
         ASSERT_TRUE(scoped->ok) << scoped->message;
 
@@ -318,8 +316,8 @@ TEST(AppCommandRegistry, McpAddFlagValuesConsumedExactlyOnce) {
         EXPECT_FALSE(r1.has("command"));
 
         // Two --scope flags: LAST token wins everywhere.
-        auto two_scopes = registry.execute(
-            "/mcp add s2 node s2.js --scope project --scope user", ctx());
+        auto two_scopes =
+            registry.execute("/mcp add s2 node s2.js --scope project --scope user", ctx());
         ASSERT_TRUE(two_scopes.has_value());
         ASSERT_TRUE(two_scopes->ok) << two_scopes->message;
 
@@ -342,7 +340,7 @@ TEST(AppCommandRegistry, ConfigListGetReflectLoadedConfig) {
     const auto root = fs::temp_directory_path() / ("loom_cmd_c8_list_" + std::to_string(suffix));
     fs::remove_all(root);
     const auto home = root / "home";
-    const auto cfg  = root / "cfg";
+    const auto cfg = root / "cfg";
     const auto work = root / "work";
     fs::create_directories(home);
     fs::create_directories(cfg);
@@ -417,7 +415,7 @@ TEST(AppCommandRegistry, ConfigSetPreservesExistingSections) {
     const auto root = cmd_make_temp_root("loom_cmd_c8_preserve_");
     fs::remove_all(root);
     const auto home = root / "home";
-    const auto cfg  = root / "cfg";
+    const auto cfg = root / "cfg";
     const auto work = root / "work";
     fs::create_directories(home);
     fs::create_directories(cfg);
@@ -437,8 +435,7 @@ TEST(AppCommandRegistry, ConfigSetPreservesExistingSections) {
 
     auto read_file = [](const fs::path& p) {
         std::ifstream in(p, std::ios::binary);
-        return std::string((std::istreambuf_iterator<char>(in)),
-                           std::istreambuf_iterator<char>());
+        return std::string((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
     };
 
     const fs::path project_path = work / ".loom" / "settings.json";
@@ -482,10 +479,8 @@ TEST(AppCommandRegistry, ConfigSetPreservesExistingSections) {
         auto project = loom::utils::json::parse_file(project_path);
         ASSERT_TRUE(project.has_value());
         const auto root_node = project->root();
-        EXPECT_EQ(root_node.get("model").as_str(),
-                  std::string_view("custom-model-x"));
-        EXPECT_EQ(root_node.get("theme").as_str(),
-                  std::string_view("light"));
+        EXPECT_EQ(root_node.get("model").as_str(), std::string_view("custom-model-x"));
+        EXPECT_EQ(root_node.get("theme").as_str(), std::string_view("light"));
 
         // The project-owned server survives with its OWN parsed value.
         const auto servers = root_node.get("mcpServers");
@@ -519,7 +514,7 @@ TEST(AppCommandRegistry, ConfigSetPreservesUnknownKeys) {
     const auto root = cmd_make_temp_root("loom_cmd_c21_unknown_");
     fs::remove_all(root);
     const auto home = root / "home";
-    const auto cfg  = root / "cfg";
+    const auto cfg = root / "cfg";
     const auto work = root / "work";
     fs::create_directories(home);
     fs::create_directories(cfg);
@@ -560,17 +555,14 @@ TEST(AppCommandRegistry, ConfigSetPreservesUnknownKeys) {
         const auto root_node = project->root();
         // The unknown top-level key survives with its value intact.
         ASSERT_TRUE(root_node.has("x-custom"));
-        EXPECT_EQ(root_node.get("x-custom").get("tool").as_str(),
-                  std::string_view("loom"));
+        EXPECT_EQ(root_node.get("x-custom").get("tool").as_str(), std::string_view("loom"));
         // The known flat key is preserved, and the unknown sibling
         // survives alongside it.
-        EXPECT_EQ(root_node.get("model").as_str(),
-                  std::string_view("seed-model"));
+        EXPECT_EQ(root_node.get("model").as_str(), std::string_view("seed-model"));
         ASSERT_TRUE(root_node.has("x_custom_leaf"));
         EXPECT_EQ(root_node.get("x_custom_leaf").as_int(), 42);
         // The intended write landed.
-        EXPECT_EQ(root_node.get("theme").as_str(),
-                  std::string_view("light"));
+        EXPECT_EQ(root_node.get("theme").as_str(), std::string_view("light"));
     }
 
     cleanup();
@@ -586,7 +578,7 @@ TEST(AppCommandRegistry, ConfigGetReflectsExternalEdit) {
     const auto root = cmd_make_temp_root("loom_cmd_c23_external_");
     fs::remove_all(root);
     const auto home = root / "home";
-    const auto cfg  = root / "cfg";
+    const auto cfg = root / "cfg";
     const auto work = root / "work";
     fs::create_directories(home);
     fs::create_directories(cfg);
@@ -647,7 +639,7 @@ TEST(AppCommandRegistry, McpSuggestionsReflectExternalConfigEdit) {
     const auto root = cmd_make_temp_root("loom_cmd_c23_mcp_");
     fs::remove_all(root);
     const auto home = root / "home";
-    const auto cfg  = root / "cfg";
+    const auto cfg = root / "cfg";
     const auto work = root / "work";
     fs::create_directories(home);
     fs::create_directories(cfg);
@@ -701,10 +693,11 @@ TEST(AppCommandRegistry, McpSuggestionsReflectExternalConfigEdit) {
 TEST(AppCommandRegistry, ConfigSetFailsOnUnreadableProjectConfig) {
     namespace fs = std::filesystem;
     const auto suffix = std::chrono::system_clock::now().time_since_epoch().count();
-    const auto root = fs::temp_directory_path() / ("loom_cmd_c8_unreadable_" + std::to_string(suffix));
+    const auto root =
+        fs::temp_directory_path() / ("loom_cmd_c8_unreadable_" + std::to_string(suffix));
     fs::remove_all(root);
     const auto home = root / "home";
-    const auto cfg  = root / "cfg";
+    const auto cfg = root / "cfg";
     const auto work = root / "work";
     fs::create_directories(home);
     fs::create_directories(cfg);
@@ -745,8 +738,8 @@ TEST(AppCommandRegistry, ConfigSetFailsOnUnreadableProjectConfig) {
         EXPECT_EQ(read_file(project_path), bytes_before);
         EXPECT_FALSE(fs::exists(work / ".loom" / "settings.json.tmp"));
         std::error_code ec;
-        EXPECT_EQ(std::distance(fs::directory_iterator(work / ".loom", ec),
-                                fs::directory_iterator()), 1);
+        EXPECT_EQ(
+            std::distance(fs::directory_iterator(work / ".loom", ec), fs::directory_iterator()), 1);
     }
 
     cleanup();
@@ -755,7 +748,8 @@ TEST(AppCommandRegistry, ConfigSetFailsOnUnreadableProjectConfig) {
 TEST(AppCommandRegistry, RuntimeSurfaceCommandsExecuteLocalLogic) {
     loom::commands::AppCommandRegistry registry;
 
-    auto debug = registry.execute(R"(/debug-tool-call {"name":"Bash","input":{"command":"pwd"}})", ctx());
+    auto debug =
+        registry.execute(R"(/debug-tool-call {"name":"Bash","input":{"command":"pwd"}})", ctx());
     ASSERT_TRUE(debug.has_value());
     EXPECT_TRUE(debug->ok);
     EXPECT_NE(debug->message.find("Tool-call payload valid"), std::string::npos);
@@ -852,16 +846,21 @@ TEST(ClearCommand, InvokesCallbacksForAllScope) {
 TEST(CompactCommand, RuntimeContextCompactsActiveQueryEngineConversation) {
     httplib::Server summary_server;
     summary_server.new_task_queue = [] { return new httplib::ThreadPool(1); };
-    summary_server.Post("/v1/messages", [](const httplib::Request& request, httplib::Response& response) {
+    summary_server.Post("/v1/messages", [](const httplib::Request& request,
+                                           httplib::Response& response) {
         EXPECT_NE(request.body.find("CONTEXT CHECKPOINT"), std::string::npos);
-        response.set_content(R"({"id":"command-checkpoint","type":"message","role":"assistant","content":[{"type":"text","text":"## Goal\nContinue command task.\n## Constraints\nPreserve runtime detail; do not commit.\n## Decisions\nUse current implementation.\n## Progress\nInspected history.\n## Next Steps\nComplete verification.\n## References\n/work/source.cpp"}],"stop_reason":"end_turn","usage":{"input_tokens":20,"output_tokens":30}})", "application/json");
+        response.set_content(
+            R"({"id":"command-checkpoint","type":"message","role":"assistant","content":[{"type":"text","text":"## Goal\nContinue command task.\n## Constraints\nPreserve runtime detail; do not commit.\n## Decisions\nUse current implementation.\n## Progress\nInspected history.\n## Next Steps\nComplete verification.\n## References\n/work/source.cpp"}],"stop_reason":"end_turn","usage":{"input_tokens":20,"output_tokens":30}})",
+            "application/json");
     });
     const auto port = summary_server.bind_to_any_port("127.0.0.1");
     ASSERT_GT(port, 0);
     std::jthread summary_thread([&] { summary_server.listen_after_bind(); });
     summary_server.wait_until_ready();
+
     struct StopSummaryServer {
         httplib::Server& server;
+
         ~StopSummaryServer() { server.stop(); }
     } stop_summary_server{summary_server};
 
@@ -876,8 +875,9 @@ TEST(CompactCommand, RuntimeContextCompactsActiveQueryEngineConversation) {
     config.cwd = std::filesystem::current_path().string();
     loom::core::QueryEngine engine(std::move(config), tool_registry);
     loom::core::SystemMessage system{};
-    system.id.value="controlled-command-compaction-system";
-    system.content.emplace_back(loom::core::TextBlock{"Verify local work and preserve all constraints."});
+    system.id.value = "controlled-command-compaction-system";
+    system.content.emplace_back(
+        loom::core::TextBlock{"Verify local work and preserve all constraints."});
     engine.restore_conversation({loom::core::Message{std::move(system)}});
 
     auto make_user = [](std::string text, int index) {
@@ -889,10 +889,10 @@ TEST(CompactCommand, RuntimeContextCompactsActiveQueryEngineConversation) {
     };
 
     for (int i = 0; i < 10; ++i) {
-        engine.append_message_for_testing(make_user(
-            "retain compact command runtime detail " + std::to_string(i) + " " +
-            std::string(400, static_cast<char>('a' + (i % 20))),
-            i));
+        engine.append_message_for_testing(
+            make_user("retain compact command runtime detail " + std::to_string(i) + " " +
+                          std::string(400, static_cast<char>('a' + (i % 20))),
+                      i));
     }
 
     auto before = engine.get_conversation();
@@ -909,7 +909,8 @@ TEST(CompactCommand, RuntimeContextCompactsActiveQueryEngineConversation) {
     EXPECT_TRUE(result->ok);
     EXPECT_EQ(result->status, loom::core::CommandStatus::Succeeded);
     EXPECT_NE(result->message.find("Compaction complete"), std::string::npos);
-    EXPECT_EQ(result->message.find("Summarize the following conversation segments"), std::string::npos);
+    EXPECT_EQ(result->message.find("Summarize the following conversation segments"),
+              std::string::npos);
 
     auto after = engine.get_conversation();
     EXPECT_LT(after.size(), before.size());
@@ -1028,7 +1029,7 @@ TEST(AppCommandRegistry, XaaSetupCallbackPortReachesLoginSeam) {
     namespace fs = std::filesystem;
     const auto root = cmd_make_temp_root("loom_cmd_c17a_xaa_");
     const auto home = root / "home";
-    const auto cfg  = root / "cfg";
+    const auto cfg = root / "cfg";
     const auto work = root / "work";
     fs::create_directories(home);
     fs::create_directories(cfg);
@@ -1048,10 +1049,9 @@ TEST(AppCommandRegistry, XaaSetupCallbackPortReachesLoginSeam) {
     {
         loom::commands::AppCommandRegistry registry;
 
-        auto setup = registry.execute(
-            "/mcp xaa setup --issuer https://idp.example.com "
-            "--client-id loom-cli --callback-port 19485",
-            ctx());
+        auto setup = registry.execute("/mcp xaa setup --issuer https://idp.example.com "
+                                      "--client-id loom-cli --callback-port 19485",
+                                      ctx());
         ASSERT_TRUE(setup.has_value());
         ASSERT_TRUE(setup->ok) << setup->message;
 
@@ -1088,7 +1088,7 @@ TEST(AppCommandRegistry, ConfigSetDoesNotBakeEnvModelIntoProjectFile) {
     namespace fs = std::filesystem;
     const auto root = cmd_make_temp_root("loom_cmd_c19_envbake_");
     const auto home = root / "home";
-    const auto cfg  = root / "cfg";
+    const auto cfg = root / "cfg";
     const auto work = root / "work";
     fs::create_directories(home);
     fs::create_directories(cfg);
@@ -1130,14 +1130,12 @@ TEST(AppCommandRegistry, ConfigSetDoesNotBakeEnvModelIntoProjectFile) {
         // The unrelated key landed...
         EXPECT_NE(bytes.find("\"theme\": \"dark\""), std::string::npos) << bytes;
         // ...while the env value was never written into the tracked file.
-        EXPECT_EQ(bytes.find("env-ephemeral-model-c19"), std::string::npos)
-            << bytes;
+        EXPECT_EQ(bytes.find("env-ephemeral-model-c19"), std::string::npos) << bytes;
         EXPECT_EQ(bytes.find("4321"), std::string::npos) << bytes;
         // The file's OWN model value is preserved (not dropped, not env).
         auto project = loom::utils::json::parse_file(project_path);
         ASSERT_TRUE(project.has_value());
-        EXPECT_EQ(project->root().get("model").as_str(),
-                  std::string_view("file-model-c19"));
+        EXPECT_EQ(project->root().get("model").as_str(), std::string_view("file-model-c19"));
     }
 
     // The real proof it was not baked: with the env UNSET, a fresh load
@@ -1162,7 +1160,7 @@ TEST(AppCommandRegistry, ConfigSetNeverWritesEnvCredentialsToFile) {
     namespace fs = std::filesystem;
     const auto root = cmd_make_temp_root("loom_cmd_c19_secrets_");
     const auto home = root / "home";
-    const auto cfg  = root / "cfg";
+    const auto cfg = root / "cfg";
     const auto work = root / "work";
     fs::create_directories(home);
     fs::create_directories(cfg);
@@ -1171,10 +1169,8 @@ TEST(AppCommandRegistry, ConfigSetNeverWritesEnvCredentialsToFile) {
     EnvironmentGuard home_guard("HOME", home.string());
     EnvironmentGuard cfg_guard("LOOM_CONFIG_DIR", cfg.string());
     EnvironmentGuard api_guard("LOOM_API_KEY", "SECRET-c19-traceable-key");
-    EnvironmentGuard base_guard("LOOM_BASE_URL",
-                                "https://SECRET-c19-base.example.invalid/api");
-    EnvironmentGuard proxy_guard("HTTPS_PROXY",
-                                 "http://SECRET-c19-proxy.example:3128");
+    EnvironmentGuard base_guard("LOOM_BASE_URL", "https://SECRET-c19-base.example.invalid/api");
+    EnvironmentGuard proxy_guard("HTTPS_PROXY", "http://SECRET-c19-proxy.example:3128");
 
     const fs::path previous_cwd = fs::current_path();
     fs::current_path(work);
@@ -1217,7 +1213,7 @@ TEST(AppCommandRegistry, ConfigSetExplicitEnvOverriddenLeafPersistsUserValue) {
     namespace fs = std::filesystem;
     const auto root = cmd_make_temp_root("loom_cmd_c19_explicit_");
     const auto home = root / "home";
-    const auto cfg  = root / "cfg";
+    const auto cfg = root / "cfg";
     const auto work = root / "work";
     fs::create_directories(home);
     fs::create_directories(cfg);
@@ -1246,8 +1242,7 @@ TEST(AppCommandRegistry, ConfigSetExplicitEnvOverriddenLeafPersistsUserValue) {
         loom::commands::AppCommandRegistry registry;
 
         // Explicit user intent while LOOM_MODEL=Y: X wins on disk.
-        auto set_model = registry.execute(
-            "/config set model X-user-model-c19", ctx());
+        auto set_model = registry.execute("/config set model X-user-model-c19", ctx());
         ASSERT_TRUE(set_model.has_value());
         ASSERT_TRUE(set_model->ok) << set_model->message;
         {
@@ -1256,19 +1251,16 @@ TEST(AppCommandRegistry, ConfigSetExplicitEnvOverriddenLeafPersistsUserValue) {
             EXPECT_EQ(bytes.find("Y-env-model-c19"), std::string::npos) << bytes;
             auto project = loom::utils::json::parse_file(project_path);
             ASSERT_TRUE(project.has_value());
-            EXPECT_EQ(project->root().get("model").as_str(),
-                      std::string_view("X-user-model-c19"));
+            EXPECT_EQ(project->root().get("model").as_str(), std::string_view("X-user-model-c19"));
         }
 
         // Same rule for maxOutputTokens with LOOM_MAX_TOKENS engaged.
-        auto set_tokens = registry.execute(
-            "/config set maxOutputTokens 2048", ctx());
+        auto set_tokens = registry.execute("/config set maxOutputTokens 2048", ctx());
         ASSERT_TRUE(set_tokens.has_value());
         ASSERT_TRUE(set_tokens->ok) << set_tokens->message;
         {
             const std::string bytes = cmd_read_file(project_path);
-            EXPECT_NE(bytes.find("\"maxOutputTokens\": 2048"), std::string::npos)
-                << bytes;
+            EXPECT_NE(bytes.find("\"maxOutputTokens\": 2048"), std::string::npos) << bytes;
             EXPECT_EQ(bytes.find("9999"), std::string::npos) << bytes;
         }
 
@@ -1316,7 +1308,7 @@ TEST(AppCommandRegistry, XaaShowPresenceOnlyDoesNotEchoSecret) {
     namespace fs = std::filesystem;
     const auto root = cmd_make_temp_root("loom_cmd_c20_xaa_show_");
     const auto home = root / "home";
-    const auto cfg  = root / "cfg";
+    const auto cfg = root / "cfg";
     const auto work = root / "work";
     fs::create_directories(home);
     fs::create_directories(cfg);
@@ -1340,12 +1332,10 @@ TEST(AppCommandRegistry, XaaShowPresenceOnlyDoesNotEchoSecret) {
         // reads MCP_XAA_IDP_CLIENT_SECRET and writes it to the hardened
         // ~/.config/loom/xaa/idp_tokens.json store.
         {
-            EnvironmentGuard secret_guard(
-                "MCP_XAA_IDP_CLIENT_SECRET", "show-secret-never-echoed");
-            auto setup = registry.execute(
-                "/mcp xaa setup --issuer https://idp.example.com "
-                "--client-id loom-cli --client-secret",
-                ctx());
+            EnvironmentGuard secret_guard("MCP_XAA_IDP_CLIENT_SECRET", "show-secret-never-echoed");
+            auto setup = registry.execute("/mcp xaa setup --issuer https://idp.example.com "
+                                          "--client-id loom-cli --client-secret",
+                                          ctx());
             ASSERT_TRUE(setup.has_value());
             ASSERT_TRUE(setup->ok) << setup->message;
         }
@@ -1358,8 +1348,7 @@ TEST(AppCommandRegistry, XaaShowPresenceOnlyDoesNotEchoSecret) {
 
         // Presence-only: the output says a secret is stored, but never
         // echoes the value.
-        EXPECT_NE(show->message.find("(stored in keychain)"), std::string::npos)
-            << show->message;
+        EXPECT_NE(show->message.find("(stored in keychain)"), std::string::npos) << show->message;
         EXPECT_EQ(show->message.find("show-secret-never-echoed"), std::string::npos)
             << "secret value leaked into /mcp xaa show output: " << show->message;
     }
@@ -1370,11 +1359,18 @@ TEST(AppCommandRegistry, XaaShowPresenceOnlyDoesNotEchoSecret) {
 TEST(ConfigCommand, ExplicitGenerationOverridesCanReturnToAuto) {
     namespace fs = std::filesystem;
     const auto root = cmd_make_temp_root("loom_cmd_generation_auto_");
+
     struct Cleanup {
         fs::path previous = fs::current_path();
         fs::path root;
-        ~Cleanup() { std::error_code error; fs::current_path(previous, error); fs::remove_all(root, error); }
+
+        ~Cleanup() {
+            std::error_code error;
+            fs::current_path(previous, error);
+            fs::remove_all(root, error);
+        }
     } cleanup{fs::current_path(), root};
+
     fs::create_directories(root / "home");
     fs::create_directories(root / "config");
     fs::create_directories(root / "work");

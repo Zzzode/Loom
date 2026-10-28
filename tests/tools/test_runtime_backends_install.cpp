@@ -16,11 +16,9 @@ import loom.orchestration.runtime_backends;
 namespace {
 
 struct RuntimeBackendsPreMainInstall {
-    RuntimeBackendsPreMainInstall() {
-        loom::orchestration::install_runtime_backends();
-    }
+    RuntimeBackendsPreMainInstall() { loom::orchestration::install_runtime_backends(); }
 };
 
 const RuntimeBackendsPreMainInstall g_runtime_backends_pre_main_install;
 
-} // namespace
+}  // namespace

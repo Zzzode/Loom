@@ -1,18 +1,18 @@
 // BashTool - Executes shell commands with process lifecycle management
 module;
 
-#include <cctype>
-#include <cerrno>
-#include <cstring>
-
 #include <fcntl.h>
 #include <poll.h>
 #include <signal.h>
 #include <sys/wait.h>
 #include <unistd.h>
+
+#include <cctype>
+#include <cerrno>
 #include <cstddef>
 #include <cstdint>
 #include <cstdlib>
+#include <cstring>
 
 export module loom.tools.bash;
 
@@ -38,16 +38,16 @@ import loom.tools.should_use_sandbox;
 
 export namespace loom::tools::bash {
 
-using loom::core::Tool;
-using loom::core::ToolInput;
-using loom::core::ToolResult;
-using loom::core::ToolDefinition;
-using loom::core::ToolPermission;
 using loom::core::InputSchema;
 using loom::core::SchemaProperty;
+using loom::core::Tool;
+using loom::core::ToolDefinition;
+using loom::core::ToolInput;
+using loom::core::ToolPermission;
+using loom::core::ToolResult;
+using loom::utils::Result;
 using loom::utils::async::EventLoop;
 using loom::utils::async::Task;
-using loom::utils::Result;
 
 // =========================================================================
 // Bash Tool Configuration and Types
@@ -55,17 +55,8 @@ using loom::utils::Result;
 
 /// Dangerous command patterns that require explicit user approval
 constexpr std::array<std::string_view, 10> kDangerousPatterns = {
-    "rm -rf",
-    "mkfs",
-    "dd if=",
-    "> /dev/sd",
-    "chmod -R 777",
-    ":(){ :|:& };:",
-    "shutdown",
-    "reboot",
-    "init 0",
-    "git push --force"
-};
+    "rm -rf",        "mkfs",     "dd if=", "> /dev/sd", "chmod -R 777",
+    ":(){ :|:& };:", "shutdown", "reboot", "init 0",    "git push --force"};
 
 /// Command types for classification and UI display
 enum class CommandType {
@@ -185,13 +176,13 @@ enum class BashStream {
 /// update a UI progress display (ShellProgressMessage) without re-parsing.
 struct BashProgressSnapshot {
     BashStream stream{BashStream::Stdout};  ///< Which stream this chunk came from
-    std::string_view chunk;                 ///< Latest output chunk (view, valid only during callback)
-    std::size_t stdout_bytes = 0;           ///< Total stdout bytes received so far
-    std::size_t stderr_bytes = 0;           ///< Total stderr bytes received so far
-    std::size_t stdout_lines = 0;           ///< Approximate stdout line count
-    std::size_t stderr_lines = 0;           ///< Approximate stderr line count
-    std::chrono::milliseconds elapsed_ms{0};///< Wall-clock elapsed time
-    bool finished = false;                  ///< True on final callback after process exits
+    std::string_view chunk;        ///< Latest output chunk (view, valid only during callback)
+    std::size_t stdout_bytes = 0;  ///< Total stdout bytes received so far
+    std::size_t stderr_bytes = 0;  ///< Total stderr bytes received so far
+    std::size_t stdout_lines = 0;  ///< Approximate stdout line count
+    std::size_t stderr_lines = 0;  ///< Approximate stderr line count
+    std::chrono::milliseconds elapsed_ms{0};  ///< Wall-clock elapsed time
+    bool finished = false;                    ///< True on final callback after process exits
 };
 
 /// Callback type for live bash progress updates.
@@ -242,6 +233,7 @@ struct BackgroundTasksCleanupGuard {
         }
     }
 };
+
 inline BackgroundTasksCleanupGuard background_tasks_cleanup_guard;
 
 [[nodiscard]] std::optional<pid_t> parse_pid_key(std::string_view key) {
@@ -279,7 +271,8 @@ struct ShellInvocation {
 [[nodiscard]] ShellInvocation build_shell_invocation(const BashToolInput& input) {
     auto provider = loom::utils::shell_providers::create_default_provider();
     auto id = next_shell_invocation_id();
-    const auto use_sandbox = should_use_sandbox(input.command) && !input.dangerously_disable_sandbox;
+    const auto use_sandbox =
+        should_use_sandbox(input.command) && !input.dangerously_disable_sandbox;
     auto sandbox_tmp = use_sandbox ? create_sandbox_tmp_dir(id) : std::optional<std::string>{};
     loom::utils::shell_providers::BuildExecOptions opts{
         .id = id,
@@ -296,14 +289,13 @@ struct ShellInvocation {
     };
 }
 
-[[nodiscard]] std::vector<char*> make_exec_argv(
-    std::string& executable,
-    std::vector<std::string>& args
-) {
+[[nodiscard]] std::vector<char*> make_exec_argv(std::string& executable,
+                                                std::vector<std::string>& args) {
     std::vector<char*> argv;
     argv.reserve(args.size() + 2);
     argv.push_back(executable.data());
-    for (auto& arg : args) argv.push_back(arg.data());
+    for (auto& arg : args)
+        argv.push_back(arg.data());
     argv.push_back(nullptr);
     return argv;
 }
@@ -319,11 +311,8 @@ void apply_env_overrides(const std::map<std::string, std::string>& env) {
 
     constexpr size_t kHalf = kMaxOutput / 2;
     const auto omitted = data.size() - kMaxOutput;
-    return data.substr(0, kHalf)
-        + "\n\n... [output truncated, "
-        + std::to_string(omitted)
-        + " bytes omitted] ...\n\n"
-        + data.substr(data.size() - kHalf);
+    return data.substr(0, kHalf) + "\n\n... [output truncated, " + std::to_string(omitted) +
+           " bytes omitted] ...\n\n" + data.substr(data.size() - kHalf);
 }
 
 [[nodiscard]] int decode_exit_status(int status) noexcept {
@@ -361,7 +350,7 @@ void close_if_open(int& fd) noexcept {
 
 [[nodiscard]] bool agent_cancel_requested(const BashToolInput& input) {
     return input.agent_id &&
-        loom::tools::agent_runtime::native_agent_store().is_cancel_requested(*input.agent_id);
+           loom::tools::agent_runtime::native_agent_store().is_cancel_requested(*input.agent_id);
 }
 
 inline void append_background_output(BackgroundTaskState& state, std::string_view data) {
@@ -371,19 +360,21 @@ inline void append_background_output(BackgroundTaskState& state, std::string_vie
     }
 }
 
-[[nodiscard]] std::expected<BackgroundTaskStart, std::string> spawn_background_shell(
-    const BashToolInput& input) {
+[[nodiscard]] std::expected<BackgroundTaskStart, std::string>
+spawn_background_shell(const BashToolInput& input) {
     auto invocation = build_shell_invocation(input);
     int output_pipe[2]{-1, -1};
     if (pipe(output_pipe) != 0) {
-        return std::unexpected(std::format("Failed to create output pipe: {}", std::strerror(errno)));
+        return std::unexpected(
+            std::format("Failed to create output pipe: {}", std::strerror(errno)));
     }
 
     const pid_t worker = fork();
     if (worker < 0) {
         close_if_open(output_pipe[0]);
         close_if_open(output_pipe[1]);
-        return std::unexpected(std::format("Failed to fork background process: {}", std::strerror(errno)));
+        return std::unexpected(
+            std::format("Failed to fork background process: {}", std::strerror(errno)));
     }
 
     if (worker == 0) {
@@ -414,19 +405,18 @@ inline void append_background_output(BackgroundTaskState& state, std::string_vie
 
     close_if_open(output_pipe[1]);
     const auto task_id = std::format("task_{}", worker);
-    auto state = std::make_shared<BackgroundTaskState>(BackgroundTaskState{
-        .id = task_id,
-        .pid = worker,
-        .command = input.command,
-        .agent_id = input.agent_id,
-        .output = {},
-        .running = true,
-        .stopped = false,
-        .exit_code = std::nullopt,
-        .error = std::nullopt,
-        .created_at = std::chrono::steady_clock::now(),
-        .reader_thread = {}
-    });
+    auto state = std::make_shared<BackgroundTaskState>(
+        BackgroundTaskState{.id = task_id,
+                            .pid = worker,
+                            .command = input.command,
+                            .agent_id = input.agent_id,
+                            .output = {},
+                            .running = true,
+                            .stopped = false,
+                            .exit_code = std::nullopt,
+                            .error = std::nullopt,
+                            .created_at = std::chrono::steady_clock::now(),
+                            .reader_thread = {}});
     {
         std::lock_guard lock(background_tasks_mutex);
         background_tasks[task_id] = state;
@@ -438,7 +428,8 @@ inline void append_background_output(BackgroundTaskState& state, std::string_vie
             const auto nread = read(read_fd, buffer.data(), buffer.size());
             if (nread > 0) {
                 std::lock_guard lock(background_tasks_mutex);
-                append_background_output(*state, std::string_view(buffer.data(), static_cast<std::size_t>(nread)));
+                append_background_output(
+                    *state, std::string_view(buffer.data(), static_cast<std::size_t>(nread)));
                 continue;
             }
             if (nread == 0) break;
@@ -468,19 +459,20 @@ inline void append_background_output(BackgroundTaskState& state, std::string_vie
     return BackgroundTaskStart{.id = task_id, .pid = worker};
 }
 
-[[nodiscard]] std::expected<BashToolOutput, std::string> execute_shell(
-    const BashToolInput& input,
-    BashProgressCallback on_progress = nullptr) {
+[[nodiscard]] std::expected<BashToolOutput, std::string>
+execute_shell(const BashToolInput& input, BashProgressCallback on_progress = nullptr) {
     auto invocation = build_shell_invocation(input);
     int stdout_pipe[2]{-1, -1};
     int stderr_pipe[2]{-1, -1};
     if (pipe(stdout_pipe) != 0) {
-        return std::unexpected(std::format("Failed to create stdout pipe: {}", std::strerror(errno)));
+        return std::unexpected(
+            std::format("Failed to create stdout pipe: {}", std::strerror(errno)));
     }
     if (pipe(stderr_pipe) != 0) {
         close_if_open(stdout_pipe[0]);
         close_if_open(stdout_pipe[1]);
-        return std::unexpected(std::format("Failed to create stderr pipe: {}", std::strerror(errno)));
+        return std::unexpected(
+            std::format("Failed to create stderr pipe: {}", std::strerror(errno)));
     }
 
     const pid_t pid = fork();
@@ -564,10 +556,7 @@ inline void append_background_output(BackgroundTaskState& state, std::string_vie
             }
             cancel_kill_deadline = now + std::chrono::milliseconds(250);
         }
-        if (!process_exited &&
-            cancel_requested &&
-            !cancel_kill_sent &&
-            cancel_kill_deadline &&
+        if (!process_exited && cancel_requested && !cancel_kill_sent && cancel_kill_deadline &&
             now >= *cancel_kill_deadline) {
             cancel_kill_sent = true;
             if (kill(-pid, SIGKILL) != 0) {
@@ -585,19 +574,23 @@ inline void append_background_output(BackgroundTaskState& state, std::string_vie
         std::array<pollfd, 2> fds{};
         nfds_t nfds = 0;
         if (stdout_open) {
-            fds[nfds++] = pollfd{.fd = stdout_pipe[0], .events = POLLIN | POLLHUP | POLLERR, .revents = 0};
+            fds[nfds++] =
+                pollfd{.fd = stdout_pipe[0], .events = POLLIN | POLLHUP | POLLERR, .revents = 0};
         }
         if (stderr_open) {
-            fds[nfds++] = pollfd{.fd = stderr_pipe[0], .events = POLLIN | POLLHUP | POLLERR, .revents = 0};
+            fds[nfds++] =
+                pollfd{.fd = stderr_pipe[0], .events = POLLIN | POLLHUP | POLLERR, .revents = 0};
         }
 
         int poll_timeout_ms = 25;
         if (!output.interrupted && !process_exited) {
-            const auto remaining = std::chrono::duration_cast<std::chrono::milliseconds>(deadline - now).count();
+            const auto remaining =
+                std::chrono::duration_cast<std::chrono::milliseconds>(deadline - now).count();
             poll_timeout_ms = static_cast<int>(std::clamp<long long>(remaining, 0, 25));
         }
 
-        const int ready = nfds == 0 ? poll(nullptr, 0, poll_timeout_ms) : poll(fds.data(), nfds, poll_timeout_ms);
+        const int ready =
+            nfds == 0 ? poll(nullptr, 0, poll_timeout_ms) : poll(fds.data(), nfds, poll_timeout_ms);
         if (ready > 0) {
             nfds_t index = 0;
             if (stdout_open) {
@@ -615,10 +608,8 @@ inline void append_background_output(BackgroundTaskState& state, std::string_vie
                         stdout_line_count += new_lines;
                         BashProgressSnapshot snap;
                         snap.stream = BashStream::Stdout;
-                        snap.chunk = std::string_view{
-                            output.out.data() + prev_stdout_size,
-                            output.out.size() - prev_stdout_size
-                        };
+                        snap.chunk = std::string_view{output.out.data() + prev_stdout_size,
+                                                      output.out.size() - prev_stdout_size};
                         snap.stdout_bytes = output.out.size();
                         snap.stderr_bytes = output.err.size();
                         snap.stdout_lines = stdout_line_count;
@@ -644,10 +635,8 @@ inline void append_background_output(BackgroundTaskState& state, std::string_vie
                         stderr_line_count += new_lines;
                         BashProgressSnapshot snap;
                         snap.stream = BashStream::Stderr;
-                        snap.chunk = std::string_view{
-                            output.err.data() + prev_stderr_size,
-                            output.err.size() - prev_stderr_size
-                        };
+                        snap.chunk = std::string_view{output.err.data() + prev_stderr_size,
+                                                      output.err.size() - prev_stderr_size};
                         snap.stdout_bytes = output.out.size();
                         snap.stderr_bytes = output.err.size();
                         snap.stdout_lines = stdout_line_count;
@@ -690,7 +679,7 @@ inline void append_background_output(BackgroundTaskState& state, std::string_vie
     return output;
 }
 
-} // namespace detail
+}  // namespace detail
 
 struct BackgroundTaskSnapshot {
     std::string id;
@@ -718,7 +707,8 @@ struct BackgroundTaskSnapshot {
     };
 }
 
-[[nodiscard]] std::optional<BackgroundTaskSnapshot> get_background_task_snapshot(std::string_view id) {
+[[nodiscard]] std::optional<BackgroundTaskSnapshot>
+get_background_task_snapshot(std::string_view id) {
     std::lock_guard lock(detail::background_tasks_mutex);
     const auto it = detail::background_tasks.find(std::string(id));
     if (it != detail::background_tasks.end()) {
@@ -745,8 +735,7 @@ struct BackgroundTaskSnapshot {
         if (it == detail::background_tasks.end()) {
             if (auto pid_key = detail::parse_pid_key(id)) {
                 for (auto candidate = detail::background_tasks.begin();
-                     candidate != detail::background_tasks.end();
-                     ++candidate) {
+                     candidate != detail::background_tasks.end(); ++candidate) {
                     if (candidate->second->pid == *pid_key) {
                         it = candidate;
                         break;
@@ -774,7 +763,8 @@ struct BackgroundTaskSnapshot {
     return kill(pid, SIGTERM) == 0 || errno == ESRCH;
 }
 
-[[nodiscard]] std::vector<BackgroundTaskSnapshot> stop_background_tasks_for_agent(std::string_view agent_id) {
+[[nodiscard]] std::vector<BackgroundTaskSnapshot>
+stop_background_tasks_for_agent(std::string_view agent_id) {
     if (agent_id.empty()) return {};
 
     std::vector<std::string> task_ids;
@@ -842,18 +832,15 @@ inline void drain_all_background_tasks() {
 
     // (1) Read-only commands
     static const std::unordered_set<std::string_view> kReadCmds = {
-        "cat", "head", "tail", "less", "more", "wc", "stat", "file", "strings",
-        "ls", "tree", "du", "find", "grep", "rg", "ag", "ack", "locate",
-        "which", "whereis"
-    };
+        "cat",  "head", "tail", "less", "more", "wc", "stat", "file",   "strings", "ls",
+        "tree", "du",   "find", "grep", "rg",   "ag", "ack",  "locate", "which",   "whereis"};
     if (kReadCmds.contains(base_cmd)) {
         return CommandType::ReadOnly;
     }
 
     // (2) Write commands
     static const std::unordered_set<std::string_view> kWriteCmds = {
-        "echo", "tee", "sed", "awk", "touch", "mkdir", "rmdir", "cp", "mv", "ln"
-    };
+        "echo", "tee", "sed", "awk", "touch", "mkdir", "rmdir", "cp", "mv", "ln"};
     if (kWriteCmds.contains(base_cmd)) {
         if (loom::tools::bash_validation::is_destructive_command(command)) {
             return CommandType::Dangerous;
@@ -885,14 +872,12 @@ inline void drain_all_background_tasks() {
     return sandbox::should_use_sandbox(input, runtime);
 }
 
-
 /// Check if command is silent (expected no output)
 [[nodiscard]] bool is_silent_command(std::string_view command) noexcept {
     static const std::unordered_set<std::string_view> kSilentCmds = {
-        "mv", "cp", "rm", "mkdir", "rmdir", "chmod", "chown", "chgrp",
-        "touch", "ln", "cd", "export", "unset", "wait"
-    };
-    
+        "mv",    "cp",    "rm", "mkdir", "rmdir",  "chmod", "chown",
+        "chgrp", "touch", "ln", "cd",    "export", "unset", "wait"};
+
     auto space = command.find(' ');
     auto base_cmd = space != std::string::npos ? command.substr(0, space) : command;
     return kSilentCmds.contains(base_cmd);
@@ -906,76 +891,64 @@ inline void drain_all_background_tasks() {
 class BashTool {
 public:
     static constexpr std::string_view kName = "Bash";
-    static constexpr std::string_view kDescription = 
+    static constexpr std::string_view kDescription =
         "Execute shell commands in a terminal session. Use for running CLI tools, "
         "installing dependencies, or executing build commands.";
-    
+
     static ToolDefinition definition() {
         return ToolDefinition{
             .name = std::string(kName),
             .description = std::string(kDescription),
-            .input_schema = InputSchema{
-                .properties = {
-                    SchemaProperty{
-                        .name = "command",
-                        .type = "string",
-                        .description = "The shell command to execute",
-                        .required = true,
-                        .default_value = std::nullopt,
-                        .enum_values = std::nullopt
-                    },
-                    SchemaProperty{
-                        .name = "cwd",
-                        .type = "string",
-                        .description = "Working directory for execution (optional)",
-                        .required = false,
-                        .default_value = std::nullopt,
-                        .enum_values = std::nullopt
-                    },
-                    SchemaProperty{
-                        .name = "description",
-                        .type = "string",
-                        .description = "Clear description of what this command does",
-                        .required = false,
-                        .default_value = std::nullopt,
-                        .enum_values = std::nullopt
-                    },
-                    SchemaProperty{
-                        .name = "timeout",
-                        .type = "number",
-                        .description = "Timeout in milliseconds (default: 120000)",
-                        .required = false,
-                        .default_value = "120000",
-                        .enum_values = std::nullopt
-                    },
-                    SchemaProperty{
-                        .name = "run_in_background",
-                        .type = "boolean",
-                        .description = "Run command in background (optional)",
-                        .required = false,
-                        .default_value = "false",
-                        .enum_values = std::nullopt
-                    }
-                }
-            },
+            .input_schema =
+                InputSchema{
+                    .properties =
+                        {SchemaProperty{.name = "command",
+                                        .type = "string",
+                                        .description = "The shell command to execute",
+                                        .required = true,
+                                        .default_value = std::nullopt,
+                                        .enum_values = std::nullopt},
+                         SchemaProperty{.name = "cwd",
+                                        .type = "string",
+                                        .description = "Working directory for execution (optional)",
+                                        .required = false,
+                                        .default_value = std::nullopt,
+                                        .enum_values = std::nullopt},
+                         SchemaProperty{.name = "description",
+                                        .type = "string",
+                                        .description =
+                                            "Clear description of what this command does",
+                                        .required = false,
+                                        .default_value = std::nullopt,
+                                        .enum_values = std::nullopt},
+                         SchemaProperty{.name = "timeout",
+                                        .type = "number",
+                                        .description = "Timeout in milliseconds (default: 120000)",
+                                        .required = false,
+                                        .default_value = "120000",
+                                        .enum_values = std::nullopt},
+                         SchemaProperty{.name = "run_in_background",
+                                        .type = "boolean",
+                                        .description = "Run command in background (optional)",
+                                        .required = false,
+                                        .default_value = "false",
+                                        .enum_values = std::nullopt}}},
             .permission = ToolPermission::Execute,
             .category = "execution",
-            .max_result_size_chars = 30'000
-        };
+            .max_result_size_chars = 30'000};
     }
-    
-    explicit BashTool(EventLoop& loop = EventLoop::default_loop()) {
-        (void)loop;
-    }
-    
+
+    explicit BashTool(EventLoop& loop = EventLoop::default_loop()) { (void)loop; }
+
     /// Permission mode for the tool
     enum class PermissionMode {
         Ask,        // Always ask user for confirmation
         AutoAllow,  // Auto-allow safe commands, ask for dangerous
         YoloMode    // Allow everything without asking
     };
-    
+
     void set_permission_mode(PermissionMode mode) { permission_mode_ = mode; }
+
     void set_allowed_directories(std::vector<std::string> dirs) {
         allowed_directories_ = std::move(dirs);
     }
@@ -986,7 +959,7 @@ public:
     void set_progress_callback(detail::BashProgressCallback cb) {
         progress_callback_ = std::move(cb);
     }
-    
+
     /// Check if execution is allowed based on permission mode and command type
     [[nodiscard]] bool check_permission(const ToolInput& input) const {
         auto parsed = BashToolInput::from_json(input.json());
@@ -1002,13 +975,11 @@ public:
             }
             if (cmd.starts_with("sed") &&
                 (cmd.size() == 3 || std::isspace(static_cast<unsigned char>(cmd[3])))) {
-                const bool allow_file_writes =
-                    (permission_mode_ == PermissionMode::AutoAllow ||
-                     permission_mode_ == PermissionMode::YoloMode);
+                const bool allow_file_writes = (permission_mode_ == PermissionMode::AutoAllow ||
+                                                permission_mode_ == PermissionMode::YoloMode);
                 auto decision = loom::tools::sed_validation::check_sed_constraints(
                     parsed->command, allow_file_writes);
-                if (decision.decision ==
-                    loom::tools::sed_validation::SedSafetyDecision::Ask) {
+                if (decision.decision == loom::tools::sed_validation::SedSafetyDecision::Ask) {
                     return permission_mode_ == PermissionMode::YoloMode;
                 }
             }
@@ -1019,13 +990,13 @@ public:
         auto level = loom::tools::check_bash_permission(parsed->command, perm_mode);
 
         switch (level) {
-            case loom::tools::BashPermissionLevel::Blocked:
-                return false;
-            case loom::tools::BashPermissionLevel::NeedsApproval:
-                // In YoloMode we auto-allow even needs-approval commands.
-                return permission_mode_ == PermissionMode::YoloMode;
-            case loom::tools::BashPermissionLevel::Allowed:
-                return true;
+        case loom::tools::BashPermissionLevel::Blocked:
+            return false;
+        case loom::tools::BashPermissionLevel::NeedsApproval:
+            // In YoloMode we auto-allow even needs-approval commands.
+            return permission_mode_ == PermissionMode::YoloMode;
+        case loom::tools::BashPermissionLevel::Allowed:
+            return true;
         }
         return false;
     }
@@ -1037,7 +1008,7 @@ public:
         auto level = loom::tools::check_bash_permission(command, perm_mode);
         return level == loom::tools::BashPermissionLevel::NeedsApproval;
     }
-    
+
     /// Validate working directory is within allowed paths
     [[nodiscard]] bool is_directory_allowed(std::string_view cwd) const {
         if (allowed_directories_.empty()) return true;  // No restriction
@@ -1046,49 +1017,48 @@ public:
         }
         return false;
     }
-    
+
     /// Execute a command synchronously
     [[nodiscard]] Result<ToolResult> execute(const ToolInput& input) {
         auto parsed_input = BashToolInput::from_json(input.json());
         if (!parsed_input) {
-            return std::unexpected(loom::utils::Error(
-                loom::utils::ErrorCode::invalid_argument,
-                parsed_input.error()
-            ));
+            return std::unexpected(
+                loom::utils::Error(loom::utils::ErrorCode::invalid_argument, parsed_input.error()));
         }
-        
+
         return execute_internal(*parsed_input);
     }
-    
+
     /// Execute command asynchronously (coroutine)
     [[nodiscard]] Task<Result<ToolResult>> execute_async(const ToolInput& input) {
         auto parsed_input = BashToolInput::from_json(input.json());
         if (!parsed_input) {
-            co_return std::unexpected(loom::utils::Error(
-                loom::utils::ErrorCode::invalid_argument,
-                parsed_input.error()
-            ));
+            co_return std::unexpected(
+                loom::utils::Error(loom::utils::ErrorCode::invalid_argument, parsed_input.error()));
         }
-        
+
         co_return co_await execute_async_internal(*parsed_input);
     }
-    
+
 private:
     PermissionMode permission_mode_ = PermissionMode::AutoAllow;
     std::vector<std::string> allowed_directories_;
     detail::BashProgressCallback progress_callback_;
 
     /// Convert BashTool::PermissionMode to bash_permissions engine mode.
-    [[nodiscard]] static loom::tools::PermissionMode to_permission_mode(
-        PermissionMode mode) noexcept {
+    [[nodiscard]] static loom::tools::PermissionMode
+    to_permission_mode(PermissionMode mode) noexcept {
         switch (mode) {
-            case PermissionMode::Ask:        return loom::tools::PermissionMode::Strict;
-            case PermissionMode::AutoAllow:  return loom::tools::PermissionMode::Normal;
-            case PermissionMode::YoloMode:   return loom::tools::PermissionMode::Permissive;
+        case PermissionMode::Ask:
+            return loom::tools::PermissionMode::Strict;
+        case PermissionMode::AutoAllow:
+            return loom::tools::PermissionMode::Normal;
+        case PermissionMode::YoloMode:
+            return loom::tools::PermissionMode::Permissive;
         }
         return loom::tools::PermissionMode::Normal;
     }
-    
+
     /// Internal synchronous execution
     Result<ToolResult> execute_internal(const BashToolInput& input) {
         try {
@@ -1097,11 +1067,11 @@ private:
                 return ToolResult::error(std::format(
                     "Directory '{}' is not in the allowed directories list", *input.cwd));
             }
-            
+
             // Check if command requires confirmation
             if (requires_confirmation(input.command)) {
-                return ToolResult::error(std::format(
-                    "Command requires user confirmation: {}", input.command));
+                return ToolResult::error(
+                    std::format("Command requires user confirmation: {}", input.command));
             }
 
             if (input.run_in_background) {
@@ -1111,10 +1081,8 @@ private:
                 }
 
                 BashToolOutput output;
-                output.out = std::format(
-                    "Background task started\nTask ID: {}\nPID: {}",
-                    background_task->id,
-                    background_task->pid);
+                output.out = std::format("Background task started\nTask ID: {}\nPID: {}",
+                                         background_task->id, background_task->pid);
                 output.exit_code = 0;
                 output.background_task_id = background_task->id;
                 output.no_output_expected = false;
@@ -1139,17 +1107,17 @@ private:
             }
 
             return format_result(output, input.command, interpreted.is_error);
-            
+
         } catch (const std::exception& e) {
             return ToolResult::error(std::format("Execution error: {}", e.what()));
         }
     }
-    
+
     /// Internal async execution using libuv process
     Task<Result<ToolResult>> execute_async_internal(const BashToolInput& input) {
         co_return execute_internal(input);
     }
-    
+
     /// Format the BashToolOutput into a ToolResult.
     ///
     /// Also constructs a `BashResultInfo` struct (via bash_result_formatting)
@@ -1162,41 +1130,28 @@ private:
     /// \param semantic_is_error  true if command_semantics declared the
     ///                           execution a *real* error (as opposed to e.g.
     ///                           grep returning exit 1 for no matches).
-    [[nodiscard]] ToolResult format_result(
-        const BashToolOutput& output,
-        std::string_view command,
-        bool semantic_is_error
-    ) {
+    [[nodiscard]] ToolResult format_result(const BashToolOutput& output, std::string_view command,
+                                           bool semantic_is_error) {
         // ---- Phase 4 bridge: build structured BashResultInfo --------------
         // (UI rendering is deferred to FTXUI; only the data bridge lives here.)
-        const auto dur_ms = static_cast<std::uint64_t>(
-            std::max<std::int64_t>(0, std::chrono::duration_cast<
-                std::chrono::milliseconds>(output.duration_ms).count()));
+        const auto dur_ms = static_cast<std::uint64_t>(std::max<std::int64_t>(
+            0, std::chrono::duration_cast<std::chrono::milliseconds>(output.duration_ms).count()));
         [[maybe_unused]] const auto info = loom::tools::bash::make_result_info(
-            std::string(command),
-            output.exit_code,
-            dur_ms,
-            output.out,
-            output.err,
-            output.interrupted,
-            output.is_image,
-            output.no_output_expected,
-            output.background_task_id.has_value(),
-            output.return_code_interpretation,
-            output.interrupted_reason
-        );
+            std::string(command), output.exit_code, dur_ms, output.out, output.err,
+            output.interrupted, output.is_image, output.no_output_expected,
+            output.background_task_id.has_value(), output.return_code_interpretation,
+            output.interrupted_reason);
         // Deferred(Phase 4): hand `info` to FTXUI renderer instead of flattening.
         // -------------------------------------------------------------------
 
         std::string result_text;
 
-        const bool hard_error =
-            output.interrupted || (output.exit_code != 0 && semantic_is_error);
+        const bool hard_error = output.interrupted || (output.exit_code != 0 && semantic_is_error);
 
         if (hard_error) {
             result_text = output.interrupted
-                ? output.interrupted_reason.value_or("Command timed out")
-                : "Command failed";
+                              ? output.interrupted_reason.value_or("Command timed out")
+                              : "Command failed";
             if (!output.err.empty()) {
                 result_text += ":\n" + output.err;
             }
@@ -1223,36 +1178,40 @@ private:
 
         return ToolResult::success(result_text);
     }
-    
+
     /// Check if output represents an error
     [[nodiscard]] bool is_error(const BashToolOutput& output) const noexcept {
         return output.exit_code != 0 || output.interrupted;
     }
 };
 
-} // namespace loom::tools::bash
+}  // namespace loom::tools::bash
 
 // Export main tool class
 export namespace loom::tools {
-    using loom::tools::bash::BashTool;
+using loom::tools::bash::BashTool;
 
-    /// Factory: create BashTool wrapped as ITool (adapts Result types across modules)
-    [[nodiscard]] auto make_bash_tool() -> std::unique_ptr<loom::core::ITool> {
-        struct Adapter final : loom::core::ITool {
-            BashTool tool_;
-            loom::core::ToolDefinition def_ = BashTool::definition();
+/// Factory: create BashTool wrapped as ITool (adapts Result types across modules)
+[[nodiscard]] auto make_bash_tool() -> std::unique_ptr<loom::core::ITool> {
+    struct Adapter final : loom::core::ITool {
+        BashTool tool_;
+        loom::core::ToolDefinition def_ = BashTool::definition();
 
-            const loom::core::ToolDefinition& definition() const override { return def_; }
-            std::expected<loom::core::ToolResult, loom::core::Error> execute(const loom::core::ToolInput& input) override {
-                auto result = tool_.execute(input);
-                if (result) return std::move(*result);
-                return std::unexpected(loom::core::Error::make(
-                    loom::core::ErrorCode::ToolExecutionFailed, result.error().format()));
-            }
-            bool check_permission(const loom::core::ToolInput& input) const override {
-                return tool_.check_permission(input);
-            }
-        };
-        return std::make_unique<Adapter>();
-    }
+        const loom::core::ToolDefinition& definition() const override { return def_; }
+
+        std::expected<loom::core::ToolResult, loom::core::Error>
+        execute(const loom::core::ToolInput& input) override {
+            auto result = tool_.execute(input);
+            if (result) return std::move(*result);
+            return std::unexpected(loom::core::Error::make(
+                loom::core::ErrorCode::ToolExecutionFailed, result.error().format()));
+        }
+
+        bool check_permission(const loom::core::ToolInput& input) const override {
+            return tool_.check_permission(input);
+        }
+    };
+
+    return std::make_unique<Adapter>();
 }
+}  // namespace loom::tools

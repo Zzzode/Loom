@@ -18,9 +18,7 @@ using loom::ui::dialogs::default_renderers::register_default_renderers;
 /// Delegates to register_default_renderers with the same argument pack.
 /// Callers that write `register_bottom_renderers(reg)` bind here; the
 /// dual `using` + template keeps both calling conventions valid.
-template <typename... Args>
-inline void register_bottom_renderers(Args&&... args) {
-    loom::ui::dialogs::default_renderers::register_default_renderers(
-        std::forward<Args>(args)...);
+template <typename... Args> inline void register_bottom_renderers(Args&&... args) {
+    loom::ui::dialogs::default_renderers::register_default_renderers(std::forward<Args>(args)...);
 }
 }  // namespace loom::ui::dialogs::bottom_renderers

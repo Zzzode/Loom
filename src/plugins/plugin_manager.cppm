@@ -6,11 +6,9 @@
 // policy enforcement, startup checks, marketplace reconciliation, and refresh.
 module;
 
-
 export module loom.plugins.plugin_manager;
 
 import std;
-
 
 export namespace loom::utils::plugin_manager {
 
@@ -68,28 +66,19 @@ void clear_installed_plugins_cache();
 [[nodiscard]] const InstalledPluginsFile& get_in_memory_installed_plugins();
 
 /// Add or update a plugin installation entry
-void add_plugin_installation(
-    std::string_view plugin_id,
-    PluginScope scope,
-    const std::filesystem::path& install_path,
-    const PluginInstallationEntry& metadata,
-    std::optional<std::filesystem::path> project_path = std::nullopt
-);
+void add_plugin_installation(std::string_view plugin_id, PluginScope scope,
+                             const std::filesystem::path& install_path,
+                             const PluginInstallationEntry& metadata,
+                             std::optional<std::filesystem::path> project_path = std::nullopt);
 
 /// Remove a plugin installation entry at a specific scope
-void remove_plugin_installation(
-    std::string_view plugin_id,
-    PluginScope scope,
-    std::optional<std::filesystem::path> project_path = std::nullopt
-);
+void remove_plugin_installation(std::string_view plugin_id, PluginScope scope,
+                                std::optional<std::filesystem::path> project_path = std::nullopt);
 
 /// Add or update a plugin's installation metadata (high-level)
-void add_installed_plugin(
-    std::string_view plugin_id,
-    const InstalledPlugin& metadata,
-    PluginScope scope = PluginScope::User,
-    std::optional<std::filesystem::path> project_path = std::nullopt
-);
+void add_installed_plugin(std::string_view plugin_id, const InstalledPlugin& metadata,
+                          PluginScope scope = PluginScope::User,
+                          std::optional<std::filesystem::path> project_path = std::nullopt);
 
 /// Remove a plugin from the installed plugins registry
 [[nodiscard]] std::optional<InstalledPlugin> remove_installed_plugin(std::string_view plugin_id);
@@ -105,13 +94,9 @@ void delete_plugin_cache(const std::filesystem::path& install_path);
 
 /// Update a plugin's install path on disk without modifying in-memory state
 void update_installation_path_on_disk(
-    std::string_view plugin_id,
-    PluginScope scope,
-    std::optional<std::filesystem::path> project_path,
-    const std::filesystem::path& new_path,
-    std::string_view new_version,
-    std::optional<std::string_view> git_commit_sha = std::nullopt
-);
+    std::string_view plugin_id, PluginScope scope,
+    std::optional<std::filesystem::path> project_path, const std::filesystem::path& new_path,
+    std::string_view new_version, std::optional<std::string_view> git_commit_sha = std::nullopt);
 
 /// Check if there are pending updates (disk differs from memory)
 [[nodiscard]] bool has_pending_updates();
@@ -134,7 +119,9 @@ struct MarketplaceRemovalResult {
     std::vector<std::filesystem::path> orphaned_paths;
     std::vector<std::string> removed_plugin_ids;
 };
-[[nodiscard]] MarketplaceRemovalResult remove_all_plugins_for_marketplace(std::string_view marketplace_name);
+
+[[nodiscard]] MarketplaceRemovalResult
+remove_all_plugins_for_marketplace(std::string_view marketplace_name);
 
 /// Initialize the versioned plugins system (migration + session state)
 std::expected<void, std::string> initialize_versioned_plugins();
@@ -228,9 +215,9 @@ struct MarketplaceDiffEntry {
 };
 
 struct MarketplaceDiff {
-    std::vector<std::string> missing;               // declared in settings, absent from known_marketplaces.json
-    std::vector<MarketplaceDiffEntry> source_changed; // present but source differs
-    std::vector<std::string> up_to_date;            // present and matching
+    std::vector<std::string> missing;  // declared in settings, absent from known_marketplaces.json
+    std::vector<MarketplaceDiffEntry> source_changed;  // present but source differs
+    std::vector<std::string> up_to_date;               // present and matching
 };
 
 /// Compare declared intent (settings) against materialized state (JSON)
@@ -274,10 +261,12 @@ struct RefreshResult {
 // layer, the settings field, and the cwd bootstrap — not a quick stub fix.
 // Until then these return conservative values (not installed / nothing
 // removed) so callers fail safe.
-inline bool is_plugin_installed(std::string_view) { return false; }
+inline bool is_plugin_installed(std::string_view) {
+    return false;
+}
 
 inline std::optional<InstalledPlugin> remove_installed_plugin(std::string_view) {
     return std::nullopt;
 }
 
-} // namespace loom::utils::plugin_manager
+}  // namespace loom::utils::plugin_manager

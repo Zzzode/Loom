@@ -19,9 +19,8 @@ namespace loom::utils::swarm_backends {
 
 PaneBackend::~PaneBackend() = default;
 
-std::optional<std::string> PaneBackend::capture_pane_text(
-    const PaneId& pane_id, int tail_lines, bool use_external_session
-) {
+std::optional<std::string> PaneBackend::capture_pane_text(const PaneId& pane_id, int tail_lines,
+                                                          bool use_external_session) {
     (void)pane_id;
     (void)tail_lines;
     (void)use_external_session;
@@ -71,7 +70,8 @@ TeammateSpawnResult PaneBackendExecutor::spawn(const TeammateSpawnConfig& config
     }
     auto agent_id = format_agent_id(config.name, config.team_name);
     auto inside = backend_->is_running_inside();
-    backend_->send_command_to_pane(pane.pane_id, detail::build_teammate_cli_command(config), !inside);
+    backend_->send_command_to_pane(pane.pane_id, detail::build_teammate_cli_command(config),
+                                   !inside);
     {
         std::lock_guard lock(spawned_mutex_);
         spawned_teammates_[agent_id] = SpawnedPane{.pane_id = pane.pane_id, .inside_tmux = inside};
@@ -102,10 +102,10 @@ void PaneBackendExecutor::send_message(std::string_view agent_id, const Teammate
     (void)detail::write_backend_message_to_mailbox(agent_id, message);
 }
 
-bool PaneBackendExecutor::terminate(std::string_view agent_id, std::optional<std::string_view> reason) {
+bool PaneBackendExecutor::terminate(std::string_view agent_id,
+                                    std::optional<std::string_view> reason) {
     return detail::write_backend_message_to_mailbox(
-        agent_id,
-        detail::shutdown_request_message(agent_id, reason));
+        agent_id, detail::shutdown_request_message(agent_id, reason));
 }
 
 bool PaneBackendExecutor::kill(std::string_view agent_id) {
@@ -123,20 +123,17 @@ bool PaneBackendExecutor::is_active(std::string_view agent_id) const {
     return spawned_teammates_.contains(std::string(agent_id));
 }
 
-std::optional<std::string> PaneBackendExecutor::capture_agent_pane(
-    std::string_view agent_id, int tail_lines
-) const {
+std::optional<std::string> PaneBackendExecutor::capture_agent_pane(std::string_view agent_id,
+                                                                   int tail_lines) const {
     std::lock_guard lock(spawned_mutex_);
     auto it = spawned_teammates_.find(std::string(agent_id));
     if (it == spawned_teammates_.end()) return std::nullopt;
-    return backend_->capture_pane_text(
-        it->second.pane_id, tail_lines, !it->second.inside_tmux);
+    return backend_->capture_pane_text(it->second.pane_id, tail_lines, !it->second.inside_tmux);
 }
 
-std::map<std::string, PaneBackendExecutor::SpawnedPane>
-PaneBackendExecutor::spawned_panes() const {
+std::map<std::string, PaneBackendExecutor::SpawnedPane> PaneBackendExecutor::spawned_panes() const {
     std::lock_guard lock(spawned_mutex_);
     return spawned_teammates_;
 }
 
-} // namespace loom::utils::swarm_backends
+}  // namespace loom::utils::swarm_backends

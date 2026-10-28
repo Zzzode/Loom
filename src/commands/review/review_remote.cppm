@@ -76,7 +76,11 @@ struct ReviewComment {
             const auto parent = repo_root->parent_path().filename().string();
             result.owner = parent.empty() ? "local" : parent;
             result.repo = name;
-            try { result.number = std::stoull(trimmed); } catch (...) { return std::nullopt; }
+            try {
+                result.number = std::stoull(trimmed);
+            } catch (...) {
+                return std::nullopt;
+            }
             return result;
         }
         return std::nullopt;
@@ -89,19 +93,28 @@ struct ReviewComment {
         if (std::regex_match(trimmed, m, re)) {
             result.owner = m[1];
             result.repo = m[2];
-            try { result.number = std::stoull(m[3].str()); } catch (...) { return std::nullopt; }
+            try {
+                result.number = std::stoull(m[3].str());
+            } catch (...) {
+                return std::nullopt;
+            }
             return result;
         }
     }
 
     // 3) GitHub URL (with or without protocol)
     {
-        std::regex re(R"((?:https?://)?github\.com/([A-Za-z0-9_.-]+)/([A-Za-z0-9_.-]+)/pull/(\d+))");
+        std::regex re(
+            R"((?:https?://)?github\.com/([A-Za-z0-9_.-]+)/([A-Za-z0-9_.-]+)/pull/(\d+))");
         std::smatch m;
         if (std::regex_search(trimmed, m, re)) {
             result.owner = m[1];
             result.repo = m[2];
-            try { result.number = std::stoull(m[3].str()); } catch (...) { return std::nullopt; }
+            try {
+                result.number = std::stoull(m[3].str());
+            } catch (...) {
+                return std::nullopt;
+            }
             return result;
         }
     }
@@ -120,10 +133,7 @@ struct ReviewComment {
 [[nodiscard]] inline Result<std::string> fetch_pr_diff(const ParsedPR& pr) {
     // --- Primary: gh CLI ---
     if (loom::utils::find_executable("gh")) {
-        std::string cmd = std::format(
-            "gh pr diff {} --repo {}/{}",
-            pr.number, pr.owner, pr.repo
-        );
+        std::string cmd = std::format("gh pr diff {} --repo {}/{}", pr.number, pr.owner, pr.repo);
         auto out = loom::utils::exec_sync(cmd);
         if (out && !out->empty()) {
             return *out;
@@ -131,27 +141,21 @@ struct ReviewComment {
     }
 
     // --- Fallback: GitHub raw diff URL via curl ---
-    auto fallback_url = std::format(
-        "https://patch-diff.githubusercontent.com/raw/{}/{}/pull/{}.diff",
-        pr.owner, pr.repo, pr.number
-    );
-    auto curl = loom::utils::exec_sync(std::format(
-        "curl -sSL --max-time 30 {}", fallback_url
-    ));
+    auto fallback_url =
+        std::format("https://patch-diff.githubusercontent.com/raw/{}/{}/pull/{}.diff", pr.owner,
+                    pr.repo, pr.number);
+    auto curl = loom::utils::exec_sync(std::format("curl -sSL --max-time 30 {}", fallback_url));
     if (curl && !curl->empty() && !curl->starts_with("Not Found")) {
         return *curl;
     }
 
     return std::unexpected(Error::make(
         ErrorCode::ToolExecutionFailed,
-        std::format(
-            "Cannot fetch diff for PR #{} in {}/{}:\n"
-            "  - GitHub CLI (gh) not installed or request failed\n"
-            "  - GitHub raw diff endpoint also failed.\n"
-            "Suggestion: install `gh` with `brew install gh` and run `gh auth login`.",
-            pr.number, pr.owner, pr.repo
-        )
-    ));
+        std::format("Cannot fetch diff for PR #{} in {}/{}:\n"
+                    "  - GitHub CLI (gh) not installed or request failed\n"
+                    "  - GitHub raw diff endpoint also failed.\n"
+                    "Suggestion: install `gh` with `brew install gh` and run `gh auth login`.",
+                    pr.number, pr.owner, pr.repo)));
 }
 
 // ============================================================
@@ -160,15 +164,15 @@ struct ReviewComment {
 
 /// Build the review prompt sent to the LLM. The prompt instructs the model
 /// to produce structured JSON/Markdown review comments for downstream parsing.
-[[nodiscard]] inline std::string build_review_prompt(
-    const ParsedPR& pr,
-    const std::string& diff_content
-) {
+[[nodiscard]] inline std::string build_review_prompt(const ParsedPR& pr,
+                                                     const std::string& diff_content) {
     std::ostringstream out;
-    out << "## Remote Code Review: PR #" << pr.number << " in " << pr.owner << "/" << pr.repo << "\n\n"
+    out << "## Remote Code Review: PR #" << pr.number << " in " << pr.owner << "/" << pr.repo
+        << "\n\n"
         << "You are conducting a code review of the following GitHub pull request.\n\n"
         << "---\n\n"
-        << "### Diff Content\n\n```diff\n" << diff_content << "\n```\n\n"
+        << "### Diff Content\n\n```diff\n"
+        << diff_content << "\n```\n\n"
         << "---\n\n"
         << R"(### Review Guidelines
 
@@ -201,22 +205,24 @@ public:
         return CommandDefinition{
             .name = "review-remote",
             .description = "Review a remote GitHub PR by URL or number",
-            .args = {
-                CommandArg{
-                    .name = "pr",
-                    .description = "PR URL (github.com/OWNER/REPO/pull/N), OWNER/REPO#N, or bare PR number",
-                    .type = ArgType::Text,
-                    .required = true,
+            .args =
+                {
+                    CommandArg{
+                        .name = "pr",
+                        .description = "PR URL (github.com/OWNER/REPO/pull/N), OWNER/REPO#N, or "
+                                       "bare PR number",
+                        .type = ArgType::Text,
+                        .required = true,
+                    },
+                    CommandArg{
+                        .name = "--format",
+                        .description = "Output format: markdown (default) or json",
+                        .type = ArgType::Choice,
+                        .required = false,
+                        .choices = {"markdown", "json"},
+                        .default_value = "markdown",
+                    },
                 },
-                CommandArg{
-                    .name = "--format",
-                    .description = "Output format: markdown (default) or json",
-                    .type = ArgType::Choice,
-                    .required = false,
-                    .choices = {"markdown", "json"},
-                    .default_value = "markdown",
-                },
-            },
             .category = "git",
             .aliases = {"pr-review"},
             .hidden = false,
@@ -225,10 +231,8 @@ public:
 
     [[nodiscard]] VoidResult validate(const CommandContext& ctx) {
         if (ctx.args.empty()) {
-            return std::unexpected(Error::make(
-                ErrorCode::InvalidRequest,
-                "Usage: /review remote <PR_URL|PR_NUMBER>"
-            ));
+            return std::unexpected(
+                Error::make(ErrorCode::InvalidRequest, "Usage: /review remote <PR_URL|PR_NUMBER>"));
         }
         // Re-join args into a single string in case the URL was split by shell
         std::string joined;
@@ -239,15 +243,12 @@ public:
         if (!parse_pr_input(joined)) {
             return std::unexpected(Error::make(
                 ErrorCode::InvalidInput,
-                std::format(
-                    "Cannot parse PR input: '{}'.\n"
-                    "Accepted formats:\n"
-                    "  - Full URL:  https://github.com/owner/repo/pull/123\n"
-                    "  - Short:     owner/repo#123\n"
-                    "  - Bare:      123  (repo auto-detected from current directory)",
-                    joined
-                )
-            ));
+                std::format("Cannot parse PR input: '{}'.\n"
+                            "Accepted formats:\n"
+                            "  - Full URL:  https://github.com/owner/repo/pull/123\n"
+                            "  - Short:     owner/repo#123\n"
+                            "  - Bare:      123  (repo auto-detected from current directory)",
+                            joined)));
         }
         return {};
     }
@@ -262,7 +263,8 @@ public:
         auto pr = parse_pr_input(joined);
         // validate() already succeeded, so pr must have a value
         if (!pr) {
-            return std::unexpected(Error::make(ErrorCode::InternalError, "PR parse failed after validation"));
+            return std::unexpected(
+                Error::make(ErrorCode::InternalError, "PR parse failed after validation"));
         }
 
         // Fetch the diff
@@ -270,10 +272,9 @@ public:
         if (!diff) return std::unexpected(diff.error());
 
         if (diff->empty()) {
-            return CommandResult::fail(std::format(
-                "PR #{} in {}/{} has an empty diff — nothing to review.",
-                pr->number, pr->owner, pr->repo
-            ));
+            return CommandResult::fail(
+                std::format("PR #{} in {}/{} has an empty diff — nothing to review.", pr->number,
+                            pr->owner, pr->repo));
         }
 
         // Build the review prompt and inject it into the query engine.
@@ -294,4 +295,4 @@ public:
     }
 };
 
-} // namespace loom::commands
+}  // namespace loom::commands

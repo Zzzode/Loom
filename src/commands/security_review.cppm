@@ -44,7 +44,7 @@ enum class SecuritySeverity : std::uint8_t {
 struct SecurityFinding {
     std::string file;
     std::uint32_t line{0};
-    std::string type;            ///< e.g. "sql_injection", "hardcoded_secret", "xss"
+    std::string type;  ///< e.g. "sql_injection", "hardcoded_secret", "xss"
     SecuritySeverity severity{SecuritySeverity::Info};
     std::string evidence;        ///< Snippet or textual evidence
     std::string recommendation;  ///< How to fix it
@@ -53,11 +53,16 @@ struct SecurityFinding {
 /// Convert severity to display label
 [[nodiscard]] constexpr std::string_view severity_label(SecuritySeverity s) noexcept {
     switch (s) {
-        case SecuritySeverity::Critical: return "CRITICAL";
-        case SecuritySeverity::High:     return "HIGH";
-        case SecuritySeverity::Medium:   return "MEDIUM";
-        case SecuritySeverity::Low:      return "LOW";
-        case SecuritySeverity::Info:     return "INFO";
+    case SecuritySeverity::Critical:
+        return "CRITICAL";
+    case SecuritySeverity::High:
+        return "HIGH";
+    case SecuritySeverity::Medium:
+        return "MEDIUM";
+    case SecuritySeverity::Low:
+        return "LOW";
+    case SecuritySeverity::Info:
+        return "INFO";
     }
     return "UNKNOWN";
 }
@@ -116,10 +121,10 @@ inline constexpr std::array<std::string_view, 8> SENSITIVE_OP_PATTERNS = {
     if (!diff) {
         // Fall back to local-only (no origin)
         auto fall = loom::utils::exec_sync("git diff HEAD");
-        if (!fall) return std::unexpected(Error::make(
-            ErrorCode::ToolExecutionFailed,
-            std::format("Cannot collect branch diff: {}", fall.error())
-        ));
+        if (!fall)
+            return std::unexpected(
+                Error::make(ErrorCode::ToolExecutionFailed,
+                            std::format("Cannot collect branch diff: {}", fall.error())));
         diff = std::move(fall);
     }
 
@@ -152,9 +157,8 @@ inline constexpr std::array<std::string_view, 8> SENSITIVE_OP_PATTERNS = {
 ///
 /// IMPORTANT: the regex list lives in secret_scanner.cppm.  We do NOT copy it
 /// here — the scan is delegated.
-[[nodiscard]] inline std::vector<SecurityFinding> scan_diff_for_secrets(
-    std::string_view diff_content
-) {
+[[nodiscard]] inline std::vector<SecurityFinding>
+scan_diff_for_secrets(std::string_view diff_content) {
     std::vector<SecurityFinding> findings;
 
     auto matches = loom::services::team_memory::scan_for_secrets(diff_content);
@@ -170,10 +174,11 @@ inline constexpr std::array<std::string_view, 8> SENSITIVE_OP_PATTERNS = {
             .line = 0,
             .type = std::string("hardcoded_secret:") + m.ruleId,
             .severity = SecuritySeverity::High,
-            .evidence = std::format("Secret pattern '{}' ({}) matched in branch diff.", m.ruleId, m.label),
-            .recommendation = "Move this secret to a secrets manager (1Password, AWS Secrets Manager, "
-                              "Vault, or environment variables) and revoke the leaked value."
-        });
+            .evidence =
+                std::format("Secret pattern '{}' ({}) matched in branch diff.", m.ruleId, m.label),
+            .recommendation =
+                "Move this secret to a secrets manager (1Password, AWS Secrets Manager, "
+                "Vault, or environment variables) and revoke the leaked value."});
     }
     return findings;
 }
@@ -184,10 +189,9 @@ inline constexpr std::array<std::string_view, 8> SENSITIVE_OP_PATTERNS = {
 
 /// Build the full security-review prompt.
 /// Combines: OWASP checklist + pre-scanned secret findings + exclusions.
-[[nodiscard]] inline std::string build_security_prompt(
-    const std::string& diff_block,
-    const std::vector<SecurityFinding>& pre_scanned_secrets
-) {
+[[nodiscard]] inline std::string
+build_security_prompt(const std::string& diff_block,
+                      const std::vector<SecurityFinding>& pre_scanned_secrets) {
     std::ostringstream out;
     out << R"(# Security Review
 
@@ -205,14 +209,15 @@ theoretical issues, style concerns, or best-practice reminders.
 
     out << "## Pre-scan results (from secret scanner)\n\n";
     if (pre_scanned_secrets.empty()) {
-        out << "No hardcoded-secret patterns matched during the pre-scan. Continue with manual analysis.\n\n";
+        out << "No hardcoded-secret patterns matched during the pre-scan. Continue with manual "
+               "analysis.\n\n";
     } else {
         out << "The following findings came from the automated secret scanner. "
                "Refine them: give exact file + line + snippet, remove false positives, "
                "add any the scanner missed.\n\n";
         for (const auto& f : pre_scanned_secrets) {
-            out << std::format("  - [{}] {}: {} — {}\n",
-                               severity_label(f.severity), f.type, f.file, f.recommendation);
+            out << std::format("  - [{}] {}: {} — {}\n", severity_label(f.severity), f.type, f.file,
+                               f.recommendation);
         }
         out << "\n";
     }
@@ -261,7 +266,8 @@ report issues you are >80% confident are real and exploitable.
 
 ### 7 — Sensitive operation patterns to cross-check
 )";
-    for (auto p : SENSITIVE_OP_PATTERNS) out << "  - " << p << "\n";
+    for (auto p : SENSITIVE_OP_PATTERNS)
+        out << "  - " << p << "\n";
     out << "\n";
 
     out << R"(## Hard exclusions — DO NOT report these
@@ -357,26 +363,27 @@ public:
         return CommandDefinition{
             .name = "security-review",
             .description = "Security audit of pending branch changes (OWASP Top 10 + secrets)",
-            .args = {
-                CommandArg{
-                    .name = "base_ref",
-                    .description = "Git ref to diff against (default: origin/HEAD)",
-                    .type = ArgType::Text,
-                    .required = false,
+            .args =
+                {
+                    CommandArg{
+                        .name = "base_ref",
+                        .description = "Git ref to diff against (default: origin/HEAD)",
+                        .type = ArgType::Text,
+                        .required = false,
+                    },
+                    CommandArg{
+                        .name = "--json",
+                        .description = "Emit structured JSON findings in addition to markdown",
+                        .type = ArgType::None,
+                        .required = false,
+                    },
+                    CommandArg{
+                        .name = "--skip-secrets",
+                        .description = "Skip the pre-scan secret check (LLM-only analysis)",
+                        .type = ArgType::None,
+                        .required = false,
+                    },
                 },
-                CommandArg{
-                    .name = "--json",
-                    .description = "Emit structured JSON findings in addition to markdown",
-                    .type = ArgType::None,
-                    .required = false,
-                },
-                CommandArg{
-                    .name = "--skip-secrets",
-                    .description = "Skip the pre-scan secret check (LLM-only analysis)",
-                    .type = ArgType::None,
-                    .required = false,
-                },
-            },
             .category = "security",
             .aliases = {"sec-review", "audit"},
             .hidden = false,
@@ -392,9 +399,10 @@ public:
         std::string base_ref;
         bool skip_secrets = false;
         for (const auto& arg : ctx.args) {
-            if (arg == "--skip-secrets") skip_secrets = true;
-            else if (arg == "--json") { /* handled in prompt / downstream */ }
-            else if (!arg.starts_with("-")) {
+            if (arg == "--skip-secrets")
+                skip_secrets = true;
+            else if (arg == "--json") { /* handled in prompt / downstream */
+            } else if (!arg.starts_with("-")) {
                 if (!base_ref.empty()) base_ref += ' ';
                 base_ref += arg;
             }
@@ -407,8 +415,7 @@ public:
             diff->find("FILES MODIFIED") == std::string::npos) {
             return CommandResult::fail(
                 "Cannot determine which files changed.  Make sure you are in a git "
-                "repo with at least one commit beyond origin/HEAD."
-            );
+                "repo with at least one commit beyond origin/HEAD.");
         }
 
         // 2) Pre-scan secrets (REUSE secret_scanner, do NOT reimplement patterns)
@@ -434,4 +441,4 @@ public:
     }
 };
 
-} // namespace loom::commands
+}  // namespace loom::commands

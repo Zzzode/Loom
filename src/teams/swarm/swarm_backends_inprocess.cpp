@@ -48,15 +48,15 @@ void InProcessBackend::send_message(std::string_view agent_id, const TeammateMes
     }
 }
 
-bool InProcessBackend::terminate(std::string_view agent_id, std::optional<std::string_view> reason) {
+bool InProcessBackend::terminate(std::string_view agent_id,
+                                 std::optional<std::string_view> reason) {
     {
         std::lock_guard lock(mutex_);
         auto it = active_teammates_.find(std::string(agent_id));
         if (it == active_teammates_.end() || !it->second) return false;
     }
     return detail::write_backend_message_to_mailbox(
-        agent_id,
-        detail::shutdown_request_message(agent_id, reason));
+        agent_id, detail::shutdown_request_message(agent_id, reason));
 }
 
 bool InProcessBackend::kill(std::string_view agent_id) {
@@ -72,10 +72,7 @@ bool InProcessBackend::is_active(std::string_view agent_id) const {
 
 namespace detail {
 
-bool write_backend_message_to_mailbox(
-    std::string_view agent_id,
-    const TeammateMessage& message
-) {
+bool write_backend_message_to_mailbox(std::string_view agent_id, const TeammateMessage& message) {
     auto parsed = parse_agent_id(agent_id);
     if (!parsed) return false;
 
@@ -87,13 +84,12 @@ bool write_backend_message_to_mailbox(
         .color = message.color,
         .summary = message.summary,
     };
-    auto delivered = loom::utils::write_to_mailbox(
-        parsed->agent_name,
-        std::move(mailbox_message),
-        std::optional<std::string_view>{parsed->team_name});
+    auto delivered =
+        loom::utils::write_to_mailbox(parsed->agent_name, std::move(mailbox_message),
+                                      std::optional<std::string_view>{parsed->team_name});
     return delivered.has_value();
 }
 
-} // namespace detail
+}  // namespace detail
 
-} // namespace loom::utils::swarm_backends
+}  // namespace loom::utils::swarm_backends

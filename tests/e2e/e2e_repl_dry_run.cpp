@@ -11,6 +11,17 @@
 ///   - stdout missing any of the 3 keys  → FAIL with diff
 ///   - non-zero exit code                → FAIL (unless --dry-run legitimately
 ///                                          returns 42, which it does not)
+#include <errno.h>
+#include <fcntl.h>
+#include <libgen.h>
+#include <limits.h>
+#include <signal.h>
+#include <sys/stat.h>
+#include <sys/wait.h>
+#include <time.h>
+#include <unistd.h>
+
+#include <array>
 #include <cassert>
 #include <cstdio>
 #include <cstdlib>
@@ -18,16 +29,6 @@
 #include <string>
 #include <string_view>
 #include <vector>
-#include <array>
-#include <unistd.h>
-#include <signal.h>
-#include <sys/wait.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <libgen.h>
-#include <limits.h>
-#include <errno.h>
-#include <time.h>
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -51,7 +52,7 @@ static std::string locate_repl_binary(const char* argv0) {
         here + "/../../build/debug/bin/loom",  // from <build>/tests/
         here + "/../build/debug/bin/loom",
         here + "/build/debug/bin/loom",
-        "build/debug/bin/loom",                 // from repo root
+        "build/debug/bin/loom",  // from repo root
     };
     for (const auto& c : candidates) {
         if (file_exists_executable(c)) return c;
@@ -60,16 +61,15 @@ static std::string locate_repl_binary(const char* argv0) {
 }
 
 struct RunResult {
-    int         exit_code = -1;
+    int exit_code = -1;
     std::string stdout_;
     std::string stderr_;
-    bool        timed_out = false;
+    bool timed_out = false;
 };
 
 /// Run argv[0]=path with the NULL-terminated list of args.
 /// Timeout after `timeout_sec` seconds; kill forcibly if exceeded.
-static RunResult run_and_capture(const std::string& path,
-                                 char* const argv[],
+static RunResult run_and_capture(const std::string& path, char* const argv[],
                                  int timeout_sec = 15) {
     RunResult r;
     int out_pipe[2], err_pipe[2];
@@ -79,19 +79,27 @@ static RunResult run_and_capture(const std::string& path,
     }
 
     pid_t pid = ::fork();
-    if (pid < 0) { r.stderr_ = "fork() failed"; return r; }
+    if (pid < 0) {
+        r.stderr_ = "fork() failed";
+        return r;
+    }
 
     if (pid == 0) {
         // child
-        ::close(out_pipe[0]); ::close(err_pipe[0]);
+        ::close(out_pipe[0]);
+        ::close(err_pipe[0]);
         ::dup2(out_pipe[1], STDOUT_FILENO);
         ::dup2(err_pipe[1], STDERR_FILENO);
-        ::close(out_pipe[1]); ::close(err_pipe[1]);
+        ::close(out_pipe[1]);
+        ::close(err_pipe[1]);
         // Redirect stdin to /dev/null so FTXUI ScreenInteractive doesn't try
         // to drive the inherited terminal (--dry-run should short-circuit
         // before that point anyway, this is belt-and-suspenders).
         int devnull = ::open("/dev/null", O_RDONLY);
-        if (devnull >= 0) { ::dup2(devnull, STDIN_FILENO); ::close(devnull); }
+        if (devnull >= 0) {
+            ::dup2(devnull, STDIN_FILENO);
+            ::close(devnull);
+        }
         ::execv(path.c_str(), argv);
         // exec failed
         const char msg[] = "execv failed for loom\n";
@@ -100,20 +108,28 @@ static RunResult run_and_capture(const std::string& path,
     }
 
     // parent
-    ::close(out_pipe[1]); ::close(err_pipe[1]);
+    ::close(out_pipe[1]);
+    ::close(err_pipe[1]);
 
     // Non-blocking poll on both fds until both EOF or timeout.
     auto deadline = ::time(nullptr) + timeout_sec;
     std::array<char, 8192> buffer{};
     int open_fds = 2;
     while (open_fds > 0 && ::time(nullptr) < deadline) {
-        fd_set rfds; FD_ZERO(&rfds);
+        fd_set rfds;
+        FD_ZERO(&rfds);
         int maxfd = -1;
-        if (out_pipe[0] >= 0) { FD_SET(out_pipe[0], &rfds); maxfd = std::max(maxfd, out_pipe[0]); }
-        if (err_pipe[0] >= 0) { FD_SET(err_pipe[0], &rfds); maxfd = std::max(maxfd, err_pipe[0]); }
+        if (out_pipe[0] >= 0) {
+            FD_SET(out_pipe[0], &rfds);
+            maxfd = std::max(maxfd, out_pipe[0]);
+        }
+        if (err_pipe[0] >= 0) {
+            FD_SET(err_pipe[0], &rfds);
+            maxfd = std::max(maxfd, err_pipe[0]);
+        }
         if (maxfd < 0) break;
 
-        struct timeval tv{ .tv_sec = 1, .tv_usec = 0 };
+        struct timeval tv{.tv_sec = 1, .tv_usec = 0};
         int sel = ::select(maxfd + 1, &rfds, nullptr, nullptr, &tv);
         if (sel < 0 && errno == EINTR) continue;
         if (sel < 0) break;
@@ -123,10 +139,17 @@ static RunResult run_and_capture(const std::string& path,
             if (fd < 0 || !FD_ISSET(fd, &rfds)) return;
             for (;;) {
                 ssize_t n = ::read(fd, buffer.data(), buffer.size());
-                if (n > 0) into.append(buffer.data(), n);
-                else if (n == 0) { ::close(fd); fd = -1; --open_fds; break; }
-                else if (errno == EINTR) continue;
-                else break;
+                if (n > 0)
+                    into.append(buffer.data(), n);
+                else if (n == 0) {
+                    ::close(fd);
+                    fd = -1;
+                    --open_fds;
+                    break;
+                } else if (errno == EINTR)
+                    continue;
+                else
+                    break;
             }
         };
         drain_fd(out_pipe[0], r.stdout_);
@@ -145,8 +168,10 @@ static RunResult run_and_capture(const std::string& path,
 
     int status = 0;
     ::waitpid(pid, &status, 0);
-    if (WIFEXITED(status)) r.exit_code = WEXITSTATUS(status);
-    else if (WIFSIGNALED(status)) r.exit_code = -WTERMSIG(status);
+    if (WIFEXITED(status))
+        r.exit_code = WEXITSTATUS(status);
+    else if (WIFSIGNALED(status))
+        r.exit_code = -WTERMSIG(status);
 
     return r;
 }
@@ -190,12 +215,14 @@ int main(int /*argc*/, char* argv[]) {
     }
     // Print first 12 lines for human diagnosis on failure.
     printf("[E2E-2] stdout preview (first 12 lines):\n");
-    int lines = 0; size_t pos = 0;
+    int lines = 0;
+    size_t pos = 0;
     while (lines < 12 && pos < d.stdout_.size()) {
         size_t nl = d.stdout_.find('\n', pos);
         if (nl == string::npos) nl = d.stdout_.size();
         printf("    %s\n", string(d.stdout_, pos, nl - pos).c_str());
-        pos = nl + 1; ++lines;
+        pos = nl + 1;
+        ++lines;
     }
     // Mandatory checks — prove the engine booted to the point where the
     // full tool registry (including the new Phase 3 Bash / Edit / Glob)
@@ -222,8 +249,7 @@ int main(int /*argc*/, char* argv[]) {
         nullptr,
     };
     RunResult m = run_and_capture(bin, m_argv);
-    bool has_tools = contains_case(m.stdout_, "Bash") &&
-                     contains_case(m.stdout_, "Edit") &&
+    bool has_tools = contains_case(m.stdout_, "Bash") && contains_case(m.stdout_, "Edit") &&
                      contains_case(m.stdout_, "Glob");
     printf("[E2E-2] --model override + tool list parsed ok: %s\n", has_tools ? "✅" : "❌ FAIL");
     assert(m.exit_code == 0);

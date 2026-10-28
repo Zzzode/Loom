@@ -7,14 +7,15 @@
 module;
 
 #ifndef _WIN32
-#include <cerrno>
-#include <csignal>
-#include <cstring>
 #include <fcntl.h>
 #include <poll.h>
 #include <spawn.h>
 #include <sys/wait.h>
 #include <unistd.h>
+
+#include <cerrno>
+#include <csignal>
+#include <cstring>
 #endif
 
 module loom.platform.clipboard_job;
@@ -33,8 +34,7 @@ using steady_clock = std::chrono::steady_clock;
 using time_point = steady_clock::time_point;
 
 /// Remaining milliseconds until the deadline. Returns 0 if expired.
-[[nodiscard]] std::chrono::milliseconds
-remaining(time_point deadline) noexcept {
+[[nodiscard]] std::chrono::milliseconds remaining(time_point deadline) noexcept {
     auto now = steady_clock::now();
     if (now >= deadline) return std::chrono::milliseconds{0};
     return std::chrono::duration_cast<std::chrono::milliseconds>(deadline - now);
@@ -88,8 +88,14 @@ void kill_and_reap(pid_t leader, std::optional<pid_t>* unreaped_out) noexcept {
     for (;;) {
         int status = 0;
         pid_t r = ::waitpid(leader, &status, WNOHANG);
-        if (r == leader) { leader_exited = true; break; }
-        if (r == -1 && errno == ECHILD) { leader_exited = true; break; }
+        if (r == leader) {
+            leader_exited = true;
+            break;
+        }
+        if (r == -1 && errno == ECHILD) {
+            leader_exited = true;
+            break;
+        }
         // Check if group is empty.
         if (::kill(-pgid, 0) == -1 && errno == ESRCH) {
             // Group empty. Leader may still be a zombie — try one more reap.
@@ -118,8 +124,11 @@ void kill_and_reap(pid_t leader, std::optional<pid_t>* unreaped_out) noexcept {
         if (!leader_exited) {
             int status = 0;
             pid_t r = ::waitpid(leader, &status, WNOHANG);
-            if (r == leader) { leader_exited = true; }
-            else if (r == -1 && errno == ECHILD) { leader_exited = true; }
+            if (r == leader) {
+                leader_exited = true;
+            } else if (r == -1 && errno == ECHILD) {
+                leader_exited = true;
+            }
         }
         // Check if group is empty.
         bool group_empty = (::kill(-pgid, 0) == -1 && errno == ESRCH);
@@ -139,37 +148,31 @@ void kill_and_reap(pid_t leader, std::optional<pid_t>* unreaped_out) noexcept {
 
 // ── Worker thread ───────────────────────────────────────────────────────
 
-void worker_main_impl(
-    std::shared_ptr<const JobInput> input,
-    std::shared_ptr<CancellationState> cancel,
-    std::optional<pid_t>* unreaped_pid,
-    std::function<void(CopyResult)> on_complete);
+void worker_main_impl(std::shared_ptr<const JobInput> input,
+                      std::shared_ptr<CancellationState> cancel, std::optional<pid_t>* unreaped_pid,
+                      std::function<void(CopyResult)> on_complete);
 
-void worker_main(
-    std::shared_ptr<const JobInput> input,
-    std::shared_ptr<CancellationState> cancel,
-    std::optional<pid_t>* unreaped_pid,
-    std::function<void(CopyResult)> on_complete) noexcept
-{
+void worker_main(std::shared_ptr<const JobInput> input, std::shared_ptr<CancellationState> cancel,
+                 std::optional<pid_t>* unreaped_pid,
+                 std::function<void(CopyResult)> on_complete) noexcept {
     try {
-        worker_main_impl(std::move(input), std::move(cancel),
-                         unreaped_pid, std::move(on_complete));
+        worker_main_impl(std::move(input), std::move(cancel), unreaped_pid, std::move(on_complete));
     } catch (...) {
         // noexcept + throwing functions (std::function, std::format,
         // std::string) — report failure rather than std::terminate.
         CopyResult fail;
         fail.status = CopyResult::Status::NativeFailed;
         fail.error_detail = "worker exception";
-        try { on_complete(std::move(fail)); } catch (...) {}
+        try {
+            on_complete(std::move(fail));
+        } catch (...) {
+        }
     }
 }
 
-void worker_main_impl(
-    std::shared_ptr<const JobInput> input,
-    std::shared_ptr<CancellationState> cancel,
-    std::optional<pid_t>* unreaped_pid,
-    std::function<void(CopyResult)> on_complete)
-{
+void worker_main_impl(std::shared_ptr<const JobInput> input,
+                      std::shared_ptr<CancellationState> cancel, std::optional<pid_t>* unreaped_pid,
+                      std::function<void(CopyResult)> on_complete) {
     const auto start = steady_clock::now();
     CopyResult result;
     const auto& text = *input->text;
@@ -177,8 +180,8 @@ void worker_main_impl(
 
     auto finish = [&](CopyResult::Status status, std::string detail = {}) {
         result.status = status;
-        result.duration = std::chrono::duration_cast<std::chrono::milliseconds>(
-            steady_clock::now() - start);
+        result.duration =
+            std::chrono::duration_cast<std::chrono::milliseconds>(steady_clock::now() - start);
         result.error_detail = std::move(detail);
         on_complete(std::move(result));
     };
@@ -221,7 +224,9 @@ void worker_main_impl(
     // ── Set up posix_spawn_file_actions ───────────────────────────────
     posix_spawn_file_actions_t actions;
     if (::posix_spawn_file_actions_init(&actions) != 0) {
-        ::close(read_fd); ::close(write_fd); ::close(devnull);
+        ::close(read_fd);
+        ::close(write_fd);
+        ::close(devnull);
         finish(CopyResult::Status::NativeFailed, "posix_spawn_file_actions_init failed");
         return;
     }
@@ -236,7 +241,9 @@ void worker_main_impl(
     posix_spawnattr_t attr;
     if (::posix_spawnattr_init(&attr) != 0) {
         ::posix_spawn_file_actions_destroy(&actions);
-        ::close(read_fd); ::close(write_fd); ::close(devnull);
+        ::close(read_fd);
+        ::close(write_fd);
+        ::close(devnull);
         finish(CopyResult::Status::NativeFailed, "posix_spawnattr_init failed");
         return;
     }
@@ -246,11 +253,13 @@ void worker_main_impl(
     //
     // POSIX_SPAWN_SETSIGMASK with an EMPTY mask — the child must NOT
     // inherit the worker thread's blocked SIGPIPE.
-    if (::posix_spawnattr_setflags(&attr,
-            static_cast<short>(POSIX_SPAWN_SETPGROUP | POSIX_SPAWN_SETSIGMASK)) != 0) {
+    if (::posix_spawnattr_setflags(
+            &attr, static_cast<short>(POSIX_SPAWN_SETPGROUP | POSIX_SPAWN_SETSIGMASK)) != 0) {
         ::posix_spawnattr_destroy(&attr);
         ::posix_spawn_file_actions_destroy(&actions);
-        ::close(read_fd); ::close(write_fd); ::close(devnull);
+        ::close(read_fd);
+        ::close(write_fd);
+        ::close(devnull);
         // No degraded kill(pid) path — cannot guarantee descendant cleanup.
         finish(CopyResult::Status::NativeFailed, "SETPGROUP|SETSIGMASK not supported");
         return;
@@ -261,7 +270,9 @@ void worker_main_impl(
     if (::posix_spawnattr_setsigmask(&attr, &empty_mask) != 0) {
         ::posix_spawnattr_destroy(&attr);
         ::posix_spawn_file_actions_destroy(&actions);
-        ::close(read_fd); ::close(write_fd); ::close(devnull);
+        ::close(read_fd);
+        ::close(write_fd);
+        ::close(devnull);
         finish(CopyResult::Status::NativeFailed, "SETSIGMASK failed");
         return;
     }
@@ -276,11 +287,11 @@ void worker_main_impl(
 
     // ── Spawn ─────────────────────────────────────────────────────────
     pid_t pid = 0;
-    int rc = ::posix_spawnp(&pid, input->backend_path.c_str(),
-                            &actions, &attr, argv.data(), environ);
+    int rc =
+        ::posix_spawnp(&pid, input->backend_path.c_str(), &actions, &attr, argv.data(), environ);
     ::posix_spawnattr_destroy(&attr);
     ::posix_spawn_file_actions_destroy(&actions);
-    ::close(read_fd);   // parent doesn't need the read end
+    ::close(read_fd);  // parent doesn't need the read end
     ::close(devnull);
 
     if (rc != 0) {
@@ -329,9 +340,7 @@ void worker_main_impl(
         if (!(pfd.revents & POLLOUT)) continue;
 
         // Non-blocking write.
-        ssize_t n = ::write(write_fd,
-                            text.data() + written,
-                            text.size() - written);
+        ssize_t n = ::write(write_fd, text.data() + written, text.size() - written);
         if (n > 0) {
             written += static_cast<std::size_t>(n);
             continue;
@@ -390,9 +399,8 @@ void worker_main_impl(
             return;
         }
         // Still running — sleep with bounded timeout.
-        std::this_thread::sleep_for(
-            std::min<std::chrono::milliseconds>(remaining(deadline),
-                                                std::chrono::milliseconds{100}));
+        std::this_thread::sleep_for(std::min<std::chrono::milliseconds>(
+            remaining(deadline), std::chrono::milliseconds{100}));
     }
 }
 
@@ -400,20 +408,16 @@ void worker_main_impl(
 
 // ── ClipboardJob ────────────────────────────────────────────────────────
 
-ClipboardJob::ClipboardJob(
-    std::shared_ptr<const JobInput> input,
-    std::shared_ptr<CancellationState> cancel,
-    std::function<void(CopyResult)> on_complete)
+ClipboardJob::ClipboardJob(std::shared_ptr<const JobInput> input,
+                           std::shared_ptr<CancellationState> cancel,
+                           std::function<void(CopyResult)> on_complete)
     : input_(std::move(input))
     , cancel_(std::move(cancel))
-    , on_complete_(std::move(on_complete))
-{
+    , on_complete_(std::move(on_complete)) {
     // The worker writes to unreaped_pid_ before exiting. join() provides
     // happens-before, so the owner thread can safely read it after join().
     worker_ = std::thread(worker_main, input_, cancel_, &unreaped_pid_,
-        [this](CopyResult result) {
-            on_complete_(std::move(result));
-        });
+                          [this](CopyResult result) { on_complete_(std::move(result)); });
 }
 
 ClipboardJob::~ClipboardJob() {
@@ -447,10 +451,8 @@ std::optional<pid_t> ClipboardJob::unreaped_pid() const noexcept {
 
 namespace loom::utils::clipboard {
 
-ClipboardJob::ClipboardJob(
-    std::shared_ptr<const JobInput>,
-    std::shared_ptr<CancellationState>,
-    std::function<void(CopyResult)> on_complete) {
+ClipboardJob::ClipboardJob(std::shared_ptr<const JobInput>, std::shared_ptr<CancellationState>,
+                           std::function<void(CopyResult)> on_complete) {
     // Immediately report Unsupported on Windows.
     CopyResult result;
     result.status = CopyResult::Status::Unsupported;
@@ -460,6 +462,7 @@ ClipboardJob::ClipboardJob(
 ClipboardJob::~ClipboardJob() = default;
 
 void ClipboardJob::cancel() noexcept {}
+
 void ClipboardJob::join() noexcept {}
 
 std::optional<pid_t> ClipboardJob::unreaped_pid() const noexcept {

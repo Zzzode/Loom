@@ -10,13 +10,13 @@ export namespace loom::ui::mermaid {
 
 /// Render the admitted Mermaid subset, preserving the caller's source element
 /// when a successfully laid out diagram does not fit the assigned width.
-[[nodiscard]] std::optional<ftxui::Element> render_mermaid(
-    std::string_view source, ftxui::Element fallback);
+[[nodiscard]] std::optional<ftxui::Element> render_mermaid(std::string_view source,
+                                                           ftxui::Element fallback);
 
 /// Explicit ASCII option for the admitted GitGraph profile. Other ASCII
 /// families retain the caller-owned fallback until their profile is admitted.
-[[nodiscard]] std::optional<ftxui::Element> render_mermaid(
-    std::string_view source, ftxui::Element fallback, bool use_ascii);
+[[nodiscard]] std::optional<ftxui::Element> render_mermaid(std::string_view source,
+                                                           ftxui::Element fallback, bool use_ascii);
 
 /// RFC 0031 E6b: per-instance LRU cache of immutable laid-out diagram ROWS
 /// (std::vector<std::string>), never ftxui::Element. Width/theme are not key
@@ -45,15 +45,15 @@ public:
     /// whole-source-rejection sentinel (distinct from the returned
     /// std::optional being engaged): the caller must still run the normal
     /// finish/fallback path so the surface is reproduced exactly.
-    [[nodiscard]] std::optional<std::vector<std::string>>
-    get_or_layout(std::string_view source, bool use_ascii);
+    [[nodiscard]] std::optional<std::vector<std::string>> get_or_layout(std::string_view source,
+                                                                        bool use_ascii);
 
     /// Get-or-layout through this cache, then finish into a FRESH node via
     /// the same finish step render_mermaid uses. Cached rejections reproduce
     /// the whole-source fallback (nullopt). This is the cached drop-in for
     /// the two render_mermaid entry points; no Element is ever retained.
-    [[nodiscard]] std::optional<ftxui::Element>
-    render(std::string_view source, bool use_ascii, ftxui::Element fallback);
+    [[nodiscard]] std::optional<ftxui::Element> render(std::string_view source, bool use_ascii,
+                                                       ftxui::Element fallback);
 
     /// Drop every retained entry (document/session reset boundary).
     void clear();
@@ -70,7 +70,7 @@ private:
     std::unique_ptr<Impl> impl_;
 };
 
-} // namespace loom::ui::mermaid
+}  // namespace loom::ui::mermaid
 
 // Sole reviewed test seam (RFC 0031 E6a). These complete types are exported
 // so the engine tests can exercise the closed parsers without attaching their
@@ -173,6 +173,7 @@ struct FlowAsciiRows {
     std::vector<std::string> native;
     std::vector<std::string> ascii;
 };
+
 std::optional<FlowAsciiRows> flow_ascii_rows(std::string_view source, Work& work);
 
 // RFC 0031 E4: ordered family probe classification, factored out of the
@@ -180,8 +181,18 @@ std::optional<FlowAsciiRows> flow_ascii_rows(std::string_view source, Work& work
 // which rejects shapes the textual classifier historically tolerated); the
 // execution switch spends the same charges the legacy flag cluster did.
 enum class MermaidProbeFamily : unsigned char {
-    Flow, Sequence, GitGraph, Class, Er, State, Requirement, Charts, Mindmap, Block
+    Flow,
+    Sequence,
+    GitGraph,
+    Class,
+    Er,
+    State,
+    Requirement,
+    Charts,
+    Mindmap,
+    Block
 };
+
 struct MermaidProbeDecision {
     MermaidProbeFamily family = MermaidProbeFamily::Charts;
     bool class_envelope = false;
@@ -190,10 +201,11 @@ struct MermaidProbeDecision {
     // the single classify_mermaid probe fee; this stays zero for the switch.
     std::size_t prepay = 0;
 };
+
 std::optional<MermaidProbeDecision> classify_mermaid(std::string_view source, Work& work);
 // Test-only live-budget probe; it accepts source, never a fabricated payload.
 bool block_layout_succeeds(std::string_view source, Work& work);
 // Exact public-factory path, including dispatch and payload validation.
 bool layout_succeeds(std::string_view source, bool use_ascii, Work& work);
 
-} // namespace loom::ui::mermaid::testing
+}  // namespace loom::ui::mermaid::testing

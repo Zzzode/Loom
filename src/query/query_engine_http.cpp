@@ -9,10 +9,11 @@
 // textually includes <httplib.h> exactly like src/services/auth/*.cppm.
 module;
 
+#include <httplib.h>
+
 #include <cstddef>
 #include <cstdint>
 #include <cstdlib>
-#include <httplib.h>
 
 module loom.query.query_engine;
 
@@ -26,16 +27,17 @@ import loom.services.compact.model_context;
 
 namespace loom::core {
 
-[[nodiscard]] Result<loom::services::compact::SummaryResponse> QueryEngine::summarize_context(
-    const loom::services::compact::SummaryRequest& request) {
-    if (should_abort() || budget_tracker_.budget_exceeded) return std::unexpected(
-        Error::make(ErrorCode::InternalError, "Compaction cancelled or spend budget exhausted"));
+[[nodiscard]] Result<loom::services::compact::SummaryResponse>
+QueryEngine::summarize_context(const loom::services::compact::SummaryRequest& request) {
+    if (should_abort() || budget_tracker_.budget_exceeded)
+        return std::unexpected(Error::make(ErrorCode::InternalError,
+                                           "Compaction cancelled or spend budget exhausted"));
     auto backend = make_wire_backend(true);
     loom::query::wire::RequestInput input;
     input.model = config_.model_params.model;
     input.max_tokens = model_context_.output_cap
-        ? std::min(request.max_output_tokens, *model_context_.output_cap)
-        : request.max_output_tokens;
+                           ? std::min(request.max_output_tokens, *model_context_.output_cap)
+                           : request.max_output_tokens;
     input.system_prompt = request.instructions;
     input.stream = false;
     input.thinking_enabled = false;
@@ -48,8 +50,10 @@ namespace loom::core {
     // The endpoint helper is declared below; the public protocol helper keeps
     // the same provider path prefix as ordinary requests.
     const auto scheme = prepared->url.find("://");
-    const auto slash = scheme == std::string::npos ? std::string::npos : prepared->url.find('/', scheme + 3);
-    if (scheme == std::string::npos) return std::unexpected(Error::make(ErrorCode::InvalidRequest, "Invalid summary endpoint"));
+    const auto slash =
+        scheme == std::string::npos ? std::string::npos : prepared->url.find('/', scheme + 3);
+    if (scheme == std::string::npos)
+        return std::unexpected(Error::make(ErrorCode::InvalidRequest, "Invalid summary endpoint"));
     const auto base = prepared->url.substr(0, slash);
     const auto path = slash == std::string::npos ? std::string{"/"} : prepared->url.substr(slash);
     auto client = std::make_shared<httplib::Client>(base);
@@ -64,21 +68,29 @@ namespace loom::core {
     client->set_write_timeout(api_config_.timeout);
     httplib::Headers headers(prepared->headers.begin(), prepared->headers.end());
     set_abort_callback([client] { client->stop(); });
-    if (should_abort()) { set_abort_callback(nullptr); return std::unexpected(
-        Error::make(ErrorCode::InternalError, "Compaction cancelled")); }
+    if (should_abort()) {
+        set_abort_callback(nullptr);
+        return std::unexpected(Error::make(ErrorCode::InternalError, "Compaction cancelled"));
+    }
     if (const auto dump = dump_prompts_path(); dump) {
         std::ofstream out(*dump, std::ios::app);
         out << "{\"type\":\"compaction_request\",\"body\":" << prepared->body << "}\n";
     }
     const auto response = client->Post(path, headers, prepared->body, "application/json");
     set_abort_callback(nullptr);
-    if (should_abort()) return std::unexpected(Error::make(ErrorCode::InternalError, "Compaction cancelled"));
-    if (!response) return std::unexpected(Error::make(ErrorCode::ConnectionFailed,
-        "Compaction HTTP request failed: " + httplib::to_string(response.error())));
+    if (should_abort())
+        return std::unexpected(Error::make(ErrorCode::InternalError, "Compaction cancelled"));
+    if (!response)
+        return std::unexpected(
+            Error::make(ErrorCode::ConnectionFailed,
+                        "Compaction HTTP request failed: " + httplib::to_string(response.error())));
     if (response->status >= 400) {
-        const auto category = loom::services::compact::classify_context_failure(response->status, response->body);
-        return std::unexpected(Error::make(category == loom::services::compact::ContextFailure::None
-            ? classify_http_error(response->status) : ErrorCode::ContextWindowExceeded,
+        const auto category =
+            loom::services::compact::classify_context_failure(response->status, response->body);
+        return std::unexpected(Error::make(
+            category == loom::services::compact::ContextFailure::None
+                ? classify_http_error(response->status)
+                : ErrorCode::ContextWindowExceeded,
             std::format("Compaction API error ({}): {}", response->status, response->body)));
     }
     auto parsed = backend->parse_response(response->body);
@@ -86,7 +98,8 @@ namespace loom::core {
     account_compaction_usage(parsed->usage);
     loom::services::compact::SummaryResponse result;
     result.usage = parsed->usage;
-    result.complete = parsed->message.stop_reason == "end_turn" || parsed->message.stop_reason == "stop";
+    result.complete =
+        parsed->message.stop_reason == "end_turn" || parsed->message.stop_reason == "stop";
     for (const auto& block : parsed->message.content) {
         if (const auto* text = std::get_if<TextBlock>(&block)) result.text += text->text;
         if (std::holds_alternative<ToolUseBlock>(block)) result.has_tool_use = true;
@@ -125,16 +138,15 @@ prepared_endpoint(std::string_view url) {
     if (authority == url.size() || path == authority) {
         return std::unexpected("API URL host cannot be empty");
     }
-    return ApiMessagesEndpoint{
-        std::string(url.substr(0, path)),
-        path == std::string_view::npos ? "/" : std::string(url.substr(path))};
+    return ApiMessagesEndpoint{std::string(url.substr(0, path)),
+                               path == std::string_view::npos ? "/"
+                                                              : std::string(url.substr(path))};
 }
 
-} // namespace
+}  // namespace
 
-[[nodiscard]] std::expected<ApiMessagesEndpoint, std::string> api_messages_endpoint(
-    std::string_view base_url
-) {
+[[nodiscard]] std::expected<ApiMessagesEndpoint, std::string>
+api_messages_endpoint(std::string_view base_url) {
     const auto scheme_end = base_url.find("://");
     if (scheme_end == std::string_view::npos) {
         return std::unexpected("API base URL must include http:// or https://");
@@ -143,11 +155,11 @@ prepared_endpoint(std::string_view url) {
     const auto authority_start = scheme_end + 3;
     const auto path_start = base_url.find('/', authority_start);
     std::string client_base_url = path_start == std::string_view::npos
-        ? std::string(base_url)
-        : std::string(base_url.substr(0, path_start));
+                                      ? std::string(base_url)
+                                      : std::string(base_url.substr(0, path_start));
     std::string path_prefix = path_start == std::string_view::npos
-        ? std::string{}
-        : std::string(base_url.substr(path_start));
+                                  ? std::string{}
+                                  : std::string(base_url.substr(path_start));
 
     while (client_base_url.size() > scheme_end + 3 && client_base_url.ends_with('/')) {
         client_base_url.pop_back();
@@ -171,14 +183,17 @@ prepared_endpoint(std::string_view url) {
 
 void prepare_model_metadata(QueryEngineConfig& config) {
     const auto base_url = config.base_url.value_or("");
-    const auto selected = config.wire_api && !config.wire_api->empty() ? *config.wire_api :
-        (std::getenv("LOOM_WIRE_API") ? std::getenv("LOOM_WIRE_API") : "messages");
-    const auto wire = loom::query::wire::wire_api_from_string(selected)
-        .value_or(loom::query::wire::WireApi::Messages);
+    const auto selected =
+        config.wire_api && !config.wire_api->empty()
+            ? *config.wire_api
+            : (std::getenv("LOOM_WIRE_API") ? std::getenv("LOOM_WIRE_API") : "messages");
+    const auto wire = loom::query::wire::wire_api_from_string(selected).value_or(
+        loom::query::wire::WireApi::Messages);
     const auto canonical_wire = std::string(loom::query::wire::wire_api_name(wire));
     const auto& prior = config.model_metadata;
     if (prior && prior->base_url == base_url && prior->wire_api == canonical_wire &&
-        prior->api_key == config.api_key && prior->auth_token == config.auth_token) return;
+        prior->api_key == config.api_key && prior->auth_token == config.auth_token)
+        return;
     auto snapshot = std::make_shared<QueryEngineConfig::ModelMetadataSnapshot>();
     snapshot->base_url = base_url;
     snapshot->wire_api = canonical_wire;
@@ -188,15 +203,21 @@ void prepare_model_metadata(QueryEngineConfig& config) {
     config.model_metadata = snapshot;
     if ((!base_url.starts_with("http://") && !base_url.starts_with("https://")) ||
         base_url.find_first_of("?#") != std::string::npos ||
-        std::ranges::any_of(base_url, [](unsigned char ch) { return ch <= 0x20 || ch == 0x7f; })) return;
+        std::ranges::any_of(base_url, [](unsigned char ch) { return ch <= 0x20 || ch == 0x7f; }))
+        return;
     const auto authority_start = base_url.find("://") + 3;
     const auto authority_end = base_url.find('/', authority_start);
-    if (std::string_view(base_url).substr(authority_start, authority_end == std::string::npos
-            ? std::string::npos : authority_end - authority_start).contains('@')) return;
+    if (std::string_view(base_url)
+            .substr(authority_start, authority_end == std::string::npos
+                                         ? std::string::npos
+                                         : authority_end - authority_start)
+            .contains('@'))
+        return;
     const auto endpoint = api_messages_endpoint(base_url);
     if (!endpoint) return;
     auto path = endpoint->path;
-    path.replace(path.size() - std::string_view("messages").size(), std::string_view("messages").size(), "models");
+    path.replace(path.size() - std::string_view("messages").size(),
+                 std::string_view("messages").size(), "models");
     try {
         httplib::Client client(endpoint->client_base_url);
         suppress_socket_sigpipe(client);
@@ -209,8 +230,10 @@ void prepare_model_metadata(QueryEngineConfig& config) {
         const auto& credential = config.auth_token.empty() ? config.api_key : config.auth_token;
         if (wire == loom::query::wire::WireApi::OpenAi || !config.auth_token.empty()) {
             if (!credential.empty()) headers.emplace("Authorization", "Bearer " + credential);
-        } else if (!config.api_key.empty()) headers.emplace("x-api-key", config.api_key);
-        if (wire == loom::query::wire::WireApi::Messages) headers.emplace("anthropic-version", "2023-06-01");
+        } else if (!config.api_key.empty())
+            headers.emplace("x-api-key", config.api_key);
+        if (wire == loom::query::wire::WireApi::Messages)
+            headers.emplace("anthropic-version", "2023-06-01");
         std::string body;
         bool oversized = false;
         std::atomic<bool> timed_out{false};
@@ -226,15 +249,21 @@ void prepare_model_metadata(QueryEngineConfig& config) {
         });
         const auto response = client.Get(path, headers, [&](const char* data, std::size_t size) {
             constexpr std::size_t limit = 4 * 1024 * 1024;
-            if (size > limit - body.size()) { oversized = true; return false; }
+            if (size > limit - body.size()) {
+                oversized = true;
+                return false;
+            }
             body.append(data, size);
             return true;
         });
         deadline.request_stop();
         deadline_cv.notify_all();
         deadline.join();
-        if (!response || oversized || timed_out.load() || response->status < 200 || response->status >= 300) return;
-        snapshot->limits = loom::services::compact::parse_model_metadata(body, base_url, canonical_wire);
+        if (!response || oversized || timed_out.load() || response->status < 200 ||
+            response->status >= 300)
+            return;
+        snapshot->limits =
+            loom::services::compact::parse_model_metadata(body, base_url, canonical_wire);
     } catch (const std::exception&) {
         // Metadata is best-effort; malformed endpoints and transport failures
         // must not prevent the ordinary model request from being attempted.
@@ -280,9 +309,8 @@ void prepare_model_metadata(QueryEngineConfig& config) {
     return out;
 }
 
-[[nodiscard]] Result<QueryEngine::ApiCallResult> QueryEngine::send_request(
-    const QueryOptions& options,
-    bool is_retry_after_compact) {
+[[nodiscard]] Result<QueryEngine::ApiCallResult>
+QueryEngine::send_request(const QueryOptions& options, bool is_retry_after_compact) {
     if (should_abort()) {
         return std::unexpected(Error::make(ErrorCode::InternalError, "Query aborted"));
     }
@@ -332,24 +360,29 @@ void prepare_model_metadata(QueryEngineConfig& config) {
 
     if (!res) {
         auto err = res.error();
-        return std::unexpected(Error::make(
-            ErrorCode::ConnectionFailed,
-            std::format("HTTP request failed: {}", httplib::to_string(err))));
+        return std::unexpected(
+            Error::make(ErrorCode::ConnectionFailed,
+                        std::format("HTTP request failed: {}", httplib::to_string(err))));
     }
 
     // Check for HTTP errors
     if (res->status >= 400) {
-        const auto category = loom::services::compact::classify_context_failure(res->status, res->body);
+        const auto category =
+            loom::services::compact::classify_context_failure(res->status, res->body);
         if (!is_retry_after_compact && category != loom::services::compact::ContextFailure::None) {
-            auto compact_result = compact_context_impl("reactive", options,
-                category == loom::services::compact::ContextFailure::RequestBytesExceeded ? body.size() : 0, false);
+            auto compact_result = compact_context_impl(
+                "reactive", options,
+                category == loom::services::compact::ContextFailure::RequestBytesExceeded
+                    ? body.size()
+                    : 0,
+                false);
             if (!compact_result) return std::unexpected(compact_result.error());
             return send_request(options, /*is_retry_after_compact=*/true);
         }
 
-        return std::unexpected(Error::make(
-            classify_http_error(res->status),
-            std::format("API error ({}): {}", res->status, res->body)));
+        return std::unexpected(
+            Error::make(classify_http_error(res->status),
+                        std::format("API error ({}): {}", res->status, res->body)));
     }
 
     // Parse response
@@ -379,8 +412,8 @@ void prepare_model_metadata(QueryEngineConfig& config) {
     return ErrorCode::InternalError;
 }
 
-[[nodiscard]] QueryEngine::StreamCallResult QueryEngine::stream_single_api_call(
-    const QueryOptions& options, bool is_retry_after_compact) {
+[[nodiscard]] QueryEngine::StreamCallResult
+QueryEngine::stream_single_api_call(const QueryOptions& options, bool is_retry_after_compact) {
     StreamCallResult result;
     replay_snip_boundaries();
     apply_time_based_microcompact();
@@ -390,7 +423,8 @@ void prepare_model_metadata(QueryEngineConfig& config) {
         if (!budget) {
             result.failed = true;
             result.error_message = budget.error().message;
-            if (options.on_event) (*options.on_event)(StreamError{"context_compaction_error", result.error_message});
+            if (options.on_event)
+                (*options.on_event)(StreamError{"context_compaction_error", result.error_message});
             return result;
         }
     }
@@ -422,9 +456,10 @@ void prepare_model_metadata(QueryEngineConfig& config) {
             std::ofstream ofs(*dp, std::ios::app);
             if (ofs.is_open()) {
                 auto now_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
-                    std::chrono::system_clock::now().time_since_epoch()).count();
-                ofs << "{\"type\":\"request\",\"timestamp\":" << now_ms
-                    << ",\"body\":" << body << "}\n";
+                                  std::chrono::system_clock::now().time_since_epoch())
+                                  .count();
+                ofs << "{\"type\":\"request\",\"timestamp\":" << now_ms << ",\"body\":" << body
+                    << "}\n";
             }
         }
     }
@@ -461,6 +496,7 @@ void prepare_model_metadata(QueryEngineConfig& config) {
         std::string accumulated_text;
         std::string accumulated_json;
     };
+
     std::vector<BlockAccum> blocks;
 
     auto emit_stream_error = [&](std::string error_type, std::string message) {
@@ -469,8 +505,7 @@ void prepare_model_metadata(QueryEngineConfig& config) {
         result.error_type = std::move(error_type);
     };
 
-    auto parse_sse_event = [&](const std::string& event_type,
-                                const std::string& data) {
+    auto parse_sse_event = [&](const std::string& event_type, const std::string& data) {
         if (data.empty() || data == "[DONE]") return;
 
         auto doc_result = loom::utils::json::parse(data);
@@ -492,11 +527,13 @@ void prepare_model_metadata(QueryEngineConfig& config) {
                     }
                     auto cache_creation = usage.get("cache_creation_input_tokens");
                     if (cache_creation.valid()) {
-                        result.usage.cache_creation_tokens = static_cast<std::uint32_t>(cache_creation.as_int());
+                        result.usage.cache_creation_tokens =
+                            static_cast<std::uint32_t>(cache_creation.as_int());
                     }
                     auto cache_read = usage.get("cache_read_input_tokens");
                     if (cache_read.valid()) {
-                        result.usage.cache_read_tokens = static_cast<std::uint32_t>(cache_read.as_int());
+                        result.usage.cache_read_tokens =
+                            static_cast<std::uint32_t>(cache_read.as_int());
                     }
                 }
             }
@@ -508,7 +545,8 @@ void prepare_model_metadata(QueryEngineConfig& config) {
             }
         } else if (event_type == "content_block_start") {
             auto idx = root.get("index");
-            block_index = idx.valid() ? static_cast<std::uint32_t>(idx.as_int()) : static_cast<std::uint32_t>(blocks.size());
+            block_index = idx.valid() ? static_cast<std::uint32_t>(idx.as_int())
+                                      : static_cast<std::uint32_t>(blocks.size());
             auto cb = root.get("content_block");
             BlockAccum accum;
             if (cb.valid()) {
@@ -581,7 +619,8 @@ void prepare_model_metadata(QueryEngineConfig& config) {
                 if (auto* tb = std::get_if<TextBlock>(&accum.block)) {
                     tb->text = std::move(accum.accumulated_text);
                 } else if (auto* tub = std::get_if<ToolUseBlock>(&accum.block)) {
-                    tub->input_json = accum.accumulated_json.empty() ? "{}" : std::move(accum.accumulated_json);
+                    tub->input_json =
+                        accum.accumulated_json.empty() ? "{}" : std::move(accum.accumulated_json);
                 } else if (auto* thk = std::get_if<ThinkingBlock>(&accum.block)) {
                     thk->thinking = std::move(accum.accumulated_text);
                 }
@@ -602,14 +641,17 @@ void prepare_model_metadata(QueryEngineConfig& config) {
             auto usage = root.get("usage");
             if (usage.valid()) {
                 auto ot = usage.get("output_tokens");
-                if (ot.valid()) result.usage.output_tokens = static_cast<std::uint32_t>(ot.as_int());
+                if (ot.valid())
+                    result.usage.output_tokens = static_cast<std::uint32_t>(ot.as_int());
                 auto cache_creation = usage.get("cache_creation_input_tokens");
                 if (cache_creation.valid()) {
-                    result.usage.cache_creation_tokens = static_cast<std::uint32_t>(cache_creation.as_int());
+                    result.usage.cache_creation_tokens =
+                        static_cast<std::uint32_t>(cache_creation.as_int());
                 }
                 auto cache_read = usage.get("cache_read_input_tokens");
                 if (cache_read.valid()) {
-                    result.usage.cache_read_tokens = static_cast<std::uint32_t>(cache_read.as_int());
+                    result.usage.cache_read_tokens =
+                        static_cast<std::uint32_t>(cache_read.as_int());
                 }
             }
         } else if (event_type == "message_stop") {
@@ -674,71 +716,76 @@ void prepare_model_metadata(QueryEngineConfig& config) {
         for (const auto& delta : backend->parse_stream_event(frame.type, frame.data)) {
             using Kind = loom::query::wire::StreamDelta::Kind;
             switch (delta.kind) {
-                case Kind::TextDelta:
-                    if (!text_block) text_block = start_block(TextBlock{});
-                    blocks[*text_block].accumulated_text += delta.text;
-                    emit_delta(*text_block, delta.text);
-                    break;
-                case Kind::ToolUseStart: {
-                    const auto key = delta.tool_index.value_or(0);
-                    auto found = tool_blocks.find(key);
-                    if (found == tool_blocks.end()) {
-                        ToolUseBlock tool;
-                        tool.id.value = delta.tool_id;
-                        tool.name = delta.tool_name;
-                        tool_blocks.emplace(key, start_block(std::move(tool)));
-                    } else {
-                        auto& tool = std::get<ToolUseBlock>(blocks[found->second].block);
-                        if ((!delta.tool_id.empty() && !tool.id.value.empty() && tool.id.value != delta.tool_id) ||
-                            (!delta.tool_name.empty() && !tool.name.empty() && tool.name != delta.tool_name)) {
-                            emit_stream_error("invalid_response", "Tool metadata changed within one index");
-                            break;
-                        }
-                        if (!delta.tool_id.empty()) tool.id.value = delta.tool_id;
-                        if (!delta.tool_name.empty()) tool.name = delta.tool_name;
-                    }
-                    break;
-                }
-                case Kind::ToolUseInputDelta: {
-                    const auto found = tool_blocks.find(delta.tool_index.value_or(0));
-                    if (found == tool_blocks.end()) {
-                        emit_stream_error("invalid_response", "Tool arguments arrived before tool metadata");
+            case Kind::TextDelta:
+                if (!text_block) text_block = start_block(TextBlock{});
+                blocks[*text_block].accumulated_text += delta.text;
+                emit_delta(*text_block, delta.text);
+                break;
+            case Kind::ToolUseStart: {
+                const auto key = delta.tool_index.value_or(0);
+                auto found = tool_blocks.find(key);
+                if (found == tool_blocks.end()) {
+                    ToolUseBlock tool;
+                    tool.id.value = delta.tool_id;
+                    tool.name = delta.tool_name;
+                    tool_blocks.emplace(key, start_block(std::move(tool)));
+                } else {
+                    auto& tool = std::get<ToolUseBlock>(blocks[found->second].block);
+                    if ((!delta.tool_id.empty() && !tool.id.value.empty() &&
+                         tool.id.value != delta.tool_id) ||
+                        (!delta.tool_name.empty() && !tool.name.empty() &&
+                         tool.name != delta.tool_name)) {
+                        emit_stream_error("invalid_response",
+                                          "Tool metadata changed within one index");
                         break;
                     }
-                    blocks[found->second].accumulated_json += delta.partial_json;
-                    emit_delta(found->second, delta.partial_json);
+                    if (!delta.tool_id.empty()) tool.id.value = delta.tool_id;
+                    if (!delta.tool_name.empty()) tool.name = delta.tool_name;
+                }
+                break;
+            }
+            case Kind::ToolUseInputDelta: {
+                const auto found = tool_blocks.find(delta.tool_index.value_or(0));
+                if (found == tool_blocks.end()) {
+                    emit_stream_error("invalid_response",
+                                      "Tool arguments arrived before tool metadata");
                     break;
                 }
-                case Kind::Usage:
-                    result.usage = delta.usage;
-                    break;
-                case Kind::MessageStop:
-                    if (!delta.stop_reason.empty()) {
-                        result.message.stop_reason = delta.stop_reason;
-                        wire_finish_reason = true;
-                    }
-                    if (!wire_stopped) {
-                        wire_stopped = true;
-                        for (std::size_t i = 0; i < blocks.size(); ++i) {
-                            auto& accum = blocks[i];
-                            if (auto* text = std::get_if<TextBlock>(&accum.block)) {
-                                text->text = accum.accumulated_text;
-                            } else if (auto* tool = std::get_if<ToolUseBlock>(&accum.block)) {
-                                tool->input_json = accum.accumulated_json.empty() ? "{}" : accum.accumulated_json;
-                            }
-                            if (options.on_event) {
-                                ContentBlockStop event;
-                                event.index = static_cast<std::uint32_t>(i);
-                                (*options.on_event)(event);
-                            }
+                blocks[found->second].accumulated_json += delta.partial_json;
+                emit_delta(found->second, delta.partial_json);
+                break;
+            }
+            case Kind::Usage:
+                result.usage = delta.usage;
+                break;
+            case Kind::MessageStop:
+                if (!delta.stop_reason.empty()) {
+                    result.message.stop_reason = delta.stop_reason;
+                    wire_finish_reason = true;
+                }
+                if (!wire_stopped) {
+                    wire_stopped = true;
+                    for (std::size_t i = 0; i < blocks.size(); ++i) {
+                        auto& accum = blocks[i];
+                        if (auto* text = std::get_if<TextBlock>(&accum.block)) {
+                            text->text = accum.accumulated_text;
+                        } else if (auto* tool = std::get_if<ToolUseBlock>(&accum.block)) {
+                            tool->input_json =
+                                accum.accumulated_json.empty() ? "{}" : accum.accumulated_json;
+                        }
+                        if (options.on_event) {
+                            ContentBlockStop event;
+                            event.index = static_cast<std::uint32_t>(i);
+                            (*options.on_event)(event);
                         }
                     }
-                    break;
-                case Kind::Error:
-                    emit_stream_error("stream_error", delta.text);
-                    break;
-                default:
-                    break;
+                }
+                break;
+            case Kind::Error:
+                emit_stream_error("stream_error", delta.text);
+                break;
+            default:
+                break;
             }
         }
     };
@@ -759,8 +806,8 @@ void prepare_model_metadata(QueryEngineConfig& config) {
         accepted_response = response.status < 400;
         return true;
     };
-    req.content_receiver = [&](const char* data, size_t len,
-                               uint64_t /*offset*/, uint64_t /*total*/) -> bool {
+    req.content_receiver = [&](const char* data, size_t len, uint64_t /*offset*/,
+                               uint64_t /*total*/) -> bool {
         if (should_abort()) return false;
         if (!accepted_response) {
             const auto remaining = std::size_t{65536} - rejected_body.size();
@@ -807,14 +854,20 @@ void prepare_model_metadata(QueryEngineConfig& config) {
             res.status, rejected_body.empty() ? res.body : rejected_body);
         if (context_failure != loom::services::compact::ContextFailure::None) {
             if (!is_retry_after_compact) {
-                auto compacted = compact_context_impl("reactive", options,
-                    context_failure == loom::services::compact::ContextFailure::RequestBytesExceeded ? body.size() : 0, true);
+                auto compacted = compact_context_impl(
+                    "reactive", options,
+                    context_failure == loom::services::compact::ContextFailure::RequestBytesExceeded
+                        ? body.size()
+                        : 0,
+                    true);
                 if (compacted) return stream_single_api_call(options, true);
                 emit_stream_error("context_compaction_error", compacted.error().message);
             } else {
-                emit_stream_error("invalid_request_error", "Context still exceeded after one compaction retry");
+                emit_stream_error("invalid_request_error",
+                                  "Context still exceeded after one compaction retry");
             }
-            if (options.on_event) (*options.on_event)(StreamError{result.error_type, result.error_message});
+            if (options.on_event)
+                (*options.on_event)(StreamError{result.error_type, result.error_message});
             return result;
         }
         // If streaming failed and we got nothing, fall back to non-streaming
@@ -829,30 +882,47 @@ void prepare_model_metadata(QueryEngineConfig& config) {
         } else {
             std::string type = "api_error";
             switch (fallback.error().code) {
-                case ErrorCode::AuthenticationFailed: type = "authentication_error"; break;
-                case ErrorCode::InvalidRequest:
-                case ErrorCode::ContextWindowExceeded: type = "invalid_request_error"; break;
-                case ErrorCode::RateLimited: type = "rate_limit_error"; break;
-                case ErrorCode::OverloadedError: type = "overloaded_error"; break;
-                case ErrorCode::ConnectionFailed:
-                case ErrorCode::NetworkTimeout:
-                case ErrorCode::SSLError: type = "network_error"; break;
-                default: break;
+            case ErrorCode::AuthenticationFailed:
+                type = "authentication_error";
+                break;
+            case ErrorCode::InvalidRequest:
+            case ErrorCode::ContextWindowExceeded:
+                type = "invalid_request_error";
+                break;
+            case ErrorCode::RateLimited:
+                type = "rate_limit_error";
+                break;
+            case ErrorCode::OverloadedError:
+                type = "overloaded_error";
+                break;
+            case ErrorCode::ConnectionFailed:
+            case ErrorCode::NetworkTimeout:
+            case ErrorCode::SSLError:
+                type = "network_error";
+                break;
+            default:
+                break;
             }
             emit_stream_error(std::move(type), fallback.error().format());
-            if (options.on_event) (*options.on_event)(StreamError{result.error_type, result.error_message});
+            if (options.on_event)
+                (*options.on_event)(StreamError{result.error_type, result.error_message});
             return result;
         }
     } else if (result.failed) {
-        const auto category = loom::services::compact::classify_context_failure(0,
-            result.error_type + " " + result.error_message);
+        const auto category = loom::services::compact::classify_context_failure(
+            0, result.error_type + " " + result.error_message);
         if (!is_retry_after_compact && category != loom::services::compact::ContextFailure::None) {
-            auto compacted = compact_context_impl("reactive", options,
-                category == loom::services::compact::ContextFailure::RequestBytesExceeded ? body.size() : 0, true);
+            auto compacted = compact_context_impl(
+                "reactive", options,
+                category == loom::services::compact::ContextFailure::RequestBytesExceeded
+                    ? body.size()
+                    : 0,
+                true);
             if (compacted) return stream_single_api_call(options, true);
             emit_stream_error("context_compaction_error", compacted.error().message);
         }
-        if (options.on_event) (*options.on_event)(StreamError{result.error_type, result.error_message});
+        if (options.on_event)
+            (*options.on_event)(StreamError{result.error_type, result.error_message});
         return result;
     } else {
         // Assemble final message from accumulated blocks
@@ -863,14 +933,16 @@ void prepare_model_metadata(QueryEngineConfig& config) {
         // Parse input_tokens from response if available
         auto usage_hdr = res.get_header_value("x-usage-input-tokens");
         if (!usage_hdr.empty()) {
-            try { result.usage.input_tokens = static_cast<std::uint32_t>(std::stoul(usage_hdr)); }
-            catch (...) {}
+            try {
+                result.usage.input_tokens = static_cast<std::uint32_t>(std::stoul(usage_hdr));
+            } catch (...) {
+            }
         }
     }
 
     if (backend->api() != loom::query::wire::WireApi::Messages &&
-        (!wire_stopped || !wire_terminated || !wire_finish_reason) &&
-        !result.failed && ok && res.status < 400) {
+        (!wire_stopped || !wire_terminated || !wire_finish_reason) && !result.failed && ok &&
+        res.status < 400) {
         emit_stream_error("stream_error", "Model stream ended without a completion event");
     }
 
@@ -879,9 +951,10 @@ void prepare_model_metadata(QueryEngineConfig& config) {
             const auto* tool = std::get_if<ToolUseBlock>(&block);
             if (!tool) continue;
             const auto arguments = loom::utils::json::parse(tool->input_json);
-            if (tool->id.value.empty() || tool->name.empty() ||
-                !arguments || !arguments->root().is_obj()) {
-                emit_stream_error("invalid_response", "Model stream ended with an incomplete or invalid tool call");
+            if (tool->id.value.empty() || tool->name.empty() || !arguments ||
+                !arguments->root().is_obj()) {
+                emit_stream_error("invalid_response",
+                                  "Model stream ended with an incomplete or invalid tool call");
                 break;
             }
         }
@@ -899,7 +972,8 @@ void prepare_model_metadata(QueryEngineConfig& config) {
     if (result.failed && options.on_event) {
         (*options.on_event)(StreamError{result.error_type, result.error_message});
     }
-    if (!result.failed && ok && res.status < 400) observe_context_usage(result.usage, sent_input, sent_schema);
+    if (!result.failed && ok && res.status < 400)
+        observe_context_usage(result.usage, sent_input, sent_schema);
     if (!result.failed && options.on_event) {
         StreamEnd end_event;
         end_event.stop_reason = result.message.stop_reason;
@@ -914,11 +988,11 @@ void prepare_model_metadata(QueryEngineConfig& config) {
             std::ofstream ofs(*dp, std::ios::app);
             if (ofs.is_open()) {
                 auto now_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
-                    std::chrono::system_clock::now().time_since_epoch()).count();
+                                  std::chrono::system_clock::now().time_since_epoch())
+                                  .count();
                 // Serialize the assembled response message as JSONL
                 std::string resp_json = message_to_jsonl_(Message{result.message});
-                ofs << "{\"type\":\"response\",\"timestamp\":" << now_ms
-                    << ",\"stop_reason\":\""
+                ofs << "{\"type\":\"response\",\"timestamp\":" << now_ms << ",\"stop_reason\":\""
                     << result.message.stop_reason.value_or("") << "\""
                     << ",\"has_tool_use\":" << (result.has_tool_use ? "true" : "false")
                     << ",\"failed\":" << (result.failed ? "true" : "false")
@@ -930,4 +1004,4 @@ void prepare_model_metadata(QueryEngineConfig& config) {
     return result;
 }
 
-} // namespace loom::core
+}  // namespace loom::core

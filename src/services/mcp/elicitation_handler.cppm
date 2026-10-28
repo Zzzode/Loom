@@ -12,14 +12,15 @@ struct ElicitationRequest {
 };
 
 using ElicitationResponder =
-    std::function<std::expected<std::map<std::string, std::string>, std::string>(const ElicitationRequest&)>;
+    std::function<std::expected<std::map<std::string, std::string>, std::string>(
+        const ElicitationRequest&)>;
 
 namespace detail {
-    // Servers that are allowed to elicit user input
-    inline std::map<std::string, bool, std::less<>> allowed_servers;
-    inline std::mutex responder_mutex;
-    inline ElicitationResponder responder;
-} // namespace detail
+// Servers that are allowed to elicit user input
+inline std::map<std::string, bool, std::less<>> allowed_servers;
+inline std::mutex responder_mutex;
+inline ElicitationResponder responder;
+}  // namespace detail
 
 auto set_elicitation_allowed(std::string server, bool allowed) -> void {
     detail::allowed_servers[std::move(server)] = allowed;
@@ -62,10 +63,10 @@ auto handle_elicitation(ElicitationRequest request)
         active_responder = detail::responder;
     }
     if (!active_responder) {
-        return std::unexpected(
-            "No MCP elicitation responder is registered for server: " + request.server_name);
+        return std::unexpected("No MCP elicitation responder is registered for server: " +
+                               request.server_name);
     }
     return active_responder(request);
 }
 
-} // namespace loom::services::mcp
+}  // namespace loom::services::mcp

@@ -40,15 +40,17 @@ namespace fs = std::filesystem;
     return loom::tools::LspAction::Symbols;
 }
 
-[[nodiscard]] std::string format_lsp_result(const loom::tools::LspResult& result, std::string_view action) {
+[[nodiscard]] std::string format_lsp_result(const loom::tools::LspResult& result,
+                                            std::string_view action) {
     if (result.empty()) return std::format("No LSP results for action '{}'.", action);
     std::string out;
     for (const auto& diagnostic : result.diagnostics) {
-        out += std::format("{}:{}:{} {}\n", diagnostic.source,
-            diagnostic.range.start.line, diagnostic.range.start.character, diagnostic.message);
+        out += std::format("{}:{}:{} {}\n", diagnostic.source, diagnostic.range.start.line,
+                           diagnostic.range.start.character, diagnostic.message);
     }
     for (const auto& location : result.locations) {
-        out += std::format("{}:{}:{}\n", location.uri, location.range.start.line, location.range.start.character);
+        out += std::format("{}:{}:{}\n", location.uri, location.range.start.line,
+                           location.range.start.character);
     }
     for (const auto& completion : result.completions) {
         out += std::format("{} {}\n", completion.label, completion.detail);
@@ -62,8 +64,9 @@ namespace fs = std::filesystem;
 
 [[nodiscard]] Result<ToolResult> lsp_backend(const ToolInput& input) {
     auto json = input.json();
-    auto file_text = loom::tools::detail::json_string(json, "file_path")
-        .or_else([&] { return loom::tools::detail::json_string(json, "path"); });
+    auto file_text = loom::tools::detail::json_string(json, "file_path").or_else([&] {
+        return loom::tools::detail::json_string(json, "path");
+    });
     auto action = loom::tools::detail::json_string(json, "action").value_or("symbols");
     if (!file_text || file_text->empty()) {
         return ToolResult::error("lsp requires file_path");
@@ -78,9 +81,10 @@ namespace fs = std::filesystem;
     loom::tools::LspRequest request{
         .action = parse_lsp_action(action),
         .file_path = file,
-        .position = loom::tools::LspPosition{
-            .line = loom::tools::detail::json_int(json, "line").value_or(0),
-            .character = loom::tools::detail::json_int(json, "character").value_or(0)},
+        .position =
+            loom::tools::LspPosition{
+                .line = loom::tools::detail::json_int(json, "line").value_or(0),
+                .character = loom::tools::detail::json_int(json, "character").value_or(0)},
         .query = loom::tools::detail::json_string(json, "query"),
     };
     auto result = tool.execute(std::move(request));
@@ -88,4 +92,4 @@ namespace fs = std::filesystem;
     return ToolResult::success(format_lsp_result(*result, action));
 }
 
-} // namespace loom::orchestration::detail
+}  // namespace loom::orchestration::detail

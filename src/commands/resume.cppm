@@ -15,6 +15,7 @@ import loom.commands.command;
 import loom.session.storage;
 import loom.serdes.json;
 import loom.constants.paths;
+
 export namespace loom::commands {
 
 using namespace loom::core;
@@ -36,10 +37,13 @@ public:
         return CommandDefinition{
             .name = "resume",
             .description = "Resume a previous conversation session",
-            .args = {
-                CommandArg{.name = "session_id", .description = "Session ID to resume, or 'last'",
-                           .type = ArgType::Text, .required = false},
-            },
+            .args =
+                {
+                    CommandArg{.name = "session_id",
+                               .description = "Session ID to resume, or 'last'",
+                               .type = ArgType::Text,
+                               .required = false},
+                },
             .category = "session",
             .aliases = {"r"},
             .hidden = false,
@@ -47,9 +51,7 @@ public:
         };
     }
 
-    [[nodiscard]] VoidResult validate(const CommandContext& /*ctx*/) {
-        return {};
-    }
+    [[nodiscard]] VoidResult validate(const CommandContext& /*ctx*/) { return {}; }
 
     [[nodiscard]] Result<CommandResult> execute(const CommandContext& ctx) {
         // Refresh the session list from disk on every invocation.  The
@@ -120,8 +122,7 @@ private:
     void load_sessions() {
         const auto sessions_dir = loom::constants::paths::sessions_dir();
         loaded_sessions_dir_ = sessions_dir;
-        auto metas = loom::session::list_recent_sessions(
-            loaded_sessions_dir_, kRecentSessionLimit);
+        auto metas = loom::session::list_recent_sessions(loaded_sessions_dir_, kRecentSessionLimit);
         recent_sessions_.clear();
         recent_sessions_.reserve(metas.size());
         for (auto& m : metas) {
@@ -148,8 +149,8 @@ private:
         for (const auto& s : recent_sessions_) {
             auto age = format_time_ago(s.last_active);
             const auto display_title = effective_title(s, loaded_sessions_dir_);
-            out += std::format("  {} — {} ({} msgs, {})\n",
-                short_id(s.id.str()), display_title, s.message_count, age);
+            out += std::format("  {} — {} ({} msgs, {})\n", short_id(s.id.str()), display_title,
+                               s.message_count, age);
         }
         out += "\nUse /resume <id> or /resume last";
         return out;
@@ -157,29 +158,29 @@ private:
 
     [[nodiscard]] Result<CommandResult> resume_last() const {
         if (recent_sessions_.empty()) {
-            return std::unexpected(Error::make(ErrorCode::SessionNotFound,
-                "No previous sessions to resume."));
+            return std::unexpected(
+                Error::make(ErrorCode::SessionNotFound, "No previous sessions to resume."));
         }
         const auto& last = recent_sessions_.front();
         // Signal the app to load this session's messages into the transcript.
-        return CommandResult{true,
-            std::format("Resuming session: {} ({})", last.id.str().substr(0, 8), last.title),
-            "UI:resume:" + last.id.str(),
-            CommandStatus::Succeeded};
+        return CommandResult{
+            true, std::format("Resuming session: {} ({})", last.id.str().substr(0, 8), last.title),
+            "UI:resume:" + last.id.str(), CommandStatus::Succeeded};
     }
 
     [[nodiscard]] Result<CommandResult> resume_by_id(const std::string& id) const {
         auto it = std::ranges::find_if(recent_sessions_,
-            [&](const auto& s) { return s.id.str().starts_with(id); });
+                                       [&](const auto& s) { return s.id.str().starts_with(id); });
         if (it == recent_sessions_.end()) {
-            return std::unexpected(Error::make(ErrorCode::SessionNotFound,
-                std::format("Session '{}' not found. Use /resume to list available sessions.", id)));
+            return std::unexpected(Error::make(
+                ErrorCode::SessionNotFound,
+                std::format("Session '{}' not found. Use /resume to list available sessions.",
+                            id)));
         }
         // Signal the app to load this session's messages into the transcript.
-        return CommandResult{true,
-            std::format("Resuming session: {} ({})", it->id.str().substr(0, 8), it->title),
-            "UI:resume:" + it->id.str(),
-            CommandStatus::Succeeded};
+        return CommandResult{
+            true, std::format("Resuming session: {} ({})", it->id.str().substr(0, 8), it->title),
+            "UI:resume:" + it->id.str(), CommandStatus::Succeeded};
     }
 
     /// Extract a short, distinguishing ID from a session ID.
@@ -189,8 +190,7 @@ private:
     [[nodiscard]] static std::string short_id(const std::string& id) {
         if (id.starts_with("session_")) {
             auto pos = id.rfind('_');
-            if (pos != std::string::npos && pos + 1 < id.size())
-                return id.substr(pos + 1, 8);
+            if (pos != std::string::npos && pos + 1 < id.size()) return id.substr(pos + 1, 8);
         }
         return id.substr(0, 8);
     }
@@ -200,9 +200,8 @@ private:
     /// message in messages.jsonl (truncated) so the user can actually
     /// tell sessions apart.  Handles both content formats the engine
     /// writes: plain string (single TextBlock) and content-block array.
-    [[nodiscard]] std::string effective_title(
-        const SessionSummary& s,
-        const std::filesystem::path& sessions_dir) const {
+    [[nodiscard]] std::string effective_title(const SessionSummary& s,
+                                              const std::filesystem::path& sessions_dir) const {
         if (!s.title.empty() && s.title != "Session") return s.title;
 
         auto docs = loom::session::load_messages(sessions_dir, s.id.str());
@@ -210,8 +209,7 @@ private:
             auto root = docs[i].root();
             if (!root.valid() || !root.is_obj()) continue;
             auto role_val = root.get("role");
-            if (!role_val.is_str() || role_val.as_str() != std::string_view("user"))
-                continue;
+            if (!role_val.is_str() || role_val.as_str() != std::string_view("user")) continue;
             auto content_val = root.get("content");
             if (!content_val.valid()) continue;
 
@@ -223,8 +221,7 @@ private:
                     auto block = content_val.at(j);
                     if (!block.is_obj()) continue;
                     auto type_val = block.get("type");
-                    if (!type_val.is_str() ||
-                        type_val.as_str() != std::string_view("text"))
+                    if (!type_val.is_str() || type_val.as_str() != std::string_view("text"))
                         continue;
                     auto text_val = block.get("text");
                     if (!text_val.is_str()) continue;
@@ -234,7 +231,8 @@ private:
             }
 
             if (!text.empty()) {
-                for (auto& c : text) if (c == '\n') c = ' ';
+                for (auto& c : text)
+                    if (c == '\n') c = ' ';
                 if (text.size() > 60) text = text.substr(0, 60) + "…";
                 return text;
             }
@@ -245,10 +243,8 @@ private:
 
     /// Count messages in a session by counting non-empty lines in its
     /// messages.jsonl file.  Returns 0 if the file does not exist.
-    [[nodiscard]] static int count_messages_on_disk(
-        const std::filesystem::path& sessions_dir,
-        const std::string& session_id)
-    {
+    [[nodiscard]] static int count_messages_on_disk(const std::filesystem::path& sessions_dir,
+                                                    const std::string& session_id) {
         auto jsonl_path = sessions_dir / session_id / "messages.jsonl";
         if (!std::filesystem::exists(jsonl_path)) return 0;
         std::ifstream ifs(jsonl_path);
@@ -269,4 +265,4 @@ private:
     }
 };
 
-} // namespace loom::commands
+}  // namespace loom::commands

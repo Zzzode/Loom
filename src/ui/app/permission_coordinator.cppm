@@ -23,7 +23,7 @@ public:
     [[nodiscard]] bool permission_request_current(RequestToken token) const;
     [[nodiscard]] bool wait_permission_response(RequestToken token);
     [[nodiscard]] bool resolve_permission(RequestToken token, bool allowed,
-                                         std::string_view always_allow_tool = {});
+                                          std::string_view always_allow_tool = {});
     void finish_permission_request(RequestToken token);
 
     [[nodiscard]] RequestToken begin_elicitation_request();

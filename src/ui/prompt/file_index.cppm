@@ -28,11 +28,9 @@ namespace detail {
 /// Run `git -C <cwd> <args>` and return the trimmed, deduped line list. Empty
 /// on any failure (non-repo, git missing). @a cwd comes from the app's own cwd
 /// and is not user-controlled, so it is safe to embed directly.
-[[nodiscard]] inline std::vector<std::string> run_git(const fs::path& cwd,
-                                                      std::string_view args) {
+[[nodiscard]] inline std::vector<std::string> run_git(const fs::path& cwd, std::string_view args) {
     std::vector<std::string> out;
-    const std::string cmd =
-        "git -C " + cwd.string() + " " + std::string(args) + " 2>/dev/null";
+    const std::string cmd = "git -C " + cwd.string() + " " + std::string(args) + " 2>/dev/null";
     FILE* pipe = bash::popen_spawn(cmd.c_str());
     if (!pipe) return out;
 
@@ -47,9 +45,8 @@ namespace detail {
     std::size_t pos = 0;
     while (pos < stream.size()) {
         const std::size_t nl = stream.find('\n', pos);
-        std::string line = (nl == std::string::npos)
-            ? stream.substr(pos)
-            : stream.substr(pos, nl - pos);
+        std::string line =
+            (nl == std::string::npos) ? stream.substr(pos) : stream.substr(pos, nl - pos);
         pos = (nl == std::string::npos) ? stream.size() : nl + 1;
         // Trim trailing CR.
         if (!line.empty() && line.back() == '\r') line.pop_back();
@@ -70,14 +67,11 @@ struct CacheEntry {
 /// AT-01: return the cached repo-wide file list (tracked + non-gitignored
 /// untracked) for @a cwd_text. Refreshed when .git/index mtime changes. Empty
 /// for non-repo directories (callers fall back to directory scanning).
-[[nodiscard]] inline std::vector<std::string> collect_repo_files(
-    std::string_view cwd_text) {
+[[nodiscard]] inline std::vector<std::string> collect_repo_files(std::string_view cwd_text) {
     static std::unordered_map<std::string, detail::CacheEntry> cache;
     static std::mutex mu;
 
-    const fs::path cwd = cwd_text.empty()
-        ? fs::current_path()
-        : fs::path(std::string(cwd_text));
+    const fs::path cwd = cwd_text.empty() ? fs::current_path() : fs::path(std::string(cwd_text));
     const std::string key = cwd.string();
 
     std::error_code ec;
@@ -90,8 +84,7 @@ struct CacheEntry {
         const auto it = cache.find(key);
         if (it != cache.end() && !it->second.files.empty()) {
             bool stale = false;
-            if (idx_ok && it->second.has_mtime &&
-                idx_mtime != it->second.index_mtime) {
+            if (idx_ok && it->second.has_mtime && idx_mtime != it->second.index_mtime) {
                 stale = true;
             }
             if (!stale) return it->second.files;
@@ -120,15 +113,14 @@ struct CacheEntry {
         std::error_code ec;
         for (auto it = fs::recursive_directory_iterator(
                  cwd, fs::directory_options::skip_permission_denied, ec);
-             it != fs::recursive_directory_iterator();
-             it.increment(ec)) {
+             it != fs::recursive_directory_iterator(); it.increment(ec)) {
             if (ec) break;
             const auto& entry = *it;
             const auto name = entry.path().filename().string();
             if (entry.is_directory(ec) &&
-                (name == ".git" || name == "node_modules" || name == "build" ||
-                 name == "_deps" || name == ".loom" || name == "__pycache__" ||
-                 name == ".next" || name == "target" || name == "dist")) {
+                (name == ".git" || name == "node_modules" || name == "build" || name == "_deps" ||
+                 name == ".loom" || name == "__pycache__" || name == ".next" || name == "target" ||
+                 name == "dist")) {
                 it.disable_recursion_pending();
                 continue;
             }

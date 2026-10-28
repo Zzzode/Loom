@@ -3,7 +3,6 @@
 /// Toggles brief-only mode via AppState dispatch.
 module;
 
-
 export module loom.commands.brief;
 
 import std;
@@ -35,9 +34,7 @@ public:
         };
     }
 
-    [[nodiscard]] VoidResult validate(const CommandContext&) {
-        return {};
-    }
+    [[nodiscard]] VoidResult validate(const CommandContext&) { return {}; }
 
     [[nodiscard]] Result<CommandResult> execute(const CommandContext& ctx) {
         // Try the AppState bridge first (set by app.cppm).
@@ -91,9 +88,7 @@ public:
         }
     }
 
-    [[nodiscard]] std::vector<std::string> complete(std::string_view) {
-        return {};
-    }
+    [[nodiscard]] std::vector<std::string> complete(std::string_view) { return {}; }
 };
 
-} // namespace loom::commands
+}  // namespace loom::commands

@@ -15,13 +15,13 @@
 /// capabilities.experimental['loom/channel/permission'].
 // ============================================================================
 module;
+#include <yyjson.h>
+
 #include <cctype>
+#include <cstddef>
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
-
-#include <yyjson.h>
-#include <cstddef>
 
 export module loom.services.mcp.channel_permissions;
 
@@ -40,8 +40,7 @@ export namespace loom::services::mcp {
 //   /^\s*(y|yes|n|no)\s+([a-km-z]{5})\s*$/i
 // 5 lowercase letters, no 'l' (looks like 1/I). Case-insensitive.
 // No bare yes/no (conversational). No prefix/suffix chatter.
-constexpr std::string_view PERMISSION_REPLY_PATTERN =
-    R"(^\s*(y|yes|n|no)\s+([a-km-z]{5})\s*$)";
+constexpr std::string_view PERMISSION_REPLY_PATTERN = R"(^\s*(y|yes|n|no)\s+([a-km-z]{5})\s*$)";
 
 // 25-letter alphabet: a-z minus 'l' (looks like 1/I). 25^5 ≈ 9.8M space.
 constexpr std::string_view ID_ALPHABET = "abcdefghijkmnopqrstuvwxyz";
@@ -49,10 +48,9 @@ constexpr std::string_view ID_ALPHABET = "abcdefghijkmnopqrstuvwxyz";
 // Substring blocklist — 5 random letters can spell things. Non-exhaustive,
 // covers the send-to-your-boss-by-accident tier.
 constexpr std::array<std::string_view, 24> ID_AVOID_SUBSTRINGS = {
-    "fuck",  "shit",  "cunt",  "cock",  "dick",  "twat",  "piss",
-    "crap",  "bitch", "whore", "ass",   "tit",   "cum",   "fag",
-    "dyke",  "nig",   "kike",  "rape",  "nazi",  "damn",  "poo",
-    "pee",   "wank",  "anus",
+    "fuck",  "shit",  "cunt", "cock", "dick", "twat", "piss", "crap",
+    "bitch", "whore", "ass",  "tit",  "cum",  "fag",  "dyke", "nig",
+    "kike",  "rape",  "nazi", "damn", "poo",  "pee",  "wank", "anus",
 };
 
 // ============================================================================
@@ -62,13 +60,13 @@ constexpr std::array<std::string_view, 24> ID_AVOID_SUBSTRINGS = {
 // Behavior returned by a channel permission response.
 enum class ChannelPermissionBehavior : std::uint8_t {
     Allow = 0,
-    Deny  = 1,
+    Deny = 1,
 };
 
 // Response from a channel server resolving a pending permission request.
 struct ChannelPermissionResponse {
-    ChannelPermissionBehavior behavior;     ///< Allow or Deny
-    std::string               from_server;  ///< Which channel server replied
+    ChannelPermissionBehavior behavior;  ///< Allow or Deny
+    std::string from_server;             ///< Which channel server replied
 };
 
 // ============================================================================
@@ -91,9 +89,7 @@ public:
 
     // Register a resolver for a request ID. Returns unsubscribe function.
     // Lowercases the key so matching is case-insensitive.
-    auto on_response(std::string_view request_id, Handler handler)
-        -> std::function<void()>
-    {
+    auto on_response(std::string_view request_id, Handler handler) -> std::function<void()> {
         std::string key = to_lower(request_id);
         std::lock_guard lock(mutex_);
         pending_[key] = std::move(handler);
@@ -109,10 +105,8 @@ public:
     // Delete BEFORE calling — if resolver throws or re-enters, the entry
     // is already gone. Also handles duplicate events (second emission
     // falls through — server bug or network dup, ignore).
-    auto resolve(std::string_view    request_id,
-                 ChannelPermissionBehavior behavior,
-                 std::string_view    from_server) -> bool
-    {
+    auto resolve(std::string_view request_id, ChannelPermissionBehavior behavior,
+                 std::string_view from_server) -> bool {
         std::string key = to_lower(request_id);
         Handler resolver;
         {
@@ -125,7 +119,7 @@ public:
         }
         // Call outside the lock to avoid deadlock if resolver re-enters
         resolver(ChannelPermissionResponse{
-            .behavior    = behavior,
+            .behavior = behavior,
             .from_server = std::string(from_server),
         });
         return true;
@@ -147,8 +141,8 @@ private:
         return result;
     }
 
-    mutable std::mutex                                mutex_;
-    std::unordered_map<std::string, Handler>          pending_;
+    mutable std::mutex mutex_;
+    std::unordered_map<std::string, Handler> pending_;
 };
 
 // ============================================================================
@@ -158,9 +152,7 @@ private:
 // Factory for the callbacks object. The pending Map is closed over — NOT
 // module-level, NOT in AppState. Constructed once per session inside a hook,
 // stable reference stored in AppState.
-inline auto create_channel_permission_callbacks()
-    -> std::shared_ptr<ChannelPermissionCallbacks>
-{
+inline auto create_channel_permission_callbacks() -> std::shared_ptr<ChannelPermissionCallbacks> {
     return std::make_shared<ChannelPermissionCallbacks>();
 }
 
@@ -211,7 +203,7 @@ inline auto contains_blocked_substring(std::string_view id) -> bool {
     });
 }
 
-} // namespace detail
+}  // namespace detail
 
 // Short ID from a toolUseID. 5 letters from a 25-char alphabet (a-z minus
 // 'l' — looks like 1/I in many fonts). 25^5 ≈ 9.8M space, birthday
@@ -275,11 +267,9 @@ inline auto truncate_for_preview(std::string_view json_input) -> std::string {
 // Template: T must have .name (string), .state (ServerState), and
 // .capabilities (ServerCapabilities with .experimental map).
 template <typename T>
-auto filter_permission_relay_clients(
-    const std::vector<T>&                        clients,
-    std::function<bool(std::string_view)>        is_in_allowlist)
-    -> std::vector<T>
-{
+auto filter_permission_relay_clients(const std::vector<T>& clients,
+                                     std::function<bool(std::string_view)> is_in_allowlist)
+    -> std::vector<T> {
     std::vector<T> result;
     for (const auto& c : clients) {
         // Condition 1: connected / ready
@@ -311,13 +301,11 @@ auto filter_permission_relay_clients(
 // event — CC never regex-matches text. This utility is for testing and
 // standalone tooling. Exported so plugins can use the exact same logic.
 struct ParsedPermissionReply {
-    std::string               request_id;
+    std::string request_id;
     ChannelPermissionBehavior behavior;
 };
 
-inline auto parse_permission_reply(std::string_view reply)
-    -> std::optional<ParsedPermissionReply>
-{
+inline auto parse_permission_reply(std::string_view reply) -> std::optional<ParsedPermissionReply> {
     // Manual implementation of /^\s*(y|yes|n|no)\s+([a-km-z]{5})\s*$/i
     // Skip leading whitespace
     std::size_t pos = 0;
@@ -333,13 +321,16 @@ inline auto parse_permission_reply(std::string_view reply)
         behavior = ChannelPermissionBehavior::Allow;
         ++pos;
         // Optional "es" for "yes"
-        if (pos < reply.size() && std::tolower(static_cast<unsigned char>(reply[pos])) == 'e') ++pos;
-        if (pos < reply.size() && std::tolower(static_cast<unsigned char>(reply[pos])) == 's') ++pos;
+        if (pos < reply.size() && std::tolower(static_cast<unsigned char>(reply[pos])) == 'e')
+            ++pos;
+        if (pos < reply.size() && std::tolower(static_cast<unsigned char>(reply[pos])) == 's')
+            ++pos;
     } else if (first == 'n') {
         behavior = ChannelPermissionBehavior::Deny;
         ++pos;
         // Optional "o" for "no"
-        if (pos < reply.size() && std::tolower(static_cast<unsigned char>(reply[pos])) == 'o') ++pos;
+        if (pos < reply.size() && std::tolower(static_cast<unsigned char>(reply[pos])) == 'o')
+            ++pos;
     } else {
         return std::nullopt;
     }
@@ -374,7 +365,7 @@ inline auto parse_permission_reply(std::string_view reply)
 
     return ParsedPermissionReply{
         .request_id = std::move(request_id),
-        .behavior   = behavior,
+        .behavior = behavior,
     };
 }
 
@@ -398,15 +389,15 @@ inline auto parse_permission_reply(std::string_view reply)
 // silently, or show a permission prompt to the user.
 enum class ChannelPermission : std::uint8_t {
     Allowed = 0,  // Silent allow — no dialog shown
-    Denied  = 1,  // Silent deny — tool call rejected
-    Prompt  = 2,  // Show permission dialog (default for unknown tools)
+    Denied = 1,   // Silent deny — tool call rejected
+    Prompt = 2,   // Show permission dialog (default for unknown tools)
 };
 
 // Scope granularity for permission rules
 enum class ChannelPermissionScope : std::uint8_t {
     Global = 0,  // Applies to all servers and all tools
     Server = 1,  // Applies to all tools on a specific server
-    Tool   = 2,  // Applies to a specific tool on a specific server
+    Tool = 2,    // Applies to a specific tool on a specific server
 };
 
 // ---------------------------------------------------------------------------
@@ -417,10 +408,10 @@ enum class ChannelPermissionScope : std::uint8_t {
 // A rule associates a (scope, server_name?, tool_name?) tuple with a
 // permission decision. Optional fields are empty strings when not set.
 struct ChannelPermissionRule {
-    ChannelPermissionScope scope       = ChannelPermissionScope::Global;
-    std::string            server_name;  // Set when scope >= Server
-    std::string            tool_name;    // Set when scope == Tool
-    ChannelPermission      permission   = ChannelPermission::Prompt;
+    ChannelPermissionScope scope = ChannelPermissionScope::Global;
+    std::string server_name;  // Set when scope >= Server
+    std::string tool_name;    // Set when scope == Tool
+    ChannelPermission permission = ChannelPermission::Prompt;
 };
 
 // ---------------------------------------------------------------------------
@@ -476,19 +467,15 @@ public:
 
     // Resolve the effective permission for a tool on a server using
     // most-specific-wins: Tool > Server > Global > default Prompt.
-    [[nodiscard]] ChannelPermission check_permission(
-        std::string_view server_name,
-        std::string_view tool_name) const
-    {
+    [[nodiscard]] ChannelPermission check_permission(std::string_view server_name,
+                                                     std::string_view tool_name) const {
         std::lock_guard lock(mutex_);
         return resolve_permission_locked(server_name, tool_name);
     }
 
     // Alias for check_permission.
-    [[nodiscard]] ChannelPermission get_effective_permission(
-        std::string_view server_name,
-        std::string_view tool_name) const
-    {
+    [[nodiscard]] ChannelPermission get_effective_permission(std::string_view server_name,
+                                                             std::string_view tool_name) const {
         return check_permission(server_name, tool_name);
     }
 
@@ -503,10 +490,8 @@ public:
 
     // Remove a rule by identity. Returns true if a rule was removed.
     // Triggers an implicit save() on success.
-    bool remove_rule(ChannelPermissionScope scope,
-                     std::string_view server_name,
-                     std::string_view tool_name)
-    {
+    bool remove_rule(ChannelPermissionScope scope, std::string_view server_name,
+                     std::string_view tool_name) {
         std::lock_guard lock(mutex_);
         auto it = find_rule_locked(scope, server_name, tool_name);
         if (it == rules_.end()) return false;
@@ -534,34 +519,31 @@ public:
     // Create a Global-scope rule.
     static ChannelPermissionRule make_global_rule(ChannelPermission perm) {
         return ChannelPermissionRule{
-            .scope       = ChannelPermissionScope::Global,
+            .scope = ChannelPermissionScope::Global,
             .server_name = {},
-            .tool_name   = {},
-            .permission  = perm,
+            .tool_name = {},
+            .permission = perm,
         };
     }
 
     // Create a Server-scope rule.
-    static ChannelPermissionRule make_server_rule(
-        std::string_view server, ChannelPermission perm)
-    {
+    static ChannelPermissionRule make_server_rule(std::string_view server, ChannelPermission perm) {
         return ChannelPermissionRule{
-            .scope       = ChannelPermissionScope::Server,
+            .scope = ChannelPermissionScope::Server,
             .server_name = std::string(server),
-            .tool_name   = {},
-            .permission  = perm,
+            .tool_name = {},
+            .permission = perm,
         };
     }
 
     // Create a Tool-scope rule.
-    static ChannelPermissionRule make_tool_rule(
-        std::string_view server, std::string_view tool, ChannelPermission perm)
-    {
+    static ChannelPermissionRule make_tool_rule(std::string_view server, std::string_view tool,
+                                                ChannelPermission perm) {
         return ChannelPermissionRule{
-            .scope       = ChannelPermissionScope::Tool,
+            .scope = ChannelPermissionScope::Tool,
             .server_name = std::string(server),
-            .tool_name   = std::string(tool),
-            .permission  = perm,
+            .tool_name = std::string(tool),
+            .permission = perm,
         };
     }
 
@@ -575,8 +557,7 @@ public:
         // Test/isolation override: a dedicated path keeps parallel test
         // processes from clobbering each other (and from touching the real
         // user file). Mirrors the LOOM_*_FILE override convention.
-        if (const char* override_path =
-                std::getenv("LOOM_CHANNEL_PERMISSIONS_FILE");
+        if (const char* override_path = std::getenv("LOOM_CHANNEL_PERMISSIONS_FILE");
             override_path && *override_path) {
             return fs::path(override_path);
         }
@@ -672,36 +653,28 @@ private:
             yyjson_mut_val* obj = yyjson_mut_obj(doc);
 
             // scope
-            yyjson_mut_obj_add_str(doc, obj, "scope",
-                scope_to_string(rule.scope).data());
+            yyjson_mut_obj_add_str(doc, obj, "scope", scope_to_string(rule.scope).data());
 
             // server_name (only for Server / Tool scope)
-            if (rule.scope >= ChannelPermissionScope::Server &&
-                !rule.server_name.empty())
-            {
-                yyjson_mut_obj_add_str(doc, obj, "server_name",
-                    rule.server_name.c_str());
+            if (rule.scope >= ChannelPermissionScope::Server && !rule.server_name.empty()) {
+                yyjson_mut_obj_add_str(doc, obj, "server_name", rule.server_name.c_str());
             }
 
             // tool_name (only for Tool scope)
-            if (rule.scope == ChannelPermissionScope::Tool &&
-                !rule.tool_name.empty())
-            {
-                yyjson_mut_obj_add_str(doc, obj, "tool_name",
-                    rule.tool_name.c_str());
+            if (rule.scope == ChannelPermissionScope::Tool && !rule.tool_name.empty()) {
+                yyjson_mut_obj_add_str(doc, obj, "tool_name", rule.tool_name.c_str());
             }
 
             // permission
             yyjson_mut_obj_add_str(doc, obj, "permission",
-                permission_to_string(rule.permission).data());
+                                   permission_to_string(rule.permission).data());
 
             yyjson_mut_arr_append(rules_arr, obj);
         }
 
         // Write to file.
         size_t len = 0;
-        char* json = yyjson_mut_write(doc,
-            YYJSON_WRITE_PRETTY | YYJSON_WRITE_ESCAPE_SLASHES, &len);
+        char* json = yyjson_mut_write(doc, YYJSON_WRITE_PRETTY | YYJSON_WRITE_ESCAPE_SLASHES, &len);
         yyjson_mut_doc_free(doc);
 
         if (!json) return;
@@ -714,18 +687,16 @@ private:
     }
 
     // Most-specific-wins resolution.
-    ChannelPermission resolve_permission_locked(
-        std::string_view server_name,
-        std::string_view tool_name) const noexcept
-    {
-        ChannelPermission best_perm   = ChannelPermission::Prompt;  // default
-        int               best_score  = -1;
+    ChannelPermission resolve_permission_locked(std::string_view server_name,
+                                                std::string_view tool_name) const noexcept {
+        ChannelPermission best_perm = ChannelPermission::Prompt;  // default
+        int best_score = -1;
 
         for (const auto& rule : rules_) {
             int score = rule_match_score(rule, server_name, tool_name);
             if (score > best_score) {
                 best_score = score;
-                best_perm  = rule.permission;
+                best_perm = rule.permission;
             }
         }
 
@@ -737,46 +708,39 @@ private:
     //   Server match = 2
     //   Global match = 1
     //   No match     = -1
-    static int rule_match_score(const ChannelPermissionRule& rule,
-                                std::string_view server_name,
-                                std::string_view tool_name) noexcept
-    {
+    static int rule_match_score(const ChannelPermissionRule& rule, std::string_view server_name,
+                                std::string_view tool_name) noexcept {
         switch (rule.scope) {
-            case ChannelPermissionScope::Tool:
-                if (rule.server_name == server_name &&
-                    rule.tool_name == tool_name) return 3;
-                return -1;
+        case ChannelPermissionScope::Tool:
+            if (rule.server_name == server_name && rule.tool_name == tool_name) return 3;
+            return -1;
 
-            case ChannelPermissionScope::Server:
-                if (rule.server_name == server_name) return 2;
-                return -1;
+        case ChannelPermissionScope::Server:
+            if (rule.server_name == server_name) return 2;
+            return -1;
 
-            case ChannelPermissionScope::Global:
-                return 1;
+        case ChannelPermissionScope::Global:
+            return 1;
         }
         return -1;
     }
 
     // Find a rule by exact identity. Returns rules_.end() if not found.
-    std::vector<ChannelPermissionRule>::iterator find_rule_locked(
-        ChannelPermissionScope scope,
-        std::string_view server_name,
-        std::string_view tool_name) noexcept
-    {
-        return std::find_if(rules_.begin(), rules_.end(),
-            [&](const ChannelPermissionRule& r) {
-                if (r.scope != scope) return false;
-                switch (scope) {
-                    case ChannelPermissionScope::Global:
-                        return true;
-                    case ChannelPermissionScope::Server:
-                        return r.server_name == server_name;
-                    case ChannelPermissionScope::Tool:
-                        return r.server_name == server_name &&
-                               r.tool_name == tool_name;
-                }
-                return false;
-            });
+    std::vector<ChannelPermissionRule>::iterator
+    find_rule_locked(ChannelPermissionScope scope, std::string_view server_name,
+                     std::string_view tool_name) noexcept {
+        return std::find_if(rules_.begin(), rules_.end(), [&](const ChannelPermissionRule& r) {
+            if (r.scope != scope) return false;
+            switch (scope) {
+            case ChannelPermissionScope::Global:
+                return true;
+            case ChannelPermissionScope::Server:
+                return r.server_name == server_name;
+            case ChannelPermissionScope::Tool:
+                return r.server_name == server_name && r.tool_name == tool_name;
+            }
+            return false;
+        });
     }
 
     // Insert or update a rule by identity.
@@ -793,9 +757,7 @@ private:
     // JSON parsing helpers
     // ------------------------------------------------------------------
 
-    static std::optional<ChannelPermissionRule> parse_rule_json(
-        yyjson_val* obj)
-    {
+    static std::optional<ChannelPermissionRule> parse_rule_json(yyjson_val* obj) {
         if (!yyjson_is_obj(obj)) return std::nullopt;
 
         // scope (required)
@@ -814,23 +776,21 @@ private:
         std::string server_name;
         yyjson_val* server_val = yyjson_obj_get(obj, "server_name");
         if (server_val && yyjson_is_str(server_val)) {
-            server_name = std::string(
-                yyjson_get_str(server_val), yyjson_get_len(server_val));
+            server_name = std::string(yyjson_get_str(server_val), yyjson_get_len(server_val));
         }
 
         // tool_name (optional)
         std::string tool_name;
         yyjson_val* tool_val = yyjson_obj_get(obj, "tool_name");
         if (tool_val && yyjson_is_str(tool_val)) {
-            tool_name = std::string(
-                yyjson_get_str(tool_val), yyjson_get_len(tool_val));
+            tool_name = std::string(yyjson_get_str(tool_val), yyjson_get_len(tool_val));
         }
 
         return ChannelPermissionRule{
-            .scope       = scope,
+            .scope = scope,
             .server_name = std::move(server_name),
-            .tool_name   = std::move(tool_name),
-            .permission  = perm,
+            .tool_name = std::move(tool_name),
+            .permission = perm,
         };
     }
 
@@ -838,41 +798,39 @@ private:
     // String conversion helpers
     // ------------------------------------------------------------------
 
-    static std::string_view scope_to_string(
-        ChannelPermissionScope scope) noexcept
-    {
+    static std::string_view scope_to_string(ChannelPermissionScope scope) noexcept {
         switch (scope) {
-            case ChannelPermissionScope::Global: return "global";
-            case ChannelPermissionScope::Server: return "server";
-            case ChannelPermissionScope::Tool:   return "tool";
+        case ChannelPermissionScope::Global:
+            return "global";
+        case ChannelPermissionScope::Server:
+            return "server";
+        case ChannelPermissionScope::Tool:
+            return "tool";
         }
         return "global";
     }
 
-    static ChannelPermissionScope scope_from_string(
-        std::string_view s) noexcept
-    {
+    static ChannelPermissionScope scope_from_string(std::string_view s) noexcept {
         if (s == "server") return ChannelPermissionScope::Server;
-        if (s == "tool")   return ChannelPermissionScope::Tool;
+        if (s == "tool") return ChannelPermissionScope::Tool;
         return ChannelPermissionScope::Global;
     }
 
-    static std::string_view permission_to_string(
-        ChannelPermission perm) noexcept
-    {
+    static std::string_view permission_to_string(ChannelPermission perm) noexcept {
         switch (perm) {
-            case ChannelPermission::Allowed: return "allowed";
-            case ChannelPermission::Denied:  return "denied";
-            case ChannelPermission::Prompt:  return "prompt";
+        case ChannelPermission::Allowed:
+            return "allowed";
+        case ChannelPermission::Denied:
+            return "denied";
+        case ChannelPermission::Prompt:
+            return "prompt";
         }
         return "prompt";
     }
 
-    static ChannelPermission permission_from_string(
-        std::string_view s) noexcept
-    {
+    static ChannelPermission permission_from_string(std::string_view s) noexcept {
         if (s == "allowed") return ChannelPermission::Allowed;
-        if (s == "denied")  return ChannelPermission::Denied;
+        if (s == "denied") return ChannelPermission::Denied;
         return ChannelPermission::Prompt;
     }
 
@@ -880,8 +838,8 @@ private:
     // Data members
     // ------------------------------------------------------------------
 
-    mutable std::mutex                    mutex_;
-    std::vector<ChannelPermissionRule>    rules_;
+    mutable std::mutex mutex_;
+    std::vector<ChannelPermissionRule> rules_;
 };
 
 // ============================================================================
@@ -889,9 +847,7 @@ private:
 // ============================================================================
 
 // Creates a store and immediately loads rules from disk.
-inline auto create_channel_permission_store()
-    -> std::shared_ptr<ChannelPermissionStore>
-{
+inline auto create_channel_permission_store() -> std::shared_ptr<ChannelPermissionStore> {
     auto store = std::make_shared<ChannelPermissionStore>();
     store->load();
     return store;
@@ -902,27 +858,30 @@ inline auto create_channel_permission_store()
 // ============================================================================
 
 // Convert ChannelPermission to a human-readable string.
-[[nodiscard]] inline auto channel_permission_to_string(
-    ChannelPermission perm) -> std::string_view
-{
+[[nodiscard]] inline auto channel_permission_to_string(ChannelPermission perm) -> std::string_view {
     switch (perm) {
-        case ChannelPermission::Allowed: return "Allowed";
-        case ChannelPermission::Denied:  return "Denied";
-        case ChannelPermission::Prompt:  return "Prompt";
+    case ChannelPermission::Allowed:
+        return "Allowed";
+    case ChannelPermission::Denied:
+        return "Denied";
+    case ChannelPermission::Prompt:
+        return "Prompt";
     }
     return "Unknown";
 }
 
 // Convert ChannelPermissionScope to a human-readable string.
-[[nodiscard]] inline auto channel_permission_scope_to_string(
-    ChannelPermissionScope scope) -> std::string_view
-{
+[[nodiscard]] inline auto channel_permission_scope_to_string(ChannelPermissionScope scope)
+    -> std::string_view {
     switch (scope) {
-        case ChannelPermissionScope::Global: return "Global";
-        case ChannelPermissionScope::Server: return "Server";
-        case ChannelPermissionScope::Tool:   return "Tool";
+    case ChannelPermissionScope::Global:
+        return "Global";
+    case ChannelPermissionScope::Server:
+        return "Server";
+    case ChannelPermissionScope::Tool:
+        return "Tool";
     }
     return "Unknown";
 }
 
-} // namespace loom::services::mcp
+}  // namespace loom::services::mcp

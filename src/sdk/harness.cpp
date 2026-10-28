@@ -12,12 +12,12 @@ module loom.sdk.harness;
 import std;
 
 import loom.types.types;
-import loom.config.config;        // ConfigManager, Settings
-import loom.query.query_engine;  // QueryEngine, QueryOptions, ModelParams
-import loom.query.assembly;     // assemble, resolve_engine_config, AssemblyConfig/Overrides/Callbacks
-import loom.hooks.tool_permissions;  // AskUserResponseFn
-import loom.session.storage;    // load_messages (resume path)
-import loom.serdes.json;        // JsonVal (parse_session_message_value)
+import loom.config.config;      // ConfigManager, Settings
+import loom.query.query_engine; // QueryEngine, QueryOptions, ModelParams
+import loom.query.assembly; // assemble, resolve_engine_config, AssemblyConfig/Overrides/Callbacks
+import loom.hooks.tool_permissions; // AskUserResponseFn
+import loom.session.storage;        // load_messages (resume path)
+import loom.serdes.json;            // JsonVal (parse_session_message_value)
 
 namespace loom::sdk {
 
@@ -25,7 +25,7 @@ namespace {
 
 namespace fs = std::filesystem;
 
-} // namespace
+}  // namespace
 
 // ============================================================
 // Harness::Impl — declaration order is load-bearing (§2.3)
@@ -63,7 +63,8 @@ struct Harness::Impl {
 // Construction
 // ============================================================
 
-Harness::Harness(HarnessConfig config) : impl_(std::make_unique<Impl>()) {
+Harness::Harness(HarnessConfig config)
+    : impl_(std::make_unique<Impl>()) {
     // Move the callbacks out first (they are the declared-first members).
     impl_->permission_callback_ = std::move(config.permission_callback);
     impl_->event_sink_ = std::move(config.event_sink);
@@ -117,7 +118,8 @@ Harness::Harness(HarnessConfig config) : impl_(std::make_unique<Impl>()) {
     if (config.max_budget_usd) engine_config.max_budget_usd = *config.max_budget_usd;
     if (config.max_turns) engine_config.max_turns = *config.max_turns;
     if (config.system_prompt) engine_config.custom_system_prompt = *config.system_prompt;
-    if (config.append_system_prompt) engine_config.append_system_prompt = *config.append_system_prompt;
+    if (config.append_system_prompt)
+        engine_config.append_system_prompt = *config.append_system_prompt;
     // The resolver already set always_deny_rules from settings; append the
     // embedder's rules (both sources apply).
     for (auto& rule : config.always_deny_rules) {
@@ -173,8 +175,8 @@ loom::core::Result<TurnResult> Harness::run(const TurnOptions& options) {
     // engine's own aborted_ flag is auto-reset at query() entry, so this
     // harness-level flag is what makes "abort before run" observable.
     if (impl_->abort_requested_->exchange(false)) {
-        return std::unexpected(loom::core::Error::make(
-            loom::core::ErrorCode::InternalError, "Query interrupted"));
+        return std::unexpected(
+            loom::core::Error::make(loom::core::ErrorCode::InternalError, "Query interrupted"));
     }
 
     auto& engine = impl_->handle_->engine();
@@ -266,9 +268,9 @@ loom::core::Result<void> Harness::resume(std::string_view session_id) {
         return std::unexpected(*impl_->construction_error_);
     }
     if (!impl_->sessions_dir_) {
-        return std::unexpected(loom::core::Error::make(
-            loom::core::ErrorCode::InvalidInput,
-            "resume() requires sessions_dir in HarnessConfig"));
+        return std::unexpected(
+            loom::core::Error::make(loom::core::ErrorCode::InvalidInput,
+                                    "resume() requires sessions_dir in HarnessConfig"));
     }
 
     // Real engine resume path (§2.3): load_messages (rank 6) ->
@@ -280,9 +282,9 @@ loom::core::Result<void> Harness::resume(std::string_view session_id) {
     // phase-3 cost; see §3.4.)
     auto docs = loom::session::load_messages(*impl_->sessions_dir_, session_id);
     if (docs.empty()) {
-        return std::unexpected(loom::core::Error::make(
-            loom::core::ErrorCode::SessionNotFound,
-            std::format("No messages found for session {}", session_id)));
+        return std::unexpected(
+            loom::core::Error::make(loom::core::ErrorCode::SessionNotFound,
+                                    std::format("No messages found for session {}", session_id)));
     }
 
     std::vector<loom::core::Message> messages;
@@ -313,4 +315,4 @@ std::vector<loom::core::Message> Harness::conversation() const {
     return impl_->handle_->engine().get_conversation();
 }
 
-} // namespace loom::sdk
+}  // namespace loom::sdk

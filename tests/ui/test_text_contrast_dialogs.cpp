@@ -28,25 +28,30 @@ namespace doctor = loom::ui::doctor_screen;
 using namespace ftxui;
 using namespace std::chrono_literals;
 constexpr std::array kThemes{
-    theme::ThemeVariant::Dark, theme::ThemeVariant::Light,
+    theme::ThemeVariant::Dark,           theme::ThemeVariant::Light,
     theme::ThemeVariant::DarkDaltonized, theme::ThemeVariant::LightDaltonized,
-    theme::ThemeVariant::Monochrome, theme::ThemeVariant::LightAnsi,
+    theme::ThemeVariant::Monochrome,     theme::ThemeVariant::LightAnsi,
     theme::ThemeVariant::DarkAnsi};
+
 struct RestoreTheme {
     theme::Theme original = theme::current_theme();
+
     ~RestoreTheme() { theme::set_theme(original); }
 };
+
 Screen Paint(Element element) {
     auto screen = Screen::Create(Dimension::Fixed(160), Dimension::Fixed(80));
     Render(screen, std::move(element));
     return screen;
 }
+
 std::optional<std::pair<int, int>> Find(const Screen& screen, std::string_view word) {
     for (int y = 0; y < screen.dimy(); ++y) {
         for (int x = 0; x + static_cast<int>(word.size()) <= screen.dimx(); ++x) {
             bool match = true;
             for (std::size_t i = 0; i < word.size(); ++i) {
-                if (screen.PixelAt(x + static_cast<int>(i), y).character != std::string(1, word[i])) {
+                if (screen.PixelAt(x + static_cast<int>(i), y).character !=
+                    std::string(1, word[i])) {
                     match = false;
                     break;
                 }
@@ -56,6 +61,7 @@ std::optional<std::pair<int, int>> Find(const Screen& screen, std::string_view w
     }
     return std::nullopt;
 }
+
 std::optional<std::array<int, 3>> Rgb(Color color) {
     const auto sgr = color.Print(false);
     if (!sgr.starts_with("38;2;")) return std::nullopt;
@@ -70,6 +76,7 @@ std::optional<std::array<int, 3>> Rgb(Color color) {
     }
     return cursor == end ? std::optional(channels) : std::nullopt;
 }
+
 double Luminance(const std::array<int, 3>& rgb) {
     const auto linear = [](int channel) {
         const auto value = channel / 255.0;
@@ -77,6 +84,7 @@ double Luminance(const std::array<int, 3>& rgb) {
     };
     return linear(rgb[0]) * 0.2126 + linear(rgb[1]) * 0.7152 + linear(rgb[2]) * 0.0722;
 }
+
 void Readable(const Screen& screen, std::string_view word, Color foreground,
               std::optional<Color> background = std::nullopt) {
     SCOPED_TRACE(word);
@@ -91,13 +99,14 @@ void Readable(const Screen& screen, std::string_view word, Color foreground,
         // Transparent rows are certified against the palette's declared
         // canvas reference. An unknown physical/ANSI canvas is not certified.
         const auto resolved_background = pixel.background_color == Color::Default
-            ? theme::current_theme().palette->background : pixel.background_color;
+                                             ? theme::current_theme().palette->background
+                                             : pixel.background_color;
         EXPECT_NE(pixel.foreground_color, resolved_background);
         const auto variant = theme::current_theme().variant;
-        const bool rgb_variant = variant == theme::ThemeVariant::Dark
-            || variant == theme::ThemeVariant::Light
-            || variant == theme::ThemeVariant::DarkDaltonized
-            || variant == theme::ThemeVariant::LightDaltonized;
+        const bool rgb_variant = variant == theme::ThemeVariant::Dark ||
+                                 variant == theme::ThemeVariant::Light ||
+                                 variant == theme::ThemeVariant::DarkDaltonized ||
+                                 variant == theme::ThemeVariant::LightDaltonized;
         if (rgb_variant) {
             const auto fg = Rgb(pixel.foreground_color);
             const auto bg = Rgb(resolved_background);
@@ -109,17 +118,21 @@ void Readable(const Screen& screen, std::string_view word, Color foreground,
         }
     }
 }
+
 std::shared_ptr<trust::DialogState> TrustState() {
     auto state = std::make_shared<trust::DialogState>();
     state->props.forced_level = risk::RiskLevel::Critical;
     state->props.workspace_path_storage = std::make_shared<std::string>("/tmp/workspace");
     state->props.summary.action_summary = "Read private credentials";
     state->props.summary.risk_factors = {"External account access"};
-    state->props.summary.sensitive_paths = {{"/tmp/SECRET", "Credentials", risk::RiskLevel::Critical, "Sensitive credential explanation"}};
+    state->props.summary.sensitive_paths = {{"/tmp/SECRET", "Credentials",
+                                             risk::RiskLevel::Critical,
+                                             "Sensitive credential explanation"}};
     state->props.summary.domains = {"external.example"};
     state->show_second_confirm = true;
     return state;
 }
+
 doctor::DoctorDataModel DoctorModel() {
     doctor::DoctorDataModel model;
     model.version.current_version = "test-version";
@@ -135,7 +148,7 @@ doctor::DoctorDataModel DoctorModel() {
     result.elapsed = 42ms;
     return model;
 }
-}
+}  // namespace
 
 TEST(DialogTextContrast, SharedFrameSubtitleRemainsReadableInPanelAndModalLayouts) {
     RestoreTheme restore;
@@ -239,7 +252,8 @@ TEST(DialogTextContrast, ActualResumePickerKeepsSessionMetadataSearchAndSelectio
         for (auto word : {"age0", "100 msgs", "/project0"}) {
             Readable(screen, word, pal.muted, pal.message_actions_background);
         }
-        for (auto word : {"age1", "101 msgs", "/project1"}) Readable(screen, word, pal.muted);
+        for (auto word : {"age1", "101 msgs", "/project1"})
+            Readable(screen, word, pal.muted);
         auto& state = std::get<dsys::SessionPickerPayload>(payload);
         state.selected_index = 17;
         Readable(Paint(registry.render(payload, context)), "2 more", pal.muted);
@@ -285,6 +299,7 @@ TEST(DialogTextContrast, ActualTrustConsentDetailsAndCriticalInstructionsStayRea
         EXPECT_TRUE(state->yes_input.empty());
     }
 }
+
 TEST(DialogTextContrast, TrustSelectedAndDisabledActionsRetainTheirStates) {
     RestoreTheme restore;
     for (auto variant : kThemes) {
@@ -298,8 +313,8 @@ TEST(DialogTextContrast, TrustSelectedAndDisabledActionsRetainTheirStates) {
         Readable(screen, "Allow once", pal.warning);
         Readable(screen, "Remember this decision", pal.muted);
         Readable(screen, "Press [D] to show details", pal.muted);
-        const auto disabled = Paint(trust::RenderButtonRow({"Allow once", "Cancel"}, 0,
-            risk::RiskLevel::High, true));
+        const auto disabled =
+            Paint(trust::RenderButtonRow({"Allow once", "Cancel"}, 0, risk::RiskLevel::High, true));
         const auto at = Find(disabled, "Allow once");
         ASSERT_TRUE(at.has_value());
         EXPECT_TRUE(disabled.PixelAt(at->first, at->second).dim);
@@ -310,6 +325,7 @@ TEST(DialogTextContrast, TrustSelectedAndDisabledActionsRetainTheirStates) {
         EXPECT_EQ(state->selected, 0);
     }
 }
+
 TEST(DialogTextContrast, EnabledSettingsDescriptionsNavigationAndDirtyErrorsAreReadable) {
     RestoreTheme restore;
     for (auto variant : kThemes) {
@@ -321,8 +337,10 @@ TEST(DialogTextContrast, EnabledSettingsDescriptionsNavigationAndDirtyErrorsAreR
         Readable(permissions, "Default behaviour when tools request access", pal.muted);
         Readable(permissions, "Permit shell command execution", pal.muted);
         Readable(permissions, "Permit file creation and modification", pal.muted);
-        Readable(Paint(settings::RenderSidebar(settings::SettingsTabId::General)), "Permissions", pal.muted);
-        const auto disabled = Paint(settings::SettingRow("Unavailable", text("none"), "Disabled explanation", true));
+        Readable(Paint(settings::RenderSidebar(settings::SettingsTabId::General)), "Permissions",
+                 pal.muted);
+        const auto disabled =
+            Paint(settings::SettingRow("Unavailable", text("none"), "Disabled explanation", true));
         const auto at = Find(disabled, "Disabled explanation");
         ASSERT_TRUE(at.has_value());
         EXPECT_TRUE(disabled.PixelAt(at->first, at->second).dim);
@@ -339,6 +357,7 @@ TEST(DialogTextContrast, EnabledSettingsDescriptionsNavigationAndDirtyErrorsAreR
         EXPECT_TRUE(clean.PixelAt(save->first, save->second).dim);
     }
 }
+
 TEST(DialogTextContrast, SelectedSettingsMcpMetadataHasReadableFilledForegroundPairs) {
     RestoreTheme restore;
     for (auto variant : kThemes) {
@@ -352,16 +371,19 @@ TEST(DialogTextContrast, SelectedSettingsMcpMetadataHasReadableFilledForegroundP
         working.mcp_servers.front().command = "tool-runner";
         const auto selected = Paint(settings::RenderMCPTab(working, 1, 0));
         const auto selected_bg = variant == theme::ThemeVariant::Monochrome
-            ? pal.message_actions_background : pal.surface_tint_2;
+                                     ? pal.message_actions_background
+                                     : pal.surface_tint_2;
         Readable(selected, "stdio", pal.muted, selected_bg);
         Readable(selected, "tool-runner", pal.info, selected_bg);
         const auto ordinary = Paint(settings::RenderMCPTab(working, 1, -1));
         Readable(ordinary, "stdio", pal.muted);
         Readable(ordinary, "tool-runner", pal.info);
         working.mcp_servers.clear();
-        Readable(Paint(settings::RenderMCPTab(working, 1, -1)), "use /mcp add to configure", pal.muted);
+        Readable(Paint(settings::RenderMCPTab(working, 1, -1)), "use /mcp add to configure",
+                 pal.muted);
     }
 }
+
 TEST(DialogTextContrast, ActualRunningDoctorKeepsDiagnosticMetadataAndPendingStatusReadable) {
     RestoreTheme restore;
     for (auto variant : kThemes) {
@@ -369,7 +391,8 @@ TEST(DialogTextContrast, ActualRunningDoctorKeepsDiagnosticMetadataAndPendingSta
         theme::set_theme(variant);
         const auto& pal = *theme::current_theme().palette;
         const auto model = DoctorModel();
-        const auto screen = Paint(doctor::RenderRunningState(model, 0, 1, static_cast<doctor::CheckId>(1)));
+        const auto screen =
+            Paint(doctor::RenderRunningState(model, 0, 1, static_cast<doctor::CheckId>(1)));
         Readable(screen, "Credential probe failed", pal.danger);
         Readable(screen, "loom-diagnostic", pal.muted);
         Readable(screen, "/tmp/loom-install", pal.muted);
@@ -378,6 +401,7 @@ TEST(DialogTextContrast, ActualRunningDoctorKeepsDiagnosticMetadataAndPendingSta
         EXPECT_EQ(model.results.front().severity, doctor::DiagnosticSeverity::Error);
     }
 }
+
 TEST(DialogTextContrast, ExpandedDoctorResultsPreserveRequiredFailureReasonsAndActions) {
     RestoreTheme restore;
     for (auto variant : kThemes) {
@@ -397,6 +421,7 @@ TEST(DialogTextContrast, ExpandedDoctorResultsPreserveRequiredFailureReasonsAndA
         EXPECT_TRUE(expanded.front());
     }
 }
+
 TEST(DialogTextContrast, DoctorSummaryRetainsReadableActiveLockAndNavigationInformation) {
     RestoreTheme restore;
     for (auto variant : kThemes) {
@@ -416,57 +441,60 @@ TEST(DialogTextContrast, DoctorSummaryRetainsReadableActiveLockAndNavigationInfo
 
 TEST(DialogTextContrast, ActualSettingsWindowClearsOnlyItsOwnComposedSurfaceAndKeepsEvents) {
     RestoreTheme restore;
-    for (auto variant : kThemes) for (const int columns : {40, 80}) {
-        SCOPED_TRACE(std::format("theme={},columns={}", theme::variant_name(variant), columns));
-        theme::set_theme(variant);
-        const auto& pal = *theme::current_theme().palette;
-        loom::core::ConfigManager config;
-        int closed = 0;
-        settings::SettingsDialogOptions options;
-        options.on_close = [&](std::optional<std::string>, settings::CommandResultDisplay) { ++closed; };
-        auto component = settings::MakeSettingsDialog(config, std::move(options));
-        Box actual;
-        auto paint = [&](bool transcript) {
-            Elements rows;
-            for (int row = 0; row < 34; ++row)
-                rows.push_back(text(std::string(columns + 8, transcript ? '~' : ' ')));
-            auto screen = Screen::Create(Dimension::Fixed(columns + 8), Dimension::Fixed(34));
-            auto panel = component->Render() | size(WIDTH, EQUAL, columns)
-                | size(HEIGHT, EQUAL, 30) | reflect(actual);
-            Render(screen, dbox({vbox(std::move(rows)), std::move(panel) | center}));
-            return screen;
-        };
-        const auto clean = paint(false);
-        const auto composed = paint(true);
-        ASSERT_GE(actual.x_min, 0);
-        ASSERT_LT(actual.x_max, composed.dimx());
-        ASSERT_GE(actual.y_min, 0);
-        ASSERT_LT(actual.y_max, composed.dimy());
-        int blanks = 0;
-        for (int y = actual.y_min; y <= actual.y_max; ++y)
-            for (int x = actual.x_min; x <= actual.x_max; ++x) {
-                const auto& expected = clean.PixelAt(x, y);
-                const auto& pixel = composed.PixelAt(x, y);
-                ASSERT_EQ(pixel.character, expected.character) << "cell " << x << "," << y;
-                EXPECT_EQ(pixel.foreground_color, expected.foreground_color);
-                EXPECT_EQ(pixel.background_color, expected.background_color);
-                EXPECT_EQ(pixel.dim, expected.dim);
-                EXPECT_EQ(pixel.bold, expected.bold);
-                EXPECT_EQ(pixel.inverted, expected.inverted);
-                EXPECT_NE(pixel.character, "~");
-                if (pixel.character == " ") {
-                    ++blanks;
-                    EXPECT_EQ(pixel.background_color, pal.background);
+    for (auto variant : kThemes)
+        for (const int columns : {40, 80}) {
+            SCOPED_TRACE(std::format("theme={},columns={}", theme::variant_name(variant), columns));
+            theme::set_theme(variant);
+            const auto& pal = *theme::current_theme().palette;
+            loom::core::ConfigManager config;
+            int closed = 0;
+            settings::SettingsDialogOptions options;
+            options.on_close = [&](std::optional<std::string>, settings::CommandResultDisplay) {
+                ++closed;
+            };
+            auto component = settings::MakeSettingsDialog(config, std::move(options));
+            Box actual;
+            auto paint = [&](bool transcript) {
+                Elements rows;
+                for (int row = 0; row < 34; ++row)
+                    rows.push_back(text(std::string(columns + 8, transcript ? '~' : ' ')));
+                auto screen = Screen::Create(Dimension::Fixed(columns + 8), Dimension::Fixed(34));
+                auto panel = component->Render() | size(WIDTH, EQUAL, columns) |
+                             size(HEIGHT, EQUAL, 30) | reflect(actual);
+                Render(screen, dbox({vbox(std::move(rows)), std::move(panel) | center}));
+                return screen;
+            };
+            const auto clean = paint(false);
+            const auto composed = paint(true);
+            ASSERT_GE(actual.x_min, 0);
+            ASSERT_LT(actual.x_max, composed.dimx());
+            ASSERT_GE(actual.y_min, 0);
+            ASSERT_LT(actual.y_max, composed.dimy());
+            int blanks = 0;
+            for (int y = actual.y_min; y <= actual.y_max; ++y)
+                for (int x = actual.x_min; x <= actual.x_max; ++x) {
+                    const auto& expected = clean.PixelAt(x, y);
+                    const auto& pixel = composed.PixelAt(x, y);
+                    ASSERT_EQ(pixel.character, expected.character) << "cell " << x << "," << y;
+                    EXPECT_EQ(pixel.foreground_color, expected.foreground_color);
+                    EXPECT_EQ(pixel.background_color, expected.background_color);
+                    EXPECT_EQ(pixel.dim, expected.dim);
+                    EXPECT_EQ(pixel.bold, expected.bold);
+                    EXPECT_EQ(pixel.inverted, expected.inverted);
+                    EXPECT_NE(pixel.character, "~");
+                    if (pixel.character == " ") {
+                        ++blanks;
+                        EXPECT_EQ(pixel.background_color, pal.background);
+                    }
                 }
-            }
-        EXPECT_GT(blanks, 0);
-        EXPECT_EQ(composed.PixelAt(0, 0).character, "~");
-        EXPECT_TRUE(Find(clean, "General").has_value());
-        EXPECT_TRUE(component->OnEvent(Event::ArrowRight));
-        const auto changed = paint(false);
-        EXPECT_TRUE(Find(changed, "Model").has_value());
-        EXPECT_NE(clean.ToString(), changed.ToString());
-        EXPECT_TRUE(component->OnEvent(Event::Escape));
-        EXPECT_EQ(closed, 1);
-    }
+            EXPECT_GT(blanks, 0);
+            EXPECT_EQ(composed.PixelAt(0, 0).character, "~");
+            EXPECT_TRUE(Find(clean, "General").has_value());
+            EXPECT_TRUE(component->OnEvent(Event::ArrowRight));
+            const auto changed = paint(false);
+            EXPECT_TRUE(Find(changed, "Model").has_value());
+            EXPECT_NE(clean.ToString(), changed.ToString());
+            EXPECT_TRUE(component->OnEvent(Event::Escape));
+            EXPECT_EQ(closed, 1);
+        }
 }

@@ -6,8 +6,8 @@
 ///             file format, reserved shortcuts, /doctor validation, and
 ///             dynamic tables of actions/contexts.
 module;
-#include <cstdlib>
 #include <cstddef>
+#include <cstdlib>
 
 export module loom.skills.bundled.skill_keybindings;
 
@@ -26,98 +26,106 @@ export namespace loom::skills::bundled {
 
 /// All binding contexts
 inline const char* KNOWN_CONTEXTS[][2] = {
-    {"Global",          "Applies everywhere unless overridden by a specific context"},
-    {"Chat",            "Main chat input pane"},
-    {"Autocomplete",    "Autocomplete / suggestion dropdown"},
-    {"Confirmation",    "Yes/No permission and confirmation dialogs"},
-    {"Tabs",            "Tab management bar"},
-    {"Transcript",      "Message list / transcript view"},
-    {"HistorySearch",   "History search modal"},
-    {"Task",            "Task list panel"},
-    {"ThemePicker",     "Theme picker dialog"},
-    {"Help",            "Help modal"},
-    {"Attachments",     "Attachment list"},
-    {"Footer",          "Status / footer bar"},
+    {"Global", "Applies everywhere unless overridden by a specific context"},
+    {"Chat", "Main chat input pane"},
+    {"Autocomplete", "Autocomplete / suggestion dropdown"},
+    {"Confirmation", "Yes/No permission and confirmation dialogs"},
+    {"Tabs", "Tab management bar"},
+    {"Transcript", "Message list / transcript view"},
+    {"HistorySearch", "History search modal"},
+    {"Task", "Task list panel"},
+    {"ThemePicker", "Theme picker dialog"},
+    {"Help", "Help modal"},
+    {"Attachments", "Attachment list"},
+    {"Footer", "Status / footer bar"},
     {"MessageSelector", "Multi-message selection mode"},
-    {"DiffDialog",      "Diff review dialog"},
-    {"ModelPicker",     "Model picker dialog"},
-    {"Select",          "Generic selection lists"},
+    {"DiffDialog", "Diff review dialog"},
+    {"ModelPicker", "Model picker dialog"},
+    {"Select", "Generic selection lists"},
 };
 
 /// Key binding actions (prefix:context mapping for dynamic inference)
 inline const char* PREFIX_TO_CONTEXT[][2] = {
-    {"app",             "Global"},
-    {"history",         "Global or Chat"},
-    {"chat",            "Chat"},
-    {"autocomplete",    "Autocomplete"},
-    {"confirm",         "Confirmation"},
-    {"tabs",            "Tabs"},
-    {"transcript",      "Transcript"},
-    {"historySearch",   "HistorySearch"},
-    {"task",            "Task"},
-    {"theme",           "ThemePicker"},
-    {"help",            "Help"},
-    {"attachments",     "Attachments"},
-    {"footer",          "Footer"},
+    {"app", "Global"},
+    {"history", "Global or Chat"},
+    {"chat", "Chat"},
+    {"autocomplete", "Autocomplete"},
+    {"confirm", "Confirmation"},
+    {"tabs", "Tabs"},
+    {"transcript", "Transcript"},
+    {"historySearch", "HistorySearch"},
+    {"task", "Task"},
+    {"theme", "ThemePicker"},
+    {"help", "Help"},
+    {"attachments", "Attachments"},
+    {"footer", "Footer"},
     {"messageSelector", "MessageSelector"},
-    {"diff",            "DiffDialog"},
-    {"modelPicker",     "ModelPicker"},
-    {"select",          "Select"},
-    {"permission",      "Confirmation"},
+    {"diff", "DiffDialog"},
+    {"modelPicker", "ModelPicker"},
+    {"select", "Select"},
+    {"permission", "Confirmation"},
 };
 
 /// Common keyboard actions (subset of KEYBINDING_ACTIONS with plausible defaults;
 /// full table populated dynamically when runtime schema is available)
 struct DefaultBinding {
     const char* action;
-    const char* keys;   // comma-separated
+    const char* keys;  // comma-separated
     const char* context;
 };
+
 inline DefaultBinding DEFAULT_BINDINGS[] = {
-    {"app:toggleTodos",         "Ctrl+K Ctrl+T",   "Global"},
-    {"app:help",                "Ctrl+/",          "Global"},
-    {"app:exit",                "Ctrl+D",          "Global"},
-    {"app:clearScreen",         "Ctrl+L",          "Global"},
-    {"app:interrupt",           "Ctrl+C",          "Global"},
-    {"chat:submit",             "Enter",           "Chat"},
-    {"chat:newline",            "Alt+Enter",       "Chat"},
-    {"chat:externalEditor",     "Ctrl+G",          "Chat"},
-    {"chat:historyUp",          "Up",              "Chat"},
-    {"chat:historyDown",        "Down",            "Chat"},
-    {"historySearch:open",      "Ctrl+R",          "Global"},
-    {"tabs:new",                "Ctrl+T",          "Tabs"},
-    {"tabs:close",              "Ctrl+W",          "Tabs"},
-    {"tabs:next",               "Ctrl+Tab",        "Tabs"},
-    {"tabs:prev",               "Ctrl+Shift+Tab",  "Tabs"},
-    {"confirm:accept",          "Y",               "Confirmation"},
-    {"confirm:reject",          "N",               "Confirmation"},
+    {"app:toggleTodos", "Ctrl+K Ctrl+T", "Global"},
+    {"app:help", "Ctrl+/", "Global"},
+    {"app:exit", "Ctrl+D", "Global"},
+    {"app:clearScreen", "Ctrl+L", "Global"},
+    {"app:interrupt", "Ctrl+C", "Global"},
+    {"chat:submit", "Enter", "Chat"},
+    {"chat:newline", "Alt+Enter", "Chat"},
+    {"chat:externalEditor", "Ctrl+G", "Chat"},
+    {"chat:historyUp", "Up", "Chat"},
+    {"chat:historyDown", "Down", "Chat"},
+    {"historySearch:open", "Ctrl+R", "Global"},
+    {"tabs:new", "Ctrl+T", "Tabs"},
+    {"tabs:close", "Ctrl+W", "Tabs"},
+    {"tabs:next", "Ctrl+Tab", "Tabs"},
+    {"tabs:prev", "Ctrl+Shift+Tab", "Tabs"},
+    {"confirm:accept", "Y", "Confirmation"},
+    {"confirm:reject", "N", "Confirmation"},
 };
 
 /// Non-rebindable shortcuts (binding these will always raise an error)
-struct ReservedShortcut { const char* key; const char* reason; };
-inline ReservedShortcut NON_REBINDABLE[] = {
-    {"Ctrl+C",  "Terminal interrupt (SIGINT) — cannot be rebound"},
-    {"Ctrl+Z",  "Terminal suspend (SIGTSTP) — cannot be rebound"},
-    {"Ctrl+D",  "EOF signal — reserved when input is empty"},
-    {"Ctrl+S",  "Terminal XOFF flow control (may be unavoidable)"},
-    {"Ctrl+Q",  "Terminal XON flow control"},
+struct ReservedShortcut {
+    const char* key;
+    const char* reason;
 };
+
+inline ReservedShortcut NON_REBINDABLE[] = {
+    {"Ctrl+C", "Terminal interrupt (SIGINT) — cannot be rebound"},
+    {"Ctrl+Z", "Terminal suspend (SIGTSTP) — cannot be rebound"},
+    {"Ctrl+D", "EOF signal — reserved when input is empty"},
+    {"Ctrl+S", "Terminal XOFF flow control (may be unavoidable)"},
+    {"Ctrl+Q", "Terminal XON flow control"},
+};
+
 /// Shortcut reserved for terminal conventions (warned about, not blocked).
-struct TerminalReservedShortcut { const char* key; const char* reason; const char* level; };
+struct TerminalReservedShortcut {
+    const char* key;
+    const char* reason;
+    const char* level;
+};
+
 inline TerminalReservedShortcut TERMINAL_RESERVED[] = {
-    {"Ctrl+B",  "tmux default prefix key",              "warning"},
-    {"Ctrl+A",  "GNU screen default prefix key",        "warning"},
-    {"Ctrl+R",  "Terminal reverse history search",      "warning"},
-    {"Ctrl+L",  "Terminal form-feed / clear screen",    "warning"},
-    {"Ctrl+V",  "Terminal literal-next (verbatim insert)", "warning"},
+    {"Ctrl+B", "tmux default prefix key", "warning"},
+    {"Ctrl+A", "GNU screen default prefix key", "warning"},
+    {"Ctrl+R", "Terminal reverse history search", "warning"},
+    {"Ctrl+L", "Terminal form-feed / clear screen", "warning"},
+    {"Ctrl+V", "Terminal literal-next (verbatim insert)", "warning"},
 };
 inline ReservedShortcut MACOS_RESERVED[] = {
-    {"Cmd+Q",   "Quit application — macOS system"},
-    {"Cmd+H",   "Hide application — macOS system"},
-    {"Cmd+M",   "Minimize window — macOS system"},
-    {"Cmd+W",   "Close window — macOS system"},
-    {"Cmd+,",   "Preferences — macOS system"},
-    {"Cmd+Space","Spotlight search — macOS system"},
+    {"Cmd+Q", "Quit application — macOS system"}, {"Cmd+H", "Hide application — macOS system"},
+    {"Cmd+M", "Minimize window — macOS system"},  {"Cmd+W", "Close window — macOS system"},
+    {"Cmd+,", "Preferences — macOS system"},      {"Cmd+Space", "Spotlight search — macOS system"},
 };
 
 // ---------------------------------------------------------------------------
@@ -127,9 +135,8 @@ inline ReservedShortcut MACOS_RESERVED[] = {
 namespace detail {
 
 /// Build a markdown table from headers + rows.
-inline std::string markdown_table(
-    const std::vector<std::string>& headers,
-    const std::vector<std::vector<std::string>>& rows) {
+inline std::string markdown_table(const std::vector<std::string>& headers,
+                                  const std::vector<std::vector<std::string>>& rows) {
 
     std::ostringstream oss;
     auto join = [&](const std::vector<std::string>& v, const char* sep) {
@@ -138,7 +145,9 @@ inline std::string markdown_table(
             oss << v[i];
         }
     };
-    oss << "| "; join(headers, " | "); oss << " |\n";
+    oss << "| ";
+    join(headers, " | ");
+    oss << " |\n";
     oss << "| ";
     for (size_t i = 0; i < headers.size(); ++i) {
         if (i) oss << " | ";
@@ -146,7 +155,9 @@ inline std::string markdown_table(
     }
     oss << " |\n";
     for (const auto& row : rows) {
-        oss << "| "; join(row, " | "); oss << " |\n";
+        oss << "| ";
+        join(row, " | ");
+        oss << " |\n";
     }
     return oss.str();
 }
@@ -162,7 +173,7 @@ inline std::string infer_context_from_action(std::string_view action) {
     return "Unknown";
 }
 
-} // namespace detail
+}  // namespace detail
 
 /// Generate the "Available Contexts" markdown table dynamically.
 inline std::string generate_contexts_table() {
@@ -327,41 +338,20 @@ inline const char* SECTION_BEHAVIORAL_RULES = R"(## Behavioral Rules
 inline std::string section_doctor() {
     std::vector<std::string> headers = {"Issue", "Cause", "Fix"};
     std::vector<std::vector<std::string>> rows = {
-        {
-            "`keybindings.json must have a \"bindings\" array`",
-            "Missing wrapper object",
-            "Wrap bindings in `{ \"bindings\": [...] }`"
-        },
-        {
-            "`\"bindings\" must be an array`",
-            "`bindings` is not an array",
-            "Set `\"bindings\"` to an array: `[{ context: ..., bindings: ... }]`"
-        },
-        {
-            "`Unknown context \"X\"`",
-            "Typo or invalid context name",
-            "Use exact context names from the Available Contexts table"
-        },
-        {
-            "`Duplicate key \"X\" in Y bindings`",
-            "Same key defined twice in one context",
-            "Remove the duplicate; JSON uses only the last value"
-        },
-        {
-            "`\"X\" may not work: ...`",
-            "Key conflicts with terminal/OS reserved shortcut",
-            "Choose a different key (see Reserved Shortcuts section)"
-        },
-        {
-            "`Could not parse keystroke \"X\"`",
-            "Invalid key syntax",
-            "Check syntax: use `+` between modifiers, valid key names"
-        },
-        {
-            "`Invalid action for \"X\"`",
-            "Action value is not a string or null",
-            "Actions must be strings like `\"app:help\"` or `null` to unbind"
-        },
+        {"`keybindings.json must have a \"bindings\" array`", "Missing wrapper object",
+         "Wrap bindings in `{ \"bindings\": [...] }`"},
+        {"`\"bindings\" must be an array`", "`bindings` is not an array",
+         "Set `\"bindings\"` to an array: `[{ context: ..., bindings: ... }]`"},
+        {"`Unknown context \"X\"`", "Typo or invalid context name",
+         "Use exact context names from the Available Contexts table"},
+        {"`Duplicate key \"X\" in Y bindings`", "Same key defined twice in one context",
+         "Remove the duplicate; JSON uses only the last value"},
+        {"`\"X\" may not work: ...`", "Key conflicts with terminal/OS reserved shortcut",
+         "Choose a different key (see Reserved Shortcuts section)"},
+        {"`Could not parse keystroke \"X\"`", "Invalid key syntax",
+         "Check syntax: use `+` between modifiers, valid key names"},
+        {"`Invalid action for \"X\"`", "Action value is not a string or null",
+         "Actions must be strings like `\"app:help\"` or `null` to unbind"},
     };
 
     std::ostringstream oss;
@@ -372,7 +362,8 @@ validates `~/.loom/keybindings.json`.
 
 ### Common Issues and Fixes
 
-)" << detail::markdown_table(headers, rows) << R"(
+)" << detail::markdown_table(headers, rows)
+        << R"(
 ### Example /doctor Output
 
 ```
@@ -394,8 +385,8 @@ potential conflicts but the binding may still work.)";
 
 /// Build the complete keybindings-help prompt.
 /// If `user_args` is provided, appends a "## User Request" section.
-inline std::string build_keybindings_help_prompt(
-    std::optional<std::string_view> user_args = std::nullopt) {
+inline std::string
+build_keybindings_help_prompt(std::optional<std::string_view> user_args = std::nullopt) {
 
     std::vector<std::string> sections = {
         SECTION_INTRO,
@@ -449,27 +440,26 @@ inline bool is_keybinding_customization_enabled() {
 loom::skills::SkillManifest get_keybindings_help_skill_manifest() {
     return loom::skills::SkillManifest{
         .name = "keybindings-help",
-        .description =
-            "Use when the user wants to customize keyboard shortcuts, rebind keys, add "
-            "chord bindings, or modify ~/.loom/keybindings.json. Examples: \"rebind "
-            "ctrl+s\", \"add a chord shortcut\", \"change the submit key\", "
-            "\"customize keybindings\".",
+        .description = "Use when the user wants to customize keyboard shortcuts, rebind keys, add "
+                       "chord bindings, or modify ~/.loom/keybindings.json. Examples: \"rebind "
+                       "ctrl+s\", \"add a chord shortcut\", \"change the submit key\", "
+                       "\"customize keybindings\".",
         .version = "1.0.0",
-        .triggers = {
-            "keybinding",
-            "keybindings",
-            "rebind",
-            "customize key",
-            "keyboard shortcut",
-            "keybindings.json",
-            "chord binding",
-            "unbind key",
-            "change submit key",
-            "shortcut",
-            "key binding",
-        },
-        .directory = {}
-    };
+        .triggers =
+            {
+                "keybinding",
+                "keybindings",
+                "rebind",
+                "customize key",
+                "keyboard shortcut",
+                "keybindings.json",
+                "chord binding",
+                "unbind key",
+                "change submit key",
+                "shortcut",
+                "key binding",
+            },
+        .directory = {}};
 }
 
-} // namespace loom::skills::bundled
+}  // namespace loom::skills::bundled

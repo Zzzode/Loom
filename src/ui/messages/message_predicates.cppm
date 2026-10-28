@@ -14,4 +14,4 @@ struct MessageLike {
     return message.type == "user" && !message.is_meta && !message.has_tool_use_result;
 }
 
-} // namespace loom::utils::message_predicates
+}  // namespace loom::utils::message_predicates

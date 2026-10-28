@@ -5,7 +5,6 @@
 /// is no npm installer to invoke.
 module;
 
-
 export module loom.commands.install;
 
 import std;
@@ -33,9 +32,7 @@ public:
         };
     }
 
-    [[nodiscard]] static VoidResult validate(const CommandContext&) {
-        return {};
-    }
+    [[nodiscard]] static VoidResult validate(const CommandContext&) { return {}; }
 
     [[nodiscard]] static Result<CommandResult> execute(const CommandContext&) {
         std::string out = "Loom (native C++ build):\n";
@@ -47,9 +44,7 @@ public:
         return CommandResult::success(std::move(out));
     }
 
-    [[nodiscard]] static std::vector<std::string> complete(std::string_view) {
-        return {};
-    }
+    [[nodiscard]] static std::vector<std::string> complete(std::string_view) { return {}; }
 };
 
-} // namespace loom::commands
+}  // namespace loom::commands

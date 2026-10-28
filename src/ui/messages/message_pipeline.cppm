@@ -30,11 +30,11 @@
 // ────────────────────────────────────────────────────────────────────────
 module;
 
+#include <ftxui/dom/elements.hpp>
+
 #include <cctype>
 #include <cstddef>
 #include <cstdint>
-
-#include <ftxui/dom/elements.hpp>
 
 export module loom.ui.messages.message_pipeline;
 
@@ -56,23 +56,23 @@ namespace figs = loom::ui::design::figures;
 /// (user-input filter).  Render sites switch on this to pick the right
 /// component — the render-layer dispatcher.
 enum class UserRowKind : std::uint8_t {
-    kPlainText = 0,           // literal user text, no tags
-    kBashInput = 1,           // <bash-input> wrapped text → RenderUserBashInput
-    kQuotedReply = 2,         // <quoted-reply> + body (two rows)
-    kToolInvocation = 3,      // <tool:name>result</tool:name> block
-    kSystemCommand = 4,       // <system> wrapper (stripped body)
-    kAttachment = 5,          // <at-file> / <at-agent> / <at-tool>
+    kPlainText = 0,       // literal user text, no tags
+    kBashInput = 1,       // <bash-input> wrapped text → RenderUserBashInput
+    kQuotedReply = 2,     // <quoted-reply> + body (two rows)
+    kToolInvocation = 3,  // <tool:name>result</tool:name> block
+    kSystemCommand = 4,   // <system> wrapper (stripped body)
+    kAttachment = 5,      // <at-file> / <at-agent> / <at-tool>
 };
 
 /// Output of Stage 4 USER_INPUT_FILTER: a single logical user row stripped
 /// of its XML envelope, classified for the right render component.
 struct FilteredUserRow {
     UserRowKind kind = UserRowKind::kPlainText;
-    std::string display_text;          // what to show (no XML tags)
-    std::string quoted_reply;          // if kind == kQuotedReply: the quoted block
-    std::string attachment_ref;        // if kind == kAttachment: raw "@ref"
-    std::string tool_name;             // if kind == kToolInvocation: the "name" part
-    bool is_transcript_only = false;   // showInTranscript override
+    std::string display_text;         // what to show (no XML tags)
+    std::string quoted_reply;         // if kind == kQuotedReply: the quoted block
+    std::string attachment_ref;       // if kind == kAttachment: raw "@ref"
+    std::string tool_name;            // if kind == kToolInvocation: the "name" part
+    bool is_transcript_only = false;  // showInTranscript override
 };
 
 // ─── Stage 1 Dedup: DedupTracker ───────────────────────────────────────────
@@ -87,11 +87,11 @@ struct FilteredUserRow {
 /// is also dropped (prevents the streaming_tools[id].complete flag from
 /// bouncing true→false→true when the server replays events).
 class DedupTracker {
-  public:
+public:
     enum class IndexState : std::uint8_t {
         kNotSeen = 0,
-        kOpen    = 1,    // Start seen, any number of Deltas allowed
-        kStopped = 2,    // Stop seen — further events rejected
+        kOpen = 1,     // Start seen, any number of Deltas allowed
+        kStopped = 2,  // Stop seen — further events rejected
     };
 
     /// Reset the tracker at the beginning of each new query / turn.
@@ -151,7 +151,7 @@ class DedupTracker {
         // A tool that has already been `End`ed cannot restart its Start.
         const auto [it, inserted] = seen_tool_use_ids_.emplace(std::string(tool_use_id));
         (void)it;
-        return inserted;   // first-ever mention → accept.
+        return inserted;  // first-ever mention → accept.
     }
 
     [[nodiscard]] bool should_accept_exec_end(std::string_view tool_use_id) {
@@ -165,9 +165,7 @@ class DedupTracker {
     /// Reset per-index dedup state (for a new API call within the same query
     /// tool-loop).  Preserves per-tool-use-id state so tool execution events
     /// that span the boundary aren't double-processed.
-    void clear_indices() noexcept {
-        index_states_.clear();
-    }
+    void clear_indices() noexcept { index_states_.clear(); }
 
     /// Expose state for tests.
     [[nodiscard]] IndexState state_of(std::size_t idx) const {
@@ -175,7 +173,7 @@ class DedupTracker {
         return (it == index_states_.end()) ? IndexState::kNotSeen : it->second;
     }
 
-  private:
+private:
     // NOTE: std::unordered_map over a flat vector for generality; typical
     // turn cardinality is < 30 indices, so either data structure is fine.
     std::unordered_map<std::size_t, IndexState> index_states_;
@@ -208,7 +206,7 @@ using xml_tags::extract_tag;
 /// Used to peel off processed envelope tags so downstream tags match cleanly.
 inline void strip_tag_all(std::string& text, std::string_view tag_name) noexcept {
     if (tag_name.empty()) return;
-    const std::string open  = std::string("<") + std::string(tag_name) + ">";
+    const std::string open = std::string("<") + std::string(tag_name) + ">";
     const std::string close = std::string("</") + std::string(tag_name) + ">";
 
     std::string out;
@@ -239,7 +237,7 @@ inline void strip_tag_all(std::string& text, std::string_view tag_name) noexcept
 match_tool_tag(std::string_view text) noexcept {
     const auto s = text.find("<tool:");
     if (s == std::string_view::npos) return std::nullopt;
-    const auto name_start = s + 6;   // len("<tool:")
+    const auto name_start = s + 6;  // len("<tool:")
     const auto name_end = text.find('>', name_start);
     if (name_end == std::string_view::npos) return std::nullopt;
     const std::string name(text.substr(name_start, name_end - name_start));
@@ -249,9 +247,7 @@ match_tool_tag(std::string_view text) noexcept {
     if (e == std::string_view::npos) {
         return std::make_pair(name, std::string(text.substr(content_start)));
     }
-    return std::make_pair(
-        name,
-        std::string(text.substr(content_start, e - content_start)));
+    return std::make_pair(name, std::string(text.substr(content_start, e - content_start)));
 }
 
 /// Stage 4 ENTRY POINT: take raw user input (possibly with XML tags) and
@@ -263,9 +259,8 @@ match_tool_tag(std::string_view text) noexcept {
 ///                                      → [{kBashInput, "make clean"}]
 ///   "<quoted-reply># old issue</quoted-reply>new comment"
 ///                                      → [{kQuotedReply, "new comment", "# old issue"}]
-[[nodiscard]] inline std::vector<FilteredUserRow> filter_user_text(
-    std::string_view raw_text) noexcept
-{
+[[nodiscard]] inline std::vector<FilteredUserRow>
+filter_user_text(std::string_view raw_text) noexcept {
     std::vector<FilteredUserRow> rows;
     // Fast path — no angle brackets → single plain-text row.
     if (raw_text.find('<') == std::string_view::npos) {
@@ -312,7 +307,7 @@ match_tool_tag(std::string_view text) noexcept {
             .tool_name = {},
             .is_transcript_only = false,
         });
-        return rows;   // <quoted-reply> is the outermost classifying tag
+        return rows;  // <quoted-reply> is the outermost classifying tag
     }
 
     // 3) <tool:NAME> … </tool:NAME> — can appear multiple times, once per tool
@@ -352,9 +347,12 @@ match_tool_tag(std::string_view text) noexcept {
             auto val = extract_tag(working, tag);
             if (!val) break;
             std::string prefix;
-            if (tag[3] == 'f') prefix = "@";                   // at-file → @
-            else if (tag[3] == 'a') prefix = "@";               // at-agent → @
-            else prefix = "@tool:";                             // at-tool → @tool:
+            if (tag[3] == 'f')
+                prefix = "@";  // at-file → @
+            else if (tag[3] == 'a')
+                prefix = "@";  // at-agent → @
+            else
+                prefix = "@tool:";  // at-tool → @tool:
             rows.push_back(FilteredUserRow{
                 .kind = UserRowKind::kAttachment,
                 .display_text = {},
@@ -370,8 +368,10 @@ match_tool_tag(std::string_view text) noexcept {
     // 6) Emit remaining plain text (if any non-whitespace content remains)
     {
         std::string_view v(working);
-        while (!v.empty() && std::isspace(static_cast<unsigned char>(v.front()))) v.remove_prefix(1);
-        while (!v.empty() && std::isspace(static_cast<unsigned char>(v.back())))  v.remove_suffix(1);
+        while (!v.empty() && std::isspace(static_cast<unsigned char>(v.front())))
+            v.remove_prefix(1);
+        while (!v.empty() && std::isspace(static_cast<unsigned char>(v.back())))
+            v.remove_suffix(1);
         if (!v.empty()) {
             rows.push_back(FilteredUserRow{
                 .kind = UserRowKind::kPlainText,
@@ -409,13 +409,13 @@ match_tool_tag(std::string_view text) noexcept {
 // NOTE: These are display-only fields; the engine preserves the FULL result
 // text in its conversation memory regardless of truncation here.
 
-inline constexpr std::size_t kMaxToolPreviewBytes = 4096;   // 4 * 1024
-inline constexpr std::size_t kMaxCompactPreviewChars = 200; // compactCard preview
+inline constexpr std::size_t kMaxToolPreviewBytes = 4096;    // 4 * 1024
+inline constexpr std::size_t kMaxCompactPreviewChars = 200;  // compactCard preview
 
 struct AugmentedToolResult {
-    bool        truncated   = false;
-    int         error_code  = 0;        // 0 = no code, >0 = shell exit/HTTP code
-    std::string preview;                // compact one-liner
+    bool truncated = false;
+    int error_code = 0;   // 0 = no code, >0 = shell exit/HTTP code
+    std::string preview;  // compact one-liner
 };
 
 /// Extract a numeric error code from the beginning of a tool result.
@@ -451,7 +451,8 @@ struct AugmentedToolResult {
     if (auto p = s.find("exit"); p != std::string_view::npos) {
         // Walk to first digit after "exit"
         auto q = p + 4;
-        while (q < n && !std::isdigit(static_cast<unsigned char>(head[q]))) ++q;
+        while (q < n && !std::isdigit(static_cast<unsigned char>(head[q])))
+            ++q;
         int val = 0;
         while (q < n && std::isdigit(static_cast<unsigned char>(head[q]))) {
             val = val * 10 + (head[q] - '0');
@@ -481,11 +482,12 @@ struct AugmentedToolResult {
     // Skip leading pure-whitespace lines.
     while (!v.empty()) {
         const auto nl = v.find_first_of("\r\n");
-        std::string_view line = (nl == std::string_view::npos)
-            ? v : v.substr(0, nl);
+        std::string_view line = (nl == std::string_view::npos) ? v : v.substr(0, nl);
         std::string_view t = line;
-        while (!t.empty() && std::isspace(static_cast<unsigned char>(t.front()))) t.remove_prefix(1);
-        while (!t.empty() && std::isspace(static_cast<unsigned char>(t.back())))  t.remove_suffix(1);
+        while (!t.empty() && std::isspace(static_cast<unsigned char>(t.front())))
+            t.remove_prefix(1);
+        while (!t.empty() && std::isspace(static_cast<unsigned char>(t.back())))
+            t.remove_suffix(1);
         if (!t.empty()) {
             // First non-empty line — truncate to kMaxCompactPreviewChars codepoints.
             // We count UTF-8 by start bytes to avoid slicing a multi-byte sequence.
@@ -510,13 +512,12 @@ struct AugmentedToolResult {
     return {};
 }
 
-[[nodiscard]] inline AugmentedToolResult augment_tool_result(
-    std::string_view full_result, bool is_error) noexcept
-{
+[[nodiscard]] inline AugmentedToolResult augment_tool_result(std::string_view full_result,
+                                                             bool is_error) noexcept {
     AugmentedToolResult a;
-    a.truncated  = full_result.size() > kMaxToolPreviewBytes;
+    a.truncated = full_result.size() > kMaxToolPreviewBytes;
     a.error_code = is_error ? parse_error_code(full_result) : 0;
-    a.preview    = build_compact_preview(full_result);
+    a.preview = build_compact_preview(full_result);
     return a;
 }
 

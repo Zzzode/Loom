@@ -32,7 +32,7 @@ bool block_layout_succeeds(std::string_view source, Work& work) {
 }
 
 bool layout_succeeds(std::string_view source, bool use_ascii, Work& work) {
-    return detail::layout_mermaid_payload(source,use_ascii,work).has_value();
+    return detail::layout_mermaid_payload(source, use_ascii, work).has_value();
 }
 
-} // namespace loom::ui::mermaid::testing
+}  // namespace loom::ui::mermaid::testing

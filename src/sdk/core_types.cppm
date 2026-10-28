@@ -42,9 +42,9 @@ using NonNullableUsage = std::unordered_map<std::string, int>;
 struct SDKUserMessage {
     static constexpr auto type = "user";
     std::unordered_map<std::string, std::string> message;  // API user message
-    std::optional<std::string> parent_tool_use_id;  // nullable
+    std::optional<std::string> parent_tool_use_id;         // nullable
     std::optional<bool> is_synthetic;
-    std::optional<std::string> priority;  // "now" | "next" | "later"
+    std::optional<std::string> priority;   // "now" | "next" | "later"
     std::optional<std::string> timestamp;  // ISO timestamp
     std::optional<std::string> uuid;
     std::optional<std::string> session_id;
@@ -65,7 +65,7 @@ struct SDKUserMessageReplay {
 struct SDKAssistantMessage {
     static constexpr auto type = "assistant";
     std::unordered_map<std::string, std::string> message;  // API assistant message
-    std::optional<std::string> parent_tool_use_id;  // nullable
+    std::optional<std::string> parent_tool_use_id;         // nullable
     std::optional<core_schemas::SDKAssistantMessageError> error;
     std::string uuid;
     std::string session_id;
@@ -144,7 +144,7 @@ struct SDKSystemMessage {
 /// SDK partial assistant message (streaming)
 struct SDKPartialAssistantMessage {
     static constexpr auto type = "stream_event";
-    std::string event_json;  // Raw stream event as JSON string
+    std::string event_json;                         // Raw stream event as JSON string
     std::optional<std::string> parent_tool_use_id;  // nullable
     std::string uuid;
     std::string session_id;
@@ -156,12 +156,14 @@ struct SDKCompactBoundaryMessage {
     static constexpr auto subtype = "compact_boundary";
     std::string trigger;  // "manual" | "auto"
     int pre_tokens = 0;
+
     // Preserved segment for message relinking
     struct PreservedSegment {
         std::string head_uuid;
         std::string anchor_uuid;
         std::string tail_uuid;
     };
+
     std::optional<PreservedSegment> preserved_segment;
     std::string uuid;
     std::string session_id;
@@ -222,18 +224,10 @@ struct SDKStreamlinedToolUseSummaryMessage {
 };
 
 /// Union of all SDK message types
-using SDKMessage = std::variant<
-    SDKAssistantMessage,
-    SDKUserMessage,
-    SDKUserMessageReplay,
-    SDKResultSuccess,
-    SDKResultError,
-    SDKSystemMessage,
-    SDKPartialAssistantMessage,
-    SDKCompactBoundaryMessage,
-    SDKStatusMessage,
-    SDKToolProgressMessage
->;
+using SDKMessage =
+    std::variant<SDKAssistantMessage, SDKUserMessage, SDKUserMessageReplay, SDKResultSuccess,
+                 SDKResultError, SDKSystemMessage, SDKPartialAssistantMessage,
+                 SDKCompactBoundaryMessage, SDKStatusMessage, SDKToolProgressMessage>;
 
 // ============================================================================
 // Protocol Constants
@@ -241,20 +235,18 @@ using SDKMessage = std::variant<
 
 /// Hook event names as compile-time constant array
 inline constexpr std::array HOOK_EVENTS = {
-    "PreToolUse", "PostToolUse", "PostToolUseFailure",
-    "Notification", "UserPromptSubmit", "SessionStart", "SessionEnd",
-    "Stop", "StopFailure", "SubagentStart", "SubagentStop",
-    "PreCompact", "PostCompact", "PermissionRequest", "PermissionDenied",
-    "Setup", "TeammateIdle", "TaskCreated", "TaskCompleted",
-    "Elicitation", "ElicitationResult", "ConfigChange",
-    "WorktreeCreate", "WorktreeRemove", "InstructionsLoaded",
-    "CwdChanged", "FileChanged",
+    "PreToolUse",         "PostToolUse",       "PostToolUseFailure", "Notification",
+    "UserPromptSubmit",   "SessionStart",      "SessionEnd",         "Stop",
+    "StopFailure",        "SubagentStart",     "SubagentStop",       "PreCompact",
+    "PostCompact",        "PermissionRequest", "PermissionDenied",   "Setup",
+    "TeammateIdle",       "TaskCreated",       "TaskCompleted",      "Elicitation",
+    "ElicitationResult",  "ConfigChange",      "WorktreeCreate",     "WorktreeRemove",
+    "InstructionsLoaded", "CwdChanged",        "FileChanged",
 };
 
 /// Exit reasons as compile-time constant array
 inline constexpr std::array EXIT_REASONS = {
-    "clear", "resume", "logout", "prompt_input_exit",
-    "other", "bypass_permissions_disabled",
+    "clear", "resume", "logout", "prompt_input_exit", "other", "bypass_permissions_disabled",
 };
 
-} // namespace loom::sdk::core_types
+}  // namespace loom::sdk::core_types

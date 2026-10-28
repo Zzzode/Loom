@@ -4,10 +4,9 @@ import std;
 
 export namespace loom::utils::settings_merge {
 
-[[nodiscard]] inline std::vector<std::string> merge_arrays_unique(
-    const std::vector<std::string>& target,
-    const std::vector<std::string>& source
-) {
+[[nodiscard]] inline std::vector<std::string>
+merge_arrays_unique(const std::vector<std::string>& target,
+                    const std::vector<std::string>& source) {
     std::vector<std::string> result;
     std::unordered_set<std::string> seen;
     result.reserve(target.size() + source.size());
@@ -20,4 +19,4 @@ export namespace loom::utils::settings_merge {
     return result;
 }
 
-} // namespace loom::utils::settings_merge
+}  // namespace loom::utils::settings_merge

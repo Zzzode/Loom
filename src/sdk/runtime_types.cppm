@@ -13,7 +13,7 @@ export module loom.sdk.runtime_types;
 import std;
 
 import loom.sdk.core_types;
-import loom.model.effort;  // arch-check: keep-import (EffortLevel CONVERGE alias)
+import loom.model.effort; // arch-check: keep-import (EffortLevel CONVERGE alias)
 
 export namespace loom::sdk::runtime {
 
@@ -163,4 +163,4 @@ struct McpSdkServerConfigWithInstance {
     std::shared_ptr<void> server;
 };
 
-} // namespace loom::sdk::runtime
+}  // namespace loom::sdk::runtime

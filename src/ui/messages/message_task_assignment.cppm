@@ -36,11 +36,16 @@ struct TaskAssignmentOptions {
 [[nodiscard]] inline Element render_task_assignment(const TaskAssignmentOptions& opts) {
     auto status_text = [&]() -> std::pair<std::string, Color> {
         switch (opts.status) {
-            case TaskAssignmentStatus::Assigned: return {"ASSIGNED", loom::ui::design::theme::current_theme().palette->info};
-            case TaskAssignmentStatus::InProgress: return {"IN PROGRESS", loom::ui::design::theme::current_theme().palette->warning};
-            case TaskAssignmentStatus::Completed: return {"DONE", loom::ui::design::theme::current_theme().palette->success};
-            case TaskAssignmentStatus::Failed: return {"FAILED", loom::ui::design::theme::current_theme().palette->danger};
-            case TaskAssignmentStatus::Cancelled: return {"CANCELLED", loom::ui::design::theme::current_theme().palette->muted};
+        case TaskAssignmentStatus::Assigned:
+            return {"ASSIGNED", loom::ui::design::theme::current_theme().palette->info};
+        case TaskAssignmentStatus::InProgress:
+            return {"IN PROGRESS", loom::ui::design::theme::current_theme().palette->warning};
+        case TaskAssignmentStatus::Completed:
+            return {"DONE", loom::ui::design::theme::current_theme().palette->success};
+        case TaskAssignmentStatus::Failed:
+            return {"FAILED", loom::ui::design::theme::current_theme().palette->danger};
+        case TaskAssignmentStatus::Cancelled:
+            return {"CANCELLED", loom::ui::design::theme::current_theme().palette->muted};
         }
         return {"UNKNOWN", loom::ui::design::theme::current_theme().palette->text};
     }();
@@ -54,4 +59,4 @@ struct TaskAssignmentOptions {
     });
 }
 
-} // namespace loom::ui::messages
+}  // namespace loom::ui::messages

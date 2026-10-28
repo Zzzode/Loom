@@ -24,10 +24,11 @@
 // signing, if user scripts need to run first.  This module does NOT spawn
 // user shells.
 module;
-#include <cstdlib>
-#include <cstdint>
-#include <ctime>
 #include <httplib.h>
+
+#include <cstdint>
+#include <cstdlib>
+#include <ctime>
 
 export module loom.services.auth.sigv4;
 
@@ -53,7 +54,7 @@ namespace http = loom::utils::http;
 struct AwsCredentials {
     std::string access_key_id;
     std::string secret_access_key;
-    std::string session_token; // optional, non-empty = assumed-role / STS
+    std::string session_token;  // optional, non-empty = assumed-role / STS
 
     [[nodiscard]] bool valid() const noexcept {
         return !access_key_id.empty() && !secret_access_key.empty();
@@ -64,9 +65,10 @@ struct AwsCredentials {
 // caller can invalidate the cache.
 struct IamRoleCredentials : AwsCredentials {
     system_clock::time_point expiration;
-    std::string code; // "Success" on valid response
-    std::string type; // "AWS-HMAC"
+    std::string code;  // "Success" on valid response
+    std::string type;  // "AWS-HMAC"
     std::string role_arn;
+
     [[nodiscard]] bool expired() const noexcept {
         return system_clock::now() >= expiration - minutes(5);
     }
@@ -77,12 +79,12 @@ struct IamRoleCredentials : AwsCredentials {
 // UTC, WITHOUT dashes/colons.
 // ---------------------------------------------------------------------------
 struct SigV4Timestamps {
-    std::string ymd_hms; // e.g. 20250115T134530Z
-    std::string ymd;     // e.g. 20250115
+    std::string ymd_hms;  // e.g. 20250115T134530Z
+    std::string ymd;      // e.g. 20250115
 };
 
-[[nodiscard]] inline SigV4Timestamps make_timestamps(
-    system_clock::time_point tp = system_clock::now()) {
+[[nodiscard]] inline SigV4Timestamps
+make_timestamps(system_clock::time_point tp = system_clock::now()) {
     auto tt = system_clock::to_time_t(tp);
     std::tm utc{};
 #if defined(_WIN32)
@@ -144,8 +146,8 @@ using QueryParams = std::vector<std::pair<std::string, std::string>>;
 
 // Take a header multimap (name → value) and collapse into lowercased,
 // sorted std::map with comma-joined multi-values.
-[[nodiscard]] inline HeaderMap canonicalize_headers(
-    const std::vector<std::pair<std::string, std::string>>& raw_headers) {
+[[nodiscard]] inline HeaderMap
+canonicalize_headers(const std::vector<std::pair<std::string, std::string>>& raw_headers) {
     std::map<std::string, std::vector<std::string>> acc;
     for (const auto& [name, value] : raw_headers) {
         acc[lower_ascii(name)].push_back(normalize_header_value(value));
@@ -169,15 +171,16 @@ using QueryParams = std::vector<std::pair<std::string, std::string>>;
 // The host header is mandatory for SigV4.  So is x-amz-date.  Any request
 // passing through this signer MUST have both already added before signing.
 // (Helper that appends them before canonicalization is provided below.)
-[[nodiscard]] inline std::string build_signed_headers_list(
-    const HeaderMap& m,
-    std::initializer_list<std::string_view> extra_required = {}) {
+[[nodiscard]] inline std::string
+build_signed_headers_list(const HeaderMap& m,
+                          std::initializer_list<std::string_view> extra_required = {}) {
     std::string out;
     auto append_name = [&](std::string_view lc_name) {
         if (!out.empty()) out.push_back(';');
         out += lc_name;
     };
-    for (const auto& [k, _] : m) append_name(k);
+    for (const auto& [k, _] : m)
+        append_name(k);
     // extra_required names that are already in m are skipped (already added).
     for (std::string_view n : extra_required) {
         if (m.find(std::string(n)) == m.end()) append_name(n);
@@ -209,13 +212,10 @@ using QueryParams = std::vector<std::pair<std::string, std::string>>;
 }
 
 // Build the canonical request string per AWS spec.
-[[nodiscard]] inline std::string canonical_request(
-    std::string_view method,
-    std::string_view uri_path,
-    std::string_view canonical_query,
-    const HeaderMap& canonical_headers,
-    std::string_view signed_headers_list,
-    std::string_view payload_sha256_hex) {
+[[nodiscard]] inline std::string
+canonical_request(std::string_view method, std::string_view uri_path,
+                  std::string_view canonical_query, const HeaderMap& canonical_headers,
+                  std::string_view signed_headers_list, std::string_view payload_sha256_hex) {
     std::string out;
     // Line 1: METHOD
     out += method;
@@ -233,7 +233,7 @@ using QueryParams = std::vector<std::pair<std::string, std::string>>;
         out += v;
         out.push_back('\n');
     }
-    out.push_back('\n'); // blank line separating headers block from signed-list
+    out.push_back('\n');  // blank line separating headers block from signed-list
     // Signed headers list
     out += signed_headers_list;
     out.push_back('\n');
@@ -250,16 +250,13 @@ using QueryParams = std::vector<std::pair<std::string, std::string>>;
 //   kSigning = HMAC(kService,                    "aws4_request")
 //   signature = HEX(HMAC(kSigning, string_to_sign))
 // ---------------------------------------------------------------------------
-[[nodiscard]] inline std::array<uint8_t, 32> derive_signing_key(
-    std::string_view secret_access_key,
-    std::string_view date_ymd,
-    std::string_view region,
-    std::string_view service) {
+[[nodiscard]] inline std::array<uint8_t, 32> derive_signing_key(std::string_view secret_access_key,
+                                                                std::string_view date_ymd,
+                                                                std::string_view region,
+                                                                std::string_view service) {
     using loom::utils::crypto::hmac_sha256;
     std::string k_secret = std::string("AWS4") + std::string(secret_access_key);
-    auto k_date = hmac_sha256(
-        std::string_view(k_secret).substr(0, k_secret.size()),
-        date_ymd);
+    auto k_date = hmac_sha256(std::string_view(k_secret).substr(0, k_secret.size()), date_ymd);
     auto k_region = hmac_sha256(
         std::span<const uint8_t>(k_date.data(), k_date.size()),
         std::span<const uint8_t>(reinterpret_cast<const uint8_t*>(region.data()), region.size()));
@@ -269,34 +266,29 @@ using QueryParams = std::vector<std::pair<std::string, std::string>>;
     static constexpr std::string_view k_aws4_request = "aws4_request";
     return hmac_sha256(
         std::span<const uint8_t>(k_service.data(), k_service.size()),
-        std::span<const uint8_t>(reinterpret_cast<const uint8_t*>(k_aws4_request.data()), k_aws4_request.size()));
+        std::span<const uint8_t>(reinterpret_cast<const uint8_t*>(k_aws4_request.data()),
+                                 k_aws4_request.size()));
 }
 
 // Convenience: build the HMAC key-inputs as string_view views over the
 // byte arrays returned from the prior HMAC.
-[[nodiscard]] inline std::array<uint8_t, 32> hmac_bytes(
-    const std::array<uint8_t, 32>& key_bytes,
-    std::string_view msg_chars) {
+[[nodiscard]] inline std::array<uint8_t, 32> hmac_bytes(const std::array<uint8_t, 32>& key_bytes,
+                                                        std::string_view msg_chars) {
     return loom::utils::crypto::hmac_sha256(
         std::span<const uint8_t>(key_bytes.data(), key_bytes.size()),
-        std::span<const uint8_t>(
-            reinterpret_cast<const uint8_t*>(msg_chars.data()),
-            msg_chars.size()));
+        std::span<const uint8_t>(reinterpret_cast<const uint8_t*>(msg_chars.data()),
+                                 msg_chars.size()));
 }
 
 // String to sign (AWS SigV4 "Credential Scope" form):
 //   "AWS4-HMAC-SHA256\n" + ymd_hms + "\n" + ymd/region/service/aws4_request
 //   + "\n" + SHA256_HEX(canonical_request)
-[[nodiscard]] inline std::string string_to_sign(
-    std::string_view ymd_hms,
-    std::string_view ymd,
-    std::string_view region,
-    std::string_view service,
-    std::string_view canonical_request_str) {
+[[nodiscard]] inline std::string string_to_sign(std::string_view ymd_hms, std::string_view ymd,
+                                                std::string_view region, std::string_view service,
+                                                std::string_view canonical_request_str) {
     using loom::utils::crypto::sha256;
     std::string scope;
-    scope.reserve(ymd.size() + 1 + region.size() + 1 + service.size() +
-                  1 + 12);
+    scope.reserve(ymd.size() + 1 + region.size() + 1 + service.size() + 1 + 12);
     scope += ymd;
     scope.push_back('/');
     scope += region;
@@ -337,10 +329,10 @@ struct SignedRequest {
 
 // Required inputs:
 //   method — "GET", "POST", etc. (UPPERCASE; AWS rejects anything else)
-//   endpoint_host — "bedrock-runtime.us-east-1.amazonaws.com" (NO scheme, NO port defaulted when scheme standard)
-//   uri_path — "/model/<model-id>/invoke"
-//   query — sorted later; callers can pass raw unsorted key/val pairs
-//   body_bytes — POST payload (will be SHA-256 hashed; hex is BOTH added to
+//   endpoint_host — "bedrock-runtime.us-east-1.amazonaws.com" (NO scheme, NO port defaulted when
+//   scheme standard) uri_path — "/model/<model-id>/invoke" query — sorted later; callers can pass
+//   raw unsorted key/val pairs body_bytes — POST payload (will be SHA-256 hashed; hex is BOTH added
+//   to
 //                x-amz-content-sha256 AND used as payload line in canonical req)
 //   extra_headers — caller headers (User-Agent, Content-Type, accept etc.)
 //                   in ORIGINAL case.  They are lowercased internally.
@@ -348,24 +340,18 @@ struct SignedRequest {
 //   region — "us-east-1", "eu-west-1" etc.
 //   service — "bedrock" for Bedrock Runtime, "sts" for STS, etc.
 //   tp — optional override timestamp (for tests)
-[[nodiscard]] inline Result<SignedRequest> sign_request(
-    std::string_view method,
-    std::string_view endpoint_host,
-    std::string_view uri_path,
-    const QueryParams& query,
-    std::string_view body_bytes,
-    const std::vector<std::pair<std::string, std::string>>& extra_headers,
-    const AwsCredentials& creds,
-    std::string_view region,
-    std::string_view service,
-    std::optional<system_clock::time_point> tp = std::nullopt) {
+[[nodiscard]] inline Result<SignedRequest>
+sign_request(std::string_view method, std::string_view endpoint_host, std::string_view uri_path,
+             const QueryParams& query, std::string_view body_bytes,
+             const std::vector<std::pair<std::string, std::string>>& extra_headers,
+             const AwsCredentials& creds, std::string_view region, std::string_view service,
+             std::optional<system_clock::time_point> tp = std::nullopt) {
     using loom::utils::crypto::sha256;
     using loom::utils::crypto::sha256_bytes_to_hex;
 
     if (!creds.valid()) {
-        return std::unexpected(Error(
-            loom::utils::ErrorCode::invalid_argument,
-            "AWS SigV4: missing AccessKeyId / SecretAccessKey"));
+        return std::unexpected(Error(loom::utils::ErrorCode::invalid_argument,
+                                     "AWS SigV4: missing AccessKeyId / SecretAccessKey"));
     }
     auto ts = make_timestamps(tp.value_or(system_clock::now()));
 
@@ -400,15 +386,13 @@ struct SignedRequest {
     }
 
     std::string canon_q = canonical_query_string(query);
-    std::string canon_req = canonical_request(
-        method, uri_path, canon_q, canon_hdrs, signed_list, payload_hex);
+    std::string canon_req =
+        canonical_request(method, uri_path, canon_q, canon_hdrs, signed_list, payload_hex);
 
-    std::string sts = string_to_sign(
-        ts.ymd_hms, ts.ymd, region, service, canon_req);
+    std::string sts = string_to_sign(ts.ymd_hms, ts.ymd, region, service, canon_req);
 
     // Derive signing key
-    auto signing_key = derive_signing_key(
-        creds.secret_access_key, ts.ymd, region, service);
+    auto signing_key = derive_signing_key(creds.secret_access_key, ts.ymd, region, service);
     auto sig_bytes = hmac_bytes(signing_key, sts);
     std::string sig_hex = sha256_bytes_to_hex(sig_bytes);
 
@@ -416,8 +400,7 @@ struct SignedRequest {
     //   AWS4-HMAC-SHA256 Credential=<akid>/<scope>,
     //   SignedHeaders=<signed_list>, Signature=<hex>
     std::string scope;
-    scope.reserve(ts.ymd.size() + 1 + region.size() + 1 + service.size() +
-                  1 + 12);
+    scope.reserve(ts.ymd.size() + 1 + region.size() + 1 + service.size() + 1 + 12);
     scope += ts.ymd;
     scope.push_back('/');
     scope += region;
@@ -426,8 +409,8 @@ struct SignedRequest {
     scope += "/aws4_request";
 
     std::string authz;
-    authz.reserve(128 + creds.access_key_id.size() + scope.size() +
-                  signed_list.size() + sig_hex.size());
+    authz.reserve(128 + creds.access_key_id.size() + scope.size() + signed_list.size() +
+                  sig_hex.size());
     authz += "AWS4-HMAC-SHA256 Credential=";
     authz += creds.access_key_id;
     authz.push_back('/');
@@ -455,8 +438,7 @@ struct SignedRequest {
 
 // Build a credentials struct by inspecting env vars first (highest priority
 // after any user scripts have already run).
-[[nodiscard]] inline std::optional<AwsCredentials>
-credentials_from_env() {
+[[nodiscard]] inline std::optional<AwsCredentials> credentials_from_env() {
     using loom::utils::env::get_env;
     auto akid = get_env("AWS_ACCESS_KEY_ID");
     auto sk = get_env("AWS_SECRET_ACCESS_KEY");
@@ -474,6 +456,7 @@ credentials_from_env() {
 // We do NOT handle prefix "profile " stripping for config — callers pass
 // profile name with or without prefix as needed.
 using IniSections = std::unordered_map<std::string, std::unordered_map<std::string, std::string>>;
+
 [[nodiscard]] inline IniSections parse_ini_file(const std::string& path) {
     IniSections out;
     std::ifstream f(path);
@@ -498,12 +481,14 @@ using IniSections = std::unordered_map<std::string, std::unordered_map<std::stri
         if (eq == std::string::npos) continue;
         std::string key = line.substr(start, eq - start);
         // rstrip key
-        while (!key.empty() && (key.back() == ' ' || key.back() == '\t')) key.pop_back();
+        while (!key.empty() && (key.back() == ' ' || key.back() == '\t'))
+            key.pop_back();
         std::string val = line.substr(eq + 1);
         std::size_t vs = val.find_first_not_of(" \t");
         if (vs != std::string::npos) val = val.substr(vs);
         // rstrip value
-        while (!val.empty() && (val.back() == ' ' || val.back() == '\t')) val.pop_back();
+        while (!val.empty() && (val.back() == ' ' || val.back() == '\t'))
+            val.pop_back();
         if (!current.empty()) {
             out[current][std::move(key)] = std::move(val);
         }
@@ -516,19 +501,16 @@ using IniSections = std::unordered_map<std::string, std::unordered_map<std::stri
 // Profile lookup: AWS_PROFILE env, else "default".  Config file sections
 // use "profile NAME" prefix per AWS spec — we try both the raw name and the
 // "profile " prefix variant.
-[[nodiscard]] inline std::optional<AwsCredentials>
-credentials_from_ini() {
+[[nodiscard]] inline std::optional<AwsCredentials> credentials_from_ini() {
     using loom::utils::env::get_env;
     auto profile = get_env("AWS_PROFILE").value_or("default");
     const char* home_env = std::getenv("HOME");
     std::string home = home_env ? home_env : "";
-    auto cred_file = get_env("AWS_SHARED_CREDENTIALS_FILE")
-        .value_or(home + "/.aws/credentials");
-    auto cfg_file = get_env("AWS_CONFIG_FILE")
-        .value_or(home + "/.aws/config");
+    auto cred_file = get_env("AWS_SHARED_CREDENTIALS_FILE").value_or(home + "/.aws/credentials");
+    auto cfg_file = get_env("AWS_CONFIG_FILE").value_or(home + "/.aws/config");
 
-    const auto lookup = [&](const IniSections& ini, std::string_view pname)
-        -> std::optional<AwsCredentials> {
+    const auto lookup = [&](const IniSections& ini,
+                            std::string_view pname) -> std::optional<AwsCredentials> {
         // Try exact match, then "profile <name>" match for config.
         auto it = ini.find(std::string(pname));
         if (it == ini.end()) {
@@ -543,8 +525,7 @@ credentials_from_ini() {
         if (auto tok = m.find("aws_session_token"); tok != m.end()) {
             c.session_token = tok->second;
         }
-        return c.valid() ? std::optional<AwsCredentials>(std::move(c))
-                         : std::nullopt;
+        return c.valid() ? std::optional<AwsCredentials>(std::move(c)) : std::nullopt;
     };
 
     // Credentials file has highest priority (matches SDK chain).
@@ -565,33 +546,27 @@ credentials_from_imds_v2(std::chrono::milliseconds timeout_ms = 1500ms) {
 
     try {
         httplib::Client cli(std::string(kImdsHost), 80);
-        cli.set_connection_timeout(timeout_ms.count() / 1000,
-                                   (timeout_ms.count() % 1000) * 1000);
-        cli.set_read_timeout(timeout_ms.count() / 1000,
-                             (timeout_ms.count() % 1000) * 1000);
-        cli.set_write_timeout(timeout_ms.count() / 1000,
-                              (timeout_ms.count() % 1000) * 1000);
+        cli.set_connection_timeout(timeout_ms.count() / 1000, (timeout_ms.count() % 1000) * 1000);
+        cli.set_read_timeout(timeout_ms.count() / 1000, (timeout_ms.count() % 1000) * 1000);
+        cli.set_write_timeout(timeout_ms.count() / 1000, (timeout_ms.count() % 1000) * 1000);
 
         // Step 1: PUT to get TTL token.
         httplib::Headers token_req_headers;
         token_req_headers.emplace(std::string(kTtlHeader), "21600");
-        auto put = cli.Put("/latest/api/token", token_req_headers, "",
-                           "text/plain");
+        auto put = cli.Put("/latest/api/token", token_req_headers, "", "text/plain");
         if (!put || put->status != 200 || put->body.empty()) return std::nullopt;
         std::string token = put->body;
 
         // Step 2: GET role name.
         httplib::Headers imds_headers;
         imds_headers.emplace("X-aws-ec2-metadata-token", token);
-        auto role_r = cli.Get("/latest/meta-data/iam/security-credentials/",
-                              imds_headers);
+        auto role_r = cli.Get("/latest/meta-data/iam/security-credentials/", imds_headers);
         if (!role_r || role_r->status != 200 || role_r->body.empty()) {
             return std::nullopt;
         }
         std::string role_name = role_r->body;
         // Strip trailing \n if present (IMDS sometimes appends it).
-        while (!role_name.empty() &&
-               (role_name.back() == '\n' || role_name.back() == '\r')) {
+        while (!role_name.empty() && (role_name.back() == '\n' || role_name.back() == '\r')) {
             role_name.pop_back();
         }
         if (role_name.empty() || role_name.find('\n') != std::string::npos) {
@@ -601,8 +576,7 @@ credentials_from_imds_v2(std::chrono::milliseconds timeout_ms = 1500ms) {
         }
 
         // Step 3: GET credentials payload.
-        std::string url = "/latest/meta-data/iam/security-credentials/" +
-                          role_name;
+        std::string url = "/latest/meta-data/iam/security-credentials/" + role_name;
         auto creds_r = cli.Get(url.c_str(), imds_headers);
         if (!creds_r || creds_r->status != 200) return std::nullopt;
 
@@ -653,8 +627,7 @@ credentials_from_imds_v2(std::chrono::milliseconds timeout_ms = 1500ms) {
 //   (a) run user's awsAuthRefresh / awsCredentialExport via bash_execution,
 //   (b) then call resolve_default_credentials() so env/ini/IMDS fill in any
 //       remaining gaps.
-[[nodiscard]] inline std::optional<AwsCredentials>
-resolve_default_credentials() {
+[[nodiscard]] inline std::optional<AwsCredentials> resolve_default_credentials() {
     if (auto c = credentials_from_env()) return c;
     if (auto c = credentials_from_ini()) return c;
     if (auto c = credentials_from_imds_v2()) return AwsCredentials(*c);
@@ -677,19 +650,20 @@ resolve_default_credentials() {
 struct BedrockAuthMode {
     bool use_bedrock = false;
     bool skip_auth = false;
-    std::optional<std::string> bearer_token; // non-empty overrides everything
+    std::optional<std::string> bearer_token;  // non-empty overrides everything
 };
+
 [[nodiscard]] inline BedrockAuthMode detect_bedrock_mode() {
     using loom::utils::env::get_env;
     using loom::utils::env::is_env_truthy;
     BedrockAuthMode m;
     m.use_bedrock = is_env_truthy("LOOM_USE_BEDROCK");
-    m.skip_auth   = is_env_truthy("LOOM_SKIP_BEDROCK_AUTH");
+    m.skip_auth = is_env_truthy("LOOM_SKIP_BEDROCK_AUTH");
     if (auto bt = get_env("AWS_BEARER_TOKEN_BEDROCK"); bt && !bt->empty()) {
         m.bearer_token = std::move(*bt);
-        m.skip_auth = true; // Bearer token replaces SigV4 entirely
+        m.skip_auth = true;  // Bearer token replaces SigV4 entirely
     }
     return m;
 }
 
-} // namespace loom::services::auth::aws
+}  // namespace loom::services::auth::aws

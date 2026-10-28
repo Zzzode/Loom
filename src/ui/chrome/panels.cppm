@@ -8,11 +8,10 @@ export module loom.ui.chrome.panels;
 
 import std;
 
-
 namespace ftxui {
-    class Element;
-    class Node;
-}
+class Element;
+class Node;
+}  // namespace ftxui
 
 export namespace loom::ui {
 
@@ -22,12 +21,18 @@ enum class PanelType { Settings, Mcp, Tasks, Diff, Help, Permissions };
 // Convert PanelType to display name
 [[nodiscard]] constexpr auto panel_name(PanelType type) -> std::string_view {
     switch (type) {
-        case PanelType::Settings:    return "Settings";
-        case PanelType::Mcp:         return "MCP Servers";
-        case PanelType::Tasks:       return "Tasks";
-        case PanelType::Diff:        return "Diff";
-        case PanelType::Help:        return "Help";
-        case PanelType::Permissions: return "Permissions";
+    case PanelType::Settings:
+        return "Settings";
+    case PanelType::Mcp:
+        return "MCP Servers";
+    case PanelType::Tasks:
+        return "Tasks";
+    case PanelType::Diff:
+        return "Diff";
+    case PanelType::Help:
+        return "Help";
+    case PanelType::Permissions:
+        return "Permissions";
     }
     return "Unknown";
 }
@@ -41,7 +46,7 @@ struct SettingEntry {
     std::string description;
     std::string category;
     bool is_readonly{false};
-    std::vector<std::string> allowed_values; // Empty means free-form
+    std::vector<std::string> allowed_values;  // Empty means free-form
 };
 
 // SettingsPanel: displays and edits settings
@@ -79,8 +84,10 @@ public:
     // Update a setting value, returns error if readonly
     [[nodiscard]] auto update(std::string_view key, std::string_view value)
         -> std::expected<void, std::string> {
-        auto it = std::find_if(entries_.begin(), entries_.end(), [key](const auto& e) { return e.key == key; });
-        if (it == entries_.end()) return std::unexpected(std::format("Setting '{}' not found", key));
+        auto it = std::find_if(entries_.begin(), entries_.end(),
+                               [key](const auto& e) { return e.key == key; });
+        if (it == entries_.end())
+            return std::unexpected(std::format("Setting '{}' not found", key));
         if (it->is_readonly) return std::unexpected(std::format("Setting '{}' is read-only", key));
         if (!it->allowed_values.empty()) {
             auto valid = std::find(it->allowed_values.begin(), it->allowed_values.end(), value);
@@ -124,18 +131,23 @@ public:
 
     // Get status summary string
     [[nodiscard]] auto status_summary() const -> std::string {
-        auto connected = std::count_if(servers_.begin(), servers_.end(),
-            [](const auto& s) { return s.status == McpStatus::Connected; });
+        auto connected = std::count_if(servers_.begin(), servers_.end(), [](const auto& s) {
+            return s.status == McpStatus::Connected;
+        });
         return std::format("{}/{} connected", connected, servers_.size());
     }
 
     // Status icon for display
     [[nodiscard]] static auto status_icon(McpStatus status) -> std::string_view {
         switch (status) {
-            case McpStatus::Connected:    return "●";
-            case McpStatus::Connecting:   return "◐";
-            case McpStatus::Disconnected: return "○";
-            case McpStatus::Error:        return "✗";
+        case McpStatus::Connected:
+            return "●";
+        case McpStatus::Connecting:
+            return "◐";
+        case McpStatus::Disconnected:
+            return "○";
+        case McpStatus::Error:
+            return "✗";
         }
         return "?";
     }
@@ -156,7 +168,7 @@ struct TaskEntry {
     std::string id;
     std::string description;
     TaskStatus status{TaskStatus::Pending};
-    double progress{0.0}; // 0.0 - 1.0
+    double progress{0.0};  // 0.0 - 1.0
     std::optional<std::string> error;
     std::chrono::system_clock::time_point created_at;
     std::optional<std::chrono::system_clock::time_point> completed_at;
@@ -166,6 +178,7 @@ struct TaskEntry {
 class TasksPanel {
 public:
     auto set_tasks(std::vector<TaskEntry> tasks) -> void { tasks_ = std::move(tasks); }
+
     auto add_task(TaskEntry task) -> void { tasks_.push_back(std::move(task)); }
 
     auto update_progress(std::string_view id, double progress) -> void {
@@ -189,9 +202,9 @@ public:
 
     // Count active (running) tasks
     [[nodiscard]] auto active_count() const -> std::size_t {
-        return static_cast<std::size_t>(std::count_if(
-            tasks_.begin(), tasks_.end(),
-            [](const auto& t) { return t.status == TaskStatus::Running; }));
+        return static_cast<std::size_t>(
+            std::count_if(tasks_.begin(), tasks_.end(),
+                          [](const auto& t) { return t.status == TaskStatus::Running; }));
     }
 
     [[nodiscard]] auto render() const -> ftxui::Element;
@@ -200,7 +213,8 @@ private:
     std::vector<TaskEntry> tasks_;
 
     auto find_task(std::string_view id) -> std::vector<TaskEntry>::iterator {
-        return std::find_if(tasks_.begin(), tasks_.end(), [id](const auto& t) { return t.id == id; });
+        return std::find_if(tasks_.begin(), tasks_.end(),
+                            [id](const auto& t) { return t.id == id; });
     }
 };
 
@@ -249,7 +263,10 @@ public:
     // Total stats across all files
     [[nodiscard]] auto total_stats() const -> std::pair<std::size_t, std::size_t> {
         std::size_t adds = 0, dels = 0;
-        for (const auto& d : diffs_) { adds += d.additions; dels += d.deletions; }
+        for (const auto& d : diffs_) {
+            adds += d.additions;
+            dels += d.deletions;
+        }
         return {adds, dels};
     }
 
@@ -267,15 +284,18 @@ private:
 
 // Keybinding entry
 struct Keybinding {
-    std::string keys;       // e.g., "Ctrl+C"
-    std::string action;     // e.g., "Cancel current generation"
-    std::string category;   // e.g., "General", "Navigation"
+    std::string keys;      // e.g., "Ctrl+C"
+    std::string action;    // e.g., "Cancel current generation"
+    std::string category;  // e.g., "General", "Navigation"
 };
 
 // HelpPanel: keybindings and command reference
 class HelpPanel {
 public:
-    auto set_keybindings(std::vector<Keybinding> bindings) -> void { bindings_ = std::move(bindings); }
+    auto set_keybindings(std::vector<Keybinding> bindings) -> void {
+        bindings_ = std::move(bindings);
+    }
+
     auto set_commands(std::vector<std::pair<std::string, std::string>> cmds) -> void {
         commands_ = std::move(cmds);
     }
@@ -284,7 +304,8 @@ public:
     [[nodiscard]] auto grouped_bindings() const
         -> std::map<std::string, std::vector<const Keybinding*>> {
         std::map<std::string, std::vector<const Keybinding*>> grouped;
-        for (const auto& b : bindings_) grouped[b.category].push_back(&b);
+        for (const auto& b : bindings_)
+            grouped[b.category].push_back(&b);
         return grouped;
     }
 
@@ -304,7 +325,7 @@ enum class PermissionLevel { Allow, Ask, Deny };
 struct PermissionRule {
     std::string tool_name;
     PermissionLevel level{PermissionLevel::Ask};
-    std::optional<std::string> path_pattern; // Glob pattern restriction
+    std::optional<std::string> path_pattern;  // Glob pattern restriction
     std::string reason;
 };
 
@@ -314,7 +335,8 @@ public:
     auto set_rules(std::vector<PermissionRule> rules) -> void { rules_ = std::move(rules); }
 
     // Check permission for a tool+path combination
-    [[nodiscard]] auto check(std::string_view tool, std::string_view path) const -> PermissionLevel {
+    [[nodiscard]] auto check(std::string_view tool, std::string_view path) const
+        -> PermissionLevel {
         for (const auto& rule : rules_) {
             if (rule.tool_name == tool) {
                 if (!rule.path_pattern || path.starts_with(*rule.path_pattern)) {
@@ -322,15 +344,18 @@ public:
                 }
             }
         }
-        return PermissionLevel::Ask; // Default
+        return PermissionLevel::Ask;  // Default
     }
 
     // Level display icon
     [[nodiscard]] static auto level_icon(PermissionLevel level) -> std::string_view {
         switch (level) {
-            case PermissionLevel::Allow: return "✓";
-            case PermissionLevel::Ask:   return "?";
-            case PermissionLevel::Deny:  return "✗";
+        case PermissionLevel::Allow:
+            return "✓";
+        case PermissionLevel::Ask:
+            return "?";
+        case PermissionLevel::Deny:
+            return "✗";
         }
         return " ";
     }
@@ -344,14 +369,8 @@ private:
 // ─── Unified Panel Render ────────────────────────────────────
 
 // State variant for panel rendering
-using PanelState = std::variant<
-    SettingsPanel,
-    McpPanel,
-    TasksPanel,
-    DiffPanel,
-    HelpPanel,
-    PermissionsPanel
->;
+using PanelState =
+    std::variant<SettingsPanel, McpPanel, TasksPanel, DiffPanel, HelpPanel, PermissionsPanel>;
 
 // Render any panel by type via visitor
 [[nodiscard]] auto render_panel(const PanelState& state) -> ftxui::Element;
@@ -359,4 +378,4 @@ using PanelState = std::variant<
 // Render panel with title bar and close button
 [[nodiscard]] auto render_panel_frame(PanelType type, const PanelState& state) -> ftxui::Element;
 
-} // namespace loom::ui
+}  // namespace loom::ui

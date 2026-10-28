@@ -25,7 +25,6 @@ namespace loom::tools::agent_runtime {
 // should use loom::tools::built_in_agents::get_built_in_agents() which returns
 // equivalent definitions.
 
-
 namespace builtin_detail {
 
 // Tool-name constants.
@@ -64,22 +63,27 @@ Guidelines:
 - NEVER proactively create documentation files (*.md) or README files. Only create documentation files if explicitly requested.)";
 
 [[nodiscard]] inline std::string gp_prompt() {
-    return std::format(
-        "{} When you complete the task, respond with a concise report covering what was done and any key findings — the caller will relay this to the user, so it only needs the essentials.\n\n{}",
-        kGpPrefix, kGpGuidelines
-    );
+    return std::format("{} When you complete the task, respond with a concise report covering what "
+                       "was done and any key findings — the caller will relay this to the user, so "
+                       "it only needs the essentials.\n\n{}",
+                       kGpPrefix, kGpGuidelines);
 }
 
 inline constexpr std::string_view kGpWhen =
-    "General-purpose agent for researching complex questions, searching for code, and executing multi-step tasks. When you are searching for a keyword or file and are not confident that you will find the right match in the first few tries use this agent to perform the search for you.";
+    "General-purpose agent for researching complex questions, searching for code, and executing "
+    "multi-step tasks. When you are searching for a keyword or file and are not confident that you "
+    "will find the right match in the first few tries use this agent to perform the search for "
+    "you.";
 
 // ---- explore ----
 [[nodiscard]] inline std::string explore_prompt() {
     const bool emb = kEmbeddedSearch;
-    const auto glob_s = emb ? std::format("- Use `find` via {} for broad file pattern matching", kBash)
-                            : std::format("- Use {} for broad file pattern matching", kGlob);
-    const auto grep_s = emb ? std::format("- Use `grep` via {} for searching file contents with regex", kBash)
-                            : std::format("- Use {} for searching file contents with regex", kGrep);
+    const auto glob_s =
+        emb ? std::format("- Use `find` via {} for broad file pattern matching", kBash)
+            : std::format("- Use {} for broad file pattern matching", kGlob);
+    const auto grep_s =
+        emb ? std::format("- Use `grep` via {} for searching file contents with regex", kBash)
+            : std::format("- Use {} for searching file contents with regex", kGrep);
     const std::string bash_tail = emb ? ", grep" : "";
     return std::format(
         R"(You are a file search specialist for Loom, a personal AI coding assistant. You excel at thoroughly navigating and exploring codebases.
@@ -115,18 +119,21 @@ NOTE: You are meant to be a fast agent that returns output as quickly as possibl
 - Wherever possible you should try to spawn multiple parallel tool calls for grepping and reading files
 
 Complete the user's search request efficiently and report your findings clearly.)",
-        glob_s, grep_s, kRead, kBash, bash_tail, kBash
-    );
+        glob_s, grep_s, kRead, kBash, bash_tail, kBash);
 }
 
 inline constexpr std::string_view kExploreWhen =
-    "Fast agent specialized for exploring codebases. Use this when you need to quickly find files by patterns (eg. \"src/components/**/*.tsx\"), search code for keywords (eg. \"API endpoints\"), or answer questions about the codebase (eg. \"how do API endpoints work?\"). When calling this agent, specify the desired thoroughness level: \"quick\" for basic searches, \"medium\" for moderate exploration, or \"very thorough\" for comprehensive analysis across multiple locations and naming conventions.";
+    "Fast agent specialized for exploring codebases. Use this when you need to quickly find files "
+    "by patterns (eg. \"src/components/**/*.tsx\"), search code for keywords (eg. \"API "
+    "endpoints\"), or answer questions about the codebase (eg. \"how do API endpoints work?\"). "
+    "When calling this agent, specify the desired thoroughness level: \"quick\" for basic "
+    "searches, \"medium\" for moderate exploration, or \"very thorough\" for comprehensive "
+    "analysis across multiple locations and naming conventions.";
 
 // ---- plan ----
 [[nodiscard]] inline std::string plan_prompt() {
-    const auto search = kEmbeddedSearch
-        ? std::format("`find`, `grep`, and {}", kRead)
-        : std::format("{}, {}, and {}", kGlob, kGrep, kRead);
+    const auto search = kEmbeddedSearch ? std::format("`find`, `grep`, and {}", kRead)
+                                        : std::format("{}, {}, and {}", kGlob, kGrep, kRead);
     const std::string bash_tail = kEmbeddedSearch ? ", grep" : "";
     return std::format(
         R"(You are a software architect and planning specialist for Loom. Your role is to explore the codebase and design implementation plans.
@@ -179,12 +186,13 @@ List 3-5 files most critical for implementing this plan:
 - path/to/file3.ts
 
 REMEMBER: You can ONLY explore and plan. You CANNOT and MUST NOT write, edit, or modify any files. You do NOT have access to file editing tools.)",
-        search, kBash, bash_tail, kBash
-    );
+        search, kBash, bash_tail, kBash);
 }
 
 inline constexpr std::string_view kPlanWhen =
-    "Software architect agent for designing implementation plans. Use this when you need to plan the implementation strategy for a task. Returns step-by-step plans, identifies critical files, and considers architectural trade-offs.";
+    "Software architect agent for designing implementation plans. Use this when you need to plan "
+    "the implementation strategy for a task. Returns step-by-step plans, identifies critical "
+    "files, and considers architectural trade-offs.";
 
 // ---- statusline-setup ----
 inline constexpr std::string_view kStatuslinePrompt =
@@ -383,15 +391,19 @@ VERDICT: PASS / VERDICT: FAIL / VERDICT: PARTIAL
 Use the literal string `VERDICT: ` followed by exactly one of PASS, FAIL, PARTIAL.
 - **FAIL**: include what failed, exact error output, reproduction steps.
 - **PARTIAL**: environmental limitations only.)",
-        kBash, kWebFetch
-    );
+        kBash, kWebFetch);
 }
 
 inline constexpr std::string_view kVerificationWhen =
-    "Use this agent to verify that implementation work is correct before reporting completion. Invoke after non-trivial tasks (3+ file edits, backend/API changes, infrastructure changes). Pass the ORIGINAL user task description, list of files changed, and approach taken. The agent runs builds, tests, linters, and checks to produce a PASS/FAIL/PARTIAL verdict with evidence.";
+    "Use this agent to verify that implementation work is correct before reporting completion. "
+    "Invoke after non-trivial tasks (3+ file edits, backend/API changes, infrastructure changes). "
+    "Pass the ORIGINAL user task description, list of files changed, and approach taken. The agent "
+    "runs builds, tests, linters, and checks to produce a PASS/FAIL/PARTIAL verdict with evidence.";
 
 inline constexpr std::string_view kVerificationReminder =
-    "CRITICAL: This is a VERIFICATION-ONLY task. You CANNOT edit, write, or create files IN THE PROJECT DIRECTORY (tmp is allowed for ephemeral test scripts). You MUST end with VERDICT: PASS, VERDICT: FAIL, or VERDICT: PARTIAL.";
+    "CRITICAL: This is a VERIFICATION-ONLY task. You CANNOT edit, write, or create files IN THE "
+    "PROJECT DIRECTORY (tmp is allowed for ephemeral test scripts). You MUST end with VERDICT: "
+    "PASS, VERDICT: FAIL, or VERDICT: PARTIAL.";
 
 // ---- loom-guide ----
 // Empty: no documentation host is shipped (see loom.constants.prompts).
@@ -399,9 +411,8 @@ inline constexpr std::string_view kCcdocsMap = "";
 inline constexpr std::string_view kCdpDocsMap = "";
 
 [[nodiscard]] inline std::string guide_base_prompt() {
-    const auto local = kEmbeddedSearch
-        ? std::format("{}, `find`, and `grep`", kRead)
-        : std::format("{}, {}, and {}", kRead, kGlob, kGrep);
+    const auto local = kEmbeddedSearch ? std::format("{}, `find`, and `grep`", kRead)
+                                       : std::format("{}, {}, and {}", kRead, kGlob, kGrep);
     return std::format(
         R"(You are the Loom guide agent. Your primary responsibility is helping users understand and use Loom, the Loom Agent SDK, and the Loom API effectively.
 
@@ -434,16 +445,18 @@ inline constexpr std::string_view kCdpDocsMap = "";
 - Proactively suggest related commands, shortcuts, capabilities
 
 Complete the user's request with accurate, documentation-based guidance.)",
-        kCcdocsMap, kCdpDocsMap, kCdpDocsMap,
-        kWebFetch, kWebSearch, local
-    );
+        kCcdocsMap, kCdpDocsMap, kCdpDocsMap, kWebFetch, kWebSearch, local);
 }
 
 inline constexpr std::string_view kGuideWhen =
-    "Use this agent when the user asks questions (\"Can Loom...\", \"Does Loom...\", \"How do I...\") about: (1) Loom CLI tool - features, hooks, slash commands, MCP servers, settings, IDE integrations, keyboard shortcuts; (2) Loom Agent SDK - building custom agents; (3) Loom API - API usage, tool use, SDK usage. **IMPORTANT:** Before spawning a new agent, check if there is already a running or recently completed loom-guide agent that you can continue via SendMessage.";
+    "Use this agent when the user asks questions (\"Can Loom...\", \"Does Loom...\", \"How do "
+    "I...\") about: (1) Loom CLI tool - features, hooks, slash commands, MCP servers, settings, "
+    "IDE integrations, keyboard shortcuts; (2) Loom Agent SDK - building custom agents; (3) Loom "
+    "API - API usage, tool use, SDK usage. **IMPORTANT:** Before spawning a new agent, check if "
+    "there is already a running or recently completed loom-guide agent that you can continue via "
+    "SendMessage.";
 
-} // namespace builtin_detail
-
+}  // namespace builtin_detail
 
 [[nodiscard]] bool are_explore_plan_agents_enabled() {
 #if defined(ANT_NATIVE_BUILD)
@@ -454,10 +467,11 @@ inline constexpr std::string_view kGuideWhen =
            env_truthy("BUILTIN_EXPLORE_PLAN_AGENTS");
 #endif
 }
+
 [[nodiscard]] bool is_verification_agent_enabled() {
-    return env_truthy("LOOM_ENABLE_VERIFICATION_AGENT") ||
-           env_truthy("VERIFICATION_AGENT");
+    return env_truthy("LOOM_ENABLE_VERIFICATION_AGENT") || env_truthy("VERIFICATION_AGENT");
 }
+
 [[nodiscard]] std::vector<AgentDefinition> built_in_agent_definitions() {
     using namespace builtin_detail;
 
@@ -535,13 +549,14 @@ inline constexpr std::string_view kGuideWhen =
             .path = std::nullopt,
             .system_prompt = explore_prompt(),
             .tools = {"Read", "Glob", "Grep"},
-            .disallowed_tools = {
-                std::string{kAgent},
-                std::string{kExitPlanMode},
-                std::string{kEdit},
-                std::string{kWrite},
-                std::string{kNotebookEdit},
-            },
+            .disallowed_tools =
+                {
+                    std::string{kAgent},
+                    std::string{kExitPlanMode},
+                    std::string{kEdit},
+                    std::string{kWrite},
+                    std::string{kNotebookEdit},
+                },
             .permission_mode = std::nullopt,
             .max_turns = 15,
             .initial_prompt = std::nullopt,
@@ -568,13 +583,14 @@ inline constexpr std::string_view kGuideWhen =
             .path = std::nullopt,
             .system_prompt = plan_prompt(),
             .tools = {"Read", "Glob", "Grep"},
-            .disallowed_tools = {
-                std::string{kAgent},
-                std::string{kExitPlanMode},
-                std::string{kEdit},
-                std::string{kWrite},
-                std::string{kNotebookEdit},
-            },
+            .disallowed_tools =
+                {
+                    std::string{kAgent},
+                    std::string{kExitPlanMode},
+                    std::string{kEdit},
+                    std::string{kWrite},
+                    std::string{kNotebookEdit},
+                },
             .permission_mode = std::nullopt,
             .max_turns = 10,
             .initial_prompt = std::nullopt,
@@ -596,15 +612,16 @@ inline constexpr std::string_view kGuideWhen =
 
     // --- loom-guide (suppressed for SDK entrypoints) ---
     if (!is_sdk_entrypoint()) {
-        const std::vector<std::string> guide_tools = kEmbeddedSearch
-            ? std::vector<std::string>{
-                  std::string{kBash}, std::string{kRead},
-                  std::string{kWebFetch}, std::string{kWebSearch}}
-            : std::vector<std::string>{
-                  std::string{kGlob}, std::string{kGrep}, std::string{kRead},
-                  std::string{kWebFetch}, std::string{kWebSearch}};
+        const std::vector<std::string> guide_tools =
+            kEmbeddedSearch
+                ? std::vector<std::string>{std::string{kBash}, std::string{kRead},
+                                           std::string{kWebFetch}, std::string{kWebSearch}}
+                : std::vector<std::string>{std::string{kGlob}, std::string{kGrep},
+                                           std::string{kRead}, std::string{kWebFetch},
+                                           std::string{kWebSearch}};
         const std::string feedback =
-            "- When you cannot find an answer or the feature doesn't exist, direct the user to use /feedback to report a feature request or bug";
+            "- When you cannot find an answer or the feature doesn't exist, direct the user to use "
+            "/feedback to report a feature request or bug";
         const std::string system_prompt = guide_base_prompt() + "\n" + feedback;
         agents.push_back(AgentDefinition{
             .agent_type = "loom-guide",
@@ -646,13 +663,14 @@ inline constexpr std::string_view kGuideWhen =
             .path = std::nullopt,
             .system_prompt = verification_prompt(),
             .tools = {"Read", "Glob", "Grep", "Bash"},
-            .disallowed_tools = {
-                std::string{kAgent},
-                std::string{kExitPlanMode},
-                std::string{kEdit},
-                std::string{kWrite},
-                std::string{kNotebookEdit},
-            },
+            .disallowed_tools =
+                {
+                    std::string{kAgent},
+                    std::string{kExitPlanMode},
+                    std::string{kEdit},
+                    std::string{kWrite},
+                    std::string{kNotebookEdit},
+                },
             .permission_mode = std::nullopt,
             .max_turns = 20,
             .initial_prompt = std::nullopt,
@@ -674,11 +692,9 @@ inline constexpr std::string_view kGuideWhen =
 
     return agents;
 }
-void append_existing_plugin_component_path(
-    loom::utils::json::JsonVal value,
-    const fs::path& plugin_dir,
-    std::vector<fs::path>& out
-) {
+
+void append_existing_plugin_component_path(loom::utils::json::JsonVal value,
+                                           const fs::path& plugin_dir, std::vector<fs::path>& out) {
     auto append_one = [&](std::string_view raw) {
         if (raw.empty()) return;
         fs::path path{std::string(raw)};
@@ -695,9 +711,9 @@ void append_existing_plugin_component_path(
         });
     }
 }
-[[nodiscard]] std::optional<PluginComponentPaths> read_plugin_component_paths(
-    const fs::path& plugin_dir
-) {
+
+[[nodiscard]] std::optional<PluginComponentPaths>
+read_plugin_component_paths(const fs::path& plugin_dir) {
     const auto manifest_path = plugin_dir / "plugin.json";
     std::ifstream input(manifest_path);
     if (!input) return std::nullopt;
@@ -734,6 +750,7 @@ void append_existing_plugin_component_path(
     if (paths.agents_paths.empty() && paths.skills_paths.empty()) return std::nullopt;
     return paths;
 }
+
 [[nodiscard]] std::vector<PluginComponentPaths> discover_plugin_component_paths() {
     std::vector<PluginComponentPaths> discovered;
     std::vector<fs::path> roots;
@@ -757,10 +774,9 @@ void append_existing_plugin_component_path(
     std::ranges::sort(discovered, {}, &PluginComponentPaths::plugin_name);
     return discovered;
 }
-[[nodiscard]] LoadAgentDefinitionsResult load_agent_definitions_from_dir_ex(
-    const fs::path& dir,
-    std::string source
-) {
+
+[[nodiscard]] LoadAgentDefinitionsResult load_agent_definitions_from_dir_ex(const fs::path& dir,
+                                                                            std::string source) {
     LoadAgentDefinitionsResult result;
     std::error_code ec;
     if (!fs::exists(dir, ec) || !fs::is_directory(dir, ec)) return result;
@@ -780,9 +796,8 @@ void append_existing_plugin_component_path(
             {
                 std::ifstream input(entry.path());
                 if (input) {
-                    std::string text(
-                        (std::istreambuf_iterator<char>(input)),
-                        std::istreambuf_iterator<char>());
+                    std::string text((std::istreambuf_iterator<char>(input)),
+                                     std::istreambuf_iterator<char>());
                     std::string_view sv(text);
                     if (sv.starts_with("---\n") || sv.starts_with("---\r\n")) {
                         auto first_nl = sv.find('\n');
@@ -790,8 +805,7 @@ void append_existing_plugin_component_path(
                         if (fm_end != std::string_view::npos) {
                             auto fm_sv = sv.substr(first_nl + 1, fm_end - first_nl - 1);
                             auto fm = loom::utils::parse_yaml(fm_sv);
-                            if (const auto* fields =
-                                    std::get_if<loom::utils::YamlMap>(&fm.data);
+                            if (const auto* fields = std::get_if<loom::utils::YamlMap>(&fm.data);
                                 fields) {
                                 const auto name = yaml_string_field(*fields, "name");
                                 if (name && !name->empty()) {
@@ -826,29 +840,26 @@ void append_existing_plugin_component_path(
                     }
                 }
             } else {
-                result.agents.insert(
-                    result.agents.end(),
-                    std::make_move_iterator(parsed.begin()),
-                    std::make_move_iterator(parsed.end()));
+                result.agents.insert(result.agents.end(), std::make_move_iterator(parsed.begin()),
+                                     std::make_move_iterator(parsed.end()));
             }
         }
     }
     std::ranges::sort(result.agents, {}, &AgentDefinition::agent_type);
     return result;
 }
-[[nodiscard]] std::vector<AgentDefinition> load_agent_definitions_from_dir(
-    const fs::path& dir,
-    std::string source
-) {
+
+[[nodiscard]] std::vector<AgentDefinition> load_agent_definitions_from_dir(const fs::path& dir,
+                                                                           std::string source) {
     return load_agent_definitions_from_dir_ex(dir, std::move(source)).agents;
 }
-[[nodiscard]] std::string qualify_plugin_component_name(
-    std::string_view plugin_name,
-    std::string value
-) {
+
+[[nodiscard]] std::string qualify_plugin_component_name(std::string_view plugin_name,
+                                                        std::string value) {
     if (value.empty() || value.starts_with("plugin:")) return value;
     return std::format("plugin:{}:{}", plugin_name, value);
 }
+
 void qualify_plugin_mcp_names(AgentDefinition& agent, std::string_view plugin_name) {
     for (auto& server : agent.required_mcp_servers) {
         server = qualify_plugin_component_name(plugin_name, std::move(server));
@@ -860,12 +871,10 @@ void qualify_plugin_mcp_names(AgentDefinition& agent, std::string_view plugin_na
         server.name = qualify_plugin_component_name(plugin_name, std::move(server.name));
     }
 }
-void append_plugin_agent_definition(
-    std::vector<AgentDefinition>& agents,
-    AgentDefinition agent,
-    std::string_view plugin_name,
-    const std::vector<std::string>& namespace_parts
-) {
+
+void append_plugin_agent_definition(std::vector<AgentDefinition>& agents, AgentDefinition agent,
+                                    std::string_view plugin_name,
+                                    const std::vector<std::string>& namespace_parts) {
     std::string qualified = std::string(plugin_name);
     for (const auto& part : namespace_parts) {
         if (!part.empty()) qualified += ":" + part;
@@ -876,23 +885,23 @@ void append_plugin_agent_definition(
     qualify_plugin_mcp_names(agent, plugin_name);
     agents.push_back(std::move(agent));
 }
-void load_plugin_agents_from_path(
-    std::vector<AgentDefinition>& agents,
-    const fs::path& path,
-    std::string_view plugin_name,
-    std::vector<std::string> namespace_parts
-) {
+
+void load_plugin_agents_from_path(std::vector<AgentDefinition>& agents, const fs::path& path,
+                                  std::string_view plugin_name,
+                                  std::vector<std::string> namespace_parts) {
     std::error_code ec;
     if (!fs::exists(path, ec)) return;
 
     if (fs::is_regular_file(path, ec)) {
         if (path.extension() == ".md") {
             if (auto parsed = parse_agent_markdown(path, "plugin")) {
-                append_plugin_agent_definition(agents, std::move(*parsed), plugin_name, namespace_parts);
+                append_plugin_agent_definition(agents, std::move(*parsed), plugin_name,
+                                               namespace_parts);
             }
         } else if (path.extension() == ".json") {
             for (auto& parsed : parse_agents_json_file(path, "plugin")) {
-                append_plugin_agent_definition(agents, std::move(parsed), plugin_name, namespace_parts);
+                append_plugin_agent_definition(agents, std::move(parsed), plugin_name,
+                                               namespace_parts);
             }
         }
         return;
@@ -904,11 +913,13 @@ void load_plugin_agents_from_path(
         if (entry.is_regular_file(ec)) {
             if (entry.path().extension() == ".md") {
                 if (auto parsed = parse_agent_markdown(entry.path(), "plugin")) {
-                    append_plugin_agent_definition(agents, std::move(*parsed), plugin_name, namespace_parts);
+                    append_plugin_agent_definition(agents, std::move(*parsed), plugin_name,
+                                                   namespace_parts);
                 }
             } else if (entry.path().extension() == ".json") {
                 for (auto& parsed : parse_agents_json_file(entry.path(), "plugin")) {
-                    append_plugin_agent_definition(agents, std::move(parsed), plugin_name, namespace_parts);
+                    append_plugin_agent_definition(agents, std::move(parsed), plugin_name,
+                                                   namespace_parts);
                 }
             }
         } else if (entry.is_directory(ec)) {
@@ -918,6 +929,7 @@ void load_plugin_agents_from_path(
         }
     }
 }
+
 [[nodiscard]] std::vector<AgentDefinition> load_plugin_agent_definitions() {
     std::vector<AgentDefinition> agents;
     for (const auto& plugin : discover_plugin_component_paths()) {
@@ -928,14 +940,14 @@ void load_plugin_agents_from_path(
     std::ranges::sort(agents, {}, &AgentDefinition::agent_type);
     return agents;
 }
-[[nodiscard]] std::vector<AgentDefinition> get_all_agent_definitions(
-    std::optional<fs::path> cwd
-) {
+
+[[nodiscard]] std::vector<AgentDefinition> get_all_agent_definitions(std::optional<fs::path> cwd) {
     std::map<std::string, AgentDefinition> by_type;
     auto active_agents = [&]() {
         std::vector<AgentDefinition> active;
         active.reserve(by_type.size());
-        for (auto& [_, agent] : by_type) active.push_back(std::move(agent));
+        for (auto& [_, agent] : by_type)
+            active.push_back(std::move(agent));
         return active;
     };
 
@@ -950,26 +962,27 @@ void load_plugin_agents_from_path(
 
     if (auto* home = std::getenv("HOME")) {
         const auto user_settings = fs::path(home) / ".loom" / "settings.json";
-        for (auto& agent : load_agent_definitions_from_dir(
-            fs::path(home) / ".loom" / "agents", "userSettings")) {
+        for (auto& agent :
+             load_agent_definitions_from_dir(fs::path(home) / ".loom" / "agents", "userSettings")) {
             by_type[agent.agent_type] = std::move(agent);
         }
-        for (auto& agent : load_agent_definitions_from_settings_file(user_settings, "userSettings")) {
+        for (auto& agent :
+             load_agent_definitions_from_settings_file(user_settings, "userSettings")) {
             by_type[agent.agent_type] = std::move(agent);
         }
     }
 
     const auto project_cwd = cwd.value_or(fs::current_path());
-    for (auto& agent : load_agent_definitions_from_dir(
-        project_cwd / ".loom" / "agents", "projectSettings")) {
+    for (auto& agent :
+         load_agent_definitions_from_dir(project_cwd / ".loom" / "agents", "projectSettings")) {
         by_type[agent.agent_type] = std::move(agent);
     }
     for (auto& agent : load_agent_definitions_from_settings_file(
-        project_cwd / ".loom" / "settings.json", "projectSettings")) {
+             project_cwd / ".loom" / "settings.json", "projectSettings")) {
         by_type[agent.agent_type] = std::move(agent);
     }
     for (auto& agent : load_agent_definitions_from_settings_file(
-        project_cwd / ".loom" / "settings.local.json", "localSettings")) {
+             project_cwd / ".loom" / "settings.local.json", "localSettings")) {
         by_type[agent.agent_type] = std::move(agent);
     }
     for (auto& agent : load_flag_agent_definitions()) {
@@ -981,10 +994,9 @@ void load_plugin_agents_from_path(
 
     return active_agents();
 }
-[[nodiscard]] std::optional<AgentDefinition> find_agent_definition(
-    std::string_view requested_type,
-    std::optional<fs::path> cwd
-) {
+
+[[nodiscard]] std::optional<AgentDefinition> find_agent_definition(std::string_view requested_type,
+                                                                   std::optional<fs::path> cwd) {
     auto agents = get_all_agent_definitions(std::move(cwd));
     auto resolved = resolve_requested_agent_type(requested_type, agents);
     if (!resolved) return std::nullopt;
@@ -993,18 +1005,18 @@ void load_plugin_agents_from_path(
     }
     return std::nullopt;
 }
+
 [[nodiscard]] bool has_teammate_identity() {
     auto agent_id = loom::utils::get_agent_id();
     auto agent_name = loom::utils::get_agent_name();
     auto team_name = loom::utils::get_team_name();
-    return agent_id && !agent_id->empty() &&
-        agent_name && !agent_name->empty() &&
-        team_name && !team_name->empty();
+    return agent_id && !agent_id->empty() && agent_name && !agent_name->empty() && team_name &&
+           !team_name->empty();
 }
-[[nodiscard]] std::optional<std::string> build_teammate_append_system_prompt(
-    std::optional<std::string> existing_append_prompt,
-    std::optional<fs::path> cwd
-) {
+
+[[nodiscard]] std::optional<std::string>
+build_teammate_append_system_prompt(std::optional<std::string> existing_append_prompt,
+                                    std::optional<fs::path> cwd) {
     if (!has_teammate_identity()) return existing_append_prompt;
 
     std::string append_prompt = existing_append_prompt.value_or("");
@@ -1013,26 +1025,26 @@ void load_plugin_agents_from_path(
     if (auto agent_type = loom::utils::get_agent_type(); agent_type && !agent_type->empty()) {
         auto agent = find_agent_definition(*agent_type, std::move(cwd));
         if (agent && agent->source != "built-in" && !agent->system_prompt.empty()) {
-            append_prompt_section(
-                append_prompt,
-                std::format("# Custom Agent Instructions\n{}", agent->system_prompt));
+            append_prompt_section(append_prompt, std::format("# Custom Agent Instructions\n{}",
+                                                             agent->system_prompt));
         }
     }
 
     if (append_prompt.empty()) return std::nullopt;
     return append_prompt;
 }
-std::expected<std::vector<std::string>, std::string> load_agents_from_dir(std::string_view dir_path) {
+
+std::expected<std::vector<std::string>, std::string>
+load_agents_from_dir(std::string_view dir_path) {
     std::vector<std::string> names;
     for (const auto& agent : load_agent_definitions_from_dir(fs::path(dir_path), "custom")) {
         names.push_back(agent.agent_type);
     }
     return names;
 }
-[[nodiscard]] LoadAgentDefinitionsResult load_agents_dir(
-    const fs::path& dir,
-    std::string_view source
-) {
+
+[[nodiscard]] LoadAgentDefinitionsResult load_agents_dir(const fs::path& dir,
+                                                         std::string_view source) {
     return load_agent_definitions_from_dir_ex(dir, std::string(source));
 }
-} // namespace loom::tools::agent_runtime
+}  // namespace loom::tools::agent_runtime

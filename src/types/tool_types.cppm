@@ -49,7 +49,7 @@ struct ApiExecutionContext {
     std::string api_version = "2023-06-01";
     std::chrono::milliseconds timeout{120000};
     std::uint64_t context_window_tokens = 200000;
-    std::uint64_t context_output_tokens = 0; // Original request; zero selects automatic defaults.
+    std::uint64_t context_output_tokens = 0;  // Original request; zero selects automatic defaults.
     double context_compaction_threshold = 0.9;
     bool context_auto_compact = true;
     std::shared_ptr<const ModelContextConfig> model_context_config{};
@@ -71,7 +71,7 @@ struct HostAgentResumeConstraint {
 
 /// JSON-based tool input wrapping raw parameter data
 struct ToolInput {
-    std::string raw_json;   // Raw JSON string of parameters
+    std::string raw_json;  // Raw JSON string of parameters
     // Internal execution context; never serialized as model-supplied input.
     std::optional<std::string> parent_model = std::nullopt;
     // Queried only during execute(); must be non-blocking and non-throwing.
@@ -129,7 +129,8 @@ struct ToolOutputContent {
     }
 
     /// Create a base64 document output
-    [[nodiscard]] static ToolOutputContent document_output(std::string media_type, std::string data) {
+    [[nodiscard]] static ToolOutputContent document_output(std::string media_type,
+                                                           std::string data) {
         return ToolOutputContent{
             .text = {},
             .format = "document",
@@ -146,18 +147,12 @@ struct ToolResult {
 
     /// Create a successful single-text result
     [[nodiscard]] static ToolResult success(std::string text) {
-        return ToolResult{
-            {ToolOutputContent::text_output(std::move(text))},
-            false
-        };
+        return ToolResult{{ToolOutputContent::text_output(std::move(text))}, false};
     }
 
     /// Create an error result
     [[nodiscard]] static ToolResult error(std::string message) {
-        return ToolResult{
-            {ToolOutputContent::text_output(std::move(message))},
-            true
-        };
+        return ToolResult{{ToolOutputContent::text_output(std::move(message))}, true};
     }
 
     /// Create a multi-content successful result
@@ -166,4 +161,4 @@ struct ToolResult {
     }
 };
 
-} // namespace loom::core
+}  // namespace loom::core

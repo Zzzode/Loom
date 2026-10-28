@@ -10,12 +10,12 @@ namespace loom::terminal::output {
 
 loom::utils::VoidResult write_control_sequence(std::string_view bytes) {
     if (!bytes.empty() && std::fwrite(bytes.data(), 1, bytes.size(), stdout) != bytes.size()) {
-        return std::unexpected(loom::utils::make_error(
-            loom::utils::ErrorCode::io_error, "Terminal output: fwrite failed"));
+        return std::unexpected(loom::utils::make_error(loom::utils::ErrorCode::io_error,
+                                                       "Terminal output: fwrite failed"));
     }
     if (std::fflush(stdout) != 0) {
-        return std::unexpected(loom::utils::make_error(
-            loom::utils::ErrorCode::io_error, "Terminal output: fflush failed"));
+        return std::unexpected(loom::utils::make_error(loom::utils::ErrorCode::io_error,
+                                                       "Terminal output: fflush failed"));
     }
     return {};
 }

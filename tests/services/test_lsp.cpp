@@ -1,20 +1,21 @@
 /// @file test_lsp.cpp
 /// @brief Service layer tests split from test_services.cpp.
 
-#include <cctype>
-#include <cstdint>
-#include <cstdlib>
-#include <atomic>
 #include <arpa/inet.h>
 #include <fcntl.h>
 #include <netinet/in.h>
 #include <signal.h>
+#include <sys/file.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/time.h>
-#include <sys/file.h>
 #include <sys/wait.h>
 #include <unistd.h>
+
+#include <atomic>
+#include <cctype>
+#include <cstdint>
+#include <cstdlib>
 #ifdef __APPLE__
 #include <CommonCrypto/CommonDigest.h>
 #else
@@ -23,9 +24,8 @@
 
 #include <gtest/gtest.h>
 #include <httplib.h>
+
 #include <limits>
-
-
 
 import std;
 import loom.cli.ccr_client;
@@ -85,7 +85,8 @@ namespace {
 struct CurrentPathGuard {
     fs::path previous;
 
-    explicit CurrentPathGuard(const fs::path& next) : previous(fs::current_path()) {
+    explicit CurrentPathGuard(const fs::path& next)
+        : previous(fs::current_path()) {
         fs::current_path(next);
     }
 
@@ -99,7 +100,8 @@ struct EnvironmentGuard {
     std::string name;
     std::optional<std::string> previous;
 
-    EnvironmentGuard(std::string key, const std::string& value) : name(std::move(key)) {
+    EnvironmentGuard(std::string key, const std::string& value)
+        : name(std::move(key)) {
         if (const char* existing = std::getenv(name.c_str())) {
             previous = existing;
         }
@@ -119,17 +121,15 @@ loom::services::lsp::LspClient make_lsp_for_parsing() {
     return loom::services::lsp::LspClient(loom::services::lsp::LspClient::Config{});
 }
 
-} // namespace
+}  // namespace
 
 TEST(LspConfig, LoadsPluginLspServersFromManifestAndRoutesExtension) {
     auto root = fs::weakly_canonical(fs::temp_directory_path()) / "loom_plugin_lsp_test";
     fs::remove_all(root);
     fs::create_directories(root / ".loom");
     EnvironmentGuard home_guard("HOME", root.string());
-    EnvironmentGuard plugin_cache_guard(
-        "LOOM_PLUGIN_CACHE_DIR",
-        (root / ".loom" / "plugins").string()
-    );
+    EnvironmentGuard plugin_cache_guard("LOOM_PLUGIN_CACHE_DIR",
+                                        (root / ".loom" / "plugins").string());
 
     const auto plugin_root = root / ".loom" / "plugins" / "lsp-fixture";
     fs::create_directories(plugin_root / "workspace");
@@ -221,7 +221,8 @@ process.stdin.resume();
       "env": {
         "PLUGIN_LSP_MODE": "${user_config.mode}",
         "PLUGIN_LSP_ROOT": "${LOOM_PLUGIN_ROOT}",
-        "PLUGIN_LSP_LOG": ")JSON" << log_path.string() << R"JSON("
+        "PLUGIN_LSP_LOG": ")JSON"
+                 << log_path.string() << R"JSON("
       },
       "workspaceFolder": "${LOOM_PLUGIN_ROOT}/workspace",
       "initializationOptions": {"mode": "configured", "feature": true}
@@ -246,14 +247,14 @@ process.stdin.resume();
         EXPECT_EQ(it->config.env.at("PLUGIN_LSP_ROOT"), plugin_root.string());
         EXPECT_EQ(it->config.env.at("PLUGIN_LSP_LOG"), log_path.string());
         EXPECT_EQ(it->config.env.at("LOOM_PLUGIN_ROOT"), plugin_root.string());
-        EXPECT_EQ(
-            it->config.env.at("LOOM_PLUGIN_DATA"),
-            (root / ".loom" / "plugins" / "data" / "lsp-fixture").string()
-        );
+        EXPECT_EQ(it->config.env.at("LOOM_PLUGIN_DATA"),
+                  (root / ".loom" / "plugins" / "data" / "lsp-fixture").string());
         ASSERT_TRUE(it->config.workspace_folder.has_value());
         EXPECT_EQ(*it->config.workspace_folder, (plugin_root / "workspace").string());
-        EXPECT_NE(it->config.initialization_options_json.find("\"mode\":\"configured\""), std::string::npos);
-        EXPECT_NE(it->config.initialization_options_json.find("\"feature\":true"), std::string::npos);
+        EXPECT_NE(it->config.initialization_options_json.find("\"mode\":\"configured\""),
+                  std::string::npos);
+        EXPECT_NE(it->config.initialization_options_json.find("\"feature\":true"),
+                  std::string::npos);
         EXPECT_EQ(it->config.extension_to_language.at("foo"), "foo-plugin");
 
         auto manager = loom::services::lsp::create_lsp_server_manager();
@@ -285,14 +286,17 @@ process.stdin.resume();
         EXPECT_NE(initialize_pos, std::string::npos) << log;
         EXPECT_NE(initialized_pos, std::string::npos) << log;
         EXPECT_NE(did_open_pos, std::string::npos) << log;
-        if (initialize_pos != std::string::npos &&
-            initialized_pos != std::string::npos &&
+        if (initialize_pos != std::string::npos && initialized_pos != std::string::npos &&
             did_open_pos != std::string::npos) {
             EXPECT_LT(initialize_pos, initialized_pos);
             EXPECT_LT(initialized_pos, did_open_pos);
         }
-        EXPECT_NE(log.find("\"initializationOptions\":{\"mode\":\"configured\",\"feature\":true}"), std::string::npos) << log;
-        EXPECT_NE(log.find("\"rootPath\":\"" + (plugin_root / "workspace").string() + "\""), std::string::npos) << log;
+        EXPECT_NE(log.find("\"initializationOptions\":{\"mode\":\"configured\",\"feature\":true}"),
+                  std::string::npos)
+            << log;
+        EXPECT_NE(log.find("\"rootPath\":\"" + (plugin_root / "workspace").string() + "\""),
+                  std::string::npos)
+            << log;
         EXPECT_NE(log.find("\"languageId\":\"foo-plugin\""), std::string::npos) << log;
 
         auto shutdown = manager->shutdown();
@@ -302,11 +306,9 @@ process.stdin.resume();
     fs::remove_all(root);
 }
 
-
 // LSP response parsers — exercised against canned JSON fixtures (no server).
 // These cover the previously-stubbed parsers that dropped most response data.
 // ---------------------------------------------------------------------------
-
 
 TEST(LspClientParser, ParseHoverExtractsMarkupStringAndRange) {
     auto client = make_lsp_for_parsing();
@@ -344,8 +346,8 @@ TEST(LspClientParser, ParseDocumentSymbolsHandlesHierarchy) {
 
 TEST(LspClientParser, ParseCodeActionsReadsTitleKindPreferred) {
     auto client = make_lsp_for_parsing();
-    auto actions = client.parse_code_actions(
-        R"([{"title":"Fix me","kind":"quickfix","isPreferred":true}])");
+    auto actions =
+        client.parse_code_actions(R"([{"title":"Fix me","kind":"quickfix","isPreferred":true}])");
     ASSERT_TRUE(actions.has_value());
     ASSERT_EQ(actions->size(), 1u);
     EXPECT_EQ((*actions)[0].title, "Fix me");
@@ -373,9 +375,12 @@ TEST(LspClientParser, ParseCompletionListEnrichesItems) {
     ASSERT_EQ(list->items.size(), 1u);
     const auto& item = list->items.front();
     EXPECT_EQ(item.label, "foo");
-    ASSERT_TRUE(item.detail.has_value());  EXPECT_EQ(*item.detail, "(int)");
-    ASSERT_TRUE(item.documentation.has_value()); EXPECT_EQ(*item.documentation, "doc");
-    ASSERT_TRUE(item.insert_text.has_value());  EXPECT_EQ(*item.insert_text, "foo()");
+    ASSERT_TRUE(item.detail.has_value());
+    EXPECT_EQ(*item.detail, "(int)");
+    ASSERT_TRUE(item.documentation.has_value());
+    EXPECT_EQ(*item.documentation, "doc");
+    ASSERT_TRUE(item.insert_text.has_value());
+    EXPECT_EQ(*item.insert_text, "foo()");
 }
 
 TEST(LspClientParser, ParseInitializeResultPopulatesCapabilities) {

@@ -1,20 +1,21 @@
 /// @file test_session.cpp
 /// @brief Service layer tests split from test_services.cpp.
 
-#include <cctype>
-#include <cstdint>
-#include <cstdlib>
-#include <atomic>
 #include <arpa/inet.h>
 #include <fcntl.h>
 #include <netinet/in.h>
 #include <signal.h>
+#include <sys/file.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/time.h>
-#include <sys/file.h>
 #include <sys/wait.h>
 #include <unistd.h>
+
+#include <atomic>
+#include <cctype>
+#include <cstdint>
+#include <cstdlib>
 #ifdef __APPLE__
 #include <CommonCrypto/CommonDigest.h>
 #else
@@ -23,9 +24,8 @@
 
 #include <gtest/gtest.h>
 #include <httplib.h>
+
 #include <limits>
-
-
 
 import std;
 import loom.cli.ccr_client;
@@ -86,7 +86,8 @@ struct EnvironmentGuard {
     std::string name;
     std::optional<std::string> previous;
 
-    EnvironmentGuard(std::string key, const std::string& value) : name(std::move(key)) {
+    EnvironmentGuard(std::string key, const std::string& value)
+        : name(std::move(key)) {
         if (const char* existing = std::getenv(name.c_str())) {
             previous = existing;
         }
@@ -106,7 +107,8 @@ struct EnvironmentUnsetGuard {
     std::string name;
     std::optional<std::string> previous;
 
-    explicit EnvironmentUnsetGuard(std::string key) : name(std::move(key)) {
+    explicit EnvironmentUnsetGuard(std::string key)
+        : name(std::move(key)) {
         if (const char* existing = std::getenv(name.c_str())) {
             previous = existing;
         }
@@ -168,9 +170,7 @@ public:
         }
 
         running_.store(true);
-        accept_thread_ = std::jthread([this](std::stop_token stop) {
-            accept_loop(stop);
-        });
+        accept_thread_ = std::jthread([this](std::stop_token stop) { accept_loop(stop); });
     }
 
     ~LocalCcrHttpServer() {
@@ -184,13 +184,11 @@ public:
 
     [[nodiscard]] bool ready() const noexcept { return listen_fd_ >= 0 && port_ != 0; }
 
-    [[nodiscard]] std::string base_url() const {
-        return std::format("http://127.0.0.1:{}", port_);
-    }
+    [[nodiscard]] std::string base_url() const { return std::format("http://127.0.0.1:{}", port_); }
 
-    [[nodiscard]] std::optional<std::vector<LocalCcrHttpRequest>> wait_for_requests(
-        std::size_t count,
-        std::chrono::milliseconds timeout = std::chrono::seconds(3)) {
+    [[nodiscard]] std::optional<std::vector<LocalCcrHttpRequest>>
+    wait_for_requests(std::size_t count,
+                      std::chrono::milliseconds timeout = std::chrono::seconds(3)) {
         std::unique_lock lock(mutex_);
         if (!cv_.wait_for(lock, timeout, [this, count] { return requests_.size() >= count; })) {
             return std::nullopt;
@@ -203,7 +201,8 @@ private:
         while (!stop.stop_requested() && running_.load()) {
             sockaddr_in client_addr{};
             socklen_t client_len = sizeof(client_addr);
-            int client_fd = ::accept(listen_fd_, reinterpret_cast<sockaddr*>(&client_addr), &client_len);
+            int client_fd =
+                ::accept(listen_fd_, reinterpret_cast<sockaddr*>(&client_addr), &client_len);
             if (client_fd < 0) {
                 if (!running_.load()) break;
                 continue;
@@ -257,20 +256,18 @@ private:
     }
 
     static bool send_response(int fd, int status, std::string_view reason, std::string_view body) {
-        const auto response = std::format(
-            "HTTP/1.1 {} {}\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{}",
-            status,
-            reason,
-            body.size(),
-            body);
+        const auto response =
+            std::format("HTTP/1.1 {} {}\r\nContent-Type: application/json\r\nContent-Length: "
+                        "{}\r\nConnection: close\r\n\r\n{}",
+                        status, reason, body.size(), body);
         return send_all(fd, response);
     }
 
     static bool send_sse_response(int fd, std::string_view body) {
-        const auto response = std::format(
-            "HTTP/1.1 200 OK\r\nContent-Type: text/event-stream\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{}",
-            body.size(),
-            body);
+        const auto response =
+            std::format("HTTP/1.1 200 OK\r\nContent-Type: text/event-stream\r\nContent-Length: "
+                        "{}\r\nConnection: close\r\n\r\n{}",
+                        body.size(), body);
         return send_all(fd, response);
     }
 
@@ -287,7 +284,8 @@ private:
             send_response(fd, 201, "Created", R"({"id":"remote-session-1"})");
             return;
         }
-        if (request->method == "POST" && request->path == "/api/sessions/remote-session-1/messages") {
+        if (request->method == "POST" &&
+            request->path == "/api/sessions/remote-session-1/messages") {
             send_response(fd, 200, "OK", R"({"content":"remote-ok"})");
             return;
         }
@@ -295,15 +293,15 @@ private:
             send_response(fd, 201, "Created", R"({"ok":true})");
             return;
         }
-        if (request->method == "POST" && request->path == "/api/sessions/remote-session-1/messages?stream=true") {
-            send_sse_response(fd,
-                "event: message\r\n"
-                "data: {\"delta\":\"one\"}\r\n"
-                "\r\n"
-                "data: {\"delta\":\"two\"}\r\n"
-                "\r\n"
-                "data: [DONE]\r\n"
-                "\r\n");
+        if (request->method == "POST" &&
+            request->path == "/api/sessions/remote-session-1/messages?stream=true") {
+            send_sse_response(fd, "event: message\r\n"
+                                  "data: {\"delta\":\"one\"}\r\n"
+                                  "\r\n"
+                                  "data: {\"delta\":\"two\"}\r\n"
+                                  "\r\n"
+                                  "data: [DONE]\r\n"
+                                  "\r\n");
             return;
         }
         if (request->method == "DELETE" && request->path == "/api/sessions/remote-session-1") {
@@ -322,7 +320,7 @@ private:
     std::vector<LocalCcrHttpRequest> requests_;
 };
 
-} // namespace
+}  // namespace
 
 TEST(SessionIngress, PostsSessionEventsWithBearerAuth) {
     LocalCcrHttpServer server;
@@ -345,7 +343,8 @@ TEST(SessionIngress, PostsSessionEventsWithBearerAuth) {
     ASSERT_EQ(requests->size(), 1u);
     EXPECT_EQ((*requests)[0].method, "POST");
     EXPECT_EQ((*requests)[0].path, "/v1/sessions/session_1/events");
-    EXPECT_NE((*requests)[0].headers.find("Authorization: Bearer session-jwt-token"), std::string::npos);
+    EXPECT_NE((*requests)[0].headers.find("Authorization: Bearer session-jwt-token"),
+              std::string::npos);
     EXPECT_NE((*requests)[0].body.find(R"("events":[)"), std::string::npos);
     EXPECT_NE((*requests)[0].body.find(R"("type":"control_response")"), std::string::npos);
     EXPECT_NE((*requests)[0].body.find(R"("request_id":"permission-1")"), std::string::npos);
@@ -373,7 +372,8 @@ TEST(SessionIngress, PostsSessionEventsWithSessionCookieAuth) {
     ASSERT_EQ(requests->size(), 1u);
     EXPECT_EQ((*requests)[0].method, "POST");
     EXPECT_EQ((*requests)[0].path, "/v1/sessions/session_1/events");
-    EXPECT_NE((*requests)[0].headers.find("Cookie: sessionKey=sk-ant-sid01-test"), std::string::npos);
+    EXPECT_NE((*requests)[0].headers.find("Cookie: sessionKey=sk-ant-sid01-test"),
+              std::string::npos);
     EXPECT_NE((*requests)[0].headers.find("X-Organization-Uuid: org-uuid-1"), std::string::npos);
     EXPECT_EQ((*requests)[0].headers.find("Authorization:"), std::string::npos);
     EXPECT_NE((*requests)[0].body.find(R"("type":"progress")"), std::string::npos);
@@ -399,7 +399,8 @@ TEST(SessionIngress, CreatesIngressFromDaemonEnvironmentAndSendsLifecycleEvent) 
     EXPECT_TRUE(*created);
     EXPECT_TRUE(loom::services::api::is_ingress_active());
 
-    auto sent = loom::services::api::send_ingress_lifecycle_event("started", std::string_view{"work_1"});
+    auto sent =
+        loom::services::api::send_ingress_lifecycle_event("started", std::string_view{"work_1"});
     ASSERT_TRUE(sent.has_value()) << sent.error();
 
     auto requests = server.wait_for_requests(1);
@@ -407,7 +408,8 @@ TEST(SessionIngress, CreatesIngressFromDaemonEnvironmentAndSendsLifecycleEvent) 
     ASSERT_EQ(requests->size(), 1u);
     EXPECT_EQ((*requests)[0].method, "POST");
     EXPECT_EQ((*requests)[0].path, "/v1/sessions/session_1/events");
-    EXPECT_NE((*requests)[0].headers.find("Authorization: Bearer env-session-token"), std::string::npos);
+    EXPECT_NE((*requests)[0].headers.find("Authorization: Bearer env-session-token"),
+              std::string::npos);
     EXPECT_NE((*requests)[0].body.find(R"("type":"session_lifecycle")"), std::string::npos);
     EXPECT_NE((*requests)[0].body.find(R"("status":"started")"), std::string::npos);
     EXPECT_NE((*requests)[0].body.find(R"("bridge_work_id":"work_1")"), std::string::npos);
@@ -445,8 +447,7 @@ TEST(SessionMemoryService, StoresSearchesAndDeletesMemoryItems) {
 TEST(MemoryExtraction, LlmPromptContainsDirInstructionsAndTranscript) {
     namespace em = loom::services::extract_memories;
     const std::string prompt = em::build_llm_extraction_prompt(
-        "/tmp/x/memory",
-        "user: always write tests in English\nassistant: got it",
+        "/tmp/x/memory", "user: always write tests in English\nassistant: got it",
         std::string_view{"- [Old](old.md) — prior memory"});
 
     // Instructs the sub-agent WHERE to write.

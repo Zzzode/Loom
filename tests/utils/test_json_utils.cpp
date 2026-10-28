@@ -1,11 +1,13 @@
 /// @file test_json_utils.cpp
 ///
 /// Split out of the former test_utils.cpp kitchen-sink (169 tests, 53 suites).
-/// This file covers the JSON utilities (loom.serdes.json parse/serialize, control-message key compat) suites.
+/// This file covers the JSON utilities (loom.serdes.json parse/serialize, control-message key
+/// compat) suites.
 
 #include <gtest/gtest.h>
-#include <cstdlib>
 #include <httplib.h>
+
+#include <cstdlib>
 
 import std;
 import loom.text.string;
@@ -191,7 +193,10 @@ TEST(JsonCCUtils, ParseFileReturnsErrorOnMissingFile) {
 
 TEST(JsonCCUtils, ParseFileReturnsErrorOnInvalidJson) {
     auto tmp = std::filesystem::temp_directory_path() / "cc-json-read-test.json";
-    { std::ofstream f(tmp); f << "{invalid}"; }
+    {
+        std::ofstream f(tmp);
+        f << "{invalid}";
+    }
     auto r = loom::utils::json::parse_file(tmp);
     EXPECT_FALSE(r.has_value());
     std::error_code ec;
@@ -200,7 +205,10 @@ TEST(JsonCCUtils, ParseFileReturnsErrorOnInvalidJson) {
 
 TEST(JsonCCUtils, ParseFileRoundTripsValidJson) {
     auto tmp = std::filesystem::temp_directory_path() / "cc-json-read-rt.json";
-    { std::ofstream f(tmp); f << R"({"key": "value", "n": 5})"; }
+    {
+        std::ofstream f(tmp);
+        f << R"({"key": "value", "n": 5})";
+    }
     auto r = loom::utils::json::parse_file(tmp);
     ASSERT_TRUE(r.has_value());
     EXPECT_EQ(r->root().get("key").as_str(), "value");

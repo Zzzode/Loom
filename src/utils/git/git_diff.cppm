@@ -49,9 +49,7 @@ inline bool parse_hunk_header(std::string_view line, DiffHunk& hunk) {
     if (header_pos < line.size() && line[header_pos] == ' ') {
         ++header_pos;
     }
-    hunk.header = header_pos < line.size()
-        ? std::string(line.substr(header_pos))
-        : std::string{};
+    hunk.header = header_pos < line.size() ? std::string(line.substr(header_pos)) : std::string{};
 
     // Parse -old_start,old_count
     auto space = range_str.find(' ');
@@ -131,8 +129,7 @@ inline std::vector<FileDiff> parse_unified_diff(std::string_view input) {
 }
 
 // Generate unified diff from two strings
-inline std::string generate_unified_diff(std::string_view old_content,
-                                         std::string_view new_content,
+inline std::string generate_unified_diff(std::string_view old_content, std::string_view new_content,
                                          std::string_view filename) {
     // Split into lines
     auto split_lines = [](std::string_view sv) -> std::vector<std::string> {
@@ -152,9 +149,8 @@ inline std::string generate_unified_diff(std::string_view old_content,
         return "";
     }
 
-    std::vector<std::vector<int>> lcs(
-        old_lines.size() + 1,
-        std::vector<int>(new_lines.size() + 1, 0));
+    std::vector<std::vector<int>> lcs(old_lines.size() + 1,
+                                      std::vector<int>(new_lines.size() + 1, 0));
     for (std::size_t i = old_lines.size(); i-- > 0;) {
         for (std::size_t j = new_lines.size(); j-- > 0;) {
             if (old_lines[i] == new_lines[j]) {
@@ -169,8 +165,7 @@ inline std::string generate_unified_diff(std::string_view old_content,
     std::size_t old_index = 0;
     std::size_t new_index = 0;
     while (old_index < old_lines.size() || new_index < new_lines.size()) {
-        if (old_index < old_lines.size() &&
-            new_index < new_lines.size() &&
+        if (old_index < old_lines.size() && new_index < new_lines.size() &&
             old_lines[old_index] == new_lines[new_index]) {
             diff_lines.push_back({DiffLine::Type::Context, old_lines[old_index]});
             ++old_index;
@@ -196,20 +191,20 @@ inline std::string generate_unified_diff(std::string_view old_content,
     int old_start = old_count == 0 ? 0 : 1;
     int new_start = new_count == 0 ? 0 : 1;
 
-    result += "@@ -" + std::to_string(old_start) + "," + std::to_string(old_count) +
-              " +" + std::to_string(new_start) + "," + std::to_string(new_count) + " @@\n";
+    result += "@@ -" + std::to_string(old_start) + "," + std::to_string(old_count) + " +" +
+              std::to_string(new_start) + "," + std::to_string(new_count) + " @@\n";
 
     for (const auto& line : diff_lines) {
         switch (line.type) {
-            case DiffLine::Type::Context:
-                result += " " + line.content + "\n";
-                break;
-            case DiffLine::Type::Added:
-                result += "+" + line.content + "\n";
-                break;
-            case DiffLine::Type::Removed:
-                result += "-" + line.content + "\n";
-                break;
+        case DiffLine::Type::Context:
+            result += " " + line.content + "\n";
+            break;
+        case DiffLine::Type::Added:
+            result += "+" + line.content + "\n";
+            break;
+        case DiffLine::Type::Removed:
+            result += "-" + line.content + "\n";
+            break;
         }
     }
 
@@ -224,8 +219,10 @@ inline DiffStats get_diff_stats(const std::vector<FileDiff>& diffs) {
     for (const auto& diff : diffs) {
         for (const auto& hunk : diff.hunks) {
             for (const auto& line : hunk.lines) {
-                if (line.type == DiffLine::Type::Added) ++stats.additions;
-                else if (line.type == DiffLine::Type::Removed) ++stats.deletions;
+                if (line.type == DiffLine::Type::Added)
+                    ++stats.additions;
+                else if (line.type == DiffLine::Type::Removed)
+                    ++stats.deletions;
             }
         }
     }
@@ -233,4 +230,4 @@ inline DiffStats get_diff_stats(const std::vector<FileDiff>& diffs) {
     return stats;
 }
 
-} // namespace loom::utils
+}  // namespace loom::utils

@@ -79,11 +79,11 @@ CONSUMERS = (("native", "test_mermaid_block_source58", "tests/ui/test_mermaid_bl
 HELPERS = tuple("tests/support/mermaid_block58_" + name + ".hpp" for name in
                 ("source", "projection", "contours", "boundary_authority", "authority", "official"))
 REVIEWED_HELPER_SHA = {
-    'tests/support/mermaid_block58_source.hpp': '4063369a8318db47762d13ff18c6db02441165a6fc7f4334907b4f4786548c03',
-    'tests/support/mermaid_block58_projection.hpp': 'bbcb680aa8cf29652a1bfdc7275b4c16e76da52c4ca2a2eed2acb9b6ca4d8d4d',
-    'tests/support/mermaid_block58_contours.hpp': '1acab0050d8942520721ea91efbd42760ba930c646328fbfaa6cfe5d569e14e6',
-    'tests/support/mermaid_block58_boundary_authority.hpp': '45ffa8e034da0a6aabc10daaaf0787524488eb03171e52b937cf3f25c438d68e',
-    'tests/support/mermaid_block58_authority.hpp': '3b609c966bec06bd28b728a0aa94e01463029f51e732b476048a8eb8a1dbecb2',
+    'tests/support/mermaid_block58_source.hpp': 'e324bb0299d796f1c6b549ad19d38ee82f4e6f2c508a3b020a53ba69eb4c9b98',
+    'tests/support/mermaid_block58_projection.hpp': '8b5374e9b9c888e26e90cff67a34195e6abd0541bbbae939f2253a57550efb24',
+    'tests/support/mermaid_block58_contours.hpp': 'ff966fdce81d2cc21b0f1f77ed832285fb5c35f3fa0c8685acdbb927f208992e',
+    'tests/support/mermaid_block58_boundary_authority.hpp': 'f9657c35a1c264403199b9033c3a1015b12d9f773acb3be6b1bd1f627c36e22d',
+    'tests/support/mermaid_block58_authority.hpp': 'cf86ccffe73ae455c3904cc074a24b1a2dd5ef6a0d7f1ac998fe5490bb994b25',
 }
 COMMON = ("src/ui/visual/mermaid_block_impl.cpp", "src/ui/visual/mermaid.cppm",
     "src/ui/visual/mermaid_detail.cppm", "src/ui/visual/mermaid_impl.cpp", "src/ui/visual/mermaid_cache_impl.cpp",

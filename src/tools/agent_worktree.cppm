@@ -24,4 +24,4 @@ struct AgentWorktreeCleanupResult {
 
 [[nodiscard]] AgentWorktreeCleanupResult cleanup_agent_worktree(std::string_view agent_id);
 
-} // namespace loom::tools::agent
+}  // namespace loom::tools::agent

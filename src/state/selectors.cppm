@@ -16,8 +16,8 @@
 /// (they are templates) and only declarations for the 113 free functions.
 module;
 
-#include <cstdint>
 #include <cstddef>
+#include <cstdint>
 
 export module loom.state.selectors;
 
@@ -34,8 +34,7 @@ export namespace loom::state::selectors {
 
 /// Generic memoized selector that caches result based on an input key.
 /// Re-computes only when the extracted key changes.
-template <typename Key, typename Value>
-class MemoizedSelector {
+template <typename Key, typename Value> class MemoizedSelector {
     std::optional<Key> cached_key_;
     std::optional<Value> cached_value_;
     std::function<Key(const AppState&)> key_extractor_;
@@ -46,11 +45,10 @@ class MemoizedSelector {
 
 public:
     /// Construct with key extraction function and computation function
-    MemoizedSelector(
-        std::function<Key(const AppState&)> key_fn,
-        std::function<Value(const AppState&)> compute_fn
-    ) : key_extractor_(std::move(key_fn)),
-        compute_(std::move(compute_fn)) {}
+    MemoizedSelector(std::function<Key(const AppState&)> key_fn,
+                     std::function<Value(const AppState&)> compute_fn)
+        : key_extractor_(std::move(key_fn))
+        , compute_(std::move(compute_fn)) {}
 
     /// Get the cached or freshly computed value
     [[nodiscard]] Value select(const AppState& state) {
@@ -197,7 +195,8 @@ public:
 [[nodiscard]] std::optional<std::string_view> get_advisor_model(const AppState& state) noexcept;
 
 /// Get the Ultraplan session URL
-[[nodiscard]] std::optional<std::string_view> get_ultraplan_session_url(const AppState& state) noexcept;
+[[nodiscard]] std::optional<std::string_view>
+get_ultraplan_session_url(const AppState& state) noexcept;
 
 /// Get the speculation session time saved
 [[nodiscard]] int64_t get_speculation_session_time_saved_ms(const AppState& state) noexcept;
@@ -228,10 +227,12 @@ public:
 [[nodiscard]] bool should_show_remote_callout(const AppState& state) noexcept;
 
 /// Get the REPL bridge connect URL
-[[nodiscard]] std::optional<std::string_view> get_repl_bridge_connect_url(const AppState& state) noexcept;
+[[nodiscard]] std::optional<std::string_view>
+get_repl_bridge_connect_url(const AppState& state) noexcept;
 
 /// Get the REPL bridge session URL
-[[nodiscard]] std::optional<std::string_view> get_repl_bridge_session_url(const AppState& state) noexcept;
+[[nodiscard]] std::optional<std::string_view>
+get_repl_bridge_session_url(const AppState& state) noexcept;
 
 /// Get the REPL bridge error
 [[nodiscard]] std::optional<std::string_view> get_repl_bridge_error(const AppState& state) noexcept;
@@ -275,13 +276,15 @@ public:
 [[nodiscard]] bool has_tasks(const AppState& state) noexcept;
 
 /// Get the foregrounded task ID
-[[nodiscard]] std::optional<std::string_view> get_foregrounded_task_id(const AppState& state) noexcept;
+[[nodiscard]] std::optional<std::string_view>
+get_foregrounded_task_id(const AppState& state) noexcept;
 
 /// Check if a specific task is foregrounded
 [[nodiscard]] bool is_task_foregrounded(const AppState& state, std::string_view task_id) noexcept;
 
 /// Get the viewing agent task ID
-[[nodiscard]] std::optional<std::string_view> get_viewing_agent_task_id(const AppState& state) noexcept;
+[[nodiscard]] std::optional<std::string_view>
+get_viewing_agent_task_id(const AppState& state) noexcept;
 
 /// Check if we're viewing a specific agent's task
 [[nodiscard]] bool is_viewing_agent_task(const AppState& state, std::string_view task_id) noexcept;
@@ -293,17 +296,20 @@ public:
 [[nodiscard]] bool is_agent_name_registered(const AppState& state, std::string_view name) noexcept;
 
 /// Get an agent ID by name
-[[nodiscard]] std::optional<std::string_view> get_agent_id_by_name(const AppState& state, std::string_view name) noexcept;
+[[nodiscard]] std::optional<std::string_view> get_agent_id_by_name(const AppState& state,
+                                                                   std::string_view name) noexcept;
 
 // ============================================================
 // Companion (Buddy) Selectors
 // ============================================================
 
 /// Get the companion reaction
-[[nodiscard]] std::optional<std::string_view> get_companion_reaction(const AppState& state) noexcept;
+[[nodiscard]] std::optional<std::string_view>
+get_companion_reaction(const AppState& state) noexcept;
 
 /// Get the companion pet time
-[[nodiscard]] std::optional<std::chrono::system_clock::time_point> get_companion_pet_time(const AppState& state) noexcept;
+[[nodiscard]] std::optional<std::chrono::system_clock::time_point>
+get_companion_pet_time(const AppState& state) noexcept;
 
 /// Check if companion was petted recently (within last 5 seconds)
 [[nodiscard]] bool was_companion_petted_recently(const AppState& state) noexcept;
@@ -383,17 +389,20 @@ public:
 [[nodiscard]] std::string_view get_working_directory(const AppState& state) noexcept;
 
 /// Get allowed directories (paths added via /add-dir)
-[[nodiscard]] const std::vector<std::string>& get_allowed_directories(const AppState& state) noexcept;
+[[nodiscard]] const std::vector<std::string>&
+get_allowed_directories(const AppState& state) noexcept;
 
 // ============================================================
 // Prompt Suggestion Selectors
 // ============================================================
 
 /// Get the prompt suggestion text
-[[nodiscard]] std::optional<std::string_view> get_prompt_suggestion_text(const AppState& state) noexcept;
+[[nodiscard]] std::optional<std::string_view>
+get_prompt_suggestion_text(const AppState& state) noexcept;
 
 /// Get the prompt suggestion prompt ID
-[[nodiscard]] std::optional<std::string_view> get_prompt_suggestion_prompt_id(const AppState& state) noexcept;
+[[nodiscard]] std::optional<std::string_view>
+get_prompt_suggestion_prompt_id(const AppState& state) noexcept;
 
 /// Check if there's an active prompt suggestion
 [[nodiscard]] bool has_prompt_suggestion(const AppState& state) noexcept;
@@ -434,7 +443,8 @@ public:
 [[nodiscard]] bool has_skill_improvement_suggestion(const AppState& state) noexcept;
 
 /// Get the skill improvement suggestion skill name
-[[nodiscard]] std::optional<std::string_view> get_skill_improvement_skill_name(const AppState& state) noexcept;
+[[nodiscard]] std::optional<std::string_view>
+get_skill_improvement_skill_name(const AppState& state) noexcept;
 
 // ============================================================
 // Inbox Selectors
@@ -490,46 +500,33 @@ public:
 
 /// Create a memoized selector using message count as cache key
 template <typename Value>
-[[nodiscard]] inline auto create_message_based_selector(
-    std::function<Value(const AppState&)> compute
-) {
-    return MemoizedSelector<size_t, Value>(
-        [](const AppState& s) { return s.messages.size(); },
-        std::move(compute)
-    );
+[[nodiscard]] inline auto
+create_message_based_selector(std::function<Value(const AppState&)> compute) {
+    return MemoizedSelector<size_t, Value>([](const AppState& s) { return s.messages.size(); },
+                                           std::move(compute));
 }
 
 /// Create a memoized selector using total token count as cache key
 template <typename Value>
-[[nodiscard]] inline auto create_usage_based_selector(
-    std::function<Value(const AppState&)> compute
-) {
+[[nodiscard]] inline auto
+create_usage_based_selector(std::function<Value(const AppState&)> compute) {
     return MemoizedSelector<uint32_t, Value>(
-        [](const AppState& s) { return s.total_usage.total(); },
-        std::move(compute)
-    );
+        [](const AppState& s) { return s.total_usage.total(); }, std::move(compute));
 }
 
 /// Create a memoized selector using task count as cache key
 template <typename Value>
-[[nodiscard]] inline auto create_task_based_selector(
-    std::function<Value(const AppState&)> compute
-) {
-    return MemoizedSelector<size_t, Value>(
-        [](const AppState& s) { return s.tasks.size(); },
-        std::move(compute)
-    );
+[[nodiscard]] inline auto
+create_task_based_selector(std::function<Value(const AppState&)> compute) {
+    return MemoizedSelector<size_t, Value>([](const AppState& s) { return s.tasks.size(); },
+                                           std::move(compute));
 }
 
 /// Create a memoized selector using MCP reconnect key as cache key
 template <typename Value>
-[[nodiscard]] inline auto create_mcp_based_selector(
-    std::function<Value(const AppState&)> compute
-) {
+[[nodiscard]] inline auto create_mcp_based_selector(std::function<Value(const AppState&)> compute) {
     return MemoizedSelector<uint32_t, Value>(
-        [](const AppState& s) { return s.mcp.plugin_reconnect_key; },
-        std::move(compute)
-    );
+        [](const AppState& s) { return s.mcp.plugin_reconnect_key; }, std::move(compute));
 }
 
-} // namespace loom::state::selectors
+}  // namespace loom::state::selectors

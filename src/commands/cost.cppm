@@ -39,11 +39,14 @@ public:
         return CommandDefinition{
             .name = "cost",
             .description = "Show cost breakdown for the current session",
-            .args = {
-                CommandArg{.name = "view", .description = "summary | messages | models",
-                           .type = ArgType::Choice, .required = false,
-                           .choices = {"summary", "messages", "models"}},
-            },
+            .args =
+                {
+                    CommandArg{.name = "view",
+                               .description = "summary | messages | models",
+                               .type = ArgType::Choice,
+                               .required = false,
+                               .choices = {"summary", "messages", "models"}},
+                },
             .category = "session",
             .aliases = {},
             .hidden = false,
@@ -54,8 +57,9 @@ public:
         if (ctx.args.empty()) return {};
         auto view = ctx.args[0];
         if (view != "summary" && view != "messages" && view != "models") {
-            return std::unexpected(Error::make(ErrorCode::InvalidRequest,
-                std::format("Invalid view: '{}'. Use: summary|messages|models", view)));
+            return std::unexpected(
+                Error::make(ErrorCode::InvalidRequest,
+                            std::format("Invalid view: '{}'. Use: summary|messages|models", view)));
         }
         return {};
     }
@@ -93,23 +97,23 @@ public:
             std::uint32_t total_in = tracker_usage.input_tokens ? tracker_usage.input_tokens : 0;
             std::uint32_t total_out = tracker_usage.output_tokens ? tracker_usage.output_tokens : 0;
             double cost = tracker_cost_usd > 0.0 ? tracker_cost_usd : total_cost_;
-            std::size_t num_requests = entries_.empty()
-                ? static_cast<std::size_t>(total_in + total_out > 0 ? 1 : 0)
-                : entries_.size();
+            std::size_t num_requests =
+                entries_.empty() ? static_cast<std::size_t>(total_in + total_out > 0 ? 1 : 0)
+                                 : entries_.size();
 
             if (num_requests == 0 && cost <= 0.0) {
                 return CommandResult::success("No API requests made yet. Cost: $0.00");
             }
 
-            return CommandResult::success(std::format(
-                "Session Cost Summary:\n"
-                "  Total cost:     ${:.4f}\n"
-                "  Input tokens:   {}\n"
-                "  Output tokens:  {}\n"
-                "  Total requests: {}\n"
-                "  Avg per request: ${:.4f}",
-                cost, total_in, total_out, num_requests,
-                num_requests > 0 ? cost / static_cast<double>(num_requests) : 0.0));
+            return CommandResult::success(
+                std::format("Session Cost Summary:\n"
+                            "  Total cost:     ${:.4f}\n"
+                            "  Input tokens:   {}\n"
+                            "  Output tokens:  {}\n"
+                            "  Total requests: {}\n"
+                            "  Avg per request: ${:.4f}",
+                            cost, total_in, total_out, num_requests,
+                            num_requests > 0 ? cost / static_cast<double>(num_requests) : 0.0));
         }
         if (view == "messages") {
             if (entries_.empty() && tracker_usage.total() == 0) {
@@ -151,8 +155,8 @@ public:
     /// Record usage via CommandContext — dispatches UpdateUsage to AppState
     /// AND records in the global CostTracker. Use this when QueryEngine has
     /// access to the CommandContext.
-    void record(const CommandContext& ctx, std::string_view model,
-                const TokenUsage& usage, double cost_usd) {
+    void record(const CommandContext& ctx, std::string_view model, const TokenUsage& usage,
+                double cost_usd) {
         // Update the global CostTracker
         global_cost_tracker().record(std::string(model), usage, "api_request");
 
@@ -180,8 +184,8 @@ private:
     // Format from AppState (authoritative — set by QueryEngine dispatch)
     // ----------------------------------------------------------
 
-    [[nodiscard]] std::string format_summary_from_app_state(
-        const loom::state::AppState& state) const {
+    [[nodiscard]] std::string
+    format_summary_from_app_state(const loom::state::AppState& state) const {
 
         const auto& usage = state.total_usage;
         double cost = state.total_cost_usd;
@@ -192,27 +196,23 @@ private:
 
         // Estimate request count from entries_ if available, else derive from usage.
         std::size_t num_requests = entries_.empty()
-            ? static_cast<std::size_t>(usage.total() > 0 ? 1 : 0)
-            : entries_.size();
+                                       ? static_cast<std::size_t>(usage.total() > 0 ? 1 : 0)
+                                       : entries_.size();
 
-        return std::format(
-            "Session Cost Summary:\n"
-            "  Total cost:     ${:.4f}\n"
-            "  Input tokens:   {}\n"
-            "  Output tokens:  {}\n"
-            "  Cache read:     {}\n"
-            "  Total requests: {}\n"
-            "  Avg per request: ${:.4f}",
-            cost,
-            usage.input_tokens,
-            usage.output_tokens,
-            usage.cache_read_tokens,
-            num_requests,
-            num_requests > 0 ? cost / static_cast<double>(num_requests) : 0.0);
+        return std::format("Session Cost Summary:\n"
+                           "  Total cost:     ${:.4f}\n"
+                           "  Input tokens:   {}\n"
+                           "  Output tokens:  {}\n"
+                           "  Cache read:     {}\n"
+                           "  Total requests: {}\n"
+                           "  Avg per request: ${:.4f}",
+                           cost, usage.input_tokens, usage.output_tokens, usage.cache_read_tokens,
+                           num_requests,
+                           num_requests > 0 ? cost / static_cast<double>(num_requests) : 0.0);
     }
 
-    [[nodiscard]] std::string format_per_message_from_app_state(
-        const loom::state::AppState& state) const {
+    [[nodiscard]] std::string
+    format_per_message_from_app_state(const loom::state::AppState& state) const {
 
         if (entries_.empty()) {
             // No per-message records — show aggregate from AppState.
@@ -220,12 +220,11 @@ private:
             if (usage.total() == 0 && state.total_cost_usd <= 0.0) {
                 return "No messages yet.";
             }
-            return std::format(
-                "Cost per message:\n"
-                "  (aggregate — no per-request records)\n"
-                "  Input: {} tokens, Output: {} tokens\n"
-                "  Total: ${:.4f}",
-                usage.input_tokens, usage.output_tokens, state.total_cost_usd);
+            return std::format("Cost per message:\n"
+                               "  (aggregate — no per-request records)\n"
+                               "  Input: {} tokens, Output: {} tokens\n"
+                               "  Total: ${:.4f}",
+                               usage.input_tokens, usage.output_tokens, state.total_cost_usd);
         }
         return format_per_message();
     }
@@ -246,10 +245,9 @@ private:
             const auto& [model_usage, model_cost_microusd] = pair;
             double model_cost_usd = model_cost_microusd / 1'000'000.0;
             total += model_cost_usd;
-            out += std::format("  {} — ${:.4f} (in:{} out:{} cache_r:{})\n",
-                model, model_cost_usd,
-                model_usage.input_tokens, model_usage.output_tokens,
-                model_usage.cache_read_tokens);
+            out += std::format("  {} — ${:.4f} (in:{} out:{} cache_r:{})\n", model, model_cost_usd,
+                               model_usage.input_tokens, model_usage.output_tokens,
+                               model_usage.cache_read_tokens);
         }
 
         // If CostTracker is empty but entries_ has data, fall back to entries
@@ -271,12 +269,12 @@ private:
         if (entries_.empty()) {
             return "No API requests made yet. Cost: $0.00";
         }
-        return std::format(
-            "Session Cost Summary:\n"
-            "  Total cost:     ${:.4f}\n"
-            "  Total requests: {}\n"
-            "  Avg per request: ${:.4f}",
-            total_cost_, entries_.size(), total_cost_ / static_cast<double>(entries_.size()));
+        return std::format("Session Cost Summary:\n"
+                           "  Total cost:     ${:.4f}\n"
+                           "  Total requests: {}\n"
+                           "  Avg per request: ${:.4f}",
+                           total_cost_, entries_.size(),
+                           total_cost_ / static_cast<double>(entries_.size()));
     }
 
     [[nodiscard]] std::string format_per_message() const {
@@ -285,8 +283,8 @@ private:
         std::string out = "Cost per message:\n";
         std::size_t idx = 1;
         for (const auto& e : entries_) {
-            out += std::format("  #{:<3} {} — ${:.4f} (in:{} out:{})\n",
-                idx++, e.model, e.cost_usd, e.input_tokens, e.output_tokens);
+            out += std::format("  #{:<3} {} — ${:.4f} (in:{} out:{})\n", idx++, e.model, e.cost_usd,
+                               e.input_tokens, e.output_tokens);
         }
         out += std::format("  Total: ${:.4f}", total_cost_);
         return out;
@@ -296,12 +294,16 @@ private:
         if (entries_.empty()) return "No messages yet.";
 
         // Aggregate cost by model
-        struct ModelCost { double cost = 0.0; std::uint32_t count = 0; };
+        struct ModelCost {
+            double cost = 0.0;
+            std::uint32_t count = 0;
+        };
+
         std::vector<std::pair<std::string, ModelCost>> model_costs;
 
         for (const auto& e : entries_) {
             auto it = std::ranges::find_if(model_costs,
-                [&](const auto& p) { return p.first == e.model; });
+                                           [&](const auto& p) { return p.first == e.model; });
             if (it != model_costs.end()) {
                 it->second.cost += e.cost_usd;
                 it->second.count++;
@@ -319,4 +321,4 @@ private:
     }
 };
 
-} // namespace loom::commands
+}  // namespace loom::commands

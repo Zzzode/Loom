@@ -42,19 +42,16 @@ void AppAdapter::AppendLocalMessagesToScreenState() {
     // each gets its own unique prefix.  A monotonically counter ensures
     // no collisions.
     static std::uint64_t s_local_seq = 0;
-    for (auto it = local_command_messages_.begin();
-         it != local_command_messages_.end(); ++it) {
+    for (auto it = local_command_messages_.begin(); it != local_command_messages_.end(); ++it) {
         if (it->id.empty()) {
             char buf[32];
-            std::snprintf(buf, sizeof(buf), "loc_%016llx",
-                          (unsigned long long)s_local_seq++);
+            std::snprintf(buf, sizeof(buf), "loc_%016llx", (unsigned long long)s_local_seq++);
             it->id = std::string(buf, 24);
         }
     }
-    screen_state_->messages_store.messages.insert(
-        screen_state_->messages_store.messages.end(),
-        local_command_messages_.begin(),
-        local_command_messages_.end());
+    screen_state_->messages_store.messages.insert(screen_state_->messages_store.messages.end(),
+                                                  local_command_messages_.begin(),
+                                                  local_command_messages_.end());
 }
 
 void AppAdapter::AppendLocalCommandInputMessage(std::string command) {
@@ -67,8 +64,7 @@ void AppAdapter::AppendLocalCommandInputMessage(std::string command) {
     local_command_messages_.push_back(std::move(entry));
 }
 
-void AppAdapter::AppendLocalCommandMessage(std::string message, bool is_error,
-                                           bool as_system) {
+void AppAdapter::AppendLocalCommandMessage(std::string message, bool is_error, bool as_system) {
     if (message.empty()) return;
     repl::MessageDisplayEntry entry;
     entry.role = "system";
@@ -104,4 +100,4 @@ void AppAdapter::DismissLocalJsxCommand(std::string result_message) {
     AppendLocalCommandMessage(std::move(result_message), false);
 }
 
-} // namespace loom::ui
+}  // namespace loom::ui

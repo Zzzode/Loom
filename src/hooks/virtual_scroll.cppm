@@ -11,7 +11,6 @@ export module loom.hooks.virtual_scroll;
 
 import std;
 
-
 export namespace loom::hooks {
 
 // ============================================================
@@ -76,7 +75,8 @@ public:
 
     /// Scroll to a specific item index
     auto scroll_to(std::size_t index) -> void {
-        if (index >= state_.total_items) index = state_.total_items > 0 ? state_.total_items - 1 : 0;
+        if (index >= state_.total_items)
+            index = state_.total_items > 0 ? state_.total_items - 1 : 0;
         state_.scroll_offset = compute_offset_for_item(index);
         state_.auto_scroll = false;
     }
@@ -145,11 +145,11 @@ public:
         }
         state_.total_items -= count;
         state_.item_heights.erase(state_.item_heights.begin(),
-                                   state_.item_heights.begin() + static_cast<long>(count));
+                                  state_.item_heights.begin() + static_cast<long>(count));
 
         auto removed_height = compute_height_range(0, count);
-        state_.scroll_offset = state_.scroll_offset > removed_height ?
-                               state_.scroll_offset - removed_height : 0;
+        state_.scroll_offset =
+            state_.scroll_offset > removed_height ? state_.scroll_offset - removed_height : 0;
     }
 
     // ─── Event handling ────────────────────────────────────────
@@ -157,33 +157,33 @@ public:
     /// Handle a scroll event from the UI layer; returns true if consumed
     [[nodiscard]] auto handle_scroll_event(const ScrollEvent& event) -> bool {
         switch (event.type) {
-            case ScrollEvent::Type::WheelUp:
-                scroll_by(-3);
-                return true;
-            case ScrollEvent::Type::WheelDown:
-                scroll_by(3);
-                return true;
-            case ScrollEvent::Type::PageUp:
-                scroll_by(-static_cast<int>(state_.viewport_height));
-                return true;
-            case ScrollEvent::Type::PageDown:
-                scroll_by(static_cast<int>(state_.viewport_height));
-                return true;
-            case ScrollEvent::Type::Home:
-                state_.scroll_offset = 0;
-                state_.auto_scroll = false;
-                return true;
-            case ScrollEvent::Type::End:
-                scroll_to_bottom();
-                return true;
-            case ScrollEvent::Type::DragThumb:
-                if (event.thumb_pos) {
-                    auto pos = std::clamp(*event.thumb_pos, 0.0f, 1.0f);
-                    state_.scroll_offset = static_cast<std::size_t>(
-                        pos * static_cast<float>(max_scroll_offset()));
-                    state_.auto_scroll = is_at_bottom();
-                }
-                return true;
+        case ScrollEvent::Type::WheelUp:
+            scroll_by(-3);
+            return true;
+        case ScrollEvent::Type::WheelDown:
+            scroll_by(3);
+            return true;
+        case ScrollEvent::Type::PageUp:
+            scroll_by(-static_cast<int>(state_.viewport_height));
+            return true;
+        case ScrollEvent::Type::PageDown:
+            scroll_by(static_cast<int>(state_.viewport_height));
+            return true;
+        case ScrollEvent::Type::Home:
+            state_.scroll_offset = 0;
+            state_.auto_scroll = false;
+            return true;
+        case ScrollEvent::Type::End:
+            scroll_to_bottom();
+            return true;
+        case ScrollEvent::Type::DragThumb:
+            if (event.thumb_pos) {
+                auto pos = std::clamp(*event.thumb_pos, 0.0f, 1.0f);
+                state_.scroll_offset =
+                    static_cast<std::size_t>(pos * static_cast<float>(max_scroll_offset()));
+                state_.auto_scroll = is_at_bottom();
+            }
+            return true;
         }
         return false;
     }
@@ -212,7 +212,7 @@ public:
         auto total = total_content_height();
         if (total == 0) return 1.0f;
         return std::min(1.0f,
-            static_cast<float>(state_.viewport_height) / static_cast<float>(total));
+                        static_cast<float>(state_.viewport_height) / static_cast<float>(total));
     }
 
     // ─── Configuration ─────────────────────────────────────────
@@ -230,7 +230,9 @@ public:
     auto set_auto_scroll(bool enabled) -> void { state_.auto_scroll = enabled; }
 
     [[nodiscard]] auto state() const -> const ScrollState& { return state_; }
+
     [[nodiscard]] auto viewport_height() const -> std::size_t { return state_.viewport_height; }
+
     [[nodiscard]] auto total_items() const -> std::size_t { return state_.total_items; }
 
 private:
@@ -239,7 +241,8 @@ private:
     // ─── Internal helpers ──────────────────────────────────────
 
     /// Compute total height of items in range [start, end)
-    [[nodiscard]] auto compute_height_range(std::size_t start, std::size_t end) const -> std::size_t {
+    [[nodiscard]] auto compute_height_range(std::size_t start, std::size_t end) const
+        -> std::size_t {
         if (start >= end || state_.item_heights.empty()) return 0;
         end = std::min(end, state_.item_heights.size());
         std::size_t height = 0;
@@ -266,7 +269,6 @@ private:
         VisibleRange range;
         if (state_.total_items == 0) return range;
 
-
         std::size_t accumulated = 0;
         for (std::size_t i = 0; i < state_.total_items; ++i) {
             auto item_h = i < state_.item_heights.size() ? state_.item_heights[i] : 1;
@@ -277,7 +279,6 @@ private:
             }
             accumulated += item_h;
         }
-
 
         std::size_t visible_height = 0;
         for (std::size_t i = range.start; i < state_.total_items; ++i) {
@@ -293,4 +294,4 @@ private:
     }
 };
 
-} // namespace loom::hooks
+}  // namespace loom::hooks

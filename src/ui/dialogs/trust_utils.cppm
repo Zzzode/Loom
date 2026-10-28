@@ -14,6 +14,7 @@
 module;
 
 #include <unistd.h>
+
 #include <cctype>
 #include <cstdint>
 
@@ -41,63 +42,67 @@ using loom::plugins::PluginDefinition;
 /// Four-tier risk classification used by TrustDialog to pick a layout and
 /// enforce safety UX (countdown, double-confirm).
 enum class RiskLevel : std::uint8_t {
-    Low = 0,      // Green  — 2 buttons, no safety barriers
-    Medium = 1,   // Yellow — 3 buttons + collapsible details
-    High = 2,     // Orange — 4 buttons + mandatory 5-second countdown
-    Critical = 3, // Red    — checkbox + "type YES" double confirm
+    Low = 0,       // Green  — 2 buttons, no safety barriers
+    Medium = 1,    // Yellow — 3 buttons + collapsible details
+    High = 2,      // Orange — 4 buttons + mandatory 5-second countdown
+    Critical = 3,  // Red    — checkbox + "type YES" double confirm
 };
 
 /// Convert a RiskLevel to a canonical lowercase string.
 [[nodiscard]] constexpr std::string_view risk_level_name(RiskLevel level) noexcept {
     switch (level) {
-        case RiskLevel::Low:      return "low";
-        case RiskLevel::Medium:   return "medium";
-        case RiskLevel::High:     return "high";
-        case RiskLevel::Critical: return "critical";
+    case RiskLevel::Low:
+        return "low";
+    case RiskLevel::Medium:
+        return "medium";
+    case RiskLevel::High:
+        return "high";
+    case RiskLevel::Critical:
+        return "critical";
     }
     return "unknown";
 }
 
 /// What kind of action prompted the trust check.
 enum class ActionType : std::uint8_t {
-    WorkspaceTrust,   // Initial "trust this folder" prompt
-    PluginInstall,    // Installing a plugin (1st time / unsigned / unknown source)
-    PluginUpdate,     // Updating a plugin (version bump, permission changes)
-    PathAccess,       // Reading or writing files
-    PathWrite,        // Destructive file write (overwrite, delete, truncate)
-    Command,          // Bash / shell command
-    ExternalApi,      // High-cost or high-privilege external API call
-    Bridge,           // IDE bridge / remote connection
+    WorkspaceTrust,  // Initial "trust this folder" prompt
+    PluginInstall,   // Installing a plugin (1st time / unsigned / unknown source)
+    PluginUpdate,    // Updating a plugin (version bump, permission changes)
+    PathAccess,      // Reading or writing files
+    PathWrite,       // Destructive file write (overwrite, delete, truncate)
+    Command,         // Bash / shell command
+    ExternalApi,     // High-cost or high-privilege external API call
+    Bridge,          // IDE bridge / remote connection
 };
 
 /// A sensitive-path match returned by `scan_paths_for_sensitive`.
 struct SensitiveMatch {
-    std::string path;          // The original path that matched
-    std::string category;      // e.g. "SSH key", "AWS credentials"
-    RiskLevel severity;        // Minimum risk tier implied by this match
-    std::string description;   // Human-readable explanation (for details panel)
+    std::string path;         // The original path that matched
+    std::string category;     // e.g. "SSH key", "AWS credentials"
+    RiskLevel severity;       // Minimum risk tier implied by this match
+    std::string description;  // Human-readable explanation (for details panel)
 };
 
 /// Aggregated risk summary used to populate the dialog body.
 struct RiskSummary {
     RiskLevel level = RiskLevel::Low;
-    std::string action_summary;       // One-line "This action will …"
-    std::vector<std::string> risk_factors; // Bullet points shown to the user
-    std::vector<SensitiveMatch> sensitive_paths; // Matches from scan
-    std::vector<std::string> domains;     // URLs / hostnames involved
+    std::string action_summary;                   // One-line "This action will …"
+    std::vector<std::string> risk_factors;        // Bullet points shown to the user
+    std::vector<SensitiveMatch> sensitive_paths;  // Matches from scan
+    std::vector<std::string> domains;             // URLs / hostnames involved
     std::optional<std::string> plugin_id;
-    bool first_install = false;          // True for first-time plugin installs
-    bool unsigned_code = false;          // True for plugins without signature
-    bool unknown_marketplace = false;    // True for non-official marketplace
+    bool first_install = false;        // True for first-time plugin installs
+    bool unsigned_code = false;        // True for plugins without signature
+    bool unknown_marketplace = false;  // True for non-official marketplace
 };
 
 /// User-facing result of a trust dialog.
 enum class TrustChoice : std::uint8_t {
-    AllowOnce,       // Allow this single action
-    AlwaysAllow,     // Persist: skip prompt for this path/plugin
-    ViewFile,        // Show file contents before deciding (High tier only)
-    Cancel,          // Block / do nothing
-    EnableAnyway,    // Critical tier: user typed YES to override
+    AllowOnce,     // Allow this single action
+    AlwaysAllow,   // Persist: skip prompt for this path/plugin
+    ViewFile,      // Show file contents before deciding (High tier only)
+    Cancel,        // Block / do nothing
+    EnableAnyway,  // Critical tier: user typed YES to override
 };
 
 // =========================================================================
@@ -112,8 +117,8 @@ enum class TrustChoice : std::uint8_t {
 namespace detail {
 
 struct SensitivePathRule {
-    std::string pattern;         // ECMAScript regex
-    std::string category;        // Displayed category
+    std::string pattern;   // ECMAScript regex
+    std::string category;  // Displayed category
     RiskLevel severity;
     std::string description;
 };
@@ -125,7 +130,8 @@ inline const std::array<std::pair<std::string_view, SensitivePathRule>, 22> kSen
     // SSH keys
     {"\\.ssh/(id_rsa|id_ed25519|id_ecdsa|id_dsa)(\\.pub)?$",
      {"", "SSH private key", RiskLevel::Critical,
-      "This file contains a private SSH key. Exposing it grants login access to any host with the matching public key."}},
+      "This file contains a private SSH key. Exposing it grants login access to any host with the "
+      "matching public key."}},
 
     {"\\.ssh/config$",
      {"", "SSH configuration", RiskLevel::High,
@@ -138,7 +144,8 @@ inline const std::array<std::pair<std::string_view, SensitivePathRule>, 22> kSen
     // AWS credentials
     {"\\.aws/(credentials|config)$",
      {"", "AWS credentials", RiskLevel::Critical,
-      "Contains AWS access keys and secrets. Exfiltrating these keys allows spending against your AWS account."}},
+      "Contains AWS access keys and secrets. Exfiltrating these keys allows spending against your "
+      "AWS account."}},
 
     {"\\.aws/cli/history$",
      {"", "AWS CLI history", RiskLevel::High,
@@ -150,8 +157,7 @@ inline const std::array<std::pair<std::string_view, SensitivePathRule>, 22> kSen
       "Google Cloud service-account JSON key — full account access if leaked."}},
 
     {"\\.config/gcloud/(application_default_credentials|credentials|access_tokens)",
-     {"", "GCP credentials", RiskLevel::High,
-      "Active GCP credentials or access tokens."}},
+     {"", "GCP credentials", RiskLevel::High, "Active GCP credentials or access tokens."}},
 
     // Environment / dotenv
     {"(^|/)(\\.env|\\.env\\.(local|prod|production|staging|dev|development))($|\\.)",
@@ -197,7 +203,8 @@ inline const std::array<std::pair<std::string_view, SensitivePathRule>, 22> kSen
     // Browser cookie / login databases
     {"(Cookies|Login Data|Web Data)(\\.db)?$",
      {"", "Browser cookie / login DB", RiskLevel::Critical,
-      "Chromium/Firefox cookie or saved-password database. Grants session hijack of all logged-in sites."}},
+      "Chromium/Firefox cookie or saved-password database. Grants session hijack of all logged-in "
+      "sites."}},
 
     // KeePass / Bitwarden / 1Password vaults
     {"\\.(kdbx|kwallet|opdata)$",
@@ -225,7 +232,7 @@ inline const std::array<std::pair<std::string_view, SensitivePathRule>, 22> kSen
       "Electron/VS Code-style credential storage, often unencrypted on disk."}},
 }};
 
-} // namespace detail
+}  // namespace detail
 
 // =========================================================================
 // Public API: scanning & classification
@@ -249,13 +256,12 @@ scan_paths_for_sensitive(const std::vector<std::string>& paths) {
         bool matched = false;
         for (const auto& [pattern, rule] : detail::kSensitivePaths) {
             try {
-                std::regex re(std::string{pattern},
-                              std::regex::ECMAScript | std::regex::icase);
+                std::regex re(std::string{pattern}, std::regex::ECMAScript | std::regex::icase);
                 if (std::regex_search(normalized, re)) {
                     matches.push_back(SensitiveMatch{
-                        .path        = raw_path,
-                        .category    = rule.category,
-                        .severity    = rule.severity,
+                        .path = raw_path,
+                        .category = rule.category,
+                        .severity = rule.severity,
                         .description = rule.description,
                     });
                     matched = true;
@@ -279,10 +285,11 @@ scan_paths_for_sensitive(const std::vector<std::string>& paths) {
                     // Leave a marker — caller is responsible for actually
                     // reading the file and calling scan_for_secrets().
                     matches.push_back(SensitiveMatch{
-                        .path        = raw_path,
-                        .category    = "Suspicious config file",
-                        .severity    = RiskLevel::Medium,
-                        .description = "Content may contain secrets — use scan_for_secrets() on file contents.",
+                        .path = raw_path,
+                        .category = "Suspicious config file",
+                        .severity = RiskLevel::Medium,
+                        .description = "Content may contain secrets — use scan_for_secrets() on "
+                                       "file contents.",
                     });
                     break;
                 }
@@ -296,10 +303,14 @@ scan_paths_for_sensitive(const std::vector<std::string>& paths) {
 /// Safe → Low, Caution → Medium, Dangerous → High, Forbidden → Critical.
 [[nodiscard]] constexpr RiskLevel from_danger_level(loom::utils::bash::DangerLevel dl) noexcept {
     switch (dl) {
-        case loom::utils::bash::DangerLevel::Safe:      return RiskLevel::Low;
-        case loom::utils::bash::DangerLevel::Caution:   return RiskLevel::Medium;
-        case loom::utils::bash::DangerLevel::Dangerous: return RiskLevel::High;
-        case loom::utils::bash::DangerLevel::Forbidden: return RiskLevel::Critical;
+    case loom::utils::bash::DangerLevel::Safe:
+        return RiskLevel::Low;
+    case loom::utils::bash::DangerLevel::Caution:
+        return RiskLevel::Medium;
+    case loom::utils::bash::DangerLevel::Dangerous:
+        return RiskLevel::High;
+    case loom::utils::bash::DangerLevel::Forbidden:
+        return RiskLevel::Critical;
     }
     return RiskLevel::Low;
 }
@@ -310,10 +321,7 @@ scan_paths_for_sensitive(const std::vector<std::string>& paths) {
 /// tier.  It intentionally does NOT re-implement bash_security — callers
 /// that already have a SafetyCheckResult should use from_danger_level()
 /// instead and pass that level in via the summary.
-[[nodiscard]] inline RiskLevel classify_risk(
-    ActionType type,
-    const RiskSummary& summary)
-{
+[[nodiscard]] inline RiskLevel classify_risk(ActionType type, const RiskSummary& summary) {
     // 1. Any Critical sensitive path bumps to Critical.
     for (const auto& m : summary.sensitive_paths) {
         if (m.severity == RiskLevel::Critical) return RiskLevel::Critical;
@@ -335,24 +343,24 @@ scan_paths_for_sensitive(const std::vector<std::string>& paths) {
 
     // 3. Action-type defaults.
     switch (type) {
-        case ActionType::WorkspaceTrust:
-            // Default — 2 buttons, Low tier unless concerns.
-            return summary.sensitive_paths.empty() ? RiskLevel::Low : RiskLevel::Medium;
-        case ActionType::PluginInstall:
-            return summary.first_install ? RiskLevel::Medium : RiskLevel::Low;
-        case ActionType::PluginUpdate:
-            return RiskLevel::Medium;
-        case ActionType::PathAccess:
-            return summary.sensitive_paths.empty() ? RiskLevel::Low : RiskLevel::Medium;
-        case ActionType::PathWrite:
-            return summary.sensitive_paths.empty() ? RiskLevel::Medium : RiskLevel::High;
-        case ActionType::Command:
-            // Usually filled in via from_danger_level(); fallback to Medium.
-            return summary.level < RiskLevel::Medium ? RiskLevel::Medium : summary.level;
-        case ActionType::ExternalApi:
-            return RiskLevel::Medium;
-        case ActionType::Bridge:
-            return summary.first_install ? RiskLevel::High : RiskLevel::Medium;
+    case ActionType::WorkspaceTrust:
+        // Default — 2 buttons, Low tier unless concerns.
+        return summary.sensitive_paths.empty() ? RiskLevel::Low : RiskLevel::Medium;
+    case ActionType::PluginInstall:
+        return summary.first_install ? RiskLevel::Medium : RiskLevel::Low;
+    case ActionType::PluginUpdate:
+        return RiskLevel::Medium;
+    case ActionType::PathAccess:
+        return summary.sensitive_paths.empty() ? RiskLevel::Low : RiskLevel::Medium;
+    case ActionType::PathWrite:
+        return summary.sensitive_paths.empty() ? RiskLevel::Medium : RiskLevel::High;
+    case ActionType::Command:
+        // Usually filled in via from_danger_level(); fallback to Medium.
+        return summary.level < RiskLevel::Medium ? RiskLevel::Medium : summary.level;
+    case ActionType::ExternalApi:
+        return RiskLevel::Medium;
+    case ActionType::Bridge:
+        return summary.first_install ? RiskLevel::High : RiskLevel::Medium;
     }
     return summary.level;
 }
@@ -364,31 +372,34 @@ scan_paths_for_sensitive(const std::vector<std::string>& paths) {
 /// Build a one-line risk-level heading for the dialog title bar.
 [[nodiscard]] inline std::string get_risk_title(RiskLevel level) {
     switch (level) {
-        case RiskLevel::Low:      return "Information";
-        case RiskLevel::Medium:   return "Warning";
-        case RiskLevel::High:     return "High Risk";
-        case RiskLevel::Critical: return "CRITICAL RISK";
+    case RiskLevel::Low:
+        return "Information";
+    case RiskLevel::Medium:
+        return "Warning";
+    case RiskLevel::High:
+        return "High Risk";
+    case RiskLevel::Critical:
+        return "CRITICAL RISK";
     }
     return "Attention";
 }
 
 /// Build the main warning message (action summary + generic risk text)
 /// shown at the top of the dialog body.
-[[nodiscard]] inline std::string get_trust_message(
-    RiskLevel level,
-    const RiskSummary& summary)
-{
+[[nodiscard]] inline std::string get_trust_message(RiskLevel level, const RiskSummary& summary) {
     if (!summary.action_summary.empty()) return summary.action_summary;
 
     switch (level) {
-        case RiskLevel::Low:
-            return "This action is low risk. You can still cancel if you did not expect it.";
-        case RiskLevel::Medium:
-            return "This action accesses files or settings you may want to review before allowing.";
-        case RiskLevel::High:
-            return "This action can modify or exfiltrate sensitive data. READ the details below and wait for the countdown.";
-        case RiskLevel::Critical:
-            return "THIS ACTION CAN COMPROMISE YOUR ACCOUNTS OR SYSTEM. You must explicitly opt-in below.";
+    case RiskLevel::Low:
+        return "This action is low risk. You can still cancel if you did not expect it.";
+    case RiskLevel::Medium:
+        return "This action accesses files or settings you may want to review before allowing.";
+    case RiskLevel::High:
+        return "This action can modify or exfiltrate sensitive data. READ the details below and "
+               "wait for the countdown.";
+    case RiskLevel::Critical:
+        return "THIS ACTION CAN COMPROMISE YOUR ACCOUNTS OR SYSTEM. You must explicitly opt-in "
+               "below.";
     }
     return "";
 }
@@ -397,17 +408,14 @@ scan_paths_for_sensitive(const std::vector<std::string>& paths) {
 [[nodiscard]] inline bool is_known_safe_domain(std::string_view host);
 
 /// Return a short list of 3-5 risk bullet points for the details panel.
-[[nodiscard]] inline std::vector<std::string> build_risk_bullets(
-    const RiskSummary& summary)
-{
+[[nodiscard]] inline std::vector<std::string> build_risk_bullets(const RiskSummary& summary) {
     std::vector<std::string> bullets;
     bullets.reserve(5);
 
     if (!summary.sensitive_paths.empty()) {
-        bullets.push_back(std::format(
-            "Accesses {} sensitive path{}",
-            summary.sensitive_paths.size(),
-            summary.sensitive_paths.size() == 1 ? "" : "s"));
+        bullets.push_back(std::format("Accesses {} sensitive path{}",
+                                      summary.sensitive_paths.size(),
+                                      summary.sensitive_paths.size() == 1 ? "" : "s"));
     }
     if (summary.first_install) {
         bullets.push_back("First install — no prior trust record for this plugin or path.");
@@ -464,8 +472,7 @@ scan_paths_for_sensitive(const std::vector<std::string>& paths) {
     for (auto safe : kSafeHosts) {
         if (host == safe) return true;
         // Allow subdomains of safe hosts, e.g. "vscode.dev.github.com"
-        if (host.size() > safe.size() &&
-            host.substr(host.size() - safe.size()) == safe &&
+        if (host.size() > safe.size() && host.substr(host.size() - safe.size()) == safe &&
             host[host.size() - safe.size() - 1] == '.') {
             return true;
         }
@@ -480,14 +487,10 @@ scan_paths_for_sensitive(const std::vector<std::string>& paths) {
 /// Summarise the risk of installing / updating a plugin.
 /// Reuses the PluginDefinition and PluginCapabilities structs from
 /// plugins/plugin.cppm — we do NOT duplicate the trust model.
-[[nodiscard]] inline RiskSummary plugin_risk_summary(
-    const PluginDefinition& def,
-    const PluginCapabilities& caps,
-    std::string_view marketplace_domain,
-    bool is_first_install = true,
-    bool is_update = false,
-    bool has_signature = true)
-{
+[[nodiscard]] inline RiskSummary
+plugin_risk_summary(const PluginDefinition& def, const PluginCapabilities& caps,
+                    std::string_view marketplace_domain, bool is_first_install = true,
+                    bool is_update = false, bool has_signature = true) {
     RiskSummary s;
     s.plugin_id = def.name;
     s.first_install = is_first_install;
@@ -500,27 +503,25 @@ scan_paths_for_sensitive(const std::vector<std::string>& paths) {
 
     // Count capability risk
     if (!caps.tools.empty()) {
-        s.risk_factors.push_back(std::format("Exposes {} tool capability{}.",
-            caps.tools.size(), caps.tools.size() == 1 ? "" : "ies"));
+        s.risk_factors.push_back(std::format("Exposes {} tool capability{}.", caps.tools.size(),
+                                             caps.tools.size() == 1 ? "" : "ies"));
     }
     if (!caps.hooks.empty()) {
-        s.risk_factors.push_back(std::format("Registers {} lifecycle hook{}.",
-            caps.hooks.size(), caps.hooks.size() == 1 ? "" : "s"));
+        s.risk_factors.push_back(std::format("Registers {} lifecycle hook{}.", caps.hooks.size(),
+                                             caps.hooks.size() == 1 ? "" : "s"));
     }
     if (!caps.commands.empty()) {
-        s.risk_factors.push_back(std::format("Registers {} slash command{}.",
-            caps.commands.size(), caps.commands.size() == 1 ? "" : "s"));
+        s.risk_factors.push_back(std::format("Registers {} slash command{}.", caps.commands.size(),
+                                             caps.commands.size() == 1 ? "" : "s"));
     }
 
     if (is_update) {
         s.action_summary = std::format(
-            "Updating plugin \"{} {}\" to a new version — permissions may have changed.",
-            def.name, def.version);
+            "Updating plugin \"{} {}\" to a new version — permissions may have changed.", def.name,
+            def.version);
     } else {
-        s.action_summary = std::format(
-            "Installing plugin \"{} {}\" by {}.",
-            def.name, def.version,
-            def.author.empty() ? "unknown author" : def.author);
+        s.action_summary = std::format("Installing plugin \"{} {}\" by {}.", def.name, def.version,
+                                       def.author.empty() ? "unknown author" : def.author);
     }
 
     if (!def.homepage) {
@@ -538,10 +539,9 @@ scan_paths_for_sensitive(const std::vector<std::string>& paths) {
 // =========================================================================
 
 /// Format a list of items with proper "and" conjunction.
-[[nodiscard]] inline std::string format_list_with_and(
-    const std::vector<std::string>& items,
-    std::optional<std::size_t> limit = std::nullopt)
-{
+[[nodiscard]] inline std::string
+format_list_with_and(const std::vector<std::string>& items,
+                     std::optional<std::size_t> limit = std::nullopt) {
     if (items.empty()) return "";
     const std::size_t effective = limit.value_or(0);
     const std::size_t n = items.size();
@@ -550,7 +550,8 @@ scan_paths_for_sensitive(const std::vector<std::string>& paths) {
         if (n == 1) return items[0];
         if (n == 2) return items[0] + " and " + items[1];
         std::ostringstream os;
-        for (std::size_t i = 0; i + 1 < n; ++i) os << items[i] << ", ";
+        for (std::size_t i = 0; i + 1 < n; ++i)
+            os << items[i] << ", ";
         os << "and " << items.back();
         return os.str();
     }
@@ -562,7 +563,8 @@ scan_paths_for_sensitive(const std::vector<std::string>& paths) {
         os << items[0] << " and " << remaining << " more";
         return os.str();
     }
-    for (std::size_t i = 0; i < effective; ++i) os << items[i] << ", ";
+    for (std::size_t i = 0; i < effective; ++i)
+        os << items[i] << ", ";
     os << "and " << remaining << " more";
     return os.str();
 }
@@ -573,4 +575,4 @@ inline constexpr int kHighTierCountdownSeconds = 5;
 /// The exact confirmation word the user must type for Critical-tier.
 inline constexpr std::string_view kCriticalConfirmWord = "YES";
 
-} // namespace loom::ui::trust_utils
+}  // namespace loom::ui::trust_utils

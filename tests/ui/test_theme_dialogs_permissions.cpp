@@ -1,8 +1,8 @@
 /// @file test_theme_dialogs_permissions.cpp
 /// @brief Semantic theme and caller override regressions for dialogs/permissions.
+#include <ftxui/component/component.hpp>
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/screen/screen.hpp>
-#include <ftxui/component/component.hpp>
 #include <gtest/gtest.h>
 
 import std;
@@ -26,6 +26,7 @@ namespace settings = loom::ui::dialogs::settings_dialog;
 
 struct RestoreTheme {
     theme::Theme saved = theme::current_theme();
+
     ~RestoreTheme() { theme::set_theme(saved); }
 };
 
@@ -37,14 +38,13 @@ constexpr std::array variants{
 };
 
 ftxui::Screen RenderScreen(ftxui::Element element, int width = 160, int height = 40) {
-    auto screen = ftxui::Screen::Create(
-        ftxui::Dimension::Fixed(width), ftxui::Dimension::Fixed(height));
+    auto screen =
+        ftxui::Screen::Create(ftxui::Dimension::Fixed(width), ftxui::Dimension::Fixed(height));
     ftxui::Render(screen, std::move(element));
     return screen;
 }
 
-void ExpectGlyphColor(const ftxui::Screen& screen, std::string_view glyph,
-                      ftxui::Color expected) {
+void ExpectGlyphColor(const ftxui::Screen& screen, std::string_view glyph, ftxui::Color expected) {
     bool found = false;
     for (int y = 0; y < screen.dimy(); ++y) {
         for (int x = 0; x < screen.dimx(); ++x) {
@@ -64,7 +64,7 @@ void ExpectNoDecorativeEmoji(const ftxui::Screen& screen) {
     EXPECT_EQ(text.find('\xF0'), std::string::npos);
     EXPECT_EQ(text.find("\xEF\xB8\x8F"), std::string::npos);
 }
-} // namespace
+}  // namespace
 
 TEST(DialogPermissionTheme, SemanticRiskAndActionColorsFollowCurrentTheme) {
     RestoreTheme restore;
@@ -87,11 +87,12 @@ TEST(DialogPermissionTheme, SemanticRiskAndActionColorsFollowCurrentTheme) {
 TEST(DialogPermissionTheme, PermissionAndPluginDecorationsKeepLabelsWithoutEmoji) {
     RestoreTheme restore;
     constexpr std::array names{
-        "FileReadTool", "FileWriteTool", "FileEditTool", "GlobTool", "GrepTool",
-        "BashTool", "PowerShellTool", "WebFetchTool", "WebSearchTool", "AgentTool",
-        "SkillTool", "EnterPlanModeTool", "exit_plan_mode", "TaskCreateTool",
-        "TaskUpdateTool", "TeamCreateTool", "MCPTool", "NotebookEditTool",
-        "AskUserQuestionTool", "ComputerUseApproval", "UnknownTool",
+        "FileReadTool",   "FileWriteTool",    "FileEditTool",        "GlobTool",
+        "GrepTool",       "BashTool",         "PowerShellTool",      "WebFetchTool",
+        "WebSearchTool",  "AgentTool",        "SkillTool",           "EnterPlanModeTool",
+        "exit_plan_mode", "TaskCreateTool",   "TaskUpdateTool",      "TeamCreateTool",
+        "MCPTool",        "NotebookEditTool", "AskUserQuestionTool", "ComputerUseApproval",
+        "UnknownTool",
     };
     for (auto variant : variants) {
         theme::set_theme(variant);
@@ -101,7 +102,8 @@ TEST(DialogPermissionTheme, PermissionAndPluginDecorationsKeepLabelsWithoutEmoji
             EXPECT_NE(screen.ToString().find(name), std::string::npos);
         }
         for (int kind = 0; kind <= static_cast<int>(pc::ActionKind::Other); ++kind)
-            ExpectNoDecorativeEmoji(RenderScreen(pc::ActionIcon(static_cast<pc::ActionKind>(kind))));
+            ExpectNoDecorativeEmoji(
+                RenderScreen(pc::ActionIcon(static_cast<pc::ActionKind>(kind))));
         auto help = RenderScreen(loom::ui::dialogs::plugin_dialog::RenderHelp());
         ExpectNoDecorativeEmoji(help);
         EXPECT_NE(help.ToString().find("Plugin Command Help"), std::string::npos);

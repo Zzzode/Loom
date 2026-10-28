@@ -14,8 +14,8 @@ export module loom.ui.screens.repl_selectors;
 
 import std;
 
-import loom.ui.screens.dialog_store;       // DialogStore
-import loom.ui.screens.task_view_store;   // TaskViewStore / IsToolAnimating
+import loom.ui.screens.dialog_store;    // DialogStore
+import loom.ui.screens.task_view_store; // TaskViewStore / IsToolAnimating
 
 export namespace loom::ui::repl_screen {
 
@@ -31,4 +31,4 @@ export namespace loom::ui::repl_screen {
 /// canonical definition lives there.
 using loom::ui::repl_screen::IsToolAnimating;
 
-}  // namespace loom::ui
+}  // namespace loom::ui::repl_screen

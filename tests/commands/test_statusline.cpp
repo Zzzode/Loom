@@ -7,6 +7,7 @@
 /// the command metadata test).
 
 #include <gtest/gtest.h>
+
 #include <cstdlib>
 
 import std;
@@ -23,7 +24,8 @@ struct ScopedEnvVar {
     std::string name;
     std::optional<std::string> previous;
 
-    explicit ScopedEnvVar(std::string key) : name(std::move(key)) {
+    explicit ScopedEnvVar(std::string key)
+        : name(std::move(key)) {
         if (const char* existing = std::getenv(name.c_str())) {
             previous = existing;
         }
@@ -37,22 +39,18 @@ struct ScopedEnvVar {
         }
     }
 
-    void set(const char* value) const {
-        setenv(name.c_str(), value, 1);
-    }
+    void set(const char* value) const { setenv(name.c_str(), value, 1); }
 
-    void unset() const {
-        unsetenv(name.c_str());
-    }
+    void unset() const { unsetenv(name.c_str()); }
 };
 
 // ===========================================================================
 // loom.ui.app.statusline_runner — JSON serialization (to_json)
 // ===========================================================================
 
+using loom::utils::json::parse;
 using loom::utils::statusline::StatusLineCommandInput;
 using loom::utils::statusline::to_json;
-using loom::utils::json::parse;
 
 TEST(StatuslineJson, SerializesBaseFields) {
     StatusLineCommandInput input;
@@ -166,8 +164,8 @@ TEST(StatuslineJson, SerializesUnknownContextUsageAsNulls) {
 }
 
 TEST(StatuslineJson, SerializesCurrentContextOccupancyWithoutNarrowing) {
-    for (const auto tokens : {std::uint64_t{5'000'000'000},
-                              std::numeric_limits<std::uint64_t>::max()}) {
+    for (const auto tokens :
+         {std::uint64_t{5'000'000'000}, std::numeric_limits<std::uint64_t>::max()}) {
         for (const bool estimated : {false, true}) {
             StatusLineCommandInput input;
             input.context_window.total_input_tokens = 17;
@@ -397,10 +395,11 @@ TEST(StatuslineJson, OmitsRateLimitsWhenBothSubBucketsNullopt) {
 TEST(StatuslineJson, IncludesRateLimitsFiveHourOnly) {
     StatusLineCommandInput input;
     input.rate_limits = loom::utils::statusline::StatusLineRateLimits{
-        .five_hour = loom::utils::statusline::StatusLineRateLimitBucket{
-            .used_percentage = 45.5,
-            .resets_at = 1700000000000LL,
-        },
+        .five_hour =
+            loom::utils::statusline::StatusLineRateLimitBucket{
+                .used_percentage = 45.5,
+                .resets_at = 1700000000000LL,
+            },
         .seven_day = std::nullopt,
     };
 
@@ -420,14 +419,16 @@ TEST(StatuslineJson, IncludesRateLimitsFiveHourOnly) {
 TEST(StatuslineJson, IncludesRateLimitsBothBuckets) {
     StatusLineCommandInput input;
     input.rate_limits = loom::utils::statusline::StatusLineRateLimits{
-        .five_hour = loom::utils::statusline::StatusLineRateLimitBucket{
-            .used_percentage = 30.0,
-            .resets_at = 1000,
-        },
-        .seven_day = loom::utils::statusline::StatusLineRateLimitBucket{
-            .used_percentage = 60.0,
-            .resets_at = 99999,
-        },
+        .five_hour =
+            loom::utils::statusline::StatusLineRateLimitBucket{
+                .used_percentage = 30.0,
+                .resets_at = 1000,
+            },
+        .seven_day =
+            loom::utils::statusline::StatusLineRateLimitBucket{
+                .used_percentage = 60.0,
+                .resets_at = 99999,
+            },
     };
 
     auto json_str = to_json(input);
@@ -491,9 +492,7 @@ TEST(StatuslineExecute, CommandReadsJsonFromStdin) {
     input.model.id = "stdin-test-model";
 
     // Read from stdin and echo the model.id
-    auto result = execute_statusline_command(
-        "cat | head -c 500",
-        input);
+    auto result = execute_statusline_command("cat | head -c 500", input);
 
     EXPECT_TRUE(result.success) << "error: " << result.error;
     // Output should contain the JSON with our test data
@@ -525,9 +524,7 @@ TEST(StatuslineExecute, BlankLinesAreStripped) {
 
     StatusLineCommandInput input;
     // Multi-line output with blank lines interspersed
-    auto result = execute_statusline_command(
-        "printf 'line1\\n\\n  line2  \\n\\nline3\\n'",
-        input);
+    auto result = execute_statusline_command("printf 'line1\\n\\n  line2  \\n\\nline3\\n'", input);
 
     EXPECT_TRUE(result.success) << "error: " << result.error;
     EXPECT_EQ(result.output, "line1\nline2\nline3");
@@ -537,9 +534,7 @@ TEST(StatuslineExecute, EachLineIsTrimmed) {
     if (!has_bash()) GTEST_SKIP() << "bash not available";
 
     StatusLineCommandInput input;
-    auto result = execute_statusline_command(
-        "printf '  first  \\n  second\\nthird  \\n'",
-        input);
+    auto result = execute_statusline_command("printf '  first  \\n  second\\nthird  \\n'", input);
 
     EXPECT_TRUE(result.success) << "error: " << result.error;
     EXPECT_EQ(result.output, "first\nsecond\nthird");
@@ -603,16 +598,14 @@ TEST(StatuslineExecute, ComplexJsonInputPassedCorrectly) {
     input.exceeds_200k_tokens = false;
     input.vim = loom::utils::statusline::StatusLineVimInfo{.mode = "NORMAL"};
     input.rate_limits = loom::utils::statusline::StatusLineRateLimits{
-        .five_hour = loom::utils::statusline::StatusLineRateLimitBucket{
-            .used_percentage = 50.0, .resets_at = 1234567890LL},
+        .five_hour = loom::utils::statusline::StatusLineRateLimitBucket{.used_percentage = 50.0,
+                                                                        .resets_at = 1234567890LL},
         .seven_day = std::nullopt,
     };
 
     // Use python (if available) or grep to verify the JSON has expected keys
     // We'll just check the output length and a few key fields
-    auto result = execute_statusline_command(
-        "cat | tr -d '\\n' | wc -c",
-        input);
+    auto result = execute_statusline_command("cat | tr -d '\\n' | wc -c", input);
 
     EXPECT_TRUE(result.success) << "error: " << result.error;
     // JSON should be non-trivial in size
@@ -629,4 +622,4 @@ TEST(StatuslineExecute, ResultStructFieldsCorrect) {
     EXPECT_EQ(r.elapsed.count(), 0);
 }
 
-} // namespace
+}  // namespace

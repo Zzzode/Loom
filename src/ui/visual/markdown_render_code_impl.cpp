@@ -18,8 +18,7 @@ namespace loom::ui {
 namespace detail {
 namespace {
 
-[[nodiscard]] Element render_source_code_block(const BlockToken& tok,
-                                        const MarkdownOptions& opts) {
+[[nodiscard]] Element render_source_code_block(const BlockToken& tok, const MarkdownOptions& opts) {
     // Split into lines (preserve trailing empty line behavior like EOL).
     auto split_lines = [](std::string_view code) {
         std::vector<std::string> lines;
@@ -39,13 +38,11 @@ namespace {
     auto lines = split_lines(tok.code_content);
 
     if (opts.syntax_highlighting && !tok.code_content.empty()) {
-        auto highlighted = code_highlight::highlight_source(
-            tok.code_content, tok.code_lang);
+        auto highlighted = code_highlight::highlight_source(tok.code_content, tok.code_lang);
         auto theme_result = code_highlight::get_syntax_theme(opts.theme_name);
         auto theme = opts.theme_name.empty() ? code_highlight::SyntaxTheme{}
-                   : theme_result ? *theme_result
-                                  : code_highlight::get_theme(
-                                        code_highlight::ThemeName::Dark);
+                     : theme_result          ? *theme_result
+                                    : code_highlight::get_theme(code_highlight::ThemeName::Dark);
 
         Elements out;
         for (const auto& hl : highlighted.lines) {
@@ -64,17 +61,14 @@ namespace {
                 for (const auto& t : hl.tokens) {
                     segments.push_back({
                         .text = t.text,
-                        .foreground = code_highlight::token_color(
-                            t.type, theme),
+                        .foreground = code_highlight::token_color(t.type, theme),
                     });
                 }
             }
-            Element line_el = code_highlight::colored_text_line(
-                std::move(segments));
+            Element line_el = code_highlight::colored_text_line(std::move(segments));
             // A named syntax palette owns its declared canvas. The normal
             // palette-driven Markdown path deliberately remains transparent.
-            if (!opts.theme_name.empty())
-                line_el = line_el | bgcolor(theme.bg);
+            if (!opts.theme_name.empty()) line_el = line_el | bgcolor(theme.bg);
             if (opts.dim_color) line_el = line_el | dim;
             out.push_back(std::move(line_el));
         }
@@ -94,23 +88,22 @@ namespace {
     }
     return vbox(std::move(out));
 }
-} // namespace
+}  // namespace
 
-[[nodiscard]] Element render_code_block(const BlockToken& tok,
-                                        const MarkdownOptions& opts) {
+[[nodiscard]] Element render_code_block(const BlockToken& tok, const MarkdownOptions& opts) {
     auto source = render_source_code_block(tok, opts);
     if (tok.code_lang == "mermaid" && tok.code_fence_closed) {
         // RFC 0031 E6b: an attached per-instance rows cache memoizes the
         // layout (exact source bytes, ASCII bit); either way a FRESH node is
         // built from the rows, so dim/width behavior is unchanged.
         auto diagram = opts.mermaid_rows_cache
-            ? opts.mermaid_rows_cache->render(tok.code_content, false, source)
-            : mermaid::render_mermaid(tok.code_content, source);
+                           ? opts.mermaid_rows_cache->render(tok.code_content, false, source)
+                           : mermaid::render_mermaid(tok.code_content, source);
         if (diagram) {
             return opts.dim_color ? *diagram | dim : *diagram;
         }
     }
     return source;
 }
-} // namespace detail
-} // namespace loom::ui
+}  // namespace detail
+}  // namespace loom::ui

@@ -11,7 +11,6 @@ export module loom.tools.mode_validation;
 
 import std;
 
-
 export namespace loom::tools::mode_validation {
 
 // ---------------------------------------------------------------------------
@@ -25,10 +24,10 @@ export namespace loom::tools::mode_validation {
 /// Permission mode enum — values match the TS string union keys so callers can
 /// map one-to-one.  Unknown / future values map to kDefault.
 enum class PermissionMode {
-    kDefault,             // Normal interactive prompts (no special mode)
-    kAcceptEdits,         // 'acceptEdits' — auto-allow filesystem operations
-    kBypassPermissions,   // 'bypassPermissions' — handled by main permission flow
-    kDontAsk,             // 'dontAsk' — handled by main permission flow
+    kDefault,            // Normal interactive prompts (no special mode)
+    kAcceptEdits,        // 'acceptEdits' — auto-allow filesystem operations
+    kBypassPermissions,  // 'bypassPermissions' — handled by main permission flow
+    kDontAsk,            // 'dontAsk' — handled by main permission flow
 };
 
 /// Behaviour enum for permission results — matches TS PermissionResult::behavior.
@@ -42,23 +41,23 @@ enum class PermissionBehavior {
 /// The 'decision reason' attached to allow/ask/deny results so the permission
 /// UI can explain *why* a decision was reached.
 enum class DecisionReasonType {
-    kMode,       // Decision came from permission mode (e.g. acceptEdits)
-    kRule,       // Decision came from a user-defined allow/deny rule
-    kSafety,     // Decision came from a safety check
-    kOther,      // Catch-all
+    kMode,    // Decision came from permission mode (e.g. acceptEdits)
+    kRule,    // Decision came from a user-defined allow/deny rule
+    kSafety,  // Decision came from a safety check
+    kOther,   // Catch-all
 };
 
 struct DecisionReason {
     DecisionReasonType type{DecisionReasonType::kOther};
-    std::optional<PermissionMode> mode;     // set when type == kMode
-    std::string reason;                      // human-readable when type == kOther
+    std::optional<PermissionMode> mode;  // set when type == kMode
+    std::string reason;                  // human-readable when type == kOther
 };
 
 /// Result of a mode validation check.
 struct PermissionResult {
     PermissionBehavior behavior{PermissionBehavior::kPassthrough};
     std::optional<std::string> message;
-    std::optional<std::string> updated_command;   // for 'allow' with updated input
+    std::optional<std::string> updated_command;  // for 'allow' with updated input
     std::optional<DecisionReason> decision_reason;
 };
 
@@ -70,8 +69,7 @@ struct PermissionResult {
 // ---------------------------------------------------------------------------
 
 inline constexpr std::array<std::string_view, 7> kAcceptEditsAllowedCommands = {
-    "mkdir", "touch", "rm", "rmdir", "mv", "cp", "sed"
-};
+    "mkdir", "touch", "rm", "rmdir", "mv", "cp", "sed"};
 
 /// Returns true if `command` is one of the filesystem operations allowed by
 /// Accept Edits mode.
@@ -96,7 +94,10 @@ inline constexpr std::array<std::string_view, 7> kAcceptEditsAllowedCommands = {
     auto flush = [&] {
         // trim leading / trailing whitespace
         auto b = current.find_first_not_of(" \t\n\r");
-        if (b == std::string::npos) { current.clear(); return; }
+        if (b == std::string::npos) {
+            current.clear();
+            return;
+        }
         auto e = current.find_last_not_of(" \t\n\r");
         std::string trimmed = current.substr(b, e - b + 1);
         if (!trimmed.empty()) result.push_back(std::move(trimmed));
@@ -106,9 +107,20 @@ inline constexpr std::array<std::string_view, 7> kAcceptEditsAllowedCommands = {
     for (size_t i = 0; i < input.size(); ++i) {
         char c = input[i];
         // Handle multi-character operators: &&  ||  |&
-        if (c == '&' && i + 1 < input.size() && input[i + 1] == '&') { flush(); ++i; continue; }
-        if (c == '|' && i + 1 < input.size() && input[i + 1] == '|') { flush(); ++i; continue; }
-        if (c == '|' || c == ';' || c == '\n') { flush(); continue; }
+        if (c == '&' && i + 1 < input.size() && input[i + 1] == '&') {
+            flush();
+            ++i;
+            continue;
+        }
+        if (c == '|' && i + 1 < input.size() && input[i + 1] == '|') {
+            flush();
+            ++i;
+            continue;
+        }
+        if (c == '|' || c == ';' || c == '\n') {
+            flush();
+            continue;
+        }
         current.push_back(c);
     }
     flush();
@@ -130,8 +142,8 @@ inline constexpr std::array<std::string_view, 7> kAcceptEditsAllowedCommands = {
 ///                              the first whitespace token which is fine for
 ///                              the filesystem allowlist).
 /// @param mode                  Current permission mode.
-[[nodiscard]] inline PermissionResult
-validate_command_for_mode(std::string_view cmd, PermissionMode mode) {
+[[nodiscard]] inline PermissionResult validate_command_for_mode(std::string_view cmd,
+                                                                PermissionMode mode) {
     auto trimmed = cmd;
     // trim leading whitespace
     while (!trimmed.empty() && (trimmed.front() == ' ' || trimmed.front() == '\t')) {
@@ -152,8 +164,7 @@ validate_command_for_mode(std::string_view cmd, PermissionMode mode) {
     }
 
     // In Accept Edits mode, auto-allow filesystem operations
-    if (mode == PermissionMode::kAcceptEdits &&
-        is_filesystem_command(base_cmd)) {
+    if (mode == PermissionMode::kAcceptEdits && is_filesystem_command(base_cmd)) {
         PermissionResult result;
         result.behavior = PermissionBehavior::kAllow;
         result.updated_command = std::string(cmd);
@@ -167,10 +178,8 @@ validate_command_for_mode(std::string_view cmd, PermissionMode mode) {
 
     PermissionResult result;
     result.behavior = PermissionBehavior::kPassthrough;
-    result.message = std::format(
-        "No mode-specific handling for '{}' in mode {}",
-        std::string(base_cmd),
-        static_cast<int>(mode));
+    result.message = std::format("No mode-specific handling for '{}' in mode {}",
+                                 std::string(base_cmd), static_cast<int>(mode));
     return result;
 }
 
@@ -191,8 +200,8 @@ validate_command_for_mode(std::string_view cmd, PermissionMode mode) {
 ///   - kAllow        if the current mode permits auto-approval
 ///   - kAsk          (reserved; no current path produces this)
 ///   - kPassthrough  if no mode-specific handling applies
-[[nodiscard]] inline PermissionResult
-check_permission_mode(std::string_view full_command, PermissionMode mode) {
+[[nodiscard]] inline PermissionResult check_permission_mode(std::string_view full_command,
+                                                            PermissionMode mode) {
     // Bypass mode is handled elsewhere in the main permission flow.
     if (mode == PermissionMode::kBypassPermissions) {
         PermissionResult result;
@@ -229,12 +238,10 @@ check_permission_mode(std::string_view full_command, PermissionMode mode) {
 /// Returns the list of commands auto-allowed for a given permission mode.
 /// Used by the permission UI to inform the user which operations are
 /// implicitly approved.
-[[nodiscard]] inline std::vector<std::string_view>
-get_auto_allowed_commands(PermissionMode mode) {
+[[nodiscard]] inline std::vector<std::string_view> get_auto_allowed_commands(PermissionMode mode) {
     if (mode == PermissionMode::kAcceptEdits) {
-        return std::vector<std::string_view>(
-            kAcceptEditsAllowedCommands.begin(),
-            kAcceptEditsAllowedCommands.end());
+        return std::vector<std::string_view>(kAcceptEditsAllowedCommands.begin(),
+                                             kAcceptEditsAllowedCommands.end());
     }
     return {};
 }
@@ -243,14 +250,12 @@ get_auto_allowed_commands(PermissionMode mode) {
 // TS-compatible aliases (for call sites still using TS-style camelCase)
 // ---------------------------------------------------------------------------
 
-[[nodiscard]] inline PermissionResult
-checkPermissionMode(std::string_view c, PermissionMode m) {
+[[nodiscard]] inline PermissionResult checkPermissionMode(std::string_view c, PermissionMode m) {
     return check_permission_mode(c, m);
 }
 
-[[nodiscard]] inline std::vector<std::string_view>
-getAutoAllowedCommands(PermissionMode m) {
+[[nodiscard]] inline std::vector<std::string_view> getAutoAllowedCommands(PermissionMode m) {
     return get_auto_allowed_commands(m);
 }
 
-} // namespace loom::tools::mode_validation
+}  // namespace loom::tools::mode_validation

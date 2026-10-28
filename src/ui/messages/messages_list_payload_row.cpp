@@ -4,9 +4,9 @@
 // per-type message renderer plus the tool UI registry.
 module;
 
-#include <ftxui/dom/elements.hpp>
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
+#include <ftxui/dom/elements.hpp>
 
 module loom.ui.messages.messages_list;
 
@@ -16,7 +16,7 @@ import loom.ui.messages.api_error_message;
 import loom.ui.foundation.design_figures;
 
 import loom.ui.foundation.clock;
-import loom.ui.foundation.theme_provider;  // user_message_background token
+import loom.ui.foundation.theme_provider; // user_message_background token
 import loom.ui.messages.message_row;
 import loom.ui.messages.user_text_message;
 import loom.ui.messages.local_command_output_message;
@@ -77,17 +77,14 @@ void clear_thinking_stream_last_seen_for_testing() {
 
 namespace detail {
 
-auto render_payload_row(const MessagesListInput& input,
-                               std::size_t row_idx,
-                               bool is_selected,
-                               std::size_t frame_count,
-                               bool add_margin) -> Element
-{
+auto render_payload_row(const MessagesListInput& input, std::size_t row_idx, bool is_selected,
+                        std::size_t frame_count, bool add_margin) -> Element {
     if (row_idx >= input.shapes.size() || row_idx >= input.rows.size()) {
-        return text((std::string(loom::ui::design::figures::kWarning) + " bad row_idx")) | color(loom::ui::design::theme::current_theme().palette->warning);
+        return text((std::string(loom::ui::design::figures::kWarning) + " bad row_idx")) |
+               color(loom::ui::design::theme::current_theme().palette->warning);
     }
-    MessageShape shape   = input.shapes[row_idx];
-    const auto& payload  = input.rows[row_idx];
+    MessageShape shape = input.shapes[row_idx];
+    const auto& payload = input.rows[row_idx];
 
     // Helper: returns true for shapes that belong to the same assistant
     // "turn group" (i.e. multiple content blocks inside one assistant
@@ -115,8 +112,7 @@ auto render_payload_row(const MessagesListInput& input,
     // flow through the divergent envelope+dispatch path below.
     using S = MessageShape;
     const bool is_streaming_tail =
-        (input.streaming_tail_row != std::size_t(-1) &&
-         row_idx == input.streaming_tail_row);
+        (input.streaming_tail_row != std::size_t(-1) && row_idx == input.streaming_tail_row);
 
     if (shape == S::UserText || shape == S::UserPrompt || shape == S::UserCommand) {
         auto* d = std::get_if<UserTextMessageData>(&payload);
@@ -129,57 +125,56 @@ auto render_payload_row(const MessagesListInput& input,
             // add_margin is threaded for faithfulness (top margin = add_margin ? 1 : 0).
             const UserTextMessageData fd = *d;
             Element el = (shape == S::UserCommand || fd.command_name)
-                ? RenderUserCommandMessage(fd, /*is_selected=*/is_selected, /*add_margin=*/add_margin)
-                : RenderUserPromptMessage(fd, /*is_selected=*/is_selected, /*add_margin=*/add_margin);
-            (void)frame_count; (void)is_streaming_tail;
+                             ? RenderUserCommandMessage(fd, /*is_selected=*/is_selected,
+                                                        /*add_margin=*/add_margin)
+                             : RenderUserPromptMessage(fd, /*is_selected=*/is_selected,
+                                                       /*add_margin=*/add_margin);
+            (void)frame_count;
+            (void)is_streaming_tail;
             return el;
         }
-    }
-    else if (shape == S::UserLocalCommandOutput) {
+    } else if (shape == S::UserLocalCommandOutput) {
         auto* opts = std::get_if<local_cmd::LocalCommandOptions>(&payload);
         if (opts) {
             Element el = local_cmd::RenderLocalCommandOutputFaithful(*opts);
-            (void)frame_count; (void)is_streaming_tail;
+            (void)frame_count;
+            (void)is_streaming_tail;
             return el;
         }
-    }
-    else if (shape == S::UserLocalJsxOutput) {
+    } else if (shape == S::UserLocalJsxOutput) {
         auto* d = std::get_if<UserTextMessageData>(&payload);
         if (d) {
             Elements lines;
             std::size_t start = 0;
             while (start <= d->content.size()) {
                 const auto nl = d->content.find('\n', start);
-                std::string line = nl == std::string::npos
-                    ? d->content.substr(start)
-                    : d->content.substr(start, nl - start);
+                std::string line = nl == std::string::npos ? d->content.substr(start)
+                                                           : d->content.substr(start, nl - start);
 
                 Element row = text(line.empty() ? " " : line);
                 if (line == "Skills" || line == "Agents") {
-                    row = std::move(row) | bold | color(loom::ui::design::theme::current_theme().palette->brief_label_you);
-                } else if (line == "Esc to close" ||
-                           line.starts_with("Press ")) {
+                    row = std::move(row) | bold |
+                          color(loom::ui::design::theme::current_theme().palette->brief_label_you);
+                } else if (line == "Esc to close" || line.starts_with("Press ")) {
                     row = std::move(row) | dim;
                 } else if (line.starts_with("› ")) {
-                    row = std::move(row) | bold | color(loom::ui::design::theme::current_theme().palette->brief_label_loom);
+                    row = std::move(row) | bold |
+                          color(loom::ui::design::theme::current_theme().palette->brief_label_loom);
                 } else if (line.find("─") != std::string::npos) {
                     row = std::move(row) | dim;
-                } else if (line.ends_with("skills") ||
-                           line.find("skills (") != std::string::npos ||
-                           line == "MCP skills" ||
-                           line == "Workflow commands" ||
-                           line.ends_with("agents") ||
-                           line.find("agents (") != std::string::npos ||
+                } else if (line.ends_with("skills") || line.find("skills (") != std::string::npos ||
+                           line == "MCP skills" || line == "Workflow commands" ||
+                           line.ends_with("agents") || line.find("agents (") != std::string::npos ||
                            line == "Built-in (always available):") {
                     row = std::move(row) | bold | dim;
-                } else if (const auto marker = line.find(" · ");
-                           marker != std::string::npos) {
+                } else if (const auto marker = line.find(" · "); marker != std::string::npos) {
                     row = hbox({
                         text(line.substr(0, marker)),
                         text(line.substr(marker)) | dim,
                     });
                 } else {
-                    row = std::move(row) | color(loom::ui::design::theme::current_theme().palette->muted);
+                    row = std::move(row) |
+                          color(loom::ui::design::theme::current_theme().palette->muted);
                 }
                 lines.push_back(std::move(row));
 
@@ -187,11 +182,11 @@ auto render_payload_row(const MessagesListInput& input,
                 start = nl + 1;
             }
             if (lines.empty()) lines.push_back(text(" "));
-            (void)frame_count; (void)is_streaming_tail;
+            (void)frame_count;
+            (void)is_streaming_tail;
             return vbox(std::move(lines));
         }
-    }
-    else if (shape == S::AssistantText) {
+    } else if (shape == S::AssistantText) {
         auto* d = std::get_if<AssistantTextMessageData>(&payload);
         if (d) {
             // show_dot is ALWAYS true for every AssistantTextMessage
@@ -212,8 +207,7 @@ auto render_payload_row(const MessagesListInput& input,
             (void)frame_count;
             return el;
         }
-    }
-    else if (shape == S::AssistantThinking || shape == S::AssistantRedactedThinking) {
+    } else if (shape == S::AssistantThinking || shape == S::AssistantRedactedThinking) {
         auto* o = std::get_if<thinking_message::ThinkingMessageOptions>(&payload);
         if (o) {
             // Completed thinking rows render as a collapsed "∴ Thought for
@@ -230,8 +224,8 @@ auto render_payload_row(const MessagesListInput& input,
             // (within the 3s collapse grace), force transcript mode so the
             // full body is shown rather than the collapsed
             // "∴ Thinking (ctrl+o to expand)" label.
-            const bool thinking_force_expanded = is_streaming_tail ||
-                was_recently_streaming(row_idx);
+            const bool thinking_force_expanded =
+                is_streaming_tail || was_recently_streaming(row_idx);
             if (is_streaming_tail) mark_streaming(row_idx);
             Element el = thinking_message::RenderThinkingMessageFaithful(
                 o->data,
@@ -246,8 +240,8 @@ auto render_payload_row(const MessagesListInput& input,
                 !thinking_force_expanded && input.row_click_tracker &&
                 (!o->data.raw_text.empty() || !o->data.sections.empty())) {
                 std::string_view uuid = (row_idx < input.uuids.size())
-                    ? std::string_view(input.uuids[row_idx])
-                    : std::string_view{};
+                                            ? std::string_view(input.uuids[row_idx])
+                                            : std::string_view{};
                 auto key = compute_expand_key(shape, payload, uuid);
                 if (!key.empty()) {
                     Box& box = input.row_click_tracker->track_row(std::move(key));
@@ -257,16 +251,15 @@ auto render_payload_row(const MessagesListInput& input,
             (void)frame_count;
             return el;
         }
-    }
-    else if (shape == S::SystemText) {
+    } else if (shape == S::SystemText) {
         auto* d = std::get_if<SystemTextMessageData>(&payload);
         if (d) {
             Element el = RenderSystemTextMessageFaithful(*d, /*add_margin=*/add_margin);
-            (void)frame_count; (void)is_streaming_tail;
+            (void)frame_count;
+            (void)is_streaming_tail;
             return el;
         }
-    }
-    else if (shape == S::UserToolResult) {
+    } else if (shape == S::UserToolResult) {
         auto* opts = std::get_if<ToolResultOptions>(&payload);
         if (opts) {
             // Bridge ToolResultOptions (divergent model) → ToolResultFaithfulData
@@ -281,57 +274,54 @@ auto render_payload_row(const MessagesListInput& input,
             fd.verbose = is_row_expanded(input, row_idx);
             fd.is_transcript_mode = input.is_transcript_mode;
 
-            using DS = ToolResultStatus;   // divergent status
-            using FK = ToolResultKind;     // faithful kind
+            using DS = ToolResultStatus;  // divergent status
+            using FK = ToolResultKind;    // faithful kind
 
             switch (opts->status) {
-                case DS::Success:
-                    fd.kind = FK::Success;
+            case DS::Success:
+                fd.kind = FK::Success;
+                fd.content = opts->output;
+                fd.content_items = opts->content_items;
+                break;
+            case DS::Error:
+                fd.kind = FK::Error;
+                // Prefer error_message if set; fall back to output field.
+                if (opts->error_message && !opts->error_message->empty()) {
+                    fd.content = opts->error_message;
+                } else {
                     fd.content = opts->output;
-                    fd.content_items = opts->content_items;
-                    break;
-                case DS::Error:
-                    fd.kind = FK::Error;
-                    // Prefer error_message if set; fall back to output field.
-                    if (opts->error_message && !opts->error_message->empty()) {
-                        fd.content = opts->error_message;
-                    } else {
-                        fd.content = opts->output;
-                    }
-                    break;
-                case DS::Timeout:
-                    fd.kind = FK::Error;
-                    fd.content = opts->output
-                        ? opts->output
-                        : std::optional<std::string>("Timed out");
-                    break;
-                case DS::Cancelled:
-                    fd.kind = FK::Canceled;
-                    fd.content = opts->output;
-                    break;
+                }
+                break;
+            case DS::Timeout:
+                fd.kind = FK::Error;
+                fd.content = opts->output ? opts->output : std::optional<std::string>("Timed out");
+                break;
+            case DS::Cancelled:
+                fd.kind = FK::Canceled;
+                fd.content = opts->output;
+                break;
             }
 
             Element el = RenderToolResultMessageFaithful(fd, add_margin);
             // Track clickable tool result rows for mouse hit-testing.
             // The event handler toggles the expand key on click, which
             // expands/collapses the truncated output.
-            if (input.row_click_tracker &&
-                ((fd.content && !fd.content->empty()) ||
-                 (fd.content_items && !fd.content_items->empty()))) {
+            if (input.row_click_tracker && ((fd.content && !fd.content->empty()) ||
+                                            (fd.content_items && !fd.content_items->empty()))) {
                 std::string_view uuid = (row_idx < input.uuids.size())
-                    ? std::string_view(input.uuids[row_idx])
-                    : std::string_view{};
+                                            ? std::string_view(input.uuids[row_idx])
+                                            : std::string_view{};
                 auto key = compute_expand_key(shape, payload, uuid);
                 if (!key.empty()) {
                     Box& box = input.row_click_tracker->track_row(std::move(key));
                     el = std::move(el) | reflect(box);
                 }
             }
-            (void)frame_count; (void)is_streaming_tail;
+            (void)frame_count;
+            (void)is_streaming_tail;
             return el;
         }
-    }
-    else if (shape == S::AssistantToolUse) {
+    } else if (shape == S::AssistantToolUse) {
         auto* opts = std::get_if<tool_use_message::ToolUseRenderOptions>(&payload);
         if (opts) {
             // Bridge ToolUseRenderOptions → FaithfulToolUseData via
@@ -343,18 +333,13 @@ auto render_payload_row(const MessagesListInput& input,
             using namespace loom::ui::tools;
             const bool is_registered_builtin =
                 global_tool_ui_registry().find(opts->call.tool_name) != nullptr;
-            const ToolUIFunctions& ui =
-                get_tool_ui_or_generic(opts->call.tool_name);
+            const ToolUIFunctions& ui = get_tool_ui_or_generic(opts->call.tool_name);
 
             tool_use_message::FaithfulToolUseData fd;
-            fd.user_facing_name =
-                ui.user_facing_name
-                    ? ui.user_facing_name(opts->call.raw_parameters)
-                    : std::string{opts->call.tool_name};
-            fd.message =
-                ui.message
-                    ? ui.message(opts->call.raw_parameters)
-                    : std::string{};
+            fd.user_facing_name = ui.user_facing_name
+                                      ? ui.user_facing_name(opts->call.raw_parameters)
+                                      : std::string{opts->call.tool_name};
+            fd.message = ui.message ? ui.message(opts->call.raw_parameters) : std::string{};
             if (ui.tag) {
                 auto tag = ui.tag(opts->call.raw_parameters);
                 if (tag) fd.tag = *tag;
@@ -364,11 +349,21 @@ auto render_payload_row(const MessagesListInput& input,
             using TS = tool_use_message::ToolStatus;
             using FTS = tool_use_message::FaithfulToolStatus;
             switch (opts->call.status) {
-                case TS::Pending:   fd.status = FTS::Queued;  break;
-                case TS::Running:   fd.status = FTS::Running; break;
-                case TS::Success:   fd.status = FTS::Success; break;
-                case TS::Error:     fd.status = FTS::Error;   break;
-                case TS::Cancelled: fd.status = FTS::Error;   break;
+            case TS::Pending:
+                fd.status = FTS::Queued;
+                break;
+            case TS::Running:
+                fd.status = FTS::Running;
+                break;
+            case TS::Success:
+                fd.status = FTS::Success;
+                break;
+            case TS::Error:
+                fd.status = FTS::Error;
+                break;
+            case TS::Cancelled:
+                fd.status = FTS::Error;
+                break;
             }
 
             // Progress / queued text from tool UI functions
@@ -377,8 +372,7 @@ auto render_payload_row(const MessagesListInput& input,
                 if (opts->call.result_preview) {
                     preview = *opts->call.result_preview;
                 }
-                fd.progress_text = ui.progress(
-                    opts->call.raw_parameters, preview);
+                fd.progress_text = ui.progress(opts->call.raw_parameters, preview);
             } else {
                 fd.progress_text = "Running…";
             }
@@ -410,8 +404,7 @@ auto render_payload_row(const MessagesListInput& input,
             Element el = tool_use_message::RenderFaithfulToolUseMessage(fd);
             return el;
         }
-    }
-    else if (shape == S::UserImage) {
+    } else if (shape == S::UserImage) {
         // Faithful render: each user-attached image is its own transcript
         // row.  Render directly via message_image::render (stateless Element)
         // wrapped in user-message chrome for visual consistency with
@@ -423,8 +416,8 @@ auto render_payload_row(const MessagesListInput& input,
         // its own user-styled card.
         auto* d = std::get_if<image::ImageMessageData>(&payload);
         if (d) {
-            const Color kUserBg = loom::ui::design::theme::current_theme()
-                                      .palette->user_message_background;
+            const Color kUserBg =
+                loom::ui::design::theme::current_theme().palette->user_message_background;
 
             Element body = image::render(*d);
 
@@ -470,17 +463,17 @@ auto render_payload_row(const MessagesListInput& input,
     }
 
     RenderEnvelopeOptions env_opts{
-        .shape          = shape,
-        .timestamp      = std::chrono::system_clock::now(),
-        .status         = derive_status_badge(shape, row_idx, input.streaming_tail_row),
-        .show_dismiss   = (shape == MessageShape::SystemAdvisor ||
-                           shape == MessageShape::SystemHookProgress),
-        .is_selected    = is_selected,
-        .frame_count    = frame_count,
+        .shape = shape,
+        .timestamp = std::chrono::system_clock::now(),
+        .status = derive_status_badge(shape, row_idx, input.streaming_tail_row),
+        .show_dismiss =
+            (shape == MessageShape::SystemAdvisor || shape == MessageShape::SystemHookProgress),
+        .is_selected = is_selected,
+        .frame_count = frame_count,
     };
     return render_message_envelope(env_opts, std::move(body));
 }
 
-} // namespace detail
+}  // namespace detail
 
-} // namespace loom::ui::messages_list
+}  // namespace loom::ui::messages_list

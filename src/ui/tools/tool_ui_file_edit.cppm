@@ -62,8 +62,7 @@ namespace detail {
 
 /// Extract basename + truncate middle for display.
 /// Preserves filename at end.
-[[nodiscard]] inline std::string display_path(std::string_view path,
-                                               std::size_t max_len = 60) {
+[[nodiscard]] inline std::string display_path(std::string_view path, std::size_t max_len = 60) {
     if (path.size() <= max_len) return std::string(path);
 
     // Find the filename (last path component)
@@ -83,8 +82,7 @@ namespace detail {
 
     // Keep start + …/ + filename
     std::size_t head_len = max_len - 3 - filename.size() - 2;  // -"…/" "-filename"
-    return std::string(path.substr(0, head_len)) + "\xE2\x80\xA6/" +
-           std::string(filename);
+    return std::string(path.substr(0, head_len)) + "\xE2\x80\xA6/" + std::string(filename);
 }
 
 /// Check if path is in a plans directory.
@@ -144,8 +142,7 @@ namespace detail {
         return std::nullopt;
     };
 
-    fns.progress = [](std::string_view input_json,
-                       std::string_view /*partial_result*/) {
+    fns.progress = [](std::string_view input_json, std::string_view /*partial_result*/) {
         std::string path = detail::extract_file_path(input_json);
         if (!path.empty()) {
             return "Updating " + detail::display_path(path, 50) + "\342\200\246";  // …
@@ -167,10 +164,8 @@ namespace detail {
     // (create).  The output field carries the raw new content which is NOT
     // shown in update mode — indexing it would produce phantom matches.
     // Under-count: tool_use already indexes file_path.
-    fns.extract_search_text = [](
-        std::string_view /*output_text*/,
-        std::string_view /*error_text*/) -> std::optional<std::string>
-    {
+    fns.extract_search_text = [](std::string_view /*output_text*/,
+                                 std::string_view /*error_text*/) -> std::optional<std::string> {
         return std::string{};
     };
 
@@ -179,12 +174,9 @@ namespace detail {
 
 /// Register FileEdit tool UI in the global registry.
 inline void register_file_edit_ui() {
-    global_tool_ui_registry().register_tool_ui(
-        "edit_file", make_file_edit_ui());
-    global_tool_ui_registry().register_tool_ui(
-        "Edit", make_file_edit_ui());
-    global_tool_ui_registry().register_tool_ui(
-        "FileEdit", make_file_edit_ui());
+    global_tool_ui_registry().register_tool_ui("edit_file", make_file_edit_ui());
+    global_tool_ui_registry().register_tool_ui("Edit", make_file_edit_ui());
+    global_tool_ui_registry().register_tool_ui("FileEdit", make_file_edit_ui());
 }
 
 }  // namespace loom::ui::tools::file_edit_ui

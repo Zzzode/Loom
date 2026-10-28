@@ -21,16 +21,12 @@ public:
         if (denials_.size() > max_denials) denials_.resize(max_denials);
     }
 
-    [[nodiscard]] const std::vector<AutoModeDenial>& get() const noexcept {
-        return denials_;
-    }
+    [[nodiscard]] const std::vector<AutoModeDenial>& get() const noexcept { return denials_; }
 
-    void clear() noexcept {
-        denials_.clear();
-    }
+    void clear() noexcept { denials_.clear(); }
 
 private:
     std::vector<AutoModeDenial> denials_;
 };
 
-} // namespace loom::utils::auto_mode_denials
+}  // namespace loom::utils::auto_mode_denials

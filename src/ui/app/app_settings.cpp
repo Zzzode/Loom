@@ -2,13 +2,12 @@
 // Keeps loom.config.settings_manager out of both app.cppm and the :impl BMI.
 module;
 
-
 module loom.ui.app.app;
 
 import std;
 
 import loom.config.settings_manager;
-import loom.config.config;             // ConfigManager for statusLine.segments
+import loom.config.config; // ConfigManager for statusLine.segments
 import loom.ui.foundation.theme_provider;
 
 namespace loom::ui {
@@ -36,9 +35,8 @@ void AppAdapter::init_settings_manager() {
 
 void AppAdapter::subscribe_settings_changed(std::function<void()> cb) {
     if (!settings_ || !settings_->manager) return;
-    settings_->unsubscribe =
-        settings_->manager->on_change([cb = std::move(cb)](
-            settings_nm::SettingSource) mutable { cb(); });
+    settings_->unsubscribe = settings_->manager->on_change(
+        [cb = std::move(cb)](settings_nm::SettingSource) mutable { cb(); });
 }
 
 void AppAdapter::StopSettingsWatcher() {
@@ -50,8 +48,7 @@ std::optional<std::string> AppAdapter::setting_string(std::string_view key) cons
     if (!settings_ || !settings_->manager) return std::nullopt;
     auto settings = settings_->manager->get_initial_settings();
     auto it = settings.find(std::string(key));
-    if (it != settings.end() &&
-        std::holds_alternative<std::string>(it->second)) {
+    if (it != settings.end() && std::holds_alternative<std::string>(it->second)) {
         return std::get<std::string>(it->second);
     }
     return std::nullopt;
@@ -84,12 +81,11 @@ void AppAdapter::ProjectSettingsToScreenState() {
     screen_state_->settings_model = setting_string("model").value_or(std::string{});
 
     // --- default agent display name ---
-    screen_state_->settings_agent_name =
-        setting_string("agent").value_or(std::string{});
+    screen_state_->settings_agent_name = setting_string("agent").value_or(std::string{});
 
     // --- status line config (settings.statusLine) ---
     std::optional<std::string> status_line_type = statusline_setting("type");
-    std::string status_line_command  = statusline_setting("command").value_or(std::string{});
+    std::string status_line_command = statusline_setting("command").value_or(std::string{});
     std::optional<bool> status_line_enabled;
     int status_line_padding = 0;
 
@@ -100,28 +96,25 @@ void AppAdapter::ProjectSettingsToScreenState() {
         if (auto parsed = parse_int_text(*pad)) status_line_padding = *parsed;
     }
 
-    if (auto command = first_non_empty_env({
-            "LOOM_STATUS_LINE_COMMAND",
-            "LOOM_STATUS_LINE_COMMAND"})) {
+    if (auto command =
+            first_non_empty_env({"LOOM_STATUS_LINE_COMMAND", "LOOM_STATUS_LINE_COMMAND"})) {
         status_line_command = *command;
         status_line_type = "command";
     }
-    if (auto enabled = first_non_empty_env({
-            "LOOM_STATUS_LINE_ENABLED",
-            "LOOM_STATUS_LINE_ENABLED"})) {
+    if (auto enabled =
+            first_non_empty_env({"LOOM_STATUS_LINE_ENABLED", "LOOM_STATUS_LINE_ENABLED"})) {
         status_line_enabled = parse_bool_text(*enabled);
     }
-    if (auto padding = first_non_empty_env({
-            "LOOM_STATUS_LINE_PADDING",
-            "LOOM_STATUS_LINE_PADDING"})) {
+    if (auto padding =
+            first_non_empty_env({"LOOM_STATUS_LINE_PADDING", "LOOM_STATUS_LINE_PADDING"})) {
         if (auto parsed = parse_int_text(*padding)) {
             status_line_padding = *parsed;
         }
     }
 
     const bool type_allows_command = !status_line_type || *status_line_type == "command";
-    const bool enabled = status_line_enabled.value_or(
-        !status_line_command.empty() && type_allows_command);
+    const bool enabled =
+        status_line_enabled.value_or(!status_line_command.empty() && type_allows_command);
     screen_state_->status_line_command = std::move(status_line_command);
     screen_state_->status_line_padding = status_line_padding;
     screen_state_->status_line_enabled =
@@ -147,21 +140,19 @@ void AppAdapter::ProjectSettingsToScreenState() {
         if (auto env = first_non_empty_env({"LOOM_THEME", "LOOM_THEME"})) {
             theme_name = *env;
         }
-        loom::ui::design::theme::set_theme(
-            loom::ui::design::theme::parse_variant(theme_name));
+        loom::ui::design::theme::set_theme(loom::ui::design::theme::parse_variant(theme_name));
     }
 
     const auto& sl = bar_cfg.settings().status_line;
     screen_state_->status_bar_enabled = sl.enabled.value_or(true);
     auto& segs = screen_state_->status_bar_segments;
-    if (auto it = sl.segments.find("cwd");    it != sl.segments.end()) segs.cwd    = it->second;
-    if (auto it = sl.segments.find("git");    it != sl.segments.end()) segs.git    = it->second;
-    if (auto it = sl.segments.find("model");  it != sl.segments.end()) segs.model  = it->second;
+    if (auto it = sl.segments.find("cwd"); it != sl.segments.end()) segs.cwd = it->second;
+    if (auto it = sl.segments.find("git"); it != sl.segments.end()) segs.git = it->second;
+    if (auto it = sl.segments.find("model"); it != sl.segments.end()) segs.model = it->second;
     if (auto it = sl.segments.find("tokens"); it != sl.segments.end()) segs.tokens = it->second;
-    if (auto it = sl.segments.find("cost");   it != sl.segments.end()) segs.cost   = it->second;
-    if (auto it = sl.segments.find("tasks");  it != sl.segments.end()) segs.tasks  = it->second;
-    if (auto it = sl.segments.find("agent");  it != sl.segments.end()) segs.agent  = it->second;
+    if (auto it = sl.segments.find("cost"); it != sl.segments.end()) segs.cost = it->second;
+    if (auto it = sl.segments.find("tasks"); it != sl.segments.end()) segs.tasks = it->second;
+    if (auto it = sl.segments.find("agent"); it != sl.segments.end()) segs.agent = it->second;
 }
-
 
 }  // namespace loom::ui

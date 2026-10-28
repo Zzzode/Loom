@@ -11,7 +11,7 @@ import std;
 import loom.tools.script_typecheck;
 import loom.tools.script_diagnostics;
 import loom.tools.script_types;
-import loom.tools.tool_display_names;  // arch-check: keep-import (SCRIPT_TOOL_NAME)
+import loom.tools.tool_display_names; // arch-check: keep-import (SCRIPT_TOOL_NAME)
 import loom.process.bash.bash_execution;
 
 export namespace loom::tools {
@@ -30,16 +30,26 @@ enum class ScriptError {
 
 constexpr auto format_error(ScriptError err) -> std::string_view {
     switch (err) {
-        case ScriptError::EmptyScript:          return "Script content is empty";
-        case ScriptError::UnsupportedLanguage:  return "Unsupported script language";
-        case ScriptError::SandboxViolation:     return "Script violated sandbox constraints";
-        case ScriptError::Timeout:              return "Script execution timed out";
-        case ScriptError::ResourceLimitExceeded: return "Script exceeded resource limits";
-        case ScriptError::SyntaxError:          return "Script contains syntax errors";
-        case ScriptError::RuntimeError:         return "Script runtime error";
-        case ScriptError::TypeCheckFailed:      return "Type checking failed";
-        case ScriptError::InterpreterNotFound:  return "Script interpreter not found";
-        default:                                return "Unknown script error";
+    case ScriptError::EmptyScript:
+        return "Script content is empty";
+    case ScriptError::UnsupportedLanguage:
+        return "Unsupported script language";
+    case ScriptError::SandboxViolation:
+        return "Script violated sandbox constraints";
+    case ScriptError::Timeout:
+        return "Script execution timed out";
+    case ScriptError::ResourceLimitExceeded:
+        return "Script exceeded resource limits";
+    case ScriptError::SyntaxError:
+        return "Script contains syntax errors";
+    case ScriptError::RuntimeError:
+        return "Script runtime error";
+    case ScriptError::TypeCheckFailed:
+        return "Type checking failed";
+    case ScriptError::InterpreterNotFound:
+        return "Script interpreter not found";
+    default:
+        return "Unknown script error";
     }
 }
 
@@ -68,11 +78,16 @@ auto resolve_interpreter(ScriptLanguage lang) -> std::expected<std::string, Scri
 
 constexpr auto script_extension(ScriptLanguage lang) -> std::string_view {
     switch (lang) {
-        case ScriptLanguage::TypeScript: return ".ts";
-        case ScriptLanguage::JavaScript: return ".js";
-        case ScriptLanguage::Python:     return ".py";
-        case ScriptLanguage::Shell:      return ".sh";
-        case ScriptLanguage::Unknown:    return ".txt";
+    case ScriptLanguage::TypeScript:
+        return ".ts";
+    case ScriptLanguage::JavaScript:
+        return ".js";
+    case ScriptLanguage::Python:
+        return ".py";
+    case ScriptLanguage::Shell:
+        return ".sh";
+    case ScriptLanguage::Unknown:
+        return ".txt";
     }
     return ".txt";
 }
@@ -80,7 +95,8 @@ constexpr auto script_extension(ScriptLanguage lang) -> std::string_view {
 class ScriptTool {
 public:
     static constexpr std::string_view name = SCRIPT_TOOL_NAME;
-    static constexpr std::string_view description = "Execute scripts in a sandboxed environment with resource limits";
+    static constexpr std::string_view description =
+        "Execute scripts in a sandboxed environment with resource limits";
 
     auto validate(const ScriptRequest& request) const -> std::expected<void, ScriptError> {
         if (request.code.empty()) {
@@ -98,8 +114,9 @@ public:
         auto start_time = std::chrono::steady_clock::now();
 
         auto tmp_path = std::filesystem::temp_directory_path() /
-            std::format("loom_script_{}{}", std::chrono::steady_clock::now().time_since_epoch().count(),
-                        script_extension(request.language));
+                        std::format("loom_script_{}{}",
+                                    std::chrono::steady_clock::now().time_since_epoch().count(),
+                                    script_extension(request.language));
 
         {
             std::ofstream out(tmp_path);
@@ -144,10 +161,10 @@ public:
             // Pretty-print diagnostics via unified format_diagnostics formatter.
             if (!result.diagnostics.empty()) {
                 ::loom::tools::FormatDiagnosticOptions fopts;
-                fopts.max_display    = 200;
-                fopts.use_colors     = true;
+                fopts.max_display = 200;
+                fopts.use_colors = true;
                 fopts.align_messages = true;
-                fopts.show_snippets  = false;
+                fopts.show_snippets = false;
                 if (!result.errors.empty()) result.errors += "\n";
                 result.errors += ::loom::tools::format_diagnostics(result.diagnostics, fopts);
             }
@@ -170,27 +187,22 @@ public:
     }},
     "required": ["code", "language"]
   }}
-}})json", name, description);
+}})json",
+                           name, description);
     }
 
 private:
-
     auto build_sandboxed_command(std::string_view interpreter,
                                  const std::filesystem::path& script_path,
                                  const SandboxLimits& limits) const -> std::string {
 
-        return std::format(
-            "ulimit -v {} -t {} 2>/dev/null; {} {} 2>&1",
-            limits.max_memory_mb * 1024,       // KB for ulimit
-            limits.timeout.count(),
-            interpreter,
-            script_path.string()
-        );
+        return std::format("ulimit -v {} -t {} 2>/dev/null; {} {} 2>&1",
+                           limits.max_memory_mb * 1024,  // KB for ulimit
+                           limits.timeout.count(), interpreter, script_path.string());
     }
 
     auto run_type_check(ScriptLanguage lang, std::string_view code) const
-        -> std::vector<Diagnostic>
-    {
+        -> std::vector<Diagnostic> {
         std::vector<Diagnostic> diags;
 
         // migrated: integrate script typecheck via loom.tools.script_typecheck
@@ -203,10 +215,10 @@ private:
 
         using namespace loom::tools::script_typecheck;
         TypecheckOptions opts;
-        opts.code                = std::string(code);
+        opts.code = std::string(code);
         opts.preamble_line_count = 0;
-        opts.max_diagnostics     = 100;
-        opts.timeout             = std::chrono::seconds{30};
+        opts.max_diagnostics = 100;
+        opts.timeout = std::chrono::seconds{30};
 
         TypecheckResult result = run_script_typecheck(opts);
 
@@ -214,14 +226,20 @@ private:
         for (const auto& d : result.diagnostics) {
             Diagnostic local_diag;
             switch (d.severity) {
-                case script_typecheck::Severity::Error:   local_diag.level = DiagnosticLevel::Error;   break;
-                case script_typecheck::Severity::Warning: local_diag.level = DiagnosticLevel::Warning; break;
-                case script_typecheck::Severity::Info:    local_diag.level = DiagnosticLevel::Info;    break;
+            case script_typecheck::Severity::Error:
+                local_diag.level = DiagnosticLevel::Error;
+                break;
+            case script_typecheck::Severity::Warning:
+                local_diag.level = DiagnosticLevel::Warning;
+                break;
+            case script_typecheck::Severity::Info:
+                local_diag.level = DiagnosticLevel::Info;
+                break;
             }
-            local_diag.line    = static_cast<size_t>(std::max(1, d.line));
-            local_diag.column  = static_cast<size_t>(std::max(1, d.column));
+            local_diag.line = static_cast<size_t>(std::max(1, d.line));
+            local_diag.column = static_cast<size_t>(std::max(1, d.column));
             local_diag.message = std::format("TS{}: {}", d.code, d.message);
-            local_diag.source  = "script_typecheck";
+            local_diag.source = "script_typecheck";
             diags.push_back(std::move(local_diag));
         }
 
@@ -229,4 +247,4 @@ private:
     }
 };
 
-} // namespace loom::tools
+}  // namespace loom::tools

@@ -1,7 +1,8 @@
 // Host agent actions must pass the same permissions and hooks as model tools.
 #include <gtest/gtest.h>
-#include <cstdlib>
 #include <httplib.h>
+
+#include <cstdlib>
 
 import std;
 import loom.query.query_engine;
@@ -17,21 +18,28 @@ namespace {
 namespace runtime = loom::tools::agent_runtime;
 namespace json = loom::utils::json;
 namespace hr = loom::utils::hooks_registry;
+
 struct HostAgentProbe final : loom::core::ITool {
     loom::core::ToolDefinition definition_{};
     int calls = 0;
     bool cancelled = false;
     std::optional<std::string> session;
+
     HostAgentProbe() { definition_.name = "Agent"; }
+
     const loom::core::ToolDefinition& definition() const override { return definition_; }
-    loom::core::Result<loom::core::ToolResult> execute(const loom::core::ToolInput& input) override {
+
+    loom::core::Result<loom::core::ToolResult>
+    execute(const loom::core::ToolInput& input) override {
         ++calls;
         session = input.parent_session_id;
         cancelled = input.is_cancelled && input.is_cancelled();
         return loom::core::ToolResult::success("Started background agent owned");
     }
+
     bool check_permission(const loom::core::ToolInput&) const override { return true; }
 };
+
 class AgentHostControls : public ::testing::Test {
 protected:
     std::filesystem::path root;
@@ -40,9 +48,11 @@ protected:
     loom::core::ToolRegistry registry;
     std::unique_ptr<loom::core::QueryEngine> engine;
     HostAgentProbe* probe = nullptr;
+
     void SetUp() override {
-        root = std::filesystem::temp_directory_path() / std::format(
-            "loom-host-agent-{}", std::chrono::steady_clock::now().time_since_epoch().count());
+        root = std::filesystem::temp_directory_path() /
+               std::format("loom-host-agent-{}",
+                           std::chrono::steady_clock::now().time_since_epoch().count());
         std::filesystem::create_directories(root);
         if (const char* old = std::getenv("LOOM_AGENT_RUNTIME_DIR")) previous_runtime = old;
         ::setenv("LOOM_AGENT_RUNTIME_DIR", root.c_str(), 1);
@@ -66,18 +76,23 @@ protected:
         record.notification_delivered = true;
         runtime::native_agent_store().upsert(std::move(record));
     }
+
     void TearDown() override {
         engine.reset();
         runtime::native_agent_store().clear_for_testing();
-        if (previous_runtime) ::setenv("LOOM_AGENT_RUNTIME_DIR", previous_runtime->c_str(), 1);
-        else ::unsetenv("LOOM_AGENT_RUNTIME_DIR");
+        if (previous_runtime)
+            ::setenv("LOOM_AGENT_RUNTIME_DIR", previous_runtime->c_str(), 1);
+        else
+            ::unsetenv("LOOM_AGENT_RUNTIME_DIR");
         loom::tools::global_team_store().clear_for_testing();
-        if (previous_teams) ::setenv("LOOM_TEAM_RUNTIME_DIR", previous_teams->c_str(), 1);
-        else ::unsetenv("LOOM_TEAM_RUNTIME_DIR");
+        if (previous_teams)
+            ::setenv("LOOM_TEAM_RUNTIME_DIR", previous_teams->c_str(), 1);
+        else
+            ::unsetenv("LOOM_TEAM_RUNTIME_DIR");
         std::filesystem::remove_all(root);
     }
 };
-}
+}  // namespace
 
 TEST_F(AgentHostControls, ContinueUsesCurrentContextAndDoesNotFabricateRootToolHistory) {
     engine->abort();
@@ -117,14 +132,14 @@ TEST_F(AgentHostControls, PermissionPayloadCannotRedirectTargetOrSpawnFreshAgent
         return response;
     });
     engine->set_permission_hook(&permission);
-    for (const auto* payload : {
-        R"({"agent_id":"foreign","subagent_type":"general-purpose","prompt":"redirect","resume_existing":true,"run_in_background":true})",
-        R"({"agent_id":"owned","subagent_type":"general-purpose","prompt":"redirect","resume_existing":false,"run_in_background":true})",
-        R"({"agent_id":"owned","subagent_type":"general-purpose","prompt":"redirect","resume_existing":true,"run_in_background":false})",
-        R"({"agent_id":"owned","subagent_type":"Explore","prompt":"redirect","resume_existing":true,"run_in_background":true})",
-        R"({"agent_id":"owned","subagent_type":"general-purpose","prompt":"redirect","resume_existing":true,"run_in_background":true,"team_name":"foreign-team"})",
-        R"({"agent_id":"owned","subagent_type":"general-purpose","prompt":"redirect","resume_existing":true,"run_in_background":true,"cwd":"/foreign-directory"})"
-    }) {
+    for (
+        const auto* payload :
+        {R"({"agent_id":"foreign","subagent_type":"general-purpose","prompt":"redirect","resume_existing":true,"run_in_background":true})",
+         R"({"agent_id":"owned","subagent_type":"general-purpose","prompt":"redirect","resume_existing":false,"run_in_background":true})",
+         R"({"agent_id":"owned","subagent_type":"general-purpose","prompt":"redirect","resume_existing":true,"run_in_background":false})",
+         R"({"agent_id":"owned","subagent_type":"Explore","prompt":"redirect","resume_existing":true,"run_in_background":true})",
+         R"({"agent_id":"owned","subagent_type":"general-purpose","prompt":"redirect","resume_existing":true,"run_in_background":true,"team_name":"foreign-team"})",
+         R"({"agent_id":"owned","subagent_type":"general-purpose","prompt":"redirect","resume_existing":true,"run_in_background":true,"cwd":"/foreign-directory"})"}) {
         rewritten = payload;
         auto result = engine->continue_agent_instance("owned", "Continue");
         EXPECT_FALSE(result) << rewritten;
@@ -138,7 +153,10 @@ TEST_F(AgentHostControls, PreToolUsePayloadCannotRedirectTarget) {
     json::JsonMutDoc doc;
     auto object = doc.object();
     object.add("action", doc.string("retry"));
-    object.add("modified_payload", doc.string(R"({"agent_id":"foreign","subagent_type":"general-purpose","prompt":"redirect","resume_existing":true,"run_in_background":true})"));
+    object.add(
+        "modified_payload",
+        doc.string(
+            R"({"agent_id":"foreign","subagent_type":"general-purpose","prompt":"redirect","resume_existing":true,"run_in_background":true})"));
     doc.set_root(object);
     httplib::Server server;
     std::atomic<int> hook_calls{0};
@@ -149,10 +167,13 @@ TEST_F(AgentHostControls, PreToolUsePayloadCannotRedirectTarget) {
     const int port = server.bind_to_any_port("127.0.0.1");
     ASSERT_GT(port, 0);
     std::jthread serving([&] { server.listen_after_bind(); });
+
     struct StopServer {
         httplib::Server& server;
+
         ~StopServer() { server.stop(); }
     } stop_server{server};
+
     server.wait_until_ready();
     hr::HttpHookConfig command;
     command.url = std::format("http://127.0.0.1:{}/hook", port);
@@ -238,7 +259,8 @@ TEST_F(AgentHostControls, NativeTeamContinuationRequiresTheOriginalExistingMembe
     EXPECT_EQ(probe->calls, 1);
     EXPECT_TRUE(teams.get("team")->members.empty());
     ASSERT_TRUE(teams.remove("team"));
-    EXPECT_NE(engine->agent_message_unavailable_reason("owned").find("no longer available"), std::string::npos);
+    EXPECT_NE(engine->agent_message_unavailable_reason("owned").find("no longer available"),
+              std::string::npos);
 }
 
 TEST_F(AgentHostControls, TeamIdentityMutationDuringPermissionCannotRedirectContinuation) {

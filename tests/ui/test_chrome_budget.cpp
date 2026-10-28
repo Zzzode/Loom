@@ -1,10 +1,10 @@
-#include <cstdlib>
-
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/dom/node.hpp>
 #include <ftxui/screen/screen.hpp>
 #include <ftxui/screen/string.hpp>
 #include <gtest/gtest.h>
+
+#include <cstdlib>
 
 #include "test_ui_helpers.h"
 
@@ -28,27 +28,36 @@ using namespace ftxui;
 struct EnvironmentGuard {
     std::string name;
     std::optional<std::string> previous;
-    EnvironmentGuard(std::string key, std::string value) : name(std::move(key)) {
+
+    EnvironmentGuard(std::string key, std::string value)
+        : name(std::move(key)) {
         if (const auto* existing = std::getenv(name.c_str())) previous = existing;
         setenv(name.c_str(), value.c_str(), 1);
     }
+
     ~EnvironmentGuard() {
-        if (previous) setenv(name.c_str(), previous->c_str(), 1);
-        else unsetenv(name.c_str());
+        if (previous)
+            setenv(name.c_str(), previous->c_str(), 1);
+        else
+            unsetenv(name.c_str());
     }
 };
+
 int height(const Element& element) {
     element->ComputeRequirement();
     return element->requirement().min_y;
 }
+
 std::string visible(const Screen& screen) {
     return strip_ansi(screen.ToString());
 }
+
 Screen paint(Element element, int columns, int rows) {
     auto screen = Screen::Create(Dimension::Fixed(columns), Dimension::Fixed(rows));
     Render(screen, std::move(element));
     return screen;
 }
+
 // Opt-in evidence export uses the same native pixels asserted by these tests.
 // Normal test runs create no capture files.
 void capture_repl(const Screen& screen, const repl::ReplScreenState& state) {
@@ -57,12 +66,12 @@ void capture_repl(const Screen& screen, const repl::ReplScreenState& state) {
     const auto* info = testing::UnitTest::GetInstance()->current_test_info();
     std::string name = std::string(info->test_suite_name()) + "." + info->name();
     for (char& ch : name) {
-        if (!((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z')
-              || (ch >= '0' && ch <= '9') || ch == '_' || ch == '-' || ch == '.'))
+        if (!((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || (ch >= '0' && ch <= '9') ||
+              ch == '_' || ch == '-' || ch == '.'))
             ch = '_';
     }
     name += "-" + std::string(loom::ui::design::theme::variant_name(
-        loom::ui::design::theme::current_theme().variant));
+                      loom::ui::design::theme::current_theme().variant));
     name += std::format("-{}x{}", screen.dimx(), screen.dimy());
     const std::filesystem::path directory(capture_dir);
     std::error_code error;
@@ -115,6 +124,7 @@ void capture_repl(const Screen& screen, const repl::ReplScreenState& state) {
     root.add("pixels", pixels);
     write(".json", document.to_pretty_string());
 }
+
 Screen paint_repl(repl::ReplScreenState& state, int columns, int rows) {
     EnvironmentGuard cols("COLUMNS", std::to_string(columns));
     EnvironmentGuard lines("LINES", std::to_string(rows));
@@ -126,6 +136,7 @@ Screen paint_repl(repl::ReplScreenState& state, int columns, int rows) {
     capture_repl(final, state);
     return final;
 }
+
 void populate(repl::ReplScreenState& state, int tasks = 10, int teammates = 20) {
     state.cwd = "/tmp/budget";
     state.status_line_enabled = true;
@@ -135,7 +146,7 @@ void populate(repl::ReplScreenState& state, int tasks = 10, int teammates = 20) 
         todo::TodoDisplayItem item;
         item.content = "task-" + std::to_string(i);
         item.status = i == 5 || i == 8 ? todo::TodoDisplayItem::Status::InProgress
-                                      : todo::TodoDisplayItem::Status::Pending;
+                                       : todo::TodoDisplayItem::Status::Pending;
         state.todo_store.items.push_back(std::move(item));
     }
     for (int i = 0; i < teammates; ++i) {
@@ -149,6 +160,7 @@ void populate(repl::ReplScreenState& state, int tasks = 10, int teammates = 20) 
     }
     state.task_view_store.teammate_count = teammates;
 }
+
 void expect_caret(const Screen& screen) {
     const auto caret = screen.cursor();
     ASSERT_GE(caret.x, 0);
@@ -157,6 +169,7 @@ void expect_caret(const Screen& screen) {
     ASSERT_LT(caret.y, screen.dimy());
     EXPECT_TRUE(screen.PixelAt(caret.x, caret.y).inverted);
 }
+
 int transcript_height(const repl::ReplScreenState& state) {
     const auto& box = state.messages_store.scrollable_box;
     return std::max(0, box.y_max - box.y_min + 1);
@@ -178,18 +191,18 @@ TEST(ChromeBudget, TodoStrikethroughCoversOnlyVisibleLabelCells) {
         std::string content;
         std::string label;
     };
-    for (const auto& sample : std::vector<Case>{
-            {80, "Run lifecycle tests", "Run lifecycle tests"},
-            {30, "修复删除线范围", "修复删除线范围"},
-            {12, "Long task description", "Long task…"},
-            {9, "检查任务范围", "检查任…"},
-            {2, "Short", ""},
-            {1, "Short", ""}}) {
-        for (auto status : {todo::TodoDisplayItem::Status::Completed,
-                            todo::TodoDisplayItem::Status::Pending,
-                            todo::TodoDisplayItem::Status::InProgress}) {
-            SCOPED_TRACE(std::format("{} columns, content={}, status={}",
-                sample.columns, sample.content, static_cast<int>(status)));
+
+    for (const auto& sample : std::vector<Case>{{80, "Run lifecycle tests", "Run lifecycle tests"},
+                                                {30, "修复删除线范围", "修复删除线范围"},
+                                                {12, "Long task description", "Long task…"},
+                                                {9, "检查任务范围", "检查任…"},
+                                                {2, "Short", ""},
+                                                {1, "Short", ""}}) {
+        for (auto status :
+             {todo::TodoDisplayItem::Status::Completed, todo::TodoDisplayItem::Status::Pending,
+              todo::TodoDisplayItem::Status::InProgress}) {
+            SCOPED_TRACE(std::format("{} columns, content={}, status={}", sample.columns,
+                                     sample.content, static_cast<int>(status)));
             todo::TodoDisplayItem item;
             item.content = sample.content;
             item.status = status;
@@ -198,7 +211,8 @@ TEST(ChromeBudget, TodoStrikethroughCoversOnlyVisibleLabelCells) {
             const int label_end = 2 + string_width(sample.label);
             for (int x = 0; x < sample.columns; ++x) {
                 EXPECT_EQ(static_cast<bool>(screen.PixelAt(x, 0).strikethrough),
-                    status == todo::TodoDisplayItem::Status::Completed && x >= 2 && x < label_end)
+                          status == todo::TodoDisplayItem::Status::Completed && x >= 2 &&
+                              x < label_end)
                     << "column " << x;
             }
         }
@@ -218,7 +232,8 @@ TEST(ChromeBudget, TodoBudgetsZeroThroughFiveIncludeCountsAndStableActivePriorit
             EXPECT_EQ(text.find("Tasks"), std::string::npos);
             continue;
         }
-        EXPECT_NE(text.find(std::format("Tasks 1/10 done (+{} hidden)", 11 - rows)), std::string::npos);
+        EXPECT_NE(text.find(std::format("Tasks 1/10 done (+{} hidden)", 11 - rows)),
+                  std::string::npos);
         if (rows >= 2) EXPECT_NE(text.find("task-5"), std::string::npos);
         if (rows >= 3) EXPECT_LT(text.find("task-5"), text.find("task-8"));
         if (rows >= 4) EXPECT_LT(text.find("task-8"), text.find("task-0"));
@@ -228,20 +243,26 @@ TEST(ChromeBudget, TodoBudgetsZeroThroughFiveIncludeCountsAndStableActivePriorit
         EXPECT_EQ(state.todo_store.items[i].status, before[i].status);
     }
 }
+
 TEST(ChromeBudget, TeamBudgetsZeroThroughFiveCountOmittedWithoutReordering) {
     repl::ReplScreenState state;
     populate(state);
     for (int rows = 0; rows <= 5; ++rows) {
-        auto element = team::RenderLiveTeammateStrip(state.task_view_store.live_teammates, 80, rows);
+        auto element =
+            team::RenderLiveTeammateStrip(state.task_view_store.live_teammates, 80, rows);
         EXPECT_EQ(height(element), rows);
         const auto text = visible(paint(element, 80, 5));
-        if (rows == 0) EXPECT_EQ(text.find("Teams"), std::string::npos);
-        else EXPECT_NE(text.find(std::format("Teams 20 (+{} hidden)", 21 - rows)), std::string::npos);
+        if (rows == 0)
+            EXPECT_EQ(text.find("Teams"), std::string::npos);
+        else
+            EXPECT_NE(text.find(std::format("Teams 20 (+{} hidden)", 21 - rows)),
+                      std::string::npos);
         if (rows >= 3) EXPECT_LT(text.find("@worker-0"), text.find("@worker-1"));
     }
     EXPECT_EQ(state.task_view_store.live_teammates.front().agent_id, "agent-0");
     EXPECT_EQ(state.task_view_store.live_teammates.back().agent_id, "agent-19");
 }
+
 TEST(ChromeBudget, StandaloneDefaultsAndSmallCompleteTeamsRemainUnbounded) {
     repl::ReplScreenState state;
     populate(state, 10, 2);
@@ -253,17 +274,20 @@ TEST(ChromeBudget, StandaloneDefaultsAndSmallCompleteTeamsRemainUnbounded) {
     EXPECT_EQ(height(todo::RenderTodoPanel({}, 80, 4)), 0);
     EXPECT_EQ(height(team::RenderLiveTeammateStrip({}, 80, 4)), 0);
 }
+
 TEST(ChromeBudget, UnicodeTruncationUsesCellsAndZeroCapacityIsEmpty) {
     EXPECT_EQ(todo::detail::one_line("中文😀 tail", 0), "");
     EXPECT_EQ(team::one_line_tail("中文😀 tail", 0), "");
     for (int columns = 1; columns <= 16; ++columns) {
-        auto task = todo::detail::one_line("中文😀 e\xcc\x81 text", static_cast<std::size_t>(columns));
+        auto task =
+            todo::detail::one_line("中文😀 e\xcc\x81 text", static_cast<std::size_t>(columns));
         auto tail = team::one_line_tail("中文😀 e\xcc\x81 text", static_cast<std::size_t>(columns));
         EXPECT_LE(string_width(task), columns);
         EXPECT_LE(string_width(tail), columns);
         EXPECT_EQ(task, tail);
     }
 }
+
 TEST(ChromeBudget, NarrowRowsPreserveGlyphNameStatusAndTailOrder) {
     todo::TodoDisplayItem item;
     item.content = "中文😀 task";
@@ -287,6 +311,7 @@ TEST(ChromeBudget, NarrowRowsPreserveGlyphNameStatusAndTailOrder) {
     EXPECT_EQ(visible(paint(todo::RenderTodoRow(item, 1), 1, 1)), "○");
     EXPECT_EQ(visible(paint(team::RenderLiveTeammateRow(peer, 1), 1, 1)), "●");
 }
+
 TEST(ChromeBudget, CompletedTextAndLiveTailUseReadableUndimmedForegrounds) {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
     todo::TodoDisplayItem task;
@@ -308,6 +333,7 @@ TEST(ChromeBudget, CompletedTextAndLiveTailUseReadableUndimmedForegrounds) {
         }
     }
 }
+
 TEST(ChromeBudget, DenseEightyByTwentyFourKeepsLayeredHeadersAndCurrentTask) {
     repl::ReplScreenState state;
     populate(state);
@@ -327,11 +353,13 @@ TEST(ChromeBudget, DenseEightyByTwentyFourKeepsLayeredHeadersAndCurrentTask) {
     EXPECT_EQ(state.todo_store.items.size(), 10u);
     EXPECT_EQ(state.task_view_store.live_teammates.size(), 20u);
 }
+
 TEST(ChromeBudget, NarrowLongAsciiAndUnicodePreserveEightRowsCaretAndFooter) {
     for (bool unicode : {false, true}) {
         repl::ReplScreenState state;
         populate(state);
-        for (int i = 0; i < 80; ++i) state.input_text += unicode ? "中文😀" : "abcdefgh";
+        for (int i = 0; i < 80; ++i)
+            state.input_text += unicode ? "中文😀" : "abcdefgh";
         const auto before = state.input_text;
         auto screen = paint_repl(state, 40, 24);
         EXPECT_GE(transcript_height(state), 8);
@@ -340,6 +368,7 @@ TEST(ChromeBudget, NarrowLongAsciiAndUnicodePreserveEightRowsCaretAndFooter) {
         EXPECT_EQ(state.input_text, before);
     }
 }
+
 TEST(ChromeBudget, ResizeRetainsHeldInputBytesCaretAndViewport) {
     repl::ReplScreenState state;
     populate(state);
@@ -356,6 +385,7 @@ TEST(ChromeBudget, ResizeRetainsHeldInputBytesCaretAndViewport) {
     EXPECT_EQ(state.prompt_render_input, held);
     EXPECT_EQ(state.input_text, bytes);
 }
+
 TEST(ChromeBudget, EmptyActivityConsumesNoRowsAndTinyFixedChromeTakesPriority) {
     repl::ReplScreenState empty;
     populate(empty, 0, 0);
@@ -383,6 +413,7 @@ TEST(ChromeBudget, EmptyActivityConsumesNoRowsAndTinyFixedChromeTakesPriority) {
     EXPECT_NE(visible(small).find("Background agents running"), std::string::npos);
     expect_caret(small);
 }
+
 TEST(ChromeBudget, LayeredAgentDetailsUseSpareCapacityAfterCurrentTask) {
     repl::ReplScreenState few_tasks;
     populate(few_tasks, 1, 20);
@@ -432,17 +463,19 @@ TEST(ChromeBudget, TodoEnvelopeRequiresVisibleWorkRow) {
                 SCOPED_TRACE(std::format("columns={}, phase={}, work={}", columns, phase, work));
                 repl::ReplScreenState state;
                 populate(state, 3, 0);
-                state.todo_store.items.front().content = "task-0 " + std::string(columns - 10, 'x') + "Z";
+                state.todo_store.items.front().content =
+                    "task-0 " + std::string(columns - 10, 'x') + "Z";
                 if (phase == 0) {
-                    state.todo_store.items.front().status = todo::TodoDisplayItem::Status::InProgress;
+                    state.todo_store.items.front().status =
+                        todo::TodoDisplayItem::Status::InProgress;
                 } else {
                     for (auto& item : state.todo_store.items)
                         item.status = todo::TodoDisplayItem::Status::Completed;
                 }
                 state.todo_store.completed_collapsed = phase == 2;
                 state.query_running = work != 0;
-                state.task_view_store.spinner_mode = work == 0
-                    ? repl::SpinnerMode::Hidden : repl::SpinnerMode::Thinking;
+                state.task_view_store.spinner_mode =
+                    work == 0 ? repl::SpinnerMode::Hidden : repl::SpinnerMode::Thinking;
                 state.task_view_store.spinner_verb = "Working";
                 // An outer focus owner hides work chrome even during a query.
                 if (work == 2) state.mode = repl::ReplMode::SettingsView;
@@ -491,8 +524,8 @@ TEST(ChromeBudget, OneActivityRowKeepsRunningAgentsAheadOfCompletedTasks) {
         for (auto& item : state.todo_store.items)
             item.status = todo::TodoDisplayItem::Status::Completed;
         state.query_running = working;
-        state.task_view_store.spinner_mode = working
-            ? repl::SpinnerMode::Thinking : repl::SpinnerMode::Hidden;
+        state.task_view_store.spinner_mode =
+            working ? repl::SpinnerMode::Thinking : repl::SpinnerMode::Hidden;
         state.task_view_store.spinner_verb = "Working";
         // Foreground and static background work each reserve the same row.
         state.input_text = std::string(160, 'x');
@@ -504,7 +537,8 @@ TEST(ChromeBudget, OneActivityRowKeepsRunningAgentsAheadOfCompletedTasks) {
             EXPECT_NE(text.find("instances"), std::string::npos);
             EXPECT_EQ(text.find("Tasks"), std::string::npos);
             EXPECT_EQ(text.find("hidden"), std::string::npos);
-            EXPECT_NE(text.find(working ? "Working" : "Background agents running"), std::string::npos);
+            EXPECT_NE(text.find(working ? "Working" : "Background agents running"),
+                      std::string::npos);
             EXPECT_NE(text.find("⎿"), std::string::npos);
             EXPECT_EQ(text.find("task-0"), std::string::npos);
             EXPECT_GE(transcript_height(state), 8);
@@ -514,28 +548,32 @@ TEST(ChromeBudget, OneActivityRowKeepsRunningAgentsAheadOfCompletedTasks) {
 }
 
 TEST(ChromeBudget, CompletedTasksKeepDistinctCompletionHeaderWhenSpaceAllows) {
-    for (const bool working : {false, true}) for (const bool collapsed : {false, true}) {
-        SCOPED_TRACE(std::format("working={},collapsed={}", working, collapsed));
-        repl::ReplScreenState state;
-        populate(state, 3, 2);
-        for (auto& item : state.todo_store.items) item.status = todo::TodoDisplayItem::Status::Completed;
-        state.todo_store.completed_collapsed = collapsed;
-        state.query_running = working;
-        state.task_view_store.spinner_mode = working ? repl::SpinnerMode::Thinking : repl::SpinnerMode::Hidden;
-        state.task_view_store.spinner_verb = "Working";
-        const auto screen = paint_repl(state, 80, 30);
-        const auto text = visible(screen);
-        EXPECT_NE(text.find("Tasks 3/3 completed"), std::string::npos);
-        EXPECT_NE(text.find("Agent Teams · 2 agents running"), std::string::npos);
-        EXPECT_LT(text.find("Tasks 3/3 completed"), text.find("Agent Teams · 2 agents running"));
-        EXPECT_NE(text.find("@worker-0"), std::string::npos);
-        EXPECT_EQ(text.find("task-0") != std::string::npos, !collapsed);
-        EXPECT_EQ(text.find("✓ Tasks 3/3 completed") != std::string::npos, collapsed);
-        EXPECT_EQ(text.find("hidden"), std::string::npos);
-        EXPECT_NE(text.find("FOOTER-MARK"), std::string::npos);
-        EXPECT_GE(transcript_height(state), 12);
-        expect_caret(screen);
-    }
+    for (const bool working : {false, true})
+        for (const bool collapsed : {false, true}) {
+            SCOPED_TRACE(std::format("working={},collapsed={}", working, collapsed));
+            repl::ReplScreenState state;
+            populate(state, 3, 2);
+            for (auto& item : state.todo_store.items)
+                item.status = todo::TodoDisplayItem::Status::Completed;
+            state.todo_store.completed_collapsed = collapsed;
+            state.query_running = working;
+            state.task_view_store.spinner_mode =
+                working ? repl::SpinnerMode::Thinking : repl::SpinnerMode::Hidden;
+            state.task_view_store.spinner_verb = "Working";
+            const auto screen = paint_repl(state, 80, 30);
+            const auto text = visible(screen);
+            EXPECT_NE(text.find("Tasks 3/3 completed"), std::string::npos);
+            EXPECT_NE(text.find("Agent Teams · 2 agents running"), std::string::npos);
+            EXPECT_LT(text.find("Tasks 3/3 completed"),
+                      text.find("Agent Teams · 2 agents running"));
+            EXPECT_NE(text.find("@worker-0"), std::string::npos);
+            EXPECT_EQ(text.find("task-0") != std::string::npos, !collapsed);
+            EXPECT_EQ(text.find("✓ Tasks 3/3 completed") != std::string::npos, collapsed);
+            EXPECT_EQ(text.find("hidden"), std::string::npos);
+            EXPECT_NE(text.find("FOOTER-MARK"), std::string::npos);
+            EXPECT_GE(transcript_height(state), 12);
+            expect_caret(screen);
+        }
 }
 
 TEST(ChromeBudget, ActiveSpinnerPreservesTranscriptCaretAndFooterAcrossFrames) {
@@ -568,8 +606,8 @@ TEST(ChromeBudget, WorkRowAlignsWithPromptAndTasksUseResponseEnvelope) {
         int work_y = -1;
         int header_y = -1;
         for (int y = 0; y < screen.dimy(); ++y) {
-            if (screen.PixelAt(2, y).character == "W" &&
-                screen.PixelAt(3, y).character == "o") work_y = y;
+            if (screen.PixelAt(2, y).character == "W" && screen.PixelAt(3, y).character == "o")
+                work_y = y;
             if (screen.PixelAt(2, y).character == "⎿") header_y = y;
         }
         ASSERT_GE(work_y, 0);
@@ -646,13 +684,15 @@ TEST(ChromeBudget, AllThemeVariantsRenderDenseBashWithSpinnerAndRestoreTheme) {
     {
         struct RestoreTheme {
             theme::Theme value;
+
             ~RestoreTheme() { theme::set_theme(value); }
         } restore{original};
-        for (const auto variant : std::array{
-            theme::ThemeVariant::Dark, theme::ThemeVariant::Light,
-            theme::ThemeVariant::DarkDaltonized, theme::ThemeVariant::LightDaltonized,
-            theme::ThemeVariant::Monochrome, theme::ThemeVariant::LightAnsi,
-            theme::ThemeVariant::DarkAnsi}) {
+
+        for (const auto variant :
+             std::array{theme::ThemeVariant::Dark, theme::ThemeVariant::Light,
+                        theme::ThemeVariant::DarkDaltonized, theme::ThemeVariant::LightDaltonized,
+                        theme::ThemeVariant::Monochrome, theme::ThemeVariant::LightAnsi,
+                        theme::ThemeVariant::DarkAnsi}) {
             SCOPED_TRACE(theme::variant_name(variant));
             theme::set_theme(variant);
             repl::ReplScreenState state;
@@ -685,63 +725,66 @@ TEST(ChromeBudget, AllThemeVariantsRenderDenseBashWithSpinnerAndRestoreTheme) {
 }
 
 TEST(ChromeBudget, CopyFeedbackSharesWorkRowAndPreservesChromeGeometry) {
-    for (int columns : {40, 80, 120}) for (int rows : {24, 40}) {
-        for (bool running : {false, true}) for (bool multiline : {false, true}) {
-            SCOPED_TRACE(std::format("{}x{}, running={}, multiline={}",
-                columns, rows, running, multiline));
-            repl::ReplScreenState state;
-            populate(state, 2, 1);
-            state.input_text = multiline ? "draft\nsecond line" : "draft";
-            state.query_running = running;
-            if (running) {
-                state.task_view_store.spinner_mode = repl::SpinnerMode::Responding;
-                state.task_view_store.spinner_verb = "Working";
-                state.task_view_store.estimated_generation_tps = 42.1;
-            }
-            auto before = paint_repl(state, columns, rows);
-            const auto viewport = state.messages_store.scrollable_box;
-            const auto row_of = [](const Screen& screen, std::string_view label) {
-                for (int y = 0; y < screen.dimy(); ++y) {
-                    std::string row;
-                    for (int x = 0; x < screen.dimx(); ++x)
-                        row += screen.PixelAt(x, y).character;
-                    if (row.find(label) != std::string::npos) return y;
+    for (int columns : {40, 80, 120})
+        for (int rows : {24, 40}) {
+            for (bool running : {false, true})
+                for (bool multiline : {false, true}) {
+                    SCOPED_TRACE(std::format("{}x{}, running={}, multiline={}", columns, rows,
+                                             running, multiline));
+                    repl::ReplScreenState state;
+                    populate(state, 2, 1);
+                    state.input_text = multiline ? "draft\nsecond line" : "draft";
+                    state.query_running = running;
+                    if (running) {
+                        state.task_view_store.spinner_mode = repl::SpinnerMode::Responding;
+                        state.task_view_store.spinner_verb = "Working";
+                        state.task_view_store.estimated_generation_tps = 42.1;
+                    }
+                    auto before = paint_repl(state, columns, rows);
+                    const auto viewport = state.messages_store.scrollable_box;
+                    const auto row_of = [](const Screen& screen, std::string_view label) {
+                        for (int y = 0; y < screen.dimy(); ++y) {
+                            std::string row;
+                            for (int x = 0; x < screen.dimx(); ++x)
+                                row += screen.PixelAt(x, y).character;
+                            if (row.find(label) != std::string::npos) return y;
+                        }
+                        return -1;
+                    };
+                    const int expected_row =
+                        row_of(before, running ? "Working" : "Background agents running");
+                    ASSERT_GE(expected_row, 0);
+                    state.copy_toast_text = "Copied 5 chars to clipboard";
+                    auto after = paint_repl(state, columns, rows);
+                    ASSERT_EQ(row_of(after, "Copied"), expected_row);
+                    EXPECT_EQ(row_of(after, "Copied 5 chars to clipboard"), expected_row);
+                    EXPECT_EQ(state.messages_store.scrollable_box.y_max, viewport.y_max);
+                    EXPECT_EQ(row_of(after, "FOOTER-MARK"), row_of(before, "FOOTER-MARK"));
+                    if (columns >= 80) {
+                        EXPECT_EQ(row_of(after, running ? "Working" : "Background agents running"),
+                                  expected_row);
+                        if (running) EXPECT_EQ(row_of(after, "~42.1 tok/s"), expected_row);
+                    } else {
+                        // The toast takes priority within forty cells. The remaining
+                        // work prefix stays in its original row; its full label and
+                        // throughput are allowed to clip rather than moving chrome.
+                        EXPECT_EQ(after.PixelAt(2, expected_row).character, running ? "W" : "B");
+                    }
+                    for (int y = 0; y < rows; ++y) {
+                        if (y == expected_row) continue;
+                        for (int x = 0; x < columns; ++x)
+                            EXPECT_EQ(after.PixelAt(x, y).character, before.PixelAt(x, y).character)
+                                << "Unrelated cell moved at " << x << ',' << y;
+                    }
+                    EXPECT_EQ(state.input_text, multiline ? "draft\nsecond line" : "draft");
+                    expect_caret(after);
                 }
-                return -1;
-            };
-            const int expected_row = row_of(before, running ? "Working" : "Background agents running");
-            ASSERT_GE(expected_row, 0);
-            state.copy_toast_text = "Copied 5 chars to clipboard";
-            auto after = paint_repl(state, columns, rows);
-            ASSERT_EQ(row_of(after, "Copied"), expected_row);
-            EXPECT_EQ(row_of(after, "Copied 5 chars to clipboard"), expected_row);
-            EXPECT_EQ(state.messages_store.scrollable_box.y_max, viewport.y_max);
-            EXPECT_EQ(row_of(after, "FOOTER-MARK"), row_of(before, "FOOTER-MARK"));
-            if (columns >= 80) {
-                EXPECT_EQ(row_of(after, running ? "Working" : "Background agents running"), expected_row);
-                if (running) EXPECT_EQ(row_of(after, "~42.1 tok/s"), expected_row);
-            } else {
-                // The toast takes priority within forty cells. The remaining
-                // work prefix stays in its original row; its full label and
-                // throughput are allowed to clip rather than moving chrome.
-                EXPECT_EQ(after.PixelAt(2, expected_row).character, running ? "W" : "B");
-            }
-            for (int y = 0; y < rows; ++y) {
-                if (y == expected_row) continue;
-                for (int x = 0; x < columns; ++x)
-                    EXPECT_EQ(after.PixelAt(x, y).character, before.PixelAt(x, y).character)
-                        << "Unrelated cell moved at " << x << ',' << y;
-            }
-            EXPECT_EQ(state.input_text, multiline ? "draft\nsecond line" : "draft");
-            expect_caret(after);
         }
-    }
 }
 
-
 TEST(ChromeBudget, ThreePeerGroupsHaveIndentedChildrenWithinMeasuredChrome) {
-    for (const auto dimensions : {std::pair{40, 24}, std::pair{60, 30},
-                                  std::pair{80, 40}, std::pair{120, 48}}) {
+    for (const auto dimensions :
+         {std::pair{40, 24}, std::pair{60, 30}, std::pair{80, 40}, std::pair{120, 48}}) {
         SCOPED_TRACE(std::format("{}x{}", dimensions.first, dimensions.second));
         repl::ReplScreenState state;
         populate(state, 4, 2);
@@ -755,7 +798,8 @@ TEST(ChromeBudget, ThreePeerGroupsHaveIndentedChildrenWithinMeasuredChrome) {
         const auto locate = [&](std::string_view label) {
             for (int y = 0; y < screen.dimy(); ++y) {
                 std::string row;
-                for (int x = 0; x < screen.dimx(); ++x) row += screen.PixelAt(x, y).character;
+                for (int x = 0; x < screen.dimx(); ++x)
+                    row += screen.PixelAt(x, y).character;
                 if (row.find(label) != std::string::npos) return y;
             }
             return -1;
@@ -770,13 +814,15 @@ TEST(ChromeBudget, ThreePeerGroupsHaveIndentedChildrenWithinMeasuredChrome) {
         for (const int y : {task_y, sub_y, team_y}) {
             EXPECT_TRUE(screen.PixelAt(5, y).bold);
             if (y != task_y)
-                for (int x = 0; x < 5; ++x) EXPECT_EQ(screen.PixelAt(x, y).character, " ");
+                for (int x = 0; x < 5; ++x)
+                    EXPECT_EQ(screen.PixelAt(x, y).character, " ");
         }
         if (dimensions.second >= 30) {
             for (const auto label : {"task-0", "SUB-ONE", "@worker-0"}) {
                 const int y = locate(label);
                 ASSERT_GE(y, 0) << label;
-                for (int x = 0; x < 7; ++x) EXPECT_EQ(screen.PixelAt(x, y).character, " ");
+                for (int x = 0; x < 7; ++x)
+                    EXPECT_EQ(screen.PixelAt(x, y).character, " ");
             }
             EXPECT_GT(locate("task-0"), task_y);
             EXPECT_LT(locate("task-0"), sub_y);

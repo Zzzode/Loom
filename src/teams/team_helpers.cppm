@@ -1,7 +1,7 @@
 module;
 
-#include <cerrno>
 #include <cctype>
+#include <cerrno>
 #include <cstdint>
 #include <cstdlib>
 #if !defined(_WIN32)
@@ -9,6 +9,7 @@ module;
 #include <sys/file.h>
 #include <sys/stat.h>
 #include <unistd.h>
+
 #include <cstddef>
 #endif
 
@@ -73,10 +74,7 @@ public:
     static constexpr auto kLockWaitTimeout = std::chrono::seconds(10);
     static constexpr auto kLockPollInterval = std::chrono::milliseconds(50);
 
-    explicit ScopedInboxLock(
-        const fs::path& inbox_path,
-        LockKind kind = LockKind::Exclusive
-    ) {
+    explicit ScopedInboxLock(const fs::path& inbox_path, LockKind kind = LockKind::Exclusive) {
 #if !defined(_WIN32)
         kind_ = kind;
         std::error_code ec;
@@ -85,8 +83,7 @@ public:
         // O_NOFOLLOW: a pre-placed symlink at the lock name can never be
         // locked or followed (open fails ELOOP). Failure keeps fd_ < 0 and
         // locked_ false; callers only have locked() to distinguish outcomes.
-        fd_ = ::open(lock_path_.c_str(),
-                     O_RDWR | O_CREAT | O_CLOEXEC | O_NOFOLLOW, 0600);
+        fd_ = ::open(lock_path_.c_str(), O_RDWR | O_CREAT | O_CLOEXEC | O_NOFOLLOW, 0600);
         if (fd_ < 0) return;
         // Require a regular file: O_NOFOLLOW above only rejects symlinks,
         // but a pre-existing FIFO/socket/device at the lock name opens
@@ -94,17 +91,15 @@ public:
         // Linux/macOS) and flock(2) works on ANY fd type, so without this
         // check the lock would be taken on a non-regular file instead of
         // rejected.
-        struct stat lock_stat {};
-        if (::fstat(fd_, &lock_stat) != 0 ||
-            !S_ISREG(lock_stat.st_mode)) {
+        struct stat lock_stat{};
+        if (::fstat(fd_, &lock_stat) != 0 || !S_ISREG(lock_stat.st_mode)) {
             ::close(fd_);
             fd_ = -1;
             return;
         }
         // Hard wall-clock deadline; see the class comment for why this is a
         // deadline loop on LOCK_NB rather than N blocking attempts.
-        const auto deadline =
-            std::chrono::steady_clock::now() + kLockWaitTimeout;
+        const auto deadline = std::chrono::steady_clock::now() + kLockWaitTimeout;
         for (;;) {
             // Deadline gate BEFORE the attempt: once expired, never call
             // flock again, so no overshot sleep can acquire past the bound.
@@ -113,8 +108,7 @@ public:
                 fd_ = -1;
                 return;
             }
-            if (::flock(fd_, (kind_ == LockKind::Shared ? LOCK_SH : LOCK_EX)
-                                 | LOCK_NB) == 0) {
+            if (::flock(fd_, (kind_ == LockKind::Shared ? LOCK_SH : LOCK_EX) | LOCK_NB) == 0) {
                 locked_ = true;
                 return;
             }
@@ -122,14 +116,12 @@ public:
                 // Sleep no longer than the remaining budget: a
                 // scheduler-stalled sleep still re-enters at the deadline
                 // gate above and times out rather than acquiring.
-                const auto remaining =
-                    deadline - std::chrono::steady_clock::now();
-                if (remaining <=
-                    std::chrono::steady_clock::duration::zero()) {
+                const auto remaining = deadline - std::chrono::steady_clock::now();
+                if (remaining <= std::chrono::steady_clock::duration::zero()) {
                     continue;  // top-of-loop gate closes this out
                 }
-                const auto poll = std::chrono::duration_cast<
-                    std::chrono::steady_clock::duration>(kLockPollInterval);
+                const auto poll = std::chrono::duration_cast<std::chrono::steady_clock::duration>(
+                    kLockPollInterval);
                 std::this_thread::sleep_for(std::min(poll, remaining));
                 continue;
             }
@@ -183,14 +175,14 @@ using ScopedFileLock = ScopedInboxLock;
 
 /// Runtime context for in-process teammates (stored via thread_local)
 struct TeammateContext {
-    std::string agent_id;           // Full agent ID, e.g., "researcher@my-team"
-    std::string agent_name;         // Display name, e.g., "researcher"
-    std::string team_name;          // Team name this teammate belongs to
-    std::optional<std::string> agent_type; // Agent definition type for teammate prompt/context
-    std::optional<std::string> color;  // UI color assigned
-    bool plan_mode_required = false;   // Whether teammate must enter plan mode first
-    std::string parent_session_id;     // Leader's session ID
-    bool is_in_process = true;         // Always true for in-process teammates
+    std::string agent_id;                   // Full agent ID, e.g., "researcher@my-team"
+    std::string agent_name;                 // Display name, e.g., "researcher"
+    std::string team_name;                  // Team name this teammate belongs to
+    std::optional<std::string> agent_type;  // Agent definition type for teammate prompt/context
+    std::optional<std::string> color;       // UI color assigned
+    bool plan_mode_required = false;        // Whether teammate must enter plan mode first
+    std::string parent_session_id;          // Leader's session ID
+    bool is_in_process = true;              // Always true for in-process teammates
 };
 
 inline thread_local std::optional<TeammateContext> active_teammate_context;
@@ -203,8 +195,7 @@ const TeammateContext* get_teammate_context();
 bool is_in_process_teammate();
 
 /// Run a function with teammate context set (scoped context)
-template<typename F>
-decltype(auto) run_with_teammate_context(const TeammateContext& ctx, F&& fn) {
+template <typename F> decltype(auto) run_with_teammate_context(const TeammateContext& ctx, F&& fn) {
     struct ContextGuard {
         std::optional<TeammateContext> previous;
 
@@ -213,22 +204,18 @@ decltype(auto) run_with_teammate_context(const TeammateContext& ctx, F&& fn) {
             active_teammate_context = c;
         }
 
-        ~ContextGuard() {
-            active_teammate_context = std::move(previous);
-        }
+        ~ContextGuard() { active_teammate_context = std::move(previous); }
     };
+
     ContextGuard guard(ctx);
     return std::forward<F>(fn)();
 }
 
 /// Create a TeammateContext from spawn configuration
-TeammateContext create_teammate_context(
-    std::string_view agent_id,
-    std::string_view agent_name,
-    std::string_view team_name,
-    std::string_view parent_session_id,
-    bool plan_mode_required,
-    std::optional<std::string_view> color);
+TeammateContext create_teammate_context(std::string_view agent_id, std::string_view agent_name,
+                                        std::string_view team_name,
+                                        std::string_view parent_session_id, bool plan_mode_required,
+                                        std::optional<std::string_view> color);
 
 // ─── Dynamic Team Context (runtime joining) ──────────────────────────────────
 
@@ -281,11 +268,7 @@ bool is_plan_mode_required();
 // ─── Team Discovery ─────────────────────────────────────────────────────────
 
 /// Pane backend type used for teammate hosting
-enum class PaneBackendType {
-    tmux,
-    iterm2,
-    in_process
-};
+enum class PaneBackendType { tmux, iterm2, in_process };
 
 /// Summary of a team's state
 struct TeamSummary {
@@ -302,15 +285,15 @@ struct TeammateStatus {
     std::optional<std::string> agent_type;
     std::optional<std::string> model;
     std::optional<std::string> prompt;
-    std::string status;   // "running", "idle", "unknown"
+    std::string status;  // "running", "idle", "unknown"
     std::optional<std::string> color;
-    std::optional<std::string> idle_since;     // ISO timestamp
+    std::optional<std::string> idle_since;  // ISO timestamp
     std::string tmux_pane_id;
     std::string cwd;
     std::optional<std::string> worktree_path;
     bool is_hidden = false;
     std::optional<PaneBackendType> backend_type;
-    std::optional<std::string> mode;   // Current permission mode
+    std::optional<std::string> mode;  // Current permission mode
 };
 
 /// Get detailed teammate statuses for a team
@@ -324,17 +307,17 @@ std::vector<TeammateStatus> get_teammate_statuses(std::string_view team_name);
 
 /// One member row in a team config.json.
 struct TeamMemberRecord {
-    std::string agent_id;             // JSON "agentId", e.g. "name@team"
-    std::string name;                 // JSON "name"
-    std::optional<std::string> color;          // Palette token, e.g. "blue"
-    std::optional<std::string> backend;        // BackendType: "tmux"|"iterm2"|"in-process"
-    std::string tmux_pane_id;                  // JSON "tmuxPaneId"
-    std::optional<std::string> mode;           // PermissionMode string
-    std::int64_t joined_at = 0;                // JSON "joinedAt"
+    std::string agent_id;                // JSON "agentId", e.g. "name@team"
+    std::string name;                    // JSON "name"
+    std::optional<std::string> color;    // Palette token, e.g. "blue"
+    std::optional<std::string> backend;  // BackendType: "tmux"|"iterm2"|"in-process"
+    std::string tmux_pane_id;            // JSON "tmuxPaneId"
+    std::optional<std::string> mode;     // PermissionMode string
+    std::int64_t joined_at = 0;          // JSON "joinedAt"
     std::string cwd;
-    bool plan_mode_required = false;           // JSON "planModeRequired"
-    bool is_active = true;                     // JSON "isActive"
-    std::optional<std::string> agent_type;     // JSON "agentType"
+    bool plan_mode_required = false;        // JSON "planModeRequired"
+    bool is_active = true;                  // JSON "isActive"
+    std::optional<std::string> agent_type;  // JSON "agentType"
     std::optional<std::string> model;
     std::optional<std::string> prompt;
     std::optional<std::string> worktree_path;  // JSON "worktreePath"
@@ -346,10 +329,10 @@ struct TeamMemberRecord {
 struct TeamFileRecord {
     std::string name;
     std::optional<std::string> description;
-    std::int64_t created_at = 0;               // JSON "createdAt"
-    std::string lead_agent_id;                 // JSON "leadAgentId"
+    std::int64_t created_at = 0;                 // JSON "createdAt"
+    std::string lead_agent_id;                   // JSON "leadAgentId"
     std::optional<std::string> lead_session_id;  // JSON "leadSessionId"
-    std::vector<std::string> hidden_pane_ids;  // JSON "hiddenPaneIds"
+    std::vector<std::string> hidden_pane_ids;    // JSON "hiddenPaneIds"
     std::vector<TeamMemberRecord> members;
 };
 
@@ -378,14 +361,13 @@ struct InitialTeamContext {
 bool write_team_file(std::string_view team_name, const TeamFileRecord& record);
 
 /// Find a member row by display name (linear search, TS Array.prototype.find).
-[[nodiscard]] std::optional<TeamMemberRecord> find_team_member(
-    const TeamFileRecord& file, std::string_view name);
+[[nodiscard]] std::optional<TeamMemberRecord> find_team_member(const TeamFileRecord& file,
+                                                               std::string_view name);
 
 /// Resolve initial leader/teammate identity for an explicit identity triple.
-[[nodiscard]] std::optional<InitialTeamContext> compute_initial_team_context(
-    std::string_view team_name,
-    std::string_view agent_name,
-    std::optional<std::string_view> agent_id);
+[[nodiscard]] std::optional<InitialTeamContext>
+compute_initial_team_context(std::string_view team_name, std::string_view agent_name,
+                             std::optional<std::string_view> agent_id);
 
 /// Resolve initial identity from the current environment / dynamic context.
 /// This is the C++ equivalent of computeInitialTeamContext() in
@@ -411,10 +393,8 @@ struct TeamMemoryCounts {
 };
 
 /// Append team memory summary parts to a parts vector
-void append_team_memory_summary_parts(
-    const TeamMemoryCounts& counts,
-    bool is_active,
-    std::vector<std::string>& parts);
+void append_team_memory_summary_parts(const TeamMemoryCounts& counts, bool is_active,
+                                      std::vector<std::string>& parts);
 
 // ─── Teammate Mailbox ────────────────────────────────────────────────────────
 
@@ -422,10 +402,10 @@ void append_team_memory_summary_parts(
 struct TeammateMessage {
     std::string from;
     std::string text;
-    std::string timestamp;   // ISO format
+    std::string timestamp;  // ISO format
     bool read = false;
-    std::optional<std::string> color;     // Sender's assigned color
-    std::optional<std::string> summary;   // 5-10 word preview
+    std::optional<std::string> color;    // Sender's assigned color
+    std::optional<std::string> summary;  // 5-10 word preview
 };
 
 /// Get the filesystem path to a teammate's inbox file
@@ -435,45 +415,39 @@ std::string get_inbox_path(std::string_view agent_name, std::optional<std::strin
 std::string get_inbox_path(std::string_view agent_name);
 
 /// Read all messages from a teammate's inbox
-std::expected<std::vector<TeammateMessage>, std::string> read_inbox(
-    std::string_view agent_name,
-    std::optional<std::string_view> team_name,
-    bool already_holds_exclusive_lock = false);
+std::expected<std::vector<TeammateMessage>, std::string>
+read_inbox(std::string_view agent_name, std::optional<std::string_view> team_name,
+           bool already_holds_exclusive_lock = false);
 
 /// Overload without team_name
-std::expected<std::vector<TeammateMessage>, std::string> read_inbox(
-    std::string_view agent_name);
+std::expected<std::vector<TeammateMessage>, std::string> read_inbox(std::string_view agent_name);
 
 /// Send a message to a teammate's inbox
-std::expected<void, std::string> send_message(
-    std::string_view to_agent_name,
-    std::string_view text,
-    std::optional<std::string_view> summary);
+std::expected<void, std::string> send_message(std::string_view to_agent_name, std::string_view text,
+                                              std::optional<std::string_view> summary);
 
 /// Overload without summary
-std::expected<void, std::string> send_message(
-    std::string_view to_agent_name,
-    std::string_view text);
+std::expected<void, std::string> send_message(std::string_view to_agent_name,
+                                              std::string_view text);
 
 /// Mark all messages in an inbox as read
-std::expected<void, std::string> mark_all_read(
-    std::string_view agent_name,
-    std::optional<std::string_view> team_name);
+std::expected<void, std::string> mark_all_read(std::string_view agent_name,
+                                               std::optional<std::string_view> team_name);
 
 /// Overload without team_name
 std::expected<void, std::string> mark_all_read(std::string_view agent_name);
 
 /// Get the count of unread messages in an inbox
-std::expected<size_t, std::string> unread_count(
-    std::string_view agent_name,
-    std::optional<std::string_view> team_name);
+std::expected<size_t, std::string> unread_count(std::string_view agent_name,
+                                                std::optional<std::string_view> team_name);
 
 /// Overload without team_name
 std::expected<size_t, std::string> unread_count(std::string_view agent_name);
 
 namespace detail {
 
-[[nodiscard]] inline std::optional<std::string> env_string(std::initializer_list<const char*> names) {
+[[nodiscard]] inline std::optional<std::string>
+env_string(std::initializer_list<const char*> names) {
     for (const auto* name : names) {
         if (const char* value = std::getenv(name); value && *value) {
             return std::string(value);
@@ -490,8 +464,8 @@ namespace detail {
         std::ranges::transform(normalized, normalized.begin(), [](unsigned char ch) {
             return static_cast<char>(std::tolower(ch));
         });
-        return normalized != "0" && normalized != "false" &&
-            normalized != "no" && normalized != "off";
+        return normalized != "0" && normalized != "false" && normalized != "no" &&
+               normalized != "off";
     }
     return false;
 }
@@ -502,30 +476,45 @@ namespace detail {
     static const char* hex = "0123456789abcdef";
     for (unsigned char ch : value) {
         switch (ch) {
-            case '\\': out += R"(\\)"; break;
-            case '"': out += R"(\")"; break;
-            case '\n': out += R"(\n)"; break;
-            case '\r': out += R"(\r)"; break;
-            case '\t': out += R"(\t)"; break;
-            case '\b': out += R"(\b)"; break;
-            case '\f': out += R"(\f)"; break;
-            default:
-                // RFC 8259: all other C0 control bytes must be \u-escaped;
-                // one bad control char must never corrupt the whole inbox.
-                if (ch < 0x20) {
-                    out += R"(\u00)";
-                    out.push_back(hex[(ch >> 4) & 0x0F]);
-                    out.push_back(hex[ch & 0x0F]);
-                } else {
-                    out.push_back(static_cast<char>(ch));
-                }
-                break;
+        case '\\':
+            out += R"(\\)";
+            break;
+        case '"':
+            out += R"(\")";
+            break;
+        case '\n':
+            out += R"(\n)";
+            break;
+        case '\r':
+            out += R"(\r)";
+            break;
+        case '\t':
+            out += R"(\t)";
+            break;
+        case '\b':
+            out += R"(\b)";
+            break;
+        case '\f':
+            out += R"(\f)";
+            break;
+        default:
+            // RFC 8259: all other C0 control bytes must be \u-escaped;
+            // one bad control char must never corrupt the whole inbox.
+            if (ch < 0x20) {
+                out += R"(\u00)";
+                out.push_back(hex[(ch >> 4) & 0x0F]);
+                out.push_back(hex[ch & 0x0F]);
+            } else {
+                out.push_back(static_cast<char>(ch));
+            }
+            break;
         }
     }
     return out;
 }
 
-[[nodiscard]] inline std::string sanitize_path_component(std::string_view value, std::string_view fallback) {
+[[nodiscard]] inline std::string sanitize_path_component(std::string_view value,
+                                                         std::string_view fallback) {
     std::string out;
     out.reserve(value.size());
     for (unsigned char ch : value) {
@@ -568,16 +557,15 @@ namespace detail {
     return std::to_string(millis);
 }
 
-[[nodiscard]] inline std::optional<std::string> json_optional_string(
-    loom::utils::json::JsonVal object,
-    std::string_view key
-) {
+[[nodiscard]] inline std::optional<std::string>
+json_optional_string(loom::utils::json::JsonVal object, std::string_view key) {
     auto value = object.get(key);
     if (!value.valid() || !value.is_str()) return std::nullopt;
     return std::string(value.as_str());
 }
 
-[[nodiscard]] inline bool write_messages(const fs::path& inbox_path, const std::vector<TeammateMessage>& messages) {
+[[nodiscard]] inline bool write_messages(const fs::path& inbox_path,
+                                         const std::vector<TeammateMessage>& messages) {
     // c16: the bytes are the exact hand-built JSON array the old truncating
     // ofstream wrote; the replace itself is atomic and symlink/FIFO-safe.
     // CALLERS already hold LOCK_EX on the inbox sibling.
@@ -610,9 +598,7 @@ namespace detail {
     return atomic_replace_file(inbox_path, out).has_value();
 }
 
-} // namespace detail
-
-
+}  // namespace detail
 
 inline const TeammateContext* get_teammate_context() {
     return active_teammate_context ? &*active_teammate_context : nullptr;
@@ -622,14 +608,10 @@ inline bool is_in_process_teammate() {
     return active_teammate_context.has_value();
 }
 
-inline TeammateContext create_teammate_context(
-    std::string_view agent_id,
-    std::string_view agent_name,
-    std::string_view team_name,
-    std::string_view parent_session_id,
-    bool plan_mode_required,
-    std::optional<std::string_view> color
-) {
+inline TeammateContext
+create_teammate_context(std::string_view agent_id, std::string_view agent_name,
+                        std::string_view team_name, std::string_view parent_session_id,
+                        bool plan_mode_required, std::optional<std::string_view> color) {
     return TeammateContext{
         .agent_id = std::string(agent_id),
         .agent_name = std::string(agent_name),
@@ -696,20 +678,24 @@ inline std::optional<std::string> get_agent_id() {
 }
 
 inline std::optional<std::string> get_teammate_color() {
-    if (active_teammate_context && active_teammate_context->color && !active_teammate_context->color->empty()) {
+    if (active_teammate_context && active_teammate_context->color &&
+        !active_teammate_context->color->empty()) {
         return active_teammate_context->color;
     }
-    if (active_dynamic_team_context && active_dynamic_team_context->color && !active_dynamic_team_context->color->empty()) {
+    if (active_dynamic_team_context && active_dynamic_team_context->color &&
+        !active_dynamic_team_context->color->empty()) {
         return active_dynamic_team_context->color;
     }
     return detail::env_string({"LOOM_AGENT_COLOR", "LOOM_AGENT_COLOR"});
 }
 
 inline std::optional<std::string> get_agent_type() {
-    if (active_teammate_context && active_teammate_context->agent_type && !active_teammate_context->agent_type->empty()) {
+    if (active_teammate_context && active_teammate_context->agent_type &&
+        !active_teammate_context->agent_type->empty()) {
         return active_teammate_context->agent_type;
     }
-    if (active_dynamic_team_context && active_dynamic_team_context->agent_type && !active_dynamic_team_context->agent_type->empty()) {
+    if (active_dynamic_team_context && active_dynamic_team_context->agent_type &&
+        !active_dynamic_team_context->agent_type->empty()) {
         return active_dynamic_team_context->agent_type;
     }
     return detail::env_string({"LOOM_AGENT_TYPE", "LOOM_AGENT_TYPE"});
@@ -721,25 +707,22 @@ inline bool is_plan_mode_required() {
     return detail::env_truthy({"LOOM_PLAN_MODE_REQUIRED", "LOOM_PLAN_MODE_REQUIRED"});
 }
 
-inline std::string get_inbox_path(std::string_view agent_name, std::optional<std::string_view> team_name) {
-    const auto team = team_name && !team_name->empty()
-        ? std::string(*team_name)
-        : detail::current_team_name();
-    return (detail::teams_dir() /
-        detail::sanitize_path_component(team, "default") /
-        "inboxes" /
-        (detail::sanitize_path_component(agent_name, "agent") + ".json")).string();
+inline std::string get_inbox_path(std::string_view agent_name,
+                                  std::optional<std::string_view> team_name) {
+    const auto team =
+        team_name && !team_name->empty() ? std::string(*team_name) : detail::current_team_name();
+    return (detail::teams_dir() / detail::sanitize_path_component(team, "default") / "inboxes" /
+            (detail::sanitize_path_component(agent_name, "agent") + ".json"))
+        .string();
 }
 
 inline std::string get_inbox_path(std::string_view agent_name) {
     return get_inbox_path(agent_name, std::nullopt);
 }
 
-inline std::expected<std::vector<TeammateMessage>, std::string> read_inbox(
-    std::string_view agent_name,
-    std::optional<std::string_view> team_name,
-    bool already_holds_exclusive_lock
-) {
+inline std::expected<std::vector<TeammateMessage>, std::string>
+read_inbox(std::string_view agent_name, std::optional<std::string_view> team_name,
+           bool already_holds_exclusive_lock) {
     const auto inbox_path = fs::path{get_inbox_path(agent_name, team_name)};
     // c16: LOCK_SH across read+parse. The atomic rename alone guarantees no
     // torn bytes, but the shared lock additionally orders this read against
@@ -790,15 +773,14 @@ inline std::expected<std::vector<TeammateMessage>, std::string> read_inbox(
     return messages;
 }
 
-inline std::expected<std::vector<TeammateMessage>, std::string> read_inbox(std::string_view agent_name) {
+inline std::expected<std::vector<TeammateMessage>, std::string>
+read_inbox(std::string_view agent_name) {
     return read_inbox(agent_name, std::nullopt);
 }
 
-inline std::expected<void, std::string> write_to_mailbox(
-    std::string_view recipient_name,
-    TeammateMessage message,
-    std::optional<std::string_view> team_name
-) {
+inline std::expected<void, std::string>
+write_to_mailbox(std::string_view recipient_name, TeammateMessage message,
+                 std::optional<std::string_view> team_name) {
     std::lock_guard<std::mutex> lock(teammate_inbox_mutex());
     const auto inbox_path = fs::path{get_inbox_path(recipient_name, team_name)};
     ScopedInboxLock flock(inbox_path);
@@ -806,7 +788,7 @@ inline std::expected<void, std::string> write_to_mailbox(
         return std::unexpected("failed to acquire cross-process inbox lock");
     }
     auto existing = read_inbox(recipient_name, team_name,
-                              /*already_holds_exclusive_lock=*/true);
+                               /*already_holds_exclusive_lock=*/true);
     if (!existing) return std::unexpected(existing.error());
     if (message.timestamp.empty()) message.timestamp = detail::timestamp_now();
     message.read = false;
@@ -817,11 +799,9 @@ inline std::expected<void, std::string> write_to_mailbox(
     return {};
 }
 
-inline std::expected<void, std::string> send_message(
-    std::string_view to_agent_name,
-    std::string_view text,
-    std::optional<std::string_view> summary
-) {
+inline std::expected<void, std::string> send_message(std::string_view to_agent_name,
+                                                     std::string_view text,
+                                                     std::optional<std::string_view> summary) {
     return write_to_mailbox(
         to_agent_name,
         TeammateMessage{
@@ -835,14 +815,13 @@ inline std::expected<void, std::string> send_message(
         std::nullopt);
 }
 
-inline std::expected<void, std::string> send_message(std::string_view to_agent_name, std::string_view text) {
+inline std::expected<void, std::string> send_message(std::string_view to_agent_name,
+                                                     std::string_view text) {
     return send_message(to_agent_name, text, std::nullopt);
 }
 
-inline std::expected<void, std::string> mark_all_read(
-    std::string_view agent_name,
-    std::optional<std::string_view> team_name
-) {
+inline std::expected<void, std::string> mark_all_read(std::string_view agent_name,
+                                                      std::optional<std::string_view> team_name) {
     std::lock_guard<std::mutex> lock(teammate_inbox_mutex());
     const auto inbox_path = fs::path{get_inbox_path(agent_name, team_name)};
     ScopedInboxLock flock(inbox_path);
@@ -852,7 +831,8 @@ inline std::expected<void, std::string> mark_all_read(
     auto messages = read_inbox(agent_name, team_name,
                                /*already_holds_exclusive_lock=*/true);
     if (!messages) return std::unexpected(messages.error());
-    for (auto& message : *messages) message.read = true;
+    for (auto& message : *messages)
+        message.read = true;
     if (!detail::write_messages(inbox_path, *messages)) {
         return std::unexpected("failed to update teammate inbox");
     }
@@ -863,15 +843,12 @@ inline std::expected<void, std::string> mark_all_read(std::string_view agent_nam
     return mark_all_read(agent_name, std::nullopt);
 }
 
-inline std::expected<size_t, std::string> unread_count(
-    std::string_view agent_name,
-    std::optional<std::string_view> team_name
-) {
+inline std::expected<size_t, std::string> unread_count(std::string_view agent_name,
+                                                       std::optional<std::string_view> team_name) {
     auto messages = read_inbox(agent_name, team_name);
     if (!messages) return std::unexpected(messages.error());
-    return static_cast<size_t>(std::ranges::count_if(*messages, [](const auto& message) {
-        return !message.read;
-    }));
+    return static_cast<size_t>(
+        std::ranges::count_if(*messages, [](const auto& message) { return !message.read; }));
 }
 
 inline std::expected<size_t, std::string> unread_count(std::string_view agent_name) {
@@ -881,8 +858,7 @@ inline std::expected<size_t, std::string> unread_count(std::string_view agent_na
 // ─── Canonical team config.json implementation ──────────────────────────────
 
 inline std::string team_dir(std::string_view team_name) {
-    return (detail::teams_dir() /
-            detail::sanitize_path_component(team_name, "team")).string();
+    return (detail::teams_dir() / detail::sanitize_path_component(team_name, "team")).string();
 }
 
 inline std::string team_file_path(std::string_view team_name) {
@@ -892,9 +868,8 @@ inline std::string team_file_path(std::string_view team_name) {
 namespace detail {
 
 /// Parse one members[] row from config.json (camelCase keys from teamHelpers.ts).
-[[nodiscard]] inline std::optional<TeamMemberRecord> parse_team_member(
-    const loom::utils::json::JsonVal& value
-) {
+[[nodiscard]] inline std::optional<TeamMemberRecord>
+parse_team_member(const loom::utils::json::JsonVal& value) {
     if (!value.is_obj()) return std::nullopt;
     const auto agent_id = value.get("agentId");
     const auto name = value.get("name");
@@ -927,9 +902,8 @@ namespace detail {
 }
 
 /// Emit an optional JSON string field, skipping absent values.
-inline void append_optional_json_string(
-    std::string& out, std::string_view key, const std::optional<std::string>& value
-) {
+inline void append_optional_json_string(std::string& out, std::string_view key,
+                                        const std::optional<std::string>& value) {
     if (!value) return;
     out += ",\n      \"";
     out += key;
@@ -938,7 +912,7 @@ inline void append_optional_json_string(
     out += '"';
 }
 
-} // namespace detail
+}  // namespace detail
 
 inline std::optional<TeamFileRecord> read_team_file(std::string_view team_name) {
     const auto path = fs::path{team_file_path(team_name)};
@@ -990,15 +964,13 @@ inline bool write_team_file(std::string_view team_name, const TeamFileRecord& re
     out += "{\n";
     out += "  \"name\": \"" + detail::mailbox_json_escape(record.name) + "\",\n";
     if (record.description) {
-        out += "  \"description\": \"" +
-               detail::mailbox_json_escape(*record.description) + "\",\n";
+        out += "  \"description\": \"" + detail::mailbox_json_escape(*record.description) + "\",\n";
     }
     out += "  \"createdAt\": " + std::to_string(record.created_at) + ",\n";
-    out += "  \"leadAgentId\": \"" +
-           detail::mailbox_json_escape(record.lead_agent_id) + '"';
+    out += "  \"leadAgentId\": \"" + detail::mailbox_json_escape(record.lead_agent_id) + '"';
     if (record.lead_session_id) {
-        out += ",\n  \"leadSessionId\": \"" +
-               detail::mailbox_json_escape(*record.lead_session_id) + '"';
+        out += ",\n  \"leadSessionId\": \"" + detail::mailbox_json_escape(*record.lead_session_id) +
+               '"';
     }
     out += ",\n  \"hiddenPaneIds\": [";
     for (std::size_t i = 0; i < record.hidden_pane_ids.size(); ++i) {
@@ -1014,10 +986,8 @@ inline bool write_team_file(std::string_view team_name, const TeamFileRecord& re
         for (std::size_t i = 0; i < record.members.size(); ++i) {
             const auto& m = record.members[i];
             out += "    {\n";
-            out += "      \"agentId\": \"" +
-                   detail::mailbox_json_escape(m.agent_id) + "\",\n";
-            out += "      \"name\": \"" +
-                   detail::mailbox_json_escape(m.name) + "\"";
+            out += "      \"agentId\": \"" + detail::mailbox_json_escape(m.agent_id) + "\",\n";
+            out += "      \"name\": \"" + detail::mailbox_json_escape(m.name) + "\"";
             detail::append_optional_json_string(out, "agentType", m.agent_type);
             detail::append_optional_json_string(out, "model", m.model);
             detail::append_optional_json_string(out, "prompt", m.prompt);
@@ -1026,10 +996,9 @@ inline bool write_team_file(std::string_view team_name, const TeamFileRecord& re
                 out += ",\n      \"planModeRequired\": true";
             }
             out += ",\n      \"joinedAt\": " + std::to_string(m.joined_at);
-            out += ",\n      \"tmuxPaneId\": \"" +
-                   detail::mailbox_json_escape(m.tmux_pane_id) + '"';
-            out += ",\n      \"cwd\": \"" +
-                   detail::mailbox_json_escape(m.cwd) + '"';
+            out +=
+                ",\n      \"tmuxPaneId\": \"" + detail::mailbox_json_escape(m.tmux_pane_id) + '"';
+            out += ",\n      \"cwd\": \"" + detail::mailbox_json_escape(m.cwd) + '"';
             detail::append_optional_json_string(out, "worktreePath", m.worktree_path);
             detail::append_optional_json_string(out, "sessionId", m.session_id);
             detail::append_optional_json_string(out, "backendType", m.backend);
@@ -1059,20 +1028,17 @@ inline bool write_team_file(std::string_view team_name, const TeamFileRecord& re
     return atomic_replace_file(path, out).has_value();
 }
 
-inline std::optional<TeamMemberRecord> find_team_member(
-    const TeamFileRecord& file, std::string_view name
-) {
+inline std::optional<TeamMemberRecord> find_team_member(const TeamFileRecord& file,
+                                                        std::string_view name) {
     for (const auto& member : file.members) {
         if (member.name == name) return member;
     }
     return std::nullopt;
 }
 
-inline std::optional<InitialTeamContext> compute_initial_team_context(
-    std::string_view team_name,
-    std::string_view agent_name,
-    std::optional<std::string_view> agent_id
-) {
+inline std::optional<InitialTeamContext>
+compute_initial_team_context(std::string_view team_name, std::string_view agent_name,
+                             std::optional<std::string_view> agent_id) {
     if (team_name.empty() || agent_name.empty()) return std::nullopt;
 
     const auto file = read_team_file(team_name);
@@ -1084,9 +1050,8 @@ inline std::optional<InitialTeamContext> compute_initial_team_context(
     context.lead_agent_id = file->lead_agent_id;
     // reconnection.ts:51: isLeader = !agentId.
     context.is_leader = !agent_id || agent_id->empty();
-    context.self_agent_id = (!context.is_leader)
-        ? std::optional<std::string>{std::string(*agent_id)}
-        : std::nullopt;
+    context.self_agent_id =
+        (!context.is_leader) ? std::optional<std::string>{std::string(*agent_id)} : std::nullopt;
     context.self_agent_name = std::string(agent_name);
     return context;
 }
@@ -1097,10 +1062,9 @@ inline std::optional<InitialTeamContext> compute_initial_team_context_from_env()
     const auto agent_name = get_agent_name();
     if (!agent_name || agent_name->empty()) return std::nullopt;
     const auto agent_id = get_agent_id();
-    return compute_initial_team_context(
-        *team_name,
-        *agent_name,
-        agent_id ? std::optional<std::string_view>{*agent_id} : std::nullopt);
+    return compute_initial_team_context(*team_name, *agent_name,
+                                        agent_id ? std::optional<std::string_view>{*agent_id}
+                                                 : std::nullopt);
 }
 
-} // namespace loom::utils
+}  // namespace loom::utils

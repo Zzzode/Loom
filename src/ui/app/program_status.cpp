@@ -32,8 +32,8 @@ bool valid_pair(std::string_view key, std::string_view value) noexcept {
     }
     for (const unsigned char byte : value) {
         if (!((byte >= 'a' && byte <= 'z') || (byte >= 'A' && byte <= 'Z') ||
-              (byte >= '0' && byte <= '9') || byte == '_' || byte == '.' ||
-              byte == ',' || byte == '+' || byte == '/' || byte == '=' || byte == '-')) {
+              (byte >= '0' && byte <= '9') || byte == '_' || byte == '.' || byte == ',' ||
+              byte == '+' || byte == '/' || byte == '=' || byte == '-')) {
             return false;
         }
     }
@@ -42,10 +42,14 @@ bool valid_pair(std::string_view key, std::string_view value) noexcept {
 
 unsigned int kind_bit(Kind kind) noexcept {
     switch (kind) {
-        case Kind::Permission: return 1;
-        case Kind::Question: return 2;
-        case Kind::Auth: return 4;
-        case Kind::None: return 0;
+    case Kind::Permission:
+        return 1;
+    case Kind::Question:
+        return 2;
+    case Kind::Auth:
+        return 4;
+    case Kind::None:
+        return 0;
     }
     return 0;
 }
@@ -83,13 +87,16 @@ bool ProgramStatusReporter::HandleControl(std::string_view raw, Time now) noexce
         if (boundary != ';' && boundary != '\a' && boundary != '\033') return false;
     }
     Expire(now);
-    if (capability_ != Capability::Probing || raw.size() > 4096 ||
-        !raw.starts_with("\033]7501;")) return true;
+    if (capability_ != Capability::Probing || raw.size() > 4096 || !raw.starts_with("\033]7501;"))
+        return true;
 
     std::string_view body = raw.substr(7);
-    if (body.ends_with("\033\\")) body.remove_suffix(2);
-    else if (body.ends_with('\a')) body.remove_suffix(1);
-    else return true;
+    if (body.ends_with("\033\\"))
+        body.remove_suffix(2);
+    else if (body.ends_with('\a'))
+        body.remove_suffix(1);
+    else
+        return true;
 
     const auto first_colon = body.find(':');
     if (trim(body.substr(0, first_colon)) != "?") return true;
@@ -105,8 +112,10 @@ bool ProgramStatusReporter::HandleControl(std::string_view raw, Time now) noexce
                 const auto key = trim(pair.substr(0, equals));
                 const auto value = trim(pair.substr(equals + 1));
                 if (valid_pair(key, value)) {
-                    if (key == "states") states = value;
-                    else if (key == "kinds") kinds = value;
+                    if (key == "states")
+                        states = value;
+                    else if (key == "kinds")
+                        kinds = value;
                 }
             }
             if (colon == std::string_view::npos) break;
@@ -164,8 +173,8 @@ void ProgramStatusReporter::Complete(bool error, bool paused) noexcept {
     if (capability_ == Capability::Stopped) return;
     active_ = false;
     working_ = false;
-    outcome_ = cancelled_ ? State::Idle :
-        (paused ? State::Blocked : (error ? State::Error : State::Done));
+    outcome_ =
+        cancelled_ ? State::Idle : (paused ? State::Blocked : (error ? State::Error : State::Done));
     Recompute();
 }
 
@@ -184,8 +193,7 @@ void ProgramStatusReporter::Refresh(bool working, Kind blocked) noexcept {
 
 void ProgramStatusReporter::Emit() noexcept {
     try {
-        const auto kind = (supported_kinds_ & kind_bit(desired_kind_)) ?
-            desired_kind_ : Kind::None;
+        const auto kind = (supported_kinds_ & kind_bit(desired_kind_)) ? desired_kind_ : Kind::None;
         auto encoded = osc::program_status(desired_, kind);
         if (!encoded) {
             capability_ = Capability::Disabled;
@@ -213,8 +221,9 @@ void ProgramStatusReporter::Finish(bool normal, Time now) noexcept {
     // A background human request may overlay a completed foreground result.
     // Preserve that result on normal exit, not the transient blocked snapshot.
     desired_ = normal && !active_ && !working_ && !cancelled_ &&
-            (outcome_ == State::Done || outcome_ == State::Error) ?
-        outcome_ : State::Idle;
+                       (outcome_ == State::Done || outcome_ == State::Error)
+                   ? outcome_
+                   : State::Idle;
     desired_kind_ = Kind::None;
     if (capability_ == Capability::Enabled) Emit();
     capability_ = Capability::Stopped;

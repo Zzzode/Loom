@@ -69,7 +69,8 @@ namespace loom::state::selectors {
 }
 
 /// Get allowed directories (paths added via /add-dir)
-[[nodiscard]] const std::vector<std::string>& get_allowed_directories(const AppState& state) noexcept {
+[[nodiscard]] const std::vector<std::string>&
+get_allowed_directories(const AppState& state) noexcept {
     return state.allowed_directories;
 }
 
@@ -82,4 +83,4 @@ namespace loom::state::selectors {
     return state.is_loading || state.is_streaming || state.error_message.has_value();
 }
 
-} // namespace loom::state::selectors
+}  // namespace loom::state::selectors

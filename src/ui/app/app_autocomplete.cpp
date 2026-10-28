@@ -18,16 +18,16 @@
 //                           ProcessCompletedPastes, project_agent_definition_card
 module;
 
-#include <cstring>
-#include <cctype>
-#include <cstdio>
-#include <cstdlib>
-#include <ctime>
-
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/event.hpp>
 #include <ftxui/dom/elements.hpp>
+
+#include <cctype>
 #include <cstdint>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <ctime>
 
 module loom.ui.app.app;
 
@@ -53,8 +53,8 @@ namespace loom::ui {
 namespace agent_runtime = loom::tools::agent_runtime;
 namespace agent_cards = loom::ui::agents::cards;
 // Defined in app_extra_methods.cpp (same module); redeclared for module linkage.
-agent_cards::AgentCardData project_agent_definition_card(
-    const agent_runtime::AgentDefinition& agent);
+agent_cards::AgentCardData
+project_agent_definition_card(const agent_runtime::AgentDefinition& agent);
 
 namespace repl = loom::ui::repl_screen;
 namespace acsrc = loom::ui::autocomplete_sources;
@@ -67,31 +67,30 @@ namespace {
 // and fuzzy matches must always reflect the latest input. Each source retains
 // at most eight contexts; thread-local ownership keeps UI instances on different
 // event-loop threads independent without locking around filesystem reads.
-template <typename T>
-class CompletionSourceCache {
+template <typename T> class CompletionSourceCache {
     using Clock = std::chrono::steady_clock;
+
     struct Entry {
         T value;
         Clock::time_point refreshed;
         Clock::time_point accessed;
     };
+
     std::unordered_map<std::string, Entry> entries_;
 
 public:
-    template <typename Loader>
-    const T& get(std::string key, Loader&& load) {
+    template <typename Loader> const T& get(std::string key, Loader&& load) {
         const auto now = Clock::now();
         auto it = entries_.find(key);
         if (it == entries_.end()) {
             // Load before eviction so an unsuccessful loader preserves the cache.
             auto value = load();
             if (entries_.size() >= 8) {
-                auto oldest = std::ranges::min_element(entries_, {},
-                    [](const auto& item) { return item.second.accessed; });
+                auto oldest = std::ranges::min_element(
+                    entries_, {}, [](const auto& item) { return item.second.accessed; });
                 entries_.erase(oldest);
             }
-            it = entries_.emplace(std::move(key), Entry{
-                std::move(value), now, now}).first;
+            it = entries_.emplace(std::move(key), Entry{std::move(value), now, now}).first;
         } else {
             const auto age = now - it->second.refreshed;
             const auto quiet = now - it->second.accessed;
@@ -99,8 +98,7 @@ public:
             // the first request after a pause, or after five seconds even when
             // typing continues. No background timer or stale filtered rows.
             if (age >= std::chrono::seconds(1) &&
-                (quiet >= std::chrono::milliseconds(150) ||
-                 age >= std::chrono::seconds(5))) {
+                (quiet >= std::chrono::milliseconds(150) || age >= std::chrono::seconds(5))) {
                 it->second.value = load();
                 it->second.refreshed = now;
             }
@@ -115,11 +113,10 @@ struct CompletionDirectoryEntry {
     bool is_directory = false;
 };
 
-const std::vector<CompletionDirectoryEntry>& completion_directory_entries(
-    const std::filesystem::path& cwd,
-    const std::filesystem::path& directory) {
-    static thread_local CompletionSourceCache<
-        std::vector<CompletionDirectoryEntry>> cache;
+const std::vector<CompletionDirectoryEntry>&
+completion_directory_entries(const std::filesystem::path& cwd,
+                             const std::filesystem::path& directory) {
+    static thread_local CompletionSourceCache<std::vector<CompletionDirectoryEntry>> cache;
     const auto parent = directory.lexically_normal();
     // Include cwd even for absolute paths: changing projects invalidates the
     // active context, while different leaf queries reuse the same source list.
@@ -127,8 +124,7 @@ const std::vector<CompletionDirectoryEntry>& completion_directory_entries(
         std::vector<CompletionDirectoryEntry> entries;
         std::error_code ec;
         for (auto it = std::filesystem::directory_iterator(parent, ec);
-             !ec && it != std::filesystem::directory_iterator();
-             it.increment(ec)) {
+             !ec && it != std::filesystem::directory_iterator(); it.increment(ec)) {
             const bool is_directory = it->is_directory(ec);
             if (ec) ec.clear();
             entries.push_back({it->path().filename().string(), is_directory});
@@ -139,9 +135,8 @@ const std::vector<CompletionDirectoryEntry>& completion_directory_entries(
 
 // Cache the whole PATH source, rather than each PATH directory separately:
 // long PATH lists must not churn the eight-context directory cache per keypress.
-const std::vector<std::string>& completion_shell_commands(
-    const std::filesystem::path& cwd,
-    std::string_view path_text) {
+const std::vector<std::string>& completion_shell_commands(const std::filesystem::path& cwd,
+                                                          std::string_view path_text) {
     static thread_local CompletionSourceCache<std::vector<std::string>> cache;
     return cache.get(cwd.string() + "\n" + std::string(path_text), [&] {
         std::vector<std::string> names;
@@ -150,8 +145,10 @@ const std::vector<std::string>& completion_shell_commands(
         while (!paths.empty()) {
             const auto sep = paths.find(':');
             const auto current = paths.substr(0, sep);
-            if (sep == std::string_view::npos) paths = {};
-            else paths.remove_prefix(sep + 1);
+            if (sep == std::string_view::npos)
+                paths = {};
+            else
+                paths.remove_prefix(sep + 1);
             if (current.empty()) continue;
             std::filesystem::path dir{std::string(current)};
             if (dir.is_relative()) dir = cwd / dir;
@@ -172,34 +169,27 @@ struct CompletionTeammateEntry {
 std::string completion_agent_context(std::string_view cwd) {
     const char* home = std::getenv("HOME");
     const char* config = std::getenv("LOOM_CONFIG_DIR");
-    return std::format("{}\n{}\n{}\n{}", cwd,
-        agent_runtime::runtime_state_dir().string(),
-        home ? home : "", config ? config : "");
+    return std::format("{}\n{}\n{}\n{}", cwd, agent_runtime::runtime_state_dir().string(),
+                       home ? home : "", config ? config : "");
 }
 
-const std::vector<CompletionTeammateEntry>& completion_native_agents(
-    std::string_view cwd) {
-    static thread_local CompletionSourceCache<
-        std::vector<CompletionTeammateEntry>> cache;
+const std::vector<CompletionTeammateEntry>& completion_native_agents(std::string_view cwd) {
+    static thread_local CompletionSourceCache<std::vector<CompletionTeammateEntry>> cache;
     return cache.get(completion_agent_context(cwd), [] {
         std::vector<CompletionTeammateEntry> entries;
         for (const auto& record : agent_runtime::load_all_native_agent_records()) {
-            entries.push_back({
-                record.name.value_or(record.agent_id),
-                std::string(agent_runtime::native_agent_status_name(record.status)),
-                record.teammate_color.value_or("")});
+            entries.push_back({record.name.value_or(record.agent_id),
+                               std::string(agent_runtime::native_agent_status_name(record.status)),
+                               record.teammate_color.value_or("")});
         }
         return entries;
     });
 }
 
-const std::vector<acsrc::FormattedSuggestion>& completion_agent_suggestions(
-    std::string_view cwd) {
-    static thread_local CompletionSourceCache<
-        std::vector<acsrc::FormattedSuggestion>> cache;
-    return cache.get(completion_agent_context(cwd), [&] {
-        return acsrc::build_agent_suggestions(cwd, "", 0, 0);
-    });
+const std::vector<acsrc::FormattedSuggestion>& completion_agent_suggestions(std::string_view cwd) {
+    static thread_local CompletionSourceCache<std::vector<acsrc::FormattedSuggestion>> cache;
+    return cache.get(completion_agent_context(cwd),
+                     [&] { return acsrc::build_agent_suggestions(cwd, "", 0, 0); });
 }
 
 struct CompletionSessionEntry {
@@ -208,17 +198,15 @@ struct CompletionSessionEntry {
     std::string fallback_title;
 };
 
-const std::vector<CompletionSessionEntry>& completion_session_entries(
-    const std::filesystem::path& directory) {
-    static thread_local CompletionSourceCache<
-        std::vector<CompletionSessionEntry>> cache;
+const std::vector<CompletionSessionEntry>&
+completion_session_entries(const std::filesystem::path& directory) {
+    static thread_local CompletionSourceCache<std::vector<CompletionSessionEntry>> cache;
     return cache.get(directory.lexically_normal().string(), [&] {
         std::vector<CompletionSessionEntry> entries;
         for (auto metadata : loom::session::list_recent_sessions(directory, 50)) {
             const int count = count_session_messages(directory, metadata.session_id);
             std::string fallback;
-            if (count > 0 &&
-                (metadata.title.value_or("").empty() || metadata.title == "Session")) {
+            if (count > 0 && (metadata.title.value_or("").empty() || metadata.title == "Session")) {
                 fallback = first_user_message_as_title(directory, metadata.session_id);
             }
             entries.push_back({std::move(metadata), count, std::move(fallback)});
@@ -232,18 +220,18 @@ const std::vector<CompletionSessionEntry>& completion_session_entries(
 // RFC 0001 Phase C batch 2: folded from app.cppm — sole caller is
 // RefreshAutocompleteSuggestions below. Plain (non-inline) definition;
 // the declaration stays exported in app.cppm.
-[[nodiscard]] AutocompleteToken token_around_cursor(
-    std::string_view input,
-    std::size_t cursor) {
+[[nodiscard]] AutocompleteToken token_around_cursor(std::string_view input, std::size_t cursor) {
     if (cursor == std::string::npos || cursor > input.size()) {
         cursor = input.size();
     }
 
     std::size_t start = cursor;
-    while (start > 0 && !ascii_isspace(input[start - 1])) --start;
+    while (start > 0 && !ascii_isspace(input[start - 1]))
+        --start;
 
     std::size_t end = cursor;
-    while (end < input.size() && !ascii_isspace(input[end])) ++end;
+    while (end < input.size() && !ascii_isspace(input[end]))
+        ++end;
 
     // Quoted @ mention detection.
     // If the token starts with @", extend end to include the full quoted content
@@ -276,21 +264,15 @@ void AppAdapter::RefreshAutocompleteSuggestions() {
     screen_state_->autocomplete_stable_name_width = 0;  // INF-03: slash branch sets it
 
     const std::string& input = screen_state_->input_text;
-    const std::size_t cursor =
-        screen_state_->input_cursor == std::string::npos ||
-            screen_state_->input_cursor > input.size()
-        ? input.size()
-        : screen_state_->input_cursor;
+    const std::size_t cursor = screen_state_->input_cursor == std::string::npos ||
+                                       screen_state_->input_cursor > input.size()
+                                   ? input.size()
+                                   : screen_state_->input_cursor;
     const auto token = token_around_cursor(input, cursor);
 
-    auto add_suggestion = [&](std::string display,
-                              std::string description,
-                              std::string insert,
-                              std::size_t start,
-                              std::size_t end,
-                              bool submit_on_return = false,
-                              std::string id = "",
-                              std::string icon = "",
+    auto add_suggestion = [&](std::string display, std::string description, std::string insert,
+                              std::size_t start, std::size_t end, bool submit_on_return = false,
+                              std::string id = "", std::string icon = "",
                               std::string color_name = "") {
         if (id.empty()) id = display;  // INF-02: stable-id fallback
         screen_state_->autocomplete_suggestions.push_back(
@@ -310,22 +292,16 @@ void AppAdapter::RefreshAutocompleteSuggestions() {
     auto restore_index = [&] {
         if (screen_state_->autocomplete_suggestions.empty()) return;
         int preserved_index = 0;
-        if (previous_index >= 0 &&
-            previous_index < static_cast<int>(previous_suggestions.size())) {
-            const auto& previous =
-                previous_suggestions[static_cast<std::size_t>(previous_index)];
+        if (previous_index >= 0 && previous_index < static_cast<int>(previous_suggestions.size())) {
+            const auto& previous = previous_suggestions[static_cast<std::size_t>(previous_index)];
             // INF-02: match by stable id (falls back to display_text via
             // add_suggestion's default), so same-display items from
             // different sources don't collide.
-            auto it = std::ranges::find(
-                screen_state_->autocomplete_suggestions,
-                previous.id,
-                &repl::ReplScreenState::AutocompleteSuggestion::id);
+            auto it = std::ranges::find(screen_state_->autocomplete_suggestions, previous.id,
+                                        &repl::ReplScreenState::AutocompleteSuggestion::id);
             if (it != screen_state_->autocomplete_suggestions.end()) {
                 preserved_index = static_cast<int>(
-                    std::distance(
-                        screen_state_->autocomplete_suggestions.begin(),
-                        it));
+                    std::distance(screen_state_->autocomplete_suggestions.begin(), it));
             }
         }
         screen_state_->autocomplete_index = preserved_index;
@@ -351,11 +327,14 @@ void AppAdapter::RefreshAutocompleteSuggestions() {
     // SL-03: derive inline argument hint for "/cmd ..." inputs (shown by
     // TextInputImpl after the prompt).
     screen_state_->pending_argument_hint.clear();
-    if (input.starts_with('/') && static_cast<loom::commands::AppCommandRegistry*>(cmd_registry_raw())) {
+    if (input.starts_with('/') &&
+        static_cast<loom::commands::AppCommandRegistry*>(cmd_registry_raw())) {
         const auto sp = input.find(' ');
         if (sp != std::string::npos && sp > 1) {
             const std::string cmd_name = input.substr(1, sp - 1);
-            if (const auto* def = static_cast<loom::commands::AppCommandRegistry*>(cmd_registry_raw())->find_definition(cmd_name)) {
+            if (const auto* def =
+                    static_cast<loom::commands::AppCommandRegistry*>(cmd_registry_raw())
+                        ->find_definition(cmd_name)) {
                 if (!def->argument_hint.empty()) {
                     screen_state_->pending_argument_hint = def->argument_hint;
                 }
@@ -372,7 +351,9 @@ void AppAdapter::RefreshAutocompleteSuggestions() {
         const std::string partial = token.text.substr(1);
         if (!(partial.empty() || partial.find(' ') != std::string::npos)) {
             const CommandDefinition* best = nullptr;
-            for (const auto* def : static_cast<loom::commands::AppCommandRegistry*>(cmd_registry_raw())->visible_commands()) {
+            for (const auto* def :
+                 static_cast<loom::commands::AppCommandRegistry*>(cmd_registry_raw())
+                     ->visible_commands()) {
                 if (def->name.size() >= partial.size() &&
                     def->name.compare(0, partial.size(), partial) == 0) {
                     if (!best || def->name.size() < best->name.size()) best = def;
@@ -386,18 +367,19 @@ void AppAdapter::RefreshAutocompleteSuggestions() {
 
     auto add_directory_suggestions = [&](std::string_view partial) {
         std::filesystem::path base = screen_state_->cwd.empty()
-            ? std::filesystem::current_path()
-            : std::filesystem::path(screen_state_->cwd);
+                                         ? std::filesystem::current_path()
+                                         : std::filesystem::path(screen_state_->cwd);
         std::filesystem::path raw{std::string(partial)};
-        std::filesystem::path parent = raw.has_parent_path()
-            ? base / raw.parent_path()
-            : base;
-        const auto prefix = raw.has_parent_path()
-            ? raw.parent_path().string() + "/"
-            : std::string{};
+        std::filesystem::path parent = raw.has_parent_path() ? base / raw.parent_path() : base;
+        const auto prefix =
+            raw.has_parent_path() ? raw.parent_path().string() + "/" : std::string{};
         const auto leaf = raw.filename().string();
 
-        struct DirCandidate { std::string display; std::string insert; int rank; };
+        struct DirCandidate {
+            std::string display;
+            std::string insert;
+            int rank;
+        };
         std::vector<DirCandidate> dirs;
         for (const auto& entry : completion_directory_entries(base, parent)) {
             if (!entry.is_directory) continue;
@@ -416,13 +398,8 @@ void AppAdapter::RefreshAutocompleteSuggestions() {
             return a.display < b.display;
         });
         for (auto& dir : dirs) {
-            add_suggestion(
-                std::move(dir.display),
-                "Directory",
-                std::move(dir.insert),
-                token.start,
-                token.end,
-                false);
+            add_suggestion(std::move(dir.display), "Directory", std::move(dir.insert), token.start,
+                           token.end, false);
         }
     };
 
@@ -436,8 +413,7 @@ void AppAdapter::RefreshAutocompleteSuggestions() {
             // sessions that use messages.jsonl (the engine appends without
             // updating the metadata count).
             if (entry.message_count == 0) continue;
-            if (!frn::fuzzy_match_nucleo(id, partial) &&
-                !frn::fuzzy_match_nucleo(title, partial)) {
+            if (!frn::fuzzy_match_nucleo(id, partial) && !frn::fuzzy_match_nucleo(title, partial)) {
                 continue;
             }
             // Short ID: UUID → first 8 chars; session_<ts>_<hex> → hex suffix.
@@ -445,7 +421,8 @@ void AppAdapter::RefreshAutocompleteSuggestions() {
             if (id.starts_with("session_")) {
                 auto pos = id.rfind('_');
                 short_id_str = (pos != std::string::npos && pos + 1 < id.size())
-                    ? id.substr(pos + 1, 8) : id.substr(0, 8);
+                                   ? id.substr(pos + 1, 8)
+                                   : id.substr(0, 8);
             } else {
                 short_id_str = id.substr(0, std::min<std::size_t>(id.size(), 8));
             }
@@ -454,35 +431,26 @@ void AppAdapter::RefreshAutocompleteSuggestions() {
             if (desc.empty() || desc == "Session") {
                 desc = entry.fallback_title;
             }
-            add_suggestion(
-                std::move(short_id_str),
-                std::move(desc),
-                id,
-                token.start,
-                token.end,
-                true);
+            add_suggestion(std::move(short_id_str), std::move(desc), id, token.start, token.end,
+                           true);
         }
     };
 
     const auto before_cursor = input.substr(0, cursor);
-    if (before_cursor.starts_with("/add-dir ") ||
-        before_cursor.starts_with("/add-dir\t")) {
+    if (before_cursor.starts_with("/add-dir ") || before_cursor.starts_with("/add-dir\t")) {
         add_directory_suggestions(token.text);
         restore_index();
         return;
     }
-    if (before_cursor.starts_with("/resume ") ||
-        before_cursor.starts_with("/resume\t") ||
-        before_cursor.starts_with("/r ") ||
-        before_cursor.starts_with("/r\t")) {
+    if (before_cursor.starts_with("/resume ") || before_cursor.starts_with("/resume\t") ||
+        before_cursor.starts_with("/r ") || before_cursor.starts_with("/r\t")) {
         add_session_suggestions(token.text);
         restore_index();
         return;
     }
 
     // @history with-space trigger: user typed "@history <query>"
-    if (before_cursor.starts_with("@history ") ||
-        before_cursor.starts_with("@history\t")) {
+    if (before_cursor.starts_with("@history ") || before_cursor.starts_with("@history\t")) {
         // Use everything after "@history " as the search query, not just
         // the token around cursor — multi-word history search should work.
         // Trim leading whitespace so "@history  " (extra spaces) is treated
@@ -493,30 +461,26 @@ void AppAdapter::RefreshAutocompleteSuggestions() {
                (history_query.front() == ' ' || history_query.front() == '\t')) {
             history_query.remove_prefix(1);
         }
-        for (const auto& sug : acsrc::build_history_suggestions(
-                 std::string(history_query), 0, cursor, 50)) {
-            add_suggestion(sug.display_text, sug.description,
-                sug.insert_text, sug.replacement_start, sug.replacement_end,
-                sug.submit_on_return, sug.id, sug.icon, sug.color_name);
+        for (const auto& sug :
+             acsrc::build_history_suggestions(std::string(history_query), 0, cursor, 50)) {
+            add_suggestion(sug.display_text, sug.description, sug.insert_text,
+                           sug.replacement_start, sug.replacement_end, sug.submit_on_return, sug.id,
+                           sug.icon, sug.color_name);
         }
         restore_index();
         return;
     }
 
-    if (input.starts_with('/') &&
-        cursor <= input.size() &&
+    if (input.starts_with('/') && cursor <= input.size() &&
         before_cursor.find_first_of(" \t\n") != std::string::npos &&
         static_cast<loom::commands::AppCommandRegistry*>(cmd_registry_raw())) {
-        auto completions = static_cast<loom::commands::AppCommandRegistry*>(cmd_registry_raw())->complete(before_cursor);
+        auto completions = static_cast<loom::commands::AppCommandRegistry*>(cmd_registry_raw())
+                               ->complete(before_cursor);
         for (auto& completion : completions) {
             const bool whole_command = completion.starts_with('/');
             add_suggestion(
-                completion,
-                "Command argument",
-                whole_command ? completion + " " : completion,
-                whole_command ? 0 : token.start,
-                whole_command ? cursor : token.end,
-                true);
+                completion, "Command argument", whole_command ? completion + " " : completion,
+                whole_command ? 0 : token.start, whole_command ? cursor : token.end, true);
         }
         if (!screen_state_->autocomplete_suggestions.empty()) {
             restore_index();
@@ -526,6 +490,7 @@ void AppAdapter::RefreshAutocompleteSuggestions() {
 
     if (token.text.starts_with('/')) {
         const auto query = std::string_view(token.text).substr(1);
+
         struct SlashCandidate {
             std::string display;
             std::string description;
@@ -534,10 +499,13 @@ void AppAdapter::RefreshAutocompleteSuggestions() {
             bool submit = true;
             std::string id;  // INF-02: source-aware stable id
         };
+
         std::vector<SlashCandidate> candidates;
 
         if (static_cast<loom::commands::AppCommandRegistry*>(cmd_registry_raw())) {
-            for (const auto* def : static_cast<loom::commands::AppCommandRegistry*>(cmd_registry_raw())->visible_commands()) {
+            for (const auto* def :
+                 static_cast<loom::commands::AppCommandRegistry*>(cmd_registry_raw())
+                     ->visible_commands()) {
                 if (!def) continue;
                 // SL-02: multi-key match — name (exact/prefix/substring/subseq)
                 // outranks a description-word match, so commands are still
@@ -560,7 +528,10 @@ void AppAdapter::RefreshAutocompleteSuggestions() {
                     // shouldExecute gate is on argNames.length.
                     bool needs_args = false;
                     for (const auto& a : def->args) {
-                        if (a.required) { needs_args = true; break; }
+                        if (a.required) {
+                            needs_args = true;
+                            break;
+                        }
                     }
                     // SL-07: show the matched alias as a parenthetical on
                     // the CANONICAL row.
@@ -619,9 +590,10 @@ void AppAdapter::RefreshAutocompleteSuggestions() {
                 std::min(loom::utils::skill_usage::get_skill_usage_score(skill.name), 3.0));
             candidates.push_back(SlashCandidate{
                 .display = "/" + skill.name,
-                .description = (skill.kind == "workflow")
-                    ? std::format("[workflow] {} skill · {}", skill.source, skill.description)
-                    : std::format("{} skill · {}", skill.source, skill.description),
+                .description =
+                    (skill.kind == "workflow")
+                        ? std::format("[workflow] {} skill · {}", skill.source, skill.description)
+                        : std::format("{} skill · {}", skill.source, skill.description),
                 .insert = "/" + skill.name + " ",
                 .rank = skill_rank - recency_bonus,
                 .submit = true,
@@ -652,7 +624,8 @@ void AppAdapter::RefreshAutocompleteSuggestions() {
         // SL-01: hidden-command exact-name escape hatch — if the user typed
         // the full name of a hidden command, surface it at the top.
         // visible_commands() otherwise hides them entirely.
-        if (auto* hidden = static_cast<loom::commands::AppCommandRegistry*>(cmd_registry_raw())->hidden_command_if_exact(query)) {
+        if (auto* hidden = static_cast<loom::commands::AppCommandRegistry*>(cmd_registry_raw())
+                               ->hidden_command_if_exact(query)) {
             candidates.push_back(SlashCandidate{
                 .display = "/" + hidden->name,
                 .description = hidden->description,
@@ -680,14 +653,9 @@ void AppAdapter::RefreshAutocompleteSuggestions() {
         }
         const std::size_t limit = std::min<std::size_t>(candidates.size(), 80);
         for (std::size_t i = 0; i < limit; ++i) {
-            add_suggestion(
-                std::move(candidates[i].display),
-                std::move(candidates[i].description),
-                std::move(candidates[i].insert),
-                token.start,
-                token.end,
-                candidates[i].submit,
-                std::move(candidates[i].id));
+            add_suggestion(std::move(candidates[i].display), std::move(candidates[i].description),
+                           std::move(candidates[i].insert), token.start, token.end,
+                           candidates[i].submit, std::move(candidates[i].id));
         }
         restore_index();
         return;
@@ -696,8 +664,7 @@ void AppAdapter::RefreshAutocompleteSuggestions() {
     // INF-01/AT-08: @ mentions are suppressed in bash mode (the @DM/@file
     // branches are gated on non-bash mode);
     // in bash mode we fall through to the $PATH shell-command scan below.
-    if (token.text.starts_with('@') &&
-        !repl::effective_is_bash(*screen_state_)) {
+    if (token.text.starts_with('@') && !repl::effective_is_bash(*screen_state_)) {
         // Strip @" prefix and trailing " for quoted paths.
         std::string raw_query_text(token.text.substr(1));
         const bool is_quoted = !raw_query_text.empty() && raw_query_text.front() == '"';
@@ -715,19 +682,19 @@ void AppAdapter::RefreshAutocompleteSuggestions() {
             auto after = std::string_view(raw_query_text).substr(7);
             while (!after.empty() && (after.front() == ' ' || after.front() == '\t'))
                 after.remove_prefix(1);
-            for (const auto& sug : acsrc::build_history_suggestions(
-                     std::string(after), token.start, token.end, 50)) {
-                add_suggestion(sug.display_text, sug.description,
-                    sug.insert_text, sug.replacement_start, sug.replacement_end,
-                    sug.submit_on_return, sug.id, sug.icon, sug.color_name);
+            for (const auto& sug :
+                 acsrc::build_history_suggestions(std::string(after), token.start, token.end, 50)) {
+                add_suggestion(sug.display_text, sug.description, sug.insert_text,
+                               sug.replacement_start, sug.replacement_end, sug.submit_on_return,
+                               sug.id, sug.icon, sug.color_name);
             }
             restore_index();
             return;
         }
 
         std::filesystem::path base = screen_state_->cwd.empty()
-            ? std::filesystem::current_path()
-            : std::filesystem::path(screen_state_->cwd);
+                                         ? std::filesystem::current_path()
+                                         : std::filesystem::path(screen_state_->cwd);
 
         // Expand ~ before resolving the directory to scan.
         // The display prefix keeps the original unexpanded form so the user
@@ -736,9 +703,8 @@ void AppAdapter::RefreshAutocompleteSuggestions() {
         std::filesystem::path expanded_path = loom::utils::path::expand_tilde(raw_path);
 
         // Compute the display prefix (unexpanded, e.g. "~/src/")
-        const auto prefix = raw_path.has_parent_path()
-            ? raw_path.parent_path().string() + "/"
-            : std::string{};
+        const auto prefix =
+            raw_path.has_parent_path() ? raw_path.parent_path().string() + "/" : std::string{};
 
         // Compute the actual directory to scan (expanded, e.g. /home/user/src)
         std::filesystem::path parent;
@@ -760,10 +726,9 @@ void AppAdapter::RefreshAutocompleteSuggestions() {
         // directory_iterator block below still handles explicit path
         // browsing (@src/...).
         // ~/ ./ ../ / all trigger path completion.
-        const bool has_separator = query.find('/') != std::string_view::npos ||
-                                   query.find('\\') != std::string_view::npos;
-        const bool is_path_like = has_separator ||
-                                  query == "~" || query == "." || query == ".." ||
+        const bool has_separator =
+            query.find('/') != std::string_view::npos || query.find('\\') != std::string_view::npos;
+        const bool is_path_like = has_separator || query == "~" || query == "." || query == ".." ||
                                   query.starts_with("~/") || query.starts_with("./") ||
                                   query.starts_with("../");
         const bool bare_query = !is_path_like;
@@ -783,7 +748,14 @@ void AppAdapter::RefreshAutocompleteSuggestions() {
                 }
                 return true;
             };
-            struct DmCandidate { std::string display; std::string insert; std::string desc; std::string color; };
+
+            struct DmCandidate {
+                std::string display;
+                std::string insert;
+                std::string desc;
+                std::string color;
+            };
+
             std::vector<DmCandidate> dms;
             for (const auto& record : completion_native_agents(screen_state_->cwd)) {
                 const auto& name = record.name;
@@ -797,9 +769,10 @@ void AppAdapter::RefreshAutocompleteSuggestions() {
             }
             if (!dms.empty()) {
                 for (auto& d : dms) {
-                    add_suggestion(std::move(d.display), std::move(d.desc),
-                                   std::move(d.insert), token.start, token.end,
-                                   false, "", std::string{loom::ui::design::figures::kCircle}, std::move(d.color));
+                    add_suggestion(std::move(d.display), std::move(d.desc), std::move(d.insert),
+                                   token.start, token.end, false, "",
+                                   std::string{loom::ui::design::figures::kCircle},
+                                   std::move(d.color));
                 }
                 restore_index();
                 return;  // exclusive: bare-@ with teammate match shows DMs only
@@ -810,12 +783,19 @@ void AppAdapter::RefreshAutocompleteSuggestions() {
         // On an empty @ query, show teammates/MCP/agents, not every file
         // in the repo. With a non-empty query the index fuzzy-matches.
         if (bare_query && !query.empty()) {
-            struct RepoCandidate { std::string display; std::string insert; std::string desc; int rank; std::string icon; };
+            struct RepoCandidate {
+                std::string display;
+                std::string insert;
+                std::string desc;
+                int rank;
+                std::string icon;
+            };
+
             std::vector<RepoCandidate> repos;
             for (const auto& rel : fidx::collect_repo_files(screen_state_->cwd)) {
                 const std::size_t slash = rel.find_last_of("/\\");
-                const std::string base = (slash == std::string_view::npos)
-                    ? rel : rel.substr(slash + 1);
+                const std::string base =
+                    (slash == std::string_view::npos) ? rel : rel.substr(slash + 1);
                 const bool match_base = frn::fuzzy_match_nucleo(base, query);
                 const bool match_path = !match_base && frn::fuzzy_match_nucleo(rel, query);
                 if (!match_base && !match_path) continue;
@@ -827,7 +807,8 @@ void AppAdapter::RefreshAutocompleteSuggestions() {
                     .insert = "@" + rel + " ",
                     .desc = is_dir ? "Directory" : "File",
                     .rank = frn::fuzzy_rank_nucleo(base, query) + (match_base ? 0 : 2),
-                    .icon = is_dir ? std::string{loom::ui::design::figures::kSquareSmall} : std::string{loom::ui::design::figures::kSquareSmall},
+                    .icon = is_dir ? std::string{loom::ui::design::figures::kSquareSmall}
+                                   : std::string{loom::ui::design::figures::kSquareSmall},
                 });
                 if (repos.size() >= 50) break;  // cap at 50 for terminal
             }
@@ -836,12 +817,18 @@ void AppAdapter::RefreshAutocompleteSuggestions() {
                 return a.display < b.display;
             });
             for (auto& r : repos) {
-                add_suggestion(std::move(r.display), std::move(r.desc),
-                               std::move(r.insert), token.start, token.end,
-                               false, "", std::move(r.icon));
+                add_suggestion(std::move(r.display), std::move(r.desc), std::move(r.insert),
+                               token.start, token.end, false, "", std::move(r.icon));
             }
         } else {
-            struct FileCandidate { std::string display; std::string insert; std::string desc; int rank; std::string icon; };
+            struct FileCandidate {
+                std::string display;
+                std::string insert;
+                std::string desc;
+                int rank;
+                std::string icon;
+            };
+
             std::vector<FileCandidate> files;
             for (const auto& entry : completion_directory_entries(base, parent)) {
                 const auto& name = entry.name;
@@ -853,12 +840,12 @@ void AppAdapter::RefreshAutocompleteSuggestions() {
                 // Icons: 📄 for files, 📁 for directories.
                 files.push_back(FileCandidate{
                     .display = "@" + rel,
-                    .insert = is_quoted
-                        ? std::format("@\"{}\"", rel)  // re-wrap in quotes
-                        : "@" + rel,
+                    .insert = is_quoted ? std::format("@\"{}\"", rel)  // re-wrap in quotes
+                                        : "@" + rel,
                     .desc = is_dir ? "Directory" : "File",
                     .rank = frn::fuzzy_rank_nucleo(name, leaf),
-                    .icon = is_dir ? std::string{loom::ui::design::figures::kSquareSmall} : std::string{loom::ui::design::figures::kSquareSmall},
+                    .icon = is_dir ? std::string{loom::ui::design::figures::kSquareSmall}
+                                   : std::string{loom::ui::design::figures::kSquareSmall},
                 });
                 if (files.size() >= 50) break;  // cap at 50 results
             }
@@ -867,15 +854,9 @@ void AppAdapter::RefreshAutocompleteSuggestions() {
                 return a.display < b.display;
             });
             for (auto& file : files) {
-                add_suggestion(
-                    std::move(file.display),
-                    std::move(file.desc),
-                    std::move(file.insert),
-                    token.start,
-                    token.end,
-                    false,
-                    "",
-                    std::move(file.icon));
+                add_suggestion(std::move(file.display), std::move(file.desc),
+                               std::move(file.insert), token.start, token.end, false, "",
+                               std::move(file.icon));
             }
         }
 
@@ -885,11 +866,10 @@ void AppAdapter::RefreshAutocompleteSuggestions() {
         // Cache source formatting; filter names and apply the current token
         // replacement range on every input event.
         for (const auto& sug : completion_agent_suggestions(screen_state_->cwd)) {
-            if (!frn::fuzzy_match_nucleo(
-                    std::string_view(sug.display_text).substr(1), query)) continue;
-            add_suggestion(sug.display_text, sug.description,
-                sug.insert_text, token.start, token.end,
-                sug.submit_on_return, sug.id, sug.icon, sug.color_name);
+            if (!frn::fuzzy_match_nucleo(std::string_view(sug.display_text).substr(1), query))
+                continue;
+            add_suggestion(sug.display_text, sug.description, sug.insert_text, token.start,
+                           token.end, sug.submit_on_return, sug.id, sug.icon, sug.color_name);
         }
         // MCP server resources (list_native_mcp_resources) are collected
         // and passed to the unified @-mention autocomplete dropdown
@@ -901,15 +881,9 @@ void AppAdapter::RefreshAutocompleteSuggestions() {
                 !frn::fuzzy_match_nucleo(resource.insert_text, query)) {
                 continue;
             }
-            add_suggestion(
-                "@" + resource.display,
-                resource.description,
-                "@" + resource.insert_text + " ",
-                token.start,
-                token.end,
-                false,
-                "",
-                std::string{loom::ui::design::figures::kSquareSmallFilled});
+            add_suggestion("@" + resource.display, resource.description,
+                           "@" + resource.insert_text + " ", token.start, token.end, false, "",
+                           std::string{loom::ui::design::figures::kSquareSmallFilled});
         }
 
         // AT-10: @-history session autocomplete — search past sessions by
@@ -924,16 +898,14 @@ void AppAdapter::RefreshAutocompleteSuggestions() {
                 const auto& m = entry.metadata;
                 const auto& id = m.session_id;
                 const auto& title = m.title.value_or("");
-                const std::string short_id =
-                    id.substr(0, std::min<std::size_t>(id.size(), 8));
-                const std::string display_label =
-                    title.empty() ? short_id : title;
+                const std::string short_id = id.substr(0, std::min<std::size_t>(id.size(), 8));
+                const std::string display_label = title.empty() ? short_id : title;
 
                 if (!frn::fuzzy_match_nucleo(display_label, query) &&
                     !frn::fuzzy_match_nucleo(id, query) &&
                     !frn::fuzzy_match_nucleo(short_id, query)) {
-                        continue;
-                    }
+                    continue;
+                }
 
                 // Build description: "Session" + short-ID hint + msg count.
                 // Count from the file on disk: metadata.message_count is 0
@@ -947,15 +919,11 @@ void AppAdapter::RefreshAutocompleteSuggestions() {
                     desc += std::format(" ({} msgs)", msg_count);
                 }
 
-                add_suggestion(
-                    "@" + display_label,
-                    std::move(desc),
-                    "@" + id,
-                    token.start,
-                    token.end,
-                    /*submit_on_return=*/false,
-                    /*id=*/"session:" + id,
-                    /*icon=*/std::string{loom::ui::design::figures::kEllipsis});
+                add_suggestion("@" + display_label, std::move(desc), "@" + id, token.start,
+                               token.end,
+                               /*submit_on_return=*/false,
+                               /*id=*/"session:" + id,
+                               /*icon=*/std::string{loom::ui::design::figures::kEllipsis});
             }
         }
 
@@ -975,13 +943,17 @@ void AppAdapter::RefreshAutocompleteSuggestions() {
                 std::string desc = "Prompt";
                 if (entry.timestamp_ms > 0) {
                     using namespace std::chrono;
-                    auto now = duration_cast<milliseconds>(
-                        system_clock::now().time_since_epoch()).count();
+                    auto now =
+                        duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count();
                     auto delta_sec = (now - entry.timestamp_ms) / 1000;
-                    if (delta_sec < 60) desc += " · just now";
-                    else if (delta_sec < 3600) desc += std::format(" · {}m ago", delta_sec / 60);
-                    else if (delta_sec < 86400) desc += std::format(" · {}h ago", delta_sec / 3600);
-                    else desc += std::format(" · {}d ago", delta_sec / 86400);
+                    if (delta_sec < 60)
+                        desc += " · just now";
+                    else if (delta_sec < 3600)
+                        desc += std::format(" · {}m ago", delta_sec / 60);
+                    else if (delta_sec < 86400)
+                        desc += std::format(" · {}h ago", delta_sec / 3600);
+                    else
+                        desc += std::format(" · {}d ago", delta_sec / 86400);
                 }
                 if (!entry.session_id.empty()) {
                     desc += std::format(" · {}", entry.session_id.substr(0, 8));
@@ -989,15 +961,11 @@ void AppAdapter::RefreshAutocompleteSuggestions() {
 
                 // Insert: the full prompt text so accepting it pastes the
                 // complete previous prompt into the input.
-                add_suggestion(
-                    "@" + display,
-                    std::move(desc),
-                    entry.full_text,
-                    token.start,
-                    token.end,
-                    /*submit_on_return=*/false,
-                    /*id=*/"prompt-history:" + std::to_string(entry.timestamp_ms),
-                    /*icon=*/std::string{loom::ui::design::figures::kSquareSmall});
+                add_suggestion("@" + display, std::move(desc), entry.full_text, token.start,
+                               token.end,
+                               /*submit_on_return=*/false,
+                               /*id=*/"prompt-history:" + std::to_string(entry.timestamp_ms),
+                               /*icon=*/std::string{loom::ui::design::figures::kSquareSmall});
             }
         }
 
@@ -1008,8 +976,7 @@ void AppAdapter::RefreshAutocompleteSuggestions() {
     // INF-01/AT-08: # channels are suppressed in bash mode (the #-channel
     // branch is gated on prompt mode); in bash mode we fall through to the
     // $PATH shell-command scan below.
-    if (token.text.starts_with('#') &&
-        !repl::effective_is_bash(*screen_state_)) {
+    if (token.text.starts_with('#') && !repl::effective_is_bash(*screen_state_)) {
         const auto query = std::string_view(token.text).substr(1);
         // Channel-like MCP resources (name starts with '#' or uri contains
         // "channel"/"slack") are passed to the #-channel autocomplete
@@ -1017,22 +984,14 @@ void AppAdapter::RefreshAutocompleteSuggestions() {
         // #-mention picker alongside native Slack channels.
         for (const auto& resource : acsrc::collect_mcp_resource_suggestions()) {
             if (!resource.channel_like) continue;
-            const auto display = resource.display.starts_with("#")
-                ? resource.display
-                : "#" + resource.display;
+            const auto display =
+                resource.display.starts_with("#") ? resource.display : "#" + resource.display;
             if (!frn::fuzzy_match_nucleo(display, token.text) &&
                 !frn::fuzzy_match_nucleo(resource.insert_text, query)) {
-                    continue;
-                }
-            add_suggestion(
-                display,
-                resource.description,
-                display + " ",
-                token.start,
-                token.end,
-                false,
-                "",
-                std::string{loom::ui::design::figures::kBullet});
+                continue;
+            }
+            add_suggestion(display, resource.description, display + " ", token.start, token.end,
+                           false, "", std::string{loom::ui::design::figures::kBullet});
         }
         restore_index();
         return;
@@ -1043,15 +1002,8 @@ void AppAdapter::RefreshAutocompleteSuggestions() {
             const auto base = std::filesystem::current_path();
             for (const auto& name : completion_shell_commands(base, path_env)) {
                 if (!frn::fuzzy_match_nucleo(name, token.text)) continue;
-                add_suggestion(
-                    name,
-                    "Shell command",
-                    name + " ",
-                    token.start,
-                    token.end,
-                    false,
-                    "",
-                    "▶_");
+                add_suggestion(name, "Shell command", name + " ", token.start, token.end, false, "",
+                               "▶_");
                 if (screen_state_->autocomplete_suggestions.size() >= 50) break;
             }
         }

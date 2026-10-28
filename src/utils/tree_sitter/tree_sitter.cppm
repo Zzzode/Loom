@@ -33,6 +33,7 @@ struct TSLanguageDeleter {
         // not be freed. No-op here to keep the unique_ptr signature uniform.
     }
 };
+
 using TSLanguageHandle = std::unique_ptr<const TSLanguage, TSLanguageDeleter>;
 
 struct TSTreeDeleter {
@@ -40,6 +41,7 @@ struct TSTreeDeleter {
         if (t) ts_tree_delete(t);
     }
 };
+
 using TSTreePtr = std::unique_ptr<TSTree, TSTreeDeleter>;
 
 struct TSParserDeleter {
@@ -47,6 +49,7 @@ struct TSParserDeleter {
         if (p) ts_parser_delete(p);
     }
 };
+
 using TSParserPtr = std::unique_ptr<TSParser, TSParserDeleter>;
 
 struct TSQueryDeleter {
@@ -54,6 +57,7 @@ struct TSQueryDeleter {
         if (q) ts_query_delete(q);
     }
 };
+
 using TSQueryPtr = std::unique_ptr<TSQuery, TSQueryDeleter>;
 
 struct TSQueryCursorDeleter {
@@ -61,13 +65,16 @@ struct TSQueryCursorDeleter {
         if (c) ts_query_cursor_delete(c);
     }
 };
+
 using TSQueryCursorPtr = std::unique_ptr<TSQueryCursor, TSQueryCursorDeleter>;
 
 // ─── Parser ──────────────────────────────────────────────────────────────────
 /// Opaque RAII wrapper around TSParser.  Non-copyable, moveable.
 class Parser {
 public:
-    Parser() : p_(ts_parser_new()) {}
+    Parser()
+        : p_(ts_parser_new()) {}
+
     ~Parser() = default;
     Parser(const Parser&) = delete;
     Parser& operator=(const Parser&) = delete;
@@ -83,9 +90,8 @@ public:
     /// Parse a UTF-8 script into a tree.  Returns nullptr on allocation failure.
     [[nodiscard]] TSTreePtr parse(std::string_view src) const noexcept {
         if (!p_) return nullptr;
-        return TSTreePtr{ts_parser_parse_string(
-            p_.get(), nullptr, src.data(),
-            static_cast<uint32_t>(src.size()))};
+        return TSTreePtr{ts_parser_parse_string(p_.get(), nullptr, src.data(),
+                                                static_cast<uint32_t>(src.size()))};
     }
 
     /// Access to the raw parser (used for advanced consumers such as re-parsing with
@@ -107,6 +113,7 @@ public:
         uint32_t start_byte = 0;
         uint32_t end_byte = 0;
     };
+
     struct Match {
         uint32_t query_id = 0;
         uint32_t pattern_index = 0;
@@ -122,12 +129,8 @@ public:
         }
         uint32_t err_offset = 0;
         TSQueryError err = TSQueryErrorNone;
-        q_.reset(ts_query_new(
-            lang,
-            pattern.data(),
-            static_cast<uint32_t>(pattern.size()),
-            &err_offset,
-            &err));
+        q_.reset(ts_query_new(lang, pattern.data(), static_cast<uint32_t>(pattern.size()),
+                              &err_offset, &err));
         if (q_) {
             uint32_t count = ts_query_capture_count(q_.get());
             capture_names_.resize(count);
@@ -143,14 +146,15 @@ public:
     }
 
     [[nodiscard]] bool ok() const noexcept { return q_ != nullptr; }
+
     [[nodiscard]] const std::string& error() const noexcept { return error_msg_; }
+
     [[nodiscard]] uint32_t pattern_count() const noexcept { return pattern_count_; }
 
     /// Run the query over `tree` and return all matches ordered by pattern.
     /// The `src` text is optional here because tree-sitter already owns node ranges; the
     /// parameter is retained for symmetry with higher-level text extraction helpers.
-    [[nodiscard]] std::vector<Match> matches(TSTree* tree,
-                                         std::string_view /*src*/ = {}) const {
+    [[nodiscard]] std::vector<Match> matches(TSTree* tree, std::string_view /*src*/ = {}) const {
         std::vector<Match> out;
         if (!q_ || !tree) return out;
         TSQueryCursorPtr cursor{ts_query_cursor_new()};
@@ -170,7 +174,7 @@ public:
                 }
                 TSNode n = c.node;
                 cap.start_byte = ts_node_start_byte(n);
-                cap.end_byte   = ts_node_end_byte(n);
+                cap.end_byte = ts_node_end_byte(n);
                 m.captures.push_back(std::move(cap));
             }
             out.push_back(std::move(m));
@@ -182,13 +186,20 @@ private:
     static std::string describe_query_error(TSQueryError err, uint32_t off) {
         std::string msg = "ts_query_new failed at offset " + std::to_string(off) + ": ";
         switch (err) {
-            case TSQueryErrorSyntax:    return msg + "syntax";
-            case TSQueryErrorNodeType:  return msg + "unknown node type";
-            case TSQueryErrorField:   return msg + "unknown field";
-            case TSQueryErrorCapture: return msg + "bad capture";
-            case TSQueryErrorStructure: return msg + "bad structure";
-            case TSQueryErrorLanguage:  return msg + "language version mismatch";
-            default: return msg + "unknown";
+        case TSQueryErrorSyntax:
+            return msg + "syntax";
+        case TSQueryErrorNodeType:
+            return msg + "unknown node type";
+        case TSQueryErrorField:
+            return msg + "unknown field";
+        case TSQueryErrorCapture:
+            return msg + "bad capture";
+        case TSQueryErrorStructure:
+            return msg + "bad structure";
+        case TSQueryErrorLanguage:
+            return msg + "language version mismatch";
+        default:
+            return msg + "unknown";
         }
     }
 
@@ -204,7 +215,7 @@ private:
     return tree_sitter_bash();
 }
 
-#else   // !LOOM_HAS_TREE_SITTER
+#else  // !LOOM_HAS_TREE_SITTER
 
 // ─── Disabled stubs ────────────────────────────────────────────────────────
 // When tree-sitter is not linked we provide zero-dependency stub types so
@@ -212,10 +223,16 @@ private:
 // Query::ok is always false.  Higher layers must treat this as a parse
 // failure (conservative fallback → manual approval required).
 
-struct TSLanguageDeleter { void operator()(void const*) const noexcept {} };
+struct TSLanguageDeleter {
+    void operator()(void const*) const noexcept {}
+};
+
 using TSLanguageHandle = std::unique_ptr<const void, TSLanguageDeleter>;
 
-struct TSTreeDeleter { void operator()(void*) const noexcept {} };
+struct TSTreeDeleter {
+    void operator()(void*) const noexcept {}
+};
+
 using TSTreePtr = std::unique_ptr<void, TSTreeDeleter>;
 
 class Parser {
@@ -228,7 +245,9 @@ public:
     Parser& operator=(Parser&&) noexcept = default;
 
     [[nodiscard]] bool set_language(const void*) const noexcept { return false; }
+
     [[nodiscard]] TSTreePtr parse(std::string_view /*src*/) const noexcept { return nullptr; }
+
     [[nodiscard]] void* raw() const noexcept { return nullptr; }
 };
 
@@ -240,6 +259,7 @@ public:
         uint32_t start_byte = 0;
         uint32_t end_byte = 0;
     };
+
     struct Match {
         uint32_t query_id = 0;
         uint32_t pattern_index = 0;
@@ -251,11 +271,12 @@ public:
     }
 
     [[nodiscard]] bool ok() const noexcept { return false; }
+
     [[nodiscard]] const std::string& error() const noexcept { return error_msg_; }
+
     [[nodiscard]] uint32_t pattern_count() const noexcept { return 0; }
 
-    [[nodiscard]] std::vector<Match> matches(void* /*tree*/,
-                                          std::string_view = {}) const {
+    [[nodiscard]] std::vector<Match> matches(void* /*tree*/, std::string_view = {}) const {
         return {};
     }
 

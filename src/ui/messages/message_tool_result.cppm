@@ -2,11 +2,12 @@
 /// @brief Tool result message rendering (success/error states)
 module;
 
-#include <cctype>
-#include <cstdint>
-#include <ftxui/dom/elements.hpp>
 #include <ftxui/component/component.hpp>
+#include <ftxui/dom/elements.hpp>
+
+#include <cctype>
 #include <cstddef>
+#include <cstdint>
 
 export module loom.ui.messages.message_tool_result;
 
@@ -20,9 +21,9 @@ import loom.constants.xml;
 // apply_sgr_run, ansi_to_ftxui_elements) moved to the chrome leaf
 // loom.ui.chrome.ansi_render; messages -> chrome is downward-legal.
 import loom.ui.chrome.ansi_render;
-import loom.ui.messages.message_components;  // for padding() Decorator
+import loom.ui.messages.message_components; // for padding() Decorator
 import loom.ui.messages.xml_tags;
-import loom.ui.visual.markdown;                     // render_markdown() for natural-language tool results
+import loom.ui.visual.markdown; // render_markdown() for natural-language tool results
 
 export namespace loom::ui::messages {
 
@@ -75,12 +76,29 @@ using namespace ftxui;
 
         // Single-char escapes
         switch (next) {
-            case 'n':  out += '\n'; ++i; break;   // \n → newline
-            case 't':  out += '\t'; ++i; break;   // \t → tab
-            case '"':  out += '"';  ++i; break;   // \" → quote
-            case '\\': out += '\\'; ++i; break;   // \\ → backslash (JSON)
-            case '/':  out += '/';  ++i; break;   // \/ → forward slash (JSON)
-            default:   out += '\\'; break;        // unknown escape: keep backslash
+        case 'n':
+            out += '\n';
+            ++i;
+            break;  // \n → newline
+        case 't':
+            out += '\t';
+            ++i;
+            break;  // \t → tab
+        case '"':
+            out += '"';
+            ++i;
+            break;  // \" → quote
+        case '\\':
+            out += '\\';
+            ++i;
+            break;  // \\ → backslash (JSON)
+        case '/':
+            out += '/';
+            ++i;
+            break;  // \/ → forward slash (JSON)
+        default:
+            out += '\\';
+            break;  // unknown escape: keep backslash
         }
     }
     return out;
@@ -112,13 +130,27 @@ namespace detail {
         char c = s[pos++];
         if (escape) {
             switch (c) {
-                case 'n':  result += '\n'; break;
-                case 't':  result += '\t'; break;
-                case 'r':  result += '\r'; break;
-                case '"':  result += '"';  break;
-                case '\\': result += '\\'; break;
-                case '/':  result += '/';  break;
-                default:   result += c;    break;
+            case 'n':
+                result += '\n';
+                break;
+            case 't':
+                result += '\t';
+                break;
+            case 'r':
+                result += '\r';
+                break;
+            case '"':
+                result += '"';
+                break;
+            case '\\':
+                result += '\\';
+                break;
+            case '/':
+                result += '/';
+                break;
+            default:
+                result += c;
+                break;
             }
             escape = false;
         } else if (c == '\\') {
@@ -148,9 +180,8 @@ namespace detail {
     // Looks for ANY string value that is "dominant" (large enough),
     // not just specific key names — but we prioritize known text keys.
     static constexpr std::string_view kTextKeys[] = {
-        "text", "messages", "content", "analysis",
-        "result", "summary", "output", "description",
-        "caption", "body",
+        "text",    "messages", "content",     "analysis", "result",
+        "summary", "output",   "description", "caption",  "body",
     };
 
     // Scan for key-value patterns: "key":"value"  inside the JSON object.
@@ -166,7 +197,8 @@ namespace detail {
         while ((search_pos = s.find(pat, search_pos)) != std::string_view::npos) {
             std::size_t after_key = search_pos + pat.size();
             // Skip whitespace after colon
-            while (after_key < s.size() && s[after_key] == ' ') ++after_key;
+            while (after_key < s.size() && s[after_key] == ' ')
+                ++after_key;
 
             // Expect a string value starting with "
             if (after_key < s.size() && s[after_key] == '"') {
@@ -204,8 +236,7 @@ namespace detail {
 /// text, so we need this extraction step.
 ///
 /// Returns the decoded text string, or nullopt if the pattern doesn't match.
-[[nodiscard]] std::optional<std::string> try_extract_result_summary_text(
-    std::string_view s) {
+[[nodiscard]] std::optional<std::string> try_extract_result_summary_text(std::string_view s) {
     // Look for "_result_summary" or "result_summary" anywhere in the string.
     // Common patterns: "analyze_image_result_summary:", "tool_result_summary:"
     auto summary_pos = s.find("result_summary");
@@ -227,7 +258,8 @@ namespace detail {
 
     // Skip whitespace after the colon
     std::size_t after_key = key_pos + kTextKey.size();
-    while (after_key < s.size() && s[after_key] == ' ') ++after_key;
+    while (after_key < s.size() && s[after_key] == ' ')
+        ++after_key;
 
     // Expect a string value starting with "
     if (after_key >= s.size() || s[after_key] != '"') return std::nullopt;
@@ -241,7 +273,7 @@ namespace detail {
     return extracted;
 }
 
-} // namespace detail
+}  // namespace detail
 
 /// Tools whose results are LLM-generated natural language (not raw structured
 /// output).  AgentTool, BriefTool, ExitPlanModeTool all render their results
@@ -287,17 +319,23 @@ struct ToolResultOptions {
 [[nodiscard]] inline Element render_tool_result(const ToolResultOptions& opts) {
     auto status_indicator = [&]() -> Element {
         switch (opts.status) {
-            case ToolResultStatus::Success: return text("✓") | color(loom::ui::design::theme::current_theme().palette->success);
-            case ToolResultStatus::Error: return text("✗") | color(loom::ui::design::theme::current_theme().palette->danger);
-            case ToolResultStatus::Timeout: return text("Timeout") | color(loom::ui::design::theme::current_theme().palette->warning);
-            case ToolResultStatus::Cancelled: return text("⊘") | color(loom::ui::design::theme::current_theme().palette->muted);
+        case ToolResultStatus::Success:
+            return text("✓") | color(loom::ui::design::theme::current_theme().palette->success);
+        case ToolResultStatus::Error:
+            return text("✗") | color(loom::ui::design::theme::current_theme().palette->danger);
+        case ToolResultStatus::Timeout:
+            return text("Timeout") |
+                   color(loom::ui::design::theme::current_theme().palette->warning);
+        case ToolResultStatus::Cancelled:
+            return text("⊘") | color(loom::ui::design::theme::current_theme().palette->muted);
         }
         return text("?");
     }();
 
     std::vector<Element> elements;
     elements.push_back(hbox({
-        status_indicator, text(" "),
+        status_indicator,
+        text(" "),
         text(opts.tool_name) | bold,
         opts.duration_ms ? (text(std::format(" ({:.0f}ms)", *opts.duration_ms)) | dim) : text(""),
     }));
@@ -309,12 +347,13 @@ struct ToolResultOptions {
         // spans match the previous subdued look.  ansi_to_ftxui_elements
         // returns its per-line vector type-erased (see ansi_render.cppm);
         // cast it back and compose the lines.
-        auto ansi_elems = std::static_pointer_cast<std::vector<Element>>(
-            ansi_to_ftxui_elements(*opts.output));
+        auto ansi_elems =
+            std::static_pointer_cast<std::vector<Element>>(ansi_to_ftxui_elements(*opts.output));
         elements.push_back(vbox(std::move(*ansi_elems)) | dim);
     }
     if (opts.error_message) {
-        elements.push_back(text(*opts.error_message) | color(loom::ui::design::theme::current_theme().palette->danger));
+        elements.push_back(text(*opts.error_message) |
+                           color(loom::ui::design::theme::current_theme().palette->danger));
     }
     if (opts.is_truncated) {
         elements.push_back(text("  (output truncated)") | dim);
@@ -346,13 +385,13 @@ struct ToolResultOptions {
 
 /// Kind of tool result.
 enum class ToolResultKind {
-    Success,          // normal successful tool result (default)
-    Error,            // is_error = true (generic error fallback)
-    Interrupted,      // INTERRUPT_MESSAGE_FOR_TOOL_USE (user Ctrl-C mid-tool)
-    Rejected,         // REJECT_MESSAGE prefix (user rejected tool use)
-    Canceled,         // CANCEL_MESSAGE prefix (user canceled execution)
-    PlanRejected,     // PLAN_REJECTION_PREFIX (user rejected a plan)
-    ClassifierDenied, // auto-mode classifier denied the tool
+    Success,           // normal successful tool result (default)
+    Error,             // is_error = true (generic error fallback)
+    Interrupted,       // INTERRUPT_MESSAGE_FOR_TOOL_USE (user Ctrl-C mid-tool)
+    Rejected,          // REJECT_MESSAGE prefix (user rejected tool use)
+    Canceled,          // CANCEL_MESSAGE prefix (user canceled execution)
+    PlanRejected,      // PLAN_REJECTION_PREFIX (user rejected a plan)
+    ClassifierDenied,  // auto-mode classifier denied the tool
 };
 
 /// Faithful data model.
@@ -392,7 +431,7 @@ namespace detail {
 
 /// Wrap content in a MessageResponse-style envelope.
 [[nodiscard]] inline Element wrap_message_response(Element body) {
-    return hbox({ message_response_prefix(), std::move(body) });
+    return hbox({message_response_prefix(), std::move(body)});
 }
 
 // ─── Interrupted-by-user ─────────────────────────────────────────────────
@@ -431,10 +470,8 @@ namespace detail {
 
 /// Remove sandbox-violations tag pairs while preserving their content.
 [[nodiscard]] inline std::string remove_sandbox_tags(std::string_view text) {
-    const std::string open = std::format(
-        "<{}>", loom::constants::xml::SANDBOX_VIOLATIONS_TAG);
-    const std::string close = std::format(
-        "</{}>", loom::constants::xml::SANDBOX_VIOLATIONS_TAG);
+    const std::string open = std::format("<{}>", loom::constants::xml::SANDBOX_VIOLATIONS_TAG);
+    const std::string close = std::format("</{}>", loom::constants::xml::SANDBOX_VIOLATIONS_TAG);
 
     std::string result;
     result.reserve(text.size());
@@ -462,7 +499,7 @@ namespace detail {
 
 /// Strip <error> and </error> tags (keep inner content).
 [[nodiscard]] inline std::string strip_error_tags(std::string_view text) {
-    constexpr std::string_view kOpen  = "<error>";
+    constexpr std::string_view kOpen = "<error>";
     constexpr std::string_view kClose = "</error>";
 
     std::string result;
@@ -493,15 +530,13 @@ namespace detail {
 inline void trim_string(std::string& s) {
     // ltrim
     auto it = s.begin();
-    while (it != s.end() &&
-           std::isspace(static_cast<unsigned char>(*it))) {
+    while (it != s.end() && std::isspace(static_cast<unsigned char>(*it))) {
         ++it;
     }
     s.erase(s.begin(), it);
     // rtrim
     auto rit = s.end();
-    while (rit != s.begin() &&
-           std::isspace(static_cast<unsigned char>(*(rit - 1)))) {
+    while (rit != s.begin() && std::isspace(static_cast<unsigned char>(*(rit - 1)))) {
         --rit;
     }
     s.erase(rit, s.end());
@@ -511,7 +546,8 @@ constexpr int kMaxRenderedLines = 10;
 
 [[nodiscard]] inline int count_newlines(std::string_view s) {
     int count = 0;
-    for (char c : s) if (c == '\n') ++count;
+    for (char c : s)
+        if (c == '\n') ++count;
     return count;
 }
 
@@ -527,32 +563,31 @@ constexpr int kMaxRenderedLines = 10;
         pos = nl + 1;
         ++lines;
     }
-    if (lines == n && pos > 0) --pos; // back up over the final \n
+    if (lines == n && pos > 0) --pos;  // back up over the final \n
     return std::string(s.substr(0, pos));
 }
 
 /// Render the fallback error message.
-[[nodiscard]] inline Element output_expansion_hint(
-    std::string_view summary, bool expanded, bool is_transcript_mode) {
-    Elements parts{ text(std::string(summary) + " "),
-                    message_action(expanded ? "Show less" : "Show more") };
+[[nodiscard]] inline Element output_expansion_hint(std::string_view summary, bool expanded,
+                                                   bool is_transcript_mode) {
+    Elements parts{text(std::string(summary) + " "),
+                   message_action(expanded ? "Show less" : "Show more")};
     if (!is_transcript_mode) {
         parts.push_back(message_key_hint("Ctrl+E", "Toggle tools"));
     }
     return flexbox(std::move(parts));
 }
 
-[[nodiscard]] inline Element render_fallback_error(
-    std::string_view error_text, bool verbose, bool is_transcript_mode) {
-    std::string extracted = xml_tags::extract_tag(error_text, "tool_use_error")
-        .value_or(std::string(error_text));
+[[nodiscard]] inline Element render_fallback_error(std::string_view error_text, bool verbose,
+                                                   bool is_transcript_mode) {
+    std::string extracted =
+        xml_tags::extract_tag(error_text, "tool_use_error").value_or(std::string(error_text));
     std::string without_sandbox = remove_sandbox_tags(extracted);
     std::string without_error = strip_error_tags(without_sandbox);
     trim_string(without_error);
 
     std::string error;
-    if (!verbose &&
-        without_error.find("InputValidationError: ") != std::string::npos) {
+    if (!verbose && without_error.find("InputValidationError: ") != std::string::npos) {
         error = "Invalid tool parameters";
     } else if (without_error.substr(0, 7) == "Error: " ||
                without_error.substr(0, 11) == "Cancelled: ") {
@@ -575,9 +610,10 @@ constexpr int kMaxRenderedLines = 10;
 
     Elements lines;
     {
-        auto ansi_elems = std::static_pointer_cast<std::vector<Element>>(
-            ansi_to_ftxui_elements(display_text));
-        lines.push_back(vbox(std::move(*ansi_elems)) | color(loom::ui::design::theme::current_theme().palette->danger));
+        auto ansi_elems =
+            std::static_pointer_cast<std::vector<Element>>(ansi_to_ftxui_elements(display_text));
+        lines.push_back(vbox(std::move(*ansi_elems)) |
+                        color(loom::ui::design::theme::current_theme().palette->danger));
     }
 
     if (verbose && plus_lines > 0) {
@@ -601,8 +637,7 @@ constexpr int kMaxRenderedLines = 10;
 // "User rejected Loom's plan:" label + plan content in a round-border box
 // with planMode color (purple).
 
-[[nodiscard]] inline Element render_rejected_plan(
-    std::string_view plan_content) {
+[[nodiscard]] inline Element render_rejected_plan(std::string_view plan_content) {
     // Render plan as plain text inside a ROUNDED-border box with plan-mode
     // color.  padding(0,1,0,1) gives 1 cell of horizontal padding
     // (left+right).
@@ -613,238 +648,224 @@ constexpr int kMaxRenderedLines = 10;
     while (start <= plan_content.size()) {
         auto nl = plan_content.find('\n', start);
         if (nl == std::string_view::npos) {
-            plan_lines.push_back(text(
-                std::string(plan_content.substr(start))));
+            plan_lines.push_back(text(std::string(plan_content.substr(start))));
             break;
         }
-        plan_lines.push_back(text(
-            std::string(plan_content.substr(start, nl - start))));
+        plan_lines.push_back(text(std::string(plan_content.substr(start, nl - start))));
         start = nl + 1;
     }
 
-    Element plan_box = vbox(std::move(plan_lines))
-        | borderStyled(BorderStyle::ROUNDED, loom::ui::design::theme::current_theme().palette->plan_mode)
-        | padding(/*top=*/0, /*right=*/1, /*bottom=*/0, /*left=*/1);
+    Element plan_box = vbox(std::move(plan_lines)) |
+                       borderStyled(BorderStyle::ROUNDED,
+                                    loom::ui::design::theme::current_theme().palette->plan_mode) |
+                       padding(/*top=*/0, /*right=*/1, /*bottom=*/0, /*left=*/1);
 
     Elements inner;
-    inner.push_back(
-        text("User rejected Loom's plan:") | color(loom::ui::design::theme::current_theme().palette->muted));
+    inner.push_back(text("User rejected Loom's plan:") |
+                    color(loom::ui::design::theme::current_theme().palette->muted));
     inner.push_back(std::move(plan_box));
 
     return wrap_message_response(vbox(std::move(inner)));
 }
 
-} // namespace detail
+}  // namespace detail
 
 // ─── Faithful top-level dispatcher ────────────────────────────────────────
 /// Dispatch order: Canceled → Rejected → Error → Success
 ///
 /// `add_margin` controls the blank separator line above tool result rows.
 /// Defaults true; the caller threads the turn-boundary-computed value.
-[[nodiscard]] inline Element RenderToolResultMessageFaithful(
-    const ToolResultFaithfulData& data, bool add_margin = true) {
+[[nodiscard]] inline Element RenderToolResultMessageFaithful(const ToolResultFaithfulData& data,
+                                                             bool add_margin = true) {
     using K = ToolResultKind;
     Element result;
 
     switch (data.kind) {
-        case K::Canceled:
-            // UserToolCanceledMessage → MessageResponse + InterruptedByUser
-            result = detail::wrap_message_response(
-                detail::render_interrupted_by_user());
-            break;
+    case K::Canceled:
+        // UserToolCanceledMessage → MessageResponse + InterruptedByUser
+        result = detail::wrap_message_response(detail::render_interrupted_by_user());
+        break;
 
-        case K::Interrupted:
-            // UserToolErrorMessage: includes INTERRUPT_MESSAGE
-            // → MessageResponse + InterruptedByUser
-            result = detail::wrap_message_response(
-                detail::render_interrupted_by_user());
-            break;
+    case K::Interrupted:
+        // UserToolErrorMessage: includes INTERRUPT_MESSAGE
+        // → MessageResponse + InterruptedByUser
+        result = detail::wrap_message_response(detail::render_interrupted_by_user());
+        break;
 
-        case K::Rejected:
-            // UserToolRejectMessage → fallback path
-            result = detail::render_fallback_rejected();
-            break;
+    case K::Rejected:
+        // UserToolRejectMessage → fallback path
+        result = detail::render_fallback_rejected();
+        break;
 
-        case K::PlanRejected:
-            // UserToolErrorMessage: PLAN_REJECTION_PREFIX
-            result = detail::render_rejected_plan(
-                data.content.value_or(""));
-            break;
+    case K::PlanRejected:
+        // UserToolErrorMessage: PLAN_REJECTION_PREFIX
+        result = detail::render_rejected_plan(data.content.value_or(""));
+        break;
 
-        case K::ClassifierDenied: {
-            // UserToolErrorMessage: isClassifierDenial
-            std::string msg =
-                "Denied by auto mode classifier \xc2\xb7 /feedback if incorrect";
-            result = detail::wrap_message_response(text(msg) | dim);
+    case K::ClassifierDenied: {
+        // UserToolErrorMessage: isClassifierDenial
+        std::string msg = "Denied by auto mode classifier \xc2\xb7 /feedback if incorrect";
+        result = detail::wrap_message_response(text(msg) | dim);
+        break;
+    }
+
+    case K::Error: {
+        // UserToolErrorMessage fallback path
+        std::string content = data.content.value_or("Tool execution failed");
+        result = detail::render_fallback_error(content, data.verbose, data.is_transcript_mode);
+        break;
+    }
+
+    case K::Success: {
+        // UserToolSuccessMessage renders tool.render_tool_result_message()
+        // directly — NO "✓ tool_name" header.  The result body is wrapped in
+        // <MessageResponse> (⎿ connector) by the tool's own renderer.
+        // For BashTool: stdout wrapped in MessageResponse.
+
+        bool has_content_items = data.content_items && !data.content_items->empty();
+        bool has_flat_content = data.content && !data.content->empty();
+
+        if (!has_content_items && !has_flat_content) {
+            // Empty success: "(No output)" in MessageResponse style
+            result = detail::wrap_message_response(text("(No output)") | dim);
             break;
         }
 
-        case K::Error: {
-            // UserToolErrorMessage fallback path
-            std::string content = data.content.value_or("Tool execution failed");
-            result = detail::render_fallback_error(content, data.verbose, data.is_transcript_mode);
-            break;
-        }
+        Elements elems;
 
-        case K::Success: {
-            // UserToolSuccessMessage renders tool.render_tool_result_message()
-            // directly — NO "✓ tool_name" header.  The result body is wrapped in
-            // <MessageResponse> (⎿ connector) by the tool's own renderer.
-            // For BashTool: stdout wrapped in MessageResponse.
-
-            bool has_content_items = data.content_items && !data.content_items->empty();
-            bool has_flat_content = data.content && !data.content->empty();
-
-            if (!has_content_items && !has_flat_content) {
-                // Empty success: "(No output)" in MessageResponse style
-                result = detail::wrap_message_response(
-                    text("(No output)") | dim);
-                break;
+        if (has_content_items) {
+            // Line-count truncation: when not verbose, show at most
+            // kMaxRenderedLines (10) with a "+N lines" hint.  Matches
+            // the flat-content path below.
+            int total_lines = 0;
+            for (const auto& item : *data.content_items) {
+                if (item.type == "text") {
+                    std::string tc = item.text;
+                    if (auto unwrapped = detail::try_unwrap_text_payload(tc))
+                        tc = std::move(*unwrapped);
+                    while (!tc.empty() && (tc.back() == '\n' || tc.back() == '\r'))
+                        tc.pop_back();
+                    if (tc.empty()) continue;
+                    total_lines += detail::count_newlines(tc) + 1;
+                } else if (item.type == "image") {
+                    total_lines += 1;
+                }
             }
+            int plus_lines = total_lines - detail::kMaxRenderedLines;
+            int lines_budget = data.verbose ? total_lines : detail::kMaxRenderedLines;
 
-            Elements elems;
-
-            if (has_content_items) {
-                // Line-count truncation: when not verbose, show at most
-                // kMaxRenderedLines (10) with a "+N lines" hint.  Matches
-                // the flat-content path below.
-                int total_lines = 0;
-                for (const auto& item : *data.content_items) {
-                    if (item.type == "text") {
-                        std::string tc = item.text;
-                        if (auto unwrapped = detail::try_unwrap_text_payload(tc))
-                            tc = std::move(*unwrapped);
-                        while (!tc.empty() &&
-                               (tc.back() == '\n' || tc.back() == '\r'))
-                            tc.pop_back();
-                        if (tc.empty()) continue;
-                        total_lines += detail::count_newlines(tc) + 1;
-                    } else if (item.type == "image") {
-                        total_lines += 1;
+            for (const auto& item : *data.content_items) {
+                if (!data.verbose && lines_budget <= 0) break;
+                if (item.type == "text") {
+                    std::string text_content = item.text;
+                    if (auto unwrapped = detail::try_unwrap_text_payload(text_content)) {
+                        text_content = std::move(*unwrapped);
                     }
-                }
-                int plus_lines = total_lines - detail::kMaxRenderedLines;
-                int lines_budget = data.verbose ? total_lines
-                                                : detail::kMaxRenderedLines;
-
-                for (const auto& item : *data.content_items) {
-                    if (!data.verbose && lines_budget <= 0) break;
-                    if (item.type == "text") {
-                        std::string text_content = item.text;
-                        if (auto unwrapped = detail::try_unwrap_text_payload(text_content)) {
-                            text_content = std::move(*unwrapped);
+                    // Trim trailing newlines — shell output typically ends
+                    // with \n which would produce an extra blank ⎿ line.
+                    while (!text_content.empty() &&
+                           (text_content.back() == '\n' || text_content.back() == '\r'))
+                        text_content.pop_back();
+                    if (text_content.empty()) continue;
+                    // Truncate this item if it would exceed the budget.
+                    if (!data.verbose && plus_lines > 0) {
+                        int item_lines = detail::count_newlines(text_content) + 1;
+                        if (item_lines > lines_budget) {
+                            text_content = detail::take_first_lines(text_content, lines_budget);
+                            lines_budget = 0;
+                        } else {
+                            lines_budget -= item_lines;
                         }
-                        // Trim trailing newlines — shell output typically ends
-                        // with \n which would produce an extra blank ⎿ line.
-                        while (!text_content.empty() &&
-                               (text_content.back() == '\n' || text_content.back() == '\r'))
-                            text_content.pop_back();
-                        if (text_content.empty()) continue;
-                        // Truncate this item if it would exceed the budget.
-                        if (!data.verbose && plus_lines > 0) {
-                            int item_lines = detail::count_newlines(text_content) + 1;
-                            if (item_lines > lines_budget) {
-                                text_content = detail::take_first_lines(
-                                    text_content, lines_budget);
-                                lines_budget = 0;
-                            } else {
-                                lines_budget -= item_lines;
-                            }
-                        }
-                        auto ansi_elems = std::static_pointer_cast<std::vector<Element>>(
-                            ansi_to_ftxui_elements(text_content));
-                        elems.push_back(detail::wrap_message_response(
-                            vbox(std::move(*ansi_elems))));
-                    } else if (item.type == "image") {
-                        elems.push_back(detail::wrap_message_response(
-                            text("[Image]") | dim));
-                        if (!data.verbose && plus_lines > 0)
-                            --lines_budget;
                     }
+                    auto ansi_elems = std::static_pointer_cast<std::vector<Element>>(
+                        ansi_to_ftxui_elements(text_content));
+                    elems.push_back(detail::wrap_message_response(vbox(std::move(*ansi_elems))));
+                } else if (item.type == "image") {
+                    elems.push_back(detail::wrap_message_response(text("[Image]") | dim));
+                    if (!data.verbose && plus_lines > 0) --lines_budget;
                 }
-                // Recoverable preview truncation uses the row click action and mode-specific shortcut.
-                if (data.verbose && plus_lines > 0) {
-                    elems.push_back(detail::wrap_message_response(
-                        detail::output_expansion_hint("", true, data.is_transcript_mode)));
-                }
-                if (!data.verbose && plus_lines > 0) {
-                    std::string hint = "\xe2\x80\xa6 +";
-                    hint += std::to_string(plus_lines);
-                    hint += " line";
-                    if (plus_lines != 1) hint += 's';
-                    elems.push_back(detail::wrap_message_response(
-                        detail::output_expansion_hint(hint, false, data.is_transcript_mode)));
-                }
+            }
+            // Recoverable preview truncation uses the row click action and mode-specific shortcut.
+            if (data.verbose && plus_lines > 0) {
+                elems.push_back(detail::wrap_message_response(
+                    detail::output_expansion_hint("", true, data.is_transcript_mode)));
+            }
+            if (!data.verbose && plus_lines > 0) {
+                std::string hint = "\xe2\x80\xa6 +";
+                hint += std::to_string(plus_lines);
+                hint += " line";
+                if (plus_lines != 1) hint += 's';
+                elems.push_back(detail::wrap_message_response(
+                    detail::output_expansion_hint(hint, false, data.is_transcript_mode)));
+            }
+        } else {
+            std::string output = *data.content;
+            if (auto unwrapped = detail::try_unwrap_text_payload(output)) {
+                output = std::move(*unwrapped);
+            }
+            constexpr std::size_t kMaxLen = 4000;
+            const bool chars_hidden = output.size() > kMaxLen;
+            // Line-count truncation: when not verbose, show at most
+            // kMaxRenderedLines (10) with a "+N lines" hint.  Matches
+            // Claude Code / Codex behaviour where long tool output
+            // (e.g. Read of a large file) is collapsed by default.
+            int total_lines = detail::count_newlines(output) + 1;
+            int plus_lines = total_lines - detail::kMaxRenderedLines;
+            std::string display_output;
+            if (data.verbose || plus_lines <= 0) {
+                display_output = output;
             } else {
-                std::string output = *data.content;
-                if (auto unwrapped = detail::try_unwrap_text_payload(output)) {
-                    output = std::move(*unwrapped);
-                }
-                constexpr std::size_t kMaxLen = 4000;
-                const bool chars_hidden = output.size() > kMaxLen;
-                // Line-count truncation: when not verbose, show at most
-                // kMaxRenderedLines (10) with a "+N lines" hint.  Matches
-                // Claude Code / Codex behaviour where long tool output
-                // (e.g. Read of a large file) is collapsed by default.
-                int total_lines = detail::count_newlines(output) + 1;
-                int plus_lines = total_lines - detail::kMaxRenderedLines;
-                std::string display_output;
-                if (data.verbose || plus_lines <= 0) {
-                    display_output = output;
-                } else {
-                    display_output = detail::take_first_lines(
-                        output, detail::kMaxRenderedLines);
-                }
-                if (!data.verbose && display_output.size() > kMaxLen) {
-                    // Do not cut through a UTF-8 code point at the preview boundary.
-                    std::size_t end = kMaxLen;
-                    while (end > 0 && (static_cast<unsigned char>(display_output[end]) & 0xC0) == 0x80)
-                        --end;
-                    display_output.resize(end);
-                    display_output += "…";
-                }
-                // Collect all lines into a single vbox, then wrap once so
-                // the ⎿ connector appears only on the first line (not on
-                // every line).
-                Elements line_elems;
-                std::size_t line_start = 0;
-                while (line_start < display_output.size()) {
-                    auto nl = display_output.find('\n', line_start);
-                    std::string_view line = (nl == std::string::npos)
+                display_output = detail::take_first_lines(output, detail::kMaxRenderedLines);
+            }
+            if (!data.verbose && display_output.size() > kMaxLen) {
+                // Do not cut through a UTF-8 code point at the preview boundary.
+                std::size_t end = kMaxLen;
+                while (end > 0 && (static_cast<unsigned char>(display_output[end]) & 0xC0) == 0x80)
+                    --end;
+                display_output.resize(end);
+                display_output += "…";
+            }
+            // Collect all lines into a single vbox, then wrap once so
+            // the ⎿ connector appears only on the first line (not on
+            // every line).
+            Elements line_elems;
+            std::size_t line_start = 0;
+            while (line_start < display_output.size()) {
+                auto nl = display_output.find('\n', line_start);
+                std::string_view line =
+                    (nl == std::string::npos)
                         ? std::string_view(display_output).substr(line_start)
                         : std::string_view(display_output).substr(line_start, nl - line_start);
-                    auto ansi_elems = std::static_pointer_cast<std::vector<Element>>(
-                        ansi_to_ftxui_elements(line));
-                    line_elems.push_back(vbox(std::move(*ansi_elems)));
-                    if (nl == std::string::npos) break;
-                    line_start = nl + 1;
-                }
-                elems.push_back(detail::wrap_message_response(
-                    vbox(std::move(line_elems))));
-                // Recoverable preview truncation uses the row click action and mode-specific shortcut.
-                if (data.verbose && (plus_lines > 0 || chars_hidden)) {
-                    elems.push_back(detail::wrap_message_response(
-                        detail::output_expansion_hint("", true, data.is_transcript_mode)));
-                }
-                if (!data.verbose && (plus_lines > 0 || chars_hidden)) {
-                    std::string hint = "\xe2\x80\xa6 +";
-                    hint += std::to_string(plus_lines);
-                    hint += " line";
-                    if (plus_lines != 1) hint += 's';
-                    if (plus_lines <= 0) hint = "… output preview";
-                    elems.push_back(detail::wrap_message_response(
-                        detail::output_expansion_hint(hint, false, data.is_transcript_mode)));
-                }
+                auto ansi_elems =
+                    std::static_pointer_cast<std::vector<Element>>(ansi_to_ftxui_elements(line));
+                line_elems.push_back(vbox(std::move(*ansi_elems)));
+                if (nl == std::string::npos) break;
+                line_start = nl + 1;
             }
-
-            if (data.is_truncated) {
+            elems.push_back(detail::wrap_message_response(vbox(std::move(line_elems))));
+            // Recoverable preview truncation uses the row click action and mode-specific shortcut.
+            if (data.verbose && (plus_lines > 0 || chars_hidden)) {
                 elems.push_back(detail::wrap_message_response(
-                    text("(output truncated)") | dim));
+                    detail::output_expansion_hint("", true, data.is_transcript_mode)));
             }
-
-            result = vbox(std::move(elems));
-            break;
+            if (!data.verbose && (plus_lines > 0 || chars_hidden)) {
+                std::string hint = "\xe2\x80\xa6 +";
+                hint += std::to_string(plus_lines);
+                hint += " line";
+                if (plus_lines != 1) hint += 's';
+                if (plus_lines <= 0) hint = "… output preview";
+                elems.push_back(detail::wrap_message_response(
+                    detail::output_expansion_hint(hint, false, data.is_transcript_mode)));
+            }
         }
+
+        if (data.is_truncated) {
+            elems.push_back(detail::wrap_message_response(text("(output truncated)") | dim));
+        }
+
+        result = vbox(std::move(elems));
+        break;
+    }
     }
 
     if (!result) result = text("");
@@ -854,4 +875,4 @@ constexpr int kMaxRenderedLines = 10;
     return result;
 }
 
-} // namespace loom::ui::messages
+}  // namespace loom::ui::messages

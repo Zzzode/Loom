@@ -20,7 +20,7 @@ import loom.tools.file_write;
 import loom.tools.glob;
 // make_grep_tool() is called below; the arch checker's trailing-return-type
 // extraction does not see it exported (pre-existing false negative).
-import loom.tools.grep;  // arch-check: keep-import
+import loom.tools.grep; // arch-check: keep-import
 import loom.tools.todo_write;
 import loom.tools.web_fetch;
 import loom.tools.web_search;
@@ -34,13 +34,10 @@ using loom::core::ToolDefinition;
 using loom::core::ToolInput;
 using loom::core::ToolPermission;
 
-[[nodiscard]] ToolDefinition define_tool(
-    std::string name,
-    std::string description,
-    ToolPermission permission,
-    std::vector<SchemaProperty> properties,
-    std::string category
-) {
+[[nodiscard]] ToolDefinition define_tool(std::string name, std::string description,
+                                         ToolPermission permission,
+                                         std::vector<SchemaProperty> properties,
+                                         std::string category) {
     return ToolDefinition{
         .name = std::move(name),
         .description = std::move(description),
@@ -51,20 +48,15 @@ using loom::core::ToolPermission;
     };
 }
 
-[[nodiscard]] std::unique_ptr<ITool> make_runtime_tool(
-    std::string name,
-    std::string description,
-    ToolPermission permission,
-    std::vector<SchemaProperty> properties,
-    RuntimeExecutor executor,
-    std::string category,
-    loom::tools::agent::AgentLivePermissionCheckFn permission_check
-) {
+[[nodiscard]] std::unique_ptr<ITool>
+make_runtime_tool(std::string name, std::string description, ToolPermission permission,
+                  std::vector<SchemaProperty> properties, RuntimeExecutor executor,
+                  std::string category,
+                  loom::tools::agent::AgentLivePermissionCheckFn permission_check) {
     return std::make_unique<RuntimeFunctionTool>(
-        define_tool(std::move(name), std::move(description), permission, std::move(properties), std::move(category)),
-        std::move(executor),
-        std::move(permission_check)
-    );
+        define_tool(std::move(name), std::move(description), permission, std::move(properties),
+                    std::move(category)),
+        std::move(executor), std::move(permission_check));
 }
 
 [[nodiscard]] bool RuntimeFunctionTool::check_permission(const ToolInput& input) const {
@@ -80,7 +72,7 @@ using loom::core::ToolPermission;
     return definition_.permission == ToolPermission::ReadOnly;
 }
 
-} // namespace loom::tools::detail
+}  // namespace loom::tools::detail
 
 namespace loom::tools {
 
@@ -99,8 +91,7 @@ using loom::core::ToolPermission;
 // loom::tools::built_in_agents::get_built_in_agents().
 // ---------------------------------------------------------------------------
 
-[[nodiscard]] std::vector<agent_runtime::AgentDefinition>
-get_built_in_agent_definitions() {
+[[nodiscard]] std::vector<agent_runtime::AgentDefinition> get_built_in_agent_definitions() {
     return loom::tools::built_in_agents::get_built_in_agents();
 }
 
@@ -117,20 +108,16 @@ void register_runtime_tools(loom::core::ToolRegistry& registry, RuntimeToolOptio
     // Resolve and invoke it BEFORE the permission checker is moved, passing
     // a COPY — the simple() lambda below keeps reusing the checker.
     const auto& slot_factory = agent_tool_factory();
-    const auto& agent_factory = options.agent_tool_factory
-        ? options.agent_tool_factory
-        : slot_factory;
+    const auto& agent_factory =
+        options.agent_tool_factory ? options.agent_tool_factory : slot_factory;
     AgentConfig agent_config;
     agent_config.default_model = std::move(options.default_model);
     agent_config.api_context = std::move(options.api_context);
     agent_config.parent_permission_mode = std::move(options.parent_permission_mode);
     if (agent_factory) {
-        registry.register_tool(agent_factory(
-            std::move(agent_config),
-            0,
-            &registry,
-            options.permission_check,
-            options.permission_hook_valid_for_background));
+        registry.register_tool(agent_factory(std::move(agent_config), 0, &registry,
+                                             options.permission_check,
+                                             options.permission_hook_valid_for_background));
     }
 
     auto permission_check = std::move(options.permission_check);
@@ -151,9 +138,9 @@ void register_runtime_tools(loom::core::ToolRegistry& registry, RuntimeToolOptio
                 : shared_state_(std::move(s)) {}
 
             const loom::core::ToolDefinition& definition() const override { return def_; }
-            std::expected<loom::core::ToolResult, loom::core::Error> execute(
-                const loom::core::ToolInput& input) override
-            {
+
+            std::expected<loom::core::ToolResult, loom::core::Error>
+            execute(const loom::core::ToolInput& input) override {
                 // Sync shared state into tool before execution
                 tool_.read_file_state() = *shared_state_;
                 // Auto-read: if the file hasn't been read yet, implicitly read it
@@ -165,13 +152,14 @@ void register_runtime_tools(loom::core::ToolRegistry& registry, RuntimeToolOptio
                     if (!existing || existing->is_partial_view) {
                         std::error_code ec;
                         if (fs::exists(abs_path, ec)) {
-                            tool_.read_file_state().set(abs_path, loom::tools::file_edit::ReadTimestamp{
-                                .timestamp = std::chrono::system_clock::now(),
-                                .offset = std::nullopt,
-                                .limit = std::nullopt,
-                                .content = std::nullopt,
-                                .is_partial_view = false,
-                            });
+                            tool_.read_file_state().set(
+                                abs_path, loom::tools::file_edit::ReadTimestamp{
+                                              .timestamp = std::chrono::system_clock::now(),
+                                              .offset = std::nullopt,
+                                              .limit = std::nullopt,
+                                              .content = std::nullopt,
+                                              .is_partial_view = false,
+                                          });
                         }
                     }
                 }
@@ -180,13 +168,14 @@ void register_runtime_tools(loom::core::ToolRegistry& registry, RuntimeToolOptio
                 *shared_state_ = tool_.read_file_state();
                 if (result) return std::move(*result);
                 return std::unexpected(loom::core::Error::make(
-                    loom::core::ErrorCode::ToolExecutionFailed,
-                    result.error().format()));
+                    loom::core::ErrorCode::ToolExecutionFailed, result.error().format()));
             }
+
             bool check_permission(const loom::core::ToolInput& input) const override {
                 return tool_.check_permission(input);
             }
         };
+
         registry.register_tool(std::make_unique<EditAdapter>(shared_read_state));
     }
     {
@@ -199,32 +188,36 @@ void register_runtime_tools(loom::core::ToolRegistry& registry, RuntimeToolOptio
                 : shared_state_(std::move(s)) {}
 
             const loom::core::ToolDefinition& definition() const override { return def_; }
-            std::expected<loom::core::ToolResult, loom::core::Error> execute(
-                const loom::core::ToolInput& input) override
-            {
+
+            std::expected<loom::core::ToolResult, loom::core::Error>
+            execute(const loom::core::ToolInput& input) override {
                 auto result = tool_.execute(input);
                 if (result) {
                     // On success, record the read in shared state so Edit sees it
                     auto parsed = loom::tools::file_read::FileReadInput::from_json(input.json());
                     if (parsed) {
                         auto abs_path = fs::absolute(parsed->file_path);
-                        shared_state_->set(abs_path, loom::tools::file_edit::ReadTimestamp{
-                            .timestamp = std::chrono::system_clock::now(),
-                            .offset = parsed->offset,
-                            .limit = parsed->limit,
-                            .content = std::nullopt,
-                            .is_partial_view = parsed->offset.has_value() || parsed->limit.has_value(),
-                        });
+                        shared_state_->set(abs_path,
+                                           loom::tools::file_edit::ReadTimestamp{
+                                               .timestamp = std::chrono::system_clock::now(),
+                                               .offset = parsed->offset,
+                                               .limit = parsed->limit,
+                                               .content = std::nullopt,
+                                               .is_partial_view = parsed->offset.has_value() ||
+                                                                  parsed->limit.has_value(),
+                                           });
                     }
                     return std::move(*result);
                 }
                 return std::unexpected(loom::core::Error::make(
                     loom::core::ErrorCode::ToolExecutionFailed, result.error().format()));
             }
+
             bool check_permission(const loom::core::ToolInput& input) const override {
                 return tool_.check_permission(input);
             }
         };
+
         registry.register_tool(std::make_unique<ReadAdapter>(shared_read_state));
     }
     registry.register_tool(make_file_write_tool());
@@ -237,17 +230,20 @@ void register_runtime_tools(loom::core::ToolRegistry& registry, RuntimeToolOptio
     registry.register_tool(make_web_fetch_tool());
     registry.register_tool(make_web_search_tool());
 
-    const auto simple = [&registry, permission_check](std::string name, std::string description, ToolPermission permission,
-                                                      std::vector<SchemaProperty> properties = {}, std::string category = "runtime") {
+    const auto simple = [&registry, permission_check](std::string name, std::string description,
+                                                      ToolPermission permission,
+                                                      std::vector<SchemaProperty> properties = {},
+                                                      std::string category = "runtime") {
         auto name_copy = name;
-        return detail::make_runtime_tool(std::move(name), std::move(description), permission, std::move(properties),
+        return detail::make_runtime_tool(
+            std::move(name), std::move(description), permission, std::move(properties),
             [name_copy, &registry](const loom::core::ToolInput& input) {
                 return detail::execute_simple_runtime_tool(name_copy, input, &registry);
             },
-            std::move(category),
-            permission_check);
+            std::move(category), permission_check);
     };
-    const auto prop = [](std::string name, std::string type, std::string description, bool required) {
+    const auto prop = [](std::string name, std::string type, std::string description,
+                         bool required) {
         return SchemaProperty{
             .name = std::move(name),
             .type = std::move(type),
@@ -258,11 +254,19 @@ void register_runtime_tools(loom::core::ToolRegistry& registry, RuntimeToolOptio
         };
     };
 
-    registry.register_tool(simple("ask_user_question", "Ask the interactive user a question and return the answer",
-        ToolPermission::ReadOnly, {prop("question", "string", "Question to ask", true)}, "interaction"));
-    registry.register_tool(simple("computer_use", "Control the local computer through screenshots, mouse, keyboard, and scroll actions",
-        ToolPermission::Execute, {
-            prop("action", "string", "screenshot, move, click, double_click, right_click, drag, type, press, hotkey, or scroll", true),
+    registry.register_tool(
+        simple("ask_user_question", "Ask the interactive user a question and return the answer",
+               ToolPermission::ReadOnly, {prop("question", "string", "Question to ask", true)},
+               "interaction"));
+    registry.register_tool(simple(
+        "computer_use",
+        "Control the local computer through screenshots, mouse, keyboard, and scroll actions",
+        ToolPermission::Execute,
+        {
+            prop("action", "string",
+                 "screenshot, move, click, double_click, right_click, drag, type, press, hotkey, "
+                 "or scroll",
+                 true),
             prop("x", "number", "X coordinate, region origin, or scroll delta x", false),
             prop("y", "number", "Y coordinate, region origin, or scroll delta y", false),
             prop("to_x", "number", "Drag target X coordinate", false),
@@ -271,237 +275,297 @@ void register_runtime_tools(loom::core::ToolRegistry& registry, RuntimeToolOptio
             prop("height", "number", "Screenshot region height", false),
             prop("text", "string", "Text to type or key to press", false),
             prop("key", "string", "Key name for press actions", false),
-        }, "computer_use"));
-    registry.register_tool(simple("brief", "Read or write the workspace brief",
-        ToolPermission::Write, {prop("content", "string", "Brief content to save", false)}, "context"));
-    registry.register_tool(simple("config",
-        "Read and update the closed set of Loom user-configuration scalars "
-        "(model and network settings) used by the headless direct-query "
-        "server, which re-reads the user configuration on every request. The "
-        "interactive TUI resolves model/network settings from environment "
-        "variables and command-line flags only, so a write does not change "
-        "this session. Actions: \"get\" (default; with no key, returns every "
-        "projected key with its effective value and source; with a key, "
-        "returns one key), \"set\" (validates and writes the user-tier "
-        "settings.json — value may be a string or a native JSON boolean or "
-        "number; null clears temperature or thinkingBudget in "
-        "the user tier only), \"list\" (the writable, read-only, and blocked "
-        "key sets). Values currently supplied by an environment variable are "
-        "still written but reported as shadowed. API keys, endpoints, TLS, "
-        "permissions, prompts, and MCP servers are not writable with this "
-        "tool and credential values are never returned.",
-        ToolPermission::Write, {
-            prop("action", "string", "get (default), set, or list", false),
-            prop("key", "string", "Flat configuration key, e.g. \"model\" (get/set)", false),
-            prop("value", "string", "New value as a string or a native JSON boolean/number; null clears temperature or thinkingBudget (set only)", false),
-        }, "config"));
-    registry.register_tool(simple("enter_plan_mode", "Enter plan mode",
-        ToolPermission::Write, {}, "planning"));
-    registry.register_tool(simple("exit_plan_mode", "Exit plan mode",
-        ToolPermission::Write, {}, "planning"));
+        },
+        "computer_use"));
+    registry.register_tool(
+        simple("brief", "Read or write the workspace brief", ToolPermission::Write,
+               {prop("content", "string", "Brief content to save", false)}, "context"));
+    registry.register_tool(
+        simple("config",
+               "Read and update the closed set of Loom user-configuration scalars "
+               "(model and network settings) used by the headless direct-query "
+               "server, which re-reads the user configuration on every request. The "
+               "interactive TUI resolves model/network settings from environment "
+               "variables and command-line flags only, so a write does not change "
+               "this session. Actions: \"get\" (default; with no key, returns every "
+               "projected key with its effective value and source; with a key, "
+               "returns one key), \"set\" (validates and writes the user-tier "
+               "settings.json — value may be a string or a native JSON boolean or "
+               "number; null clears temperature or thinkingBudget in "
+               "the user tier only), \"list\" (the writable, read-only, and blocked "
+               "key sets). Values currently supplied by an environment variable are "
+               "still written but reported as shadowed. API keys, endpoints, TLS, "
+               "permissions, prompts, and MCP servers are not writable with this "
+               "tool and credential values are never returned.",
+               ToolPermission::Write,
+               {
+                   prop("action", "string", "get (default), set, or list", false),
+                   prop("key", "string", "Flat configuration key, e.g. \"model\" (get/set)", false),
+                   prop("value", "string",
+                        "New value as a string or a native JSON boolean/number; null clears "
+                        "temperature or thinkingBudget (set only)",
+                        false),
+               },
+               "config"));
+    registry.register_tool(
+        simple("enter_plan_mode", "Enter plan mode", ToolPermission::Write, {}, "planning"));
+    registry.register_tool(
+        simple("exit_plan_mode", "Exit plan mode", ToolPermission::Write, {}, "planning"));
     if constexpr (features::kWorktreeMode) {
         registry.register_tool(simple("enter_worktree", "Create and enter a git worktree",
-            ToolPermission::Execute, {prop("branch", "string", "Branch name", true)}, "git"));
+                                      ToolPermission::Execute,
+                                      {prop("branch", "string", "Branch name", true)}, "git"));
         registry.register_tool(simple("exit_worktree", "Remove a git worktree",
-            ToolPermission::Execute, {prop("path", "string", "Worktree path", false)}, "git"));
+                                      ToolPermission::Execute,
+                                      {prop("path", "string", "Worktree path", false)}, "git"));
     }
     if constexpr (features::kEnableLspTool) {
-        registry.register_tool(simple("lsp", "Fallback language intelligence for definitions, references, symbols, hover, and diagnostics",
-            ToolPermission::ReadOnly, {prop("file_path", "string", "File path", true)}, "code"));
+        registry.register_tool(simple("lsp",
+                                      "Fallback language intelligence for definitions, references, "
+                                      "symbols, hover, and diagnostics",
+                                      ToolPermission::ReadOnly,
+                                      {prop("file_path", "string", "File path", true)}, "code"));
     }
-    registry.register_tool(simple("mcp", "Invoke a tool exposed by an MCP server. Specify the server name (e.g. 'zai-builtin', 'computer-use') and the tool name to call on that server.",
-        ToolPermission::Network, {
-            prop("server_name", "string", "Name of the MCP server to invoke (e.g. 'zai-builtin')", true),
-            prop("tool_name", "string", "Name of the tool on the MCP server (e.g. 'analyze_image')", true),
-            prop("arguments", "object", "Arguments to pass to the MCP tool", false),
-        }, "mcp"));
+    registry.register_tool(
+        simple("mcp",
+               "Invoke a tool exposed by an MCP server. Specify the server name (e.g. "
+               "'zai-builtin', 'computer-use') and the tool name to call on that server.",
+               ToolPermission::Network,
+               {
+                   prop("server_name", "string",
+                        "Name of the MCP server to invoke (e.g. 'zai-builtin')", true),
+                   prop("tool_name", "string",
+                        "Name of the tool on the MCP server (e.g. 'analyze_image')", true),
+                   prop("arguments", "object", "Arguments to pass to the MCP tool", false),
+               },
+               "mcp"));
     registry.register_tool(simple("list_mcp_resources", "List local MCP-style resources",
-        ToolPermission::ReadOnly, {}, "mcp"));
+                                  ToolPermission::ReadOnly, {}, "mcp"));
     registry.register_tool(simple("read_mcp_resource", "Read a local MCP-style resource",
-        ToolPermission::ReadOnly, {prop("uri", "string", "Resource URI", true)}, "mcp"));
+                                  ToolPermission::ReadOnly,
+                                  {prop("uri", "string", "Resource URI", true)}, "mcp"));
     registry.register_tool(simple("mcp_auth", "Check MCP authentication token availability",
-        ToolPermission::ReadOnly, {prop("server_name", "string", "MCP server name", true)}, "mcp"));
-    registry.register_tool(simple("notebook_edit", "Edit Jupyter notebook cells by id or index",
-        ToolPermission::Write, {
-            prop("notebook_path", "string", "Notebook path", true),
-            prop("cell_id", "string", "Notebook cell id or cell-N index", false),
-            prop("cell_index", "integer", "Notebook cell index", false),
-            prop("new_source", "string", "Replacement or inserted source", false),
-            prop("cell_type", "string", "code, markdown, or raw", false),
-            prop("edit_mode", "string", "replace, insert, or delete", false),
-        }, "filesystem"));
+                                  ToolPermission::ReadOnly,
+                                  {prop("server_name", "string", "MCP server name", true)}, "mcp"));
+    registry.register_tool(
+        simple("notebook_edit", "Edit Jupyter notebook cells by id or index", ToolPermission::Write,
+               {
+                   prop("notebook_path", "string", "Notebook path", true),
+                   prop("cell_id", "string", "Notebook cell id or cell-N index", false),
+                   prop("cell_index", "integer", "Notebook cell index", false),
+                   prop("new_source", "string", "Replacement or inserted source", false),
+                   prop("cell_type", "string", "code, markdown, or raw", false),
+                   prop("edit_mode", "string", "replace, insert, or delete", false),
+               },
+               "filesystem"));
     if constexpr (features::kPowerShellTool) {
         registry.register_tool(simple("powershell", "Execute a PowerShell command on Windows",
-            ToolPermission::Execute, {
-                SchemaProperty{
-                    .name = "command",
-                    .type = "string",
-                    .description = "Command",
-                    .required = true,
-                    .default_value = std::nullopt,
-                    .enum_values = std::nullopt,
-                },
-                SchemaProperty{
-                    .name = "cwd",
-                    .type = "string",
-                    .description = "Working directory",
-                    .required = false,
-                    .default_value = std::nullopt,
-                    .enum_values = std::nullopt,
-                },
-                SchemaProperty{
-                    .name = "timeout",
-                    .type = "integer",
-                    .description = "Timeout in seconds",
-                    .required = false,
-                    .default_value = std::nullopt,
-                    .enum_values = std::nullopt,
-                },
-            }, "shell"));
+                                      ToolPermission::Execute,
+                                      {
+                                          SchemaProperty{
+                                              .name = "command",
+                                              .type = "string",
+                                              .description = "Command",
+                                              .required = true,
+                                              .default_value = std::nullopt,
+                                              .enum_values = std::nullopt,
+                                          },
+                                          SchemaProperty{
+                                              .name = "cwd",
+                                              .type = "string",
+                                              .description = "Working directory",
+                                              .required = false,
+                                              .default_value = std::nullopt,
+                                              .enum_values = std::nullopt,
+                                          },
+                                          SchemaProperty{
+                                              .name = "timeout",
+                                              .type = "integer",
+                                              .description = "Timeout in seconds",
+                                              .required = false,
+                                              .default_value = std::nullopt,
+                                              .enum_values = std::nullopt,
+                                          },
+                                      },
+                                      "shell"));
     }
     // In CPP, "repl" delegates to execute_script() which has a working
     // implementation, so it is registered unconditionally.
-    registry.register_tool(simple("repl", "Run a one-shot REPL snippet",
-        ToolPermission::Execute, {prop("code", "string", "Code to execute", true)}, "execution"));
+    registry.register_tool(simple("repl", "Run a one-shot REPL snippet", ToolPermission::Execute,
+                                  {prop("code", "string", "Code to execute", true)}, "execution"));
     // In CPP, schedule_cron has a working implementation (loom.tools.cron),
     // so it is registered unconditionally.
-    registry.register_tool(simple("schedule_cron", "Schedule a cron-style reminder for this process",
-        ToolPermission::Write, {prop("message", "string", "Scheduled message", true)}, "tasks"));
+    registry.register_tool(simple(
+        "schedule_cron", "Schedule a cron-style reminder for this process", ToolPermission::Write,
+        {prop("message", "string", "Scheduled message", true)}, "tasks"));
     if constexpr (features::kScriptToolEnabled) {
-        registry.register_tool(simple("script", "Execute a bounded script",
-            ToolPermission::Execute, {prop("code", "string", "Script code", true)}, "execution"));
+        registry.register_tool(simple("script", "Execute a bounded script", ToolPermission::Execute,
+                                      {prop("code", "string", "Script code", true)}, "execution"));
     }
-    registry.register_tool(simple("send_message", "Queue a message for an agent or team",
-        ToolPermission::Write, {
+    registry.register_tool(simple(
+        "send_message", "Queue a message for an agent or team", ToolPermission::Write,
+        {
             prop("to", "string", "Recipient teammate, '*' broadcast, or compatible target", false),
             prop("message", "object", "Plain text or structured SendMessage payload", false),
             prop("summary", "string", "Preview summary for plain text messages", false),
             prop("target_agent", "string", "Compatibility recipient field", false),
             prop("content", "string", "Compatibility message body field", false),
-        }, "agents"));
+        },
+        "agents"));
     registry.register_tool(simple("shared", "Read or write shared runtime key-value state",
-        ToolPermission::Write, {prop("key", "string", "Shared key", false)}, "agents"));
-    registry.register_tool(simple("skill",
+                                  ToolPermission::Write,
+                                  {prop("key", "string", "Shared key", false)}, "agents"));
+    registry.register_tool(simple(
+        "skill",
         "Execute a skill with validation, template expansion, and context modifier cascading",
-        ToolPermission::ReadOnly, {
+        ToolPermission::ReadOnly,
+        {
             prop("action", "string",
                  "Skill action: install, update, list, search, or execute (default)", false),
-            prop("skill_path", "string",
-                 "Path or qualified name of the installed skill", false),
+            prop("skill_path", "string", "Path or qualified name of the installed skill", false),
             prop("arguments", "object", "Named arguments passed to the skill", false),
             prop("context_modifiers", "object",
                  "Invocation overrides for model, effort, max_tokens, temperature, etc.", false),
             prop("model", "string", "Override the LLM model used by the skill", false),
-            prop("effort", "integer",
-                 "Effort level 1 (fast) .. 5 (deep); overrides frontmatter", false),
-            prop("allowed_tools", "array",
-                 "List of tool names the skill is permitted to call", false),
-            prop("budget_token_limit", "integer",
-                 "Maximum tokens allowed for skill execution", false),
-            prop("structured_output", "object",
-                 "JSON schema constraining the final LLM response", false),
+            prop("effort", "integer", "Effort level 1 (fast) .. 5 (deep); overrides frontmatter",
+                 false),
+            prop("allowed_tools", "array", "List of tool names the skill is permitted to call",
+                 false),
+            prop("budget_token_limit", "integer", "Maximum tokens allowed for skill execution",
+                 false),
+            prop("structured_output", "object", "JSON schema constraining the final LLM response",
+                 false),
             prop("should_use_sandbox", "boolean",
                  "True if the skill must run inside the sandboxed runtime", false),
-            prop("use_fork_model", "boolean",
-                 "True if the skill runs in a forked isolated session", false),
+            prop("use_fork_model", "boolean", "True if the skill runs in a forked isolated session",
+                 false),
             prop("fork_model", "boolean", "Alias for use_fork_model", false),
             prop("session_id", "string", "Session identifier for ${LOOM_SESSION_ID}", false),
             prop("name", "string", "Alias for skill_path", false),
-        }, "skills"));
+        },
+        "skills"));
     if constexpr (features::kEnableSleepTool) {
-        registry.register_tool(simple("sleep", "Sleep for a bounded number of seconds",
-            ToolPermission::Execute, {prop("duration", "number", "Duration in seconds", true)}, "execution"));
+        registry.register_tool(
+            simple("sleep", "Sleep for a bounded number of seconds", ToolPermission::Execute,
+                   {prop("duration", "number", "Duration in seconds", true)}, "execution"));
     }
     registry.register_tool(simple("synthetic_output", "Return provided synthetic output content",
-        ToolPermission::ReadOnly, {prop("content", "string", "Content", true)}, "testing"));
+                                  ToolPermission::ReadOnly,
+                                  {prop("content", "string", "Content", true)}, "testing"));
 
     if constexpr (features::kTaskTools) {
-        for (const auto& name : {"task_create", "task_get", "task_list", "task_output", "task_stop", "task_update"}) {
+        for (const auto& name :
+             {"task_create", "task_get", "task_list", "task_output", "task_stop", "task_update"}) {
             const bool output = std::string_view(name) == "task_output";
-            auto description = output
-                ? std::string("Read a non-blocking snapshot of a task or subagent by task_id. "
-                    "Returns immediately with current status and available output or error. "
-                    "Queued or running status is not completion; inspect the final result before relying on it.")
-                : std::format("Runtime task operation {}", name);
-            registry.register_tool(simple(name, std::move(description), ToolPermission::Write,
-                {
-                    prop("task_id", "string", output ? "Task or agent ID returned by a tool" : "Task ID", false),
-                    prop("pid", "number", "Background process PID", false),
-                }, "tasks"));
+            auto description =
+                output
+                    ? std::string(
+                          "Read a non-blocking snapshot of a task or subagent by task_id. "
+                          "Returns immediately with current status and available output or error. "
+                          "Queued or running status is not completion; inspect the final result "
+                          "before relying on it.")
+                    : std::format("Runtime task operation {}", name);
+            registry.register_tool(
+                simple(name, std::move(description), ToolPermission::Write,
+                       {
+                           prop("task_id", "string",
+                                output ? "Task or agent ID returned by a tool" : "Task ID", false),
+                           prop("pid", "number", "Background process PID", false),
+                       },
+                       "tasks"));
         }
     }
     if constexpr (features::kAgentSwarmsEnabled) {
-        registry.register_tool(simple("team_create", "Create a runtime team record", ToolPermission::Write,
-            {prop("team_name", "string", "Team name", false)}, "agents"));
-        registry.register_tool(simple("team_delete", "Delete a runtime team record", ToolPermission::Write,
-            {prop("team_name", "string", "Team name", true)}, "agents"));
+        registry.register_tool(simple("team_create", "Create a runtime team record",
+                                      ToolPermission::Write,
+                                      {prop("team_name", "string", "Team name", false)}, "agents"));
+        registry.register_tool(simple("team_delete", "Delete a runtime team record",
+                                      ToolPermission::Write,
+                                      {prop("team_name", "string", "Team name", true)}, "agents"));
     }
     if constexpr (features::kTestingPermissionTool) {
         registry.register_tool(simple("testing", "Run a test command", ToolPermission::Execute,
-            {prop("command", "string", "Test command", false)}, "testing"));
+                                      {prop("command", "string", "Test command", false)},
+                                      "testing"));
     }
     if constexpr (features::kToolSearch) {
-        registry.register_tool(simple("tool_search", "Search registered runtime tools", ToolPermission::ReadOnly,
-            {prop("query", "string", "Search query", false)}, "tools"));
+        registry.register_tool(simple("tool_search", "Search registered runtime tools",
+                                      ToolPermission::ReadOnly,
+                                      {prop("query", "string", "Search query", false)}, "tools"));
     }
     // In CPP, tungsten has a working implementation (loom.tools.tungsten_tool),
     // so it is registered unconditionally.
-    registry.register_tool(simple("tungsten", "Use the Tungsten integration when configured", ToolPermission::Network, {}, "integrations"));
+    registry.register_tool(simple("tungsten", "Use the Tungsten integration when configured",
+                                  ToolPermission::Network, {}, "integrations"));
     if constexpr (features::kWebBrowserTool) {
-        registry.register_tool(simple("web_browser", "Automate browser navigation, extraction, form fill, and screenshots",
-            ToolPermission::Network, {prop("action", "string", "Browser action", true)}, "browser"));
+        registry.register_tool(simple(
+            "web_browser", "Automate browser navigation, extraction, form fill, and screenshots",
+            ToolPermission::Network, {prop("action", "string", "Browser action", true)},
+            "browser"));
     }
     if constexpr (features::kWorkflowScripts) {
-        registry.register_tool(simple("workflow", "Read and execute workflow definitions", ToolPermission::ReadOnly,
-            {prop("file", "string", "Workflow file", true)}, "workflow"));
+        registry.register_tool(simple("workflow", "Read and execute workflow definitions",
+                                      ToolPermission::ReadOnly,
+                                      {prop("file", "string", "Workflow file", true)}, "workflow"));
     }
 
     // ── Feature-gated stub tools (registered only when their flag is on) ────
     if constexpr (features::kPushNotificationTool) {
         registry.register_tool(simple("push_notification", "Send a push notification to the user",
-            ToolPermission::Write, {
-                prop("title", "string", "Notification title", true),
-                prop("body", "string", "Notification body", false),
-            }, "notifications"));
+                                      ToolPermission::Write,
+                                      {
+                                          prop("title", "string", "Notification title", true),
+                                          prop("body", "string", "Notification body", false),
+                                      },
+                                      "notifications"));
     }
     if constexpr (features::kMonitorTool) {
-        registry.register_tool(simple("monitor", "Monitor a background process or file for changes",
-            ToolPermission::ReadOnly, {
+        registry.register_tool(simple(
+            "monitor", "Monitor a background process or file for changes", ToolPermission::ReadOnly,
+            {
                 prop("command", "string", "Command or pattern to monitor", true),
                 prop("pattern", "string", "Regex pattern to watch for", false),
-            }, "monitoring"));
+            },
+            "monitoring"));
     }
     if constexpr (features::kSendUserFileTool) {
-        registry.register_tool(simple("send_user_file", "Send a file to the user",
-            ToolPermission::Write, {prop("file_path", "string", "Path to the file", true)}, "delivery"));
+        registry.register_tool(
+            simple("send_user_file", "Send a file to the user", ToolPermission::Write,
+                   {prop("file_path", "string", "Path to the file", true)}, "delivery"));
     }
     if constexpr (features::kSubscribePRTool) {
-        registry.register_tool(simple("subscribe_pr", "Subscribe to a GitHub PR for updates",
-            ToolPermission::Network, {prop("pr_url", "string", "PR URL to subscribe to", true)}, "github"));
+        registry.register_tool(
+            simple("subscribe_pr", "Subscribe to a GitHub PR for updates", ToolPermission::Network,
+                   {prop("pr_url", "string", "PR URL to subscribe to", true)}, "github"));
     }
     if constexpr (features::kOverflowTestTool) {
-        registry.register_tool(simple("overflow_test", "Test tool for context overflow scenarios",
-            ToolPermission::ReadOnly, {prop("size", "number", "Size in tokens", false)}, "testing"));
+        registry.register_tool(simple(
+            "overflow_test", "Test tool for context overflow scenarios", ToolPermission::ReadOnly,
+            {prop("size", "number", "Size in tokens", false)}, "testing"));
     }
     if constexpr (features::kContextCollapse) {
         registry.register_tool(simple("ctx_inspect", "Inspect the current context window usage",
-            ToolPermission::ReadOnly, {}, "context"));
+                                      ToolPermission::ReadOnly, {}, "context"));
     }
     if constexpr (features::kTerminalPanel) {
-        registry.register_tool(simple("terminal_capture", "Capture the current terminal screen content",
-            ToolPermission::ReadOnly, {}, "terminal"));
+        registry.register_tool(simple("terminal_capture",
+                                      "Capture the current terminal screen content",
+                                      ToolPermission::ReadOnly, {}, "terminal"));
     }
     if constexpr (features::kHistorySnip) {
-        registry.register_tool(simple("snip", "Create a snippet from conversation history",
-            ToolPermission::Write, {prop("query", "string", "Snippet query", false)}, "history"));
+        registry.register_tool(
+            simple("snip", "Create a snippet from conversation history", ToolPermission::Write,
+                   {prop("query", "string", "Snippet query", false)}, "history"));
     }
     if constexpr (features::kUdsInbox) {
         registry.register_tool(simple("list_peers", "List connected peer sessions",
-            ToolPermission::ReadOnly, {}, "peers"));
+                                      ToolPermission::ReadOnly, {}, "peers"));
     }
     if constexpr (features::kVerifyPlanExecution) {
-        registry.register_tool(simple("verify_plan_execution", "Verify that a plan execution matches expectations",
-            ToolPermission::ReadOnly, {prop("plan", "string", "Plan to verify", true)}, "planning"));
+        registry.register_tool(
+            simple("verify_plan_execution", "Verify that a plan execution matches expectations",
+                   ToolPermission::ReadOnly, {prop("plan", "string", "Plan to verify", true)},
+                   "planning"));
     }
 
     // Touch built-in agent registry so lazy feature-flag evaluation is
@@ -514,4 +578,4 @@ void register_runtime_tools(loom::core::ToolRegistry& registry) {
     register_runtime_tools(registry, RuntimeToolOptions{});
 }
 
-} // namespace loom::tools
+}  // namespace loom::tools

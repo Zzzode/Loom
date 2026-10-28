@@ -70,13 +70,14 @@ struct TempFile {
             ofs << "Line " << i << ": Lorem ipsum dolor sit amet, consectetur.\n";
         }
     }
+
     ~TempFile() {
         std::error_code ec;
         fs::remove(path, ec);
     }
 };
 
-} // namespace
+}  // namespace
 
 // =========================================================================
 // BM_SseParser: Feed a pre-built SSE body through FeedParser
@@ -97,10 +98,10 @@ static void BM_SseParser(benchmark::State& state) {
         benchmark::DoNotOptimize(accum);
         benchmark::ClobberMemory();
     }
-    state.SetBytesProcessed(
-        static_cast<int64_t>(state.iterations()) *
-        static_cast<int64_t>(sse_body.size()));
+    state.SetBytesProcessed(static_cast<int64_t>(state.iterations()) *
+                            static_cast<int64_t>(sse_body.size()));
 }
+
 BENCHMARK(BM_SseParser);
 
 // =========================================================================
@@ -120,17 +121,15 @@ static void BM_JsonSerialize(benchmark::State& state) {
     messages.push_back(TextMessage{
         .role = Role::User,
         .content = "Explain the theory of general relativity in simple terms, "
-                   "covering spacetime curvature, gravitational lensing, and time dilation."
-    });
+                   "covering spacetime curvature, gravitational lensing, and time dilation."});
     messages.push_back(TextMessage{
         .role = Role::Assistant,
         .content = "General relativity, proposed by Einstein in 1915, describes gravity "
-                   "not as a force but as curvature of spacetime caused by mass and energy."
-    });
+                   "not as a force but as curvature of spacetime caused by mass and energy."});
     messages.push_back(TextMessage{
         .role = Role::User,
-        .content = "Can you provide a mathematical formulation using the Einstein field equations?"
-    });
+        .content =
+            "Can you provide a mathematical formulation using the Einstein field equations?"});
 
     const std::string_view system_prompt =
         "You are a helpful physics tutor specializing in general relativity.";
@@ -145,6 +144,7 @@ static void BM_JsonSerialize(benchmark::State& state) {
         benchmark::ClobberMemory();
     }
 }
+
 BENCHMARK(BM_JsonSerialize);
 
 // =========================================================================
@@ -165,12 +165,14 @@ static void BM_ToolDispatch(benchmark::State& state) {
         ToolDefinition def_ = FileReadTool::definition();
 
         const ToolDefinition& definition() const override { return def_; }
+
         std::expected<ToolResult, Error> execute(const ToolInput& input) override {
             auto result = tool_.execute(input);
             if (result) return std::move(*result);
-            return std::unexpected(Error::make(
-                ErrorCode::ToolExecutionFailed, result.error().format()));
+            return std::unexpected(
+                Error::make(ErrorCode::ToolExecutionFailed, result.error().format()));
         }
+
         bool check_permission(const ToolInput& input) const override {
             return tool_.check_permission(input);
         }
@@ -181,8 +183,8 @@ static void BM_ToolDispatch(benchmark::State& state) {
     registry.register_tool(std::make_unique<ReadAdapter>());
 
     // Build the JSON input for file read
-    const std::string input_json = std::string(R"({"file_path":")") +
-                                   tmp.path.string() + R"(","limit":10})";
+    const std::string input_json =
+        std::string(R"({"file_path":")") + tmp.path.string() + R"(","limit":10})";
     ToolInput input = ToolInput::from_json(input_json);
 
     for (auto _ : state) {
@@ -191,6 +193,7 @@ static void BM_ToolDispatch(benchmark::State& state) {
         benchmark::ClobberMemory();
     }
 }
+
 BENCHMARK(BM_ToolDispatch);
 
 // =========================================================================
@@ -198,13 +201,11 @@ BENCHMARK(BM_ToolDispatch);
 // =========================================================================
 
 static void BM_BackoffDelay(benchmark::State& state) {
-    RetryConfig cfg{
-        .max_attempts = 5,
-        .base_delay = std::chrono::milliseconds{500},
-        .max_delay = std::chrono::milliseconds{30000},
-        .retry_on_http = {429, 500, 502, 503, 504},
-        .jitter_ratio = 0.2
-    };
+    RetryConfig cfg{.max_attempts = 5,
+                    .base_delay = std::chrono::milliseconds{500},
+                    .max_delay = std::chrono::milliseconds{30000},
+                    .retry_on_http = {429, 500, 502, 503, 504},
+                    .jitter_ratio = 0.2};
 
     int attempt = 0;
     for (auto _ : state) {
@@ -213,6 +214,7 @@ static void BM_BackoffDelay(benchmark::State& state) {
         ++attempt;
     }
 }
+
 BENCHMARK(BM_BackoffDelay);
 
 // =========================================================================
@@ -235,4 +237,5 @@ static void BM_BackoffDelayNoJitter(benchmark::State& state) {
         ++attempt;
     }
 }
+
 BENCHMARK(BM_BackoffDelayNoJitter);

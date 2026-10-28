@@ -30,12 +30,11 @@ struct ImageInfo {
     std::string summary;
 };
 
-using GetInfoFn = std::function<
-    std::expected<ImageInfo, std::string>(const std::filesystem::path&)>;
-using ToBase64Fn = std::function<
-    std::string(std::span<const std::uint8_t>)>;
-using FromBase64Fn = std::function<
-    std::expected<std::vector<std::uint8_t>, std::string>(std::string_view)>;
+using GetInfoFn =
+    std::function<std::expected<ImageInfo, std::string>(const std::filesystem::path&)>;
+using ToBase64Fn = std::function<std::string(std::span<const std::uint8_t>)>;
+using FromBase64Fn =
+    std::function<std::expected<std::vector<std::uint8_t>, std::string>(std::string_view)>;
 
 /// Installed image codec. Truthy only when all three entry points are set
 /// (the production installer wires them atomically together).
@@ -45,8 +44,7 @@ struct Codec {
     FromBase64Fn from_base64;
 
     [[nodiscard]] explicit operator bool() const noexcept {
-        return static_cast<bool>(get_info) &&
-               static_cast<bool>(to_base64) &&
+        return static_cast<bool>(get_info) && static_cast<bool>(to_base64) &&
                static_cast<bool>(from_base64);
     }
 };
@@ -60,7 +58,7 @@ namespace detail {
     return instance;
 }
 
-} // namespace detail
+}  // namespace detail
 
 /// Install the process-wide image codec. Called once from the orchestration
 /// installer; passing a default-constructed Codec clears it.
@@ -80,4 +78,4 @@ inline void clear_codec() {
     return detail::image_codec_storage();
 }
 
-} // namespace loom::tools::image_codec
+}  // namespace loom::tools::image_codec

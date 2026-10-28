@@ -2,9 +2,10 @@
 /// @brief Plugin command tests.
 
 #include <gtest/gtest.h>
-#include <cstdlib>
-#include <atomic>
 #include <unistd.h>
+
+#include <atomic>
+#include <cstdlib>
 
 import std;
 import loom.commands.command;
@@ -48,6 +49,7 @@ struct HomeGuard {
     std::string name = "HOME";
     std::optional<std::string> previous;
     fs::path tmp;
+
     explicit HomeGuard() {
         if (const char* h = std::getenv("HOME")) previous = h;
         auto base = fs::temp_directory_path();
@@ -58,6 +60,7 @@ struct HomeGuard {
         fs::create_directories(tmp);
         setenv("HOME", tmp.c_str(), 1);
     }
+
     ~HomeGuard() {
         if (previous) {
             setenv("HOME", previous->c_str(), 1);
@@ -69,7 +72,7 @@ struct HomeGuard {
     }
 };
 
-} // namespace
+}  // namespace
 
 // ============================================================================
 // Plugin command — behavioural parity with TS src/commands/plugin/.

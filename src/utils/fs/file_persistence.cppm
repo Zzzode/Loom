@@ -1,9 +1,10 @@
 module;
 
-#include <cerrno>
-#include <cstdio>
 #include <fcntl.h>
 #include <unistd.h>
+
+#include <cerrno>
+#include <cstdio>
 
 export module loom.fs.file_persistence;
 
@@ -50,11 +51,12 @@ inline auto fsync_fd(int fd) -> std::string {
     int fd = ::open(p.c_str(), flags);
     return fd;
 #else
-    (void)p; (void)is_dir;
+    (void)p;
+    (void)is_dir;
     return -1;
 #endif
 }
 
 }  // namespace detail
 
-} // namespace loom::utils
+}  // namespace loom::utils

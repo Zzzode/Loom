@@ -58,8 +58,7 @@ inline void install_core_settings_mcp_loader() {
             // empty (XAA not configured) get_idp_client_secret("") misses, so
             // the field stays unset — no special-casing on the read path.
             layer.xaa_idp_client_secret =
-                loom::services::mcp::get_idp_client_secret(
-                    config.settings().xaa_idp.issuer);
+                loom::services::mcp::get_idp_client_secret(config.settings().xaa_idp.issuer);
 
             return layer;
         });

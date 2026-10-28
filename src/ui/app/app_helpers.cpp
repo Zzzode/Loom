@@ -42,7 +42,8 @@ namespace loom::ui {
     return std::nullopt;
 }
 
-[[nodiscard]] std::optional<std::string> first_non_empty_env(std::initializer_list<const char*> names) {
+[[nodiscard]] std::optional<std::string>
+first_non_empty_env(std::initializer_list<const char*> names) {
     for (const auto* name : names) {
         if (auto value = non_empty_env(name)) return value;
     }
@@ -68,19 +69,16 @@ namespace loom::ui {
 // ============================================================
 
 [[nodiscard]] std::string trim_ascii_copy(std::string_view value) {
-    while (!value.empty() &&
-           std::isspace(static_cast<unsigned char>(value.front()))) {
+    while (!value.empty() && std::isspace(static_cast<unsigned char>(value.front()))) {
         value.remove_prefix(1);
     }
-    while (!value.empty() &&
-           std::isspace(static_cast<unsigned char>(value.back()))) {
+    while (!value.empty() && std::isspace(static_cast<unsigned char>(value.back()))) {
         value.remove_suffix(1);
     }
     return std::string(value);
 }
 
-[[nodiscard]] std::string summarize_agent_description(
-    std::string_view description) {
+[[nodiscard]] std::string summarize_agent_description(std::string_view description) {
     auto newline = description.find('\n');
     if (newline != std::string_view::npos) {
         description = description.substr(0, newline);
@@ -97,8 +95,7 @@ namespace loom::ui {
 [[nodiscard]] std::string lowercase_ascii(std::string_view value) {
     std::string out(value);
     for (char& ch : out) {
-        ch = static_cast<char>(
-            std::tolower(static_cast<unsigned char>(ch)));
+        ch = static_cast<char>(std::tolower(static_cast<unsigned char>(ch)));
     }
     return out;
 }
@@ -114,8 +111,7 @@ namespace loom::ui {
 [[nodiscard]] std::string AppAdapter::lowercase_ascii(std::string_view value) {
     std::string out(value);
     for (char& ch : out) {
-        ch = static_cast<char>(
-            std::tolower(static_cast<unsigned char>(ch)));
+        ch = static_cast<char>(std::tolower(static_cast<unsigned char>(ch)));
     }
     return out;
 }
@@ -124,8 +120,7 @@ namespace loom::ui {
     return (ch & 0xC0) == 0x80;
 }
 
-[[nodiscard]] std::size_t AppAdapter::utf16_code_unit_count(
-    std::string_view value) {
+[[nodiscard]] std::size_t AppAdapter::utf16_code_unit_count(std::string_view value) {
     std::size_t count = 0;
     for (std::size_t i = 0; i < value.size();) {
         const auto c0 = static_cast<unsigned char>(value[i]);
@@ -134,38 +129,29 @@ namespace loom::ui {
 
         if (c0 < 0x80) {
             codepoint = c0;
-        } else if ((c0 & 0xE0) == 0xC0 &&
-                   i + 1 < value.size() &&
+        } else if ((c0 & 0xE0) == 0xC0 && i + 1 < value.size() &&
                    utf8_continuation(static_cast<unsigned char>(value[i + 1]))) {
-            codepoint =
-                (static_cast<std::uint32_t>(c0 & 0x1F) << 6) |
-                static_cast<std::uint32_t>(
-                    static_cast<unsigned char>(value[i + 1]) & 0x3F);
+            codepoint = (static_cast<std::uint32_t>(c0 & 0x1F) << 6) |
+                        static_cast<std::uint32_t>(static_cast<unsigned char>(value[i + 1]) & 0x3F);
             length = 2;
-        } else if ((c0 & 0xF0) == 0xE0 &&
-                   i + 2 < value.size() &&
+        } else if ((c0 & 0xF0) == 0xE0 && i + 2 < value.size() &&
                    utf8_continuation(static_cast<unsigned char>(value[i + 1])) &&
                    utf8_continuation(static_cast<unsigned char>(value[i + 2]))) {
             codepoint =
                 (static_cast<std::uint32_t>(c0 & 0x0F) << 12) |
-                (static_cast<std::uint32_t>(
-                     static_cast<unsigned char>(value[i + 1]) & 0x3F) << 6) |
-                static_cast<std::uint32_t>(
-                    static_cast<unsigned char>(value[i + 2]) & 0x3F);
+                (static_cast<std::uint32_t>(static_cast<unsigned char>(value[i + 1]) & 0x3F) << 6) |
+                static_cast<std::uint32_t>(static_cast<unsigned char>(value[i + 2]) & 0x3F);
             length = 3;
-        } else if ((c0 & 0xF8) == 0xF0 &&
-                   i + 3 < value.size() &&
+        } else if ((c0 & 0xF8) == 0xF0 && i + 3 < value.size() &&
                    utf8_continuation(static_cast<unsigned char>(value[i + 1])) &&
                    utf8_continuation(static_cast<unsigned char>(value[i + 2])) &&
                    utf8_continuation(static_cast<unsigned char>(value[i + 3]))) {
             codepoint =
                 (static_cast<std::uint32_t>(c0 & 0x07) << 18) |
-                (static_cast<std::uint32_t>(
-                     static_cast<unsigned char>(value[i + 1]) & 0x3F) << 12) |
-                (static_cast<std::uint32_t>(
-                     static_cast<unsigned char>(value[i + 2]) & 0x3F) << 6) |
-                static_cast<std::uint32_t>(
-                    static_cast<unsigned char>(value[i + 3]) & 0x3F);
+                (static_cast<std::uint32_t>(static_cast<unsigned char>(value[i + 1]) & 0x3F)
+                 << 12) |
+                (static_cast<std::uint32_t>(static_cast<unsigned char>(value[i + 2]) & 0x3F) << 6) |
+                static_cast<std::uint32_t>(static_cast<unsigned char>(value[i + 3]) & 0x3F);
             length = 4;
         }
 
@@ -175,10 +161,9 @@ namespace loom::ui {
     return count;
 }
 
-[[nodiscard]] std::size_t AppAdapter::rough_js_token_count(
-    std::string_view value) {
+[[nodiscard]] std::size_t AppAdapter::rough_js_token_count(std::string_view value) {
     return static_cast<std::size_t>(
         std::llround(static_cast<double>(utf16_code_unit_count(value)) / 4.0));
 }
 
-} // namespace loom::ui
+}  // namespace loom::ui

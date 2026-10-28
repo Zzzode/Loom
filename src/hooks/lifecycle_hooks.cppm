@@ -3,7 +3,6 @@
 /// Provides an event bus where consumers can register callbacks for tool and session lifecycle.
 module;
 
-
 export module loom.hooks.lifecycle_hooks;
 
 import std;
@@ -27,7 +26,7 @@ struct PostToolUseEvent {
     std::string tool_name;
     std::string tool_use_id;
     bool is_error;
-    std::string output_preview;      // First 500 chars of output
+    std::string output_preview;  // First 500 chars of output
     std::chrono::milliseconds duration;
     std::chrono::system_clock::time_point timestamp;
 };
@@ -55,7 +54,7 @@ struct QueryStartEvent {
 
 struct QueryEndEvent {
     bool success;
-    std::uint32_t rounds;          // Number of tool-loop rounds
+    std::uint32_t rounds;  // Number of tool-loop rounds
     std::uint32_t tools_executed;
     std::chrono::milliseconds duration;
     std::chrono::system_clock::time_point timestamp;
@@ -152,7 +151,8 @@ public:
 
     /// Check pre-tool-use permissions. Returns nullopt if allowed, or denial reason if blocked.
     /// Also emits the notification event to all pre-tool-use hooks.
-    [[nodiscard]] std::optional<std::string> check_and_emit_pre_tool_use(const PreToolUseEvent& event) {
+    [[nodiscard]] std::optional<std::string>
+    check_and_emit_pre_tool_use(const PreToolUseEvent& event) {
         std::vector<PreToolUseChecker> checkers;
         {
             std::lock_guard lk(mu_);
@@ -220,9 +220,8 @@ public:
 
     [[nodiscard]] std::size_t total_hooks() const {
         std::lock_guard lk(mu_);
-        return pre_tool_hooks_.size() + post_tool_hooks_.size() +
-               session_hooks_.size() + query_start_hooks_.size() +
-               query_end_hooks_.size() + pre_tool_checkers_.size() +
+        return pre_tool_hooks_.size() + post_tool_hooks_.size() + session_hooks_.size() +
+               query_start_hooks_.size() + query_end_hooks_.size() + pre_tool_checkers_.size() +
                stop_hooks_.size();
     }
 
@@ -254,4 +253,4 @@ private:
     std::vector<StopHookChecker> stop_hooks_;
 };
 
-} // namespace loom::hooks
+}  // namespace loom::hooks

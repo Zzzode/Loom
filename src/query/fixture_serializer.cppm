@@ -40,4 +40,4 @@ export namespace loom::core {
 /// Serialize a __checkpoint__ JSONL line with the given name.
 [[nodiscard]] std::string checkpoint_to_json(std::string_view name);
 
-} // namespace loom::core
+}  // namespace loom::core

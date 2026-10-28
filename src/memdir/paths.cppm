@@ -3,9 +3,9 @@
 /// Migrated from src/memdir/paths.ts, memoryTypes.ts
 module;
 
-#include <cstdlib>
-#include <cstdio>
 #include <cctype>
+#include <cstdio>
+#include <cstdlib>
 
 export module loom.memdir.paths;
 
@@ -17,10 +17,10 @@ export namespace loom::memdir {
 
 /// Memory file types
 enum class MemoryType : std::uint8_t {
-    ProjectMemory,   // LOOM.md at project root
-    UserMemory,      // ~/.loom/LOOM.md
-    TreeMemory,      // LOOM.md at ancestor directories
-    TeamMemory,      // Team shared memories
+    ProjectMemory,  // LOOM.md at project root
+    UserMemory,     // ~/.loom/LOOM.md
+    TreeMemory,     // LOOM.md at ancestor directories
+    TeamMemory,     // Team shared memories
 };
 
 /// A resolved memory file location
@@ -40,23 +40,21 @@ struct MemoryPath {
 /// Get the project-level memory file path. Prefers whichever cascade name
 /// already exists, so we read a legacy CLAUDE.md rather than looking past it
 /// for a LOOM.md that is not there.
-[[nodiscard]] inline std::filesystem::path get_project_memory_path(
-    const std::filesystem::path& project_root
-) {
+[[nodiscard]] inline std::filesystem::path
+get_project_memory_path(const std::filesystem::path& project_root) {
     return loom::constants::paths::project_memory_path(project_root);
 }
 
 /// Get all ancestor memory file paths between cwd and filesystem root.
 /// Uses the shared per-directory cascade, so a nearer CLAUDE.md correctly
 /// beats a farther LOOM.md.
-[[nodiscard]] inline std::vector<MemoryPath> get_tree_memory_paths(
-    const std::filesystem::path& cwd,
-    const std::filesystem::path& project_root
-) {
+[[nodiscard]] inline std::vector<MemoryPath>
+get_tree_memory_paths(const std::filesystem::path& cwd, const std::filesystem::path& project_root) {
     std::vector<MemoryPath> paths;
     auto current = cwd;
 
-    while (current != project_root && current.has_parent_path() && current != current.parent_path()) {
+    while (current != project_root && current.has_parent_path() &&
+           current != current.parent_path()) {
         if (auto memory_file = loom::constants::paths::memory_file_in(current)) {
             paths.push_back(MemoryPath{
                 .path = *memory_file,
@@ -66,24 +64,22 @@ struct MemoryPath {
         }
         current = current.parent_path();
     }
-    
+
     return paths;
 }
 
 /// Get team memory directory path
-[[nodiscard]] inline std::filesystem::path get_team_memory_dir(
-    const std::filesystem::path& project_root
-) {
+[[nodiscard]] inline std::filesystem::path
+get_team_memory_dir(const std::filesystem::path& project_root) {
     return project_root / ".loom" / "team-memory";
 }
 
 /// Resolve all memory paths for the current session
-[[nodiscard]] inline std::vector<MemoryPath> resolve_all_memory_paths(
-    const std::filesystem::path& cwd,
-    const std::filesystem::path& project_root
-) {
+[[nodiscard]] inline std::vector<MemoryPath>
+resolve_all_memory_paths(const std::filesystem::path& cwd,
+                         const std::filesystem::path& project_root) {
     std::vector<MemoryPath> all;
-    
+
     // User memory
     auto user_path = get_user_memory_path();
     all.push_back(MemoryPath{
@@ -91,7 +87,7 @@ struct MemoryPath {
         .type = MemoryType::UserMemory,
         .exists = std::filesystem::exists(user_path),
     });
-    
+
     // Project memory
     auto proj_path = get_project_memory_path(project_root);
     all.push_back(MemoryPath{
@@ -99,11 +95,11 @@ struct MemoryPath {
         .type = MemoryType::ProjectMemory,
         .exists = std::filesystem::exists(proj_path),
     });
-    
+
     // Tree memories
     auto tree = get_tree_memory_paths(cwd, project_root);
     all.insert(all.end(), tree.begin(), tree.end());
-    
+
     return all;
 }
 
@@ -124,9 +120,8 @@ struct MemoryPath {
     out.reserve(name.size());
     for (char c : name) {
         const auto uc = static_cast<unsigned char>(c);
-        const bool ok = (uc >= 'a' && uc <= 'z') ||
-                        (uc >= 'A' && uc <= 'Z') ||
-                        (uc >= '0' && uc <= '9');
+        const bool ok =
+            (uc >= 'a' && uc <= 'z') || (uc >= 'A' && uc <= 'Z') || (uc >= '0' && uc <= '9');
         out.push_back(ok ? c : '-');
     }
     return out;
@@ -134,21 +129,20 @@ struct MemoryPath {
 
 /// Find the canonical git root for a path (all worktrees of a repo share one
 /// memory dir); falls back to the path itself when not inside a git repo.
-[[nodiscard]] inline std::filesystem::path find_canonical_git_root(
-    const std::filesystem::path& start) {
+[[nodiscard]] inline std::filesystem::path
+find_canonical_git_root(const std::filesystem::path& start) {
     std::error_code ec;
     auto abs = std::filesystem::absolute(start, ec);
     if (ec) abs = start;
-    std::string cmd =
-        "git -C \"" + abs.string() + "\" rev-parse --show-toplevel 2>/dev/null";
+    std::string cmd = "git -C \"" + abs.string() + "\" rev-parse --show-toplevel 2>/dev/null";
     std::string out;
     if (FILE* p = popen(cmd.c_str(), "r")) {
         char buf[512];
-        while (fgets(buf, sizeof(buf), p)) out += buf;
+        while (fgets(buf, sizeof(buf), p))
+            out += buf;
         pclose(p);
     }
-    while (!out.empty() &&
-           (out.back() == '\n' || out.back() == '\r' || out.back() == ' ')) {
+    while (!out.empty() && (out.back() == '\n' || out.back() == '\r' || out.back() == ' ')) {
         out.pop_back();
     }
     if (!out.empty()) return std::filesystem::path(out);
@@ -179,12 +173,11 @@ struct MemoryPath {
 /// Canonical auto-memory directory for the given working/project root.
 /// Returns nullopt when auto-memory is disabled. Honors the full-path
 /// override used by SDK/cowork embeddings.
-[[nodiscard]] inline std::optional<std::filesystem::path> get_auto_mem_path(
-    const std::filesystem::path& project_root) {
+[[nodiscard]] inline std::optional<std::filesystem::path>
+get_auto_mem_path(const std::filesystem::path& project_root) {
     if (!is_auto_memory_enabled()) return std::nullopt;
 
-    if (const char* ov = std::getenv("LOOM_COWORK_MEMORY_PATH_OVERRIDE");
-        ov && *ov) {
+    if (const char* ov = std::getenv("LOOM_COWORK_MEMORY_PATH_OVERRIDE"); ov && *ov) {
         return std::filesystem::path(ov);
     }
 
@@ -215,27 +208,22 @@ get_auto_mem_entrypoint(const std::filesystem::path& project_root) {
 /// Per-project projects key (same sanitization as the auto-memory key, but
 /// derived from the cwd directly — TS getProjectDir(getCwd()) does not walk
 /// to the git root here).
-[[nodiscard]] inline std::filesystem::path get_project_state_dir(
-    const std::filesystem::path& cwd) {
+[[nodiscard]] inline std::filesystem::path get_project_state_dir(const std::filesystem::path& cwd) {
     std::error_code ec;
     auto abs = std::filesystem::absolute(cwd, ec);
     if (ec) abs = cwd;
-    return loom_config_home() / "projects" /
-           sanitize_memory_key(abs.string());
+    return loom_config_home() / "projects" / sanitize_memory_key(abs.string());
 }
 
-[[nodiscard]] inline std::filesystem::path get_session_memory_dir(
-    const std::filesystem::path& cwd,
-    std::string_view session_id) {
-    return get_project_state_dir(cwd) /
-           std::filesystem::path(std::string(session_id)) /
+[[nodiscard]] inline std::filesystem::path get_session_memory_dir(const std::filesystem::path& cwd,
+                                                                  std::string_view session_id) {
+    return get_project_state_dir(cwd) / std::filesystem::path(std::string(session_id)) /
            "session-memory";
 }
 
-[[nodiscard]] inline std::filesystem::path get_session_memory_path(
-    const std::filesystem::path& cwd,
-    std::string_view session_id) {
+[[nodiscard]] inline std::filesystem::path get_session_memory_path(const std::filesystem::path& cwd,
+                                                                   std::string_view session_id) {
     return get_session_memory_dir(cwd, session_id) / "summary.md";
 }
 
-} // namespace loom::memdir
+}  // namespace loom::memdir

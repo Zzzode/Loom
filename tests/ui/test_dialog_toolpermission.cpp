@@ -19,13 +19,13 @@
 ///      rendered above the base chrome, and suppressed when
 ///      is_prompt_input_active=true (Band3 suppression).
 
-#include <cstdlib>
-
 #include <ftxui/component/event.hpp>
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/dom/node.hpp>
 #include <ftxui/screen/screen.hpp>
 #include <gtest/gtest.h>
+
+#include <cstdlib>
 
 import std;
 import loom.ui.dialogs.system;
@@ -39,12 +39,12 @@ import loom.ui.permissions.permission_computer_use;
 
 namespace {
 
-namespace fs   = std::filesystem;
+namespace fs = std::filesystem;
 namespace dsys = loom::ui::dialogs::system;
 namespace dtrig = loom::ui::dialogs::triggers;
-namespace dr   = loom::ui::dialogs::default_renderers;
-namespace rs   = loom::ui::repl_screen;
-namespace sp   = loom::ui::permissions::single_prompt;
+namespace dr = loom::ui::dialogs::default_renderers;
+namespace rs = loom::ui::repl_screen;
+namespace sp = loom::ui::permissions::single_prompt;
 namespace cperm = loom::ui::permissions;
 
 using Element = ftxui::Element;
@@ -52,8 +52,7 @@ using Element = ftxui::Element;
 // ─── helpers ───────────────────────────────────────────────────────────────
 
 std::string render_to_ansi(ftxui::Element el, int w = 120, int h = 40) {
-    auto screen = ftxui::Screen::Create(
-        ftxui::Dimension::Fixed(w), ftxui::Dimension::Fixed(h));
+    auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(w), ftxui::Dimension::Fixed(h));
     ftxui::Render(screen, el);
     return screen.ToString();
 }
@@ -69,17 +68,22 @@ std::string strip_ansi(std::string s) {
             char next = s[i + 1];
             if (next == '[') {
                 i += 2;
-                while (i < s.size() &&
-                       !(s[i] >= '@' && s[i] <= '~')) ++i;
+                while (i < s.size() && !(s[i] >= '@' && s[i] <= '~'))
+                    ++i;
                 if (i < s.size()) ++i;
                 continue;
             }
             if (next == ']') {
                 i += 2;
                 while (i < s.size()) {
-                    if (s[i] == '\x07') { ++i; break; }
-                    if (s[i] == '\x1b' && i + 1 < s.size() &&
-                        s[i + 1] == '\\') { i += 2; break; }
+                    if (s[i] == '\x07') {
+                        ++i;
+                        break;
+                    }
+                    if (s[i] == '\x1b' && i + 1 < s.size() && s[i + 1] == '\\') {
+                        i += 2;
+                        break;
+                    }
                     ++i;
                 }
                 continue;
@@ -121,63 +125,60 @@ void check_golden(const std::string& name, const std::string& actual) {
         return;
     }
     std::ifstream in(path, std::ios::binary);
-    ASSERT_TRUE(in.good()) << "golden missing: " << path << " (run with UPDATE_GOLDENS=1 to create)";
-    std::string expected(
-        (std::istreambuf_iterator<char>(in)),
-        std::istreambuf_iterator<char>());
-    EXPECT_EQ(normalize_line_endings(actual),
-              normalize_line_endings(expected))
+    ASSERT_TRUE(in.good()) << "golden missing: " << path
+                           << " (run with UPDATE_GOLDENS=1 to create)";
+    std::string expected((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
+    EXPECT_EQ(normalize_line_endings(actual), normalize_line_endings(expected))
         << "golden mismatch: " << path;
 }
 
 /// ──── Sample payload builders ──────────────────────────────────────────
 
-dsys::ToolPermissionPayload MakeBashPayload(
-    std::function<void(bool, std::optional<bool>)> on_response = nullptr,
-    std::function<void()> on_abort = nullptr)
-{
+dsys::ToolPermissionPayload
+MakeBashPayload(std::function<void(bool, std::optional<bool>)> on_response = nullptr,
+                std::function<void()> on_abort = nullptr) {
     dsys::ToolPermissionPayload p;
-    p.id           = "1001";
-    p.tool_name    = "Bash";
-    p.description  = "Loom wants to run a bash command.";
-    p.action_kind  = sp::ActionKind::Execute;
-    p.risk_level   = sp::RiskLevel::Medium;
+    p.id = "1001";
+    p.tool_name = "Bash";
+    p.description = "Loom wants to run a bash command.";
+    p.action_kind = sp::ActionKind::Execute;
+    p.risk_level = sp::RiskLevel::Medium;
     p.affected_paths = {"/tmp/build.sh"};
     p.workspace_root = "/home/user/project";
     p.rule_match_explanation = "matched 'Bash(make *):*' allow-pattern";
     p.can_always_allow = true;
     p.detail = sp::DetailBash{
-        .command           = "cmake --build build-check -j 8",
-        .working_dir       = "/home/user/project",
-        .is_destructive    = false,
+        .command = "cmake --build build-check -j 8",
+        .working_dir = "/home/user/project",
+        .is_destructive = false,
         .destructive_reason = "",
     };
     p.on_response = [cb = std::move(on_response)](sp::Decision d, bool sandbox) {
         if (!cb) return;
         if (d == sp::Decision::AlwaysAllow || d == sp::Decision::AllowOnce)
-            cb(true,  /*always=*/d == sp::Decision::AlwaysAllow);
+            cb(true, /*always=*/d == sp::Decision::AlwaysAllow);
         else
             cb(false, std::nullopt);
         (void)sandbox;
     };
-    p.on_abort    = std::move(on_abort);
+    p.on_abort = std::move(on_abort);
     return p;
 }
 
 dsys::ToolPermissionPayload MakeFileEditPayload() {
     dsys::ToolPermissionPayload p;
-    p.id          = "1002";
-    p.tool_name   = "FileEditTool";
+    p.id = "1002";
+    p.tool_name = "FileEditTool";
     p.description = "Loom wants to edit a C++ module file.";
     p.action_kind = sp::ActionKind::Write;
-    p.risk_level  = sp::RiskLevel::Low;
+    p.risk_level = sp::RiskLevel::Low;
     p.affected_paths = {"src/ui/dialogs/dialog_system.cppm"};
     p.workspace_root = "/home/user/project";
     p.can_always_allow = true;
     p.detail = sp::DetailFileEdit{
-        .file_path    = "src/ui/dialogs/dialog_system.cppm",
-        .old_snippet  = "   // old code\n",
-        .new_snippet  = "   DialogRendererRegistry registry;\n   // new code\n",
+        .file_path = "src/ui/dialogs/dialog_system.cppm",
+        .old_snippet = "   // old code\n",
+        .new_snippet = "   DialogRendererRegistry registry;\n   // new code\n",
         .creates_file = false,
     };
     return p;
@@ -185,37 +186,29 @@ dsys::ToolPermissionPayload MakeFileEditPayload() {
 
 dsys::ToolPermissionPayload MakeGenericPayload() {
     dsys::ToolPermissionPayload p;
-    p.id          = "1003";
-    p.tool_name   = "AgentTool";
+    p.id = "1003";
+    p.tool_name = "AgentTool";
     p.description = "Loom wants to spawn a sub-agent.";
     p.action_kind = sp::ActionKind::Other;
-    p.risk_level  = sp::RiskLevel::High;
+    p.risk_level = sp::RiskLevel::High;
     p.detail = sp::DetailGeneric{
-        .description =
-            "Agent ID: coordinator-a2\n"
-            "Budget tokens: 64,000\n"
-            "Timeout: 5 minutes",
+        .description = "Agent ID: coordinator-a2\n"
+                       "Budget tokens: 64,000\n"
+                       "Timeout: 5 minutes",
     };
     p.can_always_allow = false;
     return p;
 }
 
-
 // ─── 1. DialogSystem basic invariants ──────────────────────────────────────
 
 TEST(DialogSystem, SlotRoutingForTypes) {
-    EXPECT_EQ(dsys::slot_for(dsys::DialogType::ToolPermission),
-              dsys::DialogSlot::Overlay);
-    EXPECT_EQ(dsys::slot_for(dsys::DialogType::SandboxPermission),
-              dsys::DialogSlot::Bottom);
-    EXPECT_EQ(dsys::slot_for(dsys::DialogType::TrustDialog),
-              dsys::DialogSlot::Standalone);
-    EXPECT_EQ(dsys::slot_for(dsys::DialogType::SettingsPanel),
-              dsys::DialogSlot::Modal);
-    EXPECT_EQ(dsys::priority_for(dsys::DialogType::ToolPermission),
-              dsys::DialogPriority::Band3);
-    EXPECT_EQ(dsys::priority_for(dsys::DialogType::SandboxPermission),
-              dsys::DialogPriority::Band2);
+    EXPECT_EQ(dsys::slot_for(dsys::DialogType::ToolPermission), dsys::DialogSlot::Overlay);
+    EXPECT_EQ(dsys::slot_for(dsys::DialogType::SandboxPermission), dsys::DialogSlot::Bottom);
+    EXPECT_EQ(dsys::slot_for(dsys::DialogType::TrustDialog), dsys::DialogSlot::Standalone);
+    EXPECT_EQ(dsys::slot_for(dsys::DialogType::SettingsPanel), dsys::DialogSlot::Modal);
+    EXPECT_EQ(dsys::priority_for(dsys::DialogType::ToolPermission), dsys::DialogPriority::Band3);
+    EXPECT_EQ(dsys::priority_for(dsys::DialogType::SandboxPermission), dsys::DialogPriority::Band2);
 }
 
 TEST(DialogSystem, ShouldShowDialogSuppressionPolicy) {
@@ -224,54 +217,66 @@ TEST(DialogSystem, ShouldShowDialogSuppressionPolicy) {
     auto make_variant = [](dsys::DialogType t) -> dsys::DialogPayloadVariant {
         using namespace dsys;
         switch (t) {
-            case DialogType::ToolPermission: {
-                ToolPermissionPayload p; p.id = "tp"; return p;
-            }
-            case DialogType::SandboxPermission: {
-                SandboxPermissionPayload p; p.id = "sp"; return p;
-            }
-            case DialogType::IdleReturn: {
-                IdleReturnPayload p; p.id = "ir"; return p;
-            }
-            case DialogType::TrustDialog: {
-                TrustDialogPayload p; p.id = "td"; return p;
-            }
-            case DialogType::SettingsPanel: {
-                SettingsPanelPayload p; p.id = "set"; return p;
-            }
-            default: {
-                ToolPermissionPayload p; p.id = "x"; return p;
-            }
+        case DialogType::ToolPermission: {
+            ToolPermissionPayload p;
+            p.id = "tp";
+            return p;
+        }
+        case DialogType::SandboxPermission: {
+            SandboxPermissionPayload p;
+            p.id = "sp";
+            return p;
+        }
+        case DialogType::IdleReturn: {
+            IdleReturnPayload p;
+            p.id = "ir";
+            return p;
+        }
+        case DialogType::TrustDialog: {
+            TrustDialogPayload p;
+            p.id = "td";
+            return p;
+        }
+        case DialogType::SettingsPanel: {
+            SettingsPanelPayload p;
+            p.id = "set";
+            return p;
+        }
+        default: {
+            ToolPermissionPayload p;
+            p.id = "x";
+            return p;
+        }
         }
     };
 
-    auto tp  = make_variant(dsys::DialogType::ToolPermission);
-    auto sb  = make_variant(dsys::DialogType::SandboxPermission);
-    auto ir  = make_variant(dsys::DialogType::IdleReturn);
-    auto td  = make_variant(dsys::DialogType::TrustDialog);
+    auto tp = make_variant(dsys::DialogType::ToolPermission);
+    auto sb = make_variant(dsys::DialogType::SandboxPermission);
+    auto ir = make_variant(dsys::DialogType::IdleReturn);
+    auto td = make_variant(dsys::DialogType::TrustDialog);
     auto set = make_variant(dsys::DialogType::SettingsPanel);
 
     // Band3 ToolPermission is suppressed while prompt has input active
     // OR mid-animation, but shown otherwise.
-    EXPECT_FALSE(dsys::should_show_dialog(
-        tp, /*is_prompt_input_active=*/true,  /*allow_anim=*/true));
-    EXPECT_FALSE(dsys::should_show_dialog(
-        tp, /*is_prompt_input_active=*/false, /*allow_anim=*/false));
-    EXPECT_TRUE(dsys::should_show_dialog(
-        tp, /*is_prompt_input_active=*/false, /*allow_anim=*/true));
+    EXPECT_FALSE(
+        dsys::should_show_dialog(tp, /*is_prompt_input_active=*/true, /*allow_anim=*/true));
+    EXPECT_FALSE(
+        dsys::should_show_dialog(tp, /*is_prompt_input_active=*/false, /*allow_anim=*/false));
+    EXPECT_TRUE(
+        dsys::should_show_dialog(tp, /*is_prompt_input_active=*/false, /*allow_anim=*/true));
     // Band2 SandboxPermission (Bottom): suppressed while typing (only
     // Band1 bottom dialogs survive typing) but NOT suppressed by the
     // animation flag (animation suppression only targets Band3).
-    EXPECT_FALSE(dsys::should_show_dialog(
-        sb, /*is_prompt_input_active=*/true,  /*allow_anim=*/false));
-    EXPECT_TRUE(dsys::should_show_dialog(
-        sb, /*is_prompt_input_active=*/false, /*allow_anim=*/false));
+    EXPECT_FALSE(
+        dsys::should_show_dialog(sb, /*is_prompt_input_active=*/true, /*allow_anim=*/false));
+    EXPECT_TRUE(
+        dsys::should_show_dialog(sb, /*is_prompt_input_active=*/false, /*allow_anim=*/false));
     // Band4 banners: same typing-suppression rule (typing kills bands 2..6).
     // Animation suppression never touches Band4.
-    EXPECT_FALSE(dsys::should_show_dialog(
-        ir, /*is_prompt_input_active=*/true,  /*allow_anim=*/false));
-    EXPECT_TRUE(dsys::should_show_dialog(
-        ir, /*is_prompt_input_active=*/false, /*allow_anim=*/false));
+    EXPECT_FALSE(
+        dsys::should_show_dialog(ir, /*is_prompt_input_active=*/true, /*allow_anim=*/false));
+    EXPECT_TRUE(
+        dsys::should_show_dialog(ir, /*is_prompt_input_active=*/false, /*allow_anim=*/false));
     // Modal / Standalone always show.
     EXPECT_TRUE(dsys::should_show_dialog(td, true, false));
     EXPECT_TRUE(dsys::should_show_dialog(set, true, false));
@@ -284,7 +289,7 @@ inline dsys::ToolPermissionPayload& tp(dsys::DialogPayloadVariant& v) {
     auto* p = std::get_if<dsys::ToolPermissionPayload>(&v);
     if (!p) {
         ADD_FAILURE() << "Variant does not hold ToolPermissionPayload";
-        static dsys::ToolPermissionPayload dummy; // crash-safe fallback
+        static dsys::ToolPermissionPayload dummy;  // crash-safe fallback
         return dummy;
     }
     return *p;
@@ -313,9 +318,8 @@ TEST(DialogSystem, QueuePushRoutesByTypeAndPopById) {
 
 TEST(DialogSystem, DialogPayloadVariantTypeOfMatchesPush) {
     dsys::DialogQueue q;
-    dtrig::PushToolPermission(
-        q, "FileEdit", "edit file",
-        [](dsys::ToolPermissionPayload::Decision, bool) {});
+    dtrig::PushToolPermission(q, "FileEdit", "edit file",
+                              [](dsys::ToolPermissionPayload::Decision, bool) {});
     auto peek = q.peek_overlay();
     ASSERT_TRUE(peek.has_value());
     EXPECT_EQ(dsys::type_of(peek->get()), dsys::DialogType::ToolPermission);
@@ -331,7 +335,8 @@ TEST(DialogRegistry, UnregisteredTypeRendersFallbackWithEscHint) {
     dsys::ToolPermissionPayload payload = MakeBashPayload();
     dsys::DialogPayloadVariant v = payload;
     dsys::DialogRenderContext ctx;
-    ctx.term_cols = 100; ctx.term_rows = 30;
+    ctx.term_cols = 100;
+    ctx.term_rows = 30;
     Element el = reg.render(v, ctx);
     ASSERT_NE(el, nullptr);
     std::string ansi = render_to_ansi(std::move(el), 100, 30);
@@ -346,7 +351,8 @@ TEST(DialogRegistry, RegisterDefaultEnablesRenderAndHandle) {
     // separate contains() / has_renderer() accessors).
     dsys::DialogPayloadVariant v = MakeBashPayload();
     dsys::DialogRenderContext ctx;
-    ctx.term_cols = 80; ctx.term_rows = 24;
+    ctx.term_cols = 80;
+    ctx.term_rows = 24;
     Element el = reg.render(v, ctx);
     ASSERT_NE(el, nullptr);
     // Renderer is registered when it returns something richer than the
@@ -367,11 +373,11 @@ TEST(VisualSnapshot, ToolPermissionBashMatchesGolden) {
     // Ensure ui_state is NOT set so we test the fresh-build path and the
     // output is fully deterministic (no focus drift between calls).
     dsys::DialogRenderContext ctx;
-    ctx.term_cols = 120; ctx.term_rows = 40;
+    ctx.term_cols = 120;
+    ctx.term_rows = 40;
     Element el = reg.render(v, ctx);
     ASSERT_NE(el, nullptr);
-    check_golden("tool_permission_bash",
-                 render_to_ansi(std::move(el), 120, 40));
+    check_golden("tool_permission_bash", render_to_ansi(std::move(el), 120, 40));
 }
 
 TEST(VisualSnapshot, ToolPermissionFileEditMatchesGolden) {
@@ -379,11 +385,11 @@ TEST(VisualSnapshot, ToolPermissionFileEditMatchesGolden) {
     dr::register_default_renderers(reg);
     dsys::DialogPayloadVariant v = MakeFileEditPayload();
     dsys::DialogRenderContext ctx;
-    ctx.term_cols = 120; ctx.term_rows = 40;
+    ctx.term_cols = 120;
+    ctx.term_rows = 40;
     Element el = reg.render(v, ctx);
     ASSERT_NE(el, nullptr);
-    check_golden("tool_permission_file_edit",
-                 render_to_ansi(std::move(el), 120, 40));
+    check_golden("tool_permission_file_edit", render_to_ansi(std::move(el), 120, 40));
 }
 
 TEST(VisualSnapshot, ToolPermissionGenericMatchesGolden) {
@@ -391,11 +397,11 @@ TEST(VisualSnapshot, ToolPermissionGenericMatchesGolden) {
     dr::register_default_renderers(reg);
     dsys::DialogPayloadVariant v = MakeGenericPayload();
     dsys::DialogRenderContext ctx;
-    ctx.term_cols = 120; ctx.term_rows = 40;
+    ctx.term_cols = 120;
+    ctx.term_rows = 40;
     Element el = reg.render(v, ctx);
     ASSERT_NE(el, nullptr);
-    check_golden("tool_permission_generic",
-                 render_to_ansi(std::move(el), 120, 40));
+    check_golden("tool_permission_generic", render_to_ansi(std::move(el), 120, 40));
 }
 
 // ─── 4. Keyboard event handling ────────────────────────────────────────────
@@ -405,14 +411,17 @@ using DecisionPair = std::pair<bool, std::optional<bool>>;
 struct DecisionRecorder {
     std::optional<DecisionPair> response;
     int abort_called = 0;
-    void reset() { response.reset(); abort_called = 0; }
+
+    void reset() {
+        response.reset();
+        abort_called = 0;
+    }
 };
 
 dsys::ToolPermissionPayload MakeRecordedBash(DecisionRecorder& rec) {
     return MakeBashPayload(
-        /*on_response=*/[&rec](bool a, std::optional<bool> b) {
-            rec.response = DecisionPair{a, b};
-        },
+        /*on_response=*/[&rec](bool a,
+                               std::optional<bool> b) { rec.response = DecisionPair{a, b}; },
         /*on_abort=*/[&rec] { ++rec.abort_called; });
 }
 
@@ -483,9 +492,7 @@ TEST(KeyboardEvents, EscapeFallsBackToDenyWhenNoAbortCb) {
     // SOME signal even if it forgot to register on_abort.
     DecisionRecorder rec;
     auto p = MakeBashPayload(
-        [&rec](bool a, std::optional<bool> b) {
-            rec.response = DecisionPair{a, b};
-        },
+        [&rec](bool a, std::optional<bool> b) { rec.response = DecisionPair{a, b}; },
         /*on_abort=*/nullptr);
     dsys::DialogPayloadVariant v = std::move(p);
     EXPECT_TRUE(dr::HandleToolPermissionEvent(tp(v), ftxui::Event::Escape));
@@ -493,7 +500,6 @@ TEST(KeyboardEvents, EscapeFallsBackToDenyWhenNoAbortCb) {
     ASSERT_TRUE(rec.response.has_value());
     EXPECT_EQ(*rec.response, (DecisionPair{false, std::nullopt}));
 }
-
 
 TEST(KeyboardEvents, LowercaseDProducesAlwaysDeny) {
     DecisionRecorder rec;
@@ -616,9 +622,9 @@ TEST(DialogDispatchPriority, OverlayDispatchedBeforeBottom) {
     s.dialog_store.dialog_queue.push(std::move(idle));
 
     // 'y' should be consumed by the overlay, not the idle bottom payload.
-    EXPECT_TRUE(rs::dialog_queue_render::DispatchDialogQueueEvents(
-        s, ftxui::Event::Character('y'),
-        /*is_prompt_input_active=*/false, /*allow_anim=*/true));
+    EXPECT_TRUE(rs::dialog_queue_render::DispatchDialogQueueEvents(s, ftxui::Event::Character('y'),
+                                                                   /*is_prompt_input_active=*/false,
+                                                                   /*allow_anim=*/true));
     EXPECT_TRUE(rec_bash.response.has_value());
     EXPECT_EQ(*rec_bash.response, (DecisionPair{true, false}));
 }
@@ -632,15 +638,15 @@ TEST(DialogDispatchPriority, Band3OverlaySuppressedWhileTyping) {
     s.dialog_store.dialog_queue.push(std::move(bash));
 
     // is_prompt_input_active=true → Overlay not dispatched.
-    EXPECT_FALSE(rs::dialog_queue_render::DispatchDialogQueueEvents(
-        s, ftxui::Event::Character('y'),
-        /*is_prompt_input_active=*/true, /*allow_anim=*/true));
+    EXPECT_FALSE(rs::dialog_queue_render::DispatchDialogQueueEvents(s, ftxui::Event::Character('y'),
+                                                                    /*is_prompt_input_active=*/true,
+                                                                    /*allow_anim=*/true));
     EXPECT_FALSE(rec_bash.response.has_value());
 
     // Deactivate prompt → event is routed normally.
-    EXPECT_TRUE(rs::dialog_queue_render::DispatchDialogQueueEvents(
-        s, ftxui::Event::Character('y'),
-        /*is_prompt_input_active=*/false, /*allow_anim=*/true));
+    EXPECT_TRUE(rs::dialog_queue_render::DispatchDialogQueueEvents(s, ftxui::Event::Character('y'),
+                                                                   /*is_prompt_input_active=*/false,
+                                                                   /*allow_anim=*/true));
     EXPECT_EQ(*rec_bash.response, (DecisionPair{true, false}));
 }
 
@@ -653,14 +659,16 @@ TEST(LayerAllDialogs, OverlaySuppressedWhenPromptActive) {
 
     auto base = ftxui::text("base chrome") | ftxui::bold;
     Element active = rs::dialog_queue_render::LayerAllDialogs(
-        ftxui::Element{base}, rs::dialog_queue_render::PrepareDialogLayers(
-        s, /*is_prompt_input_active=*/true, /*allow_anim=*/true, 100, 25));
+        ftxui::Element{base},
+        rs::dialog_queue_render::PrepareDialogLayers(s, /*is_prompt_input_active=*/true,
+                                                     /*allow_anim=*/true, 100, 25));
     Element idle = rs::dialog_queue_render::LayerAllDialogs(
-        ftxui::Element{base}, rs::dialog_queue_render::PrepareDialogLayers(
-        s, /*is_prompt_input_active=*/false, /*allow_anim=*/true, 100, 25));
+        ftxui::Element{base},
+        rs::dialog_queue_render::PrepareDialogLayers(s, /*is_prompt_input_active=*/false,
+                                                     /*allow_anim=*/true, 100, 25));
 
     std::string active_str = render_to_ansi(std::move(active), 100, 25);
-    std::string idle_str   = render_to_ansi(std::move(idle), 100, 25);
+    std::string idle_str = render_to_ansi(std::move(idle), 100, 25);
 
     // Prompt-active case should not contain the permission header (overlay
     // suppressed), idle case should.
@@ -677,23 +685,30 @@ TEST(LayerAllDialogs, PermissionFooterReflowsInsideExistingOverlayBudget) {
                 SCOPED_TRACE(std::format("{}x{} kind={}", width, height, kind));
                 rs::ReplScreenState state;
                 dr::register_default_renderers(state.dialog_store.dialog_renderers);
-                state.dialog_store.PushDialog(kind == 0 ? MakeBashPayload() :
-                    kind == 1 ? MakeFileEditPayload() : MakeGenericPayload());
-                auto view = rs::dialog_queue_render::PrepareDialogLayers(state, false, true, width, height);
+                state.dialog_store.PushDialog(kind == 0   ? MakeBashPayload()
+                                              : kind == 1 ? MakeFileEditPayload()
+                                                          : MakeGenericPayload());
+                auto view =
+                    rs::dialog_queue_render::PrepareDialogLayers(state, false, true, width, height);
                 ftxui::Elements underlay;
-                for (int row = 0; row < height; ++row) underlay.push_back(ftxui::text(std::string(width, '@')));
-                const auto text = strip_ansi(render_to_ansi(rs::dialog_queue_render::LayerAllDialogs(
-                    ftxui::vbox(std::move(underlay)), std::move(view)), width, height));
+                for (int row = 0; row < height; ++row)
+                    underlay.push_back(ftxui::text(std::string(width, '@')));
+                const auto text = strip_ansi(
+                    render_to_ansi(rs::dialog_queue_render::LayerAllDialogs(
+                                       ftxui::vbox(std::move(underlay)), std::move(view)),
+                                   width, height));
                 std::istringstream lines(text);
                 for (std::string line; std::getline(lines, line);) {
                     const auto left = line.find("│");
                     const auto right = line.rfind("│");
                     if (left != std::string::npos && right > left)
-                        EXPECT_EQ(line.substr(left, right - left).find('@'), std::string::npos) << line;
+                        EXPECT_EQ(line.substr(left, right - left).find('@'), std::string::npos)
+                            << line;
                 }
-                for (const auto* label : {"Permission", "Always deny this tool", "Always allow this scope",
-                        "Sandbox", "[y] Allow", "[n] Deny", "[a] Always allow", "[d] Always deny",
-                        "[s] Toggle sandbox", "[Esc] Cancel", "[PgUp/PgDn] Details"})
+                for (const auto* label :
+                     {"Permission", "Always deny this tool", "Always allow this scope", "Sandbox",
+                      "[y] Allow", "[n] Deny", "[a] Always allow", "[d] Always deny",
+                      "[s] Toggle sandbox", "[Esc] Cancel", "[PgUp/PgDn] Details"})
                     EXPECT_NE(text.find(label), std::string::npos) << label << '\n' << text;
             }
         }
@@ -705,7 +720,8 @@ TEST(LayerAllDialogs, PermissionDetailsPageWithoutMovingDecisionFocusOrApproving
     dr::register_default_renderers(state.dialog_store.dialog_renderers);
     auto request = MakeBashPayload();
     request.description = std::string{};
-    for (int i = 0; i < 60; ++i) request.description += "BODY-DATA ";
+    for (int i = 0; i < 60; ++i)
+        request.description += "BODY-DATA ";
     request.affected_paths.clear();
     request.rule_match_explanation = "DETAIL-END";
     sp::DetailBash bash;
@@ -718,13 +734,15 @@ TEST(LayerAllDialogs, PermissionDetailsPageWithoutMovingDecisionFocusOrApproving
     request.on_response = [&](sp::Decision, bool) { ++decisions; };
     state.dialog_store.PushDialog(std::move(request));
     auto paint = [&](int width = 40, int height = 24) {
-        return strip_ansi(render_to_ansi(rs::dialog_queue_render::PrepareDialogLayers(
-            state, false, true, width, height).overlay, width, height));
+        return strip_ansi(render_to_ansi(
+            rs::dialog_queue_render::PrepareDialogLayers(state, false, true, width, height).overlay,
+            width, height));
     };
     const auto initial = paint();
     EXPECT_NE(initial.find("DESTRUCTIVE-WARNING"), std::string::npos) << initial;
     EXPECT_EQ(initial.find("DETAIL-END"), std::string::npos) << initial;
-    auto& payload = std::get<dsys::ToolPermissionPayload>(state.dialog_store.dialog_queue.peek_overlay_mut()->get());
+    auto& payload = std::get<dsys::ToolPermissionPayload>(
+        state.dialog_store.dialog_queue.peek_overlay_mut()->get());
     auto ui = std::static_pointer_cast<sp::PromptState>(payload.ui_state);
     ui->focused_button = 1;
     for (int i = 0; i < 100; ++i) {
@@ -754,7 +772,8 @@ TEST(ToolPermissionKeyboardEvents, StandaloneDetailPagingKeepsOneShotDecision) {
     props.tool_name = "Bash";
     props.action_kind = sp::ActionKind::Execute;
     props.risk_level = sp::RiskLevel::High;
-    for (int i = 0; i < 60; ++i) props.description += "BODY-DATA ";
+    for (int i = 0; i < 60; ++i)
+        props.description += "BODY-DATA ";
     props.detail = sp::DetailGeneric{"STANDALONE-TARGET"};
     props.rule_match_explanation = "STANDALONE-END";
     props.on_decide = [&](sp::Decision decision, bool) {
@@ -763,11 +782,15 @@ TEST(ToolPermissionKeyboardEvents, StandaloneDetailPagingKeepsOneShotDecision) {
     };
     auto component = sp::MakeSinglePromptDialog(std::move(props));
     auto paint = [&] {
-        return strip_ansi(render_to_ansi(component->Render() | ftxui::size(ftxui::HEIGHT, ftxui::LESS_THAN, 14), 40, 24));
+        return strip_ansi(render_to_ansi(
+            component->Render() | ftxui::size(ftxui::HEIGHT, ftxui::LESS_THAN, 14), 40, 24));
     };
     EXPECT_NE(paint().find("STANDALONE-TARGET"), std::string::npos);
     EXPECT_EQ(paint().find("STANDALONE-END"), std::string::npos);
-    for (int i = 0; i < 100; ++i) { component->OnEvent(ftxui::Event::PageDown); (void)paint(); }
+    for (int i = 0; i < 100; ++i) {
+        component->OnEvent(ftxui::Event::PageDown);
+        (void)paint();
+    }
     EXPECT_NE(paint().find("STANDALONE-END"), std::string::npos);
     EXPECT_EQ(decisions, 0);
     component->OnEvent(ftxui::Event::Return);
@@ -813,30 +836,27 @@ TEST(ComputerUsePermission, DetailRendersActionAndTarget) {
     EXPECT_NE(ansi.find("COMPUTER USE"), std::string::npos) << ansi;
     EXPECT_NE(ansi.find("Click on screen"), std::string::npos) << ansi;
     EXPECT_NE(ansi.find("(640, 480)"), std::string::npos) << ansi;
-    EXPECT_NE(ansi.find("First computer use in this session"), std::string::npos)
-        << ansi;
+    EXPECT_NE(ansi.find("First computer use in this session"), std::string::npos) << ansi;
 }
 
 TEST(ComputerUsePermission, InputParsingRecognizesActions) {
     // Native wire shape: action + coordinate array.
-    auto click = cperm::options_from_tool_input(
-        R"({"action":"left_click","coordinate":[100,200]})");
+    auto click =
+        cperm::options_from_tool_input(R"({"action":"left_click","coordinate":[100,200]})");
     ASSERT_TRUE(click.has_value());
     EXPECT_EQ(click->action, cperm::ComputerUseAction::Click);
     ASSERT_TRUE(click->coordinates.has_value());
     EXPECT_EQ(*click->coordinates, "(100, 200)");
 
     // Typing carries the text payload.
-    auto typed = cperm::options_from_tool_input(
-        R"({"action":"type","text":"hello world"})");
+    auto typed = cperm::options_from_tool_input(R"({"action":"type","text":"hello world"})");
     ASSERT_TRUE(typed.has_value());
     EXPECT_EQ(typed->action, cperm::ComputerUseAction::Type);
     ASSERT_TRUE(typed->text_to_type.has_value());
     EXPECT_EQ(*typed->text_to_type, "hello world");
 
     // Local adapter vocabulary + explicit app target.
-    auto app = cperm::options_from_tool_input(
-        R"({"action":"screenshot","app":"Finder"})");
+    auto app = cperm::options_from_tool_input(R"({"action":"screenshot","app":"Finder"})");
     ASSERT_TRUE(app.has_value());
     EXPECT_EQ(app->action, cperm::ComputerUseAction::Screenshot);
     ASSERT_TRUE(app->target_app.has_value());

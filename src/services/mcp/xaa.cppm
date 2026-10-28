@@ -6,15 +6,16 @@
 ///   2. RFC 7523 JWT Bearer Grant at the AS: ID-JAG → access_token
 ///
 /// Spec refs:
-///   - ID-JAG (IETF draft): https://datatracker.ietf.org/doc/draft-ietf-oauth-identity-assertion-authz-grant/
+///   - ID-JAG (IETF draft):
+///   https://datatracker.ietf.org/doc/draft-ietf-oauth-identity-assertion-authz-grant/
 ///   - MCP ext-auth (SEP-990): https://github.com/modelcontextprotocol/ext-auth
 ///   - RFC 8693 (Token Exchange), RFC 7523 (JWT Bearer), RFC 9728 (PRM)
 module;
+#include <httplib.h>
+
 #include <cctype>
 #include <cstdint>
 #include <cstdlib>
-
-#include <httplib.h>
 
 export module loom.services.mcp.xaa;
 
@@ -42,12 +43,9 @@ inline constexpr int kXaaRequestTimeoutMs = 30000;
 // Grant type and token type URNs
 inline constexpr std::string_view kTokenExchangeGrant =
     "urn:ietf:params:oauth:grant-type:token-exchange";
-inline constexpr std::string_view kJwtBearerGrant =
-    "urn:ietf:params:oauth:grant-type:jwt-bearer";
-inline constexpr std::string_view kIdJagTokenType =
-    "urn:ietf:params:oauth:token-type:id-jag";
-inline constexpr std::string_view kIdTokenType =
-    "urn:ietf:params:oauth:token-type:id_token";
+inline constexpr std::string_view kJwtBearerGrant = "urn:ietf:params:oauth:grant-type:jwt-bearer";
+inline constexpr std::string_view kIdJagTokenType = "urn:ietf:params:oauth:token-type:id-jag";
+inline constexpr std::string_view kIdTokenType = "urn:ietf:params:oauth:token-type:id_token";
 
 // ─── Error Types ──────────────────────────────────────────────────────────
 
@@ -133,17 +131,19 @@ namespace detail {
     std::string s(url);
     auto scheme_end = s.find("://");
     if (scheme_end == std::string_view::npos) {
-        while (!s.empty() && s.back() == '/') s.pop_back();
+        while (!s.empty() && s.back() == '/')
+            s.pop_back();
         return s;
     }
     auto host_start = scheme_end + 3;
     auto path_start = s.find('/', host_start);
     std::string host = path_start == std::string::npos
-        ? s.substr(host_start)
-        : s.substr(host_start, path_start - host_start);
+                           ? s.substr(host_start)
+                           : s.substr(host_start, path_start - host_start);
 
     // Lowercase host
-    for (auto& c : host) c = static_cast<char>(std::tolower(c));
+    for (auto& c : host)
+        c = static_cast<char>(std::tolower(c));
 
     // Extract port and check if it's the default for the scheme
     std::string hostname = host;
@@ -152,7 +152,8 @@ namespace detail {
         std::string port_str = host.substr(colon_pos + 1);
         hostname = host.substr(0, colon_pos);
         std::string scheme = s.substr(0, scheme_end);
-        for (auto& c : scheme) c = static_cast<char>(std::tolower(c));
+        for (auto& c : scheme)
+            c = static_cast<char>(std::tolower(c));
         bool is_default_port = false;
         if (scheme == "http" && port_str == "80") is_default_port = true;
         if (scheme == "https" && port_str == "443") is_default_port = true;
@@ -160,10 +161,12 @@ namespace detail {
     }
 
     std::string path = path_start == std::string::npos ? "" : s.substr(path_start);
-    while (!path.empty() && path.back() == '/') path.pop_back();
+    while (!path.empty() && path.back() == '/')
+        path.pop_back();
 
     std::string scheme = s.substr(0, scheme_end);
-    for (auto& c : scheme) c = static_cast<char>(std::tolower(c));
+    for (auto& c : scheme)
+        c = static_cast<char>(std::tolower(c));
 
     return scheme + "://" + host + path;
 }
@@ -188,49 +191,40 @@ struct FormPostResult {
     std::string body;
 };
 
-[[nodiscard]] inline Result<FormPostResult> post_form(
-    std::string_view url,
-    std::string_view body,
-    const httplib::Headers& headers = {}) {
+[[nodiscard]] inline Result<FormPostResult> post_form(std::string_view url, std::string_view body,
+                                                      const httplib::Headers& headers = {}) {
     auto parsed = parse_url(url);
     if (!parsed) return std::unexpected(parsed.error());
 
     httplib::Client client(parsed->base);
     client.set_follow_location(true);
     client.set_connection_timeout(10, 0);
-    client.set_read_timeout(kXaaRequestTimeoutMs / 1000,
-        (kXaaRequestTimeoutMs % 1000) * 1000);
+    client.set_read_timeout(kXaaRequestTimeoutMs / 1000, (kXaaRequestTimeoutMs % 1000) * 1000);
 
     httplib::Headers merged_headers = headers;
     if (merged_headers.find("Accept") == merged_headers.end()) {
         merged_headers.emplace("Accept", "application/json");
     }
 
-    auto response = client.Post(
-        parsed->path, merged_headers,
-        std::string(body),
-        "application/x-www-form-urlencoded");
+    auto response = client.Post(parsed->path, merged_headers, std::string(body),
+                                "application/x-www-form-urlencoded");
     if (!response) {
         return std::unexpected(Error(ErrorCode::network_error,
-            "XAA: POST request failed to " + parsed->base + parsed->path));
+                                     "XAA: POST request failed to " + parsed->base + parsed->path));
     }
-    return FormPostResult{
-        .status = response->status,
-        .body = std::move(response->body)};
+    return FormPostResult{.status = response->status, .body = std::move(response->body)};
 }
 
 /// Perform an HTTP GET. Returns {status, body}.
-[[nodiscard]] inline Result<FormPostResult> http_get(
-    std::string_view url,
-    const httplib::Headers& headers = {}) {
+[[nodiscard]] inline Result<FormPostResult> http_get(std::string_view url,
+                                                     const httplib::Headers& headers = {}) {
     auto parsed = parse_url(url);
     if (!parsed) return std::unexpected(parsed.error());
 
     httplib::Client client(parsed->base);
     client.set_follow_location(true);
     client.set_connection_timeout(10, 0);
-    client.set_read_timeout(kXaaRequestTimeoutMs / 1000,
-        (kXaaRequestTimeoutMs % 1000) * 1000);
+    client.set_read_timeout(kXaaRequestTimeoutMs / 1000, (kXaaRequestTimeoutMs % 1000) * 1000);
 
     httplib::Headers merged_headers = headers;
     if (merged_headers.find("Accept") == merged_headers.end()) {
@@ -240,21 +234,19 @@ struct FormPostResult {
     auto response = client.Get(parsed->path, merged_headers);
     if (!response) {
         return std::unexpected(Error(ErrorCode::network_error,
-            "XAA: GET request failed to " + parsed->base + parsed->path));
+                                     "XAA: GET request failed to " + parsed->base + parsed->path));
     }
-    return FormPostResult{
-        .status = response->status,
-        .body = std::move(response->body)};
+    return FormPostResult{.status = response->status, .body = std::move(response->body)};
 }
 
-} // namespace detail
+}  // namespace detail
 
 // ─── Layer 2: PRM Discovery ───────────────────────────────────────────────
 
 /// RFC 9728 PRM discovery: GET {serverUrl}/.well-known/oauth-protected-resource
 /// Plus RFC 9728 §3.3 resource-mismatch validation (mix-up protection).
-[[nodiscard]] inline Result<ProtectedResourceMetadata> discover_protected_resource(
-    std::string_view server_url) {
+[[nodiscard]] inline Result<ProtectedResourceMetadata>
+discover_protected_resource(std::string_view server_url) {
     // Build PRM discovery URL: {serverUrl}/.well-known/oauth-protected-resource
     std::string base(server_url);
     // Find the path start to insert the well-known at the right place
@@ -270,7 +262,8 @@ struct FormPostResult {
         std::string authority = base.substr(0, path_start);
         std::string path = base.substr(path_start);
         // Strip trailing slash from path for clean append
-        while (!path.empty() && path.back() == '/') path.pop_back();
+        while (!path.empty() && path.back() == '/')
+            path.pop_back();
         discovery_url = authority + path + "/.well-known/oauth-protected-resource";
     }
 
@@ -278,21 +271,22 @@ struct FormPostResult {
     if (!response) return std::unexpected(response.error());
 
     if (response->status < 200 || response->status >= 300) {
-        return std::unexpected(Error(ErrorCode::network_error,
-            "XAA: PRM discovery failed: HTTP " + std::to_string(response->status)
-            + " at " + discovery_url));
+        return std::unexpected(
+            Error(ErrorCode::network_error, "XAA: PRM discovery failed: HTTP " +
+                                                std::to_string(response->status) + " at " +
+                                                discovery_url));
     }
 
     auto parsed = loom::utils::json::parse(response->body);
     if (!parsed) {
         return std::unexpected(Error(ErrorCode::parse_error,
-            "XAA: PRM discovery returned non-JSON at " + discovery_url));
+                                     "XAA: PRM discovery returned non-JSON at " + discovery_url));
     }
 
     auto root = parsed->root();
     if (!root.is_obj()) {
-        return std::unexpected(Error(ErrorCode::parse_error,
-            "XAA: PRM discovery response is not a JSON object"));
+        return std::unexpected(
+            Error(ErrorCode::parse_error, "XAA: PRM discovery response is not a JSON object"));
     }
 
     auto resource_val = root.get("resource");
@@ -300,8 +294,8 @@ struct FormPostResult {
 
     std::string resource = resource_val.is_str() ? std::string(resource_val.as_str()) : "";
     if (resource.empty()) {
-        return std::unexpected(Error(ErrorCode::parse_error,
-            "XAA: PRM discovery failed: PRM missing resource"));
+        return std::unexpected(
+            Error(ErrorCode::parse_error, "XAA: PRM discovery failed: PRM missing resource"));
     }
 
     // Parse authorization_servers array
@@ -312,28 +306,28 @@ struct FormPostResult {
         });
     }
     if (auth_servers.empty()) {
-        return std::unexpected(Error(ErrorCode::parse_error,
-            "XAA: PRM discovery failed: PRM missing authorization_servers"));
+        return std::unexpected(
+            Error(ErrorCode::parse_error,
+                  "XAA: PRM discovery failed: PRM missing authorization_servers"));
     }
 
     // RFC 9728 §3.3 resource-mismatch validation (mix-up protection)
     if (detail::normalize_url(resource) != detail::normalize_url(server_url)) {
         return std::unexpected(Error(ErrorCode::permission_denied,
-            "XAA: PRM discovery failed: PRM resource mismatch: expected "
-            + std::string(server_url) + ", got " + resource));
+                                     "XAA: PRM discovery failed: PRM resource mismatch: expected " +
+                                         std::string(server_url) + ", got " + resource));
     }
 
-    return ProtectedResourceMetadata{
-        .resource = std::move(resource),
-        .authorization_servers = std::move(auth_servers)};
+    return ProtectedResourceMetadata{.resource = std::move(resource),
+                                     .authorization_servers = std::move(auth_servers)};
 }
 
 // ─── Layer 2: AS Metadata Discovery ───────────────────────────────────────
 
 /// AS metadata discovery via RFC 8414 + OIDC fallback.
 /// Plus RFC 8414 §3.3 issuer-mismatch validation (mix-up protection).
-[[nodiscard]] inline Result<AuthorizationServerMetadata> discover_authorization_server(
-    std::string_view as_url) {
+[[nodiscard]] inline Result<AuthorizationServerMetadata>
+discover_authorization_server(std::string_view as_url) {
     // Build AS metadata URL: {asUrl}/.well-known/oauth-authorization-server
     std::string base(as_url);
     auto scheme_end = base.find("://");
@@ -346,7 +340,8 @@ struct FormPostResult {
     } else {
         std::string authority = base.substr(0, path_start);
         std::string path = base.substr(path_start);
-        while (!path.empty() && path.back() == '/') path.pop_back();
+        while (!path.empty() && path.back() == '/')
+            path.pop_back();
         discovery_url = authority + path + "/.well-known/oauth-authorization-server";
     }
 
@@ -361,7 +356,8 @@ struct FormPostResult {
         } else {
             std::string authority = base.substr(0, path_start);
             std::string path = base.substr(path_start);
-            while (!path.empty() && path.back() == '/') path.pop_back();
+            while (!path.empty() && path.back() == '/')
+                path.pop_back();
             oidc_url = authority + path + "/.well-known/openid-configuration";
         }
 
@@ -369,22 +365,22 @@ struct FormPostResult {
         if (!fallback) return std::unexpected(fallback.error());
         if (fallback->status < 200 || fallback->status >= 300) {
             return std::unexpected(Error(ErrorCode::network_error,
-                "XAA: AS metadata discovery failed: HTTP "
-                + std::to_string(fallback->status) + " at " + oidc_url));
+                                         "XAA: AS metadata discovery failed: HTTP " +
+                                             std::to_string(fallback->status) + " at " + oidc_url));
         }
         response = std::move(*fallback);
     }
 
     auto parsed = loom::utils::json::parse(response->body);
     if (!parsed) {
-        return std::unexpected(Error(ErrorCode::parse_error,
-            "XAA: AS metadata discovery returned non-JSON"));
+        return std::unexpected(
+            Error(ErrorCode::parse_error, "XAA: AS metadata discovery returned non-JSON"));
     }
 
     auto root = parsed->root();
     if (!root.is_obj()) {
-        return std::unexpected(Error(ErrorCode::parse_error,
-            "XAA: AS metadata response is not a JSON object"));
+        return std::unexpected(
+            Error(ErrorCode::parse_error, "XAA: AS metadata response is not a JSON object"));
     }
 
     AuthorizationServerMetadata meta;
@@ -393,27 +389,28 @@ struct FormPostResult {
 
     if (meta.issuer.empty() || meta.token_endpoint.empty()) {
         return std::unexpected(Error(ErrorCode::parse_error,
-            "XAA: AS metadata discovery failed: no valid metadata at "
-            + std::string(as_url)));
+                                     "XAA: AS metadata discovery failed: no valid metadata at " +
+                                         std::string(as_url)));
     }
 
     // RFC 8414 §3.3 issuer-mismatch validation
     if (detail::normalize_url(meta.issuer) != detail::normalize_url(as_url)) {
-        return std::unexpected(Error(ErrorCode::permission_denied,
-            "XAA: AS metadata discovery failed: issuer mismatch: expected "
-            + std::string(as_url) + ", got " + meta.issuer));
+        return std::unexpected(
+            Error(ErrorCode::permission_denied,
+                  "XAA: AS metadata discovery failed: issuer mismatch: expected " +
+                      std::string(as_url) + ", got " + meta.issuer));
     }
 
     // RFC 8414 §3.3 / RFC 9728 §3 require HTTPS for token endpoint
-    if (!meta.token_endpoint.starts_with("https://")
-        && !meta.token_endpoint.starts_with("http://localhost:")
-        && !meta.token_endpoint.starts_with("http://127.0.0.1:")) {
-        return std::unexpected(Error(ErrorCode::permission_denied,
-            "XAA: refusing non-HTTPS token endpoint: " + meta.token_endpoint));
+    if (!meta.token_endpoint.starts_with("https://") &&
+        !meta.token_endpoint.starts_with("http://localhost:") &&
+        !meta.token_endpoint.starts_with("http://127.0.0.1:")) {
+        return std::unexpected(
+            Error(ErrorCode::permission_denied,
+                  "XAA: refusing non-HTTPS token endpoint: " + meta.token_endpoint));
     }
 
-    meta.grant_types_supported =
-        detail::parse_string_array(root.get("grant_types_supported"));
+    meta.grant_types_supported = detail::parse_string_array(root.get("grant_types_supported"));
     meta.token_endpoint_auth_methods_supported =
         detail::parse_string_array(root.get("token_endpoint_auth_methods_supported"));
 
@@ -424,22 +421,20 @@ struct FormPostResult {
 
 /// RFC 8693 Token Exchange at the IdP: id_token → ID-JAG.
 /// Validates issued_token_type is id-jag.
-[[nodiscard]] inline Result<JwtAuthGrantResult> request_jwt_authorization_grant(
-    std::string_view token_endpoint,
-    std::string_view audience,
-    std::string_view resource,
-    std::string_view id_token,
-    std::string_view client_id,
-    std::optional<std::string_view> client_secret = std::nullopt,
-    std::optional<std::string_view> scope = std::nullopt) {
+[[nodiscard]] inline Result<JwtAuthGrantResult>
+request_jwt_authorization_grant(std::string_view token_endpoint, std::string_view audience,
+                                std::string_view resource, std::string_view id_token,
+                                std::string_view client_id,
+                                std::optional<std::string_view> client_secret = std::nullopt,
+                                std::optional<std::string_view> scope = std::nullopt) {
 
-    std::string body = "grant_type=" + detail::url_encode(kTokenExchangeGrant)
-        + "&requested_token_type=" + detail::url_encode(kIdJagTokenType)
-        + "&audience=" + detail::url_encode(audience)
-        + "&resource=" + detail::url_encode(resource)
-        + "&subject_token=" + detail::url_encode(id_token)
-        + "&subject_token_type=" + detail::url_encode(kIdTokenType)
-        + "&client_id=" + detail::url_encode(client_id);
+    std::string body = "grant_type=" + detail::url_encode(kTokenExchangeGrant) +
+                       "&requested_token_type=" + detail::url_encode(kIdJagTokenType) +
+                       "&audience=" + detail::url_encode(audience) +
+                       "&resource=" + detail::url_encode(resource) +
+                       "&subject_token=" + detail::url_encode(id_token) +
+                       "&subject_token_type=" + detail::url_encode(kIdTokenType) +
+                       "&client_id=" + detail::url_encode(client_id);
 
     if (client_secret && !client_secret->empty()) {
         body += "&client_secret=" + detail::url_encode(*client_secret);
@@ -452,49 +447,42 @@ struct FormPostResult {
     if (!response) return std::unexpected(response.error());
 
     if (response->status < 200 || response->status >= 300) {
-        std::string redacted = detail::redact_tokens(
-            std::string_view(response->body).substr(0, 200));
+        std::string redacted =
+            detail::redact_tokens(std::string_view(response->body).substr(0, 200));
         // 4xx → id_token rejected (invalid_grant etc.), clear cache.
         // 5xx → IdP outage, id_token may still be valid, preserve it.
         bool should_clear = response->status < 500;
-        throw XaaTokenExchangeError(
-            "XAA: token exchange failed: HTTP " + std::to_string(response->status)
-            + ": " + redacted,
-            should_clear);
+        throw XaaTokenExchangeError("XAA: token exchange failed: HTTP " +
+                                        std::to_string(response->status) + ": " + redacted,
+                                    should_clear);
     }
 
     auto parsed = loom::utils::json::parse(response->body);
     if (!parsed) {
         // Transient network condition (captive portal, proxy) — don't clear id_token.
-        throw XaaTokenExchangeError(
-            "XAA: token exchange returned non-JSON (captive portal?) at "
-            + std::string(token_endpoint),
-            false);
+        throw XaaTokenExchangeError("XAA: token exchange returned non-JSON (captive portal?) at " +
+                                        std::string(token_endpoint),
+                                    false);
     }
 
     auto root = parsed->root();
     if (!root.is_obj()) {
-        throw XaaTokenExchangeError(
-            "XAA: token exchange response did not match expected shape: "
-            + detail::redact_tokens(response->body),
-            true);
+        throw XaaTokenExchangeError("XAA: token exchange response did not match expected shape: " +
+                                        detail::redact_tokens(response->body),
+                                    true);
     }
 
     auto access_token_val = root.get("access_token");
     if (!access_token_val.is_str() || access_token_val.as_str().empty()) {
-        throw XaaTokenExchangeError(
-            "XAA: token exchange response missing access_token",
-            true);
+        throw XaaTokenExchangeError("XAA: token exchange response missing access_token", true);
     }
 
     auto issued_type_val = root.get("issued_token_type");
-    if (!issued_type_val.is_str()
-        || issued_type_val.as_str() != kIdJagTokenType) {
-        std::string got = issued_type_val.is_str()
-            ? std::string(issued_type_val.as_str()) : "(missing)";
+    if (!issued_type_val.is_str() || issued_type_val.as_str() != kIdJagTokenType) {
+        std::string got =
+            issued_type_val.is_str() ? std::string(issued_type_val.as_str()) : "(missing)";
         throw XaaTokenExchangeError(
-            "XAA: token exchange returned unexpected issued_token_type: " + got,
-            true);
+            "XAA: token exchange returned unexpected issued_token_type: " + got, true);
     }
 
     JwtAuthGrantResult result;
@@ -515,16 +503,14 @@ struct FormPostResult {
 /// RFC 7523 JWT Bearer Grant at the AS: ID-JAG → access_token.
 /// auth_method defaults to client_secret_basic (SEP-990 conformance test
 /// requires this). Only set client_secret_post if AS explicitly requires it.
-[[nodiscard]] inline Result<XaaTokenResult> exchange_jwt_auth_grant(
-    std::string_view token_endpoint,
-    std::string_view assertion,
-    std::string_view client_id,
-    std::string_view client_secret,
-    std::string_view auth_method = "client_secret_basic",
-    std::optional<std::string_view> scope = std::nullopt) {
+[[nodiscard]] inline Result<XaaTokenResult>
+exchange_jwt_auth_grant(std::string_view token_endpoint, std::string_view assertion,
+                        std::string_view client_id, std::string_view client_secret,
+                        std::string_view auth_method = "client_secret_basic",
+                        std::optional<std::string_view> scope = std::nullopt) {
 
-    std::string body = "grant_type=" + detail::url_encode(kJwtBearerGrant)
-        + "&assertion=" + detail::url_encode(assertion);
+    std::string body = "grant_type=" + detail::url_encode(kJwtBearerGrant) +
+                       "&assertion=" + detail::url_encode(assertion);
 
     if (scope && !scope->empty()) {
         body += "&scope=" + detail::url_encode(*scope);
@@ -532,10 +518,10 @@ struct FormPostResult {
 
     httplib::Headers headers;
     if (auth_method == "client_secret_basic") {
-        auto basic_payload = detail::url_encode(client_id)
-            + ":" + detail::url_encode(client_secret);
+        auto basic_payload =
+            detail::url_encode(client_id) + ":" + detail::url_encode(client_secret);
         headers.emplace("Authorization",
-            "Basic " + loom::utils::crypto::base64_encode(basic_payload));
+                        "Basic " + loom::utils::crypto::base64_encode(basic_payload));
     } else {
         body += "&client_id=" + detail::url_encode(client_id);
         body += "&client_secret=" + detail::url_encode(client_secret);
@@ -545,30 +531,31 @@ struct FormPostResult {
     if (!response) return std::unexpected(response.error());
 
     if (response->status < 200 || response->status >= 300) {
-        std::string redacted = detail::redact_tokens(
-            std::string_view(response->body).substr(0, 200));
+        std::string redacted =
+            detail::redact_tokens(std::string_view(response->body).substr(0, 200));
         return std::unexpected(Error(ErrorCode::permission_denied,
-            "XAA: jwt-bearer grant failed: HTTP "
-            + std::to_string(response->status) + ": " + redacted));
+                                     "XAA: jwt-bearer grant failed: HTTP " +
+                                         std::to_string(response->status) + ": " + redacted));
     }
 
     auto parsed = loom::utils::json::parse(response->body);
     if (!parsed) {
-        return std::unexpected(Error(ErrorCode::parse_error,
-            "XAA: jwt-bearer grant returned non-JSON (captive portal?) at "
-            + std::string(token_endpoint)));
+        return std::unexpected(
+            Error(ErrorCode::parse_error,
+                  "XAA: jwt-bearer grant returned non-JSON (captive portal?) at " +
+                      std::string(token_endpoint)));
     }
 
     auto root = parsed->root();
     if (!root.is_obj()) {
-        return std::unexpected(Error(ErrorCode::parse_error,
-            "XAA: jwt-bearer response did not match expected shape"));
+        return std::unexpected(
+            Error(ErrorCode::parse_error, "XAA: jwt-bearer response did not match expected shape"));
     }
 
     auto access_token_val = root.get("access_token");
     if (!access_token_val.is_str() || access_token_val.as_str().empty()) {
-        return std::unexpected(Error(ErrorCode::parse_error,
-            "XAA: jwt-bearer response missing access_token"));
+        return std::unexpected(
+            Error(ErrorCode::parse_error, "XAA: jwt-bearer response missing access_token"));
     }
 
     XaaTokenResult result;
@@ -599,10 +586,9 @@ struct FormPostResult {
 /// @param server_url  The MCP server URL (e.g. "https://mcp.example.com/mcp")
 /// @param config      IdP + AS credentials
 /// @param server_name Server name for debug logging
-[[nodiscard]] inline Result<XaaResult> perform_cross_app_access(
-    std::string_view server_url,
-    const XaaConfig& config,
-    std::string_view server_name = "xaa") {
+[[nodiscard]] inline Result<XaaResult>
+perform_cross_app_access(std::string_view server_url, const XaaConfig& config,
+                         std::string_view server_name = "xaa") {
 
     (void)server_name;  // Reserved for future logging
 
@@ -624,17 +610,17 @@ struct FormPostResult {
         }
         // Check if AS supports jwt-bearer (if it advertises grant types)
         if (candidate->grant_types_supported) {
-            bool supports_jwt_bearer = std::ranges::any_of(
-                *candidate->grant_types_supported,
-                [](const auto& g) { return g == kJwtBearerGrant; });
+            bool supports_jwt_bearer =
+                std::ranges::any_of(*candidate->grant_types_supported,
+                                    [](const auto& g) { return g == kJwtBearerGrant; });
             if (!supports_jwt_bearer) {
                 std::string supported_list;
                 for (const auto& g : *candidate->grant_types_supported) {
                     if (!supported_list.empty()) supported_list += ", ";
                     supported_list += g;
                 }
-                as_errors.push_back(as_url + ": does not advertise jwt-bearer grant (supported: "
-                    + supported_list + ")");
+                as_errors.push_back(as_url + ": does not advertise jwt-bearer grant (supported: " +
+                                    supported_list + ")");
                 continue;
             }
         }
@@ -656,10 +642,10 @@ struct FormPostResult {
     std::string auth_method = "client_secret_basic";
     auto methods = as_meta.token_endpoint_auth_methods_supported;
     if (methods) {
-        bool supports_basic = std::ranges::any_of(*methods,
-            [](const auto& m) { return m == "client_secret_basic"; });
-        bool supports_post = std::ranges::any_of(*methods,
-            [](const auto& m) { return m == "client_secret_post"; });
+        bool supports_basic =
+            std::ranges::any_of(*methods, [](const auto& m) { return m == "client_secret_basic"; });
+        bool supports_post =
+            std::ranges::any_of(*methods, [](const auto& m) { return m == "client_secret_post"; });
         if (!supports_basic && supports_post) {
             auth_method = "client_secret_post";
         }
@@ -669,17 +655,11 @@ struct FormPostResult {
     JwtAuthGrantResult jag;
     try {
         auto jag_result = request_jwt_authorization_grant(
-            config.idp_token_endpoint,
-            as_meta.issuer,
-            prm->resource,
-            config.idp_id_token,
+            config.idp_token_endpoint, as_meta.issuer, prm->resource, config.idp_id_token,
             config.idp_client_id,
-            config.idp_client_secret
-                ? std::optional<std::string_view>(*config.idp_client_secret)
-                : std::nullopt,
-            config.scope
-                ? std::optional<std::string_view>(*config.scope)
-                : std::nullopt);
+            config.idp_client_secret ? std::optional<std::string_view>(*config.idp_client_secret)
+                                     : std::nullopt,
+            config.scope ? std::optional<std::string_view>(*config.scope) : std::nullopt);
         if (!jag_result) {
             return std::unexpected(jag_result.error());
         }
@@ -694,14 +674,8 @@ struct FormPostResult {
 
     // 5. Exchange ID-JAG for access_token at the AS
     auto tokens = exchange_jwt_auth_grant(
-        as_meta.token_endpoint,
-        jag.jwt_auth_grant,
-        config.client_id,
-        config.client_secret,
-        auth_method,
-        config.scope
-            ? std::optional<std::string_view>(*config.scope)
-            : std::nullopt);
+        as_meta.token_endpoint, jag.jwt_auth_grant, config.client_id, config.client_secret,
+        auth_method, config.scope ? std::optional<std::string_view>(*config.scope) : std::nullopt);
     if (!tokens) return std::unexpected(tokens.error());
 
     // 6. Return result with AS issuer URL for persistence
@@ -747,8 +721,9 @@ namespace detail {
 
         // Trim whitespace
         auto trim = [](std::string& s) {
-            while (!s.empty() && (s.back() == ' ' || s.back() == '\t'
-                || s.back() == '\r' || s.back() == '\n')) s.pop_back();
+            while (!s.empty() &&
+                   (s.back() == ' ' || s.back() == '\t' || s.back() == '\r' || s.back() == '\n'))
+                s.pop_back();
             auto start = s.find_first_not_of(" \t");
             if (start != std::string::npos) s = s.substr(start);
         };
@@ -824,12 +799,11 @@ namespace detail {
     return config;
 }
 
-} // namespace detail
+}  // namespace detail
 
 /// Get XAA configuration for a specific MCP server.
 /// Reads from ~/.loom/xaa-idp.txt (file-based config for now).
-[[nodiscard]] inline std::optional<XaaConfig> get_xaa_config(
-    std::string_view server_name) {
+[[nodiscard]] inline std::optional<XaaConfig> get_xaa_config(std::string_view server_name) {
     (void)server_name;  // Currently single config, future: per-server
     return detail::read_xaa_config_file();
 }
@@ -859,12 +833,10 @@ namespace detail {
 ///        that owns it — exactly as server_config already carries the AS OAuth
 ///        fields into this call. validated_callback_port() ignores an
 ///        out-of-range value rather than truncating it.
-[[nodiscard]] inline Result<XaaResult> authenticate_xaa(
-    const XaaConfig& config,
-    std::string_view mcp_server_url,
-    std::function<void(const std::string&)> on_auth_url = nullptr,
-    bool skip_browser = false,
-    std::optional<int> callback_port = std::nullopt) {
+[[nodiscard]] inline Result<XaaResult>
+authenticate_xaa(const XaaConfig& config, std::string_view mcp_server_url,
+                 std::function<void(const std::string&)> on_auth_url = nullptr,
+                 bool skip_browser = false, std::optional<int> callback_port = std::nullopt) {
 
     // 1. Get id_token (cached or via browser flow)
     std::string id_token = config.idp_id_token;
@@ -926,19 +898,19 @@ namespace detail {
 /// Clear XAA tokens for the given IdP issuer.
 /// If revocation_endpoint is available, POST to it.
 inline void logout_xaa(std::string_view idp_issuer,
-    std::optional<std::string_view> revocation_endpoint = std::nullopt,
-    std::optional<std::string_view> token_to_revoke = std::nullopt,
-    std::optional<std::string_view> client_id = std::nullopt,
-    std::optional<std::string_view> client_secret = std::nullopt) {
+                       std::optional<std::string_view> revocation_endpoint = std::nullopt,
+                       std::optional<std::string_view> token_to_revoke = std::nullopt,
+                       std::optional<std::string_view> client_id = std::nullopt,
+                       std::optional<std::string_view> client_secret = std::nullopt) {
 
     // Clear cached id_token
     clear_idp_id_token(idp_issuer);
 
     // If we have a revocation endpoint and token, try to revoke
-    if (revocation_endpoint && token_to_revoke && !revocation_endpoint->empty()
-        && !token_to_revoke->empty()) {
-        std::string body = "token=" + detail::url_encode(*token_to_revoke)
-            + "&token_type_hint=access_token";
+    if (revocation_endpoint && token_to_revoke && !revocation_endpoint->empty() &&
+        !token_to_revoke->empty()) {
+        std::string body =
+            "token=" + detail::url_encode(*token_to_revoke) + "&token_type_hint=access_token";
 
         if (client_id && client_secret && !client_id->empty() && !client_secret->empty()) {
             body += "&client_id=" + detail::url_encode(*client_id);
@@ -950,4 +922,4 @@ inline void logout_xaa(std::string_view idp_issuer,
     }
 }
 
-} // namespace loom::services::mcp
+}  // namespace loom::services::mcp

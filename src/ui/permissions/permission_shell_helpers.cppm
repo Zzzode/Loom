@@ -16,7 +16,8 @@ using namespace ftxui;
 inline constexpr std::size_t kMaxCommandPreview = 120;
 
 /// Truncate command for display
-[[nodiscard]] inline std::string truncate_command(std::string_view cmd, std::size_t max_len = kMaxCommandPreview) {
+[[nodiscard]] inline std::string truncate_command(std::string_view cmd,
+                                                  std::size_t max_len = kMaxCommandPreview) {
     if (cmd.size() <= max_len) return std::string(cmd);
     return std::string(cmd.substr(0, max_len - 3)) + "...";
 }
@@ -36,8 +37,10 @@ inline constexpr std::size_t kMaxCommandPreview = 120;
 [[nodiscard]] inline Element render_permission_footer(bool allow_always = true) {
     if (allow_always) {
         return hbox({
-            text("[Y]es") | bold, text(" / "),
-            text("[N]o") | bold, text(" / "),
+            text("[Y]es") | bold,
+            text(" / "),
+            text("[N]o") | bold,
+            text(" / "),
             text("[A]lways") | bold,
         });
     }
@@ -55,4 +58,4 @@ inline constexpr std::size_t kMaxCommandPreview = 120;
     return vbox(elements);
 }
 
-} // namespace loom::ui::permissions
+}  // namespace loom::ui::permissions

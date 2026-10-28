@@ -4,15 +4,16 @@
 /// and status queries over newline-delimited JSON-RPC protocol.
 module;
 
-#include <cstdint>
-#include <sys/socket.h>
-#include <netinet/in.h>
 #include <arpa/inet.h>
+#include <netinet/in.h>
 #include <signal.h>
+#include <sys/socket.h>
 #include <unistd.h>
-#include <cstdlib>
+
 #include <cerrno>
 #include <cstddef>
+#include <cstdint>
+#include <cstdlib>
 
 export module loom.daemon.daemon_client;
 
@@ -87,6 +88,7 @@ inline std::optional<pid_t> get_daemon_pid() {
 class DaemonClient {
 public:
     DaemonClient() = default;
+
     ~DaemonClient() { disconnect(); }
 
     // Prevent copy
@@ -138,9 +140,8 @@ public:
         }
 
         auto id = std::format("{}", ++request_counter_);
-        auto request = std::format(
-            R"({{"jsonrpc":"2.0","id":"{}","method":"{}","params":{}}})",
-            id, method, params);
+        auto request = std::format(R"({{"jsonrpc":"2.0","id":"{}","method":"{}","params":{}}})", id,
+                                   method, params);
         request += '\n';
 
         ssize_t sent;
@@ -199,14 +200,10 @@ public:
     // ─── Convenience methods ────────────────────────────────────
 
     /// Query daemon status
-    auto status() -> std::expected<std::string, std::string> {
-        return call("status");
-    }
+    auto status() -> std::expected<std::string, std::string> { return call("status"); }
 
     /// List active sessions
-    auto list_sessions() -> std::expected<std::string, std::string> {
-        return call("sessions");
-    }
+    auto list_sessions() -> std::expected<std::string, std::string> { return call("sessions"); }
 
     /// Spawn a new session with the given task
     auto spawn(std::string_view task_id) -> std::expected<std::string, std::string> {
@@ -215,20 +212,18 @@ public:
     }
 
     /// Write one chunk to a daemon-managed headless session stdin.
-    auto send_stdin(std::string_view session_id, std::string_view data) -> std::expected<std::string, std::string> {
-        auto params = std::format(
-            R"({{"session_id":"{}","data":"{}"}})",
-            json_escape(session_id),
-            json_escape(data));
+    auto send_stdin(std::string_view session_id, std::string_view data)
+        -> std::expected<std::string, std::string> {
+        auto params = std::format(R"({{"session_id":"{}","data":"{}"}})", json_escape(session_id),
+                                  json_escape(data));
         return call("stdin", params);
     }
 
     /// Deliver one raw remote SDK/control event to a daemon-managed headless session.
-    auto send_event(std::string_view session_id, std::string_view event_json) -> std::expected<std::string, std::string> {
-        auto params = std::format(
-            R"({{"session_id":"{}","event":{}}})",
-            json_escape(session_id),
-            event_json);
+    auto send_event(std::string_view session_id, std::string_view event_json)
+        -> std::expected<std::string, std::string> {
+        auto params =
+            std::format(R"({{"session_id":"{}","event":{}}})", json_escape(session_id), event_json);
         return call("event", params);
     }
 
@@ -245,9 +240,7 @@ public:
     }
 
     /// Request graceful daemon shutdown
-    auto shutdown() -> std::expected<std::string, std::string> {
-        return call("shutdown");
-    }
+    auto shutdown() -> std::expected<std::string, std::string> { return call("shutdown"); }
 
     /// Check if connected
     [[nodiscard]] bool is_connected() const { return connected_; }
@@ -267,14 +260,30 @@ private:
         out.reserve(value.size() + 8);
         for (char ch : value) {
             switch (ch) {
-                case '\\': out += R"(\\)"; break;
-                case '"': out += R"(\")"; break;
-                case '\b': out += R"(\b)"; break;
-                case '\f': out += R"(\f)"; break;
-                case '\n': out += R"(\n)"; break;
-                case '\r': out += R"(\r)"; break;
-                case '\t': out += R"(\t)"; break;
-                default: out.push_back(ch); break;
+            case '\\':
+                out += R"(\\)";
+                break;
+            case '"':
+                out += R"(\")";
+                break;
+            case '\b':
+                out += R"(\b)";
+                break;
+            case '\f':
+                out += R"(\f)";
+                break;
+            case '\n':
+                out += R"(\n)";
+                break;
+            case '\r':
+                out += R"(\r)";
+                break;
+            case '\t':
+                out += R"(\t)";
+                break;
+            default:
+                out.push_back(ch);
+                break;
             }
         }
         return out;
@@ -286,4 +295,4 @@ private:
     uint64_t request_counter_ = 0;
 };
 
-} // namespace loom::daemon
+}  // namespace loom::daemon

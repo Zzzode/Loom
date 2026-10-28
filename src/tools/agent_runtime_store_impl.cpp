@@ -21,8 +21,8 @@ thread_local NativeAgentStore* executing_background_store = nullptr;
 
 bool is_team_agent_record(const NativeAgentRecord& record) noexcept {
     return (record.team_name && !record.team_name->empty()) ||
-        record.teammate_backend.has_value() || record.teammate_task_id.has_value() ||
-        record.teammate_pane_id.has_value();
+           record.teammate_backend.has_value() || record.teammate_task_id.has_value() ||
+           record.teammate_pane_id.has_value();
 }
 
 std::size_t NativeAgentStore::subscribe_changed(std::function<void()> callback) {
@@ -53,7 +53,8 @@ void NativeAgentStore::notify_changed() noexcept {
         {
             std::scoped_lock lock(observers_mutex_);
             observers.reserve(observers_.size());
-            for (const auto& [_, observer] : observers_) observers.push_back(observer);
+            for (const auto& [_, observer] : observers_)
+                observers.push_back(observer);
         }
         for (const auto& observer : observers) {
             // The active load admits a callback. Unsubscribe never waits for
@@ -75,13 +76,15 @@ NativeAgentStore::~NativeAgentStore() {
         decltype(observers_) removed;
         {
             std::scoped_lock lock(observers_mutex_);
-            for (const auto& [_, observer] : observers_) observer->active.store(false);
+            for (const auto& [_, observer] : observers_)
+                observer->active.store(false);
             observers_.swap(removed);
         }
     }
     {
         std::scoped_lock lock(mutex_);
-        for (auto& [_, record] : records_) record.cancel_requested = true;
+        for (auto& [_, record] : records_)
+            record.cancel_requested = true;
     }
     wait_for_background_agents();
 }
@@ -136,8 +139,9 @@ void NativeAgentStore::end_execution(std::string_view agent_id) {
     notify_changed();
 }
 
-std::expected<void, std::string> NativeAgentStore::reserve_resume(
-    std::string_view agent_id, const std::optional<loom::core::HostAgentResumeConstraint>& host) {
+std::expected<void, std::string>
+NativeAgentStore::reserve_resume(std::string_view agent_id,
+                                 const std::optional<loom::core::HostAgentResumeConstraint>& host) {
     std::scoped_lock lock(mutex_);
     const auto id = std::string(agent_id);
     if (!records_.contains(id)) {
@@ -152,28 +156,31 @@ std::expected<void, std::string> NativeAgentStore::reserve_resume(
         const auto& record = records_.at(id);
         if (host->agent_id != id || host->agent_type != record.agent_type ||
             host->parent_session_id.empty() || !record.parent_session_id ||
-            *record.parent_session_id != host->parent_session_id ||
-            host->cwd != record.cwd || host->team_name != record.team_name ||
-            host->name != record.name || host->teammate_backend != record.teammate_backend ||
+            *record.parent_session_id != host->parent_session_id || host->cwd != record.cwd ||
+            host->team_name != record.team_name || host->name != record.name ||
+            host->teammate_backend != record.teammate_backend ||
             host->teammate_task_id != record.teammate_task_id ||
             host->teammate_pane_id != record.teammate_pane_id ||
             (record.parent_agent_id && !record.parent_agent_id->empty()) ||
-            record.status == NativeAgentStatus::Queued || record.status == NativeAgentStatus::Running ||
+            record.status == NativeAgentStatus::Queued ||
+            record.status == NativeAgentStatus::Running ||
             (record.sidechain_entries.empty() && record.transcript.empty())) {
-            return std::unexpected("Agent identity or continuation eligibility changed before admission");
+            return std::unexpected(
+                "Agent identity or continuation eligibility changed before admission");
         }
     }
     if (host && is_team_agent_record(records_.at(id))) {
         const auto& record = records_.at(id);
-        if (record.teammate_backend != "in-process" || !record.team_name || record.teammate_pane_id) {
+        if (record.teammate_backend != "in-process" || !record.team_name ||
+            record.teammate_pane_id) {
             return std::unexpected("Only native in-process Team Agents can be continued here");
         }
         auto admitted = loom::tools::global_team_store().update_member_status(
             *record.team_name, id, loom::tools::MemberStatus::Working);
         if (!admitted) {
             return std::unexpected(admitted.error() == loom::tools::TeamError::TeamNotFound
-                ? "Agent team is no longer available"
-                : "Agent is no longer a member of its team");
+                                       ? "Agent team is no longer available"
+                                       : "Agent is no longer a member of its team");
         }
     }
     resume_reservations_.insert(id);
@@ -194,40 +201,46 @@ std::string NativeAgentStore::resume_unavailable_reason(std::string_view agent_i
     return {};
 }
 
-std::string NativeAgentStore::owned_stop_unavailable_reason(
-    std::string_view agent_id, std::string_view session_id, std::stop_token owner) const {
+std::string NativeAgentStore::owned_stop_unavailable_reason(std::string_view agent_id,
+                                                            std::string_view session_id,
+                                                            std::stop_token owner) const {
     std::scoped_lock lock(mutex_);
     const auto id = std::string(agent_id);
     const auto record = records_.find(id);
-    if (session_id.empty() || record == records_.end() ||
-        !record->second.parent_session_id || *record->second.parent_session_id != session_id) {
+    if (session_id.empty() || record == records_.end() || !record->second.parent_session_id ||
+        *record->second.parent_session_id != session_id) {
         return "Agent does not belong to this session";
     }
     const auto active = active_executions_.find(id);
-    if (!owner.stop_possible() || active == active_executions_.end() || active->second.owner != owner) {
+    if (!owner.stop_possible() || active == active_executions_.end() ||
+        active->second.owner != owner) {
         return "No active execution owned by this process";
     }
     if (record->second.status != NativeAgentStatus::Queued &&
-        record->second.status != NativeAgentStatus::Running) return "Agent execution is finishing";
+        record->second.status != NativeAgentStatus::Running)
+        return "Agent execution is finishing";
     return {};
 }
 
-std::expected<void, std::string> NativeAgentStore::request_owned_cancel(
-    std::string_view agent_id, std::string_view session_id, std::stop_token owner) {
+std::expected<void, std::string> NativeAgentStore::request_owned_cancel(std::string_view agent_id,
+                                                                        std::string_view session_id,
+                                                                        std::stop_token owner) {
     {
         std::scoped_lock lock(mutex_);
         const auto id = std::string(agent_id);
         auto record = records_.find(id);
-        if (session_id.empty() || record == records_.end() ||
-            !record->second.parent_session_id || *record->second.parent_session_id != session_id) {
+        if (session_id.empty() || record == records_.end() || !record->second.parent_session_id ||
+            *record->second.parent_session_id != session_id) {
             return std::unexpected("Agent does not belong to this session");
         }
         const auto active = active_executions_.find(id);
-        if (!owner.stop_possible() || active == active_executions_.end() || active->second.owner != owner) {
+        if (!owner.stop_possible() || active == active_executions_.end() ||
+            active->second.owner != owner) {
             return std::unexpected("No active execution owned by this process");
         }
         if (record->second.status != NativeAgentStatus::Queued &&
-            record->second.status != NativeAgentStatus::Running) return std::unexpected("Agent execution is finishing");
+            record->second.status != NativeAgentStatus::Running)
+            return std::unexpected("Agent execution is finishing");
         record->second.cancel_requested = true;
         record->second.updated_at = std::chrono::system_clock::now();
         (void)persist_native_agent_record(record->second);
@@ -236,8 +249,8 @@ std::expected<void, std::string> NativeAgentStore::request_owned_cancel(
     return {};
 }
 
-void NativeAgentStore::run_background_agent(std::string agent_id,
-    std::function<void()> execute, std::stop_token owner) {
+void NativeAgentStore::run_background_agent(std::string agent_id, std::function<void()> execute,
+                                            std::stop_token owner) {
     try {
         std::scoped_lock workers_lock(workers_mutex_);
         for (auto it = workers_.begin(); it != workers_.end();) {
@@ -257,25 +270,29 @@ void NativeAgentStore::run_background_agent(std::string agent_id,
             begin_execution_locked(agent_id, owner);
         }
         try {
-            workers_.push_back(BackgroundWorker{owner, finished, std::thread([this, agent_id, finished, execute = std::move(execute)]() mutable {
-                executing_background_store = this;
-                try {
-                    mark_running(agent_id);
-                    execute();
-                } catch (const std::exception& error) {
-                    finish_agent(agent_id, std::unexpected(std::string(error.what())));
-                } catch (...) {
-                    finish_agent(agent_id, std::unexpected(std::string("Background agent execution failed")));
-                }
-                execute = {};
-                end_execution(agent_id);
-                executing_background_store = nullptr;
-                finished->store(true);
-            })});
+            workers_.push_back(BackgroundWorker{
+                owner, finished,
+                std::thread([this, agent_id, finished, execute = std::move(execute)]() mutable {
+                    executing_background_store = this;
+                    try {
+                        mark_running(agent_id);
+                        execute();
+                    } catch (const std::exception& error) {
+                        finish_agent(agent_id, std::unexpected(std::string(error.what())));
+                    } catch (...) {
+                        finish_agent(agent_id, std::unexpected(std::string(
+                                                   "Background agent execution failed")));
+                    }
+                    execute = {};
+                    end_execution(agent_id);
+                    executing_background_store = nullptr;
+                    finished->store(true);
+                })});
         } catch (...) {
             std::scoped_lock lock(mutex_);
             auto it = active_executions_.find(agent_id);
-            if (it != active_executions_.end() && --it->second.count == 0) active_executions_.erase(it);
+            if (it != active_executions_.end() && --it->second.count == 0)
+                active_executions_.erase(it);
             throw;
         }
     } catch (...) {
@@ -285,35 +302,38 @@ void NativeAgentStore::run_background_agent(std::string agent_id,
     notify_changed();
 }
 
-void NativeAgentStore::finish_agent(
-    std::string_view agent_id,
-    std::expected<std::string, std::string> result
-) {
+void NativeAgentStore::finish_agent(std::string_view agent_id,
+                                    std::expected<std::string, std::string> result) {
     update(agent_id, [&](NativeAgentRecord& record) {
         if (record.status == NativeAgentStatus::Completed ||
             record.status == NativeAgentStatus::Failed ||
-            record.status == NativeAgentStatus::Cancelled) return;
+            record.status == NativeAgentStatus::Cancelled)
+            return;
         record.live_text.clear();
         auto active = active_executions_.find(std::string(agent_id));
         if (active != active_executions_.end()) active->second.accepting_input = false;
-        const bool cancelled = record.cancel_requested ||
-            (active != active_executions_.end() && active->second.owner.stop_requested());
+        const bool cancelled = record.cancel_requested || (active != active_executions_.end() &&
+                                                           active->second.owner.stop_requested());
         record.cancel_requested = cancelled;
         record.status = cancelled ? NativeAgentStatus::Cancelled
-            : result ? NativeAgentStatus::Completed : NativeAgentStatus::Failed;
+                        : result  ? NativeAgentStatus::Completed
+                                  : NativeAgentStatus::Failed;
         if (record.status == NativeAgentStatus::Completed) {
             record.output = std::move(*result);
             record.error = std::nullopt;
             record.progress = 1.0;
             const auto entry = "assistant: " + *record.output;
-            if (!std::ranges::contains(record.transcript, entry)) record.transcript.push_back(entry);
+            if (!std::ranges::contains(record.transcript, entry))
+                record.transcript.push_back(entry);
         } else {
             record.output = std::nullopt;
-            record.error = result
-                ? std::format("Agent {} cancelled before completion", agent_id)
-                : std::move(result.error());
-            const auto entry = std::string(cancelled ? "system: agent cancelled: " : "system: agent failed: ") + *record.error;
-            if (!std::ranges::contains(record.transcript, entry)) record.transcript.push_back(entry);
+            record.error = result ? std::format("Agent {} cancelled before completion", agent_id)
+                                  : std::move(result.error());
+            const auto entry =
+                std::string(cancelled ? "system: agent cancelled: " : "system: agent failed: ") +
+                *record.error;
+            if (!std::ranges::contains(record.transcript, entry))
+                record.transcript.push_back(entry);
         }
         record.notification_delivered = false;
     });
@@ -331,7 +351,8 @@ void NativeAgentStore::wait_for_background_agents() {
             if (workers_.empty()) return;
             workers.swap(workers_);
         }
-        for (auto& worker : workers) worker.thread.join();
+        for (auto& worker : workers)
+            worker.thread.join();
     }
 }
 
@@ -343,7 +364,8 @@ void NativeAgentStore::cancel_and_wait_for_background_agents(std::stop_token own
         std::scoped_lock lock(mutex_);
         for (const auto& [id, active] : active_executions_) {
             if (active.owner == owner) {
-                if (auto record = records_.find(id); record != records_.end() &&
+                if (auto record = records_.find(id);
+                    record != records_.end() &&
                     (record->second.status == NativeAgentStatus::Queued ||
                      record->second.status == NativeAgentStatus::Running)) {
                     record->second.cancel_requested = true;
@@ -368,7 +390,8 @@ void NativeAgentStore::cancel_and_wait_for_background_agents(std::stop_token own
             }
         }
         if (workers.empty()) return;
-        for (auto& worker : workers) worker.thread.join();
+        for (auto& worker : workers)
+            worker.thread.join();
     }
 }
 
@@ -381,187 +404,190 @@ void NativeAgentStore::upsert(NativeAgentRecord record) {
 }
 
 void NativeAgentStore::upsert_locked(NativeAgentRecord record) {
-        if (!record.transcript_path) {
-            record.transcript_path = agent_transcript_path(record.agent_id).string();
+    if (!record.transcript_path) {
+        record.transcript_path = agent_transcript_path(record.agent_id).string();
+    }
+    if (!record.sidechain_jsonl_path) {
+        record.sidechain_jsonl_path = agent_sidechain_jsonl_path(record.agent_id).string();
+    }
+    if (!record.output_file_path) {
+        record.output_file_path = agent_output_file_path(record.agent_id).string();
+    }
+    // Resume startup must merge the latest mailbox under the admission lock.
+    if (resume_reservations_.contains(record.agent_id)) {
+        if (auto previous = records_.find(record.agent_id); previous != records_.end()) {
+            record.pending_messages = previous->second.pending_messages;
         }
-        if (!record.sidechain_jsonl_path) {
-            record.sidechain_jsonl_path = agent_sidechain_jsonl_path(record.agent_id).string();
-        }
-        if (!record.output_file_path) {
-            record.output_file_path = agent_output_file_path(record.agent_id).string();
-        }
-        // Resume startup must merge the latest mailbox under the admission lock.
-        if (resume_reservations_.contains(record.agent_id)) {
-            if (auto previous = records_.find(record.agent_id); previous != records_.end()) {
-                record.pending_messages = previous->second.pending_messages;
-            }
-        }
-        record.updated_at = std::chrono::system_clock::now();
-        auto agent_id = record.agent_id;
-        auto stored = record;
-        records_.insert_or_assign(std::move(agent_id), std::move(record));
-        (void)persist_native_agent_record(stored);
+    }
+    record.updated_at = std::chrono::system_clock::now();
+    auto agent_id = record.agent_id;
+    auto stored = record;
+    records_.insert_or_assign(std::move(agent_id), std::move(record));
+    (void)persist_native_agent_record(stored);
 }
 
 std::optional<NativeAgentRecord> NativeAgentStore::get(std::string_view agent_id) const {
-        std::scoped_lock lock(mutex_);
-        auto it = records_.find(std::string(agent_id));
-        if (it == records_.end()) {
-            auto loaded = load_native_agent_record(agent_id);
-            if (!loaded) return std::nullopt;
-            auto loaded_agent_id = loaded->agent_id;
-            auto [inserted, _] = records_.emplace(std::move(loaded_agent_id), std::move(*loaded));
-            it = inserted;
-        }
-        return it->second;
+    std::scoped_lock lock(mutex_);
+    auto it = records_.find(std::string(agent_id));
+    if (it == records_.end()) {
+        auto loaded = load_native_agent_record(agent_id);
+        if (!loaded) return std::nullopt;
+        auto loaded_agent_id = loaded->agent_id;
+        auto [inserted, _] = records_.emplace(std::move(loaded_agent_id), std::move(*loaded));
+        it = inserted;
+    }
+    return it->second;
 }
 
 std::vector<NativeAgentRecord> NativeAgentStore::list() const {
-        std::scoped_lock lock(mutex_);
-        for (auto record : load_all_native_agent_records()) {
-            auto agent_id = record.agent_id;
-            // Creation time is process-local metadata in the existing format.
-            // Refresh persisted fields without changing stable instance order.
-            if (auto existing = records_.find(agent_id); existing != records_.end()) {
-                record.created_at = existing->second.created_at;
-                record.live_text = existing->second.live_text;
-            }
-            records_[std::move(agent_id)] = std::move(record);
+    std::scoped_lock lock(mutex_);
+    for (auto record : load_all_native_agent_records()) {
+        auto agent_id = record.agent_id;
+        // Creation time is process-local metadata in the existing format.
+        // Refresh persisted fields without changing stable instance order.
+        if (auto existing = records_.find(agent_id); existing != records_.end()) {
+            record.created_at = existing->second.created_at;
+            record.live_text = existing->second.live_text;
         }
-        std::vector<NativeAgentRecord> out;
-        out.reserve(records_.size());
-        for (const auto& [_, record] : records_) out.push_back(record);
-        std::ranges::sort(out, {}, &NativeAgentRecord::agent_id);
-        return out;
+        records_[std::move(agent_id)] = std::move(record);
+    }
+    std::vector<NativeAgentRecord> out;
+    out.reserve(records_.size());
+    for (const auto& [_, record] : records_)
+        out.push_back(record);
+    std::ranges::sort(out, {}, &NativeAgentRecord::agent_id);
+    return out;
 }
 
 void NativeAgentStore::mark_running(std::string_view agent_id) {
-        update(agent_id, [](NativeAgentRecord& record) {
-            record.status = NativeAgentStatus::Running;
-            record.progress = 0.0;
-        });
+    update(agent_id, [](NativeAgentRecord& record) {
+        record.status = NativeAgentStatus::Running;
+        record.progress = 0.0;
+    });
 }
 
 void NativeAgentStore::mark_completed(std::string_view agent_id, std::string output) {
-        update(agent_id, [&](NativeAgentRecord& record) {
-            if (!output.empty()) {
-                const auto transcript_entry = "assistant: " + output;
-                if (!std::ranges::contains(record.transcript, transcript_entry)) {
-                    record.transcript.push_back(transcript_entry);
-                }
+    update(agent_id, [&](NativeAgentRecord& record) {
+        if (!output.empty()) {
+            const auto transcript_entry = "assistant: " + output;
+            if (!std::ranges::contains(record.transcript, transcript_entry)) {
+                record.transcript.push_back(transcript_entry);
             }
-            record.status = NativeAgentStatus::Completed;
-            record.output = std::move(output);
-            record.error = std::nullopt;
-            record.progress = 1.0;
-            record.notification_delivered = false;
-        });
+        }
+        record.status = NativeAgentStatus::Completed;
+        record.output = std::move(output);
+        record.error = std::nullopt;
+        record.progress = 1.0;
+        record.notification_delivered = false;
+    });
 }
 
 void NativeAgentStore::mark_failed(std::string_view agent_id, std::string error) {
-        update(agent_id, [&](NativeAgentRecord& record) {
-            if (!error.empty()) {
-                const auto transcript_entry = "system: agent failed: " + error;
-                if (!std::ranges::contains(record.transcript, transcript_entry)) {
-                    record.transcript.push_back(transcript_entry);
-                }
+    update(agent_id, [&](NativeAgentRecord& record) {
+        if (!error.empty()) {
+            const auto transcript_entry = "system: agent failed: " + error;
+            if (!std::ranges::contains(record.transcript, transcript_entry)) {
+                record.transcript.push_back(transcript_entry);
             }
-            record.status = NativeAgentStatus::Failed;
-            record.error = std::move(error);
-            record.output = std::nullopt;
-            record.notification_delivered = false;
-        });
+        }
+        record.status = NativeAgentStatus::Failed;
+        record.error = std::move(error);
+        record.output = std::nullopt;
+        record.notification_delivered = false;
+    });
 }
 
 void NativeAgentStore::mark_cancelled(std::string_view agent_id, std::string reason) {
-        update(agent_id, [&](NativeAgentRecord& record) {
-            if (!reason.empty()) {
-                const auto transcript_entry = "system: agent cancelled: " + reason;
-                if (!std::ranges::contains(record.transcript, transcript_entry)) {
-                    record.transcript.push_back(transcript_entry);
-                }
+    update(agent_id, [&](NativeAgentRecord& record) {
+        if (!reason.empty()) {
+            const auto transcript_entry = "system: agent cancelled: " + reason;
+            if (!std::ranges::contains(record.transcript, transcript_entry)) {
+                record.transcript.push_back(transcript_entry);
             }
-            record.status = NativeAgentStatus::Cancelled;
-            record.cancel_requested = true;
-            record.error = std::move(reason);
-            record.output = std::nullopt;
-            record.notification_delivered = false;
-        });
+        }
+        record.status = NativeAgentStatus::Cancelled;
+        record.cancel_requested = true;
+        record.error = std::move(reason);
+        record.output = std::nullopt;
+        record.notification_delivered = false;
+    });
 }
 
 void NativeAgentStore::request_cancel(std::string_view agent_id, std::string reason) {
-        update(agent_id, [&](NativeAgentRecord& record) {
-            if (record.status == NativeAgentStatus::Completed ||
-                record.status == NativeAgentStatus::Failed ||
-                record.status == NativeAgentStatus::Cancelled) return;
-            record.cancel_requested = true;
-            if (active_executions_.contains(record.agent_id) &&
-                (record.status == NativeAgentStatus::Queued ||
-                 record.status == NativeAgentStatus::Running)) {
-                // A stop request acknowledges intent. Only the worker can publish
-                // a terminal status after its hooks and borrowed-state cleanup.
-                return;
-            }
-            record.status = NativeAgentStatus::Cancelled;
-            record.error = std::move(reason);
-            record.output = std::nullopt;
-            record.notification_delivered = false;
-            const auto entry = "system: agent cancelled: " + *record.error;
-            if (!record.error->empty() && !std::ranges::contains(record.transcript, entry)) record.transcript.push_back(entry);
-        });
+    update(agent_id, [&](NativeAgentRecord& record) {
+        if (record.status == NativeAgentStatus::Completed ||
+            record.status == NativeAgentStatus::Failed ||
+            record.status == NativeAgentStatus::Cancelled)
+            return;
+        record.cancel_requested = true;
+        if (active_executions_.contains(record.agent_id) &&
+            (record.status == NativeAgentStatus::Queued ||
+             record.status == NativeAgentStatus::Running)) {
+            // A stop request acknowledges intent. Only the worker can publish
+            // a terminal status after its hooks and borrowed-state cleanup.
+            return;
+        }
+        record.status = NativeAgentStatus::Cancelled;
+        record.error = std::move(reason);
+        record.output = std::nullopt;
+        record.notification_delivered = false;
+        const auto entry = "system: agent cancelled: " + *record.error;
+        if (!record.error->empty() && !std::ranges::contains(record.transcript, entry))
+            record.transcript.push_back(entry);
+    });
 }
 
 bool NativeAgentStore::is_cancel_requested(std::string_view agent_id) const {
-        std::scoped_lock lock(mutex_);
-        auto it = records_.find(std::string(agent_id));
-        const auto active = active_executions_.find(std::string(agent_id));
-        return (it != records_.end() && it->second.cancel_requested) ||
-            (active != active_executions_.end() && active->second.owner.stop_requested());
+    std::scoped_lock lock(mutex_);
+    auto it = records_.find(std::string(agent_id));
+    const auto active = active_executions_.find(std::string(agent_id));
+    return (it != records_.end() && it->second.cancel_requested) ||
+           (active != active_executions_.end() && active->second.owner.stop_requested());
 }
 
-std::vector<PendingTaskEvent> NativeAgentStore::take_pending_task_events(
-    std::string_view parent_session_id) {
-        if (parent_session_id.empty()) return {};
-        std::scoped_lock lock(mutex_);
-        for (auto record : load_all_native_agent_records()) {
-            auto agent_id = record.agent_id;
-            // Creation time is process-local metadata in the existing format.
-            // Refresh persisted fields without changing stable instance order.
-            if (auto existing = records_.find(agent_id); existing != records_.end()) {
-                record.created_at = existing->second.created_at;
-                record.live_text = existing->second.live_text;
-            }
-            records_[std::move(agent_id)] = std::move(record);
+std::vector<PendingTaskEvent>
+NativeAgentStore::take_pending_task_events(std::string_view parent_session_id) {
+    if (parent_session_id.empty()) return {};
+    std::scoped_lock lock(mutex_);
+    for (auto record : load_all_native_agent_records()) {
+        auto agent_id = record.agent_id;
+        // Creation time is process-local metadata in the existing format.
+        // Refresh persisted fields without changing stable instance order.
+        if (auto existing = records_.find(agent_id); existing != records_.end()) {
+            record.created_at = existing->second.created_at;
+            record.live_text = existing->second.live_text;
         }
+        records_[std::move(agent_id)] = std::move(record);
+    }
 
-        std::vector<PendingTaskEvent> notifications;
-        for (auto& [_, record] : records_) {
-            if (!record.background || record.notification_delivered) continue;
-            if (!record.parent_session_id || *record.parent_session_id != parent_session_id) continue;
-            auto notification = make_native_agent_task_event(record);
-            if (!notification) continue;
-            notifications.push_back(std::move(*notification));
-            record.notification_delivered = true;
-            (void)persist_native_agent_record(record);
-        }
-        std::ranges::sort(notifications, {}, &PendingTaskEvent::model_context);
-        return notifications;
+    std::vector<PendingTaskEvent> notifications;
+    for (auto& [_, record] : records_) {
+        if (!record.background || record.notification_delivered) continue;
+        if (!record.parent_session_id || *record.parent_session_id != parent_session_id) continue;
+        auto notification = make_native_agent_task_event(record);
+        if (!notification) continue;
+        notifications.push_back(std::move(*notification));
+        record.notification_delivered = true;
+        (void)persist_native_agent_record(record);
+    }
+    std::ranges::sort(notifications, {}, &PendingTaskEvent::model_context);
+    return notifications;
 }
 
 void NativeAgentStore::clear_for_testing() {
-        wait_for_background_agents();
-        std::scoped_lock lock(mutex_);
-        records_.clear();
+    wait_for_background_agents();
+    std::scoped_lock lock(mutex_);
+    records_.clear();
 }
 
 void NativeAgentStore::append_transcript(std::string_view agent_id, std::string entry) {
-        update(agent_id, [&](NativeAgentRecord& record) {
-            record.transcript.push_back(std::move(entry));
-        });
+    update(agent_id,
+           [&](NativeAgentRecord& record) { record.transcript.push_back(std::move(entry)); });
 }
 
-std::string NativeAgentStore::owned_message_reason_locked(
-    std::string_view agent_id, std::string_view session_id, std::stop_token owner) const {
+std::string NativeAgentStore::owned_message_reason_locked(std::string_view agent_id,
+                                                          std::string_view session_id,
+                                                          std::stop_token owner) const {
     const auto id = std::string(agent_id);
     const auto record = records_.find(id);
     if (session_id.empty() || record == records_.end() ||
@@ -573,28 +599,33 @@ std::string NativeAgentStore::owned_message_reason_locked(
         return "Only native in-process Team Agents accept input here";
     }
     const auto active = active_executions_.find(id);
-    if (!owner.stop_possible() || active == active_executions_.end() || active->second.owner != owner) {
+    if (!owner.stop_possible() || active == active_executions_.end() ||
+        active->second.owner != owner) {
         return "No active execution owned by this process";
     }
-    if (owner.stop_requested() || record->second.cancel_requested) return "Agent cancellation is pending";
+    if (owner.stop_requested() || record->second.cancel_requested)
+        return "Agent cancellation is pending";
     if (record->second.status != NativeAgentStatus::Running || !active->second.accepting_input) {
         return "Agent is starting or finishing; retry after its state changes";
     }
     return {};
 }
 
-std::string NativeAgentStore::owned_message_unavailable_reason(
-    std::string_view agent_id, std::string_view session_id, std::stop_token owner) const {
+std::string NativeAgentStore::owned_message_unavailable_reason(std::string_view agent_id,
+                                                               std::string_view session_id,
+                                                               std::stop_token owner) const {
     std::scoped_lock lock(mutex_);
     return owned_message_reason_locked(agent_id, session_id, owner);
 }
 
-std::expected<void, std::string> NativeAgentStore::enqueue_owned_message(
-    std::string_view agent_id, std::string_view session_id, std::stop_token owner, std::string message) {
+std::expected<void, std::string>
+NativeAgentStore::enqueue_owned_message(std::string_view agent_id, std::string_view session_id,
+                                        std::stop_token owner, std::string message) {
     if (message.empty()) return std::unexpected("Agent message is empty");
     {
         std::scoped_lock lock(mutex_);
-        if (auto reason = owned_message_reason_locked(agent_id, session_id, owner); !reason.empty()) {
+        if (auto reason = owned_message_reason_locked(agent_id, session_id, owner);
+            !reason.empty()) {
             return std::unexpected(std::move(reason));
         }
         auto& record = records_.at(std::string(agent_id));
@@ -612,7 +643,8 @@ bool NativeAgentStore::open_input(std::string_view agent_id) {
     const auto record = records_.find(std::string(agent_id));
     if (active == active_executions_.end() || record == records_.end() ||
         record->second.status != NativeAgentStatus::Running || record->second.cancel_requested ||
-        active->second.owner.stop_requested()) return false;
+        active->second.owner.stop_requested())
+        return false;
     active->second.accepting_input = true;
     return true;
 }
@@ -621,7 +653,8 @@ bool NativeAgentStore::close_input_if_idle(std::string_view agent_id) {
     std::scoped_lock lock(mutex_);
     const auto record = records_.find(std::string(agent_id));
     if (record != records_.end() && !record->second.pending_messages.empty()) return false;
-    if (auto active = active_executions_.find(std::string(agent_id)); active != active_executions_.end()) {
+    if (auto active = active_executions_.find(std::string(agent_id));
+        active != active_executions_.end()) {
         active->second.accepting_input = false;
     }
     return true;
@@ -629,7 +662,8 @@ bool NativeAgentStore::close_input_if_idle(std::string_view agent_id) {
 
 void NativeAgentStore::close_input(std::string_view agent_id) {
     std::scoped_lock lock(mutex_);
-    if (auto active = active_executions_.find(std::string(agent_id)); active != active_executions_.end()) {
+    if (auto active = active_executions_.find(std::string(agent_id));
+        active != active_executions_.end()) {
         active->second.accepting_input = false;
     }
 }
@@ -646,7 +680,8 @@ void NativeAgentStore::append_live_text(std::string_view agent_id, std::string_v
         constexpr std::string_view notice = "[Earlier live output truncated]\n";
         if (live.size() > limit) {
             auto start = live.size() - (limit - notice.size());
-            while (start < live.size() && (static_cast<unsigned char>(live[start]) & 0xc0) == 0x80) ++start;
+            while (start < live.size() && (static_cast<unsigned char>(live[start]) & 0xc0) == 0x80)
+                ++start;
             live = std::string(notice) + live.substr(start);
         }
     }
@@ -664,70 +699,68 @@ void NativeAgentStore::clear_live_text(std::string_view agent_id) {
 }
 
 void NativeAgentStore::enqueue_pending_message(std::string_view agent_id, std::string message) {
-        update(agent_id, [&](NativeAgentRecord& record) {
-            record.pending_messages.push_back(std::move(message));
-        });
+    update(agent_id, [&](NativeAgentRecord& record) {
+        record.pending_messages.push_back(std::move(message));
+    });
 }
 
 void NativeAgentStore::enqueue_resume_message(std::string_view agent_id, std::string message) {
-        update(agent_id, [&](NativeAgentRecord& record) {
-            const bool was_terminal =
-                record.status == NativeAgentStatus::Completed ||
-                record.status == NativeAgentStatus::Failed ||
-                record.status == NativeAgentStatus::Cancelled;
-            record.pending_messages.push_back(std::move(message));
-            if (!was_terminal || active_executions_.contains(record.agent_id) ||
-                resume_reservations_.contains(record.agent_id)) return;
+    update(agent_id, [&](NativeAgentRecord& record) {
+        const bool was_terminal = record.status == NativeAgentStatus::Completed ||
+                                  record.status == NativeAgentStatus::Failed ||
+                                  record.status == NativeAgentStatus::Cancelled;
+        record.pending_messages.push_back(std::move(message));
+        if (!was_terminal || active_executions_.contains(record.agent_id) ||
+            resume_reservations_.contains(record.agent_id))
+            return;
 
-            record.status = NativeAgentStatus::Queued;
-            record.output = std::nullopt;
-            record.error = std::nullopt;
-            record.progress = 0.0;
-            record.cancel_requested = false;
-            record.notification_delivered = false;
-            record.transcript.push_back("system: resume requested from pending message");
-        });
+        record.status = NativeAgentStatus::Queued;
+        record.output = std::nullopt;
+        record.error = std::nullopt;
+        record.progress = 0.0;
+        record.cancel_requested = false;
+        record.notification_delivered = false;
+        record.transcript.push_back("system: resume requested from pending message");
+    });
 }
 
 std::vector<std::string> NativeAgentStore::take_pending_messages(std::string_view agent_id) {
-        std::vector<std::string> messages;
-        update(agent_id, [&](NativeAgentRecord& record) {
-            messages = std::move(record.pending_messages);
-            record.pending_messages.clear();
-        });
-        return messages;
+    std::vector<std::string> messages;
+    update(agent_id, [&](NativeAgentRecord& record) {
+        messages = std::move(record.pending_messages);
+        record.pending_messages.clear();
+    });
+    return messages;
 }
 
-void NativeAgentStore::append_sidechain_message(
-    std::string_view agent_id,
-    std::string_view role,
-    std::string_view content_json,
-    std::string_view fallback_text,
-    std::optional<std::string_view> transcript_entry,
-    bool request_anchor
-) {
-        update(agent_id, [&](NativeAgentRecord& record) {
-            if (role == "assistant") record.live_text.clear();
-            auto entry = make_sidechain_jsonl_entry(record.agent_id,
-                record.sidechain_entries.size(), role, content_json, fallback_text);
-            if (request_anchor) {
-                entry.pop_back();
-                entry += R"(,"requestAnchor":true})";
-            }
-            record.sidechain_entries.push_back(std::move(entry));
-            if (transcript_entry) record.transcript.emplace_back(*transcript_entry);
-        });
+void NativeAgentStore::append_sidechain_message(std::string_view agent_id, std::string_view role,
+                                                std::string_view content_json,
+                                                std::string_view fallback_text,
+                                                std::optional<std::string_view> transcript_entry,
+                                                bool request_anchor) {
+    update(agent_id, [&](NativeAgentRecord& record) {
+        if (role == "assistant") record.live_text.clear();
+        auto entry = make_sidechain_jsonl_entry(record.agent_id, record.sidechain_entries.size(),
+                                                role, content_json, fallback_text);
+        if (request_anchor) {
+            entry.pop_back();
+            entry += R"(,"requestAnchor":true})";
+        }
+        record.sidechain_entries.push_back(std::move(entry));
+        if (transcript_entry) record.transcript.emplace_back(*transcript_entry);
+    });
 }
 
 void NativeAgentStore::append_sidechain_entry(std::string_view agent_id, std::string entry) {
-        if (entry.empty()) return;
-        update(agent_id, [&](NativeAgentRecord& record) {
-            record.sidechain_entries.push_back(std::move(entry));
-        });
+    if (entry.empty()) return;
+    update(agent_id, [&](NativeAgentRecord& record) {
+        record.sidechain_entries.push_back(std::move(entry));
+    });
 }
 
-std::expected<void, std::string> NativeAgentStore::append_checkpoint_checked(
-    std::string_view agent_id, std::size_t expected_entries, std::string entry) {
+std::expected<void, std::string>
+NativeAgentStore::append_checkpoint_checked(std::string_view agent_id, std::size_t expected_entries,
+                                            std::string entry) {
     {
         std::scoped_lock lock(mutex_);
         const auto found = records_.find(std::string(agent_id));
@@ -751,55 +784,47 @@ std::expected<void, std::string> NativeAgentStore::append_checkpoint_checked(
 }
 
 void NativeAgentStore::update_progress(std::string_view agent_id, double progress) {
-        update(agent_id, [&](NativeAgentRecord& record) {
-            record.progress = std::clamp(progress, 0.0, 1.0);
-        });
+    update(agent_id,
+           [&](NativeAgentRecord& record) { record.progress = std::clamp(progress, 0.0, 1.0); });
 }
 
-void NativeAgentStore::set_worktree_metadata(
-    std::string_view agent_id,
-    std::string path,
-    std::string branch,
-    std::string base_commit,
-    std::string git_root
-) {
-        update(agent_id, [&](NativeAgentRecord& record) {
-            record.worktree_path = std::move(path);
-            record.worktree_branch = std::move(branch);
-            record.worktree_base_commit = std::move(base_commit);
-            record.worktree_git_root = std::move(git_root);
-            record.worktree_cleanup_performed = false;
-        });
+void NativeAgentStore::set_worktree_metadata(std::string_view agent_id, std::string path,
+                                             std::string branch, std::string base_commit,
+                                             std::string git_root) {
+    update(agent_id, [&](NativeAgentRecord& record) {
+        record.worktree_path = std::move(path);
+        record.worktree_branch = std::move(branch);
+        record.worktree_base_commit = std::move(base_commit);
+        record.worktree_git_root = std::move(git_root);
+        record.worktree_cleanup_performed = false;
+    });
 }
 
 void NativeAgentStore::mark_worktree_cleaned(std::string_view agent_id) {
-        update(agent_id, [](NativeAgentRecord& record) {
-            if (record.worktree_path && record.cwd == record.worktree_path) {
-                record.cwd = std::nullopt;
-            }
-            record.worktree_path = std::nullopt;
-            record.worktree_branch = std::nullopt;
-            record.worktree_base_commit = std::nullopt;
-            record.worktree_git_root = std::nullopt;
-            record.worktree_cleanup_performed = true;
-        });
+    update(agent_id, [](NativeAgentRecord& record) {
+        if (record.worktree_path && record.cwd == record.worktree_path) {
+            record.cwd = std::nullopt;
+        }
+        record.worktree_path = std::nullopt;
+        record.worktree_branch = std::nullopt;
+        record.worktree_base_commit = std::nullopt;
+        record.worktree_git_root = std::nullopt;
+        record.worktree_cleanup_performed = true;
+    });
 }
 
-void NativeAgentStore::set_teammate_metadata(
-    std::string_view agent_id,
-    std::string backend,
-    std::optional<std::string> task_id,
-    std::optional<std::string> pane_id,
-    std::optional<std::string> color,
-    std::optional<std::string> parent_session_id
-) {
-        update(agent_id, [&](NativeAgentRecord& record) {
-            record.teammate_backend = std::move(backend);
-            record.teammate_task_id = std::move(task_id);
-            record.teammate_pane_id = std::move(pane_id);
-            record.teammate_color = std::move(color);
-            record.parent_session_id = std::move(parent_session_id);
-        });
+void NativeAgentStore::set_teammate_metadata(std::string_view agent_id, std::string backend,
+                                             std::optional<std::string> task_id,
+                                             std::optional<std::string> pane_id,
+                                             std::optional<std::string> color,
+                                             std::optional<std::string> parent_session_id) {
+    update(agent_id, [&](NativeAgentRecord& record) {
+        record.teammate_backend = std::move(backend);
+        record.teammate_task_id = std::move(task_id);
+        record.teammate_pane_id = std::move(pane_id);
+        record.teammate_color = std::move(color);
+        record.parent_session_id = std::move(parent_session_id);
+    });
 }
 
 NativeAgentStore& native_agent_store() {
@@ -819,6 +844,7 @@ NativeAgentStore& native_agent_store() {
     auto now = std::chrono::steady_clock::now().time_since_epoch().count();
     return "agent-" + std::to_string(now);
 }
+
 std::expected<AgentExecutionResult, std::string> run_agent(const AgentRuntimeConfig& config) {
     auto id = runtime_agent_id(config);
 
@@ -827,10 +853,13 @@ std::expected<AgentExecutionResult, std::string> run_agent(const AgentRuntimeCon
     // a clear message so the caller (AgentTool) can surface it.
     if (config.worktree_path && !config.worktree_path->empty()) {
         std::error_code ec;
-        if (!fs::exists(*config.worktree_path, ec) || !fs::is_directory(*config.worktree_path, ec)) {
+        if (!fs::exists(*config.worktree_path, ec) ||
+            !fs::is_directory(*config.worktree_path, ec)) {
             NativeAgentRecord failed = make_native_agent_record(id, "runtime");
             failed.parent_agent_id = config.parent_agent_id;
-            failed.cwd = config.working_dir.empty() ? std::nullopt : std::optional<std::string>{config.working_dir};
+            failed.cwd = config.working_dir.empty()
+                             ? std::nullopt
+                             : std::optional<std::string>{config.working_dir};
             failed.status = NativeAgentStatus::Failed;
             failed.error = "Configured worktree does not exist";
             failed.capabilities = config.capabilities;
@@ -885,7 +914,8 @@ std::expected<AgentExecutionResult, std::string> run_agent(const AgentRuntimeCon
 
     NativeAgentRecord queued = make_native_agent_record(id, "runtime");
     queued.parent_agent_id = config.parent_agent_id;
-    queued.cwd = config.working_dir.empty() ? std::nullopt : std::optional<std::string>{config.working_dir};
+    queued.cwd =
+        config.working_dir.empty() ? std::nullopt : std::optional<std::string>{config.working_dir};
     queued.status = NativeAgentStatus::Queued;
     queued.capabilities = config.capabilities;
     queued.worktree_path = config.worktree_path;
@@ -901,9 +931,9 @@ std::expected<AgentExecutionResult, std::string> run_agent(const AgentRuntimeCon
     // fork_directive is non-empty.
     if (config.fork_directive && !config.fork_directive->empty() && !config.allow_fork) {
         native_agent_store().mark_failed(
-            id,
+            id, "run_agent: fork_directive supplied but allow_fork is false in config");
+        return std::unexpected(
             "run_agent: fork_directive supplied but allow_fork is false in config");
-        return std::unexpected("run_agent: fork_directive supplied but allow_fork is false in config");
     }
 
     // NOTE: the actual LLM streaming loop is intentionally NOT here — it lives
@@ -940,35 +970,36 @@ std::expected<AgentExecutionResult, std::string> run_agent(const AgentRuntimeCon
         .transcript = record ? record->transcript : std::vector<std::string>{},
     };
 }
-std::expected<std::string, std::string> fork_subagent(std::string_view parent_id, const AgentRuntimeConfig& config) {
+
+std::expected<std::string, std::string> fork_subagent(std::string_view parent_id,
+                                                      const AgentRuntimeConfig& config) {
     if (parent_id.empty()) return std::unexpected("Parent agent id is required");
     if (!config.allow_fork) return std::unexpected("Agent forking is disabled by runtime config");
 
     auto parent = native_agent_store().get(parent_id);
     if (!parent) return std::unexpected("Parent agent not found: " + std::string(parent_id));
     if (native_agent_record_is_fork_child(*parent)) {
-        return std::unexpected("Fork is not available inside a forked worker. Complete your task directly using your tools.");
+        return std::unexpected("Fork is not available inside a forked worker. Complete your task "
+                               "directly using your tools.");
     }
 
     auto child_id = runtime_agent_id(config);
     if (child_id == parent_id) child_id += "-fork";
 
     auto inherited_sidechain_entries = fork_sidechain_entries_for_child(*parent, child_id);
-    auto inherited_transcript = transcript_lines_from_sidechain_entries(inherited_sidechain_entries);
+    auto inherited_transcript =
+        transcript_lines_from_sidechain_entries(inherited_sidechain_entries);
     if (inherited_transcript.empty()) inherited_transcript = parent->transcript;
     inherited_transcript.push_back(std::format("system: forked from {}", parent->agent_id));
-    auto unresolved_tool_use_ids = unresolved_tool_use_ids_from_sidechain_entries(inherited_sidechain_entries);
+    auto unresolved_tool_use_ids =
+        unresolved_tool_use_ids_from_sidechain_entries(inherited_sidechain_entries);
     if (config.fork_directive && !config.fork_directive->empty()) {
         auto directive_message = build_fork_child_message(*config.fork_directive);
-        auto directive_content_json = fork_missing_tool_results_content_json(
-            unresolved_tool_use_ids,
-            directive_message);
-        auto directive_entry = make_sidechain_jsonl_entry(
-            child_id,
-            inherited_sidechain_entries.size(),
-            "user",
-            directive_content_json,
-            directive_message);
+        auto directive_content_json =
+            fork_missing_tool_results_content_json(unresolved_tool_use_ids, directive_message);
+        auto directive_entry =
+            make_sidechain_jsonl_entry(child_id, inherited_sidechain_entries.size(), "user",
+                                       directive_content_json, directive_message);
         if (auto transcript_entry = transcript_entry_from_sidechain_jsonl_line(directive_entry)) {
             inherited_transcript.push_back(std::move(*transcript_entry));
         } else {
@@ -976,27 +1007,26 @@ std::expected<std::string, std::string> fork_subagent(std::string_view parent_id
         }
         inherited_sidechain_entries.push_back(std::move(directive_entry));
     } else if (!unresolved_tool_use_ids.empty()) {
-        auto missing_tool_results_content_json = fork_missing_tool_results_content_json(unresolved_tool_use_ids, {});
-        auto missing_tool_results_entry = make_sidechain_jsonl_entry(
-            child_id,
-            inherited_sidechain_entries.size(),
-            "user",
-            missing_tool_results_content_json,
-            {});
-        if (auto transcript_entry = transcript_entry_from_sidechain_jsonl_line(missing_tool_results_entry)) {
+        auto missing_tool_results_content_json =
+            fork_missing_tool_results_content_json(unresolved_tool_use_ids, {});
+        auto missing_tool_results_entry =
+            make_sidechain_jsonl_entry(child_id, inherited_sidechain_entries.size(), "user",
+                                       missing_tool_results_content_json, {});
+        if (auto transcript_entry =
+                transcript_entry_from_sidechain_jsonl_line(missing_tool_results_entry)) {
             inherited_transcript.push_back(std::move(*transcript_entry));
         }
         inherited_sidechain_entries.push_back(std::move(missing_tool_results_entry));
     }
 
-    auto child_cwd = config.working_dir.empty()
-        ? parent->cwd
-        : std::optional<std::string>{config.working_dir};
+    auto child_cwd =
+        config.working_dir.empty() ? parent->cwd : std::optional<std::string>{config.working_dir};
     auto child_worktree_path = config.worktree_path;
     auto child_worktree_branch = config.worktree_branch;
     auto child_worktree_base_commit = config.worktree_base_commit;
     auto child_worktree_git_root = config.worktree_git_root;
-    if (!child_worktree_path && parent->worktree_path && child_cwd && *child_cwd == *parent->worktree_path) {
+    if (!child_worktree_path && parent->worktree_path && child_cwd &&
+        *child_cwd == *parent->worktree_path) {
         child_worktree_path = parent->worktree_path;
         child_worktree_branch = parent->worktree_branch;
         child_worktree_base_commit = parent->worktree_base_commit;
@@ -1006,11 +1036,7 @@ std::expected<std::string, std::string> fork_subagent(std::string_view parent_id
         auto worktree_notice = build_worktree_fork_notice(*parent->cwd, *child_worktree_path);
         inherited_transcript.push_back("user: " + worktree_notice);
         inherited_sidechain_entries.push_back(make_sidechain_jsonl_entry(
-            child_id,
-            inherited_sidechain_entries.size(),
-            "user",
-            {},
-            worktree_notice));
+            child_id, inherited_sidechain_entries.size(), "user", {}, worktree_notice));
     }
 
     NativeAgentRecord child = make_native_agent_record(child_id, parent->agent_type);
@@ -1031,6 +1057,7 @@ std::expected<std::string, std::string> fork_subagent(std::string_view parent_id
     native_agent_store().upsert(std::move(child));
     return child_id;
 }
+
 std::expected<AgentExecutionResult, std::string> resume_agent(std::string_view agent_id) {
     if (agent_id.empty()) {
         return std::unexpected("resume_agent: empty agent_id is not allowed");
@@ -1042,10 +1069,9 @@ std::expected<AgentExecutionResult, std::string> resume_agent(std::string_view a
     // returned as-is; the caller decides whether to re-run. For running or
     // queued agents we transition to running so pollers pick them back up
     // (matches TS resumeAgentBackground which re-enters runAsyncAgentLifecycle).
-    const bool already_terminal =
-        record->status == NativeAgentStatus::Completed ||
-        record->status == NativeAgentStatus::Failed ||
-        record->status == NativeAgentStatus::Cancelled;
+    const bool already_terminal = record->status == NativeAgentStatus::Completed ||
+                                  record->status == NativeAgentStatus::Failed ||
+                                  record->status == NativeAgentStatus::Cancelled;
 
     // migrated edge case: fork-type agents track the parent's rendered
     // system prompt so resuming a fork child without a stored fork context
@@ -1053,12 +1079,11 @@ std::expected<AgentExecutionResult, std::string> resume_agent(std::string_view a
     // sidechain entries AND is marked as a fork child we surface a clear
     // error instead of silently producing a divergent prompt cache key.
     const bool is_fork_child = native_agent_record_is_fork_child(*record);
-    if (is_fork_child && record->sidechain_entries.empty() &&
-        !already_terminal) {
-        return std::unexpected(std::format(
-            "Cannot resume fork agent '{}': no sidechain transcript available "
-            "to reconstruct parent prompt bytes",
-            record->agent_id));
+    if (is_fork_child && record->sidechain_entries.empty() && !already_terminal) {
+        return std::unexpected(
+            std::format("Cannot resume fork agent '{}': no sidechain transcript available "
+                        "to reconstruct parent prompt bytes",
+                        record->agent_id));
     }
 
     if (record->worktree_path && !record->worktree_path->empty()) {
@@ -1074,11 +1099,12 @@ std::expected<AgentExecutionResult, std::string> resume_agent(std::string_view a
             auto previous_worktree = *record->worktree_path;
             native_agent_store().mark_worktree_cleaned(agent_id);
             native_agent_store().append_transcript(
-                agent_id,
-                "system: resumed worktree " + previous_worktree +
-                    " no longer exists; falling back to parent cwd");
+                agent_id, "system: resumed worktree " + previous_worktree +
+                              " no longer exists; falling back to parent cwd");
             record = native_agent_store().get(agent_id);
-            if (!record) return std::unexpected("Agent not found after worktree resume update: " + std::string(agent_id));
+            if (!record)
+                return std::unexpected("Agent not found after worktree resume update: " +
+                                       std::string(agent_id));
         }
     }
 
@@ -1091,23 +1117,24 @@ std::expected<AgentExecutionResult, std::string> resume_agent(std::string_view a
         native_agent_store().mark_running(agent_id);
         if (!(is_fork_child && previous_status == NativeAgentStatus::Queued)) {
             native_agent_store().append_transcript(
-                agent_id,
-                std::format("system: agent resumed (previous status: {})",
-                    native_agent_status_name(previous_status)));
+                agent_id, std::format("system: agent resumed (previous status: {})",
+                                      native_agent_status_name(previous_status)));
         }
         record = native_agent_store().get(agent_id);
-        if (!record) return std::unexpected("Agent not found after resume status update: " + std::string(agent_id));
+        if (!record)
+            return std::unexpected("Agent not found after resume status update: " +
+                                   std::string(agent_id));
     }
 
-    std::string output = record->output.value_or(
-        std::format("Agent {} is {} (previous: {})", record->agent_id,
-            native_agent_status_name(record->status),
-            native_agent_status_name(
-                already_terminal ? record->status :
-                is_fork_child ? NativeAgentStatus::Queued : record->status)));
+    std::string output = record->output.value_or(std::format(
+        "Agent {} is {} (previous: {})", record->agent_id, native_agent_status_name(record->status),
+        native_agent_status_name(already_terminal ? record->status
+                                 : is_fork_child  ? NativeAgentStatus::Queued
+                                                  : record->status)));
     auto error = record->error;
-    auto exit_code = record->status == NativeAgentStatus::Failed ? 1 :
-        record->status == NativeAgentStatus::Cancelled ? 130 : 0;
+    auto exit_code = record->status == NativeAgentStatus::Failed      ? 1
+                     : record->status == NativeAgentStatus::Cancelled ? 130
+                                                                      : 0;
     return AgentExecutionResult{
         .agent_id = record->agent_id,
         .exit_code = exit_code,
@@ -1116,16 +1143,22 @@ std::expected<AgentExecutionResult, std::string> resume_agent(std::string_view a
         .transcript = record->transcript,
     };
 }
+
 AgentLifecycle get_agent_lifecycle(std::string_view agent_id) {
     auto record = native_agent_store().get(agent_id);
     if (!record) return AgentLifecycle::Failed;
     switch (record->status) {
-        case NativeAgentStatus::Queued: return AgentLifecycle::Starting;
-        case NativeAgentStatus::Running: return AgentLifecycle::Running;
-        case NativeAgentStatus::Completed: return AgentLifecycle::Completed;
-        case NativeAgentStatus::Failed: return AgentLifecycle::Failed;
-        case NativeAgentStatus::Cancelled: return AgentLifecycle::Cancelled;
+    case NativeAgentStatus::Queued:
+        return AgentLifecycle::Starting;
+    case NativeAgentStatus::Running:
+        return AgentLifecycle::Running;
+    case NativeAgentStatus::Completed:
+        return AgentLifecycle::Completed;
+    case NativeAgentStatus::Failed:
+        return AgentLifecycle::Failed;
+    case NativeAgentStatus::Cancelled:
+        return AgentLifecycle::Cancelled;
     }
     return AgentLifecycle::Failed;
 }
-} // namespace loom::tools::agent_runtime
+}  // namespace loom::tools::agent_runtime

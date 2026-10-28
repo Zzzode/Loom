@@ -2,7 +2,6 @@ module;
 
 #include <cctype>
 
-
 export module loom.tools.script_types;
 
 import std;
@@ -11,13 +10,7 @@ import loom.tools.script_diagnostics;
 
 export namespace loom::tools {
 
-enum class ScriptLanguage {
-    TypeScript,
-    JavaScript,
-    Python,
-    Shell,
-    Unknown
-};
+enum class ScriptLanguage { TypeScript, JavaScript, Python, Shell, Unknown };
 
 inline auto detect_script_language(const std::filesystem::path& file) -> ScriptLanguage {
     auto ext = file.extension().string();
@@ -47,21 +40,21 @@ inline auto detect_script_language(const std::filesystem::path& file) -> ScriptL
 
 inline auto get_script_runner(ScriptLanguage lang) -> std::optional<std::filesystem::path> {
     switch (lang) {
-        case ScriptLanguage::TypeScript:
+    case ScriptLanguage::TypeScript:
 
-            return std::filesystem::path("/usr/local/bin/bun");
+        return std::filesystem::path("/usr/local/bin/bun");
 
-        case ScriptLanguage::JavaScript:
-            return std::filesystem::path("/usr/local/bin/node");
+    case ScriptLanguage::JavaScript:
+        return std::filesystem::path("/usr/local/bin/node");
 
-        case ScriptLanguage::Python:
-            return std::filesystem::path("/usr/bin/python3");
+    case ScriptLanguage::Python:
+        return std::filesystem::path("/usr/bin/python3");
 
-        case ScriptLanguage::Shell:
-            return std::filesystem::path("/bin/bash");
+    case ScriptLanguage::Shell:
+        return std::filesystem::path("/bin/bash");
 
-        case ScriptLanguage::Unknown:
-            return std::nullopt;
+    case ScriptLanguage::Unknown:
+        return std::nullopt;
     }
     return std::nullopt;
 }
@@ -76,13 +69,18 @@ struct ScriptResult {
 
 inline auto script_language_to_string(ScriptLanguage lang) -> std::string_view {
     switch (lang) {
-        case ScriptLanguage::TypeScript:  return "TypeScript";
-        case ScriptLanguage::JavaScript:  return "JavaScript";
-        case ScriptLanguage::Python:      return "Python";
-        case ScriptLanguage::Shell:       return "Shell";
-        case ScriptLanguage::Unknown:     return "Unknown";
+    case ScriptLanguage::TypeScript:
+        return "TypeScript";
+    case ScriptLanguage::JavaScript:
+        return "JavaScript";
+    case ScriptLanguage::Python:
+        return "Python";
+    case ScriptLanguage::Shell:
+        return "Shell";
+    case ScriptLanguage::Unknown:
+        return "Unknown";
     }
     return "Unknown";
 }
 
-} // namespace loom::tools
+}  // namespace loom::tools

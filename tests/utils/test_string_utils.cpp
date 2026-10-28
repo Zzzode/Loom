@@ -1,11 +1,13 @@
 /// @file test_string_utils.cpp
 ///
 /// Split out of the former test_utils.cpp kitchen-sink (169 tests, 53 suites).
-/// This file covers the string/text utilities (trim/split/join, words, sanitization, diff, hashing, CLI parsing) suites.
+/// This file covers the string/text utilities (trim/split/join, words, sanitization, diff, hashing,
+/// CLI parsing) suites.
 
 #include <gtest/gtest.h>
-#include <cstdlib>
 #include <httplib.h>
+
+#include <cstdlib>
 
 import std;
 import loom.text.string;
@@ -78,7 +80,6 @@ TEST(StringUtils, SplitByDelimiter) {
     EXPECT_EQ(parts[1], "b");
     EXPECT_EQ(parts[2], "c");
 
-
     auto empty = loom::utils::string::split("", ',');
     ASSERT_EQ(empty.size(), 1u);
     EXPECT_EQ(empty[0], "");
@@ -94,7 +95,6 @@ TEST(StringUtils, JoinCombinesStrings) {
     std::vector<std::string> items = {"hello", "world", "test"};
     EXPECT_EQ(loom::utils::string::join(items, " "), "hello world test");
     EXPECT_EQ(loom::utils::string::join(items, ", "), "hello, world, test");
-
 
     std::vector<std::string> empty_vec;
     EXPECT_EQ(loom::utils::string::join(empty_vec, ","), "");
@@ -113,7 +113,6 @@ TEST(StringUtils, StartsWithAndEndsWith) {
     EXPECT_TRUE(loom::utils::string::ends_with("hello world", "world"));
     EXPECT_FALSE(loom::utils::string::ends_with("hello world", "hello"));
 
-
     EXPECT_TRUE(loom::utils::string::starts_with("anything", ""));
     EXPECT_TRUE(loom::utils::string::ends_with("anything", ""));
 }
@@ -129,7 +128,8 @@ TEST(StringUtils, TruncateDoesNotUnderflowWhenEllipsisIsLongerThanLimit) {
 }
 
 TEST(StringUtilsCompat, EscapeRegexEscapesSpecialCharacters) {
-    EXPECT_EQ(loom::utils::escape_regex(R"(a.b*c+$^?{}()|[]\)"), R"(a\.b\*c\+\$\^\?\{\}\(\)\|\[\]\\)");
+    EXPECT_EQ(loom::utils::escape_regex(R"(a.b*c+$^?{}()|[]\)"),
+              R"(a\.b\*c\+\$\^\?\{\}\(\)\|\[\]\\)");
     EXPECT_EQ(loom::utils::escape_regex("plain"), "plain");
 }
 
@@ -191,23 +191,26 @@ TEST(WordsSlug, GeneratesRandomSlugsWithExpectedShapeAndKnownWords) {
 }
 
 TEST(Sanitization, RemovesDangerousHiddenUnicodeRanges) {
-    EXPECT_EQ(
-        loom::utils::sanitization::partially_sanitize_unicode("safe\xE2\x80\x8Bhidden\xEF\xBB\xBFtext"),
-        "safehiddentext");
-    EXPECT_EQ(
-        loom::utils::sanitization::partially_sanitize_unicode("left\xE2\x80\xAEright"),
-        "leftright");
-    EXPECT_EQ(
-        loom::utils::sanitization::partially_sanitize_unicode("private\xEE\x80\x80use"),
-        "privateuse");
+    EXPECT_EQ(loom::utils::sanitization::partially_sanitize_unicode(
+                  "safe\xE2\x80\x8Bhidden\xEF\xBB\xBFtext"),
+              "safehiddentext");
+    EXPECT_EQ(loom::utils::sanitization::partially_sanitize_unicode("left\xE2\x80\xAEright"),
+              "leftright");
+    EXPECT_EQ(loom::utils::sanitization::partially_sanitize_unicode("private\xEE\x80\x80use"),
+              "privateuse");
 }
 
 TEST(Sanitization, AppliesCompatibilityNormalizationBeforeFiltering) {
-    EXPECT_EQ(
-        loom::utils::sanitization::partially_sanitize_unicode("\xEF\xBC\xA8\xEF\xBD\x85\xEF\xBD\x8C\xEF\xBD\x8C\xEF\xBD\x8F\xEF\xBC\x91\xEF\xBC\x92\xEF\xBC\x93"),
-        "Hello123");
-    EXPECT_EQ(loom::utils::sanitization::partially_sanitize_unicode(std::string("o") + "\xEF\xAC\x83" + "ce"), "office");
-    EXPECT_EQ(loom::utils::sanitization::partially_sanitize_unicode("\xE2\x91\xA0\xE2\x85\xA0\xC2\xB2\xE3\x8E\x8F"), "1I2kg");
+    EXPECT_EQ(loom::utils::sanitization::partially_sanitize_unicode(
+                  "\xEF\xBC\xA8\xEF\xBD\x85\xEF\xBD\x8C\xEF\xBD\x8C\xEF\xBD\x8F\xEF\xBC\x91\xEF\xBC"
+                  "\x92\xEF\xBC\x93"),
+              "Hello123");
+    EXPECT_EQ(loom::utils::sanitization::partially_sanitize_unicode(std::string("o") +
+                                                                    "\xEF\xAC\x83" + "ce"),
+              "office");
+    EXPECT_EQ(loom::utils::sanitization::partially_sanitize_unicode(
+                  "\xE2\x91\xA0\xE2\x85\xA0\xC2\xB2\xE3\x8E\x8F"),
+              "1I2kg");
 }
 
 TEST(Sanitization, RecursivelySanitizesStringsArraysObjectsAndKeys) {
@@ -216,9 +219,9 @@ TEST(Sanitization, RecursivelySanitizesStringsArraysObjectsAndKeys) {
     SanitizedValue input = SanitizedValue::object({
         {"safe\xE2\x80\x8Bkey", SanitizedValue("value\xEF\xBB\xBFtext")},
         {"items", SanitizedValue::array({
-            SanitizedValue("\xEF\xBC\xA8\xEF\xBD\x89"),
-            SanitizedValue::object({{"nested\xE2\x80\xAEkey", SanitizedValue("ok")}}),
-        })},
+                      SanitizedValue("\xEF\xBC\xA8\xEF\xBD\x89"),
+                      SanitizedValue::object({{"nested\xE2\x80\xAEkey", SanitizedValue("ok")}}),
+                  })},
     });
 
     auto sanitized = loom::utils::sanitization::recursively_sanitize_unicode(input);
@@ -249,21 +252,27 @@ TEST(ArgumentSubstitution, ParsesNamesHintsAndSubstitutesPlaceholders) {
     using namespace loom::utils::argument_substitution;
 
     EXPECT_TRUE(parse_arguments("  \t ").empty());
-    EXPECT_EQ(parse_arguments(R"(foo "hello world" 'again there' $FOO)"), (std::vector<std::string>{"foo", "hello world", "again there", "$FOO"}));
-    EXPECT_EQ(parse_arguments(R"(foo "unterminated)"), (std::vector<std::string>{"foo", "\"unterminated"}));
+    EXPECT_EQ(parse_arguments(R"(foo "hello world" 'again there' $FOO)"),
+              (std::vector<std::string>{"foo", "hello world", "again there", "$FOO"}));
+    EXPECT_EQ(parse_arguments(R"(foo "unterminated)"),
+              (std::vector<std::string>{"foo", "\"unterminated"}));
 
-    EXPECT_EQ(parse_argument_names(std::optional<std::string>{"foo bar 123  baz"}), (std::vector<std::string>{"foo", "bar", "baz"}));
-    EXPECT_EQ(parse_argument_names(std::vector<std::string>{"foo", "", "42", "bar"}), (std::vector<std::string>{"foo", "bar"}));
-    EXPECT_EQ(generate_progressive_argument_hint({"arg1", "arg2", "arg3"}, {"value1"}), "[arg2] [arg3]");
+    EXPECT_EQ(parse_argument_names(std::optional<std::string>{"foo bar 123  baz"}),
+              (std::vector<std::string>{"foo", "bar", "baz"}));
+    EXPECT_EQ(parse_argument_names(std::vector<std::string>{"foo", "", "42", "bar"}),
+              (std::vector<std::string>{"foo", "bar"}));
+    EXPECT_EQ(generate_progressive_argument_hint({"arg1", "arg2", "arg3"}, {"value1"}),
+              "[arg2] [arg3]");
     EXPECT_FALSE(generate_progressive_argument_hint({"arg1"}, {"value1"}).has_value());
 
     EXPECT_EQ(
-        substitute_arguments("all=$ARGUMENTS first=$ARGUMENTS[0] second=$1 named=$foo missing=$2", "alpha beta", true, {"foo"}),
-        "all=alpha beta first=alpha second=beta named=alpha missing="
-    );
+        substitute_arguments("all=$ARGUMENTS first=$ARGUMENTS[0] second=$1 named=$foo missing=$2",
+                             "alpha beta", true, {"foo"}),
+        "all=alpha beta first=alpha second=beta named=alpha missing=");
     EXPECT_EQ(substitute_arguments("unchanged", std::nullopt), "unchanged");
     EXPECT_EQ(substitute_arguments("prefix", "x y", true), "prefix\n\nARGUMENTS: x y");
-    EXPECT_EQ(substitute_arguments("$foo $foobar $foo[0]", "one two", true, {"foo"}), "one $foobar $foo[0]");
+    EXPECT_EQ(substitute_arguments("$foo $foobar $foo[0]", "one two", true, {"foo"}),
+              "one $foobar $foo[0]");
 }
 
 TEST(SemanticInputCoercion, CoercesOnlyExplicitBooleanAndDecimalStringLiterals) {
@@ -293,9 +302,12 @@ TEST(HashUtils, MatchesTypeScriptDjb2Sha256AndPairHashing) {
     EXPECT_EQ(djb2_hash("LOOM"), 2342561);
     EXPECT_EQ(djb2_hash("\xF0\x9F\x98\x80"), 1772899);
 
-    EXPECT_EQ(hash_content("hello"), "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824");
-    EXPECT_EQ(hash_pair("ts", "code"), "8aea308fb5b062d3ab47d67952ee9d76beab21da1610bf7fbcc97e728e84c226");
-    EXPECT_EQ(hash_pair("tsc", "ode"), "2dd84b1bcba070e82fd5d6278dcc35424d1d6d3cc8d87fd3b12486e8dcfe5749");
+    EXPECT_EQ(hash_content("hello"),
+              "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824");
+    EXPECT_EQ(hash_pair("ts", "code"),
+              "8aea308fb5b062d3ab47d67952ee9d76beab21da1610bf7fbcc97e728e84c226");
+    EXPECT_EQ(hash_pair("tsc", "ode"),
+              "2dd84b1bcba070e82fd5d6278dcc35424d1d6d3cc8d87fd3b12486e8dcfe5749");
     EXPECT_NE(hash_pair("ts", "code"), hash_pair("tsc", "ode"));
 }
 
@@ -376,10 +388,8 @@ TEST(DiffUtils, ApplyPatchRejectsMismatchedContext) {
 }
 
 TEST(GitDiff, GenerateUnifiedDiffPreservesContextAndRoundTripsToStats) {
-    auto patch = loom::utils::generate_unified_diff(
-        "alpha\nbeta\ngamma\n",
-        "alpha\ndelta\ngamma\n",
-        "notes.txt");
+    auto patch = loom::utils::generate_unified_diff("alpha\nbeta\ngamma\n", "alpha\ndelta\ngamma\n",
+                                                    "notes.txt");
 
     EXPECT_NE(patch.find("diff --git a/notes.txt b/notes.txt"), std::string::npos);
     EXPECT_NE(patch.find(" alpha\n"), std::string::npos);
@@ -398,9 +408,8 @@ TEST(GitDiff, GenerateUnifiedDiffPreservesContextAndRoundTripsToStats) {
 }
 
 TEST(GitDiff, GenerateUnifiedDiffReturnsEmptyStringForIdenticalContent) {
-    EXPECT_EQ(
-        loom::utils::generate_unified_diff("same\ncontent\n", "same\ncontent\n", "same.txt"),
-        "");
+    EXPECT_EQ(loom::utils::generate_unified_diff("same\ncontent\n", "same\ncontent\n", "same.txt"),
+              "");
 }
 
 TEST(SlashCommandParsing, ParsesRegularAndMcpSlashCommands) {

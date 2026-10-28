@@ -33,15 +33,18 @@ class Conversation {
 
 public:
     Conversation()
-        : id_(), created_at_(std::chrono::system_clock::now()),
-        updated_at_(std::chrono::system_clock::now()),
-        max_messages_(100), max_total_tokens_(200000) {}
+        : id_()
+        , created_at_(std::chrono::system_clock::now())
+        , updated_at_(std::chrono::system_clock::now())
+        , max_messages_(100)
+        , max_total_tokens_(200000) {}
 
     explicit Conversation(ConversationId id)
-        : id_(std::move(id)),
-        created_at_(std::chrono::system_clock::now()),
-        updated_at_(std::chrono::system_clock::now()),
-        max_messages_(100), max_total_tokens_(200000) {}
+        : id_(std::move(id))
+        , created_at_(std::chrono::system_clock::now())
+        , updated_at_(std::chrono::system_clock::now())
+        , max_messages_(100)
+        , max_total_tokens_(200000) {}
 
     /// Add message
     void add_message(Message msg) {
@@ -241,17 +244,20 @@ public:
 
             std::ofstream output(path, std::ios::binary | std::ios::trunc);
             if (!output.is_open()) {
-                return std::unexpected(Error::make(ErrorCode::ConfigWriteError,
+                return std::unexpected(Error::make(
+                    ErrorCode::ConfigWriteError,
                     std::format("Failed to open conversation history file '{}'", path.string())));
             }
             output << doc.to_pretty_string();
             if (!output.good()) {
-                return std::unexpected(Error::make(ErrorCode::ConfigWriteError,
+                return std::unexpected(Error::make(
+                    ErrorCode::ConfigWriteError,
                     std::format("Failed to write conversation history file '{}'", path.string())));
             }
         } catch (const std::exception& e) {
-            return std::unexpected(Error::make(ErrorCode::ConfigWriteError,
-                std::format("Failed to save conversation history: {}", e.what())));
+            return std::unexpected(
+                Error::make(ErrorCode::ConfigWriteError,
+                            std::format("Failed to save conversation history: {}", e.what())));
         }
 
         return {};
@@ -265,20 +271,20 @@ public:
 
         auto parsed = loom::utils::json::parse_file(storage_path_);
         if (!parsed) {
-            return std::unexpected(Error::make(ErrorCode::SessionCorrupted,
-                parsed.error().message()));
+            return std::unexpected(
+                Error::make(ErrorCode::SessionCorrupted, parsed.error().message()));
         }
 
         auto root = parsed->root();
         if (!root.is_obj()) {
             return std::unexpected(Error::make(ErrorCode::SessionCorrupted,
-                "Conversation history root must be an object"));
+                                               "Conversation history root must be an object"));
         }
 
         auto conversations_value = root.get("conversations");
         if (!conversations_value.is_arr()) {
             return std::unexpected(Error::make(ErrorCode::SessionCorrupted,
-                "Conversation history missing conversations array"));
+                                               "Conversation history missing conversations array"));
         }
 
         std::unordered_map<std::string, std::unique_ptr<Conversation>> loaded;
@@ -315,9 +321,9 @@ public:
 
 private:
     [[nodiscard]] Conversation* create_conversation_locked() {
-        auto id = std::format("conv_{}",
-            std::chrono::duration_cast<std::chrono::milliseconds>(
-                std::chrono::system_clock::now().time_since_epoch()).count());
+        auto id = std::format("conv_{}", std::chrono::duration_cast<std::chrono::milliseconds>(
+                                             std::chrono::system_clock::now().time_since_epoch())
+                                             .count());
         auto conversation = std::make_unique<Conversation>(ConversationId{id});
         auto* ptr = conversation.get();
         conversations_[id] = std::move(conversation);
@@ -326,71 +332,73 @@ private:
     }
 
     [[nodiscard]] static int64_t to_epoch_ms(std::chrono::system_clock::time_point time) {
-        return std::chrono::duration_cast<std::chrono::milliseconds>(
-            time.time_since_epoch()).count();
+        return std::chrono::duration_cast<std::chrono::milliseconds>(time.time_since_epoch())
+            .count();
     }
 
     [[nodiscard]] static std::chrono::system_clock::time_point from_epoch_ms(int64_t ms) {
         return std::chrono::system_clock::time_point{std::chrono::milliseconds(ms)};
     }
 
-    [[nodiscard]] static loom::utils::json::JsonMutVal serialize_content_block(
-        loom::utils::json::JsonMutDoc& doc,
-        const ContentBlock& block) {
+    [[nodiscard]] static loom::utils::json::JsonMutVal
+    serialize_content_block(loom::utils::json::JsonMutDoc& doc, const ContentBlock& block) {
         auto obj = doc.object();
-        std::visit([&](const auto& value) {
-            using T = std::decay_t<decltype(value)>;
-            if constexpr (std::is_same_v<T, TextBlock>) {
-                obj.add("type", doc.string("text"));
-                obj.add("text", doc.string(value.text));
-            } else if constexpr (std::is_same_v<T, ToolUseBlock>) {
-                obj.add("type", doc.string("tool_use"));
-                obj.add("id", doc.string(value.id.value));
-                obj.add("name", doc.string(value.name));
-                obj.add("input_json", doc.string(value.input_json));
-            } else if constexpr (std::is_same_v<T, ToolResultBlock>) {
-                obj.add("type", doc.string("tool_result"));
-                obj.add("tool_use_id", doc.string(value.tool_use_id.value));
-                // Content may be string or array of content items
-                if (std::holds_alternative<std::string>(value.content)) {
-                    obj.add("content", doc.string(std::get<std::string>(value.content)));
-                } else {
-                    const auto& items = std::get<std::vector<ToolResultContentItem>>(value.content);
-                    auto arr = doc.array();
-                    for (const auto& item : items) {
-                        auto item_obj = doc.object();
-                        item_obj.add("type", doc.string(item.type));
-                        if (item.type == "text") {
-                            item_obj.add("text", doc.string(item.text));
-                        } else if (item.type == "image") {
-                            item_obj.add("media_type", doc.string(item.media_type));
-                            item_obj.add("data", doc.string(item.data));
+        std::visit(
+            [&](const auto& value) {
+                using T = std::decay_t<decltype(value)>;
+                if constexpr (std::is_same_v<T, TextBlock>) {
+                    obj.add("type", doc.string("text"));
+                    obj.add("text", doc.string(value.text));
+                } else if constexpr (std::is_same_v<T, ToolUseBlock>) {
+                    obj.add("type", doc.string("tool_use"));
+                    obj.add("id", doc.string(value.id.value));
+                    obj.add("name", doc.string(value.name));
+                    obj.add("input_json", doc.string(value.input_json));
+                } else if constexpr (std::is_same_v<T, ToolResultBlock>) {
+                    obj.add("type", doc.string("tool_result"));
+                    obj.add("tool_use_id", doc.string(value.tool_use_id.value));
+                    // Content may be string or array of content items
+                    if (std::holds_alternative<std::string>(value.content)) {
+                        obj.add("content", doc.string(std::get<std::string>(value.content)));
+                    } else {
+                        const auto& items =
+                            std::get<std::vector<ToolResultContentItem>>(value.content);
+                        auto arr = doc.array();
+                        for (const auto& item : items) {
+                            auto item_obj = doc.object();
+                            item_obj.add("type", doc.string(item.type));
+                            if (item.type == "text") {
+                                item_obj.add("text", doc.string(item.text));
+                            } else if (item.type == "image") {
+                                item_obj.add("media_type", doc.string(item.media_type));
+                                item_obj.add("data", doc.string(item.data));
+                            }
+                            arr.append(item_obj);
                         }
-                        arr.append(item_obj);
+                        obj.add("content", std::move(arr));
                     }
-                    obj.add("content", std::move(arr));
+                    obj.add("is_error", doc.boolean(value.is_error));
+                } else if constexpr (std::is_same_v<T, ImageBlock>) {
+                    obj.add("type", doc.string("image"));
+                    obj.add("media_type", doc.string(value.media_type));
+                    obj.add("data", doc.string(value.data));
+                } else if constexpr (std::is_same_v<T, DocumentBlock>) {
+                    obj.add("type", doc.string("document"));
+                    obj.add("media_type", doc.string(value.media_type));
+                    obj.add("data", doc.string(value.data));
+                } else if constexpr (std::is_same_v<T, ThinkingBlock>) {
+                    obj.add("type", doc.string("thinking"));
+                    obj.add("thinking", doc.string(value.thinking));
+                    obj.add("signature", doc.string(value.signature));
                 }
-                obj.add("is_error", doc.boolean(value.is_error));
-            } else if constexpr (std::is_same_v<T, ImageBlock>) {
-                obj.add("type", doc.string("image"));
-                obj.add("media_type", doc.string(value.media_type));
-                obj.add("data", doc.string(value.data));
-            } else if constexpr (std::is_same_v<T, DocumentBlock>) {
-                obj.add("type", doc.string("document"));
-                obj.add("media_type", doc.string(value.media_type));
-                obj.add("data", doc.string(value.data));
-            } else if constexpr (std::is_same_v<T, ThinkingBlock>) {
-                obj.add("type", doc.string("thinking"));
-                obj.add("thinking", doc.string(value.thinking));
-                obj.add("signature", doc.string(value.signature));
-            }
-        }, block);
+            },
+            block);
         return obj;
     }
 
-    [[nodiscard]] static loom::utils::json::JsonMutVal serialize_content_blocks(
-        loom::utils::json::JsonMutDoc& doc,
-        const std::vector<ContentBlock>& blocks) {
+    [[nodiscard]] static loom::utils::json::JsonMutVal
+    serialize_content_blocks(loom::utils::json::JsonMutDoc& doc,
+                             const std::vector<ContentBlock>& blocks) {
         auto arr = doc.array();
         for (const auto& block : blocks) {
             arr.append(serialize_content_block(doc, block));
@@ -398,9 +406,9 @@ private:
         return arr;
     }
 
-    [[nodiscard]] static loom::utils::json::JsonMutVal serialize_compact_metadata(
-        loom::utils::json::JsonMutDoc& doc,
-        const CompactMetadata& metadata) {
+    [[nodiscard]] static loom::utils::json::JsonMutVal
+    serialize_compact_metadata(loom::utils::json::JsonMutDoc& doc,
+                               const CompactMetadata& metadata) {
         auto obj = doc.object();
         obj.add("trigger", doc.string(metadata.trigger));
         obj.add("pre_tokens", doc.number(static_cast<int64_t>(metadata.pre_tokens)));
@@ -414,9 +422,8 @@ private:
         return obj;
     }
 
-    [[nodiscard]] static loom::utils::json::JsonMutVal serialize_snip_metadata(
-        loom::utils::json::JsonMutDoc& doc,
-        const SnipMetadata& metadata) {
+    [[nodiscard]] static loom::utils::json::JsonMutVal
+    serialize_snip_metadata(loom::utils::json::JsonMutDoc& doc, const SnipMetadata& metadata) {
         auto obj = doc.object();
         auto removed = doc.array();
         for (const auto& uuid : metadata.removed_uuids) {
@@ -428,48 +435,51 @@ private:
 
 public:
     /// Canonical local-history codec shared with durable context checkpoints.
-    [[nodiscard]] static loom::utils::json::JsonMutVal serialize_message(
-        loom::utils::json::JsonMutDoc& doc,
-        const Message& message) {
+    [[nodiscard]] static loom::utils::json::JsonMutVal
+    serialize_message(loom::utils::json::JsonMutDoc& doc, const Message& message) {
         auto obj = doc.object();
         obj.add("role", doc.string(std::string(role_to_string(get_role(message)))));
-        std::visit([&](const auto& value) {
-            obj.add("id", doc.string(value.id.value));
-            obj.add("timestamp_ms", doc.number(to_epoch_ms(value.timestamp)));
-            obj.add("content", serialize_content_blocks(doc, value.content));
+        std::visit(
+            [&](const auto& value) {
+                obj.add("id", doc.string(value.id.value));
+                obj.add("timestamp_ms", doc.number(to_epoch_ms(value.timestamp)));
+                obj.add("content", serialize_content_blocks(doc, value.content));
 
-            using T = std::decay_t<decltype(value)>;
-            if constexpr (std::is_same_v<T, UserMessage>) {
-                write_user_message_origin(value.origin, obj, doc);
-            } else if constexpr (std::is_same_v<T, AssistantMessage>) {
-                if (value.stop_reason) obj.add("stop_reason", doc.string(*value.stop_reason));
-                if (value.model) obj.add("model", doc.string(*value.model));
-            } else if constexpr (std::is_same_v<T, SystemMessage>) {
-                if (value.cache_control) obj.add("cache_control", doc.string(*value.cache_control));
-                if (value.subtype) obj.add("subtype", doc.string(*value.subtype));
-                if (value.compact_metadata) {
-                    obj.add("compact_metadata", serialize_compact_metadata(doc, *value.compact_metadata));
+                using T = std::decay_t<decltype(value)>;
+                if constexpr (std::is_same_v<T, UserMessage>) {
+                    write_user_message_origin(value.origin, obj, doc);
+                } else if constexpr (std::is_same_v<T, AssistantMessage>) {
+                    if (value.stop_reason) obj.add("stop_reason", doc.string(*value.stop_reason));
+                    if (value.model) obj.add("model", doc.string(*value.model));
+                } else if constexpr (std::is_same_v<T, SystemMessage>) {
+                    if (value.cache_control)
+                        obj.add("cache_control", doc.string(*value.cache_control));
+                    if (value.subtype) obj.add("subtype", doc.string(*value.subtype));
+                    if (value.compact_metadata) {
+                        obj.add("compact_metadata",
+                                serialize_compact_metadata(doc, *value.compact_metadata));
+                    }
+                    if (value.snip_metadata) {
+                        obj.add("snip_metadata",
+                                serialize_snip_metadata(doc, *value.snip_metadata));
+                    }
+                } else if constexpr (std::is_same_v<T, ToolUseMessage>) {
+                    obj.add("tool_name", doc.string(value.tool_name));
+                    obj.add("tool_input_json", doc.string(value.tool_input_json));
+                } else if constexpr (std::is_same_v<T, ToolResultMessage>) {
+                    obj.add("tool_use_id", doc.string(value.tool_use_id.value));
+                    obj.add("tool_name", doc.string(value.tool_name));
+                    obj.add("is_error", doc.boolean(value.is_error));
                 }
-                if (value.snip_metadata) {
-                    obj.add("snip_metadata", serialize_snip_metadata(doc, *value.snip_metadata));
-                }
-            } else if constexpr (std::is_same_v<T, ToolUseMessage>) {
-                obj.add("tool_name", doc.string(value.tool_name));
-                obj.add("tool_input_json", doc.string(value.tool_input_json));
-            } else if constexpr (std::is_same_v<T, ToolResultMessage>) {
-                obj.add("tool_use_id", doc.string(value.tool_use_id.value));
-                obj.add("tool_name", doc.string(value.tool_name));
-                obj.add("is_error", doc.boolean(value.is_error));
-            }
-        }, message);
+            },
+            message);
         return obj;
     }
 
 private:
-    [[nodiscard]] static loom::utils::json::JsonMutVal serialize_conversation(
-        loom::utils::json::JsonMutDoc& doc,
-        const std::string& id,
-        const Conversation& conversation) {
+    [[nodiscard]] static loom::utils::json::JsonMutVal
+    serialize_conversation(loom::utils::json::JsonMutDoc& doc, const std::string& id,
+                           const Conversation& conversation) {
         auto obj = doc.object();
         obj.add("id", doc.string(id));
         obj.add("title", doc.string(conversation.get_title()));
@@ -484,20 +494,19 @@ private:
         return obj;
     }
 
-    [[nodiscard]] static Result<ContentBlock> parse_content_block(loom::utils::json::JsonVal block) {
+    [[nodiscard]] static Result<ContentBlock>
+    parse_content_block(loom::utils::json::JsonVal block) {
         if (!block.is_obj()) {
             return std::unexpected(Error::make(ErrorCode::SessionCorrupted,
-                "Conversation content block must be an object"));
+                                               "Conversation content block must be an object"));
         }
         auto type = block.get_string("type");
         if (type == "text") {
             return TextBlock{block.get_string("text")};
         }
         if (type == "tool_use") {
-            return ToolUseBlock{
-                ToolUseId{block.get_string("id")},
-                block.get_string("name"),
-                block.get_string("input_json")};
+            return ToolUseBlock{ToolUseId{block.get_string("id")}, block.get_string("name"),
+                                block.get_string("input_json")};
         }
         if (type == "tool_result") {
             // Content may be string or array of content items
@@ -516,8 +525,10 @@ private:
                     if (ci.type == "text") {
                         if (auto tx = elem.get("text"); tx.is_str()) ci.text = tx.as_str();
                     } else if (ci.type == "image") {
-                        if (auto mt = elem.get("media_type"); mt.is_str()) ci.media_type = mt.as_str();
-                        else if (auto mt = elem.get("mimeType"); mt.is_str()) ci.media_type = mt.as_str();
+                        if (auto mt = elem.get("media_type"); mt.is_str())
+                            ci.media_type = mt.as_str();
+                        else if (auto mt = elem.get("mimeType"); mt.is_str())
+                            ci.media_type = mt.as_str();
                         if (auto d = elem.get("data"); d.is_str()) ci.data = d.as_str();
                     }
                     if (!ci.type.empty()) items.push_back(std::move(ci));
@@ -529,7 +540,7 @@ private:
         if (type == "image") {
             ImageBlock ib;
             ib.media_type = block.get_string("media_type");
-            ib.data       = block.get_string("data");
+            ib.data = block.get_string("data");
             return ib;
         }
         if (type == "document") {
@@ -538,12 +549,13 @@ private:
         if (type == "thinking") {
             return ThinkingBlock{block.get_string("thinking"), block.get_string("signature")};
         }
-        return std::unexpected(Error::make(ErrorCode::SessionCorrupted,
-            std::format("Unknown conversation content block type '{}'", type)));
+        return std::unexpected(
+            Error::make(ErrorCode::SessionCorrupted,
+                        std::format("Unknown conversation content block type '{}'", type)));
     }
 
-    [[nodiscard]] static Result<std::vector<ContentBlock>> parse_content_blocks(
-        loom::utils::json::JsonVal content) {
+    [[nodiscard]] static Result<std::vector<ContentBlock>>
+    parse_content_blocks(loom::utils::json::JsonVal content) {
         std::vector<ContentBlock> blocks;
         if (!content.valid() || !content.is_arr()) {
             return blocks;
@@ -565,8 +577,8 @@ private:
         return blocks;
     }
 
-    [[nodiscard]] static std::optional<CompactMetadata> parse_compact_metadata(
-        loom::utils::json::JsonVal value) {
+    [[nodiscard]] static std::optional<CompactMetadata>
+    parse_compact_metadata(loom::utils::json::JsonVal value) {
         if (!value.valid() || !value.is_obj()) return std::nullopt;
         CompactMetadata metadata;
         metadata.trigger = value.get_string("trigger");
@@ -585,8 +597,8 @@ private:
         return metadata;
     }
 
-    [[nodiscard]] static std::optional<SnipMetadata> parse_snip_metadata(
-        loom::utils::json::JsonVal value) {
+    [[nodiscard]] static std::optional<SnipMetadata>
+    parse_snip_metadata(loom::utils::json::JsonVal value) {
         if (!value.valid() || !value.is_obj()) return std::nullopt;
         auto removed = value.get("removed_uuids");
         if (!removed.is_arr()) return std::nullopt;
@@ -604,17 +616,15 @@ private:
 public:
     [[nodiscard]] static Result<Message> parse_message(loom::utils::json::JsonVal value) {
         if (!value.is_obj()) {
-            return std::unexpected(Error::make(ErrorCode::SessionCorrupted,
-                "Conversation message must be an object"));
+            return std::unexpected(
+                Error::make(ErrorCode::SessionCorrupted, "Conversation message must be an object"));
         }
 
         auto content = parse_content_blocks(value.get("content"));
         if (!content) return std::unexpected(content.error());
 
-        MessageBase base{
-            MessageId{value.get_string("id")},
-            from_epoch_ms(value.get_int("timestamp_ms")),
-            std::move(*content)};
+        MessageBase base{MessageId{value.get_string("id")},
+                         from_epoch_ms(value.get_int("timestamp_ms")), std::move(*content)};
 
         auto role = value.get_string("role");
         if (role == "user") {
@@ -625,17 +635,21 @@ public:
         if (role == "assistant") {
             auto tool_name = value.get_string("tool_name");
             if (!tool_name.empty()) {
-                return ToolUseMessage{std::move(base), tool_name, value.get_string("tool_input_json")};
+                return ToolUseMessage{std::move(base), tool_name,
+                                      value.get_string("tool_input_json")};
             }
             std::optional<std::string> stop_reason;
             std::optional<std::string> model;
-            if (auto stop = value.get("stop_reason"); stop.is_str()) stop_reason = std::string(stop.as_str());
-            if (auto model_value = value.get("model"); model_value.is_str()) model = std::string(model_value.as_str());
+            if (auto stop = value.get("stop_reason"); stop.is_str())
+                stop_reason = std::string(stop.as_str());
+            if (auto model_value = value.get("model"); model_value.is_str())
+                model = std::string(model_value.as_str());
             return AssistantMessage{std::move(base), std::move(stop_reason), std::move(model)};
         }
         if (role == "system") {
             std::optional<std::string> cache_control;
-            if (auto cache = value.get("cache_control"); cache.is_str()) cache_control = std::string(cache.as_str());
+            if (auto cache = value.get("cache_control"); cache.is_str())
+                cache_control = std::string(cache.as_str());
             std::optional<std::string> subtype;
             if (auto subtype_value = value.get("subtype"); subtype_value.is_str()) {
                 subtype = std::string(subtype_value.as_str());
@@ -649,29 +663,29 @@ public:
             };
         }
         if (role == "tool") {
-            return ToolResultMessage{
-                std::move(base),
-                ToolUseId{value.get_string("tool_use_id")},
-                value.get_string("tool_name"),
-                value.get("is_error").is_bool() && value.get("is_error").as_bool()};
+            return ToolResultMessage{std::move(base), ToolUseId{value.get_string("tool_use_id")},
+                                     value.get_string("tool_name"),
+                                     value.get("is_error").is_bool() &&
+                                         value.get("is_error").as_bool()};
         }
 
-        return std::unexpected(Error::make(ErrorCode::SessionCorrupted,
-            std::format("Unknown conversation message role '{}'", role)));
+        return std::unexpected(
+            Error::make(ErrorCode::SessionCorrupted,
+                        std::format("Unknown conversation message role '{}'", role)));
     }
 
 private:
-    [[nodiscard]] static Result<std::pair<std::string, std::unique_ptr<Conversation>>> parse_conversation(
-        loom::utils::json::JsonVal value) {
+    [[nodiscard]] static Result<std::pair<std::string, std::unique_ptr<Conversation>>>
+    parse_conversation(loom::utils::json::JsonVal value) {
         if (!value.is_obj()) {
-            return std::unexpected(Error::make(ErrorCode::SessionCorrupted,
-                "Conversation entry must be an object"));
+            return std::unexpected(
+                Error::make(ErrorCode::SessionCorrupted, "Conversation entry must be an object"));
         }
 
         auto id = value.get_string("id");
         if (id.empty()) {
-            return std::unexpected(Error::make(ErrorCode::SessionCorrupted,
-                "Conversation entry missing id"));
+            return std::unexpected(
+                Error::make(ErrorCode::SessionCorrupted, "Conversation entry missing id"));
         }
 
         auto conversation = std::make_unique<Conversation>(ConversationId{id});
@@ -698,4 +712,4 @@ private:
     }
 };
 
-} // namespace loom::core
+}  // namespace loom::core

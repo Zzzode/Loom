@@ -1,9 +1,9 @@
 // RFC 0031 E4: ordered family probe-table invariants. This unit drives the
 // classify probe through the loom.ui.visual.mermaid.testing seam facade
 // (RFC 0031 E6a); it never declares the production module.
-#include <gtest/gtest.h>
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/screen/screen.hpp>
+#include <gtest/gtest.h>
 
 import std;
 import loom.ui.visual.mermaid.testing;
@@ -19,13 +19,12 @@ classify(const std::string& source, std::size_t remaining = 1'000'000) {
     return loom::ui::mermaid::testing::classify_mermaid(source, work);
 }
 
-} // namespace
+}  // namespace
 
 TEST(MermaidProbe, BareAndConfiguredFlowHeadersResolveToFlow) {
     // A bare parseable flow is owned by the pre-table parse ahead of the
     // probe table; classify runs only on its fallback, so assert configured.
-    auto configured = classify(
-        "---\ndescription: x\n---\nflowchart LR\nA-->B\n");
+    auto configured = classify("---\ndescription: x\n---\nflowchart LR\nA-->B\n");
     ASSERT_TRUE(configured.has_value());
     EXPECT_EQ(configured->family, MermaidProbeFamily::Flow);
     // RFC 0031 E5: the prefix walk is folded into the single classify probe
@@ -45,21 +44,18 @@ TEST(MermaidProbe, SequenceRoutesBareTitledAndMultilineDirective) {
     // RFC 0031 E5: folded prefix walk — prepay stays zero.
     EXPECT_EQ(titled->prepay, 0u);
 
-    auto multiline = classify(
-        "%%{init: {\n  \"theme\":\"base\"\n}%%\nsequenceDiagram\nA->>B: x\n");
+    auto multiline = classify("%%{init: {\n  \"theme\":\"base\"\n}%%\nsequenceDiagram\nA->>B: x\n");
     ASSERT_TRUE(multiline.has_value());
     EXPECT_EQ(multiline->family, MermaidProbeFamily::Sequence);
 }
 
 TEST(MermaidProbe, MultilineDirectiveOwnsClassOnlyForExactHeader) {
-    auto exact = classify(
-        "%%{init: {\n  \"x\":1\n}%%\nclassDiagram\nclass A\n");
+    auto exact = classify("%%{init: {\n  \"x\":1\n}%%\nclassDiagram\nclass A\n");
     ASSERT_TRUE(exact.has_value());
     EXPECT_EQ(exact->family, MermaidProbeFamily::Class);
     EXPECT_TRUE(exact->class_envelope);
 
-    auto typo = classify(
-        "%%{init: {\n  \"x\":1\n}%%\nclassDiagramFoo\n");
+    auto typo = classify("%%{init: {\n  \"x\":1\n}%%\nclassDiagramFoo\n");
     ASSERT_TRUE(typo.has_value());
     EXPECT_EQ(typo->family, MermaidProbeFamily::Charts);
 }
@@ -69,7 +65,7 @@ TEST(MermaidProbe, LeadingInitDirectiveMarksClassEnvelope) {
     ASSERT_TRUE(init.has_value());
     EXPECT_EQ(init->family, MermaidProbeFamily::Class);
     EXPECT_TRUE(init->class_envelope);
-    EXPECT_EQ(init->prepay, 0u); // no frontmatter -> no prefix prepay
+    EXPECT_EQ(init->prepay, 0u);  // no frontmatter -> no prefix prepay
 
     auto er = classify("%%{init: {}}%%\nerDiagram\nA ||--o{ B\n");
     ASSERT_TRUE(er.has_value());
@@ -90,8 +86,7 @@ TEST(MermaidProbe, RelationsPrefixesResolveExactFamilies) {
 }
 
 TEST(MermaidProbe, RequirementResolvesFoldedAndExact) {
-    auto exact = classify(
-        "---\ndescription: >-\n  x\n---\nrequirementDiagram\ntest satisfies t\n");
+    auto exact = classify("---\ndescription: >-\n  x\n---\nrequirementDiagram\ntest satisfies t\n");
     ASSERT_TRUE(exact.has_value());
     EXPECT_EQ(exact->family, MermaidProbeFamily::Requirement);
     EXPECT_TRUE(exact->requirement_input);
@@ -100,15 +95,14 @@ TEST(MermaidProbe, RequirementResolvesFoldedAndExact) {
 TEST(MermaidProbe, GitGraphResolvesBeforeRelationsAndCharts) {
     EXPECT_EQ(classify("gitGraph\n  commit id:\"1\"\n")->family, MermaidProbeFamily::GitGraph);
     EXPECT_EQ(classify("gitGraph TB:\n  commit\n")->family, MermaidProbeFamily::GitGraph);
-    auto cohort = classify(
-        "---\ndescription: >-\n  d\n---\ngitGraph\n  commit id:\"1\"\n  commit id:\"2\"\n  commit id:\"3\"\n");
+    auto cohort = classify("---\ndescription: >-\n  d\n---\ngitGraph\n  commit id:\"1\"\n  commit "
+                           "id:\"2\"\n  commit id:\"3\"\n");
     ASSERT_TRUE(cohort.has_value());
     EXPECT_EQ(cohort->family, MermaidProbeFamily::GitGraph);
 }
 
 TEST(MermaidProbe, StateFrontmatterResolvesRelationsState) {
-    auto state = classify(
-        "---\ndescription: >-\n  d\n---\nstateDiagram-v2\n  [*] --> State1\n");
+    auto state = classify("---\ndescription: >-\n  d\n---\nstateDiagram-v2\n  [*] --> State1\n");
     ASSERT_TRUE(state.has_value());
     EXPECT_EQ(state->family, MermaidProbeFamily::State);
 }
@@ -121,7 +115,8 @@ TEST(MermaidProbe, ChartsIsTheFinalFallback) {
 
 TEST(MermaidProbe, MindmapRequiresExactHeaderAndPreservesOldEnumValues) {
     EXPECT_EQ(classify("mindmap\n  a\n")->family, MermaidProbeFamily::Mindmap);
-    EXPECT_EQ(classify("---\ndescription: tree\n---\nmindmap\nroot\n")->family, MermaidProbeFamily::Mindmap);
+    EXPECT_EQ(classify("---\ndescription: tree\n---\nmindmap\nroot\n")->family,
+              MermaidProbeFamily::Mindmap);
     EXPECT_EQ(classify("mindmapExtra\nroot\n")->family, MermaidProbeFamily::Charts);
     EXPECT_EQ(static_cast<unsigned>(MermaidProbeFamily::Charts), 7u);
     EXPECT_FALSE(classify("mindmap\nroot\n", 0).has_value());
@@ -134,14 +129,12 @@ TEST(MermaidProbe, MalformedEnvelopeStillClassifiesTextually) {
     EXPECT_EQ(unterminated->family, MermaidProbeFamily::Charts);
     // A directive whose quoted data contains a fake close still routes
     // sequence textually (parse_envelope may reject; classification must not).
-    auto quoted = classify(
-        "%%{init: {\"x\":\"}%%\"} }%%\nsequenceDiagram\nA->>B: x\n");
+    auto quoted = classify("%%{init: {\"x\":\"}%%\"} }%%\nsequenceDiagram\nA->>B: x\n");
     ASSERT_TRUE(quoted.has_value());
     EXPECT_EQ(quoted->family, MermaidProbeFamily::Sequence);
 }
 
 TEST(MermaidProbe, RouteBudgetFailureReturnsNoDecision) {
-    auto exhausted = classify("---\ndescription: x\n---\nsequenceDiagram\nA->>B\n",
-                              0);
+    auto exhausted = classify("---\ndescription: x\n---\nsequenceDiagram\nA->>B\n", 0);
     EXPECT_FALSE(exhausted.has_value());
 }

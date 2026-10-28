@@ -9,9 +9,7 @@ export module loom.hooks.exit_handler;
 
 import std;
 
-
 export namespace loom::hooks {
-
 
 enum class ExitReason {
     ctrl_c,
@@ -21,7 +19,6 @@ enum class ExitReason {
     signal,
 };
 
-
 struct ExitHandlerConfig {
     bool require_double_press{true};
     std::uint32_t cleanup_timeout_ms{5000};
@@ -29,14 +26,13 @@ struct ExitHandlerConfig {
     std::chrono::milliseconds double_press_window{1500};
 };
 
-
 using CleanupCallback = std::function<bool()>;
 
 using ExitCallback = std::function<void(ExitReason)>;
 
-
 class ExitHandler {
     using Clock = std::chrono::steady_clock;
+
 public:
     explicit ExitHandler(ExitHandlerConfig config = {})
         : config_(std::move(config)) {}
@@ -50,42 +46,38 @@ public:
         std::lock_guard lock{mu_};
 
         switch (reason) {
-            case ExitReason::ctrl_d:
+        case ExitReason::ctrl_d:
 
-                initiate_exit(reason);
-                return true;
+            initiate_exit(reason);
+            return true;
 
-            case ExitReason::ctrl_c:
-                return handle_ctrl_c();
+        case ExitReason::ctrl_c:
+            return handle_ctrl_c();
 
-            case ExitReason::command:
-            case ExitReason::error:
-            case ExitReason::signal:
+        case ExitReason::command:
+        case ExitReason::error:
+        case ExitReason::signal:
 
-                initiate_exit(reason);
-                return true;
+            initiate_exit(reason);
+            return true;
         }
         return false;
     }
-
 
     auto register_cleanup(CleanupCallback callback) -> void {
         std::lock_guard lock{mu_};
         cleanup_callbacks_.push_back(std::move(callback));
     }
 
-
     auto set_exit_message(std::string msg) -> void {
         std::lock_guard lock{mu_};
         exit_message_ = std::move(msg);
     }
 
-
     [[nodiscard]] auto is_exit_pending() const -> bool {
         std::lock_guard lock{mu_};
         return exit_pending_;
     }
-
 
     auto reset() -> void {
         std::lock_guard lock{mu_};
@@ -93,33 +85,27 @@ public:
         first_press_time_ = std::nullopt;
     }
 
-
     auto force_exit(ExitReason reason) -> void {
         std::lock_guard lock{mu_};
         initiate_exit(reason);
     }
-
 
     auto on_exit(ExitCallback callback) -> void {
         std::lock_guard lock{mu_};
         exit_callbacks_.push_back(std::move(callback));
     }
 
-
     [[nodiscard]] auto exit_message() const -> std::string_view {
         std::lock_guard lock{mu_};
         return exit_message_;
     }
 
-
     [[nodiscard]] auto config() const -> const ExitHandlerConfig& { return config_; }
-
 
     auto set_config(ExitHandlerConfig config) -> void {
         std::lock_guard lock{mu_};
         config_ = std::move(config);
     }
-
 
     [[nodiscard]] auto run_cleanup() -> std::size_t {
         std::lock_guard lock{mu_};
@@ -142,7 +128,6 @@ private:
     std::vector<CleanupCallback> cleanup_callbacks_;
     std::vector<ExitCallback> exit_callbacks_;
 
-
     [[nodiscard]] auto handle_ctrl_c() -> bool {
         if (!config_.require_double_press) {
             initiate_exit(ExitReason::ctrl_c);
@@ -159,12 +144,10 @@ private:
             }
         }
 
-
         exit_pending_ = true;
         first_press_time_ = now;
         return false;
     }
-
 
     auto initiate_exit(ExitReason reason) -> void {
         for (const auto& cb : exit_callbacks_) {
@@ -174,14 +157,11 @@ private:
     }
 };
 
-
 [[nodiscard]] inline auto create_exit_handler() -> ExitHandler {
-    return ExitHandler(ExitHandlerConfig{
-        .require_double_press = true,
-        .cleanup_timeout_ms = 5000,
-        .save_on_exit = true,
-        .double_press_window = std::chrono::milliseconds(1500)
-    });
+    return ExitHandler(ExitHandlerConfig{.require_double_press = true,
+                                         .cleanup_timeout_ms = 5000,
+                                         .save_on_exit = true,
+                                         .double_press_window = std::chrono::milliseconds(1500)});
 }
 
-} // namespace loom::hooks
+}  // namespace loom::hooks

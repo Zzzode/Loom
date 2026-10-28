@@ -3,7 +3,6 @@
 /// Hooks configuration command registration and summaries.
 module;
 
-
 export module loom.commands.hooks;
 
 import std;
@@ -30,13 +29,12 @@ public:
         };
     }
 
-    [[nodiscard]] VoidResult validate(const CommandContext&) {
-        return {};
-    }
+    [[nodiscard]] VoidResult validate(const CommandContext&) { return {}; }
 
     [[nodiscard]] Result<CommandResult> execute(const CommandContext& ctx) {
         if (!ctx.args.empty() && ctx.args.front() == "list") {
-            return CommandResult::success("Hook events: PreToolUse, PostToolUse, Notification, Stop, SubagentStop");
+            return CommandResult::success(
+                "Hook events: PreToolUse, PostToolUse, Notification, Stop, SubagentStop");
         }
         // Return "UI:hooks" metadata so the app shell opens the HooksConfig
         // modal dialog via PushFromCommandMetadata.
@@ -57,4 +55,4 @@ public:
     }
 };
 
-} // namespace loom::commands
+}  // namespace loom::commands

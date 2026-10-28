@@ -1,16 +1,17 @@
 // C++23 Module: Prompt input component with multi-line editing, history, typeahead, and vim mode
 module;
 
+#include <ftxui/dom/elements.hpp>
+
 #include <cstddef>
 #include <cstdint>
 #include <cstdlib>
-#include <ftxui/dom/elements.hpp>
 
 export module loom.ui.prompt.prompt_input;
 
 import std;
 
-import loom.ui.foundation.ui_types;  // canonical VimMode
+import loom.ui.foundation.ui_types; // canonical VimMode
 
 export namespace loom::ui {
 
@@ -46,7 +47,8 @@ struct Selection {
 // InputBuffer: multi-line text editing with cursor management
 class InputBuffer {
 public:
-    InputBuffer() : lines_{""} {}
+    InputBuffer()
+        : lines_{""} {}
 
     // Insert text at cursor position, handles newlines
     auto insert(std::string_view text) -> void {
@@ -113,9 +115,7 @@ public:
     }
 
     // Yank (copy) current line
-    [[nodiscard]] auto yank_line() const -> std::string {
-        return lines_[cursor_.line] + '\n';
-    }
+    [[nodiscard]] auto yank_line() const -> std::string { return lines_[cursor_.line] + '\n'; }
 
     // Paste text after cursor
     auto paste(std::string_view text) -> void { insert(text); }
@@ -126,9 +126,8 @@ public:
         std::size_t start = 0;
         while (start < text.size()) {
             auto end = text.find('\n', start);
-            auto line = end == std::string_view::npos
-                ? text.substr(start)
-                : text.substr(start, end - start);
+            auto line = end == std::string_view::npos ? text.substr(start)
+                                                      : text.substr(start, end - start);
             if (!(line.empty() && end != std::string_view::npos && end + 1 >= text.size())) {
                 new_lines.emplace_back(line);
             }
@@ -151,39 +150,43 @@ public:
     // Move cursor with boundary checks
     auto move_cursor(VimMotion motion) -> void {
         switch (motion) {
-            case VimMotion::Left:
-                if (cursor_.col > 0) cursor_.col--;
-                break;
-            case VimMotion::Right:
-                if (cursor_.col < lines_[cursor_.line].size()) cursor_.col++;
-                break;
-            case VimMotion::Up:
-                if (cursor_.line > 0) {
-                    cursor_.line--;
-                    cursor_.col = std::min(cursor_.col, lines_[cursor_.line].size());
-                }
-                break;
-            case VimMotion::Down:
-                if (cursor_.line + 1 < lines_.size()) {
-                    cursor_.line++;
-                    cursor_.col = std::min(cursor_.col, lines_[cursor_.line].size());
-                }
-                break;
-            case VimMotion::WordForward: {
-                auto& line = lines_[cursor_.line];
-                auto pos = line.find_first_of(" \t", cursor_.col);
-                cursor_.col = (pos != std::string::npos) ? pos + 1 : line.size();
-                break;
+        case VimMotion::Left:
+            if (cursor_.col > 0) cursor_.col--;
+            break;
+        case VimMotion::Right:
+            if (cursor_.col < lines_[cursor_.line].size()) cursor_.col++;
+            break;
+        case VimMotion::Up:
+            if (cursor_.line > 0) {
+                cursor_.line--;
+                cursor_.col = std::min(cursor_.col, lines_[cursor_.line].size());
             }
-            case VimMotion::WordBack: {
-                if (cursor_.col == 0) break;
-                auto& line = lines_[cursor_.line];
-                auto pos = line.find_last_of(" \t", cursor_.col - 1);
-                cursor_.col = (pos != std::string::npos) ? pos + 1 : 0;
-                break;
+            break;
+        case VimMotion::Down:
+            if (cursor_.line + 1 < lines_.size()) {
+                cursor_.line++;
+                cursor_.col = std::min(cursor_.col, lines_[cursor_.line].size());
             }
-            case VimMotion::LineStart: cursor_.col = 0; break;
-            case VimMotion::LineEnd: cursor_.col = lines_[cursor_.line].size(); break;
+            break;
+        case VimMotion::WordForward: {
+            auto& line = lines_[cursor_.line];
+            auto pos = line.find_first_of(" \t", cursor_.col);
+            cursor_.col = (pos != std::string::npos) ? pos + 1 : line.size();
+            break;
+        }
+        case VimMotion::WordBack: {
+            if (cursor_.col == 0) break;
+            auto& line = lines_[cursor_.line];
+            auto pos = line.find_last_of(" \t", cursor_.col - 1);
+            cursor_.col = (pos != std::string::npos) ? pos + 1 : 0;
+            break;
+        }
+        case VimMotion::LineStart:
+            cursor_.col = 0;
+            break;
+        case VimMotion::LineEnd:
+            cursor_.col = lines_[cursor_.line].size();
+            break;
         }
     }
 
@@ -249,9 +252,15 @@ public:
         return result;
     }
 
-    auto clear() -> void { lines_ = {""}; cursor_ = {0, 0}; }
+    auto clear() -> void {
+        lines_ = {""};
+        cursor_ = {0, 0};
+    }
+
     [[nodiscard]] auto cursor() const -> CursorPos { return cursor_; }
+
     [[nodiscard]] auto lines() const -> const std::vector<std::string>& { return lines_; }
+
     [[nodiscard]] auto empty() const -> bool { return lines_.size() == 1 && lines_[0].empty(); }
 
 private:
@@ -263,7 +272,8 @@ private:
         return 1;
     }
 
-    [[nodiscard]] static auto previous_codepoint_start(const std::string& line, std::size_t col) -> std::size_t {
+    [[nodiscard]] static auto previous_codepoint_start(const std::string& line, std::size_t col)
+        -> std::size_t {
         if (col == 0) return 0;
         std::size_t pos = col - 1;
         while (pos > 0 && (static_cast<unsigned char>(line[pos]) & 0b1100'0000) == 0b1000'0000) {
@@ -279,7 +289,8 @@ private:
 // HistoryManager: command history with search
 class HistoryManager {
 public:
-    explicit HistoryManager(std::size_t max_entries = 1000) : max_entries_(max_entries) {}
+    explicit HistoryManager(std::size_t max_entries = 1000)
+        : max_entries_(max_entries) {}
 
     auto push(std::string_view entry) -> void {
         if (entry.empty()) return;
@@ -302,7 +313,10 @@ public:
     [[nodiscard]] auto navigate_down() -> std::optional<std::string> {
         if (nav_index_ == std::string::npos) return std::nullopt;
         ++nav_index_;
-        if (nav_index_ >= history_.size()) { nav_index_ = std::string::npos; return std::nullopt; }
+        if (nav_index_ >= history_.size()) {
+            nav_index_ = std::string::npos;
+            return std::nullopt;
+        }
         return history_[nav_index_];
     }
 
@@ -319,6 +333,7 @@ public:
     }
 
     auto reset_navigation() -> void { nav_index_ = std::string::npos; }
+
     [[nodiscard]] auto size() const -> std::size_t { return history_.size(); }
 
 private:
@@ -331,7 +346,7 @@ private:
 struct Suggestion {
     std::string text;
     std::string description;
-    std::string category; // "command", "file", "history"
+    std::string category;  // "command", "file", "history"
 };
 
 // Typeahead: slash commands and file path completion
@@ -360,19 +375,23 @@ public:
     }
 
     [[nodiscard]] auto selected_index() const -> std::optional<std::size_t> { return selected_; }
+
     auto select_next(std::size_t total) -> void {
         selected_ = selected_.has_value() ? (*selected_ + 1) % total : 0;
     }
+
     auto select_prev(std::size_t total) -> void {
         selected_ = selected_.has_value() ? (*selected_ + total - 1) % total : total - 1;
     }
+
     auto reset() -> void { selected_ = std::nullopt; }
 
 private:
     std::vector<Suggestion> commands_;
     std::optional<std::size_t> selected_;
 
-    static auto append_path_suggestions(std::string_view input, std::vector<Suggestion>& results) -> void {
+    static auto append_path_suggestions(std::string_view input, std::vector<Suggestion>& results)
+        -> void {
         std::filesystem::path prefix(input);
         if (input.starts_with("~")) {
             if (const char* home = std::getenv("HOME")) {
@@ -390,9 +409,8 @@ private:
             if (ec) break;
             auto name = entry.path().filename().string();
             if (!stem.empty() && !name.starts_with(stem)) continue;
-            auto suggestion = (dir == std::filesystem::path("."))
-                ? name
-                : (prefix.parent_path() / name).string();
+            auto suggestion =
+                (dir == std::filesystem::path(".")) ? name : (prefix.parent_path() / name).string();
             if (entry.is_directory(ec)) suggestion += "/";
             results.push_back({std::move(suggestion), "path completion", "file"});
             if (results.size() >= 8) break;
@@ -403,6 +421,7 @@ private:
 // Paste detection: distinguishes rapid keystrokes from paste
 class PasteDetector {
     using Clock = std::chrono::steady_clock;
+
 public:
     // Returns true if the sequence of inputs looks like a paste
     auto feed(char ch) -> bool {
@@ -436,4 +455,4 @@ private:
 //   - loom::ui::prompt::vim_input (standalone VimInput component)
 //   - ui::components::TextInputImpl with optional<VimMode> (text_input.cppm)
 
-} // namespace loom::ui
+}  // namespace loom::ui

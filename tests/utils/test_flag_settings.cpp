@@ -4,8 +4,9 @@
 /// This file covers the settings/flag application (--settings, sources, paths, merge) suites.
 
 #include <gtest/gtest.h>
-#include <cstdlib>
 #include <httplib.h>
+
+#include <cstdlib>
 
 import std;
 import loom.text.string;
@@ -70,33 +71,47 @@ TEST(SettingsSources, ParsesCliFlagAndFormatsDisplayNames) {
     auto parsed = loom::utils::settings_sources::parse_setting_sources_flag("user, project,local");
     ASSERT_TRUE(parsed.has_value()) << parsed.error();
     EXPECT_EQ(parsed.value(), (std::vector<SettingSource>{
-        SettingSource::UserSettings,
-        SettingSource::ProjectSettings,
-        SettingSource::LocalSettings,
-    }));
+                                  SettingSource::UserSettings,
+                                  SettingSource::ProjectSettings,
+                                  SettingSource::LocalSettings,
+                              }));
 
     EXPECT_TRUE(loom::utils::settings_sources::parse_setting_sources_flag("")->empty());
-    EXPECT_FALSE(loom::utils::settings_sources::parse_setting_sources_flag("user,managed").has_value());
-    EXPECT_EQ(loom::utils::settings_sources::get_setting_source_name(SettingSource::LocalSettings), "project, gitignored");
-    EXPECT_EQ(loom::utils::settings_sources::get_source_display_name(SettingSource::PolicySettings), "Managed");
+    EXPECT_FALSE(
+        loom::utils::settings_sources::parse_setting_sources_flag("user,managed").has_value());
+    EXPECT_EQ(loom::utils::settings_sources::get_setting_source_name(SettingSource::LocalSettings),
+              "project, gitignored");
+    EXPECT_EQ(loom::utils::settings_sources::get_source_display_name(SettingSource::PolicySettings),
+              "Managed");
     EXPECT_EQ(loom::utils::settings_sources::get_display_name_lowercase("cliArg"), "CLI argument");
-    EXPECT_EQ(loom::utils::settings_sources::get_display_name_capitalized("session"), "Current session");
+    EXPECT_EQ(loom::utils::settings_sources::get_display_name_capitalized("session"),
+              "Current session");
 }
 
 TEST(SettingsPathsAndMerge, ComputesManagedAndRelativePathsAndDedupesArrays) {
     using loom::utils::settings_sources::SettingSource;
 
-    EXPECT_EQ(loom::utils::settings_paths::managed_file_path(loom::utils::settings_paths::Platform::MacOS), "/Library/Application Support/Loom");
-    EXPECT_EQ(loom::utils::settings_paths::managed_file_path(loom::utils::settings_paths::Platform::Windows), "C:\\Program Files\\Loom");
-    EXPECT_EQ(loom::utils::settings_paths::managed_file_path(loom::utils::settings_paths::Platform::Linux), "/etc/loom");
-    EXPECT_EQ(loom::utils::settings_paths::managed_settings_drop_in_dir("/etc/loom"), "/etc/loom/managed-settings.d");
-    EXPECT_EQ(loom::utils::settings_paths::relative_settings_file_path_for_source(SettingSource::ProjectSettings), ".loom/settings.json");
-    EXPECT_EQ(loom::utils::settings_paths::relative_settings_file_path_for_source(SettingSource::LocalSettings), ".loom/settings.local.json");
+    EXPECT_EQ(loom::utils::settings_paths::managed_file_path(
+                  loom::utils::settings_paths::Platform::MacOS),
+              "/Library/Application Support/Loom");
+    EXPECT_EQ(loom::utils::settings_paths::managed_file_path(
+                  loom::utils::settings_paths::Platform::Windows),
+              "C:\\Program Files\\Loom");
+    EXPECT_EQ(loom::utils::settings_paths::managed_file_path(
+                  loom::utils::settings_paths::Platform::Linux),
+              "/etc/loom");
+    EXPECT_EQ(loom::utils::settings_paths::managed_settings_drop_in_dir("/etc/loom"),
+              "/etc/loom/managed-settings.d");
+    EXPECT_EQ(loom::utils::settings_paths::relative_settings_file_path_for_source(
+                  SettingSource::ProjectSettings),
+              ".loom/settings.json");
+    EXPECT_EQ(loom::utils::settings_paths::relative_settings_file_path_for_source(
+                  SettingSource::LocalSettings),
+              ".loom/settings.local.json");
 
-    EXPECT_EQ(
-        loom::utils::settings_merge::merge_arrays_unique({"Bash(ls:*)", "Read(*)"}, {"Read(*)", "Edit(src:*)"}),
-        (std::vector<std::string>{"Bash(ls:*)", "Read(*)", "Edit(src:*)"})
-    );
+    EXPECT_EQ(loom::utils::settings_merge::merge_arrays_unique({"Bash(ls:*)", "Read(*)"},
+                                                               {"Read(*)", "Edit(src:*)"}),
+              (std::vector<std::string>{"Bash(ls:*)", "Read(*)", "Edit(src:*)"}));
 }
 
 // ---------------------------------------------------------------------------
@@ -115,8 +130,7 @@ TEST(FlagSettings, AppliesEnvBlockAndModelAndApiKey) {
 
     std::unordered_map<std::string, std::string> recorded;
     auto result = loom::config::apply_flag_settings(
-        parsed->root(),
-        [&](std::string_view name, std::string_view value) {
+        parsed->root(), [&](std::string_view name, std::string_view value) {
             recorded[std::string(name)] = std::string(value);
         });
 
@@ -133,12 +147,10 @@ TEST(FlagSettings, AppliesEnvBlockAndModelAndApiKey) {
 
 // baseUrl is reported back like apiKey/model and is never deferred.
 TEST(FlagSettings, AppliesBaseUrl) {
-    auto parsed = loom::utils::json::parse(
-        R"({"baseUrl":"https://x.example"})");
+    auto parsed = loom::utils::json::parse(R"({"baseUrl":"https://x.example"})");
     ASSERT_TRUE(parsed.has_value());
 
-    auto result = loom::config::apply_flag_settings(
-        parsed->root(), [](auto, auto) {});
+    auto result = loom::config::apply_flag_settings(parsed->root(), [](auto, auto) {});
 
     ASSERT_TRUE(result.base_url.has_value());
     EXPECT_EQ(*result.base_url, "https://x.example");
@@ -173,19 +185,13 @@ TEST(FlagSettings, ResolvesDefaultModelFromEnvironmentPriority) {
         return it->second;
     };
 
-    EXPECT_EQ(
-        loom::config::resolve_default_model_from_environment(getter),
-        "glm-sonnet-default");
+    EXPECT_EQ(loom::config::resolve_default_model_from_environment(getter), "glm-sonnet-default");
 
     env["LOOM_MODEL"] = "test-model";
-    EXPECT_EQ(
-        loom::config::resolve_default_model_from_environment(getter),
-        "test-model");
+    EXPECT_EQ(loom::config::resolve_default_model_from_environment(getter), "test-model");
 
     env["LOOM_MODEL"] = "loom-model";
-    EXPECT_EQ(
-        loom::config::resolve_default_model_from_environment(getter),
-        "loom-model");
+    EXPECT_EQ(loom::config::resolve_default_model_from_environment(getter), "loom-model");
 }
 
 TEST(FlagSettings, RecordsDeferredKeys) {
@@ -220,28 +226,24 @@ TEST(FlagSettings, ParsesPermissionsDenyRules) {
     EXPECT_TRUE(result.deferred_keys.empty());
 
     // Non-array deny / non-object permissions are ignored without crashing.
-    auto bad = loom::utils::json::parse(
-        R"({"permissions":{"deny":"Bash"}})");
+    auto bad = loom::utils::json::parse(R"({"permissions":{"deny":"Bash"}})");
     ASSERT_TRUE(bad.has_value());
-    auto bad_result =
-        loom::config::apply_flag_settings(bad->root(), [](auto, auto) {});
+    auto bad_result = loom::config::apply_flag_settings(bad->root(), [](auto, auto) {});
     EXPECT_TRUE(bad_result.deny_rules.empty());
 
     // Non-string elements inside the deny array are skipped defensively,
     // and a non-object permissions value is ignored without crashing.
-    auto mixed = loom::utils::json::parse(
-        R"({"permissions":{"deny":["Bash",1,null,"Read"]}})");
+    auto mixed = loom::utils::json::parse(R"({"permissions":{"deny":["Bash",1,null,"Read"]}})");
     ASSERT_TRUE(mixed.has_value());
-    auto mixed_result =
-        loom::config::apply_flag_settings(mixed->root(), [](auto, auto) {});
+    auto mixed_result = loom::config::apply_flag_settings(mixed->root(), [](auto, auto) {});
     ASSERT_EQ(mixed_result.deny_rules.size(), 2u);
     EXPECT_EQ(mixed_result.deny_rules[0], "Bash");
     EXPECT_EQ(mixed_result.deny_rules[1], "Read");
 
     auto perm_scalar = loom::utils::json::parse(R"({"permissions":123})");
     ASSERT_TRUE(perm_scalar.has_value());
-    auto perm_scalar_result = loom::config::apply_flag_settings(
-        perm_scalar->root(), [](auto, auto) {});
+    auto perm_scalar_result =
+        loom::config::apply_flag_settings(perm_scalar->root(), [](auto, auto) {});
     EXPECT_TRUE(perm_scalar_result.deny_rules.empty());
 }
 

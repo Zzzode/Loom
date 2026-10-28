@@ -1,20 +1,21 @@
 /// @file test_query_engine_svc.cpp
 /// @brief Service layer tests split from test_services.cpp.
 
-#include <cctype>
-#include <cstdint>
-#include <cstdlib>
-#include <atomic>
 #include <arpa/inet.h>
 #include <fcntl.h>
 #include <netinet/in.h>
 #include <signal.h>
+#include <sys/file.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/time.h>
-#include <sys/file.h>
 #include <sys/wait.h>
 #include <unistd.h>
+
+#include <atomic>
+#include <cctype>
+#include <cstdint>
+#include <cstdlib>
 #ifdef __APPLE__
 #include <CommonCrypto/CommonDigest.h>
 #else
@@ -23,9 +24,8 @@
 
 #include <gtest/gtest.h>
 #include <httplib.h>
+
 #include <limits>
-
-
 
 import std;
 import loom.cli.ccr_client;
@@ -87,7 +87,8 @@ struct EnvironmentGuard {
     std::string name;
     std::optional<std::string> previous;
 
-    EnvironmentGuard(std::string key, const std::string& value) : name(std::move(key)) {
+    EnvironmentGuard(std::string key, const std::string& value)
+        : name(std::move(key)) {
         if (const char* existing = std::getenv(name.c_str())) {
             previous = existing;
         }
@@ -107,7 +108,8 @@ struct EnvironmentUnsetGuard {
     std::string name;
     std::optional<std::string> previous;
 
-    explicit EnvironmentUnsetGuard(std::string key) : name(std::move(key)) {
+    explicit EnvironmentUnsetGuard(std::string key)
+        : name(std::move(key)) {
         if (const char* existing = std::getenv(name.c_str())) {
             previous = existing;
         }
@@ -132,8 +134,8 @@ public:
         return definition_;
     }
 
-    [[nodiscard]] loom::core::Result<loom::core::ToolResult> execute(
-        const loom::core::ToolInput& /*input*/) override {
+    [[nodiscard]] loom::core::Result<loom::core::ToolResult>
+    execute(const loom::core::ToolInput& /*input*/) override {
         return loom::core::ToolResult::success("unused");
     }
 
@@ -155,42 +157,44 @@ bool send_all(int fd, std::string_view data) {
     return true;
 }
 
-
 void isolate_service_compaction_system(loom::core::QueryEngine& engine) {
     loom::core::SystemMessage system{};
-    system.id.value="controlled-service-compaction-system";
-    system.content.emplace_back(loom::core::TextBlock{"Verify local work and preserve all constraints."});
+    system.id.value = "controlled-service-compaction-system";
+    system.content.emplace_back(
+        loom::core::TextBlock{"Verify local work and preserve all constraints."});
     engine.restore_conversation({loom::core::Message{std::move(system)}});
 }
 
 std::string compact_test_checkpoint() {
     return "## Goal\nContinue the requested verification.\n## Constraints\n"
-        "legacy requirement alpha; design constraint gamma; NEVER COMMIT.\n"
-        "## Decisions\nassistant decision beta; assistant decision delta; design constraint delta.\n"
-        "## Progress\ninitial 0; auto compact payload; reactive legacy; completed result=47.\n"
-        "## Next Steps\nContinue verification with the latest request.\n"
-        "## References\n/work/exact.cpp\n";
+           "legacy requirement alpha; design constraint gamma; NEVER COMMIT.\n"
+           "## Decisions\nassistant decision beta; assistant decision delta; design constraint "
+           "delta.\n"
+           "## Progress\ninitial 0; auto compact payload; reactive legacy; completed result=47.\n"
+           "## Next Steps\nContinue verification with the latest request.\n"
+           "## References\n/work/exact.cpp\n";
 }
 
 std::string compact_test_response() {
     std::string escaped = "\"";
     for (char c : compact_test_checkpoint()) {
-        if (c == '\n') escaped += "\\n";
-        else escaped += c;
+        if (c == '\n')
+            escaped += "\\n";
+        else
+            escaped += c;
     }
     escaped += "\"";
     return R"({"id":"checkpoint","type":"message","role":"assistant","model":"loom-test","content":[{"type":"text","text":)" +
-        escaped +
-        R"(}],"stop_reason":"end_turn","usage":{"input_tokens":23,"output_tokens":31}})";
+           escaped +
+           R"(}],"stop_reason":"end_turn","usage":{"input_tokens":23,"output_tokens":31}})";
 }
 
 class LocalMessagesServer {
 public:
-    explicit LocalMessagesServer(
-        std::vector<std::string> response_bodies = {},
-        std::vector<int> response_statuses = {})
-        : response_bodies_(std::move(response_bodies)),
-          response_statuses_(std::move(response_statuses)) {
+    explicit LocalMessagesServer(std::vector<std::string> response_bodies = {},
+                                 std::vector<int> response_statuses = {})
+        : response_bodies_(std::move(response_bodies))
+        , response_statuses_(std::move(response_statuses)) {
         listen_fd_ = ::socket(AF_INET, SOCK_STREAM, 0);
         if (listen_fd_ < 0) return;
         int yes = 1;
@@ -217,9 +221,7 @@ public:
         }
 
         running_.store(true);
-        accept_thread_ = std::jthread([this](std::stop_token stop) {
-            accept_loop(stop);
-        });
+        accept_thread_ = std::jthread([this](std::stop_token stop) { accept_loop(stop); });
     }
 
     ~LocalMessagesServer() {
@@ -233,12 +235,10 @@ public:
 
     [[nodiscard]] std::uint16_t port() const noexcept { return port_; }
 
-    [[nodiscard]] std::string base_url() const {
-        return std::format("http://127.0.0.1:{}", port_);
-    }
+    [[nodiscard]] std::string base_url() const { return std::format("http://127.0.0.1:{}", port_); }
 
-    [[nodiscard]] std::optional<std::string> wait_for_body(
-        std::chrono::milliseconds timeout = std::chrono::seconds(3)) {
+    [[nodiscard]] std::optional<std::string>
+    wait_for_body(std::chrono::milliseconds timeout = std::chrono::seconds(3)) {
         std::unique_lock lock(mutex_);
         if (!cv_.wait_for(lock, timeout, [this] { return request_body_.has_value(); })) {
             return std::nullopt;
@@ -246,8 +246,8 @@ public:
         return request_body_;
     }
 
-    [[nodiscard]] std::optional<std::string> wait_for_headers(
-        std::chrono::milliseconds timeout = std::chrono::seconds(3)) {
+    [[nodiscard]] std::optional<std::string>
+    wait_for_headers(std::chrono::milliseconds timeout = std::chrono::seconds(3)) {
         std::unique_lock lock(mutex_);
         if (!cv_.wait_for(lock, timeout, [this] { return request_headers_.has_value(); })) {
             return std::nullopt;
@@ -255,11 +255,12 @@ public:
         return request_headers_;
     }
 
-    [[nodiscard]] std::optional<std::vector<std::string>> wait_for_bodies(
-        std::size_t count,
-        std::chrono::milliseconds timeout = std::chrono::seconds(3)) {
+    [[nodiscard]] std::optional<std::vector<std::string>>
+    wait_for_bodies(std::size_t count,
+                    std::chrono::milliseconds timeout = std::chrono::seconds(3)) {
         std::unique_lock lock(mutex_);
-        if (!cv_.wait_for(lock, timeout, [this, count] { return request_bodies_.size() >= count; })) {
+        if (!cv_.wait_for(lock, timeout,
+                          [this, count] { return request_bodies_.size() >= count; })) {
             return std::nullopt;
         }
         return request_bodies_;
@@ -270,7 +271,8 @@ private:
         while (!stop.stop_requested() && running_.load()) {
             sockaddr_in client_addr{};
             socklen_t client_len = sizeof(client_addr);
-            int client_fd = ::accept(listen_fd_, reinterpret_cast<sockaddr*>(&client_addr), &client_len);
+            int client_fd =
+                ::accept(listen_fd_, reinterpret_cast<sockaddr*>(&client_addr), &client_len);
             if (client_fd < 0) {
                 if (!running_.load()) break;
                 continue;
@@ -324,15 +326,17 @@ private:
         // Capacity discovery is not a model turn: do not publish an empty
         // business body or consume a scripted POST response for this GET.
         if (request.headers.starts_with("GET ")) {
-            send_all(fd, "HTTP/1.1 404 Not Found\r\nContent-Length: 0\r\nConnection: close\r\n\r\n");
+            send_all(fd,
+                     "HTTP/1.1 404 Not Found\r\nContent-Length: 0\r\nConnection: close\r\n\r\n");
             return;
         }
         auto body = request.body;
         if (body.find("CONTEXT CHECKPOINT") != std::string::npos) {
             const auto summary = compact_test_response();
-            const auto reply = std::format(
-                "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{}",
-                summary.size(), summary);
+            const auto reply =
+                std::format("HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: "
+                            "{}\r\nConnection: close\r\n\r\n{}",
+                            summary.size(), summary);
             send_all(fd, reply);
             return;
         }
@@ -354,19 +358,18 @@ private:
         int response_status = 200;
         std::string response_reason = "OK";
         if (!response_statuses_.empty()) {
-            response_status = response_statuses_[std::min(request_index, response_statuses_.size() - 1)];
+            response_status =
+                response_statuses_[std::min(request_index, response_statuses_.size() - 1)];
             if (response_status == 413) {
                 response_reason = "Payload Too Large";
             } else if (response_status >= 400) {
                 response_reason = "Error";
             }
         }
-        const auto response = std::format(
-            "HTTP/1.1 {} {}\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{}",
-            response_status,
-            response_reason,
-            response_body.size(),
-            response_body);
+        const auto response =
+            std::format("HTTP/1.1 {} {}\r\nContent-Type: application/json\r\nContent-Length: "
+                        "{}\r\nConnection: close\r\n\r\n{}",
+                        response_status, response_reason, response_body.size(), response_body);
         send_all(fd, response);
     }
 
@@ -383,7 +386,7 @@ private:
     std::vector<int> response_statuses_;
 };
 
-} // namespace
+}  // namespace
 
 TEST(QueryEngine, AppliesPerQueryEnabledToolsToMessagesRequest) {
     LocalMessagesServer server;
@@ -404,31 +407,35 @@ TEST(QueryEngine, AppliesPerQueryEnabledToolsToMessagesRequest) {
         loom::core::ToolDefinition{
             .name = "Read",
             .description = "Read a file",
-            .input_schema = loom::core::InputSchema{
-                .properties = {
-                    loom::core::SchemaProperty{
-                        .name = "file_path",
-                        .type = "string",
-                        .description = "File path",
-                        .required = true,
-                    },
+            .input_schema =
+                loom::core::InputSchema{
+                    .properties =
+                        {
+                            loom::core::SchemaProperty{
+                                .name = "file_path",
+                                .type = "string",
+                                .description = "File path",
+                                .required = true,
+                            },
+                        },
                 },
-            },
             .permission = loom::core::ToolPermission::ReadOnly,
         },
         loom::core::ToolDefinition{
             .name = "Write",
             .description = "Write a file",
-            .input_schema = loom::core::InputSchema{
-                .properties = {
-                    loom::core::SchemaProperty{
-                        .name = "file_path",
-                        .type = "string",
-                        .description = "File path",
-                        .required = true,
-                    },
+            .input_schema =
+                loom::core::InputSchema{
+                    .properties =
+                        {
+                            loom::core::SchemaProperty{
+                                .name = "file_path",
+                                .type = "string",
+                                .description = "File path",
+                                .required = true,
+                            },
+                        },
                 },
-            },
             .permission = loom::core::ToolPermission::Write,
         },
     };
@@ -520,15 +527,12 @@ TEST(QueryEngine, SnipMetadataProjectsRemovedMessagesFromMessagesRequest) {
     EXPECT_EQ(request_body->find("snipped-assistant-id"), std::string::npos) << *request_body;
     EXPECT_NE(request_body->find("SURVIVOR_PAYLOAD_SHOULD_SEND"), std::string::npos)
         << *request_body;
-    EXPECT_NE(request_body->find("fresh prompt after snip"), std::string::npos)
-        << *request_body;
+    EXPECT_NE(request_body->find("fresh prompt after snip"), std::string::npos) << *request_body;
 
     auto conversation = engine.get_conversation();
     auto contains_message_id = [&](std::string_view id) {
         return std::ranges::any_of(conversation, [&](const loom::core::Message& msg) {
-            return std::visit([&](const auto& value) {
-                return value.id.value == id;
-            }, msg);
+            return std::visit([&](const auto& value) { return value.id.value == id; }, msg);
         });
     };
     EXPECT_FALSE(contains_message_id("snipped-user-id"));
@@ -636,8 +640,7 @@ TEST(QueryEngine, DisableThinkingEnvSuppressesThinkingAndClearThinkingContextMan
 
     auto headers = server.wait_for_headers();
     ASSERT_TRUE(headers.has_value());
-    EXPECT_EQ(headers->find("context-management-2025-06-27"), std::string::npos)
-        << *headers;
+    EXPECT_EQ(headers->find("context-management-2025-06-27"), std::string::npos) << *headers;
 
     fs::remove_all(root);
 }
@@ -652,15 +655,16 @@ TEST(QueryEngine, InjectsPendingNativeAgentTaskNotificationsIntoRequest) {
     EnvironmentGuard runtime_dir_guard("LOOM_AGENT_RUNTIME_DIR", (root / "runtime").string());
     loom::tools::agent_runtime::native_agent_store().clear_for_testing();
 
-    loom::tools::agent_runtime::native_agent_store().upsert(loom::tools::agent_runtime::NativeAgentRecord{
-        .agent_id = "query-notify-agent",
-        .agent_type = "general-purpose",
-        .description = "Query notify agent",
-        .background = true,
-        .status = loom::tools::agent_runtime::NativeAgentStatus::Completed,
-        .output = std::string("native agent completed with useful context"),
-        .parent_session_id = std::string("notification-parent"),
-    });
+    loom::tools::agent_runtime::native_agent_store().upsert(
+        loom::tools::agent_runtime::NativeAgentRecord{
+            .agent_id = "query-notify-agent",
+            .agent_type = "general-purpose",
+            .description = "Query notify agent",
+            .background = true,
+            .status = loom::tools::agent_runtime::NativeAgentStatus::Completed,
+            .output = std::string("native agent completed with useful context"),
+            .parent_session_id = std::string("notification-parent"),
+        });
 
     loom::core::ToolRegistry registry;
     loom::core::QueryEngineConfig config;
@@ -721,10 +725,13 @@ TEST(QueryEngine, InjectsPendingNativeAgentTaskNotificationsIntoRequest) {
     });
     EXPECT_TRUE(saw_user_notification);
 
-    auto delivered_record = loom::tools::agent_runtime::native_agent_store().get("query-notify-agent");
+    auto delivered_record =
+        loom::tools::agent_runtime::native_agent_store().get("query-notify-agent");
     ASSERT_TRUE(delivered_record.has_value());
     EXPECT_TRUE(delivered_record->notification_delivered);
-    EXPECT_TRUE(loom::tools::agent_runtime::native_agent_store().take_pending_task_events("notification-parent").empty());
+    EXPECT_TRUE(loom::tools::agent_runtime::native_agent_store()
+                    .take_pending_task_events("notification-parent")
+                    .empty());
 
     bool persisted_event = false;
     bool persisted_human = false;
@@ -797,7 +804,8 @@ TEST(QueryEngine, PersistsTranscriptToSessionStorage) {
     {
         std::ifstream ifs(msgs_path);
         std::string line;
-        while (std::getline(ifs, line)) if (!line.empty()) lines.push_back(line);
+        while (std::getline(ifs, line))
+            if (!line.empty()) lines.push_back(line);
     }
     // Two non-system messages -> two transcript lines.
     ASSERT_EQ(lines.size(), 2u);
@@ -827,7 +835,8 @@ TEST(QueryEngine, StructuredOutputInjectsResponseSchema) {
     config.context_window.auto_compact = false;
     config.response_schema = loom::core::QueryEngineConfig::ResponseSchema{
         .name = "result",
-        .schema_json = R"({"type":"object","properties":{"answer":{"type":"string"}},"required":["answer"]})",
+        .schema_json =
+            R"({"type":"object","properties":{"answer":{"type":"string"}},"required":["answer"]})",
     };
     loom::core::QueryEngine engine(std::move(config), registry);
 
@@ -849,15 +858,24 @@ TEST(QueryEngine, TracksInvokedSkillsInLoop) {
     // records the skill name in discovered_skills_ (previously a dead field).
     struct StubSkillTool final : loom::core::ITool {
         loom::core::ToolDefinition definition_{};
+
         StubSkillTool() {
             definition_.name = "skill";
             definition_.permission = loom::core::ToolPermission::ReadOnly;
         }
-        [[nodiscard]] const loom::core::ToolDefinition& definition() const override { return definition_; }
-        [[nodiscard]] loom::core::Result<loom::core::ToolResult> execute(const loom::core::ToolInput&) override {
+
+        [[nodiscard]] const loom::core::ToolDefinition& definition() const override {
+            return definition_;
+        }
+
+        [[nodiscard]] loom::core::Result<loom::core::ToolResult>
+        execute(const loom::core::ToolInput&) override {
             return loom::core::ToolResult::success("ok");
         }
-        [[nodiscard]] bool check_permission(const loom::core::ToolInput&) const override { return true; }
+
+        [[nodiscard]] bool check_permission(const loom::core::ToolInput&) const override {
+            return true;
+        }
     };
 
     loom::core::ToolRegistry registry;
@@ -882,8 +900,7 @@ TEST(QueryEngine, TracksInvokedSkillsInLoop) {
 TEST(QueryEngine, CompactionPersistsSessionSummaryForResumedSession) {
     LocalMessagesServer summary_server;
     ASSERT_NE(summary_server.port(), 0);
-    auto root = fs::temp_directory_path() /
-        ("loom-session-summary-" + std::to_string(::getpid()));
+    auto root = fs::temp_directory_path() / ("loom-session-summary-" + std::to_string(::getpid()));
     fs::remove_all(root);
     fs::create_directories(root);
     EnvironmentGuard home_guard("HOME", root.string());
@@ -899,12 +916,12 @@ TEST(QueryEngine, CompactionPersistsSessionSummaryForResumedSession) {
     config.session_id_override = "resume-session-id";
     fs::create_directories(root / "work");
 
-    const auto summary_path = loom::memdir::get_session_memory_path(
-        root / "work", "resume-session-id");
+    const auto summary_path =
+        loom::memdir::get_session_memory_path(root / "work", "resume-session-id");
 
     {
         loom::core::QueryEngine engine(config, registry);
-    isolate_service_compaction_system(engine);
+        isolate_service_compaction_system(engine);
         auto make_user = [](std::string text) {
             loom::core::UserMessage msg{};
             msg.id.value = "user-" + text;
@@ -920,10 +937,14 @@ TEST(QueryEngine, CompactionPersistsSessionSummaryForResumedSession) {
             return loom::core::Message{std::move(msg)};
         };
         // Oversized historical exchanges leave a small recent task intact.
-        engine.append_message_for_testing(make_user("legacy requirement alpha" + std::string(1500, 'x')));
-        engine.append_message_for_testing(make_assistant("assistant decision beta" + std::string(1500, 'y')));
-        engine.append_message_for_testing(make_user("design constraint gamma" + std::string(1500, 'x')));
-        engine.append_message_for_testing(make_assistant("assistant decision delta" + std::string(1500, 'y')));
+        engine.append_message_for_testing(
+            make_user("legacy requirement alpha" + std::string(1500, 'x')));
+        engine.append_message_for_testing(
+            make_assistant("assistant decision beta" + std::string(1500, 'y')));
+        engine.append_message_for_testing(
+            make_user("design constraint gamma" + std::string(1500, 'x')));
+        engine.append_message_for_testing(
+            make_assistant("assistant decision delta" + std::string(1500, 'y')));
         engine.append_message_for_testing(make_user("recent one"));
         engine.append_message_for_testing(make_assistant("recent two"));
         engine.append_message_for_testing(make_user("recent three"));
@@ -981,10 +1002,13 @@ TEST(QueryEngine, CompactConversationPreservesSummarizedHistoryDetails) {
         return loom::core::Message{std::move(msg)};
     };
 
-    engine.append_message_for_testing(make_user("legacy requirement alpha" + std::string(1500, 'x')));
-    engine.append_message_for_testing(make_assistant("assistant decision beta" + std::string(1500, 'y')));
+    engine.append_message_for_testing(
+        make_user("legacy requirement alpha" + std::string(1500, 'x')));
+    engine.append_message_for_testing(
+        make_assistant("assistant decision beta" + std::string(1500, 'y')));
     engine.append_message_for_testing(make_user("tool context gamma" + std::string(1500, 'x')));
-    engine.append_message_for_testing(make_assistant("design constraint delta" + std::string(1500, 'y')));
+    engine.append_message_for_testing(
+        make_assistant("design constraint delta" + std::string(1500, 'y')));
     engine.append_message_for_testing(make_user("recent one"));
     engine.append_message_for_testing(make_assistant("recent two"));
     engine.append_message_for_testing(make_user("recent three"));
@@ -1070,8 +1094,10 @@ TEST(QueryEngine, CompactConversationCarriesTaskBudgetRemainingIntoNextRequest) 
     };
 
     for (int i = 0; i < 5; ++i) {
-        engine.append_message_for_testing(make_user("legacy user context " + std::to_string(i) + std::string(1200, 'u')));
-        engine.append_message_for_testing(make_assistant("legacy assistant context " + std::to_string(i) + std::string(1200, 'a')));
+        engine.append_message_for_testing(
+            make_user("legacy user context " + std::to_string(i) + std::string(1200, 'u')));
+        engine.append_message_for_testing(make_assistant(
+            "legacy assistant context " + std::to_string(i) + std::string(1200, 'a')));
     }
 
     auto compacted = engine.compact_conversation("auto");
@@ -1146,18 +1172,21 @@ TEST(QueryEngine, RestoreConversationDerivesTaskBudgetRemainingFromCompactBounda
     };
 
     for (int i = 0; i < 5; ++i) {
-        engine.append_message_for_testing(make_user("restored legacy user context " + std::to_string(i) + std::string(1200, 'u')));
-        engine.append_message_for_testing(make_assistant("restored legacy assistant context " + std::to_string(i) + std::string(1200, 'a')));
+        engine.append_message_for_testing(make_user("restored legacy user context " +
+                                                    std::to_string(i) + std::string(1200, 'u')));
+        engine.append_message_for_testing(make_assistant(
+            "restored legacy assistant context " + std::to_string(i) + std::string(1200, 'a')));
     }
 
     auto compacted = engine.compact_conversation("auto");
     ASSERT_TRUE(compacted.has_value());
 
     auto restored_messages = engine.get_conversation();
-    auto boundary_it = std::ranges::find_if(restored_messages, [](const loom::core::Message& message) {
-        const auto* system = std::get_if<loom::core::SystemMessage>(&message);
-        return system && system->subtype && *system->subtype == "compact_boundary";
-    });
+    auto boundary_it =
+        std::ranges::find_if(restored_messages, [](const loom::core::Message& message) {
+            const auto* system = std::get_if<loom::core::SystemMessage>(&message);
+            return system && system->subtype && *system->subtype == "compact_boundary";
+        });
     ASSERT_NE(boundary_it, restored_messages.end());
     const auto* boundary = std::get_if<loom::core::SystemMessage>(&*boundary_it);
     ASSERT_NE(boundary, nullptr);
@@ -1231,28 +1260,31 @@ TEST(QueryEngine, RepeatedCompactDoesNotSummarizePriorCompactBoundaries) {
     };
 
     for (int i = 0; i < 10; ++i) {
-        engine.append_message_for_testing(i % 2 == 0
-            ? make_user("initial " + std::to_string(i) + std::string(1200, 'i'))
-            : make_assistant("initial " + std::to_string(i) + std::string(1200, 'i')));
+        engine.append_message_for_testing(
+            i % 2 == 0 ? make_user("initial " + std::to_string(i) + std::string(1200, 'i'))
+                       : make_assistant("initial " + std::to_string(i) + std::string(1200, 'i')));
     }
 
     auto first = engine.compact_conversation();
     ASSERT_TRUE(first.has_value());
 
     for (int i = 0; i < 6; ++i) {
-        engine.append_message_for_testing(i % 2 == 0
-            ? make_user("second wave " + std::to_string(i) + std::string(i == 0 ? 0 : 1200, 'w'))
-            : make_assistant("second wave " + std::to_string(i) + std::string(1200, 'w')));
+        engine.append_message_for_testing(
+            i % 2 == 0
+                ? make_user("second wave " + std::to_string(i) +
+                            std::string(i == 0 ? 0 : 1200, 'w'))
+                : make_assistant("second wave " + std::to_string(i) + std::string(1200, 'w')));
     }
 
     auto second = engine.compact_conversation();
     ASSERT_TRUE(second.has_value());
 
     auto conversation = engine.get_conversation();
-    auto boundary_count = std::ranges::count_if(conversation, [](const loom::core::Message& message) {
-        const auto* system = std::get_if<loom::core::SystemMessage>(&message);
-        return system && system->subtype && *system->subtype == "compact_boundary";
-    });
+    auto boundary_count =
+        std::ranges::count_if(conversation, [](const loom::core::Message& message) {
+            const auto* system = std::get_if<loom::core::SystemMessage>(&message);
+            return system && system->subtype && *system->subtype == "compact_boundary";
+        });
     EXPECT_EQ(boundary_count, 1);
 
     const auto* marker = std::get_if<loom::core::UserMessage>(&conversation.at(2));
@@ -1306,17 +1338,22 @@ TEST(QueryEngine, AutoCompactWritesBoundaryMetadataAndKeepsRecentTail) {
         engine.append_message_for_testing(make_user(i));
     }
     const auto before_request = engine.get_conversation();
-    EXPECT_EQ(std::ranges::count_if(before_request, [](const loom::core::Message& message) {
-        const auto* system = std::get_if<loom::core::SystemMessage>(&message);
-        return system && system->subtype && *system->subtype == "compact_boundary";
-    }), 0);
+    EXPECT_EQ(std::ranges::count_if(before_request,
+                                    [](const loom::core::Message& message) {
+                                        const auto* system =
+                                            std::get_if<loom::core::SystemMessage>(&message);
+                                        return system && system->subtype &&
+                                               *system->subtype == "compact_boundary";
+                                    }),
+              0);
     ASSERT_TRUE(engine.query("Continue verification after accumulated history."));
 
     auto conversation = engine.get_conversation();
-    auto boundary_count = std::ranges::count_if(conversation, [](const loom::core::Message& message) {
-        const auto* system = std::get_if<loom::core::SystemMessage>(&message);
-        return system && system->subtype && *system->subtype == "compact_boundary";
-    });
+    auto boundary_count =
+        std::ranges::count_if(conversation, [](const loom::core::Message& message) {
+            const auto* system = std::get_if<loom::core::SystemMessage>(&message);
+            return system && system->subtype && *system->subtype == "compact_boundary";
+        });
     ASSERT_EQ(boundary_count, 1);
     ASSERT_LT(conversation.size(), before_request.size());
 
@@ -1325,7 +1362,8 @@ TEST(QueryEngine, AutoCompactWritesBoundaryMetadataAndKeepsRecentTail) {
         return system && system->subtype && *system->subtype == "compact_boundary";
     });
     ASSERT_NE(boundary_it, conversation.end());
-    const auto boundary_index = static_cast<std::size_t>(std::distance(conversation.begin(), boundary_it));
+    const auto boundary_index =
+        static_cast<std::size_t>(std::distance(conversation.begin(), boundary_it));
 
     const auto* boundary = std::get_if<loom::core::SystemMessage>(&*boundary_it);
     ASSERT_NE(boundary, nullptr);
@@ -1339,10 +1377,15 @@ TEST(QueryEngine, AutoCompactWritesBoundaryMetadataAndKeepsRecentTail) {
     ASSERT_NE(marker, nullptr);
     EXPECT_EQ(boundary->compact_metadata->preserved_segment->anchor_uuid, marker->id.value);
 
-    const auto last_id = std::visit([](const auto& msg) { return msg.id.value; }, conversation.back());
+    const auto last_id =
+        std::visit([](const auto& msg) { return msg.id.value; }, conversation.back());
     EXPECT_NE(boundary->compact_metadata->preserved_segment->tail_uuid, last_id);
     EXPECT_TRUE(std::ranges::any_of(conversation, [&](const auto& message) {
-        return std::visit([&](const auto& msg) { return msg.id.value == boundary->compact_metadata->preserved_segment->tail_uuid; }, message);
+        return std::visit(
+            [&](const auto& msg) {
+                return msg.id.value == boundary->compact_metadata->preserved_segment->tail_uuid;
+            },
+            message);
     }));
 
     ASSERT_EQ(marker->content.size(), 1u);
@@ -1380,15 +1423,16 @@ TEST(QueryEngine, ReactiveCompactRetriesPromptTooLongAfterWritingBoundary) {
         loom::core::UserMessage msg{};
         msg.id.value = "reactive-user-" + std::to_string(i);
         msg.timestamp = std::chrono::system_clock::now();
-        msg.content.push_back(loom::core::TextBlock{
-            "reactive legacy " + std::to_string(i) + " " + std::string(600, 'r')});
+        msg.content.push_back(loom::core::TextBlock{"reactive legacy " + std::to_string(i) + " " +
+                                                    std::string(600, 'r')});
         engine.append_message_for_testing(loom::core::Message{std::move(msg)});
     }
 
     auto response = engine.query("trigger reactive compact");
     ASSERT_TRUE(response.has_value()) << response.error().message;
     ASSERT_FALSE(response->message.content.empty());
-    const auto* response_text = std::get_if<loom::core::TextBlock>(&response->message.content.front());
+    const auto* response_text =
+        std::get_if<loom::core::TextBlock>(&response->message.content.front());
     ASSERT_NE(response_text, nullptr);
     EXPECT_EQ(response_text->text, "reactive-ok");
 
@@ -1518,7 +1562,8 @@ TEST(QueryEngine, AppliesMainThreadToolResultBudgetBeforeModelRequest) {
     EXPECT_TRUE(saw_persisted_file);
 
     const auto conversation = engine.get_conversation();
-    auto replacement_for = [](const std::vector<loom::core::Message>& messages, std::string_view tool_use_id) {
+    auto replacement_for = [](const std::vector<loom::core::Message>& messages,
+                              std::string_view tool_use_id) {
         for (const auto& message : messages) {
             const auto* tool_result = std::get_if<loom::core::ToolResultMessage>(&message);
             if (!tool_result || tool_result->tool_use_id.value != tool_use_id) continue;
@@ -1684,16 +1729,19 @@ TEST(QueryEngine, TimeBasedMicrocompactClearsOldCompactableToolResultsBeforeRequ
         }
         return std::nullopt;
     };
-    EXPECT_EQ(tool_result_text("read-old"), std::optional<std::string>{"[Old tool result content cleared]"});
-    EXPECT_EQ(tool_result_text("bash-old"), std::optional<std::string>{"[Old tool result content cleared]"});
-    EXPECT_EQ(tool_result_text("task-noncompact"), std::optional<std::string>{"NONCOMPACT_TASK_RESULT_SHOULD_STAY"});
-    EXPECT_EQ(tool_result_text("edit-recent"), std::optional<std::string>{"RECENT_EDIT_RESULT_SHOULD_STAY"});
+    EXPECT_EQ(tool_result_text("read-old"),
+              std::optional<std::string>{"[Old tool result content cleared]"});
+    EXPECT_EQ(tool_result_text("bash-old"),
+              std::optional<std::string>{"[Old tool result content cleared]"});
+    EXPECT_EQ(tool_result_text("task-noncompact"),
+              std::optional<std::string>{"NONCOMPACT_TASK_RESULT_SHOULD_STAY"});
+    EXPECT_EQ(tool_result_text("edit-recent"),
+              std::optional<std::string>{"RECENT_EDIT_RESULT_SHOULD_STAY"});
 
     fs::remove_all(root);
 }
 
 // End of file
-
 
 TEST(QueryEngine, InterleavedParentsAndChildConsumeOnlyTheirOwnTypedTaskEvents) {
     LocalMessagesServer server;
@@ -1705,7 +1753,8 @@ TEST(QueryEngine, InterleavedParentsAndChildConsumeOnlyTheirOwnTypedTaskEvents) 
     auto& store = loom::tools::agent_runtime::native_agent_store();
     store.clear_for_testing();
     for (const auto owner : {"parent-a", "parent-b"}) {
-        auto record = loom::tools::agent_runtime::make_native_agent_record(std::string("task-") + owner, "general-purpose");
+        auto record = loom::tools::agent_runtime::make_native_agent_record(
+            std::string("task-") + owner, "general-purpose");
         record.background = true;
         record.status = loom::tools::agent_runtime::NativeAgentStatus::Completed;
         record.parent_session_id = owner;

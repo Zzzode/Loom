@@ -30,11 +30,16 @@ enum class PermissionMode : std::uint8_t {
 /// Convert PermissionMode to string
 [[nodiscard]] constexpr std::string_view permission_mode_to_string(PermissionMode mode) noexcept {
     switch (mode) {
-        case PermissionMode::Default: return "default";
-        case PermissionMode::Plan: return "plan";
-        case PermissionMode::Auto: return "auto";
-        case PermissionMode::Bubble: return "bubble";
-        case PermissionMode::UngatedAuto: return "ungated-auto";
+    case PermissionMode::Default:
+        return "default";
+    case PermissionMode::Plan:
+        return "plan";
+    case PermissionMode::Auto:
+        return "auto";
+    case PermissionMode::Bubble:
+        return "bubble";
+    case PermissionMode::UngatedAuto:
+        return "ungated-auto";
     }
     return "unknown";
 }
@@ -50,19 +55,18 @@ struct ToolPermissionContext {
 // Settings Type Definitions
 // ============================================================
 
-
 /// Status line settings (mirrors TS settings.statusLine)
 struct StatusLineSettings {
     bool enabled = false;
-    std::string command;        // Shell command whose output is shown in the status line
-    int padding = 0;            // Horizontal padding (TS: paddingX)
+    std::string command;  // Shell command whose output is shown in the status line
+    int padding = 0;      // Horizontal padding (TS: paddingX)
 };
 
 struct Settings {
     std::string model;
     std::string theme;
     bool verbose = false;
-    std::string output_style;   // TS: settings.outputStyle
+    std::string output_style;  // TS: settings.outputStyle
     bool disable_all_hooks = false;
     StatusLineSettings status_line;
     std::unordered_map<std::string, std::string> env_vars;
@@ -144,13 +148,13 @@ enum class RemoteConnectionStatus {
 
 /// Configuration for the active model
 struct ModelConfig {
-    std::string model_id;           // e.g., "gpt-4o", "deepseek-chat"
-    std::string display_name;       // e.g., "GPT-4o"
+    std::string model_id;      // e.g., "gpt-4o", "deepseek-chat"
+    std::string display_name;  // e.g., "GPT-4o"
     std::uint32_t max_tokens = 8192;
     double temperature = 1.0;
     std::optional<std::string> system_prompt_override;
-    double input_cost_per_mtok = 3.0;   // $ per million input tokens
-    double output_cost_per_mtok = 15.0; // $ per million output tokens
+    double input_cost_per_mtok = 3.0;    // $ per million input tokens
+    double output_cost_per_mtok = 15.0;  // $ per million output tokens
 };
 
 // ============================================================
@@ -171,12 +175,14 @@ struct InstallationStatus {
         enum class Status { Pending, Installing, Installed, Failed } status;
         std::optional<std::string> error;
     };
+
     struct PluginStatus {
         std::string id;
         std::string name;
         enum class Status { Pending, Installing, Installed, Failed } status;
         std::optional<std::string> error;
     };
+
     std::vector<MarketplaceStatus> marketplaces;
     std::vector<PluginStatus> plugins;
 };
@@ -304,6 +310,7 @@ struct AppState {
     // MCP & Plugins
     // ========================================
     MCPState mcp;
+
     struct PluginsState {
         std::vector<LoadedPlugin> enabled;
         std::vector<LoadedPlugin> disabled;
@@ -362,6 +369,7 @@ struct AppState {
     bool thinking_enabled = true;
     bool prompt_suggestion_enabled = true;
     std::map<std::string, std::string> session_hooks;
+
     struct InboxState {
         struct InboxMessage {
             std::string id;
@@ -372,8 +380,10 @@ struct AppState {
             std::optional<std::string> color;
             std::optional<std::string> summary;
         };
+
         std::vector<InboxMessage> messages;
     } inbox;
+
     struct WorkerSandboxPermissions {
         struct PermissionRequest {
             std::string request_id;
@@ -383,20 +393,26 @@ struct AppState {
             std::string host;
             std::chrono::system_clock::time_point created_at;
         };
+
         std::vector<PermissionRequest> queue;
         std::size_t selected_index = 0;
     } worker_sandbox_permissions;
+
     struct PendingWorkerRequest {
         std::string tool_name;
         std::string tool_use_id;
         std::string description;
     };
+
     std::optional<PendingWorkerRequest> pending_worker_request;
+
     struct PendingSandboxRequest {
         std::string request_id;
         std::string host;
     };
+
     std::optional<PendingSandboxRequest> pending_sandbox_request;
+
     struct PromptSuggestionState {
         std::optional<std::string> text;
         std::optional<std::string> prompt_id;
@@ -404,21 +420,27 @@ struct AppState {
         std::chrono::system_clock::time_point accepted_at;
         std::optional<std::string> generation_request_id;
     } prompt_suggestion;
+
     SpeculationState speculation;
     std::int64_t speculation_session_time_saved_ms = 0;
+
     struct SkillImprovementState {
         struct Suggestion {
             std::string skill_name;
-            std::vector<std::tuple<std::string, std::string, std::string>> updates; // section, change, reason
+            std::vector<std::tuple<std::string, std::string, std::string>>
+                updates;  // section, change, reason
         };
+
         std::optional<Suggestion> suggestion;
     } skill_improvement;
+
     struct InitialMessage {
         loom::core::UserMessage message;
         bool clear_context = false;
         std::optional<PermissionMode> mode;
         std::vector<std::string> allowed_prompts;
     };
+
     std::optional<InitialMessage> initial_message;
     std::optional<std::string> effort_value;
     std::set<std::string> active_overlays;
@@ -426,15 +448,19 @@ struct AppState {
     std::optional<std::string> advisor_model;
     bool ultraplan_launching = false;
     std::optional<std::string> ultraplan_session_url;
+
     struct UltraplanPendingChoice {
         std::string plan;
         std::string session_id;
         std::string task_id;
     };
+
     std::optional<UltraplanPendingChoice> ultraplan_pending_choice;
+
     struct UltraplanLaunchPending {
         std::string blurb;
     };
+
     std::optional<UltraplanLaunchPending> ultraplan_launch_pending;
     bool is_ultraplan_mode = false;
 };
@@ -475,8 +501,10 @@ struct AppState {
 [[nodiscard]] inline AppState with_usage(const AppState& state, loom::core::TokenUsage usage) {
     auto next = state;
     next.total_usage += usage;
-    double input_cost = static_cast<double>(usage.input_tokens) * state.current_model.input_cost_per_mtok / 1'000'000.0;
-    double output_cost = static_cast<double>(usage.output_tokens) * state.current_model.output_cost_per_mtok / 1'000'000.0;
+    double input_cost = static_cast<double>(usage.input_tokens) *
+                        state.current_model.input_cost_per_mtok / 1'000'000.0;
+    double output_cost = static_cast<double>(usage.output_tokens) *
+                         state.current_model.output_cost_per_mtok / 1'000'000.0;
     next.total_cost_usd += input_cost + output_cost;
     return next;
 }
@@ -608,4 +636,4 @@ private:
     }
 };
 
-} // namespace loom::state
+}  // namespace loom::state

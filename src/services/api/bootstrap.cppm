@@ -141,7 +141,8 @@ private:
     [[nodiscard]] static std::optional<BootstrapResponse> parse_response(JsonVal root) {
         if (!root.valid() || !root.is_obj()) return std::nullopt;
         BootstrapResponse response;
-        if (auto client_data = root.get("client_data"); client_data.valid() && client_data.is_str()) {
+        if (auto client_data = root.get("client_data");
+            client_data.valid() && client_data.is_str()) {
             response.client_data = std::string(client_data.as_str());
         }
         auto models = root.get("additional_model_options");
@@ -155,7 +156,8 @@ private:
                 if (auto name = item.get("name"); name.valid() && name.is_str()) {
                     option.name = std::string(name.as_str());
                 }
-                if (auto description = item.get("description"); description.valid() && description.is_str()) {
+                if (auto description = item.get("description");
+                    description.valid() && description.is_str()) {
                     option.description = std::string(description.as_str());
                 }
                 if (!option.model_id.empty()) {
@@ -258,9 +260,7 @@ public:
 
     [[nodiscard]] bool is_initialized() const { return initialized_; }
 
-    [[nodiscard]] const BootstrapResponse& response() const {
-        return response_;
-    }
+    [[nodiscard]] const BootstrapResponse& response() const { return response_; }
 
     // Get additional model options from bootstrap
     [[nodiscard]] std::vector<ModelOption> get_additional_models() const {
@@ -268,9 +268,7 @@ public:
     }
 
     // Create an API client using the stored bootstrap config
-    [[nodiscard]] MessagesClient create_api_client() const {
-        return create_client(config_);
-    }
+    [[nodiscard]] MessagesClient create_api_client() const { return create_client(config_); }
 
     // Reset state
     void reset() {
@@ -298,9 +296,7 @@ private:
 
 // Simple async bootstrap (non-blocking)
 inline void bootstrap_async(const BootstrapConfig& config) {
-    std::thread([config]() {
-        (void)BootstrapState::instance().initialize(config);
-    }).detach();
+    std::thread([config]() { (void)BootstrapState::instance().initialize(config); }).detach();
 }
 
 // Convenience: create a client from global state or defaults
@@ -311,4 +307,4 @@ inline void bootstrap_async(const BootstrapConfig& config) {
     return create_client();
 }
 
-} // namespace loom::services::api
+}  // namespace loom::services::api

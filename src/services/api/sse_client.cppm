@@ -4,11 +4,12 @@
 // - dry-run gate when api_key is empty (no network)
 // - abort propagation via should_abort callback
 module;
+#include <curl/curl.h>
+
 #include <cctype>
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
-#include <curl/curl.h>
 
 export module loom.services.api.sse;
 
@@ -31,7 +32,7 @@ namespace json = loom::utils::json;
 enum class Role { System, User, Assistant };
 
 struct TextMessage {
-    Role        role    = Role::User;
+    Role role = Role::User;
     std::string content;  // UTF-8 text
 };
 
@@ -40,14 +41,14 @@ struct TextMessage {
 // =========================================================================
 
 enum class SseEventType {
-    MessageStart,         // event: message_start
-    ContentBlockStart,    // event: content_block_start (type: "text")
-    ContentBlockDelta,    // event: content_block_delta -> delta.text
-    ContentBlockStop,     // event: content_block_stop
-    MessageDelta,         // event: message_delta (stop_reason, usage)
-    MessageStop,          // event: message_stop
-    Error,                // event: error -> JSON error
-    Ping,                 // event: ping
+    MessageStart,       // event: message_start
+    ContentBlockStart,  // event: content_block_start (type: "text")
+    ContentBlockDelta,  // event: content_block_delta -> delta.text
+    ContentBlockStop,   // event: content_block_stop
+    MessageDelta,       // event: message_delta (stop_reason, usage)
+    MessageStop,        // event: message_stop
+    Error,              // event: error -> JSON error
+    Ping,               // event: ping
     Unknown,
 };
 
@@ -64,10 +65,9 @@ struct StreamingCallbacks {
     std::function<void(std::string_view text_delta)> on_text_delta;
     /// Called exactly once per request — either after receiving message_stop,
     /// or when a terminal error / abort happens.
-    std::function<void(int         final_http_status,
-                       std::string final_stop_reason,
-                       std::string final_accumulated_text,
-                       std::string error_reason)> on_final;
+    std::function<void(int final_http_status, std::string final_stop_reason,
+                       std::string final_accumulated_text, std::string error_reason)>
+        on_final;
     /// Polled periodically (at least once per WRITEFUNCTION invocation).
     /// Return true to abort the transfer.
     std::function<bool()> should_abort;
@@ -79,11 +79,11 @@ struct StreamingCallbacks {
 
 struct ApiConfig {
     std::string base_url;
-    std::string api_key;    // if empty -> dry-run (no network, immediate on_final)
+    std::string api_key;  // if empty -> dry-run (no network, immediate on_final)
     std::string api_version = "2023-06-01";
     std::string model_id;
-    int         max_tokens  = 8192;
-    double      temperature = 0.7;
+    int max_tokens = 8192;
+    double temperature = 0.7;
 };
 
 // =========================================================================
@@ -92,7 +92,8 @@ struct ApiConfig {
 
 class SseClient {
 public:
-    explicit SseClient(ApiConfig cfg) : cfg_(std::move(cfg)) {
+    explicit SseClient(ApiConfig cfg)
+        : cfg_(std::move(cfg)) {
         // curl_global_init is not thread-safe; guard with atomic flag.
         [[maybe_unused]] static const int init_rc = [] {
             return curl_global_init(CURL_GLOBAL_ALL);
@@ -109,18 +110,15 @@ public:
     ///   0               : HTTP 200 + stream completed with message_stop
     ///   positive value  : HTTP status (e.g. 401, 429, 500, ...)
     ///   negative value  : libcurl CURLE_* code (transport failure)
-    int PostMessagesStream(std::string_view system_prompt,
-                           std::span<const TextMessage> messages,
+    int PostMessagesStream(std::string_view system_prompt, std::span<const TextMessage> messages,
                            StreamingCallbacks cbs = {}) {
         ResetParser();
 
         // ---- Dry-run gate: honour empty api_key, never go out to network ----
         if (cfg_.api_key.empty()) {
             if (cbs.on_final) {
-                cbs.on_final(0,
-                             "dry_run",
-                             /* accumulated text */ "",
-                             "[dry-run] no api key provided");
+                cbs.on_final(0, "dry_run",
+                             /* accumulated text */ "", "[dry-run] no api key provided");
             }
             return 0;
         }
@@ -133,32 +131,29 @@ public:
 
         // ---- Scratch state captured in WRITEFUNCTION --------------------
         struct TransferState {
-            SseClient*         client;
+            SseClient* client;
             StreamingCallbacks* cbs;
-            std::string*       accum;
-            std::string*       stop_reason;
-            int*               http_status;
-            std::string*       error_reason;
-            bool               final_called = false;
+            std::string* accum;
+            std::string* stop_reason;
+            int* http_status;
+            std::string* error_reason;
+            bool final_called = false;
         };
 
-        int                http_status  = 0;
-        std::string        accumulated;
-        std::string        stop_reason;
-        std::string        error_reason;
-        TransferState      state{this, &cbs, &accumulated, &stop_reason,
-                            &http_status, &error_reason};
+        int http_status = 0;
+        std::string accumulated;
+        std::string stop_reason;
+        std::string error_reason;
+        TransferState state{this, &cbs, &accumulated, &stop_reason, &http_status, &error_reason};
 
         CURL* curl = curl_easy_init();
         if (!curl) {
-            if (cbs.on_final) cbs.on_final(0, "", "",
-                                           "libcurl: curl_easy_init failed");
+            if (cbs.on_final) cbs.on_final(0, "", "", "libcurl: curl_easy_init failed");
             return static_cast<int>(CURLE_FAILED_INIT);
         }
 
         // Wrap callback state so lambdas don't dangle.
-        auto write_cb = +[](char* ptr, size_t size, size_t nmemb, void* userdata)
-                            -> size_t {
+        auto write_cb = +[](char* ptr, size_t size, size_t nmemb, void* userdata) -> size_t {
             const std::size_t n = size * nmemb;
             auto* st = static_cast<TransferState*>(userdata);
 
@@ -167,8 +162,8 @@ public:
 
             // Detect and emit text deltas, message_stop, error by re-parsing
             // every full SSE event inside FeedParser.
-            st->client->FeedParserImpl(chunk, *st->cbs, *st->accum,
-                                       *st->stop_reason, *st->error_reason);
+            st->client->FeedParserImpl(chunk, *st->cbs, *st->accum, *st->stop_reason,
+                                       *st->error_reason);
 
             // Abort propagation
             if (st->cbs->should_abort && st->cbs->should_abort()) {
@@ -177,8 +172,7 @@ public:
             return n;
         };
 
-        auto header_cb = +[](char* ptr, size_t size, size_t nmemb, void* userdata)
-                             -> size_t {
+        auto header_cb = +[](char* ptr, size_t size, size_t nmemb, void* userdata) -> size_t {
             const std::size_t n = size * nmemb;
             auto* st = static_cast<TransferState*>(userdata);
             // Look for "HTTP/1.1 429 Too Many Requests" style line
@@ -188,14 +182,11 @@ public:
                 const auto space1 = line.find(' ');
                 if (space1 != std::string_view::npos) {
                     const auto after = line.substr(space1 + 1);
-                    if (after.size() >= 3 &&
-                        std::isdigit(static_cast<unsigned char>(after[0])) &&
+                    if (after.size() >= 3 && std::isdigit(static_cast<unsigned char>(after[0])) &&
                         std::isdigit(static_cast<unsigned char>(after[1])) &&
                         std::isdigit(static_cast<unsigned char>(after[2]))) {
                         *st->http_status =
-                            (after[0] - '0') * 100 +
-                            (after[1] - '0') * 10 +
-                            (after[2] - '0');
+                            (after[0] - '0') * 100 + (after[1] - '0') * 10 + (after[2] - '0');
                     }
                 }
             }
@@ -215,8 +206,7 @@ public:
         curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
         curl_easy_setopt(curl, CURLOPT_POST, 1L);
         curl_easy_setopt(curl, CURLOPT_POSTFIELDS, body.data());
-        curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE_LARGE,
-                         static_cast<curl_off_t>(body.size()));
+        curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE_LARGE, static_cast<curl_off_t>(body.size()));
         curl_easy_setopt(curl, CURLOPT_HTTPHEADER, hdrs);
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_cb);
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, &state);
@@ -229,12 +219,9 @@ public:
         curl_easy_setopt(curl, CURLOPT_FAILONERROR, 0L);  // we parse body on error
 
         // Loopback no-proxy for local tests
-        if (url.starts_with("http://127.0.0.1") ||
-            url.starts_with("http://localhost") ||
-            url.starts_with("https://127.0.0.1") ||
-            url.starts_with("https://localhost") ||
-            url.starts_with("http://[::1]") ||
-            url.starts_with("https://[::1]")) {
+        if (url.starts_with("http://127.0.0.1") || url.starts_with("http://localhost") ||
+            url.starts_with("https://127.0.0.1") || url.starts_with("https://localhost") ||
+            url.starts_with("http://[::1]") || url.starts_with("https://[::1]")) {
             curl_easy_setopt(curl, CURLOPT_NOPROXY, "localhost,127.0.0.1,::1");
         }
 
@@ -244,20 +231,15 @@ public:
         if (!state.final_called && cbs.on_final) {
             if (rc != CURLE_OK) {
                 error_reason = std::string("libcurl error: ") + curl_easy_strerror(rc);
-                cbs.on_final(static_cast<int>(rc) < 0
-                                 ? static_cast<int>(rc)
-                                 : -static_cast<int>(rc),
-                             std::move(stop_reason),
-                             std::move(accumulated),
-                             std::move(error_reason));
+                cbs.on_final(
+                    static_cast<int>(rc) < 0 ? static_cast<int>(rc) : -static_cast<int>(rc),
+                    std::move(stop_reason), std::move(accumulated), std::move(error_reason));
             } else {
                 long http_long = 0;
                 curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_long);
                 http_status = static_cast<int>(http_long);
                 if (http_status == 0) http_status = 200;  // dry-run fallback
-                cbs.on_final(http_status,
-                             std::move(stop_reason),
-                             std::move(accumulated),
+                cbs.on_final(http_status, std::move(stop_reason), std::move(accumulated),
                              std::move(error_reason));
             }
             state.final_called = true;
@@ -277,7 +259,7 @@ public:
     /// Synchronous non-streaming facade (uses stream internally, then
     /// accumulates all text deltas).
     struct SyncResult {
-        int         http_status = 0;
+        int http_status = 0;
         std::string text;
         std::string error;
     };
@@ -289,11 +271,10 @@ public:
         cbs.on_text_delta = [&res](std::string_view delta) {
             res.text.append(delta.data(), delta.size());
         };
-        cbs.on_final = [&res](int http, std::string_view /*stop*/,
-                              std::string_view /*accum*/,
+        cbs.on_final = [&res](int http, std::string_view /*stop*/, std::string_view /*accum*/,
                               std::string_view err) {
             res.http_status = http;
-            res.error       = std::string(err);
+            res.error = std::string(err);
         };
         const int rc = PostMessagesStream(system_prompt, messages, std::move(cbs));
         if (rc != 0 && res.http_status == 0) res.http_status = rc;
@@ -305,15 +286,10 @@ public:
     /// which owns its accumulator, this overload writes into caller-owned
     /// out_accum/out_stop/out_err so unit tests and the QueryEngine mock driver
     /// can inspect parser state without needing a live SSE writer closure.
-    void FeedParser(std::string_view      bytes,
-                    StreamingCallbacks& cbs,
-                    std::string&      out_accumulated_text,
-                    std::string&      out_stop_reason,
-                    std::string&      out_error_reason) {
-        FeedParserImpl(bytes, cbs,
-                     out_accumulated_text,
-                     out_stop_reason,
-                     out_error_reason);
+    void FeedParser(std::string_view bytes, StreamingCallbacks& cbs,
+                    std::string& out_accumulated_text, std::string& out_stop_reason,
+                    std::string& out_error_reason) {
+        FeedParserImpl(bytes, cbs, out_accumulated_text, out_stop_reason, out_error_reason);
     }
 
     /// Backwards-compatible overload: FeedParser with no output references — discards
@@ -330,9 +306,8 @@ private:
     // -----------------------------------------------------------------
     // Body builder using loom.serdes.json (RAII mutable doc) for zero-copy headers
     // -----------------------------------------------------------------
-    [[nodiscard]] std::string BuildMessagesBody(
-        std::string_view system_prompt,
-        std::span<const TextMessage> messages) const {
+    [[nodiscard]] std::string BuildMessagesBody(std::string_view system_prompt,
+                                                std::span<const TextMessage> messages) const {
 
         json::JsonMutDoc doc;
         json::JsonMutVal root = doc.object();
@@ -353,9 +328,9 @@ private:
         json::JsonMutVal msgs = doc.array();
         for (const auto& m : messages) {
             json::JsonMutVal obj = doc.object();
-            const char* role_str =
-                m.role == Role::System ? "system" :
-                m.role == Role::Assistant ? "assistant" : "user";
+            const char* role_str = m.role == Role::System      ? "system"
+                                   : m.role == Role::Assistant ? "assistant"
+                                                               : "user";
             obj.add("role", doc.string(role_str));
 
             // content = [{type:"text", text:m.content}]
@@ -377,10 +352,8 @@ private:
     // SSE Parser: feeds partial buffer, emits complete events (newline
     // terminated `\n\n`) and pulls JSON fields for text deltas / stop.
     // -----------------------------------------------------------------
-    void FeedParserImpl(std::string_view chunk,
-                        StreamingCallbacks& cbs,
-                        std::string& accumulated_text,
-                        std::string& out_stop_reason,
+    void FeedParserImpl(std::string_view chunk, StreamingCallbacks& cbs,
+                        std::string& accumulated_text, std::string& out_stop_reason,
                         std::string& out_error_reason) {
         parser_buf_.append(chunk.data(), chunk.size());
 
@@ -390,10 +363,14 @@ private:
             for (std::size_t i = 0; i + 1 < parser_buf_.size(); ++i) {
                 const char c = parser_buf_[i];
                 const char d = parser_buf_[i + 1];
-                if (c == '\n' && d == '\n') { sep = i; break; }
+                if (c == '\n' && d == '\n') {
+                    sep = i;
+                    break;
+                }
                 if (c == '\r' && d == '\n' && i + 3 < parser_buf_.size() &&
                     parser_buf_[i + 2] == '\r' && parser_buf_[i + 3] == '\n') {
-                    sep = i; break;
+                    sep = i;
+                    break;
                 }
             }
             if (sep == std::string::npos) break;
@@ -405,8 +382,8 @@ private:
             parser_buf_.erase(0, sep + sep_len);
 
             SseEventType type_hint = SseEventType::Unknown;
-            std::string  data_str;
-            bool         has_data = false;
+            std::string data_str;
+            bool has_data = false;
 
             // Scan event line-by-line
             std::size_t line_start = 0;
@@ -445,80 +422,80 @@ private:
 
             // ---- Extract typed payloads ----------------------------------
             switch (type_hint) {
-                case SseEventType::ContentBlockDelta: {
-                    auto parsed = json::parse(data_str);
-                    if (!parsed) break;
-                    json::JsonVal root = parsed->root();
-                    if (auto delta = root.get("delta")) {
-                        if (auto text = delta.get("text")) {
-                            std::string_view sv = text.as_str();
-                            accumulated_text.append(sv.data(), sv.size());
-                            if (cbs.on_text_delta) cbs.on_text_delta(sv);
-                        }
+            case SseEventType::ContentBlockDelta: {
+                auto parsed = json::parse(data_str);
+                if (!parsed) break;
+                json::JsonVal root = parsed->root();
+                if (auto delta = root.get("delta")) {
+                    if (auto text = delta.get("text")) {
+                        std::string_view sv = text.as_str();
+                        accumulated_text.append(sv.data(), sv.size());
+                        if (cbs.on_text_delta) cbs.on_text_delta(sv);
                     }
+                }
+                break;
+            }
+            case SseEventType::MessageDelta: {
+                auto parsed = json::parse(data_str);
+                if (!parsed) break;
+                json::JsonVal root = parsed->root();
+                if (auto delta = root.get("delta")) {
+                    if (auto sr = delta.get("stop_reason")) {
+                        std::string_view sv = sr.as_str();
+                        out_stop_reason.assign(sv.data(), sv.size());
+                    }
+                }
+                break;
+            }
+            case SseEventType::Error: {
+                auto parsed = json::parse(data_str);
+                if (!parsed) {
+                    out_error_reason = data_str;
                     break;
                 }
-                case SseEventType::MessageDelta: {
-                    auto parsed = json::parse(data_str);
-                    if (!parsed) break;
-                    json::JsonVal root = parsed->root();
-                    if (auto delta = root.get("delta")) {
-                        if (auto sr = delta.get("stop_reason")) {
-                            std::string_view sv = sr.as_str();
-                            out_stop_reason.assign(sv.data(), sv.size());
-                        }
-                    }
-                    break;
-                }
-                case SseEventType::Error: {
-                    auto parsed = json::parse(data_str);
-                    if (!parsed) {
-                        out_error_reason = data_str;
-                        break;
-                    }
-                    json::JsonVal root = parsed->root();
-                    if (auto err = root.get("error")) {
-                        if (auto msg = err.get("message")) {
-                            std::string_view sv = msg.as_str();
+                json::JsonVal root = parsed->root();
+                if (auto err = root.get("error")) {
+                    if (auto msg = err.get("message")) {
+                        std::string_view sv = msg.as_str();
+                        out_error_reason.assign(sv.data(), sv.size());
+                    } else if (auto type_v = err.get("type")) {
+                        // Fallback: serialize the whole error object; if that
+                        // fails, fall back to the bare type string.
+                        std::string serialized = json::to_string(err);
+                        if (!serialized.empty()) {
+                            out_error_reason = std::move(serialized);
+                        } else {
+                            std::string_view sv = type_v.as_str();
                             out_error_reason.assign(sv.data(), sv.size());
-                        } else if (auto type_v = err.get("type")) {
-                            // Fallback: serialize the whole error object; if that
-                            // fails, fall back to the bare type string.
-                            std::string serialized = json::to_string(err);
-                            if (!serialized.empty()) {
-                                out_error_reason = std::move(serialized);
-                            } else {
-                                std::string_view sv = type_v.as_str();
-                                out_error_reason.assign(sv.data(), sv.size());
-                            }
                         }
                     }
-                    break;
                 }
-                case SseEventType::MessageStop:
-                    // Terminal event.  We intentionally do NOT fire on_final
-                    // here — on_final is fired once by PostMessagesStream when
-                    // curl_easy_perform returns, so HTTP status is included.
-                    break;
-                default:
-                    break;
+                break;
+            }
+            case SseEventType::MessageStop:
+                // Terminal event.  We intentionally do NOT fire on_final
+                // here — on_final is fired once by PostMessagesStream when
+                // curl_easy_perform returns, so HTTP status is included.
+                break;
+            default:
+                break;
             }
         }
     }
 
     [[nodiscard]] static SseEventType ClassifyEvent(std::string_view name) noexcept {
-        if (name == "message_start")       return SseEventType::MessageStart;
+        if (name == "message_start") return SseEventType::MessageStart;
         if (name == "content_block_start") return SseEventType::ContentBlockStart;
         if (name == "content_block_delta") return SseEventType::ContentBlockDelta;
-        if (name == "content_block_stop")  return SseEventType::ContentBlockStop;
-        if (name == "message_delta")       return SseEventType::MessageDelta;
-        if (name == "message_stop")        return SseEventType::MessageStop;
-        if (name == "error")               return SseEventType::Error;
-        if (name == "ping")                return SseEventType::Ping;
+        if (name == "content_block_stop") return SseEventType::ContentBlockStop;
+        if (name == "message_delta") return SseEventType::MessageDelta;
+        if (name == "message_stop") return SseEventType::MessageStop;
+        if (name == "error") return SseEventType::Error;
+        if (name == "ping") return SseEventType::Ping;
         return SseEventType::Unknown;
     }
 
-    ApiConfig   cfg_;
+    ApiConfig cfg_;
     std::string parser_buf_;  // incomplete SSE event buffer (cross-chunk)
 };
 
@@ -541,7 +518,7 @@ enum class SseEvent {
 
 /// Plain-text message required by dispatch (role as string, no image/tool support).
 struct Message {
-    std::string role = "user";   // "user" or "assistant" (dispatch semantics)
+    std::string role = "user";  // "user" or "assistant" (dispatch semantics)
     std::string text_content;
 };
 
@@ -552,32 +529,27 @@ struct Message {
 ///   on_complete()                        - message_stop or dry-run normal completion
 struct SseCallbacks {
     std::function<void(std::string_view event)> on_event;
-    std::function<void(std::string_view data)>  on_data;
+    std::function<void(std::string_view data)> on_data;
     std::function<void(int http_status, std::string error_reason)> on_error;
-    std::function<void()>                         on_complete;
+    std::function<void()> on_complete;
 };
 
 /// Adapts dispatch-style `PostMessagesStream(system_prompt, vector<Message>, SseCallbacks)`
 /// to the internal StreamingCallbacks; also constructs ApiConfig.
 /// Return semantics match SseClient::PostMessagesStream:
 ///   0=success, >0=HTTP status, <0=negated libcurl CURLE code.
-inline int PostMessagesStream(
-    std::string_view              base_url,
-    std::string_view              api_key,
-    std::string_view              system_prompt,
-    const std::vector<Message>&   messages,
-    SseCallbacks                  cbs,
-    std::string_view              api_version = "2023-06-01",
-    std::string_view              model_id    = "",
-    int                           max_tokens  = 8192,
-    double                        temperature = 0.7) {
+inline int PostMessagesStream(std::string_view base_url, std::string_view api_key,
+                              std::string_view system_prompt, const std::vector<Message>& messages,
+                              SseCallbacks cbs, std::string_view api_version = "2023-06-01",
+                              std::string_view model_id = "", int max_tokens = 8192,
+                              double temperature = 0.7) {
 
     ApiConfig cfg;
-    cfg.base_url    = std::string(base_url);
-    cfg.api_key     = std::string(api_key);
+    cfg.base_url = std::string(base_url);
+    cfg.api_key = std::string(api_key);
     cfg.api_version = std::string(api_version);
-    cfg.model_id    = std::string(model_id);
-    cfg.max_tokens  = max_tokens;
+    cfg.model_id = std::string(model_id);
+    cfg.max_tokens = max_tokens;
     cfg.temperature = temperature;
 
     SseClient client(std::move(cfg));
@@ -586,9 +558,12 @@ inline int PostMessagesStream(
     converted.reserve(messages.size());
     for (const auto& m : messages) {
         TextMessage tm;
-        if (m.role == "assistant")      tm.role = Role::Assistant;
-        else if (m.role == "system")    tm.role = Role::System;
-        else                            tm.role = Role::User;
+        if (m.role == "assistant")
+            tm.role = Role::Assistant;
+        else if (m.role == "system")
+            tm.role = Role::System;
+        else
+            tm.role = Role::User;
         tm.content = m.text_content;
         converted.push_back(std::move(tm));
     }
@@ -597,34 +572,49 @@ inline int PostMessagesStream(
     internal.on_sse_event = [cbs](SseEventType t, std::string_view data) {
         const char* name = "unknown";
         switch (t) {
-            case SseEventType::MessageStart:      name = "message_start";      break;
-            case SseEventType::ContentBlockStart: name = "content_block_start";break;
-            case SseEventType::ContentBlockDelta: name = "content_block_delta";break;
-            case SseEventType::ContentBlockStop:  name = "content_block_stop"; break;
-            case SseEventType::MessageDelta:      name = "message_delta";      break;
-            case SseEventType::MessageStop:       name = "message_stop";       break;
-            case SseEventType::Error:             name = "error";              break;
-            case SseEventType::Ping:              name = "ping";               break;
-            case SseEventType::Unknown:           name = "";                   break;
+        case SseEventType::MessageStart:
+            name = "message_start";
+            break;
+        case SseEventType::ContentBlockStart:
+            name = "content_block_start";
+            break;
+        case SseEventType::ContentBlockDelta:
+            name = "content_block_delta";
+            break;
+        case SseEventType::ContentBlockStop:
+            name = "content_block_stop";
+            break;
+        case SseEventType::MessageDelta:
+            name = "message_delta";
+            break;
+        case SseEventType::MessageStop:
+            name = "message_stop";
+            break;
+        case SseEventType::Error:
+            name = "error";
+            break;
+        case SseEventType::Ping:
+            name = "ping";
+            break;
+        case SseEventType::Unknown:
+            name = "";
+            break;
         }
         if (name[0] && cbs.on_event) cbs.on_event(name);
-        if (!data.empty() && cbs.on_data)  cbs.on_data(data);
+        if (!data.empty() && cbs.on_data) cbs.on_data(data);
     };
-    internal.on_final =
-        [cbs = std::move(cbs)](int http, std::string_view stop,
-                               std::string_view /*accum*/, std::string_view err) {
-            if (!err.empty() || (http != 0 && !(http >= 200 && http < 300))) {
-                if (cbs.on_error) {
-                    cbs.on_error(http,
-                                 err.empty()
-                                     ? std::string("HTTP ").append(std::to_string(http))
-                                     : std::string(err));
-                }
-            } else if (cbs.on_complete) {
-                cbs.on_complete();
+    internal.on_final = [cbs = std::move(cbs)](int http, std::string_view stop,
+                                               std::string_view /*accum*/, std::string_view err) {
+        if (!err.empty() || (http != 0 && !(http >= 200 && http < 300))) {
+            if (cbs.on_error) {
+                cbs.on_error(http, err.empty() ? std::string("HTTP ").append(std::to_string(http))
+                                               : std::string(err));
             }
-            (void)stop;
-        };
+        } else if (cbs.on_complete) {
+            cbs.on_complete();
+        }
+        (void)stop;
+    };
 
     return client.PostMessagesStream(system_prompt, converted, std::move(internal));
 }

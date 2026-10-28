@@ -15,28 +15,28 @@ import loom.serdes.yaml;
 
 namespace loom::tools::agent_runtime {
 
-[[nodiscard]] std::optional<std::string> yaml_scalar_to_string(const loom::utils::YamlValue& value) {
+[[nodiscard]] std::optional<std::string>
+yaml_scalar_to_string(const loom::utils::YamlValue& value) {
     if (const auto* text = std::get_if<std::string>(&value.data)) return *text;
     if (const auto* flag = std::get_if<bool>(&value.data)) return *flag ? "true" : "false";
     if (const auto* number = std::get_if<int64_t>(&value.data)) return std::to_string(*number);
     if (const auto* number = std::get_if<double>(&value.data)) return std::format("{}", *number);
     return std::nullopt;
 }
-[[nodiscard]] const loom::utils::YamlValue* yaml_field(
-    const loom::utils::YamlMap& fields,
-    std::string_view key
-) {
+
+[[nodiscard]] const loom::utils::YamlValue* yaml_field(const loom::utils::YamlMap& fields,
+                                                       std::string_view key) {
     auto it = fields.find(std::string(key));
     return it == fields.end() ? nullptr : &it->second;
 }
-[[nodiscard]] std::optional<std::string> yaml_string_field(
-    const loom::utils::YamlMap& fields,
-    std::string_view key
-) {
+
+[[nodiscard]] std::optional<std::string> yaml_string_field(const loom::utils::YamlMap& fields,
+                                                           std::string_view key) {
     const auto* value = yaml_field(fields, key);
     if (!value) return std::nullopt;
     return yaml_scalar_to_string(*value);
 }
+
 [[nodiscard]] std::vector<std::string> yaml_string_list(const loom::utils::YamlValue& value) {
     std::vector<std::string> values;
     if (const auto* array = std::get_if<loom::utils::YamlArray>(&value.data)) {
@@ -53,27 +53,24 @@ namespace loom::tools::agent_runtime {
     }
     return values;
 }
-[[nodiscard]] std::vector<std::string> yaml_string_list_field(
-    const loom::utils::YamlMap& fields,
-    std::string_view key
-) {
+
+[[nodiscard]] std::vector<std::string> yaml_string_list_field(const loom::utils::YamlMap& fields,
+                                                              std::string_view key) {
     const auto* value = yaml_field(fields, key);
     return value ? yaml_string_list(*value) : std::vector<std::string>{};
 }
-void append_yaml_string_map(
-    const loom::utils::YamlValue& value,
-    std::unordered_map<std::string, std::string>& out
-) {
+
+void append_yaml_string_map(const loom::utils::YamlValue& value,
+                            std::unordered_map<std::string, std::string>& out) {
     const auto* map = std::get_if<loom::utils::YamlMap>(&value.data);
     if (!map) return;
     for (const auto& [key, item] : *map) {
         if (auto scalar = yaml_scalar_to_string(item)) out[key] = std::move(*scalar);
     }
 }
-[[nodiscard]] std::optional<AgentInlineMcpServerConfig> parse_inline_mcp_server_config(
-    std::string name,
-    const loom::utils::YamlValue& value
-) {
+
+[[nodiscard]] std::optional<AgentInlineMcpServerConfig>
+parse_inline_mcp_server_config(std::string name, const loom::utils::YamlValue& value) {
     const auto* map = std::get_if<loom::utils::YamlMap>(&value.data);
     if (!map || name.empty()) return std::nullopt;
 
@@ -81,19 +78,24 @@ void append_yaml_string_map(
     config.name = std::move(name);
     if (auto type = yaml_string_field(*map, "type")) config.transport = std::move(*type);
     if (config.transport.empty()) {
-        if (auto transport = yaml_string_field(*map, "transport")) config.transport = std::move(*transport);
+        if (auto transport = yaml_string_field(*map, "transport"))
+            config.transport = std::move(*transport);
     }
     if (auto command = yaml_string_field(*map, "command")) config.command = std::move(*command);
     if (auto url = yaml_string_field(*map, "url")) config.url = std::move(*url);
     if (const auto* args = yaml_field(*map, "args")) config.args = yaml_string_list(*args);
     if (const auto* env = yaml_field(*map, "env")) append_yaml_string_map(*env, config.env);
-    if (const auto* headers = yaml_field(*map, "headers")) append_yaml_string_map(*headers, config.headers);
-    if (auto helper = yaml_string_field(*map, "headersHelper")) config.headers_helper = std::move(*helper);
+    if (const auto* headers = yaml_field(*map, "headers"))
+        append_yaml_string_map(*headers, config.headers);
+    if (auto helper = yaml_string_field(*map, "headersHelper"))
+        config.headers_helper = std::move(*helper);
     if (config.headers_helper.empty()) {
-        if (auto helper = yaml_string_field(*map, "headers_helper")) config.headers_helper = std::move(*helper);
+        if (auto helper = yaml_string_field(*map, "headers_helper"))
+            config.headers_helper = std::move(*helper);
     }
     return config;
 }
+
 [[nodiscard]] ParsedAgentMcpServers parse_agent_mcp_servers(const loom::utils::YamlValue& value) {
     ParsedAgentMcpServers parsed;
     if (const auto* array = std::get_if<loom::utils::YamlArray>(&value.data)) {
@@ -128,7 +130,9 @@ void append_yaml_string_map(
     }
     return parsed;
 }
-[[nodiscard]] std::optional<AgentHookCommand> parse_agent_hook_command(const loom::utils::YamlValue& value) {
+
+[[nodiscard]] std::optional<AgentHookCommand>
+parse_agent_hook_command(const loom::utils::YamlValue& value) {
     AgentHookCommand command;
     if (auto scalar = yaml_scalar_to_string(value)) {
         if (scalar->empty()) return std::nullopt;
@@ -141,13 +145,16 @@ void append_yaml_string_map(
 
     auto type = yaml_string_field(*map, "type").value_or("command");
     if (!type.empty() && canonicalize_agent_type(type) != "command") return std::nullopt;
-    auto raw_command = yaml_string_field(*map, "command").or_else([&] { return yaml_string_field(*map, "cmd"); });
+    auto raw_command =
+        yaml_string_field(*map, "command").or_else([&] { return yaml_string_field(*map, "cmd"); });
     if (!raw_command || raw_command->empty()) return std::nullopt;
     command.command = std::move(*raw_command);
     if (auto shell = yaml_string_field(*map, "shell"); shell && !shell->empty()) {
         command.shell = std::move(*shell);
     }
-    if (auto timeout = yaml_string_field(*map, "timeout").or_else([&] { return yaml_string_field(*map, "timeoutSeconds"); })) {
+    if (auto timeout = yaml_string_field(*map, "timeout").or_else([&] {
+            return yaml_string_field(*map, "timeoutSeconds");
+        })) {
         command.timeout_seconds = parse_positive_int(*timeout);
     }
     if (auto condition = yaml_string_field(*map, "if"); condition && !condition->empty()) {
@@ -155,11 +162,14 @@ void append_yaml_string_map(
     }
     return command;
 }
-[[nodiscard]] std::vector<AgentHookCommand> parse_agent_hook_commands(const loom::utils::YamlValue& value) {
+
+[[nodiscard]] std::vector<AgentHookCommand>
+parse_agent_hook_commands(const loom::utils::YamlValue& value) {
     std::vector<AgentHookCommand> commands;
     if (const auto* array = std::get_if<loom::utils::YamlArray>(&value.data)) {
         for (const auto& item : *array) {
-            if (auto command = parse_agent_hook_command(item)) commands.push_back(std::move(*command));
+            if (auto command = parse_agent_hook_command(item))
+                commands.push_back(std::move(*command));
         }
         return commands;
     }
@@ -173,7 +183,9 @@ void append_yaml_string_map(
     if (auto command = parse_agent_hook_command(value)) commands.push_back(std::move(*command));
     return commands;
 }
-[[nodiscard]] std::optional<AgentHookMatcher> parse_agent_hook_matcher(const loom::utils::YamlValue& value) {
+
+[[nodiscard]] std::optional<AgentHookMatcher>
+parse_agent_hook_matcher(const loom::utils::YamlValue& value) {
     AgentHookMatcher matcher;
     if (const auto* map = std::get_if<loom::utils::YamlMap>(&value.data)) {
         if (auto match = yaml_string_field(*map, "matcher"); match && !match->empty()) {
@@ -191,18 +203,22 @@ void append_yaml_string_map(
     if (matcher.hooks.empty()) return std::nullopt;
     return matcher;
 }
-[[nodiscard]] std::vector<AgentHookMatcher> parse_agent_hook_matchers(const loom::utils::YamlValue& value) {
+
+[[nodiscard]] std::vector<AgentHookMatcher>
+parse_agent_hook_matchers(const loom::utils::YamlValue& value) {
     std::vector<AgentHookMatcher> matchers;
     if (const auto* array = std::get_if<loom::utils::YamlArray>(&value.data)) {
         for (const auto& item : *array) {
-            if (auto matcher = parse_agent_hook_matcher(item)) matchers.push_back(std::move(*matcher));
+            if (auto matcher = parse_agent_hook_matcher(item))
+                matchers.push_back(std::move(*matcher));
         }
         return matchers;
     }
 
     if (const auto* map = std::get_if<loom::utils::YamlMap>(&value.data)) {
         if (map->contains("hooks") || map->contains("command") || map->contains("cmd")) {
-            if (auto matcher = parse_agent_hook_matcher(value)) matchers.push_back(std::move(*matcher));
+            if (auto matcher = parse_agent_hook_matcher(value))
+                matchers.push_back(std::move(*matcher));
             return matchers;
         }
         for (const auto& [matcher_name, hooks] : *map) {
@@ -220,6 +236,7 @@ void append_yaml_string_map(
     if (auto matcher = parse_agent_hook_matcher(value)) matchers.push_back(std::move(*matcher));
     return matchers;
 }
+
 [[nodiscard]] AgentHooksByEvent parse_agent_hooks(const loom::utils::YamlValue& value) {
     AgentHooksByEvent hooks;
     if (const auto* map = std::get_if<loom::utils::YamlMap>(&value.data)) {
@@ -228,7 +245,8 @@ void append_yaml_string_map(
             if (!matchers.empty()) {
                 auto target_event = canonical_hook_event_name(event);
                 auto& out = hooks[target_event];
-                out.insert(out.end(), std::make_move_iterator(matchers.begin()), std::make_move_iterator(matchers.end()));
+                out.insert(out.end(), std::make_move_iterator(matchers.begin()),
+                           std::make_move_iterator(matchers.end()));
             }
         }
         return hooks;
@@ -237,7 +255,8 @@ void append_yaml_string_map(
     if (const auto* array = std::get_if<loom::utils::YamlArray>(&value.data)) {
         for (const auto& item : *array) {
             if (auto event = yaml_scalar_to_string(item); event && !event->empty()) {
-                hooks.try_emplace(canonical_hook_event_name(*event), std::vector<AgentHookMatcher>{});
+                hooks.try_emplace(canonical_hook_event_name(*event),
+                                  std::vector<AgentHookMatcher>{});
             }
         }
     } else if (auto event = yaml_scalar_to_string(value); event && !event->empty()) {
@@ -245,10 +264,9 @@ void append_yaml_string_map(
     }
     return hooks;
 }
-[[nodiscard]] std::optional<AgentDefinition> parse_agent_markdown(
-    const fs::path& path,
-    std::string source
-) {
+
+[[nodiscard]] std::optional<AgentDefinition> parse_agent_markdown(const fs::path& path,
+                                                                  std::string source) {
     std::ifstream input(path);
     if (!input) return std::nullopt;
 
@@ -262,10 +280,8 @@ void append_yaml_string_map(
     auto frontmatter_end = text.find("\n---", first_newline + 1);
     if (frontmatter_end == std::string::npos) return std::nullopt;
 
-    const auto frontmatter_text = std::string_view(text).substr(
-        first_newline + 1,
-        frontmatter_end - first_newline - 1
-    );
+    const auto frontmatter_text =
+        std::string_view(text).substr(first_newline + 1, frontmatter_end - first_newline - 1);
     auto parsed_frontmatter = loom::utils::parse_yaml(frontmatter_text);
     const auto* fields = std::get_if<loom::utils::YamlMap>(&parsed_frontmatter.data);
     if (!fields) return std::nullopt;
@@ -303,7 +319,8 @@ void append_yaml_string_map(
     }
 
     auto body_start = text.find('\n', frontmatter_end + 4);
-    std::string body = body_start == std::string::npos ? "" : trim(std::string_view(text).substr(body_start + 1));
+    std::string body =
+        body_start == std::string::npos ? "" : trim(std::string_view(text).substr(body_start + 1));
 
     AgentDefinition definition;
     definition.agent_type = *name;
@@ -315,9 +332,8 @@ void append_yaml_string_map(
     if (model_raw && !model_raw->empty()) {
         auto trimmed = trim(*model_raw);
         auto lowered = trimmed;
-        std::ranges::transform(lowered, lowered.begin(), [](unsigned char c) {
-            return static_cast<char>(std::tolower(c));
-        });
+        std::ranges::transform(lowered, lowered.begin(),
+                               [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
         definition.model = lowered == "inherit" ? std::string{"inherit"} : trimmed;
     } else {
         definition.model = "inherit";
@@ -333,15 +349,18 @@ void append_yaml_string_map(
     definition.system_prompt = std::move(body);
     definition.tools = yaml_string_list_field(*fields, "tools");
     definition.disallowed_tools = yaml_string_list_field(*fields, "disallowedTools");
-    if (auto permission_mode = yaml_string_field(*fields, "permissionMode"); permission_mode && !permission_mode->empty()) {
+    if (auto permission_mode = yaml_string_field(*fields, "permissionMode");
+        permission_mode && !permission_mode->empty()) {
         definition.permission_mode = std::move(*permission_mode);
     }
     if (const auto* effort_value = yaml_field(*fields, "effort")) {
-        if (auto effort = yaml_scalar_to_string(*effort_value); effort && valid_agent_effort(*effort)) {
+        if (auto effort = yaml_scalar_to_string(*effort_value);
+            effort && valid_agent_effort(*effort)) {
             definition.effort = std::move(*effort);
         }
     }
-    if (auto memory = yaml_string_field(*fields, "memory"); memory && valid_agent_memory_scope(*memory)) {
+    if (auto memory = yaml_string_field(*fields, "memory");
+        memory && valid_agent_memory_scope(*memory)) {
         definition.memory = std::move(*memory);
     }
     if (auto color = yaml_string_field(*fields, "color"); color && valid_agent_color(*color)) {
@@ -350,8 +369,9 @@ void append_yaml_string_map(
     if (auto omit = yaml_string_field(*fields, "omitLoomMd")) {
         definition.omit_loom_md = parse_bool_field(*omit);
     }
-    auto critical = yaml_string_field(*fields, "criticalSystemReminder_EXPERIMENTAL")
-        .or_else([&] { return yaml_string_field(*fields, "criticalSystemReminder"); });
+    auto critical = yaml_string_field(*fields, "criticalSystemReminder_EXPERIMENTAL").or_else([&] {
+        return yaml_string_field(*fields, "criticalSystemReminder");
+    });
     if (critical && !critical->empty()) {
         definition.critical_system_reminder = std::move(*critical);
     }
@@ -381,10 +401,9 @@ void append_yaml_string_map(
     }
     return definition;
 }
-[[nodiscard]] std::string get_parse_error(
-    const loom::utils::YamlMap& fields,
-    std::string_view fallback
-) {
+
+[[nodiscard]] std::string get_parse_error(const loom::utils::YamlMap& fields,
+                                          std::string_view fallback) {
     const auto name = yaml_string_field(fields, "name");
     if (!name || name->empty()) {
         return "Missing required \"name\" field in frontmatter";
@@ -395,4 +414,4 @@ void append_yaml_string_map(
     }
     return std::string(fallback);
 }
-} // namespace loom::tools::agent_runtime
+}  // namespace loom::tools::agent_runtime

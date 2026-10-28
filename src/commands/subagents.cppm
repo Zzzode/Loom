@@ -3,8 +3,10 @@ export module loom.commands.subagents;
 import std;
 import loom.types.types;
 import loom.commands.command;
+
 export namespace loom::commands {
 using namespace loom::core;
+
 class SubagentsCommand {
 public:
     [[nodiscard]] static CommandDefinition definition();
@@ -12,4 +14,4 @@ public:
     [[nodiscard]] loom::core::VoidResult validate(const CommandContext& ctx);
     [[nodiscard]] loom::core::Result<CommandResult> execute(const CommandContext& ctx);
 };
-}
+}  // namespace loom::commands

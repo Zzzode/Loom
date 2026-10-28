@@ -13,14 +13,14 @@
 ///      Ctrl+C ({0x03}) -> on_abort (separate code path from Esc).
 ///   4. Mode dispatch: options non-empty => SELECT, options empty => FREE-TEXT.
 
-#include <cstdlib>
-
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/event.hpp>
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/dom/node.hpp>
 #include <ftxui/screen/screen.hpp>
 #include <gtest/gtest.h>
+
+#include <cstdlib>
 
 import std;
 import loom.ui.dialogs.prompt_dialog;
@@ -43,12 +43,8 @@ using loom::ui::dialogs::prompt_dialog::PromptOption;
 // ---------------------------------------------------------------------------
 
 /// Render an FTXUI Component to a plain-string snapshot.
-std::string RenderComponent(const Component& component,
-                            int width = 92,
-                            int height = 28)
-{
-    auto screen = Screen::Create(Dimension::Fixed(width),
-                                 Dimension::Fixed(height));
+std::string RenderComponent(const Component& component, int width = 92, int height = 28) {
+    auto screen = Screen::Create(Dimension::Fixed(width), Dimension::Fixed(height));
     auto doc = component->Render();
     Render(screen, doc);
     return screen.ToString();
@@ -63,7 +59,8 @@ std::string StripAnsi(std::string_view s) {
     while (i < s.size()) {
         if (s[i] == '\033' && i + 1 < s.size() && s[i + 1] == '[') {
             i += 2;
-            while (i < s.size() && (s[i] < 0x40 || s[i] > 0x7E)) ++i;
+            while (i < s.size() && (s[i] < 0x40 || s[i] > 0x7E))
+                ++i;
             if (i < s.size()) ++i;
             continue;
         }
@@ -127,36 +124,30 @@ bool ShouldUpdateGoldens() {
 /// content to disk and succeed; otherwise we compare and report diff.
 void ExpectGolden(std::string_view name, std::string_view content) {
     const auto path = GoldenDir() / (std::string{name} + ".txt");
-    const std::string normalized = normalize_line_endings(
-        std::string{content} + "\n");
+    const std::string normalized = normalize_line_endings(std::string{content} + "\n");
 
     if (ShouldUpdateGoldens()) {
         fs::create_directories(path.parent_path());
         std::ofstream out{path, std::ios::binary | std::ios::trunc};
         ASSERT_TRUE(out.good()) << "Failed to write golden: " << path;
-        out.write(normalized.data(),
-                  static_cast<std::streamsize>(normalized.size()));
+        out.write(normalized.data(), static_cast<std::streamsize>(normalized.size()));
         SUCCEED() << "Wrote golden: " << path;
         return;
     }
 
     ASSERT_TRUE(fs::is_regular_file(path))
-        << "Missing golden file " << path
-        << " (re-run with UPDATE_GOLDENS=1 to create)";
+        << "Missing golden file " << path << " (re-run with UPDATE_GOLDENS=1 to create)";
 
     std::ifstream in{path, std::ios::binary};
-    std::string expected_raw(
-        (std::istreambuf_iterator<char>(in)),
-        std::istreambuf_iterator<char>());
+    std::string expected_raw((std::istreambuf_iterator<char>(in)),
+                             std::istreambuf_iterator<char>());
     const std::string expected = normalize_line_endings(expected_raw);
 
     EXPECT_EQ(normalized, expected)
         << "Golden mismatch for " << name << "\n"
         << "--- expected (" << path << ")\n"
-        << expected
-        << "--- actual\n"
-        << normalized
-        << "---\nRe-run with UPDATE_GOLDENS=1 to regenerate.";
+        << expected << "--- actual\n"
+        << normalized << "---\nRe-run with UPDATE_GOLDENS=1 to regenerate.";
 }
 
 // ---------------------------------------------------------------------------
@@ -174,7 +165,7 @@ TEST(PromptDialogPayload, RequiredFieldsExist) {
     // field is missing or misnamed, this test will fail to compile.
     payload.options = std::vector<PromptOption>{
         PromptOption{"Yes", "yes", "Agree"},
-        PromptOption{"No",  "no",  "Disagree"},
+        PromptOption{"No", "no", "Disagree"},
     };
     payload.selected_index = 1;
     payload.tool_input_summary = "run tests";
@@ -255,9 +246,9 @@ TEST(PromptDialogSelect, prompt_dialog_select_3_options) {
     PromptDialogPayload payload;
     payload.title = "What would you like to do?";
     payload.options = std::vector<PromptOption>{
-        PromptOption{"Edit a file",      "edit",    "FileEditTool"},
-        PromptOption{"Run a command",    "bash",    "BashTool"},
-        PromptOption{"Search the web",   "web",     "WebSearchTool"},
+        PromptOption{"Edit a file", "edit", "FileEditTool"},
+        PromptOption{"Run a command", "bash", "BashTool"},
+        PromptOption{"Search the web", "web", "WebSearchTool"},
     };
     payload.selected_index = 0;
     Component c = MakePromptDialog(std::move(payload));
@@ -268,29 +259,27 @@ TEST(PromptDialogSelect, prompt_dialog_select_focus_on_second_row) {
     PromptDialogPayload payload;
     payload.title = "Pick an action";
     payload.options = std::vector<PromptOption>{
-        PromptOption{"First",  "a", "option A"},
+        PromptOption{"First", "a", "option A"},
         PromptOption{"Second", "b", "option B"},
-        PromptOption{"Third",  "c", "option C"},
+        PromptOption{"Third", "c", "option C"},
     };
-    payload.selected_index = 1; // focus on second row (1-based index 2)
+    payload.selected_index = 1;  // focus on second row (1-based index 2)
     Component c = MakePromptDialog(std::move(payload));
-    ExpectGolden("prompt_dialog_select_focus_on_second_row",
-                 StripAnsi(RenderComponent(c)));
+    ExpectGolden("prompt_dialog_select_focus_on_second_row", StripAnsi(RenderComponent(c)));
 }
 
 TEST(PromptDialogSelect, prompt_dialog_with_tool_input_summary) {
     PromptDialogPayload payload;
     payload.title = "Allow this command?";
     payload.options = std::vector<PromptOption>{
-        PromptOption{"Allow once",    "once",   "Run now"},
-        PromptOption{"Always allow",  "always", "Remember"},
-        PromptOption{"Deny",          "deny",   "Reject"},
+        PromptOption{"Allow once", "once", "Run now"},
+        PromptOption{"Always allow", "always", "Remember"},
+        PromptOption{"Deny", "deny", "Reject"},
     };
     payload.selected_index = 0;
     payload.tool_input_summary = "BashTool: rm -rf /tmp/build-cache";
     Component c = MakePromptDialog(std::move(payload));
-    ExpectGolden("prompt_dialog_with_tool_input_summary",
-                 StripAnsi(RenderComponent(c)));
+    ExpectGolden("prompt_dialog_with_tool_input_summary", StripAnsi(RenderComponent(c)));
 }
 
 // ---------------------------------------------------------------------------
@@ -327,7 +316,7 @@ TEST(PromptDialogSelect, ArrowDownAndUpMoveFocusWithWrap) {
     payload2.selected_index = 0;
     payload2.on_select = [&](const std::string& k) { fired_key = k; };
     Component c2 = MakePromptDialog(std::move(payload2));
-    (void)c2->OnEvent(Event::ArrowUp); // wraps to C
+    (void)c2->OnEvent(Event::ArrowUp);  // wraps to C
     (void)c2->OnEvent(Event::Return);
     EXPECT_EQ(fired_key, "c");
 }
@@ -360,9 +349,9 @@ TEST(PromptDialogSelect, JAndKMoveFocus) {
     payload2.selected_index = 0;
     payload2.on_select = [&](const std::string& k) { fired_key = k; };
     Component c2 = MakePromptDialog(std::move(payload2));
-    (void)c2->OnEvent(Event::Character('j')); // 1
-    (void)c2->OnEvent(Event::Character('j')); // 2
-    (void)c2->OnEvent(Event::Character('j')); // wrap to 0
+    (void)c2->OnEvent(Event::Character('j'));  // 1
+    (void)c2->OnEvent(Event::Character('j'));  // 2
+    (void)c2->OnEvent(Event::Character('j'));  // wrap to 0
     (void)c2->OnEvent(Event::Return);
     EXPECT_EQ(fired_key, "a");
 }
@@ -372,8 +361,8 @@ TEST(PromptDialogSelect, NumericShortcutsCommitImmediately) {
     std::optional<std::string> resp;
     PromptDialogPayload payload;
     payload.options = std::vector<PromptOption>{
-        PromptOption{"One",   "key-1", ""},
-        PromptOption{"Two",   "key-2", ""},
+        PromptOption{"One", "key-1", ""},
+        PromptOption{"Two", "key-2", ""},
         PromptOption{"Three", "key-3", ""},
     };
     payload.selected_index = 0;
@@ -414,8 +403,8 @@ TEST(PromptDialogSelect, EscapeCallsOnResponseNullopt) {
     payload.on_response = [&](std::optional<std::string> r) { resp = std::move(r); };
     Component c = MakePromptDialog(std::move(payload));
     (void)c->OnEvent(Event::Escape);
-    EXPECT_TRUE(resp.has_value() == false); // nullopt
-    EXPECT_FALSE(abort_called.load()); // abort is separate code path
+    EXPECT_TRUE(resp.has_value() == false);  // nullopt
+    EXPECT_FALSE(abort_called.load());       // abort is separate code path
 }
 
 TEST(PromptDialogSelect, CtrlCCallsOnAbortSeparateFromEscape) {
@@ -427,16 +416,14 @@ TEST(PromptDialogSelect, CtrlCCallsOnAbortSeparateFromEscape) {
         PromptOption{"B", "b", ""},
     };
     payload.on_abort = [&] { abort_called.store(true); };
-    payload.on_response = [&](std::optional<std::string>) {
-        response_called.store(true);
-    };
+    payload.on_response = [&](std::optional<std::string>) { response_called.store(true); };
     Component c = MakePromptDialog(std::move(payload));
 
     // ftxui::Event::CtrlC does not exist. We use Event::Special({0x03})
     // which is the byte-level encoding the terminal emits for Ctrl+C.
     (void)c->OnEvent(Event::Special({0x03}));
     EXPECT_TRUE(abort_called.load());
-    EXPECT_FALSE(response_called.load()); // distinct from Esc path
+    EXPECT_FALSE(response_called.load());  // distinct from Esc path
 }
 
 // ---------------------------------------------------------------------------
@@ -447,7 +434,7 @@ TEST(PromptDialogFreeText, EnterSubmitsEscapeCancelsCtrlCAborts) {
     std::optional<std::string> resp;
     std::atomic<bool> abort_called{false};
     PromptDialogPayload payload;
-    payload.options = {}; // FREE-TEXT
+    payload.options = {};  // FREE-TEXT
     payload.title = "Your name";
     payload.placeholder = "Type your name…";
     payload.on_response = [&](std::optional<std::string> r) { resp = std::move(r); };
@@ -469,16 +456,14 @@ TEST(PromptDialogFreeText, EnterSubmitsEscapeCancelsCtrlCAborts) {
     payload2.on_abort = [&] { abort_called.store(true); };
     Component c2 = MakePromptDialog(std::move(payload2));
     (void)c2->OnEvent(Event::Escape);
-    EXPECT_FALSE(resp.has_value()); // nullopt
+    EXPECT_FALSE(resp.has_value());  // nullopt
     EXPECT_FALSE(abort_called.load());
 
     // Ctrl+C: abort only.
     abort_called.store(false);
     PromptDialogPayload payload3;
     payload3.options = {};
-    payload3.on_response = [&](std::optional<std::string>) {
-        response_called_global = true;
-    };
+    payload3.on_response = [&](std::optional<std::string>) { response_called_global = true; };
     payload3.on_abort = [&] { abort_called.store(true); };
     Component c3 = MakePromptDialog(std::move(payload3));
     response_called_global = false;
@@ -487,4 +472,4 @@ TEST(PromptDialogFreeText, EnterSubmitsEscapeCancelsCtrlCAborts) {
     EXPECT_FALSE(response_called_global);
 }
 
-} // namespace
+}  // namespace

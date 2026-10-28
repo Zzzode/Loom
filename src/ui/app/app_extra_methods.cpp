@@ -34,9 +34,9 @@ import loom.model.model;
 import loom.scm.git.git;
 import loom.text.parse_references;
 import loom.ui.features.agents.agent_shared_widgets;
-import loom.ui.features.todos.todo_panel;       // TodoDisplayItem
+import loom.ui.features.todos.todo_panel; // TodoDisplayItem
 import loom.ui.foundation.clock;
-import loom.tools.todo_write;                    // todo_write_store()
+import loom.tools.todo_write; // todo_write_store()
 import loom.tools.agent_display;
 
 // ── Imports available via the interface but needed for namespace aliases ─
@@ -52,8 +52,8 @@ namespace agent_display = loom::tools::agent_display;
 
 // ── project_agent_definition_card (moved out of app.cppm) ───────────────
 // Agent defs with color + truncated when_to_use.
-agent_cards::AgentCardData project_agent_definition_card(
-    const agent_runtime::AgentDefinition& agent) {
+agent_cards::AgentCardData
+project_agent_definition_card(const agent_runtime::AgentDefinition& agent) {
     agent_cards::AgentCardData card;
     card.id = agent.agent_type;
     card.name = agent.agent_type;
@@ -101,88 +101,89 @@ void AppAdapter::RunLocalBashCommand(std::string command) {
 
     bash_running_.store(true);
     const auto program_generation = BeginProgramStatusOperation();
-    const std::string cwd = static_cast<loom::core::QueryEngine*>(engine_raw()) ? static_cast<loom::core::QueryEngine*>(engine_raw())->working_directory() : std::string{};
-    bash_thread_ = std::jthread(
-        [this, command, cwd, session_id = current_session_id_, program_generation,
-         dispatch = ui_dispatcher()](std::stop_token st) {
-            // POSIX single-quote helper for paths with spaces/quotes.
-            auto sq = [](std::string_view s) {
-                std::string out = "'";
-                for (char c : s) {
-                    if (c == '\'') out += "'\\''";
-                    else out += c;
-                }
-                out += "'";
-                return out;
-            };
-
-            // Write final cwd to a tempfile (not stdout) so command output
-            // can't collide with the cwd data.  Use && so pwd -P only runs
-            // on success (failed commands shouldn't change cwd).
-            const auto cwd_file = std::filesystem::temp_directory_path() /
-                ("loom-cwd-" + session_id);
-            const std::string cwd_file_str = cwd_file.string();
-
-            std::string full;
-            if (!cwd.empty()) {
-                full = "cd " + sq(cwd) + " && " + command +
-                       " 2>&1 && pwd -P > " + sq(cwd_file_str);
-            } else {
-                full = command + " 2>&1 && pwd -P > " + sq(cwd_file_str);
+    const std::string cwd =
+        static_cast<loom::core::QueryEngine*>(engine_raw())
+            ? static_cast<loom::core::QueryEngine*>(engine_raw())->working_directory()
+            : std::string{};
+    bash_thread_ = std::jthread([this, command, cwd, session_id = current_session_id_,
+                                 program_generation,
+                                 dispatch = ui_dispatcher()](std::stop_token st) {
+        // POSIX single-quote helper for paths with spaces/quotes.
+        auto sq = [](std::string_view s) {
+            std::string out = "'";
+            for (char c : s) {
+                if (c == '\'')
+                    out += "'\\''";
+                else
+                    out += c;
             }
+            out += "'";
+            return out;
+        };
 
-            std::string output;
-            bool is_error = false;
-            if (FILE* pipe = loom::utils::bash::popen_spawn(full)) {
-                std::array<char, 4096> buf{};
-                while (!st.stop_requested() &&
-                       std::fgets(buf.data(), static_cast<int>(buf.size()), pipe)
-                               != nullptr) {
-                    output += buf.data();
-                }
-                const int status = loom::utils::bash::pclose_spawn(pipe);
-                is_error = status != 0;
-            } else {
-                output = "Command failed: could not spawn /bin/sh";
-                is_error = true;
-            }
+        // Write final cwd to a tempfile (not stdout) so command output
+        // can't collide with the cwd data.  Use && so pwd -P only runs
+        // on success (failed commands shouldn't change cwd).
+        const auto cwd_file = std::filesystem::temp_directory_path() / ("loom-cwd-" + session_id);
+        const std::string cwd_file_str = cwd_file.string();
 
-            // Trim trailing newlines from the visible output.
-            while (!output.empty() &&
-                   (output.back() == '\n' || output.back() == '\r')) {
-                output.pop_back();
-            }
+        std::string full;
+        if (!cwd.empty()) {
+            full = "cd " + sq(cwd) + " && " + command + " 2>&1 && pwd -P > " + sq(cwd_file_str);
+        } else {
+            full = command + " 2>&1 && pwd -P > " + sq(cwd_file_str);
+        }
 
-            // Read the cwd file (only exists if command succeeded).
-            std::string new_cwd;
-            {
-                std::ifstream ifs(cwd_file_str);
-                if (ifs.is_open()) {
-                    std::getline(ifs, new_cwd);
-                    // Trim trailing whitespace
-                    while (!new_cwd.empty() &&
-                           (new_cwd.back() == '\n' || new_cwd.back() == '\r' ||
-                            new_cwd.back() == ' '))
-                        new_cwd.pop_back();
-                }
-                // Clean up tempfile
-                std::error_code ec;
-                std::filesystem::remove(cwd_file, ec);
+        std::string output;
+        bool is_error = false;
+        if (FILE* pipe = loom::utils::bash::popen_spawn(full)) {
+            std::array<char, 4096> buf{};
+            while (!st.stop_requested() &&
+                   std::fgets(buf.data(), static_cast<int>(buf.size()), pipe) != nullptr) {
+                output += buf.data();
             }
+            const int status = loom::utils::bash::pclose_spawn(pipe);
+            is_error = status != 0;
+        } else {
+            output = "Command failed: could not spawn /bin/sh";
+            is_error = true;
+        }
 
-            {
-                std::lock_guard lk(bash_result_mutex_);
-                pending_bash_result_ = PendingBashResult{
-                    .output = std::move(output), .is_error = is_error,
-                    .cwd = new_cwd != cwd ? std::move(new_cwd) : std::string{},
-                    .session_id = session_id};
+        // Trim trailing newlines from the visible output.
+        while (!output.empty() && (output.back() == '\n' || output.back() == '\r')) {
+            output.pop_back();
+        }
+
+        // Read the cwd file (only exists if command succeeded).
+        std::string new_cwd;
+        {
+            std::ifstream ifs(cwd_file_str);
+            if (ifs.is_open()) {
+                std::getline(ifs, new_cwd);
+                // Trim trailing whitespace
+                while (!new_cwd.empty() &&
+                       (new_cwd.back() == '\n' || new_cwd.back() == '\r' || new_cwd.back() == ' '))
+                    new_cwd.pop_back();
             }
-            dispatch([this, program_generation, is_error] {
-                CompleteProgramStatusOperation(program_generation, is_error, false);
-            });
-            bash_running_.store(false);
-            PostRenderEvent();
+            // Clean up tempfile
+            std::error_code ec;
+            std::filesystem::remove(cwd_file, ec);
+        }
+
+        {
+            std::lock_guard lk(bash_result_mutex_);
+            pending_bash_result_ =
+                PendingBashResult{.output = std::move(output),
+                                  .is_error = is_error,
+                                  .cwd = new_cwd != cwd ? std::move(new_cwd) : std::string{},
+                                  .session_id = session_id};
+        }
+        dispatch([this, program_generation, is_error] {
+            CompleteProgramStatusOperation(program_generation, is_error, false);
         });
+        bash_running_.store(false);
+        PostRenderEvent();
+    });
 }
 
 // ── ProjectRuntimeMetadataToScreenState (moved out of app.cppm) ─────────
@@ -191,16 +192,14 @@ void AppAdapter::ProjectRuntimeMetadataToScreenState() {
     // usage/budget/config state. query_running_'s completion store publishes
     // those writes before the UI reads the next snapshot.
     if (query_running_.load()) return;
-    const auto& model_id = static_cast<loom::core::QueryEngine*>(engine_raw())->model_params().model;
+    const auto& model_id =
+        static_cast<loom::core::QueryEngine*>(engine_raw())->model_params().model;
     screen_state_->chrome_store.status_bar.model_name = model_id;
-    screen_state_->chrome_store.model_display_name =
-        loom::utils::get_model_display_name(model_id);
+    screen_state_->chrome_store.model_display_name = loom::utils::get_model_display_name(model_id);
 
     auto usage = static_cast<loom::core::QueryEngine*>(engine_raw())->get_usage();
-    screen_state_->chrome_store.status_bar.input_tokens =
-        static_cast<int>(usage.input_tokens);
-    screen_state_->chrome_store.status_bar.output_tokens =
-        static_cast<int>(usage.output_tokens);
+    screen_state_->chrome_store.status_bar.input_tokens = static_cast<int>(usage.input_tokens);
+    screen_state_->chrome_store.status_bar.output_tokens = static_cast<int>(usage.output_tokens);
     screen_state_->chrome_store.status_bar.cost_usd =
         static_cast<loom::core::QueryEngine*>(engine_raw())->budget_tracker().current_spend_usd;
     const auto context = static_cast<loom::core::QueryEngine*>(engine_raw())->context_usage();
@@ -217,8 +216,8 @@ void AppAdapter::ProjectRuntimeMetadataToScreenState() {
     // every render event).
     if (screen_state_->cwd != last_branch_cwd_) {
         last_branch_cwd_ = screen_state_->cwd;
-        cached_git_branch_ = loom::utils::git::get_branch(
-            last_branch_cwd_.empty() ? "." : last_branch_cwd_);
+        cached_git_branch_ =
+            loom::utils::git::get_branch(last_branch_cwd_.empty() ? "." : last_branch_cwd_);
     }
     screen_state_->chrome_store.git_branch = cached_git_branch_;
 }
@@ -259,36 +258,36 @@ void AppAdapter::ProjectTodosToScreenState() {
         todos::TodoDisplayItem display;
         display.content = item.content;
         switch (item.status) {
-            case loom::tools::TodoStatus::InProgress:
-                display.status = todos::TodoDisplayItem::Status::InProgress;
-                break;
-            case loom::tools::TodoStatus::Completed:
-                display.status = todos::TodoDisplayItem::Status::Completed;
-                break;
-            case loom::tools::TodoStatus::Pending:
-            default:
-                display.status = todos::TodoDisplayItem::Status::Pending;
-                break;
+        case loom::tools::TodoStatus::InProgress:
+            display.status = todos::TodoDisplayItem::Status::InProgress;
+            break;
+        case loom::tools::TodoStatus::Completed:
+            display.status = todos::TodoDisplayItem::Status::Completed;
+            break;
+        case loom::tools::TodoStatus::Pending:
+        default:
+            display.status = todos::TodoDisplayItem::Status::Pending;
+            break;
         }
         switch (item.priority) {
-            case loom::tools::Priority::High:
-                display.priority = todos::TodoDisplayItem::Priority::High;
-                break;
-            case loom::tools::Priority::Low:
-                display.priority = todos::TodoDisplayItem::Priority::Low;
-                break;
-            case loom::tools::Priority::Medium:
-            default:
-                display.priority = todos::TodoDisplayItem::Priority::Medium;
-                break;
+        case loom::tools::Priority::High:
+            display.priority = todos::TodoDisplayItem::Priority::High;
+            break;
+        case loom::tools::Priority::Low:
+            display.priority = todos::TodoDisplayItem::Priority::Low;
+            break;
+        case loom::tools::Priority::Medium:
+        default:
+            display.priority = todos::TodoDisplayItem::Priority::Medium;
+            break;
         }
         out.push_back(std::move(display));
     }
     const auto now = clock::steady_now();
     if (out != store.items) store.completed_at.reset();
     store.items = std::move(out);
-    const bool all_completed = !store.items.empty() &&
-        std::ranges::all_of(store.items, [](const auto& item) {
+    const bool all_completed =
+        !store.items.empty() && std::ranges::all_of(store.items, [](const auto& item) {
             return item.status == todos::TodoDisplayItem::Status::Completed;
         });
     todo_collapse_deadline_ms_.store(0);
@@ -302,8 +301,8 @@ void AppAdapter::ProjectTodosToScreenState() {
     store.completed_collapsed = now >= due;
     // The worker only wakes the UI; it never reads the unsynchronized test clock.
     if (!store.completed_collapsed && screen_.load())
-        todo_collapse_deadline_ms_.store(std::chrono::ceil<std::chrono::milliseconds>(
-            due.time_since_epoch()).count());
+        todo_collapse_deadline_ms_.store(
+            std::chrono::ceil<std::chrono::milliseconds>(due.time_since_epoch()).count());
 }
 
 // ── ApplyMessageCollapsePipeline (moved out of app.cppm) ────────────────
@@ -313,8 +312,7 @@ void AppAdapter::ProjectTodosToScreenState() {
 // engine no longer emits their summary formats — the function is retained
 // as a pass-through so call sites stay stable.  If a future collapse pass
 // is needed, slot it in here.
-std::vector<Message> AppAdapter::ApplyMessageCollapsePipeline(
-    std::vector<Message> messages) const {
+std::vector<Message> AppAdapter::ApplyMessageCollapsePipeline(std::vector<Message> messages) const {
     return messages;
 }
 
@@ -334,8 +332,8 @@ void AppAdapter::SpawnPasteWorker(int id) {
     // P4-1b: delegates to PasteCoordinator.  The coordinator owns the
     // in-flight set, the pending-result maps, and the background thread.
     // PostRenderEvent is injected as the wake callback.
-    paste_.SpawnPasteWorker(id, [this] { this->PostRenderEvent(); },
-                            no_real_paste_worker_for_testing_);
+    paste_.SpawnPasteWorker(
+        id, [this] { this->PostRenderEvent(); }, no_real_paste_worker_for_testing_);
 }
 
 // ── ProcessCompletedPastes (moved out of app.cppm) ──────────────────────
@@ -434,18 +432,18 @@ void AppAdapter::ProcessCompletedPastes() {
                 // Adjust cursor if it was past the erased region.
                 auto cursor = screen_state_->input_cursor;
                 if (cursor != std::string::npos && cursor > erase_start) {
-                    cursor = (cursor >= erase_start + erase_len)
-                        ? cursor - erase_len
-                        : erase_start;
+                    cursor = (cursor >= erase_start + erase_len) ? cursor - erase_len : erase_start;
                     screen_state_->input_cursor = cursor;
                 }
             }
             paste_.pasted_contents().erase(id);  // just in case
-            paste_.mark_completed(id);  // main thread
+            paste_.mark_completed(id);           // main thread
         }
     }
 }
 
-void AppAdapter::set_mouse_mode(bool active) { mouse_mode_ = active; }
+void AppAdapter::set_mouse_mode(bool active) {
+    mouse_mode_ = active;
+}
 
-} // namespace loom::ui
+}  // namespace loom::ui

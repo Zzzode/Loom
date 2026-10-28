@@ -19,13 +19,13 @@ export module loom.tools.runtime_team_shared;
 import std;
 
 import loom.serdes.json;
-import loom.tools.agent_worktree;       // cleanup_agent_worktree
-import loom.tools.agent_runtime;        // NativeAgentRecord / native_agent_store / runtime_state_dir
-import loom.tools.bash;                 // stop_background_tasks_for_agent
+import loom.tools.agent_worktree; // cleanup_agent_worktree
+import loom.tools.agent_runtime;  // NativeAgentRecord / native_agent_store / runtime_state_dir
+import loom.tools.bash;           // stop_background_tasks_for_agent
 import loom.tools.team;
 import loom.tools.runtime_shared_utils; // safe_runtime_dir_component, path helpers
 import loom.teams.team_helpers;         // team_runtime_dir
-import loom.fs.atomic_replace;       // c16 hardened team-data replaces
+import loom.fs.atomic_replace;          // c16 hardened team-data replaces
 import loom.teams.swarm.backends;       // BackendRegistry
 
 export namespace loom::tools::runtime_team_shared {
@@ -42,7 +42,8 @@ using loom::tools::agent_runtime::NativeAgentRecord;
 /// hard-coded in `runtime_registry::native_agent_status_is_terminal`. Tests
 /// and wrappers can use this as a fallback when no caller-defined predicate
 /// is supplied.
-[[nodiscard]] inline bool is_terminal_default(loom::tools::agent_runtime::NativeAgentStatus status) {
+[[nodiscard]] inline bool
+is_terminal_default(loom::tools::agent_runtime::NativeAgentStatus status) {
     using S = loom::tools::agent_runtime::NativeAgentStatus;
     return status == S::Completed || status == S::Failed || status == S::Cancelled;
 }
@@ -52,7 +53,8 @@ using loom::tools::agent_runtime::NativeAgentRecord;
 //     verbatim because they already have 3 call sites in runtime_registry).
 // ---------------------------------------------------------------------------
 
-[[nodiscard]] inline std::optional<std::string> json_string(json::JsonVal obj, std::string_view key) {
+[[nodiscard]] inline std::optional<std::string> json_string(json::JsonVal obj,
+                                                            std::string_view key) {
     auto val = obj.get(key);
     if (!val.is_str()) return std::nullopt;
     return std::string(val.as_str());
@@ -75,9 +77,9 @@ using loom::tools::agent_runtime::NativeAgentRecord;
             member.agent_id = std::string(item.as_str());
         } else if (item.is_obj()) {
             member.agent_id = json_string(item, "agent_id")
-                .or_else([&] { return json_string(item, "id"); })
-                .or_else([&] { return json_string(item, "name"); })
-                .value_or("");
+                                  .or_else([&] { return json_string(item, "id"); })
+                                  .or_else([&] { return json_string(item, "name"); })
+                                  .value_or("");
             member.role = parse_team_member_role(json_string(item, "role").value_or("worker"));
             member.current_task = json_string(item, "current_task");
         }
@@ -94,9 +96,8 @@ struct TeamMemberStartOptions {
     std::optional<std::string> isolation;
 };
 
-[[nodiscard]] inline std::unordered_map<std::string, TeamMemberStartOptions> parse_team_member_start_options(
-    json::JsonVal root
-) {
+[[nodiscard]] inline std::unordered_map<std::string, TeamMemberStartOptions>
+parse_team_member_start_options(json::JsonVal root) {
     std::unordered_map<std::string, TeamMemberStartOptions> options;
     auto value = root.get("members");
     if (!value.valid() || !value.is_arr()) return options;
@@ -104,18 +105,21 @@ struct TeamMemberStartOptions {
     value.iter([&](json::JsonVal item) {
         if (!item.is_obj()) return;
         auto agent_id = json_string(item, "agent_id")
-            .or_else([&] { return json_string(item, "id"); })
-            .or_else([&] { return json_string(item, "name"); });
+                            .or_else([&] { return json_string(item, "id"); })
+                            .or_else([&] { return json_string(item, "name"); });
         if (!agent_id || agent_id->empty()) return;
-        options.emplace(*agent_id, TeamMemberStartOptions{
-            .prompt = json_string(item, "prompt"),
-            .agent_type = json_string(item, "subagent_type")
-                .or_else([&] { return json_string(item, "agent_type"); }),
-            .mode = json_string(item, "mode")
-                .or_else([&] { return json_string(item, "permission_mode"); }),
-            .cwd = json_string(item, "cwd"),
-            .isolation = json_string(item, "isolation"),
-        });
+        options.emplace(*agent_id,
+                        TeamMemberStartOptions{
+                            .prompt = json_string(item, "prompt"),
+                            .agent_type = json_string(item, "subagent_type").or_else([&] {
+                                return json_string(item, "agent_type");
+                            }),
+                            .mode = json_string(item, "mode").or_else([&] {
+                                return json_string(item, "permission_mode");
+                            }),
+                            .cwd = json_string(item, "cwd"),
+                            .isolation = json_string(item, "isolation"),
+                        });
     });
     return options;
 }
@@ -131,8 +135,8 @@ struct TeamMemberStartOptions {
     value.iter([&](json::JsonVal item) {
         if (!item.is_obj()) return;
         auto id = json_string(item, "id");
-        auto description = json_string(item, "description")
-            .or_else([&] { return json_string(item, "task"); });
+        auto description =
+            json_string(item, "description").or_else([&] { return json_string(item, "task"); });
         if (!id || !description) return;
         tasks.push_back(SharedTaskItem{
             .id = *id,
@@ -197,10 +201,8 @@ struct TeamConfigMemberRuntimeState {
 /// Lowercase-alnum-with-dashes sanitisation used for team directory names.
 /// Differs from `safe_runtime_dir_component` by replacing non-alnum with
 /// '-' rather than '_' (keeps team dirs visually distinct from agent dirs).
-[[nodiscard]] inline std::string ts_sanitized_team_dir_name(
-    std::string_view value,
-    std::string_view fallback
-) {
+[[nodiscard]] inline std::string ts_sanitized_team_dir_name(std::string_view value,
+                                                            std::string_view fallback) {
     std::string out;
     out.reserve(value.size());
     for (unsigned char ch : value) {
@@ -242,16 +244,10 @@ struct TeamConfigMemberRuntimeState {
 
 /// Human-readable message inserted into a team-member agent's prompt /
 /// transcript when its leader assigns a shared task to it.
-[[nodiscard]] inline std::string format_team_task_assignment_message(
-    std::string_view team_name,
-    std::string_view task_id,
-    std::string_view description
-) {
-    return std::format(
-        "[Team task {} assigned by {}]\n{}",
-        task_id,
-        team_name,
-        description);
+[[nodiscard]] inline std::string format_team_task_assignment_message(std::string_view team_name,
+                                                                     std::string_view task_id,
+                                                                     std::string_view description) {
+    return std::format("[Team task {} assigned by {}]\n{}", task_id, team_name, description);
 }
 
 // ---------------------------------------------------------------------------
@@ -273,10 +269,8 @@ inline bool write_empty_inbox_if_missing(const fs::path& inbox_path) {
 /// Serialise the current shared task list to `tasks.json` via `JsonMutDoc`
 /// (no hand-written escaping). Tasks are written in the same order they
 /// appear in the input span.
-inline bool write_team_task_snapshot(
-    const fs::path& task_path,
-    std::span<const SharedTaskItem> tasks
-) {
+inline bool write_team_task_snapshot(const fs::path& task_path,
+                                     std::span<const SharedTaskItem> tasks) {
     std::error_code ec;
     fs::create_directories(task_path.parent_path(), ec);
     if (ec) return false;
@@ -293,8 +287,7 @@ inline bool write_team_task_snapshot(
         arr.append(obj);
     }
     doc.set_root(arr);
-    return loom::utils::atomic_replace_file(task_path, doc.to_string())
-        .has_value();
+    return loom::utils::atomic_replace_file(task_path, doc.to_string()).has_value();
 }
 
 namespace team_config_detail {
@@ -307,13 +300,10 @@ inline void splice_json_member(std::ostream& out, json::JsonMutDoc& doc) {
         out << ',' << std::string_view{serialized}.substr(1, serialized.size() - 2);
     }
 }
-} // namespace team_config_detail
+}  // namespace team_config_detail
 
-inline void write_team_config_optional_string(
-    std::ostream& out,
-    std::string_view key,
-    const std::optional<std::string>& value
-) {
+inline void write_team_config_optional_string(std::ostream& out, std::string_view key,
+                                              const std::optional<std::string>& value) {
     if (!value || value->empty()) return;
     json::JsonMutDoc doc;
     auto obj = doc.object();
@@ -322,11 +312,8 @@ inline void write_team_config_optional_string(
     team_config_detail::splice_json_member(out, doc);
 }
 
-inline void write_team_config_optional_bool(
-    std::ostream& out,
-    std::string_view key,
-    std::optional<bool> value
-) {
+inline void write_team_config_optional_bool(std::ostream& out, std::string_view key,
+                                            std::optional<bool> value) {
     if (!value) return;
     json::JsonMutDoc doc;
     auto obj = doc.object();
@@ -338,23 +325,18 @@ inline void write_team_config_optional_bool(
 /// Render a single team-member object (as used by the `members` array inside
 /// config.json). Uses JsonMutDoc for all string / number escaping so control
 /// characters in the agent id can't corrupt the output JSON.
-inline void write_team_config_member(
-    std::ostream& out,
-    std::string_view agent_id,
-    std::string_view role,
-    std::string_view cwd,
-    std::int64_t timestamp_ms,
-    const TeamConfigMemberRuntimeState* state = nullptr
-) {
+inline void write_team_config_member(std::ostream& out, std::string_view agent_id,
+                                     std::string_view role, std::string_view cwd,
+                                     std::int64_t timestamp_ms,
+                                     const TeamConfigMemberRuntimeState* state = nullptr) {
     const auto agent_type = state && state->agent_type && !state->agent_type->empty()
-        ? std::string_view{*state->agent_type}
-        : role;
-    const auto member_cwd = state && state->cwd && !state->cwd->empty()
-        ? std::string_view{*state->cwd}
-        : cwd;
+                                ? std::string_view{*state->agent_type}
+                                : role;
+    const auto member_cwd =
+        state && state->cwd && !state->cwd->empty() ? std::string_view{*state->cwd} : cwd;
     const auto pane_id = state && state->pane_id && !state->pane_id->empty()
-        ? std::string_view{*state->pane_id}
-        : std::string_view{""};
+                             ? std::string_view{*state->pane_id}
+                             : std::string_view{""};
 
     json::JsonMutDoc doc;
     auto obj = doc.object();
@@ -389,23 +371,21 @@ inline void write_team_config_member(
 /// builder. Always inserts the implicit team-lead entry so downstream tools
 /// don't need to know about the `team-lead@<team>` convention.
 inline bool write_team_config_file(
-    const fs::path& config_path,
-    const Team& team,
-    const std::unordered_map<std::string, TeamConfigMemberRuntimeState>& member_states = {}
-) {
+    const fs::path& config_path, const Team& team,
+    const std::unordered_map<std::string, TeamConfigMemberRuntimeState>& member_states = {}) {
     std::error_code ec;
     fs::create_directories(config_path.parent_path(), ec);
     if (ec) return false;
 
     const auto timestamp_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
-        std::chrono::system_clock::now().time_since_epoch()).count();
+                                  std::chrono::system_clock::now().time_since_epoch())
+                                  .count();
     auto cwd = fs::current_path(ec);
     if (ec) cwd = fs::path{};
     const auto cwd_text = cwd.string();
     const auto lead_id = team_lead_agent_id(team.name);
 
-    auto member_to_string = [&](std::string_view agent_id,
-                                std::string_view role) -> std::string {
+    auto member_to_string = [&](std::string_view agent_id, std::string_view role) -> std::string {
         std::ostringstream oss;
         const auto state_it = member_states.find(std::string(agent_id));
         const auto* state = state_it == member_states.end() ? nullptr : &state_it->second;
@@ -414,9 +394,8 @@ inline bool write_team_config_file(
     };
 
     std::vector<std::string> member_json;
-    const bool has_explicit_lead = std::ranges::any_of(team.members, [&](const auto& member) {
-        return member.agent_id == lead_id;
-    });
+    const bool has_explicit_lead = std::ranges::any_of(
+        team.members, [&](const auto& member) { return member.agent_id == lead_id; });
     if (!has_explicit_lead) member_json.push_back(member_to_string(lead_id, "team-lead"));
     for (const auto& member : team.members) {
         member_json.push_back(member_to_string(member.agent_id, member_role_name(member.role)));
@@ -441,8 +420,7 @@ inline bool write_team_config_file(
     // between concurrent config rewrites.
     loom::utils::ScopedFileLock flock(config_path);
     if (!flock.locked()) return false;
-    return loom::utils::atomic_replace_file(config_path, doc.to_string())
-        .has_value();
+    return loom::utils::atomic_replace_file(config_path, doc.to_string()).has_value();
 }
 
 // ---------------------------------------------------------------------------
@@ -457,8 +435,7 @@ inline bool write_team_config_file(
 [[nodiscard]] inline std::unordered_map<std::string, TeamConfigMemberRuntimeState>
 team_config_runtime_states_from_native_records(
     std::span<const NativeAgentRecord> records,
-    bool (*is_terminal)(loom::tools::agent_runtime::NativeAgentStatus)
-) {
+    bool (*is_terminal)(loom::tools::agent_runtime::NativeAgentStatus)) {
     std::unordered_map<std::string, TeamConfigMemberRuntimeState> states;
     for (const auto& record : records) {
         TeamConfigMemberRuntimeState state{
@@ -482,28 +459,24 @@ team_config_runtime_states_from_native_records(
     return states;
 }
 
-[[nodiscard]] inline bool contains_agent_id(
-    const std::vector<NativeAgentRecord>& records,
-    std::string_view agent_id
-) {
-    return std::ranges::any_of(records, [&](const auto& record) {
-        return record.agent_id == agent_id;
-    });
+[[nodiscard]] inline bool contains_agent_id(const std::vector<NativeAgentRecord>& records,
+                                            std::string_view agent_id) {
+    return std::ranges::any_of(records,
+                               [&](const auto& record) { return record.agent_id == agent_id; });
 }
 
 /// Collect every native-agent record that is either (a) an explicit team
 /// member or (b) carries a team_name/team_id tag matching `team_name` /
 /// `team_id`. Dedup on agent_id so downstream cleanup only touches each
 /// agent once.
-[[nodiscard]] inline std::vector<NativeAgentRecord> collect_team_native_agents(
-    std::string_view team_id,
-    std::string_view team_name,
-    std::span<const TeamMember> members
-) {
+[[nodiscard]] inline std::vector<NativeAgentRecord>
+collect_team_native_agents(std::string_view team_id, std::string_view team_name,
+                           std::span<const TeamMember> members) {
     std::vector<NativeAgentRecord> records;
     for (const auto& member : members) {
         if (auto record = agent_runtime::native_agent_store().get(member.agent_id)) {
-            if (!contains_agent_id(records, record->agent_id)) records.push_back(std::move(*record));
+            if (!contains_agent_id(records, record->agent_id))
+                records.push_back(std::move(*record));
         }
     }
     for (auto record : agent_runtime::native_agent_store().list()) {
@@ -523,13 +496,11 @@ team_config_runtime_states_from_native_records(
 /// Any step that fails is silently absorbed (the team *record* is already
 /// gone from the team store at this point), but counters are populated so
 /// the caller can report what actually happened.
-[[nodiscard]] inline TeamDeletionCleanupSummary cleanup_team_runtime_artifacts(
-    std::string_view team_id,
-    std::string_view team_name,
-    std::span<const NativeAgentRecord> records,
-    bool (*is_terminal)(loom::tools::agent_runtime::NativeAgentStatus),
-    std::size_t (*cleanup_transcript)(const NativeAgentRecord&)
-) {
+[[nodiscard]] inline TeamDeletionCleanupSummary
+cleanup_team_runtime_artifacts(std::string_view team_id, std::string_view team_name,
+                               std::span<const NativeAgentRecord> records,
+                               bool (*is_terminal)(loom::tools::agent_runtime::NativeAgentStatus),
+                               std::size_t (*cleanup_transcript)(const NativeAgentRecord&)) {
     namespace swarm = loom::utils::swarm_backends;
     namespace bash_ns = loom::tools::bash;
 
@@ -558,8 +529,7 @@ team_config_runtime_states_from_native_records(
 
         if (!is_terminal(record.status)) {
             agent_runtime::native_agent_store().mark_cancelled(
-                record.agent_id,
-                std::format("team deleted: {}", team_name));
+                record.agent_id, std::format("team deleted: {}", team_name));
             ++summary.cancelled_agents;
         }
 
@@ -571,11 +541,11 @@ team_config_runtime_states_from_native_records(
     std::error_code ec;
     const auto root = team_runtime_dir();
     for (auto component : {
-        ts_sanitized_team_dir_name(team_name, "team"),
-        ts_sanitized_team_dir_name(team_id, "team"),
-        runtime_shared_utils::safe_runtime_dir_component(team_name, "team"),
-        runtime_shared_utils::safe_runtime_dir_component(team_id, "team"),
-    }) {
+             ts_sanitized_team_dir_name(team_name, "team"),
+             ts_sanitized_team_dir_name(team_id, "team"),
+             runtime_shared_utils::safe_runtime_dir_component(team_name, "team"),
+             runtime_shared_utils::safe_runtime_dir_component(team_id, "team"),
+         }) {
         auto removed = fs::remove_all(root / component, ec);
         if (!ec && removed > 0) ++summary.team_dirs_removed;
         ec.clear();
@@ -588,12 +558,8 @@ team_config_runtime_states_from_native_records(
 /// resulting paths so the caller can later re-write config.json with
 /// populated member runtime states (after native agents are launched).
 [[nodiscard]] inline std::expected<TeamCreationArtifactsSummary, std::string>
-ensure_team_runtime_artifacts(
-    std::string_view team_name,
-    std::span<const TeamMember> members,
-    std::span<const SharedTaskItem> tasks,
-    const Team& team
-) {
+ensure_team_runtime_artifacts(std::string_view team_name, std::span<const TeamMember> members,
+                              std::span<const SharedTaskItem> tasks, const Team& team) {
     TeamCreationArtifactsSummary summary{
         .team_dir = team_runtime_dir() / ts_sanitized_team_dir_name(team_name, "team"),
         .team_file_path = {},
@@ -602,7 +568,8 @@ ensure_team_runtime_artifacts(
 
     std::error_code ec;
     fs::create_directories(summary.team_dir / "inboxes", ec);
-    if (ec) return std::unexpected(std::format("failed to create team directory: {}", ec.message()));
+    if (ec)
+        return std::unexpected(std::format("failed to create team directory: {}", ec.message()));
 
     for (const auto& member : members) {
         if (member.agent_id.empty()) continue;
@@ -623,4 +590,4 @@ ensure_team_runtime_artifacts(
     return summary;
 }
 
-} // namespace loom::tools::runtime_team_shared
+}  // namespace loom::tools::runtime_team_shared

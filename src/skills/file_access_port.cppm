@@ -26,8 +26,8 @@ export namespace loom::skills {
 /// Hook type: called after a file is read/written/edited.
 /// @param file_path  Absolute path of the accessed file
 /// @param cwd        Current working directory (for skill path resolution)
-using FileAccessHook = std::function<void(const std::filesystem::path& file_path,
-                                           const std::filesystem::path& cwd)>;
+using FileAccessHook =
+    std::function<void(const std::filesystem::path& file_path, const std::filesystem::path& cwd)>;
 
 namespace detail {
 /// Internal storage for the hook (function-local static to avoid
@@ -36,7 +36,7 @@ namespace detail {
     static FileAccessHook instance;
     return instance;
 }
-} // namespace detail
+}  // namespace detail
 
 /// Register the file-access hook. Called by loom_skills at init time.
 /// Pass nullptr to unregister.
@@ -46,10 +46,8 @@ inline void set_file_access_hook(FileAccessHook hook) {
 
 /// Notify the file-access hook (if registered). Called by file tools
 /// after successful read/write/edit operations.
-inline void notify_file_access(
-    const std::filesystem::path& file_path,
-    const std::filesystem::path& cwd)
-{
+inline void notify_file_access(const std::filesystem::path& file_path,
+                               const std::filesystem::path& cwd) {
     auto& hook = detail::file_access_hook();
     if (hook) {
         try {
@@ -60,4 +58,4 @@ inline void notify_file_access(
     }
 }
 
-} // namespace loom::skills
+}  // namespace loom::skills

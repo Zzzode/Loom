@@ -36,11 +36,14 @@ public:
         return CommandDefinition{
             .name = "plan",
             .description = "Enter plan mode (read-only) or show current plan",
-            .args = {
-                CommandArg{.name = "action", .description = "on | plan | off | auto | show | clear",
-                           .type = ArgType::Choice, .required = false,
-                           .choices = {"on", "plan", "off", "auto", "show", "clear"}},
-            },
+            .args =
+                {
+                    CommandArg{.name = "action",
+                               .description = "on | plan | off | auto | show | clear",
+                               .type = ArgType::Choice,
+                               .required = false,
+                               .choices = {"on", "plan", "off", "auto", "show", "clear"}},
+                },
             .category = "session",
             .aliases = {},
             .hidden = false,
@@ -52,7 +55,8 @@ public:
         auto action = ctx.args[0];
         static constexpr std::array valid = {"on", "plan", "off", "auto", "show", "clear"};
         if (std::ranges::find(valid, action) == valid.end()) {
-            return std::unexpected(Error::make(ErrorCode::InvalidRequest,
+            return std::unexpected(Error::make(
+                ErrorCode::InvalidRequest,
                 std::format("Invalid action: '{}'. Use: on|plan|off|auto|show|clear", action)));
         }
         return {};
@@ -131,8 +135,8 @@ private:
     std::vector<PlanStep> steps_;
     std::chrono::system_clock::time_point started_at_;
 
-    [[nodiscard]] Result<CommandResult> format_status_from_state(
-        const loom::state::AppState& state) const {
+    [[nodiscard]] Result<CommandResult>
+    format_status_from_state(const loom::state::AppState& state) const {
         auto mode = state.tool_permission_context.mode;
         auto mode_str = loom::state::permission_mode_to_string(mode);
 
@@ -148,7 +152,8 @@ private:
         }
 
         if (!steps_.empty()) {
-            auto completed = std::ranges::count_if(steps_, [](const auto& s) { return s.completed; });
+            auto completed =
+                std::ranges::count_if(steps_, [](const auto& s) { return s.completed; });
             out += std::format("\n\nPlan steps: {}/{} completed", completed, steps_.size());
         }
 
@@ -201,8 +206,7 @@ private:
 
     [[nodiscard]] Result<CommandResult> enter_auto_mode() {
         active_ = false;
-        return CommandResult::success(
-            "Auto mode activated. Tools will run automatically.");
+        return CommandResult::success("Auto mode activated. Tools will run automatically.");
     }
 
     [[nodiscard]] Result<CommandResult> exit_plan_mode() {
@@ -210,8 +214,9 @@ private:
             return CommandResult::success("Plan mode is not active.");
         }
         active_ = false;
-        return CommandResult::success(std::format(
-            "Plan mode deactivated. {} steps in plan.\nYou can now execute normally.", steps_.size()));
+        return CommandResult::success(
+            std::format("Plan mode deactivated. {} steps in plan.\nYou can now execute normally.",
+                        steps_.size()));
     }
 
     [[nodiscard]] Result<CommandResult> show_plan() const {
@@ -234,4 +239,4 @@ private:
     }
 };
 
-} // namespace loom::commands
+}  // namespace loom::commands

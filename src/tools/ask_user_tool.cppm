@@ -6,7 +6,6 @@ export module loom.tools.ask_user;
 
 import std;
 
-
 export namespace loom::tools {
 
 // Error types for ask user operations
@@ -21,32 +20,39 @@ enum class AskUserError {
 
 constexpr auto format_error(AskUserError err) -> std::string_view {
     switch (err) {
-        case AskUserError::QuestionEmpty:   return "Question text is empty";
-        case AskUserError::Timeout:         return "User response timed out";
-        case AskUserError::UserCancelled:   return "User cancelled the prompt";
-        case AskUserError::InvalidOptions:  return "Options list is invalid";
-        case AskUserError::CallbackFailed:  return "Response callback invocation failed";
-        case AskUserError::TooManyOptions:  return "Too many options provided (max 20)";
-        default:                            return "Unknown ask user error";
+    case AskUserError::QuestionEmpty:
+        return "Question text is empty";
+    case AskUserError::Timeout:
+        return "User response timed out";
+    case AskUserError::UserCancelled:
+        return "User cancelled the prompt";
+    case AskUserError::InvalidOptions:
+        return "Options list is invalid";
+    case AskUserError::CallbackFailed:
+        return "Response callback invocation failed";
+    case AskUserError::TooManyOptions:
+        return "Too many options provided (max 20)";
+    default:
+        return "Unknown ask user error";
     }
 }
 
 // Question structure representing a user prompt
 struct Question {
-    std::string text;                               // Primary question text
-    std::optional<std::string> header;              // Optional header/title above the question
-    std::vector<std::string> options;               // Selectable options (empty = free-form input)
-    bool multi_select{false};                       // Allow multiple selections
-    std::optional<std::string> default_answer;      // Pre-filled default answer
-    std::optional<std::string> placeholder;         // Placeholder text for input
+    std::string text;                           // Primary question text
+    std::optional<std::string> header;          // Optional header/title above the question
+    std::vector<std::string> options;           // Selectable options (empty = free-form input)
+    bool multi_select{false};                   // Allow multiple selections
+    std::optional<std::string> default_answer;  // Pre-filled default answer
+    std::optional<std::string> placeholder;     // Placeholder text for input
 };
 
 // User response structure
 struct UserResponse {
-    std::string text;                               // Raw text response
-    std::vector<std::string> selected_options;      // Selected options (for option-based questions)
-    bool is_default{false};                         // Whether default answer was used
-    std::chrono::milliseconds response_time{0};     // Time taken to respond
+    std::string text;                            // Raw text response
+    std::vector<std::string> selected_options;   // Selected options (for option-based questions)
+    bool is_default{false};                      // Whether default answer was used
+    std::chrono::milliseconds response_time{0};  // Time taken to respond
 };
 
 // Callback type for collecting user responses
@@ -54,16 +60,17 @@ using ResponseCallback = std::function<std::expected<UserResponse, AskUserError>
 
 // Configuration for ask user tool
 struct AskUserConfig {
-    std::chrono::seconds timeout{300};              // 5 minute default timeout
-    bool allow_empty_response{false};               // Allow empty responses
-    ResponseCallback callback;                      // Callback to collect response
+    std::chrono::seconds timeout{300};  // 5 minute default timeout
+    bool allow_empty_response{false};   // Allow empty responses
+    ResponseCallback callback;          // Callback to collect response
 };
 
 // AskUserTool - main class for interactive user prompts
 class AskUserTool {
 public:
     static constexpr std::string_view name = "ask_user";
-    static constexpr std::string_view description = "Ask the user a question and wait for their response";
+    static constexpr std::string_view description =
+        "Ask the user a question and wait for their response";
     static constexpr size_t kMaxOptions = 20;
     static constexpr size_t kMaxQuestionLength = 10000;
 
@@ -71,9 +78,7 @@ public:
         : config_(std::move(config)) {}
 
     // Set the response callback
-    void set_callback(ResponseCallback callback) {
-        config_.callback = std::move(callback);
-    }
+    void set_callback(ResponseCallback callback) { config_.callback = std::move(callback); }
 
     // Validate question before asking
     auto validate(const Question& question) const -> std::expected<void, AskUserError> {
@@ -92,9 +97,9 @@ public:
 
         // Validate default answer is in options list if options are provided
         if (question.default_answer && !question.options.empty()) {
-            bool found = std::any_of(question.options.begin(), question.options.end(), [&](const auto& opt) {
-                return opt == *question.default_answer;
-            });
+            bool found =
+                std::any_of(question.options.begin(), question.options.end(),
+                            [&](const auto& opt) { return opt == *question.default_answer; });
             if (!found) {
                 return std::unexpected(AskUserError::InvalidOptions);
             }
@@ -152,8 +157,8 @@ public:
         }
 
         // Check empty response
-        if (!config_.allow_empty_response && response->text.empty()
-            && response->selected_options.empty()) {
+        if (!config_.allow_empty_response && response->text.empty() &&
+            response->selected_options.empty()) {
             if (question.default_answer) {
                 response->text = *question.default_answer;
                 response->is_default = true;
@@ -165,16 +170,13 @@ public:
 
     // Convenience: ask a yes/no question
     auto ask_yes_no(std::string_view question_text, bool default_yes = true)
-        -> std::expected<bool, AskUserError>
-    {
-        Question q{
-            .text = std::string(question_text),
-            .header = std::nullopt,
-            .options = {"Yes", "No"},
-            .multi_select = false,
-            .default_answer = default_yes ? "Yes" : "No",
-            .placeholder = std::nullopt
-        };
+        -> std::expected<bool, AskUserError> {
+        Question q{.text = std::string(question_text),
+                   .header = std::nullopt,
+                   .options = {"Yes", "No"},
+                   .multi_select = false,
+                   .default_answer = default_yes ? "Yes" : "No",
+                   .placeholder = std::nullopt};
 
         auto response = execute(std::move(q));
         if (!response) return std::unexpected(response.error());
@@ -196,7 +198,8 @@ public:
     }},
     "required": ["question"]
   }}
-}})", name, description);
+}})",
+                           name, description);
     }
 
 private:
@@ -210,8 +213,7 @@ private:
 // This enables faithful integration with the DialogQueue system.
 
 using AskUserResponder = std::function<std::optional<std::string>(
-    std::string_view question,
-    std::optional<std::string> default_answer)>;
+    std::string_view question, std::optional<std::string> default_answer)>;
 
 /// Get the current global ask-user responder (may be empty).
 inline AskUserResponder& get_global_ask_user_responder() {
@@ -228,4 +230,4 @@ inline AskUserResponder set_global_ask_user_responder(AskUserResponder responder
     return prev;
 }
 
-} // namespace loom::tools
+}  // namespace loom::tools

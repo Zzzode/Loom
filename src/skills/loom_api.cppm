@@ -15,12 +15,13 @@ export namespace loom::skills::loom_api {
     return SkillDefinition{
         .name = "loom-api",
         .description = "Direct Loom API interaction patterns for programmatic use",
-        .trigger_patterns = {
-            R"(loom\s+api)",
-            R"(api\s+(?:call|request|endpoint))",
-            R"(programmatic.*loom)",
-            R"(sdk.*(?:usage|example))",
-        },
+        .trigger_patterns =
+            {
+                R"(loom\s+api)",
+                R"(api\s+(?:call|request|endpoint))",
+                R"(programmatic.*loom)",
+                R"(sdk.*(?:usage|example))",
+            },
         .content = R"(## Loom API Skill
 
 ### Direct API Usage
@@ -47,4 +48,4 @@ export namespace loom::skills::loom_api {
     };
 }
 
-} // namespace loom::skills::loom_api
+}  // namespace loom::skills::loom_api

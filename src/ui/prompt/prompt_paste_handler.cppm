@@ -2,11 +2,12 @@
 /// @brief Multi-line paste detection and handling UI, including image paste
 /// chip rendering helpers.
 module;
+#include <ftxui/component/component.hpp>
+#include <ftxui/dom/elements.hpp>
 #include <unistd.h>
+
 #include <cstddef>
 #include <cstdint>
-#include <ftxui/dom/elements.hpp>
-#include <ftxui/component/component.hpp>
 
 export module loom.ui.prompt.prompt_paste_handler;
 
@@ -25,10 +26,10 @@ using namespace ftxui;
 
 /// @brief State for a multi-line text paste confirmation overlay.
 struct PastePreview {
-    std::string content;          ///< Truncated display text (head + ref + tail)
-    std::size_t line_count{0};    ///< Line count of the FULL paste
-    bool is_large{false};         ///< True when >10K chars (truncation applied)
-    int paste_id{0};              ///< Unique id for [...Truncated text #N] ref
+    std::string content;              ///< Truncated display text (head + ref + tail)
+    std::size_t line_count{0};        ///< Line count of the FULL paste
+    bool is_large{false};             ///< True when >10K chars (truncation applied)
+    int paste_id{0};                  ///< Unique id for [...Truncated text #N] ref
     std::string placeholder_content;  ///< The truncated middle text (for storage on confirm)
 };
 
@@ -54,26 +55,25 @@ struct PastePreview {
 /// fields used by the FTXUI renderer.  `start` and `end` are UTF-8 byte
 /// offsets within the input text.
 struct ImageChipInfo {
-    int id;                  ///< Paste id (e.g. 1 for [Image #1])
-    std::size_t start;       ///< Byte offset of '[' in the input text
-    std::size_t end;         ///< Byte offset one past ']'
-    std::string label;       ///< The rendered text, e.g. "[Image #1]"
+    int id;             ///< Paste id (e.g. 1 for [Image #1])
+    std::size_t start;  ///< Byte offset of '[' in the input text
+    std::size_t end;    ///< Byte offset one past ']'
+    std::string label;  ///< The rendered text, e.g. "[Image #1]"
 };
 
 /// Parse all [Image #N] references from `text` and return display-ready
 /// chip info.  Non-image refs (Pasted text #N, ...Truncated text #N) are
 /// filtered out.
-[[nodiscard]] inline std::vector<ImageChipInfo> collect_image_chips(
-    std::string_view text) {
+[[nodiscard]] inline std::vector<ImageChipInfo> collect_image_chips(std::string_view text) {
     const auto refs = loom::utils::parse_references(text);
     std::vector<ImageChipInfo> chips;
     chips.reserve(refs.size());
     for (const auto& r : refs) {
         if (!r.match.starts_with("[Image")) continue;
         chips.push_back(ImageChipInfo{
-            .id    = r.id,
+            .id = r.id,
             .start = r.index,
-            .end   = r.index + r.match.size(),
+            .end = r.index + r.match.size(),
             .label = r.match,
         });
     }
@@ -95,10 +95,9 @@ struct ImageChipInfo {
 ///                or collect_image_chips label field).
 /// @param inverted  When true, swap fg/bg (cursor-at-start selected state).
 /// @param chip_color  Foreground colour (default white for dark themes).
-[[nodiscard]] inline Element render_image_chip(
-    std::string_view label,
-    bool is_inverted = false,
-    Color chip_color = loom::ui::design::theme::current_theme().palette->text) {
+[[nodiscard]] inline Element
+render_image_chip(std::string_view label, bool is_inverted = false,
+                  Color chip_color = loom::ui::design::theme::current_theme().palette->text) {
     // FTXUI's `inverted` maps to ANSI SGR 7 (reverse video).  No bold is
     // applied to image chips.
     Decorator decor = color(chip_color);
@@ -111,9 +110,7 @@ struct ImageChipInfo {
 /// Convenience overload: render an ImageChipInfo as an Element.
 /// `cursor_pos` is the absolute byte offset of the text cursor; when it
 /// equals chip.start the chip is rendered inverted (selected state).
-[[nodiscard]] inline Element render_image_chip(
-    const ImageChipInfo& chip,
-    std::size_t cursor_pos) {
+[[nodiscard]] inline Element render_image_chip(const ImageChipInfo& chip, std::size_t cursor_pos) {
     const bool is_selected = (cursor_pos == chip.start);
     return render_image_chip(chip.label, is_selected);
 }
@@ -142,10 +139,11 @@ enum class PasteKind {
     };
     std::string ext_lower;
     ext_lower.reserve(ext.size());
-    for (char c : ext) ext_lower.push_back(to_lower(c));
+    for (char c : ext)
+        ext_lower.push_back(to_lower(c));
 
-    return ext_lower == "png" || ext_lower == "jpg" || ext_lower == "jpeg" ||
-           ext_lower == "gif" || ext_lower == "webp";
+    return ext_lower == "png" || ext_lower == "jpg" || ext_lower == "jpeg" || ext_lower == "gif" ||
+           ext_lower == "webp";
 }
 
 // ── Image magic-byte detection ──────────────────────────────────────────
@@ -170,16 +168,14 @@ enum class ImageFormat {
 ///
 /// NOTE: JPEG check requires only 3 bytes but we guard with size >= 4 so
 /// every branch can safely index bytes[3] for the PNG/WebP checks.
-[[nodiscard]] inline std::optional<ImageFormat>
-detect_image_magic_bytes(std::string_view buffer) {
+[[nodiscard]] inline std::optional<ImageFormat> detect_image_magic_bytes(std::string_view buffer) {
     if (buffer.size() < 4) return std::nullopt;
 
     const auto* bytes = reinterpret_cast<const std::uint8_t*>(buffer.data());
-    const auto size   = buffer.size();
+    const auto size = buffer.size();
 
     // PNG: 89 50 4E 47
-    if (bytes[0] == 0x89 && bytes[1] == 0x50 &&
-        bytes[2] == 0x4E && bytes[3] == 0x47) {
+    if (bytes[0] == 0x89 && bytes[1] == 0x50 && bytes[2] == 0x4E && bytes[3] == 0x47) {
         return ImageFormat::PNG;
     }
     // JPEG: FF D8 FF
@@ -191,11 +187,9 @@ detect_image_magic_bytes(std::string_view buffer) {
         return ImageFormat::GIF;
     }
     // WebP: "RIFF" at offset 0, "WEBP" at offset 8
-    if (size >= 12 &&
-        bytes[0] == 0x52 && bytes[1] == 0x49 &&
-        bytes[2] == 0x46 && bytes[3] == 0x46 &&
-        bytes[8] == 0x57 && bytes[9] == 0x45 &&
-        bytes[10] == 0x42 && bytes[11] == 0x50) {
+    if (size >= 12 && bytes[0] == 0x52 && bytes[1] == 0x49 && bytes[2] == 0x46 &&
+        bytes[3] == 0x46 && bytes[8] == 0x57 && bytes[9] == 0x45 && bytes[10] == 0x42 &&
+        bytes[11] == 0x50) {
         return ImageFormat::WebP;
     }
     return std::nullopt;
@@ -212,9 +206,8 @@ detect_image_magic_bytes(std::string_view buffer) {
 ///   3. is_image_file_path — pasted text looks like /path/to/photo.png
 ///   4. Text — plain text paste (possibly multi-line)
 ///   5. Empty — nothing usable
-[[nodiscard]] inline PasteKind classify_paste_kind(
-    std::string_view text_buffer,
-    bool has_image_data) {
+[[nodiscard]] inline PasteKind classify_paste_kind(std::string_view text_buffer,
+                                                   bool has_image_data) {
     // Raw clipboard image wins over text content.
     if (has_image_data) return PasteKind::Image;
 
@@ -246,8 +239,7 @@ detect_image_magic_bytes(std::string_view buffer) {
 ///   - Falls back to HTML data-URL extraction for web-app clipboard
 ///     images (Lark/Feishu, Google Docs embed base64 in «class HTML»).
 ///   - Non-PNG HTML-embedded images are converted via `sips -s format png`.
-[[nodiscard]] inline std::optional<std::vector<std::uint8_t>>
-read_clipboard_image_png() {
+[[nodiscard]] inline std::optional<std::vector<std::uint8_t>> read_clipboard_image_png() {
     return loom::utils::clipboard::read_image_png();
 }
 
@@ -263,14 +255,12 @@ read_clipboard_image_png() {
 /// the HTML fallback (which also converts to PNG via sips).  This helper
 /// exists for API completeness and future cross-platform support (Linux
 /// xclip can return image/jpeg directly).
-[[nodiscard]] inline std::optional<std::vector<std::uint8_t>>
-read_clipboard_image_jpeg() {
+[[nodiscard]] inline std::optional<std::vector<std::uint8_t>> read_clipboard_image_jpeg() {
     auto bytes = loom::utils::clipboard::read_image_png();
     if (!bytes || bytes->size() < 3) return std::nullopt;
     // Inspect magic bytes: FF D8 FF = JPEG.
     const auto& b = *bytes;
-    if (static_cast<std::uint8_t>(b[0]) == 0xFF &&
-        static_cast<std::uint8_t>(b[1]) == 0xD8 &&
+    if (static_cast<std::uint8_t>(b[0]) == 0xFF && static_cast<std::uint8_t>(b[1]) == 0xD8 &&
         static_cast<std::uint8_t>(b[2]) == 0xFF) {
         return bytes;
     }
@@ -289,8 +279,7 @@ read_clipboard_image_jpeg() {
 /// @param shortcut  Keybinding display string (default "Ctrl+V").  Pass
 ///                  the platform-appropriate string from the keybinding
 ///                  system (e.g. "⌘V" on macOS when resolved).
-[[nodiscard]] inline Element render_clipboard_image_hint(
-    std::string_view shortcut = "Ctrl+V") {
+[[nodiscard]] inline Element render_clipboard_image_hint(std::string_view shortcut = "Ctrl+V") {
     // \xC2\xB7 = UTF-8 middle dot (·).
     auto hint = std::format("Image in clipboard \xC2\xB7 {} to paste", shortcut);
     return text(hint) | dim;
@@ -303,12 +292,12 @@ read_clipboard_image_jpeg() {
 /// onImagePaste inserts the placeholder synchronously (instant feedback)
 /// while the actual clipboard read runs async.
 struct ImagePasteInFlight {
-    int id;                  ///< Paste id matching the [Image #N] placeholder
-    std::string placeholder; ///< The "[Image #N]" text inserted into input
-    bool started{false};     ///< Background worker has been spawned
-    bool completed{false};   ///< Worker finished (success or failure)
-    bool success{false};     ///< True if image data was retrieved
-    std::string error;       ///< Error message if failed
+    int id;                   ///< Paste id matching the [Image #N] placeholder
+    std::string placeholder;  ///< The "[Image #N]" text inserted into input
+    bool started{false};      ///< Background worker has been spawned
+    bool completed{false};    ///< Worker finished (success or failure)
+    bool success{false};      ///< True if image data was retrieved
+    std::string error;        ///< Error message if failed
 };
 
-} // namespace loom::ui::prompt
+}  // namespace loom::ui::prompt

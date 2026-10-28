@@ -55,21 +55,18 @@ namespace detail {
 
     // Skip leading whitespace/braces
     std::size_t start = 0;
-    while (start < input_json.size() &&
-           (input_json[start] == ' ' || input_json[start] == '\n' ||
-            input_json[start] == '\t' || input_json[start] == '{')) {
+    while (start < input_json.size() && (input_json[start] == ' ' || input_json[start] == '\n' ||
+                                         input_json[start] == '\t' || input_json[start] == '{')) {
         ++start;
     }
 
     std::size_t end = input_json.find('\n', start);
-    std::string_view line = (end == std::string_view::npos)
-        ? input_json.substr(start)
-        : input_json.substr(start, end - start);
+    std::string_view line = (end == std::string_view::npos) ? input_json.substr(start)
+                                                            : input_json.substr(start, end - start);
 
     // Trim trailing whitespace/braces
-    while (!line.empty() &&
-           (line.back() == ' ' || line.back() == '\t' ||
-            line.back() == '}' || line.back() == ',')) {
+    while (!line.empty() && (line.back() == ' ' || line.back() == '\t' || line.back() == '}' ||
+                             line.back() == ',')) {
         line.remove_suffix(1);
     }
 
@@ -101,17 +98,14 @@ namespace detail {
         return detail::first_line_summary(input_json);
     };
 
-    fns.tag = [](std::string_view) -> std::optional<std::string> {
-        return std::nullopt;
-    };
+    fns.tag = [](std::string_view) -> std::optional<std::string> { return std::nullopt; };
 
     fns.progress = [](std::string_view, std::string_view partial) {
         if (!partial.empty()) {
             // Show first line of partial output
             auto nl = partial.find('\n');
-            std::string line = (nl == std::string_view::npos)
-                ? std::string(partial)
-                : std::string(partial.substr(0, nl));
+            std::string line = (nl == std::string_view::npos) ? std::string(partial)
+                                                              : std::string(partial.substr(0, nl));
             if (line.size() > 80) {
                 line = line.substr(0, 80) + "\xE2\x80\xA6";
             }
@@ -140,9 +134,7 @@ export namespace loom::ui::tools {
 /// Convenience: look up in the global registry with generic fallback.
 /// Returns a copy — registered tools are copied, and unregistered tools
 /// get a freshly-constructed generic renderer using the actual tool name.
-[[nodiscard]] inline ToolUIFunctions get_tool_ui_or_generic(
-    std::string_view name)
-{
+[[nodiscard]] inline ToolUIFunctions get_tool_ui_or_generic(std::string_view name) {
     auto& reg = global_tool_ui_registry();
     const ToolUIFunctions* found = reg.find(name);
     if (found) return *found;

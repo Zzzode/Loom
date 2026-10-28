@@ -6,8 +6,8 @@
 
 module;
 
-#include <cstdlib>
 #include <cstdint>
+#include <cstdlib>
 
 export module loom.ui.chrome.terminal_io;
 
@@ -56,21 +56,19 @@ using ColorValue = std::variant<std::monostate, Color16, Color256, TrueColor>;
 
 /// Keyboard modifier flags (bitfield)
 enum class KeyModifier : std::uint8_t {
-    None  = 0,
+    None = 0,
     Shift = 1 << 0,
-    Alt   = 1 << 1,
-    Ctrl  = 1 << 2,
-    Meta  = 1 << 3,
+    Alt = 1 << 1,
+    Ctrl = 1 << 2,
+    Meta = 1 << 3,
 };
 
 [[nodiscard]] inline constexpr KeyModifier operator|(KeyModifier a, KeyModifier b) noexcept {
-    return static_cast<KeyModifier>(
-        static_cast<std::uint8_t>(a) | static_cast<std::uint8_t>(b));
+    return static_cast<KeyModifier>(static_cast<std::uint8_t>(a) | static_cast<std::uint8_t>(b));
 }
 
 [[nodiscard]] inline constexpr KeyModifier operator&(KeyModifier a, KeyModifier b) noexcept {
-    return static_cast<KeyModifier>(
-        static_cast<std::uint8_t>(a) & static_cast<std::uint8_t>(b));
+    return static_cast<KeyModifier>(static_cast<std::uint8_t>(a) & static_cast<std::uint8_t>(b));
 }
 
 inline constexpr KeyModifier& operator|=(KeyModifier& a, KeyModifier b) noexcept {
@@ -203,7 +201,7 @@ using ParsedInput = std::variant<KeypressEvent, MouseEvent, PasteEvent, ResizeEv
 [[nodiscard]] inline auto parse_sgr(std::string_view params)
     -> std::expected<SgrAttr, std::string> {
     SgrAttr attr{};
-    if (params.empty()) return attr; // Reset
+    if (params.empty()) return attr;  // Reset
 
     // Split on ';' and process each parameter
     std::size_t i = 0;
@@ -220,63 +218,122 @@ using ParsedInput = std::variant<KeypressEvent, MouseEvent, PasteEvent, ResizeEv
     while (i < params.size()) {
         int code = next_int();
         switch (code) {
-            case 0: attr = SgrAttr{}; break;
-            case 1: attr.bold = true; break;
-            case 2: attr.dim = true; break;
-            case 3: attr.italic = true; break;
-            case 4: attr.underline = true; break;
-            case 7: attr.inverse = true; break;
-            case 9: attr.strikethrough = true; break;
-            case 22: attr.bold = false; attr.dim = false; break;
-            case 23: attr.italic = false; break;
-            case 24: attr.underline = false; break;
-            case 27: attr.inverse = false; break;
-            case 29: attr.strikethrough = false; break;
-            case 30: case 31: case 32: case 33:
-            case 34: case 35: case 36: case 37:
-                attr.fg = static_cast<Color16>(code - 30); break;
-            case 38: { // Extended foreground
-                int mode = next_int();
-                if (mode == 5) { attr.fg = Color256{static_cast<std::uint8_t>(next_int())}; }
-                else if (mode == 2) {
-                    auto r = static_cast<std::uint8_t>(next_int());
-                    auto g = static_cast<std::uint8_t>(next_int());
-                    auto b = static_cast<std::uint8_t>(next_int());
-                    attr.fg = TrueColor{r, g, b};
-                }
-                break;
+        case 0:
+            attr = SgrAttr{};
+            break;
+        case 1:
+            attr.bold = true;
+            break;
+        case 2:
+            attr.dim = true;
+            break;
+        case 3:
+            attr.italic = true;
+            break;
+        case 4:
+            attr.underline = true;
+            break;
+        case 7:
+            attr.inverse = true;
+            break;
+        case 9:
+            attr.strikethrough = true;
+            break;
+        case 22:
+            attr.bold = false;
+            attr.dim = false;
+            break;
+        case 23:
+            attr.italic = false;
+            break;
+        case 24:
+            attr.underline = false;
+            break;
+        case 27:
+            attr.inverse = false;
+            break;
+        case 29:
+            attr.strikethrough = false;
+            break;
+        case 30:
+        case 31:
+        case 32:
+        case 33:
+        case 34:
+        case 35:
+        case 36:
+        case 37:
+            attr.fg = static_cast<Color16>(code - 30);
+            break;
+        case 38: {  // Extended foreground
+            int mode = next_int();
+            if (mode == 5) {
+                attr.fg = Color256{static_cast<std::uint8_t>(next_int())};
+            } else if (mode == 2) {
+                auto r = static_cast<std::uint8_t>(next_int());
+                auto g = static_cast<std::uint8_t>(next_int());
+                auto b = static_cast<std::uint8_t>(next_int());
+                attr.fg = TrueColor{r, g, b};
             }
-            case 39: attr.fg = std::monostate{}; break;
-            case 40: case 41: case 42: case 43:
-            case 44: case 45: case 46: case 47:
-                attr.bg = static_cast<Color16>(code - 40); break;
-            case 48: { // Extended background
-                int mode = next_int();
-                if (mode == 5) { attr.bg = Color256{static_cast<std::uint8_t>(next_int())}; }
-                else if (mode == 2) {
-                    auto r = static_cast<std::uint8_t>(next_int());
-                    auto g = static_cast<std::uint8_t>(next_int());
-                    auto b = static_cast<std::uint8_t>(next_int());
-                    attr.bg = TrueColor{r, g, b};
-                }
-                break;
+            break;
+        }
+        case 39:
+            attr.fg = std::monostate{};
+            break;
+        case 40:
+        case 41:
+        case 42:
+        case 43:
+        case 44:
+        case 45:
+        case 46:
+        case 47:
+            attr.bg = static_cast<Color16>(code - 40);
+            break;
+        case 48: {  // Extended background
+            int mode = next_int();
+            if (mode == 5) {
+                attr.bg = Color256{static_cast<std::uint8_t>(next_int())};
+            } else if (mode == 2) {
+                auto r = static_cast<std::uint8_t>(next_int());
+                auto g = static_cast<std::uint8_t>(next_int());
+                auto b = static_cast<std::uint8_t>(next_int());
+                attr.bg = TrueColor{r, g, b};
             }
-            case 49: attr.bg = std::monostate{}; break;
-            case 90: case 91: case 92: case 93:
-            case 94: case 95: case 96: case 97:
-                attr.fg = static_cast<Color16>(code - 90 + 8); break;
-            case 100: case 101: case 102: case 103:
-            case 104: case 105: case 106: case 107:
-                attr.bg = static_cast<Color16>(code - 100 + 8); break;
-            default: break;
+            break;
+        }
+        case 49:
+            attr.bg = std::monostate{};
+            break;
+        case 90:
+        case 91:
+        case 92:
+        case 93:
+        case 94:
+        case 95:
+        case 96:
+        case 97:
+            attr.fg = static_cast<Color16>(code - 90 + 8);
+            break;
+        case 100:
+        case 101:
+        case 102:
+        case 103:
+        case 104:
+        case 105:
+        case 106:
+        case 107:
+            attr.bg = static_cast<Color16>(code - 100 + 8);
+            break;
+        default:
+            break;
         }
     }
     return attr;
 }
 
 /// Tokenize a string containing ANSI escape sequences into structured tokens
-[[nodiscard]] inline auto tokenize_ansi(std::string_view input)
-    -> std::vector<AnsiToken> {
+[[nodiscard]] inline auto tokenize_ansi(std::string_view input) -> std::vector<AnsiToken> {
     std::vector<AnsiToken> tokens;
     std::size_t i = 0;
     std::size_t text_start = 0;
@@ -291,7 +348,7 @@ using ParsedInput = std::variant<KeypressEvent, MouseEvent, PasteEvent, ResizeEv
             if (input[i + 1] == '[') {
                 // CSI sequence
                 std::size_t seq_start = i;
-                i += 2; // skip ESC[
+                i += 2;  // skip ESC[
                 // Collect params and intermediate bytes
                 std::string params_str;
                 while (i < input.size() && input[i] >= 0x20 && input[i] <= 0x3F) {
@@ -316,7 +373,8 @@ using ParsedInput = std::variant<KeypressEvent, MouseEvent, PasteEvent, ResizeEv
                     std::size_t p = 0;
                     while (p < params_str.size()) {
                         int val = 0;
-                        while (p < params_str.size() && params_str[p] >= '0' && params_str[p] <= '9') {
+                        while (p < params_str.size() && params_str[p] >= '0' &&
+                               params_str[p] <= '9') {
                             val = val * 10 + (params_str[p] - '0');
                             p++;
                         }
@@ -334,8 +392,10 @@ using ParsedInput = std::variant<KeypressEvent, MouseEvent, PasteEvent, ResizeEv
                     osc_data += input[i];
                     i++;
                 }
-                if (i < input.size() && input[i] == '\a') i++;
-                else if (i + 1 < input.size()) i += 2; // ESC backslash
+                if (i < input.size() && input[i] == '\a')
+                    i++;
+                else if (i + 1 < input.size())
+                    i += 2;  // ESC backslash
 
                 OscSequence osc;
                 auto semi = osc_data.find(';');
@@ -367,8 +427,7 @@ using ParsedInput = std::variant<KeypressEvent, MouseEvent, PasteEvent, ResizeEv
 }
 
 /// Strip all ANSI escape sequences, returning plain text
-[[nodiscard]] inline auto strip_ansi(std::string_view input)
-    -> std::string {
+[[nodiscard]] inline auto strip_ansi(std::string_view input) -> std::string {
     std::string result;
     result.reserve(input.size());
     std::size_t i = 0;
@@ -377,17 +436,21 @@ using ParsedInput = std::variant<KeypressEvent, MouseEvent, PasteEvent, ResizeEv
             if (input[i + 1] == '[') {
                 i += 2;
                 // Skip until final byte (0x40-0x7E)
-                while (i < input.size() && (input[i] < 0x40 || input[i] > 0x7E)) i++;
-                if (i < input.size()) i++; // skip final byte
+                while (i < input.size() && (input[i] < 0x40 || input[i] > 0x7E))
+                    i++;
+                if (i < input.size()) i++;  // skip final byte
             } else if (input[i + 1] == ']') {
                 i += 2;
                 // Skip until BEL or ST
                 while (i < input.size() && input[i] != '\a' &&
-                       !(i + 1 < input.size() && input[i] == '\033' && input[i + 1] == '\\')) i++;
-                if (i < input.size() && input[i] == '\a') i++;
-                else if (i + 1 < input.size()) i += 2;
+                       !(i + 1 < input.size() && input[i] == '\033' && input[i + 1] == '\\'))
+                    i++;
+                if (i < input.size() && input[i] == '\a')
+                    i++;
+                else if (i + 1 < input.size())
+                    i += 2;
             } else {
-                i += 2; // skip other ESC sequences
+                i += 2;  // skip other ESC sequences
             }
         } else {
             result += input[i];
@@ -436,10 +499,14 @@ using ParsedInput = std::variant<KeypressEvent, MouseEvent, PasteEvent, ResizeEv
                 has_digit = true;
                 p++;
             }
-            if (has_digit) csi.params.push_back(val);
-            else csi.params.push_back(0); // default param
-            if (p < param_buf.size() && param_buf[p] == ';') p++;
-            else break;
+            if (has_digit)
+                csi.params.push_back(val);
+            else
+                csi.params.push_back(0);  // default param
+            if (p < param_buf.size() && param_buf[p] == ';')
+                p++;
+            else
+                break;
         }
     }
 
@@ -460,7 +527,9 @@ using ParsedInput = std::variant<KeypressEvent, MouseEvent, PasteEvent, ResizeEv
         } else {
             content = std::string(input.substr(6));
         }
-        return PasteEvent{.content = std::move(content), .start = true, .end = (end_pos != std::string_view::npos)};
+        return PasteEvent{.content = std::move(content),
+                          .start = true,
+                          .end = (end_pos != std::string_view::npos)};
     }
 
     // Focus events
@@ -487,28 +556,43 @@ using ParsedInput = std::variant<KeypressEvent, MouseEvent, PasteEvent, ResizeEv
                 num = num * 10 + (body[i] - '0');
             }
             switch (num) {
-                case 1: return KeypressEvent{.key = SpecialKey::Home};
-                case 2: return KeypressEvent{.key = SpecialKey::Insert};
-                case 3: return KeypressEvent{.key = SpecialKey::Delete};
-                case 4: return KeypressEvent{.key = SpecialKey::End};
-                case 5: return KeypressEvent{.key = SpecialKey::PageUp};
-                case 6: return KeypressEvent{.key = SpecialKey::PageDown};
-                case 15: return KeypressEvent{.key = SpecialKey::F5};
-                case 17: return KeypressEvent{.key = SpecialKey::F6};
-                case 18: return KeypressEvent{.key = SpecialKey::F7};
-                case 19: return KeypressEvent{.key = SpecialKey::F8};
-                case 20: return KeypressEvent{.key = SpecialKey::F9};
-                case 21: return KeypressEvent{.key = SpecialKey::F10};
-                case 23: return KeypressEvent{.key = SpecialKey::F11};
-                case 24: return KeypressEvent{.key = SpecialKey::F12};
-                default: break;
+            case 1:
+                return KeypressEvent{.key = SpecialKey::Home};
+            case 2:
+                return KeypressEvent{.key = SpecialKey::Insert};
+            case 3:
+                return KeypressEvent{.key = SpecialKey::Delete};
+            case 4:
+                return KeypressEvent{.key = SpecialKey::End};
+            case 5:
+                return KeypressEvent{.key = SpecialKey::PageUp};
+            case 6:
+                return KeypressEvent{.key = SpecialKey::PageDown};
+            case 15:
+                return KeypressEvent{.key = SpecialKey::F5};
+            case 17:
+                return KeypressEvent{.key = SpecialKey::F6};
+            case 18:
+                return KeypressEvent{.key = SpecialKey::F7};
+            case 19:
+                return KeypressEvent{.key = SpecialKey::F8};
+            case 20:
+                return KeypressEvent{.key = SpecialKey::F9};
+            case 21:
+                return KeypressEvent{.key = SpecialKey::F10};
+            case 23:
+                return KeypressEvent{.key = SpecialKey::F11};
+            case 24:
+                return KeypressEvent{.key = SpecialKey::F12};
+            default:
+                break;
             }
         }
 
         // F1-F4 (ESC[OP through ESC[OS via SS3)
         if (body.size() == 1 && body[0] >= 'P' && body[0] <= 'S') {
-            return KeypressEvent{.key = static_cast<SpecialKey>(
-                static_cast<int>(SpecialKey::F1) + (body[0] - 'P'))};
+            return KeypressEvent{
+                .key = static_cast<SpecialKey>(static_cast<int>(SpecialKey::F1) + (body[0] - 'P'))};
         }
 
         // Mouse events (SGR mode: ESC[<btn;x;yM or ESC[<btn;x;ym)
@@ -516,11 +600,20 @@ using ParsedInput = std::variant<KeypressEvent, MouseEvent, PasteEvent, ResizeEv
             // Parse SGR mouse: <btn;x;y[Mm]
             int btn = 0, x = 0, y = 0;
             std::size_t p = 1;
-            while (p < body.size() && body[p] >= '0' && body[p] <= '9') { btn = btn * 10 + (body[p] - '0'); p++; }
+            while (p < body.size() && body[p] >= '0' && body[p] <= '9') {
+                btn = btn * 10 + (body[p] - '0');
+                p++;
+            }
             if (p < body.size() && body[p] == ';') p++;
-            while (p < body.size() && body[p] >= '0' && body[p] <= '9') { x = x * 10 + (body[p] - '0'); p++; }
+            while (p < body.size() && body[p] >= '0' && body[p] <= '9') {
+                x = x * 10 + (body[p] - '0');
+                p++;
+            }
             if (p < body.size() && body[p] == ';') p++;
-            while (p < body.size() && body[p] >= '0' && body[p] <= '9') { y = y * 10 + (body[p] - '0'); p++; }
+            while (p < body.size() && body[p] >= '0' && body[p] <= '9') {
+                y = y * 10 + (body[p] - '0');
+                p++;
+            }
             bool pressed = (p < body.size() && body[p] == 'M');
 
             MouseEvent me;
@@ -542,9 +635,15 @@ using ParsedInput = std::variant<KeypressEvent, MouseEvent, PasteEvent, ResizeEv
             if (body[0] == '8' && body[1] == ';') {
                 int rows = 0, cols = 0;
                 std::size_t p = 2;
-                while (p < body.size() && body[p] >= '0' && body[p] <= '9') { rows = rows * 10 + (body[p] - '0'); p++; }
+                while (p < body.size() && body[p] >= '0' && body[p] <= '9') {
+                    rows = rows * 10 + (body[p] - '0');
+                    p++;
+                }
                 if (p < body.size() && body[p] == ';') p++;
-                while (p < body.size() && body[p] >= '0' && body[p] <= '9') { cols = cols * 10 + (body[p] - '0'); p++; }
+                while (p < body.size() && body[p] >= '0' && body[p] <= '9') {
+                    cols = cols * 10 + (body[p] - '0');
+                    p++;
+                }
                 return ResizeEvent{.cols = cols, .rows = rows};
             }
         }
@@ -553,11 +652,16 @@ using ParsedInput = std::variant<KeypressEvent, MouseEvent, PasteEvent, ResizeEv
     // SS3 sequences (ESC O followed by letter) - F1-F4
     if (input.size() == 3 && input[0] == '\033' && input[1] == 'O') {
         switch (input[2]) {
-            case 'P': return KeypressEvent{.key = SpecialKey::F1};
-            case 'Q': return KeypressEvent{.key = SpecialKey::F2};
-            case 'R': return KeypressEvent{.key = SpecialKey::F3};
-            case 'S': return KeypressEvent{.key = SpecialKey::F4};
-            default: break;
+        case 'P':
+            return KeypressEvent{.key = SpecialKey::F1};
+        case 'Q':
+            return KeypressEvent{.key = SpecialKey::F2};
+        case 'R':
+            return KeypressEvent{.key = SpecialKey::F3};
+        case 'S':
+            return KeypressEvent{.key = SpecialKey::F4};
+        default:
+            break;
         }
     }
 
@@ -580,7 +684,8 @@ using ParsedInput = std::variant<KeypressEvent, MouseEvent, PasteEvent, ResizeEv
         if (ch == 0x7F) return KeypressEvent{.key = SpecialKey::Backspace};
         if (ch < 0x20) {
             // Ctrl+letter (Ctrl+A = 0x01, etc.)
-            return KeypressEvent{.key = static_cast<char32_t>(ch + 0x60), .modifiers = KeyModifier::Ctrl};
+            return KeypressEvent{.key = static_cast<char32_t>(ch + 0x60),
+                                 .modifiers = KeyModifier::Ctrl};
         }
         // Regular printable character
         return KeypressEvent{.key = static_cast<char32_t>(ch)};
@@ -613,10 +718,8 @@ using ParsedInput = std::variant<KeypressEvent, MouseEvent, PasteEvent, ResizeEv
 // ============================================================================
 
 /// Generate a CSI escape sequence from components
-[[nodiscard]] inline auto generate_csi(
-    std::span<const int> params,
-    std::string_view intermediate,
-    char final_byte) -> std::string {
+[[nodiscard]] inline auto generate_csi(std::span<const int> params, std::string_view intermediate,
+                                       char final_byte) -> std::string {
     std::string result = "\033[";
     for (std::size_t i = 0; i < params.size(); i++) {
         if (i > 0) result += ';';
@@ -643,30 +746,46 @@ using ParsedInput = std::variant<KeypressEvent, MouseEvent, PasteEvent, ResizeEv
     if (attr.strikethrough) append(9);
 
     // Foreground color
-    std::visit([&](auto&& c) {
-        using T = std::decay_t<decltype(c)>;
-        if constexpr (std::is_same_v<T, Color16>) {
-            int val = static_cast<int>(c);
-            append(val < 8 ? 30 + val : 90 + (val - 8));
-        } else if constexpr (std::is_same_v<T, Color256>) {
-            append(38); append(5); append(c.index);
-        } else if constexpr (std::is_same_v<T, TrueColor>) {
-            append(38); append(2); append(c.r); append(c.g); append(c.b);
-        }
-    }, attr.fg);
+    std::visit(
+        [&](auto&& c) {
+            using T = std::decay_t<decltype(c)>;
+            if constexpr (std::is_same_v<T, Color16>) {
+                int val = static_cast<int>(c);
+                append(val < 8 ? 30 + val : 90 + (val - 8));
+            } else if constexpr (std::is_same_v<T, Color256>) {
+                append(38);
+                append(5);
+                append(c.index);
+            } else if constexpr (std::is_same_v<T, TrueColor>) {
+                append(38);
+                append(2);
+                append(c.r);
+                append(c.g);
+                append(c.b);
+            }
+        },
+        attr.fg);
 
     // Background color
-    std::visit([&](auto&& c) {
-        using T = std::decay_t<decltype(c)>;
-        if constexpr (std::is_same_v<T, Color16>) {
-            int val = static_cast<int>(c);
-            append(val < 8 ? 40 + val : 100 + (val - 8));
-        } else if constexpr (std::is_same_v<T, Color256>) {
-            append(48); append(5); append(c.index);
-        } else if constexpr (std::is_same_v<T, TrueColor>) {
-            append(48); append(2); append(c.r); append(c.g); append(c.b);
-        }
-    }, attr.bg);
+    std::visit(
+        [&](auto&& c) {
+            using T = std::decay_t<decltype(c)>;
+            if constexpr (std::is_same_v<T, Color16>) {
+                int val = static_cast<int>(c);
+                append(val < 8 ? 40 + val : 100 + (val - 8));
+            } else if constexpr (std::is_same_v<T, Color256>) {
+                append(48);
+                append(5);
+                append(c.index);
+            } else if constexpr (std::is_same_v<T, TrueColor>) {
+                append(48);
+                append(2);
+                append(c.r);
+                append(c.g);
+                append(c.b);
+            }
+        },
+        attr.bg);
 
     if (params.empty()) params = "0";
     return "\033[" + params + "m";
@@ -749,4 +868,4 @@ using ParsedInput = std::variant<KeypressEvent, MouseEvent, PasteEvent, ResizeEv
     return "\033[?1049l";
 }
 
-} // namespace loom::ui::termio
+}  // namespace loom::ui::termio

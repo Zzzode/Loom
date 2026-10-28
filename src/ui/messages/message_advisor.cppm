@@ -7,11 +7,10 @@
 ///   └───────────────────────────────────────────────────────┘
 module;
 
-
-#include <ftxui/dom/elements.hpp>
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/event.hpp>
+#include <ftxui/dom/elements.hpp>
 
 export module loom.ui.messages.message_advisor;
 
@@ -47,10 +46,17 @@ struct AdvisorMessage {
 [[nodiscard]] inline Element render_advisor_message(const AdvisorMessage& msg) {
     auto [prefix, prefix_color] = [&]() -> std::pair<std::string, Color> {
         switch (msg.severity) {
-            case AdvisorSeverity::Info: return {"ℹ", loom::ui::design::theme::current_theme().palette->info};
-            case AdvisorSeverity::Suggestion: return {loom::ui::design::figures::kInfo.data(), loom::ui::design::theme::current_theme().palette->suggestion};
-            case AdvisorSeverity::Warning: return {loom::ui::design::figures::kWarning.data(), loom::ui::design::theme::current_theme().palette->warning};
-            case AdvisorSeverity::Error: return {loom::ui::design::figures::kCross.data(), loom::ui::design::theme::current_theme().palette->danger};
+        case AdvisorSeverity::Info:
+            return {"ℹ", loom::ui::design::theme::current_theme().palette->info};
+        case AdvisorSeverity::Suggestion:
+            return {loom::ui::design::figures::kInfo.data(),
+                    loom::ui::design::theme::current_theme().palette->suggestion};
+        case AdvisorSeverity::Warning:
+            return {loom::ui::design::figures::kWarning.data(),
+                    loom::ui::design::theme::current_theme().palette->warning};
+        case AdvisorSeverity::Error:
+            return {loom::ui::design::figures::kCross.data(),
+                    loom::ui::design::theme::current_theme().palette->danger};
         }
         return {"?", loom::ui::design::theme::current_theme().palette->text};
     }();
@@ -70,12 +76,20 @@ struct AdvisorMessage {
 
 // ─── Severity → palette helper ─────────────────────────────────────────
 
-inline auto SeverityPalette(AdvisorSeverity s) -> std::tuple<std::string_view, std::string_view, Color> {
+inline auto SeverityPalette(AdvisorSeverity s)
+    -> std::tuple<std::string_view, std::string_view, Color> {
     switch (s) {
-        case AdvisorSeverity::Info:       return {"ℹ",  "Info",     loom::ui::design::theme::current_theme().palette->info};
-        case AdvisorSeverity::Suggestion: return {loom::ui::design::figures::kInfo.data(), "Tip",      loom::ui::design::theme::current_theme().palette->suggestion};
-        case AdvisorSeverity::Warning:    return {loom::ui::design::figures::kWarning.data(), "Warning",  loom::ui::design::theme::current_theme().palette->warning};
-        case AdvisorSeverity::Error:      return {loom::ui::design::figures::kCross.data(),  "Error",    loom::ui::design::theme::current_theme().palette->danger};
+    case AdvisorSeverity::Info:
+        return {"ℹ", "Info", loom::ui::design::theme::current_theme().palette->info};
+    case AdvisorSeverity::Suggestion:
+        return {loom::ui::design::figures::kInfo.data(), "Tip",
+                loom::ui::design::theme::current_theme().palette->suggestion};
+    case AdvisorSeverity::Warning:
+        return {loom::ui::design::figures::kWarning.data(), "Warning",
+                loom::ui::design::theme::current_theme().palette->warning};
+    case AdvisorSeverity::Error:
+        return {loom::ui::design::figures::kCross.data(), "Error",
+                loom::ui::design::theme::current_theme().palette->danger};
     }
     return {"ℹ", "Info", loom::ui::design::theme::current_theme().palette->info};
 }
@@ -83,23 +97,23 @@ inline auto SeverityPalette(AdvisorSeverity s) -> std::tuple<std::string_view, s
 // ─── Interactive component: pill + dismiss + optional action ───────────
 
 class AdvisorMessageComponent : public ComponentBase {
-  public:
+public:
     using OnDismissFn = std::function<void()>;
-    using OnActionFn  = std::function<void()>;
+    using OnActionFn = std::function<void()>;
 
-    explicit AdvisorMessageComponent(AdvisorMessage msg,
-                                     OnDismissFn on_dismiss = nullptr,
-                                     OnActionFn  on_action  = nullptr)
-        : msg_(std::move(msg)),
-          on_dismiss_(std::move(on_dismiss)),
-          on_action_(std::move(on_action)),
-          dismissed_(false)
-    {
+    explicit AdvisorMessageComponent(AdvisorMessage msg, OnDismissFn on_dismiss = nullptr,
+                                     OnActionFn on_action = nullptr)
+        : msg_(std::move(msg))
+        , on_dismiss_(std::move(on_dismiss))
+        , on_action_(std::move(on_action))
+        , dismissed_(false) {
         if (on_dismiss_) {
-            dismiss_btn_ = Button((" " + std::string(loom::ui::design::figures::kCross) + " "), [this] {
-                dismissed_ = true;
-                if (on_dismiss_) on_dismiss_();
-            }) | dim;
+            dismiss_btn_ = Button((" " + std::string(loom::ui::design::figures::kCross) + " "),
+                                  [this] {
+                                      dismissed_ = true;
+                                      if (on_dismiss_) on_dismiss_();
+                                  }) |
+                           dim;
             Add(dismiss_btn_);
         }
         if (on_action_ && msg_.action_label) {
@@ -115,9 +129,7 @@ class AdvisorMessageComponent : public ComponentBase {
 
         auto [icon, title, accent] = SeverityPalette(msg_.severity);
 
-        Element dismiss_el = on_dismiss_ && dismiss_btn_
-                                 ? dismiss_btn_->Render()
-                                 : text("");
+        Element dismiss_el = on_dismiss_ && dismiss_btn_ ? dismiss_btn_->Render() : text("");
         auto header = hbox({
             text(std::string(icon) + " ") | color(accent),
             text(std::string(title) + "  ") | bold | color(accent),
@@ -128,23 +140,21 @@ class AdvisorMessageComponent : public ComponentBase {
 
         Elements extras;
         if (msg_.source) {
-            extras.push_back(text("  source: " + *msg_.source)
-                                 | dim | color(loom::ui::design::theme::current_theme().palette->muted));
+            extras.push_back(text("  source: " + *msg_.source) | dim |
+                             color(loom::ui::design::theme::current_theme().palette->muted));
         }
         if (msg_.action_label) {
-            Element act_el = action_btn_
-                ? action_btn_->Render() | color(accent)
-                : text(" → " + *msg_.action_label) | dim | color(accent);
-            extras.push_back(hbox({ text("  "), act_el }));
+            Element act_el = action_btn_ ? action_btn_->Render() | color(accent)
+                                         : text(" → " + *msg_.action_label) | dim | color(accent);
+            extras.push_back(hbox({text("  "), act_el}));
         }
 
         Elements rows;
         rows.push_back(header);
-        for (auto& e : extras) rows.push_back(std::move(e));
+        for (auto& e : extras)
+            rows.push_back(std::move(e));
 
-        return vbox(std::move(rows))
-             | borderStyled(BorderStyle::ROUNDED, accent)
-             | padding(1);
+        return vbox(std::move(rows)) | borderStyled(BorderStyle::ROUNDED, accent) | padding(1);
     }
 
     bool OnEvent(Event event) override {
@@ -161,22 +171,20 @@ class AdvisorMessageComponent : public ComponentBase {
         return ComponentBase::OnEvent(event);
     }
 
-  private:
+private:
     AdvisorMessage msg_;
     OnDismissFn on_dismiss_;
-    OnActionFn  on_action_;
+    OnActionFn on_action_;
     bool dismissed_;
     Component dismiss_btn_;
     Component action_btn_;
 };
 
-[[nodiscard]] inline Component MakeAdvisorMessage(
-    AdvisorMessage msg,
-    AdvisorMessageComponent::OnDismissFn on_dismiss = nullptr,
-    AdvisorMessageComponent::OnActionFn  on_action  = nullptr)
-{
-    return Make<AdvisorMessageComponent>(
-        std::move(msg), std::move(on_dismiss), std::move(on_action));
+[[nodiscard]] inline Component
+MakeAdvisorMessage(AdvisorMessage msg, AdvisorMessageComponent::OnDismissFn on_dismiss = nullptr,
+                   AdvisorMessageComponent::OnActionFn on_action = nullptr) {
+    return Make<AdvisorMessageComponent>(std::move(msg), std::move(on_dismiss),
+                                         std::move(on_action));
 }
 
-} // namespace loom::ui::messages
+}  // namespace loom::ui::messages

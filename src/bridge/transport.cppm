@@ -1,10 +1,5 @@
 module;
 
-#include <cctype>
-#include <cstddef>
-#include <cstdint>
-#include <cstdlib>
-#include <cstring>
 #include <fcntl.h>
 #include <netdb.h>
 #include <openssl/sha.h>
@@ -12,16 +7,20 @@ module;
 #include <sys/socket.h>
 #include <unistd.h>
 
+#include <cctype>
+#include <cstddef>
+#include <cstdint>
+#include <cstdlib>
+#include <cstring>
+
 export module loom.bridge.transport;
 
 import std;
 
 import loom.serdes.json;
-import loom.net.http.http;  // arch-check: keep-import (HttpClient, HttpError)
-
+import loom.net.http.http; // arch-check: keep-import (HttpClient, HttpError)
 
 export namespace loom::bridge {
-
 
 enum class MessagePriority { low, normal, high, system };
 
@@ -32,22 +31,39 @@ namespace detail {
     out.reserve(value.size() + 8);
     for (char c : value) {
         switch (c) {
-            case '"': out += "\\\""; break;
-            case '\\': out += "\\\\"; break;
-            case '\n': out += "\\n"; break;
-            case '\r': out += "\\r"; break;
-            case '\t': out += "\\t"; break;
-            default: out.push_back(c); break;
+        case '"':
+            out += "\\\"";
+            break;
+        case '\\':
+            out += "\\\\";
+            break;
+        case '\n':
+            out += "\\n";
+            break;
+        case '\r':
+            out += "\\r";
+            break;
+        case '\t':
+            out += "\\t";
+            break;
+        default:
+            out.push_back(c);
+            break;
         }
     }
     return out;
 }
+
 [[nodiscard]] auto priority_to_string(MessagePriority priority) -> std::string_view {
     switch (priority) {
-        case MessagePriority::low: return "low";
-        case MessagePriority::normal: return "normal";
-        case MessagePriority::high: return "high";
-        case MessagePriority::system: return "system";
+    case MessagePriority::low:
+        return "low";
+    case MessagePriority::normal:
+        return "normal";
+    case MessagePriority::high:
+        return "high";
+    case MessagePriority::system:
+        return "system";
     }
     return "normal";
 }
@@ -60,7 +76,8 @@ namespace detail {
 }
 
 [[nodiscard]] auto base64_encode(const unsigned char* data, std::size_t len) -> std::string {
-    static constexpr char table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    static constexpr char table[] =
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
     std::string out;
     out.reserve(((len + 2) / 3) * 4);
     for (std::size_t i = 0; i < len; i += 3) {
@@ -82,19 +99,17 @@ namespace detail {
     return base64_encode(hash.data(), hash.size());
 }
 
-} // namespace detail
-
+}  // namespace detail
 
 struct BridgeMessage {
     std::string id;
-    std::string type;         // "request", "response", "event", "heartbeat"
+    std::string type;  // "request", "response", "event", "heartbeat"
     std::string method;
-    std::string payload;      // JSON payload
+    std::string payload;  // JSON payload
     MessagePriority priority{MessagePriority::normal};
     std::chrono::system_clock::time_point timestamp;
     std::optional<std::string> correlation_id;
 };
-
 
 struct InboundAttachment {
     std::string filename;
@@ -103,30 +118,29 @@ struct InboundAttachment {
     size_t size_bytes;
 };
 
-
 enum class TransportState { disconnected, connecting, connected, reconnecting, error };
-
 
 struct TransportError {
     enum Code { connection_refused, timeout, auth_failed, protocol_error, closed_by_peer };
+
     Code code;
     std::string message;
     bool retryable{true};
 };
-
 
 using MessageHandler = std::function<void(BridgeMessage)>;
 using AttachmentHandler = std::function<void(InboundAttachment)>;
 using StateChangeHandler = std::function<void(TransportState, TransportState)>;  // old, new
 using ErrorHandler = std::function<void(TransportError)>;
 
-
 class TransportFlushGate {
     std::atomic<bool> open_{true};
     std::queue<BridgeMessage> pending_;
     std::function<void(BridgeMessage)> sender_;
+
 public:
     void close() { open_ = false; }
+
     void open() {
         open_ = true;
         while (sender_ && !pending_.empty()) {
@@ -135,6 +149,7 @@ public:
             sender_(std::move(msg));
         }
     }
+
     void enqueue(BridgeMessage msg) {
         if (open_ && sender_) {
             sender_(std::move(msg));
@@ -142,27 +157,33 @@ public:
             pending_.push(std::move(msg));
         }
     }
+
     void set_sender(std::function<void(BridgeMessage)> sender) { sender_ = std::move(sender); }
+
     [[nodiscard]] auto pending_count() const -> size_t { return pending_.size(); }
+
     [[nodiscard]] auto is_open() const -> bool { return open_.load(); }
 };
-
 
 class CapacityWake {
     size_t capacity_{100};
     size_t current_load_{0};
     std::function<void()> on_capacity_available_;
+
 public:
     void set_capacity(size_t cap) { capacity_ = cap; }
+
     void record_usage(size_t units = 1) { current_load_ += units; }
+
     void release(size_t units = 1) {
         if (current_load_ >= units) current_load_ -= units;
         if (current_load_ < capacity_ && on_capacity_available_) on_capacity_available_();
     }
+
     [[nodiscard]] auto has_capacity() const -> bool { return current_load_ < capacity_; }
+
     void on_available(std::function<void()> cb) { on_capacity_available_ = std::move(cb); }
 };
-
 
 class BridgeTransport {
 protected:
@@ -179,26 +200,27 @@ public:
     }
 
     virtual ~BridgeTransport() = default;
-    
 
-    virtual auto connect(std::string_view url, std::optional<std::string_view> token) 
+    virtual auto connect(std::string_view url, std::optional<std::string_view> token)
         -> std::expected<void, TransportError> = 0;
     virtual void disconnect() = 0;
-    
 
     virtual auto send(BridgeMessage msg) -> std::expected<void, TransportError> = 0;
-    
 
     [[nodiscard]] auto get_state() const -> TransportState { return state_; }
+
     [[nodiscard]] auto is_connected() const -> bool { return state_ == TransportState::connected; }
-    
 
     void on_message(MessageHandler handler) { message_handlers_.push_back(std::move(handler)); }
-    void on_state_change(StateChangeHandler handler) { state_handlers_.push_back(std::move(handler)); }
+
+    void on_state_change(StateChangeHandler handler) {
+        state_handlers_.push_back(std::move(handler));
+    }
+
     void on_error(ErrorHandler handler) { error_handlers_.push_back(std::move(handler)); }
-    
 
     auto& flush_gate() { return flush_gate_; }
+
     auto& capacity() { return capacity_wake_; }
 
 protected:
@@ -206,9 +228,9 @@ protected:
         std::ostringstream json;
         json << R"({"id":")";
         json << detail::json_escape(msg.id) << R"(","type":")" << detail::json_escape(msg.type)
-             << R"(","method":")" << detail::json_escape(msg.method)
-             << R"(","payload":)" << (msg.payload.empty() ? "{}" : msg.payload)
-             << R"(,"priority":")" << detail::priority_to_string(msg.priority) << '"';
+             << R"(","method":")" << detail::json_escape(msg.method) << R"(","payload":)"
+             << (msg.payload.empty() ? "{}" : msg.payload) << R"(,"priority":")"
+             << detail::priority_to_string(msg.priority) << '"';
         if (msg.correlation_id) {
             json << R"(,"correlation_id":")" << detail::json_escape(*msg.correlation_id) << '"';
         }
@@ -216,7 +238,8 @@ protected:
         return json.str();
     }
 
-    [[nodiscard]] static auto parse_message_value(loom::utils::json::JsonVal root) -> std::optional<BridgeMessage> {
+    [[nodiscard]] static auto parse_message_value(loom::utils::json::JsonVal root)
+        -> std::optional<BridgeMessage> {
         if (!root.valid() || !root.is_obj()) return std::nullopt;
 
         auto payload_value = root.get("payload");
@@ -235,7 +258,8 @@ protected:
         return message;
     }
 
-    [[nodiscard]] static auto parse_inbound_message(std::string_view payload) -> std::optional<BridgeMessage> {
+    [[nodiscard]] static auto parse_inbound_message(std::string_view payload)
+        -> std::optional<BridgeMessage> {
         auto parsed = loom::utils::json::parse(payload);
         if (!parsed || !parsed->root().is_obj()) return std::nullopt;
         return parse_message_value(parsed->root());
@@ -244,16 +268,20 @@ protected:
     void set_state(TransportState new_state) {
         auto old = state_;
         state_ = new_state;
-        for (const auto& h : state_handlers_) if (h) h(old, new_state);
+        for (const auto& h : state_handlers_)
+            if (h) h(old, new_state);
     }
+
     void emit_message(BridgeMessage msg) {
-        for (const auto& h : message_handlers_) if (h) h(msg);
+        for (const auto& h : message_handlers_)
+            if (h) h(msg);
     }
+
     void emit_error(TransportError err) {
-        for (const auto& h : error_handlers_) if (h) h(err);
+        for (const auto& h : error_handlers_)
+            if (h) h(err);
     }
 };
-
 
 class WebSocketTransport : public BridgeTransport {
     struct UrlParts {
@@ -313,12 +341,10 @@ public:
         connected_.store(true);
         set_state(TransportState::connected);
         reconnect_attempts_ = 0;
-        reader_thread_ = std::jthread([this](std::stop_token stop) {
-            read_loop(stop);
-        });
+        reader_thread_ = std::jthread([this](std::stop_token stop) { read_loop(stop); });
         return {};
     }
-    
+
     void disconnect() override {
         const bool was_already_disconnected =
             state_ == TransportState::disconnected && !connected_.load();
@@ -344,10 +370,11 @@ public:
             set_state(TransportState::disconnected);
         }
     }
-    
+
     auto send(BridgeMessage msg) -> std::expected<void, TransportError> override {
         if (state_ != TransportState::connected || !connected_.load()) {
-            return std::unexpected(TransportError{TransportError::connection_refused, "Bridge WebSocket is not connected"});
+            return std::unexpected(TransportError{TransportError::connection_refused,
+                                                  "Bridge WebSocket is not connected"});
         }
 
         auto frame = serialize_message(msg);
@@ -355,7 +382,8 @@ public:
             std::lock_guard lock(send_mutex_);
             const int fd = socket_fd_.load();
             if (fd < 0) {
-                return std::unexpected(TransportError{TransportError::closed_by_peer, "Bridge WebSocket has been closed"});
+                return std::unexpected(TransportError{TransportError::closed_by_peer,
+                                                      "Bridge WebSocket has been closed"});
             }
             auto sent = send_frame_locked(fd, 0x1, frame);
             if (!sent) {
@@ -370,11 +398,15 @@ public:
         return {};
     }
 
-    [[nodiscard]] auto sent_frames() const -> const std::vector<std::string>& { return outbound_frames_; }
+    [[nodiscard]] auto sent_frames() const -> const std::vector<std::string>& {
+        return outbound_frames_;
+    }
+
     [[nodiscard]] auto max_reconnects() const -> uint32_t { return max_reconnects_; }
 
 private:
-    [[nodiscard]] static auto parse_url(std::string_view url) -> std::expected<UrlParts, std::string> {
+    [[nodiscard]] static auto parse_url(std::string_view url)
+        -> std::expected<UrlParts, std::string> {
         if (!url.starts_with("ws://")) {
             return std::unexpected("Bridge WebSocket transport currently supports ws:// URLs");
         }
@@ -466,9 +498,12 @@ private:
         std::array<char, 1024> buffer{};
         while (response.find("\r\n\r\n") == std::string::npos) {
             auto n = ::recv(fd, buffer.data(), buffer.size(), 0);
-            if (n <= 0) return std::unexpected("Connection closed before bridge WebSocket handshake completed");
+            if (n <= 0)
+                return std::unexpected(
+                    "Connection closed before bridge WebSocket handshake completed");
             response.append(buffer.data(), static_cast<std::size_t>(n));
-            if (response.size() > 64 * 1024) return std::unexpected("Bridge WebSocket handshake response is too large");
+            if (response.size() > 64 * 1024)
+                return std::unexpected("Bridge WebSocket handshake response is too large");
         }
         return response;
     }
@@ -476,15 +511,14 @@ private:
     [[nodiscard]] static auto handshake_key() -> std::string {
         std::array<unsigned char, 16> bytes{};
         std::random_device rd;
-        for (auto& byte : bytes) byte = static_cast<unsigned char>(rd());
+        for (auto& byte : bytes)
+            byte = static_cast<unsigned char>(rd());
         return detail::base64_encode(bytes.data(), bytes.size());
     }
 
-    [[nodiscard]] static auto perform_handshake(
-        int fd,
-        const UrlParts& parts,
-        std::optional<std::string_view> token
-    ) -> std::expected<void, TransportError> {
+    [[nodiscard]] static auto perform_handshake(int fd, const UrlParts& parts,
+                                                std::optional<std::string_view> token)
+        -> std::expected<void, TransportError> {
         const auto key = handshake_key();
         std::ostringstream request;
         request << "GET " << parts.path << " HTTP/1.1\r\n"
@@ -499,18 +533,24 @@ private:
         request << "\r\n";
 
         if (!send_all(fd, request.str())) {
-            return std::unexpected(TransportError{TransportError::closed_by_peer, "Failed to send bridge WebSocket handshake", true});
+            return std::unexpected(TransportError{
+                TransportError::closed_by_peer, "Failed to send bridge WebSocket handshake", true});
         }
         auto response = read_http_headers(fd);
         if (!response) {
-            return std::unexpected(TransportError{TransportError::closed_by_peer, response.error(), true});
+            return std::unexpected(
+                TransportError{TransportError::closed_by_peer, response.error(), true});
         }
         if (response->find(" 101 ") == std::string::npos &&
             response->find(" 101\r\n") == std::string::npos) {
-            return std::unexpected(TransportError{TransportError::protocol_error, "Bridge WebSocket handshake failed: expected HTTP 101", false});
+            return std::unexpected(
+                TransportError{TransportError::protocol_error,
+                               "Bridge WebSocket handshake failed: expected HTTP 101", false});
         }
         if (response->find(detail::websocket_accept_key(key)) == std::string::npos) {
-            return std::unexpected(TransportError{TransportError::protocol_error, "Bridge WebSocket handshake response has invalid accept key", false});
+            return std::unexpected(TransportError{
+                TransportError::protocol_error,
+                "Bridge WebSocket handshake response has invalid accept key", false});
         }
         return {};
     }
@@ -522,7 +562,8 @@ private:
         return payload;
     }
 
-    [[nodiscard]] static auto send_frame_locked(int fd, std::uint8_t opcode, std::string_view payload)
+    [[nodiscard]] static auto send_frame_locked(int fd, std::uint8_t opcode,
+                                                std::string_view payload)
         -> std::expected<void, std::string> {
         std::string frame;
         frame.push_back(static_cast<char>(0x80 | opcode));
@@ -542,8 +583,10 @@ private:
 
         std::array<unsigned char, 4> mask{};
         std::random_device rd;
-        for (auto& byte : mask) byte = static_cast<unsigned char>(rd());
-        for (auto byte : mask) frame.push_back(static_cast<char>(byte));
+        for (auto& byte : mask)
+            byte = static_cast<unsigned char>(rd());
+        for (auto byte : mask)
+            frame.push_back(static_cast<char>(byte));
         for (std::size_t i = 0; i < payload.size(); ++i) {
             frame.push_back(static_cast<char>(payload[i] ^ mask[i % mask.size()]));
         }
@@ -573,9 +616,11 @@ private:
                 return std::unexpected("Bridge WebSocket closed while reading frame length");
             }
             len = 0;
-            for (unsigned char byte : ext) len = (len << 8) | byte;
+            for (unsigned char byte : ext)
+                len = (len << 8) | byte;
         }
-        if (len > 16 * 1024 * 1024) return std::unexpected("Bridge WebSocket frame exceeds 16MiB limit");
+        if (len > 16 * 1024 * 1024)
+            return std::unexpected("Bridge WebSocket frame exceeds 16MiB limit");
 
         std::array<unsigned char, 4> mask{};
         if (masked && !read_exact(fd, reinterpret_cast<char*>(mask.data()), mask.size())) {
@@ -616,7 +661,9 @@ private:
                 if (auto message = parse_inbound_message(frame->payload)) {
                     emit_message(std::move(*message));
                 } else {
-                    emit_error(TransportError{TransportError::protocol_error, "Bridge WebSocket received invalid message JSON", false});
+                    emit_error(TransportError{TransportError::protocol_error,
+                                              "Bridge WebSocket received invalid message JSON",
+                                              false});
                 }
             } else if (frame->opcode == 0x8) {
                 connected_.store(false);
@@ -639,7 +686,6 @@ private:
         set_state(TransportState::disconnected);
     }
 };
-
 
 class HttpPollingTransport : public BridgeTransport {
     std::string base_url_;
@@ -669,13 +715,12 @@ public:
         }
 
         base_url_ = std::string(url);
-        while (!base_url_.empty() && base_url_.back() == '/') base_url_.pop_back();
+        while (!base_url_.empty() && base_url_.back() == '/')
+            base_url_.pop_back();
         token_ = token ? std::string(*token) : std::string{};
         connected_.store(true);
         set_state(TransportState::connected);
-        poll_thread_ = std::jthread([this](std::stop_token stop) {
-            poll_loop(stop);
-        });
+        poll_thread_ = std::jthread([this](std::stop_token stop) { poll_loop(stop); });
         return {};
     }
 
@@ -694,7 +739,9 @@ public:
 
     auto send(BridgeMessage msg) -> std::expected<void, TransportError> override {
         if (state_ != TransportState::connected || !connected_.load()) {
-            return std::unexpected(TransportError{TransportError::connection_refused, "Bridge HTTP polling transport is not connected"});
+            return std::unexpected(
+                TransportError{TransportError::connection_refused,
+                               "Bridge HTTP polling transport is not connected"});
         }
 
         auto body = serialize_message(msg);
@@ -714,7 +761,10 @@ public:
         return {};
     }
 
-    [[nodiscard]] auto posted_messages() const -> const std::vector<std::string>& { return posted_messages_; }
+    [[nodiscard]] auto posted_messages() const -> const std::vector<std::string>& {
+        return posted_messages_;
+    }
+
     [[nodiscard]] auto poll_interval() const -> std::chrono::milliseconds { return poll_interval_; }
 
 private:
@@ -733,21 +783,23 @@ private:
         return result;
     }
 
-    [[nodiscard]] static auto map_http_error(const loom::utils::HttpError& error) -> TransportError {
+    [[nodiscard]] static auto map_http_error(const loom::utils::HttpError& error)
+        -> TransportError {
         switch (error.code) {
-            case loom::utils::HttpError::timeout:
-                return {TransportError::timeout, error.message, true};
-            case loom::utils::HttpError::cancelled:
-                return {TransportError::closed_by_peer, error.message, true};
-            case loom::utils::HttpError::ssl_error:
-            case loom::utils::HttpError::dns_error:
-            case loom::utils::HttpError::connection_failed:
-                return {TransportError::connection_refused, error.message, true};
+        case loom::utils::HttpError::timeout:
+            return {TransportError::timeout, error.message, true};
+        case loom::utils::HttpError::cancelled:
+            return {TransportError::closed_by_peer, error.message, true};
+        case loom::utils::HttpError::ssl_error:
+        case loom::utils::HttpError::dns_error:
+        case loom::utils::HttpError::connection_failed:
+            return {TransportError::connection_refused, error.message, true};
         }
         return {TransportError::connection_refused, error.message, true};
     }
 
-    [[nodiscard]] static auto error_for_status(int status, std::string_view operation) -> std::optional<TransportError> {
+    [[nodiscard]] static auto error_for_status(int status, std::string_view operation)
+        -> std::optional<TransportError> {
         if (status >= 200 && status < 300) return std::nullopt;
         if (status == 401 || status == 403) {
             return TransportError{
@@ -757,19 +809,23 @@ private:
             };
         }
         return TransportError{
-            status == 408 || status == 429 ? TransportError::timeout : TransportError::protocol_error,
+            status == 408 || status == 429 ? TransportError::timeout
+                                           : TransportError::protocol_error,
             std::format("Bridge HTTP polling {} failed with HTTP {}", operation, status),
             status == 408 || status == 429 || status >= 500,
         };
     }
 
     [[nodiscard]] static auto trim_body(std::string_view body) -> std::string_view {
-        while (!body.empty() && std::isspace(static_cast<unsigned char>(body.front()))) body.remove_prefix(1);
-        while (!body.empty() && std::isspace(static_cast<unsigned char>(body.back()))) body.remove_suffix(1);
+        while (!body.empty() && std::isspace(static_cast<unsigned char>(body.front())))
+            body.remove_prefix(1);
+        while (!body.empty() && std::isspace(static_cast<unsigned char>(body.back())))
+            body.remove_suffix(1);
         return body;
     }
 
-    [[nodiscard]] static auto parse_message_batch(std::string_view body) -> std::vector<BridgeMessage> {
+    [[nodiscard]] static auto parse_message_batch(std::string_view body)
+        -> std::vector<BridgeMessage> {
         std::vector<BridgeMessage> messages;
         body = trim_body(body);
         if (body.empty() || body == "null") return messages;
@@ -851,7 +907,6 @@ private:
     }
 };
 
-
 class StdioTransport : public BridgeTransport {
 public:
     auto connect(std::string_view, std::optional<std::string_view>)
@@ -859,14 +914,17 @@ public:
         set_state(TransportState::connected);
         return {};
     }
+
     void disconnect() override { set_state(TransportState::disconnected); }
+
     auto send(BridgeMessage msg) -> std::expected<void, TransportError> override {
         if (state_ != TransportState::connected)
-            return std::unexpected(TransportError{TransportError::connection_refused, "not connected"});
+            return std::unexpected(
+                TransportError{TransportError::connection_refused, "not connected"});
         std::println(std::cout, "{}", serialize_message(msg));
         flush_gate_.enqueue(std::move(msg));
         return {};
     }
 };
 
-} // namespace loom::bridge
+}  // namespace loom::bridge

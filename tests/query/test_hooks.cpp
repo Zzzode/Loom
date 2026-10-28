@@ -24,14 +24,15 @@ namespace notif = loom::hooks::notifs;
 // The P0-03 hooks-engine tests below use the unqualified names exported from
 // loom::utils::hooks_execution (evaluate_hook_condition, CommandHookRunner,
 // HttpHookRunner, PromptHookRunner, HookExecutionContext, ...).
+using loom::utils::hooks_execution::AgentHookRunner;
 using loom::utils::hooks_execution::CommandHookRunner;
+using loom::utils::hooks_execution::evaluate_hook_condition;
 using loom::utils::hooks_execution::HookExecutionContext;
+using loom::utils::hooks_execution::HookResponseAction;
 using loom::utils::hooks_execution::HttpHookRunner;
 using loom::utils::hooks_execution::PromptHookRunner;
-using loom::utils::hooks_execution::evaluate_hook_condition;
-using loom::utils::hooks_execution::AgentHookRunner;
-using loom::utils::hooks_execution::HookResponseAction;
-using namespace loom::utils::hooks_registry;  // IndividualHookConfig / CommandHookConfig / HookEventType / HookSource
+using namespace loom::utils::hooks_registry;  // IndividualHookConfig / CommandHookConfig /
+                                              // HookEventType / HookSource
 
 // Build a HookExecutionContext with the given dotted-path -> string context
 // vars. The hooks engine resolves "tool.name" by walking nested objects
@@ -39,8 +40,8 @@ using namespace loom::utils::hooks_registry;  // IndividualHookConfig / CommandH
 // top-level children into context_vars.
 // NOTE: We must keep the JsonDoc alive for the lifetime of the context, since
 // JsonVal is a non-owning view into the document.
-[[nodiscard]] inline HookExecutionContext ctx_with_vars(
-    std::initializer_list<std::pair<std::string_view, std::string_view>> vars) {
+[[nodiscard]] inline HookExecutionContext
+ctx_with_vars(std::initializer_list<std::pair<std::string_view, std::string_view>> vars) {
     HookExecutionContext ctx;
     auto esc = [](std::string_view s) {
         std::string out;
@@ -58,15 +59,20 @@ using namespace loom::utils::hooks_registry;  // IndividualHookConfig / CommandH
         std::vector<std::string> parts;
         std::string cur;
         for (char ch : k) {
-            if (ch == '.') { if (!cur.empty()) parts.push_back(std::move(cur)); cur.clear(); }
-            else cur.push_back(ch);
+            if (ch == '.') {
+                if (!cur.empty()) parts.push_back(std::move(cur));
+                cur.clear();
+            } else
+                cur.push_back(ch);
         }
         if (!cur.empty()) parts.push_back(std::move(cur));
         if (parts.empty()) continue;
         json += "\"" + esc(parts[0]) + "\":";
-        for (std::size_t i = 1; i < parts.size(); ++i) json += "{\"" + esc(parts[i]) + "\":";
+        for (std::size_t i = 1; i < parts.size(); ++i)
+            json += "{\"" + esc(parts[i]) + "\":";
         json += "\"" + esc(v) + "\"";
-        for (std::size_t i = 1; i < parts.size(); ++i) json += "}";
+        for (std::size_t i = 1; i < parts.size(); ++i)
+            json += "}";
     }
     json += "}";
     auto parsed = loom::utils::json::parse(json);
@@ -76,9 +82,10 @@ using namespace loom::utils::hooks_registry;  // IndividualHookConfig / CommandH
         // Now copy top-level fields from the payload into context_vars.
         // (We re-read from ctx.hook_payload which points to the owned doc.)
         if (ctx.hook_payload && ctx.hook_payload->is_obj()) {
-            ctx.hook_payload->iter_obj([&](loom::utils::json::JsonVal kk, loom::utils::json::JsonVal vv) {
-                ctx.context_vars[std::string(kk.as_str())] = vv;
-            });
+            ctx.hook_payload->iter_obj(
+                [&](loom::utils::json::JsonVal kk, loom::utils::json::JsonVal vv) {
+                    ctx.context_vars[std::string(kk.as_str())] = vv;
+                });
         }
         // Clear the payload since it was just a carrier for context_vars.
         ctx.hook_payload.reset();
@@ -92,7 +99,9 @@ using namespace loom::utils::hooks_registry;  // IndividualHookConfig / CommandH
 // are independent regardless of execution order.
 struct NotifStateReset {
     NotifStateReset() = default;
+
     ~NotifStateReset() { loom::hooks::notifs::reset_dismissals_for_tests(); }
+
     NotifStateReset(const NotifStateReset&) = delete;
     NotifStateReset& operator=(const NotifStateReset&) = delete;
 };
@@ -101,9 +110,24 @@ TEST(TypeaheadHook, ComputesAndAcceptsProviderSuggestions) {
     loom::hooks::TypeaheadHook hook(/*debounce_ms=*/0, /*max_suggestions=*/3);
     hook.add_source(loom::hooks::CompletionSource::Commands, [](std::string_view) {
         return std::vector<loom::hooks::CompletionItem>{
-            {.label = "/help", .detail = "show help", .insert_text = "/help", .score = 0.0f, .source = loom::hooks::CompletionSource::Commands, .icon = std::nullopt},
-            {.label = "/hooks", .detail = "list hooks", .insert_text = "/hooks", .score = 0.0f, .source = loom::hooks::CompletionSource::Commands, .icon = std::nullopt},
-            {.label = "/model", .detail = "switch model", .insert_text = "/model", .score = 0.0f, .source = loom::hooks::CompletionSource::Commands, .icon = std::nullopt},
+            {.label = "/help",
+             .detail = "show help",
+             .insert_text = "/help",
+             .score = 0.0f,
+             .source = loom::hooks::CompletionSource::Commands,
+             .icon = std::nullopt},
+            {.label = "/hooks",
+             .detail = "list hooks",
+             .insert_text = "/hooks",
+             .score = 0.0f,
+             .source = loom::hooks::CompletionSource::Commands,
+             .icon = std::nullopt},
+            {.label = "/model",
+             .detail = "switch model",
+             .insert_text = "/model",
+             .score = 0.0f,
+             .source = loom::hooks::CompletionSource::Commands,
+             .icon = std::nullopt},
         };
     });
 
@@ -123,8 +147,18 @@ TEST(TypeaheadHook, CyclesSelectionAndExposesGhostText) {
     loom::hooks::TypeaheadHook hook(0);
     hook.add_source(loom::hooks::CompletionSource::Custom, [](std::string_view) {
         return std::vector<loom::hooks::CompletionItem>{
-            {.label = "commit", .detail = "git commit", .insert_text = "commit", .score = 0.0f, .source = loom::hooks::CompletionSource::Custom, .icon = std::nullopt},
-            {.label = "compact", .detail = "compact context", .insert_text = "compact", .score = 0.0f, .source = loom::hooks::CompletionSource::Custom, .icon = std::nullopt},
+            {.label = "commit",
+             .detail = "git commit",
+             .insert_text = "commit",
+             .score = 0.0f,
+             .source = loom::hooks::CompletionSource::Custom,
+             .icon = std::nullopt},
+            {.label = "compact",
+             .detail = "compact context",
+             .insert_text = "compact",
+             .score = 0.0f,
+             .source = loom::hooks::CompletionSource::Custom,
+             .icon = std::nullopt},
         };
     });
 
@@ -238,7 +272,8 @@ TEST(VirtualScrollHook, TracksDynamicItemHeightsAndScrollbar) {
     EXPECT_EQ(scroll.total_content_height(), 7u);
     EXPECT_LT(scroll.scrollbar_thumb_size(), 1.0f);
 
-    auto consumed = scroll.handle_scroll_event(loom::hooks::ScrollEvent{.type = loom::hooks::ScrollEvent::Type::Home, .delta = 0, .thumb_pos = std::nullopt});
+    auto consumed = scroll.handle_scroll_event(loom::hooks::ScrollEvent{
+        .type = loom::hooks::ScrollEvent::Type::Home, .delta = 0, .thumb_pos = std::nullopt});
     EXPECT_TRUE(consumed);
     EXPECT_EQ(scroll.scrollbar_position(), 0.0f);
 }
@@ -280,27 +315,32 @@ namespace {
 struct TempWorkspace {
     std::filesystem::path root;
     std::filesystem::path file;
+
     explicit TempWorkspace(std::string_view rel = "src/sample.cpp") {
         // Use a unique path per instance to avoid races when tests run in parallel
         // (ctest -jN runs separate test binaries concurrently; each binary may have
         // multiple tests using TempWorkspace sequentially, but cross-binary races
         // can happen when the same fixed path is used.)
-        auto suffix = std::to_string(
-            std::chrono::steady_clock::now().time_since_epoch().count()
-        );
+        auto suffix = std::to_string(std::chrono::steady_clock::now().time_since_epoch().count());
         root = std::filesystem::temp_directory_path() / ("loom_at_mention_" + suffix);
-        std::filesystem::create_directories(root / std::filesystem::path(std::string(rel)).parent_path());
+        std::filesystem::create_directories(root /
+                                            std::filesystem::path(std::string(rel)).parent_path());
         file = root / std::string(rel);
         std::ofstream out(file);
         out << "// sample\nint main() { return 0; }\n";
         out.close();
     }
-    ~TempWorkspace() { std::error_code ec; std::filesystem::remove_all(root, ec); }
+
+    ~TempWorkspace() {
+        std::error_code ec;
+        std::filesystem::remove_all(root, ec);
+    }
+
     TempWorkspace(const TempWorkspace&) = delete;
     TempWorkspace& operator=(const TempWorkspace&) = delete;
 };
 
-} // namespace
+}  // namespace
 
 TEST(AtMentionParse, ClassifiesFilesAndSymbols) {
     auto mentions = loom::hooks::parse_at_mentions("look at @src/foo.cpp and @Bar please");
@@ -459,9 +499,11 @@ TEST(NotifHooks, InstallationStatusFullTriplet) {
     NotifStateReset guard;
     notif::PluginInstallationStatusSnapshot snap{
         .queued = {{"q1", "QueuedPlugin"}, {"q2", "AnotherQueued"}},
-        .installing = notif::InProgressInstall{
-            .plugin_id = "inst-1", .name = "InstallingPlugin", .progress_pct = 42},
-        .failed = {{.plugin_id = "fail-1", .name = "BrokenPlugin",
+        .installing = notif::InProgressInstall{.plugin_id = "inst-1",
+                                               .name = "InstallingPlugin",
+                                               .progress_pct = 42},
+        .failed = {{.plugin_id = "fail-1",
+                    .name = "BrokenPlugin",
                     .error = "network timeout while fetching tarball"}},
     };
     notif::set_plugin_installation_snapshot(snap);
@@ -485,11 +527,13 @@ TEST(NotifHooks, InstallationStatusFullTriplet) {
 TEST(NotifHooks, McpConnectivityIssueDetected) {
     NotifStateReset guard;
     notif::set_raw_mcp_connectivity({
-        {.server_id = "mcp-ok", .display_name = "Works Fine",
+        {.server_id = "mcp-ok",
+         .display_name = "Works Fine",
          .state = notif::McpServerStatus::Connected,
          .last_error = std::nullopt,
          .last_seen_ms = notif::detail::now_ms()},
-        {.server_id = "mcp-bad", .display_name = "Broken Server",
+        {.server_id = "mcp-bad",
+         .display_name = "Broken Server",
          .state = notif::McpServerStatus::Error,
          .last_error = "connection refused",
          .last_seen_ms = notif::detail::now_ms() - 15000},
@@ -536,11 +580,13 @@ TEST(NotifHooks, TeammateShutdownRecentOnly) {
     NotifStateReset guard;
     const int64_t now = notif::detail::now_ms();
     notif::set_all_teammate_shutdowns({
-        {.agent_id = "old-agent", .display_name = "Agent Long Gone",
-         .went_down_ms = now - 10 * 60 * 1000,   // 10 minutes ago
+        {.agent_id = "old-agent",
+         .display_name = "Agent Long Gone",
+         .went_down_ms = now - 10 * 60 * 1000,  // 10 minutes ago
          .cause = notif::TeammateShutdownCause::Finished},
-        {.agent_id = "fresh-agent", .display_name = "Just Crashed",
-         .went_down_ms = now - 60 * 1000,         // 1 minute ago
+        {.agent_id = "fresh-agent",
+         .display_name = "Just Crashed",
+         .went_down_ms = now - 60 * 1000,  // 1 minute ago
          .cause = notif::TeammateShutdownCause::Crashed},
     });
     auto recent = notif::get_teammate_shutdowns(/*within=*/5min);
@@ -577,9 +623,11 @@ TEST(NotifHooks, SubscriptionSwitchAllFieldsFilled) {
     EXPECT_FALSE(after.has_value());
 
     // Sanity: can_switch=false → nullopt regardless of other fields.
-    notif::set_subscription_switch_data(notif::SubscriptionSwitch{
-        .can_switch = false, .offer_tier = "tier2", .monthly_cost_usd_cents = 100,
-        .saving_pct_over_current = 0, .trial_days_remaining = 0});
+    notif::set_subscription_switch_data(notif::SubscriptionSwitch{.can_switch = false,
+                                                                  .offer_tier = "tier2",
+                                                                  .monthly_cost_usd_cents = 100,
+                                                                  .saving_pct_over_current = 0,
+                                                                  .trial_days_remaining = 0});
     EXPECT_FALSE(notif::can_switch_to_existing_subscription().has_value());
 }
 
@@ -607,8 +655,7 @@ TEST(Hooks, ConditionLogicalAnd) {
         {"tool.name", "bash"},
         {"session.is_admin", "true"},
     });
-    auto r = evaluate_hook_condition(
-        "tool.name == bash && session.is_admin == true", ctx);
+    auto r = evaluate_hook_condition("tool.name == bash && session.is_admin == true", ctx);
     ASSERT_TRUE(r.has_value());
     EXPECT_TRUE(*r);
 
@@ -617,8 +664,7 @@ TEST(Hooks, ConditionLogicalAnd) {
         {"tool.name", "bash"},
         {"session.is_admin", "false"},
     });
-    auto r2 = evaluate_hook_condition(
-        "tool.name == bash && session.is_admin == true", ctx_noadmin);
+    auto r2 = evaluate_hook_condition("tool.name == bash && session.is_admin == true", ctx_noadmin);
     ASSERT_TRUE(r2.has_value());
     EXPECT_FALSE(*r2);
 }
@@ -668,8 +714,7 @@ TEST(Hooks, CommandRunsEcho) {
     EXPECT_TRUE(r.executed);
     EXPECT_EQ(r.exit_code, 0) << "stderr: " << r.err << ", err: " << r.error;
     // stdout should contain "hello world" (echo adds newline).
-    EXPECT_NE(r.out.find("hello world"), std::string::npos)
-        << "actual stdout: [" << r.out << "]";
+    EXPECT_NE(r.out.find("hello world"), std::string::npos) << "actual stdout: [" << r.out << "]";
 }
 
 TEST(Hooks, CommandTimeoutKills) {
@@ -678,9 +723,9 @@ TEST(Hooks, CommandTimeoutKills) {
     auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
                        std::chrono::steady_clock::now() - before)
                        .count();
-    EXPECT_FALSE(r.error.empty()); // should have timeout error.
-    EXPECT_NE(r.exit_code, 0)
-        << "exit_code=" << r.exit_code << " elapsed=" << r.elapsed.count() << "ms";
+    EXPECT_FALSE(r.error.empty());  // should have timeout error.
+    EXPECT_NE(r.exit_code, 0) << "exit_code=" << r.exit_code << " elapsed=" << r.elapsed.count()
+                              << "ms";
     // Should be close to 150ms (definitely well below 2000ms from SIGKILL wait plus margin).
     EXPECT_LT(elapsed, 3000) << "process should have been killed by timeout";
     EXPECT_LT(r.elapsed.count(), 3000);
@@ -690,7 +735,8 @@ TEST(Hooks, HttpBlocksSSRF) {
     auto r = HttpHookRunner::run("http://192.168.0.1/admin", "GET");
     EXPECT_FALSE(r.error.empty());
     std::string lower;
-    for (char c : r.error) lower.push_back(std::tolower(static_cast<unsigned char>(c)));
+    for (char c : r.error)
+        lower.push_back(std::tolower(static_cast<unsigned char>(c)));
     EXPECT_TRUE(lower.find("ssrf") != std::string::npos ||
                 lower.find("blocked") != std::string::npos ||
                 lower.find("private") != std::string::npos)
@@ -705,14 +751,12 @@ TEST(Hooks, PromptExpandsVariables) {
     });
     std::string tmpl = "Tool ${tool.name} called by ${user.role}";
     auto s = PromptHookRunner::run(tmpl, ctx, 4000);
-    EXPECT_NE(s.find("Tool bash called by admin"), std::string::npos)
-        << "got: " << s;
+    EXPECT_NE(s.find("Tool bash called by admin"), std::string::npos) << "got: " << s;
 
     // Unknown variable preserved.
     std::string tmpl2 = "Value is ${unknown.var} end";
     auto s2 = PromptHookRunner::run(tmpl2, ctx, 4000);
-    EXPECT_NE(s2.find("${unknown.var}"), std::string::npos)
-        << "got: " << s2;
+    EXPECT_NE(s2.find("${unknown.var}"), std::string::npos) << "got: " << s2;
 }
 
 TEST(Hooks, AgentBlocksNested) {
@@ -725,7 +769,8 @@ TEST(Hooks, AgentBlocksNested) {
     EXPECT_EQ(r.exit_code, 1);
     EXPECT_FALSE(r.error.empty());
     std::string lower;
-    for (char c : r.error) lower.push_back(std::tolower(static_cast<unsigned char>(c)));
+    for (char c : r.error)
+        lower.push_back(std::tolower(static_cast<unsigned char>(c)));
     EXPECT_NE(lower.find("nested agent hooks are forbidden"), std::string::npos)
         << "got error: " << r.error;
 
@@ -734,7 +779,8 @@ TEST(Hooks, AgentBlocksNested) {
     EXPECT_EQ(r2.exit_code, 1);
     EXPECT_FALSE(r2.error.empty());
     std::string lower2;
-    for (char c : r2.error) lower2.push_back(std::tolower(static_cast<unsigned char>(c)));
+    for (char c : r2.error)
+        lower2.push_back(std::tolower(static_cast<unsigned char>(c)));
     EXPECT_NE(lower2.find("nested agent hooks are forbidden"), std::string::npos);
 
     // Safe prompt: works via delegate.
@@ -801,8 +847,8 @@ TEST(Hooks, ApiQueryPipelineAccumulatesPrompts) {
         {"tool.name", "bash"},
         {"user.role", "admin"},
     });
-    auto [modified, action] = run_api_query_hooks(
-        reg, HookEventType::UserPromptSubmit, ctx, "original payload");
+    auto [modified, action] =
+        run_api_query_hooks(reg, HookEventType::UserPromptSubmit, ctx, "original payload");
     EXPECT_EQ(action.action, HookResponseAction::Continue);
     EXPECT_NE(modified.find("Hook A: tool=bash"), std::string::npos) << modified;
     EXPECT_NE(modified.find("Hook B: user=admin"), std::string::npos) << modified;
@@ -839,8 +885,7 @@ TEST(Hooks, PostToolBlocksOnError) {
 namespace {
 
 /// Build a prompt hook whose template interpolates a context variable.
-IndividualHookConfig make_prompt_hook(HookEventType evt,
-                                      std::string matcher,
+IndividualHookConfig make_prompt_hook(HookEventType evt, std::string matcher,
                                       std::string prompt_tmpl) {
     IndividualHookConfig h;
     h.event = evt;
@@ -862,20 +907,19 @@ TEST(HooksE2E, MatcherFiltersBeforePipelineRuns) {
     // Only the ones whose matcher holds against the current context should
     // survive filter_hooks_by_matcher; the pipeline then accumulates only
     // their prompts.
-    auto h_match  = make_prompt_hook(HookEventType::UserPromptSubmit,
-                                     "tool.name == bash", "match-prompt");
-    auto h_miss   = make_prompt_hook(HookEventType::UserPromptSubmit,
-                                     "tool.name == file_write", "miss-prompt");
-    auto h_uncond = make_prompt_hook(HookEventType::UserPromptSubmit,
-                                     "", "always-prompt");
+    auto h_match =
+        make_prompt_hook(HookEventType::UserPromptSubmit, "tool.name == bash", "match-prompt");
+    auto h_miss =
+        make_prompt_hook(HookEventType::UserPromptSubmit, "tool.name == file_write", "miss-prompt");
+    auto h_uncond = make_prompt_hook(HookEventType::UserPromptSubmit, "", "always-prompt");
 
     std::vector<IndividualHookConfig> reg = {h_match, h_miss, h_uncond};
     auto ctx = ctx_with_vars({{"tool.name", "bash"}});
     auto filtered = filter_hooks_by_matcher(reg, ctx);
     ASSERT_EQ(filtered.size(), 2u);  // match + unconditional
 
-    auto [modified, action] = run_api_query_hooks(
-        reg, HookEventType::UserPromptSubmit, ctx, "PAYLOAD");
+    auto [modified, action] =
+        run_api_query_hooks(reg, HookEventType::UserPromptSubmit, ctx, "PAYLOAD");
     EXPECT_EQ(action.action, HookResponseAction::Continue);
     EXPECT_NE(modified.find("match-prompt"), std::string::npos);
     EXPECT_NE(modified.find("always-prompt"), std::string::npos);
@@ -889,33 +933,31 @@ TEST(HooksE2E, PromptAccumulationPersistsAcrossManyHooks) {
     // accumulated preamble, with the original payload surviving at the tail.
     std::vector<IndividualHookConfig> reg;
     for (int i = 1; i <= 4; ++i) {
-        reg.push_back(make_prompt_hook(HookEventType::UserPromptSubmit,
-                                       {}, "rule" + std::to_string(i)));
+        reg.push_back(
+            make_prompt_hook(HookEventType::UserPromptSubmit, {}, "rule" + std::to_string(i)));
     }
     auto ctx = ctx_with_vars({});
-    auto [modified, action] = run_api_query_hooks(
-        reg, HookEventType::UserPromptSubmit, ctx, "USER_PAYLOAD");
+    auto [modified, action] =
+        run_api_query_hooks(reg, HookEventType::UserPromptSubmit, ctx, "USER_PAYLOAD");
     EXPECT_EQ(action.action, HookResponseAction::Continue);
     for (int i = 1; i <= 4; ++i) {
-        EXPECT_NE(modified.find("rule" + std::to_string(i)),
-                  std::string::npos)
-            << "missing rule" << i << " in:\n" << modified;
+        EXPECT_NE(modified.find("rule" + std::to_string(i)), std::string::npos)
+            << "missing rule" << i << " in:\n"
+            << modified;
     }
     // Original payload survives and is positioned after the preamble.
     auto last_user = modified.rfind("USER_PAYLOAD");
     auto last_rule = modified.rfind("rule4");
     EXPECT_NE(last_user, std::string::npos);
     EXPECT_NE(last_rule, std::string::npos);
-    EXPECT_GT(last_user, last_rule)
-        << "payload must come after the accumulated prompts";
+    EXPECT_GT(last_user, last_rule) << "payload must come after the accumulated prompts";
 }
 
 TEST(HooksE2E, EmptyRegistryIsNoOp) {
     // With no hooks registered, the pipeline returns Continue + the payload
     // unchanged.
     auto ctx = ctx_with_vars({{"tool.name", "bash"}});
-    auto [modified, act] = run_api_query_hooks(
-        {}, HookEventType::UserPromptSubmit, ctx, "payload");
+    auto [modified, act] = run_api_query_hooks({}, HookEventType::UserPromptSubmit, ctx, "payload");
     EXPECT_EQ(act.action, HookResponseAction::Continue);
     EXPECT_EQ(modified, "payload");
 }
@@ -924,35 +966,29 @@ TEST(HooksE2E, CrossEventIsolation) {
     // Hooks registered for one event must not fire when the pipeline runs for
     // a different event.  Here a PostToolUse prompt hook is in the registry,
     // but we run the UserPromptSubmit pipeline — the hook must be skipped.
-    auto post_hook = make_prompt_hook(HookEventType::PostToolUse,
-                                      {}, "post-leak");
+    auto post_hook = make_prompt_hook(HookEventType::PostToolUse, {}, "post-leak");
     std::vector<IndividualHookConfig> reg = {post_hook};
     auto ctx = ctx_with_vars({});
-    auto [modified, act] = run_api_query_hooks(
-        reg, HookEventType::UserPromptSubmit, ctx, "payload");
+    auto [modified, act] =
+        run_api_query_hooks(reg, HookEventType::UserPromptSubmit, ctx, "payload");
     EXPECT_EQ(act.action, HookResponseAction::Continue)
         << "post-tool hook must not fire on UserPromptSubmit";
-    EXPECT_EQ(modified, "payload")
-        << "no prompt accumulation from a different event's hook";
+    EXPECT_EQ(modified, "payload") << "no prompt accumulation from a different event's hook";
 }
 
 TEST(HooksE2E, VariableInterpolationAcrossHooks) {
     // Each prompt hook interpolates a different context variable; the
     // pipeline must resolve all of them from a single shared context.
-    auto h1 = make_prompt_hook(HookEventType::UserPromptSubmit,
-                               {}, "tool=${tool.name}");
-    auto h2 = make_prompt_hook(HookEventType::UserPromptSubmit,
-                               {}, "user=${user.role}");
-    auto h3 = make_prompt_hook(HookEventType::UserPromptSubmit,
-                               {}, "cwd=${cwd}");
+    auto h1 = make_prompt_hook(HookEventType::UserPromptSubmit, {}, "tool=${tool.name}");
+    auto h2 = make_prompt_hook(HookEventType::UserPromptSubmit, {}, "user=${user.role}");
+    auto h3 = make_prompt_hook(HookEventType::UserPromptSubmit, {}, "cwd=${cwd}");
     std::vector<IndividualHookConfig> reg = {h1, h2, h3};
     auto ctx = ctx_with_vars({
         {"tool.name", "bash"},
         {"user.role", "admin"},
         {"cwd", "/repo"},
     });
-    auto [modified, action] = run_api_query_hooks(
-        reg, HookEventType::UserPromptSubmit, ctx, "");
+    auto [modified, action] = run_api_query_hooks(reg, HookEventType::UserPromptSubmit, ctx, "");
     EXPECT_EQ(action.action, HookResponseAction::Continue);
     EXPECT_NE(modified.find("tool=bash"), std::string::npos);
     EXPECT_NE(modified.find("user=admin"), std::string::npos);

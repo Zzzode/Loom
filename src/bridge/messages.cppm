@@ -5,21 +5,14 @@ module;
 /// @file messages.cppm
 /// @brief Inbound message processing and attachments
 
-
 export module loom.bridge.messages;
 
 import std;
 
-
 export namespace loom::bridge {
 
 /// Content block types
-enum class ContentBlockType {
-    Text,
-    Image,
-    ToolUse,
-    ToolResult
-};
+enum class ContentBlockType { Text, Image, ToolUse, ToolResult };
 
 /// Base64 image source
 struct Base64ImageSource {
@@ -45,9 +38,11 @@ using ContentBlock = std::variant<TextBlock, ImageBlock>;
 /// SDK message from bridge
 struct SDKMessage {
     std::string type;
+
     struct {
         std::optional<std::variant<std::string, std::vector<ContentBlock>>> content;
     } message;
+
     std::optional<std::string> uuid;
 };
 
@@ -73,7 +68,7 @@ std::string detect_image_format_from_base64(std::string_view data) {
     if (data.find("R0lGOD") == 0) return "image/gif";
     if (data.find("UklGR") == 0) return "image/webp";
     if (data.find("Qk") == 0) return "image/bmp";
-    return "image/jpeg"; // Default
+    return "image/jpeg";  // Default
 }
 
 /// Normalize image blocks (fix media_type vs mediaType)
@@ -89,7 +84,7 @@ std::vector<ContentBlock> normalize_image_blocks(const std::vector<ContentBlock>
     if (!has_malformed) {
         return blocks;
     }
-    
+
     // Normalize
     std::vector<ContentBlock> normalized;
     normalized.reserve(blocks.size());
@@ -98,7 +93,7 @@ std::vector<ContentBlock> normalize_image_blocks(const std::vector<ContentBlock>
             normalized.push_back(block);
             continue;
         }
-        
+
         // Fix media type
         auto img = std::get<ImageBlock>(block);
         if (img.source.media_type.empty()) {
@@ -114,11 +109,11 @@ std::optional<ExtractedMessage> extract_inbound_message_fields(const SDKMessage&
     if (msg.type != "user") {
         return std::nullopt;
     }
-    
+
     if (!msg.message.content) {
         return std::nullopt;
     }
-    
+
     // Check if content is empty array
     if (std::holds_alternative<std::vector<ContentBlock>>(*msg.message.content)) {
         const auto& arr = std::get<std::vector<ContentBlock>>(*msg.message.content);
@@ -126,17 +121,16 @@ std::optional<ExtractedMessage> extract_inbound_message_fields(const SDKMessage&
             return std::nullopt;
         }
     }
-    
+
     ExtractedMessage result;
     if (std::holds_alternative<std::vector<ContentBlock>>(*msg.message.content)) {
-        result.content = normalize_image_blocks(
-            std::get<std::vector<ContentBlock>>(*msg.message.content)
-        );
+        result.content =
+            normalize_image_blocks(std::get<std::vector<ContentBlock>>(*msg.message.content));
     } else {
         result.content = *msg.message.content;
     }
     result.uuid = msg.uuid;
-    
+
     return result;
 }
 
@@ -145,7 +139,7 @@ class MessageFlushGate {
     bool is_open_ = false;
     std::vector<SDKMessage> buffer_;
     std::function<void(const SDKMessage&)> handler_;
-    
+
 public:
     explicit MessageFlushGate(std::function<void(const SDKMessage&)> handler = nullptr)
         : handler_(std::move(handler)) {}
@@ -158,34 +152,35 @@ public:
     void open() {
         is_open_ = true;
         if (handler_) {
-            for (const auto& msg : buffer_) handler_(msg);
+            for (const auto& msg : buffer_)
+                handler_(msg);
         }
         buffer_.clear();
     }
-    
+
     /// Close the gate - buffer messages
-    void close() {
-        is_open_ = false;
-    }
-    
+    void close() { is_open_ = false; }
+
     /// Check if gate is open
     bool is_open() const { return is_open_; }
-    
+
     /// Enqueue a message (or pass through if open)
     void enqueue(const SDKMessage& msg) {
         if (is_open_) {
-            if (handler_) handler_(msg);
-            else buffer_.push_back(msg);
+            if (handler_)
+                handler_(msg);
+            else
+                buffer_.push_back(msg);
         } else {
             buffer_.push_back(msg);
         }
     }
-    
+
     /// Get buffered messages
     const std::vector<SDKMessage>& buffer() const { return buffer_; }
-    
+
     /// Clear buffer
     void clear_buffer() { buffer_.clear(); }
 };
 
-} // namespace loom::bridge
+}  // namespace loom::bridge

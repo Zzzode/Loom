@@ -46,8 +46,7 @@ inline constexpr std::string_view kClass285MappingFile =
 inline constexpr std::size_t kClass285MappingBytes = 74234u;
 inline constexpr std::string_view kClass285MappingSha256 =
     "5d4cef76b3bf2dd56f9a3f3d9c955654d4c970dc40b2030aefbcb8f9005d6715";
-inline constexpr std::string_view kOfficialManifestFile =
-    "mermaid_official/manifest.json";
+inline constexpr std::string_view kOfficialManifestFile = "mermaid_official/manifest.json";
 inline constexpr std::size_t kOfficialManifestBytes = 1272942u;
 inline constexpr std::string_view kOfficialManifestSha256 =
     "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b";
@@ -73,6 +72,7 @@ struct MutationCount {
     std::string_view kind;
     std::size_t count;
 };
+
 inline constexpr std::array<MutationCount, 10> kExpectedMutations{{
     {"complete_header", 20u},
     {"header_literal", 20u},
@@ -97,4 +97,4 @@ static_assert(kRelationCount == 3u + 8u + 8u);
 static_assert(kMultiplicityCount == 2u);
 static_assert(kExpectedMutations.size() == 10u);
 
-} // namespace loom::test::mermaid_class_theme4::authority
+}  // namespace loom::test::mermaid_class_theme4::authority

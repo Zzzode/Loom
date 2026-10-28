@@ -2,8 +2,9 @@
 /// @brief loom_tasks migration parity tests.
 
 #include <gtest/gtest.h>
-#include <cstdlib>
 #include <httplib.h>
+
+#include <cstdlib>
 
 import std;
 import loom.tools.agent_runtime;
@@ -27,7 +28,8 @@ struct EnvironmentGuard {
     std::string name;
     std::optional<std::string> previous;
 
-    EnvironmentGuard(std::string key, const std::string& value) : name(std::move(key)) {
+    EnvironmentGuard(std::string key, const std::string& value)
+        : name(std::move(key)) {
         if (const char* existing = std::getenv(name.c_str())) {
             previous = existing;
         }
@@ -44,34 +46,40 @@ struct EnvironmentGuard {
 };
 
 [[nodiscard]] fs::path unique_test_dir(std::string_view prefix) {
-    return fs::temp_directory_path() / (
-        std::string(prefix) +
-        std::to_string(std::chrono::steady_clock::now().time_since_epoch().count())
-    );
+    return fs::temp_directory_path() /
+           (std::string(prefix) +
+            std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
 }
 
 class BatchReadTool final : public loom::core::ITool {
 public:
     const loom::core::ToolDefinition& definition() const override { return definition_; }
+
     loom::core::Result<loom::core::ToolResult> execute(const loom::core::ToolInput&) override {
         ++calls;
         return loom::core::ToolResult::success("batch tool executed");
     }
+
     bool check_permission(const loom::core::ToolInput&) const override { return true; }
+
     std::atomic<int> calls{0};
 
 private:
     loom::core::ToolDefinition definition_{
-        .name = "Read", .description = "Read the batch test fixture",
-        .input_schema = {}, .permission = loom::core::ToolPermission::ReadOnly,
+        .name = "Read",
+        .description = "Read the batch test fixture",
+        .input_schema = {},
+        .permission = loom::core::ToolPermission::ReadOnly,
     };
 };
 
 class BatchMessagesServer {
 public:
-    explicit BatchMessagesServer(bool hold = false) : released_(!hold) {
+    explicit BatchMessagesServer(bool hold = false)
+        : released_(!hold) {
         server_.new_task_queue = [] { return new httplib::ThreadPool(4); };
-        server_.Post("/v1/messages", [this](const httplib::Request& request, httplib::Response& response) {
+        server_.Post("/v1/messages", [this](const httplib::Request& request,
+                                            httplib::Response& response) {
             {
                 std::unique_lock lock(mutex_);
                 requests_.push_back(request.body);
@@ -81,31 +89,46 @@ public:
             }
             if (request.body.find("fail this batch") != std::string::npos) {
                 response.status = 401;
-                response.set_content(R"({"error":{"type":"authentication_error","message":"batch endpoint rejected request"}})", "application/json");
+                response.set_content(
+                    R"({"error":{"type":"authentication_error","message":"batch endpoint rejected request"}})",
+                    "application/json");
                 return;
             }
-            const bool tool_turn = request.body.find("exercise the registered tool") != std::string::npos &&
+            const bool tool_turn =
+                request.body.find("exercise the registered tool") != std::string::npos &&
                 request.body.find("\"tool_result\"") == std::string::npos;
             std::string events =
                 "event: message_start\n"
-                "data: {\"type\":\"message_start\",\"message\":{\"id\":\"msg_batch\",\"type\":\"message\",\"role\":\"assistant\",\"model\":\"batch-test\",\"content\":[],\"usage\":{\"input_tokens\":11,\"output_tokens\":0}}}\n\n";
+                "data: "
+                "{\"type\":\"message_start\",\"message\":{\"id\":\"msg_batch\",\"type\":"
+                "\"message\",\"role\":\"assistant\",\"model\":\"batch-test\",\"content\":[],"
+                "\"usage\":{\"input_tokens\":11,\"output_tokens\":0}}}\n\n";
             if (tool_turn) {
                 events +=
                     "event: content_block_start\n"
-                    "data: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"tool_use\",\"id\":\"read_batch\",\"name\":\"Read\",\"input\":{}}}\n\n"
+                    "data: "
+                    "{\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":"
+                    "\"tool_use\",\"id\":\"read_batch\",\"name\":\"Read\",\"input\":{}}}\n\n"
                     "event: content_block_delta\n"
-                    "data: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"{}\"}}\n\n";
+                    "data: "
+                    "{\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_"
+                    "json_delta\",\"partial_json\":\"{}\"}}\n\n";
             } else {
-                events +=
-                    "event: content_block_start\n"
-                    "data: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"text\",\"text\":\"\"}}\n\n"
-                    "event: content_block_delta\n"
-                    "data: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"batch final output\"}}\n\n";
+                events += "event: content_block_start\n"
+                          "data: "
+                          "{\"type\":\"content_block_start\",\"index\":0,\"content_block\":{"
+                          "\"type\":\"text\",\"text\":\"\"}}\n\n"
+                          "event: content_block_delta\n"
+                          "data: "
+                          "{\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":"
+                          "\"text_delta\",\"text\":\"batch final output\"}}\n\n";
             }
-            events += "event: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0}\n\n";
-            events += std::format(
-                "event: message_delta\ndata: {{\"type\":\"message_delta\",\"delta\":{{\"stop_reason\":\"{}\"}},\"usage\":{{\"output_tokens\":{}}}}}\n\n",
-                tool_turn ? "tool_use" : "end_turn", tool_turn ? 7 : 3);
+            events += "event: content_block_stop\ndata: "
+                      "{\"type\":\"content_block_stop\",\"index\":0}\n\n";
+            events += std::format("event: message_delta\ndata: "
+                                  "{{\"type\":\"message_delta\",\"delta\":{{\"stop_reason\":\"{}\"}"
+                                  "},\"usage\":{{\"output_tokens\":{}}}}}\n\n",
+                                  tool_turn ? "tool_use" : "end_turn", tool_turn ? 7 : 3);
             events += "event: message_stop\ndata: {\"type\":\"message_stop\"}\n\n";
             response.set_content(events, "text/event-stream");
         });
@@ -115,25 +138,36 @@ public:
             server_.wait_until_ready();
         }
     }
+
     ~BatchMessagesServer() {
         release();
         server_.stop();
         if (thread_.joinable()) thread_.join();
     }
+
     bool valid() const { return port_ > 0; }
+
     std::string base_url() const { return std::format("http://127.0.0.1:{}", port_); }
+
     bool wait_for_requests(std::size_t count) {
         std::unique_lock lock(mutex_);
-        return cv_.wait_for(lock, std::chrono::seconds(5), [this, count] { return requests_.size() >= count; });
+        return cv_.wait_for(lock, std::chrono::seconds(5),
+                            [this, count] { return requests_.size() >= count; });
     }
+
     void release() {
-        { std::lock_guard lock(mutex_); released_ = true; }
+        {
+            std::lock_guard lock(mutex_);
+            released_ = true;
+        }
         cv_.notify_all();
     }
+
     std::vector<std::string> requests() {
         std::lock_guard lock(mutex_);
         return requests_;
     }
+
     std::vector<std::string> api_keys() {
         std::lock_guard lock(mutex_);
         return api_keys_;
@@ -161,26 +195,34 @@ protected:
         fs::create_directories(root);
         loom::tools::agent_runtime::native_agent_store().clear_for_testing();
     }
+
     void TearDown() override {
         loom::tools::agent_runtime::native_agent_store().clear_for_testing();
         std::error_code ec;
         fs::remove_all(root, ec);
     }
+
     loom::tools::MultiAgentConfig config(std::string prompt) {
         return loom::tools::MultiAgentConfig{
             .agents = {{
                 .type = loom::tools::AgentType::GeneralPurpose,
-                .name = "batch-worker", .model = "batch-test", .system_prompt = "batch system policy",
-                .allowed_tools = {"Read"}, .max_turns = 2,
+                .name = "batch-worker",
+                .model = "batch-test",
+                .system_prompt = "batch system policy",
+                .allowed_tools = {"Read"},
+                .max_turns = 2,
             }},
-            .parallel = false, .coordinator_prompt = std::move(prompt), .team_name = std::nullopt,
-            .working_dir = root.string(), .prefer_in_process = false,
+            .parallel = false,
+            .coordinator_prompt = std::move(prompt),
+            .team_name = std::nullopt,
+            .working_dir = root.string(),
+            .prefer_in_process = false,
             .registry = std::make_shared<loom::core::ToolRegistry>(),
         };
     }
 };
 
-} // namespace
+}  // namespace
 
 TEST(SpawnMultiAgent, TeamNameSpawnsTeammateBackend) {
     const auto root = unique_test_dir("loom-spawn-multi-agent-");
@@ -193,31 +235,28 @@ TEST(SpawnMultiAgent, TeamNameSpawnsTeammateBackend) {
     loom::tools::agent_runtime::native_agent_store().clear_for_testing();
 
     auto created = loom::tools::global_team_store().create(
-        "migration-team",
-        "migration-team",
-        std::vector<loom::tools::TeamMember>{
-            loom::tools::TeamMember{
-                .agent_id = "reviewer-two@migration-team",
-                .role = loom::tools::MemberRole::Reviewer,
-                .status = loom::tools::MemberStatus::Working,
-                .current_task = std::nullopt,
-                .last_result = std::nullopt,
-            }
-        }
-    );
+        "migration-team", "migration-team",
+        std::vector<loom::tools::TeamMember>{loom::tools::TeamMember{
+            .agent_id = "reviewer-two@migration-team",
+            .role = loom::tools::MemberRole::Reviewer,
+            .status = loom::tools::MemberStatus::Working,
+            .current_task = std::nullopt,
+            .last_result = std::nullopt,
+        }});
     ASSERT_TRUE(created);
 
     loom::tools::MultiAgentConfig config{
-        .agents = {
-            loom::tools::MultiAgentAgentConfig{
-                .type = loom::tools::AgentType::Verify,
-                .name = "reviewer-two",
-                .model = "haiku",
-                .system_prompt = "Review migration parity",
-                .allowed_tools = {"Read"},
-                .max_turns = 1,
+        .agents =
+            {
+                loom::tools::MultiAgentAgentConfig{
+                    .type = loom::tools::AgentType::Verify,
+                    .name = "reviewer-two",
+                    .model = "haiku",
+                    .system_prompt = "Review migration parity",
+                    .allowed_tools = {"Read"},
+                    .max_turns = 1,
+                },
             },
-        },
         .parallel = false,
         .coordinator_prompt = std::string("Review the team migration"),
         .team_name = std::string("migration-team"),
@@ -228,24 +267,29 @@ TEST(SpawnMultiAgent, TeamNameSpawnsTeammateBackend) {
 
     auto futures = loom::tools::spawn_agents(config);
     auto results = loom::tools::wait_all(
-        std::span<std::future<loom::tools::MultiAgentResult>>(futures.data(), futures.size())
-    );
+        std::span<std::future<loom::tools::MultiAgentResult>>(futures.data(), futures.size()));
 
     ASSERT_EQ(results.size(), 1u);
     EXPECT_FALSE(results[0].completed);
     EXPECT_TRUE(results[0].started) << results[0].output;
     EXPECT_EQ(results[0].tokens_used, 0);
-    EXPECT_NE(loom::tools::merge_agent_results(results).find("task completion is pending"), std::string::npos);
+    EXPECT_NE(loom::tools::merge_agent_results(results).find("task completion is pending"),
+              std::string::npos);
     const std::array receipts{results[0], results[0]};
     const auto merged = loom::tools::merge_agent_results(receipts);
     EXPECT_NE(merged.find("2/2 agents started, 0/2 agents completed"), std::string::npos);
-    EXPECT_NE(results[0].output.find("Spawned successfully."), std::string::npos) << results[0].output;
-    EXPECT_NE(results[0].output.find("agent_id: reviewer-two-2@migration-team"), std::string::npos) << results[0].output;
-    EXPECT_NE(results[0].output.find("backend: in-process"), std::string::npos) << results[0].output;
-    EXPECT_NE(results[0].output.find("status: teammate_spawned"), std::string::npos) << results[0].output;
+    EXPECT_NE(results[0].output.find("Spawned successfully."), std::string::npos)
+        << results[0].output;
+    EXPECT_NE(results[0].output.find("agent_id: reviewer-two-2@migration-team"), std::string::npos)
+        << results[0].output;
+    EXPECT_NE(results[0].output.find("backend: in-process"), std::string::npos)
+        << results[0].output;
+    EXPECT_NE(results[0].output.find("status: teammate_spawned"), std::string::npos)
+        << results[0].output;
     EXPECT_EQ(results[0].output.find("Agent 'reviewer-two'"), std::string::npos);
 
-    auto record = loom::tools::agent_runtime::native_agent_store().get("reviewer-two-2@migration-team");
+    auto record =
+        loom::tools::agent_runtime::native_agent_store().get("reviewer-two-2@migration-team");
     ASSERT_TRUE(record);
     EXPECT_EQ(record->status, loom::tools::agent_runtime::NativeAgentStatus::Queued);
     EXPECT_TRUE(record->background);
@@ -383,10 +427,13 @@ TEST_F(SpawnBatchTest, CapturedSessionSnapshotOverridesConflictingEnvironment) {
     auto batch = config("use the captured session");
     batch.agents.front().model.clear();
     batch.parent_model = "snapshot-parent-model";
-    batch.api_context = std::make_shared<const loom::core::ApiExecutionContext>(loom::core::ApiExecutionContext{
-        .wire_api = "messages", .base_url = server.base_url(),
-        .api_key = "snapshot-key", .auth_token = {},
-    });
+    batch.api_context =
+        std::make_shared<const loom::core::ApiExecutionContext>(loom::core::ApiExecutionContext{
+            .wire_api = "messages",
+            .base_url = server.base_url(),
+            .api_key = "snapshot-key",
+            .auth_token = {},
+        });
     auto futures = loom::tools::spawn_agents(batch);
     batch.api_context.reset();
     batch.parent_model.reset();
@@ -411,11 +458,13 @@ TEST_F(SpawnBatchTest, CapturedLivePermissionPolicyDeniesChildToolExecution) {
     auto* read_ptr = read.get();
     batch.registry->register_tool(std::move(read));
     auto policy_calls = std::make_shared<std::atomic<int>>(0);
-    batch.permission_check = [policy_calls](std::string_view name, std::string_view, std::string_view) {
+    batch.permission_check = [policy_calls](std::string_view name, std::string_view,
+                                            std::string_view) {
         if (name == "Read") {
             ++*policy_calls;
             return loom::tools::AgentLivePermissionCheck{
-                .allowed = false, .updated_input_json = std::nullopt,
+                .allowed = false,
+                .updated_input_json = std::nullopt,
                 .message = "snapshot policy denied Read",
             };
         }
@@ -436,11 +485,7 @@ TEST_F(SpawnBatchTest, CapturedLivePermissionPolicyDeniesChildToolExecution) {
 }
 
 TEST(LocalAgentTask, NotificationLeavesOutputFileEmptyWhenNoPathIsKnown) {
-    auto xml = loom::tasks::generate_agent_notification(
-        "task_123",
-        "Review code",
-        "completed"
-    );
+    auto xml = loom::tasks::generate_agent_notification("task_123", "Review code", "completed");
 
     EXPECT_NE(xml.find("<task_id>task_123</task_id>"), std::string::npos);
     EXPECT_NE(xml.find("<output_file></output_file>"), std::string::npos);
@@ -449,32 +494,16 @@ TEST(LocalAgentTask, NotificationLeavesOutputFileEmptyWhenNoPathIsKnown) {
 
 TEST(LocalAgentTask, NotificationUsesExplicitOutputFileWhenProvided) {
     auto xml = loom::tasks::generate_agent_notification(
-        "task_123",
-        "Review code",
-        "completed",
-        std::nullopt,
-        std::nullopt,
-        std::nullopt,
-        std::nullopt,
-        std::nullopt,
-        "/tmp/agent-output.log"
-    );
+        "task_123", "Review code", "completed", std::nullopt, std::nullopt, std::nullopt,
+        std::nullopt, std::nullopt, "/tmp/agent-output.log");
 
     EXPECT_NE(xml.find("<output_file>/tmp/agent-output.log</output_file>"), std::string::npos);
 }
 
 TEST(LocalAgentTask, NotificationEscapesXmlTextNodes) {
     auto xml = loom::tasks::generate_agent_notification(
-        "task_<1>&",
-        "Review <code>&docs",
-        "failed",
-        "bad <tag>&value",
-        "result </result> & more",
-        "tool_<id>",
-        "/tmp/a&b",
-        "branch<main>",
-        "/tmp/out&1.log"
-    );
+        "task_<1>&", "Review <code>&docs", "failed", "bad <tag>&value", "result </result> & more",
+        "tool_<id>", "/tmp/a&b", "branch<main>", "/tmp/out&1.log");
 
     EXPECT_NE(xml.find("task_&lt;1&gt;&amp;"), std::string::npos);
     EXPECT_NE(xml.find("Review &lt;code&gt;&amp;docs"), std::string::npos);
@@ -487,11 +516,7 @@ TEST(LocalAgentTask, NotificationEscapesXmlTextNodes) {
 }
 
 TEST(LocalAgentTask, StoppedNotificationUsesStoppedStatusAndSummary) {
-    auto xml = loom::tasks::generate_agent_notification(
-        "task_123",
-        "Review code",
-        "stopped"
-    );
+    auto xml = loom::tasks::generate_agent_notification("task_123", "Review code", "stopped");
 
     EXPECT_NE(xml.find("<status>stopped</status>"), std::string::npos);
     EXPECT_NE(xml.find("Agent \"Review code\" was stopped"), std::string::npos);
@@ -503,9 +528,12 @@ TEST(InProcessTeammateTask, AppendMessageStoresUiVisiblePendingMessage) {
     state.type = loom::core::TaskType::InProcessTeammate;
     state.status = loom::core::TaskStatus::Running;
 
-    loom::tasks::append_teammate_message("tm_1", "hello", [&](const std::string&, std::function<void(loom::tasks::InProcessTeammateTaskState&)> mutate) {
-        mutate(state);
-    });
+    loom::tasks::append_teammate_message(
+        "tm_1", "hello",
+        [&](const std::string&,
+            std::function<void(loom::tasks::InProcessTeammateTaskState&)> mutate) {
+            mutate(state);
+        });
 
     ASSERT_EQ(state.pending_user_messages.size(), 1u);
     EXPECT_EQ(state.pending_user_messages[0], "hello");
@@ -568,21 +596,18 @@ TEST(PillLabel, ShowsUltraplanAttentionStatesAndCta) {
 
     std::vector<loom::core::TaskStateBase*> tasks = {&remote};
 
-    EXPECT_EQ(
-        loom::tasks::get_pill_label(tasks),
-        std::string(loom::tasks::DIAMOND_OPEN) + " ultraplan");
+    EXPECT_EQ(loom::tasks::get_pill_label(tasks),
+              std::string(loom::tasks::DIAMOND_OPEN) + " ultraplan");
     EXPECT_FALSE(loom::tasks::pill_needs_cta(tasks));
 
     remote.ultraplan_phase = loom::tasks::UltraplanPhase::NeedsInput;
-    EXPECT_EQ(
-        loom::tasks::get_pill_label(tasks),
-        std::string(loom::tasks::DIAMOND_OPEN) + " ultraplan needs your input");
+    EXPECT_EQ(loom::tasks::get_pill_label(tasks),
+              std::string(loom::tasks::DIAMOND_OPEN) + " ultraplan needs your input");
     EXPECT_TRUE(loom::tasks::pill_needs_cta(tasks));
 
     remote.ultraplan_phase = loom::tasks::UltraplanPhase::PlanReady;
-    EXPECT_EQ(
-        loom::tasks::get_pill_label(tasks),
-        std::string(loom::tasks::DIAMOND_FILLED) + " ultraplan ready");
+    EXPECT_EQ(loom::tasks::get_pill_label(tasks),
+              std::string(loom::tasks::DIAMOND_FILLED) + " ultraplan ready");
     EXPECT_TRUE(loom::tasks::pill_needs_cta(tasks));
 }
 
@@ -592,9 +617,8 @@ TEST(PillLabel, ShowsRemoteCloudSessionLabelForNonUltraplanTasks) {
 
     std::vector<loom::core::TaskStateBase*> tasks = {&remote};
 
-    EXPECT_EQ(
-        loom::tasks::get_pill_label(tasks),
-        std::string(loom::tasks::DIAMOND_OPEN) + " 1 cloud session");
+    EXPECT_EQ(loom::tasks::get_pill_label(tasks),
+              std::string(loom::tasks::DIAMOND_OPEN) + " 1 cloud session");
     EXPECT_FALSE(loom::tasks::pill_needs_cta(tasks));
 }
 
@@ -618,29 +642,39 @@ public:
     std::vector<std::pair<sw::PaneId, int>> capture_calls;
 
     sw::BackendType type() const override { return sw::BackendType::Tmux; }
+
     std::string_view display_name() const override { return "scripted-tmux"; }
+
     bool supports_hide_show() const override { return false; }
+
     bool is_available() const override { return available; }
+
     bool is_running_inside() const override { return inside; }
 
     sw::CreatePaneResult create_teammate_pane(std::string_view, sw::AgentColor) override {
         ++create_calls;
-        return sw::CreatePaneResult{
-            .pane_id = sw::PaneId{"%p" + std::to_string(create_calls)},
-            .is_first_teammate = (create_calls == 1)};
+        return sw::CreatePaneResult{.pane_id = sw::PaneId{"%p" + std::to_string(create_calls)},
+                                    .is_first_teammate = (create_calls == 1)};
     }
+
     void send_command_to_pane(const sw::PaneId&, std::string_view, bool) override {}
+
     void set_pane_border_color(const sw::PaneId&, sw::AgentColor, bool) override {}
+
     void set_pane_title(const sw::PaneId&, std::string_view, sw::AgentColor, bool) override {}
+
     void enable_pane_border_status(std::optional<std::string_view>, bool) override {}
+
     void rebalance_panes(std::string_view, bool) override {}
+
     bool kill_pane(const sw::PaneId&, bool) override { return true; }
+
     bool hide_pane(const sw::PaneId&, bool) override { return false; }
+
     bool show_pane(const sw::PaneId&, std::string_view, bool) override { return false; }
 
-    std::optional<std::string> capture_pane_text(
-        const sw::PaneId& id, int tail_lines, bool
-    ) override {
+    std::optional<std::string> capture_pane_text(const sw::PaneId& id, int tail_lines,
+                                                 bool) override {
         capture_calls.emplace_back(id, tail_lines);
         auto it = scripted_captures.find(id);
         if (it == scripted_captures.end() || it->second.empty()) return std::nullopt;
@@ -651,19 +685,15 @@ public:
 };
 
 TEST(SwarmBackends, CapturePaneArgBuilder) {
-    EXPECT_EQ(
-        sw::detail::build_capture_pane_command("%42", 200),
-        "tmux capture-pane -p -t '%42' -S -200 2>/dev/null");
-    EXPECT_EQ(
-        sw::detail::build_capture_pane_command("%7", 1),
-        "tmux capture-pane -p -t '%7' -S -1 2>/dev/null");
+    EXPECT_EQ(sw::detail::build_capture_pane_command("%42", 200),
+              "tmux capture-pane -p -t '%42' -S -200 2>/dev/null");
+    EXPECT_EQ(sw::detail::build_capture_pane_command("%7", 1),
+              "tmux capture-pane -p -t '%7' -S -1 2>/dev/null");
     // tail_lines below 1 clamps to 1.
-    EXPECT_EQ(
-        sw::detail::build_capture_pane_command("%7", 0),
-        "tmux capture-pane -p -t '%7' -S -1 2>/dev/null");
-    EXPECT_EQ(
-        sw::detail::build_capture_pane_command("%7", -50),
-        "tmux capture-pane -p -t '%7' -S -1 2>/dev/null");
+    EXPECT_EQ(sw::detail::build_capture_pane_command("%7", 0),
+              "tmux capture-pane -p -t '%7' -S -1 2>/dev/null");
+    EXPECT_EQ(sw::detail::build_capture_pane_command("%7", -50),
+              "tmux capture-pane -p -t '%7' -S -1 2>/dev/null");
 }
 
 TEST(SwarmBackends, ExecutorCapturesByAgent) {
@@ -677,9 +707,7 @@ TEST(SwarmBackends, ExecutorCapturesByAgent) {
     cfg.team_name = "t1";
     ASSERT_TRUE(exec.spawn(cfg).success);
 
-    EXPECT_EQ(
-        exec.capture_agent_pane("worker@t1"),
-        std::optional<std::string>("line1\nline2"));
+    EXPECT_EQ(exec.capture_agent_pane("worker@t1"), std::optional<std::string>("line1\nline2"));
     EXPECT_EQ(exec.capture_agent_pane("ghost@t1"), std::nullopt);
 
     auto panes = exec.spawned_panes();
@@ -776,4 +804,4 @@ TEST(PaneObserver, GlobalSingletonLifecycle) {
     EXPECT_EQ(po::global_pane_observer(), nullptr);
 }
 
-} // namespace loom_pane_observer_test
+}  // namespace loom_pane_observer_test

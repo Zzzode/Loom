@@ -6,16 +6,17 @@
 module;
 
 #ifndef _WIN32
-#include <cerrno>
 #include <sys/wait.h>
 #include <unistd.h>
+
+#include <cerrno>
 #endif
 
 module loom.platform.clipboard_coordinator;
 
 #ifndef _WIN32
 
-import loom.platform.clipboard;  // resolve_native_backend, is_ssh_session
+import loom.platform.clipboard; // resolve_native_backend, is_ssh_session
 
 namespace loom::utils::clipboard {
 
@@ -41,9 +42,7 @@ struct ClipboardCoordinator::Impl {
         owner = std::thread([this] { owner_loop(); });
     }
 
-    ~Impl() {
-        shutdown();
-    }
+    ~Impl() { shutdown(); }
 
     void shutdown() {
         {
@@ -155,8 +154,8 @@ struct ClipboardCoordinator::Impl {
             CopyResult result;
             result.status = CopyResult::Status::Unsupported;
             result.duration = std::chrono::milliseconds{0};
-            result.error_detail = loom::utils::clipboard::is_ssh_session()
-                ? "ssh session" : "no native backend";
+            result.error_detail =
+                loom::utils::clipboard::is_ssh_session() ? "ssh session" : "no native backend";
             request.on_complete(std::move(result));
             return;
         }
@@ -164,8 +163,8 @@ struct ClipboardCoordinator::Impl {
         input->argv = backend->argv;
 
         auto cancel = std::make_shared<CancellationState>();
-        current_job = std::make_unique<ClipboardJob>(
-            std::move(input), std::move(cancel), std::move(request.on_complete));
+        current_job = std::make_unique<ClipboardJob>(std::move(input), std::move(cancel),
+                                                     std::move(request.on_complete));
     }
 
     /// Nonblocking sweep of pending_reaps_. Reaped entries are removed.
@@ -220,6 +219,7 @@ struct ClipboardCoordinator::Impl {
         }
         return 0;
     }
+
     void shutdown() {}
 };
 

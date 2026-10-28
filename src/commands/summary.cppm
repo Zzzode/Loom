@@ -3,7 +3,6 @@
 /// Generates a conversation summary.
 module;
 
-
 export module loom.commands.summary;
 
 import std;
@@ -30,19 +29,16 @@ public:
         };
     }
 
-    [[nodiscard]] VoidResult validate(const CommandContext&) {
-        return {};
-    }
+    [[nodiscard]] VoidResult validate(const CommandContext&) { return {}; }
 
     [[nodiscard]] Result<CommandResult> execute(const CommandContext&) {
         return CommandResult::success(
             "The /summary command is not available as a built-in in this native build. "
-            "Use /compact to compress the transcript, or export the session and ask Loom to summarize it.");
+            "Use /compact to compress the transcript, or export the session and ask Loom to "
+            "summarize it.");
     }
 
-    [[nodiscard]] std::vector<std::string> complete(std::string_view) {
-        return {};
-    }
+    [[nodiscard]] std::vector<std::string> complete(std::string_view) { return {}; }
 };
 
-} // namespace loom::commands
+}  // namespace loom::commands

@@ -43,4 +43,4 @@ std::string generate_session_id() {
     return oss.str();
 }
 
-} // namespace loom::bridge
+}  // namespace loom::bridge

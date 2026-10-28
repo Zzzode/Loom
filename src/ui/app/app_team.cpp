@@ -59,31 +59,30 @@ namespace dsys = loom::ui::dialogs::system;
 //    and the file-inbox closure out of the interface BMI).
 namespace {
 std::string env_first(std::initializer_list<const char*> names) {
-        for (const char* n : names) {
-            if (const char* v = std::getenv(n); v && *v) return v;
-        }
-        return {};
+    for (const char* n : names) {
+        if (const char* v = std::getenv(n); v && *v) return v;
     }
+    return {};
+}
 
-    // Stable per-message key so repeated polls don't redeliver. The inbox
-    // entry has no id; from+timestamp+text is unique enough.
+// Stable per-message key so repeated polls don't redeliver. The inbox
+// entry has no id; from+timestamp+text is unique enough.
 std::string teammate_message_key(const loom::utils::TeammateMessage& m) {
-        return m.from + "|" + m.timestamp + "|" + m.text;
-    }
+    return m.from + "|" + m.timestamp + "|" + m.text;
+}
 
-    // Control messages (shutdown / permission / mode) are handled by dedicated
-    // paths, not submitted as task prompts. Heuristic matching the inbox
-    // classifier tags embedded in the message text.
+// Control messages (shutdown / permission / mode) are handled by dedicated
+// paths, not submitted as task prompts. Heuristic matching the inbox
+// classifier tags embedded in the message text.
 bool is_teammate_control_message(std::string_view text) {
-        static constexpr std::string_view tags[] = {
-            "loom:shutdown", "loom:permission", "loom:mode",
-            "loom:plan-approval", "loom:sandbox",
-        };
-        for (auto t : tags) {
-            if (text.find(t) != std::string_view::npos) return true;
-        }
-        return false;
+    static constexpr std::string_view tags[] = {
+        "loom:shutdown", "loom:permission", "loom:mode", "loom:plan-approval", "loom:sandbox",
+    };
+    for (auto t : tags) {
+        if (text.find(t) != std::string_view::npos) return true;
     }
+    return false;
+}
 
 }  // namespace
 
@@ -93,82 +92,76 @@ bool AppAdapter::running_as_pane_teammate() const {
 }
 
 void AppAdapter::enqueue_teammate_prompt(std::string prompt) {
-        {
-            std::lock_guard lock(teammate_.pending_mutex());
-            teammate_.pending_prompts().push_back(std::move(prompt));
-        }
-        PostRenderEvent();  // wake the UI thread to drain
+    {
+        std::lock_guard lock(teammate_.pending_mutex());
+        teammate_.pending_prompts().push_back(std::move(prompt));
     }
+    PostRenderEvent();  // wake the UI thread to drain
+}
 
-    // Called on the UI thread (Custom-event handler) when idle: submit one
-    // queued teammate task. Returns true if a prompt was submitted.
+// Called on the UI thread (Custom-event handler) when idle: submit one
+// queued teammate task. Returns true if a prompt was submitted.
 bool AppAdapter::drain_one_teammate_prompt() {
-        if (query_running_.load()) return false;
-        std::string prompt;
-        {
-            std::lock_guard lock(teammate_.pending_mutex());
-            if (teammate_.pending_prompts().empty()) return false;
-            prompt = std::move(teammate_.pending_prompts().front());
-            teammate_.pending_prompts().pop_front();
-        }
-        HandleSubmit(prompt);
-        return true;
+    if (query_running_.load()) return false;
+    std::string prompt;
+    {
+        std::lock_guard lock(teammate_.pending_mutex());
+        if (teammate_.pending_prompts().empty()) return false;
+        prompt = std::move(teammate_.pending_prompts().front());
+        teammate_.pending_prompts().pop_front();
     }
+    HandleSubmit(prompt);
+    return true;
+}
 
 void AppAdapter::start_teammate_inbox_worker() {
-        teammate_.self_agent_id() =
-            env_first({"LOOM_AGENT_ID", "LOOM_AGENT_ID"});
-        teammate_.self_agent_name() =
-            env_first({"LOOM_AGENT_NAME", "LOOM_AGENT_NAME"});
-        teammate_.self_team() =
-            env_first({"LOOM_TEAM_NAME", "LOOM_TEAM_NAME"});
-        if (!running_as_pane_teammate()) return;
+    teammate_.self_agent_id() = env_first({"LOOM_AGENT_ID", "LOOM_AGENT_ID"});
+    teammate_.self_agent_name() = env_first({"LOOM_AGENT_NAME", "LOOM_AGENT_NAME"});
+    teammate_.self_team() = env_first({"LOOM_TEAM_NAME", "LOOM_TEAM_NAME"});
+    if (!running_as_pane_teammate()) return;
 
-        const std::string agent = teammate_.self_agent_name();
-        const std::string team = teammate_.self_team();
-        teammate_.inbox_thread() = std::jthread(
-            [this, agent, team](std::stop_token stop) {
-                constexpr auto kPollInterval = std::chrono::milliseconds(1500);
-                while (!stop.stop_requested()) {
-                    std::this_thread::sleep_for(kPollInterval);
-                    if (stop.stop_requested()) break;
-                    poll_teammate_inbox_once(agent, team);
-                }
-            });
+    const std::string agent = teammate_.self_agent_name();
+    const std::string team = teammate_.self_team();
+    teammate_.inbox_thread() = std::jthread([this, agent, team](std::stop_token stop) {
+        constexpr auto kPollInterval = std::chrono::milliseconds(1500);
+        while (!stop.stop_requested()) {
+            std::this_thread::sleep_for(kPollInterval);
+            if (stop.stop_requested()) break;
+            poll_teammate_inbox_once(agent, team);
+        }
+    });
+}
+
+// One filesystem-inbox poll: read unread addressed messages, dedup,
+// enqueue task prompts (control messages skipped), mark read.
+void AppAdapter::poll_teammate_inbox_once(const std::string& agent, const std::string& team) {
+    auto msgs = loom::utils::read_inbox(agent, team);
+    if (!msgs) return;
+
+    std::vector<std::string> to_submit;
+    for (const auto& m : *msgs) {
+        if (m.read) continue;
+        if (is_teammate_control_message(m.text)) continue;
+        auto key = teammate_message_key(m);
+        {
+            std::lock_guard lock(teammate_.pending_mutex());
+            if (!teammate_.seen_message_ids().insert(key).second) continue;
+        }
+        // Wrap in the teammate-message delivery format so the model
+        // sees the sender identity.
+        to_submit.push_back(std::format("<teammate_message teammate_id=\"{}\">\n{}\n"
+                                        "</teammate_message>",
+                                        m.from, m.text));
     }
 
-    // One filesystem-inbox poll: read unread addressed messages, dedup,
-    // enqueue task prompts (control messages skipped), mark read.
-void AppAdapter::poll_teammate_inbox_once(const std::string& agent,
-                                          const std::string& team) {
-        auto msgs = loom::utils::read_inbox(agent, team);
-        if (!msgs) return;
-
-        std::vector<std::string> to_submit;
-        for (const auto& m : *msgs) {
-            if (m.read) continue;
-            if (is_teammate_control_message(m.text)) continue;
-            auto key = teammate_message_key(m);
-            {
-                std::lock_guard lock(teammate_.pending_mutex());
-                if (!teammate_.seen_message_ids().insert(key).second) continue;
-            }
-            // Wrap in the teammate-message delivery format so the model
-            // sees the sender identity.
-            to_submit.push_back(std::format(
-                "<teammate_message teammate_id=\"{}\">\n{}\n"
-                "</teammate_message>",
-                m.from, m.text));
-        }
-
-        // Mark everything we read as processed (file inbox).
-        if (!to_submit.empty() || !msgs->empty()) {
-            (void)loom::utils::mark_all_read(agent, team);
-        }
-        for (auto& p : to_submit) {
-            enqueue_teammate_prompt(std::move(p));
-        }
+    // Mark everything we read as processed (file inbox).
+    if (!to_submit.empty() || !msgs->empty()) {
+        (void)loom::utils::mark_all_read(agent, team);
     }
+    for (auto& p : to_submit) {
+        enqueue_teammate_prompt(std::move(p));
+    }
+}
 
 namespace {
 
@@ -177,12 +170,10 @@ namespace fs = std::filesystem;
 /// Teams runtime root — identical resolution to team_tool.cppm
 /// team_runtime_dir() and team_helpers detail::teams_dir().
 fs::path teams_root_dir() {
-    if (const char* env = std::getenv("LOOM_TEAM_RUNTIME_DIR");
-        env && *env) {
+    if (const char* env = std::getenv("LOOM_TEAM_RUNTIME_DIR"); env && *env) {
         return fs::path{env};
     }
-    if (const char* env = std::getenv("LOOM_TEAMS_DIR");
-        env && *env) {
+    if (const char* env = std::getenv("LOOM_TEAMS_DIR"); env && *env) {
         return fs::path{env};
     }
     return fs::current_path() / ".loom" / "teams";
@@ -236,8 +227,7 @@ std::string strip_role_prefix(std::string line) {
     if (!line.empty() && line[0] != ':') {
         std::size_t i = 0;
         while (i < line.size() &&
-               (std::isalpha(static_cast<unsigned char>(line[i])) ||
-                line[i] == '-')) {
+               (std::isalpha(static_cast<unsigned char>(line[i])) || line[i] == '-')) {
             ++i;
         }
         if (i + 2 <= line.size() && line[i] == ':' && line[i + 1] == ' ') {
@@ -314,8 +304,7 @@ void AppAdapter::ProjectLiveTeammatesToScreenState() {
     // Parse failure => roster starts empty; native store + observer still
     // contribute below.
     {
-        const fs::path config_path =
-            teams_root_dir() / sanitize_team(team) / "config.json";
+        const fs::path config_path = teams_root_dir() / sanitize_team(team) / "config.json";
         std::error_code ec;
         if (fs::exists(config_path, ec)) {
             // c16: LOCK_SH on the same sibling write_team_config_file and
@@ -323,8 +312,7 @@ void AppAdapter::ProjectLiveTeammatesToScreenState() {
             // never parses a half-written/renaming config. If the lock
             // cannot be acquired within the bounded wait, parse failure
             // semantics below apply (roster starts empty).
-            loom::utils::ScopedInboxLock roster_lock(
-                config_path, loom::utils::LockKind::Shared);
+            loom::utils::ScopedInboxLock roster_lock(config_path, loom::utils::LockKind::Shared);
             if (roster_lock.locked()) {
                 // c16a: open the leaf ONCE (O_NOFOLLOW|O_NONBLOCK) and
                 // parse the buffer — a FIFO/symlink swap between the exists
@@ -341,13 +329,11 @@ void AppAdapter::ProjectLiveTeammatesToScreenState() {
                                 // Teammate-status filter: the implicit lead row
                                 // is not a teammate.
                                 if (name == "team-lead") return;
-                                const std::string agent_id =
-                                    member.get_string("agentId");
+                                const std::string agent_id = member.get_string("agentId");
                                 if (agent_id.empty()) return;
                                 auto& t = out.emplace_back();
                                 t.agent_id = agent_id;
-                                t.name = name.empty() ? short_agent_name(agent_id)
-                                                     : name;
+                                t.name = name.empty() ? short_agent_name(agent_id) : name;
                                 t.color = member.get_string("color");
                                 t.pane_id = member.get_string("tmuxPaneId");
                                 if (t.pane_id == "in-process") t.pane_id.clear();
@@ -365,8 +351,7 @@ void AppAdapter::ProjectLiveTeammatesToScreenState() {
     }
 
     // ── (2) In-process teammates from the native agent store ──────────────
-    for (const auto& record : loom::tools::agent_runtime::native_agent_store()
-                                  .list()) {
+    for (const auto& record : loom::tools::agent_runtime::native_agent_store().list()) {
         if (!record.team_name || *record.team_name != team) continue;
         const std::size_t idx = upsert_index(record.agent_id);
         auto& t = out[idx];
@@ -375,50 +360,47 @@ void AppAdapter::ProjectLiveTeammatesToScreenState() {
         if (record.teammate_color && !record.teammate_color->empty()) {
             t.color = *record.teammate_color;
         }
-        if (record.teammate_pane_id &&
-            !record.teammate_pane_id->empty() &&
+        if (record.teammate_pane_id && !record.teammate_pane_id->empty() &&
             *record.teammate_pane_id != "in-process") {
             t.pane_id = *record.teammate_pane_id;
         }
 
         using NativeStatus = loom::tools::agent_runtime::NativeAgentStatus;
         switch (record.status) {
-            case NativeStatus::Queued:
-            case NativeStatus::Running:
-                t.status = "running";
-                break;
-            case NativeStatus::Completed:
-            case NativeStatus::Cancelled:
-                t.status = "idle";
-                break;
-            case NativeStatus::Failed:
-                t.status = "unknown";
-                break;
+        case NativeStatus::Queued:
+        case NativeStatus::Running:
+            t.status = "running";
+            break;
+        case NativeStatus::Completed:
+        case NativeStatus::Cancelled:
+            t.status = "idle";
+            break;
+        case NativeStatus::Failed:
+            t.status = "unknown";
+            break;
         }
 
         if (record.output && !record.output->empty()) {
             t.last_output_tail = last_tail_line(*record.output);
         } else if (!record.transcript.empty()) {
-            t.last_output_tail =
-                last_tail_line(strip_role_prefix(record.transcript.back()));
+            t.last_output_tail = last_tail_line(strip_role_prefix(record.transcript.back()));
         }
-        if (record.status == NativeStatus::Failed &&
-            record.error && !record.error->empty()) {
+        if (record.status == NativeStatus::Failed && record.error && !record.error->empty()) {
             t.last_output_tail = last_tail_line(*record.error);
         }
     }
 
     // ── (3) tmux/iTerm pane snapshots via the observer ────────────────────
     if (auto observer = ensure_observer_for_cached_backend()) {
-        const bool inside_tmux =
-            sw::EnvironmentDetection::is_inside_tmux_sync();
+        const bool inside_tmux = sw::EnvironmentDetection::is_inside_tmux_sync();
 
         // Track roster panes not already tracked (track() resets the
         // snapshot, so never re-track an existing agent).
         const auto tracked = observer->tracked_agent_ids();
         std::unordered_map<std::string, bool> tracked_set;
         tracked_set.reserve(tracked.size());
-        for (const auto& id : tracked) tracked_set.emplace(id, true);
+        for (const auto& id : tracked)
+            tracked_set.emplace(id, true);
         for (const auto& t : out) {
             if (t.pane_id.empty()) continue;
             if (tracked_set.contains(t.agent_id)) continue;
@@ -511,17 +493,13 @@ bool AppAdapter::drain_one_teammate_permission() {
     const std::string team = pending.team;
     // Show the worker's concrete tool input in the approval dialog.
     const std::string input_pretty =
-        sh::format_permission_request_input(request.tool_name,
-                                            request.input_json);
+        sh::format_permission_request_input(request.tool_name, request.input_json);
     const std::string description =
         "@" + request.agent_id + " requests " + request.tool_name +
-        (request.description.empty() ? std::string{}
-                                     : ("\n" + request.description)) +
-        (input_pretty.empty() ? std::string{}
-                              : ("\n\nInput:\n" + input_pretty));
+        (request.description.empty() ? std::string{} : ("\n" + request.description)) +
+        (input_pretty.empty() ? std::string{} : ("\n\nInput:\n" + input_pretty));
 
-    auto reply = [request, team](bool allow, bool always_allow,
-                                 std::string error_text) {
+    auto reply = [request, team](bool allow, bool always_allow, std::string error_text) {
         sh::SwarmPermissionResponseMessage response;
         response.type = "permission_response";
         response.request_id = request.request_id;
@@ -537,30 +515,24 @@ bool AppAdapter::drain_one_teammate_permission() {
             response.subtype = "error";
             response.error = std::move(error_text);
         }
-        (void)sh::PermissionSync::send_response_to_worker(
-            request.agent_id, response, team);
+        (void)sh::PermissionSync::send_response_to_worker(request.agent_id, response, team);
     };
 
     dtrig::PushToolPermission(
-        screen_state_->dialog_store.dialog_queue,
-        request.tool_name,
-        description,
-        /*on_response=*/[this, reply](
-            dsys::ToolPermissionPayload::Decision decision,
-            bool /*sandbox*/) {
-            const bool allow =
-                decision == dsys::ToolPermissionPayload::Decision::AllowOnce ||
-                decision ==
-                    dsys::ToolPermissionPayload::Decision::AlwaysAllow;
+        screen_state_->dialog_store.dialog_queue, request.tool_name, description,
+        /*on_response=*/
+        [this, reply](dsys::ToolPermissionPayload::Decision decision, bool /*sandbox*/) {
+            const bool allow = decision == dsys::ToolPermissionPayload::Decision::AllowOnce ||
+                               decision == dsys::ToolPermissionPayload::Decision::AlwaysAllow;
             const bool always_allow =
                 decision == dsys::ToolPermissionPayload::Decision::AlwaysAllow;
             reply(allow, always_allow,
-                  allow ? std::string{}
-                        : std::string{"Permission denied by team lead"});
+                  allow ? std::string{} : std::string{"Permission denied by team lead"});
             screen_state_->dialog_store.PopOverlay();
             PostRenderEvent();
         },
-        /*on_abort=*/[this, reply] {
+        /*on_abort=*/
+        [this, reply] {
             reply(false, false, "Permission aborted by team lead");
             screen_state_->dialog_store.PopOverlay();
             PostRenderEvent();
@@ -578,76 +550,65 @@ void AppAdapter::start_leader_inbox_worker() {
     if (running_as_pane_teammate()) return;
     const std::string team = *team_opt;
 
-    leader_inbox_thread_ = std::jthread(
-        [this, team](std::stop_token stop) {
-            constexpr auto kPollInterval = std::chrono::milliseconds(1500);
-            while (!stop.stop_requested()) {
-                std::this_thread::sleep_for(kPollInterval);
-                if (stop.stop_requested()) break;
+    leader_inbox_thread_ = std::jthread([this, team](std::stop_token stop) {
+        constexpr auto kPollInterval = std::chrono::milliseconds(1500);
+        while (!stop.stop_requested()) {
+            std::this_thread::sleep_for(kPollInterval);
+            if (stop.stop_requested()) break;
 
-                auto messages =
-                    loom::utils::read_inbox(std::string{sh::TEAM_LEAD_NAME}, team);
-                if (!messages) continue;
+            auto messages = loom::utils::read_inbox(std::string{sh::TEAM_LEAD_NAME}, team);
+            if (!messages) continue;
 
-                std::vector<TeammateCoordinator::PendingTeammatePermission> fresh;
-                std::vector<std::string> consumed_texts;
-                for (const auto& message : *messages) {
-                    // Discriminator substrings from the frozen stage-A
-                    // protocol; the generic "loom:permission" tag grep is
-                    // intentionally NOT used here so only real envelopes
-                    // parse.
-                    if (message.text.find(
-                            "\"type\":\"permission_request\"") ==
-                        std::string::npos) {
+            std::vector<TeammateCoordinator::PendingTeammatePermission> fresh;
+            std::vector<std::string> consumed_texts;
+            for (const auto& message : *messages) {
+                // Discriminator substrings from the frozen stage-A
+                // protocol; the generic "loom:permission" tag grep is
+                // intentionally NOT used here so only real envelopes
+                // parse.
+                if (message.text.find("\"type\":\"permission_request\"") == std::string::npos) {
+                    continue;
+                }
+                auto parsed = sh::PermissionSync::parse_request(message.text);
+                if (!parsed) continue;
+                {
+                    std::lock_guard lock(teammate_.permission_mutex());
+                    if (!seen_leader_permission_ids_.insert(parsed->request_id).second) {
                         continue;
                     }
-                    auto parsed =
-                        sh::PermissionSync::parse_request(message.text);
-                    if (!parsed) continue;
-                    {
-                        std::lock_guard lock(teammate_.permission_mutex());
-                        if (!seen_leader_permission_ids_
-                                 .insert(parsed->request_id)
-                                 .second) {
-                            continue;
-                        }
-                    }
-                    fresh.push_back(
-                        TeammateCoordinator::PendingTeammatePermission{std::move(*parsed), team});
-                    consumed_texts.push_back(message.text);
                 }
-
-                // Remove consumed envelopes without touching unrelated
-                // mailbox traffic (remove-on-consume mirrors the worker-side
-                // response path).
-                for (const auto& text : consumed_texts) {
-                    sh::permission_detail::remove_mailbox_message_by_text(
-                        std::string{sh::TEAM_LEAD_NAME}, team, text);
-                }
-                if (!fresh.empty()) {
-                    {
-                        std::lock_guard lock(teammate_.permission_mutex());
-                        for (auto& item : fresh) {
-                            teammate_.pending_permissions().push_back(
-                                std::move(item));
-                        }
-                    }
-                    PostRenderEvent();
-                }
+                fresh.push_back(
+                    TeammateCoordinator::PendingTeammatePermission{std::move(*parsed), team});
+                consumed_texts.push_back(message.text);
             }
-        });
+
+            // Remove consumed envelopes without touching unrelated
+            // mailbox traffic (remove-on-consume mirrors the worker-side
+            // response path).
+            for (const auto& text : consumed_texts) {
+                sh::permission_detail::remove_mailbox_message_by_text(
+                    std::string{sh::TEAM_LEAD_NAME}, team, text);
+            }
+            if (!fresh.empty()) {
+                {
+                    std::lock_guard lock(teammate_.permission_mutex());
+                    for (auto& item : fresh) {
+                        teammate_.pending_permissions().push_back(std::move(item));
+                    }
+                }
+                PostRenderEvent();
+            }
+        }
+    });
 }
 
-
 // ── Teammate test seams ────────────────────────────────────────────────────
-void AppAdapter::configure_teammate_for_testing(std::string agent_name,
-                                               std::string team) {
+void AppAdapter::configure_teammate_for_testing(std::string agent_name, std::string team) {
     teammate_.configure_for_testing(std::move(agent_name), std::move(team));
 }
 
 void AppAdapter::poll_teammate_inbox_once_for_testing() {
-    poll_teammate_inbox_once(teammate_.self_agent_name(),
-                             teammate_.self_team());
+    poll_teammate_inbox_once(teammate_.self_agent_name(), teammate_.self_team());
 }
 
 std::size_t AppAdapter::teammate_pending_count_for_testing() {
@@ -658,8 +619,7 @@ std::string AppAdapter::pop_teammate_prompt_for_testing() {
     return teammate_.pop_prompt_for_testing();
 }
 
-void AppAdapter::enqueue_teammate_permission_for_testing(void* request,
-                                                         std::string team) {
+void AppAdapter::enqueue_teammate_permission_for_testing(void* request, std::string team) {
     auto* req = static_cast<loom::utils::swarm_helpers::SwarmPermissionRequestMessage*>(request);
     {
         std::lock_guard lock(teammate_.permission_mutex());
@@ -673,10 +633,8 @@ std::size_t AppAdapter::pending_teammate_permission_count_for_testing() {
     return teammate_.pending_permission_count();
 }
 
-
 void AppAdapter::set_live_teammates_for_testing(void* v) {
-    auto& teammates =
-        *static_cast<std::vector<loom::ui::teams::live::LiveTeammate>*>(v);
+    auto& teammates = *static_cast<std::vector<loom::ui::teams::live::LiveTeammate>*>(v);
     screen_state_->task_view_store.live_teammates = std::move(teammates);
     screen_state_->task_view_store.teammate_count =
         static_cast<int>(screen_state_->task_view_store.live_teammates.size());
@@ -685,8 +643,7 @@ void AppAdapter::set_live_teammates_for_testing(void* v) {
 bool AppAdapter::teams_overview_open_for_testing() const {
     auto peek = screen_state_->dialog_store.PeekModal();
     return peek.has_value() &&
-           std::holds_alternative<
-               loom::ui::dialogs::system::TeamsViewPayload>(peek->get());
+           std::holds_alternative<loom::ui::dialogs::system::TeamsViewPayload>(peek->get());
 }
 
 }  // namespace loom::ui

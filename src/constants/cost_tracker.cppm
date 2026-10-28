@@ -9,8 +9,7 @@ module;
 export module loom.constants.cost_tracker;
 
 import std;
-import loom.types.types;  // arch-check: keep-import
-
+import loom.types.types; // arch-check: keep-import
 
 export namespace loom::core {
 
@@ -79,32 +78,34 @@ class CostTracker {
     }
 
 public:
-    CostTracker() 
+    CostTracker()
         : last_reset_(std::chrono::system_clock::now()) {}
 
     explicit CostTracker(BudgetConfig budget)
-        : budget_(std::move(budget)), last_reset_(std::chrono::system_clock::now()) {}
+        : budget_(std::move(budget))
+        , last_reset_(std::chrono::system_clock::now()) {}
 
     /// Record an API call's usage
-    void record(const std::string& model, const TokenUsage& usage, 
+    void record(const std::string& model, const TokenUsage& usage,
                 std::optional<std::string> description = std::nullopt) {
         std::lock_guard lock(mutex_);
-        
+
         auto pricing = get_pricing(model);
-        double cost = (static_cast<double>(usage.input_tokens) * pricing.input_per_token) +
-                    (static_cast<double>(usage.output_tokens) * pricing.output_per_token) +
-                    (static_cast<double>(usage.cache_creation_tokens) * pricing.cache_creation_per_token) +
-                    (static_cast<double>(usage.cache_read_tokens) * pricing.cache_read_per_token);
-        
+        double cost =
+            (static_cast<double>(usage.input_tokens) * pricing.input_per_token) +
+            (static_cast<double>(usage.output_tokens) * pricing.output_per_token) +
+            (static_cast<double>(usage.cache_creation_tokens) * pricing.cache_creation_per_token) +
+            (static_cast<double>(usage.cache_read_tokens) * pricing.cache_read_per_token);
+
         total_cost_microusd_ += cost;
-        
+
         total_usage_.input_tokens += usage.input_tokens;
         total_usage_.output_tokens += usage.output_tokens;
         total_usage_.cache_creation_tokens += usage.cache_creation_tokens;
         total_usage_.cache_read_tokens += usage.cache_read_tokens;
-        
-        records_[model].push_back(UsageRecord{
-            model, usage, cost, std::chrono::system_clock::now(), std::move(description)});
+
+        records_[model].push_back(UsageRecord{model, usage, cost, std::chrono::system_clock::now(),
+                                              std::move(description)});
     }
 
     /// Get total costs since reset
@@ -120,10 +121,11 @@ public:
     }
 
     /// Get per-model breakdown
-    [[nodiscard]] std::map<std::string, std::pair<TokenUsage, double>> get_per_model_breakdown() const {
+    [[nodiscard]] std::map<std::string, std::pair<TokenUsage, double>>
+    get_per_model_breakdown() const {
         std::lock_guard lock(const_cast<std::mutex&>(mutex_));
         std::map<std::string, std::pair<TokenUsage, double>> result;
-        
+
         for (const auto& [model, records] : records_) {
             TokenUsage model_usage;
             double model_cost = 0.0;
@@ -189,4 +191,4 @@ public:
     return instance;
 }
 
-} // namespace loom::core
+}  // namespace loom::core

@@ -3,7 +3,6 @@
 /// Environment management command registration shim.
 module;
 
-
 export module loom.commands.env;
 
 import std;
@@ -30,17 +29,16 @@ public:
         };
     }
 
-    [[nodiscard]] VoidResult validate(const CommandContext&) {
-        return {};
-    }
+    [[nodiscard]] VoidResult validate(const CommandContext&) { return {}; }
 
     [[nodiscard]] Result<CommandResult> execute(const CommandContext& ctx) {
         if (!ctx.args.empty() && (ctx.args.front() == "help" || ctx.args.front() == "--help")) {
             return CommandResult::success(
-                "The /env command is disabled by default. Remote environment controls are available through /remote-env."
-            );
+                "The /env command is disabled by default. Remote environment controls are "
+                "available through /remote-env.");
         }
-        return CommandResult::success("The /env command is disabled in this build; use /remote-env for remote environment setup.");
+        return CommandResult::success("The /env command is disabled in this build; use /remote-env "
+                                      "for remote environment setup.");
     }
 
     [[nodiscard]] std::vector<std::string> complete(std::string_view partial) {
@@ -52,4 +50,4 @@ public:
     }
 };
 
-} // namespace loom::commands
+}  // namespace loom::commands

@@ -38,4 +38,4 @@ void register_group_c_commands(CommandRegistry& registry) {
     registry.register_command<VimCommand>();
 }
 
-} // namespace loom::commands
+}  // namespace loom::commands

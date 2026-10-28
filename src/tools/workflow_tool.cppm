@@ -1,7 +1,7 @@
 // WorkflowTool - Executes predefined workflow scripts with steps and conditions
 module;
-#include <cstddef>
 #include <cctype>
+#include <cstddef>
 #include <cstdio>
 
 export module loom.tools.workflow;
@@ -26,15 +26,24 @@ enum class WorkflowError {
 
 constexpr auto format_error(WorkflowError err) -> std::string_view {
     switch (err) {
-        case WorkflowError::DefinitionEmpty:     return "Workflow definition is empty";
-        case WorkflowError::StepFailed:          return "Workflow step execution failed";
-        case WorkflowError::ConditionFailed:     return "Workflow condition evaluation failed";
-        case WorkflowError::VariableNotFound:    return "Variable not found in workflow context";
-        case WorkflowError::InvalidStep:         return "Invalid workflow step definition";
-        case WorkflowError::LoopLimitExceeded:   return "Loop iteration limit exceeded";
-        case WorkflowError::InterpolationFailed: return "Variable interpolation failed";
-        case WorkflowError::Timeout:             return "Workflow execution timed out";
-        default:                                 return "Unknown workflow error";
+    case WorkflowError::DefinitionEmpty:
+        return "Workflow definition is empty";
+    case WorkflowError::StepFailed:
+        return "Workflow step execution failed";
+    case WorkflowError::ConditionFailed:
+        return "Workflow condition evaluation failed";
+    case WorkflowError::VariableNotFound:
+        return "Variable not found in workflow context";
+    case WorkflowError::InvalidStep:
+        return "Invalid workflow step definition";
+    case WorkflowError::LoopLimitExceeded:
+        return "Loop iteration limit exceeded";
+    case WorkflowError::InterpolationFailed:
+        return "Variable interpolation failed";
+    case WorkflowError::Timeout:
+        return "Workflow execution timed out";
+    default:
+        return "Unknown workflow error";
     }
 }
 
@@ -121,27 +130,26 @@ public:
         return result;
     }
 
-    auto all() const -> const std::unordered_map<std::string, std::string>& {
-        return vars_;
-    }
+    auto all() const -> const std::unordered_map<std::string, std::string>& { return vars_; }
 
 private:
     std::unordered_map<std::string, std::string> vars_;
 };
 
 [[nodiscard]] inline bool workflow_truthy(std::string_view value) {
-    while (!value.empty() && std::isspace(static_cast<unsigned char>(value.front()))) value.remove_prefix(1);
-    while (!value.empty() && std::isspace(static_cast<unsigned char>(value.back()))) value.remove_suffix(1);
+    while (!value.empty() && std::isspace(static_cast<unsigned char>(value.front())))
+        value.remove_prefix(1);
+    while (!value.empty() && std::isspace(static_cast<unsigned char>(value.back())))
+        value.remove_suffix(1);
     std::string lower;
     lower.reserve(value.size());
-    for (unsigned char ch : value) lower.push_back(static_cast<char>(std::tolower(ch)));
+    for (unsigned char ch : value)
+        lower.push_back(static_cast<char>(std::tolower(ch)));
     return lower == "1" || lower == "true" || lower == "yes" || lower == "on";
 }
 
-[[nodiscard]] inline std::optional<std::string> workflow_json_string(
-    loom::utils::json::JsonVal root,
-    std::string_view key
-) {
+[[nodiscard]] inline std::optional<std::string>
+workflow_json_string(loom::utils::json::JsonVal root, std::string_view key) {
     auto value = root.get(key);
     if (!value.is_str()) return std::nullopt;
     return std::string(value.as_str());
@@ -155,9 +163,8 @@ private:
     return StepType::Command;
 }
 
-[[nodiscard]] inline std::expected<WorkflowDefinition, WorkflowError> parse_workflow_definition_json(
-    std::string_view text
-) {
+[[nodiscard]] inline std::expected<WorkflowDefinition, WorkflowError>
+parse_workflow_definition_json(std::string_view text) {
     auto parsed = loom::utils::json::parse(text);
     if (!parsed || !parsed->root().is_obj()) {
         return std::unexpected(WorkflowError::InvalidStep);
@@ -172,9 +179,13 @@ private:
     if (variables.is_obj()) {
         variables.iter_obj([&](loom::utils::json::JsonVal key, loom::utils::json::JsonVal value) {
             if (!key.is_str()) return;
-            if (value.is_str()) definition.initial_vars[std::string(key.as_str())] = std::string(value.as_str());
-            else if (value.is_num()) definition.initial_vars[std::string(key.as_str())] = std::to_string(value.as_int());
-            else if (value.is_bool()) definition.initial_vars[std::string(key.as_str())] = value.as_bool() ? "true" : "false";
+            if (value.is_str())
+                definition.initial_vars[std::string(key.as_str())] = std::string(value.as_str());
+            else if (value.is_num())
+                definition.initial_vars[std::string(key.as_str())] = std::to_string(value.as_int());
+            else if (value.is_bool())
+                definition.initial_vars[std::string(key.as_str())] =
+                    value.as_bool() ? "true" : "false";
         });
     }
 
@@ -186,11 +197,12 @@ private:
         WorkflowStep step;
         step.id = workflow_json_string(item, "id").value_or(std::format("step-{}", index + 1));
         step.name = workflow_json_string(item, "name").value_or(step.id);
-        step.type = parse_workflow_step_type(workflow_json_string(item, "type").value_or("command"));
+        step.type =
+            parse_workflow_step_type(workflow_json_string(item, "type").value_or("command"));
         step.action = workflow_json_string(item, "action")
-            .or_else([&] { return workflow_json_string(item, "command"); })
-            .or_else([&] { return workflow_json_string(item, "value"); })
-            .value_or("");
+                          .or_else([&] { return workflow_json_string(item, "command"); })
+                          .or_else([&] { return workflow_json_string(item, "value"); })
+                          .value_or("");
         step.condition = workflow_json_string(item, "condition");
         auto max_iterations = item.get("max_iterations");
         if (!max_iterations.is_num()) max_iterations = item.get("maxIterations");
@@ -213,7 +225,8 @@ private:
 class WorkflowTool {
 public:
     static constexpr std::string_view name = "workflow";
-    static constexpr std::string_view description = "Execute predefined workflow scripts with steps and conditions";
+    static constexpr std::string_view description =
+        "Execute predefined workflow scripts with steps and conditions";
     static constexpr size_t kDefaultMaxLoop = 100;
 
     auto validate(const WorkflowDefinition& def) const -> std::expected<void, WorkflowError> {
@@ -238,14 +251,12 @@ public:
             ctx.set(key, value);
         }
 
-        WorkflowResult result{
-            .workflow_name = definition.name,
-            .success = true,
-            .step_results = {},
-            .total_duration = std::chrono::milliseconds{0},
-            .steps_executed = 0,
-            .steps_skipped = 0
-        };
+        WorkflowResult result{.workflow_name = definition.name,
+                              .success = true,
+                              .step_results = {},
+                              .total_duration = std::chrono::milliseconds{0},
+                              .steps_executed = 0,
+                              .steps_skipped = 0};
 
         for (const auto& step : definition.steps) {
             if (step.condition) {
@@ -296,14 +307,13 @@ public:
     }},
     "required": ["name", "steps"]
   }}
-}})", name, description);
+}})",
+                           name, description);
     }
 
 private:
-
     auto execute_step(const WorkflowStep& step, VariableContext& ctx)
-        -> std::expected<StepResult, WorkflowError>
-    {
+        -> std::expected<StepResult, WorkflowError> {
         auto start = std::chrono::steady_clock::now();
 
         std::optional<std::string> action;
@@ -316,69 +326,69 @@ private:
         std::string output;
 
         switch (step.type) {
-            case StepType::Command: {
+        case StepType::Command: {
 
-                FILE* pipe = loom::utils::bash::popen_spawn(action->c_str());
+            FILE* pipe = loom::utils::bash::popen_spawn(action->c_str());
+            if (!pipe) return std::unexpected(WorkflowError::StepFailed);
+            std::array<char, 2048> buffer{};
+            while (auto n = ::fread(buffer.data(), 1, buffer.size(), pipe)) {
+                output.append(buffer.data(), n);
+            }
+            int status = loom::utils::bash::pclose_spawn(pipe);
+            if (status != 0) {
+                ctx.set(step.id + ".exit_code", std::to_string(status));
+                ctx.set(step.id + ".output", output);
+                return std::unexpected(WorkflowError::StepFailed);
+            }
+            break;
+        }
+        case StepType::Condition: {
+            if (!workflow_truthy(*action)) return std::unexpected(WorkflowError::ConditionFailed);
+            output = *action;
+            break;
+        }
+        case StepType::Loop: {
+            const auto limit = step.max_iterations.value_or(kDefaultMaxLoop);
+            if (limit > kDefaultMaxLoop) return std::unexpected(WorkflowError::LoopLimitExceeded);
+            std::ostringstream combined;
+            for (std::size_t i = 0; i < limit; ++i) {
+                ctx.set(step.id + ".index", std::to_string(i));
+                auto loop_action = ctx.interpolate(step.action);
+                if (!loop_action) return std::unexpected(loop_action.error());
+                FILE* pipe = loom::utils::bash::popen_spawn(loop_action->c_str());
                 if (!pipe) return std::unexpected(WorkflowError::StepFailed);
                 std::array<char, 2048> buffer{};
                 while (auto n = ::fread(buffer.data(), 1, buffer.size(), pipe)) {
-                    output.append(buffer.data(), n);
+                    combined.write(buffer.data(), static_cast<std::streamsize>(n));
                 }
                 int status = loom::utils::bash::pclose_spawn(pipe);
                 if (status != 0) {
+                    output = combined.str();
                     ctx.set(step.id + ".exit_code", std::to_string(status));
                     ctx.set(step.id + ".output", output);
                     return std::unexpected(WorkflowError::StepFailed);
                 }
-                break;
             }
-            case StepType::Condition: {
-                if (!workflow_truthy(*action)) return std::unexpected(WorkflowError::ConditionFailed);
-                output = *action;
-                break;
-            }
-            case StepType::Loop: {
-                const auto limit = step.max_iterations.value_or(kDefaultMaxLoop);
-                if (limit > kDefaultMaxLoop) return std::unexpected(WorkflowError::LoopLimitExceeded);
-                std::ostringstream combined;
-                for (std::size_t i = 0; i < limit; ++i) {
-                    ctx.set(step.id + ".index", std::to_string(i));
-                    auto loop_action = ctx.interpolate(step.action);
-                    if (!loop_action) return std::unexpected(loop_action.error());
-                    FILE* pipe = loom::utils::bash::popen_spawn(loop_action->c_str());
-                    if (!pipe) return std::unexpected(WorkflowError::StepFailed);
-                    std::array<char, 2048> buffer{};
-                    while (auto n = ::fread(buffer.data(), 1, buffer.size(), pipe)) {
-                        combined.write(buffer.data(), static_cast<std::streamsize>(n));
-                    }
-                    int status = loom::utils::bash::pclose_spawn(pipe);
-                    if (status != 0) {
-                        output = combined.str();
-                        ctx.set(step.id + ".exit_code", std::to_string(status));
-                        ctx.set(step.id + ".output", output);
-                        return std::unexpected(WorkflowError::StepFailed);
-                    }
-                }
-                output = combined.str();
-                break;
-            }
-            case StepType::Assign: {
+            output = combined.str();
+            break;
+        }
+        case StepType::Assign: {
 
-                auto eq_pos = action->find('=');
-                if (eq_pos != std::string::npos) {
-                    ctx.set(action->substr(0, eq_pos), action->substr(eq_pos + 1));
-                }
-                output = *action;
-                break;
+            auto eq_pos = action->find('=');
+            if (eq_pos != std::string::npos) {
+                ctx.set(action->substr(0, eq_pos), action->substr(eq_pos + 1));
             }
-            case StepType::Log: {
-                output = *action;
-                break;
-            }
-            default:
-                output = std::format("[Step type {} not fully implemented]",
-                    static_cast<int>(step.type));
-                break;
+            output = *action;
+            break;
+        }
+        case StepType::Log: {
+            output = *action;
+            break;
+        }
+        default:
+            output =
+                std::format("[Step type {} not fully implemented]", static_cast<int>(step.type));
+            break;
         }
 
         auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
@@ -386,14 +396,12 @@ private:
 
         ctx.set(step.id + ".output", output);
 
-        return StepResult{
-            .step_id = step.id,
-            .success = true,
-            .output = std::move(output),
-            .duration = elapsed,
-            .error_message = std::nullopt
-        };
+        return StepResult{.step_id = step.id,
+                          .success = true,
+                          .output = std::move(output),
+                          .duration = elapsed,
+                          .error_message = std::nullopt};
     }
 };
 
-} // namespace loom::tools
+}  // namespace loom::tools

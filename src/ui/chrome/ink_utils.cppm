@@ -6,10 +6,11 @@
 /// and terminal focus state).
 module;
 
-#include <cstdint>
-#include <cstddef>
-#include <cstdlib>
 #include <ftxui/component/screen_interactive.hpp>
+
+#include <cstddef>
+#include <cstdint>
+#include <cstdlib>
 
 #ifndef _WIN32
 #include <unistd.h>
@@ -27,11 +28,7 @@ export namespace loom::ui::ink_utils {
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-enum class WrapMode {
-    Word,
-    Char,
-    None
-};
+enum class WrapMode { Word, Char, None };
 
 struct WrapConfig {
     size_t width;
@@ -109,7 +106,8 @@ inline auto skip_ansi(const char* data, size_t len) -> size_t {
 }
 
 /// Find case-insensitive occurrence of needle in haystack starting at pos.
-inline auto find_case_insensitive(std::string_view haystack, std::string_view needle, size_t pos = 0) -> size_t {
+inline auto find_case_insensitive(std::string_view haystack, std::string_view needle,
+                                  size_t pos = 0) -> size_t {
     if (needle.empty() || needle.size() > haystack.size()) return std::string_view::npos;
     for (size_t i = pos; i + needle.size() <= haystack.size(); ++i) {
         bool match = true;
@@ -118,14 +116,17 @@ inline auto find_case_insensitive(std::string_view haystack, std::string_view ne
             char n = needle[j];
             if (h >= 'A' && h <= 'Z') h += 32;
             if (n >= 'A' && n <= 'Z') n += 32;
-            if (h != n) { match = false; break; }
+            if (h != n) {
+                match = false;
+                break;
+            }
         }
         if (match) return i;
     }
     return std::string_view::npos;
 }
 
-} // namespace detail
+}  // namespace detail
 
 // ─── Functions ───────────────────────────────────────────────────────────────
 
@@ -155,7 +156,8 @@ inline auto wrap_text(std::string_view text, WrapConfig config) -> std::vector<s
             if (text_measure::string_width(line) <= config.width) {
                 auto s = std::string{line};
                 if (config.trim) {
-                    while (!s.empty() && s.back() == ' ') s.pop_back();
+                    while (!s.empty() && s.back() == ' ')
+                        s.pop_back();
                 }
                 result.push_back(std::move(s));
             } else if (config.mode == WrapMode::Char) {
@@ -170,11 +172,13 @@ inline auto wrap_text(std::string_view text, WrapConfig config) -> std::vector<s
                         j += skip;
                         continue;
                     }
-                    auto [cp, bytes] = text_measure::detail::decode_utf8(line.data() + j, line.size() - j);
+                    auto [cp, bytes] =
+                        text_measure::detail::decode_utf8(line.data() + j, line.size() - j);
                     auto cw = static_cast<size_t>(std::max(0, text_measure::char_width(cp)));
                     if (current_width + cw > config.width && !current.empty()) {
                         if (config.trim) {
-                            while (!current.empty() && current.back() == ' ') current.pop_back();
+                            while (!current.empty() && current.back() == ' ')
+                                current.pop_back();
                         }
                         result.push_back(std::move(current));
                         current.clear();
@@ -186,7 +190,8 @@ inline auto wrap_text(std::string_view text, WrapConfig config) -> std::vector<s
                 }
                 if (!current.empty()) {
                     if (config.trim) {
-                        while (!current.empty() && current.back() == ' ') current.pop_back();
+                        while (!current.empty() && current.back() == ' ')
+                            current.pop_back();
                     }
                     result.push_back(std::move(current));
                 }
@@ -202,7 +207,8 @@ inline auto wrap_text(std::string_view text, WrapConfig config) -> std::vector<s
                     if (word.empty()) return;
                     if (current_width + word_width > config.width && !current.empty()) {
                         if (config.trim) {
-                            while (!current.empty() && current.back() == ' ') current.pop_back();
+                            while (!current.empty() && current.back() == ' ')
+                                current.pop_back();
                         }
                         result.push_back(std::move(current));
                         current.clear();
@@ -215,9 +221,10 @@ inline auto wrap_text(std::string_view text, WrapConfig config) -> std::vector<s
                         size_t chunk_width = 0;
                         size_t wi = 0;
                         while (wi < word.size()) {
-                            auto [cp, bytes] = text_measure::detail::decode_utf8(
-                                word.data() + wi, word.size() - wi);
-                            auto cw = static_cast<size_t>(std::max(0, text_measure::char_width(cp)));
+                            auto [cp, bytes] = text_measure::detail::decode_utf8(word.data() + wi,
+                                                                                 word.size() - wi);
+                            auto cw =
+                                static_cast<size_t>(std::max(0, text_measure::char_width(cp)));
                             if (chunk_width + cw > config.width && !chunk.empty()) {
                                 result.push_back(std::move(chunk));
                                 chunk.clear();
@@ -252,8 +259,8 @@ inline auto wrap_text(std::string_view text, WrapConfig config) -> std::vector<s
                         flush_word();
                         ++j;
                     } else {
-                        auto [cp, bytes] = text_measure::detail::decode_utf8(
-                            line.data() + j, line.size() - j);
+                        auto [cp, bytes] =
+                            text_measure::detail::decode_utf8(line.data() + j, line.size() - j);
                         auto cw = static_cast<size_t>(std::max(0, text_measure::char_width(cp)));
                         word.append(line.data() + j, bytes);
                         word_width += cw;
@@ -263,7 +270,8 @@ inline auto wrap_text(std::string_view text, WrapConfig config) -> std::vector<s
                 flush_word();
                 if (!current.empty()) {
                     if (config.trim) {
-                        while (!current.empty() && current.back() == ' ') current.pop_back();
+                        while (!current.empty() && current.back() == ' ')
+                            current.pop_back();
                     }
                     result.push_back(std::move(current));
                 }
@@ -277,7 +285,8 @@ inline auto wrap_text(std::string_view text, WrapConfig config) -> std::vector<s
 }
 
 /// Wraps ANSI-styled text to a given width, preserving escape sequences across line breaks.
-inline auto wrap_ansi(std::string_view text, size_t width, WrapMode mode = WrapMode::Word) -> std::string {
+inline auto wrap_ansi(std::string_view text, size_t width, WrapMode mode = WrapMode::Word)
+    -> std::string {
     auto lines = wrap_text(text, WrapConfig{.width = width, .mode = mode, .trim = true});
     std::string result;
     for (size_t i = 0; i < lines.size(); ++i) {
@@ -321,22 +330,36 @@ inline auto colorize_bg(std::string_view text, uint8_t r, uint8_t g, uint8_t b) 
 }
 
 /// Applies multiple text styles via ANSI escape sequences.
-inline auto apply_style(std::string_view text, bool bold, bool italic, bool underline, bool dim) -> std::string {
+inline auto apply_style(std::string_view text, bool bold, bool italic, bool underline, bool dim)
+    -> std::string {
     std::string prefix;
     std::string suffix;
-    if (bold)      { prefix += "\033[1m";  suffix += "\033[22m"; }
-    if (italic)    { prefix += "\033[3m";  suffix += "\033[23m"; }
-    if (underline) { prefix += "\033[4m";  suffix += "\033[24m"; }
-    if (dim)       { prefix += "\033[2m";  suffix += "\033[22m"; }
+    if (bold) {
+        prefix += "\033[1m";
+        suffix += "\033[22m";
+    }
+    if (italic) {
+        prefix += "\033[3m";
+        suffix += "\033[23m";
+    }
+    if (underline) {
+        prefix += "\033[4m";
+        suffix += "\033[24m";
+    }
+    if (dim) {
+        prefix += "\033[2m";
+        suffix += "\033[22m";
+    }
     return prefix + std::string{text} + suffix;
 }
 
 /// Highlights search matches in text with ANSI escape codes (bold + inverse).
-inline auto highlight_search(std::string_view text, std::string_view query, bool case_sensitive = false) -> std::string {
+inline auto highlight_search(std::string_view text, std::string_view query,
+                             bool case_sensitive = false) -> std::string {
     if (query.empty()) return std::string{text};
 
     std::string result;
-    result.reserve(text.size() * 2); // Generous allocation for escape sequences
+    result.reserve(text.size() * 2);  // Generous allocation for escape sequences
 
     size_t pos = 0;
     while (pos < text.size()) {
@@ -388,9 +411,9 @@ inline auto render_selection(std::string_view content, SelectionState sel) -> st
     std::string result;
     result.reserve(content.size() + 16);
     result.append(content.data(), start);
-    result += "\033[7m"; // Inverse video
+    result += "\033[7m";  // Inverse video
     result.append(content.data() + start, end - start);
-    result += "\033[27m"; // Reset inverse
+    result += "\033[27m";  // Reset inverse
     result.append(content.data() + end, content.size() - end);
     return result;
 }
@@ -439,10 +462,7 @@ inline auto hit_test(std::string_view content, int x, int y) -> HitTestResult {
                 auto line_width = static_cast<int>(text_measure::string_width(line));
                 bool inside = x < line_width;
                 return HitTestResult{
-                    .line = y,
-                    .column = std::min(x, line_width),
-                    .inside_content = inside
-                };
+                    .line = y, .column = std::min(x, line_width), .inside_content = inside};
             }
             ++current_line;
             line_start = i + 1;
@@ -467,11 +487,7 @@ inline auto get_focus_state() -> FocusState {
     is_tty = GetConsoleMode(h, &mode) != 0;
 #endif
 
-    return FocusState{
-        .app_focused = is_tty,
-        .terminal_focused = is_tty,
-        .focus_depth = 0
-    };
+    return FocusState{.app_focused = is_tty, .terminal_focused = is_tty, .focus_depth = 0};
 }
 
 /// Returns current terminal dimensions during an active FTXUI render.
@@ -481,8 +497,7 @@ inline auto query_terminal_size() -> std::pair<int, int> {
         // that previous frame here leaves resize/startup budgets one frame
         // behind. Use the same live query Draw will use for its destination.
         const auto terminal = ftxui::Terminal::Size();
-        if (terminal.dimx > 0 && terminal.dimy > 0)
-            return {terminal.dimx, terminal.dimy};
+        if (terminal.dimx > 0 && terminal.dimy > 0) return {terminal.dimx, terminal.dimy};
     }
 
     // Fallback: check COLUMNS and LINES env vars
@@ -501,7 +516,7 @@ inline auto query_terminal_colors() -> int {
     const char* colorterm = std::getenv("COLORTERM");
     if (colorterm) {
         std::string_view ct{colorterm};
-        if (ct == "truecolor" || ct == "24bit") return 16777216; // 2^24
+        if (ct == "truecolor" || ct == "24bit") return 16777216;  // 2^24
     }
 
     // Check TERM for known values
@@ -528,8 +543,7 @@ inline auto supports_unicode() -> bool {
     if (lang) {
         std::string_view l{lang};
         if (l.find("UTF-8") != std::string_view::npos ||
-            l.find("utf-8") != std::string_view::npos ||
-            l.find("UTF8") != std::string_view::npos) {
+            l.find("utf-8") != std::string_view::npos || l.find("UTF8") != std::string_view::npos) {
             return true;
         }
     }
@@ -548,4 +562,4 @@ inline auto supports_unicode() -> bool {
     return false;
 }
 
-} // namespace loom::ui::ink_utils
+}  // namespace loom::ui::ink_utils

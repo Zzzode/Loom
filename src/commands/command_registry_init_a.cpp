@@ -46,4 +46,4 @@ void register_group_a_commands(CommandRegistry& registry) {
     registry.register_command<DiffCommand>();
 }
 
-} // namespace loom::commands
+}  // namespace loom::commands

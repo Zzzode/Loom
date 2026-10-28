@@ -16,6 +16,7 @@ module;
 export module loom.services.mcp.in_process_transport;
 
 import std;
+
 export namespace loom::services::mcp {
 
 /// A JSON-RPC message carried over the in-process transport. The raw JSON body
@@ -41,6 +42,7 @@ struct InProcessTransportState {
 class InProcessTransport {
 public:
     InProcessTransport() = default;
+
     explicit InProcessTransport(std::shared_ptr<InProcessTransportState> state)
         : state_(std::move(state)) {}
 
@@ -140,4 +142,4 @@ struct LinkedTransportPair {
     };
 }
 
-} // namespace loom::services::mcp
+}  // namespace loom::services::mcp

@@ -41,4 +41,4 @@ struct McpStatusStore {
     std::vector<std::string> pending_at_mention_inserts;
 };
 
-}  // namespace loom::ui
+}  // namespace loom::ui::repl_screen

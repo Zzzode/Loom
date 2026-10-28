@@ -25,7 +25,6 @@
 //       DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT})
 
 #include <gtest/gtest.h>
-
 #include <unistd.h>
 
 import std;
@@ -38,22 +37,22 @@ import loom.services.lsp.passive_feedback;
 import loom.services.lsp.LSPServerManager;
 import loom.services.lsp.client;
 
-using loom::services::lsp::ScopedLspServerConfig;
 using loom::services::lsp::create_lsp_server_instance;
+using loom::services::lsp::create_lsp_server_manager;
 using loom::services::lsp::DiagnosticRegistry;
 using loom::services::lsp::DiagnosticSeverity;
 using loom::services::lsp::format_diagnostics_for_attachment;
-using loom::services::lsp::create_lsp_server_manager;
+using loom::services::lsp::LspClient;
 using loom::services::lsp::PassiveFeedbackCollector;
 using loom::services::lsp::PassiveFeedbackType;
 using loom::services::lsp::register_lsp_notification_handlers;
-using loom::services::lsp::LspClient;
+using loom::services::lsp::ScopedLspServerConfig;
 
+using loom::tools::lsp_action_name;
 using loom::tools::LspAction;
 using loom::tools::LspRequest;
 using loom::tools::LspResult;
 using loom::tools::LspTool;
-using loom::tools::lsp_action_name;
 
 // ---------------------------------------------------------------------------
 // M4: action enum parity with TS src/tools/LSPTool/schemas.ts:180-190.
@@ -109,10 +108,8 @@ TEST(LspToolFixM4, ValidateRejectsMissingPositionForNewActions) {
     LspTool tool;
     const std::filesystem::path file{"/tmp/non_empty_path.cpp"};
 
-    for (auto action : {LspAction::Implementation,
-                        LspAction::PrepareCallHierarchy,
-                        LspAction::IncomingCalls,
-                        LspAction::OutgoingCalls}) {
+    for (auto action : {LspAction::Implementation, LspAction::PrepareCallHierarchy,
+                        LspAction::IncomingCalls, LspAction::OutgoingCalls}) {
         LspRequest req{.action = action, .file_path = file, .position = std::nullopt};
         auto valid = tool.validate(req);
         ASSERT_FALSE(valid.has_value());
@@ -461,7 +458,7 @@ TEST(LspFeedbackWiring, FeedbackExportImportRoundTrips) {
     EXPECT_DOUBLE_EQ(fb.get_acceptance_rate("C1"), 0.5);
 
     auto path = std::filesystem::temp_directory_path() /
-        ("loom_lsp_feedback_" + std::to_string(::getpid()) + ".json");
+                ("loom_lsp_feedback_" + std::to_string(::getpid()) + ".json");
 
     auto exported = fb.export_feedback(path);
     ASSERT_TRUE(exported.has_value());

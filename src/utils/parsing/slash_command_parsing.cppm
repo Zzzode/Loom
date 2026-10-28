@@ -11,37 +11,42 @@ struct ParsedSlashCommand {
 };
 
 namespace detail {
-    [[nodiscard]] inline std::string_view trim(std::string_view value) noexcept {
-        while (!value.empty() && (value.front() == ' ' || value.front() == '\t' || value.front() == '\n' || value.front() == '\r')) value.remove_prefix(1);
-        while (!value.empty() && (value.back() == ' ' || value.back() == '\t' || value.back() == '\n' || value.back() == '\r')) value.remove_suffix(1);
-        return value;
-    }
+[[nodiscard]] inline std::string_view trim(std::string_view value) noexcept {
+    while (!value.empty() && (value.front() == ' ' || value.front() == '\t' ||
+                              value.front() == '\n' || value.front() == '\r'))
+        value.remove_prefix(1);
+    while (!value.empty() && (value.back() == ' ' || value.back() == '\t' || value.back() == '\n' ||
+                              value.back() == '\r'))
+        value.remove_suffix(1);
+    return value;
+}
 
-    [[nodiscard]] inline std::vector<std::string> split_space(std::string_view value) {
-        std::vector<std::string> parts;
-        std::size_t start = 0;
-        while (start <= value.size()) {
-            const auto pos = value.find(' ', start);
-            if (pos == std::string_view::npos) {
-                parts.emplace_back(value.substr(start));
-                break;
-            }
-            parts.emplace_back(value.substr(start, pos - start));
-            start = pos + 1;
+[[nodiscard]] inline std::vector<std::string> split_space(std::string_view value) {
+    std::vector<std::string> parts;
+    std::size_t start = 0;
+    while (start <= value.size()) {
+        const auto pos = value.find(' ', start);
+        if (pos == std::string_view::npos) {
+            parts.emplace_back(value.substr(start));
+            break;
         }
-        return parts;
+        parts.emplace_back(value.substr(start, pos - start));
+        start = pos + 1;
     }
+    return parts;
+}
 
-    [[nodiscard]] inline std::string join_space(const std::vector<std::string>& parts, std::size_t start) {
-        if (start >= parts.size()) return "";
-        std::string out = parts[start];
-        for (std::size_t i = start + 1; i < parts.size(); ++i) {
-            out.push_back(' ');
-            out.append(parts[i]);
-        }
-        return out;
+[[nodiscard]] inline std::string join_space(const std::vector<std::string>& parts,
+                                            std::size_t start) {
+    if (start >= parts.size()) return "";
+    std::string out = parts[start];
+    for (std::size_t i = start + 1; i < parts.size(); ++i) {
+        out.push_back(' ');
+        out.append(parts[i]);
     }
-} // namespace detail
+    return out;
+}
+}  // namespace detail
 
 [[nodiscard]] inline std::optional<ParsedSlashCommand> parse_slash_command(std::string_view input) {
     const auto trimmed = detail::trim(input);
@@ -62,4 +67,4 @@ namespace detail {
     return parsed;
 }
 
-} // namespace loom::utils::slash_command_parsing
+}  // namespace loom::utils::slash_command_parsing

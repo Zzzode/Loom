@@ -23,7 +23,9 @@ namespace loom::ui::messages_list {
 // repl_screen_events.cpp (hit_test) via messages_store.
 // ============================================================
 
-void RowClickTracker::begin_frame() noexcept { cursor = 0; }
+void RowClickTracker::begin_frame() noexcept {
+    cursor = 0;
+}
 
 auto RowClickTracker::track_row(std::string expand_key) -> Box& {
     if (cursor < boxes.size()) {
@@ -46,8 +48,7 @@ void RowClickTracker::end_frame() noexcept {
     }
 }
 
-auto RowClickTracker::hit_test(int x, int y) const noexcept
-    -> std::optional<std::string> {
+auto RowClickTracker::hit_test(int x, int y) const noexcept -> std::optional<std::string> {
     for (std::size_t i = 0; i < boxes.size(); ++i) {
         if (boxes[i] && boxes[i]->Contain(x, y)) {
             return expand_keys[i];
@@ -62,11 +63,14 @@ namespace {
 class SelectionRowGeometryNode final : public Node {
 public:
     SelectionRowGeometryNode(Element child, std::shared_ptr<SelectionRowGeometry> output)
-        : Node({std::move(child)}), output_(std::move(output)) {}
+        : Node({std::move(child)})
+        , output_(std::move(output)) {}
+
     void ComputeRequirement() override {
         Node::ComputeRequirement();
         requirement_ = children_[0]->requirement();
     }
+
     void SetBox(Box box) override {
         Node::SetBox(box);
         output_->box = box;
@@ -75,6 +79,7 @@ public:
         output_->box.y_max = box.y_min + requirement_.min_y - 1;
         children_[0]->SetBox(box);
     }
+
 private:
     std::shared_ptr<SelectionRowGeometry> output_;
 };
@@ -92,7 +97,7 @@ Element capture_selection_row(Element row, const MessagesListInput& input, int i
 bool payload_add_margin(MessageShape shape, bool& previous_user) {
     using S = MessageShape;
     const bool is_user = shape == S::UserText || shape == S::UserPrompt ||
-        shape == S::UserCommand || shape == S::UserImage;
+                         shape == S::UserCommand || shape == S::UserImage;
     const bool is_tool_result = shape == S::UserToolResult || shape == S::UserBashOutput;
     const bool margin = is_user ? !previous_user : !is_tool_result;
     previous_user = is_user;
@@ -100,20 +105,16 @@ bool payload_add_margin(MessageShape shape, bool& previous_user) {
 }
 
 // The static threshold check and the windowed renderer share one projection.
-[[nodiscard]] auto render_messages_list_virtual_rows(
-    const MessagesListInput& input_const,
-    const std::vector<VisibleRow>& visible,
-    std::size_t frame_count,
-    int viewport_rows,
-    int scroll_top_lines,
-    bool reset_to_bottom = false) -> Element
-{
+[[nodiscard]] auto render_messages_list_virtual_rows(const MessagesListInput& input_const,
+                                                     const std::vector<VisibleRow>& visible,
+                                                     std::size_t frame_count, int viewport_rows,
+                                                     int scroll_top_lines,
+                                                     bool reset_to_bottom = false) -> Element {
     namespace vl = loom::ui::messages::virtual_list;
 
     const auto& input = input_const;
     if (visible.empty()) {
-        return vbox({ detail::render_empty_state(input.search_query) })
-             | yframe | vscroll_indicator;
+        return vbox({detail::render_empty_state(input.search_query)}) | yframe | vscroll_indicator;
     }
 
     // The outer scroll indicator always reserves one column. The ASCII
@@ -127,25 +128,22 @@ bool payload_add_margin(MessageShape shape, bool& previous_user) {
         virt_rows = visible_rows_to_virtual(visible, input, term_cols_est);
     }
 
-    const std::size_t divider_before_vi =
-        detail::find_divider_before_visible_index(input, visible);
+    const std::size_t divider_before_vi = detail::find_divider_before_visible_index(input, visible);
     const bool has_divider =
-        (divider_before_vi < visible.size() &&
-         input.unseen_divider.has_value());
+        (divider_before_vi < visible.size() && input.unseen_divider.has_value());
 
     vl::VirtualListState state;
-    state.options.ascii_gutter  = true;
-    state.options.auto_scroll   = input.pin_to_bottom
-                                      ? vl::AutoScrollMode::Smart
-                                      : vl::AutoScrollMode::Disabled;
-    state.viewport_rows         = std::max(1, viewport_rows);
+    state.options.ascii_gutter = true;
+    state.options.auto_scroll =
+        input.pin_to_bottom ? vl::AutoScrollMode::Smart : vl::AutoScrollMode::Disabled;
+    state.viewport_rows = std::max(1, viewport_rows);
     state.options.viewport_rows = state.viewport_rows;
-    state.rows                  = std::move(virt_rows);
-    state.jh                    = vl::build_geometry(std::span{state.rows});
+    state.rows = std::move(virt_rows);
+    state.jh = vl::build_geometry(std::span{state.rows});
     // Initial scroll window
     if (input.pin_to_bottom || reset_to_bottom) {
         const int max = std::max(0, state.jh.total() - state.viewport_rows);
-        state.scroll_top    = max;
+        state.scroll_top = max;
         state.sticky_bottom = true;
     } else {
         state.scroll_top = std::max(0, scroll_top_lines);
@@ -158,84 +156,75 @@ bool payload_add_margin(MessageShape shape, bool& previous_user) {
     for (std::size_t vi = 0; vi < visible.size(); ++vi) {
         const auto& row = visible[vi];
         if (row.kind != VisibleRow::Kind::Payload) continue;
-        const auto shape = row.row_idx < input.shapes.size()
-            ? input.shapes[row.row_idx] : MessageShape::SystemTaskAssignment;
+        const auto shape = row.row_idx < input.shapes.size() ? input.shapes[row.row_idx]
+                                                             : MessageShape::SystemTaskAssignment;
         add_margin_for_vi[vi] = payload_add_margin(shape, previous_user);
     }
 
     // ── render_row callback: translate virtual back to messages_list VR
     state.callbacks.render_row =
-        [frame_count, &input, &visible, divider_before_vi, has_divider,
-         &add_margin_for_vi, term_cols_est]
-        (size_t row_index, const vl::VisibleRow& vr)
-            -> ftxui::Element
-        {
-            // Use the original VisibleRow from the visible vector — the
-            // backend_index bit-pack loses CompressedChain rich data (tool
-            // breakdown, thinking duration, live flag).  Fall back to
-            // decode only if the index is out of bounds (shouldn't happen).
-            const VisibleRow* ml_row_ptr = nullptr;
-            VisibleRow decoded{};
-            if (row_index < visible.size()) {
-                ml_row_ptr = &visible[row_index];
-            } else if (decode_virtual_backend_index(vr.backend_index, decoded)) {
-                ml_row_ptr = &decoded;
-            } else {
-                return text("") | size(HEIGHT, EQUAL,
-                    std::max(1, vr.estimated_height_lines));
-            }
-            const VisibleRow& ml_row = *ml_row_ptr;
-            // is_selected: only Payload rows can be selected.
-            bool is_selected = false;
-            if (ml_row.kind == VisibleRow::Kind::Payload &&
-                input.selected_row_idx.has_value())
-            {
-                is_selected = (ml_row.row_idx == *input.selected_row_idx);
-            }
-            // Use pre-computed add_margin from the turn-state machine above.
-            // row_index maps 1:1 to visible[] index because visible_rows_to_virtual
-            // preserves order with no dropping.
-            const bool add_margin = (row_index < add_margin_for_vi.size())
-                ? add_margin_for_vi[row_index]
-                : true;
+        [frame_count, &input, &visible, divider_before_vi, has_divider, &add_margin_for_vi,
+         term_cols_est](size_t row_index, const vl::VisibleRow& vr) -> ftxui::Element {
+        // Use the original VisibleRow from the visible vector — the
+        // backend_index bit-pack loses CompressedChain rich data (tool
+        // breakdown, thinking duration, live flag).  Fall back to
+        // decode only if the index is out of bounds (shouldn't happen).
+        const VisibleRow* ml_row_ptr = nullptr;
+        VisibleRow decoded{};
+        if (row_index < visible.size()) {
+            ml_row_ptr = &visible[row_index];
+        } else if (decode_virtual_backend_index(vr.backend_index, decoded)) {
+            ml_row_ptr = &decoded;
+        } else {
+            return text("") | size(HEIGHT, EQUAL, std::max(1, vr.estimated_height_lines));
+        }
+        const VisibleRow& ml_row = *ml_row_ptr;
+        // is_selected: only Payload rows can be selected.
+        bool is_selected = false;
+        if (ml_row.kind == VisibleRow::Kind::Payload && input.selected_row_idx.has_value()) {
+            is_selected = (ml_row.row_idx == *input.selected_row_idx);
+        }
+        // Use pre-computed add_margin from the turn-state machine above.
+        // row_index maps 1:1 to visible[] index because visible_rows_to_virtual
+        // preserves order with no dropping.
+        const bool add_margin =
+            (row_index < add_margin_for_vi.size()) ? add_margin_for_vi[row_index] : true;
 
-            Element row_el;
-            if (ml_row.kind == VisibleRow::Kind::CompactGroup) {
-                row_el = detail::render_compact_group_row(ml_row, is_selected);
-            } else if (ml_row.kind == VisibleRow::Kind::CompressedChain) {
-                row_el = detail::render_compressed_chain_row(
-                    ml_row, is_selected, frame_count, term_cols_est);
-                // Track clickable compressed chains for mouse hit-testing.
-                if (input.row_click_tracker && !ml_row.chain_uuid.empty()) {
-                    Box& box = input.row_click_tracker->track_row(
-                        "chain:" + ml_row.chain_uuid);
-                    row_el = std::move(row_el) | reflect(box);
-                }
-                // Top margin for visual separation from preceding row.
-                if (add_margin) {
-                    row_el = vbox({text(""), std::move(row_el)});
-                }
-            } else if (ml_row.kind == VisibleRow::Kind::TranscriptCapDivider) {
-                row_el = detail::render_transcript_cap_divider(ml_row.hidden_count);
-            } else {
-                row_el = detail::render_payload_row(
-                    input, ml_row.row_idx, is_selected, frame_count,
-                    add_margin);
+        Element row_el;
+        if (ml_row.kind == VisibleRow::Kind::CompactGroup) {
+            row_el = detail::render_compact_group_row(ml_row, is_selected);
+        } else if (ml_row.kind == VisibleRow::Kind::CompressedChain) {
+            row_el = detail::render_compressed_chain_row(ml_row, is_selected, frame_count,
+                                                         term_cols_est);
+            // Track clickable compressed chains for mouse hit-testing.
+            if (input.row_click_tracker && !ml_row.chain_uuid.empty()) {
+                Box& box = input.row_click_tracker->track_row("chain:" + ml_row.chain_uuid);
+                row_el = std::move(row_el) | reflect(box);
             }
+            // Top margin for visual separation from preceding row.
+            if (add_margin) {
+                row_el = vbox({text(""), std::move(row_el)});
+            }
+        } else if (ml_row.kind == VisibleRow::Kind::TranscriptCapDivider) {
+            row_el = detail::render_transcript_cap_divider(ml_row.hidden_count);
+        } else {
+            row_el = detail::render_payload_row(input, ml_row.row_idx, is_selected, frame_count,
+                                                add_margin);
+        }
 
-            // Insert divider BEFORE the row whose visible index matches
-            // dividerBeforeIndex.  In the virtual path this callback's
-            // `row_index` is the global index into the full rows[] array
-            // (0..rows.size()-1), which maps 1:1 to visible[] because
-            // visible_rows_to_virtual preserves order with no dropping.
-            if (has_divider && row_index == divider_before_vi) {
-                row_el = vbox({
-                    detail::render_unseen_divider(input.unseen_divider->count),
-                    std::move(row_el),
-                });
-            }
-            return capture_selection_row(std::move(row_el), input, static_cast<int>(row_index));
-        };
+        // Insert divider BEFORE the row whose visible index matches
+        // dividerBeforeIndex.  In the virtual path this callback's
+        // `row_index` is the global index into the full rows[] array
+        // (0..rows.size()-1), which maps 1:1 to visible[] because
+        // visible_rows_to_virtual preserves order with no dropping.
+        if (has_divider && row_index == divider_before_vi) {
+            row_el = vbox({
+                detail::render_unseen_divider(input.unseen_divider->count),
+                std::move(row_el),
+            });
+        }
+        return capture_selection_row(std::move(row_el), input, static_cast<int>(row_index));
+    };
 
     // ── Wire 2-tier search engine into virtual list state ──────────────
     // The search callback is the same one used by build_visible_rows search
@@ -255,23 +244,21 @@ bool payload_add_margin(MessageShape shape, bool& previous_user) {
 
     // Wire search_step callback so scroll_keys FSM n/N keys can navigate
     // between search matches.
-    state.callbacks.search_step =
-        [&state](int delta) -> int {
-            if (state.search_matches.empty()) return -1;
-            size_t n = state.search_matches.size();
-            size_t target_ptr = (static_cast<int>(state.search_ptr) + delta +
-                                 static_cast<int>(n)) % static_cast<int>(n);
-            size_t target_row = state.search_matches[target_ptr];
-            return state.jh.find_visual_top_for_row(target_row);
-        };
+    state.callbacks.search_step = [&state](int delta) -> int {
+        if (state.search_matches.empty()) return -1;
+        size_t n = state.search_matches.size();
+        size_t target_ptr = (static_cast<int>(state.search_ptr) + delta + static_cast<int>(n)) %
+                            static_cast<int>(n);
+        size_t target_row = state.search_matches[target_ptr];
+        return state.jh.find_visual_top_for_row(target_row);
+    };
 
     Element body = vl::render_list_as_elements(state);
     // yframe needs focusPosition to know where to scroll.  Without it,
     // yframe shows the top of the body (the top spacer), not the visible
     // rows — the user sees blank space instead of scrolled content.
     if (state.scroll_top > 0) {
-        body = std::move(body)
-             | focusPosition(0, state.scroll_top + state.viewport_rows / 2);
+        body = std::move(body) | focusPosition(0, state.scroll_top + state.viewport_rows / 2);
     }
     // Expose the exact geometry so the caller can set virtual_jh for
     // precise scroll bounds (eliminates the EstimateTranscriptRows dead-zone).
@@ -283,16 +270,13 @@ bool payload_add_margin(MessageShape shape, bool& previous_user) {
 
 }  // namespace
 
-[[nodiscard]] auto render_messages_list_virtual(
-    const MessagesListInput& input,
-    std::size_t frame_count,
-    int viewport_rows,
-    int scroll_top_lines) -> Element
-{
+[[nodiscard]] auto render_messages_list_virtual(const MessagesListInput& input,
+                                                std::size_t frame_count, int viewport_rows,
+                                                int scroll_top_lines) -> Element {
     if (input.selection_rows) input.selection_rows->clear();
     auto visible = build_visible_rows(input);
-    return render_messages_list_virtual_rows(
-        input, visible, frame_count, viewport_rows, scroll_top_lines);
+    return render_messages_list_virtual_rows(input, visible, frame_count, viewport_rows,
+                                             scroll_top_lines);
 }
 
 // =========================================================================
@@ -301,7 +285,6 @@ bool payload_add_margin(MessageShape shape, bool& previous_user) {
 /// Non-interactive version.  Used by dialogs that don't need the full
 /// selection/action pipeline.  Still applies filters + compact collapsing
 /// + streaming tail rendering + scroll frame.
-
 
 /// @param wrap_in_yframe When true (default), wraps the message rows in
 ///        yframe | vscroll_indicator | flex.  When false, returns just the
@@ -313,25 +296,28 @@ bool payload_add_margin(MessageShape shape, bool& previous_user) {
 ///        filler so it absorbs remaining viewport
 ///        space without competing with yframe|flex for parent allocation.
 ///        Golden tests leave this empty.
-[[nodiscard]] auto render_messages_list_view(
-    const MessagesListInput& input_const,
-    std::size_t frame_count,
-    std::size_t render_last_n,
-    Elements trailing_elements,
-    bool wrap_in_yframe,
-    Elements leading_elements) -> Element
-{
+[[nodiscard]] auto render_messages_list_view(const MessagesListInput& input_const,
+                                             std::size_t frame_count, std::size_t render_last_n,
+                                             Elements trailing_elements, bool wrap_in_yframe,
+                                             Elements leading_elements) -> Element {
     if (input_const.selection_rows) input_const.selection_rows->clear();
+
     // RAII guard: reset the row-click tracker at frame start and trim
     // excess boxes at frame end (every return path).  Without the trim,
     // stale boxes from a previous frame would cause false hit-test hits.
     struct FrameGuard {
         RowClickTracker* t;
-        explicit FrameGuard(RowClickTracker* p) : t(p) {
+
+        explicit FrameGuard(RowClickTracker* p)
+            : t(p) {
             if (t) t->begin_frame();
         }
-        ~FrameGuard() { if (t) t->end_frame(); }
+
+        ~FrameGuard() {
+            if (t) t->end_frame();
+        }
     };
+
     FrameGuard frame_guard(input_const.row_click_tracker);
 
     // P0-3 virtual path: for *large* transcripts, delegate to the
@@ -346,8 +332,7 @@ bool payload_add_margin(MessageShape shape, bool& previous_user) {
     // RFC 0008: hysteresis decision. The caller passes the previous mode
     // from MessagesStore; the helper retains mode within the band.
     const auto prev_mode = input.prev_virtual_mode;
-    const auto next_mode = decide_virtual_renderer_mode(
-        prev_mode, visible.size());
+    const auto next_mode = decide_virtual_renderer_mode(prev_mode, visible.size());
     input.next_virtual_mode = next_mode;
     const bool mode_switched = (next_mode != prev_mode);
     // Same-frame scroll reset: when the mode switches and the user is NOT
@@ -359,11 +344,9 @@ bool payload_add_margin(MessageShape shape, bool& previous_user) {
     if (next_mode == VirtualRendererMode::Virtual) {
         // The filler is outside the visible window for large transcripts.
         (void)trailing_elements;
-        return render_messages_list_virtual_rows(
-            input, visible, frame_count,
-            std::max(1, input.viewport_rows),
-            std::max(0, input.scroll_offset),
-            reset_to_bottom);
+        return render_messages_list_virtual_rows(input, visible, frame_count,
+                                                 std::max(1, input.viewport_rows),
+                                                 std::max(0, input.scroll_offset), reset_to_bottom);
     }
 
     if (visible.empty()) {
@@ -391,11 +374,9 @@ bool payload_add_margin(MessageShape shape, bool& previous_user) {
 
     // ---- Unseen divider anchor: compute BEFORE the last-N slice so the
     //      visible-index comparison is still correct after slicing with start.
-    const std::size_t divider_before_vi =
-        detail::find_divider_before_visible_index(input, visible);
+    const std::size_t divider_before_vi = detail::find_divider_before_visible_index(input, visible);
     const bool has_divider =
-        (divider_before_vi < visible.size() &&
-         input.unseen_divider.has_value());
+        (divider_before_vi < visible.size() && input.unseen_divider.has_value());
 
     // ---- Last-N window (non-virtualized path) ----
     std::size_t start = 0;
@@ -428,23 +409,23 @@ bool payload_add_margin(MessageShape shape, bool& previous_user) {
     // suppressed margins on ALL assistant blocks after a user row, causing:
     //   - User→assistant text gap = 0 (too small)
     //   - Inconsistent spacing when tool results were present vs absent.
-    bool prev_was_user = false;    // for user-turn continuation ⎿ connector
+    bool prev_was_user = false;  // for user-turn continuation ⎿ connector
     for (std::size_t vi = start; vi < visible.size(); ++vi) {
         const auto& vr = visible[vi];
-        const bool is_selected =
-            input.selected_row_idx.has_value() &&
-            vr.kind == VisibleRow::Kind::Payload &&
-            vr.row_idx == *input.selected_row_idx;
+        const bool is_selected = input.selected_row_idx.has_value() &&
+                                 vr.kind == VisibleRow::Kind::Payload &&
+                                 vr.row_idx == *input.selected_row_idx;
 
         if (vr.kind == VisibleRow::Kind::Payload) {
             const MessageShape shape =
                 (vr.row_idx < input.shapes.size())
                     ? input.shapes[vr.row_idx]
-                    : MessageShape::SystemTaskAssignment;   // = max enum; treated as "not user/assistant"
+                    : MessageShape::SystemTaskAssignment;  // = max enum; treated as "not
+                                                           // user/assistant"
             const bool row_add_margin = payload_add_margin(shape, prev_was_user);
 
-            rows.push_back(detail::render_payload_row(
-                input, vr.row_idx, is_selected, frame_count, row_add_margin));
+            rows.push_back(detail::render_payload_row(input, vr.row_idx, is_selected, frame_count,
+                                                      row_add_margin));
         } else if (vr.kind == VisibleRow::Kind::TranscriptCapDivider) {
             // "─── N older messages hidden · Ctrl+E to show all ───"
             rows.push_back(detail::render_transcript_cap_divider(vr.hidden_count));
@@ -455,8 +436,7 @@ bool payload_add_margin(MessageShape shape, bool& previous_user) {
                 std::max(1, input.term_cols - (wrap_in_yframe ? 1 : 0)));
             // Track clickable compressed chains for mouse hit-testing.
             if (input.row_click_tracker && !vr.chain_uuid.empty()) {
-                Box& box = input.row_click_tracker->track_row(
-                    "chain:" + vr.chain_uuid);
+                Box& box = input.row_click_tracker->track_row("chain:" + vr.chain_uuid);
                 chain_el = std::move(chain_el) | reflect(box);
             }
             rows.push_back(vbox({text(""), std::move(chain_el)}));
@@ -465,9 +445,8 @@ bool payload_add_margin(MessageShape shape, bool& previous_user) {
             rows.push_back(detail::render_compact_group_row(vr, is_selected));
         }
         if (has_divider && vi == divider_before_vi) {
-            rows.back() = vbox({
-                detail::render_unseen_divider(input.unseen_divider->count),
-                std::move(rows.back())});
+            rows.back() = vbox({detail::render_unseen_divider(input.unseen_divider->count),
+                                std::move(rows.back())});
         }
         rows.back() = capture_selection_row(std::move(rows.back()), input, static_cast<int>(vi));
     }
@@ -511,8 +490,7 @@ bool payload_add_margin(MessageShape shape, bool& previous_user) {
     const int vp = std::max(1, input.viewport_rows);
     int estimated_total_lines = 0;
     for (const auto& vr : visible) {
-        estimated_total_lines +=
-            detail::estimate_row_height(vr, input, input.term_cols);
+        estimated_total_lines += detail::estimate_row_height(vr, input, input.term_cols);
     }
     // NOTE: leading elements (logo card) are intentionally NOT included in
     // the pin-to-bottom estimate.  Pin-to-bottom should engage when MESSAGES
@@ -547,12 +525,11 @@ bool payload_add_margin(MessageShape shape, bool& previous_user) {
         // fits in the viewport (the "large blank area below logo" bug).
         list = std::move(list) | focusPositionRelative(0, 1);
     } else if (input.scroll_offset > 0) {
-        list = std::move(list)
-             | focusPosition(0, input.scroll_offset + vp / 2);
+        list = std::move(list) | focusPosition(0, input.scroll_offset + vp / 2);
     }
     list = std::move(list) | yframe;
     if (input.viewport_box) list = std::move(list) | reflect(*input.viewport_box);
     return std::move(list) | vscroll_indicator | flex;
 }
 
-} // namespace loom::ui::messages_list
+}  // namespace loom::ui::messages_list

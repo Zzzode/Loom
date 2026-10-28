@@ -5,7 +5,6 @@
 /// Exposes canonical palettes, accessibility flags and named color lookup.
 module;
 
-
 #include <ftxui/screen/color.hpp>
 
 export module loom.ui.foundation.theme_provider;
@@ -33,15 +32,15 @@ enum class ThemeVariant : std::uint8_t {
 
 // ─── Accessibility / environment overrides ───────────────────────────────────
 struct Accessibility {
-    bool reduced_motion    = false;   // suppress spinner shimmer, asterisk sweep
-    bool high_contrast     = false;   // prefer stark palette (Monochrome if set)
-    bool force_monochrome  = false;   // braille-only / e-ink terminals
+    bool reduced_motion = false;    // suppress spinner shimmer, asterisk sweep
+    bool high_contrast = false;     // prefer stark palette (Monochrome if set)
+    bool force_monochrome = false;  // braille-only / e-ink terminals
 };
 
 // ─── Theme handle (value type; cheap to copy) ────────────────────────────────
 struct Theme {
     ThemeVariant variant = ThemeVariant::Dark;
-    const Palette* palette = &palette::dark();   // never null
+    const Palette* palette = &palette::dark();  // never null
     Accessibility a11y{};
 
     /// Convenience: resolve a semantic role through this theme's palette.
@@ -55,13 +54,20 @@ struct Theme {
 /// pointer lives for the duration of the program.
 [[nodiscard]] inline const Palette* palette_for_variant(ThemeVariant v) noexcept {
     switch (v) {
-        case ThemeVariant::Dark:            return &palette::dark();
-        case ThemeVariant::Light:           return &palette::light();
-        case ThemeVariant::DarkDaltonized:  return &palette::dark_daltonized();
-        case ThemeVariant::LightDaltonized: return &palette::light_daltonized();
-        case ThemeVariant::Monochrome:      return &palette::monochrome();
-        case ThemeVariant::LightAnsi:       return &palette::light_ansi();
-        case ThemeVariant::DarkAnsi:        return &palette::dark_ansi();
+    case ThemeVariant::Dark:
+        return &palette::dark();
+    case ThemeVariant::Light:
+        return &palette::light();
+    case ThemeVariant::DarkDaltonized:
+        return &palette::dark_daltonized();
+    case ThemeVariant::LightDaltonized:
+        return &palette::light_daltonized();
+    case ThemeVariant::Monochrome:
+        return &palette::monochrome();
+    case ThemeVariant::LightAnsi:
+        return &palette::light_ansi();
+    case ThemeVariant::DarkAnsi:
+        return &palette::dark_ansi();
     }
     return &palette::dark();
 }
@@ -69,26 +75,33 @@ struct Theme {
 /// Parse a theme variant name string ("dark", "light-daltonized", …).
 /// Returns Dark on unrecognized input.
 [[nodiscard]] inline ThemeVariant parse_variant(std::string_view name) noexcept {
-    if (name == "dark")                     return ThemeVariant::Dark;
-    if (name == "light")                    return ThemeVariant::Light;
-    if (name == "dark-daltonized")          return ThemeVariant::DarkDaltonized;
-    if (name == "light-daltonized")         return ThemeVariant::LightDaltonized;
+    if (name == "dark") return ThemeVariant::Dark;
+    if (name == "light") return ThemeVariant::Light;
+    if (name == "dark-daltonized") return ThemeVariant::DarkDaltonized;
+    if (name == "light-daltonized") return ThemeVariant::LightDaltonized;
     if (name == "monochrome" || name == "ansi") return ThemeVariant::Monochrome;
-    if (name == "light-ansi")               return ThemeVariant::LightAnsi;
-    if (name == "dark-ansi")                return ThemeVariant::DarkAnsi;
-    if (name == "auto")                     return ThemeVariant::Auto;
+    if (name == "light-ansi") return ThemeVariant::LightAnsi;
+    if (name == "dark-ansi") return ThemeVariant::DarkAnsi;
+    if (name == "auto") return ThemeVariant::Auto;
     return ThemeVariant::Dark;
 }
 
 [[nodiscard]] inline std::string_view variant_name(ThemeVariant v) noexcept {
     switch (v) {
-        case ThemeVariant::Dark:            return "dark";
-        case ThemeVariant::Light:           return "light";
-        case ThemeVariant::DarkDaltonized:  return "dark-daltonized";
-        case ThemeVariant::LightDaltonized: return "light-daltonized";
-        case ThemeVariant::Monochrome:      return "monochrome";
-        case ThemeVariant::LightAnsi:       return "light-ansi";
-        case ThemeVariant::DarkAnsi:        return "dark-ansi";
+    case ThemeVariant::Dark:
+        return "dark";
+    case ThemeVariant::Light:
+        return "light";
+    case ThemeVariant::DarkDaltonized:
+        return "dark-daltonized";
+    case ThemeVariant::LightDaltonized:
+        return "light-daltonized";
+    case ThemeVariant::Monochrome:
+        return "monochrome";
+    case ThemeVariant::LightAnsi:
+        return "light-ansi";
+    case ThemeVariant::DarkAnsi:
+        return "dark-ansi";
     }
     return "dark";
 }
@@ -126,7 +139,7 @@ inline ThemeHolder& global_holder() noexcept {
     return h;
 }
 
-} // namespace detail
+}  // namespace detail
 
 [[nodiscard]] inline Theme current_theme() noexcept {
     auto& h = detail::global_holder();
@@ -158,7 +171,7 @@ inline void set_theme(Theme t) noexcept {
 /// as "loom", "success" — return the corresponding ftxui::Color.  Unknown
 /// key names fall back to theme.text.
 [[nodiscard]] inline ftxui::Color resolve_color(std::string_view color,
-                                               const Theme& theme) noexcept {
+                                                const Theme& theme) noexcept {
     if (color.empty()) return {};  // caller decides what "no color" means
 
     // ── literal forms ─────────────────────────────────────────────────────
@@ -171,14 +184,15 @@ inline void set_theme(Theme t) noexcept {
                 out = out * 10 + static_cast<std::uint32_t>(color[i] - '0');
                 ++i;
             }
-            if (i < color.size() && (color[i] == ',' || color[i] == ' '
-                                     || color[i] == ')')) ++i;
+            if (i < color.size() && (color[i] == ',' || color[i] == ' ' || color[i] == ')')) ++i;
         };
-        std::uint32_t r=0,g=0,b=0;
-        rd(r); rd(g); rd(b);
-        return ftxui::Color::RGB(static_cast<std::uint8_t>(r&0xff),
-                                 static_cast<std::uint8_t>(g&0xff),
-                                 static_cast<std::uint8_t>(b&0xff));
+        std::uint32_t r = 0, g = 0, b = 0;
+        rd(r);
+        rd(g);
+        rd(b);
+        return ftxui::Color::RGB(static_cast<std::uint8_t>(r & 0xff),
+                                 static_cast<std::uint8_t>(g & 0xff),
+                                 static_cast<std::uint8_t>(b & 0xff));
     }
     if (color.front() == '#' && color.size() == 7) {
         auto nibble = [](char c) -> std::uint8_t {
@@ -190,8 +204,7 @@ inline void set_theme(Theme t) noexcept {
         return ftxui::Color::RGB(
             static_cast<std::uint8_t>((nibble(color[1]) << 4) | nibble(color[2])),
             static_cast<std::uint8_t>((nibble(color[3]) << 4) | nibble(color[4])),
-            static_cast<std::uint8_t>((nibble(color[5]) << 4) | nibble(color[6]))
-        );
+            static_cast<std::uint8_t>((nibble(color[5]) << 4) | nibble(color[6])));
     }
     if (color.size() >= 5 && color.substr(0, 5) == "ansi:") {
         // ansi:N  —  palette16 index (0..15)
@@ -200,7 +213,7 @@ inline void set_theme(Theme t) noexcept {
         if (!rest.empty() && rest.front() >= '0' && rest.front() <= '9') {
             int n = 0;
             for (char c : rest) {
-                if (c >= '0' && c <= '9') n = n*10 + (c-'0');
+                if (c >= '0' && c <= '9') n = n * 10 + (c - '0');
             }
             return ftxui::Color{static_cast<ftxui::Color::Palette16>(n & 0xf)};
         }
@@ -208,38 +221,36 @@ inline void set_theme(Theme t) noexcept {
         // FTXUI naming: idx 7 = GrayLight,
         //               idx 15 = White,
         //               *Bright names → FTXUI *Light enum values.
-        if (rest == "black")       return ftxui::Color{ftxui::Color::Palette16::Black};
-        if (rest == "red")         return ftxui::Color{ftxui::Color::Palette16::Red};
-        if (rest == "green")       return ftxui::Color{ftxui::Color::Palette16::Green};
-        if (rest == "yellow")      return ftxui::Color{ftxui::Color::Palette16::Yellow};
-        if (rest == "blue")        return ftxui::Color{ftxui::Color::Palette16::Blue};
-        if (rest == "magenta")     return ftxui::Color{ftxui::Color::Palette16::Magenta};
-        if (rest == "cyan")        return ftxui::Color{ftxui::Color::Palette16::Cyan};
-        if (rest == "white")       return ftxui::Color{ftxui::Color::Palette16::GrayLight};
+        if (rest == "black") return ftxui::Color{ftxui::Color::Palette16::Black};
+        if (rest == "red") return ftxui::Color{ftxui::Color::Palette16::Red};
+        if (rest == "green") return ftxui::Color{ftxui::Color::Palette16::Green};
+        if (rest == "yellow") return ftxui::Color{ftxui::Color::Palette16::Yellow};
+        if (rest == "blue") return ftxui::Color{ftxui::Color::Palette16::Blue};
+        if (rest == "magenta") return ftxui::Color{ftxui::Color::Palette16::Magenta};
+        if (rest == "cyan") return ftxui::Color{ftxui::Color::Palette16::Cyan};
+        if (rest == "white") return ftxui::Color{ftxui::Color::Palette16::GrayLight};
         if (rest == "blackBright") return ftxui::Color{ftxui::Color::Palette16::GrayDark};
-        if (rest == "redBright")   return ftxui::Color{ftxui::Color::Palette16::RedLight};
+        if (rest == "redBright") return ftxui::Color{ftxui::Color::Palette16::RedLight};
         if (rest == "greenBright") return ftxui::Color{ftxui::Color::Palette16::GreenLight};
-        if (rest == "yellowBright")return ftxui::Color{ftxui::Color::Palette16::YellowLight};
-        if (rest == "blueBright")  return ftxui::Color{ftxui::Color::Palette16::BlueLight};
-        if (rest == "magentaBright")return ftxui::Color{ftxui::Color::Palette16::MagentaLight};
-        if (rest == "cyanBright")  return ftxui::Color{ftxui::Color::Palette16::CyanLight};
+        if (rest == "yellowBright") return ftxui::Color{ftxui::Color::Palette16::YellowLight};
+        if (rest == "blueBright") return ftxui::Color{ftxui::Color::Palette16::BlueLight};
+        if (rest == "magentaBright") return ftxui::Color{ftxui::Color::Palette16::MagentaLight};
+        if (rest == "cyanBright") return ftxui::Color{ftxui::Color::Palette16::CyanLight};
         if (rest == "whiteBright") return ftxui::Color{ftxui::Color::Palette16::White};
         return ftxui::Color{ftxui::Color::Palette16::GrayLight};  // fallback
     }
     if (color.size() >= 8 && color.substr(0, 7) == "ansi256") {
         int n = 0;
         for (char c : color) {
-            if (c >= '0' && c <= '9') n = n*10 + (c - '0');
+            if (c >= '0' && c <= '9') n = n * 10 + (c - '0');
         }
         return ftxui::Color{static_cast<ftxui::Color::Palette256>(n & 0xff)};
     }
 
     // ── Theme key lookup (subset of the theme fields we actually use) ────
     auto& p = *theme.palette;
-    if (color == "loom" || color == "loom_body" || color == "primary")
-        return p.primary;
-    if (color == "loomShimmer" || color == "primary_shimmer")
-        return p.primary_shimmer;
+    if (color == "loom" || color == "loom_body" || color == "primary") return p.primary;
+    if (color == "loomShimmer" || color == "primary_shimmer") return p.primary_shimmer;
     if (color == "success") return p.success;
     if (color == "error" || color == "danger") return p.danger;
     if (color == "warning") return p.warning;
@@ -248,113 +259,86 @@ inline void set_theme(Theme t) noexcept {
     if (color == "inactive" || color == "muted") return p.muted;
     if (color == "subtle") return p.subtle;
     if (color == "suggestion") return p.suggestion;
-    if (color == "text")   return p.text;
+    if (color == "text") return p.text;
     if (color == "inverseText") return p.inverse_text;
     if (color == "background") return p.background;
     if (color == "chrome") return p.chrome;
     if (color == "merged") return p.merged;
-    if (color == "diffAdded")  return p.diff_added;
+    if (color == "diffAdded") return p.diff_added;
     if (color == "diffRemoved") return p.diff_removed;
     if (color == "diffAddedWord") return p.diff_added_word;
     if (color == "diffRemovedWord") return p.diff_removed_word;
     // ── New tokens (GAP: clr-missing-42-tokens-struct + clr-shimmer-tokens-missing)
-    if (color == "permissionShimmer" || color == "permission_shimmer")
-        return p.permission_shimmer;
-    if (color == "inactiveShimmer" || color == "inactive_shimmer")
-        return p.inactive_shimmer;
-    if (color == "warningShimmer" || color == "warning_shimmer")
-        return p.warning_shimmer;
+    if (color == "permissionShimmer" || color == "permission_shimmer") return p.permission_shimmer;
+    if (color == "inactiveShimmer" || color == "inactive_shimmer") return p.inactive_shimmer;
+    if (color == "warningShimmer" || color == "warning_shimmer") return p.warning_shimmer;
     if (color == "promptBorderShimmer" || color == "prompt_border_shimmer")
         return p.prompt_border_shimmer;
-    if (color == "fastModeShimmer" || color == "fast_mode_shimmer")
-        return p.fast_mode_shimmer;
+    if (color == "fastModeShimmer" || color == "fast_mode_shimmer") return p.fast_mode_shimmer;
     if (color == "loomBlueShimmer_FOR_SYSTEM_SPINNER" || color == "loom_blue_shimmer")
         return p.loom_blue_shimmer;
-    if (color == "loomBlue_FOR_SYSTEM_SPINNER" || color == "loom_blue")
-        return p.loom_blue;
-    if (color == "planMode" || color == "plan_mode")
-        return p.plan_mode;
-    if (color == "ide")
-        return p.ide;
-    if (color == "remember")
-        return p.remember;
-    if (color == "fastMode" || color == "fast_mode")
-        return p.fast_mode;
-    if (color == "diffAddedDimmed" || color == "diff_added_dimmed")
-        return p.diff_added_dimmed;
+    if (color == "loomBlue_FOR_SYSTEM_SPINNER" || color == "loom_blue") return p.loom_blue;
+    if (color == "planMode" || color == "plan_mode") return p.plan_mode;
+    if (color == "ide") return p.ide;
+    if (color == "remember") return p.remember;
+    if (color == "fastMode" || color == "fast_mode") return p.fast_mode;
+    if (color == "diffAddedDimmed" || color == "diff_added_dimmed") return p.diff_added_dimmed;
     if (color == "diffRemovedDimmed" || color == "diff_removed_dimmed")
         return p.diff_removed_dimmed;
-    if (color == "red_FOR_SUBAGENTS_ONLY" || color == "subagent_red")
-        return p.subagent_red;
-    if (color == "blue_FOR_SUBAGENTS_ONLY" || color == "subagent_blue")
-        return p.subagent_blue;
-    if (color == "green_FOR_SUBAGENTS_ONLY" || color == "subagent_green")
-        return p.subagent_green;
+    if (color == "red_FOR_SUBAGENTS_ONLY" || color == "subagent_red") return p.subagent_red;
+    if (color == "blue_FOR_SUBAGENTS_ONLY" || color == "subagent_blue") return p.subagent_blue;
+    if (color == "green_FOR_SUBAGENTS_ONLY" || color == "subagent_green") return p.subagent_green;
     if (color == "yellow_FOR_SUBAGENTS_ONLY" || color == "subagent_yellow")
         return p.subagent_yellow;
     if (color == "purple_FOR_SUBAGENTS_ONLY" || color == "subagent_purple")
         return p.subagent_purple;
     if (color == "orange_FOR_SUBAGENTS_ONLY" || color == "subagent_orange")
         return p.subagent_orange;
-    if (color == "pink_FOR_SUBAGENTS_ONLY" || color == "subagent_pink")
-        return p.subagent_pink;
-    if (color == "cyan_FOR_SUBAGENTS_ONLY" || color == "subagent_cyan")
-        return p.subagent_cyan;
-    if (color == "professionalBlue" || color == "professional_blue")
-        return p.professional_blue;
-    if (color == "chromeYellow" || color == "chrome_yellow")
-        return p.chrome_yellow;
-    if (color == "selectionBg" || color == "selection_bg")
-        return p.selection_bg;
+    if (color == "pink_FOR_SUBAGENTS_ONLY" || color == "subagent_pink") return p.subagent_pink;
+    if (color == "cyan_FOR_SUBAGENTS_ONLY" || color == "subagent_cyan") return p.subagent_cyan;
+    if (color == "professionalBlue" || color == "professional_blue") return p.professional_blue;
+    if (color == "chromeYellow" || color == "chrome_yellow") return p.chrome_yellow;
+    if (color == "selectionBg" || color == "selection_bg") return p.selection_bg;
     if (color == "bashMessageBackgroundColor" || color == "bash_message_background")
         return p.bash_message_background;
     if (color == "memoryBackgroundColor" || color == "memory_background")
         return p.memory_background;
-    if (color == "briefLabelYou" || color == "brief_label_you")
-        return p.brief_label_you;
-    if (color == "briefLabelLoom" || color == "brief_label_loom")
-        return p.brief_label_loom;
+    if (color == "briefLabelYou" || color == "brief_label_you") return p.brief_label_you;
+    if (color == "briefLabelLoom" || color == "brief_label_loom") return p.brief_label_loom;
     // Rainbow per-stop shimmers
-    if (color == "rainbow_red_shimmer")    return p.rainbow_shimmer_stops[0];
+    if (color == "rainbow_red_shimmer") return p.rainbow_shimmer_stops[0];
     if (color == "rainbow_orange_shimmer") return p.rainbow_shimmer_stops[1];
     if (color == "rainbow_yellow_shimmer") return p.rainbow_shimmer_stops[2];
-    if (color == "rainbow_green_shimmer")  return p.rainbow_shimmer_stops[3];
-    if (color == "rainbow_blue_shimmer")   return p.rainbow_shimmer_stops[4];
+    if (color == "rainbow_green_shimmer") return p.rainbow_shimmer_stops[3];
+    if (color == "rainbow_blue_shimmer") return p.rainbow_shimmer_stops[4];
     if (color == "rainbow_indigo_shimmer") return p.rainbow_shimmer_stops[5];
     if (color == "rainbow_violet_shimmer") return p.rainbow_shimmer_stops[6];
 
     // ── Additional theme field names (GAP: palette-tokens) ───────────────
     // These 17 were not handled above and silently fell through to p.text.
-    if (color == "autoAccept" || color == "auto_accept")
-        return p.auto_accept;
-    if (color == "bashBorder" || color == "bash_border")
-        return p.bash_border;
-    if (color == "promptBorder" || color == "prompt_border")
-        return p.prompt_border;
+    if (color == "autoAccept" || color == "auto_accept") return p.auto_accept;
+    if (color == "bashBorder" || color == "bash_border") return p.bash_border;
+    if (color == "promptBorder" || color == "prompt_border") return p.prompt_border;
     if (color == "userMessageBackground" || color == "user_message_background")
         return p.user_message_background;
     if (color == "userMessageBackgroundHover" || color == "user_message_background_hover")
         return p.user_message_background_hover;
     if (color == "messageActionsBackground" || color == "message_actions_background")
         return p.message_actions_background;
-    if (color == "rate_limit_fill" || color == "rateLimitFill")
-        return p.rate_limit_fill;
-    if (color == "rate_limit_empty" || color == "rateLimitEmpty")
-        return p.rate_limit_empty;
-    if (color == "briefLabel" || color == "brief_label")
-        return p.brief_label;
+    if (color == "rate_limit_fill" || color == "rateLimitFill") return p.rate_limit_fill;
+    if (color == "rate_limit_empty" || color == "rateLimitEmpty") return p.rate_limit_empty;
+    if (color == "briefLabel" || color == "brief_label") return p.brief_label;
     // Rainbow per-stop base colors
-    if (color == "rainbow_red")    return p.rainbow[0];
+    if (color == "rainbow_red") return p.rainbow[0];
     if (color == "rainbow_orange") return p.rainbow[1];
     if (color == "rainbow_yellow") return p.rainbow[2];
-    if (color == "rainbow_green")  return p.rainbow[3];
-    if (color == "rainbow_blue")   return p.rainbow[4];
+    if (color == "rainbow_green") return p.rainbow[3];
+    if (color == "rainbow_blue") return p.rainbow[4];
     if (color == "rainbow_indigo") return p.rainbow[5];
     if (color == "rainbow_violet") return p.rainbow[6];
-    if (color == "rainbow_shimmer")
-        return p.rainbow_shimmer;
+    if (color == "rainbow_shimmer") return p.rainbow_shimmer;
 
     return p.text;
 }
 
-} // namespace loom::ui::design::theme
+}  // namespace loom::ui::design::theme

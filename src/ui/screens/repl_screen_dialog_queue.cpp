@@ -7,8 +7,8 @@
 // (the textual FTXUI includes keep the reduced-BMI writer happy).
 module;
 
-#include <ftxui/dom/elements.hpp>
 #include <ftxui/component/event.hpp>
+#include <ftxui/dom/elements.hpp>
 
 module loom.ui.screens.repl_screen;
 
@@ -77,42 +77,43 @@ bool instance_permission_pending(ReplScreenState& s) {
         const auto& payload = ref->get();
         if (!s.dialog_store.dialog_renderers.has_renderer_and_handler(dsys::type_of(payload)))
             return false;
-        return std::visit([](const auto& request) {
-            using T = std::decay_t<decltype(request)>;
-            if constexpr (std::is_same_v<T, dsys::ToolPermissionPayload> ||
-                          std::is_same_v<T, dsys::SandboxPermissionPayload> ||
-                          std::is_same_v<T, dsys::WorkerSandboxPermissionPayload>)
-                return static_cast<bool>(request.on_response);
-            return false;
-        }, payload);
+        return std::visit(
+            [](const auto& request) {
+                using T = std::decay_t<decltype(request)>;
+                if constexpr (std::is_same_v<T, dsys::ToolPermissionPayload> ||
+                              std::is_same_v<T, dsys::SandboxPermissionPayload> ||
+                              std::is_same_v<T, dsys::WorkerSandboxPermissionPayload>)
+                    return static_cast<bool>(request.on_response);
+                return false;
+            },
+            payload);
     };
     return actionable(s.dialog_store.dialog_queue.peek_overlay_mut()) ||
-        actionable(s.dialog_store.dialog_queue.peek_bottom_mut(false, true));
+           actionable(s.dialog_store.dialog_queue.peek_bottom_mut(false, true));
 }
+
 void yield_instance_to_permission(ReplScreenState& s) {
     auto top = s.dialog_store.dialog_queue.peek_modal_mut();
     if (top && std::holds_alternative<dsys::AgentInstancesPayload>(top->get()) &&
-        instance_permission_pending(s)) s.dialog_store.dialog_queue.pop_modal();
+        instance_permission_pending(s))
+        s.dialog_store.dialog_queue.pop_modal();
 }
-} // namespace
+}  // namespace
 
 /// Build the render-time width/height context for the registry.
 /// When `is_modal` is true, the context's `modal_available_cols/rows`
 /// are populated using the same formula so modal renderers can size
 /// content to the actual available pane area.
-[[nodiscard]] dsys::DialogRenderContext MakeContext(
-    int term_w, int term_h, bool is_modal,
-    const void* repl_state)
-{
+[[nodiscard]] dsys::DialogRenderContext MakeContext(int term_w, int term_h, bool is_modal,
+                                                    const void* repl_state) {
     dsys::DialogRenderContext c;
-    c.term_cols  = term_w;
-    c.term_rows  = term_h;
+    c.term_cols = term_w;
+    c.term_rows = term_h;
     c.repl_state = repl_state;
     if (is_modal) {
         // MODAL_TRANSCRIPT_PEEK = 2 (fullscreen_layout.cppm kModalTranscriptPeek)
         // The -1 accounts for the ▔ divider row.
-        constexpr int kModalTranscriptPeek =
-            loom::ui::layout::fullscreen::kModalTranscriptPeek;
+        constexpr int kModalTranscriptPeek = loom::ui::layout::fullscreen::kModalTranscriptPeek;
         c.modal_available_cols = std::max(10, term_w - 4);
         c.modal_available_rows = std::max(4, term_h - kModalTranscriptPeek - 1);
     }
@@ -122,8 +123,7 @@ void yield_instance_to_permission(ReplScreenState& s) {
 /// Standalone dialog: full-takeover render (no chrome).
 /// Passes full terminal dimensions (no modal adjustments) since standalone
 /// dialogs own the entire screen.
-[[nodiscard]] Element RenderStandaloneDialog(ReplScreenState& s,
-                                                    int w, int h) {
+[[nodiscard]] Element RenderStandaloneDialog(ReplScreenState& s, int w, int h) {
     auto peek = s.dialog_store.dialog_queue.peek_standalone_mut();
     if (!peek) return Element{};
     dsys::DialogPayloadVariant& payload = peek->get();
@@ -135,8 +135,7 @@ void yield_instance_to_permission(ReplScreenState& s) {
 /// Computes modal-available dimensions (cols-4, rows-PEEK-1) and passes
 /// them via DialogRenderContext.modal_available_cols/rows so renderers
 /// can use actual pane geometry instead of hardcoded fallbacks.
-[[nodiscard]] Element RenderModalDialog(ReplScreenState& s,
-                                               int w, int h) {
+[[nodiscard]] Element RenderModalDialog(ReplScreenState& s, int w, int h) {
     auto peek = s.dialog_store.dialog_queue.peek_modal_mut();
     if (!peek) return Element{};
     dsys::DialogPayloadVariant& payload = peek->get();
@@ -150,9 +149,7 @@ void yield_instance_to_permission(ReplScreenState& s) {
         el = std::move(el) | size(HEIGHT, LESS_THAN, ctx.modal_available_rows);
     }
     return dbox({
-        vbox({ filler(),
-               hbox({ filler(), el, filler() }) | flex_shrink,
-               filler() }) | flex,
+        vbox({filler(), hbox({filler(), el, filler()}) | flex_shrink, filler()}) | flex,
     });
 }
 
@@ -160,18 +157,13 @@ void yield_instance_to_permission(ReplScreenState& s) {
 /// clamped to 3/5 of terminal height so it never blocks the prompt.
 /// Suppressed when prompt has input active or when allow_animation
 /// dialogs are disabled (mid-tool-animation).
-[[nodiscard]] Element RenderOverlayDialog(
-    ReplScreenState& s,
-    bool is_prompt_input_active,
-    bool allow_dialogs_with_animation,
-    int w, int h)
-{
+[[nodiscard]] Element RenderOverlayDialog(ReplScreenState& s, bool is_prompt_input_active,
+                                          bool allow_dialogs_with_animation, int w, int h) {
     auto peek = s.dialog_store.dialog_queue.peek_overlay_mut();
     if (!peek) return Element{};
     dsys::DialogPayloadVariant& payload = peek->get();
     if (std::holds_alternative<std::monostate>(payload)) return Element{};
-    if (!dsys::should_show_dialog(payload, is_prompt_input_active,
-                                   allow_dialogs_with_animation)) {
+    if (!dsys::should_show_dialog(payload, is_prompt_input_active, allow_dialogs_with_animation)) {
         return Element{};
     }
     auto el = s.dialog_store.dialog_renderers.render(payload, MakeContext(w, h));
@@ -181,29 +173,23 @@ void yield_instance_to_permission(ReplScreenState& s) {
     el = std::move(el) | size(HEIGHT, LESS_THAN, max_h);
     // Inject inside a centered dbox above the messages area.
     return dbox({
-        vbox({ filler(),
-               hbox({ filler(), std::move(el) | flex_shrink, filler() })
-                   | flex_shrink,
-               filler() }) | flex,
+        vbox({filler(), hbox({filler(), std::move(el) | flex_shrink, filler()}) | flex_shrink,
+              filler()}) |
+            flex,
     });
 }
 
 /// Bottom slot: banner-style dialogs pushed to the bottom of the screen.
 /// Wraps content in max-height = 50% (half the terminal rows).  Pass
 /// actual dimensions.
-[[nodiscard]] Element RenderBottomDialog(
-    ReplScreenState& s,
-    bool is_prompt_input_active,
-    bool allow_dialogs_with_animation,
-    int w, int h)
-{
+[[nodiscard]] Element RenderBottomDialog(ReplScreenState& s, bool is_prompt_input_active,
+                                         bool allow_dialogs_with_animation, int w, int h) {
     auto peek = s.dialog_store.dialog_queue.peek_bottom_mut(is_prompt_input_active,
-                                               allow_dialogs_with_animation);
+                                                            allow_dialogs_with_animation);
     if (!peek) return Element{};
     dsys::DialogPayloadVariant& payload = peek->get();
     if (std::holds_alternative<std::monostate>(payload)) return Element{};
-    if (!dsys::should_show_dialog(payload, is_prompt_input_active,
-                                   allow_dialogs_with_animation)) {
+    if (!dsys::should_show_dialog(payload, is_prompt_input_active, allow_dialogs_with_animation)) {
         return Element{};
     }
     auto el = s.dialog_store.dialog_renderers.render(payload, MakeContext(w, h));
@@ -212,10 +198,8 @@ void yield_instance_to_permission(ReplScreenState& s) {
 }
 
 // ── Event dispatch: priority Standalone > Modal > Overlay > Bottom ──
-bool DispatchDialogQueueEvents(ReplScreenState& s,
-                                      const ftxui::Event& ev,
-                                      bool is_prompt_input_active,
-                                      bool allow_dialogs_with_animation) {
+bool DispatchDialogQueueEvents(ReplScreenState& s, const ftxui::Event& ev,
+                               bool is_prompt_input_active, bool allow_dialogs_with_animation) {
     namespace dsys = dsys_fw;
     // Only the App-owned child-view handoff overrides suppression. Main's
     // real typing/animation state remains intact for the return path.
@@ -272,7 +256,7 @@ bool DispatchDialogQueueEvents(ReplScreenState& s,
     // Bottom.
     {
         auto peek = s.dialog_store.dialog_queue.peek_bottom_mut(is_prompt_input_active,
-                                                   allow_dialogs_with_animation);
+                                                                allow_dialogs_with_animation);
         if (peek) {
             dsys::DialogPayloadVariant& payload = peek->get();
             if (!std::holds_alternative<std::monostate>(payload)) {
@@ -290,27 +274,29 @@ bool DispatchDialogQueueEvents(ReplScreenState& s,
 
 namespace {
 bool permission_payload(const dsys::DialogPayloadVariant& payload) {
-    return std::holds_alternative<dsys::ToolPermissionPayload>(payload)
-        || std::holds_alternative<dsys::SandboxPermissionPayload>(payload)
-        || std::holds_alternative<dsys::WorkerSandboxPermissionPayload>(payload);
+    return std::holds_alternative<dsys::ToolPermissionPayload>(payload) ||
+           std::holds_alternative<dsys::SandboxPermissionPayload>(payload) ||
+           std::holds_alternative<dsys::WorkerSandboxPermissionPayload>(payload);
 }
 
 bool actionable_permission(ReplScreenState& s, dsys::DialogPayloadVariant& payload) {
     if (!s.dialog_store.dialog_renderers.has_renderer_and_handler(dsys::type_of(payload)))
         return false;
-    return std::visit([](const auto& request) {
-        using T = std::decay_t<decltype(request)>;
-        if constexpr (std::is_same_v<T, dsys::ToolPermissionPayload> ||
-                      std::is_same_v<T, dsys::SandboxPermissionPayload> ||
-                      std::is_same_v<T, dsys::WorkerSandboxPermissionPayload>)
-            return static_cast<bool>(request.on_response);
-        return false;
-    }, payload);
+    return std::visit(
+        [](const auto& request) {
+            using T = std::decay_t<decltype(request)>;
+            if constexpr (std::is_same_v<T, dsys::ToolPermissionPayload> ||
+                          std::is_same_v<T, dsys::SandboxPermissionPayload> ||
+                          std::is_same_v<T, dsys::WorkerSandboxPermissionPayload>)
+                return static_cast<bool>(request.on_response);
+            return false;
+        },
+        payload);
 }
-} // namespace
+}  // namespace
 
-PreparedDialogLayers PrepareDialogLayers(
-    ReplScreenState& s, bool typing, bool allow_animation, int w, int h) {
+PreparedDialogLayers PrepareDialogLayers(ReplScreenState& s, bool typing, bool allow_animation,
+                                         int w, int h) {
     if (s.prioritize_actionable_dialogs) {
         typing = false;
         allow_animation = true;
@@ -328,27 +314,26 @@ PreparedDialogLayers PrepareDialogLayers(
     if (prepared.overlay) {
         auto top = s.dialog_store.dialog_queue.peek_overlay_mut();
         prepared.awaiting_permission = top && actionable_permission(s, top->get());
-        prepared.takes_focus = prepared.awaiting_permission
-            || (top && !permission_payload(top->get()));
+        prepared.takes_focus =
+            prepared.awaiting_permission || (top && !permission_payload(top->get()));
     } else if (prepared.bottom) {
         auto top = s.dialog_store.dialog_queue.peek_bottom_mut(typing, allow_animation);
         prepared.awaiting_permission = top && actionable_permission(s, top->get());
-        prepared.takes_focus = prepared.awaiting_permission
-            || (top && !permission_payload(top->get()));
+        prepared.takes_focus =
+            prepared.awaiting_permission || (top && !permission_payload(top->get()));
     }
     return prepared;
 }
 
 Element LayerAllDialogs(Element base_chrome, PreparedDialogLayers prepared) {
     Elements layers{std::move(base_chrome)};
-    if (prepared.bottom)
-        layers.push_back(vbox({filler(), std::move(prepared.bottom)}) | flex);
+    if (prepared.bottom) layers.push_back(vbox({filler(), std::move(prepared.bottom)}) | flex);
     if (prepared.overlay) layers.push_back(std::move(prepared.overlay));
     if (prepared.modal) layers.push_back(std::move(prepared.modal));
     if (layers.size() == 1) return layers.front();
     return dbox(std::move(layers));
 }
 
-} // namespace dialog_queue_render
+}  // namespace dialog_queue_render
 
-} // namespace loom::ui::repl_screen
+}  // namespace loom::ui::repl_screen

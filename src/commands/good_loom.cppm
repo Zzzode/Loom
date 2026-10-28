@@ -2,7 +2,6 @@
 /// @brief GoodLoomCommand implementing the hidden /good-loom slash command.
 module;
 
-
 export module loom.commands.good_loom;
 
 import std;
@@ -27,9 +26,7 @@ public:
         };
     }
 
-    [[nodiscard]] VoidResult validate(const CommandContext&) {
-        return {};
-    }
+    [[nodiscard]] VoidResult validate(const CommandContext&) { return {}; }
 
     [[nodiscard]] Result<CommandResult> execute(const CommandContext&) {
         return CommandResult::success(
@@ -37,9 +34,7 @@ public:
             "Feedback submission requires the analytics backend, which is not reachable here.");
     }
 
-    [[nodiscard]] std::vector<std::string> complete(std::string_view) {
-        return {};
-    }
+    [[nodiscard]] std::vector<std::string> complete(std::string_view) { return {}; }
 };
 
-} // namespace loom::commands
+}  // namespace loom::commands

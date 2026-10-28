@@ -39,8 +39,10 @@ struct Line {
 };
 
 std::string_view trim_ws(std::string_view value) {
-    while (!value.empty() && (value.front() == ' ' || value.front() == '\t')) value.remove_prefix(1);
-    while (!value.empty() && (value.back() == ' ' || value.back() == '\t')) value.remove_suffix(1);
+    while (!value.empty() && (value.front() == ' ' || value.front() == '\t'))
+        value.remove_prefix(1);
+    while (!value.empty() && (value.back() == ' ' || value.back() == '\t'))
+        value.remove_suffix(1);
     return value;
 }
 
@@ -48,17 +50,33 @@ std::string_view strip_comment(std::string_view value) {
     char quote = 0;
     for (std::size_t n = 0; n < value.size(); ++n) {
         const char c = value[n];
-        if (quote) { if (c == quote) quote = 0; continue; }
-        if (c == '\'' || c == '"') { quote = c; continue; }
-        if (c == '#' && (n == 0 || value[n - 1] == ' ' || value[n - 1] == '\t')) return trim_ws(value.substr(0, n));
+        if (quote) {
+            if (c == quote) quote = 0;
+            continue;
+        }
+        if (c == '\'' || c == '"') {
+            quote = c;
+            continue;
+        }
+        if (c == '#' && (n == 0 || value[n - 1] == ' ' || value[n - 1] == '\t'))
+            return trim_ws(value.substr(0, n));
     }
     return value;
 }
 
 bool scalar_form(std::string_view value, EnvelopeScalarForm& form) {
-    if (value.starts_with("'") || value.starts_with("\"")) { form = EnvelopeScalarForm::Quoted; return true; }
-    if (value == "|" || value == "|-") { form = EnvelopeScalarForm::Literal; return true; }
-    if (value == ">" || value == ">-") { form = EnvelopeScalarForm::Folded; return true; }
+    if (value.starts_with("'") || value.starts_with("\"")) {
+        form = EnvelopeScalarForm::Quoted;
+        return true;
+    }
+    if (value == "|" || value == "|-") {
+        form = EnvelopeScalarForm::Literal;
+        return true;
+    }
+    if (value == ">" || value == ">-") {
+        form = EnvelopeScalarForm::Folded;
+        return true;
+    }
     form = EnvelopeScalarForm::Plain;
     return true;
 }
@@ -82,8 +100,12 @@ bool split_lines(std::string_view source, std::vector<Line>& out) {
         line.start = at;
         line.next = newline == std::string_view::npos ? source.size() : newline + 1u;
         line.number = number++;
-        while (static_cast<std::size_t>(line.indent) < raw.size() && raw[static_cast<std::size_t>(line.indent)] == ' ') ++line.indent;
-        if (static_cast<std::size_t>(line.indent) < raw.size() && raw[static_cast<std::size_t>(line.indent)] == '\t') line.tab_indent = true;
+        while (static_cast<std::size_t>(line.indent) < raw.size() &&
+               raw[static_cast<std::size_t>(line.indent)] == ' ')
+            ++line.indent;
+        if (static_cast<std::size_t>(line.indent) < raw.size() &&
+            raw[static_cast<std::size_t>(line.indent)] == '\t')
+            line.tab_indent = true;
         line.text = raw.substr(static_cast<std::size_t>(line.indent));
         line.blank = line.text.empty();
         line.comment = !line.blank && line.text.front() == '#';
@@ -137,8 +159,8 @@ bool find_directive_end(std::string_view source, std::size_t begin, std::size_t&
     return true;
 }
 
-bool directive_tail_blank(std::string_view source,std::size_t begin,std::size_t end) {
-    const auto newline = source.find('\n',begin);
+bool directive_tail_blank(std::string_view source, std::size_t begin, std::size_t end) {
+    const auto newline = source.find('\n', begin);
     const auto stop = newline == std::string_view::npos ? source.size() : newline;
     for (std::size_t at = end; at < stop; ++at) {
         if (source[at] != ' ' && source[at] != '\t' && source[at] != '\r') return false;
@@ -155,14 +177,15 @@ std::string_view directive_json(std::string_view raw) {
     return trim_ws(body);
 }
 
-} // namespace
+}  // namespace
 
 std::optional<Envelope> parse_envelope(std::string_view source, Work& work) {
     if (source.empty() || source.size() > kSourceLimit) return {};
     // Entry boundary fee: charged before the vector<Line> allocation/scan.
     if (source.size() > (std::numeric_limits<std::size_t>::max() - kEnvelopeEntryFixed) /
                             kEnvelopeEntryPerByte ||
-        !work.spend(kEnvelopeEntryFixed + kEnvelopeEntryPerByte * source.size())) return {};
+        !work.spend(kEnvelopeEntryFixed + kEnvelopeEntryPerByte * source.size()))
+        return {};
 
     std::vector<Line> lines;
     split_lines(source, lines);
@@ -174,7 +197,10 @@ std::optional<Envelope> parse_envelope(std::string_view source, Work& work) {
     bool has_frontmatter = lines[0].indent == 0 && lines[0].raw == "---";
     if (has_frontmatter) {
         for (std::size_t n = 1; n < lines.size(); ++n) {
-            if (lines[n].indent == 0 && lines[n].raw == "---") { close_line = n; break; }
+            if (lines[n].indent == 0 && lines[n].raw == "---") {
+                close_line = n;
+                break;
+            }
         }
         if (close_line == 0) return {};
         // Frontmatter boundary fee, only on the has_frontmatter path, charged
@@ -190,10 +216,11 @@ std::optional<Envelope> parse_envelope(std::string_view source, Work& work) {
                 (std::numeric_limits<std::size_t>::max() - kEnvelopeFrontmatterFixed - init_term) /
                     kEnvelopeFrontmatterPerByte ||
             !work.spend(kEnvelopeFrontmatterFixed + init_term +
-                        kEnvelopeFrontmatterPerByte * frontmatter_bytes)) return {};
+                        kEnvelopeFrontmatterPerByte * frontmatter_bytes))
+            return {};
         envelope.has_frontmatter = true;
-        envelope.raw_frontmatter = source.substr(lines[1].start,
-            close_line > 1 ? lines[close_line].start - lines[1].start : 0u);
+        envelope.raw_frontmatter = source.substr(
+            lines[1].start, close_line > 1 ? lines[close_line].start - lines[1].start : 0u);
         if (envelope.raw_frontmatter.size() > kFrontmatterLimit) return {};
         envelope.raw_body = source.substr(lines[close_line].next);
         first_body_line = close_line + 1u;
@@ -208,18 +235,23 @@ std::optional<Envelope> parse_envelope(std::string_view source, Work& work) {
     bool skipping = true;
     while (skipping && effective < lines.size()) {
         const auto& line = lines[effective];
-        if (line.blank || line.comment) { ++effective; continue; }
+        if (line.blank || line.comment) {
+            ++effective;
+            continue;
+        }
         if (line.text.starts_with("%%{")) {
             std::size_t end = 0;
             if (!find_directive_end(source, line.start, end)) return {};
             if (end - line.start > kInitLimit) return {};
-            if (!directive_tail_blank(source,line.start,end)) return {};
-            while (effective < lines.size() && lines[effective].start < end) ++effective;
+            if (!directive_tail_blank(source, line.start, end)) return {};
+            while (effective < lines.size() && lines[effective].start < end)
+                ++effective;
             continue;
         }
         skipping = false;
     }
-    envelope.effective_body = effective < lines.size() ? source.substr(lines[effective].start) : std::string_view{};
+    envelope.effective_body =
+        effective < lines.size() ? source.substr(lines[effective].start) : std::string_view{};
 
     // Extract every %%{...}%% directive in the body (not frontmatter).
     for (std::size_t n = first_body_line; n < lines.size(); ++n) {
@@ -228,7 +260,7 @@ std::optional<Envelope> parse_envelope(std::string_view source, Work& work) {
         std::size_t end = 0;
         if (!find_directive_end(source, line.start, end)) return {};
         if (end - line.start > kInitLimit) return {};
-        if (!directive_tail_blank(source,line.start,end)) return {};
+        if (!directive_tail_blank(source, line.start, end)) return {};
         EnvelopeInit init;
         copy_string(init.raw, source.substr(line.start, end - line.start));
         const auto json = directive_json(init.raw);
@@ -238,9 +270,11 @@ std::optional<Envelope> parse_envelope(std::string_view source, Work& work) {
         envelope.init.push_back(std::move(init));
         if (envelope.init.size() > 16u) return {};
         std::size_t total = 0;
-        for (const auto& item : envelope.init) total += item.raw.size();
+        for (const auto& item : envelope.init)
+            total += item.raw.size();
         if (total > kInitTotalLimit) return {};
-        while (n + 1u < lines.size() && lines[n + 1u].start < end) ++n;
+        while (n + 1u < lines.size() && lines[n + 1u].start < end)
+            ++n;
     }
 
     if (!has_frontmatter) return envelope;
@@ -263,8 +297,17 @@ std::optional<Envelope> parse_envelope(std::string_view source, Work& work) {
         EnvelopeEvent event;
         event.line = line.number;
         event.indent = line.indent;
-        if (line.blank) { event.blank = true; envelope.events.push_back(std::move(event)); continue; }
-        if (line.comment) { event.comment = true; copy_string(event.value, line.text); envelope.events.push_back(std::move(event)); continue; }
+        if (line.blank) {
+            event.blank = true;
+            envelope.events.push_back(std::move(event));
+            continue;
+        }
+        if (line.comment) {
+            event.comment = true;
+            copy_string(event.value, line.text);
+            envelope.events.push_back(std::move(event));
+            continue;
+        }
         if (line.tab_indent) return {};
         if (line.indent == root_indent) {
             in_config = false;
@@ -279,7 +322,8 @@ std::optional<Envelope> parse_envelope(std::string_view source, Work& work) {
             event.top_level = true;
             copy_string(event.path, key);
             if (key == "title" || key == "description" || key == "config") {
-                for (const auto& seen : seen_paths) if (seen == key) return {};
+                for (const auto& seen : seen_paths)
+                    if (seen == key) return {};
                 seen_paths.emplace_back(key);
             }
             EnvelopeScalarForm form = EnvelopeScalarForm::Plain;
@@ -295,17 +339,21 @@ std::optional<Envelope> parse_envelope(std::string_view source, Work& work) {
                 continue;
             }
             std::string text;
-            const bool description_block = key == "description" && (structural.empty() || block_form(form));
+            const bool description_block =
+                key == "description" && (structural.empty() || block_form(form));
             if (description_block) {
                 if (!collect_block(lines, n, root_indent, text)) return {};
             } else if (block_form(form)) {
                 return {};
-            } else copy_string(text, raw_value);
+            } else
+                copy_string(text, raw_value);
             if (key == "description") {
                 if (description_seen || text.size() > kDescriptionLimit) return {};
                 description_seen = true;
                 EnvelopeScalar scalar;
-                scalar.text = text; scalar.form = form; scalar.line = line.number;
+                scalar.text = text;
+                scalar.form = form;
+                scalar.line = line.number;
                 copy_string(scalar.header, raw_value);
                 envelope.description = std::move(scalar);
                 copy_string(event.value, text);
@@ -313,7 +361,9 @@ std::optional<Envelope> parse_envelope(std::string_view source, Work& work) {
                 if (title_seen || text.size() > kTitleLimit) return {};
                 title_seen = true;
                 EnvelopeScalar scalar;
-                scalar.text = text; scalar.form = form; scalar.line = line.number;
+                scalar.text = text;
+                scalar.form = form;
+                scalar.line = line.number;
                 copy_string(scalar.header, raw_value);
                 envelope.title = std::move(scalar);
                 copy_string(event.value, text);
@@ -326,20 +376,25 @@ std::optional<Envelope> parse_envelope(std::string_view source, Work& work) {
 
         if (!in_config || !config_seen) return {};
         const auto colon = line.raw.find(':');
-        if (colon == std::string_view::npos || colon < static_cast<std::size_t>(line.indent)) return {};
-        const auto key = trim_ws(line.raw.substr(static_cast<std::size_t>(line.indent), colon - static_cast<std::size_t>(line.indent)));
+        if (colon == std::string_view::npos || colon < static_cast<std::size_t>(line.indent))
+            return {};
+        const auto key = trim_ws(line.raw.substr(static_cast<std::size_t>(line.indent),
+                                                 colon - static_cast<std::size_t>(line.indent)));
         auto value = line.raw.substr(colon + 1u);
         if (!value.empty() && value.front() != ' ' && value.front() != '\t') return {};
         const auto raw_value = trim_ws(value);
         const auto structural = strip_comment(raw_value);
         if (key.empty() || key.find(' ') != std::string_view::npos) return {};
-        while (!config_stack.empty() && line.indent <= config_stack.back().first) config_stack.pop_back();
+        while (!config_stack.empty() && line.indent <= config_stack.back().first)
+            config_stack.pop_back();
         if (config_stack.empty()) return {};
         const auto parent = config_stack.back().second;
         std::string path = parent.empty() ? std::string(key) : parent + "." + std::string(key);
         if (std::ranges::find(seen_paths, path) != seen_paths.end()) return {};
         seen_paths.push_back(path);
-        if (static_cast<std::size_t>(std::count(path.begin(), path.end(), '.')) >= kConfigDepthLimit) return {};
+        if (static_cast<std::size_t>(std::count(path.begin(), path.end(), '.')) >=
+            kConfigDepthLimit)
+            return {};
         event.path = path;
         EnvelopeScalarForm form = EnvelopeScalarForm::Plain;
         if (!scalar_form(structural, form)) return {};
@@ -351,7 +406,8 @@ std::optional<Envelope> parse_envelope(std::string_view source, Work& work) {
             std::string text;
             if (block_form(form)) {
                 if (!collect_block(lines, n, line.indent, text, true)) return {};
-            } else copy_string(text, raw_value);
+            } else
+                copy_string(text, raw_value);
             copy_string(event.value, text);
             envelope.config.push_back(event);
             if (envelope.config.size() > kConfigEntryLimit) return {};
@@ -361,4 +417,4 @@ std::optional<Envelope> parse_envelope(std::string_view source, Work& work) {
     return envelope;
 }
 
-} // namespace loom::ui::mermaid::detail
+}  // namespace loom::ui::mermaid::detail

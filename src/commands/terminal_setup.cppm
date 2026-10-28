@@ -6,14 +6,15 @@
 /// (FTXUI rendering DEFERRED to Phase 4).
 module;
 
+#include <cctype>
 #include <cerrno>
 #include <cstdlib>
 #include <cstring>
-#include <cctype>
 #if !defined(_WIN32)
-#  include <pwd.h>
-#  include <sys/stat.h>
-#  include <unistd.h>
+#include <pwd.h>
+#include <sys/stat.h>
+#include <unistd.h>
+
 #include <ctime>
 #endif
 
@@ -47,32 +48,44 @@ enum class ShellKind : std::uint8_t {
 /// Detected shell information.
 struct ShellInfo {
     ShellKind kind = ShellKind::Unknown;
-    std::string canonical_name;     // "bash", "zsh", "fish", "nu", "powershell"
-    std::string exec_path;          // e.g. "/bin/zsh"
-    std::string rc_path;            // e.g. "~/.bashrc" (with ~ expanded)
+    std::string canonical_name;  // "bash", "zsh", "fish", "nu", "powershell"
+    std::string exec_path;       // e.g. "/bin/zsh"
+    std::string rc_path;         // e.g. "~/.bashrc" (with ~ expanded)
 };
 
 /// Human-readable display name for a shell.
 [[nodiscard]] inline constexpr std::string_view shell_display_name(ShellKind k) noexcept {
     switch (k) {
-        case ShellKind::Bash:       return "Bash";
-        case ShellKind::Zsh:        return "Zsh";
-        case ShellKind::Fish:       return "Fish";
-        case ShellKind::Nushell:    return "Nushell";
-        case ShellKind::PowerShell: return "PowerShell";
-        case ShellKind::Unknown:    return "Unknown";
+    case ShellKind::Bash:
+        return "Bash";
+    case ShellKind::Zsh:
+        return "Zsh";
+    case ShellKind::Fish:
+        return "Fish";
+    case ShellKind::Nushell:
+        return "Nushell";
+    case ShellKind::PowerShell:
+        return "PowerShell";
+    case ShellKind::Unknown:
+        return "Unknown";
     }
     return "Unknown";
 }
 
 [[nodiscard]] inline constexpr std::string_view shell_canonical(ShellKind k) noexcept {
     switch (k) {
-        case ShellKind::Bash:       return "bash";
-        case ShellKind::Zsh:        return "zsh";
-        case ShellKind::Fish:       return "fish";
-        case ShellKind::Nushell:    return "nu";
-        case ShellKind::PowerShell: return "powershell";
-        case ShellKind::Unknown:    return "unknown";
+    case ShellKind::Bash:
+        return "bash";
+    case ShellKind::Zsh:
+        return "zsh";
+    case ShellKind::Fish:
+        return "fish";
+    case ShellKind::Nushell:
+        return "nu";
+    case ShellKind::PowerShell:
+        return "powershell";
+    case ShellKind::Unknown:
+        return "unknown";
     }
     return "unknown";
 }
@@ -109,10 +122,10 @@ namespace detail {
         return p;
     };
     std::string_view b = basename(exec);
-    if (b == "bash" || b == "-bash" || b == "rbash")      return ShellKind::Bash;
-    if (b == "zsh"  || b == "-zsh")                        return ShellKind::Zsh;
-    if (b == "fish")                                       return ShellKind::Fish;
-    if (b == "nu")                                         return ShellKind::Nushell;
+    if (b == "bash" || b == "-bash" || b == "rbash") return ShellKind::Bash;
+    if (b == "zsh" || b == "-zsh") return ShellKind::Zsh;
+    if (b == "fish") return ShellKind::Fish;
+    if (b == "nu") return ShellKind::Nushell;
     if (b == "powershell" || b == "pwsh" || b == "pwsh.exe") return ShellKind::PowerShell;
     return ShellKind::Unknown;
 }
@@ -120,12 +133,18 @@ namespace detail {
 /// Compute the conventional rc-file path for a given shell (tilde NOT expanded).
 [[nodiscard]] inline std::string rc_for_shell(ShellKind kind) {
     switch (kind) {
-        case ShellKind::Bash:       return "~/.bashrc";
-        case ShellKind::Zsh:        return "~/.zshrc";
-        case ShellKind::Fish:       return "~/.config/fish/config.fish";
-        case ShellKind::Nushell:    return "~/.config/nushell/config.nu";
-        case ShellKind::PowerShell: return "~/.config/powershell/profile.ps1";
-        case ShellKind::Unknown:    return "~/.profile";
+    case ShellKind::Bash:
+        return "~/.bashrc";
+    case ShellKind::Zsh:
+        return "~/.zshrc";
+    case ShellKind::Fish:
+        return "~/.config/fish/config.fish";
+    case ShellKind::Nushell:
+        return "~/.config/nushell/config.nu";
+    case ShellKind::PowerShell:
+        return "~/.config/powershell/profile.ps1";
+    case ShellKind::Unknown:
+        return "~/.profile";
     }
     return "~/.profile";
 }
@@ -197,7 +216,7 @@ namespace detail {
     return loom::utils::make_hyperlink(url, file_path);
 }
 
-} // namespace detail
+}  // namespace detail
 
 // ============================================================
 // Shell detection
@@ -247,7 +266,7 @@ namespace detail {
 /// Detect the current terminal emulator from env vars.
 [[nodiscard]] inline std::string detect_terminal() {
     if (auto* prog = std::getenv("TERM_PROGRAM"); prog && prog[0] != '\0') return prog;
-    if (auto* term = std::getenv("TERM");         term && term[0] != '\0') return term;
+    if (auto* term = std::getenv("TERM"); term && term[0] != '\0') return term;
     return "unknown";
 }
 
@@ -259,15 +278,19 @@ namespace detail {
 [[nodiscard]] inline std::string snippet_start_marker() {
     return "# >>> loom terminal-setup (do not remove this line) >>>";
 }
+
 [[nodiscard]] inline std::string snippet_end_marker() {
     return "# <<< loom terminal-setup (do not remove this line) <<<";
 }
+
 [[nodiscard]] inline std::string snippet_start_marker_fish() {
     return "# >>> loom terminal-setup >>>";
 }
+
 [[nodiscard]] inline std::string snippet_start_marker_nushell() {
     return "# >>> loom terminal-setup >>>";
 }
+
 [[nodiscard]] inline std::string snippet_start_marker_powershell() {
     return "# >>> loom terminal-setup >>>";
 }
@@ -276,33 +299,39 @@ namespace detail {
 /// These are placeholders for the completion-cache module's output shape.
 [[nodiscard]] inline std::string completion_snippet(ShellKind kind) {
     switch (kind) {
-        case ShellKind::Bash: return R"SYS_3(# Completions for loom
+    case ShellKind::Bash:
+        return R"SYS_3(# Completions for loom
 if command -v loom >/dev/null 2>&1; then
   eval "$(loom completions bash)"
 fi
 )SYS_3";
-        case ShellKind::Zsh: return R"SYS_4(# Completions for loom
+    case ShellKind::Zsh:
+        return R"SYS_4(# Completions for loom
 if command -v loom >/dev/null 2>&1; then
   eval "$(loom completions zsh)"
 fi
 # Make sure compinit picks up new entries
 autoload -Uz compinit && compinit -C
 )SYS_4";
-        case ShellKind::Fish: return R"(# Completions for loom
+    case ShellKind::Fish:
+        return R"(# Completions for loom
 if command -v loom >/dev/null 2>&1
     loom completions fish > $__fish_config_dir/completions/loom.fish
 end
 )";
-        case ShellKind::Nushell: return R"(# Completions for loom (Nushell)
+    case ShellKind::Nushell:
+        return R"(# Completions for loom (Nushell)
 # Run once per session: source $(loom completions nu | save --force /tmp/loom-completions.nu)
 # Then: source /tmp/loom-completions.nu
 )";
-        case ShellKind::PowerShell: return R"(# Completions for loom (PowerShell)
+    case ShellKind::PowerShell:
+        return R"(# Completions for loom (PowerShell)
 if (Get-Command loom -ErrorAction SilentlyContinue) {
   loom completions powershell | Out-String | Invoke-Expression
 }
 )";
-        case ShellKind::Unknown: return "";
+    case ShellKind::Unknown:
+        return "";
     }
     return "";
 }
@@ -310,30 +339,31 @@ if (Get-Command loom -ErrorAction SilentlyContinue) {
 /// Generate the environment-variable snippet (LOOM_BIN).
 [[nodiscard]] inline std::string env_snippet(ShellKind kind) {
     switch (kind) {
-        case ShellKind::Bash:
-        case ShellKind::Zsh:
-            return R"SYS_5(# Locate the loom binary for easy reuse
+    case ShellKind::Bash:
+    case ShellKind::Zsh:
+        return R"SYS_5(# Locate the loom binary for easy reuse
 if command -v loom >/dev/null 2>&1; then
   export LOOM_BIN="$(command -v loom)"
 fi
 )SYS_5";
-        case ShellKind::Fish:
-            return R"(# Locate the loom binary for easy reuse
+    case ShellKind::Fish:
+        return R"(# Locate the loom binary for easy reuse
 if command -v loom >/dev/null 2>&1
     set -gx LOOM_BIN (command -v loom)
 end
 )";
-        case ShellKind::Nushell:
-            return R"(# Locate the loom binary for easy reuse
+    case ShellKind::Nushell:
+        return R"(# Locate the loom binary for easy reuse
 # $env.LOOM_BIN = (which loom | get path)
 )";
-        case ShellKind::PowerShell:
-            return R"(# Locate the loom binary for easy reuse
+    case ShellKind::PowerShell:
+        return R"(# Locate the loom binary for easy reuse
 if (Get-Command loom -ErrorAction SilentlyContinue) {
   $env:LOOM_BIN = (Get-Command loom).Source
 }
 )";
-        case ShellKind::Unknown: return "";
+    case ShellKind::Unknown:
+        return "";
     }
     return "";
 }
@@ -341,26 +371,27 @@ if (Get-Command loom -ErrorAction SilentlyContinue) {
 /// Generate the theme-hint snippet (terminal title / prompt tweaks).
 [[nodiscard]] inline std::string theme_hint_snippet(ShellKind kind) {
     switch (kind) {
-        case ShellKind::Bash:
-        case ShellKind::Zsh:
-            return R"(# Theme / terminal integration hints
+    case ShellKind::Bash:
+    case ShellKind::Zsh:
+        return R"(# Theme / terminal integration hints
 # - Set LOOM_THEME=dark|light|auto to override theme detection
 # - Ensure 256-color / truecolor terminfo for best UI rendering
 # export LOOM_THEME=auto
 )";
-        case ShellKind::Fish:
-            return R"(# Theme / terminal integration hints
+    case ShellKind::Fish:
+        return R"(# Theme / terminal integration hints
 # set -gx LOOM_THEME auto   # dark|light|auto
 )";
-        case ShellKind::Nushell:
-            return R"(# Theme / terminal integration hints
+    case ShellKind::Nushell:
+        return R"(# Theme / terminal integration hints
 # $env.LOOM_THEME = "auto"   # dark|light|auto
 )";
-        case ShellKind::PowerShell:
-            return R"(# Theme / terminal integration hints
+    case ShellKind::PowerShell:
+        return R"(# Theme / terminal integration hints
 # $env:LOOM_THEME = "auto"   # dark|light|auto
 )";
-        case ShellKind::Unknown: return "";
+    case ShellKind::Unknown:
+        return "";
     }
     return "";
 }
@@ -371,10 +402,14 @@ if (Get-Command loom -ErrorAction SilentlyContinue) {
     std::string out;
     auto [start, end] = [&]() -> std::pair<std::string, std::string> {
         switch (shell.kind) {
-            case ShellKind::Fish:       return {snippet_start_marker_fish(), "# <<< loom terminal-setup <<<"};
-            case ShellKind::Nushell:    return {snippet_start_marker_nushell(), "# <<< loom terminal-setup <<<"};
-            case ShellKind::PowerShell: return {snippet_start_marker_powershell(), "# <<< loom terminal-setup <<<"};
-            default:                    return {snippet_start_marker(), snippet_end_marker()};
+        case ShellKind::Fish:
+            return {snippet_start_marker_fish(), "# <<< loom terminal-setup <<<"};
+        case ShellKind::Nushell:
+            return {snippet_start_marker_nushell(), "# <<< loom terminal-setup <<<"};
+        case ShellKind::PowerShell:
+            return {snippet_start_marker_powershell(), "# <<< loom terminal-setup <<<"};
+        default:
+            return {snippet_start_marker(), snippet_end_marker()};
         }
     }();
 
@@ -393,7 +428,7 @@ if (Get-Command loom -ErrorAction SilentlyContinue) {
 struct ApplyResult {
     bool succeeded = false;
     std::string report;
-    std::string backup_path;   // empty if no backup was created
+    std::string backup_path;  // empty if no backup was created
     bool already_present = false;
 };
 
@@ -409,8 +444,8 @@ struct ApplyResult {
         fs::create_directories(parent, ec);
         if (ec) {
             r.succeeded = false;
-            r.report = std::format("Failed to create directory '{}': {}",
-                                   parent.string(), ec.message());
+            r.report =
+                std::format("Failed to create directory '{}': {}", parent.string(), ec.message());
             return r;
         }
     }
@@ -452,21 +487,22 @@ struct ApplyResult {
 
     // Ensure existing content ends with newline before appending
     std::string prefix;
-    if (!existing.empty() && existing.back() != '\n') prefix = "\n\n";
-    else if (!existing.empty() && existing.rfind("\n\n") != existing.size() - 2) prefix = "\n";
+    if (!existing.empty() && existing.back() != '\n')
+        prefix = "\n\n";
+    else if (!existing.empty() && existing.rfind("\n\n") != existing.size() - 2)
+        prefix = "\n";
 
     std::string to_append = prefix;
     to_append += snippet;
 
     if (!detail::append_file(shell.rc_path, to_append)) {
         r.succeeded = false;
-        r.report = std::format("Failed to write to rc file: {}",
-                               detail::format_path_link(shell.rc_path));
+        r.report =
+            std::format("Failed to write to rc file: {}", detail::format_path_link(shell.rc_path));
         // Restore backup if we created one and it exists
         if (!r.backup_path.empty() && fs::exists(r.backup_path)) {
             std::error_code ec2;
-            fs::copy_file(r.backup_path, shell.rc_path,
-                          fs::copy_options::overwrite_existing, ec2);
+            fs::copy_file(r.backup_path, shell.rc_path, fs::copy_options::overwrite_existing, ec2);
         }
         return r;
     }
@@ -491,7 +527,9 @@ struct ApplyResult {
 // Main entry point (invoked via LOOM_RUNTIME_HELPER_COMMAND macro)
 // ============================================================
 
-[[nodiscard]] inline constexpr auto name() -> std::string_view { return "terminal-setup"; }
+[[nodiscard]] inline constexpr auto name() -> std::string_view {
+    return "terminal-setup";
+}
 
 /// Parse the joined args string to extract flags. Supports:
 ///   --apply          Write snippet to rc file (creates backup first)
@@ -516,10 +554,9 @@ struct ApplyResult {
     if (!shell_override.empty()) {
         shell.kind = detail::classify_shell_path(shell_override);
         if (shell.kind == ShellKind::Unknown) {
-            return {false,
-                    std::format("Unknown shell override '{}'. "
-                                "Valid: bash | zsh | fish | nu | powershell",
-                                shell_override)};
+            return {false, std::format("Unknown shell override '{}'. "
+                                       "Valid: bash | zsh | fish | nu | powershell",
+                                       shell_override)};
         }
         shell.canonical_name = std::string(shell_canonical(shell.kind));
         shell.exec_path = shell_override;
@@ -564,4 +601,4 @@ struct ApplyResult {
     return {true, oss.str()};
 }
 
-} // namespace loom::commands::terminal_setup
+}  // namespace loom::commands::terminal_setup

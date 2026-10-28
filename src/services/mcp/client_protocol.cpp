@@ -4,7 +4,7 @@
 // textual <yyjson.h> closure leaves the interface BMI.
 module;
 
-#include <cstdint> // global int64_t used unqualified; import std gives std::int64_t only
+#include <cstdint>  // global int64_t used unqualified; import std gives std::int64_t only
 
 module loom.services.mcp.client;
 
@@ -71,10 +71,8 @@ namespace {
         if (auto blob = resource.get("blob"); blob.is_str()) {
             const auto mime_type = std::string(resource.get("mimeType").as_str());
             const auto mime_label = mime_type.empty() ? std::string{"unknown type"} : mime_type;
-            return prefix + std::format(
-                "Binary content ({}, {} base64 characters)",
-                mime_label,
-                blob.as_str().size());
+            return prefix + std::format("Binary content ({}, {} base64 characters)", mime_label,
+                                        blob.as_str().size());
         }
         return prefix;
     }
@@ -82,7 +80,8 @@ namespace {
         const auto name = std::string(content.get("name").as_str());
         const auto uri = std::string(content.get("uri").as_str());
         std::string text = std::format("[Resource link: {}] {}", name.empty() ? uri : name, uri);
-        if (auto description = content.get("description"); description.is_str() && !description.as_str().empty()) {
+        if (auto description = content.get("description");
+            description.is_str() && !description.as_str().empty()) {
             text += std::format(" ({})", description.as_str());
         }
         return text;
@@ -91,18 +90,15 @@ namespace {
         const auto mime_type = std::string(content.get("mimeType").as_str());
         const auto mime_label = mime_type.empty() ? std::string{"unknown type"} : mime_type;
         const auto data = content.get("data");
-        return std::format(
-            "[{} from {}] Binary content ({}, {} base64 characters)",
-            type == "image" ? "Image" : "Audio",
-            client_name,
-            mime_label,
-            data.is_str() ? data.as_str().size() : 0);
+        return std::format("[{} from {}] Binary content ({}, {} base64 characters)",
+                           type == "image" ? "Image" : "Audio", client_name, mime_label,
+                           data.is_str() ? data.as_str().size() : 0);
     }
 
     return serialize_json_value(content).value_or(std::string{});
 }
 
-} // namespace
+}  // namespace
 
 McpClient::McpClient(Config config)
     : config_(std::move(config))
@@ -115,16 +111,16 @@ McpClient::~McpClient() {
 }
 
 // Connect to server using stdio transport
-McpResult<void> McpClient::connect_stdio(
-    std::string command, std::vector<std::string> args,
-    std::map<std::string, std::string> env) {
+McpResult<void> McpClient::connect_stdio(std::string command, std::vector<std::string> args,
+                                         std::map<std::string, std::string> env) {
 
     if (state_ != ServerState::NotStarted && state_ != ServerState::Stopped) {
         return std::unexpected(McpClientError::AlreadyConnected);
     }
 
     state_ = ServerState::Starting;
-    transport_ = std::make_unique<StdioTransport>(std::move(command), std::move(args), std::move(env));
+    transport_ =
+        std::make_unique<StdioTransport>(std::move(command), std::move(args), std::move(env));
 
     auto result = transport_->start();
     if (!result) {
@@ -136,8 +132,8 @@ McpResult<void> McpClient::connect_stdio(
 }
 
 // Connect to server using SSE transport
-McpResult<void> McpClient::connect_sse(
-    std::string url, std::map<std::string, std::string> headers) {
+McpResult<void> McpClient::connect_sse(std::string url,
+                                       std::map<std::string, std::string> headers) {
 
     if (state_ != ServerState::NotStarted && state_ != ServerState::Stopped) {
         return std::unexpected(McpClientError::AlreadyConnected);
@@ -156,8 +152,8 @@ McpResult<void> McpClient::connect_sse(
 }
 
 // Connect to server using streamable HTTP transport
-McpResult<void> McpClient::connect_streamable_http(
-    std::string url, std::map<std::string, std::string> headers) {
+McpResult<void> McpClient::connect_streamable_http(std::string url,
+                                                   std::map<std::string, std::string> headers) {
 
     if (state_ != ServerState::NotStarted && state_ != ServerState::Stopped) {
         return std::unexpected(McpClientError::AlreadyConnected);
@@ -175,9 +171,8 @@ McpResult<void> McpClient::connect_streamable_http(
     return initialize();
 }
 
-McpResult<PromptGetResult> McpClient::get_prompt(
-    std::string_view name,
-    const std::map<std::string, std::string>& arguments) {
+McpResult<PromptGetResult>
+McpClient::get_prompt(std::string_view name, const std::map<std::string, std::string>& arguments) {
 
     if (state_ != ServerState::Ready) {
         return std::unexpected(McpClientError::NotConnected);
@@ -214,8 +209,10 @@ McpResult<PromptGetResult> McpClient::get_prompt(
                     if (msg_val.is_obj()) {
                         McpPromptMessage msg;
                         auto role_str = std::string(msg_val.get("role").as_str());
-                        msg.role = (role_str == "assistant") ? PromptRole::Assistant : PromptRole::User;
-                        msg.content = prompt_message_content_to_text(msg_val.get("content"), config_.name);
+                        msg.role =
+                            (role_str == "assistant") ? PromptRole::Assistant : PromptRole::User;
+                        msg.content =
+                            prompt_message_content_to_text(msg_val.get("content"), config_.name);
                         result.messages.push_back(std::move(msg));
                     }
                 });
@@ -261,7 +258,8 @@ McpResult<void> McpClient::initialize() {
     auto capabilities = doc.object();
     if (config_.capabilities.roots) {
         auto roots_cap = doc.object();
-        roots_cap.add("listChanged", doc.boolean(config_.capabilities.roots_capabilities.list_changed));
+        roots_cap.add("listChanged",
+                      doc.boolean(config_.capabilities.roots_capabilities.list_changed));
         capabilities.add("roots", roots_cap);
     }
     root.add("capabilities", capabilities);
@@ -311,8 +309,8 @@ McpResult<void> McpClient::initialize() {
 }
 
 // Send a JSON-RPC request and wait for response (synchronous)
-McpResult<std::string> McpClient::send_request_sync(
-    std::string_view method, std::optional<std::string> params) {
+McpResult<std::string> McpClient::send_request_sync(std::string_view method,
+                                                    std::optional<std::string> params) {
 
     std::promise<McpResult<std::string>> promise;
     auto future = promise.get_future();
@@ -336,10 +334,8 @@ McpResult<std::string> McpClient::send_request_sync(
 }
 
 // Send a JSON-RPC request asynchronously
-void McpClient::send_request_async(
-    std::string_view method,
-    std::optional<std::string> params,
-    RequestCallback callback) {
+void McpClient::send_request_async(std::string_view method, std::optional<std::string> params,
+                                   RequestCallback callback) {
 
     RequestId id = next_request_id_++;
     auto request = make_request(id, std::string(method), std::move(params));
@@ -347,12 +343,10 @@ void McpClient::send_request_async(
 
     {
         std::lock_guard<std::mutex> lock(pending_mutex_);
-        pending_requests_[id] = PendingRequest{
-            .id = id,
-            .sent_at = std::chrono::steady_clock::now(),
-            .timeout = config_.request_timeout,
-            .callback = std::move(callback)
-        };
+        pending_requests_[id] = PendingRequest{.id = id,
+                                               .sent_at = std::chrono::steady_clock::now(),
+                                               .timeout = config_.request_timeout,
+                                               .callback = std::move(callback)};
     }
 
     auto result = transport_send(serialized);
@@ -383,7 +377,8 @@ McpResult<void> McpClient::transport_send(std::string_view message) {
     return transport_->send(message);
 }
 
-void McpClient::send_error_response(const RequestId& id, JsonRpcErrorCode code, std::string_view message) {
+void McpClient::send_error_response(const RequestId& id, JsonRpcErrorCode code,
+                                    std::string_view message) {
     JsonMutDoc doc;
     auto root = doc.object();
     root.add("jsonrpc", doc.string("2.0"));
@@ -449,10 +444,8 @@ void McpClient::handle_incoming_message(const std::string& message) {
             if (method == "roots/list") {
                 handle_roots_list_request(*request_id);
             } else {
-                send_error_response(
-                    *request_id,
-                    JsonRpcErrorCode::MethodNotFound,
-                    "Unsupported server request");
+                send_error_response(*request_id, JsonRpcErrorCode::MethodNotFound,
+                                    "Unsupported server request");
             }
             return;
         }
@@ -546,4 +539,4 @@ void McpClient::check_pending_timeouts() {
     }
 }
 
-} // namespace loom::services::mcp
+}  // namespace loom::services::mcp

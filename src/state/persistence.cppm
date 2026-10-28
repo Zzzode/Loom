@@ -4,12 +4,14 @@
 module;
 
 #include <unistd.h>
-#include <cstdlib>
-#include <cstdint>
+
 #include <cerrno>
+#include <cstdint>
+#include <cstdlib>
 // POSIX headers for crash-safe atomic writes (fsync the temp file and its
 // parent directory before rename).
 #include <fcntl.h>
+
 #include <cstddef>
 
 export module loom.state.persistence;
@@ -31,8 +33,7 @@ using loom::utils::VoidResult;
 // Validation
 // ============================================================
 /// state on success or an error describing the first violation.
-[[nodiscard]] inline std::expected<AppState, Error>
-validate_state(const AppState& state) {
+[[nodiscard]] inline std::expected<AppState, Error> validate_state(const AppState& state) {
     if (state.selected_ip_agent_index < -1) {
         return std::unexpected(loom::utils::make_error(
             ErrorCode::invalid_argument,
@@ -90,9 +91,12 @@ validate_state(const AppState& state) {
             root.add("allowed_directories", arr);
         }
         root.add("view_selection_mode", doc.string(state.view_selection_mode));
-        root.add("selected_ip_agent_index", doc.number(static_cast<int64_t>(state.selected_ip_agent_index)));
-        root.add("coordinator_task_index", doc.number(static_cast<int64_t>(state.coordinator_task_index)));
-        root.add("remote_background_task_count", doc.number(static_cast<int64_t>(state.remote_background_task_count)));
+        root.add("selected_ip_agent_index",
+                 doc.number(static_cast<int64_t>(state.selected_ip_agent_index)));
+        root.add("coordinator_task_index",
+                 doc.number(static_cast<int64_t>(state.coordinator_task_index)));
+        root.add("remote_background_task_count",
+                 doc.number(static_cast<int64_t>(state.remote_background_task_count)));
         add_opt_str("main_loop_model", state.main_loop_model);
         add_opt_str("advisor_model", state.advisor_model);
         add_opt_str("effort_value", state.effort_value);
@@ -101,9 +105,7 @@ validate_state(const AppState& state) {
         return doc.to_string();
     } catch (const std::exception& e) {
         return std::unexpected(loom::utils::make_error(
-            ErrorCode::internal_error,
-            std::format("Failed to serialize state: {}", e.what())
-        ));
+            ErrorCode::internal_error, std::format("Failed to serialize state: {}", e.what())));
     }
 }
 
@@ -124,27 +126,42 @@ validate_state(const AppState& state) {
         if (auto v = root.get("compact_mode"); v && v.is_bool()) state.compact_mode = v.as_bool();
         if (auto v = root.get("show_thinking"); v && v.is_bool()) state.show_thinking = v.as_bool();
         if (auto v = root.get("fast_mode"); v && v.is_bool()) state.fast_mode = v.as_bool();
-        if (auto v = root.get("thinking_enabled"); v && v.is_bool()) state.thinking_enabled = v.as_bool();
-        if (auto v = root.get("prompt_suggestion_enabled"); v && v.is_bool()) state.prompt_suggestion_enabled = v.as_bool();
-        if (auto v = root.get("kairos_enabled"); v && v.is_bool()) state.kairos_enabled = v.as_bool();
-        if (auto v = root.get("is_ultraplan_mode"); v && v.is_bool()) state.is_ultraplan_mode = v.as_bool();
-        if (auto v = root.get("ultraplan_launching"); v && v.is_bool()) state.ultraplan_launching = v.as_bool();
+        if (auto v = root.get("thinking_enabled"); v && v.is_bool())
+            state.thinking_enabled = v.as_bool();
+        if (auto v = root.get("prompt_suggestion_enabled"); v && v.is_bool())
+            state.prompt_suggestion_enabled = v.as_bool();
+        if (auto v = root.get("kairos_enabled"); v && v.is_bool())
+            state.kairos_enabled = v.as_bool();
+        if (auto v = root.get("is_ultraplan_mode"); v && v.is_bool())
+            state.is_ultraplan_mode = v.as_bool();
+        if (auto v = root.get("ultraplan_launching"); v && v.is_bool())
+            state.ultraplan_launching = v.as_bool();
         if (auto v = root.get("is_brief_only"); v && v.is_bool()) state.is_brief_only = v.as_bool();
-        if (auto v = root.get("show_teammate_message_preview"); v && v.is_bool()) state.show_teammate_message_preview = v.as_bool();
-        if (auto v = root.get("working_directory"); v && v.is_str()) state.working_directory = std::string(v.as_str());
+        if (auto v = root.get("show_teammate_message_preview"); v && v.is_bool())
+            state.show_teammate_message_preview = v.as_bool();
+        if (auto v = root.get("working_directory"); v && v.is_str())
+            state.working_directory = std::string(v.as_str());
         if (auto v = root.get("allowed_directories"); v.is_arr()) {
             v.iter([&](auto item) {
                 if (item.is_str()) state.allowed_directories.push_back(std::string(item.as_str()));
             });
         }
-        if (auto v = root.get("view_selection_mode"); v && v.is_str()) state.view_selection_mode = std::string(v.as_str());
-        if (auto v = root.get("selected_ip_agent_index"); v && v.is_num()) state.selected_ip_agent_index = static_cast<std::int32_t>(v.as_int());
-        if (auto v = root.get("coordinator_task_index"); v && v.is_num()) state.coordinator_task_index = static_cast<std::int32_t>(v.as_int());
-        if (auto v = root.get("remote_background_task_count"); v && v.is_num()) state.remote_background_task_count = static_cast<std::uint32_t>(v.as_int());
-        if (auto v = root.get("main_loop_model"); v && v.is_str()) state.main_loop_model = std::string(v.as_str());
-        if (auto v = root.get("advisor_model"); v && v.is_str()) state.advisor_model = std::string(v.as_str());
-        if (auto v = root.get("effort_value"); v && v.is_str()) state.effort_value = std::string(v.as_str());
-        if (auto v = root.get("status_line_text"); v && v.is_str()) state.status_line_text = std::string(v.as_str());
+        if (auto v = root.get("view_selection_mode"); v && v.is_str())
+            state.view_selection_mode = std::string(v.as_str());
+        if (auto v = root.get("selected_ip_agent_index"); v && v.is_num())
+            state.selected_ip_agent_index = static_cast<std::int32_t>(v.as_int());
+        if (auto v = root.get("coordinator_task_index"); v && v.is_num())
+            state.coordinator_task_index = static_cast<std::int32_t>(v.as_int());
+        if (auto v = root.get("remote_background_task_count"); v && v.is_num())
+            state.remote_background_task_count = static_cast<std::uint32_t>(v.as_int());
+        if (auto v = root.get("main_loop_model"); v && v.is_str())
+            state.main_loop_model = std::string(v.as_str());
+        if (auto v = root.get("advisor_model"); v && v.is_str())
+            state.advisor_model = std::string(v.as_str());
+        if (auto v = root.get("effort_value"); v && v.is_str())
+            state.effort_value = std::string(v.as_str());
+        if (auto v = root.get("status_line_text"); v && v.is_str())
+            state.status_line_text = std::string(v.as_str());
 
         // Enforce structural invariants before handing it back to the caller.
         auto validated = validate_state(state);
@@ -152,9 +169,7 @@ validate_state(const AppState& state) {
         return *validated;
     } catch (const std::exception& e) {
         return std::unexpected(loom::utils::make_error(
-            ErrorCode::internal_error,
-            std::format("Failed to deserialize state: {}", e.what())
-        ));
+            ErrorCode::internal_error, std::format("Failed to deserialize state: {}", e.what())));
     }
 }
 
@@ -182,19 +197,19 @@ public:
     [[nodiscard]] VoidResult save_state(const AppState& state) {
         try {
             std::unique_lock lock(mutex_);
-            
+
             // Create parent directories if needed
             auto parent_path = state_file_path_.parent_path();
             if (!parent_path.empty() && !fs::exists(parent_path)) {
                 fs::create_directories(parent_path);
             }
-            
+
             // Serialize state
             auto serialized = serialize_state(state);
             if (!serialized) {
                 return std::unexpected(serialized.error());
             }
-            
+
             // Write to file atomically using temp file
             auto temp_path = state_file_path_;
             temp_path += ".tmp";
@@ -209,8 +224,7 @@ public:
             if (fd < 0) {
                 return std::unexpected(loom::utils::make_error(
                     ErrorCode::internal_error,
-                    std::format("Failed to open state file for writing: {}", temp_path.string())
-                ));
+                    std::format("Failed to open state file for writing: {}", temp_path.string())));
             }
 
             const std::string& payload = *serialized;
@@ -239,10 +253,8 @@ public:
             if (write_failed) {
                 std::error_code ignore_ec;
                 fs::remove(temp_path, ignore_ec);
-                return std::unexpected(loom::utils::make_error(
-                    ErrorCode::internal_error,
-                    "Failed to write/fsync state file"
-                ));
+                return std::unexpected(loom::utils::make_error(ErrorCode::internal_error,
+                                                               "Failed to write/fsync state file"));
             }
 
             // fsync the parent directory so the rename is durable too. This is
@@ -258,14 +270,12 @@ public:
 
             // Atomic rename
             fs::rename(temp_path, state_file_path_);
-            
+
             last_save_time_ = std::chrono::system_clock::now();
             return {};
         } catch (const std::exception& e) {
             return std::unexpected(loom::utils::make_error(
-                ErrorCode::internal_error,
-                std::format("Failed to save state: {}", e.what())
-            ));
+                ErrorCode::internal_error, std::format("Failed to save state: {}", e.what())));
         }
     }
 
@@ -273,30 +283,28 @@ public:
     [[nodiscard]] std::expected<AppState, Error> load_state() {
         try {
             std::shared_lock lock(mutex_);
-            
+
             if (!fs::exists(state_file_path_)) {
                 // Return default state if file doesn't exist
                 return get_default_app_state();
             }
-            
+
             // Read file
             std::ifstream file(state_file_path_, std::ios::binary);
             if (!file) {
-                return std::unexpected(loom::utils::make_error(
-                    ErrorCode::internal_error,
-                    std::format("Failed to open state file for reading: {}", state_file_path_.string())
-                ));
+                return std::unexpected(
+                    loom::utils::make_error(ErrorCode::internal_error,
+                                            std::format("Failed to open state file for reading: {}",
+                                                        state_file_path_.string())));
             }
-            
+
             std::string json_str((std::istreambuf_iterator<char>(file)),
                                  std::istreambuf_iterator<char>());
-            
+
             return deserialize_state(json_str);
         } catch (const std::exception& e) {
             return std::unexpected(loom::utils::make_error(
-                ErrorCode::internal_error,
-                std::format("Failed to load state: {}", e.what())
-            ));
+                ErrorCode::internal_error, std::format("Failed to load state: {}", e.what())));
         }
     }
 
@@ -334,8 +342,7 @@ public:
             return true;
         }
         auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
-            std::chrono::system_clock::now() - *last_save_time_
-        );
+            std::chrono::system_clock::now() - *last_save_time_);
         return elapsed >= auto_save_interval_;
     }
 
@@ -349,10 +356,9 @@ public:
             last_save_time_.reset();
             return {};
         } catch (const std::exception& e) {
-            return std::unexpected(loom::utils::make_error(
-                ErrorCode::internal_error,
-                std::format("Failed to delete state file: {}", e.what())
-            ));
+            return std::unexpected(
+                loom::utils::make_error(ErrorCode::internal_error,
+                                        std::format("Failed to delete state file: {}", e.what())));
         }
     }
 };
@@ -367,4 +373,4 @@ public:
     return home / ".loom" / "state" / "app_state.json";
 }
 
-} // namespace loom::state::persistence
+}  // namespace loom::state::persistence

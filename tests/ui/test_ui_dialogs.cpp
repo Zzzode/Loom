@@ -1,18 +1,19 @@
 /// @file test_ui_dialogs.cpp
-/// @brief Split from test_ui.cpp - McpElicitation, Permissions, SettingsDialog, ToolPermission, WizardDialog (SLOC budget fix)
+/// @brief Split from test_ui.cpp - McpElicitation, Permissions, SettingsDialog, ToolPermission,
+/// WizardDialog (SLOC budget fix)
 
-#include <cstdlib>
-#include <atomic>
-#include <unistd.h>
-
-#include <ftxui/dom/elements.hpp>
-#include <ftxui/dom/node.hpp>
-#include <ftxui/screen/screen.hpp>
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/event.hpp>
 #include <ftxui/component/mouse.hpp>
+#include <ftxui/dom/elements.hpp>
+#include <ftxui/dom/node.hpp>
+#include <ftxui/screen/screen.hpp>
 #include <gtest/gtest.h>
 #include <httplib.h>
+#include <unistd.h>
+
+#include <atomic>
+#include <cstdlib>
 
 #include "test_ui_helpers.h"
 
@@ -42,7 +43,7 @@ namespace fs = std::filesystem;
 // True when walking up from `base` finds no `.git` work-tree marker.
 [[nodiscard]] bool ui_dialog_ancestry_clean(const fs::path& base) {
     std::error_code ec;
-    for (auto d = base; ; d = d.parent_path()) {
+    for (auto d = base;; d = d.parent_path()) {
         if (fs::exists(d / ".git", ec)) return false;
         if (d.parent_path() == d || d.parent_path().empty()) return true;
     }
@@ -53,14 +54,12 @@ namespace fs = std::filesystem;
     std::error_code ec;
     for (const char* var : {"XDG_RUNTIME_DIR", "TMPDIR"}) {
         if (const char* v = std::getenv(var);
-            v != nullptr && fs::is_directory(v, ec) && !ec &&
-            ui_dialog_ancestry_clean(v)) {
+            v != nullptr && fs::is_directory(v, ec) && !ec && ui_dialog_ancestry_clean(v)) {
             return fs::path(v);
         }
         ec.clear();
     }
-    if (fs::is_directory("/dev/shm", ec) && !ec &&
-        ui_dialog_ancestry_clean("/dev/shm")) {
+    if (fs::is_directory("/dev/shm", ec) && !ec && ui_dialog_ancestry_clean("/dev/shm")) {
         return fs::path("/dev/shm");
     }
     if (ui_dialog_ancestry_clean(fs::temp_directory_path())) {
@@ -72,16 +71,13 @@ namespace fs = std::filesystem;
 // Unique, retried temp directory under the clean base.
 [[nodiscard]] fs::path ui_dialog_make_temp_dir(std::string_view name) {
     static std::atomic<unsigned> counter{0};
-    const fs::path base_dir =
-        ui_dialog_clean_base().value_or(fs::temp_directory_path());
+    const fs::path base_dir = ui_dialog_clean_base().value_or(fs::temp_directory_path());
     for (int attempt = 0; attempt < 64; ++attempt) {
         const fs::path dir =
             base_dir /
             (std::string(name) + std::to_string(::getpid()) + "_" +
-             std::to_string(counter.fetch_add(1,
-                 std::memory_order_relaxed)) + "_" +
-             std::to_string(std::chrono::system_clock::now()
-                                 .time_since_epoch().count()));
+             std::to_string(counter.fetch_add(1, std::memory_order_relaxed)) + "_" +
+             std::to_string(std::chrono::system_clock::now().time_since_epoch().count()));
         std::error_code create_ec;
         fs::create_directories(dir, create_ec);
         std::error_code probe_ec;
@@ -95,13 +91,16 @@ namespace fs = std::filesystem;
 // work tree; under a plain /tmp on this box it would reach /tmp/.git).
 struct TempCwdGuard {
     fs::path previous;
+
     explicit TempCwdGuard() {
         previous = fs::current_path();
         const auto dir = ui_dialog_make_temp_dir("loom_ui_dialog_cwd_");
         fs::current_path(dir);
     }
+
     TempCwdGuard(const TempCwdGuard&) = delete;
     TempCwdGuard& operator=(const TempCwdGuard&) = delete;
+
     ~TempCwdGuard() {
         std::error_code ec;
         const auto dir = fs::current_path();
@@ -109,9 +108,7 @@ struct TempCwdGuard {
         fs::remove_all(dir, ec);
     }
 };
-}
-
-
+}  // namespace
 
 TEST(WizardDialog, RendersStepFactoryContent) {
     using namespace loom::ui::wizard_dialog;
@@ -153,9 +150,7 @@ TEST(SettingsDialog, ApiKeyRowDoesNotWritePlaceholderSecret) {
     loom::core::ConfigManager cfg;
     settings_dialog::SettingsDialogOptions opts;
     opts.initial_tab = settings_dialog::SettingsTabId::API;
-    auto dialog = settings_dialog::MakeSettingsDialog(
-        cfg,
-        std::move(opts));
+    auto dialog = settings_dialog::MakeSettingsDialog(cfg, std::move(opts));
 
     ASSERT_TRUE(dialog->OnEvent(ftxui::Event::Tab));
     ASSERT_TRUE(dialog->OnEvent(ftxui::Event::Return));
@@ -171,9 +166,7 @@ TEST(SettingsDialog, McpAddKeyDoesNotCreatePlaceholderServer) {
     loom::core::ConfigManager cfg;
     settings_dialog::SettingsDialogOptions opts;
     opts.initial_tab = settings_dialog::SettingsTabId::MCP;
-    auto dialog = settings_dialog::MakeSettingsDialog(
-        cfg,
-        std::move(opts));
+    auto dialog = settings_dialog::MakeSettingsDialog(cfg, std::move(opts));
 
     ASSERT_TRUE(dialog->OnEvent(ftxui::Event::Character('a')));
     ASSERT_TRUE(dialog->OnEvent(ftxui::Event::Character('\x13')));
@@ -219,17 +212,14 @@ TEST(SettingsDialog, SavePreservesUnknownKeys) {
     const auto root_node = project->root();
     // The unknown top-level key survives with its value intact.
     ASSERT_TRUE(root_node.has("x-custom"));
-    EXPECT_EQ(root_node.get("x-custom").get("tool").as_str(),
-              std::string_view("loom"));
+    EXPECT_EQ(root_node.get("x-custom").get("tool").as_str(), std::string_view("loom"));
     // The known flat key is preserved, and the unknown sibling
     // survives alongside it.
-    EXPECT_EQ(root_node.get("model").as_str(),
-              std::string_view("seed-model-dialog"));
+    EXPECT_EQ(root_node.get("model").as_str(), std::string_view("seed-model-dialog"));
     ASSERT_TRUE(root_node.has("x_custom_leaf"));
     EXPECT_EQ(root_node.get("x_custom_leaf").as_int(), 42);
     // The known display value round-tripped.
-    EXPECT_EQ(root_node.get("theme").as_str(),
-              std::string_view("dark"));
+    EXPECT_EQ(root_node.get("theme").as_str(), std::string_view("dark"));
 }
 
 namespace {
@@ -243,28 +233,28 @@ auto make_fake_rule_input() {
     in.rules.push_back(RuleEntry{
         .id = "rule-fake-1",
         .tool_pattern = "BashTool",
-        .strategy     = loom::utils::permissions::MatchStrategy::Glob,
-        .action       = loom::utils::permissions::PermissionAction::Allow,
-        .scope        = loom::utils::permissions::PermissionScope::Session,
+        .strategy = loom::utils::permissions::MatchStrategy::Glob,
+        .action = loom::utils::permissions::PermissionAction::Allow,
+        .scope = loom::utils::permissions::PermissionScope::Session,
         .path_pattern = "/tmp/**",
-        .priority     = 50,
-        .group_id     = "g2",
-        .description  = "Allow bash in /tmp",
-        .source       = "User",
-        .enabled      = true,
+        .priority = 50,
+        .group_id = "g2",
+        .description = "Allow bash in /tmp",
+        .source = "User",
+        .enabled = true,
     });
     in.rules.push_back(RuleEntry{
         .id = "rule-fake-2",
         .tool_pattern = "FileWriteTool",
-        .strategy     = loom::utils::permissions::MatchStrategy::Glob,
-        .action       = loom::utils::permissions::PermissionAction::Deny,
-        .scope        = loom::utils::permissions::PermissionScope::Global,
+        .strategy = loom::utils::permissions::MatchStrategy::Glob,
+        .action = loom::utils::permissions::PermissionAction::Deny,
+        .scope = loom::utils::permissions::PermissionScope::Global,
         .path_pattern = "/etc/**",
-        .priority     = 900,
-        .group_id     = "g4",
-        .description  = "Block writes to /etc",
-        .source       = "Bundled",
-        .enabled      = true,
+        .priority = 900,
+        .group_id = "g4",
+        .description = "Block writes to /etc",
+        .source = "Bundled",
+        .enabled = true,
     });
     in.search_query = "";
     return in;
@@ -280,21 +270,20 @@ auto make_fake_panel() {
     loom::utils::permissions_engine::__test_reset_workspaces();
     loom::utils::permissions_engine::push_denial({
         .tool_name = "BashTool",
-        .action    = "Run rm -rf /",
-        .path      = "/",
+        .action = "Run rm -rf /",
+        .path = "/",
         .deny_reason = "auto-mode blocked destructive command",
     });
-    loom::utils::permissions_engine::seed_default_workspace(
-        std::filesystem::temp_directory_path());
+    loom::utils::permissions_engine::seed_default_workspace(std::filesystem::temp_directory_path());
 
     PermissionsPanelModel model;
     model.rule_list.emplace(make_fake_rule_input());
 
-    PermissionsPanelCallbacks cbs; // empty – tests don't require callbacks.
+    PermissionsPanelCallbacks cbs;  // empty – tests don't require callbacks.
     return BuildPermissionsPanel(std::move(model), std::move(cbs));
 }
 
-} // namespace
+}  // namespace
 
 TEST(Permissions, TabSwitching) {
     using namespace loom::ui::permissions;
@@ -324,10 +313,8 @@ TEST(Permissions, TabSwitching) {
         EXPECT_NE(out.find("BashTool"), std::string::npos)
             << "Seeded denial entry should appear in tab 1";
         // Denials columns headers
-        EXPECT_NE(out.find("When"), std::string::npos)
-            << "Tab 1 should show 'When' column header";
-        EXPECT_NE(out.find("Tool"), std::string::npos)
-            << "Tab 1 should show 'Tool' column header";
+        EXPECT_NE(out.find("When"), std::string::npos) << "Tab 1 should show 'When' column header";
+        EXPECT_NE(out.find("Tool"), std::string::npos) << "Tab 1 should show 'Tool' column header";
     }
 
     // Switch to Tab 2 (Workspaces) via ArrowRight (from Tab 1).
@@ -344,9 +331,9 @@ TEST(Permissions, TabSwitching) {
     ASSERT_TRUE(panel->OnEvent(ftxui::Event::Character('4')));
     {
         auto out = render_component_to_text(panel, 140, 40);
-        EXPECT_TRUE(out.find("Create Rule") != std::string::npos
-                 || out.find("Tool pattern") != std::string::npos
-                 || out.find("Tool pattern:") != std::string::npos)
+        EXPECT_TRUE(out.find("Create Rule") != std::string::npos ||
+                    out.find("Tool pattern") != std::string::npos ||
+                    out.find("Tool pattern:") != std::string::npos)
             << "Tab 3 should render Create Rule form with a Tool pattern field";
         EXPECT_NE(out.find("Decision"), std::string::npos)
             << "Tab 3 form should include the Decision radio group header";
@@ -370,14 +357,14 @@ TEST(Permissions, RuleCRUD) {
 
     // --- Build a BuildPermissionRuleInputForm with blank rule + callbacks ---
     RuleEntry blank;
-    blank.id         = "crud-test-rule";
+    blank.id = "crud-test-rule";
     blank.tool_pattern = "*";
-    blank.strategy   = loom::utils::permissions::MatchStrategy::Glob;
-    blank.action     = loom::utils::permissions::PermissionAction::Ask;
-    blank.scope      = loom::utils::permissions::PermissionScope::Session;
-    blank.enabled    = true;
-    blank.priority   = 50;
-    blank.group_id   = "g6";
+    blank.strategy = loom::utils::permissions::MatchStrategy::Glob;
+    blank.action = loom::utils::permissions::PermissionAction::Ask;
+    blank.scope = loom::utils::permissions::PermissionScope::Session;
+    blank.enabled = true;
+    blank.priority = 50;
+    blank.group_id = "g6";
     blank.description = "unit test rule";
 
     bool submit_called = false;
@@ -400,7 +387,7 @@ TEST(Permissions, RuleCRUD) {
     //
     // Programmatically enter a path pattern by typing characters: we need to
     // be on the path field (Tab once from tool field).
-    ASSERT_TRUE(form->OnEvent(ftxui::Event::Tab)); // cursor -> 1 (path)
+    ASSERT_TRUE(form->OnEvent(ftxui::Event::Tab));  // cursor -> 1 (path)
     const std::string kPathPattern = "src/**/*.cpp";
     for (char c : kPathPattern)
         ASSERT_TRUE(form->OnEvent(ftxui::Event::Character(std::string{c})));
@@ -414,8 +401,7 @@ TEST(Permissions, RuleCRUD) {
         << "submitted rule should contain the typed path pattern";
     EXPECT_EQ(submitted_decision, FormDecision::AlwaysAllow)
         << "default decision index 1 maps to AlwaysAllow";
-    EXPECT_EQ(submitted_rule.action,
-              loom::utils::permissions::PermissionAction::Allow)
+    EXPECT_EQ(submitted_rule.action, loom::utils::permissions::PermissionAction::Allow)
         << "AlwaysAllow decision maps to engine PermissionAction::Allow";
     EXPECT_EQ(submitted_rule.tool_pattern, std::string{"*"})
         << "original tool pattern (*) must be preserved through submit";
@@ -423,15 +409,13 @@ TEST(Permissions, RuleCRUD) {
     // --- BuildPermissionRuleDescriptionCard callback coverage -------------
     bool edit_called = false, del_called = false, dup_called = false;
     auto card = BuildPermissionRuleDescriptionCard(
-        submitted_rule,
-        [&] { edit_called = true; },
-        [&] { del_called  = true; },
-        [&] { dup_called  = true; });
+        submitted_rule, [&] { edit_called = true; }, [&] { del_called = true; },
+        [&] { dup_called = true; });
 
     // Rendering must not crash and must show the rule content + actions.
     auto card_text = render_component_to_text(card, 120, 20);
     EXPECT_NE(card_text.find("Rule Detail"), std::string::npos);
-    EXPECT_NE(card_text.find("Edit"),   std::string::npos);
+    EXPECT_NE(card_text.find("Edit"), std::string::npos);
     EXPECT_NE(card_text.find("Delete"), std::string::npos);
     EXPECT_NE(card_text.find("Duplicate"), std::string::npos);
     EXPECT_NE(card_text.find(kPathPattern), std::string::npos)
@@ -470,8 +454,8 @@ TEST(Permissions, RuleCRUD) {
         // /on_duplicate we passed in, so invoking our side of the capture
         // is equivalent to what FTXUI would do on a button click.
         edit_called = true;
-        del_called  = true;
-        dup_called  = true;
+        del_called = true;
+        dup_called = true;
     }
     EXPECT_TRUE(edit_called);
     EXPECT_TRUE(del_called);
@@ -484,11 +468,9 @@ TEST(Permissions, RuleCRUD) {
 
 namespace mcp = loom::ui::mcp_dialogs;
 
-static mcp::ElicitFieldSchema mk_text(std::string name, std::string title,
-                                       bool required = false,
-                                       std::string description = "",
-                                       std::optional<std::string> def = std::nullopt)
-{
+static mcp::ElicitFieldSchema mk_text(std::string name, std::string title, bool required = false,
+                                      std::string description = "",
+                                      std::optional<std::string> def = std::nullopt) {
     mcp::ElicitFieldSchema f;
     f.name = std::move(name);
     f.title = std::move(title);
@@ -498,10 +480,9 @@ static mcp::ElicitFieldSchema mk_text(std::string name, std::string title,
     f.default_string = std::move(def);
     return f;
 }
+
 static mcp::ElicitFieldSchema mk_enum(std::string name, std::string title,
-                                       std::vector<std::string> values,
-                                       bool required = false)
-{
+                                      std::vector<std::string> values, bool required = false) {
     mcp::ElicitFieldSchema f;
     f.name = std::move(name);
     f.title = std::move(title);
@@ -510,9 +491,8 @@ static mcp::ElicitFieldSchema mk_enum(std::string name, std::string title,
     f.enum_values = std::move(values);
     return f;
 }
-static mcp::ElicitFieldSchema mk_bool(std::string name, std::string title,
-                                       bool def = false)
-{
+
+static mcp::ElicitFieldSchema mk_bool(std::string name, std::string title, bool def = false) {
     mcp::ElicitFieldSchema f;
     f.name = std::move(name);
     f.title = std::move(title);
@@ -520,10 +500,9 @@ static mcp::ElicitFieldSchema mk_bool(std::string name, std::string title,
     f.default_bool = def;
     return f;
 }
+
 static mcp::ElicitFieldSchema mk_multi(std::string name, std::string title,
-                                        std::vector<std::string> values,
-                                        int cols = 3)
-{
+                                       std::vector<std::string> values, int cols = 3) {
     mcp::ElicitFieldSchema f;
     f.name = std::move(name);
     f.title = std::move(title);
@@ -532,9 +511,9 @@ static mcp::ElicitFieldSchema mk_multi(std::string name, std::string title,
     f.grid_columns = cols;
     return f;
 }
+
 static mcp::ElicitFieldSchema mk_url(std::string name, std::string title,
-                                      bool show_spinner = true)
-{
+                                     bool show_spinner = true) {
     mcp::ElicitFieldSchema f;
     f.name = std::move(name);
     f.title = std::move(title);
@@ -546,15 +525,13 @@ static mcp::ElicitFieldSchema mk_url(std::string name, std::string title,
 static mcp::ElicitationPayload make_four_field_payload() {
     mcp::ElicitationPayload p;
     p.server_name = "auth-mcp";
-    p.message     = "Configure the OAuth profile to continue.";
-    p.schema      = mcp::ElicitationPayload::SchemaOpaque{"{}"};
-    p.url         = "https://auth.example.com/authorize";
+    p.message = "Configure the OAuth profile to continue.";
+    p.schema = mcp::ElicitationPayload::SchemaOpaque{"{}"};
+    p.url = "https://auth.example.com/authorize";
     p.fields = {
-        mk_text("profile", "Profile Name", /*required=*/true,
-                "Shown in the side panel."),
+        mk_text("profile", "Profile Name", /*required=*/true, "Shown in the side panel."),
         mk_url("redirect_uri", "Redirect URI", /*show_spinner=*/true),
-        mk_enum("provider", "Provider",
-                {"GitHub", "Google", "GitLab", "Bitbucket", "Okta"}),
+        mk_enum("provider", "Provider", {"GitHub", "Google", "GitLab", "Bitbucket", "Okta"}),
         mk_bool("public", "Public profile?", true),
     };
     p.seed_defaults_from_fields();
@@ -572,7 +549,7 @@ TEST(McpElicitation, Golden1_UrlResolvingSpinner4FieldForm) {
         /*enum_popup_open=*/false,
         /*enum_popup_selected=*/0,
         /*enum_typeahead_hits=*/{},
-        /*spinner_tick=*/3,   // braille frame 3
+        /*spinner_tick=*/3,  // braille frame 3
         /*url_resolving=*/true,
         /*stub_approve_focus=*/true);
     std::string rendered = strip_ansi(render_to_plain_text(std::move(e), 100, 30));
@@ -597,9 +574,9 @@ TEST(McpElicitation, Golden2_Form5FieldsWithValidationErrors) {
     auto p = make_four_field_payload();
     p.fields.push_back(mk_text("api_key", "API Key", true, "Starts with sk-"));
     // Inject 2 validation errors + focus on the api_key field
-    p.validation_errors["profile"]  = "Required field cannot be blank.";
-    p.validation_errors["api_key"]  = "Invalid format: must start with 'sk-'.";
-    p.focused_field = static_cast<int>(p.fields.size()) - 1; // api_key
+    p.validation_errors["profile"] = "Required field cannot be blank.";
+    p.validation_errors["api_key"] = "Invalid format: must start with 'sk-'.";
+    p.focused_field = static_cast<int>(p.fields.size()) - 1;  // api_key
     p.values_buffer["profile"] = std::string("");
     p.values_buffer["api_key"] = std::string("pk_test_xyz");
     ftxui::Element e = mcp::RenderElicitationPayload(p, /*button_focus=*/mcp::ElicitFocus::kAccept);
@@ -621,7 +598,8 @@ TEST(McpElicitation, Golden3_EnumSelectTypeaheadPopupOpen) {
     const auto& values = p.fields[2].enum_values;
     for (int i = 0; i < static_cast<int>(values.size()); ++i) {
         std::string low;
-        for (char c : values[i]) low.push_back(char(std::tolower((unsigned char)c)));
+        for (char c : values[i])
+            low.push_back(char(std::tolower((unsigned char)c)));
         if (low.find('g') != std::string::npos) hits.push_back(i);
     }
     // Google (1) + GitLab (2) should both hit, and GitHub (0) also.
@@ -630,7 +608,7 @@ TEST(McpElicitation, Golden3_EnumSelectTypeaheadPopupOpen) {
         /*payload=*/p,
         /*button_focus=*/mcp::ElicitFocus::kAccept,
         /*enum_popup_open=*/true,
-        /*enum_popup_selected=*/1,   // focus Google (second hit)
+        /*enum_popup_selected=*/1,  // focus Google (second hit)
         /*enum_typeahead_hits=*/hits);
     std::string rendered = strip_ansi(render_to_plain_text(std::move(e), 100, 30));
     EXPECT_NE(rendered.find("typeahead hits"), std::string::npos);
@@ -710,13 +688,13 @@ TEST(McpElicitation, Keyboard_TextInputTyped_ShiftTab_EscCancels) {
     for (char c : std::string("bot-user"))
         comp->OnEvent(ftxui::Event::Character(std::string(1, c)));
     // Tab to field 1 (url): not needed; Shift+Tab back should stay on field 0.
-    comp->OnEvent(ftxui::Event::TabReverse); // wraps to Cancel
-    comp->OnEvent(ftxui::Event::TabReverse); // wraps to Decline
-    comp->OnEvent(ftxui::Event::TabReverse); // wraps to Accept
-    comp->OnEvent(ftxui::Event::TabReverse); // wraps to last field
-    comp->OnEvent(ftxui::Event::TabReverse); // wraps to field 2 (enum)
-    comp->OnEvent(ftxui::Event::TabReverse); // wraps to field 1 (url)
-    comp->OnEvent(ftxui::Event::TabReverse); // wraps back to field 0 (profile)
+    comp->OnEvent(ftxui::Event::TabReverse);  // wraps to Cancel
+    comp->OnEvent(ftxui::Event::TabReverse);  // wraps to Decline
+    comp->OnEvent(ftxui::Event::TabReverse);  // wraps to Accept
+    comp->OnEvent(ftxui::Event::TabReverse);  // wraps to last field
+    comp->OnEvent(ftxui::Event::TabReverse);  // wraps to field 2 (enum)
+    comp->OnEvent(ftxui::Event::TabReverse);  // wraps to field 1 (url)
+    comp->OnEvent(ftxui::Event::TabReverse);  // wraps back to field 0 (profile)
     // Now press Esc → cancel action
     comp->OnEvent(ftxui::Event::Escape);
     ASSERT_TRUE(result.has_value());
@@ -733,7 +711,7 @@ TEST(McpElicitation, Keyboard_SpaceTogglesBooleanField) {
     mcp::ElicitationPayload p;
     p.server_name = "feature-mcp";
     p.schema = mcp::ElicitationPayload::SchemaOpaque{"{}"};
-    p.fields = { mk_bool("enabled", "Enabled?", true) };
+    p.fields = {mk_bool("enabled", "Enabled?", true)};
     p.seed_defaults_from_fields();
     std::optional<mcp::ElicitationResult> result;
     p.on_response = [&](mcp::ElicitationResult r) { result = std::move(r); };
@@ -824,8 +802,10 @@ TEST(McpElicitation, ComponentSeedsTypedDefaultsWithoutOverwritingValues) {
     regions.default_multi = mcp::ElicitMulti{"eu-west"};
     p.fields = {
         mk_text("name", "Name", false, "", "default-name"),
-        std::move(count), std::move(ratio),
-        mk_bool("enabled", "Enabled", true), std::move(regions),
+        std::move(count),
+        std::move(ratio),
+        mk_bool("enabled", "Enabled", true),
+        std::move(regions),
     };
     p.values_buffer["name"] = std::string("edited-name");
     p.values_buffer["enabled"] = false;
@@ -862,8 +842,7 @@ TEST(McpElicitation, Keyboard_CheckboxGridSpaceToggles) {
     mcp::ElicitationPayload p;
     p.server_name = "deploy-mcp";
     p.schema = mcp::ElicitationPayload::SchemaOpaque{"{}"};
-    p.fields = { mk_multi("regions", "Regions",
-                          {"us-east", "us-west", "eu-west", "ap-south"}) };
+    p.fields = {mk_multi("regions", "Regions", {"us-east", "us-west", "eu-west", "ap-south"})};
     p.seed_defaults_from_fields();
     std::optional<mcp::ElicitationResult> result;
     p.on_response = [&](mcp::ElicitationResult r) { result = std::move(r); };
@@ -889,17 +868,16 @@ TEST(McpElicitation, Keyboard_EnumSelectPopupCommit) {
     mcp::ElicitationPayload p;
     p.server_name = "pager-mcp";
     p.schema = mcp::ElicitationPayload::SchemaOpaque{"{}"};
-    p.fields = { mk_enum("severity", "Severity",
-                         {"Info", "Warning", "Critical", "Page"}) };
+    p.fields = {mk_enum("severity", "Severity", {"Info", "Warning", "Critical", "Page"})};
     p.seed_defaults_from_fields();
     std::optional<mcp::ElicitationResult> result;
     p.on_response = [&](mcp::ElicitationResult r) { result = std::move(r); };
     auto comp = mcp::ElicitationDialogComponent(std::move(p));
-    comp->OnEvent(ftxui::Event::Return);            // open popup
-    comp->OnEvent(ftxui::Event::ArrowDown);         // 0 → 1
-    comp->OnEvent(ftxui::Event::ArrowDown);         // 1 → 2
-    comp->OnEvent(ftxui::Event::Return);            // commit "Critical"
-    comp->OnEvent(ftxui::Event::Return);            // submit form
+    comp->OnEvent(ftxui::Event::Return);     // open popup
+    comp->OnEvent(ftxui::Event::ArrowDown);  // 0 → 1
+    comp->OnEvent(ftxui::Event::ArrowDown);  // 1 → 2
+    comp->OnEvent(ftxui::Event::Return);     // commit "Critical"
+    comp->OnEvent(ftxui::Event::Return);     // submit form
     ASSERT_TRUE(result.has_value());
     auto it = result->content.find("severity");
     ASSERT_NE(it, result->content.end());
@@ -910,14 +888,14 @@ TEST(McpElicitation, Keyboard_EnumSelectPopupCommit) {
 TEST(McpElicitation, Render_StubModeWithoutSchema) {
     mcp::ElicitationPayload p;
     p.server_name = "generic-mcp";
-    p.message     = "Server wants to install a new tool.";
-    p.url         = "https://mcp.example.com/tools/installer";
+    p.message = "Server wants to install a new tool.";
+    p.url = "https://mcp.example.com/tools/installer";
     ftxui::Element e = mcp::RenderElicitationPayload(p, /*button_focus=*/mcp::ElicitFocus::kAccept,
-                                               /*enum_popup_open=*/false,
-                                               /*enum_popup_selected=*/0, {},
-                                               /*spinner_tick=*/0,
-                                               /*url_resolving=*/true,
-                                               /*stub_approve_focus=*/true);
+                                                     /*enum_popup_open=*/false,
+                                                     /*enum_popup_selected=*/0, {},
+                                                     /*spinner_tick=*/0,
+                                                     /*url_resolving=*/true,
+                                                     /*stub_approve_focus=*/true);
     std::string rendered = strip_ansi(render_to_plain_text(std::move(e), 80, 20));
     EXPECT_NE(rendered.find("MCP Elicitation"), std::string::npos);
     EXPECT_NE(rendered.find("requests permission"), std::string::npos);
@@ -948,6 +926,7 @@ TEST(McpElicitation, Guard_CancelIsOneshot) {
     comp->OnEvent(ftxui::Event::Character('d'));
     EXPECT_EQ(fired, 1);
 }
+
 TEST(ToolPermission, EscOneshotSingleFire) {
     // TS contract: onCancel is ONE-SHOT. Priority 1) on_abort if set,
     // 2) else on_decide(Abort). NEVER both. Also verify a second Esc does
@@ -984,8 +963,7 @@ TEST(ToolPermission, EscOneshotSingleFire) {
 
     // A second Esc must be a no-op (oneshot guard).
     EXPECT_TRUE(comp->OnEvent(ftxui::Event::Escape));
-    EXPECT_EQ(abort_count.load(), 1)
-        << "Second Esc must not re-fire on_abort (oneshot contract)";
+    EXPECT_EQ(abort_count.load(), 1) << "Second Esc must not re-fire on_abort (oneshot contract)";
     EXPECT_EQ(decide_count.load(), 0);
 
     // Any other terminal event must also be ignored after oneshot.
@@ -1005,9 +983,8 @@ TEST(ToolPermission, EscOneshotSingleFire) {
     props2.action_kind = loom::ui::permissions::components::ActionKind::Write;
     props2.risk_level = loom::ui::permissions::components::RiskLevel::Low;
     props2.description = "Edit a file";
-    props2.detail = DetailFileEdit{.file_path = "src/main.cpp",
-                                   .old_snippet = "a",
-                                   .new_snippet = "b"};
+    props2.detail =
+        DetailFileEdit{.file_path = "src/main.cpp", .old_snippet = "a", .new_snippet = "b"};
     // props2.on_abort left unset intentionally.
     props2.on_decide = [&](Decision d, bool s) {
         ++decide_count2;

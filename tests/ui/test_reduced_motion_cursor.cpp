@@ -1,13 +1,13 @@
 /// @file test_reduced_motion_cursor.cpp
 /// @brief Native terminal-cursor accessibility at the existing app root.
-#include <cstdlib>
-
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_options.hpp>
 #include <ftxui/component/event.hpp>
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/screen/screen.hpp>
 #include <gtest/gtest.h>
+
+#include <cstdlib>
 
 import std;
 import loom.ui.foundation.theme_provider;
@@ -27,44 +27,56 @@ using namespace ftxui;
 
 struct RestoreTheme {
     theme::Theme original = theme::current_theme();
+
     ~RestoreTheme() { theme::set_theme(original); }
 };
+
 struct EnvironmentGuard {
     std::string key;
     std::optional<std::string> original;
-    EnvironmentGuard(std::string name, std::string value) : key(std::move(name)) {
+
+    EnvironmentGuard(std::string name, std::string value)
+        : key(std::move(name)) {
         if (const auto* old = std::getenv(key.c_str())) original = old;
         setenv(key.c_str(), value.c_str(), 1);
     }
+
     ~EnvironmentGuard() {
-        if (original) setenv(key.c_str(), original->c_str(), 1);
-        else unsetenv(key.c_str());
+        if (original)
+            setenv(key.c_str(), original->c_str(), 1);
+        else
+            unsetenv(key.c_str());
     }
 };
+
 void Motion(bool reduced) {
     auto current = theme::current_theme();
     current.a11y.reduced_motion = reduced;
     theme::set_theme(current);
 }
+
 Screen PaintRoot(Element element, int width = 80, int height = 24) {
     auto screen = Screen::Create(Dimension::Fixed(width), Dimension::Fixed(height));
     // AppAdapter::Render uses this same existing cursor-reset root.
     Render(screen, std::move(element) | dc::cursor_reset());
     return screen;
 }
+
 void ExpectPosition(Screen::Cursor a, Screen::Cursor b) {
     EXPECT_EQ(a.x, b.x);
     EXPECT_EQ(a.y, b.y);
 }
+
 std::string Text(const Screen& screen) {
     std::string value;
     for (int y = 0; y < screen.dimy(); ++y) {
-        for (int x = 0; x < screen.dimx(); ++x) value += screen.PixelAt(x, y).character;
+        for (int x = 0; x < screen.dimx(); ++x)
+            value += screen.PixelAt(x, y).character;
         value += '\n';
     }
     return value;
 }
-}
+}  // namespace
 
 TEST(ReducedMotionCursor, RootConvertsOnlyBlinkingShapesAfterChildChoosesPosition) {
     RestoreTheme restore;
@@ -80,9 +92,9 @@ TEST(ReducedMotionCursor, RootConvertsOnlyBlinkingShapesAfterChildChoosesPositio
     for (const auto [shape, expected] : cases) {
         SCOPED_TRACE(static_cast<int>(shape));
         const auto content = [&] {
-            return vbox({text("offset"), hbox({text("   "),
-                vbox({text("first"), text("middle"), text("last")})
-                    | dc::declared_cursor(true, 2, 1, shape)})});
+            return vbox({text("offset"),
+                         hbox({text("   "), vbox({text("first"), text("middle"), text("last")}) |
+                                                dc::declared_cursor(true, 2, 1, shape)})});
         };
         Motion(false);
         const auto normal = PaintRoot(content());
@@ -100,6 +112,7 @@ TEST(ReducedMotionCursor, RootConvertsOnlyBlinkingShapesAfterChildChoosesPositio
     EXPECT_EQ(idle.cursor().x, 79);
     EXPECT_EQ(idle.cursor().y, 23);
 }
+
 TEST(ReducedMotionCursor, ActualInputKeepsOffsetMiddleUnicodeCursorAndEditing) {
     RestoreTheme restore;
     std::string content = "ab中文cd";
@@ -109,8 +122,8 @@ TEST(ReducedMotionCursor, ActualInputKeepsOffsetMiddleUnicodeCursorAndEditing) {
     options.cursor_position = &position;
     auto input = Input(&content, "placeholder", options);
     auto component = Renderer(input, [&] {
-        return vbox({text("offset"), hbox({text("   "),
-            input->Render() | size(WIDTH, EQUAL, 30)})});
+        return vbox(
+            {text("offset"), hbox({text("   "), input->Render() | size(WIDTH, EQUAL, 30)})});
     });
     Motion(false);
     const auto normal = PaintRoot(component->Render());
@@ -143,6 +156,7 @@ TEST(ReducedMotionCursor, ActualInputKeepsOffsetMiddleUnicodeCursorAndEditing) {
     EXPECT_EQ(resumed.cursor().shape, Screen::Cursor::BarBlinking);
     ExpectPosition(moved.cursor(), resumed.cursor());
 }
+
 TEST(ReducedMotionCursor, UnfocusedNativeInputLeavesRootHiddenRatherThanTakingCursor) {
     RestoreTheme restore;
     std::string content = "answer";
@@ -163,7 +177,9 @@ TEST(ReducedMotionCursor, UnfocusedNativeInputLeavesRootHiddenRatherThanTakingCu
     EXPECT_FALSE(input->Focused());
     EXPECT_EQ(content, "answer");
 }
-TEST(ReducedMotionCursor, ActualQueuedQuestionUsesSteadyNativeCursorWithoutChangingDraftOrDispatch) {
+
+TEST(ReducedMotionCursor,
+     ActualQueuedQuestionUsesSteadyNativeCursorWithoutChangingDraftOrDispatch) {
     RestoreTheme restore;
     EnvironmentGuard columns("COLUMNS", "80");
     EnvironmentGuard lines("LINES", "24");
@@ -176,7 +192,9 @@ TEST(ReducedMotionCursor, ActualQueuedQuestionUsesSteadyNativeCursorWithoutChang
     question.id = "motion-native-question";
     question.title = "Question";
     question.prompt_text = "Which implementation?";
-    question.on_response = [&](std::optional<std::string> value) { answers.push_back(std::move(value)); };
+    question.on_response = [&](std::optional<std::string> value) {
+        answers.push_back(std::move(value));
+    };
     state->dialog_store.dialog_queue.push(std::move(question));
     auto component = repl::ReplScreen(state, {});
     const auto draw = [&] {

@@ -11,7 +11,7 @@ import std;
 
 import loom.types.types;
 import loom.commands.command;
-import loom.vim.vim_types;  // canonical VimMode (loom_vim target)
+import loom.vim.vim_types; // canonical VimMode (loom_vim target)
 
 export namespace loom::commands {
 
@@ -32,11 +32,14 @@ public:
         return CommandDefinition{
             .name = "vim",
             .description = "Toggle vim-style keybindings",
-            .args = {
-                CommandArg{.name = "action", .description = "on | off | status",
-                           .type = ArgType::Choice, .required = false,
-                           .choices = {"on", "off", "status"}},
-            },
+            .args =
+                {
+                    CommandArg{.name = "action",
+                               .description = "on | off | status",
+                               .type = ArgType::Choice,
+                               .required = false,
+                               .choices = {"on", "off", "status"}},
+                },
             .category = "config",
             .aliases = {"vi"},
             .hidden = false,
@@ -47,8 +50,9 @@ public:
         if (ctx.args.empty()) return {};
         auto action = ctx.args[0];
         if (action != "on" && action != "off" && action != "status") {
-            return std::unexpected(Error::make(ErrorCode::InvalidRequest,
-                std::format("Invalid action: '{}'. Use: on|off|status", action)));
+            return std::unexpected(
+                Error::make(ErrorCode::InvalidRequest,
+                            std::format("Invalid action: '{}'. Use: on|off|status", action)));
         }
         return {};
     }
@@ -57,8 +61,7 @@ public:
         if (ctx.args.empty()) {
             // Toggle
             enabled_ = !enabled_;
-            return CommandResult::success(std::format(
-                "Vim mode: {}", enabled_ ? "ON" : "OFF"));
+            return CommandResult::success(std::format("Vim mode: {}", enabled_ ? "ON" : "OFF"));
         }
 
         auto action = std::string(ctx.args[0]);
@@ -104,13 +107,20 @@ private:
 
     [[nodiscard]] static constexpr std::string_view mode_to_str(VimMode mode) noexcept {
         switch (mode) {
-            case VimMode::Normal:      return "NORMAL";
-            case VimMode::Insert:      return "INSERT";
-            case VimMode::Visual:      return "VISUAL";
-            case VimMode::VisualLine:  return "VISUAL LINE";
-            case VimMode::VisualBlock: return "VISUAL BLOCK";
-            case VimMode::Replace:     return "REPLACE";
-            case VimMode::Command:     return "COMMAND";
+        case VimMode::Normal:
+            return "NORMAL";
+        case VimMode::Insert:
+            return "INSERT";
+        case VimMode::Visual:
+            return "VISUAL";
+        case VimMode::VisualLine:
+            return "VISUAL LINE";
+        case VimMode::VisualBlock:
+            return "VISUAL BLOCK";
+        case VimMode::Replace:
+            return "REPLACE";
+        case VimMode::Command:
+            return "COMMAND";
         }
         return "UNKNOWN";
     }
@@ -118,16 +128,16 @@ private:
     [[nodiscard]] std::string format_status() const {
         if (!enabled_) return "Vim mode: OFF";
         return std::format("Vim mode: ON\nCurrent mode: {}\n\n"
-            "Keybindings:\n"
-            "  i     — Enter insert mode\n"
-            "  Esc   — Return to normal mode\n"
-            "  v     — Enter visual mode\n"
-            "  :     — Command mode\n"
-            "  dd    — Delete line\n"
-            "  yy    — Yank line\n"
-            "  p     — Paste",
-            mode_to_str(mode_));
+                           "Keybindings:\n"
+                           "  i     — Enter insert mode\n"
+                           "  Esc   — Return to normal mode\n"
+                           "  v     — Enter visual mode\n"
+                           "  :     — Command mode\n"
+                           "  dd    — Delete line\n"
+                           "  yy    — Yank line\n"
+                           "  p     — Paste",
+                           mode_to_str(mode_));
     }
 };
 
-} // namespace loom::commands
+}  // namespace loom::commands

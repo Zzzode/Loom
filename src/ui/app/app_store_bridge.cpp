@@ -7,7 +7,6 @@
 //           command_context_for_engine.
 module;
 
-
 module loom.ui.app.app;
 
 import std;
@@ -28,15 +27,12 @@ namespace loom::ui {
 [[nodiscard]] VoidResult compact_runtime_apply(void* state) {
     auto* engine = static_cast<core::QueryEngine*>(state);
     if (!engine) {
-        return std::unexpected(Error::make(
-            ErrorCode::InternalError,
-            "No active query engine is available for compaction"));
+        return std::unexpected(Error::make(ErrorCode::InternalError,
+                                           "No active query engine is available for compaction"));
     }
     auto compacted = engine->compact_conversation();
     if (!compacted) {
-        return std::unexpected(Error::make(
-            ErrorCode::InternalError,
-            compacted.error().format()));
+        return std::unexpected(Error::make(ErrorCode::InternalError, compacted.error().format()));
     }
     return VoidResult{};
 }
@@ -49,8 +45,7 @@ namespace loom::ui {
 /// ActionType, and dispatches.  Payload types are inferred from the action
 /// type (the common bool / optional-string / enum cases); anything
 /// unrecognised falls back to a payload-less dispatch.
-void app_store_dispatch(void* store_ptr, int action_type_int,
-                        const void* payload) {
+void app_store_dispatch(void* store_ptr, int action_type_int, const void* payload) {
     using loom::state::ActionType;
     auto* store = static_cast<loom::state::AppStore*>(store_ptr);
     if (!store) return;
@@ -58,85 +53,82 @@ void app_store_dispatch(void* store_ptr, int action_type_int,
 
     using loom::state::Action;
     switch (at) {
-        // ── Bool-payload actions ──────────────────────────────────
-        case ActionType::SetLoading:
-        case ActionType::SetStreaming:
-        case ActionType::SetVerbose:
-        case ActionType::SetBriefOnly:
-        case ActionType::SetFastMode:
-        case ActionType::ToggleCompactMode:
-        case ActionType::ToggleThinking:
-            if (payload) {
-                store->dispatch(Action{at, *static_cast<const bool*>(payload)});
-            } else {
-                store->dispatch(Action{at});
-            }
-            break;
-
-        // ── String-payload actions ────────────────────────────────
-        // Reducer expects std::string directly (not optional).
-        case ActionType::SetError:
-        case ActionType::GrantPermission:
-        case ActionType::RevokePermission:
-        case ActionType::SetWorkingDirectory:
-        case ActionType::SetOutputStyle:
-        case ActionType::AddNotification:
-        case ActionType::DismissNotification:
-            if (payload) {
-                store->dispatch(Action{at,
-                    *static_cast<const std::string*>(payload)});
-            } else {
-                store->dispatch(Action{at});
-            }
-            break;
-
-        // ── Optional-string-payload actions ───────────────────────
-        // Reducer expects std::optional<std::string>; caller passes a
-        // std::string* which we wrap.
-        case ActionType::SetStatusLineText:
-        case ActionType::SetSpinnerTip:
-        case ActionType::SetSlashCommand:
-        case ActionType::SetMainLoopModel:
-        case ActionType::SetAdvisorModel:
-        case ActionType::SetEffortValue:
-            if (payload) {
-                store->dispatch(Action{at,
-                    std::optional<std::string>{*static_cast<const std::string*>(payload)}});
-            } else {
-                store->dispatch(Action{at, std::optional<std::string>{}});
-            }
-            break;
-
-        // ── ExpandedView enum payload ─────────────────────────────
-        case ActionType::SetExpandedView:
-            if (payload) {
-                store->dispatch(Action{at,
-                    *static_cast<const loom::state::ExpandedView*>(payload)});
-            } else {
-                store->dispatch(Action{at, loom::state::ExpandedView::None});
-            }
-            break;
-
-        // ── PermissionMode enum payload ──────────────────────────
-        case ActionType::SetPermissionMode:
-            if (payload) {
-                store->dispatch(Action{at,
-                    *static_cast<const loom::state::PermissionMode*>(payload)});
-            } else {
-                store->dispatch(Action{at, loom::state::PermissionMode::Default});
-            }
-            break;
-
-        // ── Payload-less actions ──────────────────────────────────
-        case ActionType::ClearMessages:
-        case ActionType::ResetSession:
-        case ActionType::ClearError:
-        case ActionType::SaveState:
-        case ActionType::LoadState:
-        case ActionType::ClearSavedState:
-        default:
+    // ── Bool-payload actions ──────────────────────────────────
+    case ActionType::SetLoading:
+    case ActionType::SetStreaming:
+    case ActionType::SetVerbose:
+    case ActionType::SetBriefOnly:
+    case ActionType::SetFastMode:
+    case ActionType::ToggleCompactMode:
+    case ActionType::ToggleThinking:
+        if (payload) {
+            store->dispatch(Action{at, *static_cast<const bool*>(payload)});
+        } else {
             store->dispatch(Action{at});
-            break;
+        }
+        break;
+
+    // ── String-payload actions ────────────────────────────────
+    // Reducer expects std::string directly (not optional).
+    case ActionType::SetError:
+    case ActionType::GrantPermission:
+    case ActionType::RevokePermission:
+    case ActionType::SetWorkingDirectory:
+    case ActionType::SetOutputStyle:
+    case ActionType::AddNotification:
+    case ActionType::DismissNotification:
+        if (payload) {
+            store->dispatch(Action{at, *static_cast<const std::string*>(payload)});
+        } else {
+            store->dispatch(Action{at});
+        }
+        break;
+
+    // ── Optional-string-payload actions ───────────────────────
+    // Reducer expects std::optional<std::string>; caller passes a
+    // std::string* which we wrap.
+    case ActionType::SetStatusLineText:
+    case ActionType::SetSpinnerTip:
+    case ActionType::SetSlashCommand:
+    case ActionType::SetMainLoopModel:
+    case ActionType::SetAdvisorModel:
+    case ActionType::SetEffortValue:
+        if (payload) {
+            store->dispatch(
+                Action{at, std::optional<std::string>{*static_cast<const std::string*>(payload)}});
+        } else {
+            store->dispatch(Action{at, std::optional<std::string>{}});
+        }
+        break;
+
+    // ── ExpandedView enum payload ─────────────────────────────
+    case ActionType::SetExpandedView:
+        if (payload) {
+            store->dispatch(Action{at, *static_cast<const loom::state::ExpandedView*>(payload)});
+        } else {
+            store->dispatch(Action{at, loom::state::ExpandedView::None});
+        }
+        break;
+
+    // ── PermissionMode enum payload ──────────────────────────
+    case ActionType::SetPermissionMode:
+        if (payload) {
+            store->dispatch(Action{at, *static_cast<const loom::state::PermissionMode*>(payload)});
+        } else {
+            store->dispatch(Action{at, loom::state::PermissionMode::Default});
+        }
+        break;
+
+    // ── Payload-less actions ──────────────────────────────────
+    case ActionType::ClearMessages:
+    case ActionType::ResetSession:
+    case ActionType::ClearError:
+    case ActionType::SaveState:
+    case ActionType::LoadState:
+    case ActionType::ClearSavedState:
+    default:
+        store->dispatch(Action{at});
+        break;
     }
 }
 
@@ -150,10 +142,8 @@ const void* app_store_get_state(void* store_ptr) {
     return &snapshot;
 }
 
-[[nodiscard]] CommandContext command_context_for_engine(
-    core::QueryEngine* engine,
-    void* app_store,
-    std::string cwd) {
+[[nodiscard]] CommandContext command_context_for_engine(core::QueryEngine* engine, void* app_store,
+                                                        std::string cwd) {
     if (cwd.empty() && engine) cwd = engine->working_directory();
     return CommandContext{
         .args = {},
@@ -168,7 +158,6 @@ const void* app_store_get_state(void* store_ptr) {
     };
 }
 
-
 // Type-erased AppStore factory (keeps loom.state.* out of the :impl partition).
 [[nodiscard]] std::shared_ptr<void> create_typed_app_store() {
     // Adopt the unique_ptr's raw pointer: shared_ptr<void> type-erases the
@@ -180,14 +169,13 @@ BridgeState AppAdapter::bridge_state() const {
     BridgeState b{false, false, false, false, false};
     if (auto* raw = app_store_raw()) {
         const auto st = static_cast<loom::state::AppStore*>(raw)->get_state();
-        b.enabled        = st.repl_bridge_enabled;
+        b.enabled = st.repl_bridge_enabled;
         b.explicit_remote = st.repl_bridge_explicit;
-        b.connected      = st.repl_bridge_connected;
+        b.connected = st.repl_bridge_connected;
         b.session_active = st.repl_bridge_session_active;
-        b.reconnecting   = st.repl_bridge_reconnecting;
+        b.reconnecting = st.repl_bridge_reconnecting;
     }
     return b;
 }
-
 
 }  // namespace loom::ui

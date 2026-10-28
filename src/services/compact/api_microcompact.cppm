@@ -1,8 +1,8 @@
 /// @file api_microcompact.cppm
 /// @brief API-level micro compaction for context management
 module;
-#include <cstdlib>
 #include <cstdint>
+#include <cstdlib>
 export module loom.services.compact.api_microcompact;
 
 import std;
@@ -42,10 +42,7 @@ inline constexpr std::uint32_t k_default_target_input_tokens = 40'000;
     return loom::utils::is_env_truthy(std::getenv(name));
 }
 
-[[nodiscard]] inline std::uint32_t env_uint_or_default(
-    const char* name,
-    std::uint32_t fallback
-) {
+[[nodiscard]] inline std::uint32_t env_uint_or_default(const char* name, std::uint32_t fallback) {
     const char* raw = std::getenv(name);
     if (raw == nullptr || *raw == '\0') return fallback;
     char* end = nullptr;
@@ -55,22 +52,15 @@ inline constexpr std::uint32_t k_default_target_input_tokens = 40'000;
         std::min<unsigned long>(value, std::numeric_limits<std::uint32_t>::max()));
 }
 
-[[nodiscard]] inline std::uint32_t clear_at_least_value(
-    std::uint32_t trigger_threshold,
-    std::uint32_t keep_target
-) {
+[[nodiscard]] inline std::uint32_t clear_at_least_value(std::uint32_t trigger_threshold,
+                                                        std::uint32_t keep_target) {
     if (trigger_threshold <= keep_target) return 0;
     return trigger_threshold - keep_target;
 }
 
 [[nodiscard]] inline std::vector<std::string> clearable_result_tools() {
     return {
-        "Bash",
-        "Glob",
-        "Grep",
-        "Read",
-        "WebFetch",
-        "WebSearch",
+        "Bash", "Glob", "Grep", "Read", "WebFetch", "WebSearch",
     };
 }
 
@@ -82,11 +72,10 @@ inline constexpr std::uint32_t k_default_target_input_tokens = 40'000;
     };
 }
 
-} // namespace detail
+}  // namespace detail
 
-[[nodiscard]] inline std::optional<ContextManagementConfig> get_api_context_management(
-    ApiContextManagementOptions options = {}
-) {
+[[nodiscard]] inline std::optional<ContextManagementConfig>
+get_api_context_management(ApiContextManagementOptions options = {}) {
     ContextManagementConfig config;
 
     if (options.has_thinking && !options.is_redact_thinking_active) {
@@ -108,12 +97,10 @@ inline constexpr std::uint32_t k_default_target_input_tokens = 40'000;
         return config;
     }
 
-    const auto trigger_threshold = detail::env_uint_or_default(
-        "API_MAX_INPUT_TOKENS",
-        detail::k_default_max_input_tokens);
-    const auto keep_target = detail::env_uint_or_default(
-        "API_TARGET_INPUT_TOKENS",
-        detail::k_default_target_input_tokens);
+    const auto trigger_threshold =
+        detail::env_uint_or_default("API_MAX_INPUT_TOKENS", detail::k_default_max_input_tokens);
+    const auto keep_target = detail::env_uint_or_default("API_TARGET_INPUT_TOKENS",
+                                                         detail::k_default_target_input_tokens);
     const auto clear_at_least = detail::clear_at_least_value(trigger_threshold, keep_target);
 
     if (use_clear_tool_results) {
@@ -138,9 +125,13 @@ inline constexpr std::uint32_t k_default_target_input_tokens = 40'000;
     return config;
 }
 
-struct MicroCompactResult { std::vector<std::string> removed_message_ids; uint64_t tokens_freed{0}; };
+struct MicroCompactResult {
+    std::vector<std::string> removed_message_ids;
+    uint64_t tokens_freed{0};
+};
 
-[[nodiscard]] inline std::expected<MicroCompactResult, std::string> perform_micro_compact(uint64_t target_tokens) {
+[[nodiscard]] inline std::expected<MicroCompactResult, std::string>
+perform_micro_compact(uint64_t target_tokens) {
     return MicroCompactResult{{}, target_tokens > 0 ? target_tokens / 10 : 0};
 }
-} // namespace
+}  // namespace loom::services::compact

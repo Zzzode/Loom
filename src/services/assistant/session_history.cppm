@@ -4,8 +4,8 @@
 module;
 
 #include <cctype>
-#include <cstdlib>
 #include <cstdint>
+#include <cstdlib>
 
 export module loom.services.assistant_session_history;
 
@@ -39,21 +39,33 @@ struct SessionHistoryConfig {
         result.reserve(s.size() + 8);
         for (char ch : s) {
             switch (ch) {
-                case '"':  result += "\\\""; break;
-                case '\\': result += "\\\\"; break;
-                case '\n': result += "\\n"; break;
-                case '\r': result += "\\r"; break;
-                case '\t': result += "\\t"; break;
-                default:   result += ch; break;
+            case '"':
+                result += "\\\"";
+                break;
+            case '\\':
+                result += "\\\\";
+                break;
+            case '\n':
+                result += "\\n";
+                break;
+            case '\r':
+                result += "\\r";
+                break;
+            case '\t':
+                result += "\\t";
+                break;
+            default:
+                result += ch;
+                break;
             }
         }
         return result;
     };
 
-    std::string json = std::format(
-        R"({{"session_id":"{}","title":"{}","timestamp":"{}","message_count":{})",
-        escape(entry.session_id), escape(entry.title),
-        escape(entry.timestamp), entry.message_count);
+    std::string json =
+        std::format(R"({{"session_id":"{}","title":"{}","timestamp":"{}","message_count":{})",
+                    escape(entry.session_id), escape(entry.title), escape(entry.timestamp),
+                    entry.message_count);
 
     if (entry.project_path.has_value()) {
         json += std::format(R"(,"project_path":"{}")", escape(*entry.project_path));
@@ -77,12 +89,24 @@ struct SessionHistoryConfig {
             if (line[pos] == '\\' && pos + 1 < line.size()) {
                 ++pos;
                 switch (line[pos]) {
-                    case 'n':  value += '\n'; break;
-                    case 'r':  value += '\r'; break;
-                    case 't':  value += '\t'; break;
-                    case '"':  value += '"'; break;
-                    case '\\': value += '\\'; break;
-                    default:   value += line[pos]; break;
+                case 'n':
+                    value += '\n';
+                    break;
+                case 'r':
+                    value += '\r';
+                    break;
+                case 't':
+                    value += '\t';
+                    break;
+                case '"':
+                    value += '"';
+                    break;
+                case '\\':
+                    value += '\\';
+                    break;
+                default:
+                    value += line[pos];
+                    break;
                 }
             } else {
                 value += line[pos];
@@ -130,12 +154,10 @@ struct SessionHistoryConfig {
 }
 
 /// Load session history from disk
-[[nodiscard]] inline std::vector<SessionHistoryEntry> load_session_history(
-    std::string_view storage_path) {
+[[nodiscard]] inline std::vector<SessionHistoryEntry>
+load_session_history(std::string_view storage_path) {
 
-    fs::path path = storage_path.empty()
-        ? default_history_path()
-        : fs::path(storage_path);
+    fs::path path = storage_path.empty() ? default_history_path() : fs::path(storage_path);
 
     std::vector<SessionHistoryEntry> entries;
     if (!fs::exists(path)) return entries;
@@ -155,13 +177,10 @@ struct SessionHistoryConfig {
 }
 
 /// Save a session entry to history (append to NDJSON file)
-[[nodiscard]] inline bool save_session_entry(
-    const SessionHistoryEntry& entry,
-    std::string_view storage_path) {
+[[nodiscard]] inline bool save_session_entry(const SessionHistoryEntry& entry,
+                                             std::string_view storage_path) {
 
-    fs::path path = storage_path.empty()
-        ? default_history_path()
-        : fs::path(storage_path);
+    fs::path path = storage_path.empty() ? default_history_path() : fs::path(storage_path);
 
     // Ensure directory exists
     std::error_code ec;
@@ -177,8 +196,8 @@ struct SessionHistoryConfig {
 }
 
 /// Search session history by keyword (matches title, session_id, project_path)
-[[nodiscard]] inline std::vector<SessionHistoryEntry> search_sessions(
-    std::string_view query, std::size_t limit = 20) {
+[[nodiscard]] inline std::vector<SessionHistoryEntry> search_sessions(std::string_view query,
+                                                                      std::size_t limit = 20) {
 
     auto all = load_session_history("");
     if (query.empty()) {
@@ -192,13 +211,13 @@ struct SessionHistoryConfig {
     std::vector<SessionHistoryEntry> matches;
     std::string query_lower(query);
     std::transform(query_lower.begin(), query_lower.end(), query_lower.begin(),
-        [](unsigned char c) { return std::tolower(c); });
+                   [](unsigned char c) { return std::tolower(c); });
 
     for (const auto& entry : all) {
         auto contains = [&](std::string_view field) -> bool {
             std::string lower(field);
             std::transform(lower.begin(), lower.end(), lower.begin(),
-                [](unsigned char c) { return std::tolower(c); });
+                           [](unsigned char c) { return std::tolower(c); });
             return lower.find(query_lower) != std::string::npos;
         };
 
@@ -215,9 +234,8 @@ struct SessionHistoryConfig {
 /// Clear old sessions beyond max_entries, keeping most recent
 /// Returns the number of entries pruned
 [[nodiscard]] inline std::size_t prune_session_history(const SessionHistoryConfig& config) {
-    fs::path path = config.storage_path.empty()
-        ? default_history_path()
-        : fs::path(config.storage_path);
+    fs::path path =
+        config.storage_path.empty() ? default_history_path() : fs::path(config.storage_path);
 
     auto entries = load_session_history(path.string());
     if (entries.size() <= config.max_entries) return 0;
@@ -225,8 +243,7 @@ struct SessionHistoryConfig {
     std::size_t pruned = entries.size() - config.max_entries;
 
     // Keep the most recent entries (NDJSON is append-only, so later = newer)
-    entries.erase(entries.begin(),
-        entries.begin() + static_cast<std::ptrdiff_t>(pruned));
+    entries.erase(entries.begin(), entries.begin() + static_cast<std::ptrdiff_t>(pruned));
 
     // Rewrite the file with remaining entries
     std::ofstream file(path, std::ios::trunc);
@@ -241,20 +258,16 @@ struct SessionHistoryConfig {
 
 /// Delete a specific session from history by ID
 /// Returns true if found and removed
-[[nodiscard]] inline bool delete_session(
-    std::string_view session_id,
-    std::string_view storage_path = "") {
+[[nodiscard]] inline bool delete_session(std::string_view session_id,
+                                         std::string_view storage_path = "") {
 
-    fs::path path = storage_path.empty()
-        ? default_history_path()
-        : fs::path(storage_path);
+    fs::path path = storage_path.empty() ? default_history_path() : fs::path(storage_path);
 
     auto entries = load_session_history(path.string());
     auto original_size = entries.size();
 
-    std::erase_if(entries, [&](const SessionHistoryEntry& e) {
-        return e.session_id == session_id;
-    });
+    std::erase_if(entries,
+                  [&](const SessionHistoryEntry& e) { return e.session_id == session_id; });
 
     if (entries.size() == original_size) return false;
 
@@ -268,4 +281,4 @@ struct SessionHistoryConfig {
     return true;
 }
 
-} // namespace loom::services::assistant
+}  // namespace loom::services::assistant

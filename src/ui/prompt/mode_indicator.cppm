@@ -24,9 +24,8 @@
 /// the default path.
 module;
 
-
-#include <ftxui/dom/elements.hpp>
 #include <ftxui/component/component.hpp>
+#include <ftxui/dom/elements.hpp>
 export module loom.ui.prompt.mode_indicator;
 
 import loom.ui.foundation.theme_provider;
@@ -48,15 +47,15 @@ using PromptInputMode = loom::ui::common::PromptInputMode;
 [[nodiscard]] inline std::string agent_color_to_ansi(std::string_view color_name) {
     // ANSI 256-color palette: 30-37 are dim, 90-97 are bright.
     // We use the bright variants for agent tints.
-    if (color_name == "red")    return "\033[91m";
+    if (color_name == "red") return "\033[91m";
     if (color_name == "orange") return "\033[38;5;208m";  // orange
     if (color_name == "yellow") return "\033[93m";
-    if (color_name == "green")  return "\033[92m";
-    if (color_name == "cyan")   return "\033[96m";
-    if (color_name == "blue")   return "\033[94m";
+    if (color_name == "green") return "\033[92m";
+    if (color_name == "cyan") return "\033[96m";
+    if (color_name == "blue") return "\033[94m";
     if (color_name == "purple") return "\033[38;5;135m";  // purple
-    if (color_name == "pink")   return "\033[38;5;212m";  // pink
-    return "\033[37m";  // fallback: white
+    if (color_name == "pink") return "\033[38;5;212m";    // pink
+    return "\033[37m";                                    // fallback: white
 }
 
 // ─── Bash border ANSI ────────────────────────────────────────────────────
@@ -85,17 +84,13 @@ inline constexpr const char* kAnsiReset = "\033[0m";
 //   2. mode == Bash            → !  with bash-border color
 //   3. otherwise               → ❯ with teammate color (if swarms) or default
 [[nodiscard]] inline std::string render_prefix_glyph_ansi(
-    PromptInputMode mode,
-    std::optional<std::string_view> viewing_agent_color = std::nullopt,
-    std::optional<std::string_view> teammate_color = std::nullopt,
-    bool is_loading = false)
-{
+    PromptInputMode mode, std::optional<std::string_view> viewing_agent_color = std::nullopt,
+    std::optional<std::string_view> teammate_color = std::nullopt, bool is_loading = false) {
     const bool is_bash = (mode == PromptInputMode::Bash);
     std::string result;
 
     // Priority check: viewing agent takes precedence over bash mode.
-    const bool has_viewing_agent =
-        viewing_agent_color.has_value() && !viewing_agent_color->empty();
+    const bool has_viewing_agent = viewing_agent_color.has_value() && !viewing_agent_color->empty();
     const bool show_bash = is_bash && !has_viewing_agent;
 
     // Pick ANSI color prefix.
@@ -139,11 +134,8 @@ inline constexpr const char* kAnsiReset = "\033[0m";
 //   teammate_color      — optional teammate color for the default path.
 //   is_loading          — when true, apply dim attribute
 [[nodiscard]] inline Element render_prefix_glyph_element(
-    PromptInputMode mode,
-    std::optional<Color> viewing_agent_color = std::nullopt,
-    std::optional<Color> teammate_color = std::nullopt,
-    bool is_loading = false)
-{
+    PromptInputMode mode, std::optional<Color> viewing_agent_color = std::nullopt,
+    std::optional<Color> teammate_color = std::nullopt, bool is_loading = false) {
     const bool is_bash = (mode == PromptInputMode::Bash);
     std::string glyph_str;
 
@@ -183,10 +175,9 @@ inline constexpr const char* kAnsiReset = "\033[0m";
 // The pointer glyph (U+276F) alone — used in StickyPromptHeader,
 // user message prefix, etc.  Not to be confused with the 2-cell
 // "glyph + space" prefix used at the prompt input position.
-[[nodiscard]] inline std::string render_pointer_glyph_ansi(
-    std::optional<std::string_view> color_name = std::nullopt,
-    bool is_loading = false)
-{
+[[nodiscard]] inline std::string
+render_pointer_glyph_ansi(std::optional<std::string_view> color_name = std::nullopt,
+                          bool is_loading = false) {
     std::string result;
     if (color_name.has_value() && !color_name->empty()) {
         result += agent_color_to_ansi(*color_name);
@@ -199,4 +190,4 @@ inline constexpr const char* kAnsiReset = "\033[0m";
     return result;
 }
 
-} // namespace loom::ui::prompt::mode_indicator
+}  // namespace loom::ui::prompt::mode_indicator

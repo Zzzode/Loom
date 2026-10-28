@@ -1,12 +1,12 @@
 // C++23 Module: Terminal size monitoring with SIGWINCH subscription and debounced resize events
 module;
 
+#include <sys/ioctl.h>
+#include <unistd.h>
+
 #include <csignal>
 #include <cstddef>
 #include <cstdint>
-
-#include <sys/ioctl.h>
-#include <unistd.h>
 
 export module loom.hooks.terminal_size;
 
@@ -40,6 +40,7 @@ using ResizeCallback = std::function<void(const ResizeEvent&)>;
 
 class TerminalSizeHook {
     using Clock = std::chrono::steady_clock;
+
 public:
     explicit TerminalSizeHook(std::chrono::milliseconds debounce = std::chrono::milliseconds(50))
         : debounce_delay_(debounce) {
@@ -69,8 +70,8 @@ public:
         };
     }
 
-    [[nodiscard]] auto is_too_small(std::uint16_t min_cols = 40,
-                                     std::uint16_t min_rows = 10) -> bool {
+    [[nodiscard]] auto is_too_small(std::uint16_t min_cols = 40, std::uint16_t min_rows = 10)
+        -> bool {
         auto dims = get_size();
         return dims.cols < min_cols || dims.rows < min_rows;
     }
@@ -82,9 +83,7 @@ public:
 
         // Install SIGWINCH handler that sets atomic flag
         struct sigaction sa{};
-        sa.sa_handler = [](int) {
-            s_resize_flag_.store(true, std::memory_order_relaxed);
-        };
+        sa.sa_handler = [](int) { s_resize_flag_.store(true, std::memory_order_relaxed); };
         sigemptyset(&sa.sa_mask);
         sa.sa_flags = SA_RESTART;
         sigaction(SIGWINCH, &sa, nullptr);
@@ -160,11 +159,7 @@ private:
     }
 
     auto emit_resize(TerminalDimensions new_dims, Clock::time_point now) -> void {
-        ResizeEvent event{
-            .old_dims = current_,
-            .new_dims = new_dims,
-            .timestamp = now
-        };
+        ResizeEvent event{.old_dims = current_, .new_dims = new_dims, .timestamp = now};
         current_ = new_dims;
         last_resize_time_ = now;
 
@@ -174,4 +169,4 @@ private:
     }
 };
 
-} // namespace loom::hooks
+}  // namespace loom::hooks

@@ -7,7 +7,6 @@
 
 module;
 
-
 export module loom.commands.plugin_trust_text;
 
 import std;
@@ -36,9 +35,8 @@ constexpr std::string_view kTrustDisclaimerPrefix = " ";
 
 /// Build the complete trust-warning text without any styling.
 /// If `custom_message` is provided by marketplace config, it is appended.
-[[nodiscard]] inline std::string build_trust_warning_text(
-    std::optional<std::string_view> custom_message = std::nullopt)
-{
+[[nodiscard]] inline std::string
+build_trust_warning_text(std::optional<std::string_view> custom_message = std::nullopt) {
     std::string text{kTrustDisclaimerBody};
     if (custom_message.has_value() && !custom_message->empty()) {
         text.reserve(text.size() + 1 + custom_message->size());
@@ -51,16 +49,14 @@ constexpr std::string_view kTrustDisclaimerPrefix = " ";
 /// Build the one-line "header" text that precedes the disclaimer.
 /// Used by CLI output (Phase 2) and as an accessible label for the warning
 /// icon in FTXUI (Phase 4).
-[[nodiscard]] inline std::string_view trust_warning_header() noexcept
-{
+[[nodiscard]] inline std::string_view trust_warning_header() noexcept {
     return "Plugin trust reminder";
 }
 
 /// Returns true when a given marketplace domain is on the hardcoded
 /// trust-allowlist. Anything not on the list will show an extra
 /// "unofficial source" line.
-[[nodiscard]] constexpr bool is_trusted_marketplace_domain(std::string_view domain) noexcept
-{
+[[nodiscard]] constexpr bool is_trusted_marketplace_domain(std::string_view domain) noexcept {
     // Loom official domains.
     if (domain == "loomcode.app") return true;
     return false;
@@ -68,16 +64,16 @@ constexpr std::string_view kTrustDisclaimerPrefix = " ";
 
 /// Build a short "source" line shown under the disclaimer for untrusted
 /// marketplace domains. Returns empty string if the domain is trusted.
-[[nodiscard]] inline std::optional<std::string> build_marketplace_source_note(
-    std::string_view marketplace_name,
-    std::string_view marketplace_domain)
-{
+[[nodiscard]] inline std::optional<std::string>
+build_marketplace_source_note(std::string_view marketplace_name,
+                              std::string_view marketplace_domain) {
     if (is_trusted_marketplace_domain(marketplace_domain)) {
         return std::nullopt;
     }
-    return std::format("This plugin is sourced from \"{}\" ({}), which is not an official marketplace.",
-                       marketplace_name,
-                       marketplace_domain.empty() ? std::string_view{"unknown domain"} : marketplace_domain);
+    return std::format(
+        "This plugin is sourced from \"{}\" ({}), which is not an official marketplace.",
+        marketplace_name,
+        marketplace_domain.empty() ? std::string_view{"unknown domain"} : marketplace_domain);
 }
 
-} // namespace loom::commands::plugin
+}  // namespace loom::commands::plugin

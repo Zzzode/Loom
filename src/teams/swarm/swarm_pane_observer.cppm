@@ -28,6 +28,7 @@ namespace pane_observer_detail {
 struct ChangeSubscriptionState {
     std::mutex mtx;
     std::uint64_t next_token = 1;
+
     // Per-callback alive guard so notify() never invokes a callback whose
     // subscriber (e.g. AppAdapter) has been destroyed, even if an in-flight
     // notify copied the lambda before unsubscribe().
@@ -35,6 +36,7 @@ struct ChangeSubscriptionState {
         std::weak_ptr<void> alive;
         std::function<void()> cb;
     };
+
     std::unordered_map<std::uint64_t, Entry> subs;
 };
 
@@ -76,10 +78,8 @@ subscribe_changed_with_guard(PaneChangeCallback cb) {
     std::lock_guard lock(st.mtx);
     const std::uint64_t token = st.next_token++;
     auto alive = std::make_shared<int>(1);
-    st.subs.emplace(
-        token,
-        pane_observer_detail::ChangeSubscriptionState::Entry{
-            .alive = alive, .cb = std::move(cb)});
+    st.subs.emplace(token, pane_observer_detail::ChangeSubscriptionState::Entry{
+                               .alive = alive, .cb = std::move(cb)});
     return {token, std::shared_ptr<void>(std::move(alive))};
 }
 
@@ -98,17 +98,17 @@ inline void unsubscribe_changed(std::uint64_t token) {
 
 /// Liveness of a spawned teammate pane as seen by the leader.
 enum class PaneRunState : std::uint8_t {
-    Running,    ///< Last capture succeeded.
-    Done,       ///< Capture failed kFailureThreshold times (pane exited/killed).
+    Running,  ///< Last capture succeeded.
+    Done,     ///< Capture failed kFailureThreshold times (pane exited/killed).
 };
 
 /// Thread-safe, UI-facing per-agent observation record (the UI reads this).
 struct PaneSnapshot {
     std::string agent_id;
-    std::vector<std::string> lines;                 ///< Captured tail, split on '\n', trailing blanks trimmed.
-    std::string raw;                                ///< Last distinct captured text (dedupe key).
+    std::vector<std::string> lines;  ///< Captured tail, split on '\n', trailing blanks trimmed.
+    std::string raw;                 ///< Last distinct captured text (dedupe key).
     PaneRunState state = PaneRunState::Running;
-    std::uint64_t revision = 0;                     ///< Bumped only when `raw` changes.
+    std::uint64_t revision = 0;  ///< Bumped only when `raw` changes.
     std::chrono::steady_clock::time_point observed_at{};
     int consecutive_failures = 0;
 };
@@ -125,9 +125,10 @@ public:
 
     explicit PaneObserver(std::shared_ptr<sw::PaneBackend> backend,
                           std::chrono::milliseconds interval = kDefaultInterval,
-                          int tail_lines = kDefaultTailLines,
-                          bool auto_start = true)
-        : backend_(std::move(backend)), interval_(interval), tail_lines_(tail_lines) {
+                          int tail_lines = kDefaultTailLines, bool auto_start = true)
+        : backend_(std::move(backend))
+        , interval_(interval)
+        , tail_lines_(tail_lines) {
         if (auto_start) start();
     }
 
@@ -161,7 +162,8 @@ public:
         std::lock_guard lock(mutex_);
         std::vector<std::string> ids;
         ids.reserve(entries_.size());
-        for (const auto& [id, _] : entries_) ids.push_back(id);
+        for (const auto& [id, _] : entries_)
+            ids.push_back(id);
         return ids;
     }
 
@@ -169,13 +171,12 @@ public:
     [[nodiscard]] std::map<std::string, PaneSnapshot> get_pane_snapshot() const {
         std::lock_guard lock(mutex_);
         std::map<std::string, PaneSnapshot> out;
-        for (const auto& [id, e] : entries_) out.emplace(id, e.snapshot);
+        for (const auto& [id, e] : entries_)
+            out.emplace(id, e.snapshot);
         return out;
     }
 
-    [[nodiscard]] std::optional<PaneSnapshot> get_agent_snapshot(
-        std::string_view agent_id
-    ) const {
+    [[nodiscard]] std::optional<PaneSnapshot> get_agent_snapshot(std::string_view agent_id) const {
         std::lock_guard lock(mutex_);
         auto it = entries_.find(std::string(agent_id));
         if (it == entries_.end()) return std::nullopt;
@@ -185,11 +186,13 @@ public:
     /// Run one capture/dedupe pass synchronously (also used by tests).
     void refresh_once() {
         bool any_changed = false;
+
         struct Target {
             std::string agent_id;
             sw::PaneId pane_id;
             bool inside;
         };
+
         std::vector<Target> targets;
         {
             std::lock_guard lock(mutex_);
@@ -199,8 +202,7 @@ public:
             }
         }
         for (const auto& t : targets) {
-            auto captured = backend_->capture_pane_text(
-                t.pane_id, tail_lines_, !t.inside);
+            auto captured = backend_->capture_pane_text(t.pane_id, tail_lines_, !t.inside);
             bool changed = false;
             std::lock_guard lock(mutex_);
             auto it = entries_.find(t.agent_id);
@@ -251,6 +253,7 @@ private:
         sw::PaneId pane_id;
         bool inside_tmux = false;
     };
+
     struct Entry {
         TrackedPane tracked;
         PaneSnapshot snapshot;
@@ -278,7 +281,8 @@ private:
             }
         }
         lines.push_back(std::move(acc));
-        while (!lines.empty() && lines.back().empty()) lines.pop_back();
+        while (!lines.empty() && lines.back().empty())
+            lines.pop_back();
         return lines;
     }
 
@@ -298,14 +302,14 @@ private:
 
 /// Idempotently create/reuse the global observer for the given backend.
 /// Passing a different backend (or a destroyed previous one) recreates it.
-[[nodiscard]] std::shared_ptr<PaneObserver> ensure_global_pane_observer(
-    std::shared_ptr<sw::PaneBackend> backend,
-    std::chrono::milliseconds interval = PaneObserver::kDefaultInterval);
+[[nodiscard]] std::shared_ptr<PaneObserver>
+ensure_global_pane_observer(std::shared_ptr<sw::PaneBackend> backend,
+                            std::chrono::milliseconds interval = PaneObserver::kDefaultInterval);
 
 /// Stop the global observer's poller and drop the singleton.
 void shutdown_global_pane_observer();
 
-} // namespace loom::utils::pane_observer
+}  // namespace loom::utils::pane_observer
 
 // --- process-wide singleton storage -------------------------------------
 // Header-only module: all three accessors must share ONE function-local
@@ -323,7 +327,7 @@ struct GlobalObserverState {
     return state;
 }
 
-} // namespace loom::utils::pane_observer::pane_observer_detail
+}  // namespace loom::utils::pane_observer::pane_observer_detail
 
 namespace loom::utils::pane_observer {
 
@@ -333,10 +337,9 @@ namespace loom::utils::pane_observer {
     return state.observer;
 }
 
-[[nodiscard]] inline std::shared_ptr<PaneObserver> ensure_global_pane_observer(
-    std::shared_ptr<sw::PaneBackend> backend,
-    std::chrono::milliseconds interval
-) {
+[[nodiscard]] inline std::shared_ptr<PaneObserver>
+ensure_global_pane_observer(std::shared_ptr<sw::PaneBackend> backend,
+                            std::chrono::milliseconds interval) {
     auto& state = pane_observer_detail::holder();
     std::lock_guard lock(state.mtx);
     const auto current = state.bound_backend.lock();
@@ -361,4 +364,4 @@ inline void shutdown_global_pane_observer() {
     if (previous) previous->stop();
 }
 
-} // namespace loom::utils::pane_observer
+}  // namespace loom::utils::pane_observer

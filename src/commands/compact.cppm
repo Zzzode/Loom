@@ -34,10 +34,10 @@ constexpr int ACTION_UPDATE_USAGE = 7;
 
 /// Token budget configuration for compaction
 struct TokenBudget {
-    std::uint32_t context_window = 200000;    // Total context window capacity
-    std::uint32_t reserve_output = 16384;     // Reserved for output generation
-    std::uint32_t reserve_system = 8000;      // Reserved for system prompt
-    std::uint32_t target_after_compact = 0;   // Target token count after compaction (0 = auto)
+    std::uint32_t context_window = 200000;   // Total context window capacity
+    std::uint32_t reserve_output = 16384;    // Reserved for output generation
+    std::uint32_t reserve_system = 8000;     // Reserved for system prompt
+    std::uint32_t target_after_compact = 0;  // Target token count after compaction (0 = auto)
 
     /// Calculate available tokens for conversation history
     [[nodiscard]] std::uint32_t available_for_history() const noexcept {
@@ -53,24 +53,21 @@ struct TokenBudget {
 
 /// Statistics about the compaction operation
 struct CompactStats {
-    std::uint32_t messages_before = 0;        // Message count before compaction
-    std::uint32_t messages_after = 0;         // Message count after compaction
-    std::uint32_t tokens_before = 0;          // Estimated tokens before
-    std::uint32_t tokens_after = 0;           // Estimated tokens after
-    double compression_ratio = 0.0;           // tokens_after / tokens_before
+    std::uint32_t messages_before = 0;  // Message count before compaction
+    std::uint32_t messages_after = 0;   // Message count after compaction
+    std::uint32_t tokens_before = 0;    // Estimated tokens before
+    std::uint32_t tokens_after = 0;     // Estimated tokens after
+    double compression_ratio = 0.0;     // tokens_after / tokens_before
 
     /// Format stats for display
     [[nodiscard]] std::string format() const {
-        return std::format(
-            "Compaction complete:\n"
-            "  Messages: {} -> {} ({} removed)\n"
-            "  Tokens:   ~{} -> ~{} ({:.0f}% reduction)\n"
-            "  Ratio:    {:.2f}x compression",
-            messages_before, messages_after, messages_before - messages_after,
-            tokens_before, tokens_after,
-            (1.0 - compression_ratio) * 100.0,
-            1.0 / compression_ratio
-        );
+        return std::format("Compaction complete:\n"
+                           "  Messages: {} -> {} ({} removed)\n"
+                           "  Tokens:   ~{} -> ~{} ({:.0f}% reduction)\n"
+                           "  Ratio:    {:.2f}x compression",
+                           messages_before, messages_after, messages_before - messages_after,
+                           tokens_before, tokens_after, (1.0 - compression_ratio) * 100.0,
+                           1.0 / compression_ratio);
     }
 };
 
@@ -91,23 +88,28 @@ public:
         return CommandDefinition{
             .name = "compact",
             .description = "Compress conversation context to free up token budget",
-            .args = {
-                CommandArg{.name = "--target", .description = "Target token count after compaction",
-                           .type = ArgType::Text, .required = false},
-                CommandArg{.name = "--aggressive", .description = "More aggressive compression",
-                           .type = ArgType::None, .required = false},
-                CommandArg{.name = "--dry-run", .description = "Show what would be compressed without applying",
-                           .type = ArgType::None, .required = false},
-            },
+            .args =
+                {
+                    CommandArg{.name = "--target",
+                               .description = "Target token count after compaction",
+                               .type = ArgType::Text,
+                               .required = false},
+                    CommandArg{.name = "--aggressive",
+                               .description = "More aggressive compression",
+                               .type = ArgType::None,
+                               .required = false},
+                    CommandArg{.name = "--dry-run",
+                               .description = "Show what would be compressed without applying",
+                               .type = ArgType::None,
+                               .required = false},
+                },
             .category = "session",
             .aliases = {"compress"},
             .hidden = false,
         };
     }
 
-    [[nodiscard]] VoidResult validate(const CommandContext& /*ctx*/) {
-        return {};
-    }
+    [[nodiscard]] VoidResult validate(const CommandContext& /*ctx*/) { return {}; }
 
     [[nodiscard]] Result<CommandResult> execute(const CommandContext& ctx) {
         auto opts = parse_options(ctx.args);
@@ -123,7 +125,8 @@ public:
         // QueryEngine's AddMessage dispatches. If the provider callback is
         // unavailable or returns empty but the UI has messages, use those.
         if (active_messages.empty()) {
-            if (const auto* state = static_cast<const loom::state::AppState*>(ctx.get_app_state())) {
+            if (const auto* state =
+                    static_cast<const loom::state::AppState*>(ctx.get_app_state())) {
                 if (!state->messages.empty()) {
                     active_messages = state->messages;
                 }
@@ -140,11 +143,9 @@ public:
         // Step 1: Analyze current conversation state
         auto analysis = analyze_conversation(active_messages);
         if (analysis.tokens_before <= budget.effective_target()) {
-            auto msg = std::format(
-                "Context is already within budget (~{} tokens, target: {}).\n"
-                "No compaction needed.",
-                analysis.tokens_before, budget.effective_target()
-            );
+            auto msg = std::format("Context is already within budget (~{} tokens, target: {}).\n"
+                                   "No compaction needed.",
+                                   analysis.tokens_before, budget.effective_target());
             ctx.dispatch_action(ACTION_ADD_NOTIFICATION, &msg);
             return CommandResult::success(std::move(msg));
         }
@@ -162,12 +163,13 @@ public:
             if (!compacted) return std::unexpected(compacted.error());
 
             auto after_messages = ctx.compact_message_provider
-                ? ctx.compact_message_provider(ctx.runtime_state)
-                : active_messages;
+                                      ? ctx.compact_message_provider(ctx.runtime_state)
+                                      : active_messages;
 
             // Also refresh from AppState if the provider returned nothing
             if (after_messages.empty()) {
-                if (const auto* state = static_cast<const loom::state::AppState*>(ctx.get_app_state())) {
+                if (const auto* state =
+                        static_cast<const loom::state::AppState*>(ctx.get_app_state())) {
                     after_messages = state->messages;
                 }
             }
@@ -175,15 +177,14 @@ public:
             analysis.messages_after = static_cast<std::uint32_t>(after_messages.size());
             analysis.tokens_after = estimate_messages_tokens(after_messages);
             analysis.compression_ratio = analysis.tokens_before == 0
-                ? 1.0
-                : static_cast<double>(analysis.tokens_after) / static_cast<double>(analysis.tokens_before);
+                                             ? 1.0
+                                             : static_cast<double>(analysis.tokens_after) /
+                                                   static_cast<double>(analysis.tokens_before);
 
             // Notify the user that compaction completed and sync AppState awareness
-            auto note = std::format(
-                "Compacted: {} -> {} messages, ~{}% token reduction",
-                analysis.messages_before, analysis.messages_after,
-                static_cast<int>((1.0 - analysis.compression_ratio) * 100.0)
-            );
+            auto note = std::format("Compacted: {} -> {} messages, ~{}% token reduction",
+                                    analysis.messages_before, analysis.messages_after,
+                                    static_cast<int>((1.0 - analysis.compression_ratio) * 100.0));
             ctx.dispatch_action(ACTION_ADD_NOTIFICATION, &note);
 
             return CommandResult::success(analysis.format());
@@ -195,10 +196,8 @@ public:
         auto summary_prompt = build_summary_prompt(plan);
 
         // Notify the user that an LLM-driven compaction is in progress
-        auto note = std::format(
-            "Compacting {} messages (~{} tokens) via model summary…",
-            analysis.messages_before, analysis.tokens_before
-        );
+        auto note = std::format("Compacting {} messages (~{} tokens) via model summary…",
+                                analysis.messages_before, analysis.tokens_before);
         ctx.dispatch_action(ACTION_ADD_NOTIFICATION, &note);
 
         return CommandResult::inject(std::move(summary_prompt));
@@ -221,9 +220,7 @@ public:
     }
 
     /// Set token budget (called by config)
-    void set_budget(TokenBudget budget) {
-        budget_ = budget;
-    }
+    void set_budget(TokenBudget budget) { budget_ = budget; }
 
 private:
     std::vector<Message> conversation_messages_;
@@ -240,7 +237,7 @@ private:
     struct PlanEntry {
         std::size_t message_index;
         PreservePriority priority;
-        std::string action;             // "keep", "summarize", "remove"
+        std::string action;  // "keep", "summarize", "remove"
         std::uint32_t estimated_tokens;
     };
 
@@ -249,7 +246,10 @@ private:
         Options opts;
         for (std::size_t i = 0; i < args.size(); ++i) {
             if (args[i] == "--target" && i + 1 < args.size()) {
-                try { opts.target = std::stoul(args[++i]); } catch (...) {}
+                try {
+                    opts.target = std::stoul(args[++i]);
+                } catch (...) {
+                }
             } else if (args[i] == "--aggressive") {
                 opts.aggressive = true;
             } else if (args[i] == "--dry-run") {
@@ -269,55 +269,63 @@ private:
         return stats;
     }
 
-    [[nodiscard]] static std::uint32_t estimate_messages_tokens(const std::vector<Message>& messages) {
+    [[nodiscard]] static std::uint32_t
+    estimate_messages_tokens(const std::vector<Message>& messages) {
         return std::accumulate(messages.begin(), messages.end(), std::uint32_t{0},
-            [](std::uint32_t total, const Message& msg) {
-                return total + estimate_message_tokens(msg);
-            });
+                               [](std::uint32_t total, const Message& msg) {
+                                   return total + estimate_message_tokens(msg);
+                               });
     }
 
     /// Estimate token count for a message (simplified heuristic)
     [[nodiscard]] static std::uint32_t estimate_message_tokens(const Message& msg) {
         std::uint32_t tokens = 0;
-        std::visit([&tokens](const auto& m) {
-            for (const auto& block : m.content) {
-                std::visit([&tokens](const auto& b) {
-                    using T = std::decay_t<decltype(b)>;
-                    if constexpr (std::is_same_v<T, TextBlock>) {
-                        tokens += static_cast<std::uint32_t>(b.text.size()) / 4;
-                    } else if constexpr (std::is_same_v<T, ToolResultBlock>) {
-                        tokens += static_cast<std::uint32_t>(tool_result_content_text(b).size()) / 4;
-                    } else if constexpr (std::is_same_v<T, ToolUseBlock>) {
-                        tokens += static_cast<std::uint32_t>(b.input_json.size()) / 4;
-                    } else if constexpr (std::is_same_v<T, ThinkingBlock>) {
-                        tokens += static_cast<std::uint32_t>(b.thinking.size()) / 4;
-                    }
-                }, block);
-            }
-        }, msg);
+        std::visit(
+            [&tokens](const auto& m) {
+                for (const auto& block : m.content) {
+                    std::visit(
+                        [&tokens](const auto& b) {
+                            using T = std::decay_t<decltype(b)>;
+                            if constexpr (std::is_same_v<T, TextBlock>) {
+                                tokens += static_cast<std::uint32_t>(b.text.size()) / 4;
+                            } else if constexpr (std::is_same_v<T, ToolResultBlock>) {
+                                tokens +=
+                                    static_cast<std::uint32_t>(tool_result_content_text(b).size()) /
+                                    4;
+                            } else if constexpr (std::is_same_v<T, ToolUseBlock>) {
+                                tokens += static_cast<std::uint32_t>(b.input_json.size()) / 4;
+                            } else if constexpr (std::is_same_v<T, ThinkingBlock>) {
+                                tokens += static_cast<std::uint32_t>(b.thinking.size()) / 4;
+                            }
+                        },
+                        block);
+                }
+            },
+            msg);
         return std::max(tokens, 1u);
     }
 
     /// Classify a message's preservation priority
     [[nodiscard]] static PreservePriority classify_priority(const Message& msg) {
-        return std::visit([](const auto& m) -> PreservePriority {
-            using T = std::decay_t<decltype(m)>;
-            if constexpr (std::is_same_v<T, SystemMessage>) {
-                return PreservePriority::Critical;
-            } else if constexpr (std::is_same_v<T, UserMessage>) {
-                return PreservePriority::High;
-            } else if constexpr (std::is_same_v<T, ToolResultMessage>) {
-                return PreservePriority::Low;
-            } else {
-                return PreservePriority::Medium;
-            }
-        }, msg);
+        return std::visit(
+            [](const auto& m) -> PreservePriority {
+                using T = std::decay_t<decltype(m)>;
+                if constexpr (std::is_same_v<T, SystemMessage>) {
+                    return PreservePriority::Critical;
+                } else if constexpr (std::is_same_v<T, UserMessage>) {
+                    return PreservePriority::High;
+                } else if constexpr (std::is_same_v<T, ToolResultMessage>) {
+                    return PreservePriority::Low;
+                } else {
+                    return PreservePriority::Medium;
+                }
+            },
+            msg);
     }
 
     /// Build a plan for what to compact
-    [[nodiscard]] std::vector<PlanEntry> build_compaction_plan(
-        const std::vector<Message>& messages, bool aggressive
-    ) const {
+    [[nodiscard]] std::vector<PlanEntry> build_compaction_plan(const std::vector<Message>& messages,
+                                                               bool aggressive) const {
         std::vector<PlanEntry> plan;
         plan.reserve(messages.size());
 
@@ -349,26 +357,32 @@ private:
     }
 
     /// Format plan for dry-run display
-    [[nodiscard]] static std::string format_plan(
-        const std::vector<PlanEntry>& plan, const CompactStats& stats
-    ) {
+    [[nodiscard]] static std::string format_plan(const std::vector<PlanEntry>& plan,
+                                                 const CompactStats& stats) {
         std::string output = "Compaction Plan (dry-run):\n\n";
 
         std::uint32_t keep_tokens = 0, summarize_tokens = 0, remove_tokens = 0;
         for (const auto& entry : plan) {
-            if (entry.action == "keep") keep_tokens += entry.estimated_tokens;
-            else if (entry.action == "summarize") summarize_tokens += entry.estimated_tokens;
-            else remove_tokens += entry.estimated_tokens;
+            if (entry.action == "keep")
+                keep_tokens += entry.estimated_tokens;
+            else if (entry.action == "summarize")
+                summarize_tokens += entry.estimated_tokens;
+            else
+                remove_tokens += entry.estimated_tokens;
         }
 
-        output += std::format("  Keep:      ~{} tokens ({} messages)\n", keep_tokens,
+        output += std::format(
+            "  Keep:      ~{} tokens ({} messages)\n", keep_tokens,
             std::ranges::count_if(plan, [](const auto& e) { return e.action == "keep"; }));
-        output += std::format("  Summarize: ~{} tokens ({} messages)\n", summarize_tokens,
+        output += std::format(
+            "  Summarize: ~{} tokens ({} messages)\n", summarize_tokens,
             std::ranges::count_if(plan, [](const auto& e) { return e.action == "summarize"; }));
-        output += std::format("  Remove:    ~{} tokens ({} messages)\n", remove_tokens,
+        output += std::format(
+            "  Remove:    ~{} tokens ({} messages)\n", remove_tokens,
             std::ranges::count_if(plan, [](const auto& e) { return e.action == "remove"; }));
         output += std::format("\n  Current: ~{} tokens\n", stats.tokens_before);
-        output += std::format("  Estimated after: ~{} tokens\n", keep_tokens + summarize_tokens / 3);
+        output +=
+            std::format("  Estimated after: ~{} tokens\n", keep_tokens + summarize_tokens / 3);
 
         return output;
     }
@@ -384,13 +398,15 @@ private:
             if (entry.action != "summarize") continue;
             // Extract text content from the message
             const auto& msg = conversation_messages_[entry.message_index];
-            std::visit([&content_to_summarize](const auto& m) {
-                for (const auto& block : m.content) {
-                    if (auto* text = std::get_if<TextBlock>(&block)) {
-                        content_to_summarize += text->text + "\n---\n";
+            std::visit(
+                [&content_to_summarize](const auto& m) {
+                    for (const auto& block : m.content) {
+                        if (auto* text = std::get_if<TextBlock>(&block)) {
+                            content_to_summarize += text->text + "\n---\n";
+                        }
                     }
-                }
-            }, msg);
+                },
+                msg);
         }
 
         return std::format(
@@ -400,9 +416,11 @@ private:
             "\n"
             "  1. User requirements and explicit constraints (\"do X\", \"avoid Y\")\n"
             "  2. Key decisions already made or agreed upon\n"
-            "  3. File paths, symbols, and code snippets that are load-bearing for the current task\n"
+            "  3. File paths, symbols, and code snippets that are load-bearing for the current "
+            "task\n"
             "  4. Error states, warnings, or unresolved issues\n"
-            "  5. Tool results that materially changed the plan (not raw output — just the conclusion)\n"
+            "  5. Tool results that materially changed the plan (not raw output — just the "
+            "conclusion)\n"
             "\n"
             "Collapse aggressively: remove verbose explanations, repeated reasoning, "
             "intermediate exploration that did not bear fruit, and raw tool output dumps. "
@@ -412,9 +430,9 @@ private:
             "see ONLY this summary going forward. Do NOT lose any information the user would "
             "expect you to remember.\n"
             "\n"
-            "Content to summarize:\n{}", content_to_summarize
-        );
+            "Content to summarize:\n{}",
+            content_to_summarize);
     }
 };
 
-} // namespace loom::commands
+}  // namespace loom::commands

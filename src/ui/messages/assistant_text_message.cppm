@@ -16,13 +16,13 @@
 // ────────────────────────────────────────────────────────────────────────
 module;
 
-#include <cstdint>
-
-#include <ftxui/dom/elements.hpp>
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/event.hpp>
+#include <ftxui/dom/elements.hpp>
+
 #include <cstddef>
+#include <cstdint>
 
 export module loom.ui.messages.assistant_text_message;
 
@@ -124,7 +124,7 @@ constexpr std::string_view kStrippedPromptTags[] = {
     return result.substr(b, e - b + 1);
 }
 
-} // namespace loom::ui::messages::detail
+}  // namespace loom::ui::messages::detail
 
 // ─── Literal \n unescape (module-internal) ─────────────────────────────
 // Some models (e.g. GLM-5.2 / ByteDance) emit text with JSON-escaped
@@ -185,18 +185,35 @@ namespace loom::ui::messages::detail {
 
         // Single-char escapes
         switch (next) {
-            case 'n':  out += '\n'; ++i; break;   // \n → newline
-            case 't':  out += '\t'; ++i; break;   // \t → tab
-            case '"':  out += '"';  ++i; break;   // \" → quote
-            case '\\': out += '\\'; ++i; break;   // \\ → backslash (JSON)
-            case '/':  out += '/';  ++i; break;   // \/ → forward slash (JSON)
-            default:   out += '\\'; break;        // unknown escape: keep backslash
+        case 'n':
+            out += '\n';
+            ++i;
+            break;  // \n → newline
+        case 't':
+            out += '\t';
+            ++i;
+            break;  // \t → tab
+        case '"':
+            out += '"';
+            ++i;
+            break;  // \" → quote
+        case '\\':
+            out += '\\';
+            ++i;
+            break;  // \\ → backslash (JSON)
+        case '/':
+            out += '/';
+            ++i;
+            break;  // \/ → forward slash (JSON)
+        default:
+            out += '\\';
+            break;  // unknown escape: keep backslash
         }
     }
     return out;
 }
 
-} // namespace loom::ui::messages::detail
+}  // namespace loom::ui::messages::detail
 
 export namespace loom::ui::messages {
 
@@ -206,19 +223,18 @@ using namespace ftxui;
 
 enum class AssistantMessageKind {
     Normal,
-    RateLimit,       // handled by sibling component, but flag preserved
-    ApiError,        // routed to error_message by dispatcher
-    Empty,           // render only a dot indicator
+    RateLimit,  // handled by sibling component, but flag preserved
+    ApiError,   // routed to error_message by dispatcher
+    Empty,      // render only a dot indicator
 };
 
 struct AssistantTextMessageData {
     std::string content;
-    std::chrono::system_clock::time_point timestamp =
-        std::chrono::system_clock::now();
+    std::chrono::system_clock::time_point timestamp = std::chrono::system_clock::now();
     std::optional<std::string> model_name;
     AssistantMessageKind kind = AssistantMessageKind::Normal;
-    bool verbose = false;          // show raw text
-    bool show_dot = true;          // show bullet per text block
+    bool verbose = false;  // show raw text
+    bool show_dot = true;  // show bullet per text block
     bool is_streaming = false;
     std::uint64_t input_tokens = 0;
     std::uint64_t output_tokens = 0;
@@ -227,7 +243,7 @@ struct AssistantTextMessageData {
 // ─── Component ─────────────────────────────────────────────────────────
 
 class AssistantTextMessageComponent : public ComponentBase {
-  public:
+public:
     using OnCopyFn = std::function<void(std::string_view)>;
     using OnRegenerateFn = std::function<void()>;
     using OnRateLimitFn = std::function<void()>;
@@ -236,11 +252,10 @@ class AssistantTextMessageComponent : public ComponentBase {
                                            OnCopyFn on_copy = nullptr,
                                            OnRegenerateFn on_regen = nullptr,
                                            OnRateLimitFn on_rl = nullptr)
-        : data_(std::move(data)),
-          on_copy_(std::move(on_copy)),
-          on_regen_(std::move(on_regen)),
-          on_rate_limit_(std::move(on_rl))
-    {
+        : data_(std::move(data))
+        , on_copy_(std::move(on_copy))
+        , on_regen_(std::move(on_regen))
+        , on_rate_limit_(std::move(on_rl)) {
         auto button_style = ButtonOption::Simple();
         button_style.transform = [](const EntryState& entry) {
             Element el = message_action(entry.label);
@@ -248,28 +263,39 @@ class AssistantTextMessageComponent : public ComponentBase {
             return el;
         };
         if (on_copy_) {
-            copy_btn_ = Button("Copy", [this] {
-                if (on_copy_) on_copy_(data_.content);
-            }, button_style) | size(WIDTH, EQUAL, 10);
+            copy_btn_ = Button(
+                            "Copy",
+                            [this] {
+                                if (on_copy_) on_copy_(data_.content);
+                            },
+                            button_style) |
+                        size(WIDTH, EQUAL, 10);
             Add(copy_btn_);
         }
         if (on_regen_) {
-            regen_btn_ = Button("Regenerate", [this] {
-                if (on_regen_) on_regen_();
-            }, button_style) | size(WIDTH, EQUAL, 14);
+            regen_btn_ = Button(
+                             "Regenerate",
+                             [this] {
+                                 if (on_regen_) on_regen_();
+                             },
+                             button_style) |
+                         size(WIDTH, EQUAL, 14);
             Add(regen_btn_);
         }
         if (on_rl) {
             auto rate_limit_style = button_style;
             rate_limit_style.transform = [](const EntryState& entry) {
-                Element el = message_action(entry.label,
-                    loom::ui::design::theme::current_theme().palette->warning);
+                Element el = message_action(
+                    entry.label, loom::ui::design::theme::current_theme().palette->warning);
                 if (entry.focused) el = el | inverted;
                 return el;
             };
-            rl_btn_ = Button("RateLimit options", [this] {
-                if (on_rate_limit_) on_rate_limit_();
-            }, rate_limit_style);
+            rl_btn_ = Button(
+                "RateLimit options",
+                [this] {
+                    if (on_rate_limit_) on_rate_limit_();
+                },
+                rate_limit_style);
             Add(rl_btn_);
         }
     }
@@ -286,11 +312,13 @@ class AssistantTextMessageComponent : public ComponentBase {
         }
 
         header.push_back(text("   ") | nothing);
-        header.push_back(text(render_timestamp(data_.timestamp))
-                             | dim | color(pal.muted));
+        header.push_back(text(render_timestamp(data_.timestamp)) | dim | color(pal.muted));
 
         if (data_.is_streaming) {
-            header.push_back(text(" ▍") | (loom::ui::design::theme::current_theme().a11y.reduced_motion ? nothing : blink) | color(pal.info));
+            header.push_back(
+                text(" ▍") |
+                (loom::ui::design::theme::current_theme().a11y.reduced_motion ? nothing : blink) |
+                color(pal.info));
         }
 
         auto header_line = hbox(std::move(header));
@@ -311,8 +339,9 @@ class AssistantTextMessageComponent : public ComponentBase {
         Elements footer;
         if (data_.input_tokens > 0 || data_.output_tokens > 0) {
             footer.push_back(hbox({
-                text("Input: " + std::to_string(data_.input_tokens) + " / Output: "
-                     + std::to_string(data_.output_tokens)) | dim,
+                text("Input: " + std::to_string(data_.input_tokens) +
+                     " / Output: " + std::to_string(data_.output_tokens)) |
+                    dim,
             }));
         }
 
@@ -334,14 +363,15 @@ class AssistantTextMessageComponent : public ComponentBase {
         auto action_row = hbox(std::move(actions));
 
         return vbox({
-            std::move(header_line),
-            separator() | dim,
-            vbox(std::move(body)) | indent(2),
-            separatorEmpty(),
-            footer.empty() ? text("") : vbox(std::move(footer)),
-            expanded_ || verbose_override_ ? separatorEmpty() : text(""),
-            action_row,
-        }) | focusPosition(0, 0);
+                   std::move(header_line),
+                   separator() | dim,
+                   vbox(std::move(body)) | indent(2),
+                   separatorEmpty(),
+                   footer.empty() ? text("") : vbox(std::move(footer)),
+                   expanded_ || verbose_override_ ? separatorEmpty() : text(""),
+                   action_row,
+               }) |
+               focusPosition(0, 0);
     }
 
     bool OnEvent(Event event) override {
@@ -361,7 +391,7 @@ class AssistantTextMessageComponent : public ComponentBase {
         return ComponentBase::OnEvent(event);
     }
 
-  private:
+private:
     auto BuildBody() const -> Elements {
         const auto& pal = *loom::ui::design::theme::current_theme().palette;
         Elements out;
@@ -444,21 +474,21 @@ class AssistantTextMessageComponent : public ComponentBase {
 
 // ─── Factories ─────────────────────────────────────────────────────────
 
-[[nodiscard]] inline Component MakeAssistantTextMessage(
-    AssistantTextMessageData data,
-    AssistantTextMessageComponent::OnCopyFn on_copy = nullptr,
-    AssistantTextMessageComponent::OnRegenerateFn on_regen = nullptr,
-    AssistantTextMessageComponent::OnRateLimitFn on_rl = nullptr)
-{
-    return Make<AssistantTextMessageComponent>(
-        std::move(data), std::move(on_copy), std::move(on_regen), std::move(on_rl));
+[[nodiscard]] inline Component
+MakeAssistantTextMessage(AssistantTextMessageData data,
+                         AssistantTextMessageComponent::OnCopyFn on_copy = nullptr,
+                         AssistantTextMessageComponent::OnRegenerateFn on_regen = nullptr,
+                         AssistantTextMessageComponent::OnRateLimitFn on_rl = nullptr) {
+    return Make<AssistantTextMessageComponent>(std::move(data), std::move(on_copy),
+                                               std::move(on_regen), std::move(on_rl));
 }
 
 /// Stateless element renderer (no interactions).
-[[nodiscard]] inline Element RenderAssistantTextMessageBubble(const AssistantTextMessageData& data) {
+[[nodiscard]] inline Element
+RenderAssistantTextMessageBubble(const AssistantTextMessageData& data) {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
-    std::string cleaned = detail::unescape_literal_newlines(
-        detail::strip_prompt_xml_tags(data.content));
+    std::string cleaned =
+        detail::unescape_literal_newlines(detail::strip_prompt_xml_tags(data.content));
     return vbox({
         hbox({
             text("Assistant  ") | bold | color(pal.role_pill_assistant),
@@ -484,10 +514,9 @@ class AssistantTextMessageComponent : public ComponentBase {
 //              row bg  = palette.message_actions_background (rgb(44,50,62))
 //   * false → BLACK_CIRCLE fg = palette.text (default fg)
 //              row bg  = none / inherited
-[[nodiscard]] inline Element RenderAssistantTextMessageFaithful(
-    const AssistantTextMessageData& data, Element body,
-    bool add_margin = true,
-    bool is_selected = false) {
+[[nodiscard]] inline Element
+RenderAssistantTextMessageFaithful(const AssistantTextMessageData& data, Element body,
+                                   bool add_margin = true, bool is_selected = false) {
     // R7: use palette tokens (not inline RGB) so theme variants (light/daltonized
     // resolve correctly.
     namespace thm = loom::ui::design::theme;
@@ -502,8 +531,7 @@ class AssistantTextMessageComponent : public ComponentBase {
         // (U+23FA record-circle) and relied on glyph+space content-width (fragile when
         // the string was 2 columns wide — now we guard with an explicit size
         // constraint.
-        Element glyph = text(std::string{figs::kBullet}) | color(dot_color)
-            | size(WIDTH, EQUAL, 2);
+        Element glyph = text(std::string{figs::kBullet}) | color(dot_color) | size(WIDTH, EQUAL, 2);
         row.push_back(std::move(glyph));
     }
     row.push_back(std::move(body));
@@ -513,9 +541,8 @@ class AssistantTextMessageComponent : public ComponentBase {
     Element content = hbox(std::move(row));
     // R7: when selected, wrap the entire row in message_actions_background
     // (the outer row background).
-    Element framed = is_selected
-        ? hbox({content | bgcolor(pal.message_actions_background) | flex})
-        : hbox({content, filler()}) | flex;
+    Element framed = is_selected ? hbox({content | bgcolor(pal.message_actions_background) | flex})
+                                 : hbox({content, filler()}) | flex;
     if (add_margin) {
         return vbox({text(""), std::move(framed)});
     }
@@ -531,16 +558,14 @@ class AssistantTextMessageComponent : public ComponentBase {
 /// is rendered via StreamingMarkdown::update(), preserving complete-document
 /// context and reusing the frame when its content has not changed.
 [[nodiscard]] inline Element RenderAssistantTextMessageFaithful(
-    const AssistantTextMessageData& data,
-    bool add_margin = true,
-    bool is_selected = false,
+    const AssistantTextMessageData& data, bool add_margin = true, bool is_selected = false,
     ::loom::ui::StreamingMarkdown* streaming_md = nullptr,
     ::loom::ui::mermaid::LayoutRowsCache* mermaid_rows_cache = nullptr) {
     // Unescape literal "\n" before markdown rendering — same fix as BuildBody().
     // Without this, models that emit JSON-escaped newlines produce one long
     // clipped line and markdown line-boundary patterns (* list, headings) fail.
-    std::string cleaned = detail::unescape_literal_newlines(
-        detail::strip_prompt_xml_tags(data.content));
+    std::string cleaned =
+        detail::unescape_literal_newlines(detail::strip_prompt_xml_tags(data.content));
     // Streaming text uses StreamingMarkdown (complete-document context)
     // so live and committed text share parsing and layout rules.
     Element body;

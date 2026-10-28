@@ -3,20 +3,21 @@
 // Image reads use osascript on macOS; text backends are platform-specific.
 module;
 
+#include <fcntl.h>     // open, O_RDWR
+#include <sys/wait.h>  // waitpid
+#include <unistd.h>    // fork, setsid, dup2, execl, _exit, STDIN_FILENO
+
 #include <cerrno>
 #include <cstdint>
 #include <cstdlib>
-#include <fcntl.h>        // open, O_RDWR
-#include <sys/wait.h>     // waitpid
-#include <unistd.h>       // fork, setsid, dup2, execl, _exit, STDIN_FILENO
 
 export module loom.platform.clipboard;
 
 import std;
 
 import loom.crypto.crypto;
-import loom.platform.find_executable;       // find_executable (PATH + X_OK)
-import loom.process.bash.bash_execution;   // exec_write (pbcopy / xclip / wl-copy)
+import loom.platform.find_executable;    // find_executable (PATH + X_OK)
+import loom.process.bash.bash_execution; // exec_write (pbcopy / xclip / wl-copy)
 
 export namespace loom::utils::clipboard {
 
@@ -112,36 +113,38 @@ inline int run_detached(const std::string& cmd) noexcept {
 ///
 /// This is the osascript-only equivalent for when `«class PNGf»` is
 /// absent but HTML with a data URL is present.
-[[nodiscard]] inline std::optional<std::vector<std::uint8_t>>
-extract_png_from_html_clipboard() {
+[[nodiscard]] inline std::optional<std::vector<std::uint8_t>> extract_png_from_html_clipboard() {
 #if defined(__APPLE__)
     namespace fs = std::filesystem;
 
     // ── Step 1: read HTML from clipboard ────────────────────────────────
     fs::path html_tmp = fs::temp_directory_path() / "loom-clipboard.html";
     const std::string html_tmp_s = html_tmp.string();
-    const std::string html_script =
-        "osascript "
-        "-e 'set html_data to (the clipboard as «class HTML»)' "
-        "-e 'set fp to open for access POSIX file \"" + html_tmp_s +
-        "\" with write permission' "
-        "-e 'set eof of fp to 0' "
-        "-e 'write html_data to fp' "
-        "-e 'close access fp'";
+    const std::string html_script = "osascript "
+                                    "-e 'set html_data to (the clipboard as «class HTML»)' "
+                                    "-e 'set fp to open for access POSIX file \"" +
+                                    html_tmp_s +
+                                    "\" with write permission' "
+                                    "-e 'set eof of fp to 0' "
+                                    "-e 'write html_data to fp' "
+                                    "-e 'close access fp'";
     if (run_detached(html_script) != 0) {
-        std::error_code rc; fs::remove(html_tmp, rc);
+        std::error_code rc;
+        fs::remove(html_tmp, rc);
         return std::nullopt;
     }
 
     // ── Step 2: read HTML bytes ─────────────────────────────────────────
     std::ifstream hf(html_tmp, std::ios::binary);
     if (!hf) {
-        std::error_code rc; fs::remove(html_tmp, rc);
+        std::error_code rc;
+        fs::remove(html_tmp, rc);
         return std::nullopt;
     }
     std::vector<char> html_buf((std::istreambuf_iterator<char>(hf)),
                                std::istreambuf_iterator<char>());
-    std::error_code rc; fs::remove(html_tmp, rc);
+    std::error_code rc;
+    fs::remove(html_tmp, rc);
     if (html_buf.empty()) return std::nullopt;
 
     std::string_view html(html_buf.data(), html_buf.size());
@@ -167,8 +170,9 @@ extract_png_from_html_clipboard() {
     auto data_end = data_start;
     while (data_end < html.size()) {
         char c = html[data_end];
-        if (c == '"' || c == '\'' || c == ' ' || c == '\n' ||
-            c == '\r' || c == '<' || c == '>' || c == '\\') break;
+        if (c == '"' || c == '\'' || c == ' ' || c == '\n' || c == '\r' || c == '<' || c == '>' ||
+            c == '\\')
+            break;
         ++data_end;
     }
     if (data_end <= data_start) return std::nullopt;
@@ -185,8 +189,7 @@ extract_png_from_html_clipboard() {
     }
 
     // Non-PNG: write to temp file and convert with sips
-    fs::path src_tmp = fs::temp_directory_path() /
-        ("loom-src." + std::string(image_type));
+    fs::path src_tmp = fs::temp_directory_path() / ("loom-src." + std::string(image_type));
     fs::path dst_tmp = fs::temp_directory_path() / "loom-dst.png";
 
     {
@@ -196,12 +199,12 @@ extract_png_from_html_clipboard() {
                  static_cast<std::streamsize>(decoded->size()));
     }
 
-    const std::string sips_cmd =
-        "sips -s format png '" + src_tmp.string() +
-        "' --out '" + dst_tmp.string() + "' > /dev/null 2>&1";
+    const std::string sips_cmd = "sips -s format png '" + src_tmp.string() + "' --out '" +
+                                 dst_tmp.string() + "' > /dev/null 2>&1";
     if (run_detached(sips_cmd) != 0) {
         std::error_code ec;
-        fs::remove(src_tmp, ec); fs::remove(dst_tmp, ec);
+        fs::remove(src_tmp, ec);
+        fs::remove(dst_tmp, ec);
         return std::nullopt;
     }
 
@@ -209,16 +212,17 @@ extract_png_from_html_clipboard() {
     std::ifstream df(dst_tmp, std::ios::binary);
     if (!df) {
         std::error_code ec;
-        fs::remove(src_tmp, ec); fs::remove(dst_tmp, ec);
+        fs::remove(src_tmp, ec);
+        fs::remove(dst_tmp, ec);
         return std::nullopt;
     }
-    std::vector<std::uint8_t> png_bytes(
-        (std::istreambuf_iterator<char>(df)),
-        std::istreambuf_iterator<char>());
+    std::vector<std::uint8_t> png_bytes((std::istreambuf_iterator<char>(df)),
+                                        std::istreambuf_iterator<char>());
 
     {
         std::error_code ec;
-        fs::remove(src_tmp, ec); fs::remove(dst_tmp, ec);
+        fs::remove(src_tmp, ec);
+        fs::remove(dst_tmp, ec);
     }
     if (png_bytes.empty()) return std::nullopt;
     return png_bytes;
@@ -249,16 +253,17 @@ extract_png_from_html_clipboard() {
     // IMPORTANT (2): run_detached() (NOT std::system) is mandatory — see the
     // gotcha block above. setsid()+/dev/null isolates osascript from loom's
     // raw-mode terminal so it doesn't see a TTY on stdin and fail.
-    std::string script =
-        "osascript "
-        "-e 'set png_data to (the clipboard as «class PNGf»)' "
-        "-e 'set fp to open for access POSIX file \"" + tmp_s +
-        "\" with write permission' "
-        "-e 'set eof of fp to 0' "
-        "-e 'write png_data to fp' "
-        "-e 'close access fp'";
+    std::string script = "osascript "
+                         "-e 'set png_data to (the clipboard as «class PNGf»)' "
+                         "-e 'set fp to open for access POSIX file \"" +
+                         tmp_s +
+                         "\" with write permission' "
+                         "-e 'set eof of fp to 0' "
+                         "-e 'write png_data to fp' "
+                         "-e 'close access fp'";
     if (run_detached(script) != 0) {
-        std::error_code rc; fs::remove(tmp, rc);
+        std::error_code rc;
+        fs::remove(tmp, rc);
         // PNGf failed — clipboard may have the image embedded in HTML (e.g.
         // copying from Lark/Feishu, Google Docs).  Try the HTML data-URL
         // fallback before giving up.
@@ -266,12 +271,14 @@ extract_png_from_html_clipboard() {
     }
     std::ifstream f(tmp, std::ios::binary);
     if (!f) {
-        std::error_code rc; fs::remove(tmp, rc);
+        std::error_code rc;
+        fs::remove(tmp, rc);
         return std::nullopt;
     }
     std::vector<std::uint8_t> bytes((std::istreambuf_iterator<char>(f)),
                                     std::istreambuf_iterator<char>());
-    std::error_code rc; fs::remove(tmp, rc);
+    std::error_code rc;
+    fs::remove(tmp, rc);
     if (bytes.empty()) return std::nullopt;
     return bytes;
 #else
@@ -294,17 +301,19 @@ extract_png_from_html_clipboard() {
     // run_detached() isolates pbpaste from loom's raw-mode terminal.
     const std::string script = "pbpaste > '" + tmp_s + "'";
     if (run_detached(script) != 0) {
-        std::error_code rc; fs::remove(tmp, rc);
+        std::error_code rc;
+        fs::remove(tmp, rc);
         return "";
     }
     std::ifstream f(tmp);
     if (!f) {
-        std::error_code rc; fs::remove(tmp, rc);
+        std::error_code rc;
+        fs::remove(tmp, rc);
         return "";
     }
-    std::string content((std::istreambuf_iterator<char>(f)),
-                        std::istreambuf_iterator<char>());
-    std::error_code rc; fs::remove(tmp, rc);
+    std::string content((std::istreambuf_iterator<char>(f)), std::istreambuf_iterator<char>());
+    std::error_code rc;
+    fs::remove(tmp, rc);
     return content;
 #else
     return "";
@@ -343,16 +352,15 @@ extract_png_from_html_clipboard() {
 /// machine's clipboard, not the user's local machine. On SSH sessions, the
 /// native path is skipped and the copy pipeline goes directly to OSC 52.
 [[nodiscard]] inline bool is_ssh_session() noexcept {
-    return std::getenv("SSH_CONNECTION") != nullptr ||
-           std::getenv("SSH_TTY") != nullptr;
+    return std::getenv("SSH_CONNECTION") != nullptr || std::getenv("SSH_TTY") != nullptr;
 }
 
 // ── Linux backend detection (D-3) ───────────────────────────────────────
 
 /// Resolved native clipboard backend.
 struct BackendInfo {
-    std::string path;                ///< Absolute path to the backend executable.
-    std::vector<std::string> argv;   ///< argv[0] = backend name, rest = args.
+    std::string path;               ///< Absolute path to the backend executable.
+    std::vector<std::string> argv;  ///< argv[0] = backend name, rest = args.
 };
 
 /// Resolve the native clipboard backend for the current platform.
@@ -369,8 +377,7 @@ struct BackendInfo {
 /// set_selection(), so the original process exits 0 before the clipboard is
 /// set — a daemonized descendant can overwrite a subsequent selection's
 /// content even with serialized cancel/reap.
-[[nodiscard]] inline std::optional<BackendInfo>
-resolve_native_backend() noexcept {
+[[nodiscard]] inline std::optional<BackendInfo> resolve_native_backend() noexcept {
 #if defined(__APPLE__)
     if (is_ssh_session()) return std::nullopt;
     // pbcopy is always available on macOS.

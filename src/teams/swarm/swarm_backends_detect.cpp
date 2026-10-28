@@ -136,4 +136,4 @@ void TeammateModeSnapshot::capture_unlocked() {
     captured_ = true;
 }
 
-} // namespace loom::utils::swarm_backends
+}  // namespace loom::utils::swarm_backends

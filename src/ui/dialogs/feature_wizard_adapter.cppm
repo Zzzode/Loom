@@ -16,10 +16,10 @@
 /// FeatureWizardRequest and calls MakeFeatureWizard below.
 module;
 
-#include <ftxui/dom/elements.hpp>
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/event.hpp>
+#include <ftxui/dom/elements.hpp>
 
 export module loom.ui.dialogs.feature_wizard_adapter;
 
@@ -36,8 +36,7 @@ namespace wd = loom::ui::wizard_dialog;
 /// Build a wizard component from a neutral feature wizard request.
 /// Generic — works for any ViewKind whose erased request is a
 /// FeatureWizardRequest (the composition root selects the request type).
-[[nodiscard]] inline ftxui::Component MakeFeatureWizard(
-    const fdp::FeatureWizardRequest& request) {
+[[nodiscard]] inline ftxui::Component MakeFeatureWizard(const fdp::FeatureWizardRequest& request) {
     wd::WizardProviderProps props;
     props.title = request.title;
     props.show_step_counter = request.show_step_counter;

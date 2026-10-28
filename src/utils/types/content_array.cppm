@@ -9,7 +9,8 @@ struct ContentBlock {
     std::string text;
 };
 
-inline void insert_block_after_tool_results(std::vector<ContentBlock>& content, ContentBlock block) {
+inline void insert_block_after_tool_results(std::vector<ContentBlock>& content,
+                                            ContentBlock block) {
     int last_tool_result_index = -1;
     for (std::size_t i = 0; i < content.size(); ++i) {
         if (content[i].type == "tool_result") {
@@ -25,8 +26,9 @@ inline void insert_block_after_tool_results(std::vector<ContentBlock>& content, 
         }
     } else {
         const std::size_t insert_index = content.empty() ? 0 : content.size() - 1;
-        content.insert(content.begin() + static_cast<std::ptrdiff_t>(insert_index), std::move(block));
+        content.insert(content.begin() + static_cast<std::ptrdiff_t>(insert_index),
+                       std::move(block));
     }
 }
 
-} // namespace loom::utils::content_array
+}  // namespace loom::utils::content_array

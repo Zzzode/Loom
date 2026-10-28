@@ -1,16 +1,17 @@
 /// @file test_ui_runtime.cpp
-/// @brief Split from test_ui.cpp - AppRuntime, E2E_Gate, FullscreenLayout, Logo, PromptInput, ReplScreen (SLOC budget fix)
+/// @brief Split from test_ui.cpp - AppRuntime, E2E_Gate, FullscreenLayout, Logo, PromptInput,
+/// ReplScreen (SLOC budget fix)
 
-#include <cstdlib>
-
-#include <ftxui/dom/elements.hpp>
-#include <ftxui/dom/node.hpp>
-#include <ftxui/screen/screen.hpp>
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/event.hpp>
 #include <ftxui/component/mouse.hpp>
+#include <ftxui/dom/elements.hpp>
+#include <ftxui/dom/node.hpp>
+#include <ftxui/screen/screen.hpp>
 #include <gtest/gtest.h>
 #include <httplib.h>
+
+#include <cstdlib>
 
 #include "test_ui_helpers.h"
 
@@ -46,11 +47,6 @@ namespace {
 namespace fs = std::filesystem;
 }
 
-
-
-
-
-
 TEST(ReplScreen, SubmitsUtf8PromptOnReturn) {
     namespace repl = loom::ui::repl_screen;
 
@@ -74,19 +70,23 @@ TEST(ReplScreen, SubmitsUtf8PromptOnReturn) {
     EXPECT_TRUE(state->input_text.empty());
 }
 
-
-
 TEST(ReplScreen, TabAcceptsSelectedSlashSuggestion) {
     namespace repl = loom::ui::repl_screen;
 
     auto state = std::make_shared<repl::ReplScreenState>();
     state->input_text = "/a";
     state->autocomplete_suggestions = {
-        {.display_text = "/add-dir", .description = "Add a working directory",
-         .insert_text = "/add-dir ", .replacement_start = 0, .replacement_end = 2,
+        {.display_text = "/add-dir",
+         .description = "Add a working directory",
+         .insert_text = "/add-dir ",
+         .replacement_start = 0,
+         .replacement_end = 2,
          .submit_on_return = true},
-        {.display_text = "/agents", .description = "Manage agent configurations",
-         .insert_text = "/agents ", .replacement_start = 0, .replacement_end = 2,
+        {.display_text = "/agents",
+         .description = "Manage agent configurations",
+         .insert_text = "/agents ",
+         .replacement_start = 0,
+         .replacement_end = 2,
          .submit_on_return = true},
     };
     state->autocomplete_index = 1;
@@ -99,19 +99,23 @@ TEST(ReplScreen, TabAcceptsSelectedSlashSuggestion) {
     EXPECT_EQ(state->autocomplete_index, -1);
 }
 
-
-
 TEST(ReplScreen, ReturnSubmitsSelectedSlashSuggestion) {
     namespace repl = loom::ui::repl_screen;
 
     auto state = std::make_shared<repl::ReplScreenState>();
     state->input_text = "/a";
     state->autocomplete_suggestions = {
-        {.display_text = "/add-dir", .description = "Add a working directory",
-         .insert_text = "/add-dir ", .replacement_start = 0, .replacement_end = 2,
+        {.display_text = "/add-dir",
+         .description = "Add a working directory",
+         .insert_text = "/add-dir ",
+         .replacement_start = 0,
+         .replacement_end = 2,
          .submit_on_return = true},
-        {.display_text = "/agents", .description = "Manage agent configurations",
-         .insert_text = "/agents ", .replacement_start = 0, .replacement_end = 2,
+        {.display_text = "/agents",
+         .description = "Manage agent configurations",
+         .insert_text = "/agents ",
+         .replacement_start = 0,
+         .replacement_end = 2,
          .submit_on_return = true},
     };
     state->autocomplete_index = 1;
@@ -133,8 +137,6 @@ TEST(ReplScreen, ReturnSubmitsSelectedSlashSuggestion) {
     EXPECT_EQ(state->autocomplete_index, -1);
 }
 
-
-
 TEST(ReplScreen, CtrlNCtrlPNavigateAutocompleteWithWrapping) {
     namespace repl = loom::ui::repl_screen;
 
@@ -143,15 +145,21 @@ TEST(ReplScreen, CtrlNCtrlPNavigateAutocompleteWithWrapping) {
     state->cwd = "/tmp/cpp_migration";
     state->input_text = "/a";
     state->autocomplete_suggestions = {
-        {.display_text = "/alpha", .description = "alpha",
+        {.display_text = "/alpha",
+         .description = "alpha",
          .insert_text = "/alpha",
-         .replacement_start = 0, .replacement_end = 2},
-        {.display_text = "/bravo", .description = "bravo",
+         .replacement_start = 0,
+         .replacement_end = 2},
+        {.display_text = "/bravo",
+         .description = "bravo",
          .insert_text = "/bravo",
-         .replacement_start = 0, .replacement_end = 2},
-        {.display_text = "/charlie", .description = "charlie",
+         .replacement_start = 0,
+         .replacement_end = 2},
+        {.display_text = "/charlie",
+         .description = "charlie",
          .insert_text = "/charlie",
-         .replacement_start = 0, .replacement_end = 2},
+         .replacement_start = 0,
+         .replacement_end = 2},
     };
     state->autocomplete_index = -1;
 
@@ -167,8 +175,7 @@ TEST(ReplScreen, CtrlNCtrlPNavigateAutocompleteWithWrapping) {
     EXPECT_TRUE(component->OnEvent(ftxui::Event::Character("\x0e")));
     EXPECT_EQ(state->autocomplete_index, 2);
     EXPECT_TRUE(component->OnEvent(ftxui::Event::Character("\x0e")));
-    EXPECT_EQ(state->autocomplete_index, 0)
-        << "Ctrl+N wraps from last suggestion back to 0";
+    EXPECT_EQ(state->autocomplete_index, 0) << "Ctrl+N wraps from last suggestion back to 0";
     EXPECT_TRUE(component->OnEvent(ftxui::Event::Character("\x0e")));
     EXPECT_EQ(state->autocomplete_index, 1);
 
@@ -176,14 +183,11 @@ TEST(ReplScreen, CtrlNCtrlPNavigateAutocompleteWithWrapping) {
     // not touch input_text (TS useTypeahead.tsx:1341 early return).
     auto empty = std::make_shared<repl::ReplScreenState>();
     empty->input_text = "keep me";
-    auto empty_component =
-        repl::ReplScreen(empty, repl::ReplScreenCallbacks{});
+    auto empty_component = repl::ReplScreen(empty, repl::ReplScreenCallbacks{});
     EXPECT_FALSE(empty_component->OnEvent(ftxui::Event::Character("\x0e")));
     EXPECT_FALSE(empty_component->OnEvent(ftxui::Event::Character("\x10")));
     EXPECT_EQ(empty->input_text, "keep me");
 }
-
-
 
 TEST(ReplScreen, EscapeDoublePressOnWhitespaceOnlyClearsWithoutHistory) {
     namespace repl = loom::ui::repl_screen;
@@ -207,11 +211,8 @@ TEST(ReplScreen, EscapeDoublePressOnWhitespaceOnlyClearsWithoutHistory) {
     EXPECT_TRUE(component->OnEvent(ftxui::Event::Escape));
     EXPECT_TRUE(component->OnEvent(ftxui::Event::Escape));
     EXPECT_TRUE(state->input_text.empty());
-    EXPECT_EQ(saved, "untouched")
-        << "whitespace-only text must not be saved to history";
+    EXPECT_EQ(saved, "untouched") << "whitespace-only text must not be saved to history";
 }
-
-
 
 TEST(ReplScreen, EscapeDismissesPopupThenArmsThenClears) {
     namespace repl = loom::ui::repl_screen;
@@ -222,10 +223,8 @@ TEST(ReplScreen, EscapeDismissesPopupThenArmsThenClears) {
     state->cwd = "/tmp/cpp_migration";
     state->input_text = "query";
     state->autocomplete_suggestions = {
-        {.display_text = "query one", .description = "one",
-         .insert_text = "query one"},
-        {.display_text = "query two", .description = "two",
-         .insert_text = "query two"},
+        {.display_text = "query one", .description = "one", .insert_text = "query one"},
+        {.display_text = "query two", .description = "two", .insert_text = "query two"},
     };
 
     auto component = repl::ReplScreen(state, repl::ReplScreenCallbacks{});
@@ -249,15 +248,11 @@ TEST(ReplScreen, EscapeDismissesPopupThenArmsThenClears) {
     (void)idle_component->OnEvent(ftxui::Event::Escape);
     bool has_escape_hint = false;
     if (idle->footer_notification_queue.current) {
-        has_escape_hint =
-            idle->footer_notification_queue.current->key ==
-            "escape-again-to-clear";
+        has_escape_hint = idle->footer_notification_queue.current->key == "escape-again-to-clear";
     }
     EXPECT_FALSE(has_escape_hint);
     (void)pif::NotificationPriority::Immediate;
 }
-
-
 
 // Bug: "输入感叹号之后就没法退出这个 bash mode" — after typing '!' to enter bash
 // mode (empty input), Backspace/Escape/Delete/Ctrl+U at cursor position 0 must
@@ -280,8 +275,6 @@ TEST(ReplScreen, BashModeExitsOnBackspaceAtStart) {
     EXPECT_TRUE(component->OnEvent(ftxui::Event::Backspace));
     EXPECT_EQ(state->prompt_store.input_mode, repl::InputMode::Normal);
 }
-
-
 
 TEST(ReplScreen, BashModeExitsOnEscapeAndDeleteAndCtrlUAtStart) {
     namespace repl = loom::ui::repl_screen;
@@ -315,8 +308,6 @@ TEST(ReplScreen, BashModeExitsOnEscapeAndDeleteAndCtrlUAtStart) {
     }
 }
 
-
-
 TEST(ReplScreen, BashModeBackspaceMidTextDoesNotExitMode) {
     namespace repl = loom::ui::repl_screen;
 
@@ -335,8 +326,6 @@ TEST(ReplScreen, BashModeBackspaceMidTextDoesNotExitMode) {
     EXPECT_EQ(state->input_text, "l");
     EXPECT_EQ(state->prompt_store.input_mode, repl::InputMode::Bash);
 }
-
-
 
 TEST(ReplScreen, MouseWheelScrollsTranscript) {
     namespace repl = loom::ui::repl_screen;
@@ -387,8 +376,7 @@ TEST(ReplScreen, MouseWheelScrollsVirtualTranscript) {
     }
 
     auto component = repl::ReplScreen(state, repl::ReplScreenCallbacks{});
-    auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(120),
-                                        ftxui::Dimension::Fixed(40));
+    auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(120), ftxui::Dimension::Fixed(40));
     ftxui::Render(screen, component->Render());
     ASSERT_TRUE(state->messages_store.virtual_list_active);
     ASSERT_TRUE(state->messages_store.scroll_pinned_to_bottom);
@@ -429,8 +417,7 @@ TEST(ReplScreen, NewMessagesPillClickRePinsTranscript) {
     }
 
     auto component = repl::ReplScreen(state, repl::ReplScreenCallbacks{});
-    auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(120),
-                                        ftxui::Dimension::Fixed(40));
+    auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(120), ftxui::Dimension::Fixed(40));
     ftxui::Render(screen, component->Render());
 
     ASSERT_TRUE(state->messages_store.virtual_list_active);
@@ -476,8 +463,7 @@ TEST(ReplScreen, NewMessagesPillKeyboardShortcutRePinsTranscript) {
     }
 
     auto component = repl::ReplScreen(state, repl::ReplScreenCallbacks{});
-    auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(120),
-                                        ftxui::Dimension::Fixed(40));
+    auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(120), ftxui::Dimension::Fixed(40));
     ftxui::Render(screen, component->Render());
     ASSERT_TRUE(state->messages_store.virtual_list_active);
 
@@ -595,7 +581,8 @@ TEST(ReplScreen, WordWrapLongParagraphLastLineReachable) {
     // 200 "word " at 40 cols — the last line must be counted so the
     // scroll offset can reach it (regression: hard-wrap underestimated).
     std::string text;
-    for (int i = 0; i < 200; ++i) text += "word ";
+    for (int i = 0; i < 200; ++i)
+        text += "word ";
     text += "THEEND";
     const int lines = repl::CountWordWrappedLines(text, 40);
     // 200 "word " = 1000 chars + "THEEND" = 1006 chars
@@ -632,7 +619,8 @@ TEST(ReplScreen, VirtualEstimateRowHeightRespectsTermCols) {
 
     // A paragraph long enough to wrap at both 40 and 120 cols.
     std::string text;
-    for (int i = 0; i < 30; ++i) text += "hello world ";
+    for (int i = 0; i < 30; ++i)
+        text += "hello world ";
     // ~360 chars → at 120 cols wraps to ~3 lines, at 40 cols wraps to ~9.
 
     ml::MessagesListInput input;
@@ -644,12 +632,11 @@ TEST(ReplScreen, VirtualEstimateRowHeightRespectsTermCols) {
     auto visible = ml::build_visible_rows(input);
     ASSERT_EQ(visible.size(), 1u);
 
-    const int est_40  = ml::detail::estimate_row_height(visible[0], input, 40);
+    const int est_40 = ml::detail::estimate_row_height(visible[0], input, 40);
     const int est_120 = ml::detail::estimate_row_height(visible[0], input, 120);
 
     // Narrow terminal must produce a taller (or equal) estimate.
-    EXPECT_GT(est_40, est_120)
-        << "40-col estimate should exceed 120-col for wrapping text";
+    EXPECT_GT(est_40, est_120) << "40-col estimate should exceed 120-col for wrapping text";
 }
 
 TEST(ReplScreen, UserPromptHeightEstimatesMatchCellsWidthAndExplicitNewlines) {
@@ -671,10 +658,10 @@ TEST(ReplScreen, UserPromptHeightEstimatesMatchCellsWidthAndExplicitNewlines) {
         input.shapes.push_back(ml::MessageShape::UserPrompt);
         const auto visible = ml::build_visible_rows(input);
         ASSERT_EQ(visible.size(), 1u);
-        auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(width),
-                                           ftxui::Dimension::Fixed(12));
-        ftxui::Render(screen, ftxui::vbox({msg::RenderUserPromptMessage(data),
-                                          ftxui::text("AFTER")}));
+        auto screen =
+            ftxui::Screen::Create(ftxui::Dimension::Fixed(width), ftxui::Dimension::Fixed(12));
+        ftxui::Render(screen,
+                      ftxui::vbox({msg::RenderUserPromptMessage(data), ftxui::text("AFTER")}));
         int rendered_rows = -1;
         for (int y = 0; y < screen.dimy(); ++y) {
             if (screen.PixelAt(0, y).character == "A") rendered_rows = y;
@@ -701,7 +688,7 @@ TEST(ReplScreen, VirtualEstimateRowHeightSameForShortText) {
     auto visible = ml::build_visible_rows(input);
     ASSERT_EQ(visible.size(), 1u);
 
-    const int est_40  = ml::detail::estimate_row_height(visible[0], input, 40);
+    const int est_40 = ml::detail::estimate_row_height(visible[0], input, 40);
     const int est_120 = ml::detail::estimate_row_height(visible[0], input, 120);
 
     // Both should be equal (1 content line + envelope header).
@@ -713,7 +700,8 @@ TEST(ReplScreen, VirtualVisibleRowsToVirtualRespectsTermCols) {
 
     // A paragraph long enough to wrap differently at 40 vs 120 cols.
     std::string text;
-    for (int i = 0; i < 30; ++i) text += "hello world ";
+    for (int i = 0; i < 30; ++i)
+        text += "hello world ";
 
     ml::MessagesListInput input;
     ml::AssistantTextMessageData data;
@@ -724,7 +712,7 @@ TEST(ReplScreen, VirtualVisibleRowsToVirtualRespectsTermCols) {
     auto visible = ml::build_visible_rows(input);
     ASSERT_EQ(visible.size(), 1u);
 
-    auto virt_40  = ml::visible_rows_to_virtual(visible, input, 40);
+    auto virt_40 = ml::visible_rows_to_virtual(visible, input, 40);
     auto virt_120 = ml::visible_rows_to_virtual(visible, input, 120);
     ASSERT_EQ(virt_40.size(), 1u);
     ASSERT_EQ(virt_120.size(), 1u);
@@ -743,11 +731,10 @@ TEST(ReplScreen, WordWrapFencedCodeBlockPreservesLines) {
     namespace repl = loom::ui::repl_screen;
     // Fenced code block: each line must count as a separate row, not be
     // joined with spaces (soft-break).
-    const std::string text =
-        "```python\n"
-        "def hello():\n"
-        "    print(\"hello\")\n"
-        "```";
+    const std::string text = "```python\n"
+                             "def hello():\n"
+                             "    print(\"hello\")\n"
+                             "```";
     const int lines = repl::CountWordWrappedLines(text, 80);
     // 2 code lines → 2 rows (fence delimiters not counted).
     EXPECT_EQ(lines, 2);
@@ -757,14 +744,13 @@ TEST(ReplScreen, WordWrapIndentedCodeBlockPreservesLines) {
     namespace repl = loom::ui::repl_screen;
     // Indented code block after blank line: each line must count as a
     // separate row, not be joined with spaces.
-    const std::string text =
-        "Some text.\n"
-        "\n"
-        "    code line 1\n"
-        "    code line 2\n"
-        "    code line 3\n"
-        "\n"
-        "More text.";
+    const std::string text = "Some text.\n"
+                             "\n"
+                             "    code line 1\n"
+                             "    code line 2\n"
+                             "    code line 3\n"
+                             "\n"
+                             "More text.";
     const int lines = repl::CountWordWrappedLines(text, 80);
     // "Some text." (1) + blank (1) + 3 code lines + blank (1) + "More text." (1)
     // = 7 lines minimum.  Without the fix, code lines would be joined to ~3.
@@ -775,7 +761,8 @@ TEST(ReplScreen, WordWrapFencedCodeBlockWithWrappingContent) {
     namespace repl = loom::ui::repl_screen;
     // Long code lines should still wrap at the content width.
     std::string text = "```\n";
-    for (int i = 0; i < 20; ++i) text += "word ";
+    for (int i = 0; i < 20; ++i)
+        text += "word ";
     text += "\n```";
     const int lines = repl::CountWordWrappedLines(text, 40);
     // 20 "word " = 100 chars → at 40 cols wraps to ~3 lines.
@@ -788,9 +775,8 @@ TEST(ReplScreen, WordWrapIndentedCodeBlockNoFalsePositiveInParagraph) {
     // 4-space indent WITHOUT a preceding blank line is paragraph continuation,
     // NOT a code block (CommonMark: indented code blocks cannot interrupt
     // a paragraph).  The soft-break join with space still applies.
-    const std::string text =
-        "First line\n"
-        "    continued with indent";
+    const std::string text = "First line\n"
+                             "    continued with indent";
     const int lines = repl::CountWordWrappedLines(text, 80);
     // Soft break → joined with space → 1 line at 80 cols.
     EXPECT_EQ(lines, 1);
@@ -808,11 +794,10 @@ TEST(ReplScreen, WordWrapFencedCodeBlockOpenerSeparator) {
     // Prose before a fenced opener must produce a block separator row.
     // Without the opener boundary, "before" and "code" are joined by
     // soft-break → 2 lines instead of 3.
-    const std::string text =
-        "before\n"
-        "```\n"
-        "code\n"
-        "```";
+    const std::string text = "before\n"
+                             "```\n"
+                             "code\n"
+                             "```";
     const int lines = repl::CountWordWrappedLines(text, 80);
     // "before" (1) + separator (1) + "code" (1) = 3.
     EXPECT_EQ(lines, 3);
@@ -823,11 +808,10 @@ TEST(ReplScreen, WordWrapFencedCodeBlockClosingSeparator) {
     // Prose after a closing fence must produce a block separator row.
     // Without the closing boundary, "code" and "after" are joined on
     // the same line → 1 line, making the last line unreachable.
-    const std::string text =
-        "```\n"
-        "code\n"
-        "```\n"
-        "after";
+    const std::string text = "```\n"
+                             "code\n"
+                             "```\n"
+                             "after";
     const int lines = repl::CountWordWrappedLines(text, 80);
     // "code" (1) + separator (1) + "after" (1) = 3.
     EXPECT_EQ(lines, 3);
@@ -837,10 +821,9 @@ TEST(ReplScreen, WordWrapIndentedCodeBlockEndsAtProse) {
     namespace repl = loom::ui::repl_screen;
     // An indented code block followed by non-indented prose must produce
     // a block separator.  Without it, "code" and "after" are joined.
-    const std::string text =
-        "\n"
-        "    code\n"
-        "after";
+    const std::string text = "\n"
+                             "    code\n"
+                             "after";
     const int lines = repl::CountWordWrappedLines(text, 80);
     // "code" (1) + separator (1) + "after" (1) = 3.
     EXPECT_EQ(lines, 3);
@@ -853,13 +836,12 @@ TEST(ReplScreen, WordWrapFencedCodeBlockClosingFenceWithTail) {
     // spaces").  The line and everything after it stay in the code block.
     // Without the tail check, the fence closes early, the remaining lines
     // are soft-break joined → 3 lines instead of 4.
-    const std::string text =
-        "```\n"
-        "code\n"
-        "```not a close\n"
-        "line two\n"
-        "line three\n"
-        "```";
+    const std::string text = "```\n"
+                             "code\n"
+                             "```not a close\n"
+                             "line two\n"
+                             "line three\n"
+                             "```";
     const int lines = repl::CountWordWrappedLines(text, 80);
     // 3 code lines: "code", "```not a close", "line two", "line three"
     // — wait, that's 4.  Without the tail check the fake close ends the
@@ -874,9 +856,8 @@ TEST(ReplScreen, WordWrapIndentedCodeBlockAtDocumentStart) {
     // code blocks to begin the document when no paragraph is open.
     // Without the first_content check, the 4-space indent is stripped and
     // the lines are soft-joined → 1 line instead of 2.
-    const std::string text =
-        "    code one\n"
-        "    code two";
+    const std::string text = "    code one\n"
+                             "    code two";
     const int lines = repl::CountWordWrappedLines(text, 80);
     // 2 code lines → 2 rows.
     EXPECT_EQ(lines, 2);
@@ -887,13 +868,13 @@ TEST(ReplScreen, WordWrapIndentedCodeBlockAtDocumentStart) {
 TEST(ReplScreen, WheelStrideScalesWithViewport) {
     namespace repl = loom::ui::repl_screen;
     // 10% of viewport height, clamped to [3, 15].
-    EXPECT_EQ(repl::WheelStride(8), 3);    // 8/10=0 → min 3
-    EXPECT_EQ(repl::WheelStride(30), 3);   // 30/10=3 → min 3
-    EXPECT_EQ(repl::WheelStride(40), 4);   // 40/10=4
-    EXPECT_EQ(repl::WheelStride(60), 6);   // 60/10=6
-    EXPECT_EQ(repl::WheelStride(100), 10); // 100/10=10
-    EXPECT_EQ(repl::WheelStride(150), 15); // 150/10=15 → max 15
-    EXPECT_EQ(repl::WheelStride(200), 15); // 200/10=20 → clamped to 15
+    EXPECT_EQ(repl::WheelStride(8), 3);     // 8/10=0 → min 3
+    EXPECT_EQ(repl::WheelStride(30), 3);    // 30/10=3 → min 3
+    EXPECT_EQ(repl::WheelStride(40), 4);    // 40/10=4
+    EXPECT_EQ(repl::WheelStride(60), 6);    // 60/10=6
+    EXPECT_EQ(repl::WheelStride(100), 10);  // 100/10=10
+    EXPECT_EQ(repl::WheelStride(150), 15);  // 150/10=15 → max 15
+    EXPECT_EQ(repl::WheelStride(200), 15);  // 200/10=20 → clamped to 15
 }
 
 TEST(ReplScreen, WheelStrideHandlesZero) {
@@ -914,8 +895,7 @@ namespace {
 namespace rs = loom::ui::repl_screen;
 
 /// Add `count` assistant messages with unique IDs to the store.
-void AddTestMessages(rs::MessagesStore& store, int count,
-                     std::string_view prefix) {
+void AddTestMessages(rs::MessagesStore& store, int count, std::string_view prefix) {
     for (int i = 0; i < count; ++i) {
         rs::MessageDisplayEntry message;
         message.id = std::format("{}-{:03}", prefix, i);
@@ -929,22 +909,19 @@ void AddTestMessages(rs::MessagesStore& store, int count,
 /// stripped screen text for visual assertions.
 std::string RenderFrame(const std::shared_ptr<rs::ReplScreenState>& state) {
     auto component = rs::ReplScreen(state, rs::ReplScreenCallbacks{});
-    auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(120),
-                                        ftxui::Dimension::Fixed(40));
+    auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(120), ftxui::Dimension::Fixed(40));
     ftxui::Render(screen, component->Render());
     return strip_ansi(screen.ToString());
 }
 
 /// Create a ReplScreen component for event-driven tests (wheel, click).
-[[nodiscard]] ftxui::Component
-MakeComponent(const std::shared_ptr<rs::ReplScreenState>& state) {
+[[nodiscard]] ftxui::Component MakeComponent(const std::shared_ptr<rs::ReplScreenState>& state) {
     return rs::ReplScreen(state, rs::ReplScreenCallbacks{});
 }
 
 /// Render through an existing component and return stripped screen text.
 std::string RenderThrough(const ftxui::Component& component) {
-    auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(120),
-                                        ftxui::Dimension::Fixed(40));
+    auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(120), ftxui::Dimension::Fixed(40));
     ftxui::Render(screen, component->Render());
     return strip_ansi(screen.ToString());
 }
@@ -978,8 +955,7 @@ TEST(ReplScreen, VirtualModeSwitchStaticToVirtualThroughRender) {
     RenderFrame(state);
 
     // Mode switched Static→Virtual, counter incremented.
-    EXPECT_EQ(state->messages_store.virtual_renderer_mode,
-              VirtualRendererMode::Virtual);
+    EXPECT_EQ(state->messages_store.virtual_renderer_mode, VirtualRendererMode::Virtual);
     EXPECT_EQ(state->messages_store.virtual_mode_switch_count, 1u);
     EXPECT_TRUE(state->messages_store.virtual_list_active);
     // Pinned (default) → no scroll reset → force_bottom NOT set.
@@ -991,15 +967,13 @@ TEST(ReplScreen, VirtualModeSwitchVirtualToStaticThroughRender) {
     using loom::ui::messages_list::VirtualRendererMode;
 
     auto state = std::make_shared<repl::ReplScreenState>();
-    state->messages_store.virtual_renderer_mode =
-        VirtualRendererMode::Virtual;
+    state->messages_store.virtual_renderer_mode = VirtualRendererMode::Virtual;
     AddTestMessages(state->messages_store, 59, "exit");
 
     RenderFrame(state);
 
     // Mode switched Virtual→Static, counter incremented.
-    EXPECT_EQ(state->messages_store.virtual_renderer_mode,
-              VirtualRendererMode::Static);
+    EXPECT_EQ(state->messages_store.virtual_renderer_mode, VirtualRendererMode::Static);
     EXPECT_EQ(state->messages_store.virtual_mode_switch_count, 1u);
     EXPECT_FALSE(state->messages_store.virtual_list_active);
 }
@@ -1013,22 +987,19 @@ TEST(ReplScreen, VirtualHysteresisBandThroughRender) {
     // Frame 1: 81 messages → Static→Virtual.
     AddTestMessages(state->messages_store, 81, "band");
     RenderFrame(state);
-    EXPECT_EQ(state->messages_store.virtual_renderer_mode,
-              VirtualRendererMode::Virtual);
+    EXPECT_EQ(state->messages_store.virtual_renderer_mode, VirtualRendererMode::Virtual);
     EXPECT_EQ(state->messages_store.virtual_mode_switch_count, 1u);
 
     // Frame 2: reduce to 79 (inside band [60,80]) → stays Virtual.
     state->messages_store.messages.resize(79);
     RenderFrame(state);
-    EXPECT_EQ(state->messages_store.virtual_renderer_mode,
-              VirtualRendererMode::Virtual);
+    EXPECT_EQ(state->messages_store.virtual_renderer_mode, VirtualRendererMode::Virtual);
     EXPECT_EQ(state->messages_store.virtual_mode_switch_count, 1u);
 
     // Frame 3: reduce to 59 (< 60) → Virtual→Static.
     state->messages_store.messages.resize(59);
     RenderFrame(state);
-    EXPECT_EQ(state->messages_store.virtual_renderer_mode,
-              VirtualRendererMode::Static);
+    EXPECT_EQ(state->messages_store.virtual_renderer_mode, VirtualRendererMode::Static);
     EXPECT_EQ(state->messages_store.virtual_mode_switch_count, 2u);
 }
 
@@ -1048,8 +1019,7 @@ TEST(ReplScreen, VirtualModeSwitchNotPinnedResetsScrollToBottom) {
     RenderFrame(state);
 
     // Mode switched.
-    EXPECT_EQ(state->messages_store.virtual_renderer_mode,
-              VirtualRendererMode::Virtual);
+    EXPECT_EQ(state->messages_store.virtual_renderer_mode, VirtualRendererMode::Virtual);
     // Scroll was reset to bottom (same-frame reset).
     EXPECT_TRUE(state->messages_store.scroll_pinned_to_bottom);
     // Pill / divider state cleared by ClearRepinState.
@@ -1070,8 +1040,7 @@ TEST(ReplScreen, VirtualModeSwitchPinnedDoesNotSetForceBottom) {
 
     RenderFrame(state);
 
-    EXPECT_EQ(state->messages_store.virtual_renderer_mode,
-              VirtualRendererMode::Virtual);
+    EXPECT_EQ(state->messages_store.virtual_renderer_mode, VirtualRendererMode::Virtual);
     EXPECT_FALSE(state->messages_store.force_bottom_after_mode_switch);
 }
 
@@ -1080,14 +1049,12 @@ TEST(ReplScreen, ForceBottomFlagClearedOnWheelScrollAway) {
     using loom::ui::messages_list::VirtualRendererMode;
 
     auto state = std::make_shared<repl::ReplScreenState>();
-    state->messages_store.virtual_renderer_mode =
-        VirtualRendererMode::Virtual;
+    state->messages_store.virtual_renderer_mode = VirtualRendererMode::Virtual;
     state->messages_store.force_bottom_after_mode_switch = true;
     AddTestMessages(state->messages_store, 100, "wheel");
 
     auto component = repl::ReplScreen(state, repl::ReplScreenCallbacks{});
-    auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(120),
-                                        ftxui::Dimension::Fixed(40));
+    auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(120), ftxui::Dimension::Fixed(40));
     ftxui::Render(screen, component->Render());
     ASSERT_TRUE(state->messages_store.scroll_pinned_to_bottom);
     ASSERT_TRUE(state->messages_store.force_bottom_after_mode_switch);
@@ -1105,8 +1072,7 @@ TEST(ReplScreen, ForceBottomFlagSurvivesNewContent) {
     using loom::ui::messages_list::VirtualRendererMode;
 
     auto state = std::make_shared<repl::ReplScreenState>();
-    state->messages_store.virtual_renderer_mode =
-        VirtualRendererMode::Virtual;
+    state->messages_store.virtual_renderer_mode = VirtualRendererMode::Virtual;
     state->messages_store.force_bottom_after_mode_switch = true;
     AddTestMessages(state->messages_store, 81, "survive");
 
@@ -1119,8 +1085,7 @@ TEST(ReplScreen, ForceBottomFlagSurvivesNewContent) {
     RenderFrame(state);
     // Flag should survive — it's only cleared by explicit pin=false events.
     EXPECT_TRUE(state->messages_store.force_bottom_after_mode_switch);
-    EXPECT_EQ(state->messages_store.virtual_renderer_mode,
-              VirtualRendererMode::Virtual);
+    EXPECT_EQ(state->messages_store.virtual_renderer_mode, VirtualRendererMode::Virtual);
 }
 
 TEST(ReplScreen, VirtualModeSwitchCountTracksMultipleTransitions) {
@@ -1143,8 +1108,7 @@ TEST(ReplScreen, VirtualModeSwitchCountTracksMultipleTransitions) {
     AddTestMessages(state->messages_store, 22, "count-more");
     RenderFrame(state);
     EXPECT_EQ(state->messages_store.virtual_mode_switch_count, 3u);
-    EXPECT_EQ(state->messages_store.virtual_renderer_mode,
-              VirtualRendererMode::Virtual);
+    EXPECT_EQ(state->messages_store.virtual_renderer_mode, VirtualRendererMode::Virtual);
 }
 
 // ── Visual bottom-anchor assertions (Dev-0/Dev-2 P1: store state alone
@@ -1155,18 +1119,15 @@ TEST(ReplScreen, VirtualToStaticSingleTallMessageShowsTail) {
     using loom::ui::messages_list::VirtualRendererMode;
 
     auto state = std::make_shared<repl::ReplScreenState>();
-    state->messages_store.virtual_renderer_mode =
-        VirtualRendererMode::Virtual;
+    state->messages_store.virtual_renderer_mode = VirtualRendererMode::Virtual;
     state->messages_store.scroll_pinned_to_bottom = false;
     // Single tall message: 200 lines of local command output.
-    state->messages_store.messages.push_back(
-        MakeTallMessage(200, "tall-001", "TAIL_MARKER"));
+    state->messages_store.messages.push_back(MakeTallMessage(200, "tall-001", "TAIL_MARKER"));
 
     // Frame 1: Virtual→Static switch (visible=1 < 60). Unpinned →
     // scroll_was_reset_to_bottom → force_bottom_after_mode_switch = true.
     auto text = RenderFrame(state);
-    EXPECT_EQ(state->messages_store.virtual_renderer_mode,
-              VirtualRendererMode::Static);
+    EXPECT_EQ(state->messages_store.virtual_renderer_mode, VirtualRendererMode::Static);
     EXPECT_EQ(state->messages_store.virtual_mode_switch_count, 1u);
     EXPECT_TRUE(state->messages_store.force_bottom_after_mode_switch);
     // The tail must be visible on the switch frame.
@@ -1190,8 +1151,7 @@ TEST(ReplScreen, StaticToVirtualSwitchShowsTail) {
 
     // Frame 1: Static→Virtual switch.
     auto text = RenderFrame(state);
-    EXPECT_EQ(state->messages_store.virtual_renderer_mode,
-              VirtualRendererMode::Virtual);
+    EXPECT_EQ(state->messages_store.virtual_renderer_mode, VirtualRendererMode::Virtual);
     // Last message must be visible (pinned to bottom by default).
     EXPECT_NE(text.find("tail-visible message 080"), std::string::npos);
 
@@ -1212,8 +1172,7 @@ TEST(ReplScreen, StaticToVirtualUnpinnedSwitchResetsToBottom) {
     // Frame 1: Static→Virtual switch. Unpinned → same-frame scroll reset
     // to bottom → force_bottom_after_mode_switch = true.
     auto text = RenderFrame(state);
-    EXPECT_EQ(state->messages_store.virtual_renderer_mode,
-              VirtualRendererMode::Virtual);
+    EXPECT_EQ(state->messages_store.virtual_renderer_mode, VirtualRendererMode::Virtual);
     EXPECT_TRUE(state->messages_store.force_bottom_after_mode_switch);
     // Last message must be visible despite being unpinned before switch.
     EXPECT_NE(text.find("unpinned-tail message 080"), std::string::npos);
@@ -1229,8 +1188,7 @@ TEST(ReplScreen, WheelUpMovesScreenAwayFromBottom) {
 
     // Exercise the virtual path separately from static transcript geometry.
     auto state = std::make_shared<repl::ReplScreenState>();
-    state->messages_store.virtual_renderer_mode =
-        VirtualRendererMode::Virtual;
+    state->messages_store.virtual_renderer_mode = VirtualRendererMode::Virtual;
     AddTestMessages(state->messages_store, 100, "wheel-away");
 
     auto component = MakeComponent(state);
@@ -1269,7 +1227,8 @@ TEST(ReplScreen, FirstWheelUpMovesStaticChineseMarkdownFromBottom) {
     answer.role = "assistant";
     for (int i = 0; i < 60; ++i) {
         answer.content_preview += std::format("段落 {:02}：", i);
-        for (int j = 0; j < 25; ++j) answer.content_preview += "中文";
+        for (int j = 0; j < 25; ++j)
+            answer.content_preview += "中文";
         answer.content_preview += "\n\n";
     }
     answer.content_preview += "SCROLL_TAIL_MARKER";
@@ -1346,7 +1305,8 @@ TEST(ReplScreen, StaticPausedTranscriptScrollsAfterResize) {
     answer.role = "assistant";
     for (int i = 0; i < 60; ++i) {
         answer.content_preview += std::format("review {:02}: ", i);
-        for (int j = 0; j < 30; ++j) answer.content_preview += "中文 ";
+        for (int j = 0; j < 30; ++j)
+            answer.content_preview += "中文 ";
         answer.content_preview += "\n\n";
     }
     answer.content_preview += "RESIZE_SCROLL_TAIL";
@@ -1377,7 +1337,7 @@ TEST(ReplScreen, StaticPausedTranscriptScrollsAfterResize) {
         previous_height = state->messages_store.rendered_content_height_lines;
         const auto viewport = state->messages_store.viewport_height_lines;
         EXPECT_LT(viewport, state->messages_store.scrollable_box.y_max -
-            state->messages_store.scrollable_box.y_min + 1);
+                                state->messages_store.scrollable_box.y_min + 1);
         ftxui::Mouse wheel;
         wheel.button = ftxui::Mouse::WheelUp;
         ASSERT_TRUE(component->OnEvent(ftxui::Event::Mouse("", wheel)));
@@ -1399,7 +1359,6 @@ TEST(ReplScreen, StaticPausedTranscriptScrollsAfterResize) {
     wheel.button = ftxui::Mouse::WheelUp;
     EXPECT_FALSE(component->OnEvent(ftxui::Event::Mouse("", wheel)));
 }
-
 
 TEST(ReplScreen, VirtualAssistantSpacingMatchesStaticMessagesAndUserContinuations) {
     namespace ml = loom::ui::messages_list;
@@ -1454,10 +1413,9 @@ TEST(ReplScreen, VirtualAssistantSpacingMatchesStaticMessagesAndUserContinuation
             }
             auto draw = [&](bool use_virtual) {
                 auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(columns),
-                                                   ftxui::Dimension::Fixed(24));
-                auto element = use_virtual
-                    ? ml::render_messages_list_virtual(input, 0, 24, 0)
-                    : ml::render_messages_list_view(input, 0);
+                                                    ftxui::Dimension::Fixed(24));
+                auto element = use_virtual ? ml::render_messages_list_virtual(input, 0, 24, 0)
+                                           : ml::render_messages_list_view(input, 0);
                 ftxui::Render(screen, std::move(element));
                 return strip_ansi(screen.ToString());
             };
@@ -1508,7 +1466,7 @@ TEST(ReplScreen, VirtualAssistantSpacingMatchesStaticMessagesAndUserContinuation
             input.rows.push_back(assistant);
             input.shapes.push_back(ml::MessageShape::AssistantText);
             auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(columns),
-                                               ftxui::Dimension::Fixed(viewport));
+                                                ftxui::Dimension::Fixed(viewport));
             ftxui::Render(screen, ml::render_messages_list_virtual(input, 0, viewport, 0));
             ASSERT_FALSE(geometry.empty());
             const auto& box = geometry.back()->box;
@@ -1534,8 +1492,8 @@ TEST(ReplScreen, ConsecutiveAssistantVirtualHistoryKeepsTailAndScrollsOnFirstEve
         ScopedEnvVar terminal_rows("LINES");
         terminal_columns.set(std::to_string(columns));
         terminal_rows.set("40");
-        auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(columns),
-                                           ftxui::Dimension::Fixed(40));
+        auto screen =
+            ftxui::Screen::Create(ftxui::Dimension::Fixed(columns), ftxui::Dimension::Fixed(40));
         ftxui::Render(screen, component->Render());
         return strip_ansi(screen.ToString());
     };
@@ -1570,14 +1528,13 @@ TEST(ReplScreen, ConsecutiveAssistantVirtualHistoryKeepsTailAndScrollsOnFirstEve
     }
 }
 
-
 TEST(ReplScreen, SystemEventVirtualHeightMatchesFaithfulSingleLineSummaryForEverySubtype) {
     namespace msg = loom::ui::messages;
     namespace ml = loom::ui::messages_list;
     using ST = msg::SystemMessageSubtype;
-    for (const auto subtype : {ST::Plain, ST::TurnDuration, ST::MemorySaved, ST::BridgeStatus,
-            ST::ThinkingSummary, ST::HookSummary, ST::ModelSwitch, ST::AwaySummary,
-            ST::BackgroundTask, ST::Other}) {
+    for (const auto subtype :
+         {ST::Plain, ST::TurnDuration, ST::MemorySaved, ST::BridgeStatus, ST::ThinkingSummary,
+          ST::HookSummary, ST::ModelSwitch, ST::AwaySummary, ST::BackgroundTask, ST::Other}) {
         for (const int columns : {40, 60, 120}) {
             SCOPED_TRACE(static_cast<int>(subtype));
             SCOPED_TRACE(columns);
@@ -1589,10 +1546,10 @@ TEST(ReplScreen, SystemEventVirtualHeightMatchesFaithfulSingleLineSummaryForEver
             input.shapes.push_back(ml::MessageShape::SystemText);
             const auto visible = ml::build_visible_rows(input);
             ASSERT_EQ(visible.size(), 1u);
-            auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(columns),
-                                               ftxui::Dimension::Fixed(8));
+            auto screen =
+                ftxui::Screen::Create(ftxui::Dimension::Fixed(columns), ftxui::Dimension::Fixed(8));
             ftxui::Render(screen, ftxui::vbox({msg::RenderSystemTextMessageFaithful(event),
-                                              ftxui::text("AFTER-EVENT")}));
+                                               ftxui::text("AFTER-EVENT")}));
             int after_row = -1;
             for (int y = 0; y < screen.dimy(); ++y)
                 if (screen.PixelAt(0, y).character == "A") after_row = y;
@@ -1623,8 +1580,9 @@ TEST(ReplScreen, RestoredAssistantHistorySystemEventsKeepLatestReplyVisible) {
         };
         append("completed", "system", "Agent completed · history-check", "background_task");
         append("resume", "system", "Resuming session: history");
-        append("followup", "user", "真实端点验收：上面的120条Assistant消息和完成通知是明确标注的UI测试数据。"
-                                     "不要调用工具，只回复长历史已确认。");
+        append("followup", "user",
+               "真实端点验收：上面的120条Assistant消息和完成通知是明确标注的UI测试数据。"
+               "不要调用工具，只回复长历史已确认。");
         append("thinking", "assistant", "Confirm the history fixture.");
         state->messages_store.messages.back().is_thinking = true;
         state->messages_store.messages.back().full_content = "Confirm the history fixture.";
@@ -1632,13 +1590,12 @@ TEST(ReplScreen, RestoredAssistantHistorySystemEventsKeepLatestReplyVisible) {
         auto component = MakeComponent(state);
         for (int frame = 0; frame < 4; ++frame) {
             auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(columns),
-                                               ftxui::Dimension::Fixed(30));
+                                                ftxui::Dimension::Fixed(30));
             ftxui::Render(screen, component->Render());
             const auto text = strip_ansi(screen.ToString());
             EXPECT_TRUE(state->messages_store.virtual_list_active);
             // The initial native frame establishes the viewport geometry.
-            if (frame != 0)
-                EXPECT_NE(text.find("● 长历史已确认"), std::string::npos) << text;
+            if (frame != 0) EXPECT_NE(text.find("● 长历史已确认"), std::string::npos) << text;
         }
     }
 }

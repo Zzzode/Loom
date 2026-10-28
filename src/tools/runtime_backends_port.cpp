@@ -14,10 +14,10 @@ import std;
 // SkillLoaderExecutor, ITool, AgentConfig, ...), which graph_check's textual
 // evidence heuristic cannot attribute; the imports are required for the
 // std::function slot definitions.
-import loom.types.types;              // arch-check: keep-import
-import loom.types.tool_types;         // arch-check: keep-import
-import loom.tools.tool;               // arch-check: keep-import
-import loom.tools.agent_types;        // arch-check: keep-import
+import loom.types.types;       // arch-check: keep-import
+import loom.types.tool_types;  // arch-check: keep-import
+import loom.tools.tool;        // arch-check: keep-import
+import loom.tools.agent_types; // arch-check: keep-import
 
 namespace loom::tools::detail {
 
@@ -44,7 +44,7 @@ RuntimeBackendSlots& runtime_backend_slots() {
     return slots;
 }
 
-} // namespace loom::tools::detail
+}  // namespace loom::tools::detail
 
 namespace loom::tools {
 
@@ -65,21 +65,35 @@ std::optional<SkillLoaderExecutor>& skill_loader_executor_slot() {
 void set_lsp_backend(RuntimeToolExecutor executor) {
     detail::runtime_backend_slots().lsp = std::move(executor);
 }
-void clear_lsp_backend() { detail::runtime_backend_slots().lsp = nullptr; }
-RuntimeToolExecutor& lsp_backend() { return detail::runtime_backend_slots().lsp; }
+
+void clear_lsp_backend() {
+    detail::runtime_backend_slots().lsp = nullptr;
+}
+
+RuntimeToolExecutor& lsp_backend() {
+    return detail::runtime_backend_slots().lsp;
+}
 
 void set_mcp_backend(RuntimeToolExecutor executor) {
     detail::runtime_backend_slots().mcp = std::move(executor);
 }
-void clear_mcp_backend() { detail::runtime_backend_slots().mcp = nullptr; }
-RuntimeToolExecutor& mcp_backend() { return detail::runtime_backend_slots().mcp; }
+
+void clear_mcp_backend() {
+    detail::runtime_backend_slots().mcp = nullptr;
+}
+
+RuntimeToolExecutor& mcp_backend() {
+    return detail::runtime_backend_slots().mcp;
+}
 
 void set_list_mcp_resources_backend(RuntimeToolExecutor executor) {
     detail::runtime_backend_slots().list_mcp_resources = std::move(executor);
 }
+
 void clear_list_mcp_resources_backend() {
     detail::runtime_backend_slots().list_mcp_resources = nullptr;
 }
+
 RuntimeToolExecutor& list_mcp_resources_backend() {
     return detail::runtime_backend_slots().list_mcp_resources;
 }
@@ -87,9 +101,11 @@ RuntimeToolExecutor& list_mcp_resources_backend() {
 void set_read_mcp_resource_backend(RuntimeToolExecutor executor) {
     detail::runtime_backend_slots().read_mcp_resource = std::move(executor);
 }
+
 void clear_read_mcp_resource_backend() {
     detail::runtime_backend_slots().read_mcp_resource = nullptr;
 }
+
 RuntimeToolExecutor& read_mcp_resource_backend() {
     return detail::runtime_backend_slots().read_mcp_resource;
 }
@@ -97,15 +113,23 @@ RuntimeToolExecutor& read_mcp_resource_backend() {
 void set_mcp_auth_backend(RuntimeToolExecutor executor) {
     detail::runtime_backend_slots().mcp_auth = std::move(executor);
 }
-void clear_mcp_auth_backend() { detail::runtime_backend_slots().mcp_auth = nullptr; }
-RuntimeToolExecutor& mcp_auth_backend() { return detail::runtime_backend_slots().mcp_auth; }
+
+void clear_mcp_auth_backend() {
+    detail::runtime_backend_slots().mcp_auth = nullptr;
+}
+
+RuntimeToolExecutor& mcp_auth_backend() {
+    return detail::runtime_backend_slots().mcp_auth;
+}
 
 void set_computer_use_backend(RuntimeToolExecutor executor) {
     detail::runtime_backend_slots().computer_use = std::move(executor);
 }
+
 void clear_computer_use_backend() {
     detail::runtime_backend_slots().computer_use = nullptr;
 }
+
 RuntimeToolExecutor& computer_use_backend() {
     return detail::runtime_backend_slots().computer_use;
 }
@@ -113,17 +137,26 @@ RuntimeToolExecutor& computer_use_backend() {
 void set_config_backend(RuntimeToolExecutor executor) {
     detail::runtime_backend_slots().config = std::move(executor);
 }
-void clear_config_backend() { detail::runtime_backend_slots().config = nullptr; }
-RuntimeToolExecutor& config_backend() { return detail::runtime_backend_slots().config; }
+
+void clear_config_backend() {
+    detail::runtime_backend_slots().config = nullptr;
+}
+
+RuntimeToolExecutor& config_backend() {
+    return detail::runtime_backend_slots().config;
+}
 
 // ── Agent tool factory ────────────────────────────────────────────────────
 void set_agent_tool_factory(AgentToolFactory factory) {
     detail::runtime_backend_slots().agent_tool_factory = std::move(factory);
 }
+
 void clear_agent_tool_factory() {
-    detail::runtime_backend_slots().agent_tool_factory = nullptr; }
+    detail::runtime_backend_slots().agent_tool_factory = nullptr;
+}
+
 AgentToolFactory& agent_tool_factory() {
     return detail::runtime_backend_slots().agent_tool_factory;
 }
 
-} // namespace loom::tools
+}  // namespace loom::tools

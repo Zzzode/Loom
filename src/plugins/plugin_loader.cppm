@@ -57,7 +57,8 @@ struct LocalSource {
     std::string path;
 };
 
-using PluginSource = std::variant<LocalSource, GitHubSource, GitUrlSource, GitSubdirSource, NpmSource>;
+using PluginSource =
+    std::variant<LocalSource, GitHubSource, GitUrlSource, GitSubdirSource, NpmSource>;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Plugin Manifest & Components
@@ -136,7 +137,8 @@ struct LoadedPlugin {
     std::optional<std::vector<std::filesystem::path>> output_styles_paths = std::nullopt;
 
     // Hooks configuration (simplified — full hooks config is a nested map)
-    std::optional<std::map<std::string, std::vector<std::map<std::string, std::string>>>> hooks_config = std::nullopt;
+    std::optional<std::map<std::string, std::vector<std::map<std::string, std::string>>>>
+        hooks_config = std::nullopt;
 
     // Plugin settings (allowlisted keys only)
     std::optional<std::map<std::string, std::string>> settings = std::nullopt;
@@ -155,34 +157,25 @@ struct PluginLoadResult {
 [[nodiscard]] std::filesystem::path get_plugin_cache_path();
 
 /// Compute versioned cache path: cache/{marketplace}/{plugin}/{version}/
-[[nodiscard]] std::filesystem::path get_versioned_cache_path(
-    std::string_view plugin_id,
-    std::string_view version
-);
+[[nodiscard]] std::filesystem::path get_versioned_cache_path(std::string_view plugin_id,
+                                                             std::string_view version);
 
 /// Compute versioned cache path under a specific base directory
-[[nodiscard]] std::filesystem::path get_versioned_cache_path_in(
-    const std::filesystem::path& base_dir,
-    std::string_view plugin_id,
-    std::string_view version
-);
+[[nodiscard]] std::filesystem::path
+get_versioned_cache_path_in(const std::filesystem::path& base_dir, std::string_view plugin_id,
+                            std::string_view version);
 
 /// Get versioned ZIP cache path: versioned_path + ".zip"
-[[nodiscard]] std::filesystem::path get_versioned_zip_cache_path(
-    std::string_view plugin_id,
-    std::string_view version
-);
+[[nodiscard]] std::filesystem::path get_versioned_zip_cache_path(std::string_view plugin_id,
+                                                                 std::string_view version);
 
 /// Probe seed directories for a populated cache at this plugin version
-[[nodiscard]] std::optional<std::filesystem::path> probe_seed_cache(
-    std::string_view plugin_id,
-    std::string_view version
-);
+[[nodiscard]] std::optional<std::filesystem::path> probe_seed_cache(std::string_view plugin_id,
+                                                                    std::string_view version);
 
 /// Probe seed cache for any version (first-boot chicken-and-egg resolution)
-[[nodiscard]] std::optional<std::filesystem::path> probe_seed_cache_any_version(
-    std::string_view plugin_id
-);
+[[nodiscard]] std::optional<std::filesystem::path>
+probe_seed_cache_any_version(std::string_view plugin_id);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Plugin Installation from Source
@@ -192,29 +185,23 @@ struct PluginLoadResult {
 [[nodiscard]] std::expected<std::string, std::string> validate_git_url(std::string_view url);
 
 /// Clone a git repository
-[[nodiscard]] std::expected<void, std::string> git_clone(
-    std::string_view git_url,
-    const std::filesystem::path& target_path,
-    std::optional<std::string_view> ref = std::nullopt,
-    std::optional<std::string_view> sha = std::nullopt
-);
+[[nodiscard]] std::expected<void, std::string>
+git_clone(std::string_view git_url, const std::filesystem::path& target_path,
+          std::optional<std::string_view> ref = std::nullopt,
+          std::optional<std::string_view> sha = std::nullopt);
 
 /// Install a plugin from npm
-[[nodiscard]] std::expected<void, std::string> install_from_npm(
-    std::string_view package_name,
-    const std::filesystem::path& target_path,
-    std::optional<std::string_view> registry = std::nullopt,
-    std::optional<std::string_view> version = std::nullopt
-);
+[[nodiscard]] std::expected<void, std::string>
+install_from_npm(std::string_view package_name, const std::filesystem::path& target_path,
+                 std::optional<std::string_view> registry = std::nullopt,
+                 std::optional<std::string_view> version = std::nullopt);
 
 /// Install a plugin from a git subdirectory (sparse-checkout)
-[[nodiscard]] std::expected<std::optional<std::string>, std::string> install_from_git_subdir(
-    std::string_view url,
-    const std::filesystem::path& target_path,
-    std::string_view subdir_path,
-    std::optional<std::string_view> ref = std::nullopt,
-    std::optional<std::string_view> sha = std::nullopt
-);
+[[nodiscard]] std::expected<std::optional<std::string>, std::string>
+install_from_git_subdir(std::string_view url, const std::filesystem::path& target_path,
+                        std::string_view subdir_path,
+                        std::optional<std::string_view> ref = std::nullopt,
+                        std::optional<std::string_view> sha = std::nullopt);
 
 /// Generate a temporary cache name for a plugin
 [[nodiscard]] std::string generate_temporary_cache_name(const PluginSource& source);
@@ -226,38 +213,28 @@ struct CachePluginResult {
 };
 
 /// Cache a plugin from an external source
-[[nodiscard]] std::expected<CachePluginResult, std::string> cache_plugin(
-    const PluginSource& source,
-    std::optional<PluginManifest> manifest_override = std::nullopt
-);
+[[nodiscard]] std::expected<CachePluginResult, std::string>
+cache_plugin(const PluginSource& source,
+             std::optional<PluginManifest> manifest_override = std::nullopt);
 
 /// Copy plugin files to versioned cache directory
-[[nodiscard]] std::expected<std::filesystem::path, std::string> copy_plugin_to_versioned_cache(
-    const std::filesystem::path& source_path,
-    std::string_view plugin_id,
-    std::string_view version
-);
+[[nodiscard]] std::expected<std::filesystem::path, std::string>
+copy_plugin_to_versioned_cache(const std::filesystem::path& source_path, std::string_view plugin_id,
+                               std::string_view version);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Plugin Loading & Discovery
 // ─────────────────────────────────────────────────────────────────────────────
 
 /// Load and validate a plugin manifest from a JSON file
-[[nodiscard]] std::expected<PluginManifest, std::string> load_plugin_manifest(
-    const std::filesystem::path& manifest_path,
-    std::string_view plugin_name,
-    std::string_view source
-);
+[[nodiscard]] std::expected<PluginManifest, std::string>
+load_plugin_manifest(const std::filesystem::path& manifest_path, std::string_view plugin_name,
+                     std::string_view source);
 
 /// Create a LoadedPlugin from a plugin directory path
 [[nodiscard]] std::expected<std::pair<LoadedPlugin, std::vector<PluginError>>, std::string>
-create_plugin_from_path(
-    const std::filesystem::path& plugin_path,
-    std::string_view source,
-    bool enabled,
-    std::string_view fallback_name,
-    bool strict = true
-);
+create_plugin_from_path(const std::filesystem::path& plugin_path, std::string_view source,
+                        bool enabled, std::string_view fallback_name, bool strict = true);
 
 /// Load all plugins (marketplace-based discovery with full fetch)
 [[nodiscard]] PluginLoadResult load_all_plugins();
@@ -314,21 +291,18 @@ void clear_plugin_hook_cache();
 // ─────────────────────────────────────────────────────────────────────────────
 
 struct MarkdownFile {
-    std::string name;        // filename without extension (used as command/agent name)
-    std::string content;     // full file content
+    std::string name;     // filename without extension (used as command/agent name)
+    std::string content;  // full file content
     std::filesystem::path path;
     std::map<std::string, std::string> frontmatter;
 };
 
 /// Walk a directory for markdown files, parsing frontmatter
-[[nodiscard]] std::vector<MarkdownFile> walk_plugin_markdown(
-    const std::filesystem::path& dir_path
-);
+[[nodiscard]] std::vector<MarkdownFile> walk_plugin_markdown(const std::filesystem::path& dir_path);
 
 /// Walk multiple directories for markdown files
-[[nodiscard]] std::vector<MarkdownFile> walk_plugin_markdown_paths(
-    const std::vector<std::filesystem::path>& paths
-);
+[[nodiscard]] std::vector<MarkdownFile>
+walk_plugin_markdown_paths(const std::vector<std::filesystem::path>& paths);
 
 namespace detail {
 
@@ -440,26 +414,27 @@ struct CommandResult {
     return dirs;
 }
 
-[[nodiscard]] inline std::expected<fs::path, std::string> validate_path_within_base(
-    const fs::path& base,
-    std::string_view relative
-) {
+[[nodiscard]] inline std::expected<fs::path, std::string>
+validate_path_within_base(const fs::path& base, std::string_view relative) {
     auto base_abs = fs::absolute(base).lexically_normal();
     auto resolved = fs::absolute(base / std::string(relative)).lexically_normal();
     const auto base_text = base_abs.string();
     const auto resolved_text = resolved.string();
     const auto prefix = base_text.ends_with(fs::path::preferred_separator)
-        ? base_text
-        : base_text + fs::path::preferred_separator;
+                            ? base_text
+                            : base_text + fs::path::preferred_separator;
     if (resolved_text != base_text && !resolved_text.starts_with(prefix)) {
         return std::unexpected("Path traversal detected: " + std::string(relative));
     }
     return resolved;
 }
 
-[[nodiscard]] inline std::expected<void, std::string> copy_dir(const fs::path& source, const fs::path& target) {
-    if (!fs::exists(source)) return std::unexpected("Source path does not exist: " + source.string());
-    if (!fs::is_directory(source)) return std::unexpected("Source path is not a directory: " + source.string());
+[[nodiscard]] inline std::expected<void, std::string> copy_dir(const fs::path& source,
+                                                               const fs::path& target) {
+    if (!fs::exists(source))
+        return std::unexpected("Source path does not exist: " + source.string());
+    if (!fs::is_directory(source))
+        return std::unexpected("Source path is not a directory: " + source.string());
     auto copy_source = source;
     std::error_code ec;
     if (fs::is_symlink(source)) {
@@ -471,8 +446,7 @@ struct CommandResult {
     fs::create_directories(target.parent_path(), ec);
     if (ec) return std::unexpected("Failed to create target parent directory: " + ec.message());
     fs::copy(copy_source, target,
-        fs::copy_options::recursive | fs::copy_options::overwrite_existing,
-        ec);
+             fs::copy_options::recursive | fs::copy_options::overwrite_existing, ec);
     if (ec) return std::unexpected("Failed to copy plugin directory: " + ec.message());
     return {};
 }
@@ -485,7 +459,8 @@ inline void remove_git_metadata(const fs::path& path) {
 [[nodiscard]] inline std::optional<std::string> rev_parse_head(const fs::path& repo) {
     auto result = run_command("git rev-parse HEAD", repo);
     if (result.exit_code != 0) return std::nullopt;
-    while (!result.output.empty() && (result.output.back() == '\n' || result.output.back() == '\r')) {
+    while (!result.output.empty() &&
+           (result.output.back() == '\n' || result.output.back() == '\r')) {
         result.output.pop_back();
     }
     return result.output.empty() ? std::nullopt : std::optional<std::string>{result.output};
@@ -495,9 +470,8 @@ inline void remove_git_metadata(const fs::path& path) {
     const char* raw = std::getenv(name);
     if (!raw) return false;
     std::string value(raw);
-    std::ranges::transform(value, value.begin(), [](unsigned char ch) {
-        return static_cast<char>(std::tolower(ch));
-    });
+    std::ranges::transform(value, value.begin(),
+                           [](unsigned char ch) { return static_cast<char>(std::tolower(ch)); });
     return value == "1" || value == "true" || value == "yes" || value == "on";
 }
 
@@ -542,7 +516,8 @@ inline void remove_git_metadata(const fs::path& path) {
     return {};
 }
 
-[[nodiscard]] inline fs::path npm_package_path(const fs::path& npm_cache_path, std::string_view package_spec) {
+[[nodiscard]] inline fs::path npm_package_path(const fs::path& npm_cache_path,
+                                               std::string_view package_spec) {
     auto local_path = npm_spec_local_path(package_spec);
     if (!local_path.empty()) {
         if (auto name = package_json_name(local_path)) {
@@ -561,32 +536,32 @@ inline void remove_git_metadata(const fs::path& path) {
 
 [[nodiscard]] inline std::string trim(std::string_view value) {
     std::size_t begin = 0;
-    while (begin < value.size() && std::isspace(static_cast<unsigned char>(value[begin]))) ++begin;
+    while (begin < value.size() && std::isspace(static_cast<unsigned char>(value[begin])))
+        ++begin;
     std::size_t end = value.size();
-    while (end > begin && std::isspace(static_cast<unsigned char>(value[end - 1]))) --end;
+    while (end > begin && std::isspace(static_cast<unsigned char>(value[end - 1])))
+        --end;
     return std::string(value.substr(begin, end - begin));
 }
 
 [[nodiscard]] inline std::string strip_quotes(std::string value) {
     value = trim(value);
-    if (value.size() >= 2 &&
-        ((value.front() == '"' && value.back() == '"') ||
-         (value.front() == '\'' && value.back() == '\''))) {
+    if (value.size() >= 2 && ((value.front() == '"' && value.back() == '"') ||
+                              (value.front() == '\'' && value.back() == '\''))) {
         return value.substr(1, value.size() - 2);
     }
     return value;
 }
 
-[[nodiscard]] inline std::optional<std::string> json_string(loom::utils::json::JsonVal obj, std::string_view key) {
+[[nodiscard]] inline std::optional<std::string> json_string(loom::utils::json::JsonVal obj,
+                                                            std::string_view key) {
     auto value = obj.get(key);
     if (!value.is_str()) return std::nullopt;
     return std::string(value.as_str());
 }
 
-[[nodiscard]] inline std::optional<std::vector<std::string>> json_string_array(
-    loom::utils::json::JsonVal obj,
-    std::string_view key
-) {
+[[nodiscard]] inline std::optional<std::vector<std::string>>
+json_string_array(loom::utils::json::JsonVal obj, std::string_view key) {
     auto value = obj.get(key);
     if (!value.is_arr()) {
         if (value.is_str()) return std::vector<std::string>{std::string(value.as_str())};
@@ -612,21 +587,17 @@ inline void remove_git_metadata(const fs::path& path) {
     };
 }
 
-[[nodiscard]] inline fs::path resolve_plugin_component_path(const fs::path& root, std::string_view raw) {
+[[nodiscard]] inline fs::path resolve_plugin_component_path(const fs::path& root,
+                                                            std::string_view raw) {
     fs::path path(raw);
     if (path.is_relative()) path = root / path;
     return path;
 }
 
 inline void add_existing_component_paths(
-    const fs::path& plugin_root,
-    const std::optional<std::vector<std::string>>& manifest_paths,
-    std::optional<std::vector<fs::path>>& target,
-    std::vector<PluginError>& errors,
-    std::string_view source,
-    std::string_view plugin,
-    PluginComponent component
-) {
+    const fs::path& plugin_root, const std::optional<std::vector<std::string>>& manifest_paths,
+    std::optional<std::vector<fs::path>>& target, std::vector<PluginError>& errors,
+    std::string_view source, std::string_view plugin, PluginComponent component) {
     if (!manifest_paths) return;
     std::vector<fs::path> paths;
     for (const auto& raw : *manifest_paths) {
@@ -648,11 +619,9 @@ inline void add_existing_component_paths(
 
 [[nodiscard]] inline bool is_plugin_root(const fs::path& path) {
     return fs::exists(path / ".claude-plugin" / "plugin.json") ||
-        fs::exists(path / "plugin.json") ||
-        fs::is_directory(path / "commands") ||
-        fs::is_directory(path / "agents") ||
-        fs::is_directory(path / "skills") ||
-        fs::is_directory(path / "output-styles");
+           fs::exists(path / "plugin.json") || fs::is_directory(path / "commands") ||
+           fs::is_directory(path / "agents") || fs::is_directory(path / "skills") ||
+           fs::is_directory(path / "output-styles");
 }
 
 inline void discover_plugin_roots(const fs::path& root, std::vector<fs::path>& out) {
@@ -675,9 +644,8 @@ inline void discover_plugin_roots(const fs::path& root, std::vector<fs::path>& o
     return name.empty() ? file.filename().string() : name;
 }
 
-[[nodiscard]] inline std::pair<std::map<std::string, std::string>, std::string> parse_markdown_frontmatter(
-    std::string content
-) {
+[[nodiscard]] inline std::pair<std::map<std::string, std::string>, std::string>
+parse_markdown_frontmatter(std::string content) {
     std::map<std::string, std::string> frontmatter;
     if (!content.starts_with("---\n") && !content.starts_with("---\r\n")) {
         return {frontmatter, std::move(content)};
@@ -698,15 +666,14 @@ inline void discover_plugin_roots(const fs::path& root, std::vector<fs::path>& o
     return {frontmatter, content.substr(body_start + 1)};
 }
 
-[[nodiscard]] inline std::vector<fs::path> plugin_component_paths(
-    const LoadedPlugin& plugin,
-    const std::optional<fs::path>& single_path,
-    const std::optional<std::vector<fs::path>>& multiple_paths
-) {
+[[nodiscard]] inline std::vector<fs::path>
+plugin_component_paths(const LoadedPlugin& plugin, const std::optional<fs::path>& single_path,
+                       const std::optional<std::vector<fs::path>>& multiple_paths) {
     std::vector<fs::path> paths;
     if (single_path) paths.push_back(*single_path);
     if (multiple_paths) {
-        for (const auto& path : *multiple_paths) paths.push_back(path);
+        for (const auto& path : *multiple_paths)
+            paths.push_back(path);
     }
     for (auto& path : paths) {
         if (path.is_relative()) path = plugin.path / path;
@@ -714,47 +681,40 @@ inline void discover_plugin_roots(const fs::path& root, std::vector<fs::path>& o
     return paths;
 }
 
-} // namespace detail
+}  // namespace detail
 
 [[nodiscard]] std::filesystem::path get_plugin_cache_path() {
     if (auto* value = std::getenv("LOOM_PLUGIN_CACHE_DIR"); value && value[0]) return value;
-    if (auto* home = std::getenv("HOME"); home && home[0]) return std::filesystem::path(home) / ".loom" / "plugins";
+    if (auto* home = std::getenv("HOME"); home && home[0])
+        return std::filesystem::path(home) / ".loom" / "plugins";
     return std::filesystem::current_path() / ".loom" / "plugins";
 }
 
-[[nodiscard]] std::filesystem::path get_versioned_cache_path(
-    std::string_view plugin_id,
-    std::string_view version
-) {
+[[nodiscard]] std::filesystem::path get_versioned_cache_path(std::string_view plugin_id,
+                                                             std::string_view version) {
     return get_versioned_cache_path_in(get_plugin_cache_path(), plugin_id, version);
 }
 
-[[nodiscard]] std::filesystem::path get_versioned_cache_path_in(
-    const std::filesystem::path& base_dir,
-    std::string_view plugin_id,
-    std::string_view version
-) {
+[[nodiscard]] std::filesystem::path
+get_versioned_cache_path_in(const std::filesystem::path& base_dir, std::string_view plugin_id,
+                            std::string_view version) {
     auto parsed = loom::utils::plugin_identifier::parse_plugin_identifier(plugin_id);
     const auto marketplace = parsed.marketplace.value_or("unknown");
     const auto version_text = version.empty() ? std::string("unknown") : std::string(version);
-    return base_dir / "cache" /
-        detail::sanitize_cache_component(marketplace) /
-        detail::sanitize_cache_component(parsed.name.empty() ? std::string(plugin_id) : parsed.name) /
-        detail::sanitize_version_component(version_text);
+    return base_dir / "cache" / detail::sanitize_cache_component(marketplace) /
+           detail::sanitize_cache_component(parsed.name.empty() ? std::string(plugin_id)
+                                                                : parsed.name) /
+           detail::sanitize_version_component(version_text);
 }
 
-[[nodiscard]] std::filesystem::path get_versioned_zip_cache_path(
-    std::string_view plugin_id,
-    std::string_view version
-) {
+[[nodiscard]] std::filesystem::path get_versioned_zip_cache_path(std::string_view plugin_id,
+                                                                 std::string_view version) {
     auto path = get_versioned_cache_path(plugin_id, version);
     return std::filesystem::path(path.string() + ".zip");
 }
 
-[[nodiscard]] std::optional<std::filesystem::path> probe_seed_cache(
-    std::string_view plugin_id,
-    std::string_view version
-) {
+[[nodiscard]] std::optional<std::filesystem::path> probe_seed_cache(std::string_view plugin_id,
+                                                                    std::string_view version) {
     for (const auto& seed_dir : detail::plugin_seed_dirs()) {
         auto seed_path = get_versioned_cache_path_in(seed_dir, plugin_id, version);
         if (detail::directory_has_entries(seed_path)) return seed_path;
@@ -762,7 +722,8 @@ inline void discover_plugin_roots(const fs::path& root, std::vector<fs::path>& o
     return std::nullopt;
 }
 
-[[nodiscard]] std::optional<std::filesystem::path> probe_seed_cache_any_version(std::string_view plugin_id) {
+[[nodiscard]] std::optional<std::filesystem::path>
+probe_seed_cache_any_version(std::string_view plugin_id) {
     for (const auto& seed_dir : detail::plugin_seed_dirs()) {
         auto parent = get_versioned_cache_path_in(seed_dir, plugin_id, "_").parent_path();
         if (!std::filesystem::is_directory(parent)) continue;
@@ -780,19 +741,17 @@ inline void discover_plugin_roots(const fs::path& root, std::vector<fs::path>& o
 }
 
 [[nodiscard]] std::expected<std::string, std::string> validate_git_url(std::string_view url) {
-    if (url.starts_with("https://") || url.starts_with("http://") ||
-        url.starts_with("file://") || url.starts_with("git@")) {
+    if (url.starts_with("https://") || url.starts_with("http://") || url.starts_with("file://") ||
+        url.starts_with("git@")) {
         return std::string(url);
     }
     return std::unexpected("Unsupported git URL");
 }
 
-[[nodiscard]] std::expected<void, std::string> git_clone(
-    std::string_view git_url,
-    const std::filesystem::path& target_path,
-    std::optional<std::string_view> ref,
-    std::optional<std::string_view> sha
-) {
+[[nodiscard]] std::expected<void, std::string> git_clone(std::string_view git_url,
+                                                         const std::filesystem::path& target_path,
+                                                         std::optional<std::string_view> ref,
+                                                         std::optional<std::string_view> sha) {
     auto valid_url = validate_git_url(git_url);
     if (!valid_url) return std::unexpected(valid_url.error());
 
@@ -809,7 +768,8 @@ inline void discover_plugin_roots(const fs::path& root, std::vector<fs::path>& o
     if (sha && !sha->empty()) {
         command += " --no-checkout";
     }
-    command += " " + detail::shell_quote(*valid_url) + " " + detail::shell_quote(target_path.string());
+    command +=
+        " " + detail::shell_quote(*valid_url) + " " + detail::shell_quote(target_path.string());
 
     auto clone = detail::run_command(command);
     if (clone.exit_code != 0) {
@@ -817,28 +777,30 @@ inline void discover_plugin_roots(const fs::path& root, std::vector<fs::path>& o
     }
 
     if (sha && !sha->empty()) {
-        auto fetch = detail::run_command("git fetch --depth 1 origin " + detail::shell_quote(*sha), target_path);
+        auto fetch = detail::run_command("git fetch --depth 1 origin " + detail::shell_quote(*sha),
+                                         target_path);
         if (fetch.exit_code != 0) {
             auto unshallow = detail::run_command("git fetch --unshallow", target_path);
             if (unshallow.exit_code != 0) {
-                return std::unexpected("Failed to fetch commit " + std::string(*sha) + ": " + unshallow.output);
+                return std::unexpected("Failed to fetch commit " + std::string(*sha) + ": " +
+                                       unshallow.output);
             }
         }
-        auto checkout = detail::run_command("git checkout " + detail::shell_quote(*sha), target_path);
+        auto checkout =
+            detail::run_command("git checkout " + detail::shell_quote(*sha), target_path);
         if (checkout.exit_code != 0) {
-            return std::unexpected("Failed to checkout commit " + std::string(*sha) + ": " + checkout.output);
+            return std::unexpected("Failed to checkout commit " + std::string(*sha) + ": " +
+                                   checkout.output);
         }
     }
 
     return {};
 }
 
-[[nodiscard]] std::expected<void, std::string> install_from_npm(
-    std::string_view package_name,
-    const std::filesystem::path& target_path,
-    std::optional<std::string_view> registry,
-    std::optional<std::string_view> version
-) {
+[[nodiscard]] std::expected<void, std::string>
+install_from_npm(std::string_view package_name, const std::filesystem::path& target_path,
+                 std::optional<std::string_view> registry,
+                 std::optional<std::string_view> version) {
     const auto npm_cache_path = get_plugin_cache_path() / "npm-cache";
     std::error_code ec;
     std::filesystem::create_directories(npm_cache_path, ec);
@@ -851,8 +813,8 @@ inline void discover_plugin_roots(const fs::path& root, std::vector<fs::path>& o
 
     auto package_path = detail::npm_package_path(npm_cache_path, package_name);
     if (!std::filesystem::exists(package_path)) {
-        std::string command = "npm install " + detail::shell_quote(package_spec) +
-            " --prefix " + detail::shell_quote(npm_cache_path.string());
+        std::string command = "npm install " + detail::shell_quote(package_spec) + " --prefix " +
+                              detail::shell_quote(npm_cache_path.string());
         if (registry && !registry->empty()) {
             command += " --registry " + detail::shell_quote(*registry);
         }
@@ -863,7 +825,8 @@ inline void discover_plugin_roots(const fs::path& root, std::vector<fs::path>& o
     }
 
     if (!std::filesystem::exists(package_path)) {
-        return std::unexpected("NPM package installed but was not found at: " + package_path.string());
+        return std::unexpected("NPM package installed but was not found at: " +
+                               package_path.string());
     }
     auto copied = detail::copy_dir(package_path, target_path);
     if (!copied) return copied;
@@ -871,13 +834,10 @@ inline void discover_plugin_roots(const fs::path& root, std::vector<fs::path>& o
     return {};
 }
 
-[[nodiscard]] std::expected<std::optional<std::string>, std::string> install_from_git_subdir(
-    std::string_view url,
-    const std::filesystem::path& target_path,
-    std::string_view subdir_path,
-    std::optional<std::string_view> ref,
-    std::optional<std::string_view> sha
-) {
+[[nodiscard]] std::expected<std::optional<std::string>, std::string>
+install_from_git_subdir(std::string_view url, const std::filesystem::path& target_path,
+                        std::string_view subdir_path, std::optional<std::string_view> ref,
+                        std::optional<std::string_view> sha) {
     auto git_url = detail::git_subdir_url(url);
     if (!git_url) return std::unexpected(git_url.error());
 
@@ -891,7 +851,8 @@ inline void discover_plugin_roots(const fs::path& root, std::vector<fs::path>& o
 
     std::string clone_command = "git clone --depth 1 --filter=tree:0 --no-checkout";
     if (ref && !ref->empty()) clone_command += " --branch " + detail::shell_quote(*ref);
-    clone_command += " " + detail::shell_quote(*git_url) + " " + detail::shell_quote(clone_dir.string());
+    clone_command +=
+        " " + detail::shell_quote(*git_url) + " " + detail::shell_quote(clone_dir.string());
 
     auto clone = detail::run_command(clone_command);
     if (clone.exit_code != 0) {
@@ -899,33 +860,32 @@ inline void discover_plugin_roots(const fs::path& root, std::vector<fs::path>& o
     }
 
     auto cleanup = std::unique_ptr<void, std::function<void(void*)>>(
-        reinterpret_cast<void*>(1),
-        [clone_dir](void*) {
+        reinterpret_cast<void*>(1), [clone_dir](void*) {
             std::error_code cleanup_ec;
             std::filesystem::remove_all(clone_dir, cleanup_ec);
-        }
-    );
+        });
 
     auto sparse = detail::run_command(
-        "git sparse-checkout set --cone -- " + detail::shell_quote(subdir_path),
-        clone_dir
-    );
+        "git sparse-checkout set --cone -- " + detail::shell_quote(subdir_path), clone_dir);
     if (sparse.exit_code != 0) {
         return std::unexpected("git sparse-checkout set failed: " + sparse.output);
     }
 
     std::optional<std::string> resolved_sha;
     if (sha && !sha->empty()) {
-        auto fetch = detail::run_command("git fetch --depth 1 origin " + detail::shell_quote(*sha), clone_dir);
+        auto fetch = detail::run_command("git fetch --depth 1 origin " + detail::shell_quote(*sha),
+                                         clone_dir);
         if (fetch.exit_code != 0) {
             auto unshallow = detail::run_command("git fetch --unshallow", clone_dir);
             if (unshallow.exit_code != 0) {
-                return std::unexpected("Failed to fetch commit " + std::string(*sha) + ": " + unshallow.output);
+                return std::unexpected("Failed to fetch commit " + std::string(*sha) + ": " +
+                                       unshallow.output);
             }
         }
         auto checkout = detail::run_command("git checkout " + detail::shell_quote(*sha), clone_dir);
         if (checkout.exit_code != 0) {
-            return std::unexpected("Failed to checkout commit " + std::string(*sha) + ": " + checkout.output);
+            return std::unexpected("Failed to checkout commit " + std::string(*sha) + ": " +
+                                   checkout.output);
         }
         resolved_sha = std::string(*sha);
     } else {
@@ -939,7 +899,8 @@ inline void discover_plugin_roots(const fs::path& root, std::vector<fs::path>& o
     auto resolved_subdir = detail::validate_path_within_base(clone_dir, subdir_path);
     if (!resolved_subdir) return std::unexpected(resolved_subdir.error());
     if (!std::filesystem::exists(*resolved_subdir)) {
-        return std::unexpected("Subdirectory '" + std::string(subdir_path) + "' not found in repository");
+        return std::unexpected("Subdirectory '" + std::string(subdir_path) +
+                               "' not found in repository");
     }
     std::filesystem::rename(*resolved_subdir, target_path, ec);
     if (ec) {
@@ -953,25 +914,26 @@ inline void discover_plugin_roots(const fs::path& root, std::vector<fs::path>& o
 [[nodiscard]] std::string generate_temporary_cache_name(const PluginSource& source) {
     static std::atomic<unsigned long long> counter{0};
     const auto now = std::chrono::duration_cast<std::chrono::nanoseconds>(
-        std::chrono::steady_clock::now().time_since_epoch()
-    ).count();
+                         std::chrono::steady_clock::now().time_since_epoch())
+                         .count();
     const auto suffix = "-" + std::to_string(now) + "-" + std::to_string(counter.fetch_add(1));
-    auto prefix = std::visit([](const auto& value) -> std::string {
-        using T = std::decay_t<decltype(value)>;
-        if constexpr (std::is_same_v<T, LocalSource>) return "local-" + std::filesystem::path(value.path).filename().string();
-        if constexpr (std::is_same_v<T, GitHubSource>) return "github-" + value.repo;
-        if constexpr (std::is_same_v<T, GitUrlSource>) return "git-" + value.url;
-        if constexpr (std::is_same_v<T, GitSubdirSource>) return "git-subdir-" + value.path;
-        if constexpr (std::is_same_v<T, NpmSource>) return "npm-" + value.package_name;
-        return std::string("plugin");
-    }, source);
+    auto prefix = std::visit(
+        [](const auto& value) -> std::string {
+            using T = std::decay_t<decltype(value)>;
+            if constexpr (std::is_same_v<T, LocalSource>)
+                return "local-" + std::filesystem::path(value.path).filename().string();
+            if constexpr (std::is_same_v<T, GitHubSource>) return "github-" + value.repo;
+            if constexpr (std::is_same_v<T, GitUrlSource>) return "git-" + value.url;
+            if constexpr (std::is_same_v<T, GitSubdirSource>) return "git-subdir-" + value.path;
+            if constexpr (std::is_same_v<T, NpmSource>) return "npm-" + value.package_name;
+            return std::string("plugin");
+        },
+        source);
     return "temp-" + detail::sanitize_version_component(prefix) + suffix;
 }
 
-[[nodiscard]] std::expected<CachePluginResult, std::string> cache_plugin(
-    const PluginSource& source,
-    std::optional<PluginManifest> manifest_override
-) {
+[[nodiscard]] std::expected<CachePluginResult, std::string>
+cache_plugin(const PluginSource& source, std::optional<PluginManifest> manifest_override) {
     const auto cache_root = get_plugin_cache_path();
     std::error_code ec;
     std::filesystem::create_directories(cache_root, ec);
@@ -985,34 +947,39 @@ inline void discover_plugin_roots(const fs::path& root, std::vector<fs::path>& o
         std::filesystem::remove_all(temp_path, cleanup_ec);
     };
 
-    auto install_result = std::visit([&](const auto& value) -> std::expected<void, std::string> {
-        using T = std::decay_t<decltype(value)>;
-        if constexpr (std::is_same_v<T, LocalSource>) {
-            auto copied = detail::copy_dir(value.path, temp_path);
-            if (!copied) return copied;
-            detail::remove_git_metadata(temp_path);
-            return {};
-        } else if constexpr (std::is_same_v<T, GitHubSource>) {
-            auto cloned = git_clone(detail::github_clone_url(value.repo), temp_path, value.ref, value.sha);
-            if (!cloned) return cloned;
-            git_commit_sha = detail::rev_parse_head(temp_path);
-            return {};
-        } else if constexpr (std::is_same_v<T, GitUrlSource>) {
-            auto cloned = git_clone(value.url, temp_path, value.ref, value.sha);
-            if (!cloned) return cloned;
-            git_commit_sha = detail::rev_parse_head(temp_path);
-            return {};
-        } else if constexpr (std::is_same_v<T, GitSubdirSource>) {
-            auto installed = install_from_git_subdir(value.url, temp_path, value.path, value.ref, value.sha);
-            if (!installed) return std::unexpected(installed.error());
-            git_commit_sha = *installed;
-            return {};
-        } else if constexpr (std::is_same_v<T, NpmSource>) {
-            return install_from_npm(value.package_name, temp_path, value.registry, value.version);
-        } else {
-            return std::unexpected("Unsupported plugin source type");
-        }
-    }, source);
+    auto install_result = std::visit(
+        [&](const auto& value) -> std::expected<void, std::string> {
+            using T = std::decay_t<decltype(value)>;
+            if constexpr (std::is_same_v<T, LocalSource>) {
+                auto copied = detail::copy_dir(value.path, temp_path);
+                if (!copied) return copied;
+                detail::remove_git_metadata(temp_path);
+                return {};
+            } else if constexpr (std::is_same_v<T, GitHubSource>) {
+                auto cloned = git_clone(detail::github_clone_url(value.repo), temp_path, value.ref,
+                                        value.sha);
+                if (!cloned) return cloned;
+                git_commit_sha = detail::rev_parse_head(temp_path);
+                return {};
+            } else if constexpr (std::is_same_v<T, GitUrlSource>) {
+                auto cloned = git_clone(value.url, temp_path, value.ref, value.sha);
+                if (!cloned) return cloned;
+                git_commit_sha = detail::rev_parse_head(temp_path);
+                return {};
+            } else if constexpr (std::is_same_v<T, GitSubdirSource>) {
+                auto installed =
+                    install_from_git_subdir(value.url, temp_path, value.path, value.ref, value.sha);
+                if (!installed) return std::unexpected(installed.error());
+                git_commit_sha = *installed;
+                return {};
+            } else if constexpr (std::is_same_v<T, NpmSource>) {
+                return install_from_npm(value.package_name, temp_path, value.registry,
+                                        value.version);
+            } else {
+                return std::unexpected("Unsupported plugin source type");
+            }
+        },
+        source);
 
     if (!install_result) {
         cleanup_temp();
@@ -1023,9 +990,11 @@ inline void discover_plugin_roots(const fs::path& root, std::vector<fs::path>& o
     const auto legacy_manifest_path = temp_path / "plugin.json";
     std::expected<PluginManifest, std::string> manifest = std::unexpected("missing");
     if (std::filesystem::exists(manifest_path)) {
-        manifest = load_plugin_manifest(manifest_path, temp_path.filename().string(), temp_path.string());
+        manifest =
+            load_plugin_manifest(manifest_path, temp_path.filename().string(), temp_path.string());
     } else if (std::filesystem::exists(legacy_manifest_path)) {
-        manifest = load_plugin_manifest(legacy_manifest_path, temp_path.filename().string(), temp_path.string());
+        manifest = load_plugin_manifest(legacy_manifest_path, temp_path.filename().string(),
+                                        temp_path.string());
     } else if (manifest_override) {
         manifest = *manifest_override;
     } else {
@@ -1053,15 +1022,15 @@ inline void discover_plugin_roots(const fs::path& root, std::vector<fs::path>& o
         }
     }
 
-    return CachePluginResult{.path = final_path, .manifest = *manifest, .git_commit_sha = git_commit_sha};
+    return CachePluginResult{
+        .path = final_path, .manifest = *manifest, .git_commit_sha = git_commit_sha};
 }
 
-[[nodiscard]] std::expected<std::filesystem::path, std::string> copy_plugin_to_versioned_cache(
-    const std::filesystem::path& source_path,
-    std::string_view plugin_id,
-    std::string_view version
-) {
-    if (!std::filesystem::exists(source_path)) return std::unexpected("Plugin source path does not exist");
+[[nodiscard]] std::expected<std::filesystem::path, std::string>
+copy_plugin_to_versioned_cache(const std::filesystem::path& source_path, std::string_view plugin_id,
+                               std::string_view version) {
+    if (!std::filesystem::exists(source_path))
+        return std::unexpected("Plugin source path does not exist");
     auto target = get_versioned_cache_path(plugin_id, version);
     if (auto seed = probe_seed_cache(plugin_id, version)) return *seed;
     std::error_code ec;
@@ -1070,10 +1039,10 @@ inline void discover_plugin_roots(const fs::path& root, std::vector<fs::path>& o
     std::filesystem::create_directories(target.parent_path(), ec);
     if (ec) return std::unexpected("Failed to create plugin cache directory");
     std::filesystem::copy(source_path, target,
-        std::filesystem::copy_options::recursive |
-            std::filesystem::copy_options::copy_symlinks |
-            std::filesystem::copy_options::overwrite_existing,
-        ec);
+                          std::filesystem::copy_options::recursive |
+                              std::filesystem::copy_options::copy_symlinks |
+                              std::filesystem::copy_options::overwrite_existing,
+                          ec);
     if (ec) return std::unexpected("Failed to copy plugin to cache");
     detail::remove_git_metadata(target);
     if (!detail::directory_has_entries(target)) {
@@ -1082,11 +1051,9 @@ inline void discover_plugin_roots(const fs::path& root, std::vector<fs::path>& o
     return target;
 }
 
-[[nodiscard]] std::expected<PluginManifest, std::string> load_plugin_manifest(
-    const std::filesystem::path& manifest_path,
-    std::string_view plugin_name,
-    std::string_view source
-) {
+[[nodiscard]] std::expected<PluginManifest, std::string>
+load_plugin_manifest(const std::filesystem::path& manifest_path, std::string_view plugin_name,
+                     std::string_view source) {
     if (!std::filesystem::exists(manifest_path)) {
         return PluginManifest{
             .name = std::string(plugin_name),
@@ -1115,21 +1082,18 @@ inline void discover_plugin_roots(const fs::path& root, std::vector<fs::path>& o
     manifest.commands = detail::json_string_array(root, "commands");
     manifest.agents = detail::json_string_array(root, "agents");
     manifest.skills = detail::json_string_array(root, "skills");
-    manifest.output_styles = detail::json_string_array(root, "outputStyles")
-        .or_else([&] { return detail::json_string_array(root, "output-styles"); });
+    manifest.output_styles = detail::json_string_array(root, "outputStyles").or_else([&] {
+        return detail::json_string_array(root, "output-styles");
+    });
     return manifest;
 }
 
 [[nodiscard]] std::expected<std::pair<LoadedPlugin, std::vector<PluginError>>, std::string>
-create_plugin_from_path(
-    const std::filesystem::path& plugin_path,
-    std::string_view source,
-    bool enabled,
-    std::string_view fallback_name,
-    bool
-) {
+create_plugin_from_path(const std::filesystem::path& plugin_path, std::string_view source,
+                        bool enabled, std::string_view fallback_name, bool) {
     auto manifest_path = plugin_path / ".claude-plugin" / "plugin.json";
-    if (!std::filesystem::exists(manifest_path) && std::filesystem::exists(plugin_path / "plugin.json")) {
+    if (!std::filesystem::exists(manifest_path) &&
+        std::filesystem::exists(plugin_path / "plugin.json")) {
         manifest_path = plugin_path / "plugin.json";
     }
     auto manifest = load_plugin_manifest(manifest_path, fallback_name, source);
@@ -1147,26 +1111,29 @@ create_plugin_from_path(
     if (!plugin.manifest.commands && std::filesystem::is_directory(plugin_path / "commands")) {
         plugin.commands_path = plugin_path / "commands";
     }
-    detail::add_existing_component_paths(plugin_path, plugin.manifest.commands, plugin.commands_paths,
-        errors, source, plugin.name, PluginComponent::Commands);
+    detail::add_existing_component_paths(plugin_path, plugin.manifest.commands,
+                                         plugin.commands_paths, errors, source, plugin.name,
+                                         PluginComponent::Commands);
 
     if (!plugin.manifest.agents && std::filesystem::is_directory(plugin_path / "agents")) {
         plugin.agents_path = plugin_path / "agents";
     }
     detail::add_existing_component_paths(plugin_path, plugin.manifest.agents, plugin.agents_paths,
-        errors, source, plugin.name, PluginComponent::Agents);
+                                         errors, source, plugin.name, PluginComponent::Agents);
 
     if (!plugin.manifest.skills && std::filesystem::is_directory(plugin_path / "skills")) {
         plugin.skills_path = plugin_path / "skills";
     }
     detail::add_existing_component_paths(plugin_path, plugin.manifest.skills, plugin.skills_paths,
-        errors, source, plugin.name, PluginComponent::Skills);
+                                         errors, source, plugin.name, PluginComponent::Skills);
 
-    if (!plugin.manifest.output_styles && std::filesystem::is_directory(plugin_path / "output-styles")) {
+    if (!plugin.manifest.output_styles &&
+        std::filesystem::is_directory(plugin_path / "output-styles")) {
         plugin.output_styles_path = plugin_path / "output-styles";
     }
-    detail::add_existing_component_paths(plugin_path, plugin.manifest.output_styles, plugin.output_styles_paths,
-        errors, source, plugin.name, PluginComponent::OutputStyles);
+    detail::add_existing_component_paths(plugin_path, plugin.manifest.output_styles,
+                                         plugin.output_styles_paths, errors, source, plugin.name,
+                                         PluginComponent::OutputStyles);
 
     return std::pair<LoadedPlugin, std::vector<PluginError>>{std::move(plugin), std::move(errors)};
 }
@@ -1188,7 +1155,8 @@ create_plugin_from_path(
             continue;
         }
         result.plugins.push_back(std::move(loaded->first));
-        for (auto& error : loaded->second) result.errors.push_back(std::move(error));
+        for (auto& error : loaded->second)
+            result.errors.push_back(std::move(error));
     }
     return result;
 }
@@ -1198,14 +1166,17 @@ create_plugin_from_path(
 }
 
 void clear_plugin_cache() {}
+
 void clear_plugin_command_cache() {}
+
 void clear_plugin_agent_cache() {}
+
 void clear_plugin_output_style_cache() {}
+
 void clear_plugin_hook_cache() {}
 
-[[nodiscard]] std::vector<MarkdownFile> walk_plugin_markdown(
-    const std::filesystem::path& dir_path
-) {
+[[nodiscard]] std::vector<MarkdownFile>
+walk_plugin_markdown(const std::filesystem::path& dir_path) {
     std::vector<MarkdownFile> files;
     if (!std::filesystem::is_directory(dir_path)) return files;
     std::error_code ec;
@@ -1213,9 +1184,8 @@ void clear_plugin_hook_cache() {}
         if (ec || !entry.is_regular_file()) continue;
         auto path = entry.path();
         auto ext = path.extension().string();
-        std::ranges::transform(ext, ext.begin(), [](unsigned char ch) {
-            return static_cast<char>(std::tolower(ch));
-        });
+        std::ranges::transform(
+            ext, ext.begin(), [](unsigned char ch) { return static_cast<char>(std::tolower(ch)); });
         if (ext != ".md") continue;
         auto parsed = detail::parse_markdown_frontmatter(detail::read_text_file(path));
         files.push_back(MarkdownFile{
@@ -1229,14 +1199,14 @@ void clear_plugin_hook_cache() {}
     return files;
 }
 
-[[nodiscard]] std::vector<MarkdownFile> walk_plugin_markdown_paths(
-    const std::vector<std::filesystem::path>& paths
-) {
+[[nodiscard]] std::vector<MarkdownFile>
+walk_plugin_markdown_paths(const std::vector<std::filesystem::path>& paths) {
     std::vector<MarkdownFile> files;
     for (const auto& path : paths) {
         if (std::filesystem::is_directory(path)) {
             auto nested = walk_plugin_markdown(path);
-            files.insert(files.end(), std::make_move_iterator(nested.begin()), std::make_move_iterator(nested.end()));
+            files.insert(files.end(), std::make_move_iterator(nested.begin()),
+                         std::make_move_iterator(nested.end()));
         } else if (std::filesystem::is_regular_file(path) && path.extension() == ".md") {
             auto parsed = detail::parse_markdown_frontmatter(detail::read_text_file(path));
             files.push_back(MarkdownFile{
@@ -1256,7 +1226,8 @@ void clear_plugin_hook_cache() {}
     auto loaded = load_all_plugins_cache_only();
     for (const auto& plugin : loaded.plugins) {
         if (!plugin.enabled) continue;
-        auto paths = detail::plugin_component_paths(plugin, plugin.commands_path, plugin.commands_paths);
+        auto paths =
+            detail::plugin_component_paths(plugin, plugin.commands_path, plugin.commands_paths);
         auto files = walk_plugin_markdown_paths(paths);
         for (const auto& file : files) {
             commands.push_back(PluginCommand{
@@ -1287,7 +1258,8 @@ void clear_plugin_hook_cache() {}
     auto loaded = load_all_plugins_cache_only();
     for (const auto& plugin : loaded.plugins) {
         if (!plugin.enabled) continue;
-        auto paths = detail::plugin_component_paths(plugin, plugin.agents_path, plugin.agents_paths);
+        auto paths =
+            detail::plugin_component_paths(plugin, plugin.agents_path, plugin.agents_paths);
         auto files = walk_plugin_markdown_paths(paths);
         for (const auto& file : files) {
             agents.push_back(PluginAgent{
@@ -1306,7 +1278,8 @@ void clear_plugin_hook_cache() {}
     auto loaded = load_all_plugins_cache_only();
     for (const auto& plugin : loaded.plugins) {
         if (!plugin.enabled) continue;
-        auto paths = detail::plugin_component_paths(plugin, plugin.output_styles_path, plugin.output_styles_paths);
+        auto paths = detail::plugin_component_paths(plugin, plugin.output_styles_path,
+                                                    plugin.output_styles_paths);
         auto files = walk_plugin_markdown_paths(paths);
         for (const auto& file : files) {
             styles.push_back(PluginOutputStyle{
@@ -1320,4 +1293,4 @@ void clear_plugin_hook_cache() {}
     return styles;
 }
 
-} // namespace loom::utils::plugin_loader
+}  // namespace loom::utils::plugin_loader

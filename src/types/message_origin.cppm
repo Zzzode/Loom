@@ -29,4 +29,4 @@ struct TaskEvent {
 
 using UserMessageOrigin = std::variant<HumanInput, LegacyHistory, TaskEvent>;
 
-} // namespace loom::core
+}  // namespace loom::core

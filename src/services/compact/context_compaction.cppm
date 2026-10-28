@@ -53,14 +53,14 @@ enum class ContextFailure { None, ContextTokensExceeded, RequestBytesExceeded };
 
 [[nodiscard]] std::uint64_t estimate_message_tokens(const loom::core::Message& message);
 [[nodiscard]] std::uint64_t estimate_request_tokens(const RequestContext& context,
-                                                   bool calibrate = true);
+                                                    bool calibrate = true);
 [[nodiscard]] std::uint64_t usable_input_tokens(const ContextPolicy& policy);
 [[nodiscard]] ContextFailure classify_context_failure(int status, std::string_view body);
 [[nodiscard]] std::string checkpoint_instructions();
 [[nodiscard]] bool valid_checkpoint(std::string_view text);
 [[nodiscard]] bool valid_tool_history(std::span<const loom::core::Message> messages);
-[[nodiscard]] loom::core::Result<CompactionResult> compact_context(
-    const RequestContext& context, const ContextPolicy& policy,
-    const SummaryCallback& summarize, const CancellationCheck& cancelled = {});
+[[nodiscard]] loom::core::Result<CompactionResult>
+compact_context(const RequestContext& context, const ContextPolicy& policy,
+                const SummaryCallback& summarize, const CancellationCheck& cancelled = {});
 
-} // namespace loom::services::compact
+}  // namespace loom::services::compact

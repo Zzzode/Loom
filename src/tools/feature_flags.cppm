@@ -25,8 +25,7 @@ constexpr bool FEATURE_MONITOR_TOOL = false;
 constexpr bool FEATURE_SEND_USER_FILE_TOOL = FEATURE_KAIROS;
 
 constexpr bool FEATURE_KAIROS_PUSH_NOTIFICATION = false;
-constexpr bool FEATURE_PUSH_NOTIFICATION_TOOL =
-    FEATURE_KAIROS || FEATURE_KAIROS_PUSH_NOTIFICATION;
+constexpr bool FEATURE_PUSH_NOTIFICATION_TOOL = FEATURE_KAIROS || FEATURE_KAIROS_PUSH_NOTIFICATION;
 
 constexpr bool FEATURE_KAIROS_GITHUB_WEBHOOKS = false;
 
@@ -157,4 +156,4 @@ inline constexpr bool kToolSearch = FEATURE_TOOL_SEARCH;
 /// ScriptTool.
 inline constexpr bool kScriptToolEnabled = FEATURE_SCRIPT_TOOL_ENABLED;
 
-} // namespace loom::tools::features
+}  // namespace loom::tools::features

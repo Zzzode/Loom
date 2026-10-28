@@ -7,8 +7,7 @@ import std;
 
 namespace loom::services::api {
 
-Result<StreamParser> MessagesClient::create_message_stream(
-    const CreateMessageRequest& request) {
+Result<StreamParser> MessagesClient::create_message_stream(const CreateMessageRequest& request) {
     CreateMessageRequest stream_request = request;
     stream_request.stream = true;
     auto betas = betas_for_request(request);
@@ -19,7 +18,8 @@ Result<StreamParser> MessagesClient::create_message_stream(
                         auth_ctx_->provider() != EProv::FirstParty);
 }
 
-Result<std::size_t> MessagesClient::prepared_stream_request_size(const CreateMessageRequest& request) {
+Result<std::size_t>
+MessagesClient::prepared_stream_request_size(const CreateMessageRequest& request) {
     auto stream_request = request;
     stream_request.stream = true;
     auto prepared = prepare_request(stream_request, betas_for_request(request), true);
@@ -27,11 +27,11 @@ Result<std::size_t> MessagesClient::prepared_stream_request_size(const CreateMes
     return prepared->body.size();
 }
 
-Result<StreamParser> MessagesClient::create_prepared_stream(
-    std::string url, std::string body, std::vector<std::string> headers,
-    StreamParser::EventDecoder decoder) {
-    return start_stream(std::move(url), std::move(body), std::move(headers),
-                        std::move(decoder), false);
+Result<StreamParser> MessagesClient::create_prepared_stream(std::string url, std::string body,
+                                                            std::vector<std::string> headers,
+                                                            StreamParser::EventDecoder decoder) {
+    return start_stream(std::move(url), std::move(body), std::move(headers), std::move(decoder),
+                        false);
 }
 
 MessagesClient::~MessagesClient() {
@@ -44,10 +44,11 @@ MessagesClient::~MessagesClient() {
             if (auto transfer = weak.lock()) transfers.push_back(std::move(transfer));
         }
     }
-    for (const auto& transfer : transfers) transfer->request_stop();
+    for (const auto& transfer : transfers)
+        transfer->request_stop();
     for (const auto& transfer : transfers) {
         transfer->stop_and_join();
     }
 }
 
-} // namespace loom::services::api
+}  // namespace loom::services::api

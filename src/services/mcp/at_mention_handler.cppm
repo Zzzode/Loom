@@ -41,8 +41,8 @@ inline AtMentionResponder responder;
 
 // Extract a string field from a JSON object string via the json utils.
 // Returns std::nullopt if the field is absent or not a string.
-inline auto get_string_field(const std::string& params_json,
-                             std::string_view key) -> std::optional<std::string> {
+inline auto get_string_field(const std::string& params_json, std::string_view key)
+    -> std::optional<std::string> {
     if (params_json.empty()) return std::nullopt;
     auto parsed = loom::utils::json::parse(params_json);
     if (!parsed) return std::nullopt;
@@ -54,8 +54,8 @@ inline auto get_string_field(const std::string& params_json,
 }
 
 // Extract an integer field; std::nullopt if absent / non-number.
-inline auto get_int_field(const std::string& params_json,
-                          std::string_view key) -> std::optional<int> {
+inline auto get_int_field(const std::string& params_json, std::string_view key)
+    -> std::optional<int> {
     if (params_json.empty()) return std::nullopt;
     auto parsed = loom::utils::json::parse(params_json);
     if (!parsed) return std::nullopt;
@@ -65,7 +65,7 @@ inline auto get_int_field(const std::string& params_json,
     if (node.is_int()) return static_cast<int>(node.as_int());
     return std::nullopt;
 }
-} // namespace detail
+}  // namespace detail
 
 // Register the UI-side responder. Pass nullptr to clear.
 auto set_at_mention_responder(AtMentionResponder responder) -> void {
@@ -112,4 +112,4 @@ auto dispatch_at_mention(const std::string& server_name,
     }
 }
 
-} // namespace loom::services::mcp
+}  // namespace loom::services::mcp

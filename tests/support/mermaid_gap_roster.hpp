@@ -15,6 +15,7 @@
 // ledger and these constants are updated in the same change and re-reviewed.
 #pragma once
 #include <gtest/gtest.h>
+
 #include <algorithm>
 #include <array>
 #include <cstddef>
@@ -38,13 +39,13 @@ namespace loom::test::mermaid_gap_roster {
 namespace json = loom::utils::json;
 
 inline constexpr std::string_view kSchema = "e6c_mandatory_gap_roster/v1";
-inline constexpr std::string_view kRosterRelPath =
-    "tools/mermaid/e6c-mandatory-gap-roster.json";
+inline constexpr std::string_view kRosterRelPath = "tools/mermaid/e6c-mandatory-gap-roster.json";
 
 // Frozen ledger pins. The verifier script parses these exact constants, so
 // there is a single source of truth for size and SHA-256.
 inline constexpr std::size_t kRosterBytes = 54060;
-inline constexpr std::string_view kRosterSha256 = "d29895095a251f45064fb14455124009cc3a7055725ac88b618f6bdab4f30048";
+inline constexpr std::string_view kRosterSha256 =
+    "d29895095a251f45064fb14455124009cc3a7055725ac88b618f6bdab4f30048";
 
 // Flow400CompleteSources deliberately has no roster: its pending/decoded
 // membership is determined by immutable Model authority assets and is pinned
@@ -68,20 +69,19 @@ inline bool is_gate_name(std::string_view name) {
 }
 
 // Frozen per-gate roster row counts, checked by the Integrity test.
-inline constexpr std::array<std::pair<std::string_view, std::size_t>, 11>
-    kGateRowCounts{{
-        {"official_matrix", 78},
-        {"merman_xy102", 20},
-        {"class481", 138},
-        {"class285", 54},
-        {"class_endpoint29", 1},
-        {"state85", 14},
-        {"class_caption_starvation8", 1},
-        {"state_reverse_escape", 1},
-        {"class_notes18", 6},
-        {"requirement11_p1p6", 1},
-        {"requirement11_overflow", 1},
-    }};
+inline constexpr std::array<std::pair<std::string_view, std::size_t>, 11> kGateRowCounts{{
+    {"official_matrix", 78},
+    {"merman_xy102", 20},
+    {"class481", 138},
+    {"class285", 54},
+    {"class_endpoint29", 1},
+    {"state85", 14},
+    {"class_caption_starvation8", 1},
+    {"state_reverse_escape", 1},
+    {"class_notes18", 6},
+    {"requirement11_p1p6", 1},
+    {"requirement11_overflow", 1},
+}};
 
 inline std::filesystem::path roster_path() {
     return std::filesystem::path(LOOM_TESTS_DIR) / ".." / "tools" / "mermaid" /
@@ -109,15 +109,14 @@ inline std::optional<Roster> load_verified_roster() {
         const auto path = roster_path();
         auto bytes = read_binary(path);
         if (bytes.size() != kRosterBytes) {
-            ADD_FAILURE() << "E6c roster byte size drift for " << path.string()
-                          << ": expected " << kRosterBytes << ", actual "
-                          << bytes.size();
+            ADD_FAILURE() << "E6c roster byte size drift for " << path.string() << ": expected "
+                          << kRosterBytes << ", actual " << bytes.size();
             return std::nullopt;
         }
         const auto digest = loom::utils::crypto::sha256(bytes);
         if (digest != kRosterSha256) {
-            ADD_FAILURE() << "E6c roster SHA-256 drift for " << path.string()
-                          << ": expected " << kRosterSha256 << ", actual " << digest;
+            ADD_FAILURE() << "E6c roster SHA-256 drift for " << path.string() << ": expected "
+                          << kRosterSha256 << ", actual " << digest;
             return std::nullopt;
         }
         auto parsed = json::parse(bytes);
@@ -126,8 +125,7 @@ inline std::optional<Roster> load_verified_roster() {
             return std::nullopt;
         }
         const auto root = parsed->root();
-        if (!root.is_obj() || !root.has("schema") ||
-            root.get("schema").as_str() != kSchema) {
+        if (!root.is_obj() || !root.has("schema") || root.get("schema").as_str() != kSchema) {
             ADD_FAILURE() << "E6c roster schema must be " << kSchema;
             return std::nullopt;
         }
@@ -216,16 +214,18 @@ inline std::set<std::string> canonical_row_set(const json::JsonVal& array_value)
 }
 
 struct GapDiff {
-    std::vector<std::string> missing;    // roster rows not observed
-    std::vector<std::string> unexpected; // observed rows absent from roster
+    std::vector<std::string> missing;     // roster rows not observed
+    std::vector<std::string> unexpected;  // observed rows absent from roster
 
     bool ok() const { return missing.empty() && unexpected.empty(); }
 
     std::string render(std::string_view gate) const {
         std::ostringstream out;
         out << "E6c mandatory gap drift for gate " << gate;
-        for (const auto& row : missing) out << "\n  missing (roster-only): " << row;
-        for (const auto& row : unexpected) out << "\n  unexpected (renderer-only): " << row;
+        for (const auto& row : missing)
+            out << "\n  missing (roster-only): " << row;
+        for (const auto& row : unexpected)
+            out << "\n  unexpected (renderer-only): " << row;
         return out.str();
     }
 };
@@ -233,10 +233,10 @@ struct GapDiff {
 inline GapDiff diff_canonical_sets(const std::set<std::string>& expected,
                                    const std::set<std::string>& observed) {
     GapDiff diff;
-    std::set_difference(expected.begin(), expected.end(), observed.begin(),
-                        observed.end(), std::back_inserter(diff.missing));
-    std::set_difference(observed.begin(), observed.end(), expected.begin(),
-                        expected.end(), std::back_inserter(diff.unexpected));
+    std::set_difference(expected.begin(), expected.end(), observed.begin(), observed.end(),
+                        std::back_inserter(diff.missing));
+    std::set_difference(observed.begin(), observed.end(), expected.begin(), expected.end(),
+                        std::back_inserter(diff.unexpected));
     return diff;
 }
 
@@ -252,8 +252,7 @@ inline GapDiff diff_gate(const Roster& roster, std::string_view gate,
     const auto expected_rows = roster.gates().get(gate);
     if (!expected_rows.is_arr())
         throw std::runtime_error("E6c roster gate missing: " + std::string(gate));
-    return diff_canonical_sets(canonical_row_set(expected_rows),
-                               canonical_row_set(observed_array));
+    return diff_canonical_sets(canonical_row_set(expected_rows), canonical_row_set(observed_array));
 }
 
 // Matrix error-message -> stable category mapping. A closed set of exactly
@@ -263,24 +262,22 @@ inline GapDiff diff_gate(const Roster& roster, std::string_view gate,
 inline constexpr std::string_view kUnknownCategory = "unknown";
 
 inline std::string_view matrix_error_category(std::string_view message) {
-    static constexpr std::array<std::pair<std::string_view, std::string_view>, 6>
-        kMapping{{
-            {"Complete mapped original still uses ordinary source at240",
-             "mapped_positive_still_source"},
-            {"Restored positive retains an unmet wide source requirement",
-             "mapped_positive_still_source"},
-            {"Expected exact ordinary-code source fallback",
-             "ordinary_source_fallback_expected"},
-            {"OfficialER206 whole-null art/ordinary/restore unmet; never admission",
-             "er206_whole_null_unmet"},
-            {"Whole-null Flow has unreviewed art or failed ordinary/restore protocol",
-             "flow_whole_null_unmet"},
-            {"Whole-null original has unreviewed art or failed ordinary/restore protocol",
-             "generic_whole_null_unmet"},
-        }};
+    static constexpr std::array<std::pair<std::string_view, std::string_view>, 6> kMapping{{
+        {"Complete mapped original still uses ordinary source at240",
+         "mapped_positive_still_source"},
+        {"Restored positive retains an unmet wide source requirement",
+         "mapped_positive_still_source"},
+        {"Expected exact ordinary-code source fallback", "ordinary_source_fallback_expected"},
+        {"OfficialER206 whole-null art/ordinary/restore unmet; never admission",
+         "er206_whole_null_unmet"},
+        {"Whole-null Flow has unreviewed art or failed ordinary/restore protocol",
+         "flow_whole_null_unmet"},
+        {"Whole-null original has unreviewed art or failed ordinary/restore protocol",
+         "generic_whole_null_unmet"},
+    }};
     for (const auto& [text, category] : kMapping)
         if (message == text) return category;
     return kUnknownCategory;
 }
 
-} // namespace loom::test::mermaid_gap_roster
+}  // namespace loom::test::mermaid_gap_roster

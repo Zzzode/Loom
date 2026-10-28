@@ -4,10 +4,11 @@
 #pragma clang diagnostic ignored "-Wmissing-designated-field-initializers"
 
 #include <gtest/gtest.h>
+#include <httplib.h>
+
 #include <cstddef>
 #include <cstdlib>
 #include <cstring>
-#include <httplib.h>
 #ifndef _WIN32
 #include <fcntl.h>
 #include <sys/file.h>
@@ -35,7 +36,7 @@ import loom.tools.web_browser;
 import loom.orchestration.tools.mcp;
 import loom.commands.mcp.core_settings_loader;
 import loom.orchestration.runtime_backends;
-import loom.tools.runtime_backends.port;  // RFC-0001 B15: set_/clear_skill_loader_executor slot API
+import loom.tools.runtime_backends.port; // RFC-0001 B15: set_/clear_skill_loader_executor slot API
 import loom.tools.image_codec.port;
 import loom.tools.worktree;
 import loom.orchestration.agent;
@@ -65,7 +66,7 @@ import loom.teams.team_helpers;
 import loom.hooks.tool_permissions;
 import loom.services.api.client;
 import loom.services.mcp.types;
-import loom.services.mcp.connection_manager;  // RFC-0001 B6: svc_mcp::McpServerSnapshot
+import loom.services.mcp.connection_manager; // RFC-0001 B6: svc_mcp::McpServerSnapshot
 import loom.tools.repl;
 import loom.tools.skill;
 import loom.orchestration.agent.utils;
@@ -77,7 +78,9 @@ namespace fs = std::filesystem;
 // The agent helpers exercised by the existing tests live in
 // loom::tools::agent::utils after the agent_tool split; re-expose them through
 // the loom::tools::agent namespace so the historical call sites still resolve.
-namespace loom::tools::agent { using namespace utils; }
+namespace loom::tools::agent {
+using namespace utils;
+}
 
 namespace {
 
@@ -86,8 +89,7 @@ namespace {
 // does not block them. Production paths must supply a real checker (or accept
 // fail-closed denial for write/execute/network tools).
 loom::tools::agent::AgentLivePermissionCheckFn test_allow_all_check() {
-    auto allow = []([[maybe_unused]] std::string_view,
-                    [[maybe_unused]] std::string_view,
+    auto allow = []([[maybe_unused]] std::string_view, [[maybe_unused]] std::string_view,
                     [[maybe_unused]] std::string_view) {
         return loom::tools::agent::AgentLivePermissionCheck{.allowed = true};
     };
@@ -97,7 +99,8 @@ loom::tools::agent::AgentLivePermissionCheckFn test_allow_all_check() {
 struct CurrentPathGuard {
     fs::path previous;
 
-    explicit CurrentPathGuard(const fs::path& next) : previous(fs::current_path()) {
+    explicit CurrentPathGuard(const fs::path& next)
+        : previous(fs::current_path()) {
         fs::current_path(next);
     }
 
@@ -110,10 +113,17 @@ struct CurrentPathGuard {
 // RAII guard that closes a persistent REPL session on scope exit.
 struct ReplSessionGuard {
     std::string id;
-    explicit ReplSessionGuard(std::string s) : id(std::move(s)) {}
+
+    explicit ReplSessionGuard(std::string s)
+        : id(std::move(s)) {}
+
     ~ReplSessionGuard() {
-        try { loom::tools::repl::close_session(id); } catch (...) {}
+        try {
+            loom::tools::repl::close_session(id);
+        } catch (...) {
+        }
     }
+
     ReplSessionGuard(const ReplSessionGuard&) = delete;
     ReplSessionGuard& operator=(const ReplSessionGuard&) = delete;
 };
@@ -136,8 +146,10 @@ struct TempSkillRoot {
     TempSkillRoot() {
         auto base = fs::temp_directory_path();
         std::ostringstream ss;
-        ss << "cc-skill-test-" << std::chrono::duration_cast<std::chrono::nanoseconds>(
-               std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+        ss << "cc-skill-test-"
+           << std::chrono::duration_cast<std::chrono::nanoseconds>(
+                  std::chrono::high_resolution_clock::now().time_since_epoch())
+                  .count();
         temp_home = base / ss.str();
         skills_dir = temp_home / ".loom" / "skills";
         path = skills_dir;  // primary `path` alias used by write_skill
@@ -148,6 +160,7 @@ struct TempSkillRoot {
         }
         setenv("HOME", temp_home.string().c_str(), 1);
     }
+
     ~TempSkillRoot() {
         if (prev_home) {
             setenv("HOME", prev_home->c_str(), 1);
@@ -157,6 +170,7 @@ struct TempSkillRoot {
         std::error_code ec;
         fs::remove_all(temp_home, ec);
     }
+
     TempSkillRoot(const TempSkillRoot&) = delete;
     TempSkillRoot& operator=(const TempSkillRoot&) = delete;
 
@@ -184,7 +198,8 @@ struct EnvironmentGuard {
     std::string name;
     std::optional<std::string> previous;
 
-    EnvironmentGuard(std::string key, const std::string& value) : name(std::move(key)) {
+    EnvironmentGuard(std::string key, const std::string& value)
+        : name(std::move(key)) {
         if (const char* existing = std::getenv(name.c_str())) {
             previous = existing;
         }
@@ -204,7 +219,8 @@ struct EnvironmentUnsetGuard {
     std::string name;
     std::optional<std::string> previous;
 
-    explicit EnvironmentUnsetGuard(std::string key) : name(std::move(key)) {
+    explicit EnvironmentUnsetGuard(std::string key)
+        : name(std::move(key)) {
         if (const char* existing = std::getenv(name.c_str())) {
             previous = existing;
         }
@@ -232,27 +248,27 @@ class LocalBridgeIngressServer {
 public:
     LocalBridgeIngressServer() {
         server_.new_task_queue = [] { return new httplib::ThreadPool(2); };
-        server_.Post(R"(/v1/sessions/([^/]+)/events)", [&](const httplib::Request& req, httplib::Response& res) {
-            LocalBridgeIngressRequest request;
-            request.target_session_id = req.matches.size() > 1 ? req.matches[1].str() : std::string{};
-            request.authorization = req.get_header_value("Authorization");
-            request.cookie = req.get_header_value("Cookie");
-            request.organization_uuid = req.get_header_value("X-Organization-Uuid");
-            request.body = req.body;
-            {
-                std::lock_guard lock(mutex_);
-                requests_.push_back(std::move(request));
-            }
-            cv_.notify_all();
-            res.status = 201;
-            res.set_content(R"({"ok":true})", "application/json");
-        });
+        server_.Post(R"(/v1/sessions/([^/]+)/events)",
+                     [&](const httplib::Request& req, httplib::Response& res) {
+                         LocalBridgeIngressRequest request;
+                         request.target_session_id =
+                             req.matches.size() > 1 ? req.matches[1].str() : std::string{};
+                         request.authorization = req.get_header_value("Authorization");
+                         request.cookie = req.get_header_value("Cookie");
+                         request.organization_uuid = req.get_header_value("X-Organization-Uuid");
+                         request.body = req.body;
+                         {
+                             std::lock_guard lock(mutex_);
+                             requests_.push_back(std::move(request));
+                         }
+                         cv_.notify_all();
+                         res.status = 201;
+                         res.set_content(R"({"ok":true})", "application/json");
+                     });
 
         port_ = server_.bind_to_any_port("127.0.0.1");
         if (port_ > 0) {
-            worker_ = std::jthread([this](std::stop_token) {
-                server_.listen_after_bind();
-            });
+            worker_ = std::jthread([this](std::stop_token) { server_.listen_after_bind(); });
         }
     }
 
@@ -261,18 +277,13 @@ public:
         if (worker_.joinable()) worker_.join();
     }
 
-    [[nodiscard]] bool ready() const {
-        return port_ > 0;
-    }
+    [[nodiscard]] bool ready() const { return port_ > 0; }
 
-    [[nodiscard]] std::string base_url() const {
-        return std::format("http://127.0.0.1:{}", port_);
-    }
+    [[nodiscard]] std::string base_url() const { return std::format("http://127.0.0.1:{}", port_); }
 
-    [[nodiscard]] std::optional<std::vector<LocalBridgeIngressRequest>> wait_for_requests(
-        std::size_t count,
-        std::chrono::milliseconds timeout = std::chrono::seconds(3)
-    ) {
+    [[nodiscard]] std::optional<std::vector<LocalBridgeIngressRequest>>
+    wait_for_requests(std::size_t count,
+                      std::chrono::milliseconds timeout = std::chrono::seconds(3)) {
         std::unique_lock lock(mutex_);
         if (!cv_.wait_for(lock, timeout, [this, count] { return requests_.size() >= count; })) {
             return std::nullopt;
@@ -292,7 +303,8 @@ private:
 #ifndef _WIN32
 class LocalUnixLineServer {
 public:
-    explicit LocalUnixLineServer(fs::path path) : path_(std::move(path)) {
+    explicit LocalUnixLineServer(fs::path path)
+        : path_(std::move(path)) {
         fs::remove(path_);
         listen_fd_ = ::socket(AF_UNIX, SOCK_STREAM, 0);
         if (listen_fd_ < 0) return;
@@ -319,9 +331,7 @@ public:
             return;
         }
 
-        worker_ = std::jthread([this](std::stop_token stop) {
-            run(stop);
-        });
+        worker_ = std::jthread([this](std::stop_token stop) { run(stop); });
     }
 
     ~LocalUnixLineServer() {
@@ -334,13 +344,10 @@ public:
         fs::remove(path_);
     }
 
-    [[nodiscard]] bool valid() const {
-        return listen_fd_ >= 0;
-    }
+    [[nodiscard]] bool valid() const { return listen_fd_ >= 0; }
 
-    [[nodiscard]] std::optional<std::string> wait_for_message(
-        std::chrono::milliseconds timeout = std::chrono::seconds(3)
-    ) {
+    [[nodiscard]] std::optional<std::string>
+    wait_for_message(std::chrono::milliseconds timeout = std::chrono::seconds(3)) {
         std::unique_lock lock(mutex_);
         if (!cv_.wait_for(lock, timeout, [this] { return !messages_.empty(); })) {
             return std::nullopt;
@@ -399,11 +406,10 @@ private:
 struct FileToolServicesGuard {
     FileToolServicesGuard() {
         loom::orchestration::install_runtime_backends();
-        loom::tools::image_codec::set_codec(
-            loom::orchestration::make_image_codec());
-        loom::tools::set_skill_loader_executor(
-            loom::orchestration::make_skill_loader_executor());
+        loom::tools::image_codec::set_codec(loom::orchestration::make_image_codec());
+        loom::tools::set_skill_loader_executor(loom::orchestration::make_skill_loader_executor());
     }
+
     ~FileToolServicesGuard() {
         loom::tools::image_codec::clear_codec();
         loom::tools::clear_skill_loader_executor();
@@ -436,8 +442,8 @@ std::optional<std::string> extract_background_task_id(std::string_view text) {
     const auto value_start = start + marker.size();
     const auto value_end = text.find_first_of("\r\n", value_start);
     return std::string(text.substr(value_start, value_end == std::string_view::npos
-        ? std::string_view::npos
-        : value_end - value_start));
+                                                    ? std::string_view::npos
+                                                    : value_end - value_start));
 }
 
 std::string read_file(const fs::path& path) {
@@ -456,8 +462,8 @@ std::optional<std::string> extract_background_pid(std::string_view text) {
     const auto value_start = start + marker.size();
     const auto value_end = text.find_first_of("\r\n", value_start);
     return std::string(text.substr(value_start, value_end == std::string_view::npos
-        ? std::string_view::npos
-        : value_end - value_start));
+                                                    ? std::string_view::npos
+                                                    : value_end - value_start));
 }
 
 std::string shell_quote_for_test(std::string_view value) {
@@ -475,8 +481,10 @@ std::string shell_quote_for_test(std::string_view value) {
 
 class LocalSlowMessagesStreamServer {
 public:
-    explicit LocalSlowMessagesStreamServer(std::chrono::milliseconds delay, bool hold_response = false)
-        : delay_(delay), hold_response_(hold_response) {
+    explicit LocalSlowMessagesStreamServer(std::chrono::milliseconds delay,
+                                           bool hold_response = false)
+        : delay_(delay)
+        , hold_response_(hold_response) {
         server_.new_task_queue = [] { return new httplib::ThreadPool(2); };
         server_.Post("/v1/messages", [&](const httplib::Request& req, httplib::Response& res) {
             {
@@ -494,24 +502,30 @@ public:
             }
             res.set_content(
                 "event: message_start\n"
-                "data: {\"type\":\"message_start\",\"message\":{\"id\":\"msg_slow\",\"type\":\"message\",\"role\":\"assistant\",\"model\":\"loom-test\",\"content\":[]}}\n\n"
+                "data: "
+                "{\"type\":\"message_start\",\"message\":{\"id\":\"msg_slow\",\"type\":\"message\","
+                "\"role\":\"assistant\",\"model\":\"loom-test\",\"content\":[]}}\n\n"
                 "event: content_block_start\n"
-                "data: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"text\",\"text\":\"\"}}\n\n"
+                "data: "
+                "{\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":"
+                "\"text\",\"text\":\"\"}}\n\n"
                 "event: content_block_delta\n"
-                "data: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"late stream response\"}}\n\n"
+                "data: "
+                "{\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\","
+                "\"text\":\"late stream response\"}}\n\n"
                 "event: content_block_stop\n"
                 "data: {\"type\":\"content_block_stop\",\"index\":0}\n\n"
                 "event: message_delta\n"
-                "data: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\",\"stop_sequence\":null},\"usage\":{\"output_tokens\":3}}\n\n"
+                "data: "
+                "{\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\",\"stop_"
+                "sequence\":null},\"usage\":{\"output_tokens\":3}}\n\n"
                 "event: message_stop\n"
                 "data: {\"type\":\"message_stop\"}\n\n",
                 "text/event-stream");
         });
 
         port_ = server_.bind_to_any_port("127.0.0.1");
-        thread_ = std::thread([this] {
-            server_.listen_after_bind();
-        });
+        thread_ = std::thread([this] { server_.listen_after_bind(); });
         server_.wait_until_ready();
     }
 
@@ -525,23 +539,19 @@ public:
         if (thread_.joinable()) thread_.join();
     }
 
-    [[nodiscard]] bool valid() const {
-        return port_ > 0;
-    }
+    [[nodiscard]] bool valid() const { return port_ > 0; }
 
-    [[nodiscard]] std::string base_url() const {
-        return std::format("http://127.0.0.1:{}", port_);
-    }
+    [[nodiscard]] std::string base_url() const { return std::format("http://127.0.0.1:{}", port_); }
 
-    [[nodiscard]] bool wait_for_request(std::chrono::milliseconds timeout = std::chrono::seconds(3)) {
+    [[nodiscard]] bool
+    wait_for_request(std::chrono::milliseconds timeout = std::chrono::seconds(3)) {
         std::unique_lock lock(mutex_);
         return cv_.wait_for(lock, timeout, [this] { return request_count_ > 0; });
     }
 
-    [[nodiscard]] bool wait_for_request_count(
-        std::size_t expected,
-        std::chrono::milliseconds timeout = std::chrono::seconds(3)
-    ) {
+    [[nodiscard]] bool
+    wait_for_request_count(std::size_t expected,
+                           std::chrono::milliseconds timeout = std::chrono::seconds(3)) {
         std::unique_lock lock(mutex_);
         return cv_.wait_for(lock, timeout, [this, expected] { return request_count_ >= expected; });
     }
@@ -583,6 +593,7 @@ struct AgentCancellationGate {
         entered.set_value();
         release_future.wait();
     }
+
     void open() {
         if (!opened.exchange(true)) released.set_value();
     }
@@ -604,15 +615,25 @@ public:
             if (count == 1) {
                 res.set_content(
                     "event: message_start\n"
-                    "data: {\"type\":\"message_start\",\"message\":{\"id\":\"msg_sleep_tool\",\"type\":\"message\",\"role\":\"assistant\",\"model\":\"loom-test\",\"content\":[]}}\n\n"
+                    "data: "
+                    "{\"type\":\"message_start\",\"message\":{\"id\":\"msg_sleep_tool\",\"type\":"
+                    "\"message\",\"role\":\"assistant\",\"model\":\"loom-test\",\"content\":[]}}"
+                    "\n\n"
                     "event: content_block_start\n"
-                    "data: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"tool_use\",\"id\":\"toolu_sleep\",\"name\":\"sleep\",\"input\":{}}}\n\n"
+                    "data: "
+                    "{\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":"
+                    "\"tool_use\",\"id\":\"toolu_sleep\",\"name\":\"sleep\",\"input\":{}}}\n\n"
                     "event: content_block_delta\n"
-                    "data: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"{\\\"duration\\\":5,\\\"reason\\\":\\\"wait for cancellation\\\"}\"}}\n\n"
+                    "data: "
+                    "{\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_"
+                    "json_delta\",\"partial_json\":\"{\\\"duration\\\":5,\\\"reason\\\":\\\"wait "
+                    "for cancellation\\\"}\"}}\n\n"
                     "event: content_block_stop\n"
                     "data: {\"type\":\"content_block_stop\",\"index\":0}\n\n"
                     "event: message_delta\n"
-                    "data: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"tool_use\",\"stop_sequence\":null},\"usage\":{\"output_tokens\":12}}\n\n"
+                    "data: "
+                    "{\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"tool_use\",\"stop_"
+                    "sequence\":null},\"usage\":{\"output_tokens\":12}}\n\n"
                     "event: message_stop\n"
                     "data: {\"type\":\"message_stop\"}\n\n",
                     "text/event-stream");
@@ -621,24 +642,30 @@ public:
 
             res.set_content(
                 "event: message_start\n"
-                "data: {\"type\":\"message_start\",\"message\":{\"id\":\"msg_after_sleep\",\"type\":\"message\",\"role\":\"assistant\",\"model\":\"loom-test\",\"content\":[]}}\n\n"
+                "data: "
+                "{\"type\":\"message_start\",\"message\":{\"id\":\"msg_after_sleep\",\"type\":"
+                "\"message\",\"role\":\"assistant\",\"model\":\"loom-test\",\"content\":[]}}\n\n"
                 "event: content_block_start\n"
-                "data: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"text\",\"text\":\"\"}}\n\n"
+                "data: "
+                "{\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":"
+                "\"text\",\"text\":\"\"}}\n\n"
                 "event: content_block_delta\n"
-                "data: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"sleep finished\"}}\n\n"
+                "data: "
+                "{\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\","
+                "\"text\":\"sleep finished\"}}\n\n"
                 "event: content_block_stop\n"
                 "data: {\"type\":\"content_block_stop\",\"index\":0}\n\n"
                 "event: message_delta\n"
-                "data: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\",\"stop_sequence\":null},\"usage\":{\"output_tokens\":2}}\n\n"
+                "data: "
+                "{\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\",\"stop_"
+                "sequence\":null},\"usage\":{\"output_tokens\":2}}\n\n"
                 "event: message_stop\n"
                 "data: {\"type\":\"message_stop\"}\n\n",
                 "text/event-stream");
         });
 
         port_ = server_.bind_to_any_port("127.0.0.1");
-        thread_ = std::thread([this] {
-            server_.listen_after_bind();
-        });
+        thread_ = std::thread([this] { server_.listen_after_bind(); });
         server_.wait_until_ready();
     }
 
@@ -647,18 +674,13 @@ public:
         if (thread_.joinable()) thread_.join();
     }
 
-    [[nodiscard]] bool valid() const {
-        return port_ > 0;
-    }
+    [[nodiscard]] bool valid() const { return port_ > 0; }
 
-    [[nodiscard]] std::string base_url() const {
-        return std::format("http://127.0.0.1:{}", port_);
-    }
+    [[nodiscard]] std::string base_url() const { return std::format("http://127.0.0.1:{}", port_); }
 
-    [[nodiscard]] bool wait_for_request_count(
-        std::size_t expected,
-        std::chrono::milliseconds timeout = std::chrono::seconds(3)
-    ) {
+    [[nodiscard]] bool
+    wait_for_request_count(std::size_t expected,
+                           std::chrono::milliseconds timeout = std::chrono::seconds(3)) {
         std::unique_lock lock(mutex_);
         return cv_.wait_for(lock, timeout, [this, expected] { return request_count_ >= expected; });
     }
@@ -699,15 +721,26 @@ public:
             if (count == 1) {
                 res.set_content(
                     "event: message_start\n"
-                    "data: {\"type\":\"message_start\",\"message\":{\"id\":\"msg_bash_tool\",\"type\":\"message\",\"role\":\"assistant\",\"model\":\"loom-test\",\"content\":[]}}\n\n"
+                    "data: "
+                    "{\"type\":\"message_start\",\"message\":{\"id\":\"msg_bash_tool\",\"type\":"
+                    "\"message\",\"role\":\"assistant\",\"model\":\"loom-test\",\"content\":[]}}"
+                    "\n\n"
                     "event: content_block_start\n"
-                    "data: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"tool_use\",\"id\":\"toolu_bash\",\"name\":\"Bash\",\"input\":{}}}\n\n"
+                    "data: "
+                    "{\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":"
+                    "\"tool_use\",\"id\":\"toolu_bash\",\"name\":\"Bash\",\"input\":{}}}\n\n"
                     "event: content_block_delta\n"
-                    "data: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"{\\\"command\\\":\\\"trap 'printf cancelled; exit 0' TERM; printf started; sleep 5; printf done\\\",\\\"description\\\":\\\"wait for cancellation\\\"}\"}}\n\n"
+                    "data: "
+                    "{\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_"
+                    "json_delta\",\"partial_json\":\"{\\\"command\\\":\\\"trap 'printf cancelled; "
+                    "exit 0' TERM; printf started; sleep 5; printf "
+                    "done\\\",\\\"description\\\":\\\"wait for cancellation\\\"}\"}}\n\n"
                     "event: content_block_stop\n"
                     "data: {\"type\":\"content_block_stop\",\"index\":0}\n\n"
                     "event: message_delta\n"
-                    "data: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"tool_use\",\"stop_sequence\":null},\"usage\":{\"output_tokens\":12}}\n\n"
+                    "data: "
+                    "{\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"tool_use\",\"stop_"
+                    "sequence\":null},\"usage\":{\"output_tokens\":12}}\n\n"
                     "event: message_stop\n"
                     "data: {\"type\":\"message_stop\"}\n\n",
                     "text/event-stream");
@@ -716,24 +749,30 @@ public:
 
             res.set_content(
                 "event: message_start\n"
-                "data: {\"type\":\"message_start\",\"message\":{\"id\":\"msg_after_bash\",\"type\":\"message\",\"role\":\"assistant\",\"model\":\"loom-test\",\"content\":[]}}\n\n"
+                "data: "
+                "{\"type\":\"message_start\",\"message\":{\"id\":\"msg_after_bash\",\"type\":"
+                "\"message\",\"role\":\"assistant\",\"model\":\"loom-test\",\"content\":[]}}\n\n"
                 "event: content_block_start\n"
-                "data: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"text\",\"text\":\"\"}}\n\n"
+                "data: "
+                "{\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":"
+                "\"text\",\"text\":\"\"}}\n\n"
                 "event: content_block_delta\n"
-                "data: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"bash finished\"}}\n\n"
+                "data: "
+                "{\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\","
+                "\"text\":\"bash finished\"}}\n\n"
                 "event: content_block_stop\n"
                 "data: {\"type\":\"content_block_stop\",\"index\":0}\n\n"
                 "event: message_delta\n"
-                "data: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\",\"stop_sequence\":null},\"usage\":{\"output_tokens\":2}}\n\n"
+                "data: "
+                "{\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\",\"stop_"
+                "sequence\":null},\"usage\":{\"output_tokens\":2}}\n\n"
                 "event: message_stop\n"
                 "data: {\"type\":\"message_stop\"}\n\n",
                 "text/event-stream");
         });
 
         port_ = server_.bind_to_any_port("127.0.0.1");
-        thread_ = std::thread([this] {
-            server_.listen_after_bind();
-        });
+        thread_ = std::thread([this] { server_.listen_after_bind(); });
         server_.wait_until_ready();
     }
 
@@ -742,18 +781,13 @@ public:
         if (thread_.joinable()) thread_.join();
     }
 
-    [[nodiscard]] bool valid() const {
-        return port_ > 0;
-    }
+    [[nodiscard]] bool valid() const { return port_ > 0; }
 
-    [[nodiscard]] std::string base_url() const {
-        return std::format("http://127.0.0.1:{}", port_);
-    }
+    [[nodiscard]] std::string base_url() const { return std::format("http://127.0.0.1:{}", port_); }
 
-    [[nodiscard]] bool wait_for_request_count(
-        std::size_t expected,
-        std::chrono::milliseconds timeout = std::chrono::seconds(3)
-    ) {
+    [[nodiscard]] bool
+    wait_for_request_count(std::size_t expected,
+                           std::chrono::milliseconds timeout = std::chrono::seconds(3)) {
         std::unique_lock lock(mutex_);
         return cv_.wait_for(lock, timeout, [this, expected] { return request_count_ >= expected; });
     }
@@ -780,15 +814,13 @@ private:
 
 class LocalScriptedToolUseMessagesServer {
 public:
-    LocalScriptedToolUseMessagesServer(
-        std::string tool_name,
-        std::string tool_input_json,
-        std::string tool_use_id,
-        std::string final_text = "scripted tool complete"
-    ) : tool_name_(std::move(tool_name)),
-        tool_input_json_(std::move(tool_input_json)),
-        tool_use_id_(std::move(tool_use_id)),
-        final_text_(std::move(final_text)) {
+    LocalScriptedToolUseMessagesServer(std::string tool_name, std::string tool_input_json,
+                                       std::string tool_use_id,
+                                       std::string final_text = "scripted tool complete")
+        : tool_name_(std::move(tool_name))
+        , tool_input_json_(std::move(tool_input_json))
+        , tool_use_id_(std::move(tool_use_id))
+        , final_text_(std::move(final_text)) {
         server_.new_task_queue = [] { return new httplib::ThreadPool(2); };
         server_.Post("/v1/messages", [&](const httplib::Request& req, httplib::Response& res) {
             std::size_t count = 0;
@@ -805,17 +837,30 @@ public:
                 const auto partial_json = loom::tools::agent::json_escape_string(tool_input_json_);
                 res.set_content(
                     "event: message_start\n"
-                    "data: {\"type\":\"message_start\",\"message\":{\"id\":\"msg_scripted_tool\",\"type\":\"message\",\"role\":\"assistant\",\"model\":\"loom-test\",\"content\":[]}}\n\n"
+                    "data: "
+                    "{\"type\":\"message_start\",\"message\":{\"id\":\"msg_scripted_tool\","
+                    "\"type\":\"message\",\"role\":\"assistant\",\"model\":\"loom-test\","
+                    "\"content\":[]}}\n\n"
                     "event: content_block_start\n"
-                    "data: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"tool_use\",\"id\":\"" + tool_use_id_json + "\",\"name\":\"" + tool_name_json + "\",\"input\":{}}}\n\n"
-                    "event: content_block_delta\n"
-                    "data: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"" + partial_json + "\"}}\n\n"
-                    "event: content_block_stop\n"
-                    "data: {\"type\":\"content_block_stop\",\"index\":0}\n\n"
-                    "event: message_delta\n"
-                    "data: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"tool_use\",\"stop_sequence\":null},\"usage\":{\"output_tokens\":12}}\n\n"
-                    "event: message_stop\n"
-                    "data: {\"type\":\"message_stop\"}\n\n",
+                    "data: "
+                    "{\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":"
+                    "\"tool_use\",\"id\":\"" +
+                        tool_use_id_json + "\",\"name\":\"" + tool_name_json +
+                        "\",\"input\":{}}}\n\n"
+                        "event: content_block_delta\n"
+                        "data: "
+                        "{\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_"
+                        "json_delta\",\"partial_json\":\"" +
+                        partial_json +
+                        "\"}}\n\n"
+                        "event: content_block_stop\n"
+                        "data: {\"type\":\"content_block_stop\",\"index\":0}\n\n"
+                        "event: message_delta\n"
+                        "data: "
+                        "{\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"tool_use\","
+                        "\"stop_sequence\":null},\"usage\":{\"output_tokens\":12}}\n\n"
+                        "event: message_stop\n"
+                        "data: {\"type\":\"message_stop\"}\n\n",
                     "text/event-stream");
                 return;
             }
@@ -823,24 +868,33 @@ public:
             const auto final_text_json = loom::tools::agent::json_escape_string(final_text_);
             res.set_content(
                 "event: message_start\n"
-                "data: {\"type\":\"message_start\",\"message\":{\"id\":\"msg_after_scripted_tool\",\"type\":\"message\",\"role\":\"assistant\",\"model\":\"loom-test\",\"content\":[]}}\n\n"
+                "data: "
+                "{\"type\":\"message_start\",\"message\":{\"id\":\"msg_after_scripted_tool\","
+                "\"type\":\"message\",\"role\":\"assistant\",\"model\":\"loom-test\",\"content\":[]"
+                "}}\n\n"
                 "event: content_block_start\n"
-                "data: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"text\",\"text\":\"\"}}\n\n"
+                "data: "
+                "{\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":"
+                "\"text\",\"text\":\"\"}}\n\n"
                 "event: content_block_delta\n"
-                "data: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"" + final_text_json + "\"}}\n\n"
-                "event: content_block_stop\n"
-                "data: {\"type\":\"content_block_stop\",\"index\":0}\n\n"
-                "event: message_delta\n"
-                "data: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\",\"stop_sequence\":null},\"usage\":{\"output_tokens\":3}}\n\n"
-                "event: message_stop\n"
-                "data: {\"type\":\"message_stop\"}\n\n",
+                "data: "
+                "{\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\","
+                "\"text\":\"" +
+                    final_text_json +
+                    "\"}}\n\n"
+                    "event: content_block_stop\n"
+                    "data: {\"type\":\"content_block_stop\",\"index\":0}\n\n"
+                    "event: message_delta\n"
+                    "data: "
+                    "{\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\",\"stop_"
+                    "sequence\":null},\"usage\":{\"output_tokens\":3}}\n\n"
+                    "event: message_stop\n"
+                    "data: {\"type\":\"message_stop\"}\n\n",
                 "text/event-stream");
         });
 
         port_ = server_.bind_to_any_port("127.0.0.1");
-        thread_ = std::thread([this] {
-            server_.listen_after_bind();
-        });
+        thread_ = std::thread([this] { server_.listen_after_bind(); });
         server_.wait_until_ready();
     }
 
@@ -849,18 +903,13 @@ public:
         if (thread_.joinable()) thread_.join();
     }
 
-    [[nodiscard]] bool valid() const {
-        return port_ > 0;
-    }
+    [[nodiscard]] bool valid() const { return port_ > 0; }
 
-    [[nodiscard]] std::string base_url() const {
-        return std::format("http://127.0.0.1:{}", port_);
-    }
+    [[nodiscard]] std::string base_url() const { return std::format("http://127.0.0.1:{}", port_); }
 
-    [[nodiscard]] bool wait_for_request_count(
-        std::size_t expected,
-        std::chrono::milliseconds timeout = std::chrono::seconds(3)
-    ) {
+    [[nodiscard]] bool
+    wait_for_request_count(std::size_t expected,
+                           std::chrono::milliseconds timeout = std::chrono::seconds(3)) {
         std::unique_lock lock(mutex_);
         return cv_.wait_for(lock, timeout, [this, expected] { return request_count_ >= expected; });
     }
@@ -892,10 +941,10 @@ private:
 
 class LocalPerTurnBashCommandMessagesServer {
 public:
-    explicit LocalPerTurnBashCommandMessagesServer(
-        std::string command,
-        std::string final_text = "bash command complete"
-    ) : command_(std::move(command)), final_text_(std::move(final_text)) {
+    explicit LocalPerTurnBashCommandMessagesServer(std::string command,
+                                                   std::string final_text = "bash command complete")
+        : command_(std::move(command))
+        , final_text_(std::move(final_text)) {
         server_.new_task_queue = [] { return new httplib::ThreadPool(2); };
         server_.Post("/v1/messages", [&](const httplib::Request& req, httplib::Response& res) {
             {
@@ -907,23 +956,35 @@ public:
 
             const bool has_tool_result = req.body.find(R"("tool_result")") != std::string::npos;
             if (!has_tool_result) {
-                const auto input_json = std::format(
-                    R"({{"command":"{}","description":"run per-agent bash command"}})",
-                    loom::tools::agent::json_escape_string(command_));
+                const auto input_json =
+                    std::format(R"({{"command":"{}","description":"run per-agent bash command"}})",
+                                loom::tools::agent::json_escape_string(command_));
                 const auto partial_json = loom::tools::agent::json_escape_string(input_json);
                 res.set_content(
                     "event: message_start\n"
-                    "data: {\"type\":\"message_start\",\"message\":{\"id\":\"msg_bash_command_tool\",\"type\":\"message\",\"role\":\"assistant\",\"model\":\"loom-test\",\"content\":[]}}\n\n"
+                    "data: "
+                    "{\"type\":\"message_start\",\"message\":{\"id\":\"msg_bash_command_tool\","
+                    "\"type\":\"message\",\"role\":\"assistant\",\"model\":\"loom-test\","
+                    "\"content\":[]}}\n\n"
                     "event: content_block_start\n"
-                    "data: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"tool_use\",\"id\":\"toolu_bash_command\",\"name\":\"Bash\",\"input\":{}}}\n\n"
+                    "data: "
+                    "{\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":"
+                    "\"tool_use\",\"id\":\"toolu_bash_command\",\"name\":\"Bash\",\"input\":{}}}"
+                    "\n\n"
                     "event: content_block_delta\n"
-                    "data: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"" + partial_json + "\"}}\n\n"
-                    "event: content_block_stop\n"
-                    "data: {\"type\":\"content_block_stop\",\"index\":0}\n\n"
-                    "event: message_delta\n"
-                    "data: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"tool_use\",\"stop_sequence\":null},\"usage\":{\"output_tokens\":12}}\n\n"
-                    "event: message_stop\n"
-                    "data: {\"type\":\"message_stop\"}\n\n",
+                    "data: "
+                    "{\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_"
+                    "json_delta\",\"partial_json\":\"" +
+                        partial_json +
+                        "\"}}\n\n"
+                        "event: content_block_stop\n"
+                        "data: {\"type\":\"content_block_stop\",\"index\":0}\n\n"
+                        "event: message_delta\n"
+                        "data: "
+                        "{\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"tool_use\","
+                        "\"stop_sequence\":null},\"usage\":{\"output_tokens\":12}}\n\n"
+                        "event: message_stop\n"
+                        "data: {\"type\":\"message_stop\"}\n\n",
                     "text/event-stream");
                 return;
             }
@@ -931,24 +992,33 @@ public:
             const auto final_text_json = loom::tools::agent::json_escape_string(final_text_);
             res.set_content(
                 "event: message_start\n"
-                "data: {\"type\":\"message_start\",\"message\":{\"id\":\"msg_bash_command_done\",\"type\":\"message\",\"role\":\"assistant\",\"model\":\"loom-test\",\"content\":[]}}\n\n"
+                "data: "
+                "{\"type\":\"message_start\",\"message\":{\"id\":\"msg_bash_command_done\","
+                "\"type\":\"message\",\"role\":\"assistant\",\"model\":\"loom-test\",\"content\":[]"
+                "}}\n\n"
                 "event: content_block_start\n"
-                "data: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"text\",\"text\":\"\"}}\n\n"
+                "data: "
+                "{\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":"
+                "\"text\",\"text\":\"\"}}\n\n"
                 "event: content_block_delta\n"
-                "data: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"" + final_text_json + "\"}}\n\n"
-                "event: content_block_stop\n"
-                "data: {\"type\":\"content_block_stop\",\"index\":0}\n\n"
-                "event: message_delta\n"
-                "data: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\",\"stop_sequence\":null},\"usage\":{\"output_tokens\":3}}\n\n"
-                "event: message_stop\n"
-                "data: {\"type\":\"message_stop\"}\n\n",
+                "data: "
+                "{\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\","
+                "\"text\":\"" +
+                    final_text_json +
+                    "\"}}\n\n"
+                    "event: content_block_stop\n"
+                    "data: {\"type\":\"content_block_stop\",\"index\":0}\n\n"
+                    "event: message_delta\n"
+                    "data: "
+                    "{\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\",\"stop_"
+                    "sequence\":null},\"usage\":{\"output_tokens\":3}}\n\n"
+                    "event: message_stop\n"
+                    "data: {\"type\":\"message_stop\"}\n\n",
                 "text/event-stream");
         });
 
         port_ = server_.bind_to_any_port("127.0.0.1");
-        thread_ = std::thread([this] {
-            server_.listen_after_bind();
-        });
+        thread_ = std::thread([this] { server_.listen_after_bind(); });
         server_.wait_until_ready();
     }
 
@@ -957,18 +1027,13 @@ public:
         if (thread_.joinable()) thread_.join();
     }
 
-    [[nodiscard]] bool valid() const {
-        return port_ > 0;
-    }
+    [[nodiscard]] bool valid() const { return port_ > 0; }
 
-    [[nodiscard]] std::string base_url() const {
-        return std::format("http://127.0.0.1:{}", port_);
-    }
+    [[nodiscard]] std::string base_url() const { return std::format("http://127.0.0.1:{}", port_); }
 
-    [[nodiscard]] bool wait_for_request_count(
-        std::size_t expected,
-        std::chrono::milliseconds timeout = std::chrono::seconds(5)
-    ) {
+    [[nodiscard]] bool
+    wait_for_request_count(std::size_t expected,
+                           std::chrono::milliseconds timeout = std::chrono::seconds(5)) {
         std::unique_lock lock(mutex_);
         return cv_.wait_for(lock, timeout, [this, expected] { return request_count_ >= expected; });
     }
@@ -1003,9 +1068,7 @@ public:
         });
 
         port_ = server_.bind_to_any_port("127.0.0.1");
-        thread_ = std::thread([this] {
-            server_.listen_after_bind();
-        });
+        thread_ = std::thread([this] { server_.listen_after_bind(); });
         server_.wait_until_ready();
     }
 
@@ -1019,15 +1082,12 @@ public:
         if (thread_.joinable()) thread_.join();
     }
 
-    [[nodiscard]] bool valid() const {
-        return port_ > 0;
-    }
+    [[nodiscard]] bool valid() const { return port_ > 0; }
 
-    [[nodiscard]] std::string url() const {
-        return std::format("http://127.0.0.1:{}/slow", port_);
-    }
+    [[nodiscard]] std::string url() const { return std::format("http://127.0.0.1:{}/slow", port_); }
 
-    [[nodiscard]] bool wait_for_request(std::chrono::milliseconds timeout = std::chrono::seconds(3)) {
+    [[nodiscard]] bool
+    wait_for_request(std::chrono::milliseconds timeout = std::chrono::seconds(3)) {
         std::unique_lock lock(mutex_);
         return cv_.wait_for(lock, timeout, [this] { return request_count_ > 0; });
     }
@@ -1043,10 +1103,8 @@ private:
 };
 
 bool wait_for_native_agent_status(
-    std::string_view agent_id,
-    loom::tools::agent_runtime::NativeAgentStatus expected,
-    std::chrono::milliseconds timeout = std::chrono::milliseconds(1'000)
-) {
+    std::string_view agent_id, loom::tools::agent_runtime::NativeAgentStatus expected,
+    std::chrono::milliseconds timeout = std::chrono::milliseconds(1'000)) {
     const auto deadline = std::chrono::steady_clock::now() + timeout;
     while (std::chrono::steady_clock::now() < deadline) {
         auto record = loom::tools::agent_runtime::native_agent_store().get(agent_id);
@@ -1057,7 +1115,7 @@ bool wait_for_native_agent_status(
     return record && record->status == expected;
 }
 
-} // namespace
+}  // namespace
 
 TEST(ToolRegistry, ListsBuiltInTools) {
     auto names = loom::tools::registry::builtin_tool_names();
@@ -1098,7 +1156,8 @@ TEST(ToolRegistry, CoreRegistryCanBeConstructed) {
 
 TEST(ToolRegistry, RegistersRuntimeTools) {
     loom::core::ToolRegistry registry;
-    loom::tools::register_runtime_tools(registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
+    loom::tools::register_runtime_tools(
+        registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
 
     EXPECT_GT(registry.size(), 0u);
     EXPECT_TRUE(registry.contains("Bash"));
@@ -1115,10 +1174,10 @@ TEST(ToolRegistry, AskUserUsesInstalledResponderAndReturnsPrevious) {
     struct RestoreResponder {
         loom::tools::AskUserResponder original =
             std::move(loom::tools::get_global_ask_user_responder());
-        ~RestoreResponder() {
-            loom::tools::set_global_ask_user_responder(std::move(original));
-        }
+
+        ~RestoreResponder() { loom::tools::set_global_ask_user_responder(std::move(original)); }
     } restore;
+
     loom::tools::set_global_ask_user_responder(
         [](std::string_view, std::optional<std::string>) -> std::optional<std::string> {
             return "previous answer";
@@ -1134,10 +1193,10 @@ TEST(ToolRegistry, AskUserUsesInstalledResponderAndReturnsPrevious) {
               "UI answer: direct");
     loom::core::ToolRegistry registry;
     loom::tools::register_runtime_tools(registry, loom::tools::RuntimeToolOptions{
-        .permission_check = test_allow_all_check(),
-    });
-    auto result = registry.execute("ask_user_question", loom::core::ToolInput::from_json(
-        R"({"question":"real registry"})"));
+                                                      .permission_check = test_allow_all_check(),
+                                                  });
+    auto result = registry.execute(
+        "ask_user_question", loom::core::ToolInput::from_json(R"({"question":"real registry"})"));
     ASSERT_TRUE(result.has_value());
     ASSERT_FALSE(result->is_error);
     ASSERT_FALSE(result->content.empty());
@@ -1147,20 +1206,22 @@ TEST(ToolRegistry, AskUserUsesInstalledResponderAndReturnsPrevious) {
 TEST(ToolRegistry, TaskToolsRegistrationMatchesDiscovery) {
     loom::core::ToolRegistry registry;
     loom::tools::register_runtime_tools(registry, loom::tools::RuntimeToolOptions{
-        .permission_check = test_allow_all_check(),
-    });
+                                                      .permission_check = test_allow_all_check(),
+                                                  });
     const auto advertised = loom::tools::runtime_tool_names();
-    auto searched = registry.execute("tool_search", loom::core::ToolInput::from_json(
-        R"({"query":"task_"})"));
+    auto searched =
+        registry.execute("tool_search", loom::core::ToolInput::from_json(R"({"query":"task_"})"));
     ASSERT_TRUE(searched.has_value());
     ASSERT_FALSE(searched->is_error);
     ASSERT_FALSE(searched->content.empty());
 
-    for (const auto* name : {"task_create", "task_get", "task_list", "task_output", "task_stop", "task_update"}) {
+    for (const auto* name :
+         {"task_create", "task_get", "task_list", "task_output", "task_stop", "task_update"}) {
         SCOPED_TRACE(name);
         EXPECT_TRUE(registry.contains(name));
         EXPECT_EQ(std::ranges::count(advertised, std::string_view{name}), 1);
-        EXPECT_NE(searched->content.front().text.find(std::string{"- "} + name + "\n"), std::string::npos);
+        EXPECT_NE(searched->content.front().text.find(std::string{"- "} + name + "\n"),
+                  std::string::npos);
     }
     // Scoped checklist updates remain a separate operation from execution tasks.
     EXPECT_TRUE(registry.contains("todo_write"));
@@ -1169,14 +1230,14 @@ TEST(ToolRegistry, TaskToolsRegistrationMatchesDiscovery) {
 }
 
 TEST(ScriptDiagnostics, ParsesCompilerLevelsAndLocations) {
-    const auto diagnostics = loom::tools::parse_compiler_output(
-        "main.cpp:3:4: error: invalid expression\n"
-        "main.cpp:5:6: warning: unused variable\n"
-        "main.cpp:7:8: note: declared here\n"
-        "input.ts(9,10): error TS2322: type mismatch\n"
-        "File \"script.py\", line 11\n"
-        "  failing_call()\n"
-        "ValueError: bad input\n");
+    const auto diagnostics =
+        loom::tools::parse_compiler_output("main.cpp:3:4: error: invalid expression\n"
+                                           "main.cpp:5:6: warning: unused variable\n"
+                                           "main.cpp:7:8: note: declared here\n"
+                                           "input.ts(9,10): error TS2322: type mismatch\n"
+                                           "File \"script.py\", line 11\n"
+                                           "  failing_call()\n"
+                                           "ValueError: bad input\n");
     ASSERT_EQ(diagnostics.size(), 5u);
     using loom::tools::DiagnosticLevel;
     EXPECT_EQ(diagnostics[0].level, DiagnosticLevel::Error);
@@ -1201,23 +1262,23 @@ TEST(ScriptDiagnostics, ParsesCompilerLevelsAndLocations) {
 TEST(ToolRegistry, RuntimeSimpleToolsHonorPermissionCheckOption) {
     std::vector<std::string> checked_tools;
     loom::core::ToolRegistry registry;
-    loom::tools::register_runtime_tools(registry, loom::tools::RuntimeToolOptions{
-        .permission_check = [&checked_tools](
-            std::string_view tool_name,
-            std::string_view input_json,
-            std::string_view tool_use_id
-        ) {
-            checked_tools.emplace_back(tool_name);
-            EXPECT_FALSE(input_json.empty());
-            EXPECT_TRUE(tool_use_id.empty());
-            return loom::tools::AgentLivePermissionCheck{
-                .allowed = tool_name != "testing",
-                .message = std::string("blocked by test permission context"),
-            };
-        },
-    });
+    loom::tools::register_runtime_tools(
+        registry, loom::tools::RuntimeToolOptions{
+                      .permission_check =
+                          [&checked_tools](std::string_view tool_name, std::string_view input_json,
+                                           std::string_view tool_use_id) {
+                              checked_tools.emplace_back(tool_name);
+                              EXPECT_FALSE(input_json.empty());
+                              EXPECT_TRUE(tool_use_id.empty());
+                              return loom::tools::AgentLivePermissionCheck{
+                                  .allowed = tool_name != "testing",
+                                  .message = std::string("blocked by test permission context"),
+                              };
+                          },
+                  });
 
-    auto result = registry.execute("testing", loom::core::ToolInput::from_json(R"({"command":"unit"})"));
+    auto result =
+        registry.execute("testing", loom::core::ToolInput::from_json(R"({"command":"unit"})"));
 
     ASSERT_FALSE(result.has_value());
     EXPECT_EQ(result.error().code, loom::core::ErrorCode::ToolPermissionDenied);
@@ -1380,11 +1441,13 @@ process.stdin.resume();
     }
 
     EnvironmentGuard home_guard("HOME", root.string());
-    EnvironmentGuard plugin_cache_guard("LOOM_PLUGIN_CACHE_DIR", (root / ".loom" / "plugins").string());
+    EnvironmentGuard plugin_cache_guard("LOOM_PLUGIN_CACHE_DIR",
+                                        (root / ".loom" / "plugins").string());
     CurrentPathGuard cwd(root);
 
     loom::core::ToolRegistry registry;
-    loom::tools::register_runtime_tools(registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
+    loom::tools::register_runtime_tools(
+        registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
 
     auto execute_lsp = [&](std::string_view action) {
         loom::utils::json::JsonMutDoc doc;
@@ -1405,7 +1468,8 @@ process.stdin.resume();
     auto completion = execute_lsp("completion");
     ASSERT_TRUE(completion.has_value());
     EXPECT_FALSE(completion->is_error) << completion->content.front().text;
-    EXPECT_NE(completion->content.front().text.find("fixtureCompletion callable"), std::string::npos);
+    EXPECT_NE(completion->content.front().text.find("fixtureCompletion callable"),
+              std::string::npos);
 
     auto hover = execute_lsp("hover");
     ASSERT_TRUE(hover.has_value());
@@ -1420,7 +1484,8 @@ process.stdin.resume();
     auto diagnostics = execute_lsp("diagnostics");
     ASSERT_TRUE(diagnostics.has_value());
     EXPECT_FALSE(diagnostics->is_error) << diagnostics->content.front().text;
-    EXPECT_NE(diagnostics->content.front().text.find("fixture:1:2 fixture diagnostic"), std::string::npos);
+    EXPECT_NE(diagnostics->content.front().text.find("fixture:1:2 fixture diagnostic"),
+              std::string::npos);
 
     fs::remove_all(root);
 }
@@ -1485,10 +1550,11 @@ TEST(Tools, TaskStopStopsBackgroundBashCommands) {
     ASSERT_TRUE(task_id.has_value()) << result->content.front().text;
 
     loom::core::ToolRegistry registry;
-    loom::tools::register_runtime_tools(registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
+    loom::tools::register_runtime_tools(
+        registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
     for (int attempt = 0; attempt < 20; ++attempt) {
-        auto output = registry.execute("task_output", loom::core::ToolInput::from_json(
-            std::format(R"({{"task_id":"{}"}})", *task_id)));
+        auto output = registry.execute("task_output", loom::core::ToolInput::from_json(std::format(
+                                                          R"({{"task_id":"{}"}})", *task_id)));
         ASSERT_TRUE(output.has_value());
         ASSERT_FALSE(output->content.empty());
         if (output->content.front().text.find("ready") != std::string::npos) {
@@ -1497,15 +1563,15 @@ TEST(Tools, TaskStopStopsBackgroundBashCommands) {
         std::this_thread::sleep_for(std::chrono::milliseconds(50));
     }
 
-    auto stopped = registry.execute("task_stop", loom::core::ToolInput::from_json(
-        std::format(R"({{"task_id":"{}"}})", *task_id)));
+    auto stopped = registry.execute("task_stop", loom::core::ToolInput::from_json(std::format(
+                                                     R"({{"task_id":"{}"}})", *task_id)));
     ASSERT_TRUE(stopped.has_value());
     EXPECT_FALSE(stopped->is_error);
     ASSERT_FALSE(stopped->content.empty());
     EXPECT_NE(stopped->content.front().text.find("Status: stopped"), std::string::npos);
 
-    auto output = registry.execute("task_output", loom::core::ToolInput::from_json(
-        std::format(R"({{"task_id":"{}"}})", *task_id)));
+    auto output = registry.execute("task_output", loom::core::ToolInput::from_json(std::format(
+                                                      R"({{"task_id":"{}"}})", *task_id)));
     ASSERT_TRUE(output.has_value());
     EXPECT_FALSE(output->is_error);
     ASSERT_FALSE(output->content.empty());
@@ -1528,11 +1594,12 @@ TEST(Tools, TaskOutputAndStopAcceptBackgroundProcessPid) {
     ASSERT_TRUE(pid.has_value()) << result->content.front().text;
 
     loom::core::ToolRegistry registry;
-    loom::tools::register_runtime_tools(registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
+    loom::tools::register_runtime_tools(
+        registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
     std::string output_text;
     for (int attempt = 0; attempt < 20; ++attempt) {
-        auto output = registry.execute("task_output", loom::core::ToolInput::from_json(
-            std::format(R"({{"pid":{}}})", *pid)));
+        auto output = registry.execute(
+            "task_output", loom::core::ToolInput::from_json(std::format(R"({{"pid":{}}})", *pid)));
         ASSERT_TRUE(output.has_value());
         ASSERT_FALSE(output->is_error);
         ASSERT_FALSE(output->content.empty());
@@ -1546,15 +1613,15 @@ TEST(Tools, TaskOutputAndStopAcceptBackgroundProcessPid) {
     EXPECT_NE(output_text.find("PID: " + *pid), std::string::npos);
     EXPECT_NE(output_text.find("pid-ready"), std::string::npos);
 
-    auto stopped = registry.execute("task_stop", loom::core::ToolInput::from_json(
-        std::format(R"({{"pid":{}}})", *pid)));
+    auto stopped = registry.execute(
+        "task_stop", loom::core::ToolInput::from_json(std::format(R"({{"pid":{}}})", *pid)));
     ASSERT_TRUE(stopped.has_value());
     EXPECT_FALSE(stopped->is_error);
     ASSERT_FALSE(stopped->content.empty());
     EXPECT_NE(stopped->content.front().text.find("Status: stopped"), std::string::npos);
 
-    auto final_output = registry.execute("task_output", loom::core::ToolInput::from_json(
-        std::format(R"({{"pid":{}}})", *pid)));
+    auto final_output = registry.execute(
+        "task_output", loom::core::ToolInput::from_json(std::format(R"({{"pid":{}}})", *pid)));
     ASSERT_TRUE(final_output.has_value());
     EXPECT_FALSE(final_output->is_error);
     ASSERT_FALSE(final_output->content.empty());
@@ -1604,16 +1671,14 @@ TEST(Tools, SkillToolFallsBackToManualWalkWithoutExecutor) {
     ASSERT_TRUE(missing.has_value());
     ASSERT_TRUE(missing->is_error);
     ASSERT_FALSE(missing->content.empty());
-    EXPECT_NE(missing->content.front().text.find(
-                  "Skill not found: b12-no-such-skill-fixture"),
+    EXPECT_NE(missing->content.front().text.find("Skill not found: b12-no-such-skill-fixture"),
               std::string::npos);
 
     auto unnamed = registry.execute("skill", loom::core::ToolInput::from_json(R"({})"));
     ASSERT_TRUE(unnamed.has_value());
     ASSERT_TRUE(unnamed->is_error);
     ASSERT_FALSE(unnamed->content.empty());
-    EXPECT_NE(unnamed->content.front().text.find("skill requires name"),
-              std::string::npos);
+    EXPECT_NE(unnamed->content.front().text.find("skill requires name"), std::string::npos);
 
     fs::remove_all(root);
 }
@@ -1629,16 +1694,19 @@ TEST(Tools, RuntimeRegistryEditToolEditsFileAndReturnsOutput) {
     }
 
     loom::core::ToolRegistry registry;
-    loom::tools::register_runtime_tools(registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
+    loom::tools::register_runtime_tools(
+        registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
 
     // Read the file first (required by Edit tool)
-    auto read_result = registry.execute("Read", loom::core::ToolInput::from_json(std::format(
-        R"({{"file_path":"{}"}})",
-        loom::tools::agent::json_escape_string(path.string()))));
+    auto read_result = registry.execute(
+        "Read",
+        loom::core::ToolInput::from_json(std::format(
+            R"({{"file_path":"{}"}})", loom::tools::agent::json_escape_string(path.string()))));
     ASSERT_TRUE(read_result.has_value());
-    auto result = registry.execute("Edit", loom::core::ToolInput::from_json(std::format(
-        R"({{"file_path":"{}","old_string":"before edit","new_string":"after edit"}})",
-        loom::tools::agent::json_escape_string(path.string()))));
+    auto result = registry.execute(
+        "Edit", loom::core::ToolInput::from_json(std::format(
+                    R"({{"file_path":"{}","old_string":"before edit","new_string":"after edit"}})",
+                    loom::tools::agent::json_escape_string(path.string()))));
 
     ASSERT_TRUE(result.has_value()) << result.error().format();
     ASSERT_FALSE(result->content.empty());
@@ -1686,16 +1754,16 @@ TEST(Tools, SwarmBackendsInProcessExecutorTracksActiveTeammates) {
     EXPECT_FALSE(spawned.pane_id.has_value());
     EXPECT_TRUE(executor->is_active("reviewer-one@migration-team"));
 
-    executor->send_message(
-        "reviewer-one@migration-team",
-        loom::utils::swarm_backends::TeammateMessage{
-            .text = "Please review the migration",
-            .from = "team-lead",
-            .color = std::optional<std::string>{"cyan"},
-            .timestamp = std::nullopt,
-            .summary = std::optional<std::string>{"review migration"},
-        });
-    auto inbox = loom::utils::read_inbox("reviewer-one", std::optional<std::string_view>{"migration-team"});
+    executor->send_message("reviewer-one@migration-team",
+                           loom::utils::swarm_backends::TeammateMessage{
+                               .text = "Please review the migration",
+                               .from = "team-lead",
+                               .color = std::optional<std::string>{"cyan"},
+                               .timestamp = std::nullopt,
+                               .summary = std::optional<std::string>{"review migration"},
+                           });
+    auto inbox =
+        loom::utils::read_inbox("reviewer-one", std::optional<std::string_view>{"migration-team"});
     ASSERT_TRUE(inbox.has_value()) << inbox.error();
     ASSERT_EQ(inbox->size(), 1u);
     EXPECT_EQ(inbox->front().from, "team-lead");
@@ -1706,7 +1774,8 @@ TEST(Tools, SwarmBackendsInProcessExecutorTracksActiveTeammates) {
     EXPECT_TRUE(executor->terminate("reviewer-one@migration-team", "done"));
     EXPECT_TRUE(executor->is_active("reviewer-one@migration-team"));
 
-    inbox = loom::utils::read_inbox("reviewer-one", std::optional<std::string_view>{"migration-team"});
+    inbox =
+        loom::utils::read_inbox("reviewer-one", std::optional<std::string_view>{"migration-team"});
     ASSERT_TRUE(inbox.has_value()) << inbox.error();
     ASSERT_EQ(inbox->size(), 2u);
     EXPECT_NE(inbox->back().text.find(R"("type":"shutdown_request")"), std::string::npos);
@@ -1767,9 +1836,7 @@ TEST(Tools, SwarmBackendsPaneCommandPropagatesPermissionModeFlags) {
 
 TEST(Tools, TeamHelpersResolveTeammateAgentTypeAndPlanMode) {
     struct ClearDynamicTeamContext {
-        ~ClearDynamicTeamContext() {
-            loom::utils::clear_dynamic_team_context();
-        }
+        ~ClearDynamicTeamContext() { loom::utils::clear_dynamic_team_context(); }
     } clear_dynamic_team_context;
 
     EnvironmentGuard agent_type_guard("LOOM_AGENT_TYPE", "verification");
@@ -1843,7 +1910,8 @@ TEST(Tools, RuntimeSendMessageWritesNativeTeammateMailbox) {
     ASSERT_FALSE(spawned->is_error);
 
     loom::core::ToolRegistry registry;
-    loom::tools::register_runtime_tools(registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
+    loom::tools::register_runtime_tools(
+        registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
     auto delivered = registry.execute("send_message", loom::core::ToolInput::from_json(R"({
       "target_agent": "reviewer-one",
       "team_name": "migration-team",
@@ -1853,9 +1921,11 @@ TEST(Tools, RuntimeSendMessageWritesNativeTeammateMailbox) {
     ASSERT_TRUE(delivered.has_value());
     ASSERT_FALSE(delivered->is_error);
     ASSERT_FALSE(delivered->content.empty());
-    EXPECT_NE(delivered->content.front().text.find("reviewer-one@migration-team"), std::string::npos);
+    EXPECT_NE(delivered->content.front().text.find("reviewer-one@migration-team"),
+              std::string::npos);
 
-    auto inbox = loom::utils::read_inbox("reviewer-one", std::optional<std::string_view>{"migration-team"});
+    auto inbox =
+        loom::utils::read_inbox("reviewer-one", std::optional<std::string_view>{"migration-team"});
     ASSERT_TRUE(inbox.has_value()) << inbox.error();
     ASSERT_EQ(inbox->size(), 1u);
     EXPECT_EQ(inbox->front().from, "team-lead");
@@ -1881,8 +1951,7 @@ TEST(Tools, RuntimeSendMessageAcceptsTsSchemaAndBroadcastsToTeamMailbox) {
     loom::tools::agent_runtime::native_agent_store().clear_for_testing();
 
     auto team = loom::tools::global_team_store().create(
-        "broadcast-team-id",
-        "Broadcast Team",
+        "broadcast-team-id", "Broadcast Team",
         {
             loom::tools::TeamMember{.agent_id = "team-lead@Broadcast Team"},
             loom::tools::TeamMember{.agent_id = "reviewer@Broadcast Team"},
@@ -1891,7 +1960,8 @@ TEST(Tools, RuntimeSendMessageAcceptsTsSchemaAndBroadcastsToTeamMailbox) {
     ASSERT_TRUE(team.has_value()) << std::string(loom::tools::format_error(team.error()));
 
     loom::core::ToolRegistry registry;
-    loom::tools::register_runtime_tools(registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
+    loom::tools::register_runtime_tools(
+        registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
     auto delivered = registry.execute("send_message", loom::core::ToolInput::from_json(R"({
       "to": "*",
       "team_name": "Broadcast Team",
@@ -1901,9 +1971,12 @@ TEST(Tools, RuntimeSendMessageAcceptsTsSchemaAndBroadcastsToTeamMailbox) {
     ASSERT_TRUE(delivered.has_value());
     ASSERT_FALSE(delivered->is_error);
     ASSERT_FALSE(delivered->content.empty());
-    EXPECT_NE(delivered->content.front().text.find("Message broadcast to 2 teammate(s): reviewer, planner"), std::string::npos);
+    EXPECT_NE(delivered->content.front().text.find(
+                  "Message broadcast to 2 teammate(s): reviewer, planner"),
+              std::string::npos);
 
-    auto reviewer_inbox = loom::utils::read_inbox("reviewer", std::optional<std::string_view>{"Broadcast Team"});
+    auto reviewer_inbox =
+        loom::utils::read_inbox("reviewer", std::optional<std::string_view>{"Broadcast Team"});
     ASSERT_TRUE(reviewer_inbox.has_value()) << reviewer_inbox.error();
     ASSERT_EQ(reviewer_inbox->size(), 1u);
     EXPECT_EQ(reviewer_inbox->front().from, "team-lead");
@@ -1911,12 +1984,14 @@ TEST(Tools, RuntimeSendMessageAcceptsTsSchemaAndBroadcastsToTeamMailbox) {
     ASSERT_TRUE(reviewer_inbox->front().summary.has_value());
     EXPECT_EQ(*reviewer_inbox->front().summary, "migration audit sync");
 
-    auto planner_inbox = loom::utils::read_inbox("planner", std::optional<std::string_view>{"Broadcast Team"});
+    auto planner_inbox =
+        loom::utils::read_inbox("planner", std::optional<std::string_view>{"Broadcast Team"});
     ASSERT_TRUE(planner_inbox.has_value()) << planner_inbox.error();
     ASSERT_EQ(planner_inbox->size(), 1u);
     EXPECT_EQ(planner_inbox->front().text, "Please sync on the migration audit");
 
-    auto leader_inbox = loom::utils::read_inbox("team-lead", std::optional<std::string_view>{"Broadcast Team"});
+    auto leader_inbox =
+        loom::utils::read_inbox("team-lead", std::optional<std::string_view>{"Broadcast Team"});
     ASSERT_TRUE(leader_inbox.has_value()) << leader_inbox.error();
     EXPECT_TRUE(leader_inbox->empty());
 
@@ -1935,8 +2010,7 @@ TEST(Tools, RuntimeSendMessageWritesStructuredTeamProtocolMessages) {
     loom::tools::agent_runtime::native_agent_store().clear_for_testing();
 
     auto team = loom::tools::global_team_store().create(
-        "protocol-team-id",
-        "Protocol Team",
+        "protocol-team-id", "Protocol Team",
         {
             loom::tools::TeamMember{.agent_id = "team-lead@Protocol Team"},
             loom::tools::TeamMember{.agent_id = "reviewer@Protocol Team"},
@@ -1945,7 +2019,8 @@ TEST(Tools, RuntimeSendMessageWritesStructuredTeamProtocolMessages) {
     ASSERT_TRUE(team.has_value()) << std::string(loom::tools::format_error(team.error()));
 
     loom::core::ToolRegistry registry;
-    loom::tools::register_runtime_tools(registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
+    loom::tools::register_runtime_tools(
+        registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
 
     auto shutdown_request = registry.execute("send_message", loom::core::ToolInput::from_json(R"({
       "to": "reviewer",
@@ -1957,9 +2032,11 @@ TEST(Tools, RuntimeSendMessageWritesStructuredTeamProtocolMessages) {
     })"));
     ASSERT_TRUE(shutdown_request.has_value());
     ASSERT_FALSE(shutdown_request->is_error);
-    EXPECT_NE(shutdown_request->content.front().text.find("request_id: shutdown-"), std::string::npos);
+    EXPECT_NE(shutdown_request->content.front().text.find("request_id: shutdown-"),
+              std::string::npos);
 
-    auto reviewer_inbox = loom::utils::read_inbox("reviewer", std::optional<std::string_view>{"Protocol Team"});
+    auto reviewer_inbox =
+        loom::utils::read_inbox("reviewer", std::optional<std::string_view>{"Protocol Team"});
     ASSERT_TRUE(reviewer_inbox.has_value()) << reviewer_inbox.error();
     ASSERT_EQ(reviewer_inbox->size(), 1u);
     auto shutdown_request_json = loom::utils::json::parse(reviewer_inbox->front().text);
@@ -1967,7 +2044,8 @@ TEST(Tools, RuntimeSendMessageWritesStructuredTeamProtocolMessages) {
     EXPECT_EQ(shutdown_request_json->root().get_string("type"), "shutdown_request");
     EXPECT_EQ(shutdown_request_json->root().get_string("from"), "team-lead");
     EXPECT_EQ(shutdown_request_json->root().get_string("reason"), "Stop after final review");
-    EXPECT_NE(shutdown_request_json->root().get_string("requestId").find("shutdown-"), std::string::npos);
+    EXPECT_NE(shutdown_request_json->root().get_string("requestId").find("shutdown-"),
+              std::string::npos);
 
     auto plan_response = registry.execute("send_message", loom::core::ToolInput::from_json(R"({
       "to": "planner",
@@ -1981,9 +2059,11 @@ TEST(Tools, RuntimeSendMessageWritesStructuredTeamProtocolMessages) {
     })"));
     ASSERT_TRUE(plan_response.has_value());
     ASSERT_FALSE(plan_response->is_error);
-    EXPECT_NE(plan_response->content.front().text.find("request_id: plan-req-1"), std::string::npos);
+    EXPECT_NE(plan_response->content.front().text.find("request_id: plan-req-1"),
+              std::string::npos);
 
-    auto planner_inbox = loom::utils::read_inbox("planner", std::optional<std::string_view>{"Protocol Team"});
+    auto planner_inbox =
+        loom::utils::read_inbox("planner", std::optional<std::string_view>{"Protocol Team"});
     ASSERT_TRUE(planner_inbox.has_value()) << planner_inbox.error();
     ASSERT_EQ(planner_inbox->size(), 1u);
     auto plan_json = loom::utils::json::parse(planner_inbox->front().text);
@@ -2006,7 +2086,8 @@ TEST(Tools, RuntimeSendMessageWritesStructuredTeamProtocolMessages) {
     ASSERT_TRUE(plan_approval.has_value());
     ASSERT_FALSE(plan_approval->is_error);
 
-    planner_inbox = loom::utils::read_inbox("planner", std::optional<std::string_view>{"Protocol Team"});
+    planner_inbox =
+        loom::utils::read_inbox("planner", std::optional<std::string_view>{"Protocol Team"});
     ASSERT_TRUE(planner_inbox.has_value()) << planner_inbox.error();
     ASSERT_EQ(planner_inbox->size(), 2u);
     auto plan_approval_json = loom::utils::json::parse(planner_inbox->back().text);
@@ -2030,7 +2111,8 @@ TEST(Tools, RuntimeSendMessageWritesStructuredTeamProtocolMessages) {
     ASSERT_TRUE(shutdown_rejection.has_value());
     ASSERT_FALSE(shutdown_rejection->is_error);
 
-    auto leader_inbox = loom::utils::read_inbox("team-lead", std::optional<std::string_view>{"Protocol Team"});
+    auto leader_inbox =
+        loom::utils::read_inbox("team-lead", std::optional<std::string_view>{"Protocol Team"});
     ASSERT_TRUE(leader_inbox.has_value()) << leader_inbox.error();
     ASSERT_EQ(leader_inbox->size(), 1u);
     auto shutdown_json = loom::utils::json::parse(leader_inbox->front().text);
@@ -2053,7 +2135,8 @@ TEST(Tools, RuntimeSendMessageWritesStructuredTeamProtocolMessages) {
     ASSERT_TRUE(shutdown_approval.has_value());
     ASSERT_FALSE(shutdown_approval->is_error);
 
-    leader_inbox = loom::utils::read_inbox("team-lead", std::optional<std::string_view>{"Protocol Team"});
+    leader_inbox =
+        loom::utils::read_inbox("team-lead", std::optional<std::string_view>{"Protocol Team"});
     ASSERT_TRUE(leader_inbox.has_value()) << leader_inbox.error();
     ASSERT_EQ(leader_inbox->size(), 2u);
     auto shutdown_approval_json = loom::utils::json::parse(leader_inbox->back().text);
@@ -2062,7 +2145,8 @@ TEST(Tools, RuntimeSendMessageWritesStructuredTeamProtocolMessages) {
     EXPECT_EQ(shutdown_approval_json->root().get_string("requestId"), "shutdown-req-2");
     EXPECT_EQ(shutdown_approval_json->root().get_string("from"), "planner");
 
-    auto misrouted_shutdown_response = registry.execute("send_message", loom::core::ToolInput::from_json(R"({
+    auto misrouted_shutdown_response =
+        registry.execute("send_message", loom::core::ToolInput::from_json(R"({
       "to": "planner",
       "team_name": "Protocol Team",
       "from_agent": "reviewer",
@@ -2074,9 +2158,12 @@ TEST(Tools, RuntimeSendMessageWritesStructuredTeamProtocolMessages) {
     })"));
     ASSERT_TRUE(misrouted_shutdown_response.has_value());
     EXPECT_TRUE(misrouted_shutdown_response->is_error);
-    EXPECT_NE(misrouted_shutdown_response->content.front().text.find("shutdown_response must be sent to \"team-lead\""), std::string::npos);
+    EXPECT_NE(misrouted_shutdown_response->content.front().text.find(
+                  "shutdown_response must be sent to \"team-lead\""),
+              std::string::npos);
 
-    auto structured_broadcast = registry.execute("send_message", loom::core::ToolInput::from_json(R"({
+    auto structured_broadcast =
+        registry.execute("send_message", loom::core::ToolInput::from_json(R"({
       "to": "*",
       "team_name": "Protocol Team",
       "message": {
@@ -2086,7 +2173,9 @@ TEST(Tools, RuntimeSendMessageWritesStructuredTeamProtocolMessages) {
     })"));
     ASSERT_TRUE(structured_broadcast.has_value());
     EXPECT_TRUE(structured_broadcast->is_error);
-    EXPECT_NE(structured_broadcast->content.front().text.find("structured messages cannot be broadcast"), std::string::npos);
+    EXPECT_NE(
+        structured_broadcast->content.front().text.find("structured messages cannot be broadcast"),
+        std::string::npos);
 
     loom::tools::global_team_store().clear_for_testing();
     loom::tools::agent_runtime::native_agent_store().clear_for_testing();
@@ -2103,13 +2192,16 @@ TEST(Tools, RuntimeSendMessageDeliversPlainTextToUdsPeer) {
     ASSERT_TRUE(server.valid());
 
     loom::core::ToolRegistry registry;
-    loom::tools::register_runtime_tools(registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
-    auto delivered = registry.execute("send_message", loom::core::ToolInput::from_json(std::format(R"({{
+    loom::tools::register_runtime_tools(
+        registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
+    auto delivered = registry.execute(
+        "send_message", loom::core::ToolInput::from_json(std::format(R"({{
       "to": "uds:{}",
       "from_agent": "reviewer",
       "message": "Please inspect the peer session",
       "summary": "inspect peer session"
-    }})", socket_path.string())));
+    }})",
+                                                                     socket_path.string())));
 
     ASSERT_TRUE(delivered.has_value());
     ASSERT_FALSE(delivered->is_error);
@@ -2125,8 +2217,10 @@ TEST(Tools, RuntimeSendMessageDeliversPlainTextToUdsPeer) {
     EXPECT_EQ(root_json.get_string("mode"), "prompt");
     EXPECT_EQ(root_json.get_string("from"), "reviewer");
     EXPECT_EQ(root_json.get_string("message"), "Please inspect the peer session");
-    EXPECT_NE(root_json.get_string("value").find(R"(<cross-session-message from="reviewer">)"), std::string::npos);
-    EXPECT_NE(root_json.get_string("value").find("Please inspect the peer session"), std::string::npos);
+    EXPECT_NE(root_json.get_string("value").find(R"(<cross-session-message from="reviewer">)"),
+              std::string::npos);
+    EXPECT_NE(root_json.get_string("value").find("Please inspect the peer session"),
+              std::string::npos);
 
     fs::remove_all(root);
 }
@@ -2141,7 +2235,8 @@ TEST(Tools, RuntimeSendMessageDeliversPlainTextToBridgePeer) {
     EnvironmentGuard token_guard("LOOM_SESSION_ACCESS_TOKEN", "session-bridge-token");
 
     loom::core::ToolRegistry registry;
-    loom::tools::register_runtime_tools(registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
+    loom::tools::register_runtime_tools(
+        registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
 
     auto delivered = registry.execute("send_message", loom::core::ToolInput::from_json(R"({
       "to": "bridge:session_target",
@@ -2164,14 +2259,17 @@ TEST(Tools, RuntimeSendMessageDeliversPlainTextToBridgePeer) {
     EXPECT_NE(requests->front().body.find(R"("type":"user")"), std::string::npos);
     EXPECT_NE(requests->front().body.find(R"("role":"user")"), std::string::npos);
     EXPECT_NE(requests->front().body.find(R"("session_id":"session_target")"), std::string::npos);
-    EXPECT_NE(requests->front().body.find(R"(<cross-session-message from=\"session_source\">)"), std::string::npos);
+    EXPECT_NE(requests->front().body.find(R"(<cross-session-message from=\"session_source\">)"),
+              std::string::npos);
     EXPECT_NE(requests->front().body.find("Please inspect the remote peer"), std::string::npos);
-    EXPECT_EQ(requests->front().body.find(R"(<cross-session-message from=\"reviewer\">)"), std::string::npos);
+    EXPECT_EQ(requests->front().body.find(R"(<cross-session-message from=\"reviewer\">)"),
+              std::string::npos);
 }
 
 TEST(Tools, RuntimeSendMessageRejectsCrossSessionStructuredMessages) {
     loom::core::ToolRegistry registry;
-    loom::tools::register_runtime_tools(registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
+    loom::tools::register_runtime_tools(
+        registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
 
     auto structured_uds = registry.execute("send_message", loom::core::ToolInput::from_json(R"({
       "to": "uds:/tmp/loom-peer.sock",
@@ -2182,7 +2280,9 @@ TEST(Tools, RuntimeSendMessageRejectsCrossSessionStructuredMessages) {
     })"));
     ASSERT_TRUE(structured_uds.has_value());
     ASSERT_TRUE(structured_uds->is_error);
-    EXPECT_NE(structured_uds->content.front().text.find("structured messages cannot be sent cross-session"), std::string::npos);
+    EXPECT_NE(structured_uds->content.front().text.find(
+                  "structured messages cannot be sent cross-session"),
+              std::string::npos);
 
     auto structured_bridge = registry.execute("send_message", loom::core::ToolInput::from_json(R"({
       "to": "bridge:session_123",
@@ -2193,7 +2293,9 @@ TEST(Tools, RuntimeSendMessageRejectsCrossSessionStructuredMessages) {
     })"));
     ASSERT_TRUE(structured_bridge.has_value());
     ASSERT_TRUE(structured_bridge->is_error);
-    EXPECT_NE(structured_bridge->content.front().text.find("structured messages cannot be sent cross-session"), std::string::npos);
+    EXPECT_NE(structured_bridge->content.front().text.find(
+                  "structured messages cannot be sent cross-session"),
+              std::string::npos);
 }
 
 TEST(Tools, RuntimeSendMessageRestoresPersistedTeammateMailboxAfterStoreReload) {
@@ -2229,7 +2331,8 @@ TEST(Tools, RuntimeSendMessageRestoresPersistedTeammateMailboxAfterStoreReload) 
     loom::tools::agent_runtime::native_agent_store().clear_for_testing();
 
     loom::core::ToolRegistry registry;
-    loom::tools::register_runtime_tools(registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
+    loom::tools::register_runtime_tools(
+        registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
     auto delivered = registry.execute("send_message", loom::core::ToolInput::from_json(R"({
       "target_agent": "reviewer-one",
       "team_name": "Restart Team",
@@ -2241,15 +2344,18 @@ TEST(Tools, RuntimeSendMessageRestoresPersistedTeammateMailboxAfterStoreReload) 
     ASSERT_FALSE(delivered->content.empty());
     EXPECT_NE(delivered->content.front().text.find("reviewer-one@Restart Team"), std::string::npos);
 
-    auto restored_record = loom::tools::agent_runtime::native_agent_store().get("reviewer-one@Restart Team");
+    auto restored_record =
+        loom::tools::agent_runtime::native_agent_store().get("reviewer-one@Restart Team");
     ASSERT_TRUE(restored_record.has_value());
     ASSERT_EQ(restored_record->pending_messages.size(), 1u);
-    EXPECT_NE(restored_record->pending_messages.front().find("Review after a runtime restart"), std::string::npos);
+    EXPECT_NE(restored_record->pending_messages.front().find("Review after a runtime restart"),
+              std::string::npos);
     EXPECT_TRUE(std::ranges::any_of(restored_record->transcript, [](const auto& line) {
         return line.find("Review after a runtime restart") != std::string::npos;
     }));
 
-    auto inbox = loom::utils::read_inbox("reviewer-one", std::optional<std::string_view>{"Restart Team"});
+    auto inbox =
+        loom::utils::read_inbox("reviewer-one", std::optional<std::string_view>{"Restart Team"});
     ASSERT_TRUE(inbox.has_value()) << inbox.error();
     ASSERT_EQ(inbox->size(), 1u);
     EXPECT_EQ(inbox->front().from, "team-lead");
@@ -2293,7 +2399,8 @@ TEST(Tools, RuntimeTaskToolsExposeNativeBackgroundAgents) {
     EXPECT_EQ(fs::read_symlink(*record->output_file_path), fs::path{*record->transcript_path});
 
     loom::core::ToolRegistry registry;
-    loom::tools::register_runtime_tools(registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
+    loom::tools::register_runtime_tools(
+        registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
 
     auto listed = registry.execute("task_list", loom::core::ToolInput::from_json("{}"));
     ASSERT_TRUE(listed.has_value());
@@ -2309,7 +2416,8 @@ TEST(Tools, RuntimeTaskToolsExposeNativeBackgroundAgents) {
     ASSERT_TRUE(got.has_value());
     ASSERT_FALSE(got->is_error);
     ASSERT_FALSE(got->content.empty());
-    EXPECT_NE(got->content.front().text.find("Agent general-purpose: task-agent"), std::string::npos);
+    EXPECT_NE(got->content.front().text.find("Agent general-purpose: task-agent"),
+              std::string::npos);
 
     auto stopped = registry.execute("task_stop", loom::core::ToolInput::from_json(R"({
       "task_id": "task-agent"
@@ -2331,10 +2439,10 @@ TEST(Tools, RuntimeTaskToolsExposeNativeBackgroundAgents) {
     EXPECT_NE(output->content.front().text.find("stop requested"), std::string::npos);
 
     std::ifstream stopped_output_file(*record->output_file_path);
-    std::string stopped_output_text(
-        (std::istreambuf_iterator<char>(stopped_output_file)),
-        std::istreambuf_iterator<char>());
-    EXPECT_NE(stopped_output_text.find("system: agent cancelled: stop requested"), std::string::npos);
+    std::string stopped_output_text((std::istreambuf_iterator<char>(stopped_output_file)),
+                                    std::istreambuf_iterator<char>());
+    EXPECT_NE(stopped_output_text.find("system: agent cancelled: stop requested"),
+              std::string::npos);
 
     loom::tools::agent_runtime::native_agent_store().clear_for_testing();
     fs::remove_all(root);
@@ -2347,21 +2455,21 @@ TEST(Tools, StandaloneTaskToolsExposeNativeBackgroundAgents) {
     EnvironmentGuard runtime_dir_guard("LOOM_AGENT_RUNTIME_DIR", (root / "runtime").string());
     loom::tools::agent_runtime::native_agent_store().clear_for_testing();
 
-    loom::tools::agent_runtime::native_agent_store().upsert(loom::tools::agent_runtime::NativeAgentRecord{
-        .agent_id = "standalone-native-agent",
-        .agent_type = "general-purpose",
-        .description = "Standalone native task",
-        .background = true,
-        .status = loom::tools::agent_runtime::NativeAgentStatus::Completed,
-        .output = "standalone done",
-        .transcript = {"assistant: standalone done"},
-    });
+    loom::tools::agent_runtime::native_agent_store().upsert(
+        loom::tools::agent_runtime::NativeAgentRecord{
+            .agent_id = "standalone-native-agent",
+            .agent_type = "general-purpose",
+            .description = "Standalone native task",
+            .background = true,
+            .status = loom::tools::agent_runtime::NativeAgentStatus::Completed,
+            .output = "standalone done",
+            .transcript = {"assistant: standalone done"},
+        });
 
     loom::tools::TaskListTool list_tool;
     auto listed = list_tool.execute();
-    auto listed_native = std::ranges::find_if(listed, [](const auto* task) {
-        return task && task->id == "standalone-native-agent";
-    });
+    auto listed_native = std::ranges::find_if(
+        listed, [](const auto* task) { return task && task->id == "standalone-native-agent"; });
     ASSERT_NE(listed_native, listed.end());
     EXPECT_EQ((*listed_native)->status, loom::tools::TaskStatus::Completed);
     EXPECT_EQ((*listed_native)->description, "Standalone native task");
@@ -2379,24 +2487,29 @@ TEST(Tools, StandaloneTaskToolsExposeNativeBackgroundAgents) {
     EXPECT_NE(output->find("<task_notification>"), std::string_view::npos);
     EXPECT_NE(output->find("<status>completed</status>"), std::string_view::npos);
 
-    loom::tools::agent_runtime::native_agent_store().upsert(loom::tools::agent_runtime::NativeAgentRecord{
-        .agent_id = "standalone-stop-agent",
-        .agent_type = "general-purpose",
-        .description = "Standalone stop task",
-        .background = true,
-        .status = loom::tools::agent_runtime::NativeAgentStatus::Running,
-    });
+    loom::tools::agent_runtime::native_agent_store().upsert(
+        loom::tools::agent_runtime::NativeAgentRecord{
+            .agent_id = "standalone-stop-agent",
+            .agent_type = "general-purpose",
+            .description = "Standalone stop task",
+            .background = true,
+            .status = loom::tools::agent_runtime::NativeAgentStatus::Running,
+        });
     loom::tools::TaskStopTool stop_tool;
     auto stopped = stop_tool.execute("standalone-stop-agent");
     ASSERT_TRUE(stopped.has_value());
-    auto stopped_record = loom::tools::agent_runtime::native_agent_store().get("standalone-stop-agent");
+    auto stopped_record =
+        loom::tools::agent_runtime::native_agent_store().get("standalone-stop-agent");
     ASSERT_TRUE(stopped_record.has_value());
     EXPECT_EQ(stopped_record->status, loom::tools::agent_runtime::NativeAgentStatus::Cancelled);
     ASSERT_TRUE(stopped_record->error.has_value());
     EXPECT_EQ(*stopped_record->error, "stop requested");
 
     loom::tools::agent_runtime::native_agent_store().clear_for_testing();
-    { std::error_code ec; fs::remove_all(root, ec); }
+    {
+        std::error_code ec;
+        fs::remove_all(root, ec);
+    }
 }
 
 TEST(Tools, TaskStopCancelsRunningBackgroundAgentDuringModelStream) {
@@ -2412,7 +2525,8 @@ TEST(Tools, TaskStopCancelsRunningBackgroundAgentDuringModelStream) {
     loom::tools::agent_runtime::native_agent_store().clear_for_testing();
 
     loom::core::ToolRegistry registry;
-    loom::tools::register_runtime_tools(registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
+    loom::tools::register_runtime_tools(
+        registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
     loom::tools::AgentTool tool({}, 0, &registry);
     auto started = tool.execute(loom::core::ToolInput::from_json(R"({
       "description": "Run async and cancel while streaming",
@@ -2434,7 +2548,8 @@ TEST(Tools, TaskStopCancelsRunningBackgroundAgentDuringModelStream) {
     ASSERT_FALSE(stopped->is_error);
     ASSERT_FALSE(stopped->content.empty());
     EXPECT_NE(stopped->content.front().text.find("stream-cancel-agent"), std::string::npos);
-    const auto requested = loom::tools::agent_runtime::native_agent_store().get("stream-cancel-agent");
+    const auto requested =
+        loom::tools::agent_runtime::native_agent_store().get("stream-cancel-agent");
     ASSERT_TRUE(requested.has_value());
     EXPECT_TRUE(requested->cancel_requested);
 
@@ -2455,7 +2570,8 @@ TEST(Tools, TaskStopCancelsRunningBackgroundAgentDuringModelStream) {
     ASSERT_FALSE(output->is_error);
     ASSERT_FALSE(output->content.empty());
     EXPECT_NE(output->content.front().text.find("<status>stopped</status>"), std::string::npos);
-    EXPECT_NE(output->content.front().text.find("while waiting for model stream"), std::string::npos);
+    EXPECT_NE(output->content.front().text.find("while waiting for model stream"),
+              std::string::npos);
 
     loom::tools::agent_runtime::native_agent_store().clear_for_testing();
     fs::remove_all(root);
@@ -2465,8 +2581,9 @@ namespace {
 enum class SleepCancellationPhase { BeforeDispatch, AtHandoff };
 
 void CheckBackgroundSleepCancellation(SleepCancellationPhase phase) {
-    auto root = fs::temp_directory_path() / ("loom_native_agent_sleep_cancel_" +
-        std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
+    auto root = fs::temp_directory_path() /
+                ("loom_native_agent_sleep_cancel_" +
+                 std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
     fs::create_directories(root);
     LocalSleepToolUseMessagesServer server;
     ASSERT_TRUE(server.valid());
@@ -2478,17 +2595,21 @@ void CheckBackgroundSleepCancellation(SleepCancellationPhase phase) {
     store.clear_for_testing();
 
     loom::core::ToolRegistry registry;
-    loom::tools::register_runtime_tools(registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
+    loom::tools::register_runtime_tools(
+        registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
     auto gate = std::make_shared<AgentCancellationGate>();
-    using Terminal = std::pair<loom::tools::agent_runtime::NativeAgentRecord, std::chrono::steady_clock::time_point>;
+    using Terminal = std::pair<loom::tools::agent_runtime::NativeAgentRecord,
+                               std::chrono::steady_clock::time_point>;
     std::promise<Terminal> terminal;
     auto terminal_future = terminal.get_future();
     std::atomic_bool terminal_observed{false};
+
     struct Cleanup {
         loom::tools::agent_runtime::NativeAgentStore& store;
         std::shared_ptr<AgentCancellationGate> gate;
         const fs::path& root;
         std::size_t observer = 0;
+
         ~Cleanup() {
             store.unsubscribe_changed(observer);
             gate->open();
@@ -2499,27 +2620,33 @@ void CheckBackgroundSleepCancellation(SleepCancellationPhase phase) {
             fs::remove_all(root, ec);
         }
     } cleanup{store, gate, root};
-    cleanup.observer = store.subscribe_changed([&store, gate, phase, &terminal, &terminal_observed] {
-        auto record = store.get("sleep-cancel-agent");
-        if (!record) return;
-        using Status = loom::tools::agent_runtime::NativeAgentStatus;
-        if ((record->status == Status::Cancelled || record->status == Status::Failed ||
-             record->status == Status::Completed) && !terminal_observed.exchange(true)) {
-            terminal.set_value({*record, std::chrono::steady_clock::now()});
-        }
-        if (phase == SleepCancellationPhase::BeforeDispatch &&
-            std::ranges::any_of(record->transcript, [](const auto& entry) {
-                return entry.starts_with("assistant:");
-            })) gate->arrive_and_wait();
-    });
+
+    cleanup.observer =
+        store.subscribe_changed([&store, gate, phase, &terminal, &terminal_observed] {
+            auto record = store.get("sleep-cancel-agent");
+            if (!record) return;
+            using Status = loom::tools::agent_runtime::NativeAgentStatus;
+            if ((record->status == Status::Cancelled || record->status == Status::Failed ||
+                 record->status == Status::Completed) &&
+                !terminal_observed.exchange(true)) {
+                terminal.set_value({*record, std::chrono::steady_clock::now()});
+            }
+            if (phase == SleepCancellationPhase::BeforeDispatch &&
+                std::ranges::any_of(record->transcript, [](const auto& entry) {
+                    return entry.starts_with("assistant:");
+                }))
+                gate->arrive_and_wait();
+        });
     // The live permission callback runs after the pre-dispatch cancellation
     // checkpoint. This gate proves handoff admission, not an active sleep wait.
-    loom::tools::AgentTool tool({}, 0, &registry,
+    loom::tools::AgentTool tool(
+        {}, 0, &registry,
         [gate, phase](std::string_view name, std::string_view, std::string_view) {
             if (phase == SleepCancellationPhase::AtHandoff && name == "sleep")
                 gate->arrive_and_wait();
             return loom::tools::agent::AgentLivePermissionCheck{.allowed = true};
-        }, true);
+        },
+        true);
     auto started = tool.execute(loom::core::ToolInput::from_json(R"({
       "description": "Run async and cancel at a controlled sleep checkpoint",
       "prompt": "Use sleep until I stop you",
@@ -2549,12 +2676,15 @@ void CheckBackgroundSleepCancellation(SleepCancellationPhase phase) {
     ASSERT_EQ(terminal_future.wait_until(deadline), std::future_status::ready)
         << "Worker did not publish a terminal state after cancellation";
     const auto [record, finished_at] = terminal_future.get();
-    const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(finished_at - stop_started);
+    const auto elapsed =
+        std::chrono::duration_cast<std::chrono::milliseconds>(finished_at - stop_started);
     SCOPED_TRACE("Actual terminal error: " + record.error.value_or("[none]"));
     EXPECT_EQ(record.status, loom::tools::agent_runtime::NativeAgentStatus::Cancelled);
-    EXPECT_LT(finished_at, deadline) << "Observed cancellation latency: " << elapsed.count() << " ms";
+    EXPECT_LT(finished_at, deadline)
+        << "Observed cancellation latency: " << elapsed.count() << " ms";
     const auto expected_phase = phase == SleepCancellationPhase::BeforeDispatch
-        ? "before executing tool sleep" : "while executing tool sleep";
+                                    ? "before executing tool sleep"
+                                    : "while executing tool sleep";
     ASSERT_TRUE(record.error);
     EXPECT_NE(record.error->find(expected_phase), std::string::npos);
     store.wait_for_background_agents();
@@ -2569,7 +2699,7 @@ void CheckBackgroundSleepCancellation(SleepCancellationPhase phase) {
     EXPECT_NE(output->content.front().text.find("<status>stopped</status>"), std::string::npos);
     EXPECT_NE(output->content.front().text.find(expected_phase), std::string::npos);
 }
-} // namespace
+}  // namespace
 
 TEST(Tools, TaskStopCancelsBackgroundAgentBeforeSleepToolDispatch) {
     CheckBackgroundSleepCancellation(SleepCancellationPhase::BeforeDispatch);
@@ -2586,13 +2716,9 @@ TEST(Tools, TaskStopCancelsRunningBackgroundAgentDuringWebFetchToolExecution) {
     LocalHeldContentServer content_server;
     ASSERT_TRUE(content_server.valid());
     const auto fetch_input = std::format(
-        R"({{"url":"{}"}})",
-        loom::tools::agent::json_escape_string(content_server.url()));
-    LocalScriptedToolUseMessagesServer server(
-        "WebFetch",
-        fetch_input,
-        "toolu_webfetch_cancel",
-        "should not continue after web fetch cancellation");
+        R"({{"url":"{}"}})", loom::tools::agent::json_escape_string(content_server.url()));
+    LocalScriptedToolUseMessagesServer server("WebFetch", fetch_input, "toolu_webfetch_cancel",
+                                              "should not continue after web fetch cancellation");
     ASSERT_TRUE(server.valid());
     EnvironmentGuard runtime_dir_guard("LOOM_AGENT_RUNTIME_DIR", (root / "runtime").string());
     EnvironmentGuard api_key_guard("LOOM_API_KEY", "test-key");
@@ -2601,7 +2727,8 @@ TEST(Tools, TaskStopCancelsRunningBackgroundAgentDuringWebFetchToolExecution) {
     loom::tools::agent_runtime::native_agent_store().clear_for_testing();
 
     loom::core::ToolRegistry registry;
-    loom::tools::register_runtime_tools(registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
+    loom::tools::register_runtime_tools(
+        registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
     loom::tools::AgentTool tool({}, 0, &registry);
     auto started = tool.execute(loom::core::ToolInput::from_json(R"({
       "description": "Run async and cancel during WebFetch",
@@ -2637,7 +2764,8 @@ TEST(Tools, TaskStopCancelsRunningBackgroundAgentDuringWebFetchToolExecution) {
     ASSERT_FALSE(output->is_error);
     ASSERT_FALSE(output->content.empty());
     EXPECT_NE(output->content.front().text.find("<status>stopped</status>"), std::string::npos);
-    EXPECT_NE(output->content.front().text.find("while executing tool WebFetch"), std::string::npos);
+    EXPECT_NE(output->content.front().text.find("while executing tool WebFetch"),
+              std::string::npos);
 
     loom::tools::agent_runtime::native_agent_store().clear_for_testing();
     fs::remove_all(root);
@@ -2656,7 +2784,8 @@ TEST(Tools, TaskStopCancelsRunningBackgroundAgentDuringBashToolExecution) {
     loom::tools::agent_runtime::native_agent_store().clear_for_testing();
 
     loom::core::ToolRegistry registry;
-    loom::tools::register_runtime_tools(registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
+    loom::tools::register_runtime_tools(
+        registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
     loom::tools::AgentTool tool({}, 0, &registry);
     auto started = tool.execute(loom::core::ToolInput::from_json(R"({
       "description": "Run async and cancel during bash",
@@ -2672,8 +2801,9 @@ TEST(Tools, TaskStopCancelsRunningBackgroundAgentDuringBashToolExecution) {
     for (int i = 0; i < 500; ++i) {
         auto rec = loom::tools::agent_runtime::native_agent_store().get("bash-cancel-agent");
         if (rec && std::ranges::any_of(rec->transcript, [](const auto& e) {
-            return e.find("assistant:") != std::string::npos;
-        })) break;
+                return e.find("assistant:") != std::string::npos;
+            }))
+            break;
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
     std::this_thread::sleep_for(std::chrono::milliseconds(30));
@@ -2697,10 +2827,10 @@ TEST(Tools, TaskStopCancelsRunningBackgroundAgentDuringBashToolExecution) {
         std::this_thread::sleep_for(std::chrono::milliseconds(20));
     }
     EXPECT_TRUE(observed_bash_cancel);
-    EXPECT_LT(
-        std::chrono::duration_cast<std::chrono::milliseconds>(
-            std::chrono::steady_clock::now() - stop_started).count(),
-        5000);
+    EXPECT_LT(std::chrono::duration_cast<std::chrono::milliseconds>(
+                  std::chrono::steady_clock::now() - stop_started)
+                  .count(),
+              5000);
     EXPECT_EQ(server.request_count(), 1u);
 
     auto output = registry.execute("task_output", loom::core::ToolInput::from_json(R"({
@@ -2723,20 +2853,22 @@ TEST(Tools, RuntimeTaskOutputIncludesNativeAgentCompletionNotification) {
     EnvironmentGuard runtime_dir_guard("LOOM_AGENT_RUNTIME_DIR", (root / "runtime").string());
     loom::tools::agent_runtime::native_agent_store().clear_for_testing();
 
-    loom::tools::agent_runtime::native_agent_store().upsert(loom::tools::agent_runtime::NativeAgentRecord{
-        .agent_id = "completed-agent",
-        .agent_type = "reviewer",
-        .name = "completed reviewer",
-        .background = true,
-        .status = loom::tools::agent_runtime::NativeAgentStatus::Queued,
-        .worktree_path = (root / "agent-worktree").string(),
-        .worktree_branch = "loom-agent-completed-agent",
-        .transcript = {"user: work", "assistant: done"},
-    });
+    loom::tools::agent_runtime::native_agent_store().upsert(
+        loom::tools::agent_runtime::NativeAgentRecord{
+            .agent_id = "completed-agent",
+            .agent_type = "reviewer",
+            .name = "completed reviewer",
+            .background = true,
+            .status = loom::tools::agent_runtime::NativeAgentStatus::Queued,
+            .worktree_path = (root / "agent-worktree").string(),
+            .worktree_branch = "loom-agent-completed-agent",
+            .transcript = {"user: work", "assistant: done"},
+        });
     loom::tools::agent_runtime::native_agent_store().mark_completed("completed-agent", "done");
 
     loom::core::ToolRegistry registry;
-    loom::tools::register_runtime_tools(registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
+    loom::tools::register_runtime_tools(
+        registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
     auto output = registry.execute("task_output", loom::core::ToolInput::from_json(R"({
       "task_id": "completed-agent"
     })"));
@@ -2749,10 +2881,17 @@ TEST(Tools, RuntimeTaskOutputIncludesNativeAgentCompletionNotification) {
     EXPECT_NE(output->content.front().text.find("<task_notification>"), std::string::npos);
     EXPECT_NE(output->content.front().text.find("<status>completed</status>"), std::string::npos);
     EXPECT_NE(output->content.front().text.find("<result>done</result>"), std::string::npos);
-    EXPECT_NE(output->content.front().text.find("worktree_path: " + (root / "agent-worktree").string()), std::string::npos);
-    EXPECT_NE(output->content.front().text.find("worktree_branch: loom-agent-completed-agent"), std::string::npos);
-    EXPECT_NE(output->content.front().text.find("<worktree_path>" + (root / "agent-worktree").string()), std::string::npos);
-    EXPECT_NE(output->content.front().text.find("<worktree_branch>loom-agent-completed-agent</worktree_branch>"), std::string::npos);
+    EXPECT_NE(
+        output->content.front().text.find("worktree_path: " + (root / "agent-worktree").string()),
+        std::string::npos);
+    EXPECT_NE(output->content.front().text.find("worktree_branch: loom-agent-completed-agent"),
+              std::string::npos);
+    EXPECT_NE(
+        output->content.front().text.find("<worktree_path>" + (root / "agent-worktree").string()),
+        std::string::npos);
+    EXPECT_NE(output->content.front().text.find(
+                  "<worktree_branch>loom-agent-completed-agent</worktree_branch>"),
+              std::string::npos);
 
     loom::tools::agent_runtime::native_agent_store().clear_for_testing();
     fs::remove_all(root);
@@ -2765,18 +2904,20 @@ TEST(Tools, RuntimeTaskUpdateMarksNativeAgentFailedWithOutputArtifactAndNotifica
     EnvironmentGuard runtime_dir_guard("LOOM_AGENT_RUNTIME_DIR", (root / "runtime").string());
     loom::tools::agent_runtime::native_agent_store().clear_for_testing();
 
-    loom::tools::agent_runtime::native_agent_store().upsert(loom::tools::agent_runtime::NativeAgentRecord{
-        .agent_id = "failed-agent",
-        .agent_type = "reviewer",
-        .name = "failed reviewer",
-        .background = true,
-        .status = loom::tools::agent_runtime::NativeAgentStatus::Running,
-        .parent_session_id = std::string("notification-session"),
-        .transcript = {"user: inspect failure path"},
-    });
+    loom::tools::agent_runtime::native_agent_store().upsert(
+        loom::tools::agent_runtime::NativeAgentRecord{
+            .agent_id = "failed-agent",
+            .agent_type = "reviewer",
+            .name = "failed reviewer",
+            .background = true,
+            .status = loom::tools::agent_runtime::NativeAgentStatus::Running,
+            .parent_session_id = std::string("notification-session"),
+            .transcript = {"user: inspect failure path"},
+        });
 
     loom::core::ToolRegistry registry;
-    loom::tools::register_runtime_tools(registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
+    loom::tools::register_runtime_tools(
+        registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
 
     auto update = registry.execute("task_update", loom::core::ToolInput::from_json(R"({
       "task_id": "failed-agent",
@@ -2796,11 +2937,11 @@ TEST(Tools, RuntimeTaskUpdateMarksNativeAgentFailedWithOutputArtifactAndNotifica
     EXPECT_TRUE(fs::is_symlink(*record->output_file_path));
 
     std::ifstream artifact(*record->output_file_path);
-    std::string artifact_text(
-        (std::istreambuf_iterator<char>(artifact)),
-        std::istreambuf_iterator<char>());
+    std::string artifact_text((std::istreambuf_iterator<char>(artifact)),
+                              std::istreambuf_iterator<char>());
     EXPECT_NE(artifact_text.find("user: inspect failure path"), std::string::npos);
-    EXPECT_NE(artifact_text.find("system: agent failed: agent crashed while reading bindings"), std::string::npos);
+    EXPECT_NE(artifact_text.find("system: agent failed: agent crashed while reading bindings"),
+              std::string::npos);
 
     auto output = registry.execute("task_output", loom::core::ToolInput::from_json(R"({
       "task_id": "failed-agent"
@@ -2810,12 +2951,17 @@ TEST(Tools, RuntimeTaskUpdateMarksNativeAgentFailedWithOutputArtifactAndNotifica
     ASSERT_FALSE(output->content.empty());
     EXPECT_NE(output->content.front().text.find("<task_notification>"), std::string::npos);
     EXPECT_NE(output->content.front().text.find("<status>failed</status>"), std::string::npos);
-    EXPECT_NE(output->content.front().text.find("<result>agent crashed while reading bindings</result>"), std::string::npos);
+    EXPECT_NE(
+        output->content.front().text.find("<result>agent crashed while reading bindings</result>"),
+        std::string::npos);
 
-    auto notifications = loom::tools::agent_runtime::native_agent_store().take_pending_task_events("notification-session");
+    auto notifications = loom::tools::agent_runtime::native_agent_store().take_pending_task_events(
+        "notification-session");
     ASSERT_EQ(notifications.size(), 1u);
-    EXPECT_NE(notifications.front().model_context.find("<task_id>failed-agent</task_id>"), std::string::npos);
-    EXPECT_NE(notifications.front().model_context.find("<status>failed</status>"), std::string::npos);
+    EXPECT_NE(notifications.front().model_context.find("<task_id>failed-agent</task_id>"),
+              std::string::npos);
+    EXPECT_NE(notifications.front().model_context.find("<status>failed</status>"),
+              std::string::npos);
 
     loom::tools::agent_runtime::native_agent_store().clear_for_testing();
     fs::remove_all(root);
@@ -2828,27 +2974,33 @@ TEST(Tools, NativeAgentNotificationsAreConsumedOnce) {
     EnvironmentGuard runtime_dir_guard("LOOM_AGENT_RUNTIME_DIR", (root / "runtime").string());
     loom::tools::agent_runtime::native_agent_store().clear_for_testing();
 
-    loom::tools::agent_runtime::native_agent_store().upsert(loom::tools::agent_runtime::NativeAgentRecord{
-        .agent_id = "notify-agent",
-        .agent_type = "reviewer",
-        .name = "notify reviewer",
-        .background = true,
-        .status = loom::tools::agent_runtime::NativeAgentStatus::Queued,
-        .parent_session_id = std::string("notification-session"),
-    });
-    loom::tools::agent_runtime::native_agent_store().mark_completed("notify-agent", "review complete");
+    loom::tools::agent_runtime::native_agent_store().upsert(
+        loom::tools::agent_runtime::NativeAgentRecord{
+            .agent_id = "notify-agent",
+            .agent_type = "reviewer",
+            .name = "notify reviewer",
+            .background = true,
+            .status = loom::tools::agent_runtime::NativeAgentStatus::Queued,
+            .parent_session_id = std::string("notification-session"),
+        });
+    loom::tools::agent_runtime::native_agent_store().mark_completed("notify-agent",
+                                                                    "review complete");
 
-    auto first = loom::tools::agent_runtime::native_agent_store().take_pending_task_events("notification-session");
+    auto first = loom::tools::agent_runtime::native_agent_store().take_pending_task_events(
+        "notification-session");
     ASSERT_EQ(first.size(), 1u);
     EXPECT_NE(first.front().model_context.find("<task_notification>"), std::string::npos);
     EXPECT_NE(first.front().model_context.find("<status>completed</status>"), std::string::npos);
-    EXPECT_NE(first.front().model_context.find("<result>review complete</result>"), std::string::npos);
+    EXPECT_NE(first.front().model_context.find("<result>review complete</result>"),
+              std::string::npos);
 
-    auto second = loom::tools::agent_runtime::native_agent_store().take_pending_task_events("notification-session");
+    auto second = loom::tools::agent_runtime::native_agent_store().take_pending_task_events(
+        "notification-session");
     EXPECT_TRUE(second.empty());
 
     loom::tools::agent_runtime::native_agent_store().clear_for_testing();
-    auto restored = loom::tools::agent_runtime::native_agent_store().take_pending_task_events("notification-session");
+    auto restored = loom::tools::agent_runtime::native_agent_store().take_pending_task_events(
+        "notification-session");
     EXPECT_TRUE(restored.empty());
 
     loom::tools::agent_runtime::native_agent_store().clear_for_testing();
@@ -2862,18 +3014,19 @@ TEST(Tools, NativeAgentRecordPersistsWorktreeMetadata) {
     EnvironmentGuard runtime_dir_guard("LOOM_AGENT_RUNTIME_DIR", (root / "runtime").string());
     loom::tools::agent_runtime::native_agent_store().clear_for_testing();
 
-    loom::tools::agent_runtime::native_agent_store().upsert(loom::tools::agent_runtime::NativeAgentRecord{
-        .agent_id = "metadata-agent",
-        .agent_type = "reviewer",
-        .cwd = (root / "worktree").string(),
-        .isolation = "worktree",
-        .background = true,
-        .status = loom::tools::agent_runtime::NativeAgentStatus::Queued,
-        .worktree_path = (root / "worktree").string(),
-        .worktree_branch = "loom-agent-metadata-agent",
-        .worktree_base_commit = "abc123",
-        .worktree_git_root = root.string(),
-    });
+    loom::tools::agent_runtime::native_agent_store().upsert(
+        loom::tools::agent_runtime::NativeAgentRecord{
+            .agent_id = "metadata-agent",
+            .agent_type = "reviewer",
+            .cwd = (root / "worktree").string(),
+            .isolation = "worktree",
+            .background = true,
+            .status = loom::tools::agent_runtime::NativeAgentStatus::Queued,
+            .worktree_path = (root / "worktree").string(),
+            .worktree_branch = "loom-agent-metadata-agent",
+            .worktree_base_commit = "abc123",
+            .worktree_git_root = root.string(),
+        });
 
     loom::tools::agent_runtime::native_agent_store().clear_for_testing();
     auto restored = loom::tools::agent_runtime::native_agent_store().get("metadata-agent");
@@ -2907,13 +3060,14 @@ TEST(Tools, NativeAgentRecordPersistsSidechainJsonlAndResumesFromIt) {
     EnvironmentGuard runtime_dir_guard("LOOM_AGENT_RUNTIME_DIR", (root / "runtime").string());
     loom::tools::agent_runtime::native_agent_store().clear_for_testing();
 
-    loom::tools::agent_runtime::native_agent_store().upsert(loom::tools::agent_runtime::NativeAgentRecord{
-        .agent_id = "sidechain-agent",
-        .agent_type = "reviewer",
-        .background = true,
-        .status = loom::tools::agent_runtime::NativeAgentStatus::Completed,
-        .transcript = {"user: inspect generated bindings", "assistant: bindings reviewed"},
-    });
+    loom::tools::agent_runtime::native_agent_store().upsert(
+        loom::tools::agent_runtime::NativeAgentRecord{
+            .agent_id = "sidechain-agent",
+            .agent_type = "reviewer",
+            .background = true,
+            .status = loom::tools::agent_runtime::NativeAgentStatus::Completed,
+            .transcript = {"user: inspect generated bindings", "assistant: bindings reviewed"},
+        });
 
     auto record = loom::tools::agent_runtime::native_agent_store().get("sidechain-agent");
     ASSERT_TRUE(record.has_value());
@@ -2923,16 +3077,18 @@ TEST(Tools, NativeAgentRecordPersistsSidechainJsonlAndResumesFromIt) {
     EXPECT_TRUE(fs::exists(*record->sidechain_jsonl_path));
 
     std::ifstream sidechain_in(*record->sidechain_jsonl_path);
-    std::string sidechain_text(
-        (std::istreambuf_iterator<char>(sidechain_in)),
-        std::istreambuf_iterator<char>());
+    std::string sidechain_text((std::istreambuf_iterator<char>(sidechain_in)),
+                               std::istreambuf_iterator<char>());
     EXPECT_NE(sidechain_text.find(R"("type":"user")"), std::string::npos);
     EXPECT_NE(sidechain_text.find(R"("type":"assistant")"), std::string::npos);
     EXPECT_NE(sidechain_text.find(R"("parentUuid":null)"), std::string::npos);
     EXPECT_NE(sidechain_text.find(R"("parentUuid":"sidechain-agent-0")"), std::string::npos);
     EXPECT_NE(sidechain_text.find(R"("isSidechain":true)"), std::string::npos);
     EXPECT_NE(sidechain_text.find(R"("agentId":"sidechain-agent")"), std::string::npos);
-    EXPECT_NE(sidechain_text.find(R"("message":{"role":"user","content":[{"type":"text","text":"inspect generated bindings"}]})"), std::string::npos);
+    EXPECT_NE(
+        sidechain_text.find(
+            R"("message":{"role":"user","content":[{"type":"text","text":"inspect generated bindings"}]})"),
+        std::string::npos);
     EXPECT_NE(sidechain_text.find(R"("agent_id":"sidechain-agent")"), std::string::npos);
     EXPECT_NE(sidechain_text.find(R"("role":"user")"), std::string::npos);
     EXPECT_NE(sidechain_text.find(R"("raw":"assistant: bindings reviewed")"), std::string::npos);
@@ -2959,14 +3115,15 @@ TEST(Tools, NativeAgentResumeReadsTypeScriptSidechainTranscriptEntries) {
     EnvironmentGuard runtime_dir_guard("LOOM_AGENT_RUNTIME_DIR", (root / "runtime").string());
     loom::tools::agent_runtime::native_agent_store().clear_for_testing();
 
-    loom::tools::agent_runtime::native_agent_store().upsert(loom::tools::agent_runtime::NativeAgentRecord{
-        .agent_id = "ts-sidechain-agent",
-        .agent_type = "reviewer",
-        .background = true,
-        .status = loom::tools::agent_runtime::NativeAgentStatus::Completed,
-        .output = "completed from persisted TS transcript",
-        .transcript = {"system: placeholder"},
-    });
+    loom::tools::agent_runtime::native_agent_store().upsert(
+        loom::tools::agent_runtime::NativeAgentRecord{
+            .agent_id = "ts-sidechain-agent",
+            .agent_type = "reviewer",
+            .background = true,
+            .status = loom::tools::agent_runtime::NativeAgentStatus::Completed,
+            .output = "completed from persisted TS transcript",
+            .transcript = {"system: placeholder"},
+        });
 
     auto record = loom::tools::agent_runtime::native_agent_store().get("ts-sidechain-agent");
     ASSERT_TRUE(record.has_value());
@@ -2979,9 +3136,15 @@ TEST(Tools, NativeAgentResumeReadsTypeScriptSidechainTranscriptEntries) {
 
     {
         std::ofstream sidechain(*record->sidechain_jsonl_path, std::ios::trunc);
-        sidechain << R"({"type":"user","uuid":"u1","parentUuid":null,"isSidechain":true,"agentId":"ts-sidechain-agent","message":{"role":"user","content":[{"type":"text","text":"Inspect TS persisted prompt"}]}})" << '\n';
-        sidechain << R"({"type":"assistant","uuid":"a1","parentUuid":"u1","isSidechain":true,"agentId":"ts-sidechain-agent","message":{"role":"assistant","content":[{"type":"text","text":"TS persisted answer"},{"type":"tool_use","id":"tool-1","name":"Read","input":{"file_path":"README.md"}}]}})" << '\n';
-        sidechain << R"({"type":"user","uuid":"u2","parentUuid":"a1","isSidechain":true,"agentId":"ts-sidechain-agent","message":{"role":"user","content":[{"type":"tool_result","tool_use_id":"tool-1","content":[{"type":"text","text":"README content"}]}]}})" << '\n';
+        sidechain
+            << R"({"type":"user","uuid":"u1","parentUuid":null,"isSidechain":true,"agentId":"ts-sidechain-agent","message":{"role":"user","content":[{"type":"text","text":"Inspect TS persisted prompt"}]}})"
+            << '\n';
+        sidechain
+            << R"({"type":"assistant","uuid":"a1","parentUuid":"u1","isSidechain":true,"agentId":"ts-sidechain-agent","message":{"role":"assistant","content":[{"type":"text","text":"TS persisted answer"},{"type":"tool_use","id":"tool-1","name":"Read","input":{"file_path":"README.md"}}]}})"
+            << '\n';
+        sidechain
+            << R"({"type":"user","uuid":"u2","parentUuid":"a1","isSidechain":true,"agentId":"ts-sidechain-agent","message":{"role":"user","content":[{"type":"tool_result","tool_use_id":"tool-1","content":[{"type":"text","text":"README content"}]}]}})"
+            << '\n';
     }
 
     loom::tools::agent_runtime::native_agent_store().clear_for_testing();
@@ -3004,12 +3167,13 @@ TEST(Tools, NativeAgentStructuredSidechainPreservesToolUseAndResultBlocks) {
     EnvironmentGuard runtime_dir_guard("LOOM_AGENT_RUNTIME_DIR", (root / "runtime").string());
     loom::tools::agent_runtime::native_agent_store().clear_for_testing();
 
-    loom::tools::agent_runtime::native_agent_store().upsert(loom::tools::agent_runtime::NativeAgentRecord{
-        .agent_id = "structured-agent",
-        .agent_type = "reviewer",
-        .background = true,
-        .status = loom::tools::agent_runtime::NativeAgentStatus::Running,
-    });
+    loom::tools::agent_runtime::native_agent_store().upsert(
+        loom::tools::agent_runtime::NativeAgentRecord{
+            .agent_id = "structured-agent",
+            .agent_type = "reviewer",
+            .background = true,
+            .status = loom::tools::agent_runtime::NativeAgentStatus::Running,
+        });
 
     loom::services::api::Message assistant;
     assistant.role = "assistant";
@@ -3024,8 +3188,7 @@ TEST(Tools, NativeAgentStructuredSidechainPreservesToolUseAndResultBlocks) {
         .tool_input_json = R"({"file_path":"README.md","limit":20})",
     });
     loom::tools::agent_runtime::native_agent_store().append_sidechain_message(
-        "structured-agent",
-        assistant.role,
+        "structured-agent", assistant.role,
         loom::tools::agent::message_content_sidechain_json(assistant),
         loom::tools::agent::message_content_text(assistant));
 
@@ -3037,8 +3200,7 @@ TEST(Tools, NativeAgentStructuredSidechainPreservesToolUseAndResultBlocks) {
         .tool_use_id = "tool-structured-1",
     });
     loom::tools::agent_runtime::native_agent_store().append_sidechain_message(
-        "structured-agent",
-        tool_result.role,
+        "structured-agent", tool_result.role,
         loom::tools::agent::message_content_sidechain_json(tool_result),
         loom::tools::agent::message_content_text(tool_result));
 
@@ -3049,9 +3211,8 @@ TEST(Tools, NativeAgentStructuredSidechainPreservesToolUseAndResultBlocks) {
     ASSERT_TRUE(fs::exists(*record->sidechain_jsonl_path));
 
     std::ifstream sidechain_in(*record->sidechain_jsonl_path);
-    std::string sidechain_text(
-        (std::istreambuf_iterator<char>(sidechain_in)),
-        std::istreambuf_iterator<char>());
+    std::string sidechain_text((std::istreambuf_iterator<char>(sidechain_in)),
+                               std::istreambuf_iterator<char>());
     EXPECT_NE(sidechain_text.find(R"("type":"tool_use")"), std::string::npos);
     EXPECT_NE(sidechain_text.find(R"("id":"tool-structured-1")"), std::string::npos);
     EXPECT_NE(sidechain_text.find(R"("name":"Read")"), std::string::npos);
@@ -3059,7 +3220,8 @@ TEST(Tools, NativeAgentStructuredSidechainPreservesToolUseAndResultBlocks) {
     EXPECT_NE(sidechain_text.find(R"("limit":20)"), std::string::npos);
     EXPECT_NE(sidechain_text.find(R"("type":"tool_result")"), std::string::npos);
     EXPECT_NE(sidechain_text.find(R"("tool_use_id":"tool-structured-1")"), std::string::npos);
-    EXPECT_NE(sidechain_text.find(R"("content":[{"type":"text","text":"README content"}])"), std::string::npos);
+    EXPECT_NE(sidechain_text.find(R"("content":[{"type":"text","text":"README content"}])"),
+              std::string::npos);
     EXPECT_NE(sidechain_text.find(R"("parentUuid":null)"), std::string::npos);
     EXPECT_NE(sidechain_text.find(R"("parentUuid":"structured-agent-0")"), std::string::npos);
 
@@ -3099,7 +3261,8 @@ TEST(Tools, RuntimeSendMessageDeliversToBackgroundAgentQueue) {
     ASSERT_FALSE(started->is_error);
 
     loom::core::ToolRegistry registry;
-    loom::tools::register_runtime_tools(registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
+    loom::tools::register_runtime_tools(
+        registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
     auto delivered = registry.execute("send_message", loom::core::ToolInput::from_json(R"({
       "target_agent": "message-target",
       "content": "Review the migration diff",
@@ -3117,8 +3280,10 @@ TEST(Tools, RuntimeSendMessageDeliversToBackgroundAgentQueue) {
     ASSERT_FALSE(record->transcript.empty());
     EXPECT_NE(record->transcript.back().find("Review the migration diff"), std::string::npos);
     ASSERT_EQ(record->pending_messages.size(), 1u);
-    EXPECT_NE(record->pending_messages.front().find("[Message from team-lead priority=high]"), std::string::npos);
-    EXPECT_NE(record->pending_messages.front().find("Review the migration diff"), std::string::npos);
+    EXPECT_NE(record->pending_messages.front().find("[Message from team-lead priority=high]"),
+              std::string::npos);
+    EXPECT_NE(record->pending_messages.front().find("Review the migration diff"),
+              std::string::npos);
 
     loom::tools::agent_runtime::native_agent_store().clear_for_testing();
     auto restored = loom::tools::agent_runtime::native_agent_store().get("message-target");
@@ -3126,9 +3291,11 @@ TEST(Tools, RuntimeSendMessageDeliversToBackgroundAgentQueue) {
     ASSERT_FALSE(restored->transcript.empty());
     EXPECT_NE(restored->transcript.back().find("Review the migration diff"), std::string::npos);
     ASSERT_EQ(restored->pending_messages.size(), 1u);
-    EXPECT_NE(restored->pending_messages.front().find("Review the migration diff"), std::string::npos);
+    EXPECT_NE(restored->pending_messages.front().find("Review the migration diff"),
+              std::string::npos);
 
-    auto pending = loom::tools::agent_runtime::native_agent_store().take_pending_messages("message-target");
+    auto pending =
+        loom::tools::agent_runtime::native_agent_store().take_pending_messages("message-target");
     ASSERT_EQ(pending.size(), 1u);
     EXPECT_NE(pending.front().find("priority=high"), std::string::npos);
     loom::tools::agent_runtime::native_agent_store().clear_for_testing();
@@ -3149,24 +3316,26 @@ TEST(Tools, RuntimeSendMessageQueuesStoppedNativeAgentForResume) {
     EnvironmentUnsetGuard loom_token_guard("LOOM_AUTH_TOKEN");
     loom::tools::agent_runtime::native_agent_store().clear_for_testing();
 
-    loom::tools::agent_runtime::native_agent_store().upsert(loom::tools::agent_runtime::NativeAgentRecord{
-        .agent_id = "resume-target",
-        .agent_type = "general-purpose",
-        .description = "Stopped native agent",
-        .name = "stopped-agent",
-        .cwd = root.string(),
-        .background = true,
-        .status = loom::tools::agent_runtime::NativeAgentStatus::Completed,
-        .output = "old completed output",
-        .capabilities = {"Read"},
-        .parent_session_id = std::string("notification-session"),
-        .transcript = {"user: original prompt", "assistant: old completed output"},
-        .progress = 1.0,
-        .notification_delivered = true,
-    });
+    loom::tools::agent_runtime::native_agent_store().upsert(
+        loom::tools::agent_runtime::NativeAgentRecord{
+            .agent_id = "resume-target",
+            .agent_type = "general-purpose",
+            .description = "Stopped native agent",
+            .name = "stopped-agent",
+            .cwd = root.string(),
+            .background = true,
+            .status = loom::tools::agent_runtime::NativeAgentStatus::Completed,
+            .output = "old completed output",
+            .capabilities = {"Read"},
+            .parent_session_id = std::string("notification-session"),
+            .transcript = {"user: original prompt", "assistant: old completed output"},
+            .progress = 1.0,
+            .notification_delivered = true,
+        });
 
     loom::core::ToolRegistry registry;
-    loom::tools::register_runtime_tools(registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
+    loom::tools::register_runtime_tools(
+        registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
     auto delivered = registry.execute("send_message", loom::core::ToolInput::from_json(R"({
       "target_agent": "stopped-agent",
       "content": "Resume with this follow-up",
@@ -3176,8 +3345,11 @@ TEST(Tools, RuntimeSendMessageQueuesStoppedNativeAgentForResume) {
     ASSERT_TRUE(delivered.has_value());
     ASSERT_FALSE(delivered->is_error);
     ASSERT_FALSE(delivered->content.empty());
-    EXPECT_NE(delivered->content.front().text.find("queued for background resume"), std::string::npos);
-    EXPECT_NE(delivered->content.front().text.find("background resume deferred: no API credentials are configured"), std::string::npos);
+    EXPECT_NE(delivered->content.front().text.find("queued for background resume"),
+              std::string::npos);
+    EXPECT_NE(delivered->content.front().text.find(
+                  "background resume deferred: no API credentials are configured"),
+              std::string::npos);
 
     auto record = loom::tools::agent_runtime::native_agent_store().get("resume-target");
     ASSERT_TRUE(record.has_value());
@@ -3189,7 +3361,8 @@ TEST(Tools, RuntimeSendMessageQueuesStoppedNativeAgentForResume) {
     EXPECT_FALSE(record->cancel_requested);
     EXPECT_FALSE(record->notification_delivered);
     ASSERT_EQ(record->pending_messages.size(), 1u);
-    EXPECT_NE(record->pending_messages.front().find("Resume with this follow-up"), std::string::npos);
+    EXPECT_NE(record->pending_messages.front().find("Resume with this follow-up"),
+              std::string::npos);
     EXPECT_TRUE(std::ranges::any_of(record->transcript, [](const auto& line) {
         return line.find("resume requested from pending message") != std::string::npos;
     }));
@@ -3197,7 +3370,8 @@ TEST(Tools, RuntimeSendMessageQueuesStoppedNativeAgentForResume) {
         return line.find("Resume with this follow-up") != std::string::npos;
     }));
 
-    auto notifications = loom::tools::agent_runtime::native_agent_store().take_pending_task_events("notification-session");
+    auto notifications = loom::tools::agent_runtime::native_agent_store().take_pending_task_events(
+        "notification-session");
     EXPECT_TRUE(notifications.empty());
 
     loom::tools::agent_runtime::native_agent_store().clear_for_testing();
@@ -3205,11 +3379,13 @@ TEST(Tools, RuntimeSendMessageQueuesStoppedNativeAgentForResume) {
     ASSERT_TRUE(restored.has_value());
     EXPECT_EQ(restored->status, loom::tools::agent_runtime::NativeAgentStatus::Queued);
     ASSERT_EQ(restored->pending_messages.size(), 1u);
-    EXPECT_NE(restored->pending_messages.front().find("Resume with this follow-up"), std::string::npos);
+    EXPECT_NE(restored->pending_messages.front().find("Resume with this follow-up"),
+              std::string::npos);
 
     loom::tools::agent_runtime::native_agent_store().clear_for_testing();
     fs::remove_all(root);
 }
+
 TEST(Tools, RuntimeTeamCreateRegistersMembersAndSharedTasks) {
     auto root = fs::temp_directory_path() / "loom_team_runtime_test";
     fs::remove_all(root);
@@ -3220,7 +3396,8 @@ TEST(Tools, RuntimeTeamCreateRegistersMembersAndSharedTasks) {
     loom::tools::agent_runtime::native_agent_store().clear_for_testing();
 
     loom::core::ToolRegistry registry;
-    loom::tools::register_runtime_tools(registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
+    loom::tools::register_runtime_tools(
+        registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
 
     auto team_input = loom::core::ToolInput::from_json(R"({
       "team_id": "runtime-team-members",
@@ -3274,10 +3451,14 @@ TEST(Tools, RuntimeTeamCreateRegistersMembersAndSharedTasks) {
     ASSERT_TRUE(researcher.has_value());
     EXPECT_EQ(researcher->status, loom::tools::agent_runtime::NativeAgentStatus::Running);
     ASSERT_EQ(researcher->pending_messages.size(), 1u);
-    EXPECT_NE(researcher->pending_messages.front().find("[Team task task-1 assigned by Runtime Team Members]"), std::string::npos);
-    EXPECT_NE(researcher->pending_messages.front().find("Inspect migration parity"), std::string::npos);
+    EXPECT_NE(researcher->pending_messages.front().find(
+                  "[Team task task-1 assigned by Runtime Team Members]"),
+              std::string::npos);
+    EXPECT_NE(researcher->pending_messages.front().find("Inspect migration parity"),
+              std::string::npos);
     EXPECT_TRUE(std::ranges::any_of(researcher->transcript, [](const auto& entry) {
-        return entry.find("team task assigned task-1: Inspect migration parity") != std::string::npos;
+        return entry.find("team task assigned task-1: Inspect migration parity") !=
+               std::string::npos;
     }));
     EXPECT_TRUE(fs::exists(root / "teams" / "runtime-team-members.json"));
     auto team_dir = root / "teams" / "runtime-team-members";
@@ -3288,16 +3469,16 @@ TEST(Tools, RuntimeTeamCreateRegistersMembersAndSharedTasks) {
     EXPECT_TRUE(fs::exists(team_dir / "inboxes" / "team-reviewer.json"));
     ASSERT_TRUE(fs::exists(team_dir / "tasks.json"));
     std::ifstream tasks_in(team_dir / "tasks.json");
-    std::string tasks_text(
-        (std::istreambuf_iterator<char>(tasks_in)),
-        std::istreambuf_iterator<char>());
+    std::string tasks_text((std::istreambuf_iterator<char>(tasks_in)),
+                           std::istreambuf_iterator<char>());
     EXPECT_NE(tasks_text.find(R"("id":"task-1")"), std::string::npos);
     EXPECT_NE(tasks_text.find(R"("assigned_to":"team-researcher")"), std::string::npos);
 
     loom::tools::global_team_store().clear_for_testing();
     loom::tools::agent_runtime::native_agent_store().clear_for_testing();
     auto restored_team = loom::tools::global_team_store().get("runtime-team-members");
-    ASSERT_TRUE(restored_team.has_value()) << std::string(loom::tools::format_error(restored_team.error()));
+    ASSERT_TRUE(restored_team.has_value())
+        << std::string(loom::tools::format_error(restored_team.error()));
     ASSERT_EQ(restored_team->task_list.size(), 1u);
     EXPECT_EQ(restored_team->task_list.front().id, "task-1");
     auto restored_member = std::ranges::find_if(restored_team->members, [](const auto& candidate) {
@@ -3305,10 +3486,12 @@ TEST(Tools, RuntimeTeamCreateRegistersMembersAndSharedTasks) {
     });
     ASSERT_NE(restored_member, restored_team->members.end());
     EXPECT_EQ(restored_member->status, loom::tools::MemberStatus::Working);
-    auto restored_researcher = loom::tools::agent_runtime::native_agent_store().get("team-researcher");
+    auto restored_researcher =
+        loom::tools::agent_runtime::native_agent_store().get("team-researcher");
     ASSERT_TRUE(restored_researcher.has_value());
     ASSERT_EQ(restored_researcher->pending_messages.size(), 1u);
-    EXPECT_NE(restored_researcher->pending_messages.front().find("Inspect migration parity"), std::string::npos);
+    EXPECT_NE(restored_researcher->pending_messages.front().find("Inspect migration parity"),
+              std::string::npos);
 
     auto delivered = registry.execute("send_message", loom::core::ToolInput::from_json(R"({
       "target_agent": "team-reviewer",
@@ -3339,7 +3522,8 @@ TEST(Tools, RuntimeTeamCreateCanStartNativeAgentsAndResumeThemWithSendMessage) {
     loom::tools::agent_runtime::native_agent_store().clear_for_testing();
 
     loom::core::ToolRegistry registry;
-    loom::tools::register_runtime_tools(registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
+    loom::tools::register_runtime_tools(
+        registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
 
     auto team_input = loom::core::ToolInput::from_json(R"({
       "team_id": "native-start-team-id",
@@ -3370,15 +3554,14 @@ TEST(Tools, RuntimeTeamCreateCanStartNativeAgentsAndResumeThemWithSendMessage) {
     EXPECT_TRUE(fs::exists(created_root.get_string("team_file_path")));
     ASSERT_TRUE(server.wait_for_request_count(2));
     EXPECT_TRUE(wait_for_native_agent_status(
-        "planner@native-start-team",
-        loom::tools::agent_runtime::NativeAgentStatus::Completed,
+        "planner@native-start-team", loom::tools::agent_runtime::NativeAgentStatus::Completed,
         std::chrono::seconds(3)));
     EXPECT_TRUE(wait_for_native_agent_status(
-        "reviewer@native-start-team",
-        loom::tools::agent_runtime::NativeAgentStatus::Completed,
+        "reviewer@native-start-team", loom::tools::agent_runtime::NativeAgentStatus::Completed,
         std::chrono::seconds(3)));
 
-    auto planner = loom::tools::agent_runtime::native_agent_store().get("planner@native-start-team");
+    auto planner =
+        loom::tools::agent_runtime::native_agent_store().get("planner@native-start-team");
     ASSERT_TRUE(planner.has_value());
     ASSERT_TRUE(planner->team_name.has_value());
     EXPECT_EQ(*planner->team_name, "Native Start Team");
@@ -3389,11 +3572,13 @@ TEST(Tools, RuntimeTeamCreateCanStartNativeAgentsAndResumeThemWithSendMessage) {
         return line.find("Plan the native team launch") != std::string::npos;
     }));
 
-    auto reviewer = loom::tools::agent_runtime::native_agent_store().get("reviewer@native-start-team");
+    auto reviewer =
+        loom::tools::agent_runtime::native_agent_store().get("reviewer@native-start-team");
     ASSERT_TRUE(reviewer.has_value());
     EXPECT_EQ(reviewer->teammate_backend, "in-process");
     EXPECT_TRUE(std::ranges::any_of(reviewer->transcript, [](const auto& line) {
-        return line.find("[Team task review-task assigned by Native Start Team]") != std::string::npos;
+        return line.find("[Team task review-task assigned by Native Start Team]") !=
+               std::string::npos;
     }));
     EXPECT_EQ(reviewer->output, std::optional<std::string>{"late stream response"});
     EXPECT_EQ(planner->parent_session_id, std::optional<std::string>{"team-notification-parent"});
@@ -3407,7 +3592,6 @@ TEST(Tools, RuntimeTeamCreateCanStartNativeAgentsAndResumeThemWithSendMessage) {
         EXPECT_EQ(event.event.parent_session_id, "team-notification-parent");
     }
 
-
     auto wait_for_member_done = [](std::string_view member_id) {
         const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(3);
         while (std::chrono::steady_clock::now() < deadline) {
@@ -3417,8 +3601,7 @@ TEST(Tools, RuntimeTeamCreateCanStartNativeAgentsAndResumeThemWithSendMessage) {
                     return candidate.agent_id == member_id;
                 });
                 if (member != team->members.end() &&
-                    member->status == loom::tools::MemberStatus::Done &&
-                    member->last_result &&
+                    member->status == loom::tools::MemberStatus::Done && member->last_result &&
                     member->last_result->find("late stream response") != std::string::npos) {
                     return true;
                 }
@@ -3441,15 +3624,13 @@ TEST(Tools, RuntimeTeamCreateCanStartNativeAgentsAndResumeThemWithSendMessage) {
     EXPECT_NE(delivered->content.front().text.find("background resume started"), std::string::npos);
     ASSERT_TRUE(server.wait_for_request_count(3));
     EXPECT_TRUE(wait_for_native_agent_status(
-        "reviewer@native-start-team",
-        loom::tools::agent_runtime::NativeAgentStatus::Completed,
+        "reviewer@native-start-team", loom::tools::agent_runtime::NativeAgentStatus::Completed,
         std::chrono::seconds(3)));
     reviewer = loom::tools::agent_runtime::native_agent_store().get("reviewer@native-start-team");
     ASSERT_TRUE(reviewer.has_value());
     EXPECT_TRUE(std::ranges::any_of(reviewer->transcript, [](const auto& line) {
         return line.find("Continue reviewing the launched team path") != std::string::npos;
     }));
-
 
     EXPECT_EQ(reviewer->parent_session_id, std::optional<std::string>{"team-notification-parent"});
     const auto resumed_events = event_store.take_pending_task_events("team-notification-parent");
@@ -3464,7 +3645,9 @@ TEST(Tools, RuntimeTeamCreateCanStartNativeAgentsAndResumeThemWithSendMessage) {
     ASSERT_TRUE(deleted.has_value());
     ASSERT_FALSE(deleted->is_error);
     ASSERT_FALSE(deleted->content.empty());
-    EXPECT_NE(deleted->content.front().text.find("Deleted team Native Start Team (native-start-team-id)"), std::string::npos);
+    EXPECT_NE(
+        deleted->content.front().text.find("Deleted team Native Start Team (native-start-team-id)"),
+        std::string::npos);
     EXPECT_FALSE(fs::exists(root / "teams" / "native-start-team-id.json"));
     EXPECT_FALSE(fs::exists(root / "teams" / "native-start-team"));
     EXPECT_FALSE(fs::exists(planner_output_file) || fs::is_symlink(planner_output_file));
@@ -3477,7 +3660,10 @@ TEST(Tools, RuntimeTeamCreateCanStartNativeAgentsAndResumeThemWithSendMessage) {
 
 TEST(Tools, RuntimeTeamCreateStartedNativeTeammateResumesAfterRegistryRestart) {
     auto root = fs::temp_directory_path() / "loom_team_create_restart_resume_test";
-    { std::error_code ec; fs::remove_all(root, ec); }
+    {
+        std::error_code ec;
+        fs::remove_all(root, ec);
+    }
     fs::create_directories(root);
     LocalSlowMessagesStreamServer server(std::chrono::milliseconds(1));
     ASSERT_TRUE(server.valid());
@@ -3491,7 +3677,9 @@ TEST(Tools, RuntimeTeamCreateStartedNativeTeammateResumesAfterRegistryRestart) {
 
     {
         loom::core::ToolRegistry initial_registry;
-        loom::tools::register_runtime_tools(initial_registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
+        loom::tools::register_runtime_tools(
+            initial_registry,
+            loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
         auto team_input = loom::core::ToolInput::from_json(R"({
           "team_id": "restart-resume-team-id",
           "team_name": "Restart Resume Team",
@@ -3507,21 +3695,21 @@ TEST(Tools, RuntimeTeamCreateStartedNativeTeammateResumesAfterRegistryRestart) {
         ASSERT_TRUE(server.wait_for_request_count(1));
         ASSERT_TRUE(wait_for_native_agent_status(
             "reviewer@restart-resume-team",
-            loom::tools::agent_runtime::NativeAgentStatus::Completed,
-            std::chrono::seconds(3)));
+            loom::tools::agent_runtime::NativeAgentStatus::Completed, std::chrono::seconds(3)));
     }
 
-    auto completed = loom::tools::agent_runtime::native_agent_store().get("reviewer@restart-resume-team");
+    auto completed =
+        loom::tools::agent_runtime::native_agent_store().get("reviewer@restart-resume-team");
     ASSERT_TRUE(completed.has_value());
     EXPECT_EQ(completed->output, std::optional<std::string>{"late stream response"});
     ASSERT_TRUE(completed->team_name.has_value());
     EXPECT_EQ(*completed->team_name, "Restart Resume Team");
     EXPECT_FALSE(completed->name.has_value());
     EXPECT_EQ(completed->parent_session_id, std::optional<std::string>{"restart-parent"});
-    const auto first_events = loom::tools::agent_runtime::native_agent_store().take_pending_task_events("restart-parent");
+    const auto first_events =
+        loom::tools::agent_runtime::native_agent_store().take_pending_task_events("restart-parent");
     ASSERT_EQ(first_events.size(), 1u);
     EXPECT_EQ(first_events.front().event.kind, loom::core::TaskEventKind::TeamAgent);
-
 
     // Wait for the detached background thread to finish update_teammate_completion_status()
     // after mark_completed(). The thread holds references to team store data.
@@ -3530,8 +3718,11 @@ TEST(Tools, RuntimeTeamCreateStartedNativeTeammateResumesAfterRegistryRestart) {
     loom::tools::agent_runtime::native_agent_store().clear_for_testing();
 
     loom::core::ToolRegistry restarted_registry;
-    loom::tools::register_runtime_tools(restarted_registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
-    auto delivered = restarted_registry.execute("send_message", loom::core::ToolInput::from_json(R"({
+    loom::tools::register_runtime_tools(
+        restarted_registry,
+        loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
+    auto delivered =
+        restarted_registry.execute("send_message", loom::core::ToolInput::from_json(R"({
       "target_agent": "reviewer",
       "team_name": "Restart Resume Team",
       "content": "Continue after a fresh runtime registry",
@@ -3540,20 +3731,24 @@ TEST(Tools, RuntimeTeamCreateStartedNativeTeammateResumesAfterRegistryRestart) {
     ASSERT_TRUE(delivered.has_value());
     ASSERT_FALSE(delivered->is_error);
     ASSERT_FALSE(delivered->content.empty());
-    EXPECT_NE(delivered->content.front().text.find("reviewer@restart-resume-team"), std::string::npos);
+    EXPECT_NE(delivered->content.front().text.find("reviewer@restart-resume-team"),
+              std::string::npos);
     EXPECT_NE(delivered->content.front().text.find("background resume started"), std::string::npos);
     ASSERT_TRUE(server.wait_for_request_count(2));
     ASSERT_TRUE(wait_for_native_agent_status(
-        "reviewer@restart-resume-team",
-        loom::tools::agent_runtime::NativeAgentStatus::Completed,
+        "reviewer@restart-resume-team", loom::tools::agent_runtime::NativeAgentStatus::Completed,
         std::chrono::seconds(3)));
 
-    auto resumed = loom::tools::agent_runtime::native_agent_store().get("reviewer@restart-resume-team");
+    auto resumed =
+        loom::tools::agent_runtime::native_agent_store().get("reviewer@restart-resume-team");
     ASSERT_TRUE(resumed.has_value());
     EXPECT_TRUE(resumed->pending_messages.empty());
     EXPECT_EQ(resumed->parent_session_id, std::optional<std::string>{"restart-parent"});
-    EXPECT_TRUE(loom::tools::agent_runtime::native_agent_store().take_pending_task_events("foreign-parent").empty());
-    const auto resumed_events = loom::tools::agent_runtime::native_agent_store().take_pending_task_events("restart-parent");
+    EXPECT_TRUE(loom::tools::agent_runtime::native_agent_store()
+                    .take_pending_task_events("foreign-parent")
+                    .empty());
+    const auto resumed_events =
+        loom::tools::agent_runtime::native_agent_store().take_pending_task_events("restart-parent");
     ASSERT_EQ(resumed_events.size(), 1u);
     EXPECT_EQ(resumed_events.front().event.task_id, "reviewer@restart-resume-team");
     EXPECT_EQ(resumed_events.front().event.kind, loom::core::TaskEventKind::TeamAgent);
@@ -3565,7 +3760,8 @@ TEST(Tools, RuntimeTeamCreateStartedNativeTeammateResumesAfterRegistryRestart) {
     ASSERT_TRUE(last_request.has_value());
     EXPECT_NE(last_request->find("Continue after a fresh runtime registry"), std::string::npos);
 
-    auto inbox = loom::utils::read_inbox("reviewer", std::optional<std::string_view>{"Restart Resume Team"});
+    auto inbox =
+        loom::utils::read_inbox("reviewer", std::optional<std::string_view>{"Restart Resume Team"});
     ASSERT_TRUE(inbox.has_value()) << inbox.error();
     ASSERT_EQ(inbox->size(), 1u);
     EXPECT_EQ(inbox->front().text, "Continue after a fresh runtime registry");
@@ -3593,7 +3789,10 @@ TEST(Tools, RuntimeTeamCreateStartedNativeTeammateResumesAfterRegistryRestart) {
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
     loom::tools::global_team_store().clear_for_testing();
     loom::tools::agent_runtime::native_agent_store().clear_for_testing();
-    { std::error_code ec; fs::remove_all(root, ec); }
+    {
+        std::error_code ec;
+        fs::remove_all(root, ec);
+    }
 }
 
 TEST(Tools, RuntimeTeamCreateStartsNativeAgentsWithWorktreeIsolation) {
@@ -3608,15 +3807,22 @@ TEST(Tools, RuntimeTeamCreateStartsNativeAgentsWithWorktreeIsolation) {
         std::ofstream readme(root / "README.md");
         readme << "team worktree isolation\n";
     }
-    ASSERT_EQ(std::system(std::format("git -C \"{}\" init -q --template=", root.string()).c_str()), 0);
-    ASSERT_EQ(std::system(std::format("git -C \"{}\" config user.email test@example.com", root.string()).c_str()), 0);
-    ASSERT_EQ(std::system(std::format("git -C \"{}\" config user.name Test", root.string()).c_str()), 0);
+    ASSERT_EQ(std::system(std::format("git -C \"{}\" init -q --template=", root.string()).c_str()),
+              0);
+    ASSERT_EQ(
+        std::system(
+            std::format("git -C \"{}\" config user.email test@example.com", root.string()).c_str()),
+        0);
+    ASSERT_EQ(
+        std::system(std::format("git -C \"{}\" config user.name Test", root.string()).c_str()), 0);
     ASSERT_EQ(std::system(std::format("git -C \"{}\" add README.md", root.string()).c_str()), 0);
-    ASSERT_EQ(std::system(std::format("git -C \"{}\" commit -q --no-verify -m init", root.string()).c_str()), 0);
+    ASSERT_EQ(
+        std::system(
+            std::format("git -C \"{}\" commit -q --no-verify -m init", root.string()).c_str()),
+        0);
 
     LocalPerTurnBashCommandMessagesServer server(
-        "printf team-worktree > team_member_marker.txt; pwd",
-        "team worktree complete");
+        "printf team-worktree > team_member_marker.txt; pwd", "team worktree complete");
     ASSERT_TRUE(server.valid());
     EnvironmentGuard team_dir_guard("LOOM_TEAM_RUNTIME_DIR", (root / "teams").string());
     EnvironmentGuard agent_runtime_dir_guard("LOOM_AGENT_RUNTIME_DIR", (root / "agents").string());
@@ -3627,9 +3833,12 @@ TEST(Tools, RuntimeTeamCreateStartsNativeAgentsWithWorktreeIsolation) {
     loom::tools::agent_runtime::native_agent_store().clear_for_testing();
 
     loom::core::ToolRegistry registry;
-    loom::tools::register_runtime_tools(registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
+    loom::tools::register_runtime_tools(
+        registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
 
-    auto created = registry.execute("team_create", loom::core::ToolInput::from_json(std::format(R"({{
+    auto created = registry.execute(
+        "team_create", loom::core::ToolInput::from_json(
+                           std::format(R"({{
       "team_id": "worktree-team-id",
       "team_name": "Worktree Team",
       "start_native_agents": true,
@@ -3640,7 +3849,8 @@ TEST(Tools, RuntimeTeamCreateStartsNativeAgentsWithWorktreeIsolation) {
         {{"agent_id": "alpha@worktree-team", "prompt": "Write the worktree marker", "subagent_type": "general-purpose"}},
         {{"agent_id": "beta@worktree-team", "prompt": "Write the worktree marker", "subagent_type": "general-purpose"}}
       ]
-    }})", loom::tools::agent::json_escape_string(root.string()))));
+    }})",
+                                       loom::tools::agent::json_escape_string(root.string()))));
 
     ASSERT_TRUE(created.has_value());
     ASSERT_FALSE(created->is_error);
@@ -3653,12 +3863,10 @@ TEST(Tools, RuntimeTeamCreateStartsNativeAgentsWithWorktreeIsolation) {
 
     ASSERT_TRUE(server.wait_for_request_count(4, std::chrono::seconds(5)));
     EXPECT_TRUE(wait_for_native_agent_status(
-        "alpha@worktree-team",
-        loom::tools::agent_runtime::NativeAgentStatus::Completed,
+        "alpha@worktree-team", loom::tools::agent_runtime::NativeAgentStatus::Completed,
         std::chrono::seconds(3)));
     EXPECT_TRUE(wait_for_native_agent_status(
-        "beta@worktree-team",
-        loom::tools::agent_runtime::NativeAgentStatus::Completed,
+        "beta@worktree-team", loom::tools::agent_runtime::NativeAgentStatus::Completed,
         std::chrono::seconds(3)));
 
     auto alpha = loom::tools::agent_runtime::native_agent_store().get("alpha@worktree-team");
@@ -3680,7 +3888,8 @@ TEST(Tools, RuntimeTeamCreateStartsNativeAgentsWithWorktreeIsolation) {
     const auto alpha_path = fs::path{*alpha->worktree_path};
     const auto beta_path = fs::path{*beta->worktree_path};
     EXPECT_NE(alpha_path, beta_path);
-    EXPECT_EQ(alpha_path, fs::weakly_canonical(root) / ".loom" / "worktrees" / "alpha_worktree-team");
+    EXPECT_EQ(alpha_path,
+              fs::weakly_canonical(root) / ".loom" / "worktrees" / "alpha_worktree-team");
     EXPECT_EQ(beta_path, fs::weakly_canonical(root) / ".loom" / "worktrees" / "beta_worktree-team");
     EXPECT_EQ(*alpha->cwd, alpha_path.string());
     EXPECT_EQ(*beta->cwd, beta_path.string());
@@ -3698,8 +3907,10 @@ TEST(Tools, RuntimeTeamCreateStartsNativeAgentsWithWorktreeIsolation) {
     EXPECT_NE(config_text.find(R"("mode":"acceptEdits")"), std::string::npos);
     EXPECT_NE(config_text.find(R"("cwd":")" + alpha_path.string() + R"(")"), std::string::npos);
     EXPECT_NE(config_text.find(R"("cwd":")" + beta_path.string() + R"(")"), std::string::npos);
-    EXPECT_NE(config_text.find(R"("worktreePath":")" + alpha_path.string() + R"(")"), std::string::npos);
-    EXPECT_NE(config_text.find(R"("worktreePath":")" + beta_path.string() + R"(")"), std::string::npos);
+    EXPECT_NE(config_text.find(R"("worktreePath":")" + alpha_path.string() + R"(")"),
+              std::string::npos);
+    EXPECT_NE(config_text.find(R"("worktreePath":")" + beta_path.string() + R"(")"),
+              std::string::npos);
     EXPECT_TRUE(fs::exists(alpha_path / ".git"));
     EXPECT_TRUE(fs::exists(beta_path / ".git"));
     EXPECT_EQ(read_file(alpha_path / "team_member_marker.txt"), "team-worktree");
@@ -3720,24 +3931,28 @@ TEST(Tools, RuntimeTeamCreateStartsNativeAgentsWithWorktreeIsolation) {
     ASSERT_TRUE(deleted.has_value());
     ASSERT_FALSE(deleted->is_error);
     ASSERT_FALSE(deleted->content.empty());
-    EXPECT_NE(deleted->content.front().text.find("worktree_cleanup_attempts: 2"), std::string::npos);
+    EXPECT_NE(deleted->content.front().text.find("worktree_cleanup_attempts: 2"),
+              std::string::npos);
     EXPECT_NE(deleted->content.front().text.find("worktrees_retained: 2"), std::string::npos);
 
     auto remove_worktree = [&](const fs::path& path, std::string_view branch) {
-        (void)std::system(std::format(
-            "git -C {} worktree remove --force {} >/dev/null 2>&1",
-            shell_quote_for_test(root.string()),
-            shell_quote_for_test(path.string())).c_str());
-        (void)std::system(std::format(
-            "git -C {} branch -D {} >/dev/null 2>&1",
-            shell_quote_for_test(root.string()),
-            shell_quote_for_test(branch)).c_str());
+        (void)std::system(std::format("git -C {} worktree remove --force {} >/dev/null 2>&1",
+                                      shell_quote_for_test(root.string()),
+                                      shell_quote_for_test(path.string()))
+                              .c_str());
+        (void)std::system(std::format("git -C {} branch -D {} >/dev/null 2>&1",
+                                      shell_quote_for_test(root.string()),
+                                      shell_quote_for_test(branch))
+                              .c_str());
     };
     remove_worktree(alpha_path, *alpha->worktree_branch);
     remove_worktree(beta_path, *beta->worktree_branch);
     loom::tools::global_team_store().clear_for_testing();
     loom::tools::agent_runtime::native_agent_store().clear_for_testing();
-    { std::error_code ec; fs::remove_all(root, ec); }
+    {
+        std::error_code ec;
+        fs::remove_all(root, ec);
+    }
 }
 
 TEST(Tools, StandaloneTeamCreateAndDeleteDelegateToRuntimeTeamStore) {
@@ -3772,7 +3987,8 @@ TEST(Tools, StandaloneTeamCreateAndDeleteDelegateToRuntimeTeamStore) {
     EXPECT_EQ(created_root.get_string("lead_agent_id"), "team-lead@Standalone Team");
     EXPECT_TRUE(fs::exists(root / "teams" / "standalone-team-id.json"));
     EXPECT_TRUE(fs::exists(created_root.get_string("team_file_path")));
-    EXPECT_TRUE(fs::exists(root / "teams" / "standalone-team" / "inboxes" / "standalone-worker.json"));
+    EXPECT_TRUE(
+        fs::exists(root / "teams" / "standalone-team" / "inboxes" / "standalone-worker.json"));
     EXPECT_TRUE(fs::exists(root / "teams" / "standalone-team" / "tasks.json"));
 
     auto team = loom::tools::global_team_store().get("standalone-team-id");
@@ -3791,7 +4007,9 @@ TEST(Tools, StandaloneTeamCreateAndDeleteDelegateToRuntimeTeamStore) {
     ASSERT_TRUE(deleted.has_value()) << deleted.error().format();
     ASSERT_FALSE(deleted->is_error);
     ASSERT_FALSE(deleted->content.empty());
-    EXPECT_NE(deleted->content.front().text.find("Deleted team Standalone Team (standalone-team-id)"), std::string::npos);
+    EXPECT_NE(
+        deleted->content.front().text.find("Deleted team Standalone Team (standalone-team-id)"),
+        std::string::npos);
     EXPECT_FALSE(fs::exists(root / "teams" / "standalone-team-id.json"));
     EXPECT_FALSE(fs::exists(root / "teams" / "standalone-team"));
 
@@ -3812,7 +4030,8 @@ TEST(Tools, RuntimeTeamDeleteCancelsNativeTeammatesAndCleansArtifacts) {
     loom::tools::agent_runtime::native_agent_store().clear_for_testing();
 
     loom::core::ToolRegistry registry;
-    loom::tools::register_runtime_tools(registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
+    loom::tools::register_runtime_tools(
+        registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
 
     auto created = registry.execute("team_create", loom::core::ToolInput::from_json(R"({
       "team_id": "cleanup-team-id",
@@ -3858,12 +4077,10 @@ TEST(Tools, RuntimeTeamDeleteCancelsNativeTeammatesAndCleansArtifacts) {
     record.teammate_task_id = spawned.task_id;
     loom::tools::agent_runtime::native_agent_store().upsert(std::move(record));
     loom::tools::agent_runtime::native_agent_store().set_worktree_metadata(
-        "reviewer@cleanup-team",
-        (root / "missing-worktree").string(),
-        "loom-agent-reviewer",
-        "base",
-        root.string());
-    auto artifact_record = loom::tools::agent_runtime::native_agent_store().get("reviewer@cleanup-team");
+        "reviewer@cleanup-team", (root / "missing-worktree").string(), "loom-agent-reviewer",
+        "base", root.string());
+    auto artifact_record =
+        loom::tools::agent_runtime::native_agent_store().get("reviewer@cleanup-team");
     ASSERT_TRUE(artifact_record.has_value());
     ASSERT_TRUE(artifact_record->output_file_path.has_value());
     ASSERT_TRUE(artifact_record->transcript_path.has_value());
@@ -3875,17 +4092,16 @@ TEST(Tools, RuntimeTeamDeleteCancelsNativeTeammatesAndCleansArtifacts) {
     EXPECT_TRUE(fs::exists(transcript_artifact));
     EXPECT_TRUE(fs::exists(sidechain_artifact));
 
-    auto mailbox = loom::utils::write_to_mailbox(
-        "reviewer",
-        loom::utils::TeammateMessage{
-            .from = "team-lead",
-            .text = "Initial message",
-            .timestamp = {},
-            .read = false,
-            .color = std::nullopt,
-            .summary = std::nullopt,
-        },
-        std::optional<std::string_view>{"cleanup-team"});
+    auto mailbox = loom::utils::write_to_mailbox("reviewer",
+                                                 loom::utils::TeammateMessage{
+                                                     .from = "team-lead",
+                                                     .text = "Initial message",
+                                                     .timestamp = {},
+                                                     .read = false,
+                                                     .color = std::nullopt,
+                                                     .summary = std::nullopt,
+                                                 },
+                                                 std::optional<std::string_view>{"cleanup-team"});
     ASSERT_TRUE(mailbox.has_value()) << mailbox.error();
     EXPECT_TRUE(fs::exists(root / "teams" / "cleanup-team" / "inboxes" / "reviewer.json"));
     EXPECT_TRUE(fs::exists(root / "teams" / "cleanup-team-id.json"));
@@ -3913,13 +4129,17 @@ TEST(Tools, RuntimeTeamDeleteCancelsNativeTeammatesAndCleansArtifacts) {
     ASSERT_TRUE(deleted.has_value());
     ASSERT_FALSE(deleted->is_error);
     ASSERT_FALSE(deleted->content.empty());
-    EXPECT_NE(deleted->content.front().text.find("Deleted team cleanup-team (cleanup-team-id)"), std::string::npos);
+    EXPECT_NE(deleted->content.front().text.find("Deleted team cleanup-team (cleanup-team-id)"),
+              std::string::npos);
     EXPECT_NE(deleted->content.front().text.find("cancelled_agents: 1"), std::string::npos);
     EXPECT_NE(deleted->content.front().text.find("teammate_terminations: 1"), std::string::npos);
     EXPECT_NE(deleted->content.front().text.find("teammate_kills: 1"), std::string::npos);
-    EXPECT_NE(deleted->content.front().text.find("background_shell_tasks_stopped: 1"), std::string::npos);
-    EXPECT_NE(deleted->content.front().text.find("transcript_artifacts_removed: 3"), std::string::npos);
-    EXPECT_NE(deleted->content.front().text.find("worktree_cleanup_attempts: 1"), std::string::npos);
+    EXPECT_NE(deleted->content.front().text.find("background_shell_tasks_stopped: 1"),
+              std::string::npos);
+    EXPECT_NE(deleted->content.front().text.find("transcript_artifacts_removed: 3"),
+              std::string::npos);
+    EXPECT_NE(deleted->content.front().text.find("worktree_cleanup_attempts: 1"),
+              std::string::npos);
 
     EXPECT_FALSE(executor->is_active("reviewer@cleanup-team"));
     auto shell_after_delete = loom::tools::bash::get_background_task_snapshot(*shell_task_id);
@@ -3955,21 +4175,20 @@ TEST(Tools, TeamStoreUpdatesMemberStatusAndPersists) {
     EnvironmentGuard team_dir_guard("LOOM_TEAM_RUNTIME_DIR", (root / "teams").string());
     loom::tools::global_team_store().clear_for_testing();
 
-    auto created = loom::tools::global_team_store().create("status-team", "Status Team", {
-        loom::tools::TeamMember{
-            .agent_id = "status-agent",
-            .role = loom::tools::MemberRole::Reviewer,
-            .status = loom::tools::MemberStatus::Working,
-            .current_task = "task-1",
-        },
-    });
+    auto created = loom::tools::global_team_store().create(
+        "status-team", "Status Team",
+        {
+            loom::tools::TeamMember{
+                .agent_id = "status-agent",
+                .role = loom::tools::MemberRole::Reviewer,
+                .status = loom::tools::MemberStatus::Working,
+                .current_task = "task-1",
+            },
+        });
     ASSERT_TRUE(created.has_value()) << std::string(loom::tools::format_error(created.error()));
 
     auto updated = loom::tools::global_team_store().update_member_status(
-        "Status Team",
-        "status-agent",
-        loom::tools::MemberStatus::Done,
-        "review complete");
+        "Status Team", "status-agent", loom::tools::MemberStatus::Done, "review complete");
     ASSERT_TRUE(updated.has_value()) << std::string(loom::tools::format_error(updated.error()));
 
     loom::tools::global_team_store().clear_for_testing();
@@ -3982,10 +4201,7 @@ TEST(Tools, TeamStoreUpdatesMemberStatusAndPersists) {
     EXPECT_EQ(*restored->members.front().last_result, "review complete");
 
     auto missing = loom::tools::global_team_store().update_member_status(
-        "status-team",
-        "missing-agent",
-        loom::tools::MemberStatus::Error,
-        "failed");
+        "status-team", "missing-agent", loom::tools::MemberStatus::Error, "failed");
     EXPECT_FALSE(missing.has_value());
 
     loom::tools::global_team_store().clear_for_testing();
@@ -4017,7 +4233,8 @@ TEST(Tools, RuntimeWorkflowExecutesJsonDefinition) {
     }
 
     loom::core::ToolRegistry registry;
-    loom::tools::register_runtime_tools(registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
+    loom::tools::register_runtime_tools(
+        registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
     loom::utils::json::JsonMutDoc doc;
     auto input = doc.object();
     input.add("file", doc.string(workflow_path.string()));
@@ -4028,7 +4245,8 @@ TEST(Tools, RuntimeWorkflowExecutesJsonDefinition) {
     ASSERT_TRUE(result.has_value());
     EXPECT_FALSE(result->is_error) << result->content.front().text;
     ASSERT_FALSE(result->content.empty());
-    EXPECT_NE(result->content.front().text.find("Workflow migration-check completed"), std::string::npos);
+    EXPECT_NE(result->content.front().text.find("Workflow migration-check completed"),
+              std::string::npos);
     EXPECT_NE(result->content.front().text.find("Steps executed: 5"), std::string::npos);
     EXPECT_NE(result->content.front().text.find("Steps skipped: 1"), std::string::npos);
     EXPECT_NE(result->content.front().text.find("hello-world"), std::string::npos);
@@ -4041,7 +4259,8 @@ TEST(Tools, RuntimeWorkflowExecutesJsonDefinition) {
 TEST(Tools, TodoWriteParsesTypeScriptInputShape) {
     loom::tools::clear_all_todos_for_testing();
     loom::core::ToolRegistry registry;
-    loom::tools::register_runtime_tools(registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
+    loom::tools::register_runtime_tools(
+        registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
 
     auto result = registry.execute("todo_write", loom::core::ToolInput::from_json(R"({
       "todos": [
@@ -4059,7 +4278,8 @@ TEST(Tools, TodoWriteParsesTypeScriptInputShape) {
 TEST(Tools, TodoWriteRetainsAllDoneReplacementLists) {
     loom::tools::clear_all_todos_for_testing();
     loom::core::ToolRegistry registry;
-    loom::tools::register_runtime_tools(registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
+    loom::tools::register_runtime_tools(
+        registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
 
     auto initial = registry.execute("todo_write", loom::core::ToolInput::from_json(R"({
       "todos": [
@@ -4086,7 +4306,8 @@ TEST(Tools, TodoWriteRetainsAllDoneReplacementLists) {
     EXPECT_NE(history.find("✓ Implement parser"), std::string::npos);
     EXPECT_NE(history.find("✓ Verify parser"), std::string::npos);
     EXPECT_EQ(loom::tools::todo_write_store().get_items().size(), 2u);
-    auto clear = registry.execute("todo_write", loom::core::ToolInput::from_json(R"({"todos":[]})"));
+    auto clear =
+        registry.execute("todo_write", loom::core::ToolInput::from_json(R"({"todos":[]})"));
     ASSERT_TRUE(clear.has_value());
     EXPECT_TRUE(loom::tools::todo_write_store().get_items().empty());
     EXPECT_NE(history.find("✓ Verify parser"), std::string::npos);
@@ -4126,7 +4347,8 @@ TEST(Tools, TodoWriteCompletedMergeCapturesTheEntireScopedList) {
 TEST(Tools, TodoWriteScopesItemsByAgentId) {
     loom::tools::clear_all_todos_for_testing();
     loom::core::ToolRegistry registry;
-    loom::tools::register_runtime_tools(registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
+    loom::tools::register_runtime_tools(
+        registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
 
     auto agent_a = registry.execute("todo_write", loom::core::ToolInput::from_json(R"({
       "agent_id": "agent-a",
@@ -4166,7 +4388,8 @@ TEST(Tools, TodoWriteScopesItemsByAgentId) {
 TEST(Tools, TodoWriteCleanupRemovesAgentScopedTodos) {
     loom::tools::clear_all_todos_for_testing();
     loom::core::ToolRegistry registry;
-    loom::tools::register_runtime_tools(registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
+    loom::tools::register_runtime_tools(
+        registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
 
     auto result = registry.execute("todo_write", loom::core::ToolInput::from_json(R"({
       "agent_id": "cleanup-agent",
@@ -4193,9 +4416,11 @@ TEST(Tools, GlobFiltersByPattern) {
     }
 
     loom::core::ToolRegistry registry;
-    loom::tools::register_runtime_tools(registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
-    auto result = registry.execute("Glob", loom::core::ToolInput::from_json(
-        std::format(R"({{"pattern":"**/*.cpp","path":"{}"}})", root.string())));
+    loom::tools::register_runtime_tools(
+        registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
+    auto result =
+        registry.execute("Glob", loom::core::ToolInput::from_json(std::format(
+                                     R"({{"pattern":"**/*.cpp","path":"{}"}})", root.string())));
 
     ASSERT_TRUE(result.has_value());
     ASSERT_FALSE(result->is_error);
@@ -4214,9 +4439,11 @@ TEST(Tools, GrepUsesPathAndRegex) {
     }
 
     loom::core::ToolRegistry registry;
-    loom::tools::register_runtime_tools(registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
-    auto result = registry.execute("Grep", loom::core::ToolInput::from_json(
-        std::format(R"({{"pattern":"alpha_[0-9]+","path":"{}"}})", (root / "src").string())));
+    loom::tools::register_runtime_tools(
+        registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
+    auto result = registry.execute(
+        "Grep", loom::core::ToolInput::from_json(std::format(
+                    R"({{"pattern":"alpha_[0-9]+","path":"{}"}})", (root / "src").string())));
 
     ASSERT_TRUE(result.has_value());
     ASSERT_FALSE(result->is_error);
@@ -4312,9 +4539,12 @@ rl.on('line', line => {
     EXPECT_EQ(restarted->tools.front().name, "echo");
 
     loom::core::ToolRegistry registry;
-    loom::tools::register_runtime_tools(registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
-    auto result = registry.execute("mcp", loom::core::ToolInput::from_json(
-        R"({"server_name":"echo_fixture","tool_name":"echo","arguments":{"value":"hello"}})"));
+    loom::tools::register_runtime_tools(
+        registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
+    auto result = registry.execute(
+        "mcp",
+        loom::core::ToolInput::from_json(
+            R"({"server_name":"echo_fixture","tool_name":"echo","arguments":{"value":"hello"}})"));
 
     ASSERT_TRUE(result.has_value());
     ASSERT_FALSE(result->is_error);
@@ -4326,7 +4556,8 @@ rl.on('line', line => {
 }
 
 TEST(Tools, NativeMcpRuntimeLoadsRemoteConfigWithOAuthFromConfigFiles) {
-    auto root = fs::weakly_canonical(fs::temp_directory_path()) / "loom_mcp_remote_config_runtime_test";
+    auto root =
+        fs::weakly_canonical(fs::temp_directory_path()) / "loom_mcp_remote_config_runtime_test";
     fs::remove_all(root);
     fs::create_directories(root / ".loom");
     EnvironmentGuard home_guard("HOME", root.string());
@@ -4367,7 +4598,8 @@ TEST(Tools, NativeMcpRuntimeLoadsRemoteConfigWithOAuthFromConfigFiles) {
         EXPECT_EQ(configured->headers_helper, "node headers.js");
         ASSERT_TRUE(configured->oauth.has_value());
         ASSERT_TRUE(configured->oauth->auth_server_metadata_url.has_value());
-        EXPECT_EQ(*configured->oauth->auth_server_metadata_url, "https://auth.example.com/.well-known/oauth-authorization-server");
+        EXPECT_EQ(*configured->oauth->auth_server_metadata_url,
+                  "https://auth.example.com/.well-known/oauth-authorization-server");
         ASSERT_TRUE(configured->oauth->callback_port.has_value());
         EXPECT_EQ(*configured->oauth->callback_port, 19485);
         ASSERT_TRUE(configured->oauth->client_id.has_value());
@@ -4499,42 +4731,44 @@ TEST(Tools, McpSnapshotsSinkReceivesOneVectorPerStatusRead) {
     // fixture and no detached auto-connect thread needed. sync() marks the
     // runtime loaded, so all_statuses() takes no ensure_loaded config path.
     ASSERT_TRUE(loom::tools::sync_native_mcp_servers({
-        loom::tools::NativeMcpConfiguredServer{
-            .name = "sink_alpha",
-            .command = "true",
-            .args = {},
-            .env = {},
-        },
-        loom::tools::NativeMcpConfiguredServer{
-            .name = "sink_beta",
-            .command = "true",
-            .args = {},
-            .env = {},
-        },
-    }).has_value());
+                                                         loom::tools::NativeMcpConfiguredServer{
+                                                             .name = "sink_alpha",
+                                                             .command = "true",
+                                                             .args = {},
+                                                             .env = {},
+                                                         },
+                                                         loom::tools::NativeMcpConfiguredServer{
+                                                             .name = "sink_beta",
+                                                             .command = "true",
+                                                             .args = {},
+                                                             .env = {},
+                                                         },
+                                                     })
+                    .has_value());
 
     struct Recorder {
         std::vector<std::vector<loom::services::mcp::McpServerSnapshot>> calls;
     } recorder;
+
     loom::tools::set_mcp_snapshots_sink(
         [&recorder](std::vector<loom::services::mcp::McpServerSnapshot> snapshots) {
             recorder.calls.push_back(std::move(snapshots));
         });
 
-    auto expect_snapshots_match = [&recorder](
-                                      const std::vector<loom::tools::NativeMcpServerStatus>& statuses,
-                                      std::size_t call_index) {
-        ASSERT_LT(call_index, recorder.calls.size());
-        const auto& snaps = recorder.calls[call_index];
-        ASSERT_EQ(snaps.size(), statuses.size());
-        for (const auto& status : statuses) {
-            const auto snapshot_it = std::ranges::find(snaps, status.name,
-                &loom::services::mcp::McpServerSnapshot::name);
-            ASSERT_NE(snapshot_it, snaps.end()) << status.name;
-            EXPECT_EQ(snapshot_it->status, loom::services::mcp::ConnectionStatus::Disconnected);
-            EXPECT_EQ(status.status, "not started");
-        }
-    };
+    auto expect_snapshots_match =
+        [&recorder](const std::vector<loom::tools::NativeMcpServerStatus>& statuses,
+                    std::size_t call_index) {
+            ASSERT_LT(call_index, recorder.calls.size());
+            const auto& snaps = recorder.calls[call_index];
+            ASSERT_EQ(snaps.size(), statuses.size());
+            for (const auto& status : statuses) {
+                const auto snapshot_it = std::ranges::find(
+                    snaps, status.name, &loom::services::mcp::McpServerSnapshot::name);
+                ASSERT_NE(snapshot_it, snaps.end()) << status.name;
+                EXPECT_EQ(snapshot_it->status, loom::services::mcp::ConnectionStatus::Disconnected);
+                EXPECT_EQ(status.status, "not started");
+            }
+        };
 
     auto first = loom::tools::native_mcp_statuses();
     ASSERT_EQ(recorder.calls.size(), 1u);
@@ -4567,9 +4801,7 @@ TEST(Tools, McpSnapshotsSinkNotFiredWhenConfigLoadFails) {
 
     int sink_calls = 0;
     loom::tools::set_mcp_snapshots_sink(
-        [&sink_calls](std::vector<loom::services::mcp::McpServerSnapshot>) {
-            ++sink_calls;
-        });
+        [&sink_calls](std::vector<loom::services::mcp::McpServerSnapshot>) { ++sink_calls; });
 
     auto reloaded = loom::tools::reload_native_mcp_servers_from_config();
     ASSERT_FALSE(reloaded.has_value());
@@ -4589,9 +4821,10 @@ TEST(Tools, McpAuthUsesNativeOAuthFlowForConfiguredRemoteServers) {
     ASSERT_TRUE(loom::tools::sync_native_mcp_servers({server}).has_value());
 
     loom::core::ToolRegistry registry;
-    loom::tools::register_runtime_tools(registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
-    auto result = registry.execute("mcp_auth", loom::core::ToolInput::from_json(
-        R"({"server_name":"auth_fixture"})"));
+    loom::tools::register_runtime_tools(
+        registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
+    auto result = registry.execute(
+        "mcp_auth", loom::core::ToolInput::from_json(R"({"server_name":"auth_fixture"})"));
 
     ASSERT_TRUE(result.has_value());
     ASSERT_FALSE(result->is_error);
@@ -4606,9 +4839,12 @@ TEST(Tools, McpToolReturnsErrorWhenNativeServerIsMissing) {
     ASSERT_TRUE(loom::tools::sync_native_mcp_servers({}).has_value());
 
     loom::core::ToolRegistry registry;
-    loom::tools::register_runtime_tools(registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
-    auto result = registry.execute("mcp", loom::core::ToolInput::from_json(
-        R"({"server_name":"missing_fixture","tool_name":"echo","arguments":{"value":"hello"}})"));
+    loom::tools::register_runtime_tools(
+        registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
+    auto result = registry.execute(
+        "mcp",
+        loom::core::ToolInput::from_json(
+            R"({"server_name":"missing_fixture","tool_name":"echo","arguments":{"value":"hello"}})"));
 
     ASSERT_TRUE(result.has_value());
     ASSERT_TRUE(result->is_error);
@@ -4621,10 +4857,8 @@ TEST(Tools, McpRuntimeLoadsPluginManifestMcpServers) {
     fs::remove_all(root);
     fs::create_directories(root / ".loom");
     EnvironmentGuard home_guard("HOME", root.string());
-    EnvironmentGuard plugin_cache_guard(
-        "LOOM_PLUGIN_CACHE_DIR",
-        (root / ".loom" / "plugins").string()
-    );
+    EnvironmentGuard plugin_cache_guard("LOOM_PLUGIN_CACHE_DIR",
+                                        (root / ".loom" / "plugins").string());
 
     const auto plugin_root = root / ".loom" / "plugins" / "mcp-fixture";
     fs::create_directories(plugin_root);
@@ -4741,9 +4975,8 @@ rl.on('line', line => {
     {
         CurrentPathGuard cwd(root);
         auto servers = loom::tools::discover_plugin_native_mcp_servers();
-        auto it = std::ranges::find_if(servers, [](const auto& server) {
-            return server.name == "plugin:mcp-fixture:echo";
-        });
+        auto it = std::ranges::find_if(
+            servers, [](const auto& server) { return server.name == "plugin:mcp-fixture:echo"; });
         ASSERT_NE(it, servers.end());
         EXPECT_EQ(it->command, "node");
         ASSERT_EQ(it->args.size(), 1u);
@@ -4751,10 +4984,8 @@ rl.on('line', line => {
         EXPECT_EQ(it->env.at("PLUGIN_MCP_FIXTURE"), "configured");
         EXPECT_EQ(it->env.at("PLUGIN_MCP_TOKEN"), "secret-token");
         EXPECT_EQ(it->env.at("LOOM_PLUGIN_ROOT"), plugin_root.string());
-        EXPECT_EQ(
-            it->env.at("LOOM_PLUGIN_DATA"),
-            (root / ".loom" / "plugins" / "data" / "mcp-fixture").string()
-        );
+        EXPECT_EQ(it->env.at("LOOM_PLUGIN_DATA"),
+                  (root / ".loom" / "plugins" / "data" / "mcp-fixture").string());
 
         auto synced = loom::tools::sync_native_mcp_servers(std::move(servers));
         ASSERT_TRUE(synced.has_value()) << synced.error();
@@ -4766,7 +4997,8 @@ rl.on('line', line => {
         EXPECT_EQ(restarted->tools.front().name, "plugin_echo");
 
         loom::core::ToolRegistry registry;
-        loom::tools::register_runtime_tools(registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
+        loom::tools::register_runtime_tools(
+            registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
         auto result = registry.execute("mcp", loom::core::ToolInput::from_json(R"({
           "server_name": "plugin:mcp-fixture:echo",
           "tool_name": "plugin_echo",
@@ -4776,10 +5008,8 @@ rl.on('line', line => {
         ASSERT_TRUE(result.has_value());
         ASSERT_FALSE(result->is_error);
         ASSERT_FALSE(result->content.empty());
-        EXPECT_EQ(
-            result->content.front().text,
-            "plugin:hello:configured:secret-token:" + plugin_root.string()
-        );
+        EXPECT_EQ(result->content.front().text,
+                  "plugin:hello:configured:secret-token:" + plugin_root.string());
     }
 
     ASSERT_TRUE(loom::tools::sync_native_mcp_servers({}).has_value());
@@ -4790,10 +5020,8 @@ TEST(Tools, McpRuntimeLoadsPluginMcpbServers) {
     auto root = fs::weakly_canonical(fs::temp_directory_path()) / "loom_plugin_mcpb_test";
     fs::remove_all(root);
     EnvironmentGuard home_guard("HOME", root.string());
-    EnvironmentGuard plugin_cache_guard(
-        "LOOM_PLUGIN_CACHE_DIR",
-        (root / ".loom" / "plugins").string()
-    );
+    EnvironmentGuard plugin_cache_guard("LOOM_PLUGIN_CACHE_DIR",
+                                        (root / ".loom" / "plugins").string());
 
     const auto plugin_root = root / ".loom" / "plugins" / "mcpb-fixture";
     const auto bundle_src = root / "bundle-src";
@@ -4879,10 +5107,9 @@ rl.on('line', line => {
     }
 
     const auto bundle_path = plugin_root / "bundle.mcpb";
-    const auto zip_command = std::format(
-        "cd {} && zip -qr {} .",
-        shell_quote_for_test(bundle_src.string()),
-        shell_quote_for_test(bundle_path.string()));
+    const auto zip_command =
+        std::format("cd {} && zip -qr {} .", shell_quote_for_test(bundle_src.string()),
+                    shell_quote_for_test(bundle_path.string()));
     if (std::system(zip_command.c_str()) != 0) {
         GTEST_SKIP() << "zip command is not available";
     }
@@ -4909,7 +5136,8 @@ rl.on('line', line => {
         EXPECT_EQ(restarted->tools.front().name, "bundle_echo");
 
         loom::core::ToolRegistry registry;
-        loom::tools::register_runtime_tools(registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
+        loom::tools::register_runtime_tools(
+            registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
         auto result = registry.execute("mcp", loom::core::ToolInput::from_json(R"({
           "server_name": "plugin:mcpb-fixture:bundle",
           "tool_name": "bundle_echo",
@@ -4932,7 +5160,7 @@ TEST(ToolInput, HasFieldQueriesTopLevelKeysViaCanonicalJson) {
     EXPECT_TRUE(loom::core::has_field(input, "command"));
     EXPECT_TRUE(loom::core::has_field(input, "args"));
     EXPECT_FALSE(loom::core::has_field(input, "missing"));
-    EXPECT_FALSE(loom::core::has_field(input, ""));            // empty key is never present
+    EXPECT_FALSE(loom::core::has_field(input, ""));  // empty key is never present
     EXPECT_FALSE(loom::core::has_field(loom::core::ToolInput::from_json(R"({})"), "command"));
     EXPECT_FALSE(loom::core::has_field(loom::core::ToolInput::from_json("not json"), "command"));
 }
@@ -4985,8 +5213,8 @@ TEST(RuntimeSharedUtils, DeliveryIdsAndPendingMessageFormat) {
     };
     EXPECT_LT(as_num(a), as_num(b));
 
-    auto formatted = u::format_agent_pending_user_message(
-        "alice", loom::tools::MessagePriority::High, "hello");
+    auto formatted =
+        u::format_agent_pending_user_message("alice", loom::tools::MessagePriority::High, "hello");
     EXPECT_NE(formatted.find("alice"), std::string::npos);
     EXPECT_NE(formatted.find("high"), std::string::npos);
     EXPECT_NE(formatted.find("hello"), std::string::npos);
@@ -5049,11 +5277,11 @@ TEST(RuntimeTeamShared, S2HelpersAndS3Writers) {
     // Filesystem writers: create temp dirs and verify the output files exist
     // with a sane payload (JSON-parsable).
     std::error_code ec;
-    auto tmp = fs::temp_directory_path(ec) /
-        ("loom_s3_test_" + std::to_string(std::rand()));
+    auto tmp = fs::temp_directory_path(ec) / ("loom_s3_test_" + std::to_string(std::rand()));
     std::vector<fs::path> cleanup_paths{tmp};
     auto guard = std::shared_ptr<void>(nullptr, [&](void*) {
-        for (auto& p : cleanup_paths) fs::remove_all(p, ec);
+        for (auto& p : cleanup_paths)
+            fs::remove_all(p, ec);
     });
 
     auto inbox = tmp / "inboxes" / "alice.json";
@@ -5061,7 +5289,8 @@ TEST(RuntimeTeamShared, S2HelpersAndS3Writers) {
     EXPECT_TRUE(fs::exists(inbox, ec));
     {
         std::ifstream f(inbox);
-        std::string s; std::getline(f, s);
+        std::string s;
+        std::getline(f, s);
         EXPECT_EQ(s, "[]");
     }
 
@@ -5109,9 +5338,8 @@ TEST(RuntimeMessageDelivery, PeerAddressAndCrossSessionPayloads) {
     EXPECT_EQ(plain.target, "teammate-name");
 
     // Small JSON object builder — escape correctness is critical.
-    auto obj = md::build_runtime_json_object(
-        {{"greeting", "hello \"world\""}, {"path", "a/b"}},
-        {{"ok", true}});
+    auto obj = md::build_runtime_json_object({{"greeting", "hello \"world\""}, {"path", "a/b"}},
+                                             {{"ok", true}});
     auto parsed = loom::utils::json::parse(obj);
     ASSERT_TRUE(parsed.has_value());
     EXPECT_EQ(std::string(parsed->root().get("greeting").as_str()), "hello \"world\"");
@@ -5147,7 +5375,8 @@ TEST(RuntimeMessageDelivery, StructuredPayloads) {
     EXPECT_EQ(std::string(parsed->root().get("reason").as_str()), "wind down");
 
     // Shutdown response with explicit approval.
-    auto s2_d = json::parse(R"({"type":"shutdown_response","request_id":"R-123","approve":false,"reason":"still working"})");
+    auto s2_d = json::parse(
+        R"({"type":"shutdown_response","request_id":"R-123","approve":false,"reason":"still working"})");
     ASSERT_TRUE(s2_d.has_value());
     auto denied = md::build_structured_send_message_payload(s2_d->root(), "worker");
     ASSERT_TRUE(denied.has_value());
@@ -5157,7 +5386,8 @@ TEST(RuntimeMessageDelivery, StructuredPayloads) {
     EXPECT_EQ(std::string(parsed2->root().get("reason").as_str()), "still working");
 
     // Plan approval response round-trips all optional fields.
-    auto s3_d = json::parse(R"({"type":"plan_approval_response","request_id":"P-1","approve":true,"feedback":"looks good","permission_mode":"ask"})");
+    auto s3_d = json::parse(
+        R"({"type":"plan_approval_response","request_id":"P-1","approve":true,"feedback":"looks good","permission_mode":"ask"})");
     ASSERT_TRUE(s3_d.has_value());
     auto plan = md::build_structured_send_message_payload(s3_d->root(), "lead");
     ASSERT_TRUE(plan.has_value());
@@ -5168,7 +5398,8 @@ TEST(RuntimeMessageDelivery, StructuredPayloads) {
     EXPECT_EQ(std::string(parsed3->root().get("permissionMode").as_str()), "ask");
 
     // Semantic bool parsing via the dispatcher path: string "approved" works.
-    auto s4_d = json::parse(R"({"type":"shutdown_response","request_id":"R-2","approved":"approved"})");
+    auto s4_d =
+        json::parse(R"({"type":"shutdown_response","request_id":"R-2","approved":"approved"})");
     ASSERT_TRUE(s4_d.has_value());
     auto approved = md::build_structured_send_message_payload(s4_d->root(), "worker");
     ASSERT_TRUE(approved.has_value());
@@ -5216,8 +5447,8 @@ TEST(RuntimeMessageDelivery, SendMessageDispatcherRejectsMalformedInput) {
     EXPECT_TRUE(r1->is_error);
 
     // Missing content / message.
-    auto r2 = md::execute_send_message(
-        R"({"to":"someone"})", nullptr, [](NativeAgentStatus) { return false; });
+    auto r2 = md::execute_send_message(R"({"to":"someone"})", nullptr,
+                                       [](NativeAgentStatus) { return false; });
     ASSERT_TRUE(r2.has_value());
     EXPECT_TRUE(r2->is_error);
 }
@@ -5292,11 +5523,10 @@ TEST(ReplTool, TimeoutKillsSession) {
     ASSERT_TRUE(created.has_value()) << created.error();
     ReplSessionGuard guard(*created);
 
-    auto eval = loom::tools::repl::eval_session(
-        *created, "import time; time.sleep(10)\n", std::chrono::milliseconds{150});
+    auto eval = loom::tools::repl::eval_session(*created, "import time; time.sleep(10)\n",
+                                                std::chrono::milliseconds{150});
     ASSERT_FALSE(eval.has_value());
-    EXPECT_NE(eval.error().find("timed out"), std::string::npos)
-        << "error was: " << eval.error();
+    EXPECT_NE(eval.error().find("timed out"), std::string::npos) << "error was: " << eval.error();
 }
 
 // ─── P0-02: SkillTool validation + frontmatter parse tests ───────────────────
@@ -5355,9 +5585,9 @@ TEST(SkillTool, ListActionReturnsCatalog) {
     fs::create_directories(root.path / "code-skill");
     fs::create_directories(root.path / "docs-skill");
     root.write_skill("code-skill/SKILL.md",
-        "---\nname: code-skill\ndescription: \"Writes code\"\n---\n# body\n");
+                     "---\nname: code-skill\ndescription: \"Writes code\"\n---\n# body\n");
     root.write_skill("docs-skill/SKILL.md",
-        "---\nname: docs-skill\ndescription: \"Writes docs\"\n---\n# body\n");
+                     "---\nname: docs-skill\ndescription: \"Writes docs\"\n---\n# body\n");
 
     auto r = loom::tools::skill::execute_skill_tool_simple(R"({"action":"list"})");
     ASSERT_TRUE(r.has_value()) << r.error();
@@ -5376,12 +5606,12 @@ TEST(SkillTool, SearchActionFiltersByName) {
     fs::create_directories(root.path / "code-skill");
     fs::create_directories(root.path / "docs-skill");
     root.write_skill("code-skill/SKILL.md",
-        "---\nname: code-skill\ndescription: \"Writes code\"\n---\n# body\n");
+                     "---\nname: code-skill\ndescription: \"Writes code\"\n---\n# body\n");
     root.write_skill("docs-skill/SKILL.md",
-        "---\nname: docs-skill\ndescription: \"Writes docs\"\n---\n# body\n");
+                     "---\nname: docs-skill\ndescription: \"Writes docs\"\n---\n# body\n");
 
-    auto r = loom::tools::skill::execute_skill_tool_simple(
-        R"({"action":"search","skill_path":"code"})");
+    auto r =
+        loom::tools::skill::execute_skill_tool_simple(R"({"action":"search","skill_path":"code"})");
     ASSERT_TRUE(r.has_value()) << r.error();
     auto [doc, rootv] = parse_resp(*r);
     ASSERT_TRUE(doc);
@@ -5427,7 +5657,8 @@ TEST(SkillTool, BlocksPathTraversal) {
     if (!r.has_value()) {
         std::string err = r.error();
         std::string lower;
-        for (char c : err) lower.push_back(std::tolower(static_cast<unsigned char>(c)));
+        for (char c : err)
+            lower.push_back(std::tolower(static_cast<unsigned char>(c)));
         EXPECT_TRUE(lower.find("unsafe") != std::string::npos ||
                     lower.find("traversal") != std::string::npos ||
                     lower.find("not exist") != std::string::npos)
@@ -5440,7 +5671,8 @@ TEST(SkillTool, BlocksPathTraversal) {
     if (!r2.has_value()) {
         std::string err = r2.error();
         std::string lower;
-        for (char c : err) lower.push_back(std::tolower(static_cast<unsigned char>(c)));
+        for (char c : err)
+            lower.push_back(std::tolower(static_cast<unsigned char>(c)));
         EXPECT_TRUE(lower.find("unsafe") != std::string::npos ||
                     lower.find("traversal") != std::string::npos)
             << "got error: " << err;
@@ -5509,8 +5741,7 @@ body
     ASSERT_TRUE(plan.get("effort").is_num());
     EXPECT_EQ(static_cast<int>(plan.get("effort").as_int()), 5);
 
-    auto r2 = loom::tools::skill::execute_skill_tool_simple(
-        R"({"skill_path":"cascade"})");
+    auto r2 = loom::tools::skill::execute_skill_tool_simple(R"({"skill_path":"cascade"})");
     ASSERT_TRUE(r2.has_value()) << r2.error();
     auto [d2, rv2] = parse_resp(*r2);
     ASSERT_TRUE(d2);
@@ -5543,8 +5774,7 @@ body
 )md";
     root.write_skill("forky.md", fm);
 
-    auto r = loom::tools::skill::execute_skill_tool_simple(
-        R"({"skill_path":"forky"})");
+    auto r = loom::tools::skill::execute_skill_tool_simple(R"({"skill_path":"forky"})");
     ASSERT_TRUE(r.has_value()) << r.error();
     auto [doc, rootv] = parse_resp(*r);
     ASSERT_TRUE(doc);
@@ -5573,8 +5803,7 @@ body
 )md";
     root.write_skill("unsafe.md", fm);
 
-    auto r = loom::tools::skill::execute_skill_tool_simple(
-        R"({"skill_path":"unsafe"})");
+    auto r = loom::tools::skill::execute_skill_tool_simple(R"({"skill_path":"unsafe"})");
     ASSERT_TRUE(r.has_value()) << r.error();
     auto [doc, rootv] = parse_resp(*r);
     ASSERT_TRUE(doc);
@@ -5586,8 +5815,7 @@ body
     EXPECT_EQ(std::string(sf.get("author").as_str()), "test");
     EXPECT_FALSE(sf.get("SOME_UNSAFE_DANGEROUS_PROPERTY").valid())
         << "unsafe key leaked into frontmatter_safe";
-    EXPECT_FALSE(sf.get("SECRET_TOKEN").valid())
-        << "SECRET_TOKEN leaked into frontmatter_safe";
+    EXPECT_FALSE(sf.get("SECRET_TOKEN").valid()) << "SECRET_TOKEN leaked into frontmatter_safe";
 }
 
 TEST(SkillTool, MalformedInputJson) {
@@ -5636,8 +5864,7 @@ using loom::utils::tool_deny_rules::is_tool_denied;
 
 // Test-only ergonomic wrapper: initializer_list -> span (braced lists do not
 // implicitly convert to std::span).
-bool denied(std::initializer_list<std::string> rules,
-            const DenyToolView& view) {
+bool denied(std::initializer_list<std::string> rules, const DenyToolView& view) {
     const std::vector<std::string> rule_vector(rules);
     return is_tool_denied(rule_vector, view);
 }
@@ -5648,46 +5875,37 @@ TEST(ToolDenyRules, BasicToolAndContentRules) {
     EXPECT_FALSE(denied({"Read"}, {"Bash", std::nullopt, std::nullopt}));
 
     // Content rules never strip a tool regardless of content.
-    EXPECT_FALSE(denied({"Bash(npm install)"},
-                               {"Bash", std::nullopt, std::nullopt}));
+    EXPECT_FALSE(denied({"Bash(npm install)"}, {"Bash", std::nullopt, std::nullopt}));
     // TS REF: permissionRuleParser.ts:126-128 — content "" or "*" is dropped
     // and the rule becomes a whole-tool rule, so "Bash(*)" DOES strip Bash.
     // (The spec's ts_behavior narrative confirms this; a literal "star is
     // content" reading of the tests entry would contradict the TS parser.)
-    EXPECT_TRUE(denied({"Bash(*)"},
-                              {"Bash", std::nullopt, std::nullopt}));
+    EXPECT_TRUE(denied({"Bash(*)"}, {"Bash", std::nullopt, std::nullopt}));
     // Bare "Bash" strips too.
-    EXPECT_TRUE(denied({"Bash(*)", "Bash"},
-                              {"Bash", std::nullopt, std::nullopt}));
+    EXPECT_TRUE(denied({"Bash(*)", "Bash"}, {"Bash", std::nullopt, std::nullopt}));
 
     // Content rule with escaped parentheses parses as CONTENT (parens are
     // literal), so it never strips the whole tool — unlike "Bash()"/"Bash(*)"
     // which become whole-tool rules.
-    EXPECT_FALSE(denied({R"(Bash(foo\(bar\)))"},
-                                {"Bash", std::nullopt, std::nullopt}));
+    EXPECT_FALSE(denied({R"(Bash(foo\(bar\)))"}, {"Bash", std::nullopt, std::nullopt}));
     // Trailing content after the closing paren is a malformed tool-name rule
     // in TS and must not match the bare tool.
-    EXPECT_FALSE(denied({"Bash(x)tail"},
-                                {"Bash", std::nullopt, std::nullopt}));
+    EXPECT_FALSE(denied({"Bash(x)tail"}, {"Bash", std::nullopt, std::nullopt}));
 
     // Legacy aliases resolve to canonical tool names.
     EXPECT_TRUE(denied({"Task"}, {"Agent", std::nullopt, std::nullopt}));
-    EXPECT_TRUE(denied({"KillShell"},
-                              {"TaskStop", std::nullopt, std::nullopt}));
-    EXPECT_TRUE(denied({"AgentOutputTool"},
-                              {"TaskOutput", std::nullopt, std::nullopt}));
-    EXPECT_TRUE(denied({"BashOutputTool"},
-                              {"TaskOutput", std::nullopt, std::nullopt}));
+    EXPECT_TRUE(denied({"KillShell"}, {"TaskStop", std::nullopt, std::nullopt}));
+    EXPECT_TRUE(denied({"AgentOutputTool"}, {"TaskOutput", std::nullopt, std::nullopt}));
+    EXPECT_TRUE(denied({"BashOutputTool"}, {"TaskOutput", std::nullopt, std::nullopt}));
 
     // Unknown tools / empty lists match nothing and never throw.
-    EXPECT_FALSE(denied({"NoSuchTool"},
-                               {"Bash", std::nullopt, std::nullopt}));
+    EXPECT_FALSE(denied({"NoSuchTool"}, {"Bash", std::nullopt, std::nullopt}));
     EXPECT_FALSE(denied({}, {"Bash", std::nullopt, std::nullopt}));
 }
 
 TEST(ToolDenyRules, McpServerAndExactToolRules) {
-    const DenyToolView linear_view{
-        "list_issues", std::string{"linear"}, std::string{"list_issues"}};
+    const DenyToolView linear_view{"list_issues", std::string{"linear"},
+                                   std::string{"list_issues"}};
 
     // Server-scope rules strip every tool of the server.
     EXPECT_TRUE(denied({"mcp__linear"}, linear_view));
@@ -5698,19 +5916,16 @@ TEST(ToolDenyRules, McpServerAndExactToolRules) {
     EXPECT_FALSE(denied({"mcp__linear__create_issue"}, linear_view));
 
     // A different server is unaffected.
-    const DenyToolView github_view{
-        "pr_list", std::string{"github"}, std::string{"pr_list"}};
+    const DenyToolView github_view{"pr_list", std::string{"github"}, std::string{"pr_list"}};
     EXPECT_FALSE(denied({"mcp__linear"}, github_view));
 
     // Punctuated raw server names normalize to the rule spelling.
-    const DenyToolView dotted_server{
-        "do_thing", std::string{"my.server"}, std::string{"do_thing"}};
+    const DenyToolView dotted_server{"do_thing", std::string{"my.server"}, std::string{"do_thing"}};
     EXPECT_TRUE(denied({"mcp__my_server"}, dotted_server));
 
     // Garbage inputs return bool and never crash/fatal-fail.
     const DenyToolView bash_view{"Bash", std::nullopt, std::nullopt};
-    for (const std::string& garbage :
-         {"mcp__", "mcp", "((", "Bash(", "mcp____x", ""}) {
+    for (const std::string& garbage : {"mcp__", "mcp", "((", "Bash(", "mcp____x", ""}) {
         EXPECT_NO_FATAL_FAILURE((void)denied({garbage}, bash_view));
         EXPECT_NO_FATAL_FAILURE((void)denied({garbage}, linear_view));
     }
@@ -5758,8 +5973,8 @@ using loom::utils::json::parse;
 struct Fixture {
     ToolRegistry registry;
     std::filesystem::path cwd;
-    const std::vector<std::string> expected_all = {
-        "Read", "Bash", "list_issues", "create_issue", "pr_list"};
+    const std::vector<std::string> expected_all = {"Read", "Bash", "list_issues", "create_issue",
+                                                   "pr_list"};
 
     static ToolDefinition make_mcp_def(std::string name, std::string server) {
         ToolDefinition def;
@@ -5807,8 +6022,7 @@ struct Fixture {
         return config;
     }
 
-    std::vector<std::string> tool_names(
-        const std::vector<std::string>& deny_rules) {
+    std::vector<std::string> tool_names(const std::vector<std::string>& deny_rules) {
         QueryEngine engine(make_config(deny_rules), registry);
         const std::string body = engine.build_request_body_for_testing();
         auto doc = parse(body);
@@ -5818,9 +6032,7 @@ struct Fixture {
             const auto tools = doc->root().get("tools");
             EXPECT_TRUE(tools.is_arr()) << body;
             if (tools.is_arr()) {
-                tools.iter([&](auto element) {
-                    names.emplace_back(element.get("name").as_str());
-                });
+                tools.iter([&](auto element) { names.emplace_back(element.get("name").as_str()); });
             }
         }
         return names;
@@ -5828,15 +6040,12 @@ struct Fixture {
 
     void setup(const std::string& suffix) {
         cwd = std::filesystem::temp_directory_path() /
-              ("loom-deny-rules-" + std::to_string(::getpid()) + "-" +
-               suffix);
+              ("loom-deny-rules-" + std::to_string(::getpid()) + "-" + suffix);
         std::filesystem::remove_all(cwd);
         std::filesystem::create_directories(cwd);
     }
 
-    void teardown() {
-        std::filesystem::remove_all(cwd);
-    }
+    void teardown() { std::filesystem::remove_all(cwd); }
 };
 
 TEST(ToolDenyRulesQueryEngine, EmptyRulesListAllFiveTools) {
@@ -5885,8 +6094,8 @@ TEST(ToolDenyRulesQueryEngine, DeniesMcpExactTool) {
 TEST(ToolDenyRulesQueryEngine, UnknownAndContentRulesChangeNothing) {
     Fixture f;
     f.setup("none");
-    const std::vector<std::string> rules = {
-        "NoSuchTool", "mcp__nonexistent_server", "Bash(rm -rf)"};
+    const std::vector<std::string> rules = {"NoSuchTool", "mcp__nonexistent_server",
+                                            "Bash(rm -rf)"};
     auto names = f.tool_names(rules);
     std::vector<std::string> sorted_names = names;
     std::ranges::sort(sorted_names);
@@ -5975,8 +6184,7 @@ using namespace loom::core;
 // the simplified empty-object schema the collector stores.
 TEST(McpToolSchemaQueryEngine, VerbatimNestedSchemaEmitted) {
     namespace fs = std::filesystem;
-    auto root = fs::temp_directory_path() /
-        ("loom_mcp_schema_test_" + std::to_string(::getpid()));
+    auto root = fs::temp_directory_path() / ("loom_mcp_schema_test_" + std::to_string(::getpid()));
     fs::remove_all(root);
     fs::create_directories(root);
     const auto server_path = root / "server.js";
@@ -6038,12 +6246,8 @@ rl.on('line', line => {
     config.base_url = "http://127.0.0.1:1";  // never contacted
     config.retry_policy.max_retries = 0;
     config.cwd = root.string();
-    config.dynamic_tools_provider = [] {
-        return loom::tools::collect_mcp_tool_definitions();
-    };
-    config.mcp_input_schema_provider = [] {
-        return loom::tools::collect_mcp_input_schemas();
-    };
+    config.dynamic_tools_provider = [] { return loom::tools::collect_mcp_tool_definitions(); };
+    config.mcp_input_schema_provider = [] { return loom::tools::collect_mcp_input_schemas(); };
     ToolRegistry registry;
     QueryEngine engine(std::move(config), registry);
 
@@ -6067,12 +6271,10 @@ rl.on('line', line => {
         ASSERT_TRUE(opts.is_obj()) << body;
         const auto opts_props = opts.get("properties");
         ASSERT_TRUE(opts_props.is_obj()) << body;
-        EXPECT_EQ(std::string(opts_props.get("limit").get("type").as_str()),
-                  "integer");
+        EXPECT_EQ(std::string(opts_props.get("limit").get("type").as_str()), "integer");
         const auto tags = opts_props.get("tags");
         ASSERT_TRUE(tags.is_obj()) << body;
-        EXPECT_EQ(std::string(tags.get("items").get("type").as_str()),
-                  "string");
+        EXPECT_EQ(std::string(tags.get("items").get("type").as_str()), "string");
         // Required list and vendor keys preserved.
         EXPECT_EQ(std::string(schema.get("$schema").as_str()),
                   "http://json-schema.org/draft-07/schema#");
@@ -6096,18 +6298,19 @@ TEST(McpToolSchemaQueryEngine, ResultConversionPreservesScreenshotImage) {
     using loom::services::mcp::ContentItem;
     loom::tools::McpToolResult mcp_result{
         .content = "screenshot taken",
-        .content_items = {
-            ContentItem{
-                .type = "text",
-                .text = "screenshot taken",
+        .content_items =
+            {
+                ContentItem{
+                    .type = "text",
+                    .text = "screenshot taken",
+                },
+                ContentItem{
+                    .type = "image",
+                    .text = {},
+                    .media_type = std::string{"image/png"},
+                    .data = std::string{"BASE64PNGDATA"},
+                },
             },
-            ContentItem{
-                .type = "image",
-                .text = {},
-                .media_type = std::string{"image/png"},
-                .data = std::string{"BASE64PNGDATA"},
-            },
-        },
         .content_type = "text",
     };
 
@@ -6133,8 +6336,8 @@ TEST(McpToolSchemaQueryEngine, ResultConversionPreservesScreenshotImage) {
 // forwarded to it and its screenshot image block is preserved.
 TEST(McpToolSchemaQueryEngine, ComputerActionRoutesToComputerUseMcpServer) {
     namespace fs = std::filesystem;
-    auto root = fs::temp_directory_path() /
-        ("loom_computer_use_mcp_test_" + std::to_string(::getpid()));
+    auto root =
+        fs::temp_directory_path() / ("loom_computer_use_mcp_test_" + std::to_string(::getpid()));
     fs::remove_all(root);
     fs::create_directories(root);
     const auto server_path = root / "server.js";
@@ -6191,15 +6394,13 @@ rl.on('line', line => {
 
     loom::core::ToolRegistry registry;
     loom::tools::register_runtime_tools(
-        registry,
-        loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
+        registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
 
     // The registry dispatches the native computer action under its internal
     // "computer_use" name; the request serializer emits it as "computer".
     auto result = registry.execute(
         "computer_use",
-        loom::core::ToolInput::from_json(
-            R"({"action":"left_click","coordinate":[100,200]})"));
+        loom::core::ToolInput::from_json(R"({"action":"left_click","coordinate":[100,200]})"));
     ASSERT_TRUE(result.has_value());
     ASSERT_FALSE(result->is_error);
     bool saw_image = false;

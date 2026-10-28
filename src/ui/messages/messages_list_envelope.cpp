@@ -25,109 +25,113 @@ namespace detail {
 
 auto role_emoji(MessageShape s) -> const char* {
     switch (s) {
-        case MessageShape::UserText:
-        case MessageShape::UserCommand:
-        case MessageShape::UserBashInput:
-        case MessageShape::UserBashOutput:
-        case MessageShape::UserLocalCommandOutput:
-        case MessageShape::UserLocalJsxOutput:
-        case MessageShape::UserTeammate:
-        case MessageShape::UserAgentNotification:
-        case MessageShape::UserMemoryInput:
-        case MessageShape::UserPlan:
-        case MessageShape::UserPrompt:
-        case MessageShape::UserResourceUpdate:
-        case MessageShape::UserToolResult:
-        case MessageShape::UserImage:
-        case MessageShape::UserAttachments:
-        case MessageShape::UserChannel:
-            return loom::ui::design::figures::kPointer.data();
-        case MessageShape::AssistantText:
-            return loom::ui::design::figures::kBullet.data();
-        case MessageShape::AssistantToolUse:
-        case MessageShape::AssistantGroupedTools:
-            return loom::ui::design::figures::kSquare.data();
-        case MessageShape::AssistantThinking:
-        case MessageShape::AssistantRedactedThinking:
-            return loom::ui::design::figures::kDiamondOpen.data();
-        case MessageShape::SystemText:
-        case MessageShape::SystemCompactBoundary:
-        case MessageShape::SystemAdvisor:
-        case MessageShape::SystemTaskAssignment:
-        case MessageShape::SystemHookProgress:
-        case MessageShape::SystemShutdown:
-        case MessageShape::SystemCollapsedContent:
-        case MessageShape::SystemPlanApproval:
-        case MessageShape::SystemRateLimit:
-            return loom::ui::design::figures::kInfo.data();
-        case MessageShape::SystemAPIError:
-            return loom::ui::design::figures::kWarning.data();
+    case MessageShape::UserText:
+    case MessageShape::UserCommand:
+    case MessageShape::UserBashInput:
+    case MessageShape::UserBashOutput:
+    case MessageShape::UserLocalCommandOutput:
+    case MessageShape::UserLocalJsxOutput:
+    case MessageShape::UserTeammate:
+    case MessageShape::UserAgentNotification:
+    case MessageShape::UserMemoryInput:
+    case MessageShape::UserPlan:
+    case MessageShape::UserPrompt:
+    case MessageShape::UserResourceUpdate:
+    case MessageShape::UserToolResult:
+    case MessageShape::UserImage:
+    case MessageShape::UserAttachments:
+    case MessageShape::UserChannel:
+        return loom::ui::design::figures::kPointer.data();
+    case MessageShape::AssistantText:
+        return loom::ui::design::figures::kBullet.data();
+    case MessageShape::AssistantToolUse:
+    case MessageShape::AssistantGroupedTools:
+        return loom::ui::design::figures::kSquare.data();
+    case MessageShape::AssistantThinking:
+    case MessageShape::AssistantRedactedThinking:
+        return loom::ui::design::figures::kDiamondOpen.data();
+    case MessageShape::SystemText:
+    case MessageShape::SystemCompactBoundary:
+    case MessageShape::SystemAdvisor:
+    case MessageShape::SystemTaskAssignment:
+    case MessageShape::SystemHookProgress:
+    case MessageShape::SystemShutdown:
+    case MessageShape::SystemCollapsedContent:
+    case MessageShape::SystemPlanApproval:
+    case MessageShape::SystemRateLimit:
+        return loom::ui::design::figures::kInfo.data();
+    case MessageShape::SystemAPIError:
+        return loom::ui::design::figures::kWarning.data();
     }
     return "•";
 }
 
 auto role_label(MessageShape s) -> const char* {
     auto cat = shape_category(s);
-    if (cat == "system")   return "System";
+    if (cat == "system") return "System";
     if (cat == "tool_in" || cat == "tool_out") return "Tool";
     if (cat == "thinking") return "Thinking";
     // user / assistant / other → disambiguate by concrete shape
     switch (s) {
-        case MessageShape::AssistantText: return "Assistant";
-        case MessageShape::UserText:
-        case MessageShape::UserCommand:
-        case MessageShape::UserBashInput:
-        case MessageShape::UserBashOutput:
-        case MessageShape::UserLocalCommandOutput:
-        case MessageShape::UserLocalJsxOutput:
-        case MessageShape::UserTeammate:
-        case MessageShape::UserAgentNotification:
-        case MessageShape::UserMemoryInput:
-        case MessageShape::UserPlan:
-        case MessageShape::UserPrompt:
-        case MessageShape::UserResourceUpdate:
-        case MessageShape::UserToolResult:
-        case MessageShape::UserImage:
-        case MessageShape::UserAttachments:
-        case MessageShape::UserChannel:
-            return "You";
-        default: return "Message";
+    case MessageShape::AssistantText:
+        return "Assistant";
+    case MessageShape::UserText:
+    case MessageShape::UserCommand:
+    case MessageShape::UserBashInput:
+    case MessageShape::UserBashOutput:
+    case MessageShape::UserLocalCommandOutput:
+    case MessageShape::UserLocalJsxOutput:
+    case MessageShape::UserTeammate:
+    case MessageShape::UserAgentNotification:
+    case MessageShape::UserMemoryInput:
+    case MessageShape::UserPlan:
+    case MessageShape::UserPrompt:
+    case MessageShape::UserResourceUpdate:
+    case MessageShape::UserToolResult:
+    case MessageShape::UserImage:
+    case MessageShape::UserAttachments:
+    case MessageShape::UserChannel:
+        return "You";
+    default:
+        return "Message";
     }
 }
 
 auto role_pill_color(MessageShape s) -> Color {
     using namespace palette;
     auto cat = shape_category(s);
-    if (cat == "system")   return role_pill_system();
+    if (cat == "system") return role_pill_system();
     if (cat == "tool_in" || cat == "tool_out") return role_pill_tool();
     if (cat == "thinking") return role_pill_thinking();
     switch (s) {
-        case MessageShape::AssistantText: return role_pill_assistant();
-        case MessageShape::UserText:
-        case MessageShape::UserCommand:
-        case MessageShape::UserBashInput:
-        case MessageShape::UserBashOutput:
-        case MessageShape::UserLocalCommandOutput:
-        case MessageShape::UserLocalJsxOutput:
-        case MessageShape::UserTeammate:
-        case MessageShape::UserAgentNotification:
-        case MessageShape::UserMemoryInput:
-        case MessageShape::UserPlan:
-        case MessageShape::UserPrompt:
-        case MessageShape::UserResourceUpdate:
-        case MessageShape::UserToolResult:
-        case MessageShape::UserImage:
-        case MessageShape::UserAttachments:
-        case MessageShape::UserChannel:
-            return role_pill_user();
-        default: return role_pill_assistant();
+    case MessageShape::AssistantText:
+        return role_pill_assistant();
+    case MessageShape::UserText:
+    case MessageShape::UserCommand:
+    case MessageShape::UserBashInput:
+    case MessageShape::UserBashOutput:
+    case MessageShape::UserLocalCommandOutput:
+    case MessageShape::UserLocalJsxOutput:
+    case MessageShape::UserTeammate:
+    case MessageShape::UserAgentNotification:
+    case MessageShape::UserMemoryInput:
+    case MessageShape::UserPlan:
+    case MessageShape::UserPrompt:
+    case MessageShape::UserResourceUpdate:
+    case MessageShape::UserToolResult:
+    case MessageShape::UserImage:
+    case MessageShape::UserAttachments:
+    case MessageShape::UserChannel:
+        return role_pill_user();
+    default:
+        return role_pill_assistant();
     }
 }
 
 auto role_bg_color(MessageShape s) -> Color {
     using namespace palette;
     auto cat = shape_category(s);
-    if (cat == "system")   return role_bg_system();
+    if (cat == "system") return role_bg_system();
     if (cat == "tool_in" || cat == "tool_out") return role_bg_tool();
     if (cat == "thinking") return role_bg_thinking();
     // assistant + user share the same soft panel
@@ -136,32 +140,34 @@ auto role_bg_color(MessageShape s) -> Color {
 
 auto accent_top_color(const RenderEnvelopeOptions& o) -> Color {
     using namespace palette;
-    if (o.status == EnvelopeStatusBadge::Error)    return accent_top_error();
+    if (o.status == EnvelopeStatusBadge::Error) return accent_top_error();
     if (o.status == EnvelopeStatusBadge::Redacted) return accent_top_redacted();
     auto cat = shape_category(o.shape);
-    if (cat == "system")   return accent_top_system();
+    if (cat == "system") return accent_top_system();
     if (cat == "tool_in" || cat == "tool_out") return accent_top_tool();
-    if (cat == "thinking") return accent_top_error();   // violet-ish fallback
+    if (cat == "thinking") return accent_top_error();  // violet-ish fallback
     switch (o.shape) {
-        case MessageShape::AssistantText: return accent_top_assistant();
-        case MessageShape::UserText:
-        case MessageShape::UserCommand:
-        case MessageShape::UserBashInput:
-        case MessageShape::UserBashOutput:
-        case MessageShape::UserLocalCommandOutput:
-        case MessageShape::UserLocalJsxOutput:
-        case MessageShape::UserTeammate:
-        case MessageShape::UserAgentNotification:
-        case MessageShape::UserMemoryInput:
-        case MessageShape::UserPlan:
-        case MessageShape::UserPrompt:
-        case MessageShape::UserResourceUpdate:
-        case MessageShape::UserToolResult:
-        case MessageShape::UserImage:
-        case MessageShape::UserAttachments:
-        case MessageShape::UserChannel:
-            return accent_top_user();
-        default: return accent_top_assistant();
+    case MessageShape::AssistantText:
+        return accent_top_assistant();
+    case MessageShape::UserText:
+    case MessageShape::UserCommand:
+    case MessageShape::UserBashInput:
+    case MessageShape::UserBashOutput:
+    case MessageShape::UserLocalCommandOutput:
+    case MessageShape::UserLocalJsxOutput:
+    case MessageShape::UserTeammate:
+    case MessageShape::UserAgentNotification:
+    case MessageShape::UserMemoryInput:
+    case MessageShape::UserPlan:
+    case MessageShape::UserPrompt:
+    case MessageShape::UserResourceUpdate:
+    case MessageShape::UserToolResult:
+    case MessageShape::UserImage:
+    case MessageShape::UserAttachments:
+    case MessageShape::UserChannel:
+        return accent_top_user();
+    default:
+        return accent_top_assistant();
     }
 }
 
@@ -175,69 +181,71 @@ auto spinner_glyph(std::size_t frame) -> const char* {
     // spinner_frame_glyph returns a string_view pointing into the inline
     // constexpr kSpinnerFrames array (static storage duration), so .data()
     // is safe to return as a raw const char*.
-    if (loom::ui::design::theme::current_theme().a11y.reduced_motion)
-        return figs::kBullet.data();
+    if (loom::ui::design::theme::current_theme().a11y.reduced_motion) return figs::kBullet.data();
     return figs::spinner_frame_glyph(static_cast<int>(frame)).data();
 }
 
-} // namespace detail
+}  // namespace detail
 
-[[nodiscard]] auto render_message_envelope(
-    const RenderEnvelopeOptions& opts,
-    Element inner_content) -> Element
-{
+[[nodiscard]] auto render_message_envelope(const RenderEnvelopeOptions& opts, Element inner_content)
+    -> Element {
     using namespace palette;
 
     // ---- Avatar column (fixed 36 cols) ----
     const std::string emoji = detail::role_emoji(opts.shape);
     const std::string label = detail::role_label(opts.shape);
-    const Color pill_col    = detail::role_pill_color(opts.shape);
-    const Color bg_col      = detail::role_bg_color(opts.shape);
+    const Color pill_col = detail::role_pill_color(opts.shape);
+    const Color bg_col = detail::role_bg_color(opts.shape);
 
     // Avatar cell: emoji (colored circle bg) + first letter of role label
-    std::string first_letter{ label[0] };
+    std::string first_letter{label[0]};
     Element avatar = hbox({
-        text(" "),
-        hbox({ text(emoji), text(" "), text(first_letter) })
-            | bgcolor(pill_col) | color(loom::ui::design::theme::current_theme().palette->inverse_text) | bold | center,
-        filler(),
-    }) | size(WIDTH, EQUAL, 10);   // 10-cell avatar block
+                         text(" "),
+                         hbox({text(emoji), text(" "), text(first_letter)}) | bgcolor(pill_col) |
+                             color(loom::ui::design::theme::current_theme().palette->inverse_text) |
+                             bold | center,
+                         filler(),
+                     }) |
+                     size(WIDTH, EQUAL, 10);  // 10-cell avatar block
 
     // ---- Header row (role pill + timestamp + status + dismiss) ----
     Elements header_els;
-    header_els.push_back(
-        hbox({ text(" "), text(label), text(" ") })
-            | color(loom::ui::design::theme::current_theme().palette->inverse_text) | bgcolor(pill_col) | bold);
+    header_els.push_back(hbox({text(" "), text(label), text(" ")}) |
+                         color(loom::ui::design::theme::current_theme().palette->inverse_text) |
+                         bgcolor(pill_col) | bold);
     header_els.push_back(text("  "));
     header_els.push_back(text(render_timestamp(opts.timestamp)) | color(muted_fg()));
 
     // Status badge
     switch (opts.status) {
-        case EnvelopeStatusBadge::Running: {
-            const char* g = detail::spinner_glyph(opts.frame_count);
-            header_els.push_back(hbox({ text("  "),
-                hbox({ text(g), text(" running") }) | color(streaming_fg()) }));
-            break;
-        }
-        case EnvelopeStatusBadge::Done:
-            header_els.push_back(hbox({ text("  "),
-                hbox({ text((std::string(loom::ui::design::figures::kTick) + " ")), text("done") }) | color(loom::ui::design::theme::current_theme().palette->success) }));
-            break;
-        case EnvelopeStatusBadge::Error:
-            header_els.push_back(hbox({ text("  "),
-                hbox({ text("! "), text("error") })
-                    | color(loom::ui::design::theme::current_theme().palette->inverse_text) | bgcolor(accent_top_error()) | bold }));
-            break;
-        case EnvelopeStatusBadge::Redacted:
-            header_els.push_back(hbox({ text("  "),
-                text("[redacted]") | color(muted_fg()) | dim }));
-            break;
-        case EnvelopeStatusBadge::None:
-            break;
+    case EnvelopeStatusBadge::Running: {
+        const char* g = detail::spinner_glyph(opts.frame_count);
+        header_els.push_back(
+            hbox({text("  "), hbox({text(g), text(" running")}) | color(streaming_fg())}));
+        break;
+    }
+    case EnvelopeStatusBadge::Done:
+        header_els.push_back(hbox(
+            {text("  "),
+             hbox({text((std::string(loom::ui::design::figures::kTick) + " ")), text("done")}) |
+                 color(loom::ui::design::theme::current_theme().palette->success)}));
+        break;
+    case EnvelopeStatusBadge::Error:
+        header_els.push_back(hbox(
+            {text("  "), hbox({text("! "), text("error")}) |
+                             color(loom::ui::design::theme::current_theme().palette->inverse_text) |
+                             bgcolor(accent_top_error()) | bold}));
+        break;
+    case EnvelopeStatusBadge::Redacted:
+        header_els.push_back(hbox({text("  "), text("[redacted]") | color(muted_fg()) | dim}));
+        break;
+    case EnvelopeStatusBadge::None:
+        break;
     }
     if (opts.show_dismiss) {
         header_els.push_back(filler());
-        header_els.push_back(text((" " + std::string(loom::ui::design::figures::kCross))) | color(muted_fg()));
+        header_els.push_back(text((" " + std::string(loom::ui::design::figures::kCross))) |
+                             color(muted_fg()));
     } else {
         header_els.push_back(filler());
     }
@@ -245,16 +253,18 @@ auto spinner_glyph(std::size_t frame) -> const char* {
 
     // ---- Layout: 10-col avatar | (header + body) ----
     Element body = vbox({
-        std::move(header),
-        separatorEmpty(),
-        std::move(inner_content) | size(WIDTH, GREATER_THAN, 40),
-    }) | flex;
+                       std::move(header),
+                       separatorEmpty(),
+                       std::move(inner_content) | size(WIDTH, GREATER_THAN, 40),
+                   }) |
+                   flex;
 
     Element row = hbox({
-        avatar,
-        text(" ") | size(WIDTH, EQUAL, 1),   // gutter
-        body,
-    }) | bgcolor(bg_col) | size(WIDTH, EQUAL, 100);
+                      avatar,
+                      text(" ") | size(WIDTH, EQUAL, 1),  // gutter
+                      body,
+                  }) |
+                  bgcolor(bg_col) | size(WIDTH, EQUAL, 100);
 
     // ---- Top accent border (1 px, role/error colored) ----
     Color accent = detail::accent_top_color(opts);
@@ -302,10 +312,9 @@ namespace detail {
 /// behaviour: a divider placed inside a collapsed group still shows up, and
 /// clicking "expand" reveals the group contents with the divider still
 /// sitting before the exact row that was unseen).
-[[nodiscard]] auto find_divider_before_visible_index(
-    const MessagesListInput& input,
-    const std::vector<VisibleRow>& visible) -> std::size_t
-{
+[[nodiscard]] auto find_divider_before_visible_index(const MessagesListInput& input,
+                                                     const std::vector<VisibleRow>& visible)
+    -> std::size_t {
     if (!input.unseen_divider.has_value()) return visible.size();
     const std::string& target = input.unseen_divider->first_unseen_uuid_prefix;
     if (target.empty()) return visible.size();
@@ -320,15 +329,15 @@ namespace detail {
     if (dash_pos != std::string_view::npos) core = core.substr(0, dash_pos);
     const char core_last = core.empty() ? '\0' : core.back();
 
-    std::size_t weak_vi   = visible.size();   // first 24-char prefix match
-    std::size_t strong_vi = visible.size();   // first disambiguated match
+    std::size_t weak_vi = visible.size();    // first 24-char prefix match
+    std::size_t strong_vi = visible.size();  // first disambiguated match
 
     for (std::size_t vi = 0; vi < visible.size(); ++vi) {
         const auto& vr = visible[vi];
         if (vr.kind != VisibleRow::Kind::Payload) continue;
         if (vr.row_idx >= input.uuids.size()) continue;
         const std::string& row_uuid = input.uuids[vr.row_idx];
-        if (row_uuid.empty()) continue;   // empty uuid never matches anything
+        if (row_uuid.empty()) continue;  // empty uuid never matches anything
 
         // --- Weak path: 24-char prefix equality. ---
         const std::string_view row_prefix = uuid_prefix24(row_uuid);
@@ -348,14 +357,15 @@ namespace detail {
         // divider core.  Cap at the shorter of the two; we need at least 8.
         const std::size_t max_cmp = std::min(row_uuid.size(), core.size());
         std::size_t common = 0;
-        while (common < max_cmp && row_uuid[common] == core[common]) ++common;
+        while (common < max_cmp && row_uuid[common] == core[common])
+            ++common;
         if (common >= 8 && row_uuid.back() == core_last) {
             strong_vi = vi;
         }
     }
 
     if (strong_vi < visible.size()) return strong_vi;
-    if (weak_vi   < visible.size()) return weak_vi;
+    if (weak_vi < visible.size()) return weak_vi;
     return visible.size();
 }
 
@@ -369,8 +379,7 @@ namespace detail {
     using namespace ftxui;
 
     // Plural helper: "message" + (count === 1 ? "" : "s")
-    const std::string title =
-        std::to_string(count) + " new message" + (count == 1 ? "" : "s");
+    const std::string title = std::to_string(count) + " new message" + (count == 1 ? "" : "s");
     const Color line_color = muted_fg();
 
     // ──[ 3 new messages ]──────────────────────
@@ -379,7 +388,8 @@ namespace detail {
     const std::string dash = "─";
     std::string long_line;
     long_line.reserve(160 * dash.size());
-    for (int i = 0; i < 160; ++i) long_line += dash;   // xflex will clip / stretch to fit
+    for (int i = 0; i < 160; ++i)
+        long_line += dash;  // xflex will clip / stretch to fit
     Elements parts;
     parts.push_back(text("───") | color(line_color));
     parts.push_back(hbox({
@@ -402,15 +412,15 @@ namespace detail {
     using namespace palette;
     using namespace ftxui;
 
-    const std::string title = std::to_string(hidden_count) +
-        " older message" + (hidden_count == 1 ? "" : "s") +
-        " hidden";
+    const std::string title = std::to_string(hidden_count) + " older message" +
+                              (hidden_count == 1 ? "" : "s") + " hidden";
     const Color line_color = muted_fg();
 
     const std::string dash = "─";
     std::string long_line;
     long_line.reserve(160 * dash.size());
-    for (int i = 0; i < 160; ++i) long_line += dash;
+    for (int i = 0; i < 160; ++i)
+        long_line += dash;
     Elements parts;
     parts.push_back(text("───") | color(line_color));
     parts.push_back(text(" " + title) | color(line_color) | xflex);
@@ -424,27 +434,24 @@ namespace detail {
 }
 
 /// Decide the envelope status badge purely from MessageShape + stream state.
-auto derive_status_badge(MessageShape s, std::size_t row_idx,
-                                std::size_t streaming_tail)
-    -> EnvelopeStatusBadge
-{
+auto derive_status_badge(MessageShape s, std::size_t row_idx, std::size_t streaming_tail)
+    -> EnvelopeStatusBadge {
     if (streaming_tail != std::size_t(-1) && row_idx == streaming_tail) {
         return EnvelopeStatusBadge::Running;
     }
-    if (s == MessageShape::SystemAPIError)     return EnvelopeStatusBadge::Error;
+    if (s == MessageShape::SystemAPIError) return EnvelopeStatusBadge::Error;
     if (s == MessageShape::AssistantRedactedThinking) return EnvelopeStatusBadge::Redacted;
     return EnvelopeStatusBadge::None;
 }
 
-} // namespace detail
+}  // namespace detail
 
 namespace detail {
 
-auto render_compact_group_row(const VisibleRow& vr,
-                                     bool is_selected) -> Element
-{
+auto render_compact_group_row(const VisibleRow& vr, bool is_selected) -> Element {
     std::ostringstream label;
-    label << ("[" + std::string(loom::ui::design::figures::kSquare) + " ") << vr.group_count << " messages collapsed";
+    label << ("[" + std::string(loom::ui::design::figures::kSquare) + " ") << vr.group_count
+          << " messages collapsed";
     if (vr.tool_turns > 0) label << " in " << vr.tool_turns << " tool turns";
     if (vr.additions || vr.deletions) {
         label << ": +" << vr.additions << " add";
@@ -453,20 +460,19 @@ auto render_compact_group_row(const VisibleRow& vr,
     // This read-only compact summary has no screen-level expand handler.
     label << "]";
 
-    Element body = text(label.str())
-        | color(palette::muted_fg()) | bgcolor(loom::ui::design::theme::current_theme().palette->surface_tint_3);
+    Element body = text(label.str()) | color(palette::muted_fg()) |
+                   bgcolor(loom::ui::design::theme::current_theme().palette->surface_tint_3);
     if (is_selected) {
         body = std::move(body) | inverted | bgcolor(palette::selected_bg());
     }
     return vbox({
         separator() | color(loom::ui::design::theme::current_theme().palette->border_subtle),
-        hbox({ text(" "), std::move(body), filler() }),
+        hbox({text(" "), std::move(body), filler()}),
     });
 }
 
 /// Format a thinking duration as "Xs" or "Xm Ys".
-[[nodiscard]] auto format_chain_duration(std::chrono::milliseconds d)
-    -> std::string {
+[[nodiscard]] auto format_chain_duration(std::chrono::milliseconds d) -> std::string {
     auto secs = std::chrono::duration_cast<std::chrono::seconds>(d).count();
     if (secs < 60) return std::to_string(secs) + "s";
     auto mins = secs / 60;
@@ -478,14 +484,21 @@ auto render_compact_group_row(const VisibleRow& vr,
 [[nodiscard]] auto tool_phrase(std::string_view name, std::size_t count) -> std::string {
     const auto plural = count == 1 ? "" : "s";
     std::string noun;
-    if (name == "Bash") noun = "shell command";
-    else if (name == "Read") noun = "file read";
-    else if (name == "Grep" || name == "Glob") noun = "search";
-    else if (name == "WebSearch") noun = "web search";
-    else if (name == "WebFetch") noun = "URL fetch";
-    else noun = std::string(name) + " call";
+    if (name == "Bash")
+        noun = "shell command";
+    else if (name == "Read")
+        noun = "file read";
+    else if (name == "Grep" || name == "Glob")
+        noun = "search";
+    else if (name == "WebSearch")
+        noun = "web search";
+    else if (name == "WebFetch")
+        noun = "URL fetch";
+    else
+        noun = std::string(name) + " call";
     const auto suffix = (name == "Grep" || name == "Glob" || name == "WebSearch")
-        ? (count == 1 ? "" : "es") : plural;
+                            ? (count == 1 ? "" : "es")
+                            : plural;
     return std::to_string(count) + " " + noun + suffix;
 }
 
@@ -495,8 +508,7 @@ auto render_compact_group_row(const VisibleRow& vr,
     bool space = true;
     for (std::size_t i = 0; i < raw.size(); ++i) {
         auto ch = static_cast<unsigned char>(raw[i]);
-        if (ch == 0xC2 && i + 1 < raw.size() &&
-            static_cast<unsigned char>(raw[i + 1]) >= 0x80 &&
+        if (ch == 0xC2 && i + 1 < raw.size() && static_cast<unsigned char>(raw[i + 1]) >= 0x80 &&
             static_cast<unsigned char>(raw[i + 1]) <= 0x9F) {
             ++i;
             ch = ' ';
@@ -521,18 +533,13 @@ auto render_compact_group_row(const VisibleRow& vr,
     return clipped + "…";
 }
 
-auto render_compressed_chain_row(const VisibleRow& vr,
-                                bool is_selected,
-                                std::size_t frame_count,
-                                int term_cols) -> Element
-{
+auto render_compressed_chain_row(const VisibleRow& vr, bool is_selected, std::size_t frame_count,
+                                 int term_cols) -> Element {
     const bool live = vr.chain_is_live;
     const bool has_tools = vr.chain_has_tool_activity;
     std::ostringstream label;
-    label << (has_tools ? (live ? "Working" : "Worked")
-                        : (live ? "Thinking" : "Thought"));
-    if (vr.chain_elapsed)
-        label << " for " << format_chain_duration(*vr.chain_elapsed);
+    label << (has_tools ? (live ? "Working" : "Worked") : (live ? "Thinking" : "Thought"));
+    if (vr.chain_elapsed) label << " for " << format_chain_duration(*vr.chain_elapsed);
     for (std::size_t i = 0; i < vr.chain_tool_breakdown.size(); ++i) {
         const auto& [name, count] = vr.chain_tool_breakdown[i];
         label << ", " << tool_phrase(name, count);
@@ -545,28 +552,25 @@ auto render_compressed_chain_row(const VisibleRow& vr,
     const auto quiet_ink = pal.muted;
     const auto action = expanded ? "Hide details" : "Show details";
     const int action_width = string_width("[" + std::string(action) + "]");
-    Element body = text(chain_one_line(label.str(), term_cols - action_width - 3))
-        | color(live && vr.chain_emphasize_work
-            ? pal.primary : quiet_ink) | xflex;
+    Element body = text(chain_one_line(label.str(), term_cols - action_width - 3)) |
+                   color(live && vr.chain_emphasize_work ? pal.primary : quiet_ink) | xflex;
     if (live && vr.chain_emphasize_work) body = std::move(body) | bold;
-    if (is_selected)
-        body = std::move(body) | inverted | bgcolor(palette::selected_bg());
-    const bool blink_off = live
-        && !loom::ui::design::theme::current_theme().a11y.reduced_motion
-        && (frame_count % 10 >= 5);
-    Element dot = text(blink_off ? " " : "●")
-        | color(loom::ui::design::theme::current_theme().palette->muted);
-    Element header = hbox({std::move(dot), text(" "), std::move(body),
-        text(" "), loom::ui::messages::message_action(action)});
+    if (is_selected) body = std::move(body) | inverted | bgcolor(palette::selected_bg());
+    const bool blink_off = live && !loom::ui::design::theme::current_theme().a11y.reduced_motion &&
+                           (frame_count % 10 >= 5);
+    Element dot = text(blink_off ? " " : "●") |
+                  color(loom::ui::design::theme::current_theme().palette->muted);
+    Element header = hbox({std::move(dot), text(" "), std::move(body), text(" "),
+                           loom::ui::messages::message_action(action)});
     Elements rows{std::move(header)};
     if (!vr.chain_current_activity.empty()) {
-        rows.push_back(hbox({text("  "),
-            text(chain_one_line(vr.chain_current_activity, term_cols - 2))
-                | color(loom::ui::design::theme::current_theme().palette->text) | xflex}));
+        rows.push_back(
+            hbox({text("  "), text(chain_one_line(vr.chain_current_activity, term_cols - 2)) |
+                                  color(loom::ui::design::theme::current_theme().palette->text) |
+                                  xflex}));
     }
     Element block = vbox(std::move(rows));
-    if (expanded)
-        block = std::move(block) | bgcolor(pal.background);
+    if (expanded) block = std::move(block) | bgcolor(pal.background);
     return block;
 }
 
@@ -575,20 +579,19 @@ auto render_compressed_chain_row(const VisibleRow& vr,
 /// copy; real per-row substring highlighting is a UI17 deliverable.)
 auto render_empty_state(const std::string& search_query) -> Element {
     Elements lines = {
-        text((std::string(loom::ui::design::figures::kInfo) + "  No messages match the current filters"))
-            | color(palette::empty_state_fg()) | center | bold,
+        text((std::string(loom::ui::design::figures::kInfo) +
+              "  No messages match the current filters")) |
+            color(palette::empty_state_fg()) | center | bold,
         separatorEmpty(),
-        text("Try clearing filters or search query")
-            | color(palette::muted_fg()) | center | dim,
+        text("Try clearing filters or search query") | color(palette::muted_fg()) | center | dim,
     };
     if (!search_query.empty()) {
         lines.push_back(separatorEmpty());
-        lines.push_back(
-            text("active query: \"" + search_query + "\"") | center | dim);
+        lines.push_back(text("active query: \"" + search_query + "\"") | center | dim);
     }
-    return vbox({ filler(), vbox(lines) | center, filler() }) | flex;
+    return vbox({filler(), vbox(lines) | center, filler()}) | flex;
 }
 
-} // namespace detail
+}  // namespace detail
 
-} // namespace loom::ui::messages_list
+}  // namespace loom::ui::messages_list

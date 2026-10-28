@@ -31,31 +31,31 @@ struct CommandArg {
 
 /// Parsed command invocation
 struct ParsedCommand {
-    std::string name;                               // Command name without '/'
-    std::vector<std::string> positional_args;       // Positional arguments
+    std::string name;                                             // Command name without '/'
+    std::vector<std::string> positional_args;                     // Positional arguments
     std::vector<std::pair<std::string, std::string>> named_args;  // --key=value pairs
-    std::string raw_args;                           // Everything after the command name
+    std::string raw_args;  // Everything after the command name
 };
 
 /// Parse a raw command string
 [[nodiscard]] inline ParsedCommand parse_command(std::string_view input) {
     ParsedCommand result;
-    
+
     // Strip leading '/'
     if (!input.empty() && input[0] == '/') {
         input.remove_prefix(1);
     }
-    
+
     // Extract command name
     auto space_pos = input.find(' ');
     if (space_pos == std::string_view::npos) {
         result.name = std::string(input);
         return result;
     }
-    
+
     result.name = std::string(input.substr(0, space_pos));
     result.raw_args = std::string(input.substr(space_pos + 1));
-    
+
     // Simple arg splitting (production version would handle quotes)
     auto remaining = input.substr(space_pos + 1);
     while (!remaining.empty()) {
@@ -63,30 +63,28 @@ struct ParsedCommand {
         auto start = remaining.find_first_not_of(' ');
         if (start == std::string_view::npos) break;
         remaining.remove_prefix(start);
-        
+
         // Find end of argument
         auto end = remaining.find(' ');
         auto arg = (end == std::string_view::npos) ? remaining : remaining.substr(0, end);
-        
+
         if (arg.starts_with("--")) {
             auto eq = arg.find('=');
             if (eq != std::string_view::npos) {
-                result.named_args.emplace_back(
-                    std::string(arg.substr(2, eq - 2)),
-                    std::string(arg.substr(eq + 1))
-                );
+                result.named_args.emplace_back(std::string(arg.substr(2, eq - 2)),
+                                               std::string(arg.substr(eq + 1)));
             } else {
                 result.named_args.emplace_back(std::string(arg.substr(2)), "true");
             }
         } else {
             result.positional_args.emplace_back(arg);
         }
-        
+
         if (end == std::string_view::npos) break;
         remaining.remove_prefix(end + 1);
     }
-    
+
     return result;
 }
 
-} // namespace loom::types
+}  // namespace loom::types

@@ -1,6 +1,6 @@
 module;
-#include <cstdio>
 #include <cstdint>
+#include <cstdio>
 
 export module loom.cli.ccr_client;
 
@@ -50,11 +50,14 @@ struct CcrHttpResponse {
     std::string body;
 };
 
-using CcrHttpTransport = std::function<std::expected<CcrHttpResponse, std::string>(const CcrHttpRequest&)>;
+using CcrHttpTransport =
+    std::function<std::expected<CcrHttpResponse, std::string>(const CcrHttpRequest&)>;
 
-inline std::expected<CcrHttpResponse, std::string> default_ccr_http_transport(const CcrHttpRequest& request) {
+inline std::expected<CcrHttpResponse, std::string>
+default_ccr_http_transport(const CcrHttpRequest& request) {
     loom::utils::HttpConfig config;
-    config.timeout_ms = static_cast<uint32_t>(std::max(request.connect_timeout_ms, request.read_timeout_ms));
+    config.timeout_ms =
+        static_cast<uint32_t>(std::max(request.connect_timeout_ms, request.read_timeout_ms));
     config.max_retries = 0;
     if (auto it = request.headers.find("User-Agent"); it != request.headers.end()) {
         config.user_agent = it->second;
@@ -64,14 +67,12 @@ inline std::expected<CcrHttpResponse, std::string> default_ccr_http_transport(co
     std::expected<loom::utils::HttpResponse, loom::utils::HttpError> response;
     if (request.method == "POST") {
         if (request.stream_callback) {
-            auto streamed = client.post_stream_sse(
-                request.url,
-                request.body,
-                request.headers,
-                [&](const loom::utils::SseEvent& event) {
-                    const bool is_final = event.data == "[DONE]";
-                    request.stream_callback(event.data, is_final);
-                });
+            auto streamed =
+                client.post_stream_sse(request.url, request.body, request.headers,
+                                       [&](const loom::utils::SseEvent& event) {
+                                           const bool is_final = event.data == "[DONE]";
+                                           request.stream_callback(event.data, is_final);
+                                       });
             if (!streamed) {
                 return std::unexpected(streamed.error().message);
             }
@@ -98,7 +99,10 @@ inline std::expected<CcrHttpResponse, std::string> default_ccr_http_transport(co
 class CcrClient {
 public:
     CcrClient() = default;
-    explicit CcrClient(CcrConnectionOptions opts) : options_(std::move(opts)) {}
+
+    explicit CcrClient(CcrConnectionOptions opts)
+        : options_(std::move(opts)) {}
+
     ~CcrClient() { disconnect(); }
 
     // Non-copyable; the connection owns mutex and atomic state.
@@ -176,9 +180,7 @@ public:
 
         // Build JSON payload
         auto payload = build_message_payload(content);
-        auto message_url = [&]() {
-            return endpoint_ + "/sessions/" + session_id_ + "/messages";
-        };
+        auto message_url = [&]() { return endpoint_ + "/sessions/" + session_id_ + "/messages"; };
 
         // Execute HTTP POST through the configured transport.
         std::string url = message_url();
@@ -206,8 +208,8 @@ public:
     }
 
     // Send a message with streaming response via callback
-    std::expected<void, std::string> send_message_streaming(
-        std::string_view content, StreamCallback callback) {
+    std::expected<void, std::string> send_message_streaming(std::string_view content,
+                                                            StreamCallback callback) {
         if (!connected_.load()) {
             return std::unexpected("Not connected to remote session");
         }
@@ -261,14 +263,12 @@ public:
     // Get current session information
     [[nodiscard]] CcrSessionInfo get_session_info() const {
         std::lock_guard lock(mutex_);
-        return CcrSessionInfo{
-            .id = session_id_,
-            .status = connected_.load() ? "connected" : "disconnected",
-            .endpoint = endpoint_,
-            .connected_at = connected_at_,
-            .messages_sent = messages_sent_,
-            .messages_received = messages_received_
-        };
+        return CcrSessionInfo{.id = session_id_,
+                              .status = connected_.load() ? "connected" : "disconnected",
+                              .endpoint = endpoint_,
+                              .connected_at = connected_at_,
+                              .messages_sent = messages_sent_,
+                              .messages_received = messages_received_};
     }
 
     // Check if connected
@@ -346,8 +346,8 @@ private:
         return parsed;
     }
 
-    std::expected<std::string, std::string> perform_handshake(
-        const std::string& host, const std::string& path) {
+    std::expected<std::string, std::string> perform_handshake(const std::string& host,
+                                                              const std::string& path) {
         (void)host;
         (void)path;
         // POST to endpoint/sessions to create a new session
@@ -357,8 +357,8 @@ private:
         auto result = http_post(url, payload);
         if (!result) {
             if (options_.allow_offline_session_fallback) {
-                return "ccr-" + std::to_string(
-                    std::hash<std::string>{}(endpoint_ + token_) % 1000000);
+                return "ccr-" +
+                       std::to_string(std::hash<std::string>{}(endpoint_ + token_) % 1000000);
             }
             return std::unexpected("Remote session handshake failed: " + result.error());
         }
@@ -388,19 +388,31 @@ private:
         escaped.reserve(content.size() + 16);
         for (char c : content) {
             switch (c) {
-                case '"':  escaped += "\\\""; break;
-                case '\\': escaped += "\\\\"; break;
-                case '\n': escaped += "\\n"; break;
-                case '\r': escaped += "\\r"; break;
-                case '\t': escaped += "\\t"; break;
-                default:   escaped += c; break;
+            case '"':
+                escaped += "\\\"";
+                break;
+            case '\\':
+                escaped += "\\\\";
+                break;
+            case '\n':
+                escaped += "\\n";
+                break;
+            case '\r':
+                escaped += "\\r";
+                break;
+            case '\t':
+                escaped += "\\t";
+                break;
+            default:
+                escaped += c;
+                break;
             }
         }
         return "{\"content\":\"" + escaped + "\",\"session_id\":\"" + session_id_ + "\"}";
     }
 
-    std::expected<std::string, std::string> http_post(
-        const std::string& url, const std::string& payload) {
+    std::expected<std::string, std::string> http_post(const std::string& url,
+                                                      const std::string& payload) {
         auto response = http_request("POST", url, payload);
         if (!response) return std::unexpected(response.error());
         return response->body;
@@ -412,20 +424,16 @@ private:
         return {};
     }
 
-    std::expected<void, std::string> http_stream_post(
-        const std::string& url,
-        const std::string& payload,
-        StreamCallback callback) {
+    std::expected<void, std::string>
+    http_stream_post(const std::string& url, const std::string& payload, StreamCallback callback) {
         auto response = http_request("POST", url, payload, std::move(callback));
         if (!response) return std::unexpected(response.error());
         return {};
     }
 
-    std::expected<CcrHttpResponse, std::string> http_request(
-        std::string method,
-        const std::string& url,
-        const std::string& payload,
-        StreamCallback stream_callback = nullptr) {
+    std::expected<CcrHttpResponse, std::string>
+    http_request(std::string method, const std::string& url, const std::string& payload,
+                 StreamCallback stream_callback = nullptr) {
         std::string bearer;
         {
             std::lock_guard lock(token_mutex_);
@@ -435,11 +443,12 @@ private:
             .method = std::move(method),
             .url = url,
             .body = payload,
-            .headers = {
-                {"Content-Type", "application/json"},
-                {"Authorization", "Bearer " + bearer},
-                {"User-Agent", options_.user_agent},
-            },
+            .headers =
+                {
+                    {"Content-Type", "application/json"},
+                    {"Authorization", "Bearer " + bearer},
+                    {"User-Agent", options_.user_agent},
+                },
             .connect_timeout_ms = options_.connect_timeout_ms,
             .read_timeout_ms = options_.read_timeout_ms,
             .stream_callback = std::move(stream_callback),
@@ -449,7 +458,8 @@ private:
         auto response = transport(request);
         if (!response) return std::unexpected(response.error());
         if (response->status < 200 || response->status >= 300) {
-            return std::unexpected("HTTP " + std::to_string(response->status) + ": " + response->body);
+            return std::unexpected("HTTP " + std::to_string(response->status) + ": " +
+                                   response->body);
         }
         return response;
     }
@@ -470,4 +480,4 @@ private:
     CcrHttpTransport http_transport_{default_ccr_http_transport};
 };
 
-} // namespace loom::cli
+}  // namespace loom::cli

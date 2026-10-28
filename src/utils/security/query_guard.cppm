@@ -55,28 +55,18 @@ public:
         notify();
     }
 
-    [[nodiscard]] bool is_active() const noexcept {
-        return status_ != QueryStatus::Idle;
-    }
+    [[nodiscard]] bool is_active() const noexcept { return status_ != QueryStatus::Idle; }
 
-    [[nodiscard]] bool get_snapshot() const noexcept {
-        return is_active();
-    }
+    [[nodiscard]] bool get_snapshot() const noexcept { return is_active(); }
 
-    [[nodiscard]] std::uint64_t generation() const noexcept {
-        return generation_;
-    }
+    [[nodiscard]] std::uint64_t generation() const noexcept { return generation_; }
 
-    [[nodiscard]] QueryStatus status() const noexcept {
-        return status_;
-    }
+    [[nodiscard]] QueryStatus status() const noexcept { return status_; }
 
     [[nodiscard]] Unsubscribe subscribe(Listener listener) {
         const auto id = next_listener_id_++;
         listeners_.emplace(id, std::move(listener));
-        return [this, id] {
-            listeners_.erase(id);
-        };
+        return [this, id] { listeners_.erase(id); };
     }
 
 private:
@@ -93,4 +83,4 @@ private:
     std::map<std::uint64_t, Listener> listeners_;
 };
 
-} // namespace loom::utils::query_guard
+}  // namespace loom::utils::query_guard

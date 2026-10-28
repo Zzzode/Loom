@@ -3,15 +3,21 @@ module;
 export module loom.commands.reload_plugins;
 
 import std;
+
 export namespace loom::commands::reload_plugins {
 
-struct CommandResponse { bool ok{true}; std::string message; };
+struct CommandResponse {
+    bool ok{true};
+    std::string message;
+};
 
-[[nodiscard]] inline auto name() -> std::string_view { return "reload-plugins"; }
+[[nodiscard]] inline auto name() -> std::string_view {
+    return "reload-plugins";
+}
 
 [[nodiscard]] inline auto run(std::string_view scope = {}) -> CommandResponse {
     std::string target = scope.empty() ? "all" : std::string(scope);
-    
+
     std::string msg = std::format("Reloading {} plugins...\n\n", target);
     msg += "Refreshed:\n";
     msg += "  - Skills: scanning ~/.loom/skills/\n";
@@ -19,8 +25,8 @@ struct CommandResponse { bool ok{true}; std::string message; };
     msg += "  - Hooks: reloading .loom/hooks/\n";
     msg += "  - Commands: refreshing slash command registry\n";
     msg += "\nPlugin reload complete.";
-    
+
     return {.ok = true, .message = msg};
 }
 
-}
+}  // namespace loom::commands::reload_plugins

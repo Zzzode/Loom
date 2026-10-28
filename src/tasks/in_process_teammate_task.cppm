@@ -3,14 +3,13 @@
 /// Migrated from src/tasks/InProcessTeammateTask/
 module;
 
-
 export module loom.tasks.in_process_teammate_task;
 
 import std;
 
 import loom.tasks.task;
 import loom.tasks.types;
-import loom.hooks.remaining_notifs;  // W7: feed TeammateShutdown slot from live tasks
+import loom.hooks.remaining_notifs; // W7: feed TeammateShutdown slot from live tasks
 
 export namespace loom::tasks {
 
@@ -19,13 +18,12 @@ export namespace loom::tasks {
 // ============================================================
 
 /// Callback type for updating teammate task state
-using UpdateTeammateTaskFn = std::function<void(const std::string&, std::function<void(InProcessTeammateTaskState&)>)>;
+using UpdateTeammateTaskFn =
+    std::function<void(const std::string&, std::function<void(InProcessTeammateTaskState&)>)>;
 
 /// Request shutdown for a teammate
-inline void request_teammate_shutdown(
-    const std::string& task_id,
-    UpdateTeammateTaskFn update_task
-) {
+inline void request_teammate_shutdown(const std::string& task_id,
+                                      UpdateTeammateTaskFn update_task) {
     update_task(task_id, [](InProcessTeammateTaskState& task) {
         if (task.status != loom::core::TaskStatus::Running || task.shutdown_requested) {
             return;
@@ -35,11 +33,8 @@ inline void request_teammate_shutdown(
 }
 
 /// Append a message to a teammate's conversation history (for zoomed view)
-inline void append_teammate_message(
-    const std::string& task_id,
-    const std::string& message,
-    UpdateTeammateTaskFn update_task
-) {
+inline void append_teammate_message(const std::string& task_id, const std::string& message,
+                                    UpdateTeammateTaskFn update_task) {
     update_task(task_id, [&](InProcessTeammateTaskState& task) {
         if (task.status != loom::core::TaskStatus::Running) return;
         // Keep a lightweight in-state copy for UI zoom/drain consumers until a
@@ -49,11 +44,8 @@ inline void append_teammate_message(
 }
 
 /// Inject a user message to a teammate's pending queue
-inline void inject_user_message_to_teammate(
-    const std::string& task_id,
-    const std::string& message,
-    UpdateTeammateTaskFn update_task
-) {
+inline void inject_user_message_to_teammate(const std::string& task_id, const std::string& message,
+                                            UpdateTeammateTaskFn update_task) {
     update_task(task_id, [&](InProcessTeammateTaskState& task) {
         // Only reject if teammate is in a terminal state
         if (loom::core::is_terminal_status(task.status)) {
@@ -64,12 +56,11 @@ inline void inject_user_message_to_teammate(
 }
 
 /// Get teammate task by agent ID, preferring running tasks
-[[nodiscard]] inline std::optional<InProcessTeammateTaskState> find_teammate_task_by_agent_id(
-    const std::string& agent_id,
-    const std::vector<InProcessTeammateTaskState>& all_tasks
-) {
+[[nodiscard]] inline std::optional<InProcessTeammateTaskState>
+find_teammate_task_by_agent_id(const std::string& agent_id,
+                               const std::vector<InProcessTeammateTaskState>& all_tasks) {
     std::optional<InProcessTeammateTaskState> fallback;
-    
+
     for (const auto& task : all_tasks) {
         if (task.identity.agent_id == agent_id) {
             // Prefer running tasks
@@ -85,9 +76,8 @@ inline void inject_user_message_to_teammate(
 }
 
 /// Get all in-process teammate tasks
-[[nodiscard]] inline std::vector<InProcessTeammateTaskState> get_all_in_process_teammate_tasks(
-    const std::vector<loom::core::TaskStateBase*>& all_tasks
-) {
+[[nodiscard]] inline std::vector<InProcessTeammateTaskState>
+get_all_in_process_teammate_tasks(const std::vector<loom::core::TaskStateBase*>& all_tasks) {
     std::vector<InProcessTeammateTaskState> result;
     for (const auto* task : all_tasks) {
         if (task == nullptr || !is_in_process_teammate_task(*task)) continue;
@@ -102,36 +92,37 @@ inline void inject_user_message_to_teammate(
         [](const InProcessTeammateTaskState& t) {
             return loom::core::is_terminal_status(t.status);
         },
-        [](const InProcessTeammateTaskState& t)
-            -> loom::hooks::notifs::TeammateShutdownCause {
+        [](const InProcessTeammateTaskState& t) -> loom::hooks::notifs::TeammateShutdownCause {
             using TS = loom::core::TaskStatus;
             using C = loom::hooks::notifs::TeammateShutdownCause;
             switch (t.status) {
-                case TS::Completed: return C::Finished;
-                case TS::Failed:    return C::Failed;
-                case TS::Killed:
-                case TS::Cancelled:
-                case TS::TimedOut:  return C::Crashed;
-                default:            return C::Finished;
+            case TS::Completed:
+                return C::Finished;
+            case TS::Failed:
+                return C::Failed;
+            case TS::Killed:
+            case TS::Cancelled:
+            case TS::TimedOut:
+                return C::Crashed;
+            default:
+                return C::Finished;
             }
         });
     return result;
 }
 
 /// Get running in-process teammates sorted alphabetically by agentName
-[[nodiscard]] inline std::vector<InProcessTeammateTaskState> get_running_teammates_sorted(
-    const std::vector<InProcessTeammateTaskState>& all_tasks
-) {
+[[nodiscard]] inline std::vector<InProcessTeammateTaskState>
+get_running_teammates_sorted(const std::vector<InProcessTeammateTaskState>& all_tasks) {
     std::vector<InProcessTeammateTaskState> running;
     for (const auto& t : all_tasks) {
         if (t.status == loom::core::TaskStatus::Running) {
             running.push_back(t);
         }
     }
-    std::sort(running.begin(), running.end(), 
-        [](const auto& a, const auto& b) {
-            return a.identity.agent_name < b.identity.agent_name;
-        });
+    std::sort(running.begin(), running.end(), [](const auto& a, const auto& b) {
+        return a.identity.agent_name < b.identity.agent_name;
+    });
     return running;
 }
 
@@ -139,18 +130,16 @@ inline void inject_user_message_to_teammate(
 [[nodiscard]] inline std::vector<std::string> drain_teammate_pending_messages(
     const std::string& task_id,
     std::function<std::optional<InProcessTeammateTaskState>(const std::string&)> get_task,
-    UpdateTeammateTaskFn update_task
-) {
+    UpdateTeammateTaskFn update_task) {
     auto task_opt = get_task(task_id);
     if (!task_opt || task_opt->pending_user_messages.empty()) {
         return {};
     }
-    
+
     auto drained = task_opt->pending_user_messages;
-    update_task(task_id, [](InProcessTeammateTaskState& task) {
-        task.pending_user_messages.clear();
-    });
+    update_task(task_id,
+                [](InProcessTeammateTaskState& task) { task.pending_user_messages.clear(); });
     return drained;
 }
 
-} // namespace loom::tasks
+}  // namespace loom::tasks

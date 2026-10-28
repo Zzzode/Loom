@@ -5,11 +5,12 @@
 module;
 
 #include <unistd.h>
+
 #include <cctype>
+#include <cstdint>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#include <cstdint>
 
 export module loom.services.lsp.client;
 
@@ -103,7 +104,7 @@ struct LocationLink {
 // loom::services::lsp::Diagnostic (both modules export into the same namespace).
 struct LspClientDiagnostic {
     Range range;
-    int32_t severity = 1; // 1: Error, 2: Warning, 3: Info, 4: Hint
+    int32_t severity = 1;  // 1: Error, 2: Warning, 3: Info, 4: Hint
     std::optional<int64_t> code;
     // Raw code text exactly as published (LSP allows string OR number codes).
     // Preferred over `code` when present.
@@ -193,6 +194,7 @@ struct TextDocumentSyncClientCapabilities {
 
 struct CompletionClientCapabilities {
     std::optional<bool> dynamic_registration;
+
     struct CompletionItemCapabilities {
         std::optional<bool> snippet_support;
         std::optional<bool> commit_characters_support;
@@ -205,10 +207,13 @@ struct CompletionClientCapabilities {
         std::optional<bool> insert_text_mode_support;
         std::optional<bool> label_details_support;
     };
+
     std::optional<CompletionItemCapabilities> completion_item;
+
     struct CompletionItemKindCapabilities {
         std::optional<std::vector<int32_t>> value_set;
     };
+
     std::optional<CompletionItemKindCapabilities> completion_item_kind;
     std::optional<bool> context_support;
 };
@@ -220,14 +225,18 @@ struct HoverClientCapabilities {
 
 struct SignatureHelpClientCapabilities {
     std::optional<bool> dynamic_registration;
+
     struct SignatureInformationCapabilities {
         std::optional<std::vector<std::string>> documentation_format;
+
         struct ParameterInformationCapabilities {
             std::optional<bool> label_offset_support;
         };
+
         std::optional<ParameterInformationCapabilities> parameter_information;
         std::optional<bool> active_parameter_support;
     };
+
     std::optional<SignatureInformationCapabilities> signature_information;
     std::optional<bool> context_support;
 };
@@ -262,9 +271,11 @@ struct DocumentHighlightClientCapabilities {
 
 struct DocumentSymbolClientCapabilities {
     std::optional<bool> dynamic_registration;
+
     struct SymbolKindCapabilities {
         std::optional<std::vector<int32_t>> value_set;
     };
+
     std::optional<SymbolKindCapabilities> symbol_kind;
     std::optional<bool> hierarchical_document_symbol_support;
     std::optional<bool> tag_support;
@@ -273,9 +284,11 @@ struct DocumentSymbolClientCapabilities {
 
 struct WorkspaceSymbolClientCapabilities {
     std::optional<bool> dynamic_registration;
+
     struct SymbolKindCapabilities {
         std::optional<std::vector<int32_t>> value_set;
     };
+
     std::optional<SymbolKindCapabilities> symbol_kind;
     std::optional<bool> tag_support;
     std::optional<bool> resolve_support;
@@ -283,12 +296,15 @@ struct WorkspaceSymbolClientCapabilities {
 
 struct CodeActionClientCapabilities {
     std::optional<bool> dynamic_registration;
+
     struct CodeActionLiteralSupport {
         struct CodeActionKindCapabilities {
             std::vector<std::string> value_set;
         };
+
         CodeActionKindCapabilities code_action_kind;
     };
+
     std::optional<CodeActionLiteralSupport> code_action_literal_support;
     std::optional<bool> is_preferred_support;
     std::optional<bool> disabled_support;
@@ -314,6 +330,7 @@ struct ClientCapabilities {
         std::optional<bool> inlay_hint;
         std::optional<bool> diagnostics;
     };
+
     std::optional<WorkspaceClientCapabilities> workspace;
 
     struct TextDocumentClientCapabilities {
@@ -350,6 +367,7 @@ struct ClientCapabilities {
         std::optional<bool> inline_completion;
         std::optional<bool> diagnostics;
     };
+
     std::optional<TextDocumentClientCapabilities> text_document;
 
     struct WindowClientCapabilities {
@@ -358,6 +376,7 @@ struct ClientCapabilities {
         std::optional<bool> show_document;
         std::optional<bool> work_done_progress;
     };
+
     std::optional<WindowClientCapabilities> window;
 
     struct GeneralClientCapabilities {
@@ -366,6 +385,7 @@ struct ClientCapabilities {
         std::optional<bool> position_encodings;
         std::optional<bool> stale_request_support;
     };
+
     std::optional<GeneralClientCapabilities> general;
 
     std::optional<bool> notebook_document;
@@ -435,12 +455,13 @@ enum class LspClientError {
 };
 
 // Result type for LSP operations
-template<typename T>
-using LspResult = std::expected<T, LspClientError>;
+template <typename T> using LspResult = std::expected<T, LspClientError>;
 
 // Callback types
-using RequestCallback = std::function<void(const std::string& response, std::optional<LspClientError> error)>;
-using NotificationCallback = std::function<void(const std::string& method, const std::string& params_json)>;
+using RequestCallback =
+    std::function<void(const std::string& response, std::optional<LspClientError> error)>;
+using NotificationCallback =
+    std::function<void(const std::string& method, const std::string& params_json)>;
 
 // =========================================================================
 // Transport Interface
@@ -449,7 +470,7 @@ using NotificationCallback = std::function<void(const std::string& method, const
 class ILspTransport {
 public:
     virtual ~ILspTransport() = default;
-    
+
     [[nodiscard]] virtual LspResult<void> start() = 0;
     [[nodiscard]] virtual LspResult<void> send(std::string_view message) = 0;
     [[nodiscard]] virtual LspResult<std::string> receive() = 0;
@@ -468,16 +489,14 @@ public:
         : command_(std::move(command))
         , args_(std::move(args))
         , env_(std::move(env)) {}
-    
-    ~StdioTransport() override {
-        close();
-    }
-    
+
+    ~StdioTransport() override { close(); }
+
     [[nodiscard]] LspResult<void> start() override {
         if (is_connected()) {
             return std::unexpected(LspClientError::AlreadyConnected);
         }
-        
+
         // Build command line
         std::string full_cmd = command_;
         for (const auto& arg : args_) {
@@ -507,16 +526,16 @@ public:
         if (!pipe_handle_) {
             return std::unexpected(LspClientError::ConnectionFailed);
         }
-        
+
         connected_ = true;
         return {};
     }
-    
+
     [[nodiscard]] LspResult<void> send(std::string_view message) override {
         if (!is_connected()) {
             return std::unexpected(LspClientError::NotConnected);
         }
-        
+
         // LSP uses Content-Length header followed by JSON
         auto content_length = std::format("Content-Length: {}\r\n\r\n", message.size());
         if (fputs(content_length.c_str(), pipe_handle_) == EOF) {
@@ -528,12 +547,12 @@ public:
         fflush(pipe_handle_);
         return {};
     }
-    
+
     [[nodiscard]] LspResult<std::string> receive() override {
         if (!is_connected()) {
             return std::unexpected(LspClientError::NotConnected);
         }
-        
+
         // Read Content-Length header. LSP allows any header casing/whitespace
         // and other headers (e.g. Content-Type) may appear; parse defensively.
         char line[512];
@@ -546,8 +565,8 @@ public:
                 line_str.remove_suffix(1);
             }
             if (line_str.empty()) {
-                if (saw_header) break;      // blank line ends the header block
-                continue;                   // tolerate leading blank lines
+                if (saw_header) break;  // blank line ends the header block
+                continue;               // tolerate leading blank lines
             }
             saw_header = true;
             // Case-insensitive "Content-Length:" prefix.
@@ -555,15 +574,22 @@ public:
             if (line_str.size() >= kKey.size()) {
                 bool match = true;
                 for (std::size_t i = 0; i < kKey.size(); ++i) {
-                    if (std::tolower(static_cast<unsigned char>(line_str[i])) != kKey[i]) { match = false; break; }
+                    if (std::tolower(static_cast<unsigned char>(line_str[i])) != kKey[i]) {
+                        match = false;
+                        break;
+                    }
                 }
                 if (match) {
                     auto rest = line_str.substr(kKey.size());
-                    while (!rest.empty() && (rest.front() == ' ' || rest.front() == '\t')) rest.remove_prefix(1);
+                    while (!rest.empty() && (rest.front() == ' ' || rest.front() == '\t'))
+                        rest.remove_prefix(1);
                     int64_t parsed = 0;
                     bool ok = !rest.empty();
                     for (char c : rest) {
-                        if (c < '0' || c > '9') { ok = false; break; }
+                        if (c < '0' || c > '9') {
+                            ok = false;
+                            break;
+                        }
                         parsed = parsed * 10 + (c - '0');
                     }
                     if (ok) content_length = parsed;
@@ -601,11 +627,11 @@ public:
 
         return content;
     }
-    
+
     [[nodiscard]] bool is_connected() const override {
         return connected_ && pipe_handle_ != nullptr;
     }
-    
+
     void close() override {
         if (pipe_handle_) {
             loom::utils::bash::pclose_spawn(pipe_handle_);
@@ -613,7 +639,7 @@ public:
         }
         connected_ = false;
     }
-    
+
 private:
     std::string command_;
     std::vector<std::string> args_;
@@ -660,52 +686,52 @@ public:
         std::chrono::milliseconds init_timeout{60000};
         std::string root_uri;
         ClientCapabilities client_capabilities;
-        std::string trace = "off"; // "off", "messages", "verbose"
+        std::string trace = "off";  // "off", "messages", "verbose"
     };
-    
+
     explicit LspClient(Config config)
         : config_(std::move(config))
         , state_(LspClientState::NotStarted)
         , next_request_id_(1)
         , running_(false) {}
-    
-    ~LspClient() {
-        (void)shutdown();
-    }
-    
+
+    ~LspClient() { (void)shutdown(); }
+
     // Connect to server using stdio transport
-    [[nodiscard]] LspResult<void> connect_stdio(
-        std::string command, std::vector<std::string> args,
-        std::map<std::string, std::string> env = {}) {
-        
+    [[nodiscard]] LspResult<void> connect_stdio(std::string command, std::vector<std::string> args,
+                                                std::map<std::string, std::string> env = {}) {
+
         if (state_ != LspClientState::NotStarted && state_ != LspClientState::Stopped) {
             return std::unexpected(LspClientError::AlreadyConnected);
         }
-        
+
         state_ = LspClientState::Starting;
-        transport_ = std::make_unique<StdioTransport>(std::move(command), std::move(args), std::move(env));
-        
+        transport_ =
+            std::make_unique<StdioTransport>(std::move(command), std::move(args), std::move(env));
+
         auto result = transport_->start();
         if (!result) {
             state_ = LspClientState::Error;
             return result;
         }
-        
+
         auto init_result = initialize();
         if (!init_result) {
             return std::unexpected(init_result.error());
         }
         return {};
     }
-    
+
     // Set notification callback
     void set_notification_callback(NotificationCallback callback) {
         notification_callback_ = std::move(callback);
     }
-    
+
     // Set diagnostics callback
     void set_diagnostics_callback(
-        std::function<void(const std::string& uri, const std::vector<LspClientDiagnostic>& diagnostics)> callback) {
+        std::function<void(const std::string& uri,
+                           const std::vector<LspClientDiagnostic>& diagnostics)>
+            callback) {
         diagnostics_callback_ = std::move(callback);
     }
 
@@ -715,32 +741,33 @@ public:
     void set_diagnostic_registry(std::shared_ptr<DiagnosticRegistry> registry) {
         diagnostic_registry_ = std::move(registry);
     }
-    
+
     // =====================================================================
     // LSP Methods
     // =====================================================================
-    
+
     // Initialize the connection
     [[nodiscard]] LspResult<InitializeResult> initialize() {
         state_ = LspClientState::Initializing;
-        
+
         // Build initialize params
         JsonMutDoc doc;
         auto root = doc.object();
-        
+
         if (!config_.root_uri.empty()) {
             root.add("rootUri", doc.string(config_.root_uri));
             // Remove "file://" prefix for rootPath
-            auto root_path_str = config_.root_uri.size() > 7 ? config_.root_uri.substr(7) : config_.root_uri;
+            auto root_path_str =
+                config_.root_uri.size() > 7 ? config_.root_uri.substr(7) : config_.root_uri;
             root.add("rootPath", doc.string(root_path_str));
         } else {
             root.add("rootUri", doc.null());
             root.add("rootPath", doc.null());
         }
-        
+
         // Client capabilities
         auto capabilities = doc.object();
-        
+
         // Workspace capabilities
         auto workspace = doc.object();
         workspace.add("applyEdit", doc.boolean(true));
@@ -752,17 +779,17 @@ public:
         workspace.add("symbol", doc.object());
         workspace.add("executeCommand", doc.object());
         capabilities.add("workspace", workspace);
-        
+
         // Text document capabilities
         auto text_document = doc.object();
-        
+
         auto sync = doc.object();
         sync.add("dynamicRegistration", doc.boolean(false));
         sync.add("willSave", doc.boolean(false));
         sync.add("willSaveWaitUntil", doc.boolean(false));
         sync.add("didSave", doc.boolean(true));
         text_document.add("synchronization", sync);
-        
+
         auto completion = doc.object();
         completion.add("dynamicRegistration", doc.boolean(false));
         auto completion_item = doc.object();
@@ -774,7 +801,7 @@ public:
         completion_item.add("documentationFormat", doc_format);
         completion.add("completionItem", completion_item);
         text_document.add("completion", completion);
-        
+
         auto hover = doc.object();
         hover.add("dynamicRegistration", doc.boolean(false));
         auto hover_format = doc.array();
@@ -782,7 +809,7 @@ public:
         hover_format.append(doc.string("plaintext"));
         hover.add("contentFormat", hover_format);
         text_document.add("hover", hover);
-        
+
         text_document.add("signatureHelp", doc.object());
         text_document.add("declaration", doc.object());
         text_document.add("definition", doc.object());
@@ -799,22 +826,22 @@ public:
         text_document.add("rename", doc.object());
         text_document.add("foldingRange", doc.object());
         text_document.add("publishDiagnostics", doc.object());
-        
+
         capabilities.add("textDocument", text_document);
-        
+
         // Window capabilities
         auto window = doc.object();
         window.add("workDoneProgress", doc.boolean(false));
         capabilities.add("window", window);
-        
+
         root.add("capabilities", capabilities);
-        
+
         // Trace
         root.add("trace", doc.string(config_.trace));
-        
+
         // Workspace folders
         root.add("workspaceFolders", doc.null());
-        
+
         doc.set_root(root);
 
         // Start the receive thread BEFORE issuing the initialize request: the
@@ -848,7 +875,7 @@ public:
         state_ = LspClientState::Ready;
         return *init_result;
     }
-    
+
     // Shutdown the server
     [[nodiscard]] LspResult<void> shutdown() {
         if (state_ == LspClientState::Ready) {
@@ -858,45 +885,45 @@ public:
                 send_notification("exit", "null");
             }
         }
-        
+
         running_ = false;
         if (receive_thread_.joinable()) {
             receive_thread_.join();
         }
-        
+
         if (transport_) {
             transport_->close();
         }
-        
+
         state_ = LspClientState::Stopped;
         return {};
     }
-    
+
     // =====================================================================
     // Text Document Methods
     // =====================================================================
-    
+
     // Open a text document
     void did_open(const TextDocumentItem& document) {
         {
             std::lock_guard<std::mutex> lock(documents_mutex_);
             open_documents_[document.uri] = document;
         }
-        
+
         JsonMutDoc doc;
         auto root = doc.object();
-        
+
         auto text_document = doc.object();
         text_document.add("uri", doc.string(document.uri));
         text_document.add("languageId", doc.string(document.language_id));
         text_document.add("version", doc.number(document.version));
         text_document.add("text", doc.string(document.text));
         root.add("textDocument", text_document);
-        
+
         doc.set_root(root);
         send_notification("textDocument/didOpen", doc.to_string());
     }
-    
+
     // Change a text document
     void did_change(const VersionedTextDocumentIdentifier& document,
                     const std::vector<TextDocumentContentChangeEvent>& changes) {
@@ -912,15 +939,15 @@ public:
                 }
             }
         }
-        
+
         JsonMutDoc doc;
         auto root = doc.object();
-        
+
         auto text_document = doc.object();
         text_document.add("uri", doc.string(document.uri));
         text_document.add("version", doc.number(document.version));
         root.add("textDocument", text_document);
-        
+
         auto content_changes = doc.array();
         for (const auto& change : changes) {
             auto change_obj = doc.object();
@@ -943,178 +970,187 @@ public:
             content_changes.append(change_obj);
         }
         root.add("contentChanges", content_changes);
-        
+
         doc.set_root(root);
         send_notification("textDocument/didChange", doc.to_string());
     }
-    
+
     // Close a text document
     void did_close(const TextDocumentIdentifier& document) {
         {
             std::lock_guard<std::mutex> lock(documents_mutex_);
             open_documents_.erase(document.uri);
         }
-        
+
         JsonMutDoc doc;
         auto root = doc.object();
-        
+
         auto text_document = doc.object();
         text_document.add("uri", doc.string(document.uri));
         root.add("textDocument", text_document);
-        
+
         doc.set_root(root);
         send_notification("textDocument/didClose", doc.to_string());
     }
-    
+
     // Save a text document
-    void did_save(const TextDocumentIdentifier& document, std::optional<std::string> text = std::nullopt) {
+    void did_save(const TextDocumentIdentifier& document,
+                  std::optional<std::string> text = std::nullopt) {
         JsonMutDoc doc;
         auto root = doc.object();
-        
+
         auto text_document = doc.object();
         text_document.add("uri", doc.string(document.uri));
         root.add("textDocument", text_document);
-        
+
         if (text) {
             root.add("text", doc.string(*text));
         }
-        
+
         doc.set_root(root);
         send_notification("textDocument/didSave", doc.to_string());
     }
-    
+
     // =====================================================================
     // Language Features
     // =====================================================================
-    
+
     // Get completions at a position
-    [[nodiscard]] LspResult<CompletionList> completion(const TextDocumentIdentifier& document, const Position& position) {
+    [[nodiscard]] LspResult<CompletionList> completion(const TextDocumentIdentifier& document,
+                                                       const Position& position) {
         JsonMutDoc doc;
         auto root = doc.object();
-        
+
         auto text_document = doc.object();
         text_document.add("uri", doc.string(document.uri));
         root.add("textDocument", text_document);
-        
+
         auto pos = doc.object();
         pos.add("line", doc.number(position.line));
         pos.add("character", doc.number(position.character));
         root.add("position", pos);
-        
+
         doc.set_root(root);
-        
+
         auto response = send_request_sync("textDocument/completion", doc.to_string());
         if (!response) {
             return std::unexpected(response.error());
         }
-        
+
         return parse_completion_list(*response);
     }
-    
+
     // Get hover information at a position
-    [[nodiscard]] LspResult<Hover> hover(const TextDocumentIdentifier& document, const Position& position) {
+    [[nodiscard]] LspResult<Hover> hover(const TextDocumentIdentifier& document,
+                                         const Position& position) {
         JsonMutDoc doc;
         auto root = doc.object();
-        
+
         auto text_document = doc.object();
         text_document.add("uri", doc.string(document.uri));
         root.add("textDocument", text_document);
-        
+
         auto pos = doc.object();
         pos.add("line", doc.number(position.line));
         pos.add("character", doc.number(position.character));
         root.add("position", pos);
-        
+
         doc.set_root(root);
-        
+
         auto response = send_request_sync("textDocument/hover", doc.to_string());
         if (!response) {
             return std::unexpected(response.error());
         }
-        
+
         return parse_hover(*response);
     }
-    
+
     // Go to definition
-    [[nodiscard]] LspResult<std::vector<Location>> definition(const TextDocumentIdentifier& document, const Position& position) {
+    [[nodiscard]] LspResult<std::vector<Location>>
+    definition(const TextDocumentIdentifier& document, const Position& position) {
         JsonMutDoc doc;
         auto root = doc.object();
-        
+
         auto text_document = doc.object();
         text_document.add("uri", doc.string(document.uri));
         root.add("textDocument", text_document);
-        
+
         auto pos = doc.object();
         pos.add("line", doc.number(position.line));
         pos.add("character", doc.number(position.character));
         root.add("position", pos);
-        
+
         doc.set_root(root);
-        
+
         auto response = send_request_sync("textDocument/definition", doc.to_string());
         if (!response) {
             return std::unexpected(response.error());
         }
-        
+
         return parse_locations(*response);
     }
-    
+
     // Go to references
-    [[nodiscard]] LspResult<std::vector<Location>> references(const TextDocumentIdentifier& document, const Position& position, bool include_declaration = true) {
+    [[nodiscard]] LspResult<std::vector<Location>>
+    references(const TextDocumentIdentifier& document, const Position& position,
+               bool include_declaration = true) {
         JsonMutDoc doc;
         auto root = doc.object();
-        
+
         auto text_document = doc.object();
         text_document.add("uri", doc.string(document.uri));
         root.add("textDocument", text_document);
-        
+
         auto pos = doc.object();
         pos.add("line", doc.number(position.line));
         pos.add("character", doc.number(position.character));
         root.add("position", pos);
-        
+
         auto context = doc.object();
         context.add("includeDeclaration", doc.boolean(include_declaration));
         root.add("context", context);
-        
+
         doc.set_root(root);
-        
+
         auto response = send_request_sync("textDocument/references", doc.to_string());
         if (!response) {
             return std::unexpected(response.error());
         }
-        
+
         return parse_locations(*response);
     }
-    
+
     // Get document symbols
-    [[nodiscard]] LspResult<std::vector<DocumentSymbol>> document_symbol(const TextDocumentIdentifier& document) {
+    [[nodiscard]] LspResult<std::vector<DocumentSymbol>>
+    document_symbol(const TextDocumentIdentifier& document) {
         JsonMutDoc doc;
         auto root = doc.object();
-        
+
         auto text_document = doc.object();
         text_document.add("uri", doc.string(document.uri));
         root.add("textDocument", text_document);
-        
+
         doc.set_root(root);
-        
+
         auto response = send_request_sync("textDocument/documentSymbol", doc.to_string());
         if (!response) {
             return std::unexpected(response.error());
         }
-        
+
         return parse_document_symbols(*response);
     }
-    
+
     // Get code actions
-    [[nodiscard]] LspResult<std::vector<CodeAction>> code_action(const TextDocumentIdentifier& document, const Range& range, const CodeActionContext& context) {
+    [[nodiscard]] LspResult<std::vector<CodeAction>>
+    code_action(const TextDocumentIdentifier& document, const Range& range,
+                const CodeActionContext& context) {
         JsonMutDoc doc;
         auto root = doc.object();
-        
+
         auto text_document = doc.object();
         text_document.add("uri", doc.string(document.uri));
         root.add("textDocument", text_document);
-        
+
         auto range_obj = doc.object();
         auto start = doc.object();
         start.add("line", doc.number(range.start.line));
@@ -1125,7 +1161,7 @@ public:
         range_obj.add("start", start);
         range_obj.add("end", end);
         root.add("range", range_obj);
-        
+
         auto ctx = doc.object();
         auto diagnostics_arr = doc.array();
         for (const auto& diag : context.diagnostics) {
@@ -1146,75 +1182,83 @@ public:
         }
         ctx.add("diagnostics", diagnostics_arr);
         root.add("context", ctx);
-        
+
         doc.set_root(root);
-        
+
         auto response = send_request_sync("textDocument/codeAction", doc.to_string());
         if (!response) {
             return std::unexpected(response.error());
         }
-        
+
         return parse_code_actions(*response);
     }
-    
+
     // Format document
-    [[nodiscard]] LspResult<std::vector<TextEdit>> formatting(const TextDocumentIdentifier& document, int64_t tab_size = 4, bool insert_spaces = true) {
+    [[nodiscard]] LspResult<std::vector<TextEdit>>
+    formatting(const TextDocumentIdentifier& document, int64_t tab_size = 4,
+               bool insert_spaces = true) {
         JsonMutDoc doc;
         auto root = doc.object();
-        
+
         auto text_document = doc.object();
         text_document.add("uri", doc.string(document.uri));
         root.add("textDocument", text_document);
-        
+
         auto options = doc.object();
         options.add("tabSize", doc.number(tab_size));
         options.add("insertSpaces", doc.boolean(insert_spaces));
         root.add("options", options);
-        
+
         doc.set_root(root);
-        
+
         auto response = send_request_sync("textDocument/formatting", doc.to_string());
         if (!response) {
             return std::unexpected(response.error());
         }
-        
+
         return parse_text_edits(*response);
     }
-    
+
     // Rename symbol
-    [[nodiscard]] LspResult<std::string> rename(const TextDocumentIdentifier& document, const Position& position, const std::string& new_name) {
+    [[nodiscard]] LspResult<std::string> rename(const TextDocumentIdentifier& document,
+                                                const Position& position,
+                                                const std::string& new_name) {
         JsonMutDoc doc;
         auto root = doc.object();
-        
+
         auto text_document = doc.object();
         text_document.add("uri", doc.string(document.uri));
         root.add("textDocument", text_document);
-        
+
         auto pos = doc.object();
         pos.add("line", doc.number(position.line));
         pos.add("character", doc.number(position.character));
         root.add("position", pos);
-        
+
         root.add("newName", doc.string(new_name));
-        
+
         doc.set_root(root);
-        
+
         auto response = send_request_sync("textDocument/rename", doc.to_string());
         if (!response) {
             return std::unexpected(response.error());
         }
-        
+
         return *response;
     }
-    
+
     // =====================================================================
     // State Accessors
     // =====================================================================
-    
+
     [[nodiscard]] LspClientState state() const { return state_; }
+
     [[nodiscard]] bool is_ready() const { return state_ == LspClientState::Ready; }
-    [[nodiscard]] const ServerCapabilities& server_capabilities() const { return server_capabilities_; }
-    
+
+    [[nodiscard]] const ServerCapabilities& server_capabilities() const {
+        return server_capabilities_;
+    }
+
     [[nodiscard]] std::optional<TextDocumentItem> get_open_document(const std::string& uri) const {
         std::lock_guard<std::mutex> lock(documents_mutex_);
         auto it = open_documents_.find(uri);
@@ -1223,7 +1267,7 @@ public:
         }
         return std::nullopt;
     }
-    
+
     [[nodiscard]] std::vector<std::string> get_open_document_uris() const {
         std::lock_guard<std::mutex> lock(documents_mutex_);
         std::vector<std::string> uris;
@@ -1233,19 +1277,19 @@ public:
         }
         return uris;
     }
-    
+
 private:
     // =====================================================================
     // JSON-RPC Helpers
     // =====================================================================
-    
+
     // Send a JSON-RPC request and wait for response (synchronous)
-    [[nodiscard]] LspResult<std::string> send_request_sync(
-        std::string_view method, std::string params_json) {
-        
+    [[nodiscard]] LspResult<std::string> send_request_sync(std::string_view method,
+                                                           std::string params_json) {
+
         std::promise<LspResult<std::string>> prom;
         auto future = prom.get_future();
-        
+
         auto callback = [&prom](const std::string& response, std::optional<LspClientError> error) {
             if (error) {
                 prom.set_value(std::unexpected(*error));
@@ -1253,40 +1297,36 @@ private:
                 prom.set_value(response);
             }
         };
-        
+
         send_request_async(method, std::move(params_json), std::move(callback));
-        
+
         auto status = future.wait_for(config_.request_timeout);
         if (status == std::future_status::timeout) {
             return std::unexpected(LspClientError::Timeout);
         }
-        
+
         return future.get();
     }
-    
+
     // Send a JSON-RPC request asynchronously
-    void send_request_async(
-        std::string_view method,
-        std::string params_json,
-        RequestCallback callback) {
-        
+    void send_request_async(std::string_view method, std::string params_json,
+                            RequestCallback callback) {
+
         int64_t id = next_request_id_++;
-        
+
         // Build JSON-RPC message as string (params already serialized)
-        std::string serialized = std::format(
-            R"({{"jsonrpc":"2.0","id":{},"method":"{}","params":{}}})",
-            id, method, params_json.empty() ? "{}" : params_json);
-        
+        std::string serialized =
+            std::format(R"({{"jsonrpc":"2.0","id":{},"method":"{}","params":{}}})", id, method,
+                        params_json.empty() ? "{}" : params_json);
+
         {
             std::lock_guard<std::mutex> lock(pending_mutex_);
-            pending_requests_[id] = PendingRequest{
-                .id = id,
-                .sent_at = std::chrono::steady_clock::now(),
-                .timeout = config_.request_timeout,
-                .callback = std::move(callback)
-            };
+            pending_requests_[id] = PendingRequest{.id = id,
+                                                   .sent_at = std::chrono::steady_clock::now(),
+                                                   .timeout = config_.request_timeout,
+                                                   .callback = std::move(callback)};
         }
-        
+
         auto result = transport_send(serialized);
         if (!result) {
             std::lock_guard<std::mutex> lock(pending_mutex_);
@@ -1299,7 +1339,7 @@ private:
             }
         }
     }
-    
+
     // Send a JSON-RPC notification (no response expected)
     void send_notification(std::string_view method, std::string params_json) {
         // Build JSON-RPC notification as string (params already serialized)
@@ -1307,12 +1347,12 @@ private:
         if (params_json.empty()) {
             serialized = std::format(R"({{"jsonrpc":"2.0","method":"{}"}})", method);
         } else {
-            serialized = std::format(
-                R"({{"jsonrpc":"2.0","method":"{}","params":{}}})", method, params_json);
+            serialized = std::format(R"({{"jsonrpc":"2.0","method":"{}","params":{}}})", method,
+                                     params_json);
         }
-        (void)transport_send(serialized); // Fire and forget
+        (void)transport_send(serialized);  // Fire and forget
     }
-    
+
     // Transport layer abstraction
     [[nodiscard]] LspResult<void> transport_send(std::string_view message) {
         if (!transport_ || !transport_->is_connected()) {
@@ -1320,7 +1360,7 @@ private:
         }
         return transport_->send(message);
     }
-    
+
     // Receive loop (runs in background thread)
     void receive_loop() {
         while (running_) {
@@ -1328,7 +1368,7 @@ private:
                 std::this_thread::sleep_for(10ms);
                 continue;
             }
-            
+
             auto result = transport_->receive();
             if (!result) {
                 if (result.error() == LspClientError::ServerClosed) {
@@ -1340,11 +1380,11 @@ private:
                 }
                 continue;
             }
-            
+
             handle_incoming_message(*result);
         }
     }
-    
+
     // Handle incoming message
     void handle_incoming_message(const std::string& message) {
         // Parse message
@@ -1352,12 +1392,12 @@ private:
         if (!doc) {
             return;
         }
-        
+
         auto root = doc->root();
         if (!root.is_obj()) {
             return;
         }
-        
+
         // Check if it's a response (has id)
         auto id_node = root.get("id");
         if (id_node.valid() && !id_node.is_null()) {
@@ -1374,7 +1414,7 @@ private:
             } else {
                 return;
             }
-            
+
             // Check for error
             auto error_node = root.get("error");
             std::optional<LspClientError> error = std::nullopt;
@@ -1383,22 +1423,35 @@ private:
                 // LspClientError instead of collapsing every failure to
                 // RequestFailed.
                 auto code_node = error_node.get("code");
-                auto code = code_node.is_num()
-                    ? static_cast<LspErrorCode>(code_node.as_int())
-                    : LspErrorCode::UnknownErrorCode;
+                auto code = code_node.is_num() ? static_cast<LspErrorCode>(code_node.as_int())
+                                               : LspErrorCode::UnknownErrorCode;
                 switch (code) {
-                    case LspErrorCode::ParseError:           error = LspClientError::ParseError; break;
-                    case LspErrorCode::InvalidRequest:
-                    case LspErrorCode::InvalidParams:        error = LspClientError::InvalidResponse; break;
-                    case LspErrorCode::MethodNotFound:       error = LspClientError::RequestFailed; break;
-                    case LspErrorCode::ServerNotInitialized: error = LspClientError::NotConnected; break;
-                    case LspErrorCode::RequestCancelled:
-                    case LspErrorCode::ServerCancelled:      error = LspClientError::Timeout; break;
-                    case LspErrorCode::ContentModified:      error = LspClientError::RequestFailed; break;
-                    default:                                 error = LspClientError::RequestFailed; break;
+                case LspErrorCode::ParseError:
+                    error = LspClientError::ParseError;
+                    break;
+                case LspErrorCode::InvalidRequest:
+                case LspErrorCode::InvalidParams:
+                    error = LspClientError::InvalidResponse;
+                    break;
+                case LspErrorCode::MethodNotFound:
+                    error = LspClientError::RequestFailed;
+                    break;
+                case LspErrorCode::ServerNotInitialized:
+                    error = LspClientError::NotConnected;
+                    break;
+                case LspErrorCode::RequestCancelled:
+                case LspErrorCode::ServerCancelled:
+                    error = LspClientError::Timeout;
+                    break;
+                case LspErrorCode::ContentModified:
+                    error = LspClientError::RequestFailed;
+                    break;
+                default:
+                    error = LspClientError::RequestFailed;
+                    break;
                 }
             }
-            
+
             std::lock_guard<std::mutex> lock(pending_mutex_);
             auto it = pending_requests_.find(id);
             if (it != pending_requests_.end() && !it->second.completed) {
@@ -1410,7 +1463,8 @@ private:
                         auto result_node = root.get("result");
                         if (result_node.valid()) {
                             auto result_str = to_string(result_node);
-                            it->second.callback(result_str.empty() ? "{}" : result_str, std::nullopt);
+                            it->second.callback(result_str.empty() ? "{}" : result_str,
+                                                std::nullopt);
                         } else {
                             it->second.callback("", std::nullopt);
                         }
@@ -1423,12 +1477,12 @@ private:
             auto method_node = root.get("method");
             if (method_node.is_str()) {
                 std::string method = std::string(method_node.as_str());
-                
+
                 // Handle specific notifications
                 if (method == "textDocument/publishDiagnostics") {
                     handle_publish_diagnostics(root);
                 }
-                
+
                 // Extract params
                 std::string params_json = "{}";
                 auto params_node = root.get("params");
@@ -1436,24 +1490,24 @@ private:
                     auto serialized = to_string(params_node);
                     if (!serialized.empty()) params_json = std::move(serialized);
                 }
-                
+
                 if (notification_callback_) {
                     notification_callback_(method, params_json);
                 }
             }
         }
     }
-    
+
     // Handle publishDiagnostics notification
     void handle_publish_diagnostics(const JsonVal& root) {
         auto params = root.get("params");
         if (!params.valid()) return;
-        
+
         auto uri_node = params.get("uri");
         auto diagnostics_node = params.get("diagnostics");
-        
+
         if (!uri_node.is_str() || !diagnostics_node.is_arr()) return;
-        
+
         std::string uri = std::string(uri_node.as_str());
         std::vector<LspClientDiagnostic> diagnostics;
 
@@ -1467,9 +1521,11 @@ private:
                 auto end_node = range_node.get("end");
                 if (start_node.is_obj() && end_node.is_obj()) {
                     diag.range.start.line = static_cast<int64_t>(start_node.get("line").as_int());
-                    diag.range.start.character = static_cast<int64_t>(start_node.get("character").as_int());
+                    diag.range.start.character =
+                        static_cast<int64_t>(start_node.get("character").as_int());
                     diag.range.end.line = static_cast<int64_t>(end_node.get("line").as_int());
-                    diag.range.end.character = static_cast<int64_t>(end_node.get("character").as_int());
+                    diag.range.end.character =
+                        static_cast<int64_t>(end_node.get("character").as_int());
                 }
             }
 
@@ -1547,27 +1603,27 @@ private:
                     }
                     converted.push_back(std::move(e));
                 }
-                diagnostic_registry_->set_diagnostics(
-                    config_.name, uri, std::move(converted));
+                diagnostic_registry_->set_diagnostics(config_.name, uri, std::move(converted));
             }
         }
     }
-    
+
     // Check for timed-out pending requests
     void check_pending_timeouts() {
         auto now = std::chrono::steady_clock::now();
-        
+
         std::vector<int64_t> timed_out;
-        
+
         {
             std::lock_guard<std::mutex> lock(pending_mutex_);
             for (const auto& [id, req] : pending_requests_) {
-                auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - req.sent_at);
+                auto elapsed =
+                    std::chrono::duration_cast<std::chrono::milliseconds>(now - req.sent_at);
                 if (elapsed > req.timeout) {
                     timed_out.push_back(id);
                 }
             }
-            
+
             for (const auto& id : timed_out) {
                 auto it = pending_requests_.find(id);
                 if (it != pending_requests_.end() && !it->second.completed) {
@@ -1580,7 +1636,7 @@ private:
             }
         }
     }
-    
+
 public:
     // =====================================================================
     // Response Parsers (pure functions; public for unit testing with fixtures)
@@ -1652,13 +1708,15 @@ public:
             auto flag = [](JsonVal v) -> std::optional<bool> {
                 if (!v.valid()) return std::nullopt;
                 if (v.is_bool()) return v.as_bool();
-                if (v.is_obj()) return true; // options object => enabled
+                if (v.is_obj()) return true;  // options object => enabled
                 return std::nullopt;
             };
             if (auto tds = caps_node.get("textDocumentSync"); tds.valid()) {
-                if (tds.is_num()) c.text_document_sync = tds.as_int();
+                if (tds.is_num())
+                    c.text_document_sync = tds.as_int();
                 else if (tds.is_obj()) {
-                    if (auto ch = tds.get("change"); ch && ch.is_num()) c.text_document_sync = ch.as_int();
+                    if (auto ch = tds.get("change"); ch && ch.is_num())
+                        c.text_document_sync = ch.as_int();
                 }
             }
             if (flag(caps_node.get("completionProvider"))) c.completion_provider = "enabled";
@@ -1675,12 +1733,14 @@ public:
             if (flag(caps_node.get("documentLinkProvider"))) c.document_link_provider = "enabled";
             c.color_provider = flag(caps_node.get("colorProvider"));
             c.document_formatting_provider = flag(caps_node.get("documentFormattingProvider"));
-            c.document_range_formatting_provider = flag(caps_node.get("documentRangeFormattingProvider"));
+            c.document_range_formatting_provider =
+                flag(caps_node.get("documentRangeFormattingProvider"));
             if (flag(caps_node.get("renameProvider"))) c.rename_provider = "enabled";
             if (flag(caps_node.get("foldingRangeProvider"))) c.folding_range_provider = "enabled";
             c.execute_command_provider = flag(caps_node.get("executeCommandProvider"));
             c.selection_range_provider = flag(caps_node.get("selectionRangeProvider"));
-            if (flag(caps_node.get("semanticTokensProvider"))) c.semantic_tokens_provider = "enabled";
+            if (flag(caps_node.get("semanticTokensProvider")))
+                c.semantic_tokens_provider = "enabled";
             if (flag(caps_node.get("signatureHelpProvider"))) c.signature_help_provider = "enabled";
             if (flag(caps_node.get("callHierarchyProvider"))) c.call_hierarchy_provider = true;
             if (flag(caps_node.get("typeHierarchyProvider"))) c.type_hierarchy_provider = true;
@@ -1692,7 +1752,8 @@ public:
         if (info.is_obj()) {
             std::string name;
             if (auto n = info.get("name"); n && n.is_str()) name = std::string(n.as_str());
-            if (auto v = info.get("version"); v && v.is_str()) name += " " + std::string(v.as_str());
+            if (auto v = info.get("version"); v && v.is_str())
+                name += " " + std::string(v.as_str());
             if (!name.empty()) result.server_info = name;
         }
 
@@ -1714,26 +1775,38 @@ public:
             // Bare array form.
             if (root.is_arr()) items_node = root;
         } else if (root.is_obj()) {
-            if (auto v = root.get("isIncomplete"); v && v.is_bool()) result.is_incomplete = v.as_bool();
+            if (auto v = root.get("isIncomplete"); v && v.is_bool())
+                result.is_incomplete = v.as_bool();
         }
 
         if (items_node.is_arr()) {
             items_node.iter([&result](JsonVal item_node) {
                 CompletionItem item;
-                if (auto v = item_node.get("label"); v && v.is_str()) item.label = std::string(v.as_str());
-                if (auto v = item_node.get("kind"); v && v.is_num()) item.kind = static_cast<int32_t>(v.as_int());
-                if (auto v = item_node.get("detail"); v && v.is_str()) item.detail = std::string(v.as_str());
-                if (auto v = item_node.get("documentation"); v.valid()) item.documentation = extract_markup_string(v);
-                if (auto v = item_node.get("sortText"); v && v.is_str()) item.sort_text = std::string(v.as_str());
-                if (auto v = item_node.get("filterText"); v && v.is_str()) item.filter_text = std::string(v.as_str());
-                if (auto v = item_node.get("insertText"); v && v.is_str()) item.insert_text = std::string(v.as_str());
-                if (auto v = item_node.get("insertTextFormat"); v && v.is_num()) item.insert_text_format = static_cast<int32_t>(v.as_int());
-                if (auto v = item_node.get("deprecated"); v && v.is_bool()) item.deprecated = v.as_bool();
-                if (auto v = item_node.get("preselect"); v && v.is_bool()) item.preselect = v.as_bool();
+                if (auto v = item_node.get("label"); v && v.is_str())
+                    item.label = std::string(v.as_str());
+                if (auto v = item_node.get("kind"); v && v.is_num())
+                    item.kind = static_cast<int32_t>(v.as_int());
+                if (auto v = item_node.get("detail"); v && v.is_str())
+                    item.detail = std::string(v.as_str());
+                if (auto v = item_node.get("documentation"); v.valid())
+                    item.documentation = extract_markup_string(v);
+                if (auto v = item_node.get("sortText"); v && v.is_str())
+                    item.sort_text = std::string(v.as_str());
+                if (auto v = item_node.get("filterText"); v && v.is_str())
+                    item.filter_text = std::string(v.as_str());
+                if (auto v = item_node.get("insertText"); v && v.is_str())
+                    item.insert_text = std::string(v.as_str());
+                if (auto v = item_node.get("insertTextFormat"); v && v.is_num())
+                    item.insert_text_format = static_cast<int32_t>(v.as_int());
+                if (auto v = item_node.get("deprecated"); v && v.is_bool())
+                    item.deprecated = v.as_bool();
+                if (auto v = item_node.get("preselect"); v && v.is_bool())
+                    item.preselect = v.as_bool();
                 if (auto te = item_node.get("textEdit"); te.is_obj()) {
                     TextEdit edit;
                     edit.range = parse_range(te.get("range"));
-                    if (auto nt = te.get("newText"); nt && nt.is_str()) edit.new_text = std::string(nt.as_str());
+                    if (auto nt = te.get("newText"); nt && nt.is_str())
+                        edit.new_text = std::string(nt.as_str());
                     item.text_edit = std::move(edit);
                 }
                 result.items.push_back(std::move(item));
@@ -1777,7 +1850,8 @@ public:
         } else if (root.is_arr()) {
             root.iter([&result](JsonVal loc_node) {
                 Location loc;
-                if (auto v = loc_node.get("uri"); v && v.is_str()) loc.uri = std::string(v.as_str());
+                if (auto v = loc_node.get("uri"); v && v.is_str())
+                    loc.uri = std::string(v.as_str());
                 loc.range = parse_range(loc_node.get("range"));
                 result.push_back(std::move(loc));
             });
@@ -1805,7 +1879,8 @@ public:
         return sym;
     }
 
-    [[nodiscard]] LspResult<std::vector<DocumentSymbol>> parse_document_symbols(const std::string& json_str) {
+    [[nodiscard]] LspResult<std::vector<DocumentSymbol>>
+    parse_document_symbols(const std::string& json_str) {
         auto doc = parse(json_str);
         if (!doc) {
             return std::unexpected(LspClientError::ParseError);
@@ -1818,7 +1893,8 @@ public:
         return result;
     }
 
-    [[nodiscard]] LspResult<std::vector<CodeAction>> parse_code_actions(const std::string& json_str) {
+    [[nodiscard]] LspResult<std::vector<CodeAction>>
+    parse_code_actions(const std::string& json_str) {
         auto doc = parse(json_str);
         if (!doc) {
             return std::unexpected(LspClientError::ParseError);
@@ -1859,7 +1935,8 @@ public:
                         arr.iter([&result](JsonVal e) {
                             TextEdit te;
                             te.range = parse_range(e.get("range"));
-                            if (auto nt = e.get("newText"); nt && nt.is_str()) te.new_text = std::string(nt.as_str());
+                            if (auto nt = e.get("newText"); nt && nt.is_str())
+                                te.new_text = std::string(nt.as_str());
                             result.push_back(std::move(te));
                         });
                     }
@@ -1872,7 +1949,8 @@ public:
                 if (!e.is_obj()) return;
                 TextEdit te;
                 te.range = parse_range(e.get("range"));
-                if (auto nt = e.get("newText"); nt && nt.is_str()) te.new_text = std::string(nt.as_str());
+                if (auto nt = e.get("newText"); nt && nt.is_str())
+                    te.new_text = std::string(nt.as_str());
                 result.push_back(std::move(te));
             });
         }
@@ -1883,17 +1961,17 @@ private:
     // =====================================================================
     // Member Variables
     // =====================================================================
-    
+
     Config config_;
     LspClientState state_;
     int64_t next_request_id_;
     ServerCapabilities server_capabilities_;
-    
+
     std::unique_ptr<ILspTransport> transport_;
-    
+
     std::mutex pending_mutex_;
     std::map<int64_t, PendingRequest> pending_requests_;
-    
+
     mutable std::mutex documents_mutex_;
     std::unordered_map<std::string, TextDocumentItem> open_documents_;
     std::unordered_map<std::string, std::vector<LspClientDiagnostic>> diagnostics_;
@@ -1902,10 +1980,11 @@ private:
     std::thread receive_thread_;
 
     NotificationCallback notification_callback_;
-    std::function<void(const std::string& uri, const std::vector<LspClientDiagnostic>& diagnostics)> diagnostics_callback_;
+    std::function<void(const std::string& uri, const std::vector<LspClientDiagnostic>& diagnostics)>
+        diagnostics_callback_;
 
     // Shared stateful registry (optional; production manager injects it).
     std::shared_ptr<DiagnosticRegistry> diagnostic_registry_;
 };
 
-} // namespace loom::services::lsp
+}  // namespace loom::services::lsp

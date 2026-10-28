@@ -5,7 +5,6 @@
 /// LICENCE:  Exported.  Imported by the tool UI registry initialization.
 module;
 
-
 export module loom.ui.tools.agent;
 
 import std;
@@ -86,12 +85,9 @@ namespace detail {
         return std::string{"working on a task…"};
     };
 
-    fns.tag = [](std::string_view) -> std::optional<std::string> {
-        return std::nullopt;
-    };
+    fns.tag = [](std::string_view) -> std::optional<std::string> { return std::nullopt; };
 
-    fns.progress = [](std::string_view input_json,
-                       std::string_view partial_result) {
+    fns.progress = [](std::string_view input_json, std::string_view partial_result) {
         std::string name = detail::extract_agent_name(input_json);
         if (name.empty()) name = "agent";
 
@@ -99,8 +95,8 @@ namespace detail {
             // Show first line of partial output
             auto nl = partial_result.find('\n');
             std::string line = (nl == std::string_view::npos)
-                ? std::string(partial_result)
-                : std::string(partial_result.substr(0, nl));
+                                   ? std::string(partial_result)
+                                   : std::string(partial_result.substr(0, nl));
             if (line.size() > 50) {
                 line = line.substr(0, 47) + "\xE2\x80\xA6";
             }
@@ -122,10 +118,8 @@ namespace detail {
     // The agent's final output text (natural-language summary + tool
     // results) is visible on screen, so we index it.  The agent produces
     // natural-language results that users want to search.
-    fns.extract_search_text = [](
-        std::string_view output_text,
-        std::string_view /*error_text*/) -> std::optional<std::string>
-    {
+    fns.extract_search_text = [](std::string_view output_text,
+                                 std::string_view /*error_text*/) -> std::optional<std::string> {
         return std::string{output_text};
     };
 

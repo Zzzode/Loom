@@ -18,10 +18,10 @@ using namespace loom::core;
 
 /// Source of context in the context window
 struct ContextSource {
-    std::string name;               // Display name (e.g., file path, "system prompt")
-    std::uint32_t token_count;      // Approximate tokens consumed
-    std::string type;               // "file", "system", "conversation", "tool_result"
-    bool pinned = false;            // Whether it persists across compaction
+    std::string name;           // Display name (e.g., file path, "system prompt")
+    std::uint32_t token_count;  // Approximate tokens consumed
+    std::string type;           // "file", "system", "conversation", "tool_result"
+    bool pinned = false;        // Whether it persists across compaction
 };
 
 /// ContextCommand implements the /context slash command.
@@ -32,13 +32,18 @@ public:
         return CommandDefinition{
             .name = "context",
             .description = "Show and manage context window",
-            .args = {
-                CommandArg{.name = "action", .description = "show | add | remove | breakdown | clear",
-                           .type = ArgType::Choice, .required = false,
-                           .choices = {"show", "add", "remove", "breakdown", "clear"}},
-                CommandArg{.name = "path", .description = "File path to add/remove",
-                           .type = ArgType::FilePath, .required = false},
-            },
+            .args =
+                {
+                    CommandArg{.name = "action",
+                               .description = "show | add | remove | breakdown | clear",
+                               .type = ArgType::Choice,
+                               .required = false,
+                               .choices = {"show", "add", "remove", "breakdown", "clear"}},
+                    CommandArg{.name = "path",
+                               .description = "File path to add/remove",
+                               .type = ArgType::FilePath,
+                               .required = false},
+                },
             .category = "session",
             .aliases = {"ctx"},
             .hidden = false,
@@ -54,8 +59,8 @@ public:
             return {};
         }
         if ((action == "add" || action == "remove") && ctx.args.size() < 2) {
-            return std::unexpected(Error::make(ErrorCode::InvalidRequest,
-                std::format("Usage: /context {} <file_path>", action)));
+            return std::unexpected(Error::make(
+                ErrorCode::InvalidRequest, std::format("Usage: /context {} <file_path>", action)));
         }
         return {};
     }
@@ -108,7 +113,8 @@ private:
 
     [[nodiscard]] std::uint32_t total_used() const {
         std::uint32_t sum = 0;
-        for (const auto& s : sources_) sum += s.token_count;
+        for (const auto& s : sources_)
+            sum += s.token_count;
         return sum;
     }
 
@@ -116,9 +122,8 @@ private:
         auto used = total_used();
         auto pct = max_tokens_ > 0 ? (used * 100 / max_tokens_) : 0;
 
-        std::string out = std::format(
-            "Context Window: {}/{} tokens ({}% used)\n",
-            used, max_tokens_, pct);
+        std::string out =
+            std::format("Context Window: {}/{} tokens ({}% used)\n", used, max_tokens_, pct);
 
         // Visual bar
         constexpr std::uint32_t bar_width = 30;
@@ -142,12 +147,16 @@ private:
         std::string out = "Context breakdown:\n";
 
         // Group by type
-        struct TypeSummary { std::uint32_t tokens = 0; std::uint32_t count = 0; };
+        struct TypeSummary {
+            std::uint32_t tokens = 0;
+            std::uint32_t count = 0;
+        };
+
         std::vector<std::pair<std::string, TypeSummary>> by_type;
 
         for (const auto& s : sources_) {
-            auto it = std::ranges::find_if(by_type,
-                [&](const auto& p) { return p.first == s.type; });
+            auto it =
+                std::ranges::find_if(by_type, [&](const auto& p) { return p.first == s.type; });
             if (it != by_type.end()) {
                 it->second.tokens += s.token_count;
                 it->second.count++;
@@ -163,8 +172,8 @@ private:
 
         for (const auto& [type, summary] : by_type) {
             auto pct = max_tokens_ > 0 ? (summary.tokens * 100 / max_tokens_) : 0;
-            out += std::format("  {:<15} {:>6} tokens ({:>2}%) [{} sources]\n",
-                type, summary.tokens, pct, summary.count);
+            out += std::format("  {:<15} {:>6} tokens ({:>2}%) [{} sources]\n", type,
+                               summary.tokens, pct, summary.count);
         }
 
         out += std::format("\n  Total: {} / {} tokens", total_used(), max_tokens_);
@@ -190,25 +199,25 @@ private:
 
         auto size = fs::file_size(normalized, ec);
         if (ec) {
-            return std::unexpected(Error::make(
-                ErrorCode::InternalError,
-                std::format("Failed to inspect '{}': {}", key, ec.message())));
+            return std::unexpected(
+                Error::make(ErrorCode::InternalError,
+                            std::format("Failed to inspect '{}': {}", key, ec.message())));
         }
         constexpr std::uintmax_t max_context_file_bytes = 2 * 1024 * 1024;
         if (size > max_context_file_bytes) {
-            return std::unexpected(Error::make(
-                ErrorCode::InvalidRequest,
-                std::format("Context file '{}' is too large ({} bytes, max {}).",
-                    key, size, max_context_file_bytes)));
+            return std::unexpected(
+                Error::make(ErrorCode::InvalidRequest,
+                            std::format("Context file '{}' is too large ({} bytes, max {}).", key,
+                                        size, max_context_file_bytes)));
         }
 
         std::ifstream input(normalized, std::ios::binary);
         if (!input.is_open()) {
             return std::unexpected(Error::make(
-                ErrorCode::InternalError,
-                std::format("Failed to read context file '{}'.", key)));
+                ErrorCode::InternalError, std::format("Failed to read context file '{}'.", key)));
         }
-        std::string content((std::istreambuf_iterator<char>(input)), std::istreambuf_iterator<char>());
+        std::string content((std::istreambuf_iterator<char>(input)),
+                            std::istreambuf_iterator<char>());
         auto tokens = estimate_tokens(content);
 
         user_files_.push_back(key);
@@ -226,7 +235,8 @@ private:
             existing->token_count = tokens;
             existing->pinned = true;
         }
-        return CommandResult::success(std::format("Added '{}' to context ({} estimated tokens).", key, tokens));
+        return CommandResult::success(
+            std::format("Added '{}' to context ({} estimated tokens).", key, tokens));
     }
 
     [[nodiscard]] Result<CommandResult> remove_file(const std::string& path) {
@@ -238,8 +248,8 @@ private:
 
         auto it = std::ranges::find(user_files_, key);
         if (it == user_files_.end()) {
-            return std::unexpected(Error::make(ErrorCode::InvalidRequest,
-                std::format("File '{}' is not in user context.", path)));
+            return std::unexpected(Error::make(
+                ErrorCode::InvalidRequest, std::format("File '{}' is not in user context.", path)));
         }
         user_files_.erase(it);
         // Also remove from sources
@@ -255,4 +265,4 @@ private:
     }
 };
 
-} // namespace loom::commands
+}  // namespace loom::commands

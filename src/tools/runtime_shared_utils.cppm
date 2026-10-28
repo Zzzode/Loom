@@ -27,7 +27,7 @@ export module loom.tools.runtime_shared_utils;
 
 import std;
 
-import loom.tools.send_message;   // MessagePriority / message_priority_name
+import loom.tools.send_message; // MessagePriority / message_priority_name
 
 export namespace loom::tools::runtime_shared_utils {
 
@@ -38,8 +38,10 @@ namespace fs = std::filesystem;
 [[nodiscard]] inline std::string shell_quote(std::string_view value) {
     std::string out = "'";
     for (char c : value) {
-        if (c == '\'') out += "'\\''";
-        else out.push_back(c);
+        if (c == '\'')
+            out += "'\\''";
+        else
+            out.push_back(c);
     }
     out.push_back('\'');
     return out;
@@ -52,12 +54,24 @@ namespace fs = std::filesystem;
     result.reserve(text.size());
     for (char ch : text) {
         switch (ch) {
-            case '&': result += "&amp;"; break;
-            case '<': result += "&lt;"; break;
-            case '>': result += "&gt;"; break;
-            case '"': result += "&quot;"; break;
-            case '\'': result += "&apos;"; break;
-            default: result.push_back(ch); break;
+        case '&':
+            result += "&amp;";
+            break;
+        case '<':
+            result += "&lt;";
+            break;
+        case '>':
+            result += "&gt;";
+            break;
+        case '"':
+            result += "&quot;";
+            break;
+        case '\'':
+            result += "&apos;";
+            break;
+        default:
+            result.push_back(ch);
+            break;
         }
     }
     return result;
@@ -81,10 +95,8 @@ namespace fs = std::filesystem;
 /// directory or file name on POSIX filesystems. Any character that isn't
 /// alphanumeric, a dash, an underscore or a dot is replaced with '_'. If
 /// the result would be empty, returns the `fallback` verbatim.
-[[nodiscard]] inline std::string safe_runtime_dir_component(
-    std::string_view value,
-    std::string_view fallback
-) {
+[[nodiscard]] inline std::string safe_runtime_dir_component(std::string_view value,
+                                                            std::string_view fallback) {
     std::string out;
     out.reserve(value.size());
     for (char ch : value) {
@@ -122,16 +134,11 @@ namespace fs = std::filesystem;
 
 /// Human-readable prefix used when a pending user-visible message is queued
 /// for a background agent — rendered verbatim in the agent's transcript.
-[[nodiscard]] inline std::string format_agent_pending_user_message(
-    std::string_view from_agent,
-    MessagePriority priority,
-    std::string_view message
-) {
-    return std::format(
-        "[Message from {} priority={}]\n{}",
-        from_agent,
-        message_priority_name(priority),
-        message);
+[[nodiscard]] inline std::string format_agent_pending_user_message(std::string_view from_agent,
+                                                                   MessagePriority priority,
+                                                                   std::string_view message) {
+    return std::format("[Message from {} priority={}]\n{}", from_agent,
+                       message_priority_name(priority), message);
 }
 
-} // namespace loom::tools::runtime_shared_utils
+}  // namespace loom::tools::runtime_shared_utils

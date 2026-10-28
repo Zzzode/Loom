@@ -1,7 +1,7 @@
 module;
 #include <cctype>
-#include <cstdint>
 #include <cstddef>
+#include <cstdint>
 
 export module loom.text.string_utils;
 
@@ -31,12 +31,14 @@ export namespace loom::utils {
     return result;
 }
 
-[[nodiscard]] inline std::string join(std::span<const std::string> parts, std::string_view separator) {
+[[nodiscard]] inline std::string join(std::span<const std::string> parts,
+                                      std::string_view separator) {
     if (parts.empty()) return {};
     std::string result;
 
     size_t total = 0;
-    for (const auto& p : parts) total += p.size();
+    for (const auto& p : parts)
+        total += p.size();
     total += separator.size() * (parts.size() - 1);
     result.reserve(total);
 
@@ -110,7 +112,8 @@ export namespace loom::utils {
     return result;
 }
 
-[[nodiscard]] inline std::string replace_all(std::string str, std::string_view from, std::string_view to) {
+[[nodiscard]] inline std::string replace_all(std::string str, std::string_view from,
+                                             std::string_view to) {
     if (from.empty()) return str;
     size_t pos = 0;
     while ((pos = str.find(from, pos)) != std::string::npos) {
@@ -126,13 +129,24 @@ export namespace loom::utils {
     result.reserve(sv.size() * 2);
     for (char ch : sv) {
         switch (ch) {
-            case '.': case '*': case '+': case '?': case '^': case '$':
-            case '{': case '}': case '(': case ')': case '|': case '[':
-            case ']': case '\\':
-                result.push_back('\\');
-                break;
-            default:
-                break;
+        case '.':
+        case '*':
+        case '+':
+        case '?':
+        case '^':
+        case '$':
+        case '{':
+        case '}':
+        case '(':
+        case ')':
+        case '|':
+        case '[':
+        case ']':
+        case '\\':
+            result.push_back('\\');
+            break;
+        default:
+            break;
         }
         result.push_back(ch);
     }
@@ -148,15 +162,13 @@ export namespace loom::utils {
 }
 
 // Return singular or plural word form based on count.
-[[nodiscard]] inline std::string plural(
-    std::int64_t n,
-    std::string_view word,
-    std::optional<std::string_view> plural_word = std::nullopt
-) {
+[[nodiscard]] inline std::string
+plural(std::int64_t n, std::string_view word,
+       std::optional<std::string_view> plural_word = std::nullopt) {
     if (n == 1) return std::string(word);
     return std::string(plural_word.value_or(std::string_view{}).empty()
-        ? std::string(word) + "s"
-        : std::string(plural_word.value()));
+                           ? std::string(word) + "s"
+                           : std::string(plural_word.value()));
 }
 
 // Return the first line without allocating a split vector.
@@ -166,11 +178,8 @@ export namespace loom::utils {
 }
 
 // Count occurrences of a character starting at a byte offset.
-[[nodiscard]] inline std::size_t count_char_in_string(
-    std::string_view sv,
-    char needle,
-    std::size_t start = 0
-) {
+[[nodiscard]] inline std::size_t count_char_in_string(std::string_view sv, char needle,
+                                                      std::size_t start = 0) {
     std::size_t count = 0;
     auto pos = sv.find(needle, start);
     while (pos != std::string_view::npos) {
@@ -186,8 +195,7 @@ export namespace loom::utils {
     result.reserve(sv.size());
     for (std::size_t i = 0; i < sv.size();) {
         const auto byte = static_cast<unsigned char>(sv[i]);
-        if (i + 2 < sv.size() && byte == 0xEF &&
-            static_cast<unsigned char>(sv[i + 1]) == 0xBC) {
+        if (i + 2 < sv.size() && byte == 0xEF && static_cast<unsigned char>(sv[i + 1]) == 0xBC) {
             const auto third = static_cast<unsigned char>(sv[i + 2]);
             if (third >= 0x90 && third <= 0x99) {
                 result.push_back(static_cast<char>('0' + (third - 0x90)));
@@ -206,8 +214,7 @@ export namespace loom::utils {
     std::string result;
     result.reserve(sv.size());
     for (std::size_t i = 0; i < sv.size();) {
-        if (i + 2 < sv.size() &&
-            static_cast<unsigned char>(sv[i]) == 0xE3 &&
+        if (i + 2 < sv.size() && static_cast<unsigned char>(sv[i]) == 0xE3 &&
             static_cast<unsigned char>(sv[i + 1]) == 0x80 &&
             static_cast<unsigned char>(sv[i + 2]) == 0x80) {
             result.push_back(' ');
@@ -221,11 +228,9 @@ export namespace loom::utils {
 }
 
 // Join lines with a delimiter, appending a truncation marker once max_size is exceeded.
-[[nodiscard]] inline std::string safe_join_lines(
-    std::span<const std::string> lines,
-    std::string_view delimiter = ",",
-    std::size_t max_size = (std::size_t{1} << 25)
-) {
+[[nodiscard]] inline std::string safe_join_lines(std::span<const std::string> lines,
+                                                 std::string_view delimiter = ",",
+                                                 std::size_t max_size = (std::size_t{1} << 25)) {
     constexpr std::string_view truncation_marker = "...[truncated]";
     std::string result;
     for (const auto& line : lines) {
@@ -237,10 +242,10 @@ export namespace loom::utils {
             continue;
         }
 
-        const auto remaining = static_cast<std::int64_t>(max_size)
-            - static_cast<std::int64_t>(result.size())
-            - static_cast<std::int64_t>(delimiter_size)
-            - static_cast<std::int64_t>(truncation_marker.size());
+        const auto remaining = static_cast<std::int64_t>(max_size) -
+                               static_cast<std::int64_t>(result.size()) -
+                               static_cast<std::int64_t>(delimiter_size) -
+                               static_cast<std::int64_t>(truncation_marker.size());
         if (remaining > 0) {
             if (needs_delimiter) result += delimiter;
             result += line.substr(0, static_cast<std::size_t>(remaining));
@@ -253,4 +258,4 @@ export namespace loom::utils {
     return result;
 }
 
-} // namespace loom::utils
+}  // namespace loom::utils

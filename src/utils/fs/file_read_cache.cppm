@@ -14,7 +14,8 @@ class FileReadCache {
 public:
     explicit FileReadCache(size_t max_entries = 128,
                            std::chrono::seconds ttl = std::chrono::seconds{60})
-        : max_entries_(max_entries), ttl_(ttl) {}
+        : max_entries_(max_entries)
+        , ttl_(ttl) {}
 
     std::optional<std::string> get(const fs::path& filepath) {
         std::lock_guard lock(mutex_);
@@ -44,10 +45,7 @@ public:
         auto it = map_.find(key);
         if (it != map_.end()) {
 
-            it->second->second = CacheEntry{
-                std::move(content),
-                std::chrono::steady_clock::now()
-            };
+            it->second->second = CacheEntry{std::move(content), std::chrono::steady_clock::now()};
             lru_list_.splice(lru_list_.begin(), lru_list_, it->second);
             return;
         }
@@ -58,10 +56,8 @@ public:
             lru_list_.pop_back();
         }
 
-        lru_list_.emplace_front(
-            key,
-            CacheEntry{std::move(content), std::chrono::steady_clock::now()}
-        );
+        lru_list_.emplace_front(key,
+                                CacheEntry{std::move(content), std::chrono::steady_clock::now()});
         map_[key] = lru_list_.begin();
     }
 
@@ -122,4 +118,4 @@ inline FileReadCache& get_global_cache() {
     return instance;
 }
 
-} // namespace loom::utils
+}  // namespace loom::utils

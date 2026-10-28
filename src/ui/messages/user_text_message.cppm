@@ -15,12 +15,12 @@
 // ────────────────────────────────────────────────────────────────────────
 module;
 
-#include <ftxui/dom/elements.hpp>
-#include <ftxui/dom/node.hpp>
-#include <ftxui/screen/string.hpp>
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/event.hpp>
+#include <ftxui/dom/elements.hpp>
+#include <ftxui/dom/node.hpp>
+#include <ftxui/screen/string.hpp>
 
 export module loom.ui.messages.user_text_message;
 
@@ -42,11 +42,10 @@ using namespace ftxui;
 /// Plain data input, no globals.
 struct UserTextMessageData {
     std::string content;
-    std::chrono::system_clock::time_point timestamp =
-        std::chrono::system_clock::now();
-    std::optional<std::string> quoted_reply;   ///< Text being replied to (>)
-    bool is_transcript_mode = false;           ///< Dimmed presentation
-    std::optional<std::string> command_name;   ///< "/commit" etc. shown as chip
+    std::chrono::system_clock::time_point timestamp = std::chrono::system_clock::now();
+    std::optional<std::string> quoted_reply;  ///< Text being replied to (>)
+    bool is_transcript_mode = false;          ///< Dimmed presentation
+    std::optional<std::string> command_name;  ///< "/commit" etc. shown as chip
 };
 
 // ─── User-prompt text truncation ────────────────────────────────────────
@@ -59,9 +58,7 @@ inline constexpr std::size_t kTruncateHeadChars = 2'500;
 inline constexpr std::size_t kTruncateTailChars = 2'500;
 
 /// Count occurrences of `ch` in `text` starting at byte position `start`.
-[[nodiscard]] inline std::size_t CountCharFrom(std::string_view text,
-                                                char ch,
-                                                std::size_t start) {
+[[nodiscard]] inline std::size_t CountCharFrom(std::string_view text, char ch, std::size_t start) {
     std::size_t count = 0;
     std::size_t pos = start;
     while ((pos = text.find(ch, pos)) != std::string_view::npos) {
@@ -93,7 +90,7 @@ inline constexpr std::size_t kTruncateTailChars = 2'500;
     std::string result;
     result.reserve(truncate_detail::kTruncateHeadChars + truncate_detail::kTruncateTailChars + 40);
     result.append(head);
-    result += "\n\xe2\x80\xa6 +";       // "\n… +"
+    result += "\n\xe2\x80\xa6 +";  // "\n… +"
     result += std::to_string(hidden_lines);
     result += " lines \xe2\x80\xa6\n";  // " lines …\n"
     result.append(tail);
@@ -110,7 +107,7 @@ inline constexpr int kPromptChromeColumns = 3;  // "❯ " and right padding.
 
 /// Wrap at terminal cells, keeping fullwidth and combining glyphs together.
 [[nodiscard]] inline std::vector<std::string> WrapToWidth(std::string_view text,
-                                                         std::size_t width) {
+                                                          std::size_t width) {
     width = std::max<std::size_t>(1, width);
     const auto glyphs = Utf8ToGlyphs(std::string(text));
     std::vector<std::string> lines(1);
@@ -130,16 +127,16 @@ inline constexpr int kPromptChromeColumns = 3;  // "❯ " and right padding.
 }
 
 /// Preserve logical newlines, including empty and trailing lines.
-[[nodiscard]] inline std::vector<std::string> WrappedPromptLines(
-    std::string_view text, int content_columns) {
+[[nodiscard]] inline std::vector<std::string> WrappedPromptLines(std::string_view text,
+                                                                 int content_columns) {
     std::vector<std::string> lines;
     std::size_t start = 0;
     do {
         const auto newline = text.find('\n', start);
         const auto end = newline == std::string_view::npos ? text.size() : newline;
-        auto wrapped = WrapToWidth(text.substr(start, end - start),
-                                   std::max(1, content_columns));
-        for (auto& line : wrapped) lines.push_back(std::move(line));
+        auto wrapped = WrapToWidth(text.substr(start, end - start), std::max(1, content_columns));
+        for (auto& line : wrapped)
+            lines.push_back(std::move(line));
         if (newline == std::string_view::npos) break;
         start = newline + 1;
     } while (start <= text.size());
@@ -149,8 +146,9 @@ inline constexpr int kPromptChromeColumns = 3;  // "❯ " and right padding.
 /// Resolve wrapping after the parent assigns the available FTXUI box width.
 /// Like flexbox, request another layout pass when that width changes.
 class PromptBody : public Node {
-  public:
-    explicit PromptBody(std::string text) : text_(std::move(text)) {}
+public:
+    explicit PromptBody(std::string text)
+        : text_(std::move(text)) {}
 
     void ComputeRequirement() override {
         Elements lines;
@@ -175,7 +173,7 @@ class PromptBody : public Node {
         status->need_iteration |= columns_ != computed_columns_;
     }
 
-  private:
+private:
     std::string text_;
     int columns_ = std::numeric_limits<int>::max();
     int computed_columns_ = 0;
@@ -185,16 +183,15 @@ class PromptBody : public Node {
 // ─── Component ─────────────────────────────────────────────────────────
 
 class UserTextMessageComponent : public ComponentBase {
-  public:
+public:
     using OnCopyFn = std::function<void(std::string_view)>;
     using OnClickFn = std::function<void()>;
 
-    explicit UserTextMessageComponent(UserTextMessageData data,
-                                      OnCopyFn on_copy = nullptr,
+    explicit UserTextMessageComponent(UserTextMessageData data, OnCopyFn on_copy = nullptr,
                                       OnClickFn on_click = nullptr)
-        : data_(std::move(data)),
-          on_copy_(std::move(on_copy)),
-          on_click_(std::move(on_click)) {}
+        : data_(std::move(data))
+        , on_copy_(std::move(on_copy))
+        , on_click_(std::move(on_click)) {}
 
     Element Render() override {
         auto bubble_body = BuildContent();
@@ -202,8 +199,10 @@ class UserTextMessageComponent : public ComponentBase {
         // Right-side header: timestamp + role tag
         auto header_right = hbox({
             text(" ") | size(WIDTH, EQUAL, 1),
-            text(render_timestamp(data_.timestamp)) | dim | color(loom::ui::design::theme::current_theme().palette->muted),
-            text((" " + std::string(loom::ui::design::figures::kPointer) + " You")) | color(loom::ui::design::theme::current_theme().palette->brief_label_you),
+            text(render_timestamp(data_.timestamp)) | dim |
+                color(loom::ui::design::theme::current_theme().palette->muted),
+            text((" " + std::string(loom::ui::design::figures::kPointer) + " You")) |
+                color(loom::ui::design::theme::current_theme().palette->brief_label_you),
         });
 
         // User message is right-aligned. We indent from the left so that
@@ -215,9 +214,11 @@ class UserTextMessageComponent : public ComponentBase {
             }),
             hbox({
                 filler(),
-                vbox(std::move(bubble_body))
-                    | (hovered_ ? bgcolor(loom::ui::design::theme::current_theme().palette->message_actions_background) : nothing)
-                    | flex_shrink,
+                vbox(std::move(bubble_body)) |
+                    (hovered_ ? bgcolor(loom::ui::design::theme::current_theme()
+                                            .palette->message_actions_background)
+                              : nothing) |
+                    flex_shrink,
             }),
         });
     }
@@ -242,7 +243,7 @@ class UserTextMessageComponent : public ComponentBase {
         return ComponentBase::OnEvent(event);
     }
 
-  private:
+private:
     auto BuildContent() -> Elements {
         Elements out;
 
@@ -261,7 +262,8 @@ class UserTextMessageComponent : public ComponentBase {
         // Command chip
         if (data_.command_name) {
             out.push_back(hbox({
-                text(" $ ") | bold | color(loom::ui::design::theme::current_theme().palette->primary),
+                text(" $ ") | bold |
+                    color(loom::ui::design::theme::current_theme().palette->primary),
                 text(*data_.command_name) | bold,
             }));
         }
@@ -272,9 +274,9 @@ class UserTextMessageComponent : public ComponentBase {
         std::string display_body = TruncateUserPromptText(data_.content);
         auto lines = SplitLines(display_body);
         for (auto& line : lines) {
-            out.push_back(text(std::move(line))
-                              | color(loom::ui::design::theme::current_theme().palette->text)
-                              | (data_.is_transcript_mode ? dim : nothing));
+            out.push_back(text(std::move(line)) |
+                          color(loom::ui::design::theme::current_theme().palette->text) |
+                          (data_.is_transcript_mode ? dim : nothing));
         }
 
         return out;
@@ -303,9 +305,9 @@ class UserTextMessageComponent : public ComponentBase {
 };
 
 /// Factory function.
-[[nodiscard]] inline Component MakeUserTextMessage(UserTextMessageData data,
-                                                   UserTextMessageComponent::OnCopyFn on_copy = nullptr,
-                                                   UserTextMessageComponent::OnClickFn on_click = nullptr) {
+[[nodiscard]] inline Component
+MakeUserTextMessage(UserTextMessageData data, UserTextMessageComponent::OnCopyFn on_copy = nullptr,
+                    UserTextMessageComponent::OnClickFn on_click = nullptr) {
     return Make<UserTextMessageComponent>(std::move(data), std::move(on_copy), std::move(on_click));
 }
 
@@ -317,9 +319,10 @@ class UserTextMessageComponent : public ComponentBase {
         hbox({
             filler(),
             text(render_timestamp(data.timestamp)) | dim,
-            text((" " + std::string(loom::ui::design::figures::kPointer))) | color(loom::ui::design::theme::current_theme().palette->brief_label_you),
+            text((" " + std::string(loom::ui::design::figures::kPointer))) |
+                color(loom::ui::design::theme::current_theme().palette->brief_label_you),
         }),
-        hbox({ filler(), vbox(std::move(body)) }),
+        hbox({filler(), vbox(std::move(body))}),
     });
 }
 
@@ -357,17 +360,16 @@ class UserTextMessageComponent : public ComponentBase {
     const Color kMuted = pal.muted;
     const Color kSuggestion = pal.suggestion;
 
-    const Color prefix_color  = is_selected ? kSuggestion : kMuted;
-    const Color bg            = is_selected ? kUserBgSel : kUserBg;
-    const Decorator body_style =
-        data.is_transcript_mode ? (dim | color(kText)) : color(kText);
+    const Color prefix_color = is_selected ? kSuggestion : kMuted;
+    const Color bg = is_selected ? kUserBgSel : kUserBg;
+    const Decorator body_style = data.is_transcript_mode ? (dim | color(kText)) : color(kText);
     const Decorator prefix_style =
         data.is_transcript_mode ? (dim | color(prefix_color)) : color(prefix_color);
 
     Element body = hbox({
         text(std::string(loom::ui::design::figures::kPointer) + " ") | prefix_style,
-        std::make_shared<wrap_detail::PromptBody>(TruncateUserPromptText(data.content))
-            | body_style,
+        std::make_shared<wrap_detail::PromptBody>(TruncateUserPromptText(data.content)) |
+            body_style,
         text(" ") | color(kText),
     });
     if (!data.is_transcript_mode) body = body | bgcolor(bg);
@@ -409,9 +411,7 @@ class UserTextMessageComponent : public ComponentBase {
     // swaps both the prefix and the background.
     const Color prefix_color = kMuted;
 
-    std::string body = data.command_name
-        ? ("/" + *data.command_name)
-        : data.content;
+    std::string body = data.command_name ? ("/" + *data.command_name) : data.content;
     const Color kText = pal.text;
     // right padding = 1 only — no flex, so the chip collapses to content
     // width instead of stretching to terminal width (F8 compact chip).

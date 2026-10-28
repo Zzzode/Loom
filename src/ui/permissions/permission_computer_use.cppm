@@ -2,8 +2,8 @@
 /// @brief Computer use permission UI for screen/mouse/keyboard control
 module;
 
-#include <ftxui/dom/elements.hpp>
 #include <ftxui/component/component.hpp>
+#include <ftxui/dom/elements.hpp>
 
 export module loom.ui.permissions.permission_computer_use;
 
@@ -39,28 +39,31 @@ struct ComputerUsePermissionOptions {
 /// Get action description
 [[nodiscard]] inline std::string_view action_description(ComputerUseAction action) {
     switch (action) {
-        case ComputerUseAction::Screenshot: return "Take a screenshot";
-        case ComputerUseAction::Click: return "Click on screen";
-        case ComputerUseAction::Type: return "Type text";
-        case ComputerUseAction::Scroll: return "Scroll";
-        case ComputerUseAction::DragDrop: return "Drag and drop";
-        case ComputerUseAction::OpenApp: return "Open application";
+    case ComputerUseAction::Screenshot:
+        return "Take a screenshot";
+    case ComputerUseAction::Click:
+        return "Click on screen";
+    case ComputerUseAction::Type:
+        return "Type text";
+    case ComputerUseAction::Scroll:
+        return "Scroll";
+    case ComputerUseAction::DragDrop:
+        return "Drag and drop";
+    case ComputerUseAction::OpenApp:
+        return "Open application";
     }
     return "Unknown action";
 }
 
 /// Map an Anthropic computer_20241022 action name to the UI enum.
-[[nodiscard]] inline std::optional<ComputerUseAction> action_from_wire(
-    std::string_view action) {
+[[nodiscard]] inline std::optional<ComputerUseAction> action_from_wire(std::string_view action) {
     if (action == "screenshot" || action == "cursor_position") return ComputerUseAction::Screenshot;
-    if (action == "left_click" || action == "right_click" ||
-        action == "middle_click" || action == "double_click" ||
-        action == "triple_click" || action == "left_mouse_down" ||
+    if (action == "left_click" || action == "right_click" || action == "middle_click" ||
+        action == "double_click" || action == "triple_click" || action == "left_mouse_down" ||
         action == "left_mouse_up" || action == "click") {
         return ComputerUseAction::Click;
     }
-    if (action == "type" || action == "key" || action == "hold_key" ||
-        action == "press") {
+    if (action == "type" || action == "key" || action == "hold_key" || action == "press") {
         return ComputerUseAction::Type;
     }
     if (action == "scroll") return ComputerUseAction::Scroll;
@@ -88,13 +91,10 @@ options_from_tool_input(std::string_view input_json) {
         opts.target_app = std::string(app.as_str());
     }
     // Native coordinates arrive as {"coordinate":[x,y]}.
-    if (const auto coord = root.get("coordinate");
-        coord.is_arr() && coord.size() >= 2) {
-        opts.coordinates = std::format("({}, {})",
-            coord.at(0).as_int(), coord.at(1).as_int());
+    if (const auto coord = root.get("coordinate"); coord.is_arr() && coord.size() >= 2) {
+        opts.coordinates = std::format("({}, {})", coord.at(0).as_int(), coord.at(1).as_int());
     } else if (root.get("x").is_num() && root.get("y").is_num()) {
-        opts.coordinates = std::format("({}, {})",
-            root.get("x").as_int(), root.get("y").as_int());
+        opts.coordinates = std::format("({}, {})", root.get("x").as_int(), root.get("y").as_int());
     }
     if (const auto text = root.get("text"); text.is_str()) {
         opts.text_to_type = std::string(text.as_str());
@@ -105,7 +105,8 @@ options_from_tool_input(std::string_view input_json) {
 }
 
 /// Render computer use permission request
-[[nodiscard]] inline Element render_computer_use_permission(const ComputerUsePermissionOptions& opts) {
+[[nodiscard]] inline Element
+render_computer_use_permission(const ComputerUsePermissionOptions& opts) {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
     std::vector<Element> elements;
 
@@ -135,18 +136,19 @@ options_from_tool_input(std::string_view input_json) {
 }
 
 /// Create computer use permission component
-[[nodiscard]] inline Component computer_use_permission_dialog(
-    const ComputerUsePermissionOptions& opts,
-    std::function<void(bool)> on_decision) {
+[[nodiscard]] inline Component
+computer_use_permission_dialog(const ComputerUsePermissionOptions& opts,
+                               std::function<void(bool)> on_decision) {
     return Renderer([opts, on_decision = std::move(on_decision)] {
         return vbox({
-            text("Allow computer use?") | bold,
-            separator(),
-            render_computer_use_permission(opts),
-            separator(),
-            hbox({text("[Y]es") | bold, text(" / "), text("[N]o") | bold}),
-        }) | border;
+                   text("Allow computer use?") | bold,
+                   separator(),
+                   render_computer_use_permission(opts),
+                   separator(),
+                   hbox({text("[Y]es") | bold, text(" / "), text("[N]o") | bold}),
+               }) |
+               border;
     });
 }
 
-} // namespace loom::ui::permissions
+}  // namespace loom::ui::permissions

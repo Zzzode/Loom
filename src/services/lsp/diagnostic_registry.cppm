@@ -15,9 +15,9 @@
 // ============================================================================
 module;
 
+#include <cstddef>
 #include <cstdint>
 #include <cstdlib>
-#include <cstddef>
 
 export module loom.services.lsp.diagnostic_registry;
 
@@ -37,20 +37,25 @@ using loom::utils::Result;
 
 /// LSP diagnostic severity levels.
 enum class DiagnosticSeverity : int {
-    Error       = 1,  // LSP severity 1
-    Warning     = 2,  // LSP severity 2
-    Info        = 3,  // LSP severity 3 (called "Information" in raw LSP)
-    Hint        = 4,  // LSP severity 4
+    Error = 1,    // LSP severity 1
+    Warning = 2,  // LSP severity 2
+    Info = 3,     // LSP severity 3 (called "Information" in raw LSP)
+    Hint = 4,     // LSP severity 4
 };
 
 /// Map a raw LSP severity number to our DiagnosticSeverity enum.
 [[nodiscard]] inline DiagnosticSeverity map_lsp_severity(int lsp_severity) {
     switch (lsp_severity) {
-        case 1: return DiagnosticSeverity::Error;
-        case 2: return DiagnosticSeverity::Warning;
-        case 3: return DiagnosticSeverity::Info;
-        case 4: return DiagnosticSeverity::Hint;
-        default: return DiagnosticSeverity::Error;  // default to Error for invalid/missing
+    case 1:
+        return DiagnosticSeverity::Error;
+    case 2:
+        return DiagnosticSeverity::Warning;
+    case 3:
+        return DiagnosticSeverity::Info;
+    case 4:
+        return DiagnosticSeverity::Hint;
+    default:
+        return DiagnosticSeverity::Error;  // default to Error for invalid/missing
     }
 }
 
@@ -62,10 +67,14 @@ enum class DiagnosticSeverity : int {
 /// Map a DiagnosticSeverity to its canonical string name.
 [[nodiscard]] inline std::string_view severity_to_string(DiagnosticSeverity s) {
     switch (s) {
-        case DiagnosticSeverity::Error:   return "Error";
-        case DiagnosticSeverity::Warning: return "Warning";
-        case DiagnosticSeverity::Info:    return "Info";
-        case DiagnosticSeverity::Hint:    return "Hint";
+    case DiagnosticSeverity::Error:
+        return "Error";
+    case DiagnosticSeverity::Warning:
+        return "Warning";
+    case DiagnosticSeverity::Info:
+        return "Info";
+    case DiagnosticSeverity::Hint:
+        return "Hint";
     }
     return "Error";
 }
@@ -99,12 +108,12 @@ struct DiagnosticRelatedInfo {
 
 /// A single LSP diagnostic entry.
 struct Diagnostic {
-    std::string uri;                    ///< File URI (file://...) or plain path
-    DiagnosticRange range;             ///< Position range in the document
+    std::string uri;        ///< File URI (file://...) or plain path
+    DiagnosticRange range;  ///< Position range in the document
     DiagnosticSeverity severity{DiagnosticSeverity::Error};
-    std::optional<std::string> code;   ///< Diagnostic code (e.g. "TS2345")
-    std::optional<std::string> source; ///< Source language server name
-    std::string message;               ///< Human-readable diagnostic message
+    std::optional<std::string> code;                  ///< Diagnostic code (e.g. "TS2345")
+    std::optional<std::string> source;                ///< Source language server name
+    std::string message;                              ///< Human-readable diagnostic message
     std::vector<DiagnosticRelatedInfo> related_info;  ///< Related info locations
 
     /// Create a stable dedup key from diagnostic content.
@@ -113,12 +122,9 @@ struct Diagnostic {
         // Using yyjson for canonical serialization would be heavier; a manual
         // string concatenation is sufficient and avoids allocator churn.
         std::ostringstream oss;
-        oss << severity_to_string(severity) << '|'
-            << range.start.line << ':' << range.start.character << '-'
-            << range.end.line << ':' << range.end.character << '|'
-            << (source.value_or("")) << '|'
-            << (code.value_or("")) << '|'
-            << message;
+        oss << severity_to_string(severity) << '|' << range.start.line << ':'
+            << range.start.character << '-' << range.end.line << ':' << range.end.character << '|'
+            << (source.value_or("")) << '|' << (code.value_or("")) << '|' << message;
         return oss.str();
     }
 };
@@ -139,10 +145,10 @@ struct DiagnosticFile {
 
 /// A pending LSP diagnostic notification awaiting delivery as an attachment.
 struct PendingLSPDiagnostic {
-    std::string server_name;           ///< Server that sent the diagnostic
-    std::vector<DiagnosticFile> files; ///< Diagnostic files
-    int64_t timestamp_ms{0};           ///< When received (epoch ms)
-    bool attachment_sent{false};       ///< Whether already delivered
+    std::string server_name;            ///< Server that sent the diagnostic
+    std::vector<DiagnosticFile> files;  ///< Diagnostic files
+    int64_t timestamp_ms{0};            ///< When received (epoch ms)
+    bool attachment_sent{false};        ///< Whether already delivered
 };
 
 // ============================================================================
@@ -189,11 +195,8 @@ public:
 
     /// Set (replace) diagnostics for a given server and URI.
     /// Called when a textDocument/publishDiagnostics notification arrives.
-    void set_diagnostics(
-        std::string_view server_name,
-        std::string_view uri,
-        std::vector<Diagnostic> diagnostics
-    ) {
+    void set_diagnostics(std::string_view server_name, std::string_view uri,
+                         std::vector<Diagnostic> diagnostics) {
         std::lock_guard lock(mutex_);
 
         // Store per-server, per-URI diagnostics
@@ -327,8 +330,7 @@ public:
 
     /// Retrieve and mark-as-sent all pending diagnostics, with deduplication
     /// and volume limiting. Returns empty vector if nothing is pending.
-    std::vector<std::pair<std::string, std::vector<DiagnosticFile>>>
-    check_for_pending() {
+    std::vector<std::pair<std::string, std::vector<DiagnosticFile>>> check_for_pending() {
         std::lock_guard lock(mutex_);
 
         // Collect all diagnostic files from unsent pending notifications
@@ -338,8 +340,7 @@ public:
 
         for (const auto& [id, pending] : pending_diagnostics_) {
             if (!pending->attachment_sent) {
-                all_files.insert(all_files.end(),
-                    pending->files.begin(), pending->files.end());
+                all_files.insert(all_files.end(), pending->files.begin(), pending->files.end());
                 server_names.insert(pending->server_name);
                 to_delete.push_back(id);
             }
@@ -360,9 +361,9 @@ public:
         for (auto& file : deduped_files) {
             // Sort by severity (lower number = more severe = first)
             std::sort(file.diagnostics.begin(), file.diagnostics.end(),
-                [](const Diagnostic& a, const Diagnostic& b) {
-                    return severity_to_number(a.severity) < severity_to_number(b.severity);
-                });
+                      [](const Diagnostic& a, const Diagnostic& b) {
+                          return severity_to_number(a.severity) < severity_to_number(b.severity);
+                      });
 
             // Cap per file
             if (file.diagnostics.size() > MAX_DIAGNOSTICS_PER_FILE) {
@@ -378,9 +379,7 @@ public:
         }
 
         // Remove files that ended up with no diagnostics
-        std::erase_if(deduped_files, [](const DiagnosticFile& f) {
-            return f.diagnostics.empty();
-        });
+        std::erase_if(deduped_files, [](const DiagnosticFile& f) { return f.diagnostics.empty(); });
 
         if (deduped_files.empty()) return {};
 
@@ -444,11 +443,8 @@ public:
     // Change notification callback
     // ------------------------------------------------------------------
 
-    using ChangeCallback = std::function<void(
-        std::string_view server_name,
-        std::string_view uri,
-        size_t diagnostic_count
-    )>;
+    using ChangeCallback = std::function<void(std::string_view server_name, std::string_view uri,
+                                              size_t diagnostic_count)>;
 
     /// Register a callback invoked when diagnostics change for a server/URI.
     void on_diagnostics_changed(ChangeCallback callback) {
@@ -462,9 +458,8 @@ private:
     // ------------------------------------------------------------------
 
     /// Deduplicate diagnostic files: within-batch + cross-turn.
-    std::vector<DiagnosticFile> deduplicate_files(
-        const std::vector<DiagnosticFile>& all_files
-    ) const {
+    std::vector<DiagnosticFile>
+    deduplicate_files(const std::vector<DiagnosticFile>& all_files) const {
         std::unordered_map<std::string, std::set<std::string>> file_seen;
         std::unordered_map<std::string, DiagnosticFile> file_map;
 
@@ -515,9 +510,8 @@ private:
     /// Get current time in milliseconds since epoch.
     static int64_t current_time_ms() {
         auto now = std::chrono::system_clock::now();
-        return std::chrono::duration_cast<std::chrono::milliseconds>(
-            now.time_since_epoch()
-        ).count();
+        return std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch())
+            .count();
     }
 
     // ------------------------------------------------------------------
@@ -528,14 +522,12 @@ private:
 
     /// Per-server, per-URI diagnostic storage.
     /// server_name -> (uri -> diagnostics)
-    std::unordered_map<std::string,
-        std::unordered_map<std::string, std::vector<Diagnostic>>>
+    std::unordered_map<std::string, std::unordered_map<std::string, std::vector<Diagnostic>>>
         diagnostics_by_server_;
 
     /// Pending diagnostic notifications awaiting delivery.
     /// id -> PendingLSPDiagnostic
-    std::unordered_map<std::string, std::unique_ptr<PendingLSPDiagnostic>>
-        pending_diagnostics_;
+    std::unordered_map<std::string, std::unique_ptr<PendingLSPDiagnostic>> pending_diagnostics_;
 
     /// Cross-turn deduplication: uri -> set of delivered diagnostic keys.
     std::unordered_map<std::string, std::set<std::string>> delivered_keys_;
@@ -553,9 +545,8 @@ private:
 
 /// Convert LSP PublishDiagnosticsParams JSON to DiagnosticFile[].
 /// Handles both file:// URIs and plain paths.
-[[nodiscard]] inline std::vector<DiagnosticFile> format_diagnostics_for_attachment(
-    loom::utils::json::JsonVal params_root
-) {
+[[nodiscard]] inline std::vector<DiagnosticFile>
+format_diagnostics_for_attachment(loom::utils::json::JsonVal params_root) {
     std::vector<DiagnosticFile> result;
 
     auto uri_node = params_root.get("uri");
@@ -629,9 +620,7 @@ private:
 /// Serialize registry diagnostics into the JSON array shape consumed by
 /// lsp_tool.cppm parse_diagnostics: every element carries a NUMERIC severity
 /// (1-4), range.start/end line/character, message, optional source/code.
-[[nodiscard]] inline std::string diagnostics_to_json_array(
-    const std::vector<Diagnostic>& diags
-) {
+[[nodiscard]] inline std::string diagnostics_to_json_array(const std::vector<Diagnostic>& diags) {
     loom::utils::json::JsonMutDoc doc;
     auto root = doc.array();
     for (const auto& d : diags) {
@@ -666,4 +655,4 @@ private:
     return doc.to_string();
 }
 
-} // namespace loom::services::lsp
+}  // namespace loom::services::lsp

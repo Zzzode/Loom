@@ -88,12 +88,10 @@ namespace {
             std::size_t j = 1;  // skip '<'
             while (j < raw.size() - 1) {
                 const char c = raw[j];
-                if (c == ' ' || c == '\t' || c == '\n' || c == '/' ||
-                    c == '>') {
+                if (c == ' ' || c == '\t' || c == '\n' || c == '/' || c == '>') {
                     break;
                 }
-                name += static_cast<char>(
-                    std::tolower(static_cast<unsigned char>(c)));
+                name += static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
                 ++j;
             }
             std::string rest;
@@ -110,7 +108,8 @@ namespace {
                     last_was_space = false;
                 }
             }
-            while (!rest.empty() && rest.back() == ' ') rest.pop_back();
+            while (!rest.empty() && rest.back() == ' ')
+                rest.pop_back();
 
             out += '<';
             out += name;
@@ -128,8 +127,7 @@ namespace {
             i = end + 1;
         } else {
             const std::size_t end = input.find('<', i);
-            const std::size_t stop =
-                (end == std::string::npos) ? input.size() : end;
+            const std::size_t stop = (end == std::string::npos) ? input.size() : end;
             if (in_pre) {
                 out.append(input, i, stop - i);
             } else {
@@ -146,7 +144,8 @@ namespace {
                         wrote_space = false;
                     }
                 }
-                while (!out.empty() && out.back() == ' ') out.pop_back();
+                while (!out.empty() && out.back() == ' ')
+                    out.pop_back();
             }
             i = stop;
         }
@@ -176,8 +175,7 @@ struct SuiteReport {
     std::map<std::string, std::pair<int, int>> by_section;
 };
 
-[[nodiscard]] SuiteReport run_suite(const std::string& path,
-                                    std::string_view name,
+[[nodiscard]] SuiteReport run_suite(const std::string& path, std::string_view name,
                                     bool gfm_extensions = true) {
     SuiteReport report;
     report.name = std::string(name);
@@ -200,8 +198,7 @@ struct SuiteReport {
         const int example = static_cast<int>(tc.get("example").as_int());
         const std::string section(tc.get("section").as_str());
 
-        const std::string actual =
-            loom::ui::render_markdown_to_html(markdown, gfm_extensions);
+        const std::string actual = loom::ui::render_markdown_to_html(markdown, gfm_extensions);
 
         ++report.total;
         auto& section_stats = report.by_section[section];
@@ -218,11 +215,9 @@ struct SuiteReport {
             ++report.passed;
             ++section_stats.first;  // passed
         } else {
-            report.failures.push_back(
-                {example, section, markdown, expected, actual, false});
+            report.failures.push_back({example, section, markdown, expected, actual, false});
         }
-        report.cases.push_back(
-            {example, section, markdown, expected, actual, case_passed});
+        report.cases.push_back({example, section, markdown, expected, actual, case_passed});
     }
     return report;
 }
@@ -233,21 +228,27 @@ struct SuiteReport {
     out.reserve(s.size());
     for (char c : s) {
         switch (c) {
-            case '\n': out += "\\n"; break;
-            case '\t': out += "\\t"; break;
-            case '\r': out += "\\r"; break;
-            default:   out += c; break;
+        case '\n':
+            out += "\\n";
+            break;
+        case '\t':
+            out += "\\t";
+            break;
+        case '\r':
+            out += "\\r";
+            break;
+        default:
+            out += c;
+            break;
         }
     }
     return out;
 }
 
 void print_report(const SuiteReport& report, std::size_t max_failures) {
-    const double pct =
-        report.total ? (100.0 * report.passed / report.total) : 0.0;
-    std::cout << "\n── " << report.name << " ── " << report.passed << '/'
-              << report.total << " passed (" << std::fixed
-              << std::setprecision(1) << pct << "%)\n";
+    const double pct = report.total ? (100.0 * report.passed / report.total) : 0.0;
+    std::cout << "\n── " << report.name << " ── " << report.passed << '/' << report.total
+              << " passed (" << std::fixed << std::setprecision(1) << pct << "%)\n";
 
     // Sections with failures, worst first.
     std::vector<std::pair<std::string, std::pair<int, int>>> weak;
@@ -263,23 +264,20 @@ void print_report(const SuiteReport& report, std::size_t max_failures) {
     if (!weak.empty()) {
         std::cout << "  failing sections (" << weak.size() << "):\n";
         for (const auto& [section, stats] : weak) {
-            std::cout << "    " << section << ": " << stats.first << '/'
-                      << stats.second << '\n';
+            std::cout << "    " << section << ": " << stats.first << '/' << stats.second << '\n';
         }
     }
 
     const std::size_t n = std::min(report.failures.size(), max_failures);
     for (std::size_t i = 0; i < n; ++i) {
         const auto& f = report.failures[i];
-        std::cout << "  ✗ example " << f.example << " [" << f.section
-                  << "]\n"
+        std::cout << "  ✗ example " << f.example << " [" << f.section << "]\n"
                   << "      md: " << escape_for_print(f.markdown) << '\n'
                   << "    want: " << escape_for_print(f.expected) << '\n'
                   << "     got: " << escape_for_print(f.actual) << '\n';
     }
     if (report.failures.size() > max_failures) {
-        std::cout << "  … and " << (report.failures.size() - max_failures)
-                  << " more failures\n";
+        std::cout << "  … and " << (report.failures.size() - max_failures) << " more failures\n";
     }
 }
 
@@ -305,9 +303,9 @@ void print_report(const SuiteReport& report, std::size_t max_failures) {
 //   implemented.  Type 1 HTML blocks (<script>, <pre>, <style>,
 //   <textarea>) are exempt from the tagfilter — their content is raw
 //   text, not HTML (CommonMark examples 140–145).
-constexpr int kCommonMarkFloor = 652;       // 100.0% of 652
-constexpr int kGfmFloor = 667;              // 99.3% of 672
-constexpr int kGfmExtensionsFloor = 29;     // 96.7% of 30
+constexpr int kCommonMarkFloor = 652;    // 100.0% of 652
+constexpr int kGfmFloor = 667;           // 99.3% of 672
+constexpr int kGfmExtensionsFloor = 29;  // 96.7% of 30
 
 // Collected by the TEST() bodies; consumed by main() for --conformance-json.
 std::vector<SuiteReport> g_all_reports;
@@ -319,20 +317,29 @@ std::vector<SuiteReport> g_all_reports;
     out.reserve(s.size() + 8);
     for (char c : s) {
         switch (c) {
-            case '"':  out += "\\\""; break;
-            case '\\': out += "\\\\"; break;
-            case '\n': out += "\\n"; break;
-            case '\t': out += "\\t"; break;
-            case '\r': out += "\\r"; break;
-            default:
-                if (static_cast<unsigned char>(c) < 0x20) {
-                    char buf[8];
-                    std::snprintf(buf, sizeof(buf), "\\u%04x",
-                                  static_cast<unsigned char>(c));
-                    out += buf;
-                } else {
-                    out += c;
-                }
+        case '"':
+            out += "\\\"";
+            break;
+        case '\\':
+            out += "\\\\";
+            break;
+        case '\n':
+            out += "\\n";
+            break;
+        case '\t':
+            out += "\\t";
+            break;
+        case '\r':
+            out += "\\r";
+            break;
+        default:
+            if (static_cast<unsigned char>(c) < 0x20) {
+                char buf[8];
+                std::snprintf(buf, sizeof(buf), "\\u%04x", static_cast<unsigned char>(c));
+                out += buf;
+            } else {
+                out += c;
+            }
         }
     }
     return out;
@@ -353,21 +360,19 @@ void write_conformance_json(const std::string& path) {
     f << "{\n  \"timestamp\": \"" << ts << "\",\n  \"suites\": [\n";
     for (std::size_t i = 0; i < g_all_reports.size(); ++i) {
         const auto& r = g_all_reports[i];
-        const double pct =
-            r.total ? (100.0 * r.passed / r.total) : 0.0;
+        const double pct = r.total ? (100.0 * r.passed / r.total) : 0.0;
         f << "    {\n";
         f << "      \"name\": \"" << json_escape(r.name) << "\",\n";
         f << "      \"total\": " << r.total << ",\n";
         f << "      \"passed\": " << r.passed << ",\n";
         f << "      \"failed\": " << (r.total - r.passed) << ",\n";
-        f << "      \"pass_rate\": " << std::fixed << std::setprecision(1)
-          << pct << ",\n";
+        f << "      \"pass_rate\": " << std::fixed << std::setprecision(1) << pct << ",\n";
         f << "      \"floor\": " << r.floor << ",\n";
         f << "      \"by_section\": {\n";
         std::size_t si = 0;
         for (const auto& [section, stats] : r.by_section) {
-            f << "        \"" << json_escape(section) << "\": {\"passed\": "
-              << stats.first << ", \"total\": " << stats.second << "}";
+            f << "        \"" << json_escape(section) << "\": {\"passed\": " << stats.first
+              << ", \"total\": " << stats.second << "}";
             if (++si < r.by_section.size()) f << ',';
             f << '\n';
         }
@@ -375,11 +380,10 @@ void write_conformance_json(const std::string& path) {
         f << "      \"failures\": [\n";
         for (std::size_t fi = 0; fi < r.failures.size(); ++fi) {
             const auto& fl = r.failures[fi];
-            f << "        {\"example\": " << fl.example
-              << ", \"section\": \"" << json_escape(fl.section)
-              << "\", \"markdown\": \"" << json_escape(fl.markdown)
-              << "\", \"expected\": \"" << json_escape(fl.expected)
-              << "\", \"actual\": \"" << json_escape(fl.actual) << "\"}";
+            f << "        {\"example\": " << fl.example << ", \"section\": \""
+              << json_escape(fl.section) << "\", \"markdown\": \"" << json_escape(fl.markdown)
+              << "\", \"expected\": \"" << json_escape(fl.expected) << "\", \"actual\": \""
+              << json_escape(fl.actual) << "\"}";
             if (fi + 1 < r.failures.size()) f << ',';
             f << '\n';
         }
@@ -387,12 +391,10 @@ void write_conformance_json(const std::string& path) {
         f << "      \"cases\": [\n";
         for (std::size_t ci = 0; ci < r.cases.size(); ++ci) {
             const auto& c = r.cases[ci];
-            f << "        {\"example\": " << c.example
-              << ", \"section\": \"" << json_escape(c.section)
-              << "\", \"passed\": " << (c.passed ? "true" : "false")
-              << ", \"markdown\": \"" << json_escape(c.markdown)
-              << "\", \"expected\": \"" << json_escape(c.expected)
-              << "\", \"actual\": \"" << json_escape(c.actual) << "\"}";
+            f << "        {\"example\": " << c.example << ", \"section\": \""
+              << json_escape(c.section) << "\", \"passed\": " << (c.passed ? "true" : "false")
+              << ", \"markdown\": \"" << json_escape(c.markdown) << "\", \"expected\": \""
+              << json_escape(c.expected) << "\", \"actual\": \"" << json_escape(c.actual) << "\"}";
             if (ci + 1 < r.cases.size()) f << ',';
             f << '\n';
         }
@@ -408,9 +410,8 @@ void write_conformance_json(const std::string& path) {
 }  // namespace
 
 TEST(MarkdownConformance, CommonMark) {
-    auto report =
-        run_suite(fixture_path("commonmark_spec.json"), "CommonMark 0.31.2",
-                  /*gfm_extensions=*/false);
+    auto report = run_suite(fixture_path("commonmark_spec.json"), "CommonMark 0.31.2",
+                            /*gfm_extensions=*/false);
     report.floor = kCommonMarkFloor;
     print_report(report, 25);
     g_all_reports.push_back(std::move(report));
@@ -418,8 +419,7 @@ TEST(MarkdownConformance, CommonMark) {
 }
 
 TEST(MarkdownConformance, Gfm) {
-    auto report =
-        run_suite(fixture_path("gfm_spec.json"), "GFM core");
+    auto report = run_suite(fixture_path("gfm_spec.json"), "GFM core");
     report.floor = kGfmFloor;
     print_report(report, 25);
     g_all_reports.push_back(std::move(report));
@@ -427,8 +427,7 @@ TEST(MarkdownConformance, Gfm) {
 }
 
 TEST(MarkdownConformance, GfmExtensions) {
-    auto report =
-        run_suite(fixture_path("gfm_extensions.json"), "GFM extensions");
+    auto report = run_suite(fixture_path("gfm_extensions.json"), "GFM extensions");
     report.floor = kGfmExtensionsFloor;
     print_report(report, 30);
     g_all_reports.push_back(std::move(report));
@@ -440,8 +439,7 @@ int main(int argc, char** argv) {
     std::string json_path;
     int new_argc = 1;
     for (int i = 1; i < argc; ++i) {
-        if (std::string(argv[i]) == "--conformance-json" &&
-            i + 1 < argc) {
+        if (std::string(argv[i]) == "--conformance-json" && i + 1 < argc) {
             json_path = argv[++i];
         } else {
             argv[new_argc++] = argv[i];

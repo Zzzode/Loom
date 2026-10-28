@@ -1,7 +1,7 @@
 // LSP Server Manager Module
 module;
-#include <cstdlib>
 #include <cstdint>
+#include <cstdlib>
 
 export module loom.services.lsp.LSPServerManager;
 
@@ -25,29 +25,23 @@ struct PluginLspServerDefinition {
 
 namespace detail {
 
-[[nodiscard]] std::optional<std::string> json_string(
-    loom::utils::json::JsonVal value,
-    std::string_view key
-) {
+[[nodiscard]] std::optional<std::string> json_string(loom::utils::json::JsonVal value,
+                                                     std::string_view key) {
     auto child = value.get(key);
     if (!child.is_str()) return std::nullopt;
     return std::string(child.as_str());
 }
 
-inline void append_json_string_array(
-    loom::utils::json::JsonVal value,
-    std::vector<std::string>& out
-) {
+inline void append_json_string_array(loom::utils::json::JsonVal value,
+                                     std::vector<std::string>& out) {
     if (!value.is_arr()) return;
     value.iter([&](loom::utils::json::JsonVal item) {
         if (item.is_str()) out.emplace_back(item.as_str());
     });
 }
 
-inline void append_json_string_map(
-    loom::utils::json::JsonVal value,
-    std::unordered_map<std::string, std::string>& out
-) {
+inline void append_json_string_map(loom::utils::json::JsonVal value,
+                                   std::unordered_map<std::string, std::string>& out) {
     if (!value.is_obj()) return;
     value.iter_obj([&](loom::utils::json::JsonVal key, loom::utils::json::JsonVal item) {
         if (key.is_str() && item.is_str()) {
@@ -57,13 +51,13 @@ inline void append_json_string_map(
 }
 
 [[nodiscard]] std::string normalize_lsp_extension(std::string_view extension) {
-    while (!extension.empty() && extension.front() == '.') extension.remove_prefix(1);
+    while (!extension.empty() && extension.front() == '.')
+        extension.remove_prefix(1);
     return std::string(extension);
 }
 
-[[nodiscard]] std::unordered_map<std::string, std::string> parse_extension_to_language(
-    loom::utils::json::JsonVal value
-) {
+[[nodiscard]] std::unordered_map<std::string, std::string>
+parse_extension_to_language(loom::utils::json::JsonVal value) {
     std::unordered_map<std::string, std::string> out;
     if (!value.is_obj()) return out;
     value.iter_obj([&](loom::utils::json::JsonVal key, loom::utils::json::JsonVal item) {
@@ -87,10 +81,8 @@ inline void replace_all(std::string& value, std::string_view needle, std::string
     std::string sanitized;
     sanitized.reserve(plugin_id.size());
     for (char ch : plugin_id) {
-        const auto ok = (ch >= 'a' && ch <= 'z') ||
-                        (ch >= 'A' && ch <= 'Z') ||
-                        (ch >= '0' && ch <= '9') ||
-                        ch == '-' || ch == '_';
+        const auto ok = (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') ||
+                        (ch >= '0' && ch <= '9') || ch == '-' || ch == '_';
         sanitized.push_back(ok ? ch : '-');
     }
     return sanitized;
@@ -111,9 +103,8 @@ inline void replace_all(std::string& value, std::string_view needle, std::string
     return dir;
 }
 
-[[nodiscard]] std::optional<std::string> json_user_config_value_to_string(
-    loom::utils::json::JsonVal value
-) {
+[[nodiscard]] std::optional<std::string>
+json_user_config_value_to_string(loom::utils::json::JsonVal value) {
     if (value.is_str()) return std::string(value.as_str());
     if (value.is_bool()) return value.as_bool() ? "true" : "false";
     if (value.is_num()) {
@@ -135,10 +126,8 @@ inline void replace_all(std::string& value, std::string_view needle, std::string
     return std::nullopt;
 }
 
-inline void merge_user_config_values(
-    loom::utils::json::JsonVal values,
-    std::unordered_map<std::string, std::string>& out
-) {
+inline void merge_user_config_values(loom::utils::json::JsonVal values,
+                                     std::unordered_map<std::string, std::string>& out) {
     if (!values.is_obj()) return;
     values.iter_obj([&](loom::utils::json::JsonVal key, loom::utils::json::JsonVal value) {
         if (!key.is_str()) return;
@@ -147,11 +136,10 @@ inline void merge_user_config_values(
     });
 }
 
-inline void merge_plugin_lsp_user_config_from_settings(
-    const fs::path& settings_path,
-    std::string_view plugin_name,
-    std::unordered_map<std::string, std::string>& out
-) {
+inline void
+merge_plugin_lsp_user_config_from_settings(const fs::path& settings_path,
+                                           std::string_view plugin_name,
+                                           std::unordered_map<std::string, std::string>& out) {
     auto parsed = loom::utils::json::parse_file(settings_path);
     if (!parsed) return;
     auto plugin_config = parsed->root().get("pluginConfigs").get(plugin_name);
@@ -159,36 +147,24 @@ inline void merge_plugin_lsp_user_config_from_settings(
     merge_user_config_values(plugin_config.get("options"), out);
 }
 
-[[nodiscard]] std::unordered_map<std::string, std::string> load_plugin_lsp_user_config(
-    std::string_view plugin_name
-) {
+[[nodiscard]] std::unordered_map<std::string, std::string>
+load_plugin_lsp_user_config(std::string_view plugin_name) {
     std::unordered_map<std::string, std::string> values;
     if (const char* home = std::getenv("HOME")) {
-        merge_plugin_lsp_user_config_from_settings(
-            fs::path{home} / ".loom" / "settings.json",
-            plugin_name,
-            values
-        );
+        merge_plugin_lsp_user_config_from_settings(fs::path{home} / ".loom" / "settings.json",
+                                                   plugin_name, values);
     }
-    merge_plugin_lsp_user_config_from_settings(
-        fs::current_path() / ".loom" / "settings.json",
-        plugin_name,
-        values
-    );
-    merge_plugin_lsp_user_config_from_settings(
-        fs::current_path() / ".loom" / "settings.local.json",
-        plugin_name,
-        values
-    );
+    merge_plugin_lsp_user_config_from_settings(fs::current_path() / ".loom" / "settings.json",
+                                               plugin_name, values);
+    merge_plugin_lsp_user_config_from_settings(fs::current_path() / ".loom" / "settings.local.json",
+                                               plugin_name, values);
     return values;
 }
 
-[[nodiscard]] std::optional<std::string> resolve_plugin_lsp_value(
-    std::string value,
-    const fs::path& plugin_dir,
-    std::string_view plugin_name,
-    const std::unordered_map<std::string, std::string>& user_config
-) {
+[[nodiscard]] std::optional<std::string>
+resolve_plugin_lsp_value(std::string value, const fs::path& plugin_dir,
+                         std::string_view plugin_name,
+                         const std::unordered_map<std::string, std::string>& user_config) {
     replace_all(value, "${LOOM_PLUGIN_ROOT}", plugin_dir.string());
     replace_all(value, "${LOOM_PLUGIN_DATA}", plugin_data_dir(plugin_name).string());
 
@@ -234,9 +210,8 @@ inline void merge_plugin_lsp_user_config_from_settings(
     return resolved;
 }
 
-[[nodiscard]] std::optional<ScopedLspServerConfig> parse_plugin_lsp_server(
-    loom::utils::json::JsonVal config
-) {
+[[nodiscard]] std::optional<ScopedLspServerConfig>
+parse_plugin_lsp_server(loom::utils::json::JsonVal config) {
     if (!config.is_obj()) return std::nullopt;
     if (auto transport = json_string(config, "transport"); transport && *transport != "stdio") {
         return std::nullopt;
@@ -250,18 +225,17 @@ inline void merge_plugin_lsp_user_config_from_settings(
     if (auto workspace_folder = json_string(config, "workspaceFolder")) {
         server.workspace_folder = std::move(*workspace_folder);
     }
-    if (auto initialization_options = config.get("initializationOptions"); initialization_options.valid()) {
+    if (auto initialization_options = config.get("initializationOptions");
+        initialization_options.valid()) {
         server.initialization_options_json = initialization_options.to_string();
     }
     if (server.command.empty() || server.extension_to_language.empty()) return std::nullopt;
     return server;
 }
 
-[[nodiscard]] std::optional<ScopedLspServerConfig> resolve_plugin_lsp_server_environment(
-    ScopedLspServerConfig server,
-    const fs::path& plugin_dir,
-    std::string_view plugin_name
-) {
+[[nodiscard]] std::optional<ScopedLspServerConfig>
+resolve_plugin_lsp_server_environment(ScopedLspServerConfig server, const fs::path& plugin_dir,
+                                      std::string_view plugin_name) {
     const auto user_config = load_plugin_lsp_user_config(plugin_name);
     auto resolve = [&](std::string value) -> std::optional<std::string> {
         return resolve_plugin_lsp_value(std::move(value), plugin_dir, plugin_name, user_config);
@@ -290,10 +264,8 @@ inline void merge_plugin_lsp_user_config_from_settings(
     return server;
 }
 
-inline void merge_plugin_lsp_servers(
-    std::vector<PluginLspServerDefinition>& base,
-    std::vector<PluginLspServerDefinition> overlay
-) {
+inline void merge_plugin_lsp_servers(std::vector<PluginLspServerDefinition>& base,
+                                     std::vector<PluginLspServerDefinition> overlay) {
     for (auto& server : overlay) {
         std::erase_if(base, [&](const PluginLspServerDefinition& existing) {
             return existing.name == server.name;
@@ -302,20 +274,16 @@ inline void merge_plugin_lsp_servers(
     }
 }
 
-[[nodiscard]] std::vector<PluginLspServerDefinition> parse_plugin_lsp_server_map(
-    loom::utils::json::JsonVal servers,
-    std::string_view plugin_name,
-    const fs::path& plugin_dir
-) {
+[[nodiscard]] std::vector<PluginLspServerDefinition>
+parse_plugin_lsp_server_map(loom::utils::json::JsonVal servers, std::string_view plugin_name,
+                            const fs::path& plugin_dir) {
     std::vector<PluginLspServerDefinition> parsed;
     if (!servers.is_obj()) return parsed;
     servers.iter_obj([&](loom::utils::json::JsonVal key, loom::utils::json::JsonVal value) {
         if (!key.is_str() || !value.is_obj()) return;
         if (auto server = parse_plugin_lsp_server(value)) {
-            if (auto resolved = resolve_plugin_lsp_server_environment(
-                    std::move(*server),
-                    plugin_dir,
-                    plugin_name)) {
+            if (auto resolved = resolve_plugin_lsp_server_environment(std::move(*server),
+                                                                      plugin_dir, plugin_name)) {
                 parsed.push_back(PluginLspServerDefinition{
                     .name = std::format("plugin:{}:{}", plugin_name, key.as_str()),
                     .config = std::move(*resolved),
@@ -338,11 +306,9 @@ inline void merge_plugin_lsp_servers(
     return true;
 }
 
-[[nodiscard]] std::vector<PluginLspServerDefinition> load_plugin_lsp_servers_from_file(
-    const fs::path& plugin_dir,
-    std::string_view relative_path,
-    std::string_view plugin_name
-) {
+[[nodiscard]] std::vector<PluginLspServerDefinition>
+load_plugin_lsp_servers_from_file(const fs::path& plugin_dir, std::string_view relative_path,
+                                  std::string_view plugin_name) {
     if (relative_path.empty()) return {};
     fs::path path{std::string(relative_path)};
     if (!path_stays_within_plugin(plugin_dir, path)) return {};
@@ -360,43 +326,32 @@ inline void merge_plugin_lsp_servers(
     return parse_plugin_lsp_server_map(root, plugin_name, plugin_dir);
 }
 
-[[nodiscard]] std::vector<PluginLspServerDefinition> load_plugin_lsp_servers_from_manifest_spec(
-    const fs::path& plugin_dir,
-    std::string_view plugin_name,
-    loom::utils::json::JsonVal spec
-) {
+[[nodiscard]] std::vector<PluginLspServerDefinition>
+load_plugin_lsp_servers_from_manifest_spec(const fs::path& plugin_dir, std::string_view plugin_name,
+                                           loom::utils::json::JsonVal spec) {
     std::vector<PluginLspServerDefinition> servers;
     if (spec.is_str()) {
         merge_plugin_lsp_servers(
-            servers,
-            load_plugin_lsp_servers_from_file(plugin_dir, spec.as_str(), plugin_name)
-        );
+            servers, load_plugin_lsp_servers_from_file(plugin_dir, spec.as_str(), plugin_name));
     } else if (spec.is_arr()) {
         spec.iter([&](loom::utils::json::JsonVal item) {
             if (item.is_str()) {
-                merge_plugin_lsp_servers(
-                    servers,
-                    load_plugin_lsp_servers_from_file(plugin_dir, item.as_str(), plugin_name)
-                );
+                merge_plugin_lsp_servers(servers, load_plugin_lsp_servers_from_file(
+                                                      plugin_dir, item.as_str(), plugin_name));
             } else if (item.is_obj()) {
                 merge_plugin_lsp_servers(
-                    servers,
-                    parse_plugin_lsp_server_map(item, plugin_name, plugin_dir)
-                );
+                    servers, parse_plugin_lsp_server_map(item, plugin_name, plugin_dir));
             }
         });
     } else if (spec.is_obj()) {
-        merge_plugin_lsp_servers(
-            servers,
-            parse_plugin_lsp_server_map(spec, plugin_name, plugin_dir)
-        );
+        merge_plugin_lsp_servers(servers,
+                                 parse_plugin_lsp_server_map(spec, plugin_name, plugin_dir));
     }
     return servers;
 }
 
-[[nodiscard]] std::vector<PluginLspServerDefinition> load_plugin_lsp_servers_from_dir(
-    const fs::path& plugin_dir
-) {
+[[nodiscard]] std::vector<PluginLspServerDefinition>
+load_plugin_lsp_servers_from_dir(const fs::path& plugin_dir) {
     const auto manifest_path = plugin_dir / "plugin.json";
     std::ifstream input(manifest_path);
     if (!input) return {};
@@ -415,14 +370,12 @@ inline void merge_plugin_lsp_servers(
         load_plugin_lsp_servers_from_file(plugin_dir, ".lsp.json", plugin_name);
     if (auto spec = root.get("lspServers"); spec.valid()) {
         merge_plugin_lsp_servers(
-            servers,
-            load_plugin_lsp_servers_from_manifest_spec(plugin_dir, plugin_name, spec)
-        );
+            servers, load_plugin_lsp_servers_from_manifest_spec(plugin_dir, plugin_name, spec));
     }
     return servers;
 }
 
-} // namespace detail
+}  // namespace detail
 
 [[nodiscard]] std::vector<PluginLspServerDefinition> discover_plugin_lsp_servers() {
     std::vector<PluginLspServerDefinition> servers;
@@ -438,7 +391,8 @@ inline void merge_plugin_lsp_servers(
         for (const auto& entry : fs::directory_iterator(root, ec)) {
             if (ec) break;
             if (!entry.is_directory(ec)) continue;
-            detail::merge_plugin_lsp_servers(servers, detail::load_plugin_lsp_servers_from_dir(entry.path()));
+            detail::merge_plugin_lsp_servers(
+                servers, detail::load_plugin_lsp_servers_from_dir(entry.path()));
         }
     }
     return servers;
@@ -451,31 +405,34 @@ public:
 
     // Initialize the manager
     Result<void> initialize();
-    
+
     // Shutdown all running servers and clear state
     Result<void> shutdown();
-    
+
     // Get the LSP server instance for a given file path
     LSPServerInstance* get_server_for_file(const std::string& file_path);
-    
+
     // Ensure the appropriate LSP server is started for the given file
     Result<LSPServerInstance*> ensure_server_started(const std::string& file_path);
-    
+
     // Send a request to the appropriate LSP server
-    template<typename T>
-    Result<T> send_request(const std::string& file_path, const std::string& method, const std::any& params);
-    
+    template <typename T>
+    Result<T> send_request(const std::string& file_path, const std::string& method,
+                           const std::any& params);
+
     // Get all running server instances
-    const std::unordered_map<std::string, std::unique_ptr<LSPServerInstance>>& get_all_servers() const {
+    const std::unordered_map<std::string, std::unique_ptr<LSPServerInstance>>&
+    get_all_servers() const {
         return servers_;
     }
 
     // Shared diagnostic registry handed to every instance at registration.
     DiagnosticRegistry& diagnostic_registry() { return *diagnostic_registry_; }
+
     std::shared_ptr<DiagnosticRegistry> shared_diagnostic_registry() const {
         return diagnostic_registry_;
     }
-    
+
     // File synchronization methods
     Result<void> open_file(const std::string& file_path, const std::string& content);
     Result<void> change_file(const std::string& file_path, const std::string& content);
@@ -485,7 +442,7 @@ public:
     // Drain pending notifications and return the latest diagnostics for a file.
     Result<void> poll_file(const std::string& file_path, std::chrono::milliseconds timeout);
     Result<std::string> diagnostics_json_for_file(const std::string& file_path);
-    
+
     // Check if a file is already open on a compatible LSP server
     bool is_file_open(const std::string& file_path) const;
     static std::string file_uri_for_path(const std::string& file_path);
@@ -496,29 +453,23 @@ private:
     static std::string env_or(std::string_view name, std::string fallback);
     static std::string path_to_file_uri(const std::string& file_path);
     static std::string uri_encode(std::string_view value);
-    void register_server(
-        std::string name,
-        std::string command,
-        std::vector<std::string> args,
-        std::unordered_map<std::string, std::string> extension_to_language);
+    void register_server(std::string name, std::string command, std::vector<std::string> args,
+                         std::unordered_map<std::string, std::string> extension_to_language);
     void register_server_config(std::string name, ScopedLspServerConfig config, bool prefer);
     std::string language_for_file(const std::string& file_path) const;
-    std::string build_did_open_params(
-        const std::string& file_path,
-        const std::string& content,
-        int64_t version) const;
-    std::string build_did_change_params(
-        const std::string& file_path,
-        const std::string& content,
-        int64_t version) const;
+    std::string build_did_open_params(const std::string& file_path, const std::string& content,
+                                      int64_t version) const;
+    std::string build_did_change_params(const std::string& file_path, const std::string& content,
+                                        int64_t version) const;
     std::string build_text_document_params(const std::string& file_path) const;
-    
+
     std::unordered_map<std::string, std::unique_ptr<LSPServerInstance>> servers_;
     // Shared LSP diagnostic state; the same instance is handed to every
     // server instance so diagnostics can be queried across servers.
-    std::shared_ptr<DiagnosticRegistry> diagnostic_registry_ = std::make_shared<DiagnosticRegistry>();
+    std::shared_ptr<DiagnosticRegistry> diagnostic_registry_ =
+        std::make_shared<DiagnosticRegistry>();
     std::unordered_map<std::string, std::vector<std::string>> extension_map_;
-    std::unordered_map<std::string, std::string> opened_files_; // URI -> server name
+    std::unordered_map<std::string, std::string> opened_files_;  // URI -> server name
     std::unordered_map<std::string, int64_t> file_versions_;
     bool initialized_ = false;
 };
@@ -537,37 +488,23 @@ Result<void> LSPServerManager::initialize() {
     if (initialized_) {
         return {};
     }
-    
+
+    register_server("typescript",
+                    env_or("LOOM_TYPESCRIPT_LANGUAGE_SERVER", "typescript-language-server"),
+                    {"--stdio"},
+                    {{"ts", "typescript"},
+                     {"tsx", "typescriptreact"},
+                     {"js", "javascript"},
+                     {"jsx", "javascriptreact"}});
+    register_server("python", env_or("LOOM_PYTHON_LANGUAGE_SERVER", "pyright-langserver"),
+                    {"--stdio"}, {{"py", "python"}});
+    register_server("rust", env_or("LOOM_RUST_LANGUAGE_SERVER", "rust-analyzer"), {},
+                    {{"rs", "rust"}});
+    register_server("go", env_or("LOOM_GO_LANGUAGE_SERVER", "gopls"), {}, {{"go", "go"}});
     register_server(
-        "typescript",
-        env_or("LOOM_TYPESCRIPT_LANGUAGE_SERVER", "typescript-language-server"),
-        {"--stdio"},
-        {{"ts", "typescript"}, {"tsx", "typescriptreact"}, {"js", "javascript"}, {"jsx", "javascriptreact"}});
-    register_server(
-        "python",
-        env_or("LOOM_PYTHON_LANGUAGE_SERVER", "pyright-langserver"),
-        {"--stdio"},
-        {{"py", "python"}});
-    register_server(
-        "rust",
-        env_or("LOOM_RUST_LANGUAGE_SERVER", "rust-analyzer"),
-        {},
-        {{"rs", "rust"}});
-    register_server(
-        "go",
-        env_or("LOOM_GO_LANGUAGE_SERVER", "gopls"),
-        {},
-        {{"go", "go"}});
-    register_server(
-        "cpp",
-        env_or("LOOM_CPP_LANGUAGE_SERVER", "clangd"),
-        {},
+        "cpp", env_or("LOOM_CPP_LANGUAGE_SERVER", "clangd"), {},
         {{"c", "c"}, {"cc", "cpp"}, {"cpp", "cpp"}, {"cxx", "cpp"}, {"h", "c"}, {"hpp", "cpp"}});
-    register_server(
-        "java",
-        env_or("LOOM_JAVA_LANGUAGE_SERVER", "jdtls"),
-        {},
-        {{"java", "java"}});
+    register_server("java", env_or("LOOM_JAVA_LANGUAGE_SERVER", "jdtls"), {}, {{"java", "java"}});
     for (auto& server : discover_plugin_lsp_servers()) {
         register_server_config(std::move(server.name), std::move(server.config), true);
     }
@@ -600,7 +537,7 @@ LSPServerInstance* LSPServerManager::get_server_for_file(const std::string& file
     if (it == extension_map_.end()) {
         return nullptr;
     }
-    
+
     // Try each server for this extension
     for (const auto& server_name : it->second) {
         auto server_it = servers_.find(server_name);
@@ -621,30 +558,32 @@ Result<LSPServerInstance*> LSPServerManager::ensure_server_started(const std::st
     if (!server) {
         return nullptr;
     }
-    
+
     if (!server->is_running) {
         auto start_result = server->start();
         if (!start_result) {
             return std::unexpected(start_result.error());
         }
     }
-    
+
     return server;
 }
 
 // Send request
-template<typename T>
-Result<T> LSPServerManager::send_request(const std::string& file_path, const std::string& method, const std::any& params) {
+template <typename T>
+Result<T> LSPServerManager::send_request(const std::string& file_path, const std::string& method,
+                                         const std::any& params) {
     auto server_result = ensure_server_started(file_path);
     if (!server_result) {
         return std::unexpected(server_result.error());
     }
-    
+
     auto server = *server_result;
     if (!server) {
-        return std::unexpected(loom::utils::Error(loom::utils::ErrorCode::not_found, "No LSP server for file type"));
+        return std::unexpected(
+            loom::utils::Error(loom::utils::ErrorCode::not_found, "No LSP server for file type"));
     }
-    
+
     return server->send_request<T>(method, params);
 }
 
@@ -654,36 +593,35 @@ Result<void> LSPServerManager::open_file(const std::string& file_path, const std
     if (!server_result) {
         return std::unexpected(server_result.error());
     }
-    
+
     auto server = *server_result;
     if (!server) {
-        return {}; // No server for this file type
+        return {};  // No server for this file type
     }
-    
+
     auto version = ++file_versions_[file_path];
-    auto result = server->send_notification(
-        "textDocument/didOpen",
-        build_did_open_params(file_path, content, version));
+    auto result = server->send_notification("textDocument/didOpen",
+                                            build_did_open_params(file_path, content, version));
     if (!result) {
         return result;
     }
-    
+
     // Track opened file
     opened_files_[file_path] = server->name;
     return {};
 }
 
 // Change file
-Result<void> LSPServerManager::change_file(const std::string& file_path, const std::string& content) {
+Result<void> LSPServerManager::change_file(const std::string& file_path,
+                                           const std::string& content) {
     auto server = get_server_for_file(file_path);
     if (!server || !server->is_running) {
         return {};
     }
-    
+
     auto version = ++file_versions_[file_path];
-    return server->send_notification(
-        "textDocument/didChange",
-        build_did_change_params(file_path, content, version));
+    return server->send_notification("textDocument/didChange",
+                                     build_did_change_params(file_path, content, version));
 }
 
 // Save file
@@ -692,10 +630,8 @@ Result<void> LSPServerManager::save_file(const std::string& file_path) {
     if (!server || !server->is_running) {
         return {};
     }
-    
-    return server->send_notification(
-        "textDocument/didSave",
-        build_text_document_params(file_path));
+
+    return server->send_notification("textDocument/didSave", build_text_document_params(file_path));
 }
 
 // Close file
@@ -704,21 +640,21 @@ Result<void> LSPServerManager::close_file(const std::string& file_path) {
     if (it == opened_files_.end()) {
         return {};
     }
-    
+
     auto server = get_server_for_file(file_path);
     if (server && server->is_running) {
-        auto result = server->send_notification(
-            "textDocument/didClose",
-            build_text_document_params(file_path));
+        auto result = server->send_notification("textDocument/didClose",
+                                                build_text_document_params(file_path));
         // Ignore error
     }
-    
+
     opened_files_.erase(it);
     file_versions_.erase(file_path);
     return {};
 }
 
-Result<void> LSPServerManager::poll_file(const std::string& file_path, std::chrono::milliseconds timeout) {
+Result<void> LSPServerManager::poll_file(const std::string& file_path,
+                                         std::chrono::milliseconds timeout) {
     auto server_result = ensure_server_started(file_path);
     if (!server_result) {
         return std::unexpected(server_result.error());
@@ -765,11 +701,9 @@ std::string LSPServerManager::uri_encode(std::string_view value) {
     std::string out;
     out.reserve(value.size());
     for (unsigned char ch : value) {
-        bool safe =
-            (ch >= 'A' && ch <= 'Z') ||
-            (ch >= 'a' && ch <= 'z') ||
-            (ch >= '0' && ch <= '9') ||
-            ch == '-' || ch == '_' || ch == '.' || ch == '~' || ch == '/';
+        bool safe = (ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') ||
+                    (ch >= '0' && ch <= '9') || ch == '-' || ch == '_' || ch == '.' || ch == '~' ||
+                    ch == '/';
         if (safe) {
             out.push_back(static_cast<char>(ch));
         } else {
@@ -787,9 +721,7 @@ std::string LSPServerManager::path_to_file_uri(const std::string& file_path) {
 }
 
 void LSPServerManager::register_server(
-    std::string name,
-    std::string command,
-    std::vector<std::string> args,
+    std::string name, std::string command, std::vector<std::string> args,
     std::unordered_map<std::string, std::string> extension_to_language) {
     ScopedLspServerConfig config;
     config.command = std::move(command);
@@ -798,10 +730,8 @@ void LSPServerManager::register_server(
     register_server_config(std::move(name), std::move(config), false);
 }
 
-void LSPServerManager::register_server_config(
-    std::string name,
-    ScopedLspServerConfig config,
-    bool prefer) {
+void LSPServerManager::register_server_config(std::string name, ScopedLspServerConfig config,
+                                              bool prefer) {
     for (const auto& [extension, _language] : config.extension_to_language) {
         auto& servers = extension_map_[extension];
         std::erase(servers, name);
@@ -822,15 +752,14 @@ void LSPServerManager::register_server_config(
         // Registered here (rather than only on the LspManager singleton) so
         // managers created via create_lsp_server_manager() — the ones LspTool
         // owns — are covered too.
-        (*instance)->on_notification(
-            "textDocument/publishDiagnostics",
-            [](std::string_view, std::string_view params_json) {
-                auto parsed = loom::utils::json::parse(params_json);
-                if (!parsed) return;
-                if (!parsed->root().is_obj()) return;
-                // Validated enough to prove the frame is well-formed.
-                (void)parsed->root().get("uri").is_str();
-            });
+        (*instance)->on_notification("textDocument/publishDiagnostics",
+                                     [](std::string_view, std::string_view params_json) {
+                                         auto parsed = loom::utils::json::parse(params_json);
+                                         if (!parsed) return;
+                                         if (!parsed->root().is_obj()) return;
+                                         // Validated enough to prove the frame is well-formed.
+                                         (void)parsed->root().get("uri").is_str();
+                                     });
         servers_[name] = std::move(*instance);
     }
 }
@@ -843,14 +772,13 @@ std::string LSPServerManager::language_for_file(const std::string& file_path) co
     if (server_it == servers_.end()) return ext;
     auto language_it = server_it->second->config.extension_to_language.find(ext);
     return language_it == server_it->second->config.extension_to_language.end()
-        ? ext
-        : language_it->second;
+               ? ext
+               : language_it->second;
 }
 
-std::string LSPServerManager::build_did_open_params(
-    const std::string& file_path,
-    const std::string& content,
-    int64_t version) const {
+std::string LSPServerManager::build_did_open_params(const std::string& file_path,
+                                                    const std::string& content,
+                                                    int64_t version) const {
     loom::utils::json::JsonMutDoc doc;
     auto root = doc.object();
     auto text_document = doc.object();
@@ -863,10 +791,9 @@ std::string LSPServerManager::build_did_open_params(
     return doc.to_string();
 }
 
-std::string LSPServerManager::build_did_change_params(
-    const std::string& file_path,
-    const std::string& content,
-    int64_t version) const {
+std::string LSPServerManager::build_did_change_params(const std::string& file_path,
+                                                      const std::string& content,
+                                                      int64_t version) const {
     loom::utils::json::JsonMutDoc doc;
     auto root = doc.object();
     auto text_document = doc.object();
@@ -892,4 +819,4 @@ std::string LSPServerManager::build_text_document_params(const std::string& file
     return doc.to_string();
 }
 
-} // namespace loom::services::lsp
+}  // namespace loom::services::lsp

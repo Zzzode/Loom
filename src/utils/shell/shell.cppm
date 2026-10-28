@@ -1,14 +1,15 @@
 module;
 
-#include <cstdio>
-#include <cstring>
+#include <fcntl.h>
+#include <poll.h>
+#include <signal.h>
 #include <sys/wait.h>
 #include <unistd.h>
-#include <signal.h>
-#include <poll.h>
-#include <fcntl.h>
+
 #include <cstddef>
+#include <cstdio>
 #include <cstdlib>
+#include <cstring>
 
 export module loom.process.shell.shell;
 
@@ -36,8 +37,8 @@ struct ShellResult {
 };
 
 // Execute a shell command synchronously with full output capture
-inline std::expected<ShellResult, std::string>
-run_shell(std::string_view command, ShellOptions opts = {}) {
+inline std::expected<ShellResult, std::string> run_shell(std::string_view command,
+                                                         ShellOptions opts = {}) {
     auto start = steady_clock::now();
 
     // Create pipes for stdout and stderr
@@ -89,9 +90,8 @@ run_shell(std::string_view command, ShellOptions opts = {}) {
     std::array<char, 4096> buffer{};
     bool stdout_done = false, stderr_done = false;
 
-    auto timeout_point = opts.timeout
-        ? std::optional(steady_clock::now() + *opts.timeout)
-        : std::nullopt;
+    auto timeout_point =
+        opts.timeout ? std::optional(steady_clock::now() + *opts.timeout) : std::nullopt;
 
     while (!stdout_done || !stderr_done) {
         // Check timeout
@@ -103,26 +103,27 @@ run_shell(std::string_view command, ShellOptions opts = {}) {
             return std::unexpected("Command timed out");
         }
 
-        struct pollfd fds[2] = {
-            {stdout_pipe[0], POLLIN, 0},
-            {stderr_pipe[0], POLLIN, 0}
-        };
+        struct pollfd fds[2] = {{stdout_pipe[0], POLLIN, 0}, {stderr_pipe[0], POLLIN, 0}};
 
-        int ready = poll(fds, 2, 100); // 100ms poll timeout
+        int ready = poll(fds, 2, 100);  // 100ms poll timeout
         if (ready < 0) break;
 
         if (fds[0].revents & POLLIN) {
             ssize_t n = read(stdout_pipe[0], buffer.data(), buffer.size());
-            if (n > 0) stdout_output.append(buffer.data(), n);
-            else stdout_done = true;
+            if (n > 0)
+                stdout_output.append(buffer.data(), n);
+            else
+                stdout_done = true;
         } else if (fds[0].revents & POLLHUP) {
             stdout_done = true;
         }
 
         if (fds[1].revents & POLLIN) {
             ssize_t n = read(stderr_pipe[0], buffer.data(), buffer.size());
-            if (n > 0) stderr_output.append(buffer.data(), n);
-            else stderr_done = true;
+            if (n > 0)
+                stderr_output.append(buffer.data(), n);
+            else
+                stderr_done = true;
         } else if (fds[1].revents & POLLHUP) {
             stderr_done = true;
         }
@@ -137,17 +138,14 @@ run_shell(std::string_view command, ShellOptions opts = {}) {
     auto end = steady_clock::now();
     int exit_code = WIFEXITED(status) ? WEXITSTATUS(status) : -1;
 
-    return ShellResult{
-        .exit_code = exit_code,
-        .stdout_output = std::move(stdout_output),
-        .stderr_output = std::move(stderr_output),
-        .duration = duration_cast<milliseconds>(end - start)
-    };
+    return ShellResult{.exit_code = exit_code,
+                       .stdout_output = std::move(stdout_output),
+                       .stderr_output = std::move(stderr_output),
+                       .duration = duration_cast<milliseconds>(end - start)};
 }
 
 // Execute a shell command asynchronously
-inline std::future<ShellResult>
-run_shell_async(std::string_view command, ShellOptions opts = {}) {
+inline std::future<ShellResult> run_shell_async(std::string_view command, ShellOptions opts = {}) {
     std::string cmd(command);
     return std::async(std::launch::async, [cmd, opts = std::move(opts)]() -> ShellResult {
         auto result = run_shell(cmd, opts);
@@ -165,14 +163,20 @@ run_shell_async(std::string_view command, ShellOptions opts = {}) {
 class ShellProcess {
 public:
     ShellProcess() = default;
-    ~ShellProcess() { if (pid_ > 0) kill(); }
+
+    ~ShellProcess() {
+        if (pid_ > 0) kill();
+    }
 
     // Non-copyable, movable
     ShellProcess(const ShellProcess&) = delete;
     ShellProcess& operator=(const ShellProcess&) = delete;
+
     ShellProcess(ShellProcess&& other) noexcept
-        : pid_(other.pid_), stdin_fd_(other.stdin_fd_),
-          stdout_fd_(other.stdout_fd_), running_(other.running_) {
+        : pid_(other.pid_)
+        , stdin_fd_(other.stdin_fd_)
+        , stdout_fd_(other.stdout_fd_)
+        , running_(other.running_) {
         other.pid_ = -1;
         other.stdin_fd_ = -1;
         other.stdout_fd_ = -1;
@@ -197,7 +201,8 @@ public:
             close(stdout_pipe[1]);
 
             if (opts.cwd) chdir(opts.cwd->c_str());
-            for (const auto& [k, v] : opts.env) setenv(k.c_str(), v.c_str(), 1);
+            for (const auto& [k, v] : opts.env)
+                setenv(k.c_str(), v.c_str(), 1);
 
             std::string cmd(command);
             execl("/bin/sh", "sh", "-c", cmd.c_str(), nullptr);
@@ -261,8 +266,14 @@ public:
 
 private:
     void cleanup_fds() {
-        if (stdin_fd_ >= 0) { close(stdin_fd_); stdin_fd_ = -1; }
-        if (stdout_fd_ >= 0) { close(stdout_fd_); stdout_fd_ = -1; }
+        if (stdin_fd_ >= 0) {
+            close(stdin_fd_);
+            stdin_fd_ = -1;
+        }
+        if (stdout_fd_ >= 0) {
+            close(stdout_fd_);
+            stdout_fd_ = -1;
+        }
     }
 
     pid_t pid_ = -1;
@@ -271,4 +282,4 @@ private:
     bool running_ = false;
 };
 
-} // namespace loom::utils
+}  // namespace loom::utils

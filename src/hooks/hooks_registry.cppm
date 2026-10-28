@@ -52,33 +52,60 @@ enum class HookEventType {
 /// Convert HookEventType to string_view
 [[nodiscard]] constexpr std::string_view hook_event_name(HookEventType event) noexcept {
     switch (event) {
-        case HookEventType::PreToolUse:          return "PreToolUse";
-        case HookEventType::PostToolUse:         return "PostToolUse";
-        case HookEventType::PostToolUseFailure:  return "PostToolUseFailure";
-        case HookEventType::PermissionDenied:    return "PermissionDenied";
-        case HookEventType::Notification:        return "Notification";
-        case HookEventType::UserPromptSubmit:    return "UserPromptSubmit";
-        case HookEventType::SessionStart:        return "SessionStart";
-        case HookEventType::SessionEnd:          return "SessionEnd";
-        case HookEventType::Stop:                return "Stop";
-        case HookEventType::StopFailure:         return "StopFailure";
-        case HookEventType::SubagentStart:       return "SubagentStart";
-        case HookEventType::SubagentStop:        return "SubagentStop";
-        case HookEventType::PreCompact:          return "PreCompact";
-        case HookEventType::PostCompact:         return "PostCompact";
-        case HookEventType::PermissionRequest:   return "PermissionRequest";
-        case HookEventType::Setup:               return "Setup";
-        case HookEventType::TeammateIdle:        return "TeammateIdle";
-        case HookEventType::TaskCreated:         return "TaskCreated";
-        case HookEventType::TaskCompleted:       return "TaskCompleted";
-        case HookEventType::Elicitation:         return "Elicitation";
-        case HookEventType::ElicitationResult:   return "ElicitationResult";
-        case HookEventType::ConfigChange:        return "ConfigChange";
-        case HookEventType::InstructionsLoaded:  return "InstructionsLoaded";
-        case HookEventType::WorktreeCreate:      return "WorktreeCreate";
-        case HookEventType::WorktreeRemove:      return "WorktreeRemove";
-        case HookEventType::CwdChanged:          return "CwdChanged";
-        case HookEventType::FileChanged:         return "FileChanged";
+    case HookEventType::PreToolUse:
+        return "PreToolUse";
+    case HookEventType::PostToolUse:
+        return "PostToolUse";
+    case HookEventType::PostToolUseFailure:
+        return "PostToolUseFailure";
+    case HookEventType::PermissionDenied:
+        return "PermissionDenied";
+    case HookEventType::Notification:
+        return "Notification";
+    case HookEventType::UserPromptSubmit:
+        return "UserPromptSubmit";
+    case HookEventType::SessionStart:
+        return "SessionStart";
+    case HookEventType::SessionEnd:
+        return "SessionEnd";
+    case HookEventType::Stop:
+        return "Stop";
+    case HookEventType::StopFailure:
+        return "StopFailure";
+    case HookEventType::SubagentStart:
+        return "SubagentStart";
+    case HookEventType::SubagentStop:
+        return "SubagentStop";
+    case HookEventType::PreCompact:
+        return "PreCompact";
+    case HookEventType::PostCompact:
+        return "PostCompact";
+    case HookEventType::PermissionRequest:
+        return "PermissionRequest";
+    case HookEventType::Setup:
+        return "Setup";
+    case HookEventType::TeammateIdle:
+        return "TeammateIdle";
+    case HookEventType::TaskCreated:
+        return "TaskCreated";
+    case HookEventType::TaskCompleted:
+        return "TaskCompleted";
+    case HookEventType::Elicitation:
+        return "Elicitation";
+    case HookEventType::ElicitationResult:
+        return "ElicitationResult";
+    case HookEventType::ConfigChange:
+        return "ConfigChange";
+    case HookEventType::InstructionsLoaded:
+        return "InstructionsLoaded";
+    case HookEventType::WorktreeCreate:
+        return "WorktreeCreate";
+    case HookEventType::WorktreeRemove:
+        return "WorktreeRemove";
+    case HookEventType::CwdChanged:
+        return "CwdChanged";
+    case HookEventType::FileChanged:
+        return "FileChanged";
     }
     return "Unknown";
 }
@@ -174,9 +201,8 @@ public:
     }
 
     /// Emit a hook progress event
-    void emit_progress(std::string hook_id, std::string hook_name,
-                       std::string hook_event, std::string stdout_out,
-                       std::string stderr_out, std::string combined) {
+    void emit_progress(std::string hook_id, std::string hook_name, std::string hook_event,
+                       std::string stdout_out, std::string stderr_out, std::string combined) {
         if (!should_emit(hook_event)) return;
         emit(HookProgressEvent{
             .hook_id = std::move(hook_id),
@@ -189,9 +215,8 @@ public:
     }
 
     /// Emit a hook response (completion) event
-    void emit_response(std::string hook_id, std::string hook_name,
-                       std::string hook_event, std::string combined,
-                       std::string stdout_out, std::string stderr_out,
+    void emit_response(std::string hook_id, std::string hook_name, std::string hook_event,
+                       std::string combined, std::string stdout_out, std::string stderr_out,
                        std::optional<int> exit_code, HookOutcome outcome) {
         if (!should_emit(hook_event)) return;
         emit(HookResponseEvent{
@@ -263,7 +288,7 @@ enum class HookCommandType {
 struct CommandHookConfig {
     std::string command;
     std::string shell = "bash";
-    std::optional<std::string> condition; // "if" field
+    std::optional<std::string> condition;  // "if" field
     std::optional<int> timeout_seconds;
 };
 
@@ -297,13 +322,8 @@ struct FunctionHookConfig {
 };
 
 /// Discriminated union for all hook command types
-using HookCommand = std::variant<
-    CommandHookConfig,
-    PromptHookConfig,
-    AgentHookConfig,
-    HttpHookConfig,
-    FunctionHookConfig
->;
+using HookCommand = std::variant<CommandHookConfig, PromptHookConfig, AgentHookConfig,
+                                 HttpHookConfig, FunctionHookConfig>;
 
 /// Get the type of a hook command
 [[nodiscard]] inline HookCommandType get_command_type(const HookCommand& cmd) noexcept {
@@ -316,8 +336,8 @@ using HookCommand = std::variant<
 
 /// A matcher groups hooks by a pattern (e.g., tool name)
 struct HookMatcher {
-    std::optional<std::string> matcher; // Pattern string (empty = match all)
-    std::vector<HookCommand> hooks;     // Hooks to execute when matched
+    std::optional<std::string> matcher;  // Pattern string (empty = match all)
+    std::vector<HookCommand> hooks;      // Hooks to execute when matched
 };
 
 /// Metadata about what field a matcher operates on
@@ -334,9 +354,8 @@ struct HookEventMetadata {
 };
 
 /// Get metadata for a specific hook event type
-[[nodiscard]] HookEventMetadata get_hook_event_metadata(
-    HookEventType event,
-    const std::vector<std::string>& tool_names);
+[[nodiscard]] HookEventMetadata get_hook_event_metadata(HookEventType event,
+                                                        const std::vector<std::string>& tool_names);
 
 // =========================================================================
 // Hook Source (where a hook was defined)
@@ -355,13 +374,20 @@ enum class HookSource {
 /// Convert HookSource to display string
 [[nodiscard]] inline std::string_view hook_source_inline_display(HookSource source) noexcept {
     switch (source) {
-        case HookSource::UserSettings:    return "User";
-        case HookSource::ProjectSettings: return "Project";
-        case HookSource::LocalSettings:   return "Local";
-        case HookSource::PolicySettings:  return "Policy";
-        case HookSource::PluginHook:      return "Plugin";
-        case HookSource::SessionHook:     return "Session";
-        case HookSource::BuiltinHook:     return "Built-in";
+    case HookSource::UserSettings:
+        return "User";
+    case HookSource::ProjectSettings:
+        return "Project";
+    case HookSource::LocalSettings:
+        return "Local";
+    case HookSource::PolicySettings:
+        return "Policy";
+    case HookSource::PluginHook:
+        return "Plugin";
+    case HookSource::SessionHook:
+        return "Session";
+    case HookSource::BuiltinHook:
+        return "Built-in";
     }
     return "Unknown";
 }
@@ -369,13 +395,20 @@ enum class HookSource {
 /// Convert HookSource to description display string
 [[nodiscard]] inline std::string hook_source_description(HookSource source) {
     switch (source) {
-        case HookSource::UserSettings:    return "User settings (~/.loom/settings.json)";
-        case HookSource::ProjectSettings: return "Project settings (.loom/settings.json)";
-        case HookSource::LocalSettings:   return "Local settings (.loom/settings.local.json)";
-        case HookSource::PolicySettings:  return "Policy settings (managed)";
-        case HookSource::PluginHook:      return "Plugin hooks (~/.loom/plugins/*/hooks/hooks.json)";
-        case HookSource::SessionHook:     return "Session hooks (in-memory, temporary)";
-        case HookSource::BuiltinHook:     return "Built-in hooks (registered internally by Loom)";
+    case HookSource::UserSettings:
+        return "User settings (~/.loom/settings.json)";
+    case HookSource::ProjectSettings:
+        return "Project settings (.loom/settings.json)";
+    case HookSource::LocalSettings:
+        return "Local settings (.loom/settings.local.json)";
+    case HookSource::PolicySettings:
+        return "Policy settings (managed)";
+    case HookSource::PluginHook:
+        return "Plugin hooks (~/.loom/plugins/*/hooks/hooks.json)";
+    case HookSource::SessionHook:
+        return "Session hooks (in-memory, temporary)";
+    case HookSource::BuiltinHook:
+        return "Built-in hooks (registered internally by Loom)";
     }
     return "Unknown source";
 }
@@ -430,7 +463,7 @@ struct PendingAsyncHook {
 /// Result from checking async hook responses
 struct AsyncHookResponse {
     std::string process_id;
-    loom::utils::json::JsonVal response; // Parsed JSON response
+    loom::utils::json::JsonVal response;  // Parsed JSON response
     std::string hook_name;
     std::string hook_event;
     std::optional<std::string> tool_name;
@@ -488,12 +521,11 @@ struct HookResponseOutput {
 };
 
 /// Add arguments to a hook prompt (replaces $ARGUMENTS placeholder)
-[[nodiscard]] std::string add_arguments_to_prompt(
-    std::string_view prompt,
-    std::string_view json_input);
+[[nodiscard]] std::string add_arguments_to_prompt(std::string_view prompt,
+                                                  std::string_view json_input);
 
 /// Validate a hook response JSON against the expected schema
-[[nodiscard]] std::expected<HookResponseOutput, std::string> parse_hook_response(
-    std::string_view json_text);
+[[nodiscard]] std::expected<HookResponseOutput, std::string>
+parse_hook_response(std::string_view json_text);
 
-} // namespace loom::utils::hooks_registry
+}  // namespace loom::utils::hooks_registry

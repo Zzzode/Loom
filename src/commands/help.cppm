@@ -37,23 +37,28 @@ public:
         return CommandDefinition{
             .name = "help",
             .description = "Show available commands and usage information",
-            .args = {
-                CommandArg{.name = "command", .description = "Specific command to get help for",
-                           .type = ArgType::Text, .required = false},
-                CommandArg{.name = "--shortcuts", .description = "Show keyboard shortcuts",
-                           .type = ArgType::None, .required = false},
-                CommandArg{.name = "--examples", .description = "Show usage examples",
-                           .type = ArgType::None, .required = false},
-            },
+            .args =
+                {
+                    CommandArg{.name = "command",
+                               .description = "Specific command to get help for",
+                               .type = ArgType::Text,
+                               .required = false},
+                    CommandArg{.name = "--shortcuts",
+                               .description = "Show keyboard shortcuts",
+                               .type = ArgType::None,
+                               .required = false},
+                    CommandArg{.name = "--examples",
+                               .description = "Show usage examples",
+                               .type = ArgType::None,
+                               .required = false},
+                },
             .category = "session",
             .aliases = {"h", "?"},
             .hidden = false,
         };
     }
 
-    [[nodiscard]] VoidResult validate(const CommandContext& /*ctx*/) {
-        return {};
-    }
+    [[nodiscard]] VoidResult validate(const CommandContext& /*ctx*/) { return {}; }
 
     [[nodiscard]] Result<CommandResult> execute(const CommandContext& ctx) {
         // Check for --shortcuts or --examples flags
@@ -132,8 +137,7 @@ private:
                 aliases_str += ")";
             }
 
-            output += std::format("    /{}{:<16} {}\n",
-                def->name, aliases_str, def->description);
+            output += std::format("    /{}{:<16} {}\n", def->name, aliases_str, def->description);
         }
 
         output += "\nType /help <command> for detailed usage.\n";
@@ -150,7 +154,8 @@ private:
         // Find the command definition
         const CommandDefinition* target = nullptr;
         for (const auto* def : command_defs_) {
-            if (def->name == name || std::ranges::find(def->aliases, std::string(name)) != def->aliases.end()) {
+            if (def->name == name ||
+                std::ranges::find(def->aliases, std::string(name)) != def->aliases.end()) {
                 target = def;
                 break;
             }
@@ -158,8 +163,7 @@ private:
 
         if (!target) {
             return CommandResult::fail(
-                std::format("Unknown command: '{}'. Type /help for a list of commands.", name)
-            );
+                std::format("Unknown command: '{}'. Type /help for a list of commands.", name));
         }
 
         // Format detailed help
@@ -180,8 +184,7 @@ private:
             output += "Arguments:\n";
             for (const auto& arg : target->args) {
                 auto required_tag = arg.required ? " (required)" : "";
-                output += std::format("  {}{}\n    {}\n",
-                    arg.name, required_tag, arg.description);
+                output += std::format("  {}{}\n    {}\n", arg.name, required_tag, arg.description);
 
                 // Show choices if applicable
                 if (!arg.choices.empty()) {
@@ -206,18 +209,18 @@ private:
     /// Format keyboard shortcuts
     [[nodiscard]] static std::string format_shortcuts() {
         static constexpr std::array<KeyboardShortcut, 12> shortcuts = {{
-            {"Ctrl+C",     "Cancel current operation / interrupt generation"},
-            {"Ctrl+D",     "Exit the CLI (same as /exit)"},
-            {"Ctrl+L",     "Clear screen (same as /clear)"},
-            {"Ctrl+R",     "Search command history"},
-            {"Ctrl+A",     "Move cursor to beginning of line"},
-            {"Ctrl+E",     "Move cursor to end of line"},
-            {"Ctrl+W",     "Delete word before cursor"},
-            {"Ctrl+U",     "Delete from cursor to beginning of line"},
-            {"Tab",        "Auto-complete command or argument"},
-            {"Up/Down",    "Navigate command history"},
-            {"Esc",        "Cancel current input / dismiss popup"},
-            {"Shift+Enter","Insert newline in multi-line input"},
+            {"Ctrl+C", "Cancel current operation / interrupt generation"},
+            {"Ctrl+D", "Exit the CLI (same as /exit)"},
+            {"Ctrl+L", "Clear screen (same as /clear)"},
+            {"Ctrl+R", "Search command history"},
+            {"Ctrl+A", "Move cursor to beginning of line"},
+            {"Ctrl+E", "Move cursor to end of line"},
+            {"Ctrl+W", "Delete word before cursor"},
+            {"Ctrl+U", "Delete from cursor to beginning of line"},
+            {"Tab", "Auto-complete command or argument"},
+            {"Up/Down", "Navigate command history"},
+            {"Esc", "Cancel current input / dismiss popup"},
+            {"Shift+Enter", "Insert newline in multi-line input"},
         }};
 
         std::string output = "Keyboard Shortcuts:\n\n";
@@ -230,16 +233,17 @@ private:
     /// Format usage examples
     [[nodiscard]] static std::string format_examples() {
         static constexpr std::array<CommandExample, 10> examples = {{
-            {"/commit",                    "Generate commit message from staged changes"},
-            {"/commit --all",              "Stage all changes and generate commit"},
-            {"/commit -m \"fix: typo\"",   "Commit with a manual message"},
-            {"/review",                    "Review all uncommitted changes"},
-            {"/review --branch main",      "Review changes vs main branch"},
+            {"/commit", "Generate commit message from staged changes"},
+            {"/commit --all", "Stage all changes and generate commit"},
+            {"/commit -m \"fix: typo\"", "Commit with a manual message"},
+            {"/review", "Review all uncommitted changes"},
+            {"/review --branch main", "Review changes vs main branch"},
             {"/config set model <model-id>", "Change model"},
-            {"/compact --dry-run",         "Preview compaction without applying"},
-            {"/mcp add filesystem npx -y @modelcontextprotocol/server-filesystem", "Add an MCP server"},
-            {"/doctor",                    "Run system diagnostics"},
-            {"/clear --reset",             "Clear screen and reset conversation"},
+            {"/compact --dry-run", "Preview compaction without applying"},
+            {"/mcp add filesystem npx -y @modelcontextprotocol/server-filesystem",
+             "Add an MCP server"},
+            {"/doctor", "Run system diagnostics"},
+            {"/clear --reset", "Clear screen and reset conversation"},
         }};
 
         std::string output = "Usage Examples:\n\n";
@@ -262,4 +266,4 @@ private:
     }
 };
 
-} // namespace loom::commands
+}  // namespace loom::commands

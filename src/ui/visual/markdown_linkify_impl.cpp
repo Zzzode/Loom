@@ -12,8 +12,7 @@ import std;
 namespace loom::ui {
 namespace detail {
 
-[[nodiscard]] std::vector<TextSegment> linkify_issue_references(
-    std::string_view text) {
+[[nodiscard]] std::vector<TextSegment> linkify_issue_references(std::string_view text) {
 
     std::vector<TextSegment> result;
     std::string buffer;
@@ -40,14 +39,14 @@ namespace detail {
 
         // Try to parse owner/repo#NNN starting from the '#'.
         // Walk backwards to find the repo segment.
-        // The pattern requires: [prefix_not_word_dot_slash_dash] [A-Za-z0-9][\w-]* / [A-Za-z0-9][\w.-]* # digits
+        // The pattern requires: [prefix_not_word_dot_slash_dash] [A-Za-z0-9][\w-]* /
+        // [A-Za-z0-9][\w.-]* # digits
         //
         // Since we're at '#', scan forward for the digits first, then
         // backward for the repo.
         std::size_t num_start = hash_pos + 1;
         std::size_t num_end = num_start;
-        while (num_end < text.size() &&
-               std::isdigit(static_cast<unsigned char>(text[num_end]))) {
+        while (num_end < text.size() && std::isdigit(static_cast<unsigned char>(text[num_end]))) {
             ++num_end;
         }
         std::size_t num_len = num_end - num_start;
@@ -58,9 +57,9 @@ namespace detail {
             i = hash_pos + 1;
             continue;
         }
-        bool word_boundary = (num_end == text.size()) ||
-            (!std::isalnum(static_cast<unsigned char>(text[num_end])) &&
-             text[num_end] != '_');
+        bool word_boundary =
+            (num_end == text.size()) ||
+            (!std::isalnum(static_cast<unsigned char>(text[num_end])) && text[num_end] != '_');
         if (!word_boundary) {
             buffer += '#';
             i = hash_pos + 1;
@@ -75,8 +74,7 @@ namespace detail {
         std::size_t p = repo_end;
         while (p > 0) {
             char c = text[p - 1];
-            if (std::isalnum(static_cast<unsigned char>(c)) ||
-                c == '.' || c == '-' || c == '_') {
+            if (std::isalnum(static_cast<unsigned char>(c)) || c == '.' || c == '-' || c == '_') {
                 --p;
             } else {
                 break;
@@ -84,8 +82,7 @@ namespace detail {
         }
         // p now points to the start of the repo segment (after '/').
         // But we need at least one alphanumeric start char for the repo.
-        if (p == repo_end ||
-            !std::isalnum(static_cast<unsigned char>(text[p]))) {
+        if (p == repo_end || !std::isalnum(static_cast<unsigned char>(text[p]))) {
             buffer += '#';
             i = hash_pos + 1;
             continue;
@@ -104,16 +101,14 @@ namespace detail {
         std::size_t o = owner_end;
         while (o > 0) {
             char c = text[o - 1];
-            if (std::isalnum(static_cast<unsigned char>(c)) ||
-                c == '-' || c == '_') {
+            if (std::isalnum(static_cast<unsigned char>(c)) || c == '-' || c == '_') {
                 --o;
             } else {
                 break;
             }
         }
         // Owner must start with alphanumeric.
-        if (o == owner_end ||
-            !std::isalnum(static_cast<unsigned char>(text[o]))) {
+        if (o == owner_end || !std::isalnum(static_cast<unsigned char>(text[o]))) {
             buffer += '#';
             i = hash_pos + 1;
             continue;
@@ -124,9 +119,8 @@ namespace detail {
         bool prefix_ok = (o == 0);
         if (!prefix_ok) {
             char prev = text[o - 1];
-            prefix_ok = !std::isalnum(static_cast<unsigned char>(prev)) &&
-                        prev != '_' && prev != '.' &&
-                        prev != '/' && prev != '-';
+            prefix_ok = !std::isalnum(static_cast<unsigned char>(prev)) && prev != '_' &&
+                        prev != '.' && prev != '/' && prev != '-';
         }
         if (!prefix_ok) {
             buffer += '#';
@@ -156,10 +150,8 @@ namespace detail {
 
         // Build the hyperlink segment.
         std::string repo_str(text.substr(o, num_end - o));
-        std::string url = "https://github.com/" +
-                          std::string(text.substr(o, slash_pos - o)) +
-                          "/issues/" +
-                          std::string(text.substr(num_start, num_len));
+        std::string url = "https://github.com/" + std::string(text.substr(o, slash_pos - o)) +
+                          "/issues/" + std::string(text.substr(num_start, num_len));
 
         result.push_back({std::move(repo_str), std::move(url)});
 
@@ -169,5 +161,5 @@ namespace detail {
     flush_buffer();
     return result;
 }
-} // namespace detail
-} // namespace loom::ui
+}  // namespace detail
+}  // namespace loom::ui

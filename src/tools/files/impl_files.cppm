@@ -12,17 +12,18 @@
 ///     max_bytes_per_file so deep trees (/proc, node_modules) stay bounded.
 module;
 
-#include <unistd.h>
-#include <cstdio>
-#include <cstring>
-#include <cstdint>
-#include <climits>
-#include <cctype>
-#include <sys/stat.h>
 #include <fcntl.h>
 #include <fnmatch.h>
+#include <sys/stat.h>
+#include <unistd.h>
+
+#include <cctype>
 #include <cerrno>
+#include <climits>
 #include <cstddef>
+#include <cstdint>
+#include <cstdio>
+#include <cstring>
 
 export module loom.tools.files.impl;
 
@@ -37,18 +38,18 @@ namespace fs = std::filesystem;
 // --------------------------------------------------------------------------
 
 struct ReadOptions {
-    std::string           path;
+    std::string path;
     std::optional<size_t> max_bytes;
-    std::optional<int>    offset_line; // 1-based; nullopt = line 1
-    std::optional<int>    limit_lines;
-    bool                  binary = false;
+    std::optional<int> offset_line;  // 1-based; nullopt = line 1
+    std::optional<int> limit_lines;
+    bool binary = false;
 };
 
 struct ReadResult {
-    bool        ok = false;
+    bool ok = false;
     std::string content;
-    size_t      bytes_read = 0;
-    int         lines_read = 0;
+    size_t bytes_read = 0;
+    int lines_read = 0;
     std::string error;
 };
 
@@ -56,7 +57,10 @@ struct ReadResult {
     ReadResult r;
     std::error_code ec;
     auto file_size = fs::file_size(opts.path, ec);
-    if (ec) { r.error = "stat failed: " + ec.message(); return r; }
+    if (ec) {
+        r.error = "stat failed: " + ec.message();
+        return r;
+    }
 
     size_t to_read = static_cast<size_t>(file_size);
     if (opts.max_bytes.has_value() && *opts.max_bytes < to_read) {
@@ -66,7 +70,10 @@ struct ReadResult {
     // Binary gate: read first chunk (up to 8KB), check for NUL when
     // opts.binary==false.  If rejected we return an error immediately.
     std::ifstream in(opts.path, std::ios::binary);
-    if (!in) { r.error = "open failed for read"; return r; }
+    if (!in) {
+        r.error = "open failed for read";
+        return r;
+    }
 
     // Stream into content respecting to_read.
     std::string raw;
@@ -90,10 +97,10 @@ struct ReadResult {
     const int off = opts.offset_line.value_or(1);
     if (opts.offset_line.has_value() || opts.limit_lines.has_value()) {
         std::string out;
-        int         line_no   = 0;
-        int         included  = 0;
-        const int   limit     = opts.limit_lines.value_or(INT32_MAX);
-        size_t      start     = 0;
+        int line_no = 0;
+        int included = 0;
+        const int limit = opts.limit_lines.value_or(INT32_MAX);
+        size_t start = 0;
         for (size_t i = 0; i < raw.size(); ++i) {
             if (raw[i] == '\n') {
                 ++line_no;
@@ -121,7 +128,8 @@ struct ReadResult {
         r.content = std::move(raw);
         // Count lines for convenience.
         int cnt = 0;
-        for (char c : r.content) if (c == '\n') ++cnt;
+        for (char c : r.content)
+            if (c == '\n') ++cnt;
         if (!r.content.empty() && r.content.back() != '\n') ++cnt;
         r.lines_read = cnt;
     }
@@ -139,15 +147,15 @@ enum class WriteMode { Overwrite, Append, ExclusiveNew };
 struct WriteOptions {
     std::string path;
     std::string content;
-    WriteMode   mode = WriteMode::Overwrite;
-    bool        make_parent_dirs = true;
-    int         mode_bits = 0644;
+    WriteMode mode = WriteMode::Overwrite;
+    bool make_parent_dirs = true;
+    int mode_bits = 0644;
 };
 
 struct WriteResult {
-    bool     ok = false;
+    bool ok = false;
     uint64_t bytes_written = 0;
-    bool     created_new = false;
+    bool created_new = false;
     std::string error;
 };
 
@@ -159,7 +167,10 @@ struct WriteResult {
         fs::path p{opts.path};
         if (p.has_parent_path()) {
             fs::create_directories(p.parent_path(), ec);
-            if (ec) { r.error = "mkdirs failed: " + ec.message(); return r; }
+            if (ec) {
+                r.error = "mkdirs failed: " + ec.message();
+                return r;
+            }
         }
     }
 
@@ -168,15 +179,14 @@ struct WriteResult {
     (void)ec;
 
     if (opts.mode == WriteMode::ExclusiveNew) {
-        int fd = ::open(opts.path.c_str(),
-                        O_WRONLY | O_CREAT | O_EXCL,
+        int fd = ::open(opts.path.c_str(), O_WRONLY | O_CREAT | O_EXCL,
                         static_cast<mode_t>(opts.mode_bits));
         if (fd < 0) {
             r.error = std::string{"open(O_EXCL) failed: "} + std::strerror(errno);
             return r;
         }
         const char* data = opts.content.data();
-        size_t      left = opts.content.size();
+        size_t left = opts.content.size();
         while (left > 0) {
             ssize_t w = ::write(fd, data, left);
             if (w < 0) {
@@ -188,25 +198,36 @@ struct WriteResult {
             data += w;
             left -= static_cast<size_t>(w);
         }
-        if (::close(fd) != 0) { r.error = std::strerror(errno); return r; }
+        if (::close(fd) != 0) {
+            r.error = std::strerror(errno);
+            return r;
+        }
         r.bytes_written = opts.content.size();
-        r.created_new   = true;
+        r.created_new = true;
         r.ok = true;
         return r;
     }
 
     auto fmode = std::ios::binary;
-    if (opts.mode == WriteMode::Overwrite) fmode |= std::ios::out | std::ios::trunc;
-    else                                   fmode |= std::ios::out | std::ios::app;
+    if (opts.mode == WriteMode::Overwrite)
+        fmode |= std::ios::out | std::ios::trunc;
+    else
+        fmode |= std::ios::out | std::ios::app;
 
     std::ofstream ofs(opts.path, fmode);
-    if (!ofs) { r.error = "open failed for write"; return r; }
+    if (!ofs) {
+        r.error = "open failed for write";
+        return r;
+    }
     ofs.write(opts.content.data(), static_cast<std::streamsize>(opts.content.size()));
     ofs.flush();
-    if (!ofs) { r.error = "ostream write failed"; return r; }
+    if (!ofs) {
+        r.error = "ostream write failed";
+        return r;
+    }
     ofs.close();
     r.bytes_written = opts.content.size();
-    r.created_new   = !existed;
+    r.created_new = !existed;
     r.ok = true;
     return r;
 }
@@ -219,26 +240,32 @@ struct EditOptions {
     std::string path;
     std::string old_string;
     std::string new_string;
-    bool        replace_all = false;
-    bool        dry_run = false;
+    bool replace_all = false;
+    bool dry_run = false;
 };
 
 struct EditResult {
-    bool        ok = false;
-    int         replacements = 0;
+    bool ok = false;
+    int replacements = 0;
     std::string preview;
     std::string error;
 };
 
 [[nodiscard]] inline EditResult EditFile(EditOptions opts) {
     EditResult r;
-    if (opts.old_string.empty()) { r.error = "old_string must be non-empty"; return r; }
+    if (opts.old_string.empty()) {
+        r.error = "old_string must be non-empty";
+        return r;
+    }
 
     // 1. Read entire file (respecting the binary gate like ReadFile).
     ReadOptions ro;
     ro.path = opts.path;
     auto rr = ReadFile(std::move(ro));
-    if (!rr.ok) { r.error = std::move(rr.error); return r; }
+    if (!rr.ok) {
+        r.error = std::move(rr.error);
+        return r;
+    }
 
     const std::string& src = rr.content;
     const std::string& needle = opts.old_string;
@@ -254,7 +281,10 @@ struct EditResult {
         if (!opts.replace_all && match_positions.size() > 1) break;
     }
 
-    if (match_positions.empty()) { r.error = "old_string not found"; return r; }
+    if (match_positions.empty()) {
+        r.error = "old_string not found";
+        return r;
+    }
     if (!opts.replace_all && match_positions.size() != 1) {
         r.error = "expected exactly 1 match, found " + std::to_string(match_positions.size());
         return r;
@@ -262,10 +292,10 @@ struct EditResult {
 
     // 3. Build final content.
     std::string final_str;
-    final_str.reserve(src.size() + match_positions.size() *
-                      (opts.new_string.size() > needle.size()
-                           ? (opts.new_string.size() - needle.size())
-                           : 0));
+    final_str.reserve(src.size() +
+                      match_positions.size() * (opts.new_string.size() > needle.size()
+                                                    ? (opts.new_string.size() - needle.size())
+                                                    : 0));
     size_t last = 0;
     for (size_t pos : match_positions) {
         final_str.append(src, last, pos - last);
@@ -285,17 +315,20 @@ struct EditResult {
     fs::path p{opts.path};
     std::string tmp_path = opts.path + ".edit-tmp";
     WriteOptions wo;
-    wo.path              = tmp_path;
-    wo.content           = std::move(final_str);
-    wo.mode              = WriteMode::Overwrite;
-    wo.make_parent_dirs  = false;
+    wo.path = tmp_path;
+    wo.content = std::move(final_str);
+    wo.mode = WriteMode::Overwrite;
+    wo.make_parent_dirs = false;
     // try to preserve original mode
     std::error_code ec;
     auto s = fs::status(opts.path, ec);
     wo.mode_bits = ec ? 0644 : static_cast<int>(s.permissions());
     if (wo.mode_bits < 0100) wo.mode_bits = 0644;
     auto wr = WriteFile(std::move(wo));
-    if (!wr.ok) { r.error = std::move(wr.error); return r; }
+    if (!wr.ok) {
+        r.error = std::move(wr.error);
+        return r;
+    }
 
     std::error_code ec2;
     fs::rename(tmp_path, opts.path, ec2);
@@ -315,22 +348,25 @@ struct EditResult {
 struct GlobOptions {
     std::string pattern;
     std::string base_dir;
-    int         max_results = 1000;
-    bool        include_dirs = false;
-    bool        follow_symlinks = false;
+    int max_results = 1000;
+    bool include_dirs = false;
+    bool follow_symlinks = false;
 };
 
 struct GlobResult {
     std::vector<std::string> matches;
-    int                      total_scanned = 0;
-    std::string              error;
+    int total_scanned = 0;
+    std::string error;
 };
 
 [[nodiscard]] inline GlobResult Glob(GlobOptions opts) {
     GlobResult r;
     fs::path base = opts.base_dir.empty() ? fs::current_path() : fs::path{opts.base_dir};
     std::error_code ec;
-    if (!fs::exists(base, ec)) { r.error = "base_dir does not exist"; return r; }
+    if (!fs::exists(base, ec)) {
+        r.error = "base_dir does not exist";
+        return r;
+    }
 
     auto match_pattern = [&](const fs::path& p) -> bool {
         std::string name = p.filename().string();
@@ -350,17 +386,23 @@ struct GlobResult {
     };
 
     try {
-        auto it_opts = opts.follow_symlinks
-            ? fs::directory_options::follow_directory_symlink
-            : fs::directory_options::none;
+        auto it_opts = opts.follow_symlinks ? fs::directory_options::follow_directory_symlink
+                                            : fs::directory_options::none;
         for (auto it = fs::recursive_directory_iterator(base, it_opts, ec);
              it != fs::recursive_directory_iterator(); it.increment(ec)) {
-            if (ec) { r.error = "walk error: " + ec.message(); ec.clear(); continue; }
+            if (ec) {
+                r.error = "walk error: " + ec.message();
+                ec.clear();
+                continue;
+            }
             if (static_cast<int>(r.matches.size()) >= opts.max_results) break;
             ++r.total_scanned;
             const auto& entry = *it;
             bool is_dir = entry.is_directory(ec);
-            if (ec) { ec.clear(); continue; }
+            if (ec) {
+                ec.clear();
+                continue;
+            }
             if (!opts.include_dirs && is_dir) continue;
             if (match_pattern(entry.path())) {
                 r.matches.push_back(entry.path().string());
@@ -379,25 +421,25 @@ struct GlobResult {
 struct GrepOptions {
     std::string pattern;
     std::string path;
-    bool        fixed_strings = false;
-    bool        case_sensitive = true;
-    bool        include_filename = true;
-    int         max_results = 200;
-    int         max_bytes_per_file = 2'000'000;
-    size_t      max_depth = 20;
+    bool fixed_strings = false;
+    bool case_sensitive = true;
+    bool include_filename = true;
+    int max_results = 200;
+    int max_bytes_per_file = 2'000'000;
+    size_t max_depth = 20;
 };
 
 struct GrepMatch {
     std::string file;
-    int         line_no = 0;
+    int line_no = 0;
     std::string line;
-    int         col_start = -1;
+    int col_start = -1;
 };
 
 struct GrepResult {
     std::vector<GrepMatch> matches;
-    int                    files_scanned = 0;
-    std::string            error;
+    int files_scanned = 0;
+    std::string error;
 };
 
 namespace detail {
@@ -409,9 +451,7 @@ inline bool looks_binary(std::string_view head) {
     return false;
 }
 
-inline void scan_text(std::string_view text,
-                      const std::string& file,
-                      const GrepOptions& opts,
+inline void scan_text(std::string_view text, const std::string& file, const GrepOptions& opts,
                       std::vector<GrepMatch>& out) {
     const std::string& pat = opts.pattern;
     if (pat.empty()) return;
@@ -432,8 +472,8 @@ inline void scan_text(std::string_view text,
     }
 
     // Iterate lines.
-    int         line_no = 0;
-    size_t      start   = 0;
+    int line_no = 0;
+    size_t start = 0;
     for (size_t i = 0; i <= text.size(); ++i) {
         const bool end_line = (i == text.size()) || (text[i] == '\n');
         if (!end_line) continue;
@@ -443,20 +483,26 @@ inline void scan_text(std::string_view text,
         if (!line.empty() && line.back() == '\r') line.remove_suffix(1);
 
         bool matched = false;
-        int  col     = -1;
+        int col = -1;
 
         if (opts.fixed_strings || !have_re) {
             // literal find, optional case-insensitive via lowercase copies.
             if (opts.case_sensitive) {
                 auto pos = line.find(pat);
-                if (pos != std::string_view::npos) { matched = true; col = static_cast<int>(pos) + 1; }
+                if (pos != std::string_view::npos) {
+                    matched = true;
+                    col = static_cast<int>(pos) + 1;
+                }
             } else {
                 std::string low_line{line};
                 std::string low_pat{pat};
                 std::transform(low_line.begin(), low_line.end(), low_line.begin(), ::tolower);
-                std::transform(low_pat.begin(),  low_pat.end(),  low_pat.begin(),  ::tolower);
+                std::transform(low_pat.begin(), low_pat.end(), low_pat.begin(), ::tolower);
                 auto pos = low_line.find(low_pat);
-                if (pos != std::string::npos) { matched = true; col = static_cast<int>(pos) + 1; }
+                if (pos != std::string::npos) {
+                    matched = true;
+                    col = static_cast<int>(pos) + 1;
+                }
             }
         } else {
             std::cmatch m;
@@ -470,8 +516,8 @@ inline void scan_text(std::string_view text,
         if (matched) {
             GrepMatch gm;
             if (opts.include_filename) gm.file = file;
-            gm.line_no   = line_no;
-            gm.line      = std::string{line};
+            gm.line_no = line_no;
+            gm.line = std::string{line};
             gm.col_start = col;
             out.push_back(std::move(gm));
             if (static_cast<int>(out.size()) >= opts.max_results) return;
@@ -480,24 +526,39 @@ inline void scan_text(std::string_view text,
     }
 }
 
-} // namespace detail
+}  // namespace detail
 
 [[nodiscard]] inline GrepResult Grep(GrepOptions opts) {
     GrepResult r;
     std::error_code ec;
     fs::path root{opts.path};
-    if (!fs::exists(root, ec)) { r.error = "path does not exist: " + opts.path; return r; }
+    if (!fs::exists(root, ec)) {
+        r.error = "path does not exist: " + opts.path;
+        return r;
+    }
 
     auto collect_files = [&](auto&& self, const fs::path& dir, size_t depth) -> void {
         if (depth > opts.max_depth) return;
         if (static_cast<int>(r.matches.size()) >= opts.max_results) return;
-        for (auto it = fs::directory_iterator(dir, fs::directory_options::skip_permission_denied, ec);
+        for (auto it =
+                 fs::directory_iterator(dir, fs::directory_options::skip_permission_denied, ec);
              it != fs::directory_iterator(); it.increment(ec)) {
-            if (ec) { ec.clear(); continue; }
+            if (ec) {
+                ec.clear();
+                continue;
+            }
             if (static_cast<int>(r.matches.size()) >= opts.max_results) return;
             const auto& entry = *it;
-            bool is_dir  = entry.is_directory(ec); if (ec) { ec.clear(); continue; }
-            bool is_file = entry.is_regular_file(ec); if (ec) { ec.clear(); continue; }
+            bool is_dir = entry.is_directory(ec);
+            if (ec) {
+                ec.clear();
+                continue;
+            }
+            bool is_file = entry.is_regular_file(ec);
+            if (ec) {
+                ec.clear();
+                continue;
+            }
             if (is_dir) {
                 self(self, entry.path(), depth + 1);
                 continue;
@@ -506,7 +567,10 @@ inline void scan_text(std::string_view text,
 
             // Size cap before we even read.
             auto sz = entry.file_size(ec);
-            if (ec) { ec.clear(); continue; }
+            if (ec) {
+                ec.clear();
+                continue;
+            }
             if (sz > static_cast<uintmax_t>(opts.max_bytes_per_file)) continue;
 
             std::ifstream in(entry.path(), std::ios::binary);
@@ -523,7 +587,10 @@ inline void scan_text(std::string_view text,
 
     auto process_file = [&](const fs::path& p) {
         auto sz = fs::file_size(p, ec);
-        if (ec) { r.error = "stat failed: " + ec.message(); return; }
+        if (ec) {
+            r.error = "stat failed: " + ec.message();
+            return;
+        }
         if (sz > static_cast<uintmax_t>(opts.max_bytes_per_file)) return;
         std::ifstream in(p, std::ios::binary);
         if (!in) return;
@@ -547,4 +614,4 @@ inline void scan_text(std::string_view text,
     return r;
 }
 
-} // namespace loom::tools::files::impl
+}  // namespace loom::tools::files::impl

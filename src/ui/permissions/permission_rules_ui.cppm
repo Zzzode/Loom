@@ -4,13 +4,13 @@
 ///        matching builder in loom::ui::permissions::rule_list.
 module;
 
-#include <cstddef>
-#include <cstdint>
-
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/event.hpp>
 #include <ftxui/dom/elements.hpp>
+
+#include <cstddef>
+#include <cstdint>
 
 export module loom.ui.permissions.permission_rules_ui;
 
@@ -25,9 +25,9 @@ import loom.ui.permissions.components;
 export namespace loom::ui::permissions {
 
 using namespace ftxui;
-namespace rl   = loom::ui::permissions::rule_list;
-namespace dt   = loom::ui::design::tokens;
-namespace pc   = loom::ui::permissions::components;
+namespace rl = loom::ui::permissions::rule_list;
+namespace dt = loom::ui::design::tokens;
+namespace pc = loom::ui::permissions::components;
 namespace peng = loom::utils::permissions_engine;
 
 // Panel model/callbacks and PermTab are owned by loom.ui.permissions.rule_list
@@ -38,16 +38,22 @@ using rl::PermissionsPanelModel;
 using rl::PermTab;
 
 inline constexpr std::array<const char*, 4> kPermTabNames = {
-    "All Rules", "Recent Denials", "Workspaces", "Create Rule",
+    "All Rules",
+    "Recent Denials",
+    "Workspaces",
+    "Create Rule",
 };
 inline constexpr std::array<dt::Role, 4> kPermTabRoles = {
-    dt::Role::Permission, dt::Role::Danger, dt::Role::Info, dt::Role::Success,
+    dt::Role::Permission,
+    dt::Role::Danger,
+    dt::Role::Info,
+    dt::Role::Success,
 };
 inline constexpr std::array<const char*, 4> kPermTabIcons = {
-    "#",      // shield placeholder
-    "!",      // warning placeholder
-    "F",      // flag placeholder
-    "+",      // plus
+    "#",  // shield placeholder
+    "!",  // warning placeholder
+    "F",  // flag placeholder
+    "+",  // plus
 };
 
 // --------------------------------------------------------------------------
@@ -57,16 +63,14 @@ inline constexpr std::array<const char*, 4> kPermTabIcons = {
 namespace detail {
 
 /// Render the 4-tab header with active-tab + count-badge styling.
-[[nodiscard]] inline Element RenderPermTabBar(PermTab active,
-                                              std::size_t denials_count,
-                                              std::size_t workspace_count)
-{
+[[nodiscard]] inline Element RenderPermTabBar(PermTab active, std::size_t denials_count,
+                                              std::size_t workspace_count) {
     Elements bits;
     for (std::size_t i = 0; i < kPermTabNames.size(); ++i) {
         const auto& pal = *loom::ui::design::theme::current_theme().palette;
         const bool sel = (i == static_cast<std::size_t>(active));
-        const Color accent = dt::token_by_role(
-            *loom::ui::design::theme::current_theme().palette, kPermTabRoles[i]);
+        const Color accent =
+            dt::token_by_role(*loom::ui::design::theme::current_theme().palette, kPermTabRoles[i]);
 
         Elements label_parts = {
             text(std::string{kPermTabIcons[i]}) | color(accent),
@@ -76,29 +80,24 @@ namespace detail {
 
         if (i == 1 && denials_count > 0) {
             label_parts.push_back(text(" "));
-            label_parts.push_back(text(std::format("{}", denials_count))
-                                  | bold | color(pal.inverse_text)
-                                  | bgcolor(pal.danger));
+            label_parts.push_back(text(std::format("{}", denials_count)) | bold |
+                                  color(pal.inverse_text) | bgcolor(pal.danger));
         }
         if (i == 2 && workspace_count > 0) {
             label_parts.push_back(text(" "));
-            label_parts.push_back(text(std::format("{}", workspace_count))
-                                  | dim | color(pal.info));
+            label_parts.push_back(text(std::format("{}", workspace_count)) | dim | color(pal.info));
         }
 
         auto label = hbox(std::move(label_parts));
-        auto cell = hbox({text(" "), std::move(label), text(" ")})
-                  | (sel ? (bold | color(accent) |
-                            bgcolor(pal.surface_tint_5) | underlined)
-                         : dim);
+        auto cell = hbox({text(" "), std::move(label), text(" ")}) |
+                    (sel ? (bold | color(accent) | bgcolor(pal.surface_tint_5) | underlined) : dim);
         bits.push_back(std::move(cell));
-        if (i + 1 < kPermTabNames.size())
-            bits.push_back(text("|") | dim);
+        if (i + 1 < kPermTabNames.size()) bits.push_back(text("|") | dim);
     }
     return hbox(std::move(bits));
 }
 
-} // namespace detail
+}  // namespace detail
 
 // --------------------------------------------------------------------------
 // Top-level public factory
@@ -107,70 +106,66 @@ namespace detail {
 /// Build the 4-tab permissions panel.  Delegates per-tab content to
 /// rule_list::BuildPermissionsTabs; this wrapper owns only the tab bar UI,
 /// the active-tab state cell, and tab-navigation event handling.
-[[nodiscard]] inline Component BuildPermissionsPanel(
-    PermissionsPanelModel model,
-    PermissionsPanelCallbacks cbs)
-{
+[[nodiscard]] inline Component BuildPermissionsPanel(PermissionsPanelModel model,
+                                                     PermissionsPanelCallbacks cbs) {
     auto active = std::make_shared<PermTab>(PermTab::AllRules);
 
     rl::PermissionsTabsState tabs_state;
-    tabs_state.model      = std::move(model);
-    tabs_state.callbacks  = std::move(cbs);
+    tabs_state.model = std::move(model);
+    tabs_state.callbacks = std::move(cbs);
 
     auto inner = rl::BuildPermissionsTabs(tabs_state, active);
 
-    return Renderer(inner, [active, inner] {
-        const auto& pal = *loom::ui::design::theme::current_theme().palette;
-        const auto denials_vec =
-            peng::recent_denials(50);
-        const auto workspaces_vec =
-            peng::workspace_directories();
-        const std::size_t dc = denials_vec.size();
-        const std::size_t wc = workspaces_vec.size();
+    return Renderer(inner,
+                    [active, inner] {
+                        const auto& pal = *loom::ui::design::theme::current_theme().palette;
+                        const auto denials_vec = peng::recent_denials(50);
+                        const auto workspaces_vec = peng::workspace_directories();
+                        const std::size_t dc = denials_vec.size();
+                        const std::size_t wc = workspaces_vec.size();
 
-        auto header = vbox({
-            hbox({
-                text(" Permission Rules ")
-                    | bold | color(pal.primary),
-                filler(),
-                text("[1/2/3/4] jump  [Left/Right] switch tab  [Esc] close")
-                    | dim,
-            }),
-            pc::ThinDivider(),
-            detail::RenderPermTabBar(*active, dc, wc),
-        });
+                        auto header = vbox({
+                            hbox({
+                                text(" Permission Rules ") | bold | color(pal.primary),
+                                filler(),
+                                text("[1/2/3/4] jump  [Left/Right] switch tab  [Esc] close") | dim,
+                            }),
+                            pc::ThinDivider(),
+                            detail::RenderPermTabBar(*active, dc, wc),
+                        });
 
-        return vbox({
-            header,
-            pc::ThinDivider(),
-            inner->Render() | yflex_grow,
-        }) | yflex_grow | borderLight | color(pal.primary);
-    }) | CatchEvent([active](Event e) -> bool {
-        // Global tab-switching keys.
-        if (e == Event::ArrowRight || e == Event::Character('l')
-                                   || e == Event::Character('L')) {
-            *active = static_cast<PermTab>(
-                (static_cast<std::size_t>(*active) + 1) % kPermTabNames.size());
-            return true;
-        }
-        if (e == Event::ArrowLeft || e == Event::Character('h')
-                                  || e == Event::Character('H')) {
-            *active = static_cast<PermTab>(
-                (static_cast<std::size_t>(*active) + kPermTabNames.size() - 1)
-                % kPermTabNames.size());
-            return true;
-        }
-        // Hotkeys: 1/2/3/4 jump directly.
-        if (e.is_character()) {
-            const char c = e.character().front();
-            if (c >= '1' && c <= '4') {
-                *active = static_cast<PermTab>(
-                    static_cast<std::size_t>(c - '1'));
-                return true;
-            }
-        }
-        return false;
-    });
+                        return vbox({
+                                   header,
+                                   pc::ThinDivider(),
+                                   inner->Render() | yflex_grow,
+                               }) |
+                               yflex_grow | borderLight | color(pal.primary);
+                    }) |
+           CatchEvent([active](Event e) -> bool {
+               // Global tab-switching keys.
+               if (e == Event::ArrowRight || e == Event::Character('l') ||
+                   e == Event::Character('L')) {
+                   *active = static_cast<PermTab>((static_cast<std::size_t>(*active) + 1) %
+                                                  kPermTabNames.size());
+                   return true;
+               }
+               if (e == Event::ArrowLeft || e == Event::Character('h') ||
+                   e == Event::Character('H')) {
+                   *active = static_cast<PermTab>(
+                       (static_cast<std::size_t>(*active) + kPermTabNames.size() - 1) %
+                       kPermTabNames.size());
+                   return true;
+               }
+               // Hotkeys: 1/2/3/4 jump directly.
+               if (e.is_character()) {
+                   const char c = e.character().front();
+                   if (c >= '1' && c <= '4') {
+                       *active = static_cast<PermTab>(static_cast<std::size_t>(c - '1'));
+                       return true;
+                   }
+               }
+               return false;
+           });
 }
 
-} // namespace loom::ui::permissions
+}  // namespace loom::ui::permissions

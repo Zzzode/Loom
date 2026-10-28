@@ -23,13 +23,13 @@ export namespace loom::vim {
 
 /// Canonical vim editing mode.
 enum class VimMode : std::uint8_t {
-    Normal,      ///< Navigation / command mode.
-    Insert,      ///< Text insertion mode.  Default on focus.
-    Visual,      ///< Character-wise visual selection (v).
-    VisualLine,  ///< Line-wise visual selection (V).
-    VisualBlock, ///< Block-wise visual selection (Ctrl+V).
-    Replace,     ///< Single-character replace mode (R).
-    Command,     ///< Ex command-line mode (:).
+    Normal,       ///< Navigation / command mode.
+    Insert,       ///< Text insertion mode.  Default on focus.
+    Visual,       ///< Character-wise visual selection (v).
+    VisualLine,   ///< Line-wise visual selection (V).
+    VisualBlock,  ///< Block-wise visual selection (Ctrl+V).
+    Replace,      ///< Single-character replace mode (R).
+    Command,      ///< Ex command-line mode (:).
 };
 
 /// Returns true for modes where typed characters are inserted into text
@@ -48,13 +48,20 @@ enum class VimMode : std::uint8_t {
 /// Display label for the mode indicator (e.g. "-- NORMAL --", "-- INSERT --").
 [[nodiscard]] constexpr std::string_view vim_mode_label(VimMode m) noexcept {
     switch (m) {
-        case VimMode::Normal:      return "-- NORMAL --";
-        case VimMode::Insert:      return "-- INSERT --";
-        case VimMode::Visual:      return "-- VISUAL --";
-        case VimMode::VisualLine:  return "-- VISUAL LINE --";
-        case VimMode::VisualBlock: return "-- VISUAL BLOCK --";
-        case VimMode::Replace:     return "-- REPLACE --";
-        case VimMode::Command:     return ":";
+    case VimMode::Normal:
+        return "-- NORMAL --";
+    case VimMode::Insert:
+        return "-- INSERT --";
+    case VimMode::Visual:
+        return "-- VISUAL --";
+    case VimMode::VisualLine:
+        return "-- VISUAL LINE --";
+    case VimMode::VisualBlock:
+        return "-- VISUAL BLOCK --";
+    case VimMode::Replace:
+        return "-- REPLACE --";
+    case VimMode::Command:
+        return ":";
     }
     return "-- ??? --";
 }
@@ -62,15 +69,22 @@ enum class VimMode : std::uint8_t {
 /// Short mode name for badges / compact display (e.g. "NORMAL", "INSERT").
 [[nodiscard]] constexpr std::string_view vim_mode_short_label(VimMode m) noexcept {
     switch (m) {
-        case VimMode::Normal:      return "NORMAL";
-        case VimMode::Insert:      return "INSERT";
-        case VimMode::Visual:      return "VISUAL";
-        case VimMode::VisualLine:  return "V-LINE";
-        case VimMode::VisualBlock: return "V-BLOCK";
-        case VimMode::Replace:     return "REPLACE";
-        case VimMode::Command:     return "COMMAND";
+    case VimMode::Normal:
+        return "NORMAL";
+    case VimMode::Insert:
+        return "INSERT";
+    case VimMode::Visual:
+        return "VISUAL";
+    case VimMode::VisualLine:
+        return "V-LINE";
+    case VimMode::VisualBlock:
+        return "V-BLOCK";
+    case VimMode::Replace:
+        return "REPLACE";
+    case VimMode::Command:
+        return "COMMAND";
     }
     return "UNKNOWN";
 }
 
-} // namespace loom::vim
+}  // namespace loom::vim

@@ -4,7 +4,6 @@
 /// mirroring the default prompt of the TypeScript /init command.
 module;
 
-
 export module loom.commands.init;
 
 import std;
@@ -19,7 +18,8 @@ using namespace loom::core;
 /// Codebase-analysis prompt injected into the conversation so the assistant
 /// generates (or updates) a LOOM.md for the current repository. Mirrors the
 /// default prompt used by the TypeScript /init command.
-inline const std::string kInitPrompt = R"INITPROMPT(Please analyze this codebase and create a LOOM.md file, which will be given to future instances of Loom to operate in this repository.
+inline const std::string kInitPrompt =
+    R"INITPROMPT(Please analyze this codebase and create a LOOM.md file, which will be given to future instances of Loom to operate in this repository.
 
 What to add:
 1. Commands that will be commonly used, such as how to build, lint, and run tests. Include the necessary commands to develop in this codebase, such as how to run a single test.
@@ -57,17 +57,13 @@ public:
         };
     }
 
-    [[nodiscard]] static VoidResult validate(const CommandContext&) {
-        return {};
-    }
+    [[nodiscard]] static VoidResult validate(const CommandContext&) { return {}; }
 
     [[nodiscard]] static Result<CommandResult> execute(const CommandContext&) {
         return CommandResult::inject(kInitPrompt);
     }
 
-    [[nodiscard]] static std::vector<std::string> complete(std::string_view) {
-        return {};
-    }
+    [[nodiscard]] static std::vector<std::string> complete(std::string_view) { return {}; }
 };
 
-} // namespace loom::commands
+}  // namespace loom::commands

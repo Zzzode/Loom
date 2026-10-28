@@ -3,7 +3,6 @@
 /// Asks a quick side question without interrupting the main conversation.
 module;
 
-
 export module loom.commands.btw;
 
 import std;
@@ -25,9 +24,13 @@ public:
         return CommandDefinition{
             .name = "btw",
             .description = "Ask a quick side question without interrupting the main conversation",
-            .args = {
-                CommandArg{.name = "<question>", .description = "Your question", .type = ArgType::Text, .required = true},
-            },
+            .args =
+                {
+                    CommandArg{.name = "<question>",
+                               .description = "Your question",
+                               .type = ArgType::Text,
+                               .required = true},
+                },
             .category = "conversation",
         };
     }
@@ -35,10 +38,8 @@ public:
     [[nodiscard]] VoidResult validate(const CommandContext& ctx) {
         auto opts = parse_options(ctx.args);
         if (!opts.question || opts.question->empty()) {
-            return std::unexpected(Error::make(
-                ErrorCode::InvalidRequest,
-                "Please provide a question: /btw <your question>"
-            ));
+            return std::unexpected(Error::make(ErrorCode::InvalidRequest,
+                                               "Please provide a question: /btw <your question>"));
         }
         return {};
     }
@@ -48,13 +49,11 @@ public:
         if (!opts.question) {
             return CommandResult::fail("Usage: /btw <your question>");
         }
-        
+
         return CommandResult::inject(std::format("Side question: {}", *opts.question));
     }
 
-    [[nodiscard]] std::vector<std::string> complete(std::string_view) {
-        return {};
-    }
+    [[nodiscard]] std::vector<std::string> complete(std::string_view) { return {}; }
 
 private:
     [[nodiscard]] static BtwOptions parse_options(std::span<const std::string> args) {
@@ -72,4 +71,4 @@ private:
     }
 };
 
-} // namespace loom::commands
+}  // namespace loom::commands

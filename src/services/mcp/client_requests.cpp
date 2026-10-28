@@ -178,7 +178,8 @@ McpResult<ListPromptsResult> McpClient::list_prompts() {
                                 if (arg_val.is_obj()) {
                                     McpPromptArgument arg;
                                     arg.name = std::string(arg_val.get("name").as_str());
-                                    arg.description = std::string(arg_val.get("description").as_str());
+                                    arg.description =
+                                        std::string(arg_val.get("description").as_str());
                                     arg.required = arg_val.get("required").as_bool();
                                     prompt.arguments.push_back(std::move(arg));
                                 }
@@ -195,4 +196,4 @@ McpResult<ListPromptsResult> McpClient::list_prompts() {
     return result;
 }
 
-} // namespace loom::services::mcp
+}  // namespace loom::services::mcp

@@ -41,17 +41,28 @@ enum class TaskType : std::uint8_t {
 /// Convert TaskType to string
 [[nodiscard]] constexpr std::string_view task_type_to_string(TaskType type) noexcept {
     switch (type) {
-        case TaskType::LocalBash: return "local_bash";
-        case TaskType::LocalAgent: return "local_agent";
-        case TaskType::RemoteAgent: return "remote_agent";
-        case TaskType::InProcessTeammate: return "in_process_teammate";
-        case TaskType::LocalWorkflow: return "local_workflow";
-        case TaskType::MonitorMcp: return "monitor_mcp";
-        case TaskType::Dream: return "dream";
-        case TaskType::Search: return "search";
-        case TaskType::GeneralPurpose: return "general_purpose";
-        case TaskType::Shell: return "shell";
-        case TaskType::Agent: return "agent";
+    case TaskType::LocalBash:
+        return "local_bash";
+    case TaskType::LocalAgent:
+        return "local_agent";
+    case TaskType::RemoteAgent:
+        return "remote_agent";
+    case TaskType::InProcessTeammate:
+        return "in_process_teammate";
+    case TaskType::LocalWorkflow:
+        return "local_workflow";
+    case TaskType::MonitorMcp:
+        return "monitor_mcp";
+    case TaskType::Dream:
+        return "dream";
+    case TaskType::Search:
+        return "search";
+    case TaskType::GeneralPurpose:
+        return "general_purpose";
+    case TaskType::Shell:
+        return "shell";
+    case TaskType::Agent:
+        return "agent";
     }
     return "unknown";
 }
@@ -69,10 +80,8 @@ enum class TaskStatus : std::uint8_t {
 
 /// Check if a task is in a terminal (completed) state
 [[nodiscard]] constexpr bool is_terminal_status(TaskStatus status) noexcept {
-    return status == TaskStatus::Completed ||
-           status == TaskStatus::Failed ||
-           status == TaskStatus::Killed ||
-           status == TaskStatus::Cancelled ||
+    return status == TaskStatus::Completed || status == TaskStatus::Failed ||
+           status == TaskStatus::Killed || status == TaskStatus::Cancelled ||
            status == TaskStatus::TimedOut;
 }
 
@@ -90,19 +99,35 @@ struct TaskId {
     [[nodiscard]] static TaskId generate(TaskType type) {
         static thread_local std::mt19937_64 rng{std::random_device{}()};
         std::uniform_int_distribution<std::uint64_t> dist;
-        
+
         std::string prefix;
         switch (type) {
-            case TaskType::LocalBash: prefix = "b"; break;
-            case TaskType::LocalAgent: prefix = "a"; break;
-            case TaskType::RemoteAgent: prefix = "r"; break;
-            case TaskType::InProcessTeammate: prefix = "t"; break;
-            case TaskType::LocalWorkflow: prefix = "w"; break;
-            case TaskType::MonitorMcp: prefix = "m"; break;
-            case TaskType::Dream: prefix = "d"; break;
-            default: prefix = "x"; break;
+        case TaskType::LocalBash:
+            prefix = "b";
+            break;
+        case TaskType::LocalAgent:
+            prefix = "a";
+            break;
+        case TaskType::RemoteAgent:
+            prefix = "r";
+            break;
+        case TaskType::InProcessTeammate:
+            prefix = "t";
+            break;
+        case TaskType::LocalWorkflow:
+            prefix = "w";
+            break;
+        case TaskType::MonitorMcp:
+            prefix = "m";
+            break;
+        case TaskType::Dream:
+            prefix = "d";
+            break;
+        default:
+            prefix = "x";
+            break;
         }
-        
+
         std::string id = prefix;
         for (int i = 0; i < 8; ++i) {
             static constexpr char chars[] = "0123456789abcdefghijklmnopqrstuvwxyz";
@@ -123,7 +148,7 @@ struct LocalBashInput {
     std::optional<std::chrono::milliseconds> timeout;
     std::optional<std::string> tool_use_id;
     std::optional<std::string> agent_id;
-    std::string kind = "bash"; // "bash" or "monitor"
+    std::string kind = "bash";  // "bash" or "monitor"
 };
 
 // ============================================================
@@ -167,16 +192,16 @@ public:
     [[nodiscard]] virtual TaskType type() const = 0;
     [[nodiscard]] virtual const TaskStateBase& state() const = 0;
     [[nodiscard]] virtual TaskStateBase& state_mut() = 0;
-    
+
     /// Start task execution (async)
     virtual void start() = 0;
-    
+
     /// Wait for task completion
     [[nodiscard]] virtual Result<TaskResult> wait() = 0;
-    
+
     /// Kill a running task
     virtual void kill() = 0;
-    
+
     /// Check if task is still running
     [[nodiscard]] virtual bool is_running() const = 0;
 };
@@ -211,8 +236,11 @@ public:
     }
 
     [[nodiscard]] std::string name() const override { return "bash_task"; }
+
     [[nodiscard]] TaskType type() const override { return TaskType::LocalBash; }
+
     [[nodiscard]] const TaskStateBase& state() const override { return state_; }
+
     [[nodiscard]] TaskStateBase& state_mut() override { return state_; }
 
     void start() override {
@@ -228,8 +256,10 @@ public:
         worker_ = std::jthread([this](std::stop_token stop) {
             loom::utils::bash::ShellSessionConfig config;
             if (input_.timeout) {
-                const auto seconds = std::chrono::duration_cast<std::chrono::seconds>(*input_.timeout);
-                config.timeout = seconds > std::chrono::seconds::zero() ? seconds : std::chrono::seconds{1};
+                const auto seconds =
+                    std::chrono::duration_cast<std::chrono::seconds>(*input_.timeout);
+                config.timeout =
+                    seconds > std::chrono::seconds::zero() ? seconds : std::chrono::seconds{1};
             }
 
             auto execution = loom::utils::bash::execute_command(input_.command, config);
@@ -281,7 +311,8 @@ public:
                 status_.store(TaskStatus::Killed);
                 state_.status = TaskStatus::Killed;
             } else {
-                const auto completed = result_->success ? TaskStatus::Completed : TaskStatus::Failed;
+                const auto completed =
+                    result_->success ? TaskStatus::Completed : TaskStatus::Failed;
                 status_.store(completed);
                 state_.status = completed;
             }
@@ -298,7 +329,8 @@ public:
         if (result_) {
             return *result_;
         }
-        return std::unexpected(Error::make(ErrorCode::InternalError, "Task did not produce a result"));
+        return std::unexpected(
+            Error::make(ErrorCode::InternalError, "Task did not produce a result"));
     }
 
     void kill() override {
@@ -314,9 +346,7 @@ public:
         }
     }
 
-    [[nodiscard]] bool is_running() const override {
-        return status_.load() == TaskStatus::Running;
-    }
+    [[nodiscard]] bool is_running() const override { return status_.load() == TaskStatus::Running; }
 };
 
 // ============================================================
@@ -360,8 +390,8 @@ public:
         std::lock_guard lock(mutex_);
         auto it = tasks_.find(id);
         if (it == tasks_.end()) {
-            return std::unexpected(Error::make(ErrorCode::SessionNotFound, 
-                std::format("Task '{}' not found", id)));
+            return std::unexpected(
+                Error::make(ErrorCode::SessionNotFound, std::format("Task '{}' not found", id)));
         }
         it->second->kill();
         return {};
@@ -372,7 +402,7 @@ public:
         std::lock_guard lock(mutex_);
         auto it = tasks_.find(id);
         if (it == tasks_.end()) return;
-        
+
         if (is_terminal_status(it->second->state().status)) {
             tasks_.erase(it);
         }
@@ -381,7 +411,7 @@ public:
     /// Clean up all completed/killed tasks
     void cleanup() {
         std::lock_guard lock(mutex_);
-        for (auto it = tasks_.begin(); it != tasks_.end(); ) {
+        for (auto it = tasks_.begin(); it != tasks_.end();) {
             if (is_terminal_status(it->second->state().status)) {
                 it = tasks_.erase(it);
             } else {
@@ -403,4 +433,4 @@ public:
     }
 };
 
-} // namespace loom::core
+}  // namespace loom::core

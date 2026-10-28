@@ -1,8 +1,8 @@
 module;
 
-#include <cstdint>
 #include <cctype>
 #include <cstddef>
+#include <cstdint>
 
 export module loom.crypto.uuid_utils;
 
@@ -16,8 +16,7 @@ namespace detail {
 inline std::mt19937_64& get_rng() {
     thread_local std::mt19937_64 rng(
         std::chrono::high_resolution_clock::now().time_since_epoch().count() ^
-        reinterpret_cast<uint64_t>(&rng)
-    );
+        reinterpret_cast<uint64_t>(&rng));
     return rng;
 }
 
@@ -28,7 +27,7 @@ inline void byte_to_hex(uint8_t byte, char* out) {
     out[1] = hex_chars[byte & 0x0F];
 }
 
-} // namespace detail
+}  // namespace detail
 
 // Generate a random UUID v4
 inline std::string generate_uuid_v4() {
@@ -67,8 +66,7 @@ inline std::string generate_uuid_v7() {
 
     // Get Unix timestamp in milliseconds
     auto now = std::chrono::system_clock::now();
-    auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(
-        now.time_since_epoch()).count();
+    auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
 
     std::array<uint8_t, 16> bytes{};
 
@@ -123,7 +121,8 @@ inline bool is_valid_uuid(std::string_view uuid) {
 
 // Generate a short alphanumeric ID
 inline std::string generate_short_id(size_t length = 8) {
-    static constexpr char chars[] = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    static constexpr char chars[] =
+        "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
     static constexpr size_t char_count = sizeof(chars) - 1;
 
     auto& rng = detail::get_rng();
@@ -137,4 +136,4 @@ inline std::string generate_short_id(size_t length = 8) {
     return result;
 }
 
-} // namespace loom::utils
+}  // namespace loom::utils

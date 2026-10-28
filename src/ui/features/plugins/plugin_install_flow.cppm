@@ -12,13 +12,13 @@
 /// edge).
 module;
 
-#include <cstdint>
-#include <cstddef>
-
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/event.hpp>
 #include <ftxui/dom/elements.hpp>
+
+#include <cstddef>
+#include <cstdint>
 
 export module loom.ui.features.plugins.plugin_install_flow;
 
@@ -46,10 +46,10 @@ namespace fdp = loom::ui::feature_dialog_protocol;
 // =========================================================================
 
 enum class InstallSource : unsigned char {
-    Marketplace,   // browse and pick
-    File,          // local .zip / directory / manifest
-    Url,           // https:// URL to a zip/manifest
-    GitRepo,       // git clone from repo URL
+    Marketplace,  // browse and pick
+    File,         // local .zip / directory / manifest
+    Url,          // https:// URL to a zip/manifest
+    GitRepo,      // git clone from repo URL
 };
 
 inline constexpr std::array<const char*, 4> k_source_names = {
@@ -61,12 +61,12 @@ inline constexpr std::array<const char*, 4> k_source_names = {
 
 struct SourceStepData {
     InstallSource source = InstallSource::Marketplace;
-    std::string   marketplace_id;      // when source == Marketplace
-    std::string   plugin_id;
-    std::string   file_path;           // when source == File
-    std::string   url;                 // when source == Url
-    std::string   git_repo;            // when source == GitRepo
-    std::string   git_ref;             // branch/tag/sha (optional)
+    std::string marketplace_id;  // when source == Marketplace
+    std::string plugin_id;
+    std::string file_path;  // when source == File
+    std::string url;        // when source == Url
+    std::string git_repo;   // when source == GitRepo
+    std::string git_ref;    // branch/tag/sha (optional)
 };
 
 // =========================================================================
@@ -74,18 +74,18 @@ struct SourceStepData {
 // =========================================================================
 
 struct ReviewStepData {
-    std::string          name;
-    std::string          version;
-    std::string          author;
-    std::string          description;
+    std::string name;
+    std::string version;
+    std::string author;
+    std::string description;
     std::optional<std::string> homepage;
     std::optional<std::string> license;
-    std::vector<std::string> permissions;    // e.g. "bash:read", "file:write"
-    std::vector<std::string> tools;          // tool names
-    std::vector<std::string> commands;       // slash commands
-    std::string          install_scope;      // "user" / "project" / "local"
-    std::string          size_str;
-    std::size_t          estimated_file_count = 0;
+    std::vector<std::string> permissions;  // e.g. "bash:read", "file:write"
+    std::vector<std::string> tools;        // tool names
+    std::vector<std::string> commands;     // slash commands
+    std::string install_scope;             // "user" / "project" / "local"
+    std::string size_str;
+    std::size_t estimated_file_count = 0;
 };
 
 // =========================================================================
@@ -93,13 +93,13 @@ struct ReviewStepData {
 // =========================================================================
 
 struct TrustStepData {
-    bool        is_verified = false;
-    bool        has_signature = true;
+    bool is_verified = false;
+    bool has_signature = true;
     std::string marketplace_domain;
-    std::vector<std::string> permissions;    // mirror of ReviewStepData
+    std::vector<std::string> permissions;  // mirror of ReviewStepData
     // Populated via C1: plugin_trust_text + plugin_ui_data::TrustWarningInfo
     ui::TrustWarningInfo warning;
-    bool        user_signed_trust = false;   // gate for Next button
+    bool user_signed_trust = false;  // gate for Next button
 };
 
 // =========================================================================
@@ -120,8 +120,8 @@ enum class InstallStage : unsigned char {
 
 struct InstallProgressData {
     InstallStage stage = InstallStage::Pending;
-    int          percent = 0;            // 0..100
-    std::string  stage_label;
+    int percent = 0;  // 0..100
+    std::string stage_label;
     std::vector<std::string> log_lines;  // last ~20 lines
     std::optional<std::string> error;
 };
@@ -131,7 +131,7 @@ struct InstallProgressData {
 // =========================================================================
 
 struct CompleteStepData {
-    bool        success = true;
+    bool success = true;
     std::string installed_id;
     std::string installed_version;
     std::string install_scope;
@@ -151,7 +151,7 @@ struct InstallFlowInputs {
     std::optional<std::string> preselected_marketplace;
 
     // Plugins available in the marketplace (for Step 1 Marketplace picker)
-    std::vector<std::pair<std::string, std::string>> marketplace_plugin_list; // (id, display_name)
+    std::vector<std::pair<std::string, std::string>> marketplace_plugin_list;  // (id, display_name)
 
     // Trust dialog — PluginDefinition + PluginCapabilities are passed
     // through the UI8 TrustDialog via MakePluginTrustDialog().  The wizard
@@ -159,11 +159,11 @@ struct InstallFlowInputs {
 
     // Callbacks
     std::function<void(const SourceStepData& source, ReviewStepData& out_review)> prepare_review;
-    std::function<void(const ReviewStepData&, TrustStepData& out_trust)>     prepare_trust;
-    std::function<void(const TrustStepData&)>     on_begin_install;   // start worker thread
-    std::function<bool(InstallProgressData& out)> poll_progress;      // call each frame
-    std::function<void()>                          on_cancel;
-    std::function<void(const CompleteStepData&)>   on_complete;
+    std::function<void(const ReviewStepData&, TrustStepData& out_trust)> prepare_trust;
+    std::function<void(const TrustStepData&)> on_begin_install;   // start worker thread
+    std::function<bool(InstallProgressData& out)> poll_progress;  // call each frame
+    std::function<void()> on_cancel;
+    std::function<void(const CompleteStepData&)> on_complete;
 };
 
 // =========================================================================
@@ -174,9 +174,7 @@ namespace detail {
 
 // --- Step 1: Source ---------------------------------------------------------
 
-[[nodiscard]] inline Element RenderSourceStep(
-    const SourceStepData& data, int selected)
-{
+[[nodiscard]] inline Element RenderSourceStep(const SourceStepData& data, int selected) {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
     Elements rows;
     rows.push_back(hbox({
@@ -191,23 +189,26 @@ namespace detail {
         std::string icon;
         const char* name;
         const char* subtitle;
-        Color       accent;
+        Color accent;
     };
+
     const SourceItem k_items[] = {
         {std::string(loom::ui::design::figures::kDiamond), "From Marketplace",
-            "Browse available marketplaces and pick a plugin", pal.info},
-        {std::string(loom::ui::design::figures::kTriangleRightSmall), "From local file or directory",
-            "Install from a downloaded .zip or a local folder", pal.primary},
+         "Browse available marketplaces and pick a plugin", pal.info},
+        {std::string(loom::ui::design::figures::kTriangleRightSmall),
+         "From local file or directory", "Install from a downloaded .zip or a local folder",
+         pal.primary},
         {std::string(loom::ui::design::figures::kArrowRight), "From URL",
-            "Install directly from a manifest or zip URL", pal.info},
+         "Install directly from a manifest or zip URL", pal.info},
         {std::string(loom::ui::design::figures::kForkGlyph), "From Git repository",
-            "Clone from a git repo (HTTPS or SSH)", pal.primary},
+         "Clone from a git repo (HTTPS or SSH)", pal.primary},
     };
     for (int i = 0; i < 4; ++i) {
         const bool sel = (i == selected);
         const auto& it = k_items[i];
         auto row = hbox({
-            text(sel ? std::string(loom::ui::design::figures::kPlay) + " " : "  ") | color(it.accent),
+            text(sel ? std::string(loom::ui::design::figures::kPlay) + " " : "  ") |
+                color(it.accent),
             text(it.icon),
             text(" "),
             vbox({
@@ -225,33 +226,36 @@ namespace detail {
     auto sel_enum = (InstallSource)selected;
     std::string label, value, placeholder;
     switch (sel_enum) {
-        case InstallSource::Marketplace:
-            label = "Plugin ID: ";
-            value = data.plugin_id;
-            placeholder = "(e.g. code-formatter@official)";
-            break;
-        case InstallSource::File:
-            label = "File path: ";
-            value = data.file_path;
-            placeholder = "(e.g. ~/Downloads/plugin.zip or /path/to/manifest.json)";
-            break;
-        case InstallSource::Url:
-            label = "URL: ";
-            value = data.url;
-            placeholder = "(e.g. https://example.com/plugin.zip)";
-            break;
-        case InstallSource::GitRepo:
-            label = "Repo URL: ";
-            value = data.git_repo;
-            placeholder = "(e.g. git@github.com:user/repo.git)";
-            break;
+    case InstallSource::Marketplace:
+        label = "Plugin ID: ";
+        value = data.plugin_id;
+        placeholder = "(e.g. code-formatter@official)";
+        break;
+    case InstallSource::File:
+        label = "File path: ";
+        value = data.file_path;
+        placeholder = "(e.g. ~/Downloads/plugin.zip or /path/to/manifest.json)";
+        break;
+    case InstallSource::Url:
+        label = "URL: ";
+        value = data.url;
+        placeholder = "(e.g. https://example.com/plugin.zip)";
+        break;
+    case InstallSource::GitRepo:
+        label = "Repo URL: ";
+        value = data.git_repo;
+        placeholder = "(e.g. git@github.com:user/repo.git)";
+        break;
     }
-    rows.push_back(hbox({
-        text("  " + label) | bold | color(pal.muted),
-        text(value.empty() ? placeholder : value)
-             | color(value.empty() ? pal.muted : pal.text),
-        text("│") | (loom::ui::design::theme::current_theme().a11y.reduced_motion ? nothing : blink) | color(pal.info),
-    }) | borderLight);
+    rows.push_back(
+        hbox({
+            text("  " + label) | bold | color(pal.muted),
+            text(value.empty() ? placeholder : value) | color(value.empty() ? pal.muted : pal.text),
+            text("│") |
+                (loom::ui::design::theme::current_theme().a11y.reduced_motion ? nothing : blink) |
+                color(pal.info),
+        }) |
+        borderLight);
 
     if (sel_enum == InstallSource::GitRepo && !data.git_ref.empty()) {
         rows.push_back(text(""));
@@ -264,10 +268,14 @@ namespace detail {
 
     rows.push_back(text(" Navigation:") | color(pal.muted));
     rows.push_back(hbox({
-        text(" ↑↓/j/k") | bold | color(pal.info), text(" select source  "),
-        text("Tab") | bold | color(pal.info), text(" focus input  "),
-        text("⏎") | bold | color(pal.info), text(" next"),
-    }) | color(pal.muted));
+                       text(" ↑↓/j/k") | bold | color(pal.info),
+                       text(" select source  "),
+                       text("Tab") | bold | color(pal.info),
+                       text(" focus input  "),
+                       text("⏎") | bold | color(pal.info),
+                       text(" next"),
+                   }) |
+                   color(pal.muted));
     return vbox(std::move(rows));
 }
 
@@ -290,14 +298,15 @@ namespace detail {
                 text(" " + r.name + " ") | bold | color(pal.info) | size(HEIGHT, EQUAL, 1),
                 text(" v" + r.version) | color(pal.muted),
             }),
-            text("  by " + (r.author.empty() ? std::string{"(unknown)"} : r.author))
-                | color(pal.muted),
+            text("  by " + (r.author.empty() ? std::string{"(unknown)"} : r.author)) |
+                color(pal.muted),
         }) | flex,
         text(" "),
         hbox({
-            text("[" + r.install_scope + "] ")
-                | bold | color(r.install_scope == "user" ? pal.info
-                    : (r.install_scope == "project" ? pal.primary : pal.muted)),
+            text("[" + r.install_scope + "] ") | bold |
+                color(r.install_scope == "user"
+                          ? pal.info
+                          : (r.install_scope == "project" ? pal.primary : pal.muted)),
             text(r.size_str.empty() ? "—" : r.size_str) | color(pal.muted),
         }) | align_right,
     }));
@@ -305,9 +314,8 @@ namespace detail {
 
     // Description
     rows.push_back(text(""));
-    rows.push_back(paragraph(
-        "  " + (r.description.empty() ? "(no description)" : r.description))
-        | color(pal.muted));
+    rows.push_back(paragraph("  " + (r.description.empty() ? "(no description)" : r.description)) |
+                   color(pal.muted));
     rows.push_back(text(""));
 
     // Metadata table
@@ -364,28 +372,30 @@ namespace detail {
     // ANSI status indices may equal their tint background; retain the
     // warning text and border against the canvas in those named variants.
     const auto variant = loom::ui::design::theme::current_theme().variant;
-    const bool ansi = variant == loom::ui::design::theme::ThemeVariant::LightAnsi
-                   || variant == loom::ui::design::theme::ThemeVariant::DarkAnsi;
+    const bool ansi = variant == loom::ui::design::theme::ThemeVariant::LightAnsi ||
+                      variant == loom::ui::design::theme::ThemeVariant::DarkAnsi;
     const auto warning_background = ansi ? pal.background : pal.warning_tint_bg;
 
     // Trust disclaimer banner
     rows.push_back(text(""));
-    rows.push_back(vbox({
-        hbox({
-            text(" " + std::string(loom::ui::design::figures::kWarning) + " ") | color(pal.warning),
-            text(std::string{pt::trust_warning_header()}) | bold | color(pal.warning),
-        }),
-        paragraph("   " + pt::build_trust_warning_text()) | color(pal.muted),
-    }) | border | color(pal.warning) | bgcolor(warning_background));
+    rows.push_back(
+        vbox({
+            hbox({
+                text(" " + std::string(loom::ui::design::figures::kWarning) + " ") |
+                    color(pal.warning),
+                text(std::string{pt::trust_warning_header()}) | bold | color(pal.warning),
+            }),
+            paragraph("   " + pt::build_trust_warning_text()) | color(pal.muted),
+        }) |
+        border | color(pal.warning) | bgcolor(warning_background));
 
     return vbox(std::move(rows));
 }
 
 // --- Step 3: Trust (delegates to UI8 TrustDialog) --------------------------
 
-[[nodiscard]] inline Element RenderTrustStep(
-    const TrustStepData& t, const Element& trust_dialog_panel)
-{
+[[nodiscard]] inline Element RenderTrustStep(const TrustStepData& t,
+                                             const Element& trust_dialog_panel) {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
     Elements rows;
     rows.push_back(hbox({
@@ -399,9 +409,9 @@ namespace detail {
     // If the plugin is fully verified, show a green banner + skip.
     if (t.is_verified) {
         rows.push_back(hbox({
-            text(" " + std::string(loom::ui::design::figures::kTick) + " ") | color(pal.success) | bold,
-            text("This plugin is verified and trusted.")
-                | bold | color(pal.success),
+            text(" " + std::string(loom::ui::design::figures::kTick) + " ") | color(pal.success) |
+                bold,
+            text("This plugin is verified and trusted.") | bold | color(pal.success),
         }));
         rows.push_back(text("") | size(HEIGHT, EQUAL, 1));
     }
@@ -427,12 +437,14 @@ namespace detail {
 
     // Stage label
     Color stage_color = pal.info;
-    if (p.stage == InstallStage::Failed)   stage_color = pal.danger;
+    if (p.stage == InstallStage::Failed) stage_color = pal.danger;
     if (p.stage == InstallStage::Complete) stage_color = pal.success;
     rows.push_back(hbox({
-        text(p.stage == InstallStage::Pending ? std::string(loom::ui::design::figures::kEffortLow) : std::string(loom::ui::design::figures::kBullet)) | color(stage_color),
-        text(" " + (p.stage_label.empty() ? "Preparing…" : p.stage_label))
-             | bold | color(stage_color),
+        text(p.stage == InstallStage::Pending ? std::string(loom::ui::design::figures::kEffortLow)
+                                              : std::string(loom::ui::design::figures::kBullet)) |
+            color(stage_color),
+        text(" " + (p.stage_label.empty() ? "Preparing…" : p.stage_label)) | bold |
+            color(stage_color),
     }));
     rows.push_back(text(""));
 
@@ -443,8 +455,10 @@ namespace detail {
         const int filled = (pct * bar_width) / 100;
         std::string bar;
         bar.reserve(bar_width);
-        for (int i = 0; i < filled; ++i)     bar += "█";
-        for (int i = filled; i < bar_width; ++i) bar += "░";
+        for (int i = 0; i < filled; ++i)
+            bar += "█";
+        for (int i = filled; i < bar_width; ++i)
+            bar += "░";
         rows.push_back(hbox({
             text(" "),
             text(bar) | color(pct >= 100 ? pal.success : pal.info),
@@ -456,18 +470,19 @@ namespace detail {
     // Error (if any)
     if (p.error) {
         rows.push_back(vbox({
-            hbox({text(" " + std::string(loom::ui::design::figures::kCross) + " ") | color(pal.danger) | bold,
-                  text("Installation failed") | color(pal.danger) | bold}),
-            paragraph("   " + *p.error) | color(pal.danger),
-        }) | border | color(pal.danger));
+                           hbox({text(" " + std::string(loom::ui::design::figures::kCross) + " ") |
+                                     color(pal.danger) | bold,
+                                 text("Installation failed") | color(pal.danger) | bold}),
+                           paragraph("   " + *p.error) | color(pal.danger),
+                       }) |
+                       border | color(pal.danger));
     }
 
     // Log lines (last 8)
     rows.push_back(separator() | dim);
     rows.push_back(text(" Installation log") | color(pal.muted));
     rows.push_back(text(""));
-    int start = (int)std::max<std::ptrdiff_t>(0,
-        (std::ptrdiff_t)p.log_lines.size() - 8);
+    int start = (int)std::max<std::ptrdiff_t>(0, (std::ptrdiff_t)p.log_lines.size() - 8);
     for (int i = start; i < (int)p.log_lines.size(); ++i) {
         rows.push_back(text("   " + p.log_lines[i]) | color(pal.muted));
     }
@@ -491,8 +506,10 @@ namespace detail {
             text(" Check the log above for details, or try a different source.") | color(pal.muted),
             text(""),
             hbox({
-                text(" [Esc] ") | bold | color(pal.info), text("close   "),
-                text("[R]") | bold | color(pal.info), text(" retry"),
+                text(" [Esc] ") | bold | color(pal.info),
+                text("close   "),
+                text("[R]") | bold | color(pal.info),
+                text(" retry"),
             }) | color(pal.muted),
         });
     }
@@ -523,7 +540,8 @@ namespace detail {
         rows.push_back(text(" New tools available:") | bold);
         for (const auto& t : d.provided_tools) {
             rows.push_back(hbox({
-                text("   " + std::string(loom::ui::design::figures::kPointerSmall) + " ") | color(pal.primary),
+                text("   " + std::string(loom::ui::design::figures::kPointerSmall) + " ") |
+                    color(pal.primary),
                 text(t) | color(pal.primary),
             }));
         }
@@ -542,10 +560,12 @@ namespace detail {
     if (d.post_install_hint) {
         rows.push_back(text(""));
         rows.push_back(vbox({
-            hbox({text(" " + std::string(loom::ui::design::figures::kInfo) + " ") | color(pal.info),
-                  text("Next steps") | bold | color(pal.info)}),
-            paragraph("   " + *d.post_install_hint) | color(pal.muted),
-        }) | borderLight | color(pal.info));
+                           hbox({text(" " + std::string(loom::ui::design::figures::kInfo) + " ") |
+                                     color(pal.info),
+                                 text("Next steps") | bold | color(pal.info)}),
+                           paragraph("   " + *d.post_install_hint) | color(pal.muted),
+                       }) |
+                       borderLight | color(pal.info));
     }
 
     if (d.first_run_hotkey) {
@@ -559,15 +579,19 @@ namespace detail {
 
     rows.push_back(text(""));
     rows.push_back(hbox({
-        text(" [⏎] ") | bold | color(pal.info), text("close   "),
-        text("[L]") | bold | color(pal.info), text(" launch plugin   "),
-        text("[C]") | bold | color(pal.info), text(" configure"),
-    }) | color(pal.muted));
+                       text(" [⏎] ") | bold | color(pal.info),
+                       text("close   "),
+                       text("[L]") | bold | color(pal.info),
+                       text(" launch plugin   "),
+                       text("[C]") | bold | color(pal.info),
+                       text(" configure"),
+                   }) |
+                   color(pal.muted));
 
     return vbox(std::move(rows));
 }
 
-} // namespace detail
+}  // namespace detail
 
 // =========================================================================
 // Full install wizard component
@@ -577,16 +601,16 @@ struct InstallFlowState {
     InstallFlowInputs inputs;
 
     // Step data
-    SourceStepData    source;
-    ReviewStepData    review;
-    TrustStepData     trust;
+    SourceStepData source;
+    ReviewStepData review;
+    TrustStepData trust;
     InstallProgressData progress;
-    CompleteStepData  complete;
+    CompleteStepData complete;
 
     // Interactive state
-    int  source_selected = 0;
+    int source_selected = 0;
     std::string input_buffer;
-    int  input_focus = -1;     // -1 = picker, 0 = main input, 1 = git ref
+    int input_focus = -1;  // -1 = picker, 0 = main input, 1 = git ref
 
     // Embedded trust dialog component (Step 3)
     Component trust_dialog_component;
@@ -616,9 +640,8 @@ struct InstallFlowState {
     step1.title = "Installation source";
     step1.description = "Choose where the plugin comes from";
     step1.create_content = [state]() {
-        return Renderer([state] {
-            return detail::RenderSourceStep(state->source, state->source_selected);
-        });
+        return Renderer(
+            [state] { return detail::RenderSourceStep(state->source, state->source_selected); });
     };
     request.steps.push_back(std::move(step1));
 
@@ -628,9 +651,7 @@ struct InstallFlowState {
     step2.title = "Review details";
     step2.description = "Verify plugin info and permissions";
     step2.create_content = [state]() {
-        return Renderer([state] {
-            return detail::RenderReviewStep(state->review);
-        });
+        return Renderer([state] { return detail::RenderReviewStep(state->review); });
     };
     request.steps.push_back(std::move(step2));
 
@@ -648,24 +669,23 @@ struct InstallFlowState {
             trust_req.marketplace_domain = state->trust.marketplace_domain;
             trust_req.has_signature = state->trust.has_signature;
             trust_req.on_done = [state](fdp::TrustChoice choice) {
-                state->trust.user_signed_trust =
-                    (choice != fdp::TrustChoice::Cancel);
+                state->trust.user_signed_trust = (choice != fdp::TrustChoice::Cancel);
             };
             auto factory = fdp::resolve_dialog_factory(fdp::ViewKind::PluginTrust);
             if (factory) {
                 state->trust_dialog_component =
-                    factory(std::make_shared<fdp::FeatureTrustRequest>(
-                        std::move(trust_req)));
+                    factory(std::make_shared<fdp::FeatureTrustRequest>(std::move(trust_req)));
             }
         }
         return Renderer([state] {
-            return detail::RenderTrustStep(
-                state->trust, state->trust_dialog_component->Render());
-        }) | CatchEvent([state](Event e) {
-            if (state->trust_dialog_component)
-                return state->trust_dialog_component->OnEvent(e);
-            return false;
-        });
+                   return detail::RenderTrustStep(state->trust,
+                                                  state->trust_dialog_component->Render());
+               }) |
+               CatchEvent([state](Event e) {
+                   if (state->trust_dialog_component)
+                       return state->trust_dialog_component->OnEvent(e);
+                   return false;
+               });
     };
     request.steps.push_back(std::move(step3));
 
@@ -702,9 +722,7 @@ struct InstallFlowState {
     step5.title = "Complete";
     step5.description = "Installation result";
     step5.create_content = [state]() {
-        return Renderer([state] {
-            return detail::RenderCompleteStep(state->complete);
-        });
+        return Renderer([state] { return detail::RenderCompleteStep(state->complete); });
     };
     request.steps.push_back(std::move(step5));
 
@@ -720,40 +738,39 @@ struct InstallFlowState {
     // Resolve the wizard component through the neutral protocol (the
     // composition root maps the FeatureWizardRequest to a wizard_dialog
     // component via the generic adapter).
-    auto wizard_factory =
-        fdp::resolve_dialog_factory(fdp::ViewKind::PluginInstall);
-    auto wizard = wizard_factory
-                      ? wizard_factory(std::make_shared<fdp::FeatureWizardRequest>(
-                            std::move(request)))
-                      : Component();
+    auto wizard_factory = fdp::resolve_dialog_factory(fdp::ViewKind::PluginInstall);
+    auto wizard =
+        wizard_factory
+            ? wizard_factory(std::make_shared<fdp::FeatureWizardRequest>(std::move(request)))
+            : Component();
 
     // Wrap with inter-step pre-computation hook
     auto base_state = state;  // capture
     return wizard | CatchEvent([base_state](Event event) -> bool {
-        // Enter → step transition (captured before WizardComponent handler)
-        if (event == Event::Return) {
-            // Read the current step from the outer component's state via
-            // the wizard rendering (opaque).  We rely on the Wizard's own
-            // handler, and trigger *our* side-effects *after* the step
-            // advances via an Event::Custom post pattern.
-            //
-            // To keep this module simple + pure-UI, we run the C1 prep
-            // callbacks *before* the wizard handles Enter on Steps 1 & 2,
-            // so by the time the next step renders, its data is ready.
-            //
-            // We cannot directly read wizard_state.current_step_index, so
-            // we approximate by pre-computing on every Enter — the
-            // callbacks are idempotent.
-            if (base_state->inputs.prepare_review) {
-                base_state->inputs.prepare_review(base_state->source, base_state->review);
-            }
-            if (base_state->inputs.prepare_trust) {
-                base_state->inputs.prepare_trust(base_state->review, base_state->trust);
-            }
-            return false;  // let the wizard's own handler process Enter
-        }
-        return false;
-    });
+               // Enter → step transition (captured before WizardComponent handler)
+               if (event == Event::Return) {
+                   // Read the current step from the outer component's state via
+                   // the wizard rendering (opaque).  We rely on the Wizard's own
+                   // handler, and trigger *our* side-effects *after* the step
+                   // advances via an Event::Custom post pattern.
+                   //
+                   // To keep this module simple + pure-UI, we run the C1 prep
+                   // callbacks *before* the wizard handles Enter on Steps 1 & 2,
+                   // so by the time the next step renders, its data is ready.
+                   //
+                   // We cannot directly read wizard_state.current_step_index, so
+                   // we approximate by pre-computing on every Enter — the
+                   // callbacks are idempotent.
+                   if (base_state->inputs.prepare_review) {
+                       base_state->inputs.prepare_review(base_state->source, base_state->review);
+                   }
+                   if (base_state->inputs.prepare_trust) {
+                       base_state->inputs.prepare_trust(base_state->review, base_state->trust);
+                   }
+                   return false;  // let the wizard's own handler process Enter
+               }
+               return false;
+           });
 }
 
-} // namespace loom::ui::plugins::plugin_install_flow
+}  // namespace loom::ui::plugins::plugin_install_flow

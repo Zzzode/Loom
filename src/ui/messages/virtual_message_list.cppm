@@ -50,18 +50,18 @@
 
 module;
 
-#include <cstdint>
-#include <cstdlib>
-#include <cmath>
-#include <climits>
-
-#include <ftxui/dom/elements.hpp>
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/event.hpp>
 #include <ftxui/component/screen_interactive.hpp>
+#include <ftxui/dom/elements.hpp>
 #include <ftxui/screen/color.hpp>
+
+#include <climits>
+#include <cmath>
 #include <cstddef>
+#include <cstdint>
+#include <cstdlib>
 
 export module loom.ui.messages.virtual_list;
 
@@ -84,30 +84,30 @@ import loom.ui.messages.scroll_keys;
 //       list that knows nothing about MessageShape — it just
 //       consumes an opaque item array + measure().
 export namespace loom::ui::messages {
-  /// Opaque row descriptor consumed by VirtualMessageList.
-  /// Each row has: a stable key (row_id), a height estimate (lines),
-  /// optional search text, and a type hint for the caller's renderer.
-  struct VisibleRow {
+/// Opaque row descriptor consumed by VirtualMessageList.
+/// Each row has: a stable key (row_id), a height estimate (lines),
+/// optional search text, and a type hint for the caller's renderer.
+struct VisibleRow {
     /// Stable identifier (used by future height-cache invalidation).
-    std::uint64_t  row_id                  = 0;
+    std::uint64_t row_id = 0;
     /// Height in terminal lines.  ≥ 1.  Initially estimated from content /
     /// compact-group meta; may be refined to a measured value later.
-    int            estimated_height_lines  = 3;
+    int estimated_height_lines = 3;
     /// When true, `estimated_height_lines` is a post-layout measurement
     /// (exact); when false, it is only an estimate.
-    bool           height_measured         = false;
+    bool height_measured = false;
     /// Lowered search text.  Empty when search callbacks aren't needed.
-    std::string    search_key;
+    std::string search_key;
     /// Opaque type tag — forwarded to the caller's `render_row` callback
     /// so it can dispatch to the right inner renderer (Payload vs CompactGroup
     /// in messages_list, etc.).
-    int            type_hint               = 0;
+    int type_hint = 0;
     /// Stable payload index for the caller.  For messages_list this is
     ///     (vr.kind == CompactGroup ? ~group_idx : row_idx)
     /// so the render_row callback can round-trip the original VisibleRow.
-    std::uint64_t  backend_index           = 0;
-  };
-} // namespace loom::ui::messages
+    std::uint64_t backend_index = 0;
+};
+}  // namespace loom::ui::messages
 
 export namespace loom::ui::messages::virtual_list {
 
@@ -116,12 +116,12 @@ export namespace loom::ui::messages::virtual_list {
 using ::loom::ui::messages::VisibleRow;
 
 // ── Scroll-key helpers (public re-exports) ──────────────────────────────────
-using scroll_keys::FocusDomain;
-using scroll_keys::ScrollState;
-using scroll_keys::ScrollCallbacks;
 using scroll_keys::CenterKind;
+using scroll_keys::FocusDomain;
 using scroll_keys::FSMContext;
 using scroll_keys::HandleScrollKey;
+using scroll_keys::ScrollCallbacks;
+using scroll_keys::ScrollState;
 using scroll_keys::ShouldHandleScrollKey;
 using scroll_keys::tick_frame;
 
@@ -151,10 +151,10 @@ inline constexpr int kStickyThresholdLines = 2;
 
 /// A single row's geometric info after a build_geometry pass.
 struct RowGeometry {
-  size_t row_idx;       ///< index into input VisibleRow vector
-  int    top_line;      ///< cumulative visual top (in terminal rows, 0-based)
-  int    height_lines;  ///< height of this row in terminal rows
-  bool   cached;        ///< true if height came from measured cache
+    size_t row_idx;    ///< index into input VisibleRow vector
+    int top_line;      ///< cumulative visual top (in terminal rows, 0-based)
+    int height_lines;  ///< height of this row in terminal rows
+    bool cached;       ///< true if height came from measured cache
 };
 
 /// JumpHandle = the precomputed prefix-sum table, updated incrementally.
@@ -164,37 +164,45 @@ struct RowGeometry {
 /// Indexing is trivially a binary search: row at visual line L is the
 /// greatest i such that cumulative_lines[i] <= L.
 struct JumpHandle {
-  std::vector<int> cumulative_lines;  ///< size = N + 1; offsets[0]=0
-  size_t valid_through = 0;           ///< incremental rebuild watermark
+    std::vector<int> cumulative_lines;  ///< size = N + 1; offsets[0]=0
+    size_t valid_through = 0;           ///< incremental rebuild watermark
 
-  [[nodiscard]] size_t size()      const noexcept { return cumulative_lines.empty() ? 0 : cumulative_lines.size() - 1; }
-  [[nodiscard]] int    total()     const noexcept { return cumulative_lines.empty() ? 0 : cumulative_lines.back(); }
-  [[nodiscard]] int    top_of(size_t i) const noexcept { return cumulative_lines.empty() ? 0 : cumulative_lines[i]; }
-  [[nodiscard]] int    height_of(size_t i) const noexcept {
-    return cumulative_lines[i + 1] - cumulative_lines[i];
-  }
+    [[nodiscard]] size_t size() const noexcept {
+        return cumulative_lines.empty() ? 0 : cumulative_lines.size() - 1;
+    }
 
-  /// O(log N): find the row index that owns visual-line `line`.
-  /// Clamps to [0, n).  OOB line (>= total) returns last index.
-  [[nodiscard]] size_t find_row_at_visual_line(int line) const noexcept {
-    if (cumulative_lines.empty()) return 0;
-    size_t const n = cumulative_lines.size() - 1;
-    if (line <= 0) return 0;
-    if (line >= cumulative_lines[n]) return std::max<size_t>(1, n) - 1;
-    // upper_bound on cumulative_lines for (line) → subtract 1
-    auto it = std::upper_bound(cumulative_lines.begin(),
-                               cumulative_lines.end(), line);
-    size_t pos = static_cast<size_t>(it - cumulative_lines.begin());
-    if (pos == 0) return 0;
-    return pos - 1;
-  }
+    [[nodiscard]] int total() const noexcept {
+        return cumulative_lines.empty() ? 0 : cumulative_lines.back();
+    }
 
-  /// Convenience: visual top of row `i` (with clamp).
-  [[nodiscard]] int find_visual_top_for_row(size_t i) const noexcept {
-    if (cumulative_lines.empty()) return 0;
-    size_t const n = cumulative_lines.size() - 1;
-    return cumulative_lines[std::min(i, n)];
-  }
+    [[nodiscard]] int top_of(size_t i) const noexcept {
+        return cumulative_lines.empty() ? 0 : cumulative_lines[i];
+    }
+
+    [[nodiscard]] int height_of(size_t i) const noexcept {
+        return cumulative_lines[i + 1] - cumulative_lines[i];
+    }
+
+    /// O(log N): find the row index that owns visual-line `line`.
+    /// Clamps to [0, n).  OOB line (>= total) returns last index.
+    [[nodiscard]] size_t find_row_at_visual_line(int line) const noexcept {
+        if (cumulative_lines.empty()) return 0;
+        size_t const n = cumulative_lines.size() - 1;
+        if (line <= 0) return 0;
+        if (line >= cumulative_lines[n]) return std::max<size_t>(1, n) - 1;
+        // upper_bound on cumulative_lines for (line) → subtract 1
+        auto it = std::upper_bound(cumulative_lines.begin(), cumulative_lines.end(), line);
+        size_t pos = static_cast<size_t>(it - cumulative_lines.begin());
+        if (pos == 0) return 0;
+        return pos - 1;
+    }
+
+    /// Convenience: visual top of row `i` (with clamp).
+    [[nodiscard]] int find_visual_top_for_row(size_t i) const noexcept {
+        if (cumulative_lines.empty()) return 0;
+        size_t const n = cumulative_lines.size() - 1;
+        return cumulative_lines[std::min(i, n)];
+    }
 };
 
 /// ── build_geometry ────────────────────────────────────────────────────────
@@ -207,47 +215,44 @@ struct JumpHandle {
 /// For very large N (N > 2·kGeometryChunk · 50) this can be called
 /// incrementally by the caller: rebuild the full prefix sum only when
 /// `(rows.size() - last_known_size) > kGeometryChunk`.
-[[nodiscard]] inline JumpHandle
-build_geometry(std::span<VisibleRow const> rows) noexcept {
-  JumpHandle jh;
-  size_t const n = rows.size();
-  jh.cumulative_lines.resize(n + 1, 0);
-  int acc = 0;
-  for (size_t i = 0; i < n; ++i) {
-    // height_measured == true means estimated_height_lines is an exact
-    // post-layout measurement; treat it as authoritative.  Otherwise use
-    // the estimate, clamped to ≥ 1.
-    int const h = std::max(1, rows[i].estimated_height_lines);
-    (void)rows[i].height_measured;  // semantic: authoritative when true
-    acc += h;
-    jh.cumulative_lines[i + 1] = acc;
-  }
-  jh.valid_through = n;
-  return jh;
+[[nodiscard]] inline JumpHandle build_geometry(std::span<VisibleRow const> rows) noexcept {
+    JumpHandle jh;
+    size_t const n = rows.size();
+    jh.cumulative_lines.resize(n + 1, 0);
+    int acc = 0;
+    for (size_t i = 0; i < n; ++i) {
+        // height_measured == true means estimated_height_lines is an exact
+        // post-layout measurement; treat it as authoritative.  Otherwise use
+        // the estimate, clamped to ≥ 1.
+        int const h = std::max(1, rows[i].estimated_height_lines);
+        (void)rows[i].height_measured;  // semantic: authoritative when true
+        acc += h;
+        jh.cumulative_lines[i + 1] = acc;
+    }
+    jh.valid_through = n;
+    return jh;
 }
 
 /// Build a vector of RowGeometry entries for a slice of rows.  The caller
 /// can use this to render a precise gutter or to write post-measurement
 /// cache updates.  Output[i] corresponds to rows[start + i].
 [[nodiscard]] inline std::vector<RowGeometry>
-build_row_geometry_slice(std::span<VisibleRow const> rows,
-                         JumpHandle const& jh,
-                         size_t start,
+build_row_geometry_slice(std::span<VisibleRow const> rows, JumpHandle const& jh, size_t start,
                          size_t count) noexcept {
-  std::vector<RowGeometry> out;
-  size_t const n = rows.size();
-  out.reserve(count);
-  for (size_t k = 0; k < count; ++k) {
-    size_t const i = start + k;
-    if (i >= n) break;
-    out.push_back(RowGeometry{
-        .row_idx      = i,
-        .top_line     = jh.find_visual_top_for_row(i),
-        .height_lines = std::max(1, rows[i].estimated_height_lines),
-        .cached       = rows[i].height_measured,
-    });
-  }
-  return out;
+    std::vector<RowGeometry> out;
+    size_t const n = rows.size();
+    out.reserve(count);
+    for (size_t k = 0; k < count; ++k) {
+        size_t const i = start + k;
+        if (i >= n) break;
+        out.push_back(RowGeometry{
+            .row_idx = i,
+            .top_line = jh.find_visual_top_for_row(i),
+            .height_lines = std::max(1, rows[i].estimated_height_lines),
+            .cached = rows[i].height_measured,
+        });
+    }
+    return out;
 }
 
 /// ── build_visible_slice ───────────────────────────────────────────────────
@@ -257,64 +262,64 @@ build_row_geometry_slice(std::span<VisibleRow const> rows,
 /// [scroll_top, scroll_top + viewport_lines) plus kOverscanRows on both
 /// sides.  Computed via binary-search + linear extension: O(log N + V).
 [[nodiscard]] inline std::pair<size_t, size_t>
-build_visible_slice(JumpHandle const &jh, int scroll_top,
-                    int viewport_lines) noexcept {
-  size_t const n = jh.size();
-  if (n == 0) return {0, 0};
-  int const total  = jh.total();
-  int const v_top  = std::max(0, scroll_top - kOverscanRows);
-  int const v_bot  = std::min(total, scroll_top + viewport_lines + kOverscanRows);
-  if (v_top >= total) return {n, 0};
+build_visible_slice(JumpHandle const& jh, int scroll_top, int viewport_lines) noexcept {
+    size_t const n = jh.size();
+    if (n == 0) return {0, 0};
+    int const total = jh.total();
+    int const v_top = std::max(0, scroll_top - kOverscanRows);
+    int const v_bot = std::min(total, scroll_top + viewport_lines + kOverscanRows);
+    if (v_top >= total) return {n, 0};
 
-  size_t start = jh.find_row_at_visual_line(v_top);
-  size_t end   = start;
-  while (end < n && jh.top_of(end + 1) < v_bot) ++end;
-  if (end < n) ++end;   // include the row that straddles v_bot
-  return {start, end - start};
+    size_t start = jh.find_row_at_visual_line(v_top);
+    size_t end = start;
+    while (end < n && jh.top_of(end + 1) < v_bot)
+        ++end;
+    if (end < n) ++end;  // include the row that straddles v_bot
+    return {start, end - start};
 }
 
 // ─── Options + Callbacks (public API surface) ───────────────────────────────
 
 enum class AutoScrollMode : std::uint8_t {
-  Disabled,  ///< user controls scroll 100%; no streaming tracking
-  Sticky,    ///< pinned to bottom until user scrolls > threshold away
-  Smart,     ///< Sticky + "new messages" pill + ⬇ button to snap back
+    Disabled,  ///< user controls scroll 100%; no streaming tracking
+    Sticky,    ///< pinned to bottom until user scrolls > threshold away
+    Smart,     ///< Sticky + "new messages" pill + ⬇ button to snap back
 };
 
 struct VirtualListOptions {
-  AutoScrollMode auto_scroll   = AutoScrollMode::Smart;
-  int            viewport_rows = 40;
-  /// Paint a right-gutter █░ scroll bar in addition to yframe thumb.
-  bool           ascii_gutter  = true;
+    AutoScrollMode auto_scroll = AutoScrollMode::Smart;
+    int viewport_rows = 40;
+    /// Paint a right-gutter █░ scroll bar in addition to yframe thumb.
+    bool ascii_gutter = true;
 };
 
 enum class LoadDirection : std::uint8_t { Up, Down };
 
 struct VirtualListCallbacks {
-  /// Per-row renderer — produces a single FTXUI Element for row i.
-  std::function<ftxui::Element(size_t idx, VisibleRow const &row)> render_row;
+    /// Per-row renderer — produces a single FTXUI Element for row i.
+    std::function<ftxui::Element(size_t idx, VisibleRow const& row)> render_row;
 
-  /// Incremental fetch hooks.  Called when the user scrolls near a
-  /// boundary; return whether more rows are pending (shows spinner pill).
-  std::function<bool(LoadDirection dir, int count)> on_load_more;
+    /// Incremental fetch hooks.  Called when the user scrolls near a
+    /// boundary; return whether more rows are pending (shows spinner pill).
+    std::function<bool(LoadDirection dir, int count)> on_load_more;
 
-  /// Called after the virtual list scrolls (for sticky header / anchor
-  /// tracking on the parent).  `visual_line` is the new scroll_top.
-  std::function<void(int visual_line, bool sticky)> on_scrolled;
+    /// Called after the virtual list scrolls (for sticky header / anchor
+    /// tracking on the parent).  `visual_line` is the new scroll_top.
+    std::function<void(int visual_line, bool sticky)> on_scrolled;
 
-  /// "Jump to new messages" pill clicked by the user → typically also
-  /// triggers an `on_load_more(Down, …)` if the parent is paginated.
-  std::function<void()> on_jump_to_new_messages;
+    /// "Jump to new messages" pill clicked by the user → typically also
+    /// triggers an `on_load_more(Down, …)` if the parent is paginated.
+    std::function<void()> on_jump_to_new_messages;
 
-  /// Search support: returns a visual_line target for the delta match,
-  /// or -1 if none.  Forwarded verbatim to scroll_keys::ScrollCallbacks.
-  std::function<int(int delta)> search_step;
+    /// Search support: returns a visual_line target for the delta match,
+    /// or -1 if none.  Forwarded verbatim to scroll_keys::ScrollCallbacks.
+    std::function<int(int delta)> search_step;
 
-  /// Fired when the total match count or current match position changes.
-  ///   total   = engine-counted occurrences across all matched messages
-  ///   current = 1-based global occurrence index of the highlighted match
-  /// Both are 0 when no search is active (query empty or no matches).
-  std::function<void(size_t total, size_t current)> on_search_matches_change;
+    /// Fired when the total match count or current match position changes.
+    ///   total   = engine-counted occurrences across all matched messages
+    ///   current = 1-based global occurrence index of the highlighted match
+    /// Both are 0 when no search is active (query empty or no matches).
+    std::function<void(size_t total, size_t current)> on_search_matches_change;
 };
 
 // ─── Component state (private; factory below) ──────────────────────────────
@@ -324,90 +329,89 @@ struct VirtualListCallbacks {
 // state.
 
 struct VirtualListState {
-  // ── Geometry ───────────────────────────────────────────────────────
-  std::vector<VisibleRow>  rows;          ///< snapshot from last SetRows()
-  JumpHandle               jh;
+    // ── Geometry ───────────────────────────────────────────────────────
+    std::vector<VisibleRow> rows;  ///< snapshot from last SetRows()
+    JumpHandle jh;
 
-  // ── Scroll ─────────────────────────────────────────────────────────
-  int                      scroll_top    = 0;
-  int                      viewport_rows = 40;
-  AutoScrollMode           auto_mode     = AutoScrollMode::Smart;
-  bool                     sticky_bottom = true;   // currently pinned?
-  int                      new_message_count = 0;  // pill counter
+    // ── Scroll ─────────────────────────────────────────────────────────
+    int scroll_top = 0;
+    int viewport_rows = 40;
+    AutoScrollMode auto_mode = AutoScrollMode::Smart;
+    bool sticky_bottom = true;  // currently pinned?
+    int new_message_count = 0;  // pill counter
 
-  // ── Incremental load ───────────────────────────────────────────────
-  bool                     loading_earlier = false;
-  bool                     loading_later   = false;
-  /// Guard against re-triggering while a callback is still pending.
-  int                      load_trigger_top = -1;  // scroll_top at trigger
-  int                      load_trigger_bot = -1;
+    // ── Incremental load ───────────────────────────────────────────────
+    bool loading_earlier = false;
+    bool loading_later = false;
+    /// Guard against re-triggering while a callback is still pending.
+    int load_trigger_top = -1;  // scroll_top at trigger
+    int load_trigger_bot = -1;
 
-  // ── Scroll-key FSM ─────────────────────────────────────────────────
-  FSMContext               fsm;
-  FocusDomain              focus_domain = FocusDomain::Messages;
+    // ── Scroll-key FSM ─────────────────────────────────────────────────
+    FSMContext fsm;
+    FocusDomain focus_domain = FocusDomain::Messages;
 
-  // ── Search index (2-tier: per-message search_key → global match list)
-  //
-  // The per-message `search_key` (lowered rich text) is pre-computed by
-  // messages_list::get_cached_lowered_search_text() and stored in each
-  // VisibleRow.  This state holds the GLOBAL index over all rows: which
-  // rows match, how many occurrences in each, and which match is current.
-  std::vector<size_t>      search_matches;      ///< row indices that contain query
-  size_t                   search_ptr     = 0;  ///< current position in search_matches
-  std::vector<size_t>      search_prefix_sum;   ///< cumulative occurrence counts [0]=0
-  std::string              search_query;        ///< current lowered query (empty = no search)
-  int                      search_anchor_scroll_top = -1;  ///< scroll_top when / was pressed
-  size_t                   search_total_occurrences = 0;  ///< total = prefix_sum.back()
+    // ── Search index (2-tier: per-message search_key → global match list)
+    //
+    // The per-message `search_key` (lowered rich text) is pre-computed by
+    // messages_list::get_cached_lowered_search_text() and stored in each
+    // VisibleRow.  This state holds the GLOBAL index over all rows: which
+    // rows match, how many occurrences in each, and which match is current.
+    std::vector<size_t> search_matches;     ///< row indices that contain query
+    size_t search_ptr = 0;                  ///< current position in search_matches
+    std::vector<size_t> search_prefix_sum;  ///< cumulative occurrence counts [0]=0
+    std::string search_query;               ///< current lowered query (empty = no search)
+    int search_anchor_scroll_top = -1;      ///< scroll_top when / was pressed
+    size_t search_total_occurrences = 0;    ///< total = prefix_sum.back()
 
-  // ── Misc ───────────────────────────────────────────────────────────
-  VirtualListOptions       options;
-  VirtualListCallbacks     callbacks;
-  /// Monotonic frame counter used for debouncing (also drives FSM).
-  int                      frame = 0;
+    // ── Misc ───────────────────────────────────────────────────────────
+    VirtualListOptions options;
+    VirtualListCallbacks callbacks;
+    /// Monotonic frame counter used for debouncing (also drives FSM).
+    int frame = 0;
 };
 
 // ─── Geometry helpers (sticky clamp + triggers) ─────────────────────────────
 
-inline void clamp_scroll(VirtualListState &s) noexcept {
-  int const max = std::max(0, s.jh.total() - s.viewport_rows);
-  s.scroll_top = std::clamp(s.scroll_top, 0, max);
+inline void clamp_scroll(VirtualListState& s) noexcept {
+    int const max = std::max(0, s.jh.total() - s.viewport_rows);
+    s.scroll_top = std::clamp(s.scroll_top, 0, max);
 }
 
 /// Recompute sticky flag + new_message_count after an external scroll
 /// (user-initiated jump, page, or row mutation).
-inline void update_sticky_after_scroll(VirtualListState &s,
-                                        int old_scroll_top) noexcept {
-  (void)old_scroll_top;
-  int const max = std::max(0, s.jh.total() - s.viewport_rows);
-  int dist      = max - s.scroll_top;
+inline void update_sticky_after_scroll(VirtualListState& s, int old_scroll_top) noexcept {
+    (void)old_scroll_top;
+    int const max = std::max(0, s.jh.total() - s.viewport_rows);
+    int dist = max - s.scroll_top;
 
-  // User scrolled away from bottom → sticky breaks; re-approach re-arms.
-  if (dist > kStickyThresholdLines) {
-    s.sticky_bottom = false;
-  } else {
-    // Re-pinned: reset new-message pill.
-    s.sticky_bottom = true;
-    s.new_message_count = 0;
-  }
+    // User scrolled away from bottom → sticky breaks; re-approach re-arms.
+    if (dist > kStickyThresholdLines) {
+        s.sticky_bottom = false;
+    } else {
+        // Re-pinned: reset new-message pill.
+        s.sticky_bottom = true;
+        s.new_message_count = 0;
+    }
 }
 
 /// Fire on_load_more callbacks based on current scroll position + zone.
 /// Debounced via load_trigger_top/bot markers.
-inline void maybe_trigger_load(VirtualListState &s) {
-  if (!s.callbacks.on_load_more) return;
-  int const max = std::max(0, s.jh.total() - s.viewport_rows);
-  // Top boundary: we're near the very start.
-  if (s.scroll_top < kLoadMoreBufferZone && !s.loading_earlier &&
-      s.load_trigger_top != s.scroll_top) {
-    s.loading_earlier = s.callbacks.on_load_more(LoadDirection::Up, 50);
-    s.load_trigger_top = s.scroll_top;
-  }
-  // Bottom boundary: visible bottom is close to list bottom.
-  if ((max - s.scroll_top) < kLoadMoreBufferZone && !s.loading_later &&
-      s.load_trigger_bot != s.scroll_top) {
-    s.loading_later = s.callbacks.on_load_more(LoadDirection::Down, 50);
-    s.load_trigger_bot = s.scroll_top;
-  }
+inline void maybe_trigger_load(VirtualListState& s) {
+    if (!s.callbacks.on_load_more) return;
+    int const max = std::max(0, s.jh.total() - s.viewport_rows);
+    // Top boundary: we're near the very start.
+    if (s.scroll_top < kLoadMoreBufferZone && !s.loading_earlier &&
+        s.load_trigger_top != s.scroll_top) {
+        s.loading_earlier = s.callbacks.on_load_more(LoadDirection::Up, 50);
+        s.load_trigger_top = s.scroll_top;
+    }
+    // Bottom boundary: visible bottom is close to list bottom.
+    if ((max - s.scroll_top) < kLoadMoreBufferZone && !s.loading_later &&
+        s.load_trigger_bot != s.scroll_top) {
+        s.loading_later = s.callbacks.on_load_more(LoadDirection::Down, 50);
+        s.load_trigger_bot = s.scroll_top;
+    }
 }
 
 // ─── Search engine (2-tier index) ──────────────────────────────────────────
@@ -425,43 +429,42 @@ namespace search_detail {
 
 /// Count occurrences of `needle` in `haystack`.  Both must be lowered.
 /// Returns 0 if either is empty.
-[[nodiscard]] inline size_t count_occurrences(
-    std::string_view haystack, std::string_view needle) noexcept {
-  if (needle.empty() || haystack.empty()) return 0;
-  size_t count = 0;
-  size_t pos = 0;
-  while ((pos = haystack.find(needle, pos)) != std::string_view::npos) {
-    ++count;
-    pos += needle.size();
-    if (pos >= haystack.size()) break;
-  }
-  return count;
+[[nodiscard]] inline size_t count_occurrences(std::string_view haystack,
+                                              std::string_view needle) noexcept {
+    if (needle.empty() || haystack.empty()) return 0;
+    size_t count = 0;
+    size_t pos = 0;
+    while ((pos = haystack.find(needle, pos)) != std::string_view::npos) {
+        ++count;
+        pos += needle.size();
+        if (pos >= haystack.size()) break;
+    }
+    return count;
 }
 
 }  // namespace search_detail
 
 /// Run a full scan over all rows, populating search_matches,
 /// search_prefix_sum, search_total_occurrences, and search_query.
-inline void run_search(VirtualListState &s, std::string_view lowered_query) {
-  s.search_query = std::string{lowered_query};
-  s.search_matches.clear();
-  s.search_prefix_sum.clear();
-  s.search_prefix_sum.push_back(0);
-  s.search_total_occurrences = 0;
+inline void run_search(VirtualListState& s, std::string_view lowered_query) {
+    s.search_query = std::string{lowered_query};
+    s.search_matches.clear();
+    s.search_prefix_sum.clear();
+    s.search_prefix_sum.push_back(0);
+    s.search_total_occurrences = 0;
 
-  if (lowered_query.empty()) return;
+    if (lowered_query.empty()) return;
 
-  for (size_t i = 0; i < s.rows.size(); ++i) {
-    const auto &key = s.rows[i].search_key;
-    if (key.empty()) continue;
-    size_t cnt = search_detail::count_occurrences(key, lowered_query);
-    if (cnt > 0) {
-      s.search_matches.push_back(i);
-      s.search_prefix_sum.push_back(
-          s.search_prefix_sum.back() + cnt);
+    for (size_t i = 0; i < s.rows.size(); ++i) {
+        const auto& key = s.rows[i].search_key;
+        if (key.empty()) continue;
+        size_t cnt = search_detail::count_occurrences(key, lowered_query);
+        if (cnt > 0) {
+            s.search_matches.push_back(i);
+            s.search_prefix_sum.push_back(s.search_prefix_sum.back() + cnt);
+        }
     }
-  }
-  s.search_total_occurrences = s.search_prefix_sum.back();
+    s.search_total_occurrences = s.search_prefix_sum.back();
 }
 
 /// Set the search query and jump to the nearest match.
@@ -471,82 +474,82 @@ inline void run_search(VirtualListState &s, std::string_view lowered_query) {
 ///   3. Find nearest match to current scroll position (or anchor)
 ///   4. Jump to the matched message
 ///   5. Fire onSearchMatchesChange(total, current)
-inline void set_search_query(VirtualListState &s, std::string_view query) {
-  // Lower the query — search_key is already lowered.
-  std::string lowered;
-  lowered.reserve(query.size());
-  for (char c : query) {
-    if (c >= 'A' && c <= 'Z') {
-      lowered += static_cast<char>(c + ('a' - 'A'));
-    } else {
-      lowered += c;
+inline void set_search_query(VirtualListState& s, std::string_view query) {
+    // Lower the query — search_key is already lowered.
+    std::string lowered;
+    lowered.reserve(query.size());
+    for (char c : query) {
+        if (c >= 'A' && c <= 'Z') {
+            lowered += static_cast<char>(c + ('a' - 'A'));
+        } else {
+            lowered += c;
+        }
     }
-  }
 
-  // Save anchor before clearing (search anchor = scroll offset at / press).
-  if (s.search_anchor_scroll_top < 0 && !lowered.empty()) {
-    s.search_anchor_scroll_top = s.scroll_top;
-  }
+    // Save anchor before clearing (search anchor = scroll offset at / press).
+    if (s.search_anchor_scroll_top < 0 && !lowered.empty()) {
+        s.search_anchor_scroll_top = s.scroll_top;
+    }
 
-  // Empty query → clear search state.
-  if (lowered.empty()) {
-    s.search_matches.clear();
-    s.search_prefix_sum.clear();
-    s.search_query.clear();
-    s.search_ptr = 0;
-    s.search_total_occurrences = 0;
-    s.search_anchor_scroll_top = -1;
+    // Empty query → clear search state.
+    if (lowered.empty()) {
+        s.search_matches.clear();
+        s.search_prefix_sum.clear();
+        s.search_query.clear();
+        s.search_ptr = 0;
+        s.search_total_occurrences = 0;
+        s.search_anchor_scroll_top = -1;
+        if (s.callbacks.on_search_matches_change) {
+            s.callbacks.on_search_matches_change(0, 0);
+        }
+        return;
+    }
+
+    // Tier-2 scan: build matches + prefixSum.
+    run_search(s, lowered);
+
+    if (s.search_matches.empty()) {
+        // No matches → fire 0/0 callback.
+        s.search_ptr = 0;
+        if (s.callbacks.on_search_matches_change) {
+            s.callbacks.on_search_matches_change(0, 0);
+        }
+        return;
+    }
+
+    // Find nearest match to current scroll position.
+    // Find nearest match by absolute distance to current scroll position.
+    int origin = s.scroll_top;
+    int best_dist = INT_MAX;
+    size_t best_ptr = 0;
+    for (size_t k = 0; k < s.search_matches.size(); ++k) {
+        size_t row_idx = s.search_matches[k];
+        int row_top = s.jh.find_visual_top_for_row(row_idx);
+        int dist = std::abs(row_top - origin);
+        if (dist <= best_dist) {
+            best_dist = dist;
+            best_ptr = k;
+        }
+    }
+    s.search_ptr = best_ptr;
+
+    // Jump to the matched row (wantLast=true for sticky-bottom common case).
+    size_t target_row = s.search_matches[best_ptr];
+    int target_line = s.jh.find_visual_top_for_row(target_row);
+    int max = std::max(0, s.jh.total() - s.viewport_rows);
+    s.scroll_top = std::clamp(target_line, 0, max);
+    update_sticky_after_scroll(s, s.scroll_top);
+    if (s.callbacks.on_scrolled) {
+        s.callbacks.on_scrolled(s.scroll_top, s.sticky_bottom);
+    }
+
+    // Fire callback: total occurrences, 1-based current = prefixSum[ptr+1]
+    // (placeholder = prefixSum[ptr + 1] ?? total when wantLast=true)
+    size_t current = s.search_prefix_sum[best_ptr + 1];
+    if (current > s.search_total_occurrences) current = s.search_total_occurrences;
     if (s.callbacks.on_search_matches_change) {
-      s.callbacks.on_search_matches_change(0, 0);
+        s.callbacks.on_search_matches_change(s.search_total_occurrences, current);
     }
-    return;
-  }
-
-  // Tier-2 scan: build matches + prefixSum.
-  run_search(s, lowered);
-
-  if (s.search_matches.empty()) {
-    // No matches → fire 0/0 callback.
-    s.search_ptr = 0;
-    if (s.callbacks.on_search_matches_change) {
-      s.callbacks.on_search_matches_change(0, 0);
-    }
-    return;
-  }
-
-  // Find nearest match to current scroll position.
-  // Find nearest match by absolute distance to current scroll position.
-  int origin = s.scroll_top;
-  int best_dist = INT_MAX;
-  size_t best_ptr = 0;
-  for (size_t k = 0; k < s.search_matches.size(); ++k) {
-    size_t row_idx = s.search_matches[k];
-    int row_top = s.jh.find_visual_top_for_row(row_idx);
-    int dist = std::abs(row_top - origin);
-    if (dist <= best_dist) {
-      best_dist = dist;
-      best_ptr = k;
-    }
-  }
-  s.search_ptr = best_ptr;
-
-  // Jump to the matched row (wantLast=true for sticky-bottom common case).
-  size_t target_row = s.search_matches[best_ptr];
-  int target_line = s.jh.find_visual_top_for_row(target_row);
-  int max = std::max(0, s.jh.total() - s.viewport_rows);
-  s.scroll_top = std::clamp(target_line, 0, max);
-  update_sticky_after_scroll(s, s.scroll_top);
-  if (s.callbacks.on_scrolled) {
-    s.callbacks.on_scrolled(s.scroll_top, s.sticky_bottom);
-  }
-
-  // Fire callback: total occurrences, 1-based current = prefixSum[ptr+1]
-  // (placeholder = prefixSum[ptr + 1] ?? total when wantLast=true)
-  size_t current = s.search_prefix_sum[best_ptr + 1];
-  if (current > s.search_total_occurrences) current = s.search_total_occurrences;
-  if (s.callbacks.on_search_matches_change) {
-    s.callbacks.on_search_matches_change(s.search_total_occurrences, current);
-  }
 }
 
 /// Step to the next (delta=+1) or previous (delta=-1) match.
@@ -554,42 +557,42 @@ inline void set_search_query(VirtualListState &s, std::string_view query) {
 ///   Each step advances the ptr to the next matched ROW (since we don't
 ///   have per-occurrence screen positions).  This matches the engine-counted
 ///   badge semantics.
-inline void search_step_match(VirtualListState &s, int delta) {
-  if (s.search_matches.empty()) return;
+inline void search_step_match(VirtualListState& s, int delta) {
+    if (s.search_matches.empty()) return;
 
-  size_t n = s.search_matches.size();
-  // Wrap around: (ptr + delta + n) % n
-  size_t new_ptr = (static_cast<int>(s.search_ptr) + delta +
-                    static_cast<int>(n)) % static_cast<int>(n);
+    size_t n = s.search_matches.size();
+    // Wrap around: (ptr + delta + n) % n
+    size_t new_ptr =
+        (static_cast<int>(s.search_ptr) + delta + static_cast<int>(n)) % static_cast<int>(n);
 
-  // Guard: wraparound back to start means all messages are phantoms — stop.
-  s.search_ptr = new_ptr;
+    // Guard: wraparound back to start means all messages are phantoms — stop.
+    s.search_ptr = new_ptr;
 
-  // Jump to the new matched row.
-  size_t target_row = s.search_matches[new_ptr];
-  int target_line = s.jh.find_visual_top_for_row(target_row);
-  int max = std::max(0, s.jh.total() - s.viewport_rows);
-  s.scroll_top = std::clamp(target_line, 0, max);
-  update_sticky_after_scroll(s, s.scroll_top);
-  if (s.callbacks.on_scrolled) {
-    s.callbacks.on_scrolled(s.scroll_top, s.sticky_bottom);
-  }
+    // Jump to the new matched row.
+    size_t target_row = s.search_matches[new_ptr];
+    int target_line = s.jh.find_visual_top_for_row(target_row);
+    int max = std::max(0, s.jh.total() - s.viewport_rows);
+    s.scroll_top = std::clamp(target_line, 0, max);
+    update_sticky_after_scroll(s, s.scroll_top);
+    if (s.callbacks.on_scrolled) {
+        s.callbacks.on_scrolled(s.scroll_top, s.sticky_bottom);
+    }
 
-  // Fire callback with updated current occurrence number.
-  // We use prefixSum[ptr] + 1 (first occurrence in this message) for simplicity.
-  size_t current = s.search_prefix_sum[new_ptr] + 1;
-  if (current > s.search_total_occurrences) current = s.search_total_occurrences;
-  if (s.callbacks.on_search_matches_change) {
-    s.callbacks.on_search_matches_change(s.search_total_occurrences, current);
-  }
+    // Fire callback with updated current occurrence number.
+    // We use prefixSum[ptr] + 1 (first occurrence in this message) for simplicity.
+    size_t current = s.search_prefix_sum[new_ptr] + 1;
+    if (current > s.search_total_occurrences) current = s.search_total_occurrences;
+    if (s.callbacks.on_search_matches_change) {
+        s.callbacks.on_search_matches_change(s.search_total_occurrences, current);
+    }
 }
 
 /// Disarm search: clear screen-absolute positions (called on manual scroll).
-inline void disarm_search(VirtualListState &s) {
-  // In CPP we don't maintain screen-absolute element positions separately
-  // from the scroll state; the only thing to clear is the anchor so that
-  // a future / starts fresh from the new position.
-  s.search_anchor_scroll_top = -1;
+inline void disarm_search(VirtualListState& s) {
+    // In CPP we don't maintain screen-absolute element positions separately
+    // from the scroll state; the only thing to clear is the anchor so that
+    // a future / starts fresh from the new position.
+    s.search_anchor_scroll_top = -1;
 }
 
 /// Build the `search_step` callback that scroll_keys::ScrollCallbacks uses.
@@ -598,186 +601,175 @@ inline void disarm_search(VirtualListState &s) {
 ///
 /// Called by n/N keys handled through scroll_keys FSM.  This function
 /// bridges the two.
-[[nodiscard]] inline std::function<int(int)> make_search_step_callback(
-    VirtualListState *state) {
-  return [state](int delta) -> int {
-    if (!state || state->search_matches.empty()) return -1;
-    // Compute the target visual line for the match at ptr + delta.
-    size_t n = state->search_matches.size();
-    size_t target_ptr = (static_cast<int>(state->search_ptr) + delta +
-                         static_cast<int>(n)) % static_cast<int>(n);
-    size_t target_row = state->search_matches[target_ptr];
-    return state->jh.find_visual_top_for_row(target_row);
-  };
+[[nodiscard]] inline std::function<int(int)> make_search_step_callback(VirtualListState* state) {
+    return [state](int delta) -> int {
+        if (!state || state->search_matches.empty()) return -1;
+        // Compute the target visual line for the match at ptr + delta.
+        size_t n = state->search_matches.size();
+        size_t target_ptr = (static_cast<int>(state->search_ptr) + delta + static_cast<int>(n)) %
+                            static_cast<int>(n);
+        size_t target_row = state->search_matches[target_ptr];
+        return state->jh.find_visual_top_for_row(target_row);
+    };
 }
 
 /// Get current search match info for badge display.
 /// Returns {total_occurrences, current_occurrence_1based} — both 0 when
 /// no search is active.
-[[nodiscard]] inline std::pair<size_t, size_t>
-get_search_match_info(VirtualListState const &s) {
-  if (s.search_matches.empty()) return {0, 0};
-  size_t current = s.search_prefix_sum[s.search_ptr] + 1;
-  if (current > s.search_total_occurrences)
-    current = s.search_total_occurrences;
-  return {s.search_total_occurrences, current};
+[[nodiscard]] inline std::pair<size_t, size_t> get_search_match_info(VirtualListState const& s) {
+    if (s.search_matches.empty()) return {0, 0};
+    size_t current = s.search_prefix_sum[s.search_ptr] + 1;
+    if (current > s.search_total_occurrences) current = s.search_total_occurrences;
+    return {s.search_total_occurrences, current};
 }
 
 // ─── Render: spacers + slice + gutter ───────────────────────────────────────
 
 /// Build the loading-spinner pill (for earlier/later messages), rendered
 /// as a single text line with dim colors.
-[[nodiscard]] inline ftxui::Element
-loading_pill(std::string const &label) {
-  using namespace ftxui;
-  return hbox({
-    text("  ◷ "),
-    text(label) | color(loom::ui::design::theme::current_theme().palette->muted) | dim,
-    filler(),
-  }) | size(HEIGHT, EQUAL, 1);
+[[nodiscard]] inline ftxui::Element loading_pill(std::string const& label) {
+    using namespace ftxui;
+    return hbox({
+               text("  ◷ "),
+               text(label) | color(loom::ui::design::theme::current_theme().palette->muted) | dim,
+               filler(),
+           }) |
+           size(HEIGHT, EQUAL, 1);
 }
 
 /// Build the "⬇ new messages (N)" pill at the bottom-right.
-[[nodiscard]] inline ftxui::Element
-new_messages_pill(int count) {
-  using namespace ftxui;
-  std::string label = std::string(loom::ui::design::figures::kArrowDown) + " new messages (" + std::to_string(count) + ")";
-  return hbox({
-    filler(),
-    text(label) | color(loom::ui::design::theme::current_theme().palette->inverse_text) | bold |
-      bgcolor(loom::ui::design::theme::current_theme().palette->info) | dim |
-      size(HEIGHT, EQUAL, 1),
-  });
+[[nodiscard]] inline ftxui::Element new_messages_pill(int count) {
+    using namespace ftxui;
+    std::string label = std::string(loom::ui::design::figures::kArrowDown) + " new messages (" +
+                        std::to_string(count) + ")";
+    return hbox({
+        filler(),
+        text(label) | color(loom::ui::design::theme::current_theme().palette->inverse_text) | bold |
+            bgcolor(loom::ui::design::theme::current_theme().palette->info) | dim |
+            size(HEIGHT, EQUAL, 1),
+    });
 }
 
 /// Build an ASCII gutter scroll bar.  `rows` = total gutter rows,
 /// `ratio` = [0,1] position of top of thumb, `span` = [0,1] thumb size.
-[[nodiscard]] inline ftxui::Element
-ascii_scroll_gutter(int rows, double ratio, double span) {
-  using namespace ftxui;
-  std::vector<Element> lines;
-  lines.reserve(rows);
-  int thumb_start = static_cast<int>(std::floor(ratio * rows));
-  int thumb_end   = static_cast<int>(std::floor((ratio + span) * rows));
-  if (thumb_end == thumb_start) thumb_end = thumb_start + 1;
-  for (int i = 0; i < rows; ++i) {
-    bool inside = (i >= thumb_start && i < thumb_end);
-    lines.push_back(text(inside ? "█" : "░") | dim);
-  }
-  return vbox(std::move(lines));
+[[nodiscard]] inline ftxui::Element ascii_scroll_gutter(int rows, double ratio, double span) {
+    using namespace ftxui;
+    std::vector<Element> lines;
+    lines.reserve(rows);
+    int thumb_start = static_cast<int>(std::floor(ratio * rows));
+    int thumb_end = static_cast<int>(std::floor((ratio + span) * rows));
+    if (thumb_end == thumb_start) thumb_end = thumb_start + 1;
+    for (int i = 0; i < rows; ++i) {
+        bool inside = (i >= thumb_start && i < thumb_end);
+        lines.push_back(text(inside ? "█" : "░") | dim);
+    }
+    return vbox(std::move(lines));
 }
 
 /// Produce a single Element representing the *entire* virtual list.
 /// Uses the spacer + slice + spacer trick so yframe sees the full height.
-[[nodiscard]] inline ftxui::Element
-render_list_as_elements(VirtualListState &s) {
-  using namespace ftxui;
-  clamp_scroll(s);
+[[nodiscard]] inline ftxui::Element render_list_as_elements(VirtualListState& s) {
+    using namespace ftxui;
+    clamp_scroll(s);
 
-  int const total = s.jh.total();
-  if (s.rows.empty() || total == 0) {
-    return vbox({filler()}) | size(HEIGHT, EQUAL, 1);
-  }
-
-  // Rebuild slice + top/bottom spacer heights.
-  auto [start_idx, count] = build_visible_slice(s.jh, s.scroll_top,
-                                                 s.viewport_rows);
-  int const slice_top_line = s.jh.find_visual_top_for_row(start_idx);
-  int const slice_bot_line = (count == 0) ? slice_top_line
-                             : s.jh.find_visual_top_for_row(start_idx + count);
-  int const top_spacer_h   = std::max(0, slice_top_line);
-  int const bot_spacer_h   = std::max(0, total - slice_bot_line);
-
-  Elements children;
-  children.reserve(3 + count + 4);
-
-  // 1) top spacer
-  if (top_spacer_h > 0) {
-    children.push_back(text("") | size(HEIGHT, EQUAL, top_spacer_h));
-  }
-  // 2) top loading pill (early messages)
-  if (s.loading_earlier && start_idx == 0) {
-    children.push_back(loading_pill("Loading earlier messages…"));
-  }
-  // 3) slice rows
-  auto &rr = s.callbacks.render_row;
-  for (size_t i = 0; i < count; ++i) {
-    size_t const idx = start_idx + i;
-    if (idx >= s.rows.size()) break;
-    if (rr) {
-      children.push_back(rr(idx, s.rows[idx]));
-    } else {
-      // Diagnostic fallback when callers do not provide a row renderer.
-      children.push_back(
-          text("  row " + std::to_string(idx) +
-               "  [" + s.rows[idx].search_key + "]") |
-          size(HEIGHT, EQUAL, std::max(1, s.rows[idx].estimated_height_lines)));
+    int const total = s.jh.total();
+    if (s.rows.empty() || total == 0) {
+        return vbox({filler()}) | size(HEIGHT, EQUAL, 1);
     }
-  }
-  // 4) bottom loading pill
-  if (s.loading_later && start_idx + count >= s.rows.size()) {
-    children.push_back(loading_pill("Loading later messages…"));
-  }
-  // 5) bottom spacer
-  if (bot_spacer_h > 0) {
-    children.push_back(text("") | size(HEIGHT, EQUAL, bot_spacer_h));
-  }
 
-  Element body = vbox(std::move(children));
+    // Rebuild slice + top/bottom spacer heights.
+    auto [start_idx, count] = build_visible_slice(s.jh, s.scroll_top, s.viewport_rows);
+    int const slice_top_line = s.jh.find_visual_top_for_row(start_idx);
+    int const slice_bot_line =
+        (count == 0) ? slice_top_line : s.jh.find_visual_top_for_row(start_idx + count);
+    int const top_spacer_h = std::max(0, slice_top_line);
+    int const bot_spacer_h = std::max(0, total - slice_bot_line);
 
-  // 6) "new messages" pill — when the user is scrolled up AND new rows have
-  //    appeared below the viewport, paint a clickable (keyboard: Shift+Enter)
-  //    pill that re-pins to the tail.  FTXUI lacks z-order canvas overlay,
-  //    so we insert the pill inside the bottom spacer area (last spacer
-  //    line(s) become the pill; pure whitespace spacer lines above it).
-  if (!s.sticky_bottom && s.new_message_count > 0 &&
-      s.callbacks.on_jump_to_new_messages) {
-    constexpr int kPillRows = 1;
-    if (bot_spacer_h >= kPillRows) {
-      // Reconstruct body: top spacer → loading pills → slice rows →
-      // (bot_spacer_h - kPillRows) blank → new_messages_pill.
-      Elements es;
-      es.reserve(3 + count + 4);
-      if (top_spacer_h > 0)
-        es.push_back(text("") | size(HEIGHT, EQUAL, top_spacer_h));
-      if (s.loading_earlier && start_idx == 0)
-        es.push_back(loading_pill("Loading earlier messages…"));
-      auto &rr2 = s.callbacks.render_row;
-      for (size_t i = 0; i < count; ++i) {
+    Elements children;
+    children.reserve(3 + count + 4);
+
+    // 1) top spacer
+    if (top_spacer_h > 0) {
+        children.push_back(text("") | size(HEIGHT, EQUAL, top_spacer_h));
+    }
+    // 2) top loading pill (early messages)
+    if (s.loading_earlier && start_idx == 0) {
+        children.push_back(loading_pill("Loading earlier messages…"));
+    }
+    // 3) slice rows
+    auto& rr = s.callbacks.render_row;
+    for (size_t i = 0; i < count; ++i) {
         size_t const idx = start_idx + i;
         if (idx >= s.rows.size()) break;
-        if (rr2) {
-          es.push_back(rr2(idx, s.rows[idx]));
+        if (rr) {
+            children.push_back(rr(idx, s.rows[idx]));
         } else {
-          es.push_back(text("  row " + std::to_string(idx)) |
-                       size(HEIGHT, EQUAL,
-                            std::max(1, s.rows[idx].estimated_height_lines)));
+            // Diagnostic fallback when callers do not provide a row renderer.
+            children.push_back(
+                text("  row " + std::to_string(idx) + "  [" + s.rows[idx].search_key + "]") |
+                size(HEIGHT, EQUAL, std::max(1, s.rows[idx].estimated_height_lines)));
         }
-      }
-      if (s.loading_later && start_idx + count >= s.rows.size())
-        es.push_back(loading_pill("Loading later messages…"));
-      if (int above = bot_spacer_h - kPillRows; above > 0)
-        es.push_back(text("") | size(HEIGHT, EQUAL, above));
-      es.push_back(new_messages_pill(s.new_message_count));
-      body = vbox(std::move(es));
     }
-  }
+    // 4) bottom loading pill
+    if (s.loading_later && start_idx + count >= s.rows.size()) {
+        children.push_back(loading_pill("Loading later messages…"));
+    }
+    // 5) bottom spacer
+    if (bot_spacer_h > 0) {
+        children.push_back(text("") | size(HEIGHT, EQUAL, bot_spacer_h));
+    }
 
-  // 7) ASCII gutter (optional) — rendered as a right-hand column next to
-  //    body via hbox.  The gutter rows equal viewport_rows; the thumb
-  //    ratio uses actual scroll state.
-  if (s.options.ascii_gutter && s.viewport_rows > 0 && total > s.viewport_rows) {
-    int const max = std::max(0, total - s.viewport_rows);
-    double const ratio = (max == 0) ? 0.0
-                         : static_cast<double>(s.scroll_top) / max;
-    double const span  = std::min(
-        1.0, static_cast<double>(s.viewport_rows) / total);
-    return hbox({
-      body | xflex,
-      ascii_scroll_gutter(s.viewport_rows, ratio, span),
-    });
-  }
-  return body;
+    Element body = vbox(std::move(children));
+
+    // 6) "new messages" pill — when the user is scrolled up AND new rows have
+    //    appeared below the viewport, paint a clickable (keyboard: Shift+Enter)
+    //    pill that re-pins to the tail.  FTXUI lacks z-order canvas overlay,
+    //    so we insert the pill inside the bottom spacer area (last spacer
+    //    line(s) become the pill; pure whitespace spacer lines above it).
+    if (!s.sticky_bottom && s.new_message_count > 0 && s.callbacks.on_jump_to_new_messages) {
+        constexpr int kPillRows = 1;
+        if (bot_spacer_h >= kPillRows) {
+            // Reconstruct body: top spacer → loading pills → slice rows →
+            // (bot_spacer_h - kPillRows) blank → new_messages_pill.
+            Elements es;
+            es.reserve(3 + count + 4);
+            if (top_spacer_h > 0) es.push_back(text("") | size(HEIGHT, EQUAL, top_spacer_h));
+            if (s.loading_earlier && start_idx == 0)
+                es.push_back(loading_pill("Loading earlier messages…"));
+            auto& rr2 = s.callbacks.render_row;
+            for (size_t i = 0; i < count; ++i) {
+                size_t const idx = start_idx + i;
+                if (idx >= s.rows.size()) break;
+                if (rr2) {
+                    es.push_back(rr2(idx, s.rows[idx]));
+                } else {
+                    es.push_back(
+                        text("  row " + std::to_string(idx)) |
+                        size(HEIGHT, EQUAL, std::max(1, s.rows[idx].estimated_height_lines)));
+                }
+            }
+            if (s.loading_later && start_idx + count >= s.rows.size())
+                es.push_back(loading_pill("Loading later messages…"));
+            if (int above = bot_spacer_h - kPillRows; above > 0)
+                es.push_back(text("") | size(HEIGHT, EQUAL, above));
+            es.push_back(new_messages_pill(s.new_message_count));
+            body = vbox(std::move(es));
+        }
+    }
+
+    // 7) ASCII gutter (optional) — rendered as a right-hand column next to
+    //    body via hbox.  The gutter rows equal viewport_rows; the thumb
+    //    ratio uses actual scroll state.
+    if (s.options.ascii_gutter && s.viewport_rows > 0 && total > s.viewport_rows) {
+        int const max = std::max(0, total - s.viewport_rows);
+        double const ratio = (max == 0) ? 0.0 : static_cast<double>(s.scroll_top) / max;
+        double const span = std::min(1.0, static_cast<double>(s.viewport_rows) / total);
+        return hbox({
+            body | xflex,
+            ascii_scroll_gutter(s.viewport_rows, ratio, span),
+        });
+    }
+    return body;
 }
 
 // ─── Public factory ─────────────────────────────────────────────────────────
@@ -797,300 +789,305 @@ render_list_as_elements(VirtualListState &s) {
 // Callers that don't want to downcast can capture the state shared_ptr
 // via the (optional) output parameter.
 
-struct VirtualListComponentBase;   // forward
+struct VirtualListComponentBase;  // forward
 
 /// Public imperative API bag.  Safe to capture from callers; non-owning
 /// pointer to the VirtualListState living inside the component.
 struct VirtualListHandle {
-  VirtualListState *state = nullptr;
+    VirtualListState* state = nullptr;
 
-  /// Replace the row list and recompute geometry.
-  void SetRows(std::vector<VisibleRow> new_rows) {
-    if (!state) return;
-    int const prev_total = state->jh.total();
-    int const prev_max   = std::max(0, prev_total - state->viewport_rows);
-    bool at_bottom_old   = state->sticky_bottom ||
-                           (prev_max - state->scroll_top <= kStickyThresholdLines);
+    /// Replace the row list and recompute geometry.
+    void SetRows(std::vector<VisibleRow> new_rows) {
+        if (!state) return;
+        int const prev_total = state->jh.total();
+        int const prev_max = std::max(0, prev_total - state->viewport_rows);
+        bool at_bottom_old =
+            state->sticky_bottom || (prev_max - state->scroll_top <= kStickyThresholdLines);
 
-    state->rows = std::move(new_rows);
-    state->jh   = build_geometry(std::span{state->rows});
+        state->rows = std::move(new_rows);
+        state->jh = build_geometry(std::span{state->rows});
 
-    int const new_total = state->jh.total();
-    int const new_max   = std::max(0, new_total - state->viewport_rows);
-    int const delta_total = new_total - prev_total;
+        int const new_total = state->jh.total();
+        int const new_max = std::max(0, new_total - state->viewport_rows);
+        int const delta_total = new_total - prev_total;
 
-    // Sticky re-pin: if user was at bottom, keep there.
-    if (at_bottom_old && state->auto_mode != AutoScrollMode::Disabled) {
-      state->scroll_top    = new_max;
-      state->sticky_bottom = true;
-      state->new_message_count = 0;
-    } else if (delta_total > 0) {
-      // New rows appeared below viewport → bump new-message counter.
-      // Count how many *rows* (not lines) have visual_top below the old
-      // viewport bottom.  Bound iteration to a sane range.
-      int const old_below_line =
-          std::max(0, prev_total - state->viewport_rows - kStickyThresholdLines);
-      int counted = 0;
-      size_t const cap = state->rows.size();
-      // Walk from the END since new rows typically append at the tail.
-      for (size_t k = 0; k < cap; ++k) {
-        size_t idx = cap - 1 - k;
-        int top = state->jh.find_visual_top_for_row(idx);
-        if (top >= old_below_line) {
-          ++counted;
-        } else {
-          break;
+        // Sticky re-pin: if user was at bottom, keep there.
+        if (at_bottom_old && state->auto_mode != AutoScrollMode::Disabled) {
+            state->scroll_top = new_max;
+            state->sticky_bottom = true;
+            state->new_message_count = 0;
+        } else if (delta_total > 0) {
+            // New rows appeared below viewport → bump new-message counter.
+            // Count how many *rows* (not lines) have visual_top below the old
+            // viewport bottom.  Bound iteration to a sane range.
+            int const old_below_line =
+                std::max(0, prev_total - state->viewport_rows - kStickyThresholdLines);
+            int counted = 0;
+            size_t const cap = state->rows.size();
+            // Walk from the END since new rows typically append at the tail.
+            for (size_t k = 0; k < cap; ++k) {
+                size_t idx = cap - 1 - k;
+                int top = state->jh.find_visual_top_for_row(idx);
+                if (top >= old_below_line) {
+                    ++counted;
+                } else {
+                    break;
+                }
+                if (counted > 10000) break;  // safety cap
+            }
+            if (counted > 0) {
+                // Never count *more* new rows than the row-count delta (in case of
+                // reordering or filter changes the estimate double-counts).
+                int const cap2 = std::max(0, static_cast<int>(state->rows.size()) -
+                                                 static_cast<int>(state->jh.size()));
+                (void)cap2;
+                state->new_message_count += counted;
+            }
+            (void)delta_total;
         }
-        if (counted > 10000) break;   // safety cap
-      }
-      if (counted > 0) {
-        // Never count *more* new rows than the row-count delta (in case of
-        // reordering or filter changes the estimate double-counts).
-        int const cap2 = std::max(0, static_cast<int>(state->rows.size()) -
-                                     static_cast<int>(state->jh.size()));
-        (void)cap2;
-        state->new_message_count += counted;
-      }
-      (void)delta_total;
+
+        // Clear transient loading flags once geometry changes (parent added
+        // the fetched rows).
+        state->loading_earlier = false;
+        state->loading_later = false;
+
+        clamp_scroll(*state);
     }
 
-    // Clear transient loading flags once geometry changes (parent added
-    // the fetched rows).
-    state->loading_earlier = false;
-    state->loading_later   = false;
-
-    clamp_scroll(*state);
-  }
-
-  /// Jump so a specific row's top is at viewport top minus headroom.
-  void JumpToRow(size_t idx, int headroom = 3) {
-    if (!state || state->rows.empty()) return;
-    if (idx >= state->rows.size()) idx = state->rows.size() - 1;
-    int line = state->jh.find_visual_top_for_row(idx);
-    JumpToVisualLine(std::max(0, line - headroom));
-  }
-
-  void JumpToVisualLine(int line) {
-    if (!state) return;
-    int const max = std::max(0, state->jh.total() - state->viewport_rows);
-    state->scroll_top = std::clamp(line, 0, max);
-    update_sticky_after_scroll(*state, state->scroll_top);
-    if (state->callbacks.on_scrolled)
-      state->callbacks.on_scrolled(state->scroll_top, state->sticky_bottom);
-  }
-
-  void SetSticky(bool on) {
-    if (!state) return;
-    state->sticky_bottom = on;
-    if (on) {
-      int const max = std::max(0, state->jh.total() - state->viewport_rows);
-      state->scroll_top = max;
-      state->new_message_count = 0;
+    /// Jump so a specific row's top is at viewport top minus headroom.
+    void JumpToRow(size_t idx, int headroom = 3) {
+        if (!state || state->rows.empty()) return;
+        if (idx >= state->rows.size()) idx = state->rows.size() - 1;
+        int line = state->jh.find_visual_top_for_row(idx);
+        JumpToVisualLine(std::max(0, line - headroom));
     }
-  }
 
-  void SetFocusDomain(FocusDomain d) {
-    if (state) state->focus_domain = d;
-  }
+    void JumpToVisualLine(int line) {
+        if (!state) return;
+        int const max = std::max(0, state->jh.total() - state->viewport_rows);
+        state->scroll_top = std::clamp(line, 0, max);
+        update_sticky_after_scroll(*state, state->scroll_top);
+        if (state->callbacks.on_scrolled)
+            state->callbacks.on_scrolled(state->scroll_top, state->sticky_bottom);
+    }
 
-  // ── Search index (2-tier) imperative API ──────────────────────────────
+    void SetSticky(bool on) {
+        if (!state) return;
+        state->sticky_bottom = on;
+        if (on) {
+            int const max = std::max(0, state->jh.total() - state->viewport_rows);
+            state->scroll_top = max;
+            state->new_message_count = 0;
+        }
+    }
 
-  /// Set the search query and jump to the nearest match.
-  /// Pass empty string to clear search.
-  void SetSearchQuery(std::string_view query) {
-    if (!state) return;
-    set_search_query(*state, query);
-  }
+    void SetFocusDomain(FocusDomain d) {
+        if (state) state->focus_domain = d;
+    }
 
-  /// Step to the next match (delta=+1) or previous match (delta=-1).
-  /// Wraps around at boundaries.
-  void NextMatch() {
-    if (!state) return;
-    search_step_match(*state, 1);
-  }
+    // ── Search index (2-tier) imperative API ──────────────────────────────
 
-  void PrevMatch() {
-    if (!state) return;
-    search_step_match(*state, -1);
-  }
+    /// Set the search query and jump to the nearest match.
+    /// Pass empty string to clear search.
+    void SetSearchQuery(std::string_view query) {
+        if (!state) return;
+        set_search_query(*state, query);
+    }
 
-  /// Disarm search: clear anchor so next / starts fresh.
-  void DisarmSearch() {
-    if (!state) return;
-    disarm_search(*state);
-  }
+    /// Step to the next match (delta=+1) or previous match (delta=-1).
+    /// Wraps around at boundaries.
+    void NextMatch() {
+        if (!state) return;
+        search_step_match(*state, 1);
+    }
 
-  /// Pre-warm the search index (no-op since search_key is
-  /// pre-computed by messages_list).
-  size_t WarmSearchIndex() {
-    // In CPP, search_key is already populated by visible_rows_to_virtual
-    // via get_cached_lowered_search_text().  No extra work needed.
-    if (!state) return 0;
-    return state->rows.size();
-  }
+    void PrevMatch() {
+        if (!state) return;
+        search_step_match(*state, -1);
+    }
 
-  /// Get current search match info (for badge display).
-  /// Returns {total, current} — both 0 when no search active.
-  std::pair<size_t, size_t> GetSearchMatchInfo() const {
-    if (!state || state->search_matches.empty()) return {0, 0};
-    size_t current = state->search_prefix_sum[state->search_ptr] + 1;
-    if (current > state->search_total_occurrences)
-      current = state->search_total_occurrences;
-    return {state->search_total_occurrences, current};
-  }
+    /// Disarm search: clear anchor so next / starts fresh.
+    void DisarmSearch() {
+        if (!state) return;
+        disarm_search(*state);
+    }
 
-  /// Returns true if a search query is active (non-empty query with matches).
-  bool IsSearchActive() const {
-    return state && !state->search_matches.empty();
-  }
+    /// Pre-warm the search index (no-op since search_key is
+    /// pre-computed by messages_list).
+    size_t WarmSearchIndex() {
+        // In CPP, search_key is already populated by visible_rows_to_virtual
+        // via get_cached_lowered_search_text().  No extra work needed.
+        if (!state) return 0;
+        return state->rows.size();
+    }
+
+    /// Get current search match info (for badge display).
+    /// Returns {total, current} — both 0 when no search active.
+    std::pair<size_t, size_t> GetSearchMatchInfo() const {
+        if (!state || state->search_matches.empty()) return {0, 0};
+        size_t current = state->search_prefix_sum[state->search_ptr] + 1;
+        if (current > state->search_total_occurrences) current = state->search_total_occurrences;
+        return {state->search_total_occurrences, current};
+    }
+
+    /// Returns true if a search query is active (non-empty query with matches).
+    bool IsSearchActive() const { return state && !state->search_matches.empty(); }
 };
 
 /// Component impl.  Captures a shared_ptr<VirtualListState> so both
 /// Render() and CatchEvent() see the same mutable state.
 struct [[nodiscard]] VirtualListComponentBase : ftxui::ComponentBase {
-  std::shared_ptr<VirtualListState> s;
-  VirtualListHandle                 handle;
+    std::shared_ptr<VirtualListState> s;
+    VirtualListHandle handle;
 
-  explicit VirtualListComponentBase(std::shared_ptr<VirtualListState> state)
-      : s(std::move(state)) {
-    handle.state = s.get();
-  }
-
-  ftxui::Element Render() override {
-    using namespace ftxui;
-    tick_frame(s->fsm);
-    maybe_trigger_load(*s);
-    // Advance our own frame counter (used by debounce / UI timers).
-    s->frame++;
-
-    Element body = render_list_as_elements(*s);
-    // Wrap in yframe so outer layout gets a correct scroll thumb.
-    body = body | yframe | vscroll_indicator;
-    return body;
-  }
-
-  bool OnEvent(ftxui::Event event) override {
-    // ① New-messages pill: clicking the body with a mouse in the bottom
-    //   row fires jump_to_new_messages.  FTXUI mouse coords are screen-
-    //   relative; we only implement keyboard fallback (Shift+Enter) here.
-    if (event == ftxui::Event::Return && s->new_message_count > 0 &&
-        !s->sticky_bottom) {
-      if (s->callbacks.on_jump_to_new_messages)
-        s->callbacks.on_jump_to_new_messages();
-      handle.SetSticky(true);
-      if (s->callbacks.on_scrolled)
-        s->callbacks.on_scrolled(s->scroll_top, true);
-      return true;
+    explicit VirtualListComponentBase(std::shared_ptr<VirtualListState> state)
+        : s(std::move(state)) {
+        handle.state = s.get();
     }
 
-    // ② If scroll_keys says we own the event → run the FSM.
-    if (ShouldHandleScrollKey(s->focus_domain, event)) {
-      ScrollState ss{
-          .scroll_top    = s->scroll_top,
-          .viewport_rows = s->viewport_rows,
-          .total_rows    = s->jh.total(),
-          .selected_idx  = std::nullopt,
-      };
-      int const old_scroll = ss.scroll_top;
+    ftxui::Element Render() override {
+        using namespace ftxui;
+        tick_frame(s->fsm);
+        maybe_trigger_load(*s);
+        // Advance our own frame counter (used by debounce / UI timers).
+        s->frame++;
 
-      ScrollCallbacks cbs{
-        .scroll_to = [&](int line) {
-          int const mx = std::max(0, s->jh.total() - s->viewport_rows);
-          s->scroll_top = std::clamp(line, 0, mx);
-          ss.scroll_top = s->scroll_top;
-        },
-        .scroll_by = [&](int delta) -> bool {
-          int const mx = std::max(0, s->jh.total() - s->viewport_rows);
-          int tgt = ss.scroll_top + delta;
-          if (tgt >= mx) { s->scroll_top = mx; ss.scroll_top = mx; return true; }
-          if (tgt <= 0)  { s->scroll_top = 0;  ss.scroll_top = 0;  return false; }
-          s->scroll_top = tgt; ss.scroll_top = tgt; return false;
-        },
-        .scroll_bottom = [&] { handle.SetSticky(true); },
-        .center_selected = [&](CenterKind kind) {
-          if (s->rows.empty()) return;
-          size_t selected_row = s->jh.find_row_at_visual_line(s->scroll_top);
-          if (ss.selected_idx) {
-            selected_row = static_cast<size_t>(
-                std::clamp(*ss.selected_idx, 0,
-                           std::max(0, static_cast<int>(s->rows.size()) - 1)));
-          }
-
-          int const row_top = s->jh.find_visual_top_for_row(selected_row);
-          int const row_height = s->jh.height_of(selected_row);
-          int target = row_top;
-          switch (kind) {
-            case CenterKind::Top:
-              target = row_top;
-              break;
-            case CenterKind::Middle:
-              target = row_top - std::max(0, (s->viewport_rows - row_height) / 2);
-              break;
-            case CenterKind::Bottom:
-              target = row_top - std::max(0, s->viewport_rows - row_height);
-              break;
-          }
-          int const mx = std::max(0, s->jh.total() - s->viewport_rows);
-          s->scroll_top = std::clamp(target, 0, mx);
-          ss.scroll_top = s->scroll_top;
-        },
-        .row_to_visual = [&](int idx) -> int {
-          if (idx < 0) return 0;
-          return s->jh.find_visual_top_for_row(static_cast<size_t>(idx));
-        },
-        .visual_to_row = [&](int line) -> int {
-          return static_cast<int>(s->jh.find_row_at_visual_line(line));
-        },
-        .search_step = [&](int delta) -> int {
-          // Internal search engine takes priority over external callback.
-          if (!s->search_matches.empty()) {
-            size_t n = s->search_matches.size();
-            size_t target_ptr = (static_cast<int>(s->search_ptr) + delta +
-                                 static_cast<int>(n)) % static_cast<int>(n);
-            size_t target_row = s->search_matches[target_ptr];
-            return s->jh.find_visual_top_for_row(target_row);
-          }
-          // Fall back to external callback if provided.
-          if (s->callbacks.search_step) return s->callbacks.search_step(delta);
-          return -1;
-        },
-      };
-
-      bool consumed = HandleScrollKey(event, ss, s->fsm, cbs);
-      if (!consumed) return false;
-
-      s->scroll_top = ss.scroll_top;
-      update_sticky_after_scroll(*s, old_scroll);
-      if (s->callbacks.on_scrolled)
-        s->callbacks.on_scrolled(s->scroll_top, s->sticky_bottom);
-
-      // ③ Fire incremental loads only on *user* scroll events (not
-      //    programmatic jumps).  Prevents SetRows() storms from loop-
-      //    triggering on_load_more.
-      maybe_trigger_load(*s);
-      return true;
+        Element body = render_list_as_elements(*s);
+        // Wrap in yframe so outer layout gets a correct scroll thumb.
+        body = body | yframe | vscroll_indicator;
+        return body;
     }
-    return ComponentBase::OnEvent(event);
-  }
+
+    bool OnEvent(ftxui::Event event) override {
+        // ① New-messages pill: clicking the body with a mouse in the bottom
+        //   row fires jump_to_new_messages.  FTXUI mouse coords are screen-
+        //   relative; we only implement keyboard fallback (Shift+Enter) here.
+        if (event == ftxui::Event::Return && s->new_message_count > 0 && !s->sticky_bottom) {
+            if (s->callbacks.on_jump_to_new_messages) s->callbacks.on_jump_to_new_messages();
+            handle.SetSticky(true);
+            if (s->callbacks.on_scrolled) s->callbacks.on_scrolled(s->scroll_top, true);
+            return true;
+        }
+
+        // ② If scroll_keys says we own the event → run the FSM.
+        if (ShouldHandleScrollKey(s->focus_domain, event)) {
+            ScrollState ss{
+                .scroll_top = s->scroll_top,
+                .viewport_rows = s->viewport_rows,
+                .total_rows = s->jh.total(),
+                .selected_idx = std::nullopt,
+            };
+            int const old_scroll = ss.scroll_top;
+
+            ScrollCallbacks cbs{
+                .scroll_to =
+                    [&](int line) {
+                        int const mx = std::max(0, s->jh.total() - s->viewport_rows);
+                        s->scroll_top = std::clamp(line, 0, mx);
+                        ss.scroll_top = s->scroll_top;
+                    },
+                .scroll_by = [&](int delta) -> bool {
+                    int const mx = std::max(0, s->jh.total() - s->viewport_rows);
+                    int tgt = ss.scroll_top + delta;
+                    if (tgt >= mx) {
+                        s->scroll_top = mx;
+                        ss.scroll_top = mx;
+                        return true;
+                    }
+                    if (tgt <= 0) {
+                        s->scroll_top = 0;
+                        ss.scroll_top = 0;
+                        return false;
+                    }
+                    s->scroll_top = tgt;
+                    ss.scroll_top = tgt;
+                    return false;
+                },
+                .scroll_bottom = [&] { handle.SetSticky(true); },
+                .center_selected =
+                    [&](CenterKind kind) {
+                        if (s->rows.empty()) return;
+                        size_t selected_row = s->jh.find_row_at_visual_line(s->scroll_top);
+                        if (ss.selected_idx) {
+                            selected_row = static_cast<size_t>(
+                                std::clamp(*ss.selected_idx, 0,
+                                           std::max(0, static_cast<int>(s->rows.size()) - 1)));
+                        }
+
+                        int const row_top = s->jh.find_visual_top_for_row(selected_row);
+                        int const row_height = s->jh.height_of(selected_row);
+                        int target = row_top;
+                        switch (kind) {
+                        case CenterKind::Top:
+                            target = row_top;
+                            break;
+                        case CenterKind::Middle:
+                            target = row_top - std::max(0, (s->viewport_rows - row_height) / 2);
+                            break;
+                        case CenterKind::Bottom:
+                            target = row_top - std::max(0, s->viewport_rows - row_height);
+                            break;
+                        }
+                        int const mx = std::max(0, s->jh.total() - s->viewport_rows);
+                        s->scroll_top = std::clamp(target, 0, mx);
+                        ss.scroll_top = s->scroll_top;
+                    },
+                .row_to_visual = [&](int idx) -> int {
+                    if (idx < 0) return 0;
+                    return s->jh.find_visual_top_for_row(static_cast<size_t>(idx));
+                },
+                .visual_to_row = [&](int line) -> int {
+                    return static_cast<int>(s->jh.find_row_at_visual_line(line));
+                },
+                .search_step = [&](int delta) -> int {
+                    // Internal search engine takes priority over external callback.
+                    if (!s->search_matches.empty()) {
+                        size_t n = s->search_matches.size();
+                        size_t target_ptr =
+                            (static_cast<int>(s->search_ptr) + delta + static_cast<int>(n)) %
+                            static_cast<int>(n);
+                        size_t target_row = s->search_matches[target_ptr];
+                        return s->jh.find_visual_top_for_row(target_row);
+                    }
+                    // Fall back to external callback if provided.
+                    if (s->callbacks.search_step) return s->callbacks.search_step(delta);
+                    return -1;
+                },
+            };
+
+            bool consumed = HandleScrollKey(event, ss, s->fsm, cbs);
+            if (!consumed) return false;
+
+            s->scroll_top = ss.scroll_top;
+            update_sticky_after_scroll(*s, old_scroll);
+            if (s->callbacks.on_scrolled) s->callbacks.on_scrolled(s->scroll_top, s->sticky_bottom);
+
+            // ③ Fire incremental loads only on *user* scroll events (not
+            //    programmatic jumps).  Prevents SetRows() storms from loop-
+            //    triggering on_load_more.
+            maybe_trigger_load(*s);
+            return true;
+        }
+        return ComponentBase::OnEvent(event);
+    }
 };
 
 /// Public factory.  `out_handle` is optional — when supplied, callers get
 /// an imperative handle for SetRows/JumpToRow/etc.
-[[nodiscard]] inline ftxui::Component MakeVirtualMessageList(
-    VirtualListOptions options,
-    VirtualListCallbacks callbacks,
-    VirtualListHandle *out_handle = nullptr) {
-  auto state = std::make_shared<VirtualListState>();
-  state->options   = std::move(options);
-  state->callbacks = std::move(callbacks);
-  state->viewport_rows = state->options.viewport_rows;
-  state->auto_mode     = state->options.auto_scroll;
+[[nodiscard]] inline ftxui::Component
+MakeVirtualMessageList(VirtualListOptions options, VirtualListCallbacks callbacks,
+                       VirtualListHandle* out_handle = nullptr) {
+    auto state = std::make_shared<VirtualListState>();
+    state->options = std::move(options);
+    state->callbacks = std::move(callbacks);
+    state->viewport_rows = state->options.viewport_rows;
+    state->auto_mode = state->options.auto_scroll;
 
-  auto comp = ftxui::Make<VirtualListComponentBase>(std::move(state));
-  if (out_handle) {
-    *out_handle = static_cast<VirtualListComponentBase *>(comp.get())->handle;
-  }
-  return comp;
+    auto comp = ftxui::Make<VirtualListComponentBase>(std::move(state));
+    if (out_handle) {
+        *out_handle = static_cast<VirtualListComponentBase*>(comp.get())->handle;
+    }
+    return comp;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -1101,103 +1098,107 @@ struct [[nodiscard]] VirtualListComponentBase : ftxui::ComponentBase {
 export namespace loom::ui::messages::virtual_list::test {
 
 using TestResult = std::pair<bool, std::string>;
-[[nodiscard]] inline TestResult ok()     { return {true,  "OK"}; }
-[[nodiscard]] inline TestResult fail(std::string m) { return {false, std::move(m)}; }
+
+[[nodiscard]] inline TestResult ok() {
+    return {true, "OK"};
+}
+
+[[nodiscard]] inline TestResult fail(std::string m) {
+    return {false, std::move(m)};
+}
 
 /// Build a synthetic VisibleRow sequence of N rows with heights drawn
 /// from the pattern 1,3,7,11 (cycles).  Covers tall + short rows.
 [[nodiscard]] inline std::vector<VisibleRow> make_rows(size_t n) {
-  std::vector<VisibleRow> rows(n);
-  int pat[4] = {1, 3, 7, 11};
-  for (size_t i = 0; i < n; ++i) {
-    rows[i].row_id = i + 1;
-    rows[i].estimated_height_lines = pat[i % 4];
-    rows[i].search_key = std::string("row #") + std::to_string(i);
-    rows[i].backend_index = i;
-  }
-  return rows;
+    std::vector<VisibleRow> rows(n);
+    int pat[4] = {1, 3, 7, 11};
+    for (size_t i = 0; i < n; ++i) {
+        rows[i].row_id = i + 1;
+        rows[i].estimated_height_lines = pat[i % 4];
+        rows[i].search_key = std::string("row #") + std::to_string(i);
+        rows[i].backend_index = i;
+    }
+    return rows;
 }
 
 /// Basic geometry sanity: cumulative[i+1] - cumulative[i] == row[i].height.
 [[nodiscard]] inline TestResult GeometryPsumSanity() {
-  auto rows = make_rows(100);
-  auto jh   = build_geometry(std::span{rows});
-  int acc = 0;
-  for (size_t i = 0; i < rows.size(); ++i) {
-    if (jh.top_of((int)i) != acc)
-      return fail("psum[" + std::to_string(i) + "] = " +
-                  std::to_string(jh.top_of(i)) + ", want " + std::to_string(acc));
-    acc += std::max(1, rows[i].estimated_height_lines);
-  }
-  if (jh.total() != acc)
-    return fail("total " + std::to_string(jh.total()) + " != " +
-                std::to_string(acc));
-  return ok();
+    auto rows = make_rows(100);
+    auto jh = build_geometry(std::span{rows});
+    int acc = 0;
+    for (size_t i = 0; i < rows.size(); ++i) {
+        if (jh.top_of((int)i) != acc)
+            return fail("psum[" + std::to_string(i) + "] = " + std::to_string(jh.top_of(i)) +
+                        ", want " + std::to_string(acc));
+        acc += std::max(1, rows[i].estimated_height_lines);
+    }
+    if (jh.total() != acc)
+        return fail("total " + std::to_string(jh.total()) + " != " + std::to_string(acc));
+    return ok();
 }
 
 /// JumpHandle::find_row_at_visual_line exact match / between / OOB.
 [[nodiscard]] inline TestResult FindRowBinary() {
-  auto rows = make_rows(5);  // heights: 1,3,7,11,1 → psum = [0,1,4,11,22,23]
-  auto jh = build_geometry(std::span{rows});
-  if (jh.find_row_at_visual_line(0)  != 0) return fail("L0→0");
-  if (jh.find_row_at_visual_line(1)  != 1) return fail("L1→1");
-  if (jh.find_row_at_visual_line(2)  != 1) return fail("L2→1");
-  if (jh.find_row_at_visual_line(4)  != 2) return fail("L4→2");
-  if (jh.find_row_at_visual_line(10) != 2) return fail("L10→2");
-  if (jh.find_row_at_visual_line(11) != 3) return fail("L11→3");
-  if (jh.find_row_at_visual_line(999)!= 4) return fail("OOB→last");
-  if (jh.find_visual_top_for_row(3) != 11) return fail("top(3)!=11");
-  return ok();
+    auto rows = make_rows(5);  // heights: 1,3,7,11,1 → psum = [0,1,4,11,22,23]
+    auto jh = build_geometry(std::span{rows});
+    if (jh.find_row_at_visual_line(0) != 0) return fail("L0→0");
+    if (jh.find_row_at_visual_line(1) != 1) return fail("L1→1");
+    if (jh.find_row_at_visual_line(2) != 1) return fail("L2→1");
+    if (jh.find_row_at_visual_line(4) != 2) return fail("L4→2");
+    if (jh.find_row_at_visual_line(10) != 2) return fail("L10→2");
+    if (jh.find_row_at_visual_line(11) != 3) return fail("L11→3");
+    if (jh.find_row_at_visual_line(999) != 4) return fail("OOB→last");
+    if (jh.find_visual_top_for_row(3) != 11) return fail("top(3)!=11");
+    return ok();
 }
 
 /// build_visible_slice: scroll=0, vp=5 should include at least enough
 /// rows to cover 0..25 lines (pattern 1,3,7,11 → row 4 ends at 23).
 [[nodiscard]] inline TestResult VisibleSlice() {
-  auto rows = make_rows(1000);
-  auto jh = build_geometry(std::span{rows});
-  auto [start, cnt] = build_visible_slice(jh, 0, 40);
-  if (start != 0) return fail("start!=0");
-  // Verify slice covers at least [0, 40 + kOverscanRows) lines.
-  int end_line = jh.find_visual_top_for_row(start + cnt);
-  int need = 40 + kOverscanRows;
-  if (end_line < need)
-    return fail("slice end " + std::to_string(end_line) + " < need " +
-                std::to_string(need));
-  return ok();
+    auto rows = make_rows(1000);
+    auto jh = build_geometry(std::span{rows});
+    auto [start, cnt] = build_visible_slice(jh, 0, 40);
+    if (start != 0) return fail("start!=0");
+    // Verify slice covers at least [0, 40 + kOverscanRows) lines.
+    int end_line = jh.find_visual_top_for_row(start + cnt);
+    int need = 40 + kOverscanRows;
+    if (end_line < need)
+        return fail("slice end " + std::to_string(end_line) + " < need " + std::to_string(need));
+    return ok();
 }
 
 /// 100k rows: verify O(log N) jump scales (timing is manual; test is
 /// structural only — ensures binary search not linear walk).
 [[nodiscard]] inline TestResult LargeScaleJump() {
-  auto rows = make_rows(100'000);
-  auto jh = build_geometry(std::span{rows});
-  // Sample 3 target lines; confirm result is consistent with psum.
-  for (int line : {12345, 54321, 99999}) {
-    size_t idx = jh.find_row_at_visual_line(line);
-    if (jh.top_of(idx) > line)
-      return fail("idx=" + std::to_string(idx) + " top>line for line " +
-                  std::to_string(line));
-    if (idx + 1 < jh.size() && jh.top_of(idx + 1) <= line)
-      return fail("idx=" + std::to_string(idx) + " not upper-bound for line " +
-                  std::to_string(line));
-  }
-  return ok();
+    auto rows = make_rows(100'000);
+    auto jh = build_geometry(std::span{rows});
+    // Sample 3 target lines; confirm result is consistent with psum.
+    for (int line : {12345, 54321, 99999}) {
+        size_t idx = jh.find_row_at_visual_line(line);
+        if (jh.top_of(idx) > line)
+            return fail("idx=" + std::to_string(idx) + " top>line for line " +
+                        std::to_string(line));
+        if (idx + 1 < jh.size() && jh.top_of(idx + 1) <= line)
+            return fail("idx=" + std::to_string(idx) + " not upper-bound for line " +
+                        std::to_string(line));
+    }
+    return ok();
 }
 
 [[nodiscard]] inline std::string RunAllVirtualListTests() {
-  std::string out;
-  auto check = [&](std::string name, TestResult r) {
-    out += (r.first ? "PASS " : "FAIL ") + name + ": " + r.second + "\n";
-  };
-  check("GeometryPsumSanity", GeometryPsumSanity());
-  check("FindRowBinary",       FindRowBinary());
-  check("VisibleSlice",        VisibleSlice());
-  check("LargeScaleJump",      LargeScaleJump());
-  return out;
+    std::string out;
+    auto check = [&](std::string name, TestResult r) {
+        out += (r.first ? "PASS " : "FAIL ") + name + ": " + r.second + "\n";
+    };
+    check("GeometryPsumSanity", GeometryPsumSanity());
+    check("FindRowBinary", FindRowBinary());
+    check("VisibleSlice", VisibleSlice());
+    check("LargeScaleJump", LargeScaleJump());
+    return out;
 }
 
-} // namespace loom::ui::messages::virtual_list::test
+}  // namespace loom::ui::messages::virtual_list::test
 
-#endif // CC_VLIST_TEST
+#endif  // CC_VLIST_TEST
 
-} // namespace loom::ui::messages::virtual_list
+}  // namespace loom::ui::messages::virtual_list

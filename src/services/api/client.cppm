@@ -1,7 +1,8 @@
 // Messages API Client - Complete implementation with async, streaming, retry
 module;
-#include <cstddef>
 #include <curl/curl.h>
+
+#include <cstddef>
 #include <cstdint>
 
 export module loom.services.api.client;
@@ -71,8 +72,7 @@ struct Message {
     std::string role{};  // "user" or "assistant"
     std::vector<ContentBlock> content{};
 
-    [[nodiscard]] static Message from_text(std::string_view role,
-                                           std::string_view text) {
+    [[nodiscard]] static Message from_text(std::string_view role, std::string_view text) {
         Message msg;
         msg.role = std::string(role);
         ContentBlock block;
@@ -132,9 +132,7 @@ struct TokenUsage {
     int cache_creation_tokens = 0;
     int cache_read_tokens = 0;
 
-    [[nodiscard]] int total() const {
-        return input_tokens + output_tokens;
-    }
+    [[nodiscard]] int total() const { return input_tokens + output_tokens; }
 
     [[nodiscard]] int total_with_cache() const {
         return input_tokens + output_tokens + cache_creation_tokens + cache_read_tokens;
@@ -177,9 +175,8 @@ public:
     [[nodiscard]] static Result<CurlHandle> create() {
         void* h = curl_easy_init();
         if (!h) {
-            return std::unexpected(loom::utils::Error(
-                loom::utils::ErrorCode::internal_error,
-                "Failed to initialize CURL"));
+            return std::unexpected(loom::utils::Error(loom::utils::ErrorCode::internal_error,
+                                                      "Failed to initialize CURL"));
         }
         CurlHandle handle;
         handle.handle_ = h;
@@ -193,8 +190,10 @@ public:
 
     CurlHandle(const CurlHandle&) = delete;
     CurlHandle& operator=(const CurlHandle&) = delete;
+
     CurlHandle(CurlHandle&& other) noexcept
         : handle_(std::exchange(other.handle_, nullptr)) {}
+
     CurlHandle& operator=(CurlHandle&& other) noexcept {
         if (this != &other) {
             if (handle_) curl_easy_cleanup(handle_);
@@ -205,8 +204,7 @@ public:
 
     [[nodiscard]] void* get() const { return handle_; }
 
-    template<typename T>
-    void setopt(CURLoption option, T value) {
+    template <typename T> void setopt(CURLoption option, T value) {
         curl_easy_setopt(handle_, option, value);
     }
 
@@ -216,12 +214,9 @@ private:
 };
 
 [[nodiscard]] bool is_loopback_url(std::string_view url) {
-    return url.starts_with("http://127.0.0.1") ||
-           url.starts_with("https://127.0.0.1") ||
-           url.starts_with("http://localhost") ||
-           url.starts_with("https://localhost") ||
-           url.starts_with("http://[::1]") ||
-           url.starts_with("https://[::1]");
+    return url.starts_with("http://127.0.0.1") || url.starts_with("https://127.0.0.1") ||
+           url.starts_with("http://localhost") || url.starts_with("https://localhost") ||
+           url.starts_with("http://[::1]") || url.starts_with("https://[::1]");
 }
 
 void apply_loopback_no_proxy(CurlHandle& curl, std::string_view url) {
@@ -274,9 +269,7 @@ public:
         return std::chrono::duration_cast<std::chrono::milliseconds>(remaining);
     }
 
-    void set_rate(int requests_per_minute) {
-        max_tokens_ = requests_per_minute;
-    }
+    void set_rate(int requests_per_minute) { max_tokens_ = requests_per_minute; }
 
 private:
     void refill() {
@@ -284,7 +277,8 @@ private:
         auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - last_refill_);
         auto tokens_to_add = elapsed.count() * max_tokens_ / 60000;
         if (tokens_to_add > 0) {
-            available_tokens_ = std::min(max_tokens_, available_tokens_ + static_cast<int>(tokens_to_add));
+            available_tokens_ =
+                std::min(max_tokens_, available_tokens_ + static_cast<int>(tokens_to_add));
             last_refill_ = now;
         }
     }
@@ -362,7 +356,8 @@ public:
         if (request.thinking_budget) {
             auto thinking = doc.object();
             thinking.add("type", doc.string("enabled"));
-            thinking.add("budget_tokens", doc.number(static_cast<int64_t>(*request.thinking_budget)));
+            thinking.add("budget_tokens",
+                         doc.number(static_cast<int64_t>(*request.thinking_budget)));
             root.add("thinking", thinking);
         }
         if (request.output_effort || request.task_budget) {
@@ -373,11 +368,11 @@ public:
             if (request.task_budget) {
                 auto task_budget = doc.object();
                 task_budget.add("type", doc.string("tokens"));
-                task_budget.add("total", doc.number(static_cast<int64_t>(request.task_budget->total)));
+                task_budget.add("total",
+                                doc.number(static_cast<int64_t>(request.task_budget->total)));
                 if (request.task_budget->remaining) {
-                    task_budget.add(
-                        "remaining",
-                        doc.number(static_cast<int64_t>(*request.task_budget->remaining)));
+                    task_budget.add("remaining", doc.number(static_cast<int64_t>(
+                                                     *request.task_budget->remaining)));
                 }
                 output_config.add("task_budget", task_budget);
             }
@@ -390,7 +385,7 @@ public:
 
 private:
     [[nodiscard]] static JsonMutVal serialize_content(const std::vector<ContentBlock>& content,
-                                                   JsonMutDoc& doc) {
+                                                      JsonMutDoc& doc) {
         if (content.size() == 1 && content[0].type == ContentBlockType::Text) {
             return doc.string(content[0].text);
         }
@@ -399,56 +394,56 @@ private:
         for (const auto& block : content) {
             auto obj = doc.object();
             switch (block.type) {
-                case ContentBlockType::Text:
-                    obj.add("type", doc.string("text"));
-                    obj.add("text", doc.string(block.text));
-                    break;
-                case ContentBlockType::ToolUse:
-                    obj.add("type", doc.string("tool_use"));
-                    obj.add("id", doc.string(block.tool_use_id));
-                    obj.add("name", doc.string(block.tool_name));
-                    if (!block.tool_input_json.empty()) {
-                        auto input_doc = loom::utils::json::parse(block.tool_input_json);
-                        obj.add("input", input_doc ? doc.copy_val(input_doc->root()) : doc.object());
-                    } else {
-                        obj.add("input", doc.object());
-                    }
-                    break;
-                case ContentBlockType::ToolResult:
-                    obj.add("type", doc.string("tool_result"));
-                    obj.add("tool_use_id", doc.string(block.tool_use_id));
-                    if (block.is_error) obj.add("is_error", doc.boolean(true));
-                    obj.add("content", doc.string(block.text));
-                    break;
-                case ContentBlockType::Image: {
-                    obj.add("type", doc.string("image"));
-                    auto source = doc.object();
-                    source.add("type", doc.string("base64"));
-                    source.add("media_type", doc.string(block.media_type));
-                    source.add("data", doc.string(block.image_data));
-                    obj.add("source", source);
-                    break;
+            case ContentBlockType::Text:
+                obj.add("type", doc.string("text"));
+                obj.add("text", doc.string(block.text));
+                break;
+            case ContentBlockType::ToolUse:
+                obj.add("type", doc.string("tool_use"));
+                obj.add("id", doc.string(block.tool_use_id));
+                obj.add("name", doc.string(block.tool_name));
+                if (!block.tool_input_json.empty()) {
+                    auto input_doc = loom::utils::json::parse(block.tool_input_json);
+                    obj.add("input", input_doc ? doc.copy_val(input_doc->root()) : doc.object());
+                } else {
+                    obj.add("input", doc.object());
                 }
-                case ContentBlockType::Document: {
-                    obj.add("type", doc.string("document"));
-                    auto source = doc.object();
-                    source.add("type", doc.string("base64"));
-                    source.add("media_type", doc.string(block.media_type));
-                    source.add("data", doc.string(block.image_data));
-                    obj.add("source", source);
-                    break;
-                }
-                case ContentBlockType::Thinking:
-                    obj.add("type", doc.string("thinking"));
-                    obj.add("thinking", doc.string(block.thinking));
-                    if (!block.signature.empty()) obj.add("signature", doc.string(block.signature));
-                    break;
-                case ContentBlockType::RedactedThinking:
-                    obj.add("type", doc.string("redacted_thinking"));
-                    obj.add("data", doc.string(block.thinking));
-                    break;
-                default:
-                    break;
+                break;
+            case ContentBlockType::ToolResult:
+                obj.add("type", doc.string("tool_result"));
+                obj.add("tool_use_id", doc.string(block.tool_use_id));
+                if (block.is_error) obj.add("is_error", doc.boolean(true));
+                obj.add("content", doc.string(block.text));
+                break;
+            case ContentBlockType::Image: {
+                obj.add("type", doc.string("image"));
+                auto source = doc.object();
+                source.add("type", doc.string("base64"));
+                source.add("media_type", doc.string(block.media_type));
+                source.add("data", doc.string(block.image_data));
+                obj.add("source", source);
+                break;
+            }
+            case ContentBlockType::Document: {
+                obj.add("type", doc.string("document"));
+                auto source = doc.object();
+                source.add("type", doc.string("base64"));
+                source.add("media_type", doc.string(block.media_type));
+                source.add("data", doc.string(block.image_data));
+                obj.add("source", source);
+                break;
+            }
+            case ContentBlockType::Thinking:
+                obj.add("type", doc.string("thinking"));
+                obj.add("thinking", doc.string(block.thinking));
+                if (!block.signature.empty()) obj.add("signature", doc.string(block.signature));
+                break;
+            case ContentBlockType::RedactedThinking:
+                obj.add("type", doc.string("redacted_thinking"));
+                obj.add("data", doc.string(block.thinking));
+                break;
+            default:
+                break;
             }
             arr.append(obj);
         }
@@ -489,8 +484,10 @@ public:
         if (usage.is_obj()) {
             response.usage.input_tokens = static_cast<int>(usage.get("input_tokens").as_int());
             response.usage.output_tokens = static_cast<int>(usage.get("output_tokens").as_int());
-            response.usage.cache_creation_tokens = static_cast<int>(usage.get("cache_creation_input_tokens").as_int());
-            response.usage.cache_read_tokens = static_cast<int>(usage.get("cache_read_input_tokens").as_int());
+            response.usage.cache_creation_tokens =
+                static_cast<int>(usage.get("cache_creation_input_tokens").as_int());
+            response.usage.cache_read_tokens =
+                static_cast<int>(usage.get("cache_read_input_tokens").as_int());
         }
 
         return response;
@@ -525,11 +522,9 @@ private:
 
 class HttpClient {
 public:
-    [[nodiscard]] static Result<HttpResponse> post(
-        const std::string& url,
-        const std::string& body,
-        const std::vector<std::string>& headers,
-        std::chrono::milliseconds timeout) {
+    [[nodiscard]] static Result<HttpResponse> post(const std::string& url, const std::string& body,
+                                                   const std::vector<std::string>& headers,
+                                                   std::chrono::milliseconds timeout) {
 
         auto curl_result = CurlHandle::create();
         if (!curl_result) return std::unexpected(curl_result.error());
@@ -586,9 +581,9 @@ public:
                     loom::utils::ErrorCode::timeout,
                     std::format("Request timed out after {}ms", timeout.count())));
             }
-            return std::unexpected(loom::utils::Error(
-                loom::utils::ErrorCode::network_error,
-                std::format("CURL error: {}", curl_easy_strerror(res))));
+            return std::unexpected(
+                loom::utils::Error(loom::utils::ErrorCode::network_error,
+                                   std::format("CURL error: {}", curl_easy_strerror(res))));
         }
 
         // Get status code
@@ -601,15 +596,15 @@ public:
         while (offset < response_headers.size()) {
             auto line_end = response_headers.find('\n', offset);
             auto line = response_headers.substr(
-                offset,
-                line_end == std::string::npos ? std::string::npos : line_end - offset);
+                offset, line_end == std::string::npos ? std::string::npos : line_end - offset);
             if (!line.empty() && line.back() == '\r') line.pop_back();
             offset = line_end == std::string::npos ? response_headers.size() : line_end + 1;
             auto colon = line.find(':');
             if (colon == std::string::npos) continue;
             auto key = line.substr(0, colon);
             auto value_start = colon + 1;
-            while (value_start < line.size() && line[value_start] == ' ') ++value_start;
+            while (value_start < line.size() && line[value_start] == ' ')
+                ++value_start;
             response.headers.emplace_back(std::move(key), line.substr(value_start));
         }
 
@@ -645,39 +640,38 @@ public:
 
     ~MessagesClient();
 
-    [[nodiscard]] static loom::utils::Error error_from_http_response(
-        int status_code,
-        std::string_view body,
-        std::optional<std::string> request_id = std::nullopt) {
+    [[nodiscard]] static loom::utils::Error
+    error_from_http_response(int status_code, std::string_view body,
+                             std::optional<std::string> request_id = std::nullopt) {
         const auto details = ErrorFactory::from_json(status_code, body, std::move(request_id));
         auto code = loom::utils::ErrorCode::internal_error;
         switch (details.category) {
-            case errors::ApiErrorCategory::Authentication:
-                code = loom::utils::ErrorCode::permission_denied;
-                break;
-            case errors::ApiErrorCategory::InvalidRequest:
-                code = loom::utils::ErrorCode::invalid_argument;
-                break;
-            case errors::ApiErrorCategory::RateLimited:
-                code = loom::utils::ErrorCode::resource_exhausted;
-                break;
-            case errors::ApiErrorCategory::NetworkError:
-                code = loom::utils::ErrorCode::network_error;
-                break;
-            case errors::ApiErrorCategory::Overloaded:
-            case errors::ApiErrorCategory::ServerError:
-                code = loom::utils::ErrorCode::unavailable;
-                break;
-            case errors::ApiErrorCategory::Unknown:
-            default:
-                code = loom::utils::ErrorCode::internal_error;
-                break;
+        case errors::ApiErrorCategory::Authentication:
+            code = loom::utils::ErrorCode::permission_denied;
+            break;
+        case errors::ApiErrorCategory::InvalidRequest:
+            code = loom::utils::ErrorCode::invalid_argument;
+            break;
+        case errors::ApiErrorCategory::RateLimited:
+            code = loom::utils::ErrorCode::resource_exhausted;
+            break;
+        case errors::ApiErrorCategory::NetworkError:
+            code = loom::utils::ErrorCode::network_error;
+            break;
+        case errors::ApiErrorCategory::Overloaded:
+        case errors::ApiErrorCategory::ServerError:
+            code = loom::utils::ErrorCode::unavailable;
+            break;
+        case errors::ApiErrorCategory::Unknown:
+        default:
+            code = loom::utils::ErrorCode::internal_error;
+            break;
         }
 
-        auto message = std::format("HTTP {} {}: {}",
-            status_code,
-            details.error_type.empty() ? "api_error" : details.error_type,
-            details.error_message.empty() ? std::string(body) : details.error_message);
+        auto message =
+            std::format("HTTP {} {}: {}", status_code,
+                        details.error_type.empty() ? "api_error" : details.error_type,
+                        details.error_message.empty() ? std::string(body) : details.error_message);
         if (details.request_id && !details.request_id->empty()) {
             message += " (request id: " + *details.request_id + ")";
         }
@@ -693,25 +687,25 @@ public:
         details.error_type = "api_error";
 
         switch (error.code()) {
-            case loom::utils::ErrorCode::permission_denied:
-                details.category = errors::ApiErrorCategory::Authentication;
-                break;
-            case loom::utils::ErrorCode::invalid_argument:
-                details.category = errors::ApiErrorCategory::InvalidRequest;
-                break;
-            case loom::utils::ErrorCode::resource_exhausted:
-                details.category = errors::ApiErrorCategory::RateLimited;
-                break;
-            case loom::utils::ErrorCode::network_error:
-            case loom::utils::ErrorCode::timeout:
-                details.category = errors::ApiErrorCategory::NetworkError;
-                break;
-            case loom::utils::ErrorCode::unavailable:
-                details.category = errors::ApiErrorCategory::ServerError;
-                break;
-            default:
-                details.category = errors::ApiErrorCategory::Unknown;
-                break;
+        case loom::utils::ErrorCode::permission_denied:
+            details.category = errors::ApiErrorCategory::Authentication;
+            break;
+        case loom::utils::ErrorCode::invalid_argument:
+            details.category = errors::ApiErrorCategory::InvalidRequest;
+            break;
+        case loom::utils::ErrorCode::resource_exhausted:
+            details.category = errors::ApiErrorCategory::RateLimited;
+            break;
+        case loom::utils::ErrorCode::network_error:
+        case loom::utils::ErrorCode::timeout:
+            details.category = errors::ApiErrorCategory::NetworkError;
+            break;
+        case loom::utils::ErrorCode::unavailable:
+            details.category = errors::ApiErrorCategory::ServerError;
+            break;
+        default:
+            details.category = errors::ApiErrorCategory::Unknown;
+            break;
         }
 
         const auto& message = error.message();
@@ -726,22 +720,25 @@ public:
                 details.http_status = status;
                 details.category = ErrorClassifier::classify_status(status);
             }
-            while (pos < message.size() && message[pos] == ' ') ++pos;
+            while (pos < message.size() && message[pos] == ' ')
+                ++pos;
             auto type_end = message.find(':', pos);
             if (type_end != std::string::npos) {
                 details.error_type = message.substr(pos, type_end - pos);
                 auto message_start = type_end + 1;
-                while (message_start < message.size() && message[message_start] == ' ') ++message_start;
+                while (message_start < message.size() && message[message_start] == ' ')
+                    ++message_start;
                 auto message_end = message.find(" (", message_start);
                 details.error_message = message.substr(
-                    message_start,
-                    message_end == std::string::npos ? std::string::npos : message_end - message_start);
+                    message_start, message_end == std::string::npos ? std::string::npos
+                                                                    : message_end - message_start);
             }
             auto retry_pos = message.find("(retry after: ");
             if (retry_pos != std::string::npos) {
                 retry_pos += std::string_view{"(retry after: "}.size();
                 int seconds = 0;
-                while (retry_pos < message.size() && message[retry_pos] >= '0' && message[retry_pos] <= '9') {
+                while (retry_pos < message.size() && message[retry_pos] >= '0' &&
+                       message[retry_pos] <= '9') {
                     seconds = seconds * 10 + (message[retry_pos] - '0');
                     ++retry_pos;
                 }
@@ -753,8 +750,8 @@ public:
     }
 
     // Create message (non-streaming)
-    [[nodiscard]] Result<CreateMessageResponse> create_message(
-        const CreateMessageRequest& request) {
+    [[nodiscard]] Result<CreateMessageResponse>
+    create_message(const CreateMessageRequest& request) {
 
         RetryContext retry_context;
         retry_context.max_attempts = config_.max_retries;
@@ -782,54 +779,54 @@ public:
             auto decision = ErrorClassifier::decide(error_details, retry_context);
 
             switch (decision) {
-                case RetryDecision::RetryImmediately:
-                case RetryDecision::RetryWithDelay: {
-                    auto delay = ErrorClassifier::calculate_delay(retry_context, error_details);
-                    if (decision == RetryDecision::RetryWithDelay) {
-                        std::this_thread::sleep_for(delay);
-                    }
+            case RetryDecision::RetryImmediately:
+            case RetryDecision::RetryWithDelay: {
+                auto delay = ErrorClassifier::calculate_delay(retry_context, error_details);
+                if (decision == RetryDecision::RetryWithDelay) {
+                    std::this_thread::sleep_for(delay);
+                }
+                ++retry_context.attempt;
+                continue;
+            }
+
+            case RetryDecision::FallbackModel:
+                if (config_.fallback_model) {
+                    current_request.model = *config_.fallback_model;
+                    retry_context.consecutive_529_errors = 0;
                     ++retry_context.attempt;
                     continue;
                 }
+                return std::unexpected(result.error());
 
-                case RetryDecision::FallbackModel:
-                    if (config_.fallback_model) {
-                        current_request.model = *config_.fallback_model;
-                        retry_context.consecutive_529_errors = 0;
-                        ++retry_context.attempt;
-                        continue;
-                    }
-                    return std::unexpected(result.error());
-
-                case RetryDecision::NoRetry:
-                case RetryDecision::Abort:
-                default:
-                    return std::unexpected(result.error());
+            case RetryDecision::NoRetry:
+            case RetryDecision::Abort:
+            default:
+                return std::unexpected(result.error());
             }
         }
     }
 
     // Create streaming message — returns a StreamParser fed by a background CURL transfer
-    [[nodiscard]] Result<StreamParser> create_message_stream(
-        const CreateMessageRequest& request);
+    [[nodiscard]] Result<StreamParser> create_message_stream(const CreateMessageRequest& request);
 
     /// Send an already serialized streaming request through the same owned,
     /// cancellable transfer as Messages requests. The caller owns the wire
     /// format and supplies its SSE decoder; no protocol headers are added.
-    [[nodiscard]] Result<StreamParser> create_prepared_stream(
-        std::string url, std::string body, std::vector<std::string> headers,
-        StreamParser::EventDecoder decoder);
+    [[nodiscard]] Result<StreamParser> create_prepared_stream(std::string url, std::string body,
+                                                              std::vector<std::string> headers,
+                                                              StreamParser::EventDecoder decoder);
 
     /// Inspect the same serialized streaming body used by the transfer, including
     /// provider routing rewrites, without issuing an inference request.
-    [[nodiscard]] Result<std::size_t> prepared_stream_request_size(const CreateMessageRequest& request);
+    [[nodiscard]] Result<std::size_t>
+    prepared_stream_request_size(const CreateMessageRequest& request);
 
     // Verify API key
     [[nodiscard]] Result<bool> verify_api_key() {
         if (!config_.fallback_model || config_.fallback_model->empty()) {
-            return std::unexpected(loom::utils::Error(
-                loom::utils::ErrorCode::invalid_argument,
-                "No model configured — set fallback_model in client config"));
+            return std::unexpected(
+                loom::utils::Error(loom::utils::ErrorCode::invalid_argument,
+                                   "No model configured — set fallback_model in client config"));
         }
         CreateMessageRequest request;
         request.model = *config_.fallback_model;
@@ -846,13 +843,16 @@ public:
 
     // Configuration access
     [[nodiscard]] const Config& config() const { return config_; }
+
     void set_api_key(std::string api_key) { config_.api_key = std::move(api_key); }
+
     void set_auth_token(std::string token) { config_.auth_token = std::move(token); }
 
 private:
-    [[nodiscard]] Result<StreamParser> start_stream(
-        std::string url, std::string json_body, std::vector<std::string> headers,
-        StreamParser::EventDecoder decoder, bool is_enterprise_provider) {
+    [[nodiscard]] Result<StreamParser> start_stream(std::string url, std::string json_body,
+                                                    std::vector<std::string> headers,
+                                                    StreamParser::EventDecoder decoder,
+                                                    bool is_enterprise_provider) {
         headers.push_back("Accept: text/event-stream");
         headers.push_back("Cache-Control: no-cache");
         headers.push_back("Connection: keep-alive");
@@ -870,131 +870,128 @@ private:
 
         // The producer parser has no transfer owner; only consumer copies do.
         // This avoids a cycle and ensures the joining owner never dies here.
-        auto transfer = std::make_shared<StreamTransfer>([url = std::move(url),
-                     json_body = std::move(json_body),
-                     headers = std::move(headers),
-                     timeout = config_.timeout,
-                     parser, auth_ctx_ptr, is_enterprise_provider](std::stop_token stop) {
-            auto curl_result = CurlHandle::create();
-            if (!curl_result) {
-                ApiErrorDetails details;
-                details.category = errors::ApiErrorCategory::NetworkError;
-                details.error_type = "curl_error";
-                details.error_message = "Failed to initialize CURL";
-                parser->set_error(std::move(details));
-                return;
-            }
-            CurlHandle curl = std::move(*curl_result);
-            curl.setopt(CURLOPT_URL, url.c_str());
-            apply_loopback_no_proxy(curl, url);
-            curl.setopt(CURLOPT_POSTFIELDS, json_body.c_str());
-            curl.setopt(CURLOPT_POSTFIELDSIZE,
-                        static_cast<long>(json_body.size()));
-            curl.setopt(CURLOPT_TIMEOUT_MS,
-                        static_cast<long>(timeout.count()));
-            curl.setopt(CURLOPT_CONNECTTIMEOUT_MS,
-                static_cast<long>(std::min(timeout,
-                                std::chrono::milliseconds{30000}).count()));
-
-            // Set headers
-            struct curl_slist* header_list = nullptr;
-            for (const auto& h : headers) {
-                header_list = curl_slist_append(header_list, h.c_str());
-            }
-            curl.setopt(CURLOPT_HTTPHEADER, header_list);
-
-            // WRITEFUNCTION: feed chunks into StreamParser
-            struct WriteCtx {
-                std::shared_ptr<StreamParser> parser;
-                CURL* handle;
-                std::string error_body;
-            };
-            WriteCtx ctx{parser, static_cast<CURL*>(curl.get()), {}};
-
-            auto write_cb = +[](char* ptr, size_t size, size_t nmemb,
-                                void* userdata) -> size_t {
-                auto* wctx = static_cast<WriteCtx*>(userdata);
-                size_t bytes = size * nmemb;
-                long status = 0;
-                curl_easy_getinfo(wctx->handle, CURLINFO_RESPONSE_CODE, &status);
-                if (status >= 400) {
-                    constexpr std::size_t limit = 64 * 1024;
-                    const auto remaining = limit - wctx->error_body.size();
-                    wctx->error_body.append(ptr, std::min(bytes, remaining));
-                } else {
-                    wctx->parser->feed(std::string_view(ptr, bytes));
+        auto transfer = std::make_shared<StreamTransfer>(
+            [url = std::move(url), json_body = std::move(json_body), headers = std::move(headers),
+             timeout = config_.timeout, parser, auth_ctx_ptr,
+             is_enterprise_provider](std::stop_token stop) {
+                auto curl_result = CurlHandle::create();
+                if (!curl_result) {
+                    ApiErrorDetails details;
+                    details.category = errors::ApiErrorCategory::NetworkError;
+                    details.error_type = "curl_error";
+                    details.error_message = "Failed to initialize CURL";
+                    parser->set_error(std::move(details));
+                    return;
                 }
-                return bytes;
-            };
-            curl.setopt(CURLOPT_WRITEFUNCTION, write_cb);
-            curl.setopt(CURLOPT_WRITEDATA, &ctx);
+                CurlHandle curl = std::move(*curl_result);
+                curl.setopt(CURLOPT_URL, url.c_str());
+                apply_loopback_no_proxy(curl, url);
+                curl.setopt(CURLOPT_POSTFIELDS, json_body.c_str());
+                curl.setopt(CURLOPT_POSTFIELDSIZE, static_cast<long>(json_body.size()));
+                curl.setopt(CURLOPT_TIMEOUT_MS, static_cast<long>(timeout.count()));
+                curl.setopt(
+                    CURLOPT_CONNECTTIMEOUT_MS,
+                    static_cast<long>(std::min(timeout, std::chrono::milliseconds{30000}).count()));
 
-            // A multi transfer can be woken while waiting for headers or a
-            // stalled body, without waiting for the HTTP timeout to expire.
-            auto* handle = static_cast<CURL*>(curl.get());
-            std::unique_ptr<CURLM, decltype(&curl_multi_cleanup)> multi(
-                curl_multi_init(), &curl_multi_cleanup);
-            CURLcode res = CURLE_FAILED_INIT;
-            if (multi && curl_multi_add_handle(multi.get(), handle) == CURLM_OK) {
-                {
-                    std::stop_callback wake(stop, [&multi] {
-                        curl_multi_wakeup(multi.get());
-                    });
-                    int running = 0;
-                    res = CURLE_OK;
-                    do {
-                        if (stop.stop_requested()) {
-                            res = CURLE_ABORTED_BY_CALLBACK;
-                            break;
-                        }
-                        if (curl_multi_perform(multi.get(), &running) != CURLM_OK) {
-                            res = CURLE_RECV_ERROR;
-                            break;
-                        }
-                        if (running && curl_multi_poll(multi.get(), nullptr, 0,
-                                                       1000, nullptr) != CURLM_OK) {
-                            res = CURLE_RECV_ERROR;
-                            break;
-                        }
-                    } while (running);
-                    if (res == CURLE_OK) {
-                        int remaining = 0;
-                        while (auto* message = curl_multi_info_read(multi.get(), &remaining)) {
-                            if (message->msg == CURLMSG_DONE) res = message->data.result;
+                // Set headers
+                struct curl_slist* header_list = nullptr;
+                for (const auto& h : headers) {
+                    header_list = curl_slist_append(header_list, h.c_str());
+                }
+                curl.setopt(CURLOPT_HTTPHEADER, header_list);
+
+                // WRITEFUNCTION: feed chunks into StreamParser
+                struct WriteCtx {
+                    std::shared_ptr<StreamParser> parser;
+                    CURL* handle;
+                    std::string error_body;
+                };
+                WriteCtx ctx{parser, static_cast<CURL*>(curl.get()), {}};
+
+                auto write_cb =
+                    +[](char* ptr, size_t size, size_t nmemb, void* userdata) -> size_t {
+                    auto* wctx = static_cast<WriteCtx*>(userdata);
+                    size_t bytes = size * nmemb;
+                    long status = 0;
+                    curl_easy_getinfo(wctx->handle, CURLINFO_RESPONSE_CODE, &status);
+                    if (status >= 400) {
+                        constexpr std::size_t limit = 64 * 1024;
+                        const auto remaining = limit - wctx->error_body.size();
+                        wctx->error_body.append(ptr, std::min(bytes, remaining));
+                    } else {
+                        wctx->parser->feed(std::string_view(ptr, bytes));
+                    }
+                    return bytes;
+                };
+                curl.setopt(CURLOPT_WRITEFUNCTION, write_cb);
+                curl.setopt(CURLOPT_WRITEDATA, &ctx);
+
+                // A multi transfer can be woken while waiting for headers or a
+                // stalled body, without waiting for the HTTP timeout to expire.
+                auto* handle = static_cast<CURL*>(curl.get());
+                std::unique_ptr<CURLM, decltype(&curl_multi_cleanup)> multi(curl_multi_init(),
+                                                                            &curl_multi_cleanup);
+                CURLcode res = CURLE_FAILED_INIT;
+                if (multi && curl_multi_add_handle(multi.get(), handle) == CURLM_OK) {
+                    {
+                        std::stop_callback wake(stop, [&multi] { curl_multi_wakeup(multi.get()); });
+                        int running = 0;
+                        res = CURLE_OK;
+                        do {
+                            if (stop.stop_requested()) {
+                                res = CURLE_ABORTED_BY_CALLBACK;
+                                break;
+                            }
+                            if (curl_multi_perform(multi.get(), &running) != CURLM_OK) {
+                                res = CURLE_RECV_ERROR;
+                                break;
+                            }
+                            if (running && curl_multi_poll(multi.get(), nullptr, 0, 1000,
+                                                           nullptr) != CURLM_OK) {
+                                res = CURLE_RECV_ERROR;
+                                break;
+                            }
+                        } while (running);
+                        if (res == CURLE_OK) {
+                            int remaining = 0;
+                            while (auto* message = curl_multi_info_read(multi.get(), &remaining)) {
+                                if (message->msg == CURLMSG_DONE) res = message->data.result;
+                            }
                         }
                     }
+                    curl_multi_remove_handle(multi.get(), handle);
                 }
-                curl_multi_remove_handle(multi.get(), handle);
-            }
-            curl_slist_free_all(header_list);
+                curl_slist_free_all(header_list);
 
-            // Signal completion/error to the parser
-            if (res != CURLE_OK) {
-                ApiErrorDetails details;
-                details.category = errors::ApiErrorCategory::NetworkError;
-                details.error_type = "curl_error";
-                details.error_message = curl_easy_strerror(res);
-                parser->set_error(std::move(details));
-            } else {
-                // Check HTTP status
-                long http_code = 0;
-                curl_easy_getinfo(static_cast<CURL*>(curl.get()),
-                                  CURLINFO_RESPONSE_CODE, &http_code);
-                if (is_enterprise_provider &&
-                    (http_code == 401 || http_code == 403)) {
-                    auth_ctx_ptr->invalidate_all();
-                }
-                if (http_code >= 400) {
-                    auto details = ctx.error_body.empty()
-                        ? ErrorFactory::from_http(static_cast<int>(http_code),
-                            std::format("HTTP {} error during streaming at {}", http_code, url))
-                        : ErrorFactory::from_json(static_cast<int>(http_code), ctx.error_body);
+                // Signal completion/error to the parser
+                if (res != CURLE_OK) {
+                    ApiErrorDetails details;
+                    details.category = errors::ApiErrorCategory::NetworkError;
+                    details.error_type = "curl_error";
+                    details.error_message = curl_easy_strerror(res);
                     parser->set_error(std::move(details));
                 } else {
-                    parser->finish();
+                    // Check HTTP status
+                    long http_code = 0;
+                    curl_easy_getinfo(static_cast<CURL*>(curl.get()), CURLINFO_RESPONSE_CODE,
+                                      &http_code);
+                    if (is_enterprise_provider && (http_code == 401 || http_code == 403)) {
+                        auth_ctx_ptr->invalidate_all();
+                    }
+                    if (http_code >= 400) {
+                        auto details = ctx.error_body.empty()
+                                           ? ErrorFactory::from_http(
+                                                 static_cast<int>(http_code),
+                                                 std::format("HTTP {} error during streaming at {}",
+                                                             http_code, url))
+                                           : ErrorFactory::from_json(static_cast<int>(http_code),
+                                                                     ctx.error_body);
+                        parser->set_error(std::move(details));
+                    } else {
+                        parser->finish();
+                    }
                 }
-            }
-        });
+            });
         {
             std::scoped_lock lock(transfers_mutex_);
             std::erase_if(transfers_, [](const auto& weak) { return weak.expired(); });
@@ -1006,9 +1003,8 @@ private:
         return consumer;
     }
 
-    [[nodiscard]] static std::vector<std::string> betas_for_request(
-        const CreateMessageRequest& request
-    ) {
+    [[nodiscard]] static std::vector<std::string>
+    betas_for_request(const CreateMessageRequest& request) {
         auto betas = request.betas;
         const auto task_budget_beta = std::string{"task-budgets-2026-03-13"};
         if (request.task_budget && !std::ranges::contains(betas, task_budget_beta)) {
@@ -1019,9 +1015,8 @@ private:
 
     // Replace the top-level "model": "..." value in a serialized JSON body by
     // reparsing.  Cheap because requests are already valid compact JSON.
-    [[nodiscard]] static std::string override_model_in_json(
-        std::string json_body,
-        std::string_view new_model) {
+    [[nodiscard]] static std::string override_model_in_json(std::string json_body,
+                                                            std::string_view new_model) {
         using namespace loom::utils::json;
         auto parsed = parse(json_body);
         if (!parsed) return json_body;
@@ -1041,9 +1036,9 @@ private:
     }
 
     // Drop existing 1P auth headers, then append provider-specific headers.
-    [[nodiscard]] static std::vector<std::string> merge_auth_headers(
-        std::vector<std::string> base_headers,
-        const std::vector<std::pair<std::string, std::string>>& extra) {
+    [[nodiscard]] static std::vector<std::string>
+    merge_auth_headers(std::vector<std::string> base_headers,
+                       const std::vector<std::pair<std::string, std::string>>& extra) {
         std::vector<std::string> out;
         out.reserve(base_headers.size() + extra.size());
         for (auto& h : base_headers) {
@@ -1051,9 +1046,8 @@ private:
             // Remove x-api-key / Authorization: Bearer that build_headers()
             // may have appended for FirstParty.  Enterprise providers supply
             // their own auth.
-            const bool is_1p_auth =
-                hv.starts_with("x-api-key:") || hv.starts_with("X-Api-Key:") ||
-                hv.starts_with("Authorization:");
+            const bool is_1p_auth = hv.starts_with("x-api-key:") || hv.starts_with("X-Api-Key:") ||
+                                    hv.starts_with("Authorization:");
             if (is_1p_auth) continue;
             out.push_back(std::move(h));
         }
@@ -1073,28 +1067,27 @@ private:
 
     using EProv = loom::services::auth::byoc::EnterpriseProvider;
 
-    [[nodiscard]] Result<PreparedRequest> prepare_request(
-        const CreateMessageRequest& request,
-        const std::vector<std::string>& betas,
-        bool streaming) {
+    [[nodiscard]] Result<PreparedRequest> prepare_request(const CreateMessageRequest& request,
+                                                          const std::vector<std::string>& betas,
+                                                          bool streaming) {
         const std::string canonical_id = request.model;
         std::string json_body = RequestSerializer::serialize(request);
         std::vector<std::string> headers = build_headers(betas);
 
-        auto resolved = auth_ctx_->resolve_auth_for_request(
-            canonical_id, "POST", json_body, streaming,
-            /*extra_agnostic_headers=*/{});
+        auto resolved =
+            auth_ctx_->resolve_auth_for_request(canonical_id, "POST", json_body, streaming,
+                                                /*extra_agnostic_headers=*/{});
         if (!resolved) {
             return std::unexpected(loom::utils::Error(
                 loom::utils::ErrorCode::invalid_argument,
-                std::format("enterprise auth resolve: {}",
-                            resolved.error().message())));
+                std::format("enterprise auth resolve: {}", resolved.error().message())));
         }
 
         std::string url;
         if (resolved->provider == EProv::FirstParty) {
             url = config_.base_url;
-            while (!url.empty() && url.ends_with('/')) url.pop_back();
+            while (!url.empty() && url.ends_with('/'))
+                url.pop_back();
             url += url.ends_with("/v1") ? "/messages" : "/v1/messages";
         } else {
             // Bedrock: {base_url}{/model/.../invoke[-with-response-stream]}
@@ -1102,10 +1095,8 @@ private:
             // Foundry: {base_url}{/openai/deployments/.../chat/completions}
             url = resolved->base_url + resolved->bedrock_path;
             headers = merge_auth_headers(std::move(headers), resolved->headers);
-            if (!resolved->model_id.empty() &&
-                resolved->model_id != canonical_id) {
-                json_body = override_model_in_json(std::move(json_body),
-                                                   resolved->model_id);
+            if (!resolved->model_id.empty() && resolved->model_id != canonical_id) {
+                json_body = override_model_in_json(std::move(json_body), resolved->model_id);
             }
         }
         return PreparedRequest{
@@ -1115,15 +1106,15 @@ private:
         };
     }
 
-    [[nodiscard]] Result<CreateMessageResponse> perform_request(
-        const CreateMessageRequest& request) {
+    [[nodiscard]] Result<CreateMessageResponse>
+    perform_request(const CreateMessageRequest& request) {
 
         auto betas = betas_for_request(request);
         auto prepared = prepare_request(request, betas, /*streaming=*/false);
         if (!prepared) return std::unexpected(prepared.error());
 
-        auto http_result = HttpClient::post(
-            prepared->url, prepared->body, prepared->headers, config_.timeout);
+        auto http_result =
+            HttpClient::post(prepared->url, prepared->body, prepared->headers, config_.timeout);
         if (!http_result) {
             return std::unexpected(http_result.error());
         }
@@ -1136,18 +1127,16 @@ private:
 
         // Check for HTTP errors
         if (http_result->status_code >= 400) {
-            return std::unexpected(error_from_http_response(
-                http_result->status_code,
-                http_result->body));
+            return std::unexpected(
+                error_from_http_response(http_result->status_code, http_result->body));
         }
 
         // Parse successful response
         return ResponseParser::parse(http_result->body);
     }
 
-    [[nodiscard]] std::vector<std::string> build_headers(
-        const std::vector<std::string>& request_betas = {}
-    ) const {
+    [[nodiscard]] std::vector<std::string>
+    build_headers(const std::vector<std::string>& request_betas = {}) const {
         std::vector<std::string> headers;
         headers.push_back("Content-Type: application/json");
         headers.push_back(std::format("anthropic-version: {}", config_.api_version));
@@ -1167,8 +1156,10 @@ private:
             }
             headers.push_back(std::format("anthropic-beta: {}", beta));
         };
-        for (const auto& beta : config_.beta_headers) append_beta(beta);
-        for (const auto& beta : request_betas) append_beta(beta);
+        for (const auto& beta : config_.beta_headers)
+            append_beta(beta);
+        for (const auto& beta : request_betas)
+            append_beta(beta);
 
         return headers;
     }
@@ -1184,4 +1175,4 @@ private:
     std::vector<std::weak_ptr<StreamTransfer>> transfers_;
 };
 
-} // namespace loom::services::api
+}  // namespace loom::services::api

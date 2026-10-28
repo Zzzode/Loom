@@ -7,7 +7,6 @@
 
 module;
 
-
 export module loom.commands.plugin_details_helpers;
 
 import std;
@@ -22,17 +21,17 @@ export namespace loom::commands::plugin {
 
 /// Source of a marketplace plugin entry.
 enum class EntrySourceKind : unsigned char {
-    None,        // No source information available
-    GitHub,      // `{ source: "github", repo: "owner/repo" }`
-    Url,         // `{ source: "url", url: "https://..." }`
-    Local,       // `{ source: "local", path: "/path/to/plugin" }`
+    None,    // No source information available
+    GitHub,  // `{ source: "github", repo: "owner/repo" }`
+    Url,     // `{ source: "url", url: "https://..." }`
+    Local,   // `{ source: "local", path: "/path/to/plugin" }`
 };
 
 struct EntrySource {
     EntrySourceKind kind{EntrySourceKind::None};
-    std::string repo;     // when kind == GitHub
-    std::string url;      // when kind == Url
-    std::string path;     // when kind == Local
+    std::string repo;  // when kind == GitHub
+    std::string url;   // when kind == Url
+    std::string path;  // when kind == Local
 };
 
 /// Minimal PluginMarketplaceEntry view used by helpers here.
@@ -65,12 +64,9 @@ struct PluginDetailsMenuOption {
 
 /// Extract GitHub repo ("owner/repo") from a plugin's entry.source when the
 /// source kind is GitHub. Returns nullopt otherwise.
-[[nodiscard]] inline std::optional<std::string> extract_github_repo(
-    const InstallablePlugin& plugin)
-{
-    if (plugin.entry.source.kind == EntrySourceKind::GitHub
-        && !plugin.entry.source.repo.empty())
-    {
+[[nodiscard]] inline std::optional<std::string>
+extract_github_repo(const InstallablePlugin& plugin) {
+    if (plugin.entry.source.kind == EntrySourceKind::GitHub && !plugin.entry.source.repo.empty()) {
         return plugin.entry.source.repo;
     }
     return std::nullopt;
@@ -84,10 +80,8 @@ struct PluginDetailsMenuOption {
 /// screen. Always includes the three install-scope options; conditionally
 /// adds homepage, github, and back options.
 [[nodiscard]] inline std::vector<PluginDetailsMenuOption>
-build_plugin_details_menu_options(
-    std::optional<std::string_view> has_homepage,
-    std::optional<std::string_view> github_repo)
-{
+build_plugin_details_menu_options(std::optional<std::string_view> has_homepage,
+                                  std::optional<std::string_view> github_repo) {
     std::vector<PluginDetailsMenuOption> options{
         {"Install for you (user scope)", "install-user"},
         {"Install for all collaborators on this repository (project scope)", "install-project"},
@@ -106,4 +100,4 @@ build_plugin_details_menu_options(
     return options;
 }
 
-} // namespace loom::commands::plugin
+}  // namespace loom::commands::plugin

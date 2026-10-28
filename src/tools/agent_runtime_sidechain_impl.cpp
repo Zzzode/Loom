@@ -21,11 +21,10 @@ namespace {
 
 inline constexpr std::string_view kForkSubagentType = "fork";
 
-} // namespace
+}  // namespace
 
-[[nodiscard]] std::optional<std::string> format_native_agent_task_notification(
-    const NativeAgentRecord& record
-) {
+[[nodiscard]] std::optional<std::string>
+format_native_agent_task_notification(const NativeAgentRecord& record) {
     auto status = native_agent_terminal_notification_status(record.status);
     if (!status) return std::nullopt;
 
@@ -34,36 +33,37 @@ inline constexpr std::string_view kForkSubagentType = "fork";
     if (*status == "completed") {
         summary = std::format("Agent \"{}\" completed", description);
     } else if (*status == "failed") {
-        summary = std::format("Agent \"{}\" failed: {}", description, record.error.value_or("Unknown error"));
+        summary = std::format("Agent \"{}\" failed: {}", description,
+                              record.error.value_or("Unknown error"));
     } else {
         summary = std::format("Agent \"{}\" was stopped", description);
     }
 
     std::string result_section;
     if (record.output && !record.output->empty()) {
-        result_section = std::format("\n<{}>{}</{}>",
-            xml::RESULT_TAG, xml_escape(*record.output), xml::RESULT_TAG);
+        result_section = std::format("\n<{}>{}</{}>", xml::RESULT_TAG, xml_escape(*record.output),
+                                     xml::RESULT_TAG);
     } else if (record.error && !record.error->empty()) {
-        result_section = std::format("\n<{}>{}</{}>",
-            xml::RESULT_TAG, xml_escape(*record.error), xml::RESULT_TAG);
+        result_section = std::format("\n<{}>{}</{}>", xml::RESULT_TAG, xml_escape(*record.error),
+                                     xml::RESULT_TAG);
     }
     std::string worktree_section;
     if (record.worktree_path && !record.worktree_path->empty()) {
-        worktree_section += std::format("\n<{}>{}</{}>",
-            xml::WORKTREE_PATH_TAG, xml_escape(*record.worktree_path), xml::WORKTREE_PATH_TAG);
+        worktree_section += std::format("\n<{}>{}</{}>", xml::WORKTREE_PATH_TAG,
+                                        xml_escape(*record.worktree_path), xml::WORKTREE_PATH_TAG);
     }
     if (record.worktree_branch && !record.worktree_branch->empty()) {
-        worktree_section += std::format("\n<{}>{}</{}>",
-            xml::WORKTREE_BRANCH_TAG, xml_escape(*record.worktree_branch), xml::WORKTREE_BRANCH_TAG);
+        worktree_section +=
+            std::format("\n<{}>{}</{}>", xml::WORKTREE_BRANCH_TAG,
+                        xml_escape(*record.worktree_branch), xml::WORKTREE_BRANCH_TAG);
     }
-    return std::format(
-        "<{}>\n<{}>{}</{}>\n<{}>{}</{}>\n<{}>{}</{}>\n<{}>{}</{}>{}{}\n</{}>",
-        xml::TASK_NOTIFICATION_TAG,
-        xml::TASK_ID_TAG, xml_escape(record.agent_id), xml::TASK_ID_TAG,
-        xml::OUTPUT_FILE_TAG, xml_escape(native_agent_output_file(record)), xml::OUTPUT_FILE_TAG,
-        xml::STATUS_TAG, xml_escape(*status), xml::STATUS_TAG,
-        xml::SUMMARY_TAG, xml_escape(summary), xml::SUMMARY_TAG,
-        result_section, worktree_section, xml::TASK_NOTIFICATION_TAG);
+    return std::format("<{}>\n<{}>{}</{}>\n<{}>{}</{}>\n<{}>{}</{}>\n<{}>{}</{}>{}{}\n</{}>",
+                       xml::TASK_NOTIFICATION_TAG, xml::TASK_ID_TAG, xml_escape(record.agent_id),
+                       xml::TASK_ID_TAG, xml::OUTPUT_FILE_TAG,
+                       xml_escape(native_agent_output_file(record)), xml::OUTPUT_FILE_TAG,
+                       xml::STATUS_TAG, xml_escape(*status), xml::STATUS_TAG, xml::SUMMARY_TAG,
+                       xml_escape(summary), xml::SUMMARY_TAG, result_section, worktree_section,
+                       xml::TASK_NOTIFICATION_TAG);
 }
 
 std::optional<PendingTaskEvent> make_native_agent_task_event(const NativeAgentRecord& record) {
@@ -71,18 +71,26 @@ std::optional<PendingTaskEvent> make_native_agent_task_event(const NativeAgentRe
     using loom::core::TaskEventStatus;
     TaskEventStatus status;
     switch (record.status) {
-        case NativeAgentStatus::Completed: status = TaskEventStatus::Completed; break;
-        case NativeAgentStatus::Failed: status = TaskEventStatus::Failed; break;
-        case NativeAgentStatus::Cancelled: status = TaskEventStatus::Stopped; break;
-        case NativeAgentStatus::Queued:
-        case NativeAgentStatus::Running: return std::nullopt;
-        default: return std::nullopt;
+    case NativeAgentStatus::Completed:
+        status = TaskEventStatus::Completed;
+        break;
+    case NativeAgentStatus::Failed:
+        status = TaskEventStatus::Failed;
+        break;
+    case NativeAgentStatus::Cancelled:
+        status = TaskEventStatus::Stopped;
+        break;
+    case NativeAgentStatus::Queued:
+    case NativeAgentStatus::Running:
+        return std::nullopt;
+    default:
+        return std::nullopt;
     }
     loom::core::TaskEvent event{
         .task_id = record.agent_id,
         .parent_session_id = record.parent_session_id.value_or(""),
-        .kind = record.team_name && !record.team_name->empty()
-            ? TaskEventKind::TeamAgent : TaskEventKind::Subagent,
+        .kind = record.team_name && !record.team_name->empty() ? TaskEventKind::TeamAgent
+                                                               : TaskEventKind::Subagent,
         .status = status,
         .display_name = native_agent_display_name(record),
     };
@@ -92,7 +100,8 @@ std::optional<PendingTaskEvent> make_native_agent_task_event(const NativeAgentRe
     return PendingTaskEvent{std::move(event), std::move(*context)};
 }
 
-void write_json_string_array(std::ostream& out, std::string_view name, const std::vector<std::string>& values) {
+void write_json_string_array(std::ostream& out, std::string_view name,
+                             const std::vector<std::string>& values) {
     out << R"(,")" << name << R"(":[)";
     for (std::size_t i = 0; i < values.size(); ++i) {
         if (i != 0) out << ',';
@@ -100,17 +109,14 @@ void write_json_string_array(std::ostream& out, std::string_view name, const std
     }
     out << ']';
 }
-void write_json_optional_string(
-    std::ostream& out,
-    std::string_view name,
-    const std::optional<std::string>& value
-) {
+
+void write_json_optional_string(std::ostream& out, std::string_view name,
+                                const std::optional<std::string>& value) {
     if (value) out << R"(,")" << name << R"(":")" << json_escape(*value) << '"';
 }
-void refresh_native_agent_output_symlink(
-    const fs::path& output_path,
-    const fs::path& transcript_path
-) {
+
+void refresh_native_agent_output_symlink(const fs::path& output_path,
+                                         const fs::path& transcript_path) {
     if (output_path.empty() || output_path == transcript_path) return;
 
     std::error_code ec;
@@ -125,13 +131,13 @@ void refresh_native_agent_output_symlink(
         fs::copy_file(transcript_path, output_path, fs::copy_options::overwrite_existing, ec);
     }
 }
+
 [[nodiscard]] std::string fallback_sidechain_content_json(std::string_view text) {
     return std::format(R"([{{"type":"text","text":"{}"}}])", json_escape(text));
 }
-[[nodiscard]] std::string normalize_sidechain_content_json(
-    std::string_view content_json,
-    std::string_view fallback_text
-) {
+
+[[nodiscard]] std::string normalize_sidechain_content_json(std::string_view content_json,
+                                                           std::string_view fallback_text) {
     auto content = trim(content_json);
     if (content.empty()) return fallback_sidechain_content_json(fallback_text);
     auto parsed = loom::utils::json::parse(content);
@@ -142,13 +148,11 @@ void refresh_native_agent_output_symlink(
     }
     return std::string(content);
 }
-[[nodiscard]] std::string make_sidechain_jsonl_entry(
-    std::string_view agent_id,
-    std::size_t index,
-    std::string_view role,
-    std::string_view content_json,
-    std::string_view fallback_text
-) {
+
+[[nodiscard]] std::string make_sidechain_jsonl_entry(std::string_view agent_id, std::size_t index,
+                                                     std::string_view role,
+                                                     std::string_view content_json,
+                                                     std::string_view fallback_text) {
     const auto message_role = sidechain_message_role(role);
     const auto uuid = std::format("{}-{}", agent_id, index);
     const auto parent_uuid = index == 0 ? std::string{} : std::format("{}-{}", agent_id, index - 1);
@@ -177,11 +181,10 @@ void refresh_native_agent_output_symlink(
     entry += "}}";
     return entry;
 }
-[[nodiscard]] std::optional<std::string> rebase_sidechain_jsonl_entry_for_agent(
-    std::string_view entry,
-    std::string_view agent_id,
-    std::size_t index
-) {
+
+[[nodiscard]] std::optional<std::string>
+rebase_sidechain_jsonl_entry_for_agent(std::string_view entry, std::string_view agent_id,
+                                       std::size_t index) {
     auto parsed = loom::utils::json::parse(entry);
     if (!parsed || !parsed->root().is_obj()) return std::nullopt;
 
@@ -210,10 +213,9 @@ void refresh_native_agent_output_symlink(
     }
     return rebased;
 }
-[[nodiscard]] std::optional<std::string> rebase_content_replacement_entry_for_agent(
-    std::string_view entry,
-    std::string_view agent_id
-) {
+
+[[nodiscard]] std::optional<std::string>
+rebase_content_replacement_entry_for_agent(std::string_view entry, std::string_view agent_id) {
     auto parsed = loom::utils::json::parse(entry);
     if (!parsed || !parsed->root().is_obj()) return std::nullopt;
     auto root = parsed->root();
@@ -238,14 +240,12 @@ void refresh_native_agent_output_symlink(
     rebased += '}';
     return rebased;
 }
-[[nodiscard]] std::vector<std::string> fork_sidechain_entries_for_child(
-    const NativeAgentRecord& parent,
-    std::string_view child_agent_id
-) {
+
+[[nodiscard]] std::vector<std::string>
+fork_sidechain_entries_for_child(const NativeAgentRecord& parent, std::string_view child_agent_id) {
     std::vector<std::string> entries;
-    entries.reserve(parent.sidechain_entries.empty()
-        ? parent.transcript.size()
-        : parent.sidechain_entries.size());
+    entries.reserve(parent.sidechain_entries.empty() ? parent.transcript.size()
+                                                     : parent.sidechain_entries.size());
 
     if (!parent.sidechain_entries.empty()) {
         std::size_t message_index = 0;
@@ -256,14 +256,13 @@ void refresh_native_agent_output_symlink(
                 entries.push_back(entry);
                 continue;
             }
-            if (auto rebased_replacement = rebase_content_replacement_entry_for_agent(entry, child_agent_id)) {
+            if (auto rebased_replacement =
+                    rebase_content_replacement_entry_for_agent(entry, child_agent_id)) {
                 entries.push_back(std::move(*rebased_replacement));
                 continue;
             }
-            if (auto rebased = rebase_sidechain_jsonl_entry_for_agent(
-                    entry,
-                    child_agent_id,
-                    message_index)) {
+            if (auto rebased =
+                    rebase_sidechain_jsonl_entry_for_agent(entry, child_agent_id, message_index)) {
                 entries.push_back(std::move(*rebased));
                 ++message_index;
             }
@@ -274,26 +273,22 @@ void refresh_native_agent_output_symlink(
     std::size_t message_index = 0;
     for (const auto& transcript_entry : parent.transcript) {
         const auto [role, content] = split_transcript_role(transcript_entry);
-        entries.push_back(make_sidechain_jsonl_entry(
-            child_agent_id,
-            message_index++,
-            role,
-            {},
-            content));
+        entries.push_back(
+            make_sidechain_jsonl_entry(child_agent_id, message_index++, role, {}, content));
     }
     return entries;
 }
-void collect_sidechain_tool_use_state(
-    loom::utils::json::JsonVal content,
-    std::vector<std::string>& tool_use_ids,
-    std::unordered_set<std::string>& seen_tool_use_ids,
-    std::unordered_set<std::string>& tool_result_ids
-) {
+
+void collect_sidechain_tool_use_state(loom::utils::json::JsonVal content,
+                                      std::vector<std::string>& tool_use_ids,
+                                      std::unordered_set<std::string>& seen_tool_use_ids,
+                                      std::unordered_set<std::string>& tool_result_ids) {
     if (!content.valid()) return;
 
     if (content.is_arr()) {
         content.iter([&](loom::utils::json::JsonVal block) {
-            collect_sidechain_tool_use_state(block, tool_use_ids, seen_tool_use_ids, tool_result_ids);
+            collect_sidechain_tool_use_state(block, tool_use_ids, seen_tool_use_ids,
+                                             tool_result_ids);
         });
         return;
     }
@@ -314,11 +309,12 @@ void collect_sidechain_tool_use_state(
         return;
     }
 
-    collect_sidechain_tool_use_state(content.get("content"), tool_use_ids, seen_tool_use_ids, tool_result_ids);
+    collect_sidechain_tool_use_state(content.get("content"), tool_use_ids, seen_tool_use_ids,
+                                     tool_result_ids);
 }
-[[nodiscard]] std::vector<std::string> unresolved_tool_use_ids_from_sidechain_entries(
-    const std::vector<std::string>& entries
-) {
+
+[[nodiscard]] std::vector<std::string>
+unresolved_tool_use_ids_from_sidechain_entries(const std::vector<std::string>& entries) {
     std::vector<std::string> tool_use_ids;
     std::unordered_set<std::string> seen_tool_use_ids;
     std::unordered_set<std::string> tool_result_ids;
@@ -338,10 +334,10 @@ void collect_sidechain_tool_use_state(
     }
     return unresolved;
 }
-[[nodiscard]] std::string fork_missing_tool_results_content_json(
-    const std::vector<std::string>& tool_use_ids,
-    std::string_view directive_message
-) {
+
+[[nodiscard]] std::string
+fork_missing_tool_results_content_json(const std::vector<std::string>& tool_use_ids,
+                                       std::string_view directive_message) {
     if (tool_use_ids.empty() && directive_message.empty()) return {};
 
     std::string content = "[";
@@ -351,7 +347,8 @@ void collect_sidechain_tool_use_state(
         first = false;
         content += R"({"type":"tool_result","tool_use_id":")";
         content += json_escape(id);
-        content += R"(","content":[{"type":"text","text":"Fork started \u2014 processing in background"}]})";
+        content +=
+            R"(","content":[{"type":"text","text":"Fork started \u2014 processing in background"}]})";
     }
     if (!directive_message.empty()) {
         if (!first) content += ',';
@@ -362,6 +359,7 @@ void collect_sidechain_tool_use_state(
     content += ']';
     return content;
 }
+
 [[nodiscard]] bool native_agent_record_is_fork_child(const NativeAgentRecord& record) {
     if (record.agent_type == std::string_view(kForkSubagentType)) return true;
 
@@ -373,7 +371,7 @@ void collect_sidechain_tool_use_state(
 
     const auto has_fork_marker = [](std::string_view text) {
         return text.find("<fork-boilerplate>") != std::string_view::npos ||
-            text.find("system: forked from ") != std::string_view::npos;
+               text.find("system: forked from ") != std::string_view::npos;
     };
     for (const auto& line : record.transcript) {
         if (has_fork_marker(line)) return true;
@@ -383,20 +381,17 @@ void collect_sidechain_tool_use_state(
     }
     return false;
 }
-[[nodiscard]] std::vector<std::string> fork_child_capabilities(
-    const NativeAgentRecord& parent,
-    const AgentRuntimeConfig& config
-) {
+
+[[nodiscard]] std::vector<std::string> fork_child_capabilities(const NativeAgentRecord& parent,
+                                                               const AgentRuntimeConfig& config) {
     auto capabilities = config.capabilities.empty() ? parent.capabilities : config.capabilities;
     if (!std::ranges::contains(capabilities, "fork-subagent")) {
         capabilities.push_back("fork-subagent");
     }
     return capabilities;
 }
-bool write_sidechain_jsonl(
-    const NativeAgentRecord& record,
-    const fs::path& sidechain_path
-) {
+
+bool write_sidechain_jsonl(const NativeAgentRecord& record, const fs::path& sidechain_path) {
     std::error_code ec;
     fs::create_directories(sidechain_path.parent_path(), ec);
     if (ec) return false;
@@ -414,53 +409,49 @@ bool write_sidechain_jsonl(
     for (std::size_t i = 0; i < record.transcript.size(); ++i) {
         const auto& entry = record.transcript[i];
         const auto [role, content] = split_transcript_role(entry);
-        const auto message_type =
-            (role == "user" || role == "assistant" || role == "system") ? role : std::string_view{"system"};
+        const auto message_type = (role == "user" || role == "assistant" || role == "system")
+                                      ? role
+                                      : std::string_view{"system"};
         const auto uuid = std::format("{}-{}", record.agent_id, i);
-        const auto parent_uuid = i == 0 ? std::string{} : std::format("{}-{}", record.agent_id, i - 1);
-        sidechain
-            << R"({"type":")" << json_escape(message_type)
-            << R"(","uuid":")" << json_escape(uuid)
-            << R"(","parentUuid":)";
+        const auto parent_uuid =
+            i == 0 ? std::string{} : std::format("{}-{}", record.agent_id, i - 1);
+        sidechain << R"({"type":")" << json_escape(message_type) << R"(","uuid":")"
+                  << json_escape(uuid) << R"(","parentUuid":)";
         if (i == 0) {
             sidechain << "null";
         } else {
             sidechain << '"' << json_escape(parent_uuid) << '"';
         }
-        sidechain
-            << R"(,"isSidechain":true)"
-            << R"(,"agentId":")" << json_escape(record.agent_id)
-            << R"(","message":{"role":")" << json_escape(message_type)
-            << R"(","content":[{"type":"text","text":")" << json_escape(content)
-            << R"("}]})"
-            << R"(,"agent_id":")" << json_escape(record.agent_id)
-            << R"(","parent_uuid":)";
+        sidechain << R"(,"isSidechain":true)"
+                  << R"(,"agentId":")" << json_escape(record.agent_id) << R"(","message":{"role":")"
+                  << json_escape(message_type) << R"(","content":[{"type":"text","text":")"
+                  << json_escape(content) << R"("}]})"
+                  << R"(,"agent_id":")" << json_escape(record.agent_id) << R"(","parent_uuid":)";
         if (i == 0) {
             sidechain << "null";
         } else {
             sidechain << '"' << json_escape(parent_uuid) << '"';
         }
-        sidechain
-            << R"(,"role":")" << json_escape(message_type)
-            << R"(","content":")" << json_escape(content)
-            << R"(","raw":")" << json_escape(entry)
-            << "\"}\n";
+        sidechain << R"(,"role":")" << json_escape(message_type) << R"(","content":")"
+                  << json_escape(content) << R"(","raw":")" << json_escape(entry) << "\"}\n";
     }
     return sidechain.good();
 }
+
 namespace {
 void encode_native_agent_record(std::ostream& out, const NativeAgentRecord& record,
-    const fs::path& transcript_path, const fs::path& sidechain_path, const fs::path& output_path) {
-    out << R"({"agent_id":")" << json_escape(record.agent_id)
-        << R"(","agent_type":")" << json_escape(record.agent_type)
-        << R"(","background":)" << (record.background ? "true" : "false")
-        << R"(,"status":")" << native_agent_status_name(record.status) << '"'
-        << R"(,"cancel_requested":)" << (record.cancel_requested ? "true" : "false")
-        << R"(,"notification_delivered":)" << (record.notification_delivered ? "true" : "false")
-        << R"(,"worktree_cleanup_performed":)" << (record.worktree_cleanup_performed ? "true" : "false")
-        << R"(,"transcript_path":")" << json_escape(transcript_path.string()) << '"'
-        << R"(,"sidechain_jsonl_path":")" << json_escape(sidechain_path.string()) << '"'
-        << R"(,"output_file_path":")" << json_escape(output_path.string()) << '"';
+                                const fs::path& transcript_path, const fs::path& sidechain_path,
+                                const fs::path& output_path) {
+    out << R"({"agent_id":")" << json_escape(record.agent_id) << R"(","agent_type":")"
+        << json_escape(record.agent_type) << R"(","background":)"
+        << (record.background ? "true" : "false") << R"(,"status":")"
+        << native_agent_status_name(record.status) << '"' << R"(,"cancel_requested":)"
+        << (record.cancel_requested ? "true" : "false") << R"(,"notification_delivered":)"
+        << (record.notification_delivered ? "true" : "false") << R"(,"worktree_cleanup_performed":)"
+        << (record.worktree_cleanup_performed ? "true" : "false") << R"(,"transcript_path":")"
+        << json_escape(transcript_path.string()) << '"' << R"(,"sidechain_jsonl_path":")"
+        << json_escape(sidechain_path.string()) << '"' << R"(,"output_file_path":")"
+        << json_escape(output_path.string()) << '"';
     write_json_optional_string(out, "parent_agent_id", record.parent_agent_id);
     write_json_optional_string(out, "description", record.description);
     write_json_optional_string(out, "name", record.name);
@@ -485,7 +476,7 @@ void encode_native_agent_record(std::ostream& out, const NativeAgentRecord& reco
     write_json_string_array(out, "capabilities", record.capabilities);
     out << '}';
 }
-} // namespace
+}  // namespace
 
 std::expected<void, std::string> persist_native_agent_checkpoint(const NativeAgentRecord& record) {
     const auto dir = runtime_state_dir();
@@ -494,7 +485,8 @@ std::expected<void, std::string> persist_native_agent_checkpoint(const NativeAge
         return path.is_relative() ? dir / path : path;
     };
     const auto transcript = resolve(record.transcript_path, agent_transcript_path(record.agent_id));
-    const auto sidechain = resolve(record.sidechain_jsonl_path, agent_sidechain_jsonl_path(record.agent_id));
+    const auto sidechain =
+        resolve(record.sidechain_jsonl_path, agent_sidechain_jsonl_path(record.agent_id));
     const auto output = resolve(record.output_file_path, agent_output_file_path(record.agent_id));
     std::ostringstream encoded;
     encode_native_agent_record(encoded, record, transcript, sidechain, output);
@@ -502,7 +494,7 @@ std::expected<void, std::string> persist_native_agent_checkpoint(const NativeAge
     // The authoritative record embeds all sidechain entries. Auxiliary files
     // remain unchanged until ordinary subsequent mutations refresh their views.
     return loom::utils::atomic_replace_file(agent_record_path(record.agent_id), encoded.str(),
-        loom::utils::AtomicMode::OwnerOnly);
+                                            loom::utils::AtomicMode::OwnerOnly);
 }
 
 bool persist_native_agent_record(const NativeAgentRecord& record) {
@@ -511,13 +503,17 @@ bool persist_native_agent_record(const NativeAgentRecord& record) {
         auto path = value ? fs::path{*value} : std::move(fallback);
         return path.is_relative() ? dir / path : path;
     };
-    const auto transcript_path = resolve(record.transcript_path, agent_transcript_path(record.agent_id));
-    const auto sidechain_path = resolve(record.sidechain_jsonl_path, agent_sidechain_jsonl_path(record.agent_id));
-    const auto output_path = resolve(record.output_file_path, agent_output_file_path(record.agent_id));
+    const auto transcript_path =
+        resolve(record.transcript_path, agent_transcript_path(record.agent_id));
+    const auto sidechain_path =
+        resolve(record.sidechain_jsonl_path, agent_sidechain_jsonl_path(record.agent_id));
+    const auto output_path =
+        resolve(record.output_file_path, agent_output_file_path(record.agent_id));
     std::ostringstream encoded;
     encode_native_agent_record(encoded, record, transcript_path, sidechain_path, output_path);
-    if (!encoded.good() || !loom::utils::atomic_replace_file(
-            agent_record_path(record.agent_id), encoded.str())) return false;
+    if (!encoded.good() ||
+        !loom::utils::atomic_replace_file(agent_record_path(record.agent_id), encoded.str()))
+        return false;
 
     // Auxiliary views are refreshed only after an atomic authoritative commit.
     // A failed progress/finalization write must never truncate a saved checkpoint.
@@ -525,12 +521,15 @@ bool persist_native_agent_record(const NativeAgentRecord& record) {
     fs::create_directories(transcript_path.parent_path(), ec);
     if (!ec) {
         std::ofstream transcript(transcript_path, std::ios::trunc);
-        if (transcript) for (const auto& line : record.transcript) transcript << line << '\n';
+        if (transcript)
+            for (const auto& line : record.transcript)
+                transcript << line << '\n';
     }
     (void)write_sidechain_jsonl(record, sidechain_path);
     refresh_native_agent_output_symlink(output_path, transcript_path);
     return true;
 }
+
 [[nodiscard]] std::vector<std::string> read_transcript_lines(const fs::path& path) {
     std::vector<std::string> lines;
     std::ifstream input(path);
@@ -540,6 +539,7 @@ bool persist_native_agent_record(const NativeAgentRecord& record) {
     }
     return lines;
 }
+
 [[nodiscard]] std::string transcript_text_from_content(loom::utils::json::JsonVal content) {
     if (!content.valid()) return {};
     if (content.is_str()) return std::string(content.as_str());
@@ -585,7 +585,9 @@ bool persist_native_agent_record(const NativeAgentRecord& record) {
     });
     return out;
 }
-[[nodiscard]] std::optional<std::string> transcript_entry_from_ts_jsonl(loom::utils::json::JsonVal root) {
+
+[[nodiscard]] std::optional<std::string>
+transcript_entry_from_ts_jsonl(loom::utils::json::JsonVal root) {
     if (!root.valid() || !root.is_obj()) return std::nullopt;
 
     auto type = json_string_field(root, {"type"});
@@ -604,7 +606,9 @@ bool persist_native_agent_record(const NativeAgentRecord& record) {
     if (text.empty()) return std::nullopt;
     return std::format("{}: {}", role, text);
 }
-[[nodiscard]] std::optional<std::string> transcript_entry_from_sidechain_jsonl_line(std::string_view line) {
+
+[[nodiscard]] std::optional<std::string>
+transcript_entry_from_sidechain_jsonl_line(std::string_view line) {
     auto parsed = loom::utils::json::parse(line);
     if (!parsed || !parsed->root().is_obj()) return std::nullopt;
     auto root = parsed->root();
@@ -619,9 +623,9 @@ bool persist_native_agent_record(const NativeAgentRecord& record) {
     }
     return transcript_entry_from_ts_jsonl(root);
 }
-[[nodiscard]] std::vector<std::string> transcript_lines_from_sidechain_entries(
-    const std::vector<std::string>& entries
-) {
+
+[[nodiscard]] std::vector<std::string>
+transcript_lines_from_sidechain_entries(const std::vector<std::string>& entries) {
     std::vector<std::string> lines;
     lines.reserve(entries.size());
     for (const auto& entry : entries) {
@@ -632,6 +636,7 @@ bool persist_native_agent_record(const NativeAgentRecord& record) {
     }
     return lines;
 }
+
 [[nodiscard]] std::vector<std::string> read_sidechain_transcript_lines(const fs::path& path) {
     std::vector<std::string> lines;
     std::ifstream input(path);
@@ -644,6 +649,7 @@ bool persist_native_agent_record(const NativeAgentRecord& record) {
     }
     return lines;
 }
+
 [[nodiscard]] std::vector<std::string> read_sidechain_jsonl_entries(const fs::path& path) {
     std::vector<std::string> entries;
     std::ifstream input(path);
@@ -653,7 +659,9 @@ bool persist_native_agent_record(const NativeAgentRecord& record) {
     }
     return entries;
 }
-[[nodiscard]] std::optional<NativeAgentRecord> load_native_agent_record_from_path(const fs::path& path) {
+
+[[nodiscard]] std::optional<NativeAgentRecord>
+load_native_agent_record_from_path(const fs::path& path) {
     auto parsed = loom::utils::json::parse_file(path);
     if (!parsed || !parsed->root().is_obj()) return std::nullopt;
     auto root = parsed->root();
@@ -661,19 +669,19 @@ bool persist_native_agent_record(const NativeAgentRecord& record) {
     if (agent_id.empty()) return std::nullopt;
 
     auto status = native_agent_status_from_string(root.get_string("status"))
-        .value_or(NativeAgentStatus::Queued);
-    auto agent_type = root.get_string("agent_type").empty()
-        ? std::string("runtime")
-        : root.get_string("agent_type");
+                      .value_or(NativeAgentStatus::Queued);
+    auto agent_type = root.get_string("agent_type").empty() ? std::string("runtime")
+                                                            : root.get_string("agent_type");
     NativeAgentRecord record = make_native_agent_record(std::move(agent_id), std::move(agent_type));
     record.background = root.get("background").is_bool() && root.get("background").as_bool();
     record.status = status;
     record.capabilities = json_string_array(root.get("capabilities"));
-    record.cancel_requested = root.get("cancel_requested").is_bool() && root.get("cancel_requested").as_bool();
+    record.cancel_requested =
+        root.get("cancel_requested").is_bool() && root.get("cancel_requested").as_bool();
     record.notification_delivered = root.get("notification_delivered").is_bool() &&
-        root.get("notification_delivered").as_bool();
+                                    root.get("notification_delivered").as_bool();
     record.worktree_cleanup_performed = root.get("worktree_cleanup_performed").is_bool() &&
-        root.get("worktree_cleanup_performed").as_bool();
+                                        root.get("worktree_cleanup_performed").as_bool();
 
     auto assign_optional = [&](std::string_view key, std::optional<std::string>& field) {
         auto value = root.get(key);
@@ -705,7 +713,8 @@ bool persist_native_agent_record(const NativeAgentRecord& record) {
     record.sidechain_entries = json_string_array(root.get("sidechain_entries"));
     record.pending_messages = json_string_array(root.get("pending_messages"));
     if (record.sidechain_entries.empty() && record.sidechain_jsonl_path) {
-        record.sidechain_entries = read_sidechain_jsonl_entries(fs::path{*record.sidechain_jsonl_path});
+        record.sidechain_entries =
+            read_sidechain_jsonl_entries(fs::path{*record.sidechain_jsonl_path});
     }
     if (record.transcript_path) {
         record.transcript = read_transcript_lines(fs::path{*record.transcript_path});
@@ -715,9 +724,11 @@ bool persist_native_agent_record(const NativeAgentRecord& record) {
     }
     return record;
 }
+
 [[nodiscard]] std::optional<NativeAgentRecord> load_native_agent_record(std::string_view agent_id) {
     return load_native_agent_record_from_path(agent_record_path(agent_id));
 }
+
 [[nodiscard]] std::vector<NativeAgentRecord> load_all_native_agent_records() {
     std::vector<NativeAgentRecord> records;
     std::error_code ec;
@@ -732,4 +743,4 @@ bool persist_native_agent_record(const NativeAgentRecord& record) {
     }
     return records;
 }
-} // namespace loom::tools::agent_runtime
+}  // namespace loom::tools::agent_runtime

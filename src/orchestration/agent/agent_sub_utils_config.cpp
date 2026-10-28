@@ -57,36 +57,42 @@ namespace fs = std::filesystem;
     return out.empty() ? std::string{"agent"} : out;
 }
 
-[[nodiscard]] std::string agent_memory_dir(
-    std::string_view agent_type,
-    std::string_view scope,
-    const std::optional<std::string>& working_dir
-) {
+[[nodiscard]] std::string agent_memory_dir(std::string_view agent_type, std::string_view scope,
+                                           const std::optional<std::string>& working_dir) {
     const auto dir_name = sanitize_agent_memory_component(agent_type);
-    const auto cwd = working_dir && !working_dir->empty() ? fs::path{*working_dir} : fs::current_path();
+    const auto cwd =
+        working_dir && !working_dir->empty() ? fs::path{*working_dir} : fs::current_path();
     if (scope == "project") {
-        return ((cwd / ".loom" / "agent-memory" / dir_name).string() + fs::path::preferred_separator);
+        return ((cwd / ".loom" / "agent-memory" / dir_name).string() +
+                fs::path::preferred_separator);
     }
     if (scope == "local") {
         if (const char* remote = std::getenv("LOOM_REMOTE_MEMORY_DIR"); remote && *remote) {
             const auto git_root = loom::utils::git::find_git_root(cwd).value_or(cwd);
             const auto project_component = sanitize_agent_memory_component(git_root.string());
-            return ((fs::path{remote} / "projects" / project_component / "agent-memory-local" / dir_name).string() +
-                fs::path::preferred_separator);
+            return ((fs::path{remote} / "projects" / project_component / "agent-memory-local" /
+                     dir_name)
+                        .string() +
+                    fs::path::preferred_separator);
         }
-        return ((cwd / ".loom" / "agent-memory-local" / dir_name).string() + fs::path::preferred_separator);
+        return ((cwd / ".loom" / "agent-memory-local" / dir_name).string() +
+                fs::path::preferred_separator);
     }
-    return ((agent_memory_base_dir() / "agent-memory" / dir_name).string() + fs::path::preferred_separator);
+    return ((agent_memory_base_dir() / "agent-memory" / dir_name).string() +
+            fs::path::preferred_separator);
 }
 
 [[nodiscard]] std::string agent_memory_scope_note(std::string_view scope) {
     if (scope == "project") {
-        return "- Since this memory is project-scope and shared with your team via version control, tailor your memories to this project";
+        return "- Since this memory is project-scope and shared with your team via version "
+               "control, tailor your memories to this project";
     }
     if (scope == "local") {
-        return "- Since this memory is local-scope (not checked into version control), tailor your memories to this project and machine";
+        return "- Since this memory is local-scope (not checked into version control), tailor your "
+               "memories to this project and machine";
     }
-    return "- Since this memory is user-scope, keep learnings general since they apply across all projects";
+    return "- Since this memory is user-scope, keep learnings general since they apply across all "
+           "projects";
 }
 
 [[nodiscard]] std::string join_agent_memory_prompt_lines(const std::vector<std::string>& lines) {
@@ -98,11 +104,9 @@ namespace fs = std::filesystem;
     return out;
 }
 
-[[nodiscard]] std::string load_agent_memory_prompt(
-    std::string_view agent_type,
-    std::string_view scope,
-    const std::optional<std::string>& working_dir
-) {
+[[nodiscard]] std::string load_agent_memory_prompt(std::string_view agent_type,
+                                                   std::string_view scope,
+                                                   const std::optional<std::string>& working_dir) {
     const auto dir = agent_memory_dir(agent_type, scope, working_dir);
     std::error_code ec;
     fs::create_directories(fs::path{dir}, ec);
@@ -112,14 +116,19 @@ namespace fs = std::filesystem;
         "You have a persistent, file-based memory system at `" + dir + "`.",
         "This directory already exists; write to it directly with the Write tool.",
         "",
-        "If the user explicitly asks you to remember something, save it immediately as the best fitting memory type. If they ask you to forget something, find and remove the relevant entry.",
+        "If the user explicitly asks you to remember something, save it immediately as the best "
+        "fitting memory type. If they ask you to forget something, find and remove the relevant "
+        "entry.",
         "",
         "## How to save memories",
-        "Write each memory to its own file and keep `MEMORY.md` as a concise index of links to those files.",
-        "Use descriptive filenames, avoid duplicate memories, and update or remove memories that are wrong or outdated.",
+        "Write each memory to its own file and keep `MEMORY.md` as a concise index of links to "
+        "those files.",
+        "Use descriptive filenames, avoid duplicate memories, and update or remove memories that "
+        "are wrong or outdated.",
         "",
         "## When to access memories",
-        "Access memory when it seems relevant, when the user refers to prior work, or when the user explicitly asks you to check, recall, or remember.",
+        "Access memory when it seems relevant, when the user refers to prior work, or when the "
+        "user explicitly asks you to check, recall, or remember.",
         "If the user asks you to ignore memory, proceed as if `MEMORY.md` were empty.",
         "",
         agent_memory_scope_note(scope),
@@ -164,10 +173,8 @@ void add_agent_memory_tools(std::vector<std::string>& tools) {
     return std::string{agent_id.substr(0, at)};
 }
 
-[[nodiscard]] std::string unique_teammate_agent_name(
-    std::string base_name,
-    const loom::tools::Team& team
-) {
+[[nodiscard]] std::string unique_teammate_agent_name(std::string base_name,
+                                                     const loom::tools::Team& team) {
     if (base_name.empty()) base_name = "agent";
 
     std::unordered_set<std::string> existing_names;
@@ -185,7 +192,8 @@ void add_agent_memory_tools(std::vector<std::string>& tools) {
     return std::format("{}-{}", base_name, suffix);
 }
 
-[[nodiscard]] std::string format_teammate_agent_id(std::string_view agent_name, std::string_view team_name) {
+[[nodiscard]] std::string format_teammate_agent_id(std::string_view agent_name,
+                                                   std::string_view team_name) {
     return std::format("{}@{}", agent_name, team_name);
 }
 
@@ -295,28 +303,25 @@ Guidelines:
     return value == "low" || value == "medium" || value == "high" || value == "max";
 }
 
-[[nodiscard]] std::optional<std::string> normalized_permission_mode(
-    const std::optional<std::string>& mode
-) {
+[[nodiscard]] std::optional<std::string>
+normalized_permission_mode(const std::optional<std::string>& mode) {
     if (!mode) return std::nullopt;
     const auto trimmed = trim_tool_rule(*mode);
     if (trimmed.empty()) return std::nullopt;
     return std::string{trimmed};
 }
 
-[[nodiscard]] bool parent_permission_mode_blocks_agent_override(
-    const std::optional<std::string>& parent_mode
-) {
+[[nodiscard]] bool
+parent_permission_mode_blocks_agent_override(const std::optional<std::string>& parent_mode) {
     const auto mode = normalized_permission_mode(parent_mode);
     if (!mode) return false;
     return *mode == "bypassPermissions" || *mode == "acceptEdits" || *mode == "auto";
 }
 
-[[nodiscard]] std::optional<std::string> effective_agent_permission_mode(
-    const std::optional<std::string>& request_mode,
-    const std::optional<std::string>& definition_mode,
-    const std::optional<std::string>& parent_mode
-) {
+[[nodiscard]] std::optional<std::string>
+effective_agent_permission_mode(const std::optional<std::string>& request_mode,
+                                const std::optional<std::string>& definition_mode,
+                                const std::optional<std::string>& parent_mode) {
     if (auto explicit_mode = normalized_permission_mode(request_mode)) return explicit_mode;
     auto normalized_parent_mode = normalized_permission_mode(parent_mode);
     if (parent_permission_mode_blocks_agent_override(normalized_parent_mode)) {
@@ -344,10 +349,8 @@ void append_agent_effort_beta(CreateMessageRequest& request) {
     }
 }
 
-void apply_agent_effort_to_request(
-    CreateMessageRequest& request,
-    const std::optional<std::string>& effort
-) {
+void apply_agent_effort_to_request(CreateMessageRequest& request,
+                                   const std::optional<std::string>& effort) {
     if (!effort) return;
     const auto trimmed = trim_tool_rule(*effort);
     if (trimmed.empty()) return;
@@ -366,10 +369,8 @@ void apply_agent_effort_to_request(
     append_agent_effort_beta(request);
 }
 
-[[nodiscard]] std::string prepend_initial_prompt(
-    const std::optional<std::string>& initial_prompt,
-    std::string_view prompt
-) {
+[[nodiscard]] std::string prepend_initial_prompt(const std::optional<std::string>& initial_prompt,
+                                                 std::string_view prompt) {
     if (!initial_prompt || initial_prompt->empty()) return std::string(prompt);
     return std::format("{}\n\n{}", *initial_prompt, prompt);
 }
@@ -378,4 +379,4 @@ void apply_agent_effort_to_request(
     return std::format("<critical_system_reminder>\n{}\n</critical_system_reminder>", reminder);
 }
 
-} // namespace loom::tools::agent::utils
+}  // namespace loom::tools::agent::utils

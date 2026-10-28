@@ -53,35 +53,35 @@ enum class ProjectKind { Cli, Server, Unknown };
 
 [[nodiscard]] inline std::string_view to_string(ProjectKind k) {
     switch (k) {
-        case ProjectKind::Cli:     return "cli";
-        case ProjectKind::Server:  return "server";
-        case ProjectKind::Unknown: return "unknown";
+    case ProjectKind::Cli:
+        return "cli";
+    case ProjectKind::Server:
+        return "server";
+    case ProjectKind::Unknown:
+        return "unknown";
     }
     return "unknown";
 }
 
 struct EntryInfo {
-    std::string_view filename;   // basename only
-    std::string_view contents;   // optional: head of file contents (caller
-                                 // may leave empty — best-effort detection
-                                 // still works from filename alone)
+    std::string_view filename;  // basename only
+    std::string_view contents;  // optional: head of file contents (caller
+                                // may leave empty — best-effort detection
+                                // still works from filename alone)
 };
 
-[[nodiscard]] inline ProjectKind detect_project_kind(
-    std::vector<EntryInfo> entries) noexcept {
+[[nodiscard]] inline ProjectKind detect_project_kind(std::vector<EntryInfo> entries) noexcept {
 
     static constexpr std::array<std::string_view, 8> server_markers{
-        "server.ts", "server.js", "server.py", "server.go",
-        "server.rb", "server.java", "start-server", "main-server"
-    };
-    static constexpr std::array<std::string_view, 6> cli_markers{
-        "cli.ts", "cli.js", "cli.py", "cli.go", "cli.rb", "main-cli"
-    };
+        "server.ts", "server.js",   "server.py",    "server.go",
+        "server.rb", "server.java", "start-server", "main-server"};
+    static constexpr std::array<std::string_view, 6> cli_markers{"cli.ts", "cli.js", "cli.py",
+                                                                 "cli.go", "cli.rb", "main-cli"};
 
     // Phase 1: exact-match filenames (highest signal)
     for (const auto& e : entries) {
-        if (std::ranges::find(server_markers, e.filename) !=
-            server_markers.end()) return ProjectKind::Server;
+        if (std::ranges::find(server_markers, e.filename) != server_markers.end())
+            return ProjectKind::Server;
         if (std::ranges::find(cli_markers, e.filename) != cli_markers.end())
             return ProjectKind::Cli;
     }
@@ -94,8 +94,7 @@ struct EntryInfo {
                 // package.json often accompanies a bun/node tool.
                 return ProjectKind::Cli;
             }
-            if (e.contents.find("\"bin\"") != std::string_view::npos)
-                return ProjectKind::Cli;
+            if (e.contents.find("\"bin\"") != std::string_view::npos) return ProjectKind::Cli;
             if (e.contents.find("\"start\"") != std::string_view::npos &&
                 e.contents.find("server") != std::string_view::npos)
                 return ProjectKind::Server;
@@ -106,14 +105,14 @@ struct EntryInfo {
     auto lower = [](std::string_view s) {
         std::string out(s.size(), '\0');
         std::ranges::transform(s, out.begin(),
-            [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+                               [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
         return out;
     };
     for (const auto& e : entries) {
         const auto name = lower(e.filename);
         if (name.find("server") != std::string::npos &&
-            (name.ends_with(".ts") || name.ends_with(".js") ||
-             name.ends_with(".py") || name.ends_with(".go")))
+            (name.ends_with(".ts") || name.ends_with(".js") || name.ends_with(".py") ||
+             name.ends_with(".go")))
             return ProjectKind::Server;
         if (name.find("cli") != std::string::npos) return ProjectKind::Cli;
     }
@@ -259,23 +258,21 @@ constexpr std::string_view EVIDENCE_RULES = R"raw(
 // optional user args:
 //   SKILL_BODY.trimStart() -> if args -> append "## User Request\n\n<args>"
 // ============================================================
-[[nodiscard]] inline std::string build_prompt(
-    ProjectKind kind,
-    std::string_view args) {
+[[nodiscard]] inline std::string build_prompt(ProjectKind kind, std::string_view args) {
 
     std::vector<std::string> parts;
     parts.emplace_back(VERIFY_INTRO);
 
     switch (kind) {
-        case ProjectKind::Cli:
-            parts.emplace_back(CLI_CHECKLIST);
-            break;
-        case ProjectKind::Server:
-            parts.emplace_back(SERVER_CHECKLIST);
-            break;
-        case ProjectKind::Unknown:
-            parts.emplace_back(UNKNOWN_KIND_NOTE);
-            break;
+    case ProjectKind::Cli:
+        parts.emplace_back(CLI_CHECKLIST);
+        break;
+    case ProjectKind::Server:
+        parts.emplace_back(SERVER_CHECKLIST);
+        break;
+    case ProjectKind::Unknown:
+        parts.emplace_back(UNKNOWN_KIND_NOTE);
+        break;
     }
 
     parts.emplace_back(EVIDENCE_RULES);
@@ -303,47 +300,47 @@ constexpr std::string_view EVIDENCE_RULES = R"raw(
 [[nodiscard]] inline SkillDefinition make_verify_content_skill() {
     return SkillDefinition{
         .name = "verify-content",
-        .description =
-            "Runtime verification: rebuild, execute, and diff real output "
-            "against the user's claim for CLI binaries and HTTP servers.\n"
-            "TRIGGER when: user asks to 'run the app', 'try it', 'smoke "
-            "test', 'start the server and curl', 'verify the binary does "
-            "X', or uses /verify with a concrete behaviour claim.\n"
-            "DO NOT TRIGGER for: unit tests, type-checking, linting, or "
-            "generic 'before completion' checklists — use the 'verify' "
-            "skill for those.",
-        .trigger_patterns = {
-            // Explicit invocation / project-run phrasing
-            R"(/verify\b)",
-            R"(run\s+(?:the\s+)?(?:app|binary|cli|server))",
-            R"(smoke\s*test)",
-            R"(start\s+(?:the\s+)?server.*curl)",
-            R"(start\s+the\s+server\s+and)",
-            R"(\btry\s+it\b)",
+        .description = "Runtime verification: rebuild, execute, and diff real output "
+                       "against the user's claim for CLI binaries and HTTP servers.\n"
+                       "TRIGGER when: user asks to 'run the app', 'try it', 'smoke "
+                       "test', 'start the server and curl', 'verify the binary does "
+                       "X', or uses /verify with a concrete behaviour claim.\n"
+                       "DO NOT TRIGGER for: unit tests, type-checking, linting, or "
+                       "generic 'before completion' checklists — use the 'verify' "
+                       "skill for those.",
+        .trigger_patterns =
+            {
+                // Explicit invocation / project-run phrasing
+                R"(/verify\b)",
+                R"(run\s+(?:the\s+)?(?:app|binary|cli|server))",
+                R"(smoke\s*test)",
+                R"(start\s+(?:the\s+)?server.*curl)",
+                R"(start\s+the\s+server\s+and)",
+                R"(\btry\s+it\b)",
 
-            // Runtime verification semantics
-            R"(verify\s+.*(?:output|behaviour|behavior|server|binary|cli))",
-            R"(does\s+(?:it|this)\s+actually\s+work)",
-            R"(prove\s+(?:it|that)\s+works)",
-            R"(\bend[-\s]?to[-\s]?end\s+test)",
+                // Runtime verification semantics
+                R"(verify\s+.*(?:output|behaviour|behavior|server|binary|cli))",
+                R"(does\s+(?:it|this)\s+actually\s+work)",
+                R"(prove\s+(?:it|that)\s+works)",
+                R"(\bend[-\s]?to[-\s]?end\s+test)",
 
-            // Output-comparison phrasing
-            R"(expected\s+vs\s+(?:actual|observed))",
-            R"(check\s+(?:stdout|stderr|http\s+response|response\s+body))",
+                // Output-comparison phrasing
+                R"(expected\s+vs\s+(?:actual|observed))",
+                R"(check\s+(?:stdout|stderr|http\s+response|response\s+body))",
 
-            // Build-and-run imperative
-            R"(rebuild\s+and\s+run)",
-            R"(build\s+and\s+launch)",
-        },
+                // Build-and-run imperative
+                R"(rebuild\s+and\s+run)",
+                R"(build\s+and\s+launch)",
+            },
         .content =
             // Default content (kind unknown, no args). Callers that can
-            // detect the project kind should call build_prompt(kind, args)
-            // instead to pick the right checklist.
-            build_prompt(ProjectKind::Unknown, ""),
+        // detect the project kind should call build_prompt(kind, args)
+        // instead to pick the right checklist.
+        build_prompt(ProjectKind::Unknown, ""),
         .is_builtin = true,
         .author = std::nullopt,
         .version = "1.0.0",
     };
 }
 
-} // namespace loom::skills::verify_content
+}  // namespace loom::skills::verify_content

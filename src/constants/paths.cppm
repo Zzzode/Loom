@@ -75,8 +75,8 @@ inline constexpr std::array<std::string_view, 3> kMemoryFileCandidates = {
 /// READ-ONLY intent: this is for finding configuration that already exists.
 /// For the directory to WRITE into, use config_home_write() -- writing into a
 /// directory we did not create is a different decision (see below).
-[[nodiscard]] inline std::filesystem::path config_home_read_under(
-    const std::filesystem::path& home) {
+[[nodiscard]] inline std::filesystem::path
+config_home_read_under(const std::filesystem::path& home) {
     if (const char* env = std::getenv("LOOM_CONFIG_DIR"); env && *env) {
         return std::filesystem::path{env};
     }
@@ -178,8 +178,8 @@ inline constexpr std::array<std::string_view, 3> kMemoryFileCandidates = {
 
 /// The memory file inside `dir`, by cascade, or nullopt when none exists.
 /// Non-recursive: only this directory is considered.
-[[nodiscard]] inline std::optional<std::filesystem::path> memory_file_in(
-    const std::filesystem::path& dir) {
+[[nodiscard]] inline std::optional<std::filesystem::path>
+memory_file_in(const std::filesystem::path& dir) {
     std::error_code ec;
     for (const auto name : kMemoryFileCandidates) {
         auto candidate = dir / name;
@@ -192,8 +192,8 @@ inline constexpr std::array<std::string_view, 3> kMemoryFileCandidates = {
 
 /// Walk up from `start_dir` looking for a memory file, applying the name
 /// cascade within each directory. Returns the nearest match, or nullopt.
-[[nodiscard]] inline std::optional<std::filesystem::path> find_memory_file(
-    const std::filesystem::path& start_dir) {
+[[nodiscard]] inline std::optional<std::filesystem::path>
+find_memory_file(const std::filesystem::path& start_dir) {
     std::error_code ec;
     auto current = std::filesystem::absolute(start_dir, ec);
     if (ec) current = start_dir;
@@ -212,8 +212,7 @@ inline constexpr std::array<std::string_view, 3> kMemoryFileCandidates = {
 /// The project's memory file path for `root`, preferring an existing file and
 /// otherwise the highest-priority name (so a caller reporting "where memory
 /// would go" names the file we would actually create).
-[[nodiscard]] inline std::filesystem::path project_memory_path(
-    const std::filesystem::path& root) {
+[[nodiscard]] inline std::filesystem::path project_memory_path(const std::filesystem::path& root) {
     if (auto found = memory_file_in(root)) {
         return *found;
     }

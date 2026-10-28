@@ -35,13 +35,10 @@ struct AgentSourceGroup {
 /// Both the CLI and interactive UI should use this to ensure consistent ordering.
 [[nodiscard]] inline std::vector<AgentSourceGroup> agent_source_groups() {
     return {
-        {"User agents",        "userSettings"},
-        {"Project agents",     "projectSettings"},
-        {"Local agents",       "localSettings"},
-        {"Managed agents",     "policySettings"},
-        {"Plugin agents",      "plugin"},
-        {"CLI arg agents",     "flagSettings"},
-        {"Built-in agents",    "built-in"},
+        {"User agents", "userSettings"},   {"Project agents", "projectSettings"},
+        {"Local agents", "localSettings"}, {"Managed agents", "policySettings"},
+        {"Plugin agents", "plugin"},       {"CLI arg agents", "flagSettings"},
+        {"Built-in agents", "built-in"},
     };
 }
 
@@ -58,7 +55,8 @@ struct ResolvedAgent {
 
     // Convenience accessors mirroring TS spread semantics:
     [[nodiscard]] std::string_view agent_type() const noexcept { return definition.agent_type; }
-    [[nodiscard]] std::string_view source()     const noexcept { return definition.source; }
+
+    [[nodiscard]] std::string_view source() const noexcept { return definition.source; }
 };
 
 /// Annotate agents with override information by comparing against the active
@@ -67,10 +65,9 @@ struct ResolvedAgent {
 ///
 /// Also deduplicates by (agentType, source) to handle git worktree duplicates
 /// where the same agent file is loaded from both the worktree and main repo.
-[[nodiscard]] inline std::vector<ResolvedAgent> resolve_agent_overrides(
-    const std::vector<AgentDefinition>& all_agents,
-    const std::vector<AgentDefinition>& active_agents
-) {
+[[nodiscard]] inline std::vector<ResolvedAgent>
+resolve_agent_overrides(const std::vector<AgentDefinition>& all_agents,
+                        const std::vector<AgentDefinition>& active_agents) {
     std::unordered_map<std::string, const AgentDefinition*> active_map;
     active_map.reserve(active_agents.size());
     for (const auto& agent : active_agents) {
@@ -93,8 +90,8 @@ struct ResolvedAgent {
 
         resolved.push_back(ResolvedAgent{
             .definition = agent,
-            .overridden_by = overridden_by ? std::optional<std::string>{overridden_by}
-                                           : std::nullopt,
+            .overridden_by =
+                overridden_by ? std::optional<std::string>{overridden_by} : std::nullopt,
         });
     }
 
@@ -110,10 +107,9 @@ struct ResolvedAgent {
 ///
 /// The optional `global_default` parameter lets callers plug in the real
 /// runtime value without this module taking a direct dependency on bootstrap.
-[[nodiscard]] inline std::optional<std::string> resolve_agent_model_display(
-    const AgentDefinition& agent,
-    std::optional<std::string_view> global_default = std::nullopt
-) {
+[[nodiscard]] inline std::optional<std::string>
+resolve_agent_model_display(const AgentDefinition& agent,
+                            std::optional<std::string_view> global_default = std::nullopt) {
     std::string_view model;
     if (!agent.model.empty()) {
         model = agent.model;
@@ -129,13 +125,13 @@ struct ResolvedAgent {
 /// Get a short capitalised display name for a setting source (matches TS
 /// `getSourceDisplayName`).
 [[nodiscard]] inline std::string_view source_display_name(std::string_view source) {
-    if (source == "userSettings")    return "User";
+    if (source == "userSettings") return "User";
     if (source == "projectSettings") return "Project";
-    if (source == "localSettings")   return "Local";
-    if (source == "policySettings")  return "Managed";
-    if (source == "flagSettings")    return "Flag";
-    if (source == "plugin")          return "Plugin";
-    if (source == "built-in")        return "Built-in";
+    if (source == "localSettings") return "Local";
+    if (source == "policySettings") return "Managed";
+    if (source == "flagSettings") return "Flag";
+    if (source == "plugin") return "Plugin";
+    if (source == "built-in") return "Built-in";
     return "Unknown";
 }
 
@@ -144,9 +140,8 @@ struct ResolvedAgent {
 /// `getOverrideSourceLabel`.
 [[nodiscard]] inline std::string override_source_label(std::string_view source) {
     auto name = std::string{source_display_name(source)};
-    std::ranges::transform(name, name.begin(), [](unsigned char ch) {
-        return static_cast<char>(std::tolower(ch));
-    });
+    std::ranges::transform(name, name.begin(),
+                           [](unsigned char ch) { return static_cast<char>(std::tolower(ch)); });
     return name;
 }
 
@@ -162,8 +157,10 @@ struct CompareAgentsByName {
         const auto& rhs = b.agent_type;
         const auto min_len = std::min(lhs.size(), rhs.size());
         for (size_t i = 0; i < min_len; ++i) {
-            const unsigned char ca = static_cast<unsigned char>(std::tolower(static_cast<unsigned char>(lhs[i])));
-            const unsigned char cb = static_cast<unsigned char>(std::tolower(static_cast<unsigned char>(rhs[i])));
+            const unsigned char ca =
+                static_cast<unsigned char>(std::tolower(static_cast<unsigned char>(lhs[i])));
+            const unsigned char cb =
+                static_cast<unsigned char>(std::tolower(static_cast<unsigned char>(rhs[i])));
             if (ca != cb) return ca < cb;
         }
         return lhs.size() < rhs.size();
@@ -171,9 +168,10 @@ struct CompareAgentsByName {
 };
 
 /// Convenience wrapper that returns a sorted copy.
-[[nodiscard]] inline std::vector<AgentDefinition> sort_by_name(std::vector<AgentDefinition> agents) {
+[[nodiscard]] inline std::vector<AgentDefinition>
+sort_by_name(std::vector<AgentDefinition> agents) {
     std::ranges::sort(agents, CompareAgentsByName{});
     return agents;
 }
 
-} // namespace loom::tools::agent_display
+}  // namespace loom::tools::agent_display

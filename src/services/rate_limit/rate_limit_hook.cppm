@@ -24,10 +24,10 @@ struct RateLimitHookState {
 
 /// Rate limit event types
 enum class RateLimitEvent : std::uint8_t {
-    LimitHit,           // New rate limit encountered
-    RetryScheduled,     // Retry scheduled after backoff
-    RetrySucceeded,     // Request succeeded after retry
-    LimitLifted,        // Rate limit period ended
+    LimitHit,        // New rate limit encountered
+    RetryScheduled,  // Retry scheduled after backoff
+    RetrySucceeded,  // Request succeeded after retry
+    LimitLifted,     // Rate limit period ended
 };
 
 /// Callback for rate limit events
@@ -38,18 +38,20 @@ using RateLimitEventCallback = std::function<void(RateLimitEvent, const RateLimi
 
 /// Rate limit hook configuration
 struct RateLimitConfig {
-    std::uint32_t initial_backoff_ms{1000};     // Initial backoff: 1s
-    std::uint32_t max_backoff_ms{60000};        // Max backoff: 60s
-    double backoff_multiplier{2.0};              // Exponential factor
-    std::uint32_t max_consecutive_retries{5};   // Give up after this many
-    bool jitter_enabled{true};                  // Add randomized jitter
+    std::uint32_t initial_backoff_ms{1000};    // Initial backoff: 1s
+    std::uint32_t max_backoff_ms{60000};       // Max backoff: 60s
+    double backoff_multiplier{2.0};            // Exponential factor
+    std::uint32_t max_consecutive_retries{5};  // Give up after this many
+    bool jitter_enabled{true};                 // Add randomized jitter
 };
 
 /// Rate limit hook — monitors API responses and manages backoff
 class RateLimitHook {
 public:
     RateLimitHook() = default;
-    explicit RateLimitHook(RateLimitConfig config) : config_(config) {}
+
+    explicit RateLimitHook(RateLimitConfig config)
+        : config_(config) {}
 
     /// Install a callback for rate limit state changes
     void install(RateLimitCallback on_limit) {
@@ -82,16 +84,15 @@ public:
         if (!state_.is_rate_limited) return 0;
         auto now = std::chrono::steady_clock::now();
         if (now >= state_.limited_until) return 0;
-        auto remaining = std::chrono::duration_cast<std::chrono::milliseconds>(
-            state_.limited_until - now);
+        auto remaining =
+            std::chrono::duration_cast<std::chrono::milliseconds>(state_.limited_until - now);
         return static_cast<std::uint32_t>(remaining.count());
     }
 
     /// Handle a rate limit response (HTTP 429 or 529)
     /// Returns true if retry should be attempted, false if we should give up
-    [[nodiscard]] bool handle_rate_limit_response(
-        int status_code,
-        std::string_view retry_after_header) {
+    [[nodiscard]] bool handle_rate_limit_response(int status_code,
+                                                  std::string_view retry_after_header) {
 
         std::lock_guard lock(mutex_);
 
@@ -129,24 +130,24 @@ public:
         }
 
         // Set the limited_until time
-        state_.limited_until = std::chrono::steady_clock::now() +
-            std::chrono::milliseconds(backoff_ms);
+        state_.limited_until =
+            std::chrono::steady_clock::now() + std::chrono::milliseconds(backoff_ms);
 
         // Record which limit was hit
-        state_.last_limit_hit = std::format("HTTP {} at {}",
-            status_code,
-            std::chrono::duration_cast<std::chrono::seconds>(
-                std::chrono::steady_clock::now().time_since_epoch()).count());
+        state_.last_limit_hit = std::format("HTTP {} at {}", status_code,
+                                            std::chrono::duration_cast<std::chrono::seconds>(
+                                                std::chrono::steady_clock::now().time_since_epoch())
+                                                .count());
 
         // Check if we should give up
         if (state_.consecutive_limits > config_.max_consecutive_retries) {
             notify_event(RateLimitEvent::LimitHit);
-            return false; // Give up
+            return false;  // Give up
         }
 
         // Notify callbacks
         notify_event(RateLimitEvent::RetryScheduled);
-        return true; // Retry
+        return true;  // Retry
     }
 
     /// Reset rate limit state after a successful request
@@ -173,9 +174,8 @@ public:
             return "Rate limit: OK (no active limits)";
         }
         auto wait = remaining_wait_ms_locked();
-        return std::format(
-            "Rate limited: retry in {}ms (attempt {}/{})",
-            wait, state_.consecutive_limits, config_.max_consecutive_retries);
+        return std::format("Rate limited: retry in {}ms (attempt {}/{})", wait,
+                           state_.consecutive_limits, config_.max_consecutive_retries);
     }
 
 private:
@@ -194,8 +194,8 @@ private:
         if (!state_.is_rate_limited) return 0;
         auto now = std::chrono::steady_clock::now();
         if (now >= state_.limited_until) return 0;
-        auto remaining = std::chrono::duration_cast<std::chrono::milliseconds>(
-            state_.limited_until - now);
+        auto remaining =
+            std::chrono::duration_cast<std::chrono::milliseconds>(state_.limited_until - now);
         return static_cast<std::uint32_t>(remaining.count());
     }
 
@@ -211,7 +211,7 @@ private:
 // ============================================================
 
 namespace detail {
-    inline RateLimitHook global_hook;
+inline RateLimitHook global_hook;
 }
 
 /// Install the rate limit hook
@@ -225,8 +225,7 @@ inline RateLimitHookState check_rate_limit_state() {
 }
 
 /// Handle a rate limit response
-inline bool handle_rate_limit_response(int status_code,
-                                       std::string_view retry_after_header) {
+inline bool handle_rate_limit_response(int status_code, std::string_view retry_after_header) {
     return detail::global_hook.handle_rate_limit_response(status_code, retry_after_header);
 }
 
@@ -240,4 +239,4 @@ inline void clear_rate_limit_state() {
     detail::global_hook.reset();
 }
 
-} // namespace loom::services::rate_limit
+}  // namespace loom::services::rate_limit

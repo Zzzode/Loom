@@ -86,4 +86,4 @@ struct ChromeStore {
     bool show_overage_credit_upsell = false;
 };
 
-}  // namespace loom::ui
+}  // namespace loom::ui::repl_screen

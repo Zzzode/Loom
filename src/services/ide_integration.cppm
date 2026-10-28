@@ -2,16 +2,16 @@
 // Sources: ide.ts, idePathConversion.ts, jetbrains.ts
 module;
 
-#include <cerrno>
-#include <cctype>
-#include <cstdint>
-#include <cstdlib>
-#include <cstring>
-
 #include <netdb.h>
 #include <signal.h>
 #include <sys/socket.h>
 #include <unistd.h>
+
+#include <cctype>
+#include <cerrno>
+#include <cstdint>
+#include <cstdlib>
+#include <cstring>
 
 export module loom.services.ide_integration;
 
@@ -71,10 +71,10 @@ struct IDEInfo {
 // IDEPathFormat - Path format conventions for different IDEs
 // =========================================================================
 enum class IDEPathFormat : uint8_t {
-    Unix,           // forward slashes, absolute
-    Windows,        // backslashes, drive letter
-    URI,            // file:// URI scheme
-    Relative,       // relative to workspace root
+    Unix,      // forward slashes, absolute
+    Windows,   // backslashes, drive letter
+    URI,       // file:// URI scheme
+    Relative,  // relative to workspace root
 };
 
 // =========================================================================
@@ -127,7 +127,8 @@ public:
 
         for (const auto& entry : fs::directory_iterator(lockfile_dir_)) {
             if (!entry.is_regular_file()) continue;
-            if (entry.path().extension() != ".json" && entry.path().extension() != ".lock") continue;
+            if (entry.path().extension() != ".json" && entry.path().extension() != ".lock")
+                continue;
 
             auto lockfile = parse_lockfile(entry.path());
             if (!lockfile) continue;
@@ -143,8 +144,7 @@ public:
     }
 
     /// Find the lockfile matching a given workspace folder
-    [[nodiscard]] std::optional<IdeLockfile> find_for_workspace(
-        const fs::path& workspace) const {
+    [[nodiscard]] std::optional<IdeLockfile> find_for_workspace(const fs::path& workspace) const {
         auto lockfiles = scan();
         for (auto& lf : lockfiles) {
             if (is_any_workspace_match(lf, workspace)) {
@@ -169,9 +169,7 @@ public:
     }
 
     /// Get the lockfile directory path
-    [[nodiscard]] const fs::path& lockfile_dir() const noexcept {
-        return lockfile_dir_;
-    }
+    [[nodiscard]] const fs::path& lockfile_dir() const noexcept { return lockfile_dir_; }
 
 private:
     fs::path lockfile_dir_;
@@ -288,17 +286,16 @@ private:
     }
 
     /// Check if workspace_folder is a prefix of (or equal to) target path
-    [[nodiscard]] static bool is_workspace_match(
-        const fs::path& workspace, const fs::path& target) {
+    [[nodiscard]] static bool is_workspace_match(const fs::path& workspace,
+                                                 const fs::path& target) {
         if (workspace.empty()) return false;
         auto ws_str = workspace.string();
         auto tgt_str = target.string();
         return tgt_str.starts_with(ws_str);
     }
 
-    [[nodiscard]] static bool is_any_workspace_match(
-        const IdeLockfile& lockfile,
-        const fs::path& target) {
+    [[nodiscard]] static bool is_any_workspace_match(const IdeLockfile& lockfile,
+                                                     const fs::path& target) {
         if (is_workspace_match(lockfile.workspace_folder, target)) return true;
         for (const auto& workspace : lockfile.workspace_folders) {
             if (is_workspace_match(workspace, target)) return true;
@@ -309,7 +306,9 @@ private:
     /// Parse IDE type from lockfile name string
     [[nodiscard]] static IDEType parse_ide_type(std::string_view name) {
         if (name.find("Code - Insiders") != std::string_view::npos) return IDEType::VSCodeInsiders;
-        if (name.find("Code") != std::string_view::npos || name.find("vscode") != std::string_view::npos) return IDEType::VSCode;
+        if (name.find("Code") != std::string_view::npos ||
+            name.find("vscode") != std::string_view::npos)
+            return IDEType::VSCode;
         if (name.find("Cursor") != std::string_view::npos) return IDEType::Cursor;
         if (name.find("Windsurf") != std::string_view::npos) return IDEType::Windsurf;
         if (name.find("IntelliJ") != std::string_view::npos) return IDEType::IntelliJ;
@@ -333,7 +332,7 @@ private:
 /// RPC response from the IDE
 struct IdeRpcResponse {
     bool success = false;
-    std::string result;         // JSON result payload
+    std::string result;  // JSON result payload
     std::optional<std::string> error;
 };
 
@@ -374,7 +373,7 @@ public:
 
     /// Call an IDE MCP tool.
     [[nodiscard]] IdeRpcResponse call(std::string_view tool_name,
-                                       std::string_view params_json = "{}") {
+                                      std::string_view params_json = "{}") {
         if (!connected_ || !lockfile_) {
             return ide_rpc_failure("Not connected to IDE");
         }
@@ -398,8 +397,8 @@ public:
         loom::services::mcp::McpClient client(std::move(config));
         const auto connected = client.connect_sse(lockfile_->mcp_url(), {});
         if (!connected) {
-            return ide_rpc_failure(
-                std::format("Failed to connect to IDE MCP server: {}", mcp_error_to_string(connected.error())));
+            return ide_rpc_failure(std::format("Failed to connect to IDE MCP server: {}",
+                                               mcp_error_to_string(connected.error())));
         }
 
         loom::services::mcp::ToolCallRequest tool_request{
@@ -429,15 +428,15 @@ public:
     }
 
     /// Convenience: open diff view in IDE
-    IdeRpcResponse open_diff(const fs::path& path,
-                             std::string_view old_content,
+    IdeRpcResponse open_diff(const fs::path& path, std::string_view old_content,
                              std::string_view new_content) {
         JsonMutDoc doc;
         auto root = doc.object();
         root.add("old_file_path", doc.string(path.string()));
         root.add("new_file_path", doc.string(path.string()));
         root.add("new_file_contents", doc.string(new_content));
-        root.add("tab_name", doc.string(path.filename().empty() ? path.string() : path.filename().string()));
+        root.add("tab_name",
+                 doc.string(path.filename().empty() ? path.string() : path.filename().string()));
         root.add("old_file_contents", doc.string(old_content));
         doc.set_root(root);
         return call("openDiff", doc.to_string());
@@ -476,35 +475,47 @@ private:
     std::vector<std::string> outbound_requests_;
     std::optional<IdeLockfile> lockfile_;
 
-    [[nodiscard]] static std::string mcp_error_to_string(loom::services::mcp::McpClientError error) {
+    [[nodiscard]] static std::string
+    mcp_error_to_string(loom::services::mcp::McpClientError error) {
         using enum loom::services::mcp::McpClientError;
         switch (error) {
-            case ConnectionFailed: return "connection failed";
-            case NotConnected: return "not connected";
-            case AlreadyConnected: return "already connected";
-            case TransportError: return "transport error";
-            case ServerClosed: return "server closed";
-            case Timeout: return "timeout";
-            case InvalidResponse: return "invalid response";
-            case InitializationFailed: return "initialization failed";
-            case ProtocolError: return "protocol error";
-            case ServerNotFound: return "server not found";
-            case ToolNotFound: return "tool not found";
-            case Unauthorized: return "unauthorized";
+        case ConnectionFailed:
+            return "connection failed";
+        case NotConnected:
+            return "not connected";
+        case AlreadyConnected:
+            return "already connected";
+        case TransportError:
+            return "transport error";
+        case ServerClosed:
+            return "server closed";
+        case Timeout:
+            return "timeout";
+        case InvalidResponse:
+            return "invalid response";
+        case InitializationFailed:
+            return "initialization failed";
+        case ProtocolError:
+            return "protocol error";
+        case ServerNotFound:
+            return "server not found";
+        case ToolNotFound:
+            return "tool not found";
+        case Unauthorized:
+            return "unauthorized";
         }
         return "unknown error";
     }
 
-    [[nodiscard]] static std::string serialize_content(const std::vector<loom::services::mcp::ContentItem>& content) {
+    [[nodiscard]] static std::string
+    serialize_content(const std::vector<loom::services::mcp::ContentItem>& content) {
         std::string json = "[";
         bool first = true;
         for (const auto& item : content) {
             if (!first) json += ",";
             first = false;
-            json += std::format(
-                R"({{"type":"{}","text":"{}"}})",
-                json_escape(item.type),
-                json_escape(item.text));
+            json += std::format(R"({{"type":"{}","text":"{}"}})", json_escape(item.type),
+                                json_escape(item.text));
         }
         json += "]";
         return json;
@@ -521,9 +532,8 @@ private:
         std::string payload;
     };
 
-    [[nodiscard]] IdeRpcResponse call_websocket(
-        std::string_view tool_name,
-        std::string_view params_json) {
+    [[nodiscard]] IdeRpcResponse call_websocket(std::string_view tool_name,
+                                                std::string_view params_json) {
         auto parts = parse_ws_url(lockfile_->mcp_url());
         if (!parts) {
             return ide_rpc_failure(parts.error());
@@ -646,7 +656,8 @@ private:
     [[nodiscard]] static std::string random_websocket_key() {
         std::array<unsigned char, 16> bytes{};
         std::random_device rd;
-        for (auto& byte : bytes) byte = static_cast<unsigned char>(rd());
+        for (auto& byte : bytes)
+            byte = static_cast<unsigned char>(rd());
 
         static constexpr char alphabet[] =
             "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
@@ -662,24 +673,23 @@ private:
             }
         }
         if (valb > -6) out.push_back(alphabet[((val << 8) >> (valb + 8)) & 0x3f]);
-        while (out.size() % 4 != 0) out.push_back('=');
+        while (out.size() % 4 != 0)
+            out.push_back('=');
         return out;
     }
 
-    [[nodiscard]] static std::expected<void, std::string> perform_ws_handshake(
-        int fd,
-        const WsUrlParts& parts,
-        const std::optional<std::string>& auth_token) {
-        auto request = std::format(
-            "GET {} HTTP/1.1\r\n"
-            "Host: {}:{}\r\n"
-            "Connection: Upgrade\r\n"
-            "Upgrade: websocket\r\n"
-            "Sec-WebSocket-Version: 13\r\n"
-            "Sec-WebSocket-Protocol: mcp\r\n"
-            "Sec-WebSocket-Key: {}\r\n"
-            "User-Agent: loom-native\r\n",
-            parts.path, parts.host, parts.port, random_websocket_key());
+    [[nodiscard]] static std::expected<void, std::string>
+    perform_ws_handshake(int fd, const WsUrlParts& parts,
+                         const std::optional<std::string>& auth_token) {
+        auto request = std::format("GET {} HTTP/1.1\r\n"
+                                   "Host: {}:{}\r\n"
+                                   "Connection: Upgrade\r\n"
+                                   "Upgrade: websocket\r\n"
+                                   "Sec-WebSocket-Version: 13\r\n"
+                                   "Sec-WebSocket-Protocol: mcp\r\n"
+                                   "Sec-WebSocket-Key: {}\r\n"
+                                   "User-Agent: loom-native\r\n",
+                                   parts.path, parts.host, parts.port, random_websocket_key());
         if (auth_token && !auth_token->empty()) {
             request += "X-Loom-Code-Ide-Authorization: " + *auth_token + "\r\n";
         }
@@ -718,10 +728,8 @@ private:
         return true;
     }
 
-    [[nodiscard]] static std::expected<void, std::string> send_ws_frame(
-        int fd,
-        uint8_t opcode,
-        std::string_view payload) {
+    [[nodiscard]] static std::expected<void, std::string> send_ws_frame(int fd, uint8_t opcode,
+                                                                        std::string_view payload) {
         std::string frame;
         frame.push_back(static_cast<char>(0x80 | opcode));
         const auto len = payload.size();
@@ -740,8 +748,10 @@ private:
 
         std::array<unsigned char, 4> mask{};
         std::random_device rd;
-        for (auto& byte : mask) byte = static_cast<unsigned char>(rd());
-        for (auto byte : mask) frame.push_back(static_cast<char>(byte));
+        for (auto& byte : mask)
+            byte = static_cast<unsigned char>(rd());
+        for (auto byte : mask)
+            frame.push_back(static_cast<char>(byte));
         for (std::size_t i = 0; i < payload.size(); ++i) {
             frame.push_back(static_cast<char>(payload[i] ^ mask[i % 4]));
         }
@@ -752,16 +762,13 @@ private:
         return {};
     }
 
-    [[nodiscard]] static std::expected<void, std::string> send_ws_text(
-        int fd,
-        std::string_view payload) {
+    [[nodiscard]] static std::expected<void, std::string> send_ws_text(int fd,
+                                                                       std::string_view payload) {
         return send_ws_frame(fd, 0x1, payload);
     }
 
-    [[nodiscard]] static std::expected<void, std::string> read_exact(
-        int fd,
-        char* data,
-        std::size_t size) {
+    [[nodiscard]] static std::expected<void, std::string> read_exact(int fd, char* data,
+                                                                     std::size_t size) {
         while (size > 0) {
             auto n = ::recv(fd, data, size, 0);
             if (n <= 0) {
@@ -796,7 +803,8 @@ private:
                 return std::unexpected(read.error());
             }
             len = 0;
-            for (unsigned char byte : ext) len = (len << 8) | byte;
+            for (unsigned char byte : ext)
+                len = (len << 8) | byte;
         }
         if (len > 16 * 1024 * 1024) {
             return std::unexpected("IDE WebSocket MCP frame exceeds 16MiB");
@@ -804,7 +812,8 @@ private:
 
         std::array<unsigned char, 4> mask{};
         if (masked) {
-            if (auto read = read_exact(fd, reinterpret_cast<char*>(mask.data()), mask.size()); !read) {
+            if (auto read = read_exact(fd, reinterpret_cast<char*>(mask.data()), mask.size());
+                !read) {
                 return std::unexpected(read.error());
             }
         }
@@ -823,9 +832,8 @@ private:
         return frame;
     }
 
-    [[nodiscard]] static std::expected<std::string, std::string> receive_ws_response(
-        int fd,
-        int64_t expected_id) {
+    [[nodiscard]] static std::expected<std::string, std::string>
+    receive_ws_response(int fd, int64_t expected_id) {
         for (int attempt = 0; attempt < 128; ++attempt) {
             auto frame = read_ws_frame(fd);
             if (!frame) return std::unexpected(frame.error());
@@ -843,9 +851,8 @@ private:
             auto doc = parse(frame->payload);
             if (!doc) continue;
             auto id = doc->root().get("id");
-            const bool matches_id =
-                (id.is_num() && id.as_int() == expected_id) ||
-                (id.is_str() && id.as_str() == std::to_string(expected_id));
+            const bool matches_id = (id.is_num() && id.as_int() == expected_id) ||
+                                    (id.is_str() && id.as_str() == std::to_string(expected_id));
             if (matches_id) return frame->payload;
         }
         return std::unexpected("Timed out waiting for IDE WebSocket MCP response");
@@ -881,18 +888,29 @@ private:
         out.reserve(input.size() + 8);
         for (char ch : input) {
             switch (ch) {
-                case '"': out += "\\\""; break;
-                case '\\': out += "\\\\"; break;
-                case '\n': out += "\\n"; break;
-                case '\r': out += "\\r"; break;
-                case '\t': out += "\\t"; break;
-                default:
-                    if (std::iscntrl(static_cast<unsigned char>(ch))) {
-                        out += std::format("\\u{:04x}", static_cast<unsigned int>(static_cast<unsigned char>(ch)));
-                    } else {
-                        out.push_back(ch);
-                    }
-                    break;
+            case '"':
+                out += "\\\"";
+                break;
+            case '\\':
+                out += "\\\\";
+                break;
+            case '\n':
+                out += "\\n";
+                break;
+            case '\r':
+                out += "\\r";
+                break;
+            case '\t':
+                out += "\\t";
+                break;
+            default:
+                if (std::iscntrl(static_cast<unsigned char>(ch))) {
+                    out += std::format("\\u{:04x}",
+                                       static_cast<unsigned int>(static_cast<unsigned char>(ch)));
+                } else {
+                    out.push_back(ch);
+                }
+                break;
             }
         }
         return out;
@@ -905,9 +923,8 @@ private:
 
 /// Discovers the IDE via lockfile and sends an RPC call.
 /// This is the main entry point for other subsystems to communicate with the IDE.
-[[nodiscard]] inline IdeRpcResponse callIdeRpc(
-    std::string_view method,
-    std::string_view params_json = "{}") {
+[[nodiscard]] inline IdeRpcResponse callIdeRpc(std::string_view method,
+                                               std::string_view params_json = "{}") {
 
     IdeLockfileScanner scanner;
     auto lockfile = scanner.find_best_match();
@@ -929,63 +946,60 @@ private:
 // =========================================================================
 
 /// Convert a filesystem path to the format expected by a given IDE
-[[nodiscard]] inline std::string convert_path_to_ide_format(
-    const fs::path& path,
-    IDEPathFormat format) {
+[[nodiscard]] inline std::string convert_path_to_ide_format(const fs::path& path,
+                                                            IDEPathFormat format) {
     switch (format) {
-        case IDEPathFormat::URI:
-            return std::format("file://{}", path.string());
-        case IDEPathFormat::Unix:
-            return path.string();
-        case IDEPathFormat::Relative:
-            // Try to make relative to cwd
-            return fs::relative(path, fs::current_path()).string();
-        case IDEPathFormat::Windows:
-            // Convert forward slashes to backslashes
-            {
-                auto s = path.string();
-                for (auto& c : s) {
-                    if (c == '/') c = '\\';
-                }
-                return s;
+    case IDEPathFormat::URI:
+        return std::format("file://{}", path.string());
+    case IDEPathFormat::Unix:
+        return path.string();
+    case IDEPathFormat::Relative:
+        // Try to make relative to cwd
+        return fs::relative(path, fs::current_path()).string();
+    case IDEPathFormat::Windows:
+        // Convert forward slashes to backslashes
+        {
+            auto s = path.string();
+            for (auto& c : s) {
+                if (c == '/') c = '\\';
             }
+            return s;
+        }
     }
     return path.string();
 }
 
 /// Convert a path from IDE format back to a native filesystem path
-[[nodiscard]] inline fs::path convert_path_from_ide_format(
-    std::string_view ide_path,
-    IDEPathFormat format) {
+[[nodiscard]] inline fs::path convert_path_from_ide_format(std::string_view ide_path,
+                                                           IDEPathFormat format) {
     switch (format) {
-        case IDEPathFormat::URI:
-            if (ide_path.starts_with("file://")) {
-                return fs::path(std::string(ide_path.substr(7)));
-            }
-            return fs::path(std::string(ide_path));
-        case IDEPathFormat::Windows:
-            {
-                std::string s(ide_path);
-                for (auto& c : s) {
-                    if (c == '\\') c = '/';
-                }
-                return fs::path(s);
-            }
-        default:
-            return fs::path(std::string(ide_path));
+    case IDEPathFormat::URI:
+        if (ide_path.starts_with("file://")) {
+            return fs::path(std::string(ide_path.substr(7)));
+        }
+        return fs::path(std::string(ide_path));
+    case IDEPathFormat::Windows: {
+        std::string s(ide_path);
+        for (auto& c : s) {
+            if (c == '\\') c = '/';
+        }
+        return fs::path(s);
+    }
+    default:
+        return fs::path(std::string(ide_path));
     }
 }
 
 /// Detect the path format used by a given IDE type
 [[nodiscard]] inline IDEPathFormat get_ide_path_format(IDEType ide_type) {
     switch (ide_type) {
-        case IDEType::VSCode:
-        case IDEType::VSCodeInsiders:
-        case IDEType::Cursor:
-        case IDEType::Windsurf:
-            return IDEPathFormat::URI;
-        default:
-            return IDEPathFormat::Unix;
+    case IDEType::VSCode:
+    case IDEType::VSCodeInsiders:
+    case IDEType::Cursor:
+    case IDEType::Windsurf:
+        return IDEPathFormat::URI;
+    default:
+        return IDEPathFormat::Unix;
     }
 }
 
@@ -996,46 +1010,56 @@ private:
 /// Check if the given IDE type is a JetBrains IDE
 [[nodiscard]] inline bool is_jetbrains_ide(IDEType type) noexcept {
     switch (type) {
-        case IDEType::PyCharm:
-        case IDEType::IntelliJ:
-        case IDEType::WebStorm:
-        case IDEType::PhpStorm:
-        case IDEType::RubyMine:
-        case IDEType::CLion:
-        case IDEType::GoLand:
-        case IDEType::Rider:
-        case IDEType::DataGrip:
-        case IDEType::AppCode:
-        case IDEType::DataSpell:
-        case IDEType::Aqua:
-        case IDEType::Gateway:
-        case IDEType::Fleet:
-        case IDEType::AndroidStudio:
-            return true;
-        default:
-            return false;
+    case IDEType::PyCharm:
+    case IDEType::IntelliJ:
+    case IDEType::WebStorm:
+    case IDEType::PhpStorm:
+    case IDEType::RubyMine:
+    case IDEType::CLion:
+    case IDEType::GoLand:
+    case IDEType::Rider:
+    case IDEType::DataGrip:
+    case IDEType::AppCode:
+    case IDEType::DataSpell:
+    case IDEType::Aqua:
+    case IDEType::Gateway:
+    case IDEType::Fleet:
+    case IDEType::AndroidStudio:
+        return true;
+    default:
+        return false;
     }
 }
 
 /// Get the CLI command for a JetBrains IDE
-[[nodiscard]] inline std::expected<std::string, std::string>
-get_jetbrains_command(IDEType type) {
+[[nodiscard]] inline std::expected<std::string, std::string> get_jetbrains_command(IDEType type) {
     switch (type) {
-        case IDEType::IntelliJ: return "idea";
-        case IDEType::WebStorm: return "webstorm";
-        case IDEType::PyCharm: return "pycharm";
-        case IDEType::CLion: return "clion";
-        case IDEType::GoLand: return "goland";
-        case IDEType::PhpStorm: return "phpstorm";
-        case IDEType::RubyMine: return "rubymine";
-        case IDEType::Rider: return "rider";
-        case IDEType::DataGrip: return "datagrip";
-        case IDEType::AndroidStudio: return "studio";
-        case IDEType::Fleet: return "fleet";
-        default:
-            return std::unexpected(std::format(
-                "No known CLI command for IDE type {}", static_cast<int>(type)));
+    case IDEType::IntelliJ:
+        return "idea";
+    case IDEType::WebStorm:
+        return "webstorm";
+    case IDEType::PyCharm:
+        return "pycharm";
+    case IDEType::CLion:
+        return "clion";
+    case IDEType::GoLand:
+        return "goland";
+    case IDEType::PhpStorm:
+        return "phpstorm";
+    case IDEType::RubyMine:
+        return "rubymine";
+    case IDEType::Rider:
+        return "rider";
+    case IDEType::DataGrip:
+        return "datagrip";
+    case IDEType::AndroidStudio:
+        return "studio";
+    case IDEType::Fleet:
+        return "fleet";
+    default:
+        return std::unexpected(
+            std::format("No known CLI command for IDE type {}", static_cast<int>(type)));
     }
 }
 
-} // namespace loom::utils::ide
+}  // namespace loom::utils::ide

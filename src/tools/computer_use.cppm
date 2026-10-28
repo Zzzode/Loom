@@ -6,6 +6,7 @@ module;
 #include <cstdlib>
 #ifdef __APPLE__
 #include <ApplicationServices/ApplicationServices.h>
+
 #include <cstddef>
 #endif
 
@@ -15,26 +16,21 @@ import std;
 
 export namespace loom::core::computer_use {
 
-
 struct ImageData {
     std::vector<uint8_t> pixels;
     uint32_t width{0};
     uint32_t height{0};
     std::string format{"rgba"};
 
-    [[nodiscard]] bool is_valid() const {
-        return width > 0 && height > 0 && !pixels.empty();
-    }
+    [[nodiscard]] bool is_valid() const { return width > 0 && height > 0 && !pixels.empty(); }
 
     [[nodiscard]] size_t byte_size() const { return pixels.size(); }
 };
-
 
 struct Point {
     int32_t x{0};
     int32_t y{0};
 };
-
 
 struct Rect {
     int32_t x{0};
@@ -43,25 +39,20 @@ struct Rect {
     uint32_t height{0};
 
     [[nodiscard]] bool contains(Point p) const {
-        return p.x >= x && p.x < x + static_cast<int32_t>(width) &&
-               p.y >= y && p.y < y + static_cast<int32_t>(height);
+        return p.x >= x && p.x < x + static_cast<int32_t>(width) && p.y >= y &&
+               p.y < y + static_cast<int32_t>(height);
     }
 };
 
-
-enum class MouseButton : uint8_t {
-    Left, Right, Middle
-};
-
+enum class MouseButton : uint8_t { Left, Right, Middle };
 
 enum class Modifier : uint8_t {
-    None    = 0,
-    Shift   = 1 << 0,
-    Ctrl    = 1 << 1,
-    Alt     = 1 << 2,
-    Meta    = 1 << 3   // Cmd on macOS, Win on Windows
+    None = 0,
+    Shift = 1 << 0,
+    Ctrl = 1 << 1,
+    Alt = 1 << 2,
+    Meta = 1 << 3  // Cmd on macOS, Win on Windows
 };
-
 
 struct ActionResult {
     bool success{false};
@@ -69,11 +60,9 @@ struct ActionResult {
     std::optional<ImageData> screenshot;
 
     [[nodiscard]] static ActionResult ok() { return {true, {}, {}}; }
-    [[nodiscard]] static ActionResult fail(std::string msg) {
-        return {false, std::move(msg), {}};
-    }
-};
 
+    [[nodiscard]] static ActionResult fail(std::string msg) { return {false, std::move(msg), {}}; }
+};
 
 enum class ActionType : uint8_t {
     Screenshot,
@@ -88,7 +77,6 @@ enum class ActionType : uint8_t {
     Scroll
 };
 
-
 struct ComputerAction {
     ActionType type;
     std::optional<Point> position;
@@ -99,34 +87,35 @@ struct ComputerAction {
 
     [[nodiscard]] std::string describe() const {
         switch (type) {
-            case ActionType::Screenshot:
-                return region ? std::format("screenshot region({},{} {}x{})",
-                    region->x, region->y, region->width, region->height) : "screenshot";
-            case ActionType::MouseMove:
-                return std::format("move({}, {})", position->x, position->y);
-            case ActionType::MouseClick:
-                return std::format("click({}, {})", position->x, position->y);
-            case ActionType::MouseDoubleClick:
-                return std::format("double_click({}, {})", position->x, position->y);
-            case ActionType::MouseRightClick:
-                return std::format("right_click({}, {})", position->x, position->y);
-            case ActionType::MouseDrag:
-                return std::format("drag({},{} -> {},{})",
-                    position->x, position->y, drag_end->x, drag_end->y);
-            case ActionType::KeyType:
-                return std::format("type(\"{}\")", text.value_or(""));
-            case ActionType::KeyPress:
-                return std::format("press({})", text.value_or(""));
-            case ActionType::KeyHotkey: {
-                std::string combo;
-                for (size_t i = 0; i < keys.size(); ++i) {
-                    if (i > 0) combo += "+";
-                    combo += keys[i];
-                }
-                return std::format("hotkey({})", combo);
+        case ActionType::Screenshot:
+            return region ? std::format("screenshot region({},{} {}x{})", region->x, region->y,
+                                        region->width, region->height)
+                          : "screenshot";
+        case ActionType::MouseMove:
+            return std::format("move({}, {})", position->x, position->y);
+        case ActionType::MouseClick:
+            return std::format("click({}, {})", position->x, position->y);
+        case ActionType::MouseDoubleClick:
+            return std::format("double_click({}, {})", position->x, position->y);
+        case ActionType::MouseRightClick:
+            return std::format("right_click({}, {})", position->x, position->y);
+        case ActionType::MouseDrag:
+            return std::format("drag({},{} -> {},{})", position->x, position->y, drag_end->x,
+                               drag_end->y);
+        case ActionType::KeyType:
+            return std::format("type(\"{}\")", text.value_or(""));
+        case ActionType::KeyPress:
+            return std::format("press({})", text.value_or(""));
+        case ActionType::KeyHotkey: {
+            std::string combo;
+            for (size_t i = 0; i < keys.size(); ++i) {
+                if (i > 0) combo += "+";
+                combo += keys[i];
             }
-            case ActionType::Scroll:
-                return std::format("scroll({}, {})", position->x, position->y);
+            return std::format("hotkey({})", combo);
+        }
+        case ActionType::Scroll:
+            return std::format("scroll({}, {})", position->x, position->y);
         }
         return "unknown";
     }
@@ -144,9 +133,8 @@ public:
         return capture(std::nullopt);
     }
 
-
-    [[nodiscard]] std::expected<ImageData, std::string> capture_region(
-        int32_t x, int32_t y, uint32_t w, uint32_t h) const {
+    [[nodiscard]] std::expected<ImageData, std::string>
+    capture_region(int32_t x, int32_t y, uint32_t w, uint32_t h) const {
         if (!is_available()) {
             return std::unexpected("Screen capture not available");
         }
@@ -156,9 +144,7 @@ public:
         return capture(Rect{.x = x, .y = y, .width = w, .height = h});
     }
 
-    void set_provider(CaptureProvider provider) {
-        provider_ = std::move(provider);
-    }
+    void set_provider(CaptureProvider provider) { provider_ = std::move(provider); }
 
     [[nodiscard]] bool is_available() const {
         if (provider_) return true;
@@ -187,8 +173,10 @@ private:
     [[nodiscard]] static std::string shell_quote(std::string_view value) {
         std::string out = "'";
         for (char c : value) {
-            if (c == '\'') out += "'\\''";
-            else out.push_back(c);
+            if (c == '\'')
+                out += "'\\''";
+            else
+                out.push_back(c);
         }
         out.push_back('\'');
         return out;
@@ -202,17 +190,15 @@ private:
     [[nodiscard]] static std::vector<uint8_t> read_binary_file(const std::filesystem::path& path) {
         std::ifstream input(path, std::ios::binary);
         if (!input) return {};
-        return std::vector<uint8_t>(
-            std::istreambuf_iterator<char>(input),
-            std::istreambuf_iterator<char>());
+        return std::vector<uint8_t>(std::istreambuf_iterator<char>(input),
+                                    std::istreambuf_iterator<char>());
     }
 
-    [[nodiscard]] static std::optional<std::pair<uint32_t, uint32_t>> parse_png_size(
-        const std::vector<uint8_t>& bytes) {
-        static constexpr std::array<uint8_t, 8> signature{
-            0x89, 'P', 'N', 'G', '\r', '\n', 0x1a, '\n'};
-        if (bytes.size() < 24 ||
-            !std::equal(signature.begin(), signature.end(), bytes.begin())) {
+    [[nodiscard]] static std::optional<std::pair<uint32_t, uint32_t>>
+    parse_png_size(const std::vector<uint8_t>& bytes) {
+        static constexpr std::array<uint8_t, 8> signature{0x89, 'P',  'N',  'G',
+                                                          '\r', '\n', 0x1a, '\n'};
+        if (bytes.size() < 24 || !std::equal(signature.begin(), signature.end(), bytes.begin())) {
             return std::nullopt;
         }
         auto read_be = [&](std::size_t offset) -> uint32_t {
@@ -224,15 +210,16 @@ private:
         return std::pair{read_be(16), read_be(20)};
     }
 
-    [[nodiscard]] static std::expected<ImageData, std::string> platform_capture(std::optional<Rect> region) {
+    [[nodiscard]] static std::expected<ImageData, std::string>
+    platform_capture(std::optional<Rect> region) {
 #ifdef __APPLE__
         auto path = std::filesystem::temp_directory_path() /
-            std::format("loom-computer-use-{}.png",
-                std::chrono::steady_clock::now().time_since_epoch().count());
+                    std::format("loom-computer-use-{}.png",
+                                std::chrono::steady_clock::now().time_since_epoch().count());
         std::string cmd = "screencapture -x -t png ";
         if (region) {
-            cmd += std::format("-R {},{},{},{} ",
-                region->x, region->y, region->width, region->height);
+            cmd +=
+                std::format("-R {},{},{},{} ", region->x, region->y, region->width, region->height);
         }
         cmd += shell_quote(path.string());
         cmd += " >/dev/null 2>&1";
@@ -260,15 +247,12 @@ private:
     }
 
     [[nodiscard]] bool check_display_server() const {
-        return std::getenv("DISPLAY") != nullptr ||
-               std::getenv("WAYLAND_DISPLAY") != nullptr;
+        return std::getenv("DISPLAY") != nullptr || std::getenv("WAYLAND_DISPLAY") != nullptr;
     }
 };
 
-
 class MouseControl {
 public:
-
     [[nodiscard]] ActionResult move(int32_t x, int32_t y) {
         if (!validate_position(x, y)) {
             return ActionResult::fail("Position out of screen bounds");
@@ -278,25 +262,16 @@ public:
         return ActionResult::ok();
     }
 
-
     [[nodiscard]] ActionResult click(MouseButton button = MouseButton::Left) {
         (void)button;
         return ActionResult::ok();
     }
 
+    [[nodiscard]] ActionResult double_click() { return ActionResult::ok(); }
 
-    [[nodiscard]] ActionResult double_click() {
-        return ActionResult::ok();
-    }
+    [[nodiscard]] ActionResult right_click() { return click(MouseButton::Right); }
 
-
-    [[nodiscard]] ActionResult right_click() {
-        return click(MouseButton::Right);
-    }
-
-
-    [[nodiscard]] ActionResult drag(int32_t from_x, int32_t from_y,
-                                     int32_t to_x, int32_t to_y) {
+    [[nodiscard]] ActionResult drag(int32_t from_x, int32_t from_y, int32_t to_x, int32_t to_y) {
         if (!validate_position(from_x, from_y) || !validate_position(to_x, to_y)) {
             return ActionResult::fail("Drag position out of bounds");
         }
@@ -304,13 +279,13 @@ public:
         return ActionResult::ok();
     }
 
-
     [[nodiscard]] ActionResult scroll(int32_t delta_x, int32_t delta_y) {
         last_scroll_delta_ = {delta_x, delta_y};
         return ActionResult::ok();
     }
 
     [[nodiscard]] Point current_position() const { return current_position_; }
+
     [[nodiscard]] Point last_scroll_delta() const { return last_scroll_delta_; }
 
 private:
@@ -323,10 +298,8 @@ private:
     }
 };
 
-
 class KeyboardControl {
 public:
-
     [[nodiscard]] ActionResult type_text(std::string_view text) {
         if (text.empty()) {
             return ActionResult::fail("Empty text input");
@@ -335,14 +308,12 @@ public:
         return ActionResult::ok();
     }
 
-
     [[nodiscard]] ActionResult press_key(std::string_view key) {
         if (!is_valid_key(key)) {
             return ActionResult::fail(std::format("Unknown key: {}", key));
         }
         return ActionResult::ok();
     }
-
 
     [[nodiscard]] ActionResult hotkey(const std::vector<std::string>& keys) {
         if (keys.empty()) {
@@ -359,12 +330,11 @@ public:
 private:
     [[nodiscard]] bool is_valid_key(std::string_view key) const {
         static const std::vector<std::string_view> valid_keys = {
-            "enter", "return", "tab", "space", "backspace", "delete",
-            "escape", "up", "down", "left", "right", "home", "end",
-            "pageup", "pagedown", "f1", "f2", "f3", "f4", "f5", "f6",
-            "f7", "f8", "f9", "f10", "f11", "f12",
-            "shift", "ctrl", "control", "alt", "option", "meta", "cmd", "command", "super"
-        };
+            "enter", "return", "tab",     "space", "backspace", "delete",  "escape",   "up",
+            "down",  "left",   "right",   "home",  "end",       "pageup",  "pagedown", "f1",
+            "f2",    "f3",     "f4",      "f5",    "f6",        "f7",      "f8",       "f9",
+            "f10",   "f11",    "f12",     "shift", "ctrl",      "control", "alt",      "option",
+            "meta",  "cmd",    "command", "super"};
         auto lower = to_lower(key);
         return std::ranges::any_of(valid_keys, [&](auto k) { return k == lower; }) ||
                (key.size() == 1 && std::isprint(static_cast<unsigned char>(key[0])));
@@ -372,9 +342,8 @@ private:
 
     [[nodiscard]] static std::string to_lower(std::string_view sv) {
         std::string result(sv);
-        std::ranges::transform(result, result.begin(), [](unsigned char c) {
-            return std::tolower(c);
-        });
+        std::ranges::transform(result, result.begin(),
+                               [](unsigned char c) { return std::tolower(c); });
         return result;
     }
 };
@@ -383,9 +352,8 @@ namespace native_input_detail {
 
 [[nodiscard]] inline std::string lower(std::string_view value) {
     std::string result(value);
-    std::ranges::transform(result, result.begin(), [](unsigned char c) {
-        return static_cast<char>(std::tolower(c));
-    });
+    std::ranges::transform(result, result.begin(),
+                           [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
     return result;
 }
 
@@ -406,55 +374,104 @@ struct KeySpec {
     const auto value = lower(key);
     if (value.size() == 1) {
         switch (value[0]) {
-            case 'a': return KeySpec{0x00};
-            case 's': return KeySpec{0x01};
-            case 'd': return KeySpec{0x02};
-            case 'f': return KeySpec{0x03};
-            case 'h': return KeySpec{0x04};
-            case 'g': return KeySpec{0x05};
-            case 'z': return KeySpec{0x06};
-            case 'x': return KeySpec{0x07};
-            case 'c': return KeySpec{0x08};
-            case 'v': return KeySpec{0x09};
-            case 'b': return KeySpec{0x0B};
-            case 'q': return KeySpec{0x0C};
-            case 'w': return KeySpec{0x0D};
-            case 'e': return KeySpec{0x0E};
-            case 'r': return KeySpec{0x0F};
-            case 'y': return KeySpec{0x10};
-            case 't': return KeySpec{0x11};
-            case '1': return KeySpec{0x12};
-            case '2': return KeySpec{0x13};
-            case '3': return KeySpec{0x14};
-            case '4': return KeySpec{0x15};
-            case '6': return KeySpec{0x16};
-            case '5': return KeySpec{0x17};
-            case '=': return KeySpec{0x18};
-            case '9': return KeySpec{0x19};
-            case '7': return KeySpec{0x1A};
-            case '-': return KeySpec{0x1B};
-            case '8': return KeySpec{0x1C};
-            case '0': return KeySpec{0x1D};
-            case ']': return KeySpec{0x1E};
-            case 'o': return KeySpec{0x1F};
-            case 'u': return KeySpec{0x20};
-            case '[': return KeySpec{0x21};
-            case 'i': return KeySpec{0x22};
-            case 'p': return KeySpec{0x23};
-            case 'l': return KeySpec{0x25};
-            case 'j': return KeySpec{0x26};
-            case '\'': return KeySpec{0x27};
-            case 'k': return KeySpec{0x28};
-            case ';': return KeySpec{0x29};
-            case '\\': return KeySpec{0x2A};
-            case ',': return KeySpec{0x2B};
-            case '/': return KeySpec{0x2C};
-            case 'n': return KeySpec{0x2D};
-            case 'm': return KeySpec{0x2E};
-            case '.': return KeySpec{0x2F};
-            case ' ': return KeySpec{0x31};
-            case '`': return KeySpec{0x32};
-            default: return std::nullopt;
+        case 'a':
+            return KeySpec{0x00};
+        case 's':
+            return KeySpec{0x01};
+        case 'd':
+            return KeySpec{0x02};
+        case 'f':
+            return KeySpec{0x03};
+        case 'h':
+            return KeySpec{0x04};
+        case 'g':
+            return KeySpec{0x05};
+        case 'z':
+            return KeySpec{0x06};
+        case 'x':
+            return KeySpec{0x07};
+        case 'c':
+            return KeySpec{0x08};
+        case 'v':
+            return KeySpec{0x09};
+        case 'b':
+            return KeySpec{0x0B};
+        case 'q':
+            return KeySpec{0x0C};
+        case 'w':
+            return KeySpec{0x0D};
+        case 'e':
+            return KeySpec{0x0E};
+        case 'r':
+            return KeySpec{0x0F};
+        case 'y':
+            return KeySpec{0x10};
+        case 't':
+            return KeySpec{0x11};
+        case '1':
+            return KeySpec{0x12};
+        case '2':
+            return KeySpec{0x13};
+        case '3':
+            return KeySpec{0x14};
+        case '4':
+            return KeySpec{0x15};
+        case '6':
+            return KeySpec{0x16};
+        case '5':
+            return KeySpec{0x17};
+        case '=':
+            return KeySpec{0x18};
+        case '9':
+            return KeySpec{0x19};
+        case '7':
+            return KeySpec{0x1A};
+        case '-':
+            return KeySpec{0x1B};
+        case '8':
+            return KeySpec{0x1C};
+        case '0':
+            return KeySpec{0x1D};
+        case ']':
+            return KeySpec{0x1E};
+        case 'o':
+            return KeySpec{0x1F};
+        case 'u':
+            return KeySpec{0x20};
+        case '[':
+            return KeySpec{0x21};
+        case 'i':
+            return KeySpec{0x22};
+        case 'p':
+            return KeySpec{0x23};
+        case 'l':
+            return KeySpec{0x25};
+        case 'j':
+            return KeySpec{0x26};
+        case '\'':
+            return KeySpec{0x27};
+        case 'k':
+            return KeySpec{0x28};
+        case ';':
+            return KeySpec{0x29};
+        case '\\':
+            return KeySpec{0x2A};
+        case ',':
+            return KeySpec{0x2B};
+        case '/':
+            return KeySpec{0x2C};
+        case 'n':
+            return KeySpec{0x2D};
+        case 'm':
+            return KeySpec{0x2E};
+        case '.':
+            return KeySpec{0x2F};
+        case ' ':
+            return KeySpec{0x31};
+        case '`':
+            return KeySpec{0x32};
+        default:
+            return std::nullopt;
         }
     }
     if (value == "return" || value == "enter") return KeySpec{0x24};
@@ -486,13 +503,21 @@ struct KeySpec {
     return std::nullopt;
 }
 
-[[nodiscard]] inline std::optional<std::pair<CGKeyCode, CGEventFlags>> modifier_spec(std::string_view key) {
+[[nodiscard]] inline std::optional<std::pair<CGKeyCode, CGEventFlags>>
+modifier_spec(std::string_view key) {
     const auto value = lower(key);
-    if (value == "shift") return std::pair{static_cast<CGKeyCode>(0x38), static_cast<CGEventFlags>(kCGEventFlagMaskShift)};
-    if (value == "ctrl" || value == "control") return std::pair{static_cast<CGKeyCode>(0x3B), static_cast<CGEventFlags>(kCGEventFlagMaskControl)};
-    if (value == "alt" || value == "option") return std::pair{static_cast<CGKeyCode>(0x3A), static_cast<CGEventFlags>(kCGEventFlagMaskAlternate)};
+    if (value == "shift")
+        return std::pair{static_cast<CGKeyCode>(0x38),
+                         static_cast<CGEventFlags>(kCGEventFlagMaskShift)};
+    if (value == "ctrl" || value == "control")
+        return std::pair{static_cast<CGKeyCode>(0x3B),
+                         static_cast<CGEventFlags>(kCGEventFlagMaskControl)};
+    if (value == "alt" || value == "option")
+        return std::pair{static_cast<CGKeyCode>(0x3A),
+                         static_cast<CGEventFlags>(kCGEventFlagMaskAlternate)};
     if (value == "meta" || value == "cmd" || value == "command" || value == "super") {
-        return std::pair{static_cast<CGKeyCode>(0x37), static_cast<CGEventFlags>(kCGEventFlagMaskCommand)};
+        return std::pair{static_cast<CGKeyCode>(0x37),
+                         static_cast<CGEventFlags>(kCGEventFlagMaskCommand)};
     }
     return std::nullopt;
 }
@@ -505,7 +530,8 @@ inline void post_key(CGKeyCode code, bool down, CGEventFlags flags = 0) {
     CFRelease(event);
 }
 
-inline std::expected<void, std::string> post_key_press(std::string_view key, CGEventFlags flags = 0) {
+inline std::expected<void, std::string> post_key_press(std::string_view key,
+                                                       CGEventFlags flags = 0) {
     auto spec = key_spec(key);
     if (!spec) return std::unexpected(std::format("Unsupported key for native input: {}", key));
     const auto combined_flags = flags | spec->shift;
@@ -514,7 +540,8 @@ inline std::expected<void, std::string> post_key_press(std::string_view key, CGE
     return {};
 }
 
-[[nodiscard]] inline std::expected<std::vector<UniChar>, std::string> utf8_to_utf16(std::string_view text) {
+[[nodiscard]] inline std::expected<std::vector<UniChar>, std::string>
+utf8_to_utf16(std::string_view text) {
     std::vector<UniChar> out;
     for (std::size_t i = 0; i < text.size();) {
         const auto c = static_cast<unsigned char>(text[i]);
@@ -575,7 +602,8 @@ inline std::expected<void, std::string> type_text(std::string_view text) {
     return {};
 }
 
-inline void post_mouse(CGEventType type, CGPoint point, CGMouseButton button, std::int64_t click_state = 1) {
+inline void post_mouse(CGEventType type, CGPoint point, CGMouseButton button,
+                       std::int64_t click_state = 1) {
     CGEventRef event = CGEventCreateMouseEvent(nullptr, type, point, button);
     if (!event) return;
     CGEventSetIntegerValueField(event, kCGMouseEventClickState, click_state);
@@ -595,13 +623,14 @@ inline std::expected<void, std::string> move_mouse(Point point) {
     return {};
 }
 
-inline std::expected<void, std::string> click_mouse(Point point, CGMouseButton button, std::int64_t count = 1) {
-    const auto down = button == kCGMouseButtonRight ? kCGEventRightMouseDown
-                    : button == kCGMouseButtonCenter ? kCGEventOtherMouseDown
-                    : kCGEventLeftMouseDown;
-    const auto up = button == kCGMouseButtonRight ? kCGEventRightMouseUp
-                  : button == kCGMouseButtonCenter ? kCGEventOtherMouseUp
-                  : kCGEventLeftMouseUp;
+inline std::expected<void, std::string> click_mouse(Point point, CGMouseButton button,
+                                                    std::int64_t count = 1) {
+    const auto down = button == kCGMouseButtonRight    ? kCGEventRightMouseDown
+                      : button == kCGMouseButtonCenter ? kCGEventOtherMouseDown
+                                                       : kCGEventLeftMouseDown;
+    const auto up = button == kCGMouseButtonRight    ? kCGEventRightMouseUp
+                    : button == kCGMouseButtonCenter ? kCGEventOtherMouseUp
+                                                     : kCGEventLeftMouseUp;
     for (std::int64_t i = 1; i <= count; ++i) {
         post_mouse(down, point_to_cg(point), button, i);
         post_mouse(up, point_to_cg(point), button, i);
@@ -621,12 +650,8 @@ inline std::expected<void, std::string> drag_mouse(Point from, Point to) {
 }
 
 inline std::expected<void, std::string> scroll_mouse(Point delta) {
-    CGEventRef event = CGEventCreateScrollWheelEvent(
-        nullptr,
-        kCGScrollEventUnitPixel,
-        2,
-        delta.y,
-        delta.x);
+    CGEventRef event =
+        CGEventCreateScrollWheelEvent(nullptr, kCGScrollEventUnitPixel, 2, delta.y, delta.x);
     if (!event) return std::unexpected("Failed to create native scroll event");
     CGEventPost(kCGHIDEventTap, event);
     CFRelease(event);
@@ -659,8 +684,7 @@ inline std::expected<void, std::string> post_hotkey(const std::vector<std::strin
 
 inline std::expected<void, std::string> require_accessibility_permission() {
     if (AXIsProcessTrusted()) return {};
-    return std::unexpected(
-        "macOS Accessibility permission is required for native computer input");
+    return std::unexpected("macOS Accessibility permission is required for native computer input");
 }
 
 inline std::expected<void, std::string> dispatch_native(const ComputerAction& action) {
@@ -668,38 +692,39 @@ inline std::expected<void, std::string> dispatch_native(const ComputerAction& ac
         return std::unexpected(permission.error());
     }
     switch (action.type) {
-        case ActionType::MouseMove:
-            if (!action.position) return std::unexpected("Mouse position is required");
-            return move_mouse(*action.position);
-        case ActionType::MouseClick:
-            if (!action.position) return std::unexpected("Mouse position is required");
-            return click_mouse(*action.position, kCGMouseButtonLeft);
-        case ActionType::MouseDoubleClick:
-            if (!action.position) return std::unexpected("Mouse position is required");
-            return click_mouse(*action.position, kCGMouseButtonLeft, 2);
-        case ActionType::MouseRightClick:
-            if (!action.position) return std::unexpected("Mouse position is required");
-            return click_mouse(*action.position, kCGMouseButtonRight);
-        case ActionType::MouseDrag:
-            if (!action.position || !action.drag_end) return std::unexpected("Drag start and end positions are required");
-            return drag_mouse(*action.position, *action.drag_end);
-        case ActionType::KeyType:
-            return type_text(action.text.value_or(""));
-        case ActionType::KeyPress:
-            return post_key_press(action.text.value_or(""));
-        case ActionType::KeyHotkey:
-            return post_hotkey(action.keys);
-        case ActionType::Scroll:
-            if (!action.position) return std::unexpected("Scroll delta is required");
-            return scroll_mouse(*action.position);
-        case ActionType::Screenshot:
-            return {};
+    case ActionType::MouseMove:
+        if (!action.position) return std::unexpected("Mouse position is required");
+        return move_mouse(*action.position);
+    case ActionType::MouseClick:
+        if (!action.position) return std::unexpected("Mouse position is required");
+        return click_mouse(*action.position, kCGMouseButtonLeft);
+    case ActionType::MouseDoubleClick:
+        if (!action.position) return std::unexpected("Mouse position is required");
+        return click_mouse(*action.position, kCGMouseButtonLeft, 2);
+    case ActionType::MouseRightClick:
+        if (!action.position) return std::unexpected("Mouse position is required");
+        return click_mouse(*action.position, kCGMouseButtonRight);
+    case ActionType::MouseDrag:
+        if (!action.position || !action.drag_end)
+            return std::unexpected("Drag start and end positions are required");
+        return drag_mouse(*action.position, *action.drag_end);
+    case ActionType::KeyType:
+        return type_text(action.text.value_or(""));
+    case ActionType::KeyPress:
+        return post_key_press(action.text.value_or(""));
+    case ActionType::KeyHotkey:
+        return post_hotkey(action.keys);
+    case ActionType::Scroll:
+        if (!action.position) return std::unexpected("Scroll delta is required");
+        return scroll_mouse(*action.position);
+    case ActionType::Screenshot:
+        return {};
     }
     return std::unexpected("Unsupported native input action");
 }
 #endif
 
-} // namespace native_input_detail
+}  // namespace native_input_detail
 
 [[nodiscard]] inline InputProvider make_native_input_provider() {
     if (native_input_detail::native_input_disabled()) return {};
@@ -712,7 +737,6 @@ inline std::expected<void, std::string> dispatch_native(const ComputerAction& ac
 #endif
 }
 
-
 class ComputerUseManager {
 public:
     ComputerUseManager() = default;
@@ -721,106 +745,108 @@ public:
         : screen_(std::move(screen)) {}
 
     ComputerUseManager(ScreenCapture screen, InputProvider input)
-        : screen_(std::move(screen)), input_(std::move(input)) {}
+        : screen_(std::move(screen))
+        , input_(std::move(input)) {}
 
     [[nodiscard]] bool is_available() const {
         return screen_.is_available() || static_cast<bool>(input_);
     }
 
-
     [[nodiscard]] ActionResult execute_action(const ComputerAction& action) {
         switch (action.type) {
-            case ActionType::Screenshot:
-                if (action.region) {
-                    auto r = screen_.capture_region(
-                        action.region->x, action.region->y,
-                        action.region->width, action.region->height);
-                    if (r) return {true, {}, std::move(*r)};
-                    return ActionResult::fail(r.error());
-                } else {
-                    auto r = screen_.capture_screen();
-                    if (r) return {true, {}, std::move(*r)};
-                    return ActionResult::fail(r.error());
-                }
-            case ActionType::MouseMove:
-                if (!input_) return ActionResult::fail("Computer input control not available");
-                if (!action.position) return ActionResult::fail("Mouse position is required");
-                if (auto validated = mouse_.move(action.position->x, action.position->y); !validated.success) {
-                    return validated;
-                }
-                return dispatch_input(action);
-            case ActionType::MouseClick:
-                if (!input_) return ActionResult::fail("Computer input control not available");
-                if (!action.position) return ActionResult::fail("Mouse position is required");
-                if (auto moved = mouse_.move(action.position->x, action.position->y); !moved.success) {
-                    return moved;
-                }
-                if (auto clicked = mouse_.click(); !clicked.success) return clicked;
-                return dispatch_input(action);
-            case ActionType::MouseDoubleClick:
-                if (!input_) return ActionResult::fail("Computer input control not available");
-                if (!action.position) return ActionResult::fail("Mouse position is required");
-                if (auto moved = mouse_.move(action.position->x, action.position->y); !moved.success) {
-                    return moved;
-                }
-                if (auto clicked = mouse_.double_click(); !clicked.success) return clicked;
-                return dispatch_input(action);
-            case ActionType::MouseRightClick:
-                if (!input_) return ActionResult::fail("Computer input control not available");
-                if (!action.position) return ActionResult::fail("Mouse position is required");
-                if (auto moved = mouse_.move(action.position->x, action.position->y); !moved.success) {
-                    return moved;
-                }
-                if (auto clicked = mouse_.right_click(); !clicked.success) return clicked;
-                return dispatch_input(action);
-            case ActionType::MouseDrag:
-                if (!input_) return ActionResult::fail("Computer input control not available");
-                if (!action.position || !action.drag_end) {
-                    return ActionResult::fail("Drag start and end positions are required");
-                }
-                if (auto dragged = mouse_.drag(action.position->x, action.position->y,
-                                               action.drag_end->x, action.drag_end->y); !dragged.success) {
-                    return dragged;
-                }
-                return dispatch_input(action);
-            case ActionType::KeyType: {
-                if (!input_) return ActionResult::fail("Computer input control not available");
-                if (auto typed = keyboard_.type_text(action.text.value_or("")); !typed.success) {
-                    return typed;
-                }
-                return dispatch_input(action);
+        case ActionType::Screenshot:
+            if (action.region) {
+                auto r = screen_.capture_region(action.region->x, action.region->y,
+                                                action.region->width, action.region->height);
+                if (r) return {true, {}, std::move(*r)};
+                return ActionResult::fail(r.error());
+            } else {
+                auto r = screen_.capture_screen();
+                if (r) return {true, {}, std::move(*r)};
+                return ActionResult::fail(r.error());
             }
-            case ActionType::KeyPress: {
-                if (!input_) return ActionResult::fail("Computer input control not available");
-                if (auto pressed = keyboard_.press_key(action.text.value_or("")); !pressed.success) {
-                    return pressed;
-                }
-                return dispatch_input(action);
+        case ActionType::MouseMove:
+            if (!input_) return ActionResult::fail("Computer input control not available");
+            if (!action.position) return ActionResult::fail("Mouse position is required");
+            if (auto validated = mouse_.move(action.position->x, action.position->y);
+                !validated.success) {
+                return validated;
             }
-            case ActionType::KeyHotkey: {
-                if (!input_) return ActionResult::fail("Computer input control not available");
-                if (auto combo = keyboard_.hotkey(action.keys); !combo.success) {
-                    return combo;
-                }
-                return dispatch_input(action);
+            return dispatch_input(action);
+        case ActionType::MouseClick:
+            if (!input_) return ActionResult::fail("Computer input control not available");
+            if (!action.position) return ActionResult::fail("Mouse position is required");
+            if (auto moved = mouse_.move(action.position->x, action.position->y); !moved.success) {
+                return moved;
             }
-            case ActionType::Scroll:
-                if (!input_) return ActionResult::fail("Computer input control not available");
-                if (!action.position) return ActionResult::fail("Scroll delta is required");
-                if (auto scrolled = mouse_.scroll(action.position->x, action.position->y); !scrolled.success) {
-                    return scrolled;
-                }
-                return dispatch_input(action);
+            if (auto clicked = mouse_.click(); !clicked.success) return clicked;
+            return dispatch_input(action);
+        case ActionType::MouseDoubleClick:
+            if (!input_) return ActionResult::fail("Computer input control not available");
+            if (!action.position) return ActionResult::fail("Mouse position is required");
+            if (auto moved = mouse_.move(action.position->x, action.position->y); !moved.success) {
+                return moved;
+            }
+            if (auto clicked = mouse_.double_click(); !clicked.success) return clicked;
+            return dispatch_input(action);
+        case ActionType::MouseRightClick:
+            if (!input_) return ActionResult::fail("Computer input control not available");
+            if (!action.position) return ActionResult::fail("Mouse position is required");
+            if (auto moved = mouse_.move(action.position->x, action.position->y); !moved.success) {
+                return moved;
+            }
+            if (auto clicked = mouse_.right_click(); !clicked.success) return clicked;
+            return dispatch_input(action);
+        case ActionType::MouseDrag:
+            if (!input_) return ActionResult::fail("Computer input control not available");
+            if (!action.position || !action.drag_end) {
+                return ActionResult::fail("Drag start and end positions are required");
+            }
+            if (auto dragged = mouse_.drag(action.position->x, action.position->y,
+                                           action.drag_end->x, action.drag_end->y);
+                !dragged.success) {
+                return dragged;
+            }
+            return dispatch_input(action);
+        case ActionType::KeyType: {
+            if (!input_) return ActionResult::fail("Computer input control not available");
+            if (auto typed = keyboard_.type_text(action.text.value_or("")); !typed.success) {
+                return typed;
+            }
+            return dispatch_input(action);
+        }
+        case ActionType::KeyPress: {
+            if (!input_) return ActionResult::fail("Computer input control not available");
+            if (auto pressed = keyboard_.press_key(action.text.value_or("")); !pressed.success) {
+                return pressed;
+            }
+            return dispatch_input(action);
+        }
+        case ActionType::KeyHotkey: {
+            if (!input_) return ActionResult::fail("Computer input control not available");
+            if (auto combo = keyboard_.hotkey(action.keys); !combo.success) {
+                return combo;
+            }
+            return dispatch_input(action);
+        }
+        case ActionType::Scroll:
+            if (!input_) return ActionResult::fail("Computer input control not available");
+            if (!action.position) return ActionResult::fail("Scroll delta is required");
+            if (auto scrolled = mouse_.scroll(action.position->x, action.position->y);
+                !scrolled.success) {
+                return scrolled;
+            }
+            return dispatch_input(action);
         }
         return ActionResult::fail("Unknown action type");
     }
 
-    void set_input_provider(InputProvider input) {
-        input_ = std::move(input);
-    }
+    void set_input_provider(InputProvider input) { input_ = std::move(input); }
 
     [[nodiscard]] ScreenCapture& screen() { return screen_; }
+
     [[nodiscard]] MouseControl& mouse() { return mouse_; }
+
     [[nodiscard]] KeyboardControl& keyboard() { return keyboard_; }
 
 private:
@@ -853,4 +879,4 @@ private:
     InputProvider input_;
 };
 
-} // namespace loom::core::computer_use
+}  // namespace loom::core::computer_use

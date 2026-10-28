@@ -6,14 +6,13 @@
 /// after the current request completes.
 module;
 
-
 #include <ftxui/dom/elements.hpp>
 
 export module loom.ui.prompt.prompt_stash_notice;
 
 import std;
 
-import loom.ui.foundation.design_figures;  // kPointerSmall (figures.pointerSmall '›')
+import loom.ui.foundation.design_figures; // kPointerSmall (figures.pointerSmall '›')
 
 export namespace loom::ui::prompt {
 using namespace ftxui;
@@ -34,9 +33,8 @@ struct StashNotice {
     namespace figs = loom::ui::design::figures;
     return hbox({
         text("  ") | dim,  // left padding = 2
-        text(std::string(figs::kPointerSmall) + " Stashed (auto-restores after submit)")
-            | dim,
+        text(std::string(figs::kPointerSmall) + " Stashed (auto-restores after submit)") | dim,
     });
 }
 
-} // namespace loom::ui::prompt
+}  // namespace loom::ui::prompt

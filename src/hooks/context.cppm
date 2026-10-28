@@ -24,25 +24,26 @@ export namespace loom::core {
 struct Config {
     [[nodiscard]] std::optional<std::size_t> context_window_size() const { return std::nullopt; }
 };
-}
+}  // namespace loom::core
 
 export namespace loom::tools {
 struct ToolInfo {
     [[nodiscard]] std::string name() const { return {}; }
+
     [[nodiscard]] std::string description() const { return {}; }
 };
 
 struct Registry {
     [[nodiscard]] std::vector<std::shared_ptr<ToolInfo>> all_tools() const { return {}; }
 };
-}
+}  // namespace loom::tools
 
 export namespace loom::skills {
 struct SkillInfo {
     std::string name;
     std::string description;
 };
-}
+}  // namespace loom::skills
 
 export namespace loom::services {
 struct McpToolDescription {
@@ -54,17 +55,18 @@ struct McpToolDescription {
 struct McpManager {
     [[nodiscard]] std::vector<McpToolDescription> tool_descriptions() const { return {}; }
 };
-}
+}  // namespace loom::services
 
 namespace loom::utils {
-[[nodiscard]] inline std::optional<std::string> read_file_to_string(const std::filesystem::path& path) {
+[[nodiscard]] inline std::optional<std::string>
+read_file_to_string(const std::filesystem::path& path) {
     std::ifstream file(path);
     if (!file) return std::nullopt;
     std::ostringstream stream;
     stream << file.rdbuf();
     return stream.str();
 }
-}
+}  // namespace loom::utils
 
 export namespace loom::hooks {
 
@@ -72,7 +74,7 @@ export namespace loom::hooks {
  * Token budget tracking for the context window.
  */
 struct ContextBudget {
-    std::size_t max_tokens = 200'000;     // Model's context window size
+    std::size_t max_tokens = 200'000;          // Model's context window size
     std::size_t reserved_for_output = 16'000;  // Reserved for assistant response
     std::size_t system_prompt_tokens = 0;
     std::size_t conversation_tokens = 0;
@@ -147,8 +149,7 @@ public:
         : config_{init.config}
         , tool_registry_{init.tool_registry}
         , skills_{init.skills}
-        , mcp_manager_{init.mcp_manager}
-    {
+        , mcp_manager_{init.mcp_manager} {
         // Initialize budget from model config
         budget_.max_tokens = config_.context_window_size().value_or(200'000);
     }
@@ -252,7 +253,9 @@ public:
      * Get current context budget status.
      */
     [[nodiscard]]
-    auto budget() const -> const ContextBudget& { return budget_; }
+    auto budget() const -> const ContextBudget& {
+        return budget_;
+    }
 
 private:
     const loom::core::Config& config_;
@@ -311,13 +314,13 @@ private:
     static auto gather_environment() -> EnvironmentContext {
         EnvironmentContext env;
 
-        #if defined(__APPLE__)
-            env.os_name = "macOS";
-        #elif defined(__linux__)
-            env.os_name = "Linux";
-        #else
-            env.os_name = "Unknown";
-        #endif
+#if defined(__APPLE__)
+        env.os_name = "macOS";
+#elif defined(__linux__)
+        env.os_name = "Linux";
+#else
+        env.os_name = "Unknown";
+#endif
 
         // Read shell from environment
         if (auto shell_env = std::getenv("SHELL")) {
@@ -407,8 +410,8 @@ private:
 
         std::string section;
         for (const auto& tool : mcp_manager_->tool_descriptions()) {
-            section += std::format("## {} (MCP: {})\n{}\n\n",
-                                   tool.name, tool.server_name, tool.description);
+            section += std::format("## {} (MCP: {})\n{}\n\n", tool.name, tool.server_name,
+                                   tool.description);
         }
         return section;
     }
@@ -430,10 +433,11 @@ private:
     /**
      * Append a labeled section to the prompt with consistent formatting.
      */
-    static void append_section(std::string& prompt, std::string_view title, std::string_view content) {
+    static void append_section(std::string& prompt, std::string_view title,
+                               std::string_view content) {
         if (content.empty()) return;
         prompt += std::format("\n# {}\n{}\n", title, content);
     }
 };
 
-} // namespace loom::hooks
+}  // namespace loom::hooks

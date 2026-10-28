@@ -5,7 +5,6 @@
 /// LICENCE:  Exported.  Imported by the tool UI registry initialization.
 module;
 
-
 export module loom.ui.tools.lsp;
 
 import std;
@@ -59,9 +58,7 @@ namespace detail {
 [[nodiscard]] inline ToolUIFunctions make_lsp_ui() {
     ToolUIFunctions fns;
 
-    fns.user_facing_name = [](std::string_view) {
-        return std::string{"LSP"};
-    };
+    fns.user_facing_name = [](std::string_view) { return std::string{"LSP"}; };
 
     fns.message = [](std::string_view input_json) {
         std::string method = detail::extract_method(input_json);
@@ -83,19 +80,16 @@ namespace detail {
         return std::string{"language server request…"};
     };
 
-    fns.tag = [](std::string_view) -> std::optional<std::string> {
-        return std::string{"LSP"};
-    };
+    fns.tag = [](std::string_view) -> std::optional<std::string> { return std::string{"LSP"}; };
 
-    fns.progress = [](std::string_view input_json,
-                       std::string_view partial_result) {
+    fns.progress = [](std::string_view input_json, std::string_view partial_result) {
         std::string method = detail::extract_method(input_json);
 
         if (!partial_result.empty()) {
             auto nl = partial_result.find('\n');
             std::string line = (nl == std::string_view::npos)
-                ? std::string(partial_result)
-                : std::string(partial_result.substr(0, nl));
+                                   ? std::string(partial_result)
+                                   : std::string(partial_result.substr(0, nl));
             if (line.size() > 60) {
                 line = line.substr(0, 57) + "\xE2\x80\xA6";
             }
@@ -122,10 +116,8 @@ namespace detail {
 
     // LSP response content (diagnostics, definitions, etc.) is visible on
     // screen; index it so users can search for symbol names and file paths.
-    fns.extract_search_text = [](
-        std::string_view output_text,
-        std::string_view /*error_text*/) -> std::optional<std::string>
-    {
+    fns.extract_search_text = [](std::string_view output_text,
+                                 std::string_view /*error_text*/) -> std::optional<std::string> {
         return std::string{output_text};
     };
 

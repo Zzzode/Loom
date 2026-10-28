@@ -16,15 +16,15 @@
 /// (UI18) and use the design tokens defined in that screen.
 module;
 
-#include <unistd.h>
-#include <ctime>
-#include <cstdint>
-#include <cctype>
-
-#include <ftxui/dom/elements.hpp>
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/event.hpp>
+#include <ftxui/dom/elements.hpp>
+#include <unistd.h>
+
+#include <cctype>
+#include <cstdint>
+#include <ctime>
 
 export module loom.ui.screens.resume_screen;
 
@@ -47,16 +47,16 @@ using namespace ftxui;
 
 // Re-use data from session history — keep naming consistent.
 using ConversationStore = loom::core::ConversationStore;
-using Conversation      = loom::core::Conversation;
-using Message           = loom::core::Message;
-using Role              = loom::core::Role;
+using Conversation = loom::core::Conversation;
+using Message = loom::core::Message;
+using Role = loom::core::Role;
 
 // Re-use trust dialog primitives for delete confirmation.
 namespace tu = loom::ui::trust_utils;
+using loom::ui::trust_dialog::MakeTrustDialogComponent;
+using loom::ui::trust_dialog::TrustDialogProps;
 using tu::RiskLevel;
 using tu::TrustChoice;
-using loom::ui::trust_dialog::TrustDialogProps;
-using loom::ui::trust_dialog::MakeTrustDialogComponent;
 
 // ===========================================================================
 // Forward declarations
@@ -69,29 +69,29 @@ class ResumeScreenImpl;
 // ===========================================================================
 namespace token {
 
-    constexpr std::string_view kIconWelcome    = loom::ui::design::figures::kPointerSmall;
-    constexpr std::string_view kIconSession    = loom::ui::design::figures::kSquareSmall;
-    constexpr std::string_view kIconModel      = loom::ui::design::figures::kCircleFilled;
-    constexpr std::string_view kIconMsg        = loom::ui::design::figures::kBullet;
-    constexpr std::string_view kIconClock      = loom::ui::design::figures::kCircle;
-    constexpr std::string_view kIconCost       = loom::ui::design::figures::kCircleFilled;
-    constexpr std::string_view kIconSearch     = loom::ui::design::figures::kInfo;
-    constexpr std::string_view kIconSort       = loom::ui::design::figures::kArrowDown;
-    constexpr std::string_view kIconFilter     = loom::ui::design::figures::kTriangleDownSmall;
-    constexpr std::string_view kIconNew        = loom::ui::design::figures::kStar;
-    constexpr std::string_view kIconImport     = loom::ui::design::figures::kArrowDown;
-    constexpr std::string_view kIconBrowse     = loom::ui::design::figures::kTriangleRightSmall;
-    constexpr std::string_view kIconEdit       = loom::ui::design::figures::kPointerSmall;
-    constexpr std::string_view kIconDelete     = loom::ui::design::figures::kCross;
-    constexpr std::string_view kIconShare      = loom::ui::design::figures::kArrowRight;
-    constexpr std::string_view kIconResume     = loom::ui::design::figures::kTriangleRightSmall;
-    constexpr std::string_view kIconOpen       = loom::ui::design::figures::kSquareSmall;
-    constexpr std::string_view kIconCancel     = loom::ui::design::figures::kCross;
-    constexpr std::string_view kIconUser       = loom::ui::design::figures::kCircle;
-    constexpr std::string_view kIconAssistant  = loom::ui::design::figures::kBullet;
-    constexpr std::string_view kIconSystem     = loom::ui::design::figures::kInfo;
-    constexpr std::string_view kIconTool       = loom::ui::design::figures::kSquareSmallFilled;
-} // namespace token
+constexpr std::string_view kIconWelcome = loom::ui::design::figures::kPointerSmall;
+constexpr std::string_view kIconSession = loom::ui::design::figures::kSquareSmall;
+constexpr std::string_view kIconModel = loom::ui::design::figures::kCircleFilled;
+constexpr std::string_view kIconMsg = loom::ui::design::figures::kBullet;
+constexpr std::string_view kIconClock = loom::ui::design::figures::kCircle;
+constexpr std::string_view kIconCost = loom::ui::design::figures::kCircleFilled;
+constexpr std::string_view kIconSearch = loom::ui::design::figures::kInfo;
+constexpr std::string_view kIconSort = loom::ui::design::figures::kArrowDown;
+constexpr std::string_view kIconFilter = loom::ui::design::figures::kTriangleDownSmall;
+constexpr std::string_view kIconNew = loom::ui::design::figures::kStar;
+constexpr std::string_view kIconImport = loom::ui::design::figures::kArrowDown;
+constexpr std::string_view kIconBrowse = loom::ui::design::figures::kTriangleRightSmall;
+constexpr std::string_view kIconEdit = loom::ui::design::figures::kPointerSmall;
+constexpr std::string_view kIconDelete = loom::ui::design::figures::kCross;
+constexpr std::string_view kIconShare = loom::ui::design::figures::kArrowRight;
+constexpr std::string_view kIconResume = loom::ui::design::figures::kTriangleRightSmall;
+constexpr std::string_view kIconOpen = loom::ui::design::figures::kSquareSmall;
+constexpr std::string_view kIconCancel = loom::ui::design::figures::kCross;
+constexpr std::string_view kIconUser = loom::ui::design::figures::kCircle;
+constexpr std::string_view kIconAssistant = loom::ui::design::figures::kBullet;
+constexpr std::string_view kIconSystem = loom::ui::design::figures::kInfo;
+constexpr std::string_view kIconTool = loom::ui::design::figures::kSquareSmallFilled;
+}  // namespace token
 
 // ===========================================================================
 // Enums: sort order
@@ -107,10 +107,14 @@ enum class SortMode : std::uint8_t {
 
 [[nodiscard]] constexpr std::string_view to_string(SortMode m) {
     switch (m) {
-        case SortMode::NewestFirst: return "Newest";
-        case SortMode::OldestFirst: return "Oldest";
-        case SortMode::TitleAsc:    return "Title A–Z";
-        case SortMode::ModelAsc:    return "Model";
+    case SortMode::NewestFirst:
+        return "Newest";
+    case SortMode::OldestFirst:
+        return "Oldest";
+    case SortMode::TitleAsc:
+        return "Title A–Z";
+    case SortMode::ModelAsc:
+        return "Model";
     }
     return "Newest";
 }
@@ -121,11 +125,11 @@ enum class SortMode : std::uint8_t {
 
 /// Top-level view inside ResumeScreen.
 enum class ScreenView : std::uint8_t {
-    WelcomeEmpty,       // 1. No sessions — create / import / browse
-    SessionList,        // 2. Full list with search / sort / filter
-    DetailsPreview,     // 3. Full preview + Open/Resume/Cancel
-    EditTitle,          // 4. Rename dialog
-    DeleteConfirm,      // 5. Medium-risk TrustDialog (delegated to UI8)
+    WelcomeEmpty,    // 1. No sessions — create / import / browse
+    SessionList,     // 2. Full list with search / sort / filter
+    DetailsPreview,  // 3. Full preview + Open/Resume/Cancel
+    EditTitle,       // 4. Rename dialog
+    DeleteConfirm,   // 5. Medium-risk TrustDialog (delegated to UI8)
 };
 
 // ===========================================================================
@@ -139,17 +143,17 @@ enum class ScreenView : std::uint8_t {
 struct SessionMetaRow {
     std::string session_id;
     std::string title;
-    std::optional<std::string> model_name;       // From last assistant message
+    std::optional<std::string> model_name;  // From last assistant message
     std::chrono::system_clock::time_point created_at;
     std::chrono::system_clock::time_point last_active_at;
     std::size_t message_count = 0;
     std::size_t turn_count = 0;
     std::optional<double> total_cost_usd;
-    std::optional<std::uint64_t> total_tokens;   // Input + output
+    std::optional<std::uint64_t> total_tokens;  // Input + output
     bool is_current_project = true;
     bool has_custom_title = false;
     std::string project_path;
-    std::string last_message_summary;            // 1-line, truncated
+    std::string last_message_summary;  // 1-line, truncated
 
     // Cached lazily when entering DetailsPreview — not populated during listing.
     mutable std::optional<std::vector<Message>> preview_cache;
@@ -163,18 +167,25 @@ struct SessionMetaRow {
 inline Decorator padding(int top, int right, int bottom, int left) {
     return [=](Element e) -> Element {
         Elements rows;
-        for (int i = 0; i < top; ++i) rows.push_back(text(""));
+        for (int i = 0; i < top; ++i)
+            rows.push_back(text(""));
         {
             Elements lp, rp;
-            for (int i = 0; i < left; ++i) lp.push_back(text(" "));
-            for (int i = 0; i < right; ++i) rp.push_back(text(" "));
+            for (int i = 0; i < left; ++i)
+                lp.push_back(text(" "));
+            for (int i = 0; i < right; ++i)
+                rp.push_back(text(" "));
             rows.push_back(hbox({hbox(std::move(lp)), std::move(e), hbox(std::move(rp))}));
         }
-        for (int i = 0; i < bottom; ++i) rows.push_back(text(""));
+        for (int i = 0; i < bottom; ++i)
+            rows.push_back(text(""));
         return vbox(std::move(rows));
     };
 }
-inline Decorator padding(int all) { return padding(all, all, all, all); }
+
+inline Decorator padding(int all) {
+    return padding(all, all, all, all);
+}
 
 /// Truncate to `max` runes, adding ellipsis if truncation happened.
 [[nodiscard]] inline std::string truncate(const std::string& s, std::size_t max) {
@@ -184,30 +195,26 @@ inline Decorator padding(int all) { return padding(all, all, all, all); }
 }
 
 /// Format a time_point as relative time string.
-[[nodiscard]] inline std::string format_relative_time(
-    std::chrono::system_clock::time_point tp)
-{
+[[nodiscard]] inline std::string format_relative_time(std::chrono::system_clock::time_point tp) {
     using namespace std::chrono;
     const auto now = std::chrono::system_clock::now();
     const auto diff = duration_cast<minutes>(now - tp);
 
-    if (diff.count() < 1)       return "just now";
-    if (diff.count() < 60)      return std::format("{}m ago", diff.count());
+    if (diff.count() < 1) return "just now";
+    if (diff.count() < 60) return std::format("{}m ago", diff.count());
 
     const auto h = duration_cast<hours>(diff);
-    if (h.count() < 24)     return std::format("{}h ago", h.count());
+    if (h.count() < 24) return std::format("{}h ago", h.count());
 
     const auto days = h.count() / 24;
-    if (days < 7)               return std::format("{}d ago", days);
-    if (days < 30)              return std::format("{}w ago", days / 7);
-    if (days < 365)             return std::format("{}mo ago", days / 30);
+    if (days < 7) return std::format("{}d ago", days);
+    if (days < 30) return std::format("{}w ago", days / 7);
+    if (days < 365) return std::format("{}mo ago", days / 30);
     return std::format("{}y ago", days / 365);
 }
 
 /// Format a time_point as absolute "YYYY-MM-DD HH:MM" string.
-[[nodiscard]] inline std::string format_absolute_time(
-    std::chrono::system_clock::time_point tp)
-{
+[[nodiscard]] inline std::string format_absolute_time(std::chrono::system_clock::time_point tp) {
     const auto t = std::chrono::system_clock::to_time_t(tp);
     std::tm tm_buf{};
 #if defined(_WIN32)
@@ -223,8 +230,7 @@ inline Decorator padding(int all) { return padding(all, all, all, all); }
 /// Extract a 1-line plain-text summary from the last meaningful message in a
 /// conversation (tool/system messages are skipped — user/assistant only).
 [[nodiscard]] inline std::string extract_summary(const Conversation& conv,
-                                                 std::size_t max_chars = 80)
-{
+                                                 std::size_t max_chars = 80) {
     const auto all = conv.get_messages();
     // Walk backwards, skip tool/system.
     for (auto it = all.rbegin(); it != all.rend(); ++it) {
@@ -232,14 +238,16 @@ inline Decorator padding(int all) { return padding(all, all, all, all); }
         if (r != Role::User && r != Role::Assistant) continue;
 
         std::string text;
-        std::visit([&](const auto& m) {
-            for (const auto& blk : m.content) {
-                if (auto* tb = std::get_if<loom::core::TextBlock>(&blk)) {
-                    if (!text.empty()) text += " ";
-                    text += tb->text;
+        std::visit(
+            [&](const auto& m) {
+                for (const auto& blk : m.content) {
+                    if (auto* tb = std::get_if<loom::core::TextBlock>(&blk)) {
+                        if (!text.empty()) text += " ";
+                        text += tb->text;
+                    }
                 }
-            }
-        }, *it);
+            },
+            *it);
         // Collapse whitespace.
         std::string out;
         out.reserve(text.size());
@@ -260,9 +268,7 @@ inline Decorator padding(int all) { return padding(all, all, all, all); }
 }
 
 /// Extract the last assistant-message model name, if any.
-[[nodiscard]] inline std::optional<std::string> extract_last_model(
-    const Conversation& conv)
-{
+[[nodiscard]] inline std::optional<std::string> extract_last_model(const Conversation& conv) {
     const auto all = conv.get_messages();
     for (auto it = all.rbegin(); it != all.rend(); ++it) {
         if (auto* am = std::get_if<loom::core::AssistantMessage>(&*it)) {
@@ -280,7 +286,10 @@ inline Decorator padding(int all) { return padding(all, all, all, all); }
     for (std::size_t i = 0; i + needle.size() <= hay.size(); ++i) {
         bool ok = true;
         for (std::size_t j = 0; j < needle.size(); ++j) {
-            if (to_lower(hay[i + j]) != to_lower(needle[j])) { ok = false; break; }
+            if (to_lower(hay[i + j]) != to_lower(needle[j])) {
+                ok = false;
+                break;
+            }
         }
         if (ok) return true;
     }
@@ -293,10 +302,8 @@ inline Decorator padding(int all) { return padding(all, all, all, all); }
 
 /// Build metadata rows directly from a ConversationStore.
 /// Performs a single pass over conversations — no duplicate reads.
-[[nodiscard]] inline std::vector<SessionMetaRow> build_rows_from_store(
-    const ConversationStore& store,
-    std::string_view current_project_path = "")
-{
+[[nodiscard]] inline std::vector<SessionMetaRow>
+build_rows_from_store(const ConversationStore& store, std::string_view current_project_path = "") {
     std::vector<SessionMetaRow> rows;
     const auto ids = store.get_conversation_ids();
     rows.reserve(ids.size());
@@ -317,15 +324,15 @@ inline Decorator padding(int all) { return padding(all, all, all, all); }
         if (!conv) continue;
 
         SessionMetaRow row;
-        row.session_id      = id;
-        row.title           = conv->get_title();
-        row.created_at      = conv->get_created_at();
-        row.last_active_at  = conv->get_updated_at();
-        row.message_count   = conv->size();
-        row.model_name      = extract_last_model(*conv);
+        row.session_id = id;
+        row.title = conv->get_title();
+        row.created_at = conv->get_created_at();
+        row.last_active_at = conv->get_updated_at();
+        row.message_count = conv->size();
+        row.model_name = extract_last_model(*conv);
         row.last_message_summary = extract_summary(*conv, 90);
-        row.project_path    = std::string{current_project_path};
-        row.is_current_project = !current_project_path.empty(); // coarse
+        row.project_path = std::string{current_project_path};
+        row.is_current_project = !current_project_path.empty();  // coarse
         row.has_custom_title = !row.title.empty();
         if (row.title.empty()) {
             // Generate a human-readable fallback.
@@ -342,16 +349,12 @@ inline Decorator padding(int all) { return padding(all, all, all, all); }
 
 /// Combined search + filter result.
 struct FilteredIndex {
-    std::size_t row_index;     // index into SessionMetaRow vector
+    std::size_t row_index;  // index into SessionMetaRow vector
 };
 
-[[nodiscard]] inline std::vector<FilteredIndex> apply_filter_sort(
-    const std::vector<SessionMetaRow>& rows,
-    std::string_view query,
-    SortMode mode,
-    bool current_project_only,
-    std::string_view model_filter = "")
-{
+[[nodiscard]] inline std::vector<FilteredIndex>
+apply_filter_sort(const std::vector<SessionMetaRow>& rows, std::string_view query, SortMode mode,
+                  bool current_project_only, std::string_view model_filter = "") {
     std::vector<FilteredIndex> out;
     out.reserve(rows.size());
 
@@ -362,11 +365,10 @@ struct FilteredIndex {
             if (!r.model_name || !icontains(*r.model_name, model_filter)) continue;
         }
         if (!query.empty()) {
-            const bool hit = icontains(r.title, query)
-                          || icontains(r.session_id, query)
-                          || icontains(r.last_message_summary, query)
-                          || icontains(r.project_path, query)
-                          || (r.model_name && icontains(*r.model_name, query));
+            const bool hit = icontains(r.title, query) || icontains(r.session_id, query) ||
+                             icontains(r.last_message_summary, query) ||
+                             icontains(r.project_path, query) ||
+                             (r.model_name && icontains(*r.model_name, query));
             if (!hit) continue;
         }
         out.push_back({i});
@@ -377,18 +379,20 @@ struct FilteredIndex {
         const auto& ra = rows[a.row_index];
         const auto& rb = rows[b.row_index];
         switch (mode) {
-            case SortMode::NewestFirst:
-                return ra.last_active_at > rb.last_active_at;
-            case SortMode::OldestFirst:
-                return ra.last_active_at < rb.last_active_at;
-            case SortMode::TitleAsc:
-                return ra.title < rb.title;
-            case SortMode::ModelAsc: {
-                std::string_view ma = ra.model_name ? std::string_view{*ra.model_name} : std::string_view{};
-                std::string_view mb = rb.model_name ? std::string_view{*rb.model_name} : std::string_view{};
-                if (ma != mb) return ma < mb;
-                return ra.last_active_at > rb.last_active_at;
-            }
+        case SortMode::NewestFirst:
+            return ra.last_active_at > rb.last_active_at;
+        case SortMode::OldestFirst:
+            return ra.last_active_at < rb.last_active_at;
+        case SortMode::TitleAsc:
+            return ra.title < rb.title;
+        case SortMode::ModelAsc: {
+            std::string_view ma =
+                ra.model_name ? std::string_view{*ra.model_name} : std::string_view{};
+            std::string_view mb =
+                rb.model_name ? std::string_view{*rb.model_name} : std::string_view{};
+            if (ma != mb) return ma < mb;
+            return ra.last_active_at > rb.last_active_at;
+        }
         }
         return false;
     };
@@ -411,32 +415,33 @@ struct FilteredIndex {
 ///     │   ── Recent ─────────────────────────────────────────────      │
 ///     │   (up to 5 quick-pick entries shown when sessions > 0)         │
 ///     └─────────────────────────────────────────────────────────────────┘
-[[nodiscard]] inline Element RenderWelcomeEmpty(
-    const std::vector<SessionMetaRow>& recent_sessions,   // 0..5
-    bool show_quick_picks)
-{
+[[nodiscard]] inline Element
+RenderWelcomeEmpty(const std::vector<SessionMetaRow>& recent_sessions,  // 0..5
+                   bool show_quick_picks) {
     const auto& palette = *loom::ui::design::theme::current_theme().palette;
     Elements body;
 
     // Big title
-    body.push_back(hbox({
-        text("  ") | color(Color{}),
-        text((std::string{loom::ui::design::figures::kPointerSmall} + " Welcome back!")) | bold | color(palette.success)
-            | size(HEIGHT, EQUAL, 1),
-        filler(),
-    }) | size(HEIGHT, EQUAL, 2));
+    body.push_back(
+        hbox({
+            text("  ") | color(Color{}),
+            text((std::string{loom::ui::design::figures::kPointerSmall} + " Welcome back!")) |
+                bold | color(palette.success) | size(HEIGHT, EQUAL, 1),
+            filler(),
+        }) |
+        size(HEIGHT, EQUAL, 2));
 
-    body.push_back(paragraph(
-        "Pick up right where you left off, or start a brand new conversation."
-    ) | dim | color(loom::ui::design::theme::current_theme().palette->text));
+    body.push_back(
+        paragraph("Pick up right where you left off, or start a brand new conversation.") | dim |
+        color(loom::ui::design::theme::current_theme().palette->text));
     body.push_back(text(""));
 
     // Primary button: Create new
     body.push_back(hbox({
-        text((std::string{loom::ui::design::figures::kTriangleRightSmall} + " ")) | color(palette.success),
+        text((std::string{loom::ui::design::figures::kTriangleRightSmall} + " ")) |
+            color(palette.success),
         text("[Enter] ") | bold | color(palette.info),
-        text("Create new conversation")
-            | bold | color(palette.success),
+        text("Create new conversation") | bold | color(palette.success),
     }));
     body.push_back(text(""));
 
@@ -465,23 +470,18 @@ struct FilteredIndex {
 
         int idx = 0;
         for (const auto& r : recent_sessions) {
-            const std::string hotkey = (idx < 9)
-                ? std::format("[{}]", idx + 1)
-                : "[·]";
+            const std::string hotkey = (idx < 9) ? std::format("[{}]", idx + 1) : "[·]";
             body.push_back(hbox({
                 text(" " + hotkey + " ") | color(palette.info) | dim,
                 text(std::string{token::kIconSession} + " ") | dim,
                 text(truncate(r.title, 40)) | color(palette.text),
                 filler(),
-                text(format_relative_time(r.last_active_at))
-                    | dim | color(palette.muted),
-                text("  " + std::to_string(r.message_count) + " msg")
-                    | dim | color(palette.muted),
+                text(format_relative_time(r.last_active_at)) | dim | color(palette.muted),
+                text("  " + std::to_string(r.message_count) + " msg") | dim | color(palette.muted),
             }));
             body.push_back(hbox({
                 text("      ") | dim,
-                text(truncate(r.last_message_summary, 60))
-                    | dim | color(palette.muted),
+                text(truncate(r.last_message_summary, 60)) | dim | color(palette.muted),
             }));
             body.push_back(text(""));
             ++idx;
@@ -491,10 +491,14 @@ struct FilteredIndex {
     // Footer hint
     body.push_back(separator());
     body.push_back(hbox({
-        text(" Enter") | bold, text(" = new  "),
-        text("Esc") | bold, text(" = cancel  "),
-        text("1–5") | bold, text(" = pick recent"),
-    }) | dim);
+                       text(" Enter") | bold,
+                       text(" = new  "),
+                       text("Esc") | bold,
+                       text(" = cancel  "),
+                       text("1–5") | bold,
+                       text(" = pick recent"),
+                   }) |
+                   dim);
 
     return vbox(std::move(body)) | borderRounded | padding(1);
 }
@@ -505,9 +509,9 @@ struct FilteredIndex {
 
 /// Visual state bits passed into the card renderer.
 struct RowViewState {
-    bool selected     = false;
-    bool hovered      = false;   // show 3-button action strip
-    bool focused      = false;   // currently being navigated via Tab
+    bool selected = false;
+    bool hovered = false;  // show 3-button action strip
+    bool focused = false;  // currently being navigated via Tab
 };
 
 /// Render one session row as a card.
@@ -519,10 +523,7 @@ struct RowViewState {
 ///   │     (model)                        │  3h ago                       │
 ///   └────────────────────────────────────────────────────────────────────┘
 ///   Hover → right-side strip: [✎ edit] [🗑 delete] [↗ share]
-[[nodiscard]] inline Element RenderSessionCard(
-    const SessionMetaRow& r,
-    const RowViewState& vs)
-{
+[[nodiscard]] inline Element RenderSessionCard(const SessionMetaRow& r, const RowViewState& vs) {
     const auto& palette = *loom::ui::design::theme::current_theme().palette;
     Elements left_col;
 
@@ -530,38 +531,32 @@ struct RowViewState {
     const std::string title = truncate(r.title, 45);
     left_col.push_back(hbox({
         text(std::string{token::kIconSession} + " ") | dim,
-        text(title)
-            | (vs.selected ? (bold | color(palette.success))
-                           : (bold | color(palette.text))),
+        text(title) |
+            (vs.selected ? (bold | color(palette.success)) : (bold | color(palette.text))),
     }));
 
     // Row 2: last-message summary (gray)
     left_col.push_back(hbox({
         text("    ") | dim,
-        text(truncate(r.last_message_summary, 60))
-            | dim | color(palette.muted),
+        text(truncate(r.last_message_summary, 60)) | dim | color(palette.muted),
     }));
 
     // Row 3: model + last active
-    std::string model_txt = r.model_name
-        ? *r.model_name
-        : std::string("(model unknown)");
+    std::string model_txt = r.model_name ? *r.model_name : std::string("(model unknown)");
     left_col.push_back(hbox({
         text("    ") | dim,
         text(std::string{token::kIconModel} + " ") | dim,
         text(truncate(model_txt, 28)) | dim | color(palette.info),
         text("  ") | dim,
         text(std::string{token::kIconClock} + " ") | dim,
-        text(format_relative_time(r.last_active_at))
-            | dim | color(palette.muted),
+        text(format_relative_time(r.last_active_at)) | dim | color(palette.muted),
     }));
 
     Elements right_col;
 
     // Right top: absolute date + message count
     right_col.push_back(hbox({
-        text(format_absolute_time(r.last_active_at))
-            | dim | color(palette.muted),
+        text(format_absolute_time(r.last_active_at)) | dim | color(palette.muted),
         text("  ") | dim,
         text(std::to_string(r.message_count)) | bold | color(palette.info),
         text(" msg") | dim | color(palette.muted),
@@ -571,8 +566,8 @@ struct RowViewState {
     {
         Elements row;
         if (r.total_cost_usd) {
-            row.push_back(text(std::format("${:.2f}", *r.total_cost_usd))
-                | color(palette.success) | dim);
+            row.push_back(text(std::format("${:.2f}", *r.total_cost_usd)) | color(palette.success) |
+                          dim);
             row.push_back(text("  ") | dim);
         }
         row.push_back(text(std::to_string(r.turn_count)) | dim | color(palette.muted));
@@ -585,16 +580,13 @@ struct RowViewState {
         right_col.push_back(text("") | dim);
         right_col.push_back(hbox({
             text("[E] ") | color(palette.info) | dim,
-            text(std::string{token::kIconEdit} + " edit")
-                | dim | color(palette.info),
+            text(std::string{token::kIconEdit} + " edit") | dim | color(palette.info),
             text("  ") | dim,
             text("[Del] ") | color(palette.danger) | dim,
-            text(std::string{token::kIconDelete} + " delete")
-                | dim | color(palette.danger),
+            text(std::string{token::kIconDelete} + " delete") | dim | color(palette.danger),
             text("  ") | dim,
             text("[S] ") | color(palette.warning) | dim,
-            text(std::string{token::kIconShare} + " share")
-                | dim | color(palette.warning),
+            text(std::string{token::kIconShare} + " share") | dim | color(palette.warning),
         }));
     } else {
         // Faint hint that hover actions exist
@@ -606,13 +598,15 @@ struct RowViewState {
 
     // Compose
     Element card = hbox({
-        vbox(std::move(left_col)) | flex,
-        text("   ") | dim,
-        vbox(std::move(right_col)) | align_right,
-    }) | padding(1);
+                       vbox(std::move(left_col)) | flex,
+                       text("   ") | dim,
+                       vbox(std::move(right_col)) | align_right,
+                   }) |
+                   padding(1);
 
     if (vs.selected) {
-        card = card | bgcolor(loom::ui::design::theme::current_theme().palette->surface_tint_1) | borderStyled(palette.success);
+        card = card | bgcolor(loom::ui::design::theme::current_theme().palette->surface_tint_1) |
+               borderStyled(palette.success);
     } else {
         card = card | borderLight;
     }
@@ -626,64 +620,64 @@ struct RowViewState {
 }
 
 /// Render the header bar for the list view: search + sort + filter toggles.
-[[nodiscard]] inline Element RenderListHeader(
-    std::string_view query,
-    bool search_focused,
-    SortMode sort,
-    bool current_project_only,
-    std::string_view model_filter,
-    std::size_t total_count,
-    std::size_t filtered_count)
-{
+[[nodiscard]] inline Element RenderListHeader(std::string_view query, bool search_focused,
+                                              SortMode sort, bool current_project_only,
+                                              std::string_view model_filter,
+                                              std::size_t total_count, std::size_t filtered_count) {
     const auto& palette = *loom::ui::design::theme::current_theme().palette;
     // Search field
-    Element search = hbox({
-        text(search_focused ? " / " : (" " + std::string{loom::ui::design::figures::kInfo} + " "))
-            | color(search_focused ? palette.info : palette.muted),
-        query.empty()
-            ? text("Search sessions...") | dim
-            : text(std::string{query}) | color(palette.text),
-        text("│") | (search_focused && !loom::ui::design::theme::current_theme().a11y.reduced_motion ? blink : nothing),
-    }) | borderLight | flex;
+    Element search =
+        hbox({
+            text(search_focused ? " / "
+                                : (" " + std::string{loom::ui::design::figures::kInfo} + " ")) |
+                color(search_focused ? palette.info : palette.muted),
+            query.empty() ? text("Search sessions...") | dim
+                          : text(std::string{query}) | color(palette.text),
+            text("│") |
+                (search_focused && !loom::ui::design::theme::current_theme().a11y.reduced_motion
+                     ? blink
+                     : nothing),
+        }) |
+        borderLight | flex;
 
     // Sort dropdown label
     Element sort_el = hbox({
-        text(std::string{token::kIconSort} + " ") | dim,
-        text(std::string{to_string(sort)}) | bold | color(palette.info),
-        text(" [T]") | dim,
-    }) | borderLight;
+                          text(std::string{token::kIconSort} + " ") | dim,
+                          text(std::string{to_string(sort)}) | bold | color(palette.info),
+                          text(" [T]") | dim,
+                      }) |
+                      borderLight;
 
     // Project filter toggle
-    Element project_el = hbox({
-        text(std::string{token::kIconFilter} + " ") | dim,
-        text(current_project_only ? "Current project" : "All projects")
-            | bold
-            | color(current_project_only ? palette.warning : palette.info),
-        text(" [P]") | dim,
-    }) | borderLight;
+    Element project_el =
+        hbox({
+            text(std::string{token::kIconFilter} + " ") | dim,
+            text(current_project_only ? "Current project" : "All projects") | bold |
+                color(current_project_only ? palette.warning : palette.info),
+            text(" [P]") | dim,
+        }) |
+        borderLight;
 
     // Model filter (small)
-    Element model_el = hbox({
-        text(std::string{token::kIconModel} + " ") | dim,
-        text(model_filter.empty() ? std::string{"any model"}
-                                  : std::string{model_filter})
-            | color(model_filter.empty() ? palette.muted : palette.info),
-        text(" [M]") | dim,
-    }) | borderLight;
+    Element model_el =
+        hbox({
+            text(std::string{token::kIconModel} + " ") | dim,
+            text(model_filter.empty() ? std::string{"any model"} : std::string{model_filter}) |
+                color(model_filter.empty() ? palette.muted : palette.info),
+            text(" [M]") | dim,
+        }) |
+        borderLight;
 
     // Counter
-    Element counter = hbox({
-        text(std::format("{} / {} ", filtered_count, total_count))
-            | dim | color(palette.muted),
-        text(std::string{token::kIconMsg}) | dim,
-    }) | borderLight;
+    Element counter =
+        hbox({
+            text(std::format("{} / {} ", filtered_count, total_count)) | dim | color(palette.muted),
+            text(std::string{token::kIconMsg}) | dim,
+        }) |
+        borderLight;
 
     Elements row1 = {
-        search | flex,
-        sort_el,
-        project_el,
-        model_el,
-        counter,
+        search | flex, sort_el, project_el, model_el, counter,
     };
 
     return vbox({
@@ -692,17 +686,13 @@ struct RowViewState {
 }
 
 /// Render the full Session List view.
-[[nodiscard]] inline Element RenderSessionListView(
-    const std::vector<SessionMetaRow>& rows,
-    const std::vector<FilteredIndex>& filtered,
-    std::size_t selected_idx,     // into `filtered`
-    std::size_t hovered_idx,      // into `filtered` (== selected unless shift+key)
-    std::string_view query,
-    bool search_focused,
-    SortMode sort,
-    bool current_project_only,
-    std::string_view model_filter)
-{
+[[nodiscard]] inline Element
+RenderSessionListView(const std::vector<SessionMetaRow>& rows,
+                      const std::vector<FilteredIndex>& filtered,
+                      std::size_t selected_idx,  // into `filtered`
+                      std::size_t hovered_idx,   // into `filtered` (== selected unless shift+key)
+                      std::string_view query, bool search_focused, SortMode sort,
+                      bool current_project_only, std::string_view model_filter) {
     const auto& palette = *loom::ui::design::theme::current_theme().palette;
     Elements cards;
     cards.push_back(hbox({
@@ -712,9 +702,8 @@ struct RowViewState {
     }));
     cards.push_back(separator());
 
-    cards.push_back(RenderListHeader(
-        query, search_focused, sort, current_project_only, model_filter,
-        rows.size(), filtered.size()));
+    cards.push_back(RenderListHeader(query, search_focused, sort, current_project_only,
+                                     model_filter, rows.size(), filtered.size()));
     cards.push_back(separator());
 
     if (filtered.empty()) {
@@ -725,8 +714,8 @@ struct RowViewState {
         for (std::size_t i = 0; i < filtered.size(); ++i) {
             RowViewState vs;
             vs.selected = (i == safe_selected);
-            vs.hovered  = (i == hovered_idx) || vs.selected;
-            vs.focused  = vs.selected;
+            vs.hovered = (i == hovered_idx) || vs.selected;
+            vs.focused = vs.selected;
             cards.push_back(RenderSessionCard(rows[filtered[i].row_index], vs));
             if (i + 1 < filtered.size()) cards.push_back(text("") | dim);
         }
@@ -734,20 +723,24 @@ struct RowViewState {
 
     cards.push_back(separator());
     cards.push_back(hbox({
-        text(" ↑/↓ j/k") | bold | color(palette.info), text(" select "),
-        text("PgUp/Dn") | bold | color(palette.info), text(" page "),
-        text("G/gg")    | bold | color(palette.info), text(" jump "),
-        text("/")       | bold | color(palette.info), text(" search "),
-        text("E")       | bold | color(palette.info), text("dit "),
-        text("Del")     | bold | color(palette.danger),  text("elete "),
-        text("Esc")     | bold | color(palette.info), text(" back"),
-    }) | dim);
+                        text(" ↑/↓ j/k") | bold | color(palette.info),
+                        text(" select "),
+                        text("PgUp/Dn") | bold | color(palette.info),
+                        text(" page "),
+                        text("G/gg") | bold | color(palette.info),
+                        text(" jump "),
+                        text("/") | bold | color(palette.info),
+                        text(" search "),
+                        text("E") | bold | color(palette.info),
+                        text("dit "),
+                        text("Del") | bold | color(palette.danger),
+                        text("elete "),
+                        text("Esc") | bold | color(palette.info),
+                        text(" back"),
+                    }) |
+                    dim);
 
-    return vbox(std::move(cards))
-         | borderRounded
-         | yframe
-         | vscroll_indicator
-         | flex;
+    return vbox(std::move(cards)) | borderRounded | yframe | vscroll_indicator | flex;
 }
 
 // ===========================================================================
@@ -763,41 +756,49 @@ struct RoleBadge {
 
 [[nodiscard]] inline RoleBadge role_badge(Role r) {
     switch (r) {
-        case Role::User:      return {token::kIconUser,      loom::ui::design::theme::current_theme().palette->role_pill_user,  "User"};
-        case Role::Assistant: return {token::kIconAssistant, loom::ui::design::theme::current_theme().palette->role_pill_assistant, "Assistant"};
-        case Role::System:    return {token::kIconSystem,    loom::ui::design::theme::current_theme().palette->role_pill_system,"System"};
-        case Role::Tool:      return {token::kIconTool,      loom::ui::design::theme::current_theme().palette->role_pill_tool,"Tool"};
+    case Role::User:
+        return {token::kIconUser, loom::ui::design::theme::current_theme().palette->role_pill_user,
+                "User"};
+    case Role::Assistant:
+        return {token::kIconAssistant,
+                loom::ui::design::theme::current_theme().palette->role_pill_assistant, "Assistant"};
+    case Role::System:
+        return {token::kIconSystem,
+                loom::ui::design::theme::current_theme().palette->role_pill_system, "System"};
+    case Role::Tool:
+        return {token::kIconTool, loom::ui::design::theme::current_theme().palette->role_pill_tool,
+                "Tool"};
     }
     return {"?", loom::ui::design::theme::current_theme().palette->text, "?"};
 }
 
 /// Render a single preview message line (avatar + role + collapsed content).
-[[nodiscard]] inline Element RenderPreviewMessage(const Message& msg,
-                                                  std::size_t max_chars = 120)
-{
+[[nodiscard]] inline Element RenderPreviewMessage(const Message& msg, std::size_t max_chars = 120) {
     const auto& palette = *loom::ui::design::theme::current_theme().palette;
     const Role r = loom::core::get_role(msg);
     const auto badge = role_badge(r);
 
     std::string content;
-    std::visit([&](const auto& m) {
-        for (const auto& blk : m.content) {
-            if (auto* tb = std::get_if<loom::core::TextBlock>(&blk)) {
-                if (!content.empty()) content += " ";
-                content += tb->text;
-            } else if (auto* tu = std::get_if<loom::core::ToolUseBlock>(&blk)) {
-                content += std::format("<tool:{}>", tu->name);
-            } else if (auto* tr = std::get_if<loom::core::ToolResultBlock>(&blk)) {
-                content += std::format("<result:{}>", tr->is_error ? "error" : "ok");
-            } else if (auto* im = std::get_if<loom::core::ImageBlock>(&blk)) {
-                content += std::format("<image:{}>", im->media_type);
-            } else if (auto* dc = std::get_if<loom::core::DocumentBlock>(&blk)) {
-                content += std::format("<doc:{}>", dc->media_type);
-            } else if (auto* th = std::get_if<loom::core::ThinkingBlock>(&blk)) {
-                content += std::format("<thinking {}b>", th->thinking.size());
+    std::visit(
+        [&](const auto& m) {
+            for (const auto& blk : m.content) {
+                if (auto* tb = std::get_if<loom::core::TextBlock>(&blk)) {
+                    if (!content.empty()) content += " ";
+                    content += tb->text;
+                } else if (auto* tu = std::get_if<loom::core::ToolUseBlock>(&blk)) {
+                    content += std::format("<tool:{}>", tu->name);
+                } else if (auto* tr = std::get_if<loom::core::ToolResultBlock>(&blk)) {
+                    content += std::format("<result:{}>", tr->is_error ? "error" : "ok");
+                } else if (auto* im = std::get_if<loom::core::ImageBlock>(&blk)) {
+                    content += std::format("<image:{}>", im->media_type);
+                } else if (auto* dc = std::get_if<loom::core::DocumentBlock>(&blk)) {
+                    content += std::format("<doc:{}>", dc->media_type);
+                } else if (auto* th = std::get_if<loom::core::ThinkingBlock>(&blk)) {
+                    content += std::format("<thinking {}b>", th->thinking.size());
+                }
             }
-        }
-    }, msg);
+        },
+        msg);
     // Collapse whitespace.
     std::string clean;
     clean.reserve(content.size());
@@ -813,16 +814,15 @@ struct RoleBadge {
         text(" " + std::string{badge.icon} + " ") | color(badge.colour),
         text(std::string{badge.label}) | bold | color(badge.colour),
         text(" │ ") | dim,
-        paragraph(truncate(clean, max_chars)) | color(palette.text)
-            | size(WIDTH, LESS_THAN, 80),
+        paragraph(truncate(clean, max_chars)) | color(palette.text) | size(WIDTH, LESS_THAN, 80),
     });
 }
 
 /// Render the DetailsPreview view (right side of the split layout, or modal).
-[[nodiscard]] inline Element RenderDetailsPreview(
-    const SessionMetaRow& row,
-    const std::vector<Message>& preview_msgs,  // up to 10 most recent
-    int primary_selection) // 0=Open  1=Resume  2=Cancel
+[[nodiscard]] inline Element
+RenderDetailsPreview(const SessionMetaRow& row,
+                     const std::vector<Message>& preview_msgs,  // up to 10 most recent
+                     int primary_selection)                     // 0=Open  1=Resume  2=Cancel
 {
     const auto& palette = *loom::ui::design::theme::current_theme().palette;
     Elements body;
@@ -833,8 +833,7 @@ struct RoleBadge {
         text(row.title) | bold | color(palette.success),
         filler(),
         text("#") | dim,
-        text(row.session_id.substr(0, 10))
-            | color(palette.info) | dim,
+        text(row.session_id.substr(0, 10)) | color(palette.info) | dim,
     }));
     body.push_back(separator());
 
@@ -847,8 +846,7 @@ struct RoleBadge {
         filler(),
         text(std::string{token::kIconClock} + " ") | dim,
         text("Last active: ") | dim,
-        text(format_relative_time(row.last_active_at))
-            | color(palette.info),
+        text(format_relative_time(row.last_active_at)) | color(palette.info),
     }));
     meta_rows.push_back(hbox({
         text(" Messages:  ") | dim,
@@ -858,21 +856,17 @@ struct RoleBadge {
         text(std::to_string(row.turn_count)) | color(palette.text),
         filler(),
         text(std::string{token::kIconCost} + " ") | dim,
-        text(row.total_cost_usd
-                 ? std::format("${:.3f}", *row.total_cost_usd)
-                 : std::string{"—"})
-            | color(row.total_cost_usd ? palette.success : palette.muted),
+        text(row.total_cost_usd ? std::format("${:.3f}", *row.total_cost_usd) : std::string{"—"}) |
+            color(row.total_cost_usd ? palette.success : palette.muted),
     }));
     meta_rows.push_back(hbox({
         text(" Model:     ") | dim,
-        text(row.model_name ? *row.model_name : std::string{"(unknown)"})
-            | color(palette.info),
+        text(row.model_name ? *row.model_name : std::string{"(unknown)"}) | color(palette.info),
         filler(),
         text("Tokens: ") | dim,
-        text(row.total_tokens
-                 ? std::format("{}k", (*row.total_tokens + 500) / 1000)
-                 : std::string{"—"})
-            | color(palette.muted),
+        text(row.total_tokens ? std::format("{}k", (*row.total_tokens + 500) / 1000)
+                              : std::string{"—"}) |
+            color(palette.muted),
     }));
     if (!row.project_path.empty()) {
         meta_rows.push_back(hbox({
@@ -904,26 +898,26 @@ struct RoleBadge {
     body.push_back(text("") | dim);
     body.push_back(separator());
 
-    auto btn = [&](int idx, std::string_view icon, std::string_view label,
-                   Color c) -> Element
-    {
+    auto btn = [&](int idx, std::string_view icon, std::string_view label, Color c) -> Element {
         const bool sel = (idx == primary_selection);
         Elements p = {
-            text(sel ? (std::string{loom::ui::design::figures::kTriangleRightSmall} + " ") : "  ") | color(c),
+            text(sel ? (std::string{loom::ui::design::figures::kTriangleRightSmall} + " ") : "  ") |
+                color(c),
             text(std::string{icon} + " ") | (sel ? color(c) : dim),
             text(std::string{label}) | (sel ? (bold | color(c)) : dim),
             text(" "),
         };
-        return hbox(std::move(p)) | (sel ? bgcolor(loom::ui::design::theme::current_theme().palette->surface_tint_3)
-                                         : nothing);
+        return hbox(std::move(p)) |
+               (sel ? bgcolor(loom::ui::design::theme::current_theme().palette->surface_tint_3)
+                    : nothing);
     };
 
     body.push_back(hbox({
-        btn(0, token::kIconOpen,   "Open full",    palette.info),
+        btn(0, token::kIconOpen, "Open full", palette.info),
         text("  ") | dim,
-        btn(1, token::kIconResume, "Resume",       palette.success),
+        btn(1, token::kIconResume, "Resume", palette.success),
         text("  ") | dim,
-        btn(2, token::kIconCancel, "Cancel",       palette.danger),
+        btn(2, token::kIconCancel, "Cancel", palette.danger),
         filler(),
         text(" [Enter] confirm  [Esc] back") | dim,
     }));
@@ -936,11 +930,8 @@ struct RoleBadge {
 // ===========================================================================
 
 /// Render the inline edit-title dialog.
-[[nodiscard]] inline Element RenderEditTitleDialog(
-    const SessionMetaRow& row,
-    std::string_view draft,
-    bool has_error)
-{
+[[nodiscard]] inline Element RenderEditTitleDialog(const SessionMetaRow& row,
+                                                   std::string_view draft, bool has_error) {
     const auto& palette = *loom::ui::design::theme::current_theme().palette;
     Elements body;
     body.push_back(hbox({
@@ -964,13 +955,17 @@ struct RoleBadge {
     body.push_back(text(""));
     body.push_back(text(" New title:") | bold);
 
-    const std::string shown = draft.empty() ? std::string{"(use a short descriptive name)"}
-                                            : std::string{draft};
-    body.push_back(hbox({
-        text("  ") | dim,
-        text(shown) | (draft.empty() ? dim : color(palette.success)),
-        text("│") | (loom::ui::design::theme::current_theme().a11y.reduced_motion ? nothing : blink) | color(palette.info),
-    }) | borderLight);
+    const std::string shown =
+        draft.empty() ? std::string{"(use a short descriptive name)"} : std::string{draft};
+    body.push_back(
+        hbox({
+            text("  ") | dim,
+            text(shown) | (draft.empty() ? dim : color(palette.success)),
+            text("│") |
+                (loom::ui::design::theme::current_theme().a11y.reduced_motion ? nothing : blink) |
+                color(palette.info),
+        }) |
+        borderLight);
 
     if (has_error) {
         body.push_back(text("") | dim);
@@ -982,13 +977,14 @@ struct RoleBadge {
 
     body.push_back(separator());
     body.push_back(hbox({
-        text(" Enter") | bold | color(palette.success),
-        text(" save  "),
-        text("Esc") | bold | color(palette.danger),
-        text(" cancel  "),
-        text("Tab") | bold | dim,
-        text(" reset to current"),
-    }) | dim);
+                       text(" Enter") | bold | color(palette.success),
+                       text(" save  "),
+                       text("Esc") | bold | color(palette.danger),
+                       text(" cancel  "),
+                       text("Tab") | bold | dim,
+                       text(" reset to current"),
+                   }) |
+                   dim);
 
     return vbox(std::move(body)) | borderRounded | padding(1);
 }
@@ -1005,34 +1001,31 @@ struct RoleBadge {
 /// Build a Medium-risk TrustDialogProps for "delete session" confirmation.
 /// Follows the constraint: "Delete confirmation → UI8 TrustDialog,
 /// no duplicate confirmation."
-[[nodiscard]] inline TrustDialogProps MakeDeleteSessionTrustProps(
-    const SessionMetaRow& row,
-    std::function<void(TrustChoice result)> on_done)
-{
+[[nodiscard]] inline TrustDialogProps
+MakeDeleteSessionTrustProps(const SessionMetaRow& row,
+                            std::function<void(TrustChoice result)> on_done) {
     TrustDialogProps props;
-    props.on_done    = std::move(on_done);
-    props.action     = tu::ActionType::PathWrite;   // Deletion is destructive.
+    props.on_done = std::move(on_done);
+    props.action = tu::ActionType::PathWrite;  // Deletion is destructive.
     props.forced_level = tu::RiskLevel::Medium;
     props.action_label = "Delete conversation";
 
     tu::RiskSummary summary;
     summary.level = tu::RiskLevel::Medium;
-    summary.action_summary = std::format(
-        "You are about to permanently delete the conversation \"{}\".\n"
-        "This action cannot be undone — {} messages, {} turns of history "
-        "will be removed.",
-        truncate(row.title, 60),
-        row.message_count, row.turn_count);
+    summary.action_summary =
+        std::format("You are about to permanently delete the conversation \"{}\".\n"
+                    "This action cannot be undone — {} messages, {} turns of history "
+                    "will be removed.",
+                    truncate(row.title, 60), row.message_count, row.turn_count);
     summary.risk_factors.push_back("Permanent deletion of stored conversation data");
     summary.risk_factors.push_back(std::format("Session ID: {}", row.session_id));
     summary.risk_factors.push_back("No recycle bin / undo is available");
     if (row.total_cost_usd) {
         summary.risk_factors.push_back(std::format(
-            "Conversation cost ${:.3f} — cost history will be lost",
-            *row.total_cost_usd));
+            "Conversation cost ${:.3f} — cost history will be lost", *row.total_cost_usd));
     }
     props.summary = std::move(summary);
-    props.paths = { std::format("[session:{}]", row.session_id) };
+    props.paths = {std::format("[session:{}]", row.session_id)};
     return props;
 }
 
@@ -1044,98 +1037,86 @@ struct RoleBadge {
 /// Combines Welcome / List / Details / Edit views depending on `view`.
 [[nodiscard]] inline Element RenderResumeScreen(
     // Persisted data
-    const std::vector<SessionMetaRow>& rows,
-    const std::vector<FilteredIndex>& filtered,
+    const std::vector<SessionMetaRow>& rows, const std::vector<FilteredIndex>& filtered,
 
     // UI state
-    ScreenView view,
-    std::size_t selected_idx,
-    std::size_t hovered_idx,
-    std::string_view query,
-    bool search_focused,
-    SortMode sort_mode,
-    bool current_project_only,
+    ScreenView view, std::size_t selected_idx, std::size_t hovered_idx, std::string_view query,
+    bool search_focused, SortMode sort_mode, bool current_project_only,
     std::string_view model_filter,
-    int preview_button,   // for DetailsPreview
-    std::string_view edit_draft,
-    bool edit_has_error,
+    int preview_button,  // for DetailsPreview
+    std::string_view edit_draft, bool edit_has_error,
 
     // Optional: DetailsPreview message cache for the selected row
     const std::optional<std::vector<Message>>& preview_cache,
 
     // Loading state
-    bool loading)
-{
+    bool loading) {
     const auto& palette = *loom::ui::design::theme::current_theme().palette;
     // Loading overlay (top-level)
     if (loading) {
         return vbox({
-            text("") | dim,
-            text(" Loading conversations…") | color(palette.info),
-            text("") | dim,
-        }) | borderRounded;
+                   text("") | dim,
+                   text(" Loading conversations…") | color(palette.info),
+                   text("") | dim,
+               }) |
+               borderRounded;
     }
 
     switch (view) {
-        case ScreenView::WelcomeEmpty: {
-            // Feed up to 5 most-recent sessions for quick picks.
-            const auto recent = apply_filter_sort(
-                rows, "", SortMode::NewestFirst, current_project_only, "");
-            std::vector<SessionMetaRow> top5;
-            top5.reserve(std::min<std::size_t>(5, recent.size()));
-            for (std::size_t i = 0; i < 5 && i < recent.size(); ++i) {
-                top5.push_back(rows[recent[i].row_index]);
-            }
-            return RenderWelcomeEmpty(top5, !top5.empty());
+    case ScreenView::WelcomeEmpty: {
+        // Feed up to 5 most-recent sessions for quick picks.
+        const auto recent =
+            apply_filter_sort(rows, "", SortMode::NewestFirst, current_project_only, "");
+        std::vector<SessionMetaRow> top5;
+        top5.reserve(std::min<std::size_t>(5, recent.size()));
+        for (std::size_t i = 0; i < 5 && i < recent.size(); ++i) {
+            top5.push_back(rows[recent[i].row_index]);
         }
+        return RenderWelcomeEmpty(top5, !top5.empty());
+    }
 
-        case ScreenView::SessionList:
-            return RenderSessionListView(
-                rows, filtered, selected_idx, hovered_idx,
-                query, search_focused, sort_mode,
-                current_project_only, model_filter);
+    case ScreenView::SessionList:
+        return RenderSessionListView(rows, filtered, selected_idx, hovered_idx, query,
+                                     search_focused, sort_mode, current_project_only, model_filter);
 
-        case ScreenView::DetailsPreview: {
-            if (filtered.empty()) {
-                return RenderSessionListView(
-                    rows, filtered, selected_idx, hovered_idx,
-                    query, search_focused, sort_mode,
-                    current_project_only, model_filter);
-            }
-            const std::size_t safe = std::min(selected_idx, filtered.size() - 1);
-            const auto& row = rows[filtered[safe].row_index];
-            const auto& msgs = preview_cache.value_or(std::vector<Message>{});
-            // Split layout: left = compact list strip, right = preview.
-            auto list_strip = RenderSessionListView(
-                rows, filtered, selected_idx, hovered_idx,
-                query, search_focused, sort_mode,
-                current_project_only, model_filter);
-            auto preview = RenderDetailsPreview(row, msgs, preview_button);
-            return hbox({
-                list_strip | flex | size(WIDTH, LESS_THAN, 55),
-                preview    | flex,
-            });
+    case ScreenView::DetailsPreview: {
+        if (filtered.empty()) {
+            return RenderSessionListView(rows, filtered, selected_idx, hovered_idx, query,
+                                         search_focused, sort_mode, current_project_only,
+                                         model_filter);
         }
+        const std::size_t safe = std::min(selected_idx, filtered.size() - 1);
+        const auto& row = rows[filtered[safe].row_index];
+        const auto& msgs = preview_cache.value_or(std::vector<Message>{});
+        // Split layout: left = compact list strip, right = preview.
+        auto list_strip =
+            RenderSessionListView(rows, filtered, selected_idx, hovered_idx, query, search_focused,
+                                  sort_mode, current_project_only, model_filter);
+        auto preview = RenderDetailsPreview(row, msgs, preview_button);
+        return hbox({
+            list_strip | flex | size(WIDTH, LESS_THAN, 55),
+            preview | flex,
+        });
+    }
 
-        case ScreenView::EditTitle: {
-            if (filtered.empty()) {
-                return RenderSessionListView(
-                    rows, filtered, selected_idx, hovered_idx,
-                    query, search_focused, sort_mode,
-                    current_project_only, model_filter);
-            }
-            const std::size_t safe = std::min(selected_idx, filtered.size() - 1);
-            const auto& row = rows[filtered[safe].row_index];
-            return RenderEditTitleDialog(row, edit_draft, edit_has_error);
+    case ScreenView::EditTitle: {
+        if (filtered.empty()) {
+            return RenderSessionListView(rows, filtered, selected_idx, hovered_idx, query,
+                                         search_focused, sort_mode, current_project_only,
+                                         model_filter);
         }
+        const std::size_t safe = std::min(selected_idx, filtered.size() - 1);
+        const auto& row = rows[filtered[safe].row_index];
+        return RenderEditTitleDialog(row, edit_draft, edit_has_error);
+    }
 
-        case ScreenView::DeleteConfirm:
-            // (The TrustDialog component is injected by the caller — we
-            //  only render a backdrop hint.)
-            return RenderSessionListView(
-                rows, filtered, selected_idx, hovered_idx,
-                query, search_focused, sort_mode,
-                current_project_only, model_filter) | dim;
+    case ScreenView::DeleteConfirm:
+        // (The TrustDialog component is injected by the caller — we
+        //  only render a backdrop hint.)
+        return RenderSessionListView(rows, filtered, selected_idx, hovered_idx, query,
+                                     search_focused, sort_mode, current_project_only,
+                                     model_filter) |
+               dim;
     }
     return text("");
 }
@@ -1151,17 +1132,17 @@ struct ResumeScreenAction {
         NewConversation,
         ImportConversation,
         BrowseHistory,
-        ResumeSession,      // payload: session_id
-        OpenSessionFull,    // payload: session_id
-        RenameSession,      // payload: session_id + new_title
-        DeleteSession,      // payload: session_id
-        ShareSession,       // payload: session_id
+        ResumeSession,    // payload: session_id
+        OpenSessionFull,  // payload: session_id
+        RenameSession,    // payload: session_id + new_title
+        DeleteSession,    // payload: session_id
+        ShareSession,     // payload: session_id
         Cancel,
-        QuickPickNumber,    // payload: index (0-based) into recent sessions
+        QuickPickNumber,  // payload: index (0-based) into recent sessions
     };
     Kind kind = Kind::None;
     std::string session_id{};
-    std::string extra{};   // rename: new_title;  share: session_id too
+    std::string extra{};  // rename: new_title;  share: session_id too
     std::size_t index = 0;
 };
 
@@ -1179,13 +1160,11 @@ struct ResumeScreenOptions {
     std::function<void(const ResumeScreenAction&)> on_action;
 
     // Optional: lazy preview loader (reads last N messages on demand).
-    std::function<std::vector<Message>(const std::string& session_id,
-                                       std::size_t limit)>
+    std::function<std::vector<Message>(const std::string& session_id, std::size_t limit)>
         load_preview;
 
     // Optional: title persister.
-    std::function<void(const std::string& session_id, std::string new_title)>
-        persist_title;
+    std::function<void(const std::string& session_id, std::string new_title)> persist_title;
 
     // Optional: delete persister.
     std::function<void(const std::string& session_id)> persist_delete;
@@ -1205,7 +1184,7 @@ struct ResumeScreenState {
 
     ScreenView view = ScreenView::WelcomeEmpty;
     std::size_t selected_idx = 0;
-    std::size_t hovered_idx  = 0;
+    std::size_t hovered_idx = 0;
 
     // Search
     std::string query;
@@ -1217,7 +1196,7 @@ struct ResumeScreenState {
     std::string model_filter;
 
     // Details preview
-    int preview_button = 1;   // default = Resume
+    int preview_button = 1;  // default = Resume
     std::optional<std::vector<Message>> preview_cache;
     std::string preview_for_session_id;
 
@@ -1231,9 +1210,8 @@ struct ResumeScreenState {
 
 /// Refresh `filtered` based on current search + sort + filter state.
 inline void refresh_filtered(ResumeScreenState& s) {
-    s.filtered = apply_filter_sort(
-        s.rows, s.query, s.sort_mode,
-        s.current_project_only, s.model_filter);
+    s.filtered =
+        apply_filter_sort(s.rows, s.query, s.sort_mode, s.current_project_only, s.model_filter);
     if (s.selected_idx >= s.filtered.size() && !s.filtered.empty()) {
         s.selected_idx = s.filtered.size() - 1;
     }
@@ -1252,7 +1230,7 @@ inline void ensure_preview_loaded(ResumeScreenState& s) {
     const std::size_t safe = std::min(s.selected_idx, s.filtered.size() - 1);
     const auto& row = s.rows[s.filtered[safe].row_index];
     if (s.preview_cache && s.preview_for_session_id == row.session_id) {
-        return; // Already loaded
+        return;  // Already loaded
     }
 
     // Try custom loader first.
@@ -1294,15 +1272,13 @@ inline void ensure_preview_loaded(ResumeScreenState& s) {
     if (!state->opts.prefetched_rows.empty()) {
         state->rows = std::move(state->opts.prefetched_rows);
     } else if (state->opts.store) {
-        state->rows = build_rows_from_store(
-            *state->opts.store, state->opts.current_project_path);
+        state->rows = build_rows_from_store(*state->opts.store, state->opts.current_project_path);
     }
     refresh_filtered(*state);
 
     // Decide initial view.
-    state->view = (state->rows.empty() || state->opts.force_welcome)
-        ? ScreenView::WelcomeEmpty
-        : ScreenView::SessionList;
+    state->view = (state->rows.empty() || state->opts.force_welcome) ? ScreenView::WelcomeEmpty
+                                                                     : ScreenView::SessionList;
     state->loading = false;
 
     auto emit = [state](const ResumeScreenAction& a) {
@@ -1310,454 +1286,451 @@ inline void ensure_preview_loaded(ResumeScreenState& s) {
     };
 
     auto base = Renderer([state] {
-        return RenderResumeScreen(
-            state->rows, state->filtered,
-            state->view,
-            state->selected_idx,
-            state->hovered_idx,
-            state->query,
-            state->search_focused,
-            state->sort_mode,
-            state->current_project_only,
-            state->model_filter,
-            state->preview_button,
-            state->edit_draft,
-            state->edit_has_error,
-            state->preview_cache,
-            state->loading);
+        return RenderResumeScreen(state->rows, state->filtered, state->view, state->selected_idx,
+                                  state->hovered_idx, state->query, state->search_focused,
+                                  state->sort_mode, state->current_project_only,
+                                  state->model_filter, state->preview_button, state->edit_draft,
+                                  state->edit_has_error, state->preview_cache, state->loading);
     });
 
     // ---- Event handling ----
     return base | CatchEvent([state, emit](Event event) -> bool {
-        const auto count = state->filtered.size();
+               const auto count = state->filtered.size();
 
-        // ──────────────────────────────────────────────────────────
-        // Shared: Escape — always backs out one level
-        // ──────────────────────────────────────────────────────────
-        if (event == Event::Escape) {
-            switch (state->view) {
-                case ScreenView::WelcomeEmpty:
-                    emit({ResumeScreenAction::Kind::Cancel});
-                    return true;
-                case ScreenView::SessionList:
-                    // Switch back to Welcome if available, else Cancel.
-                    if (state->rows.empty()) {
-                        emit({ResumeScreenAction::Kind::Cancel});
-                    } else {
-                        state->view = ScreenView::WelcomeEmpty;
-                    }
-                    return true;
-                case ScreenView::DetailsPreview:
-                    state->view = ScreenView::SessionList;
-                    return true;
-                case ScreenView::EditTitle:
-                    state->view = ScreenView::SessionList;
-                    state->edit_draft.clear();
-                    state->edit_has_error = false;
-                    return true;
-                case ScreenView::DeleteConfirm:
-                    state->view = ScreenView::SessionList;
-                    return true;
-            }
-            return true;
-        }
+               // ──────────────────────────────────────────────────────────
+               // Shared: Escape — always backs out one level
+               // ──────────────────────────────────────────────────────────
+               if (event == Event::Escape) {
+                   switch (state->view) {
+                   case ScreenView::WelcomeEmpty:
+                       emit({ResumeScreenAction::Kind::Cancel});
+                       return true;
+                   case ScreenView::SessionList:
+                       // Switch back to Welcome if available, else Cancel.
+                       if (state->rows.empty()) {
+                           emit({ResumeScreenAction::Kind::Cancel});
+                       } else {
+                           state->view = ScreenView::WelcomeEmpty;
+                       }
+                       return true;
+                   case ScreenView::DetailsPreview:
+                       state->view = ScreenView::SessionList;
+                       return true;
+                   case ScreenView::EditTitle:
+                       state->view = ScreenView::SessionList;
+                       state->edit_draft.clear();
+                       state->edit_has_error = false;
+                       return true;
+                   case ScreenView::DeleteConfirm:
+                       state->view = ScreenView::SessionList;
+                       return true;
+                   }
+                   return true;
+               }
 
-        // ──────────────────────────────────────────────────────────
-        // WelcomeEmpty hotkeys
-        // ──────────────────────────────────────────────────────────
-        if (state->view == ScreenView::WelcomeEmpty) {
-            if (event == Event::Return
-                || event == Event::Character('n')
-                || event == Event::Character('N'))
-            {
-                emit({ResumeScreenAction::Kind::NewConversation});
-                return true;
-            }
-            if (event == Event::Character('i') || event == Event::Character('I')) {
-                emit({ResumeScreenAction::Kind::ImportConversation});
-                return true;
-            }
-            if (event == Event::Character('b') || event == Event::Character('B')
-                || event == Event::ArrowDown || event == Event::Character('j'))
-            {
-                if (!state->rows.empty()) {
-                    state->view = ScreenView::SessionList;
-                    state->selected_idx = 0;
-                    state->hovered_idx = 0;
-                    return true;
-                }
-                return false;
-            }
-            // Quick pick: 1…5
-            if (event.is_character()) {
-                char c = event.character()[0];
-                if (c >= '1' && c <= '9') {
-                    const std::size_t k = static_cast<std::size_t>(c - '1');
-                    auto recent = apply_filter_sort(
-                        state->rows, "", SortMode::NewestFirst,
-                        state->current_project_only, "");
-                    if (k < recent.size()) {
-                        // Translate → select that row & switch to list view.
-                        // Find its position in `filtered`.
-                        const auto row_idx = recent[k].row_index;
-                        refresh_filtered(*state);
-                        for (std::size_t i = 0; i < state->filtered.size(); ++i) {
-                            if (state->filtered[i].row_index == row_idx) {
-                                state->selected_idx = i;
-                                state->hovered_idx = i;
-                                break;
-                            }
-                        }
-                        state->view = ScreenView::SessionList;
-                        // Directly resume?  Spec says "quick pick = resume",
-                        // so fire a QuickPickNumber action for the parent to
-                        // decide and also mark the selection.
-                        ResumeScreenAction a;
-                        a.kind = ResumeScreenAction::Kind::QuickPickNumber;
-                        a.index = k;
-                        a.session_id = state->rows[row_idx].session_id;
-                        emit(a);
-                        return true;
-                    }
-                }
-            }
-            return false;
-        }
+               // ──────────────────────────────────────────────────────────
+               // WelcomeEmpty hotkeys
+               // ──────────────────────────────────────────────────────────
+               if (state->view == ScreenView::WelcomeEmpty) {
+                   if (event == Event::Return || event == Event::Character('n') ||
+                       event == Event::Character('N')) {
+                       emit({ResumeScreenAction::Kind::NewConversation});
+                       return true;
+                   }
+                   if (event == Event::Character('i') || event == Event::Character('I')) {
+                       emit({ResumeScreenAction::Kind::ImportConversation});
+                       return true;
+                   }
+                   if (event == Event::Character('b') || event == Event::Character('B') ||
+                       event == Event::ArrowDown || event == Event::Character('j')) {
+                       if (!state->rows.empty()) {
+                           state->view = ScreenView::SessionList;
+                           state->selected_idx = 0;
+                           state->hovered_idx = 0;
+                           return true;
+                       }
+                       return false;
+                   }
+                   // Quick pick: 1…5
+                   if (event.is_character()) {
+                       char c = event.character()[0];
+                       if (c >= '1' && c <= '9') {
+                           const std::size_t k = static_cast<std::size_t>(c - '1');
+                           auto recent = apply_filter_sort(state->rows, "", SortMode::NewestFirst,
+                                                           state->current_project_only, "");
+                           if (k < recent.size()) {
+                               // Translate → select that row & switch to list view.
+                               // Find its position in `filtered`.
+                               const auto row_idx = recent[k].row_index;
+                               refresh_filtered(*state);
+                               for (std::size_t i = 0; i < state->filtered.size(); ++i) {
+                                   if (state->filtered[i].row_index == row_idx) {
+                                       state->selected_idx = i;
+                                       state->hovered_idx = i;
+                                       break;
+                                   }
+                               }
+                               state->view = ScreenView::SessionList;
+                               // Directly resume?  Spec says "quick pick = resume",
+                               // so fire a QuickPickNumber action for the parent to
+                               // decide and also mark the selection.
+                               ResumeScreenAction a;
+                               a.kind = ResumeScreenAction::Kind::QuickPickNumber;
+                               a.index = k;
+                               a.session_id = state->rows[row_idx].session_id;
+                               emit(a);
+                               return true;
+                           }
+                       }
+                   }
+                   return false;
+               }
 
-        // ──────────────────────────────────────────────────────────
-        // EditTitle dialog: type + Enter(save) / Esc(cancel) / Tab(reset)
-        // ──────────────────────────────────────────────────────────
-        if (state->view == ScreenView::EditTitle) {
-            if (event == Event::Return) {
-                if (state->edit_draft.empty()) {
-                    state->edit_has_error = true;
-                    return true;
-                }
-                if (count == 0) return true;
-                const std::size_t safe = std::min(state->selected_idx, count - 1);
-                auto& row = state->rows[state->filtered[safe].row_index];
-                row.title = state->edit_draft;
-                row.has_custom_title = true;
-                if (state->opts.persist_title) {
-                    state->opts.persist_title(row.session_id, row.title);
-                }
-                // Apply immediately to store if available.
-                if (state->opts.store) {
-                    if (state->opts.store->switch_conversation(row.session_id)) {
-                        auto* conv = state->opts.store->get_active_conversation();
-                        if (conv) conv->set_title(row.title);
-                    }
-                }
-                ResumeScreenAction a;
-                a.kind = ResumeScreenAction::Kind::RenameSession;
-                a.session_id = row.session_id;
-                a.extra = row.title;
-                emit(a);
-                state->edit_draft.clear();
-                state->edit_has_error = false;
-                state->view = ScreenView::SessionList;
-                return true;
-            }
-            if (event == Event::Tab) {
-                if (count > 0) {
-                    const std::size_t safe = std::min(state->selected_idx, count - 1);
-                    state->edit_draft =
-                        state->rows[state->filtered[safe].row_index].title;
-                    state->edit_has_error = false;
-                }
-                return true;
-            }
-            if (event == Event::Backspace) {
-                if (!state->edit_draft.empty()) {
-                    state->edit_draft.pop_back();
-                    state->edit_has_error = false;
-                }
-                return true;
-            }
-            if (event.is_character() && event.character().size() == 1) {
-                const char c = event.character()[0];
-                // Reject control-ish characters.
-                if (c >= 0x20 && c < 0x7f) {
-                    state->edit_draft.push_back(c);
-                    state->edit_has_error = false;
-                    return true;
-                }
-            }
-            return false;
-        }
+               // ──────────────────────────────────────────────────────────
+               // EditTitle dialog: type + Enter(save) / Esc(cancel) / Tab(reset)
+               // ──────────────────────────────────────────────────────────
+               if (state->view == ScreenView::EditTitle) {
+                   if (event == Event::Return) {
+                       if (state->edit_draft.empty()) {
+                           state->edit_has_error = true;
+                           return true;
+                       }
+                       if (count == 0) return true;
+                       const std::size_t safe = std::min(state->selected_idx, count - 1);
+                       auto& row = state->rows[state->filtered[safe].row_index];
+                       row.title = state->edit_draft;
+                       row.has_custom_title = true;
+                       if (state->opts.persist_title) {
+                           state->opts.persist_title(row.session_id, row.title);
+                       }
+                       // Apply immediately to store if available.
+                       if (state->opts.store) {
+                           if (state->opts.store->switch_conversation(row.session_id)) {
+                               auto* conv = state->opts.store->get_active_conversation();
+                               if (conv) conv->set_title(row.title);
+                           }
+                       }
+                       ResumeScreenAction a;
+                       a.kind = ResumeScreenAction::Kind::RenameSession;
+                       a.session_id = row.session_id;
+                       a.extra = row.title;
+                       emit(a);
+                       state->edit_draft.clear();
+                       state->edit_has_error = false;
+                       state->view = ScreenView::SessionList;
+                       return true;
+                   }
+                   if (event == Event::Tab) {
+                       if (count > 0) {
+                           const std::size_t safe = std::min(state->selected_idx, count - 1);
+                           state->edit_draft = state->rows[state->filtered[safe].row_index].title;
+                           state->edit_has_error = false;
+                       }
+                       return true;
+                   }
+                   if (event == Event::Backspace) {
+                       if (!state->edit_draft.empty()) {
+                           state->edit_draft.pop_back();
+                           state->edit_has_error = false;
+                       }
+                       return true;
+                   }
+                   if (event.is_character() && event.character().size() == 1) {
+                       const char c = event.character()[0];
+                       // Reject control-ish characters.
+                       if (c >= 0x20 && c < 0x7f) {
+                           state->edit_draft.push_back(c);
+                           state->edit_has_error = false;
+                           return true;
+                       }
+                   }
+                   return false;
+               }
 
-        // ──────────────────────────────────────────────────────────
-        // DetailsPreview: button navigation + Enter / Esc
-        // ──────────────────────────────────────────────────────────
-        if (state->view == ScreenView::DetailsPreview) {
-            if (event == Event::ArrowLeft || event == Event::Character('h')) {
-                state->preview_button = std::max(0, state->preview_button - 1);
-                return true;
-            }
-            if (event == Event::ArrowRight || event == Event::Character('l')) {
-                state->preview_button = std::min(2, state->preview_button + 1);
-                return true;
-            }
-            if (event == Event::Return || event == Event::Character(' ')) {
-                if (count == 0) return true;
-                const std::size_t safe = std::min(state->selected_idx, count - 1);
-                const auto& row = state->rows[state->filtered[safe].row_index];
-                ResumeScreenAction a;
-                a.session_id = row.session_id;
-                switch (state->preview_button) {
-                    case 0: a.kind = ResumeScreenAction::Kind::OpenSessionFull; break;
-                    case 1: a.kind = ResumeScreenAction::Kind::ResumeSession;   break;
-                    default:
-                        // Cancel
-                        state->view = ScreenView::SessionList;
-                        return true;
-                }
-                emit(a);
-                return true;
-            }
-            // Fall through — list navigation still works.
-        }
+               // ──────────────────────────────────────────────────────────
+               // DetailsPreview: button navigation + Enter / Esc
+               // ──────────────────────────────────────────────────────────
+               if (state->view == ScreenView::DetailsPreview) {
+                   if (event == Event::ArrowLeft || event == Event::Character('h')) {
+                       state->preview_button = std::max(0, state->preview_button - 1);
+                       return true;
+                   }
+                   if (event == Event::ArrowRight || event == Event::Character('l')) {
+                       state->preview_button = std::min(2, state->preview_button + 1);
+                       return true;
+                   }
+                   if (event == Event::Return || event == Event::Character(' ')) {
+                       if (count == 0) return true;
+                       const std::size_t safe = std::min(state->selected_idx, count - 1);
+                       const auto& row = state->rows[state->filtered[safe].row_index];
+                       ResumeScreenAction a;
+                       a.session_id = row.session_id;
+                       switch (state->preview_button) {
+                       case 0:
+                           a.kind = ResumeScreenAction::Kind::OpenSessionFull;
+                           break;
+                       case 1:
+                           a.kind = ResumeScreenAction::Kind::ResumeSession;
+                           break;
+                       default:
+                           // Cancel
+                           state->view = ScreenView::SessionList;
+                           return true;
+                       }
+                       emit(a);
+                       return true;
+                   }
+                   // Fall through — list navigation still works.
+               }
 
-        // ──────────────────────────────────────────────────────────
-        // Search-mode: typing is captured only if search_focused
-        // ──────────────────────────────────────────────────────────
-        if (state->view == ScreenView::SessionList
-            || state->view == ScreenView::DetailsPreview)
-        {
-            // Toggle search mode with '/'
-            if (event == Event::Character('/')) {
-                state->search_focused = true;
-                state->query.clear();
-                return true;
-            }
-            if (state->search_focused) {
-                if (event == Event::Return) {
-                    state->search_focused = false;
-                    refresh_filtered(*state);
-                    return true;
-                }
-                if (event == Event::Backspace) {
-                    if (!state->query.empty()) {
-                        state->query.pop_back();
-                        refresh_filtered(*state);
-                    }
-                    return true;
-                }
-                if (event.is_character() && event.character().size() == 1) {
-                    const char c = event.character()[0];
-                    if (c >= 0x20 && c < 0x7f) {
-                        state->query.push_back(c);
-                        refresh_filtered(*state);
-                        return true;
-                    }
-                }
-                return false;
-            }
-        }
+               // ──────────────────────────────────────────────────────────
+               // Search-mode: typing is captured only if search_focused
+               // ──────────────────────────────────────────────────────────
+               if (state->view == ScreenView::SessionList ||
+                   state->view == ScreenView::DetailsPreview) {
+                   // Toggle search mode with '/'
+                   if (event == Event::Character('/')) {
+                       state->search_focused = true;
+                       state->query.clear();
+                       return true;
+                   }
+                   if (state->search_focused) {
+                       if (event == Event::Return) {
+                           state->search_focused = false;
+                           refresh_filtered(*state);
+                           return true;
+                       }
+                       if (event == Event::Backspace) {
+                           if (!state->query.empty()) {
+                               state->query.pop_back();
+                               refresh_filtered(*state);
+                           }
+                           return true;
+                       }
+                       if (event.is_character() && event.character().size() == 1) {
+                           const char c = event.character()[0];
+                           if (c >= 0x20 && c < 0x7f) {
+                               state->query.push_back(c);
+                               refresh_filtered(*state);
+                               return true;
+                           }
+                       }
+                       return false;
+                   }
+               }
 
-        // ──────────────────────────────────────────────────────────
-        // SessionList + DetailsPreview: navigation + actions
-        // ──────────────────────────────────────────────────────────
-        {
-            const bool list_view =
-                (state->view == ScreenView::SessionList) ||
-                (state->view == ScreenView::DetailsPreview);
+               // ──────────────────────────────────────────────────────────
+               // SessionList + DetailsPreview: navigation + actions
+               // ──────────────────────────────────────────────────────────
+               {
+                   const bool list_view = (state->view == ScreenView::SessionList) ||
+                                          (state->view == ScreenView::DetailsPreview);
 
-            if (list_view) {
-                // Up / Down
-                if (event == Event::ArrowUp || event == Event::Character('k')) {
-                    if (count > 0) {
-                        if (state->selected_idx > 0) --state->selected_idx;
-                        state->hovered_idx = state->selected_idx;
-                    }
-                    return true;
-                }
-                if (event == Event::ArrowDown || event == Event::Character('j')) {
-                    if (state->selected_idx + 1 < count) ++state->selected_idx;
-                    state->hovered_idx = state->selected_idx;
-                    return true;
-                }
-                // Shift-Up / Shift-Down → change hover only (no simple way in
-                // FTXUI for shift + arrow; we use 'K'/'J' for hover-only.)
-                if (event == Event::Character('K') && count > 0) {
-                    if (state->hovered_idx > 0) --state->hovered_idx;
-                    return true;
-                }
-                if (event == Event::Character('J') && count > 0) {
-                    if (state->hovered_idx + 1 < count) ++state->hovered_idx;
-                    return true;
-                }
-                // PageUp / PageDown (approximate: 10 steps)
-                if (event == Event::PageUp) {
-                    state->selected_idx = (state->selected_idx >= 10)
-                        ? state->selected_idx - 10 : 0;
-                    state->hovered_idx = state->selected_idx;
-                    return true;
-                }
-                if (event == Event::PageDown) {
-                    state->selected_idx = std::min(count - 1, state->selected_idx + 10);
-                    state->hovered_idx = state->selected_idx;
-                    return true;
-                }
-                // gg / G (we can't detect multi-key, so use 'g' = top, 'G' = end)
-                if (event == Event::Character('g') && count > 0) {
-                    state->selected_idx = 0;
-                    state->hovered_idx = 0;
-                    return true;
-                }
-                if (event == Event::Character('G') && count > 0) {
-                    state->selected_idx = count - 1;
-                    state->hovered_idx = count - 1;
-                    return true;
-                }
-                // Home / End
-                if (event == Event::Home && count > 0) {
-                    state->selected_idx = 0;
-                    state->hovered_idx = 0;
-                    return true;
-                }
-                if (event == Event::End && count > 0) {
-                    state->selected_idx = count - 1;
-                    state->hovered_idx = count - 1;
-                    return true;
-                }
+                   if (list_view) {
+                       // Up / Down
+                       if (event == Event::ArrowUp || event == Event::Character('k')) {
+                           if (count > 0) {
+                               if (state->selected_idx > 0) --state->selected_idx;
+                               state->hovered_idx = state->selected_idx;
+                           }
+                           return true;
+                       }
+                       if (event == Event::ArrowDown || event == Event::Character('j')) {
+                           if (state->selected_idx + 1 < count) ++state->selected_idx;
+                           state->hovered_idx = state->selected_idx;
+                           return true;
+                       }
+                       // Shift-Up / Shift-Down → change hover only (no simple way in
+                       // FTXUI for shift + arrow; we use 'K'/'J' for hover-only.)
+                       if (event == Event::Character('K') && count > 0) {
+                           if (state->hovered_idx > 0) --state->hovered_idx;
+                           return true;
+                       }
+                       if (event == Event::Character('J') && count > 0) {
+                           if (state->hovered_idx + 1 < count) ++state->hovered_idx;
+                           return true;
+                       }
+                       // PageUp / PageDown (approximate: 10 steps)
+                       if (event == Event::PageUp) {
+                           state->selected_idx =
+                               (state->selected_idx >= 10) ? state->selected_idx - 10 : 0;
+                           state->hovered_idx = state->selected_idx;
+                           return true;
+                       }
+                       if (event == Event::PageDown) {
+                           state->selected_idx = std::min(count - 1, state->selected_idx + 10);
+                           state->hovered_idx = state->selected_idx;
+                           return true;
+                       }
+                       // gg / G (we can't detect multi-key, so use 'g' = top, 'G' = end)
+                       if (event == Event::Character('g') && count > 0) {
+                           state->selected_idx = 0;
+                           state->hovered_idx = 0;
+                           return true;
+                       }
+                       if (event == Event::Character('G') && count > 0) {
+                           state->selected_idx = count - 1;
+                           state->hovered_idx = count - 1;
+                           return true;
+                       }
+                       // Home / End
+                       if (event == Event::Home && count > 0) {
+                           state->selected_idx = 0;
+                           state->hovered_idx = 0;
+                           return true;
+                       }
+                       if (event == Event::End && count > 0) {
+                           state->selected_idx = count - 1;
+                           state->hovered_idx = count - 1;
+                           return true;
+                       }
 
-                // Toggles: sort, project filter, model filter, clear filters
-                if (event == Event::Character('t') || event == Event::Character('T')) {
-                    switch (state->sort_mode) {
-                        case SortMode::NewestFirst: state->sort_mode = SortMode::OldestFirst; break;
-                        case SortMode::OldestFirst: state->sort_mode = SortMode::TitleAsc;    break;
-                        case SortMode::TitleAsc:    state->sort_mode = SortMode::ModelAsc;    break;
-                        case SortMode::ModelAsc:    state->sort_mode = SortMode::NewestFirst; break;
-                    }
-                    refresh_filtered(*state);
-                    return true;
-                }
-                if (event == Event::Character('p') || event == Event::Character('P')) {
-                    state->current_project_only = !state->current_project_only;
-                    refresh_filtered(*state);
-                    return true;
-                }
-                if (event == Event::Character('m') || event == Event::Character('M')) {
-                    // Cycle through common model names (or prompt).
-                    // For simplicity we cycle: "" → first model we see → next.
-                    // If no model data available, toggle is a no-op.
-                    std::vector<std::string> seen = {""};
-                    for (const auto& r : state->rows) {
-                        if (r.model_name && !r.model_name->empty()) {
-                            bool dup = false;
-                            for (const auto& s : seen) if (s == *r.model_name) { dup = true; break; }
-                            if (!dup) seen.push_back(*r.model_name);
-                        }
-                    }
-                    if (seen.size() > 1) {
-                        auto it = std::find(seen.begin(), seen.end(), state->model_filter);
-                        std::size_t p = (it == seen.end()) ? 0 : (it - seen.begin());
-                        p = (p + 1) % seen.size();
-                        state->model_filter = seen[p];
-                        refresh_filtered(*state);
-                    }
-                    return true;
-                }
-                if (event == Event::Character('c') || event == Event::Character('C')) {
-                    state->query.clear();
-                    state->model_filter.clear();
-                    state->current_project_only = true;
-                    state->sort_mode = SortMode::NewestFirst;
-                    refresh_filtered(*state);
-                    return true;
-                }
+                       // Toggles: sort, project filter, model filter, clear filters
+                       if (event == Event::Character('t') || event == Event::Character('T')) {
+                           switch (state->sort_mode) {
+                           case SortMode::NewestFirst:
+                               state->sort_mode = SortMode::OldestFirst;
+                               break;
+                           case SortMode::OldestFirst:
+                               state->sort_mode = SortMode::TitleAsc;
+                               break;
+                           case SortMode::TitleAsc:
+                               state->sort_mode = SortMode::ModelAsc;
+                               break;
+                           case SortMode::ModelAsc:
+                               state->sort_mode = SortMode::NewestFirst;
+                               break;
+                           }
+                           refresh_filtered(*state);
+                           return true;
+                       }
+                       if (event == Event::Character('p') || event == Event::Character('P')) {
+                           state->current_project_only = !state->current_project_only;
+                           refresh_filtered(*state);
+                           return true;
+                       }
+                       if (event == Event::Character('m') || event == Event::Character('M')) {
+                           // Cycle through common model names (or prompt).
+                           // For simplicity we cycle: "" → first model we see → next.
+                           // If no model data available, toggle is a no-op.
+                           std::vector<std::string> seen = {""};
+                           for (const auto& r : state->rows) {
+                               if (r.model_name && !r.model_name->empty()) {
+                                   bool dup = false;
+                                   for (const auto& s : seen)
+                                       if (s == *r.model_name) {
+                                           dup = true;
+                                           break;
+                                       }
+                                   if (!dup) seen.push_back(*r.model_name);
+                               }
+                           }
+                           if (seen.size() > 1) {
+                               auto it = std::find(seen.begin(), seen.end(), state->model_filter);
+                               std::size_t p = (it == seen.end()) ? 0 : (it - seen.begin());
+                               p = (p + 1) % seen.size();
+                               state->model_filter = seen[p];
+                               refresh_filtered(*state);
+                           }
+                           return true;
+                       }
+                       if (event == Event::Character('c') || event == Event::Character('C')) {
+                           state->query.clear();
+                           state->model_filter.clear();
+                           state->current_project_only = true;
+                           state->sort_mode = SortMode::NewestFirst;
+                           refresh_filtered(*state);
+                           return true;
+                       }
 
-                // Enter = resume / open details
-                if (event == Event::Return) {
-                    if (count == 0) return true;
-                    if (state->view == ScreenView::DetailsPreview) {
-                        // Already handled above; should not reach here.
-                        return true;
-                    }
-                    // Open details preview + load lazy preview.
-                    state->view = ScreenView::DetailsPreview;
-                    state->preview_button = 1;  // Resume by default
-                    ensure_preview_loaded(*state);
-                    return true;
-                }
-                // Space = quick resume (skips preview)
-                if (event == Event::Character(' ')) {
-                    if (count == 0) return true;
-                    const std::size_t safe = std::min(state->selected_idx, count - 1);
-                    const auto& row = state->rows[state->filtered[safe].row_index];
-                    ResumeScreenAction a;
-                    a.kind = ResumeScreenAction::Kind::ResumeSession;
-                    a.session_id = row.session_id;
-                    emit(a);
-                    return true;
-                }
+                       // Enter = resume / open details
+                       if (event == Event::Return) {
+                           if (count == 0) return true;
+                           if (state->view == ScreenView::DetailsPreview) {
+                               // Already handled above; should not reach here.
+                               return true;
+                           }
+                           // Open details preview + load lazy preview.
+                           state->view = ScreenView::DetailsPreview;
+                           state->preview_button = 1;  // Resume by default
+                           ensure_preview_loaded(*state);
+                           return true;
+                       }
+                       // Space = quick resume (skips preview)
+                       if (event == Event::Character(' ')) {
+                           if (count == 0) return true;
+                           const std::size_t safe = std::min(state->selected_idx, count - 1);
+                           const auto& row = state->rows[state->filtered[safe].row_index];
+                           ResumeScreenAction a;
+                           a.kind = ResumeScreenAction::Kind::ResumeSession;
+                           a.session_id = row.session_id;
+                           emit(a);
+                           return true;
+                       }
 
-                // E = Edit title
-                if (event == Event::Character('e') || event == Event::Character('E')) {
-                    if (count == 0) return true;
-                    const std::size_t safe = std::min(state->selected_idx, count - 1);
-                    state->edit_draft =
-                        state->rows[state->filtered[safe].row_index].title;
-                    state->edit_has_error = false;
-                    state->view = ScreenView::EditTitle;
-                    return true;
-                }
-                // Delete / Backspace = open delete-confirm dialog
-                if (event == Event::Delete || event == Event::Character('d')
-                    || event == Event::Character('D'))
-                {
-                    if (count == 0) return true;
-                    const std::size_t safe = std::min(state->selected_idx, count - 1);
-                    const auto& row = state->rows[state->filtered[safe].row_index];
+                       // E = Edit title
+                       if (event == Event::Character('e') || event == Event::Character('E')) {
+                           if (count == 0) return true;
+                           const std::size_t safe = std::min(state->selected_idx, count - 1);
+                           state->edit_draft = state->rows[state->filtered[safe].row_index].title;
+                           state->edit_has_error = false;
+                           state->view = ScreenView::EditTitle;
+                           return true;
+                       }
+                       // Delete / Backspace = open delete-confirm dialog
+                       if (event == Event::Delete || event == Event::Character('d') ||
+                           event == Event::Character('D')) {
+                           if (count == 0) return true;
+                           const std::size_t safe = std::min(state->selected_idx, count - 1);
+                           const auto& row = state->rows[state->filtered[safe].row_index];
 
-                    state->view = ScreenView::DeleteConfirm;
+                           state->view = ScreenView::DeleteConfirm;
 
-                    // Build and emit a delete-confirmation request so the
-                    // REPL shell can overlay the UI8 TrustDialog component.
-                    // The shell calls back through persist_delete / on_action
-                    // with the TrustChoice.
-                    //
-                    // We hand back the TrustDialogProps via the `extra`
-                    // field of a synthetic action; the shell must detect
-                    // Kind::DeleteSession and invoke
-                    // MakeTrustDialogComponent(MakeDeleteSessionTrustProps(...))
-                    // itself.  (This avoids a circular dependency with the
-                    // Component container here.)
-                    ResumeScreenAction a;
-                    a.kind = ResumeScreenAction::Kind::DeleteSession;
-                    a.session_id = row.session_id;
-                    a.extra = row.title;
-                    emit(a);
-                    return true;
-                }
-                // S = Share (placeholder)
-                if (event == Event::Character('s') || event == Event::Character('S')) {
-                    if (count == 0) return true;
-                    const std::size_t safe = std::min(state->selected_idx, count - 1);
-                    const auto& row = state->rows[state->filtered[safe].row_index];
-                    ResumeScreenAction a;
-                    a.kind = ResumeScreenAction::Kind::ShareSession;
-                    a.session_id = row.session_id;
-                    emit(a);
-                    return true;
-                }
+                           // Build and emit a delete-confirmation request so the
+                           // REPL shell can overlay the UI8 TrustDialog component.
+                           // The shell calls back through persist_delete / on_action
+                           // with the TrustChoice.
+                           //
+                           // We hand back the TrustDialogProps via the `extra`
+                           // field of a synthetic action; the shell must detect
+                           // Kind::DeleteSession and invoke
+                           // MakeTrustDialogComponent(MakeDeleteSessionTrustProps(...))
+                           // itself.  (This avoids a circular dependency with the
+                           // Component container here.)
+                           ResumeScreenAction a;
+                           a.kind = ResumeScreenAction::Kind::DeleteSession;
+                           a.session_id = row.session_id;
+                           a.extra = row.title;
+                           emit(a);
+                           return true;
+                       }
+                       // S = Share (placeholder)
+                       if (event == Event::Character('s') || event == Event::Character('S')) {
+                           if (count == 0) return true;
+                           const std::size_t safe = std::min(state->selected_idx, count - 1);
+                           const auto& row = state->rows[state->filtered[safe].row_index];
+                           ResumeScreenAction a;
+                           a.kind = ResumeScreenAction::Kind::ShareSession;
+                           a.session_id = row.session_id;
+                           emit(a);
+                           return true;
+                       }
 
-                // N = new conversation (also works from list view)
-                if (event == Event::Character('n') || event == Event::Character('N')) {
-                    emit({ResumeScreenAction::Kind::NewConversation});
-                    return true;
-                }
-                // W = go back to welcome screen
-                if (event == Event::Character('w') || event == Event::Character('W')) {
-                    state->view = ScreenView::WelcomeEmpty;
-                    return true;
-                }
-            }
-        }
+                       // N = new conversation (also works from list view)
+                       if (event == Event::Character('n') || event == Event::Character('N')) {
+                           emit({ResumeScreenAction::Kind::NewConversation});
+                           return true;
+                       }
+                       // W = go back to welcome screen
+                       if (event == Event::Character('w') || event == Event::Character('W')) {
+                           state->view = ScreenView::WelcomeEmpty;
+                           return true;
+                       }
+                   }
+               }
 
-        return false;
-    });
+               return false;
+           });
 }
 
 // ===========================================================================
@@ -1765,11 +1738,10 @@ inline void ensure_preview_loaded(ResumeScreenState& s) {
 // currently-selected row.  (Convenience wrapper so callers don't need to
 // re-read the row from storage a second time.)
 // ===========================================================================
-[[nodiscard]] inline Component MakeDeleteSessionTrustDialog(
-    const SessionMetaRow& row,
-    std::function<void(TrustChoice result)> on_done)
-{
+[[nodiscard]] inline Component
+MakeDeleteSessionTrustDialog(const SessionMetaRow& row,
+                             std::function<void(TrustChoice result)> on_done) {
     return MakeTrustDialogComponent(MakeDeleteSessionTrustProps(row, std::move(on_done)));
 }
 
-} // namespace loom::ui::resume_screen
+}  // namespace loom::ui::resume_screen

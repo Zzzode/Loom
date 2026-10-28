@@ -65,7 +65,8 @@ void set_hooks_config_snapshot(std::unique_ptr<HooksConfigSnapshot> snapshot);
 /// Grouped hooks for display in configuration UI
 struct GroupedHooks {
     std::unordered_map<HookEventType,
-        std::unordered_map<std::string, std::vector<IndividualHookConfig>>> by_event_and_matcher;
+                       std::unordered_map<std::string, std::vector<IndividualHookConfig>>>
+        by_event_and_matcher;
 };
 
 /// Manager for resolving and grouping hook configurations
@@ -78,31 +79,27 @@ public:
     }
 
     /// Group all hooks by event and matcher (for display)
-    [[nodiscard]] GroupedHooks group_hooks_by_event_and_matcher(
-        const std::vector<std::string>& tool_names) const;
+    [[nodiscard]] GroupedHooks
+    group_hooks_by_event_and_matcher(const std::vector<std::string>& tool_names) const;
 
     /// Get sorted matchers for a specific event
-    [[nodiscard]] std::vector<std::string> get_sorted_matchers_for_event(
-        const GroupedHooks& grouped,
-        HookEventType event) const;
+    [[nodiscard]] std::vector<std::string>
+    get_sorted_matchers_for_event(const GroupedHooks& grouped, HookEventType event) const;
 
     /// Get hooks for a specific event and matcher
-    [[nodiscard]] std::vector<IndividualHookConfig> get_hooks_for_matcher(
-        const GroupedHooks& grouped,
-        HookEventType event,
-        std::optional<std::string_view> matcher) const;
+    [[nodiscard]] std::vector<IndividualHookConfig>
+    get_hooks_for_matcher(const GroupedHooks& grouped, HookEventType event,
+                          std::optional<std::string_view> matcher) const;
 
     /// Get matcher metadata for a specific event
-    [[nodiscard]] std::optional<MatcherMetadata> get_matcher_metadata(
-        HookEventType event,
-        const std::vector<std::string>& tool_names) const;
+    [[nodiscard]] std::optional<MatcherMetadata>
+    get_matcher_metadata(HookEventType event, const std::vector<std::string>& tool_names) const;
 
     /// Get all hooks from all sources
     [[nodiscard]] std::vector<IndividualHookConfig> get_all_hooks() const;
 
     /// Get hooks filtered by event type
-    [[nodiscard]] std::vector<IndividualHookConfig> get_hooks_for_event(
-        HookEventType event) const;
+    [[nodiscard]] std::vector<IndividualHookConfig> get_hooks_for_event(HookEventType event) const;
 
     /// Invalidate cached configuration (call after settings change)
     void invalidate_cache();
@@ -115,8 +112,7 @@ private:
 
 // ── HooksConfigManager implementation ──────────────────────────────────────
 
-inline std::vector<IndividualHookConfig>
-HooksConfigManager::get_all_hooks() const {
+inline std::vector<IndividualHookConfig> HooksConfigManager::get_all_hooks() const {
     // Returns all hooks from all sources (user settings, project settings,
     // skill hooks, plugin hooks).  The full loading pipeline (settings file
     // parsing, skill frontmatter scanning, plugin hook registration) is not
@@ -220,17 +216,14 @@ public:
     }
 
     /// Add a function hook to a specific session
-    void add_function_hook(
-        std::string_view session_id,
-        HookEventType event,
-        std::string_view matcher,
-        FunctionHookPredicate predicate,
-        std::string failure_message,
-        std::optional<std::chrono::milliseconds> timeout = std::nullopt);
+    void add_function_hook(std::string_view session_id, HookEventType event,
+                           std::string_view matcher, FunctionHookPredicate predicate,
+                           std::string failure_message,
+                           std::optional<std::chrono::milliseconds> timeout = std::nullopt);
 
     /// Get all session hooks for a session, grouped by event
     [[nodiscard]] std::unordered_map<HookEventType, std::vector<HookMatcher>>
-        get_session_hooks(std::string_view session_id) const;
+    get_session_hooks(std::string_view session_id) const;
 
     /// Clear all hooks for a specific session
     void clear_session_hooks(std::string_view session_id);
@@ -335,9 +328,9 @@ public:
     void record_outcome(SkillHookOutcomeRecord record);
 
     /// Get recent outcomes for a skill
-    [[nodiscard]] std::vector<SkillHookOutcomeRecord> get_outcomes(
-        std::string_view skill_name,
-        std::optional<std::size_t> limit = std::nullopt) const;
+    [[nodiscard]] std::vector<SkillHookOutcomeRecord>
+    get_outcomes(std::string_view skill_name,
+                 std::optional<std::size_t> limit = std::nullopt) const;
 
     /// Get the success rate for a skill's hooks
     [[nodiscard]] double get_success_rate(std::string_view skill_name) const;
@@ -351,4 +344,4 @@ private:
     std::vector<SkillHookOutcomeRecord> outcomes_;
 };
 
-} // namespace loom::utils::hooks_config
+}  // namespace loom::utils::hooks_config

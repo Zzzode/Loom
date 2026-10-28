@@ -25,9 +25,9 @@
 ///   - Bottom-anchored "floating" look when used in overlay/bottom slots
 module;
 
-#include <cstdint>
-
 #include <ftxui/dom/elements.hpp>
+
+#include <cstdint>
 
 export module loom.ui.dialogs.frame;
 
@@ -56,29 +56,34 @@ namespace pc = loom::ui::permissions::components;
 /// Danger/Error map to the error color (used only by the Sandbox
 /// bypass-permissions dialog).
 enum class FrameStyle : std::uint8_t {
-    Permission,     ///< Default dialog frame
-    Info,          ///< Auxiliary info-blue
-    Success,       ///< Green
-    Warning,       ///< Yellow/orange
-    Danger,        ///< Red (high risk, alias of Error)
-    Error,         ///< Sandbox bypass dialogs
-    Critical,      ///< Bold red (critical risk)
-    Muted,         ///< Dim border
+    Permission,  ///< Default dialog frame
+    Info,        ///< Auxiliary info-blue
+    Success,     ///< Green
+    Warning,     ///< Yellow/orange
+    Danger,      ///< Red (high risk, alias of Error)
+    Error,       ///< Sandbox bypass dialogs
+    Critical,    ///< Bold red (critical risk)
+    Muted,       ///< Dim border
 };
 
 /// Get the border color for a frame style.
 /// Color semantics: Permission/Suggestion share a value.
-[[nodiscard]] inline Color frame_border_color(FrameStyle style,
-                                              const Theme& theme) {
+[[nodiscard]] inline Color frame_border_color(FrameStyle style, const Theme& theme) {
     switch (style) {
-        case FrameStyle::Permission: return theme.color_for(Role::Permission);
-        case FrameStyle::Info:       return theme.color_for(Role::Info);
-        case FrameStyle::Success:    return theme.color_for(Role::Success);
-        case FrameStyle::Warning:    return theme.color_for(Role::Warning);
-        case FrameStyle::Danger:
-        case FrameStyle::Error:
-        case FrameStyle::Critical:   return theme.color_for(Role::Danger);
-        case FrameStyle::Muted:      return theme.color_for(Role::Muted);
+    case FrameStyle::Permission:
+        return theme.color_for(Role::Permission);
+    case FrameStyle::Info:
+        return theme.color_for(Role::Info);
+    case FrameStyle::Success:
+        return theme.color_for(Role::Success);
+    case FrameStyle::Warning:
+        return theme.color_for(Role::Warning);
+    case FrameStyle::Danger:
+    case FrameStyle::Error:
+    case FrameStyle::Critical:
+        return theme.color_for(Role::Danger);
+    case FrameStyle::Muted:
+        return theme.color_for(Role::Muted);
     }
     return theme.color_for(Role::Permission);
 }
@@ -161,11 +166,9 @@ struct DialogFrameProps {
 // ============================================================
 
 /// Build a standard dialog frame with title, subtitle, and content.
-[[nodiscard]] inline Element DialogFrame(const DialogFrameProps& props,
-                                          const Theme& theme) {
+[[nodiscard]] inline Element DialogFrame(const DialogFrameProps& props, const Theme& theme) {
     // Resolve border color: explicit override wins, otherwise derive from FrameStyle.
-    auto border_col = props.color_override.value_or(
-        frame_border_color(props.style, theme));
+    auto border_col = props.color_override.value_or(frame_border_color(props.style, theme));
 
     // ---- Title row ----
     auto title_el = [&]() -> Element {
@@ -216,21 +219,22 @@ struct DialogFrameProps {
     //
     // `inner_padding_x` adds INSIDE the pane padding so callers that need
     // extra breathing room (e.g. settings tab content) still work.
-    const int pane_padding_x =
-        props.pane_variant == PaneVariant::ModalMinimal ? 1 : 2;
+    const int pane_padding_x = props.pane_variant == PaneVariant::ModalMinimal ? 1 : 2;
     const int total_pad_x = pane_padding_x + props.inner_padding_x;
 
     auto padded_content = [&]() -> Element {
         auto c = props.content;
         if (total_pad_x > 0) {
             auto pad = std::string(total_pad_x, ' ');
-            c = hbox({ text(pad), c | xflex, text(pad) });
+            c = hbox({text(pad), c | xflex, text(pad)});
         }
         if (props.inner_padding_y > 0) {
             Elements ys;
-            for (int i = 0; i < props.inner_padding_y; ++i) ys.push_back(text(""));
+            for (int i = 0; i < props.inner_padding_y; ++i)
+                ys.push_back(text(""));
             ys.push_back(c);
-            for (int i = 0; i < props.inner_padding_y; ++i) ys.push_back(text(""));
+            for (int i = 0; i < props.inner_padding_y; ++i)
+                ys.push_back(text(""));
             c = vbox(ys);
         }
         return c;
@@ -282,7 +286,8 @@ struct DialogFrameProps {
         body_els.push_back(divider_row);
     }
     // Title + subtitle block.
-    for (auto& el : outer_header_els) body_els.push_back(std::move(el));
+    for (auto& el : outer_header_els)
+        body_els.push_back(std::move(el));
 
     // ThinDivider between header and content (present in BOTH modes — it
     // demarcates the title area from the body, matching the legacy layout
@@ -308,9 +313,8 @@ struct DialogFrameProps {
 // ============================================================
 
 /// Build a simple info dialog frame with title and message.
-[[nodiscard]] inline Element SimpleInfoFrame(std::string_view title,
-                                              std::string_view message,
-                                              const Theme& theme) {
+[[nodiscard]] inline Element SimpleInfoFrame(std::string_view title, std::string_view message,
+                                             const Theme& theme) {
     DialogFrameProps props;
     props.title = std::string{title};
     props.style = FrameStyle::Info;
@@ -319,9 +323,8 @@ struct DialogFrameProps {
 }
 
 /// Build a warning dialog frame with title and message.
-[[nodiscard]] inline Element SimpleWarningFrame(std::string_view title,
-                                                 std::string_view message,
-                                                 const Theme& theme) {
+[[nodiscard]] inline Element SimpleWarningFrame(std::string_view title, std::string_view message,
+                                                const Theme& theme) {
     DialogFrameProps props;
     props.title = std::string{title};
     props.style = FrameStyle::Warning;
@@ -330,9 +333,8 @@ struct DialogFrameProps {
 }
 
 /// Build a danger dialog frame with title and message.
-[[nodiscard]] inline Element SimpleDangerFrame(std::string_view title,
-                                                std::string_view message,
-                                                const Theme& theme) {
+[[nodiscard]] inline Element SimpleDangerFrame(std::string_view title, std::string_view message,
+                                               const Theme& theme) {
     DialogFrameProps props;
     props.title = std::string{title};
     props.style = FrameStyle::Danger;
@@ -345,8 +347,7 @@ struct DialogFrameProps {
 // ============================================================
 
 /// Render a worker badge (shown in dialog title for worker-initiated requests).
-[[nodiscard]] inline Element WorkerBadge(std::string_view worker_id,
-                                          const Theme& theme) {
+[[nodiscard]] inline Element WorkerBadge(std::string_view worker_id, const Theme& theme) {
     return hbox({
         text((std::string{loom::ui::design::figures::kDiamond} + " ")) | dim,
         text(std::string{worker_id}) | bold | color(theme.color_for(Role::Info)) | dim,
@@ -354,8 +355,7 @@ struct DialogFrameProps {
 }
 
 /// Render a compact worker dot badge (for smaller dialogs).
-[[nodiscard]] inline Element WorkerBadgeCompact(std::string_view worker_id,
-                                                 const Theme& theme) {
+[[nodiscard]] inline Element WorkerBadgeCompact(std::string_view worker_id, const Theme& theme) {
     return hbox({
         text("●") | color(theme.color_for(Role::Info)),
         text(" "),
@@ -363,4 +363,4 @@ struct DialogFrameProps {
     });
 }
 
-} // namespace loom::ui::dialogs::frame
+}  // namespace loom::ui::dialogs::frame

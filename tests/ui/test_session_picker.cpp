@@ -2,14 +2,14 @@
 /// @brief Session picker dialog tests: filtering, navigation, rendering.
 /// Split from test_dialog_system.cpp (SLOC budget).
 
-#include <cstdlib>
-
-#include <gtest/gtest.h>
+#include <ftxui/component/component.hpp>
+#include <ftxui/component/event.hpp>
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/dom/node.hpp>
 #include <ftxui/screen/screen.hpp>
-#include <ftxui/component/component.hpp>
-#include <ftxui/component/event.hpp>
+#include <gtest/gtest.h>
+
+#include <cstdlib>
 
 import std;
 import loom.ui.dialogs.system;
@@ -34,9 +34,8 @@ namespace dsys = loom::ui::dialogs::system;
 // SessionPicker test helpers
 // ============================================================
 
-dsys::SessionPickerPayload MakePickerPayload(
-    std::vector<dsys::SessionPickerEntry> sessions,
-    std::function<void(const std::string&)> on_select) {
+dsys::SessionPickerPayload MakePickerPayload(std::vector<dsys::SessionPickerEntry> sessions,
+                                             std::function<void(const std::string&)> on_select) {
     dsys::SessionPickerPayload p;
     p.id = "test-session-picker";
     p.query = "";
@@ -48,16 +47,28 @@ dsys::SessionPickerPayload MakePickerPayload(
 
 std::vector<dsys::SessionPickerEntry> MakeTestSessions() {
     return {
-        {.session_id = "aaa11111", .title = "Fix the login bug",
-         .age_string = "2h ago", .message_count = 10, .cwd = "/home/user/project-a", .model = "test"},
-        {.session_id = "bbb22222", .title = "Add dark mode",
-         .age_string = "5h ago", .message_count = 25, .cwd = "/home/user/project-b", .model = "test"},
-        {.session_id = "ccc33333", .title = "Refactor parser",
-         .age_string = "1d ago", .message_count = 8, .cwd = "/home/user/project-c", .model = "test"},
+        {.session_id = "aaa11111",
+         .title = "Fix the login bug",
+         .age_string = "2h ago",
+         .message_count = 10,
+         .cwd = "/home/user/project-a",
+         .model = "test"},
+        {.session_id = "bbb22222",
+         .title = "Add dark mode",
+         .age_string = "5h ago",
+         .message_count = 25,
+         .cwd = "/home/user/project-b",
+         .model = "test"},
+        {.session_id = "ccc33333",
+         .title = "Refactor parser",
+         .age_string = "1d ago",
+         .message_count = 8,
+         .cwd = "/home/user/project-c",
+         .model = "test"},
     };
 }
 
-} // namespace
+}  // namespace
 
 TEST(SessionPicker, FiltersByTitle) {
     auto sessions = MakeTestSessions();
@@ -102,15 +113,19 @@ TEST(SessionPicker, NavigatesUpDown) {
 
     // Down wraps
     EXPECT_EQ(p.selected_index, 0);
-    EXPECT_TRUE(loom::ui::dialogs::session_picker::HandleSessionPickerEvent(p, ftxui::Event::ArrowDown));
+    EXPECT_TRUE(
+        loom::ui::dialogs::session_picker::HandleSessionPickerEvent(p, ftxui::Event::ArrowDown));
     EXPECT_EQ(p.selected_index, 1);
-    EXPECT_TRUE(loom::ui::dialogs::session_picker::HandleSessionPickerEvent(p, ftxui::Event::ArrowDown));
+    EXPECT_TRUE(
+        loom::ui::dialogs::session_picker::HandleSessionPickerEvent(p, ftxui::Event::ArrowDown));
     EXPECT_EQ(p.selected_index, 2);
-    EXPECT_TRUE(loom::ui::dialogs::session_picker::HandleSessionPickerEvent(p, ftxui::Event::ArrowDown));
+    EXPECT_TRUE(
+        loom::ui::dialogs::session_picker::HandleSessionPickerEvent(p, ftxui::Event::ArrowDown));
     EXPECT_EQ(p.selected_index, 0);  // wrap to top
 
     // Up wraps
-    EXPECT_TRUE(loom::ui::dialogs::session_picker::HandleSessionPickerEvent(p, ftxui::Event::ArrowUp));
+    EXPECT_TRUE(
+        loom::ui::dialogs::session_picker::HandleSessionPickerEvent(p, ftxui::Event::ArrowUp));
     EXPECT_EQ(p.selected_index, 2);  // wrap to bottom
 }
 
@@ -118,9 +133,11 @@ TEST(SessionPicker, NavigatesJK) {
     auto sessions = MakeTestSessions();
     auto p = MakePickerPayload(sessions, nullptr);
 
-    EXPECT_TRUE(loom::ui::dialogs::session_picker::HandleSessionPickerEvent(p, ftxui::Event::Character('j')));
+    EXPECT_TRUE(loom::ui::dialogs::session_picker::HandleSessionPickerEvent(
+        p, ftxui::Event::Character('j')));
     EXPECT_EQ(p.selected_index, 1);
-    EXPECT_TRUE(loom::ui::dialogs::session_picker::HandleSessionPickerEvent(p, ftxui::Event::Character('k')));
+    EXPECT_TRUE(loom::ui::dialogs::session_picker::HandleSessionPickerEvent(
+        p, ftxui::Event::Character('k')));
     EXPECT_EQ(p.selected_index, 0);
 }
 
@@ -130,7 +147,8 @@ TEST(SessionPicker, EnterSelects) {
     auto p = MakePickerPayload(sessions, [&](const std::string& id) { selected_id = id; });
 
     p.selected_index = 1;
-    EXPECT_TRUE(loom::ui::dialogs::session_picker::HandleSessionPickerEvent(p, ftxui::Event::Return));
+    EXPECT_TRUE(
+        loom::ui::dialogs::session_picker::HandleSessionPickerEvent(p, ftxui::Event::Return));
     EXPECT_EQ(selected_id, "bbb22222");
 }
 
@@ -139,7 +157,8 @@ TEST(SessionPicker, EscapeCancels) {
     std::string selected_id = "untouched";
     auto p = MakePickerPayload(sessions, [&](const std::string& id) { selected_id = id; });
 
-    EXPECT_TRUE(loom::ui::dialogs::session_picker::HandleSessionPickerEvent(p, ftxui::Event::Escape));
+    EXPECT_TRUE(
+        loom::ui::dialogs::session_picker::HandleSessionPickerEvent(p, ftxui::Event::Escape));
     EXPECT_TRUE(selected_id.empty());
 }
 
@@ -148,7 +167,8 @@ TEST(SessionPicker, TypingFiltersAndResetsSelection) {
     auto p = MakePickerPayload(sessions, nullptr);
 
     p.selected_index = 2;
-    EXPECT_TRUE(loom::ui::dialogs::session_picker::HandleSessionPickerEvent(p, ftxui::Event::Character('l')));
+    EXPECT_TRUE(loom::ui::dialogs::session_picker::HandleSessionPickerEvent(
+        p, ftxui::Event::Character('l')));
     EXPECT_EQ(p.query, "l");
     EXPECT_EQ(p.selected_index, 0);  // reset on filter change
 }
@@ -159,7 +179,8 @@ TEST(SessionPicker, BackspaceEditsQuery) {
 
     p.query = "log";
     p.selected_index = 1;
-    EXPECT_TRUE(loom::ui::dialogs::session_picker::HandleSessionPickerEvent(p, ftxui::Event::Backspace));
+    EXPECT_TRUE(
+        loom::ui::dialogs::session_picker::HandleSessionPickerEvent(p, ftxui::Event::Backspace));
     EXPECT_EQ(p.query, "lo");
     EXPECT_EQ(p.selected_index, 0);  // reset on filter change
 }
@@ -169,11 +190,13 @@ TEST(SessionPicker, PageUpDown) {
     auto p = MakePickerPayload(sessions, nullptr);
 
     p.selected_index = 2;
-    EXPECT_TRUE(loom::ui::dialogs::session_picker::HandleSessionPickerEvent(p, ftxui::Event::PageUp));
+    EXPECT_TRUE(
+        loom::ui::dialogs::session_picker::HandleSessionPickerEvent(p, ftxui::Event::PageUp));
     EXPECT_EQ(p.selected_index, 0);  // 2 - 8 clamped to 0
 
     p.selected_index = 0;
-    EXPECT_TRUE(loom::ui::dialogs::session_picker::HandleSessionPickerEvent(p, ftxui::Event::PageDown));
+    EXPECT_TRUE(
+        loom::ui::dialogs::session_picker::HandleSessionPickerEvent(p, ftxui::Event::PageDown));
     EXPECT_EQ(p.selected_index, 2);  // 0 + 8 clamped to count-1=2
 }
 
@@ -195,8 +218,7 @@ TEST(SessionPicker, TriggerPushesStandalone) {
 
     std::string selected_id;
     loom::ui::dialogs::triggers::PushSessionPicker(
-        queue, std::move(sessions),
-        [&](const std::string& id) { selected_id = id; });
+        queue, std::move(sessions), [&](const std::string& id) { selected_id = id; });
 
     // The picker is a standalone dialog.
     EXPECT_TRUE(queue.has_standalone());
@@ -222,8 +244,7 @@ TEST(SessionPicker, TriggerEscapePopsStandalone) {
 
     std::string selected_id = "untouched";
     loom::ui::dialogs::triggers::PushSessionPicker(
-        queue, std::move(sessions),
-        [&](const std::string& id) { selected_id = id; });
+        queue, std::move(sessions), [&](const std::string& id) { selected_id = id; });
 
     EXPECT_TRUE(queue.has_standalone());
     auto peeked = queue.peek_standalone_mut();

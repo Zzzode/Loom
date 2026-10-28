@@ -1,12 +1,13 @@
 // WebFetchTool - Fetches web content from URLs
 module;
 
-#include <cerrno>
-#include <cstdio>
 #include <fcntl.h>
 #include <signal.h>
 #include <sys/wait.h>
 #include <unistd.h>
+
+#include <cerrno>
+#include <cstdio>
 
 export module loom.tools.web_fetch;
 
@@ -28,19 +29,20 @@ struct CurlRunResult {
 [[nodiscard]] inline auto shell_quote(std::string_view s) -> std::string {
     std::string out = "'";
     for (char ch : s) {
-        if (ch == '\'') out += R"('\'')";
-        else out += ch;
+        if (ch == '\'')
+            out += R"('\'')";
+        else
+            out += ch;
     }
     out += "'";
     return out;
 }
 
-[[nodiscard]] inline auto run_curl_with_cancel(
-    std::string_view url,
-    std::function<bool()> should_cancel
-) -> std::expected<CurlRunResult, std::string> {
-    const auto cmd = "curl -fsSL --noproxy localhost,127.0.0.1,::1 --max-time 30 " +
-        shell_quote(url) + " 2>&1";
+[[nodiscard]] inline auto run_curl_with_cancel(std::string_view url,
+                                               std::function<bool()> should_cancel)
+    -> std::expected<CurlRunResult, std::string> {
+    const auto cmd =
+        "curl -fsSL --noproxy localhost,127.0.0.1,::1 --max-time 30 " + shell_quote(url) + " 2>&1";
     int pipefd[2]{-1, -1};
     if (pipe(pipefd) != 0) return std::unexpected("failed to create curl pipe");
 
@@ -125,7 +127,8 @@ struct CurlRunResult {
     return std::move(result->output);
 }
 
-[[nodiscard]] inline auto parse_url(std::string_view json) -> std::expected<std::string, std::string> {
+[[nodiscard]] inline auto parse_url(std::string_view json)
+    -> std::expected<std::string, std::string> {
     auto parsed = loom::utils::json::parse(json);
     if (!parsed || !parsed->root().is_obj()) {
         return std::unexpected("Invalid JSON input");
@@ -138,15 +141,15 @@ struct CurlRunResult {
 
     return std::string(url.as_str());
 }
-}
+}  // namespace detail
 
-using loom::core::Tool;
-using loom::core::ToolInput;
-using loom::core::ToolResult;
-using loom::core::ToolDefinition;
-using loom::core::ToolPermission;
 using loom::core::InputSchema;
 using loom::core::SchemaProperty;
+using loom::core::Tool;
+using loom::core::ToolDefinition;
+using loom::core::ToolInput;
+using loom::core::ToolPermission;
+using loom::core::ToolResult;
 using loom::utils::Result;
 
 // =========================================================================
@@ -157,36 +160,29 @@ using loom::utils::Result;
 class WebFetchTool {
 public:
     static constexpr std::string_view kName = "WebFetch";
-    static constexpr std::string_view kDescription = 
-        "Fetch the contents of a web page from a URL.";
-    
+    static constexpr std::string_view kDescription = "Fetch the contents of a web page from a URL.";
+
     static ToolDefinition definition() {
-        return ToolDefinition{
-            .name = std::string(kName),
-            .description = std::string(kDescription),
-            .input_schema = InputSchema{
-                .properties = {
-                    SchemaProperty{
-                        .name = "url",
-                        .type = "string",
-                        .description = "URL to fetch content from",
-                        .required = true,
-                        .default_value = std::nullopt,
-                        .enum_values = std::nullopt
-                    }
-                }
-            },
-            .permission = ToolPermission::Network,
-            .category = "network"
-        };
+        return ToolDefinition{.name = std::string(kName),
+                              .description = std::string(kDescription),
+                              .input_schema =
+                                  InputSchema{.properties = {SchemaProperty{
+                                                  .name = "url",
+                                                  .type = "string",
+                                                  .description = "URL to fetch content from",
+                                                  .required = true,
+                                                  .default_value = std::nullopt,
+                                                  .enum_values = std::nullopt}}},
+                              .permission = ToolPermission::Network,
+                              .category = "network"};
     }
-    
+
     WebFetchTool() = default;
-    
+
     [[nodiscard]] bool check_permission([[maybe_unused]] const ToolInput& input) const {
         return true;
     }
-    
+
     [[nodiscard]] Result<ToolResult> execute(const ToolInput& input) {
         auto parsed_url = detail::parse_url(input.json());
         if (!parsed_url) {
@@ -203,29 +199,33 @@ public:
     }
 };
 
-} // namespace loom::tools::web_fetch
+}  // namespace loom::tools::web_fetch
 
 // Export main tool class
 export namespace loom::tools {
-    using loom::tools::web_fetch::WebFetchTool;
+using loom::tools::web_fetch::WebFetchTool;
 
-    /// Factory: create WebFetchTool wrapped as ITool (adapts Result types across modules)
-    [[nodiscard]] auto make_web_fetch_tool() -> std::unique_ptr<loom::core::ITool> {
-        struct Adapter final : loom::core::ITool {
-            WebFetchTool tool_;
-            loom::core::ToolDefinition def_ = WebFetchTool::definition();
+/// Factory: create WebFetchTool wrapped as ITool (adapts Result types across modules)
+[[nodiscard]] auto make_web_fetch_tool() -> std::unique_ptr<loom::core::ITool> {
+    struct Adapter final : loom::core::ITool {
+        WebFetchTool tool_;
+        loom::core::ToolDefinition def_ = WebFetchTool::definition();
 
-            const loom::core::ToolDefinition& definition() const override { return def_; }
-            std::expected<loom::core::ToolResult, loom::core::Error> execute(const loom::core::ToolInput& input) override {
-                auto result = tool_.execute(input);
-                if (result) return std::move(*result);
-                return std::unexpected(loom::core::Error::make(
-                    loom::core::ErrorCode::ToolExecutionFailed, result.error().format()));
-            }
-            bool check_permission(const loom::core::ToolInput& input) const override {
-                return tool_.check_permission(input);
-            }
-        };
-        return std::make_unique<Adapter>();
-    }
+        const loom::core::ToolDefinition& definition() const override { return def_; }
+
+        std::expected<loom::core::ToolResult, loom::core::Error>
+        execute(const loom::core::ToolInput& input) override {
+            auto result = tool_.execute(input);
+            if (result) return std::move(*result);
+            return std::unexpected(loom::core::Error::make(
+                loom::core::ErrorCode::ToolExecutionFailed, result.error().format()));
+        }
+
+        bool check_permission(const loom::core::ToolInput& input) const override {
+            return tool_.check_permission(input);
+        }
+    };
+
+    return std::make_unique<Adapter>();
 }
+}  // namespace loom::tools

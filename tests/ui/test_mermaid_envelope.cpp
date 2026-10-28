@@ -1,9 +1,9 @@
 // RFC 0031 E1 structural envelope tests. This translation unit reaches the
 // closed parser exclusively through the loom.ui.visual.mermaid.testing seam
 // facade (RFC 0031 E6a); it never declares the production module.
-#include <gtest/gtest.h>
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/screen/screen.hpp>
+#include <gtest/gtest.h>
 
 import std;
 import loom.ui.visual.markdown;
@@ -13,8 +13,8 @@ namespace {
 
 using loom::ui::mermaid::testing::Envelope;
 using loom::ui::mermaid::testing::EnvelopeScalarForm;
-using loom::ui::mermaid::testing::Work;
 using loom::ui::mermaid::testing::parse_envelope;
+using loom::ui::mermaid::testing::Work;
 
 std::optional<Envelope> parse(std::string_view source, Work& work) {
     return parse_envelope(source, work);
@@ -39,16 +39,15 @@ TEST(MermaidEnvelope, NoFrontmatterKeepsWholeSource) {
 }
 
 TEST(MermaidEnvelope, DescriptionAndNestedConfig) {
-    std::string source =
-        "---\n"
-        "description: hello\n"
-        "config:\n"
-        "  layout: dagre\n"
-        "  flowchart:\n"
-        "    htmlLabels: true\n"
-        "---\n"
-        "flowchart TD\n"
-        "A-->B\n";
+    std::string source = "---\n"
+                         "description: hello\n"
+                         "config:\n"
+                         "  layout: dagre\n"
+                         "  flowchart:\n"
+                         "    htmlLabels: true\n"
+                         "---\n"
+                         "flowchart TD\n"
+                         "A-->B\n";
     Work work;
     const auto envelope = parse(source, work);
     ASSERT_TRUE(envelope);
@@ -64,15 +63,14 @@ TEST(MermaidEnvelope, DescriptionAndNestedConfig) {
 }
 
 TEST(MermaidEnvelope, FoldedDescriptionKeepsRawLines) {
-    std::string source =
-        "---\n"
-        "description: >-\n"
-        "  line one\n"
-        "  line two\n"
-        "\n"
-        "  line three\n"
-        "---\n"
-        "flowchart TD\n";
+    std::string source = "---\n"
+                         "description: >-\n"
+                         "  line one\n"
+                         "  line two\n"
+                         "\n"
+                         "  line three\n"
+                         "---\n"
+                         "flowchart TD\n";
     Work work;
     const auto envelope = parse(source, work);
     ASSERT_TRUE(envelope);
@@ -84,14 +82,13 @@ TEST(MermaidEnvelope, FoldedDescriptionKeepsRawLines) {
 }
 
 TEST(MermaidEnvelope, LiteralConfigBlock) {
-    std::string source =
-        "---\n"
-        "config:\n"
-        "  themeCSS: |\n"
-        "    .a { color: red; }\n"
-        "    .b { color: blue; }\n"
-        "---\n"
-        "erDiagram\n";
+    std::string source = "---\n"
+                         "config:\n"
+                         "  themeCSS: |\n"
+                         "    .a { color: red; }\n"
+                         "    .b { color: blue; }\n"
+                         "---\n"
+                         "erDiagram\n";
     Work work;
     const auto envelope = parse(source, work);
     ASSERT_TRUE(envelope);
@@ -103,11 +100,10 @@ TEST(MermaidEnvelope, LiteralConfigBlock) {
 }
 
 TEST(MermaidEnvelope, QuotedTitle) {
-    std::string source =
-        "---\n"
-        "title: \"Hello: world\"\n"
-        "---\n"
-        "classDiagram\n";
+    std::string source = "---\n"
+                         "title: \"Hello: world\"\n"
+                         "---\n"
+                         "classDiagram\n";
     Work work;
     const auto envelope = parse(source, work);
     ASSERT_TRUE(envelope);
@@ -117,35 +113,32 @@ TEST(MermaidEnvelope, QuotedTitle) {
 }
 
 TEST(MermaidEnvelope, DuplicateTopLevelRejected) {
-    std::string source =
-        "---\n"
-        "title: A\n"
-        "title: B\n"
-        "---\n"
-        "classDiagram\n";
+    std::string source = "---\n"
+                         "title: A\n"
+                         "title: B\n"
+                         "---\n"
+                         "classDiagram\n";
     Work work;
     EXPECT_FALSE(parse(source, work));
 }
 
 TEST(MermaidEnvelope, DuplicateConfigPathRejected) {
-    std::string source =
-        "---\n"
-        "config:\n"
-        "  layout: dagre\n"
-        "  layout: elk\n"
-        "---\n"
-        "flowchart TD\n";
+    std::string source = "---\n"
+                         "config:\n"
+                         "  layout: dagre\n"
+                         "  layout: elk\n"
+                         "---\n"
+                         "flowchart TD\n";
     Work work;
     EXPECT_FALSE(parse(source, work));
 }
 
 TEST(MermaidEnvelope, UnknownTopLevelIsAnEvent) {
-    std::string source =
-        "---\n"
-        "description: x\n"
-        "coveredShapes: 3\n"
-        "---\n"
-        "flowchart TD\n";
+    std::string source = "---\n"
+                         "description: x\n"
+                         "coveredShapes: 3\n"
+                         "---\n"
+                         "flowchart TD\n";
     Work work;
     const auto envelope = parse(source, work);
     ASSERT_TRUE(envelope);
@@ -162,12 +155,11 @@ TEST(MermaidEnvelope, MissingClosingFenceRejected) {
 }
 
 TEST(MermaidEnvelope, CrLfBodyOffset) {
-    std::string source =
-        "---\r\n"
-        "description: x\r\n"
-        "---\r\n"
-        "flowchart TD\r\n"
-        "A-->B\r\n";
+    std::string source = "---\r\n"
+                         "description: x\r\n"
+                         "---\r\n"
+                         "flowchart TD\r\n"
+                         "A-->B\r\n";
     Work work;
     const auto envelope = parse(source, work);
     ASSERT_TRUE(envelope);
@@ -177,13 +169,12 @@ TEST(MermaidEnvelope, CrLfBodyOffset) {
 }
 
 TEST(MermaidEnvelope, LeadingInitIsExposedAndSkipped) {
-    std::string source =
-        "---\n"
-        "description: x\n"
-        "---\n"
-        "%%{init: {\"theme\":\"dark\"}}%%\n"
-        "flowchart TD\n"
-        "A-->B\n";
+    std::string source = "---\n"
+                         "description: x\n"
+                         "---\n"
+                         "%%{init: {\"theme\":\"dark\"}}%%\n"
+                         "flowchart TD\n"
+                         "A-->B\n";
     Work work;
     const auto envelope = parse(source, work);
     ASSERT_TRUE(envelope);
@@ -195,33 +186,30 @@ TEST(MermaidEnvelope, LeadingInitIsExposedAndSkipped) {
 }
 
 TEST(MermaidEnvelope, ConfigDepthLimit) {
-    std::string source =
-        "---\n"
-        "config:\n"
-        "  a:\n"
-        "    b:\n"
-        "      c:\n"
-        "        d:\n"
-        "          e: 1\n"
-        "---\n"
-        "flowchart TD\n";
+    std::string source = "---\n"
+                         "config:\n"
+                         "  a:\n"
+                         "    b:\n"
+                         "      c:\n"
+                         "        d:\n"
+                         "          e: 1\n"
+                         "---\n"
+                         "flowchart TD\n";
     Work work;
     EXPECT_FALSE(parse(source, work));
 }
 
 TEST(MermaidEnvelope, DirectiveWithTrailingTextRejected) {
-    std::string source =
-        "%%{init: {\"theme\": \"dark\"}}%% trailing\n"
-        "flowchart TD\n";
+    std::string source = "%%{init: {\"theme\": \"dark\"}}%% trailing\n"
+                         "flowchart TD\n";
     Work work;
     EXPECT_FALSE(parse(source, work));
 }
 
 TEST(MermaidEnvelope, SecondDirectiveIsCaptured) {
-    std::string source =
-        "%%{init: {\"theme\": \"dark\"}}%%\n"
-        "%%{init: {\"theme\": \"forest\"}}%%\n"
-        "flowchart TD\n";
+    std::string source = "%%{init: {\"theme\": \"dark\"}}%%\n"
+                         "%%{init: {\"theme\": \"forest\"}}%%\n"
+                         "flowchart TD\n";
     Work work;
     const auto envelope = parse(source, work);
     ASSERT_TRUE(envelope);
@@ -230,11 +218,10 @@ TEST(MermaidEnvelope, SecondDirectiveIsCaptured) {
 }
 
 TEST(MermaidEnvelope, WorkBudgetExhaustionRejected) {
-    std::string source =
-        "---\n"
-        "description: x\n"
-        "---\n"
-        "flowchart TD\n";
+    std::string source = "---\n"
+                         "description: x\n"
+                         "---\n"
+                         "flowchart TD\n";
     Work work;
     work.remaining = 8u;
     EXPECT_FALSE(parse(source, work));
@@ -244,11 +231,10 @@ TEST(MermaidEnvelope, WorkBudgetExhaustionRejected) {
 // entry fee but not the frontmatter fee can only parse a no-frontmatter
 // envelope; a frontmatter source rejects after its closing fence is found.
 TEST(MermaidEnvelope, WorkBudgetSplitPhase) {
-    const std::string source =
-        "---\n"
-        "description: x\n"
-        "---\n"
-        "flowchart TD\n";
+    const std::string source = "---\n"
+                               "description: x\n"
+                               "---\n"
+                               "flowchart TD\n";
     // Balance above the entry fee but below the frontmatter fee: the
     // frontmatter source rejects (fee fires only on the has_frontmatter path).
     {
@@ -282,7 +268,10 @@ TEST(MermaidEnvelope, WorkBudgetSharedAcrossPhases) {
     for (std::size_t remaining = 1u; remaining < 5000000u; ++remaining) {
         Work work;
         work.remaining = remaining;
-        if (loom::ui::mermaid::testing::flow_ascii_rows(source, work)) { threshold = remaining; break; }
+        if (loom::ui::mermaid::testing::flow_ascii_rows(source, work)) {
+            threshold = remaining;
+            break;
+        }
     }
     ASSERT_GT(threshold, 0u);
     {
@@ -301,16 +290,15 @@ TEST(MermaidEnvelope, WorkBudgetSharedAcrossPhases) {
     EXPECT_GT(threshold, 4096u);
 }
 
-} // namespace
+}  // namespace
 
 TEST(MermaidEnvelope, EmptyDescriptionHeaderCollectsBlock) {
-    std::string source =
-        "---\n"
-        "description:\n"
-        "  Flow.\n"
-        "---\n"
-        "flowchart LR\n"
-        "A --> B\n";
+    std::string source = "---\n"
+                         "description:\n"
+                         "  Flow.\n"
+                         "---\n"
+                         "flowchart LR\n"
+                         "A --> B\n";
     Work work;
     const auto envelope = parse(source, work);
     ASSERT_TRUE(envelope);
@@ -322,13 +310,12 @@ TEST(MermaidEnvelope, EmptyDescriptionHeaderCollectsBlock) {
 }
 
 TEST(MermaidEnvelope, FlowEnvelopeRendersDirectly) {
-    std::string source =
-        "---\n"
-        "description:\n"
-        "  Flow.\n"
-        "---\n"
-        "flowchart LR\n"
-        "A --> B\n";
+    std::string source = "---\n"
+                         "description:\n"
+                         "  Flow.\n"
+                         "---\n"
+                         "flowchart LR\n"
+                         "A --> B\n";
     auto element = loom::ui::mermaid::render_mermaid(source, ftxui::text("fallback"));
     ASSERT_TRUE(element);
     auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(240), ftxui::Dimension::Fixed(20));
@@ -338,13 +325,12 @@ TEST(MermaidEnvelope, FlowEnvelopeRendersDirectly) {
 }
 
 TEST(MermaidEnvelope, FlowEnvelopeThroughMarkdown) {
-    std::string source =
-        "---\n"
-        "description:\n"
-        "  Flow.\n"
-        "---\n"
-        "flowchart LR\n"
-        "A --> B\n";
+    std::string source = "---\n"
+                         "description:\n"
+                         "  Flow.\n"
+                         "---\n"
+                         "flowchart LR\n"
+                         "A --> B\n";
     const auto markdown = "```mermaid\n" + source + "\n```\n\nAFTER_FLOW";
     auto element = loom::ui::render_markdown(markdown);
     auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(240), ftxui::Dimension::Fixed(20));
@@ -354,15 +340,14 @@ TEST(MermaidEnvelope, FlowEnvelopeThroughMarkdown) {
 }
 
 TEST(MermaidEnvelope, DagreBareRenders) {
-    std::string source =
-        "---\n"
-        "description:\n"
-        "  Flow.\n"
-        "config:\n"
-        "  layout: dagre\n"
-        "---\n"
-        "flowchart LR\n"
-        "A --> B\n";
+    std::string source = "---\n"
+                         "description:\n"
+                         "  Flow.\n"
+                         "config:\n"
+                         "  layout: dagre\n"
+                         "---\n"
+                         "flowchart LR\n"
+                         "A --> B\n";
     Work work;
     const auto envelope = parse(source, work);
     ASSERT_TRUE(envelope);
@@ -376,15 +361,14 @@ TEST(MermaidEnvelope, DagreBareRenders) {
 }
 
 TEST(MermaidEnvelope, ErCommentFrontmatterRendersDirectly) {
-    std::string source =
-        "---\n"
-        "# root comment\n"
-        "config: # config comment\n"
-        "  # leaf comment\n"
-        "  logLevel: 1.0 # debug\n"
-        "---\n"
-        "erDiagram\n"
-        "A ||--o{ B : linked\n";
+    std::string source = "---\n"
+                         "# root comment\n"
+                         "config: # config comment\n"
+                         "  # leaf comment\n"
+                         "  logLevel: 1.0 # debug\n"
+                         "---\n"
+                         "erDiagram\n"
+                         "A ||--o{ B : linked\n";
     Work work;
     const auto envelope = parse(source, work);
     ASSERT_TRUE(envelope);
@@ -400,14 +384,13 @@ TEST(MermaidEnvelope, ErCommentFrontmatterRendersDirectly) {
 }
 
 TEST(MermaidEnvelope, ErTitleRendersDirectly) {
-    std::string source =
-        "---\n"
-        "title: Visible authored title\n"
-        "config:\n"
-        "  logLevel: 1\n"
-        "---\n"
-        "erDiagram\n"
-        "A ||--o{ B : linked\n";
+    std::string source = "---\n"
+                         "title: Visible authored title\n"
+                         "config:\n"
+                         "  logLevel: 1\n"
+                         "---\n"
+                         "erDiagram\n"
+                         "A ||--o{ B : linked\n";
     Work work;
     const auto envelope = parse(source, work);
     ASSERT_TRUE(envelope);
@@ -422,14 +405,13 @@ TEST(MermaidEnvelope, ErTitleRendersDirectly) {
 }
 
 TEST(MermaidEnvelope, ErThemeCssBlockRendersDirectly) {
-    std::string source =
-        "---\n"
-        "config:\n"
-        "  themeCSS: |\n"
-        "    rect { fill: red; }\n"
-        "---\n"
-        "erDiagram\n"
-        "  CUSTOMER ||--o{ ORDER : places\n";
+    std::string source = "---\n"
+                         "config:\n"
+                         "  themeCSS: |\n"
+                         "    rect { fill: red; }\n"
+                         "---\n"
+                         "erDiagram\n"
+                         "  CUSTOMER ||--o{ ORDER : places\n";
     Work work;
     const auto envelope = parse(source, work);
     ASSERT_TRUE(envelope);
@@ -442,4 +424,3 @@ TEST(MermaidEnvelope, ErThemeCssBlockRendersDirectly) {
     const auto text = screen.ToString();
     EXPECT_EQ(text.find("erDiagram"), std::string::npos) << text;
 }
-

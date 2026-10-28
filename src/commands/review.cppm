@@ -21,21 +21,26 @@ using namespace loom::core;
 
 /// Severity level for review findings
 enum class ReviewSeverity : std::uint8_t {
-    Critical,   // Must fix: security, data loss, crash
-    High,       // Should fix: bugs, logic errors
-    Medium,     // Recommended: performance, maintainability
-    Low,        // Optional: style, naming, minor improvements
-    Info,       // Informational: notes, explanations
+    Critical,  // Must fix: security, data loss, crash
+    High,      // Should fix: bugs, logic errors
+    Medium,    // Recommended: performance, maintainability
+    Low,       // Optional: style, naming, minor improvements
+    Info,      // Informational: notes, explanations
 };
 
 /// Convert severity to display string with indicator
 [[nodiscard]] constexpr std::string_view severity_label(ReviewSeverity sev) noexcept {
     switch (sev) {
-        case ReviewSeverity::Critical: return "[CRITICAL]";
-        case ReviewSeverity::High:     return "[HIGH]";
-        case ReviewSeverity::Medium:   return "[MEDIUM]";
-        case ReviewSeverity::Low:      return "[LOW]";
-        case ReviewSeverity::Info:     return "[INFO]";
+    case ReviewSeverity::Critical:
+        return "[CRITICAL]";
+    case ReviewSeverity::High:
+        return "[HIGH]";
+    case ReviewSeverity::Medium:
+        return "[MEDIUM]";
+    case ReviewSeverity::Low:
+        return "[LOW]";
+    case ReviewSeverity::Info:
+        return "[INFO]";
     }
     return "[UNKNOWN]";
 }
@@ -43,19 +48,19 @@ enum class ReviewSeverity : std::uint8_t {
 /// A single review finding/comment
 struct ReviewFinding {
     ReviewSeverity severity;
-    std::string file;             // File path where issue was found
-    std::uint32_t line = 0;       // Line number (0 if not applicable)
-    std::string category;         // Category (security, performance, logic, style)
-    std::string description;      // What the issue is
-    std::string suggestion;       // How to fix it
+    std::string file;         // File path where issue was found
+    std::uint32_t line = 0;   // Line number (0 if not applicable)
+    std::string category;     // Category (security, performance, logic, style)
+    std::string description;  // What the issue is
+    std::string suggestion;   // How to fix it
 };
 
 /// Options controlling what to review
 struct ReviewOptions {
-    std::optional<std::string> branch;       // Compare against specific branch
-    std::vector<std::string> files;          // Review only specific files
-    bool staged_only = false;                // Only staged changes
-    bool include_context = true;             // Include surrounding code context
+    std::optional<std::string> branch;  // Compare against specific branch
+    std::vector<std::string> files;     // Review only specific files
+    bool staged_only = false;           // Only staged changes
+    bool include_context = true;        // Include surrounding code context
 };
 
 /// ReviewCommand implements the /review slash command.
@@ -67,14 +72,21 @@ public:
         return CommandDefinition{
             .name = "review",
             .description = "Review code changes with AI-powered analysis",
-            .args = {
-                CommandArg{.name = "--branch", .description = "Compare against a specific branch",
-                           .type = ArgType::Text, .required = false},
-                CommandArg{.name = "--staged", .description = "Review only staged changes",
-                           .type = ArgType::None, .required = false},
-                CommandArg{.name = "files", .description = "Specific files to review",
-                           .type = ArgType::FilePath, .required = false},
-            },
+            .args =
+                {
+                    CommandArg{.name = "--branch",
+                               .description = "Compare against a specific branch",
+                               .type = ArgType::Text,
+                               .required = false},
+                    CommandArg{.name = "--staged",
+                               .description = "Review only staged changes",
+                               .type = ArgType::None,
+                               .required = false},
+                    CommandArg{.name = "files",
+                               .description = "Specific files to review",
+                               .type = ArgType::FilePath,
+                               .required = false},
+                },
             .category = "git",
             .aliases = {"cr"},
             .hidden = false,
@@ -86,9 +98,8 @@ public:
         auto opts = parse_options(ctx.args);
         // Validate branch name if provided
         if (opts.branch && opts.branch->empty()) {
-            return std::unexpected(Error::make(
-                ErrorCode::InvalidRequest, "--branch requires a branch name"
-            ));
+            return std::unexpected(
+                Error::make(ErrorCode::InvalidRequest, "--branch requires a branch name"));
         }
         return {};
     }
@@ -103,8 +114,7 @@ public:
 
         if (diff->empty()) {
             return CommandResult::fail(
-                "No changes to review. Make some changes or specify a branch to compare against."
-            );
+                "No changes to review. Make some changes or specify a branch to compare against.");
         }
 
         // Step 2: Build the review prompt and inject to LLM
@@ -168,21 +178,18 @@ private:
 
         auto output = run_git_command(cmd);
         if (output.starts_with("fatal:")) {
-            return std::unexpected(Error::make(
-                ErrorCode::ToolExecutionFailed,
-                std::format("Git error: {}", output)
-            ));
+            return std::unexpected(
+                Error::make(ErrorCode::ToolExecutionFailed, std::format("Git error: {}", output)));
         }
         return output;
     }
 
     /// Build the prompt sent to LLM for code review
-    [[nodiscard]] static std::string build_review_prompt(
-        const std::string& diff, const ReviewOptions& opts
-    ) {
+    [[nodiscard]] static std::string build_review_prompt(const std::string& diff,
+                                                         const ReviewOptions& opts) {
         std::string context_note = opts.include_context
-            ? "Include surrounding code context in your analysis."
-            : "Focus only on the changed lines.";
+                                       ? "Include surrounding code context in your analysis."
+                                       : "Focus only on the changed lines.";
 
         std::string file_note;
         if (!opts.files.empty()) {
@@ -212,8 +219,7 @@ private:
             "  Suggestion: ...\n"
             "```\n"
             "End with a brief summary of overall code quality.",
-            file_note, diff, context_note
-        );
+            file_note, diff, context_note);
     }
 
     /// Format review findings for display (post-processing of LLM output)
@@ -230,32 +236,21 @@ private:
         std::ranges::sort(sorted, by_severity);
 
         for (const auto& finding : sorted) {
-            output += std::format(
-                "{} {}:{} - {}\n  {}\n  Fix: {}\n\n",
-                severity_label(finding.severity),
-                finding.file,
-                finding.line,
-                finding.category,
-                finding.description,
-                finding.suggestion
-            );
+            output += std::format("{} {}:{} - {}\n  {}\n  Fix: {}\n\n",
+                                  severity_label(finding.severity), finding.file, finding.line,
+                                  finding.category, finding.description, finding.suggestion);
         }
 
         // Summary counts
         auto count_sev = [&](ReviewSeverity sev) {
-            return std::ranges::count_if(findings, [sev](const auto& f) {
-                return f.severity == sev;
-            });
+            return std::ranges::count_if(findings,
+                                         [sev](const auto& f) { return f.severity == sev; });
         };
 
-        output += std::format(
-            "---\nSummary: {} critical, {} high, {} medium, {} low, {} info\n",
-            count_sev(ReviewSeverity::Critical),
-            count_sev(ReviewSeverity::High),
-            count_sev(ReviewSeverity::Medium),
-            count_sev(ReviewSeverity::Low),
-            count_sev(ReviewSeverity::Info)
-        );
+        output += std::format("---\nSummary: {} critical, {} high, {} medium, {} low, {} info\n",
+                              count_sev(ReviewSeverity::Critical), count_sev(ReviewSeverity::High),
+                              count_sev(ReviewSeverity::Medium), count_sev(ReviewSeverity::Low),
+                              count_sev(ReviewSeverity::Info));
 
         return output;
     }
@@ -279,4 +274,4 @@ private:
     }
 };
 
-} // namespace loom::commands
+}  // namespace loom::commands

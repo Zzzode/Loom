@@ -136,10 +136,12 @@ using SandboxIgnoreViolations = std::unordered_map<std::string, std::vector<std:
 /// Validate sandbox network configuration
 [[nodiscard]] inline bool validate_network_config(const SandboxNetworkConfig& config) {
     // http_proxy_port and socks_proxy_port must be valid port numbers if present
-    if (config.http_proxy_port && (*config.http_proxy_port < 0 || *config.http_proxy_port > 65535)) {
+    if (config.http_proxy_port &&
+        (*config.http_proxy_port < 0 || *config.http_proxy_port > 65535)) {
         return false;
     }
-    if (config.socks_proxy_port && (*config.socks_proxy_port < 0 || *config.socks_proxy_port > 65535)) {
+    if (config.socks_proxy_port &&
+        (*config.socks_proxy_port < 0 || *config.socks_proxy_port > 65535)) {
         return false;
     }
     return true;
@@ -155,4 +157,4 @@ using SandboxIgnoreViolations = std::unordered_map<std::string, std::vector<std:
     return true;
 }
 
-} // namespace loom::sdk::sandbox
+}  // namespace loom::sdk::sandbox

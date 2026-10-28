@@ -33,7 +33,7 @@ auto make_flex_leaf(int flex, int margin = 0) -> LayoutNode {
     return n;
 }
 
-} // namespace
+}  // namespace
 
 // ---------------------------------------------------------------------------
 // Root layout
@@ -66,8 +66,8 @@ TEST(FixYoga, RootMarginShrinksContentBox) {
     ASSERT_EQ(out.size(), 1u);
     EXPECT_EQ(out[0].x, 5);
     EXPECT_EQ(out[0].y, 5);
-    EXPECT_EQ(out[0].width, 90);  // 100 - 2*5
-    EXPECT_EQ(out[0].height, 30); // 40 - 2*5
+    EXPECT_EQ(out[0].width, 90);   // 100 - 2*5
+    EXPECT_EQ(out[0].height, 30);  // 40 - 2*5
 }
 
 TEST(FixYoga, EmptyRootProducesSingleResult) {
@@ -95,7 +95,7 @@ TEST(FixYoga, ColumnStacksFixedChildrenTopToBottom) {
     EXPECT_EQ(out[1].width, 10);
     EXPECT_EQ(out[1].height, 4);
     EXPECT_EQ(out[2].x, 0);
-    EXPECT_EQ(out[2].y, 4); // stacked below first
+    EXPECT_EQ(out[2].y, 4);  // stacked below first
     EXPECT_EQ(out[2].width, 20);
     EXPECT_EQ(out[2].height, 6);
 }
@@ -103,8 +103,8 @@ TEST(FixYoga, ColumnStacksFixedChildrenTopToBottom) {
 TEST(FixYoga, ColumnFlexGrowDistributesRemainingMainSpace) {
     LayoutNode root;
     root.direction = FlexDirection::Column;
-    LayoutNode f1 = make_flex_leaf(1); // flex-grow 1
-    LayoutNode f2 = make_flex_leaf(3); // flex-grow 3
+    LayoutNode f1 = make_flex_leaf(1);  // flex-grow 1
+    LayoutNode f2 = make_flex_leaf(3);  // flex-grow 3
     root.children = {&f1, &f2};
 
     // Container height 100, no fixed children -> 100 split 1:3 -> 25 / 75
@@ -117,14 +117,14 @@ TEST(FixYoga, ColumnFlexGrowDistributesRemainingMainSpace) {
 TEST(FixYoga, FlexGrowOnlyAppliesToRemainingSpaceAfterFixedChildren) {
     LayoutNode root;
     root.direction = FlexDirection::Column;
-    LayoutNode fixed = make_fixed_leaf(10, 40); // consumes 40 of 100
+    LayoutNode fixed = make_fixed_leaf(10, 40);  // consumes 40 of 100
     LayoutNode f = make_flex_leaf(1);
     root.children = {&fixed, &f};
 
     std::vector<ComputedLayout> out = compute_layout(root, 100, 100);
     ASSERT_EQ(out.size(), 3u);
-    EXPECT_EQ(out[1].height, 40); // fixed
-    EXPECT_EQ(out[2].height, 60); // remaining 100 - 40
+    EXPECT_EQ(out[1].height, 40);  // fixed
+    EXPECT_EQ(out[2].height, 60);  // remaining 100 - 40
 }
 
 // ---------------------------------------------------------------------------
@@ -188,7 +188,7 @@ TEST(FixYoga, JustifyEndPacksChildrenToEnd) {
 
     std::vector<ComputedLayout> out = compute_layout(root, 100, 20);
     ASSERT_EQ(out.size(), 2u);
-    EXPECT_EQ(out[1].x, 90); // 100 - 10
+    EXPECT_EQ(out[1].x, 90);  // 100 - 10
 }
 
 TEST(FixYoga, JustifySpaceBetweenInsertsGapBetweenChildrenOnly) {
@@ -219,8 +219,8 @@ TEST(FixYoga, JustifySpaceAroundHasHalfGapAtEdges) {
     // gap = (100 - 20) / 2 = 40, start offset = gap/2 = 20
     std::vector<ComputedLayout> out = compute_layout(root, 100, 20);
     ASSERT_EQ(out.size(), 3u);
-    EXPECT_EQ(out[1].x, 20); // gap/2
-    EXPECT_EQ(out[2].x, 70); // 20 + 10 + 40
+    EXPECT_EQ(out[1].x, 20);  // gap/2
+    EXPECT_EQ(out[2].x, 70);  // 20 + 10 + 40
 }
 
 // ---------------------------------------------------------------------------
@@ -231,7 +231,7 @@ TEST(FixYoga, AlignCenterCentersChildrenOnCrossAxis) {
     LayoutNode root;
     root.direction = FlexDirection::Row;
     root.align = Align::Center;
-    LayoutNode a = make_fixed_leaf(10, 4); // 4 tall in 20 tall cross space
+    LayoutNode a = make_fixed_leaf(10, 4);  // 4 tall in 20 tall cross space
     root.children = {&a};
 
     // cross_offset = (20 - 4) / 2 = 8
@@ -250,21 +250,21 @@ TEST(FixYoga, AlignEndPacksChildrenToEndOfCrossAxis) {
 
     std::vector<ComputedLayout> out = compute_layout(root, 100, 20);
     ASSERT_EQ(out.size(), 2u);
-    EXPECT_EQ(out[1].y, 16); // 20 - 4
+    EXPECT_EQ(out[1].y, 16);  // 20 - 4
 }
 
 TEST(FixYoga, AlignStretchFillsCrossAxisWhenChildHasNoCrossSize) {
     LayoutNode root;
     root.direction = FlexDirection::Row;
     root.align = Align::Stretch;
-    LayoutNode a; // no width/height
+    LayoutNode a;  // no width/height
     a.flex = 1;
     root.children = {&a};
 
     // main axis = width (flex 1 fills 100); cross axis = height -> stretched
     std::vector<ComputedLayout> out = compute_layout(root, 100, 20);
     ASSERT_EQ(out.size(), 2u);
-    EXPECT_EQ(out[1].height, 20); // cross space
+    EXPECT_EQ(out[1].height, 20);  // cross space
 }
 
 // ---------------------------------------------------------------------------
@@ -280,8 +280,8 @@ TEST(FixYoga, PaddingInsetsChildOrigin) {
 
     std::vector<ComputedLayout> out = compute_layout(root, 100, 100);
     ASSERT_EQ(out.size(), 2u);
-    EXPECT_EQ(out[1].x, 4); // content_x = 0 + padding
-    EXPECT_EQ(out[1].y, 4); // content_y = 0 + padding
+    EXPECT_EQ(out[1].x, 4);  // content_x = 0 + padding
+    EXPECT_EQ(out[1].y, 4);  // content_y = 0 + padding
 }
 
 // ---------------------------------------------------------------------------

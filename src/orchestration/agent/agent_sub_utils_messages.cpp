@@ -36,9 +36,8 @@ namespace loom::tools::agent::utils {
     return out;
 }
 
-[[nodiscard]] std::vector<Message> fork_context_messages_from_entries(
-    const std::vector<std::string>& entries
-) {
+[[nodiscard]] std::vector<Message>
+fork_context_messages_from_entries(const std::vector<std::string>& entries) {
     return replay_agent_context(entries).messages;
 }
 
@@ -64,14 +63,15 @@ namespace loom::tools::agent::utils {
     return ids;
 }
 
-[[nodiscard]] std::vector<Message> filter_resume_unresolved_tool_use_messages(
-    std::vector<Message> messages
-) {
+[[nodiscard]] std::vector<Message>
+filter_resume_unresolved_tool_use_messages(std::vector<Message> messages) {
     std::unordered_set<std::string> tool_use_ids;
     std::unordered_set<std::string> tool_result_ids;
     for (const auto& message : messages) {
-        for (const auto& id : tool_use_ids_in_message(message)) tool_use_ids.insert(id);
-        for (const auto& id : tool_result_ids_in_message(message)) tool_result_ids.insert(id);
+        for (const auto& id : tool_use_ids_in_message(message))
+            tool_use_ids.insert(id);
+        for (const auto& id : tool_result_ids_in_message(message))
+            tool_result_ids.insert(id);
     }
 
     std::unordered_set<std::string> unresolved_ids;
@@ -92,9 +92,8 @@ namespace loom::tools::agent::utils {
             filtered.push_back(std::move(message));
             continue;
         }
-        const bool all_unresolved = std::ranges::all_of(ids, [&](const std::string& id) {
-            return unresolved_ids.contains(id);
-        });
+        const bool all_unresolved = std::ranges::all_of(
+            ids, [&](const std::string& id) { return unresolved_ids.contains(id); });
         if (!all_unresolved) filtered.push_back(std::move(message));
     }
     return filtered;
@@ -104,13 +103,12 @@ namespace loom::tools::agent::utils {
     if (message.role != "assistant" || message.content.empty()) return false;
     return std::ranges::all_of(message.content, [](const ContentBlock& block) {
         return block.type == ContentBlockType::Thinking ||
-            block.type == ContentBlockType::RedactedThinking;
+               block.type == ContentBlockType::RedactedThinking;
     });
 }
 
-[[nodiscard]] std::vector<Message> filter_resume_orphaned_thinking_messages(
-    std::vector<Message> messages
-) {
+[[nodiscard]] std::vector<Message>
+filter_resume_orphaned_thinking_messages(std::vector<Message> messages) {
     std::vector<Message> filtered;
     filtered.reserve(messages.size());
     for (auto& message : messages) {
@@ -129,18 +127,16 @@ namespace loom::tools::agent::utils {
 
 void append_merged_user_message(std::vector<Message>& messages, Message message) {
     if (!messages.empty() && messages.back().role == "user" && message.role == "user") {
-        messages.back().content.insert(
-            messages.back().content.end(),
-            std::make_move_iterator(message.content.begin()),
-            std::make_move_iterator(message.content.end()));
+        messages.back().content.insert(messages.back().content.end(),
+                                       std::make_move_iterator(message.content.begin()),
+                                       std::make_move_iterator(message.content.end()));
         return;
     }
     messages.push_back(std::move(message));
 }
 
-[[nodiscard]] std::vector<Message> filter_resume_whitespace_assistant_messages(
-    std::vector<Message> messages
-) {
+[[nodiscard]] std::vector<Message>
+filter_resume_whitespace_assistant_messages(std::vector<Message> messages) {
     std::vector<Message> filtered;
     filtered.reserve(messages.size());
     bool changed = false;
@@ -169,9 +165,7 @@ void append_merged_user_message(std::vector<Message>& messages, Message message)
 //
 // Use this when splicing a parent's conversation history into a sub-agent's
 // context (fork / resume paths) to avoid sending malformed message sequences.
-[[nodiscard]] std::vector<Message> filter_incomplete_tool_calls(
-    std::vector<Message> messages
-) {
+[[nodiscard]] std::vector<Message> filter_incomplete_tool_calls(std::vector<Message> messages) {
     // migrated edge case: build the set of tool_use IDs that have results by
     // doing a full forward scan. TS does two passes (first pass collect
     // result IDs, second pass filter messages). We mirror exactly.
@@ -213,9 +207,8 @@ void append_merged_user_message(std::vector<Message>& messages, Message message)
     return filtered;
 }
 
-[[nodiscard]] std::unordered_map<std::string, std::string> resume_content_replacements_from_entries(
-    const std::vector<std::string>& entries
-) {
+[[nodiscard]] std::unordered_map<std::string, std::string>
+resume_content_replacements_from_entries(const std::vector<std::string>& entries) {
     std::unordered_map<std::string, std::string> replacements;
     for (const auto& entry : entries) {
         auto parsed = loom::utils::json::parse(entry);
@@ -240,23 +233,22 @@ void append_merged_user_message(std::vector<Message>& messages, Message message)
 
 void apply_resume_content_replacements(
     std::vector<Message>& messages,
-    const std::unordered_map<std::string, std::string>& replacements
-) {
+    const std::unordered_map<std::string, std::string>& replacements) {
     if (replacements.empty()) return;
     for (auto& message : messages) {
         if (message.role != "user") continue;
         for (auto& block : message.content) {
             if (block.type != ContentBlockType::ToolResult || block.tool_use_id.empty()) continue;
-            if (auto replacement = replacements.find(block.tool_use_id); replacement != replacements.end()) {
+            if (auto replacement = replacements.find(block.tool_use_id);
+                replacement != replacements.end()) {
                 block.text = replacement->second;
             }
         }
     }
 }
 
-[[nodiscard]] std::vector<Message> resume_messages_from_sidechain_entries(
-    const std::vector<std::string>& entries
-) {
+[[nodiscard]] std::vector<Message>
+resume_messages_from_sidechain_entries(const std::vector<std::string>& entries) {
     auto messages = replay_agent_context(entries).messages;
     // migrated edge case: drop assistant messages with any tool_use that
     // never received a tool_result. filter_resume_unresolved_tool_use_messages
@@ -272,12 +264,11 @@ void apply_resume_content_replacements(
 }
 
 void append_agent_sidechain_message(std::string_view agent_id, const Message& message,
-    std::optional<std::string_view> transcript_entry, bool request_anchor) {
+                                    std::optional<std::string_view> transcript_entry,
+                                    bool request_anchor) {
     loom::tools::agent_runtime::native_agent_store().append_sidechain_message(
-        agent_id,
-        message.role,
-        message_content_sidechain_json(message),
+        agent_id, message.role, message_content_sidechain_json(message),
         message_content_text(message), transcript_entry, request_anchor);
 }
 
-} // namespace loom::tools::agent::utils
+}  // namespace loom::tools::agent::utils

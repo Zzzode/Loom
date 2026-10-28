@@ -18,9 +18,8 @@ export namespace loom::utils {
 
 [[nodiscard]] inline std::string lower_env_value(std::string_view value) {
     std::string normalized = trim_env_value(value);
-    std::transform(normalized.begin(), normalized.end(), normalized.begin(), [](unsigned char ch) {
-        return static_cast<char>(std::tolower(ch));
-    });
+    std::transform(normalized.begin(), normalized.end(), normalized.begin(),
+                   [](unsigned char ch) { return static_cast<char>(std::tolower(ch)); });
     return normalized;
 }
 
@@ -64,51 +63,67 @@ export namespace loom::utils {
 [[nodiscard]] inline bool has_node_option(std::string_view node_options, std::string_view flag) {
     std::size_t i = 0;
     while (i < node_options.size()) {
-        while (i < node_options.size() && std::isspace(static_cast<unsigned char>(node_options[i]))) ++i;
+        while (i < node_options.size() && std::isspace(static_cast<unsigned char>(node_options[i])))
+            ++i;
         const auto start = i;
-        while (i < node_options.size() && !std::isspace(static_cast<unsigned char>(node_options[i]))) ++i;
+        while (i < node_options.size() &&
+               !std::isspace(static_cast<unsigned char>(node_options[i])))
+            ++i;
         if (start < i && node_options.substr(start, i - start) == flag) return true;
     }
     return false;
 }
 
-[[nodiscard]] inline bool is_bare_mode(std::string_view loom_code_simple, const std::vector<std::string>& argv) {
+[[nodiscard]] inline bool is_bare_mode(std::string_view loom_code_simple,
+                                       const std::vector<std::string>& argv) {
     if (is_env_truthy(loom_code_simple)) return true;
     return std::find(argv.begin(), argv.end(), "--bare") != argv.end();
 }
 
-[[nodiscard]] inline std::expected<std::map<std::string, std::string>, std::string> parse_env_vars(const std::vector<std::string>& raw_env_args) {
+[[nodiscard]] inline std::expected<std::map<std::string, std::string>, std::string>
+parse_env_vars(const std::vector<std::string>& raw_env_args) {
     std::map<std::string, std::string> parsed;
     for (const auto& env_str : raw_env_args) {
         const auto eq = env_str.find('=');
         if (eq == std::string::npos || eq == 0) {
-            return std::unexpected("Invalid environment variable format: " + env_str + ", environment variables should be added as: -e KEY1=value1 -e KEY2=value2");
+            return std::unexpected(
+                "Invalid environment variable format: " + env_str +
+                ", environment variables should be added as: -e KEY1=value1 -e KEY2=value2");
         }
         parsed[env_str.substr(0, eq)] = env_str.substr(eq + 1);
     }
     return parsed;
 }
 
-[[nodiscard]] inline std::string resolve_aws_region_impl(std::optional<std::string_view> aws_region, std::optional<std::string_view> aws_default_region) {
+[[nodiscard]] inline std::string
+resolve_aws_region_impl(std::optional<std::string_view> aws_region,
+                        std::optional<std::string_view> aws_default_region) {
     if (aws_region.has_value() && !aws_region->empty()) return std::string(*aws_region);
-    if (aws_default_region.has_value() && !aws_default_region->empty()) return std::string(*aws_default_region);
+    if (aws_default_region.has_value() && !aws_default_region->empty())
+        return std::string(*aws_default_region);
     return "us-east-1";
 }
 
-[[nodiscard]] inline std::string resolve_aws_region(std::string_view aws_region, std::string_view aws_default_region) {
-    return resolve_aws_region_impl(std::optional<std::string_view>{aws_region}, std::optional<std::string_view>{aws_default_region});
+[[nodiscard]] inline std::string resolve_aws_region(std::string_view aws_region,
+                                                    std::string_view aws_default_region) {
+    return resolve_aws_region_impl(std::optional<std::string_view>{aws_region},
+                                   std::optional<std::string_view>{aws_default_region});
 }
 
-[[nodiscard]] inline std::string resolve_aws_region(std::nullopt_t, std::string_view aws_default_region) {
-    return resolve_aws_region_impl(std::nullopt, std::optional<std::string_view>{aws_default_region});
+[[nodiscard]] inline std::string resolve_aws_region(std::nullopt_t,
+                                                    std::string_view aws_default_region) {
+    return resolve_aws_region_impl(std::nullopt,
+                                   std::optional<std::string_view>{aws_default_region});
 }
 
 [[nodiscard]] inline std::string resolve_aws_region(std::nullopt_t, std::nullopt_t) {
     return resolve_aws_region_impl(std::nullopt, std::nullopt);
 }
 
-[[nodiscard]] inline std::string resolve_default_vertex_region_impl(std::optional<std::string_view> cloud_ml_region) {
-    if (cloud_ml_region.has_value() && !cloud_ml_region->empty()) return std::string(*cloud_ml_region);
+[[nodiscard]] inline std::string
+resolve_default_vertex_region_impl(std::optional<std::string_view> cloud_ml_region) {
+    if (cloud_ml_region.has_value() && !cloud_ml_region->empty())
+        return std::string(*cloud_ml_region);
     return "us-east5";
 }
 
@@ -157,4 +172,4 @@ std::expected<std::string, std::string> require_env(std::string_view key) {
     return std::string(val);
 }
 
-} // namespace loom::utils
+}  // namespace loom::utils

@@ -38,18 +38,21 @@ enum class Scope {
 
 /// Parse a string scope value.  Returns nullopt for unrecognised input.
 [[nodiscard]] inline std::optional<Scope> parse_scope(std::string_view value) {
-    if (value == "user")    return Scope::User;
+    if (value == "user") return Scope::User;
     if (value == "project") return Scope::Project;
-    if (value == "local")   return Scope::Local;
+    if (value == "local") return Scope::Local;
     return std::nullopt;
 }
 
 /// Convert a Scope value to its canonical string form.
 [[nodiscard]] inline std::string_view to_string(Scope scope) {
     switch (scope) {
-        case Scope::User:    return "user";
-        case Scope::Project: return "project";
-        case Scope::Local:   return "local";
+    case Scope::User:
+        return "user";
+    case Scope::Project:
+        return "project";
+    case Scope::Local:
+        return "local";
     }
     return "user";
 }
@@ -88,37 +91,34 @@ enum class Scope {
 ///   - 'project' : <cwd>/.loom/agent-memory/<agentType>/
 ///   - 'local'   : <cwd>/.loom/agent-memory-local/<agentType>/ (or remote mount)
 ///   - 'user'    : <memoryBase>/agent-memory/<agentType>/
-[[nodiscard]] inline fs::path agent_memory_dir(
-    std::string_view agent_type,
-    Scope scope,
-    const std::optional<fs::path>& working_dir = std::nullopt
-) {
+[[nodiscard]] inline fs::path
+agent_memory_dir(std::string_view agent_type, Scope scope,
+                 const std::optional<fs::path>& working_dir = std::nullopt) {
     const auto dir_name = sanitize_agent_type_for_path(agent_type);
     const auto cwd = working_dir ? *working_dir : fs::current_path();
 
     switch (scope) {
-        case Scope::Project:
-            return cwd / ".loom" / "agent-memory" / dir_name;
-        case Scope::Local: {
-            if (const char* remote = std::getenv("LOOM_REMOTE_MEMORY_DIR"); remote && *remote) {
-                const auto git_root = loom::utils::git::find_git_root(cwd).value_or(cwd);
-                const auto project_component = sanitize_agent_type_for_path(git_root.string());
-                return fs::path{remote} / "projects" / project_component / "agent-memory-local" / dir_name;
-            }
-            return cwd / ".loom" / "agent-memory-local" / dir_name;
+    case Scope::Project:
+        return cwd / ".loom" / "agent-memory" / dir_name;
+    case Scope::Local: {
+        if (const char* remote = std::getenv("LOOM_REMOTE_MEMORY_DIR"); remote && *remote) {
+            const auto git_root = loom::utils::git::find_git_root(cwd).value_or(cwd);
+            const auto project_component = sanitize_agent_type_for_path(git_root.string());
+            return fs::path{remote} / "projects" / project_component / "agent-memory-local" /
+                   dir_name;
         }
-        case Scope::User:
-            return memory_base_dir() / "agent-memory" / dir_name;
+        return cwd / ".loom" / "agent-memory-local" / dir_name;
+    }
+    case Scope::User:
+        return memory_base_dir() / "agent-memory" / dir_name;
     }
     return fs::path{};
 }
 
 /// Returns the canonical entrypoint file (MEMORY.md) inside an agent memory dir.
-[[nodiscard]] inline fs::path agent_memory_entrypoint(
-    std::string_view agent_type,
-    Scope scope,
-    const std::optional<fs::path>& working_dir = std::nullopt
-) {
+[[nodiscard]] inline fs::path
+agent_memory_entrypoint(std::string_view agent_type, Scope scope,
+                        const std::optional<fs::path>& working_dir = std::nullopt) {
     return agent_memory_dir(agent_type, scope, working_dir) / "MEMORY.md";
 }
 
@@ -129,10 +129,9 @@ enum class Scope {
 /// Check if a file is within any agent memory directory (any scope).
 /// SECURITY: The path is normalised before comparison to prevent path
 /// traversal bypasses via `..` segments.
-[[nodiscard]] inline bool is_agent_memory_path(
-    const fs::path& absolute_path,
-    const std::optional<fs::path>& working_dir = std::nullopt
-) {
+[[nodiscard]] inline bool
+is_agent_memory_path(const fs::path& absolute_path,
+                     const std::optional<fs::path>& working_dir = std::nullopt) {
     std::error_code ec;
     const auto normalized = fs::weakly_canonical(absolute_path, ec);
     const fs::path& check = ec ? absolute_path : normalized;
@@ -177,18 +176,18 @@ enum class Scope {
 [[nodiscard]] inline std::string memory_scope_display(std::optional<Scope> scope) {
     if (!scope) return "None";
     switch (*scope) {
-        case Scope::User:
-            return "User (" + (memory_base_dir() / "agent-memory").string() + "/)";
-        case Scope::Project:
-            return "Project (.loom/agent-memory/)";
-        case Scope::Local: {
-            if (const char* remote = std::getenv("LOOM_REMOTE_MEMORY_DIR"); remote && *remote) {
-                return std::string{"Local ("} + remote + "/projects/<project>/agent-memory-local/...)";
-            }
-            return "Local (.loom/agent-memory-local/...)";
+    case Scope::User:
+        return "User (" + (memory_base_dir() / "agent-memory").string() + "/)";
+    case Scope::Project:
+        return "Project (.loom/agent-memory/)";
+    case Scope::Local: {
+        if (const char* remote = std::getenv("LOOM_REMOTE_MEMORY_DIR"); remote && *remote) {
+            return std::string{"Local ("} + remote + "/projects/<project>/agent-memory-local/...)";
         }
+        return "Local (.loom/agent-memory-local/...)";
+    }
     }
     return "None";
 }
 
-} // namespace loom::tools::agent_memory
+}  // namespace loom::tools::agent_memory

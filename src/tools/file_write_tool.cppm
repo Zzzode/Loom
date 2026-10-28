@@ -1,7 +1,6 @@
 // FileWriteTool - Creates or overwrites files with safety checks
 module;
 
-
 export module loom.tools.file_write;
 
 import std;
@@ -14,13 +13,13 @@ import loom.skills.file_access.port;
 
 export namespace loom::tools::file_write {
 
-using loom::core::Tool;
-using loom::core::ToolInput;
-using loom::core::ToolResult;
-using loom::core::ToolDefinition;
-using loom::core::ToolPermission;
 using loom::core::InputSchema;
 using loom::core::SchemaProperty;
+using loom::core::Tool;
+using loom::core::ToolDefinition;
+using loom::core::ToolInput;
+using loom::core::ToolPermission;
+using loom::core::ToolResult;
 using loom::utils::Result;
 
 namespace fs = std::filesystem;
@@ -78,9 +77,12 @@ struct FileWriteInput {
         auto mode_node = root.get("mode");
         if (mode_node.is_str()) {
             auto mode_str = mode_node.as_str();
-            if (mode_str == "create") input.mode = WriteMode::Create;
-            else if (mode_str == "append") input.mode = WriteMode::Append;
-            else input.mode = WriteMode::Overwrite;
+            if (mode_str == "create")
+                input.mode = WriteMode::Create;
+            else if (mode_str == "append")
+                input.mode = WriteMode::Append;
+            else
+                input.mode = WriteMode::Overwrite;
         }
 
         // Extract create_parents (optional)
@@ -120,70 +122,65 @@ struct FileWriteOutput {
 class FileWriteTool {
 public:
     static constexpr std::string_view kName = "Write";
-    static constexpr std::string_view kDescription = 
+    static constexpr std::string_view kDescription =
         "Write content to a file. Creates parent directories if needed.";
-    
+
     static ToolDefinition definition() {
         return ToolDefinition{
             .name = std::string(kName),
             .description = std::string(kDescription),
-            .input_schema = InputSchema{
-                .properties = {
-                    SchemaProperty{
-                        .name = "file_path",
-                        .type = "string",
-                        .description = "Absolute path to the file to write",
-                        .required = true,
-                        .default_value = std::nullopt,
-                        .enum_values = std::nullopt,
-                    },
-                    SchemaProperty{
-                        .name = "content",
-                        .type = "string",
-                        .description = "Content to write to the file",
-                        .required = true,
-                        .default_value = std::nullopt,
-                        .enum_values = std::nullopt,
-                    },
-                    SchemaProperty{
-                        .name = "mode",
-                        .type = "string",
-                        .description = "Write mode: create, overwrite, or append",
-                        .required = false,
-                        .default_value = std::nullopt,
-                        .enum_values = std::nullopt,
-                    }
-                }
-            },
+            .input_schema =
+                InputSchema{
+                    .properties = {SchemaProperty{
+                                       .name = "file_path",
+                                       .type = "string",
+                                       .description = "Absolute path to the file to write",
+                                       .required = true,
+                                       .default_value = std::nullopt,
+                                       .enum_values = std::nullopt,
+                                   },
+                                   SchemaProperty{
+                                       .name = "content",
+                                       .type = "string",
+                                       .description = "Content to write to the file",
+                                       .required = true,
+                                       .default_value = std::nullopt,
+                                       .enum_values = std::nullopt,
+                                   },
+                                   SchemaProperty{
+                                       .name = "mode",
+                                       .type = "string",
+                                       .description = "Write mode: create, overwrite, or append",
+                                       .required = false,
+                                       .default_value = std::nullopt,
+                                       .enum_values = std::nullopt,
+                                   }}},
             .permission = ToolPermission::Write,
-            .category = "filesystem"
-        };
+            .category = "filesystem"};
     }
-    
+
     FileWriteTool() = default;
 
     void set_allowed_directories(std::vector<std::string> dirs) {
         allowed_directories_ = std::move(dirs);
     }
-    
+
     [[nodiscard]] bool check_permission(const ToolInput& input) const {
         auto parsed = FileWriteInput::from_json(input.json());
         if (!parsed) return false;
         return is_path_allowed(parsed->file_path);
     }
-    
+
     [[nodiscard]] Result<ToolResult> execute(const ToolInput& input) {
         auto parsed_input = FileWriteInput::from_json(input.json());
         if (!parsed_input) {
-            return std::unexpected(loom::utils::Error(
-                loom::utils::ErrorCode::invalid_argument,
-                parsed_input.error()
-            ));
+            return std::unexpected(
+                loom::utils::Error(loom::utils::ErrorCode::invalid_argument, parsed_input.error()));
         }
-        
+
         return execute_internal(*parsed_input);
     }
-    
+
 private:
     std::unordered_map<std::string, std::vector<fs::path>> backup_history_;
     std::vector<std::string> allowed_directories_;
@@ -207,7 +204,7 @@ private:
         }
         return false;
     }
-    
+
     /// Internal execution
     Result<ToolResult> execute_internal(const FileWriteInput& input) {
         try {
@@ -215,21 +212,20 @@ private:
             if (input.file_path.empty()) {
                 return ToolResult::error("Invalid empty file path");
             }
-            
+
             FileWriteOutput output;
             output.written_path = input.file_path;
-            
+
             // Check if file exists
             bool file_exists = fs::exists(input.file_path);
             output.created_new = !file_exists;
-            
+
             // Validate mode
             if (input.mode == WriteMode::Create && file_exists) {
                 return ToolResult::error(
-                    std::format("File already exists: {}", input.file_path.string())
-                );
+                    std::format("File already exists: {}", input.file_path.string()));
             }
-            
+
             // Create parent directories if needed
             if (input.create_parents) {
                 auto parent = input.file_path.parent_path();
@@ -238,7 +234,7 @@ private:
                     output.parent_dirs_created = true;
                 }
             }
-            
+
             // Create backup if needed
             if (input.create_backup && file_exists && input.mode == WriteMode::Overwrite) {
                 auto backup_path = create_backup(input.file_path);
@@ -246,7 +242,7 @@ private:
                     output.backup_path = *backup_path;
                 }
             }
-            
+
             // Write the file
             auto open_mode = std::ios::out;
             if (input.binary_mode) {
@@ -257,28 +253,26 @@ private:
             } else {
                 open_mode |= std::ios::trunc;
             }
-            
+
             std::ofstream file(input.file_path, open_mode);
             if (!file) {
                 return ToolResult::error(
-                    std::format("Failed to open file for writing: {}", input.file_path.string())
-                );
+                    std::format("Failed to open file for writing: {}", input.file_path.string()));
             }
-            
+
             file << input.content;
             file.close();
-            
+
             if (!file.good()) {
                 return ToolResult::error(
-                    std::format("Failed to write to file: {}", input.file_path.string())
-                );
+                    std::format("Failed to write to file: {}", input.file_path.string()));
             }
-            
+
             // Set permissions if specified
             if (input.permissions) {
                 fs::permissions(input.file_path, *input.permissions);
             }
-            
+
             output.bytes_written = input.content.size();
 
             // After writing a file, discover any skill directories it belongs to
@@ -291,89 +285,94 @@ private:
             }
 
             return format_result(output);
-            
+
         } catch (const std::exception& e) {
             return ToolResult::error(std::format("Write error: {}", e.what()));
         }
     }
-    
+
     /// Create backup of file
     std::optional<fs::path> create_backup(const fs::path& path) {
         try {
             auto now = std::chrono::system_clock::now();
             auto epoch = now.time_since_epoch();
             auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(epoch).count();
-            
+
             auto backup_path = std::format("{}.bak.{}", path.string(), millis);
-            
+
             fs::copy_file(path, backup_path, fs::copy_options::overwrite_existing);
-            
+
             // Store in history
             auto& history = backup_history_[path.string()];
             history.push_back(backup_path);
-            
+
             // Keep only last 5 backups
             while (history.size() > 5) {
                 auto old_backup = history.front();
                 history.erase(history.begin());
                 try {
                     fs::remove(old_backup);
-                } catch (...) {}
+                } catch (...) {
+                }
             }
-            
+
             return backup_path;
         } catch (...) {
             return std::nullopt;
         }
     }
-    
+
     /// Format output result
     ToolResult format_result(const FileWriteOutput& output) {
         std::string result;
-        
+
         if (output.created_new) {
-            result = std::format("Created new file: {} ({} bytes)", 
-                output.written_path.string(), output.bytes_written);
+            result = std::format("Created new file: {} ({} bytes)", output.written_path.string(),
+                                 output.bytes_written);
         } else {
-            result = std::format("Overwrote file: {} ({} bytes)", 
-                output.written_path.string(), output.bytes_written);
+            result = std::format("Overwrote file: {} ({} bytes)", output.written_path.string(),
+                                 output.bytes_written);
         }
-        
+
         if (output.parent_dirs_created) {
             result += "\n(Parent directories created)";
         }
-        
+
         if (output.backup_path) {
             result += std::format("\nBackup created at: {}", output.backup_path->string());
         }
-        
+
         return ToolResult::success(result);
     }
 };
 
-} // namespace loom::tools::file_write
+}  // namespace loom::tools::file_write
 
 // Export main tool class
 export namespace loom::tools {
-    using loom::tools::file_write::FileWriteTool;
+using loom::tools::file_write::FileWriteTool;
 
-    /// Factory: create FileWriteTool wrapped as ITool (adapts Result types across modules)
-    [[nodiscard]] auto make_file_write_tool() -> std::unique_ptr<loom::core::ITool> {
-        struct Adapter final : loom::core::ITool {
-            FileWriteTool tool_;
-            loom::core::ToolDefinition def_ = FileWriteTool::definition();
+/// Factory: create FileWriteTool wrapped as ITool (adapts Result types across modules)
+[[nodiscard]] auto make_file_write_tool() -> std::unique_ptr<loom::core::ITool> {
+    struct Adapter final : loom::core::ITool {
+        FileWriteTool tool_;
+        loom::core::ToolDefinition def_ = FileWriteTool::definition();
 
-            const loom::core::ToolDefinition& definition() const override { return def_; }
-            std::expected<loom::core::ToolResult, loom::core::Error> execute(const loom::core::ToolInput& input) override {
-                auto result = tool_.execute(input);
-                if (result) return std::move(*result);
-                return std::unexpected(loom::core::Error::make(
-                    loom::core::ErrorCode::ToolExecutionFailed, result.error().format()));
-            }
-            bool check_permission(const loom::core::ToolInput& input) const override {
-                return tool_.check_permission(input);
-            }
-        };
-        return std::make_unique<Adapter>();
-    }
+        const loom::core::ToolDefinition& definition() const override { return def_; }
+
+        std::expected<loom::core::ToolResult, loom::core::Error>
+        execute(const loom::core::ToolInput& input) override {
+            auto result = tool_.execute(input);
+            if (result) return std::move(*result);
+            return std::unexpected(loom::core::Error::make(
+                loom::core::ErrorCode::ToolExecutionFailed, result.error().format()));
+        }
+
+        bool check_permission(const loom::core::ToolInput& input) const override {
+            return tool_.check_permission(input);
+        }
+    };
+
+    return std::make_unique<Adapter>();
 }
+}  // namespace loom::tools

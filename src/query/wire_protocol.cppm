@@ -46,14 +46,16 @@ using loom::core::ToolDefinition;
 
 /// Which wire format a backend speaks.
 enum class WireApi {
-    Messages,   ///< POST {base}/v1/messages, SSE event: content_block_delta ...
-    OpenAi,     ///< POST {base}/v1/chat/completions, SSE data: {choices:[...]}
+    Messages,  ///< POST {base}/v1/messages, SSE event: content_block_delta ...
+    OpenAi,    ///< POST {base}/v1/chat/completions, SSE data: {choices:[...]}
 };
 
 [[nodiscard]] constexpr std::string_view wire_api_name(WireApi api) noexcept {
     switch (api) {
-        case WireApi::Messages: return "messages";
-        case WireApi::OpenAi:   return "openai";
+    case WireApi::Messages:
+        return "messages";
+    case WireApi::OpenAi:
+        return "openai";
     }
     return "unknown";
 }
@@ -64,10 +66,9 @@ enum class WireApi {
 /// genuinely different vendor would add a case here.
 /// Kept as a string-taking overload so this module does not need to import
 /// the config module (which would add a dependency cycle risk).
-[[nodiscard]] inline std::optional<WireApi> wire_api_from_provider(
-    std::string_view provider_name) {
-    if (provider_name == "messages" || provider_name == "bedrock" ||
-        provider_name == "vertex" || provider_name == "foundry") {
+[[nodiscard]] inline std::optional<WireApi> wire_api_from_provider(std::string_view provider_name) {
+    if (provider_name == "messages" || provider_name == "bedrock" || provider_name == "vertex" ||
+        provider_name == "foundry") {
         return WireApi::Messages;
     }
     if (provider_name == "openai_compat" || provider_name == "openai" ||
@@ -80,12 +81,10 @@ enum class WireApi {
 /// Resolve the wire API from a user-facing string (config / env).
 /// Accepts: "messages", "openai", "openai-compatible", "openai_compat",
 /// "compatible". Anything else yields nullopt so callers can fall back.
-[[nodiscard]] inline std::optional<WireApi> wire_api_from_string(
-    std::string_view name) {
+[[nodiscard]] inline std::optional<WireApi> wire_api_from_string(std::string_view name) {
     if (name == "messages") return WireApi::Messages;
-    if (name == "openai" || name == "openai-compatible" ||
-        name == "openai_compat" || name == "compatible" ||
-        name == "chat-completions") {
+    if (name == "openai" || name == "openai-compatible" || name == "openai_compat" ||
+        name == "compatible" || name == "chat-completions") {
         return WireApi::OpenAi;
     }
     return std::nullopt;
@@ -98,12 +97,12 @@ enum class WireApi {
 /// Everything a backend needs to serialize one request. Vendor-neutral: the
 /// engine fills this in and hands it over.
 struct RequestInput {
-    std::string model;                       ///< model id as the user configured it
-    std::uint32_t max_tokens = 4096; // Zero omits the limit on OpenAI-compatible requests.
+    std::string model;                ///< model id as the user configured it
+    std::uint32_t max_tokens = 4096;  // Zero omits the limit on OpenAI-compatible requests.
     bool stream = false;
-    std::string system_prompt;               ///< empty => omit
-    std::vector<Message> messages;           ///< conversation, system excluded
-    std::vector<ToolDefinition> tools;       ///< already deny/enable-filtered
+    std::string system_prompt;          ///< empty => omit
+    std::vector<Message> messages;      ///< conversation, system excluded
+    std::vector<ToolDefinition> tools;  ///< already deny/enable-filtered
     /// Verbatim MCP input schemas keyed by tool name; when present for a tool
     /// the backend must prefer it over ToolDefinition::input_schema.
     std::vector<std::pair<std::string, std::string>> tool_schemas;
@@ -127,8 +126,8 @@ struct RequestInput {
 
 /// A serialized request: what to POST and with which headers.
 struct PreparedRequest {
-    std::string url;                       ///< absolute
-    std::string body;                      ///< JSON
+    std::string url;   ///< absolute
+    std::string body;  ///< JSON
     std::vector<std::pair<std::string, std::string>> headers;
 };
 
@@ -146,15 +145,15 @@ struct ParsedResponse {
 /// Backends translate their own event vocabulary into these.
 struct StreamDelta {
     enum class Kind {
-        TextDelta,        ///< append `text` to the current text block
-        ThinkingDelta,    ///< append `text` to the current thinking block
-        ToolUseStart,     ///< a tool call began: `tool_id`, `tool_name`
-        ToolUseInputDelta,///< append `partial_json` to the open tool call
-        BlockStop,        ///< current content block finished
-        MessageStop,      ///< turn finished; `stop_reason` is set
-        Usage,            ///< `usage` fields updated
-        Error,            ///< `text` is the error message
-        Ignored,          ///< event was well-formed but carries nothing we use
+        TextDelta,          ///< append `text` to the current text block
+        ThinkingDelta,      ///< append `text` to the current thinking block
+        ToolUseStart,       ///< a tool call began: `tool_id`, `tool_name`
+        ToolUseInputDelta,  ///< append `partial_json` to the open tool call
+        BlockStop,          ///< current content block finished
+        MessageStop,        ///< turn finished; `stop_reason` is set
+        Usage,              ///< `usage` fields updated
+        Error,              ///< `text` is the error message
+        Ignored,            ///< event was well-formed but carries nothing we use
     };
     Kind kind = Kind::Ignored;
     std::string text;
@@ -190,13 +189,12 @@ public:
     /// raw `event:` name (may be empty) and the raw `data:` payload.
     /// Returning several deltas is normal (e.g. a tool-call start that also
     /// carries the tool name).
-    [[nodiscard]] virtual std::vector<StreamDelta> parse_stream_event(
-        std::string_view event_name, std::string_view data) const = 0;
+    [[nodiscard]] virtual std::vector<StreamDelta>
+    parse_stream_event(std::string_view event_name, std::string_view data) const = 0;
 
     /// Whether a stop_reason value means the model wants tools executed.
     /// Messages API: "tool_use"; OpenAI: "tool_calls".
-    [[nodiscard]] virtual bool stop_reason_is_tool_use(
-        std::string_view stop_reason) const = 0;
+    [[nodiscard]] virtual bool stop_reason_is_tool_use(std::string_view stop_reason) const = 0;
 };
 
-} // namespace loom::query::wire
+}  // namespace loom::query::wire

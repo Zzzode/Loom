@@ -28,7 +28,7 @@ namespace detail {
 /// width and stops rendering at box_.x_max, so characters are lost only at
 /// the right edge, never from the middle.
 class ColoredTextLine : public Node {
- public:
+public:
     explicit ColoredTextLine(std::vector<ColoredSegment> segments)
         : segments_(std::move(segments)) {}
 
@@ -67,7 +67,7 @@ class ColoredTextLine : public Node {
         }
     }
 
- private:
+private:
     std::vector<ColoredSegment> segments_;
 };
 

@@ -37,119 +37,100 @@ namespace loom::ui::messages_list {
 namespace detail {
 
 auto payload_preview(const MessageRowPayload& p) -> std::string {
-    return std::visit([](const auto& v) -> std::string {
-        using T = std::decay_t<decltype(v)>;
+    return std::visit(
+        [](const auto& v) -> std::string {
+            using T = std::decay_t<decltype(v)>;
 
-        auto take_first = [](const auto& a, const auto& b) -> std::string {
-            using A = std::decay_t<decltype(a)>;
-            using B = std::decay_t<decltype(b)>;
-            if constexpr (!std::is_same_v<A, std::nullptr_t>) {
-                if constexpr (std::is_convertible_v<A, std::string>) return std::string(a);
-                if constexpr (requires{ std::to_string(a); }) return std::to_string(a);
-            }
-            if constexpr (!std::is_same_v<B, std::nullptr_t>) {
-                if constexpr (std::is_convertible_v<B, std::string>) return std::string(b);
-            }
-            return {};
-        };
+            auto take_first = [](const auto& a, const auto& b) -> std::string {
+                using A = std::decay_t<decltype(a)>;
+                using B = std::decay_t<decltype(b)>;
+                if constexpr (!std::is_same_v<A, std::nullptr_t>) {
+                    if constexpr (std::is_convertible_v<A, std::string>) return std::string(a);
+                    if constexpr (requires { std::to_string(a); }) return std::to_string(a);
+                }
+                if constexpr (!std::is_same_v<B, std::nullptr_t>) {
+                    if constexpr (std::is_convertible_v<B, std::string>) return std::string(b);
+                }
+                return {};
+            };
 
-        // --- User family ---
-        if constexpr (std::is_same_v<T, UserTextMessageData>) {
-            if constexpr (requires{ v.content; }) return take_first(v.content, nullptr);
-            return "user-text";
-        }
-        else if constexpr (std::is_same_v<T, user_command::UserCommandData>) {
-            if constexpr (requires{ v.command_line; }) return take_first(v.command_line, nullptr);
-            return "user-command";
-        }
-        else if constexpr (std::is_same_v<T, BashIOEntry>) {
-            if constexpr (requires{ v.content; }) return take_first(v.content, nullptr);
-            return "bash-io";
-        }
-        else if constexpr (std::is_same_v<T, UserMessageData>) {
-            if constexpr (requires{ v.title; }) return take_first(v.title, nullptr);
-            return "user-message";
-        }
-        else if constexpr (std::is_same_v<T, image::ImageMessageData>) {
-            if constexpr (requires{ v.file_name; }) {
-                return std::string{"image "} + take_first(v.file_name, nullptr);
+            // --- User family ---
+            if constexpr (std::is_same_v<T, UserTextMessageData>) {
+                if constexpr (requires { v.content; }) return take_first(v.content, nullptr);
+                return "user-text";
+            } else if constexpr (std::is_same_v<T, user_command::UserCommandData>) {
+                if constexpr (requires { v.command_line; })
+                    return take_first(v.command_line, nullptr);
+                return "user-command";
+            } else if constexpr (std::is_same_v<T, BashIOEntry>) {
+                if constexpr (requires { v.content; }) return take_first(v.content, nullptr);
+                return "bash-io";
+            } else if constexpr (std::is_same_v<T, UserMessageData>) {
+                if constexpr (requires { v.title; }) return take_first(v.title, nullptr);
+                return "user-message";
+            } else if constexpr (std::is_same_v<T, image::ImageMessageData>) {
+                if constexpr (requires { v.file_name; }) {
+                    return std::string{"image "} + take_first(v.file_name, nullptr);
+                }
+                return "image";
+            } else if constexpr (std::is_same_v<T, ToolResultOptions>) {
+                if constexpr (requires { v.tool_name; }) return take_first(v.tool_name, nullptr);
+                return "tool-result";
+            } else if constexpr (std::is_same_v<T, local_cmd::LocalCommandOptions>) {
+                return "local-command";
+            } else if constexpr (std::is_same_v<T, attachment_message::AttachmentGridOptions>) {
+                return "attachments";
             }
-            return "image";
-        }
-        else if constexpr (std::is_same_v<T, ToolResultOptions>) {
-            if constexpr (requires{ v.tool_name; }) return take_first(v.tool_name, nullptr);
-            return "tool-result";
-        }
-        else if constexpr (std::is_same_v<T, local_cmd::LocalCommandOptions>) {
-            return "local-command";
-        }
-        else if constexpr (std::is_same_v<T, attachment_message::AttachmentGridOptions>) {
-            return "attachments";
-        }
-        // --- Assistant family ---
-        else if constexpr (std::is_same_v<T, AssistantTextMessageData>) {
-            if constexpr (requires{ v.content; }) return take_first(v.content, nullptr);
-            return "assistant-text";
-        }
-        else if constexpr (std::is_same_v<T, tool_use_message::ToolUseRenderOptions>) {
-            return "tool-use";
-        }
-        else if constexpr (std::is_same_v<T, tool_use_message::GroupedToolsOptions>) {
-            return "grouped-tools";
-        }
-        else if constexpr (std::is_same_v<T, thinking_message::ThinkingMessageOptions>) {
-            return "thinking";
-        }
-        // --- System family ---
-        else if constexpr (std::is_same_v<T, SystemTextMessageData>) {
-            if constexpr (requires{ v.summary; }) return take_first(v.summary, nullptr);
-            return "system-text";
-        }
-        else if constexpr (std::is_same_v<T, ErrorMessageData>) {
-            return "error";
-        }
-        else if constexpr (std::is_same_v<T, api_error_message::APIErrorOptions>) {
-            return "api-error";
-        }
-        else if constexpr (std::is_same_v<T, collapsed_content::CollapsedContentOptions>) {
-            return "collapsed-content";
-        }
-        else if constexpr (std::is_same_v<T, RateLimitInfo>) {
-            if constexpr (requires{ v.reason; }) {
-                return take_first(v.reason, nullptr) + " " +
-                       take_first(v.message, nullptr);
+            // --- Assistant family ---
+            else if constexpr (std::is_same_v<T, AssistantTextMessageData>) {
+                if constexpr (requires { v.content; }) return take_first(v.content, nullptr);
+                return "assistant-text";
+            } else if constexpr (std::is_same_v<T, tool_use_message::ToolUseRenderOptions>) {
+                return "tool-use";
+            } else if constexpr (std::is_same_v<T, tool_use_message::GroupedToolsOptions>) {
+                return "grouped-tools";
+            } else if constexpr (std::is_same_v<T, thinking_message::ThinkingMessageOptions>) {
+                return "thinking";
             }
-            return "rate-limit";
-        }
-        else if constexpr (std::is_same_v<T, PlanApprovalOptions>) {
-            return "plan-approval";
-        }
-        else if constexpr (std::is_same_v<T, std::vector<HookProgressEntry>>) {
-            return "hook-progress";
-        }
-        else if constexpr (std::is_same_v<T, shutdown::ShutdownMessageData>) {
-            return "shutdown";
-        }
-        else if constexpr (std::is_same_v<T, AdvisorMessage>) {
-            return "advisor";
-        }
-        else if constexpr (std::is_same_v<T, UI5HandledTag>) {
-            return {};
-        }
-        else {
-            static_assert(!sizeof(T*), "Unreachable: new variant alternative in payload_preview.");
-            return {};
-        }
-    }, p);
+            // --- System family ---
+            else if constexpr (std::is_same_v<T, SystemTextMessageData>) {
+                if constexpr (requires { v.summary; }) return take_first(v.summary, nullptr);
+                return "system-text";
+            } else if constexpr (std::is_same_v<T, ErrorMessageData>) {
+                return "error";
+            } else if constexpr (std::is_same_v<T, api_error_message::APIErrorOptions>) {
+                return "api-error";
+            } else if constexpr (std::is_same_v<T, collapsed_content::CollapsedContentOptions>) {
+                return "collapsed-content";
+            } else if constexpr (std::is_same_v<T, RateLimitInfo>) {
+                if constexpr (requires { v.reason; }) {
+                    return take_first(v.reason, nullptr) + " " + take_first(v.message, nullptr);
+                }
+                return "rate-limit";
+            } else if constexpr (std::is_same_v<T, PlanApprovalOptions>) {
+                return "plan-approval";
+            } else if constexpr (std::is_same_v<T, std::vector<HookProgressEntry>>) {
+                return "hook-progress";
+            } else if constexpr (std::is_same_v<T, shutdown::ShutdownMessageData>) {
+                return "shutdown";
+            } else if constexpr (std::is_same_v<T, AdvisorMessage>) {
+                return "advisor";
+            } else if constexpr (std::is_same_v<T, UI5HandledTag>) {
+                return {};
+            } else {
+                static_assert(!sizeof(T*),
+                              "Unreachable: new variant alternative in payload_preview.");
+                return {};
+            }
+        },
+        p);
 }
 
 namespace search_detail {
 
 /// Extract a string field value from a JSON object string.
 /// Lightweight — no full JSON parser needed for known field names.
-[[nodiscard]] std::string extract_json_field(
-    std::string_view json, std::string_view field_name)
-{
+[[nodiscard]] std::string extract_json_field(std::string_view json, std::string_view field_name) {
     auto pos = json.find(field_name);
     if (pos == std::string_view::npos) return {};
     // Find the colon after the field name
@@ -177,15 +158,15 @@ namespace search_detail {
 [[nodiscard]] std::string tool_use_search_text(std::string_view input_json) {
     if (input_json.empty()) return {};
     const std::string_view known_fields[] = {
-        "\"command\"",   // Bash, Shell
-        "\"pattern\"",   // Grep, Glob
-        "\"file_path\"", // Read, Write, Edit
-        "\"path\"",      // fallback for file_path
-        "\"prompt\"",    // Agent
-        "\"description\"",// Agent, Task
-        "\"query\"",     // WebSearch, Grep
-        "\"url\"",       // WebFetch
-        "\"skill\"",     // SkillTool
+        "\"command\"",      // Bash, Shell
+        "\"pattern\"",      // Grep, Glob
+        "\"file_path\"",    // Read, Write, Edit
+        "\"path\"",         // fallback for file_path
+        "\"prompt\"",       // Agent
+        "\"description\"",  // Agent, Task
+        "\"query\"",        // WebSearch, Grep
+        "\"url\"",          // WebFetch
+        "\"skill\"",        // SkillTool
     };
     std::string result;
     for (auto field : known_fields) {
@@ -229,7 +210,7 @@ namespace search_detail {
     return result;
 }
 
-} // namespace search_detail
+}  // namespace search_detail
 
 /// Rich searchable text for indexing.  Returns detailed content from tool
 /// results (file contents, bash output, grep matches) for search matching.
@@ -240,10 +221,8 @@ namespace search_detail {
 /// @param p       The message row payload variant.
 /// @param shape   The message shape (for dispatch optimization).
 /// @return Lowercase-rich searchable text (NOT lowered — caller lowers).
-[[nodiscard]] auto extract_search_text(
-    const MessageRowPayload& p,
-    MessageShape shape) -> std::string
-{
+[[nodiscard]] auto extract_search_text(const MessageRowPayload& p, MessageShape shape)
+    -> std::string {
     using S = MessageShape;
 
     // ── Tool RESULT messages (UserToolResult) ──────────────────────────
@@ -267,10 +246,9 @@ namespace search_detail {
             } else if (opts->output && !opts->output->empty()) {
                 rich_output = *opts->output;
             }
-            std::string_view error_text =
-                (opts->error_message && !opts->error_message->empty())
-                    ? std::string_view{*opts->error_message}
-                    : std::string_view{};
+            std::string_view error_text = (opts->error_message && !opts->error_message->empty())
+                                              ? std::string_view{*opts->error_message}
+                                              : std::string_view{};
 
             // Tier 2: try tool-owned extractSearchText from registry.
             // Try tool-owned extract_search_text from registry.
@@ -302,9 +280,9 @@ namespace search_detail {
     // Extract command/pattern/path from
     // the tool's input JSON so users can search for "grep" or "file_path".
     if (shape == S::AssistantToolUse) {
-        if (auto* opts = std::get_if<::loom::ui::messages::tool_use_message::ToolUseRenderOptions>(&p)) {
-            std::string result = search_detail::tool_use_search_text(
-                opts->call.raw_parameters);
+        if (auto* opts =
+                std::get_if<::loom::ui::messages::tool_use_message::ToolUseRenderOptions>(&p)) {
+            std::string result = search_detail::tool_use_search_text(opts->call.raw_parameters);
             // Also include result_preview if available (partial output during streaming).
             if (opts->call.result_preview && !opts->call.result_preview->empty()) {
                 if (!result.empty()) result += '\n';
@@ -315,7 +293,8 @@ namespace search_detail {
         return payload_preview(p);
     }
     if (shape == S::AssistantGroupedTools) {
-        if (auto* grp = std::get_if<::loom::ui::messages::tool_use_message::GroupedToolsOptions>(&p)) {
+        if (auto* grp =
+                std::get_if<::loom::ui::messages::tool_use_message::GroupedToolsOptions>(&p)) {
             std::string result;
             for (const auto& call : grp->calls) {
                 auto t = search_detail::tool_use_search_text(call.raw_parameters);
@@ -384,6 +363,6 @@ namespace search_detail {
     return payload_preview(p);
 }
 
-} // namespace detail
+}  // namespace detail
 
-} // namespace loom::ui::messages_list
+}  // namespace loom::ui::messages_list

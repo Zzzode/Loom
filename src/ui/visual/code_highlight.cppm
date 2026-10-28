@@ -8,16 +8,16 @@
 ///   point if the fallback is ever reintroduced.
 module;
 
-#include <cstdint>
-#include <cctype>
-
-#include <ftxui/dom/elements.hpp>
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/event.hpp>
+#include <ftxui/dom/elements.hpp>
 #include <ftxui/screen/screen.hpp>
 #include <ftxui/screen/string.hpp>
+
+#include <cctype>
 #include <cstddef>
+#include <cstdint>
 
 export module loom.ui.visual.code_highlight;
 
@@ -64,10 +64,10 @@ enum class TokenType : std::uint8_t {
 
 /// One semantic span, in 1-based line / 0-based column coordinates.
 struct SemanticSpan {
-    int line = 0;            // 1-based line number
-    int start_col = 0;       // 0-based start column (bytes)
-    int end_col = 0;         // 0-based end column (exclusive)
-    std::string lsp_type;    // e.g. "function", "variable", "class", "macro"
+    int line = 0;          // 1-based line number
+    int start_col = 0;     // 0-based start column (bytes)
+    int end_col = 0;       // 0-based end column (exclusive)
+    std::string lsp_type;  // e.g. "function", "variable", "class", "macro"
 };
 
 /// A collection of semantic spans keyed by line, applied as an overlay.
@@ -80,8 +80,9 @@ struct SemanticTokenLayer {
         for (const auto& s : spans) {
             if (s.line == line) out.push_back(&s);
         }
-        std::sort(out.begin(), out.end(),
-                  [](const SemanticSpan* a, const SemanticSpan* b) { return a->start_col < b->start_col; });
+        std::sort(out.begin(), out.end(), [](const SemanticSpan* a, const SemanticSpan* b) {
+            return a->start_col < b->start_col;
+        });
         return out;
     }
 };
@@ -90,9 +91,11 @@ struct SemanticTokenLayer {
 /// types fall back to Plain (leaving the heuristic classification intact).
 [[nodiscard]] inline TokenType lsp_type_to_token_type(std::string_view lsp_type) noexcept {
     if (lsp_type == "function" || lsp_type == "method") return TokenType::Function;
-    if (lsp_type == "class" || lsp_type == "struct" || lsp_type == "enum" ||
-        lsp_type == "type" || lsp_type == "typeParameter" || lsp_type == "interface") return TokenType::Type;
-    if (lsp_type == "variable" || lsp_type == "parameter" || lsp_type == "property") return TokenType::Variable;
+    if (lsp_type == "class" || lsp_type == "struct" || lsp_type == "enum" || lsp_type == "type" ||
+        lsp_type == "typeParameter" || lsp_type == "interface")
+        return TokenType::Type;
+    if (lsp_type == "variable" || lsp_type == "parameter" || lsp_type == "property")
+        return TokenType::Variable;
     if (lsp_type == "namespace" || lsp_type == "module") return TokenType::Type;
     if (lsp_type == "macro") return TokenType::Preprocessor;
     if (lsp_type == "keyword") return TokenType::Keyword;
@@ -122,25 +125,25 @@ struct HighlightedLine {
 /// Color theme for syntax highlighting
 struct SyntaxTheme {
     std::string name;
-    Color plain          = loom::ui::design::theme::current_theme().palette->text;
-    Color keyword        = loom::ui::design::theme::current_theme().palette->primary;
-    Color string_lit     = loom::ui::design::theme::current_theme().palette->success;
-    Color number         = loom::ui::design::theme::current_theme().palette->info;
-    Color comment        = loom::ui::design::theme::current_theme().palette->muted;
-    Color op             = loom::ui::design::theme::current_theme().palette->text;
-    Color punctuation    = loom::ui::design::theme::current_theme().palette->text;
-    Color function       = loom::ui::design::theme::current_theme().palette->primary;
-    Color type_name      = loom::ui::design::theme::current_theme().palette->info;
-    Color variable       = loom::ui::design::theme::current_theme().palette->text;
-    Color constant       = loom::ui::design::theme::current_theme().palette->info;
-    Color preprocessor   = loom::ui::design::theme::current_theme().palette->primary;
-    Color attribute      = loom::ui::design::theme::current_theme().palette->primary;
-    Color error          = loom::ui::design::theme::current_theme().palette->danger;
-    Color line_number    = loom::ui::design::theme::current_theme().palette->muted;
-    Color gutter_bg      = loom::ui::design::theme::current_theme().palette->surface_tint_1;
-    Color bg             = loom::ui::design::theme::current_theme().palette->background;
-    Color added_bg       = loom::ui::design::theme::current_theme().palette->success_tint_bg;
-    Color removed_bg     = loom::ui::design::theme::current_theme().palette->danger_tint_bg;
+    Color plain = loom::ui::design::theme::current_theme().palette->text;
+    Color keyword = loom::ui::design::theme::current_theme().palette->primary;
+    Color string_lit = loom::ui::design::theme::current_theme().palette->success;
+    Color number = loom::ui::design::theme::current_theme().palette->info;
+    Color comment = loom::ui::design::theme::current_theme().palette->muted;
+    Color op = loom::ui::design::theme::current_theme().palette->text;
+    Color punctuation = loom::ui::design::theme::current_theme().palette->text;
+    Color function = loom::ui::design::theme::current_theme().palette->primary;
+    Color type_name = loom::ui::design::theme::current_theme().palette->info;
+    Color variable = loom::ui::design::theme::current_theme().palette->text;
+    Color constant = loom::ui::design::theme::current_theme().palette->info;
+    Color preprocessor = loom::ui::design::theme::current_theme().palette->primary;
+    Color attribute = loom::ui::design::theme::current_theme().palette->primary;
+    Color error = loom::ui::design::theme::current_theme().palette->danger;
+    Color line_number = loom::ui::design::theme::current_theme().palette->muted;
+    Color gutter_bg = loom::ui::design::theme::current_theme().palette->surface_tint_1;
+    Color bg = loom::ui::design::theme::current_theme().palette->background;
+    Color added_bg = loom::ui::design::theme::current_theme().palette->success_tint_bg;
+    Color removed_bg = loom::ui::design::theme::current_theme().palette->danger_tint_bg;
 };
 
 /// Well-known theme names
@@ -161,8 +164,8 @@ struct CodeHighlightOptions {
     int start_line = 1;
     int visible_lines = 30;
     int scroll_offset = 0;
-    std::optional<int> highlight_line;       // Line to highlight
-    std::vector<int> marked_lines;           // Lines with markers
+    std::optional<int> highlight_line;  // Line to highlight
+    std::vector<int> marked_lines;      // Lines with markers
     std::function<void(int line)> on_line_select;
 };
 
@@ -182,10 +185,10 @@ struct HighlightResult {
     // Explicit named themes own RGB foreground/background pairs. Keeping
     // these independent of terminal-defined ANSI indices makes their declared
     // fixed RGB surfaces readable without changing the selected syntax identity.
-    const auto& dark = *loom::ui::design::theme::palette_for_variant(
-        loom::ui::design::theme::ThemeVariant::Dark);
-    const auto& light = *loom::ui::design::theme::palette_for_variant(
-        loom::ui::design::theme::ThemeVariant::Light);
+    const auto& dark =
+        *loom::ui::design::theme::palette_for_variant(loom::ui::design::theme::ThemeVariant::Dark);
+    const auto& light =
+        *loom::ui::design::theme::palette_for_variant(loom::ui::design::theme::ThemeVariant::Light);
     theme.plain = Color::RGB(192, 192, 192);
     theme.keyword = Color::RGB(215, 135, 215);
     theme.string_lit = Color::RGB(135, 200, 135);
@@ -206,64 +209,64 @@ struct HighlightResult {
     theme.added_bg = Color::RGB(0, 30, 0);
     theme.removed_bg = Color::RGB(30, 0, 0);
     switch (name) {
-        case ThemeName::Monokai:
-            theme.name = "monokai";
-            theme.keyword = Color::RGB(249, 38, 114);
-            theme.string_lit = Color::RGB(230, 219, 116);
-            theme.number = Color::RGB(174, 129, 255);
-            theme.comment = Color::RGB(139, 134, 110);
-            theme.function = Color::RGB(166, 226, 46);
-            theme.type_name = Color::RGB(102, 217, 239);
-            theme.variable = Color::RGB(248, 248, 242);
-            theme.constant = Color::RGB(174, 129, 255);
-            break;
-        case ThemeName::Dracula:
-            theme.name = "dracula";
-            theme.keyword = Color::RGB(255, 121, 198);
-            theme.string_lit = Color::RGB(241, 250, 140);
-            theme.number = Color::RGB(189, 147, 249);
-            theme.comment = Color::RGB(110, 128, 179);
-            theme.function = Color::RGB(80, 250, 123);
-            theme.type_name = Color::RGB(139, 233, 253);
-            theme.variable = Color::RGB(248, 248, 242);
-            theme.constant = Color::RGB(189, 147, 249);
-            break;
-        case ThemeName::Nord:
-            theme.name = "nord";
-            theme.keyword = Color::RGB(129, 161, 193);
-            theme.string_lit = Color::RGB(163, 190, 140);
-            theme.number = Color::RGB(180, 142, 173);
-            theme.comment = Color::RGB(120, 131, 151);
-            theme.function = Color::RGB(136, 192, 208);
-            theme.type_name = Color::RGB(143, 188, 187);
-            theme.variable = Color::RGB(216, 222, 233);
-            theme.constant = Color::RGB(180, 142, 173);
-            break;
-        case ThemeName::Light:
-            theme.name = "light";
-            theme.plain = Color::RGB(30, 30, 30);
-            theme.keyword = Color::RGB(0, 0, 200);
-            theme.string_lit = Color::RGB(0, 118, 0);
-            theme.number = Color::RGB(0, 112, 112);
-            theme.comment = light.muted;
-            theme.function = Color::RGB(128, 0, 0);
-            theme.type_name = Color::RGB(0, 0, 128);
-            theme.variable = Color::RGB(30, 30, 30);
-            theme.bg = Color::RGB(255, 255, 255);
-            theme.gutter_bg = Color::RGB(240, 240, 240);
-            theme.line_number = light.muted;
-            theme.op = Color::RGB(30, 30, 30);
-            theme.punctuation = Color::RGB(60, 60, 60);
-            theme.constant = Color::RGB(160, 40, 40);
-            theme.preprocessor = Color::RGB(128, 0, 160);
-            theme.attribute = Color::RGB(128, 100, 0);
-            theme.error = Color::RGB(180, 0, 0);
-            theme.added_bg = light.success_tint_bg;
-            theme.removed_bg = light.danger_tint_bg;
-            break;
-        default: // Dark
-            theme.name = "dark";
-            break;
+    case ThemeName::Monokai:
+        theme.name = "monokai";
+        theme.keyword = Color::RGB(249, 38, 114);
+        theme.string_lit = Color::RGB(230, 219, 116);
+        theme.number = Color::RGB(174, 129, 255);
+        theme.comment = Color::RGB(139, 134, 110);
+        theme.function = Color::RGB(166, 226, 46);
+        theme.type_name = Color::RGB(102, 217, 239);
+        theme.variable = Color::RGB(248, 248, 242);
+        theme.constant = Color::RGB(174, 129, 255);
+        break;
+    case ThemeName::Dracula:
+        theme.name = "dracula";
+        theme.keyword = Color::RGB(255, 121, 198);
+        theme.string_lit = Color::RGB(241, 250, 140);
+        theme.number = Color::RGB(189, 147, 249);
+        theme.comment = Color::RGB(110, 128, 179);
+        theme.function = Color::RGB(80, 250, 123);
+        theme.type_name = Color::RGB(139, 233, 253);
+        theme.variable = Color::RGB(248, 248, 242);
+        theme.constant = Color::RGB(189, 147, 249);
+        break;
+    case ThemeName::Nord:
+        theme.name = "nord";
+        theme.keyword = Color::RGB(129, 161, 193);
+        theme.string_lit = Color::RGB(163, 190, 140);
+        theme.number = Color::RGB(180, 142, 173);
+        theme.comment = Color::RGB(120, 131, 151);
+        theme.function = Color::RGB(136, 192, 208);
+        theme.type_name = Color::RGB(143, 188, 187);
+        theme.variable = Color::RGB(216, 222, 233);
+        theme.constant = Color::RGB(180, 142, 173);
+        break;
+    case ThemeName::Light:
+        theme.name = "light";
+        theme.plain = Color::RGB(30, 30, 30);
+        theme.keyword = Color::RGB(0, 0, 200);
+        theme.string_lit = Color::RGB(0, 118, 0);
+        theme.number = Color::RGB(0, 112, 112);
+        theme.comment = light.muted;
+        theme.function = Color::RGB(128, 0, 0);
+        theme.type_name = Color::RGB(0, 0, 128);
+        theme.variable = Color::RGB(30, 30, 30);
+        theme.bg = Color::RGB(255, 255, 255);
+        theme.gutter_bg = Color::RGB(240, 240, 240);
+        theme.line_number = light.muted;
+        theme.op = Color::RGB(30, 30, 30);
+        theme.punctuation = Color::RGB(60, 60, 60);
+        theme.constant = Color::RGB(160, 40, 40);
+        theme.preprocessor = Color::RGB(128, 0, 160);
+        theme.attribute = Color::RGB(128, 100, 0);
+        theme.error = Color::RGB(180, 0, 0);
+        theme.added_bg = light.success_tint_bg;
+        theme.removed_bg = light.danger_tint_bg;
+        break;
+    default:  // Dark
+        theme.name = "dark";
+        break;
     }
     return theme;
 }
@@ -272,30 +275,44 @@ struct HighlightResult {
 [[nodiscard]] inline std::expected<SyntaxTheme, std::string>
 get_syntax_theme(const std::string& name) {
     if (name == "dark" || name == "default") return get_theme(ThemeName::Dark);
-    if (name == "light")   return get_theme(ThemeName::Light);
+    if (name == "light") return get_theme(ThemeName::Light);
     if (name == "monokai") return get_theme(ThemeName::Monokai);
     if (name == "dracula") return get_theme(ThemeName::Dracula);
-    if (name == "nord")    return get_theme(ThemeName::Nord);
+    if (name == "nord") return get_theme(ThemeName::Nord);
     return std::unexpected("Unknown theme: " + name);
 }
 
 /// Get color for a token type from theme
 [[nodiscard]] inline Color token_color(TokenType type, const SyntaxTheme& theme) {
     switch (type) {
-        case TokenType::Keyword:      return theme.keyword;
-        case TokenType::String:       return theme.string_lit;
-        case TokenType::Number:       return theme.number;
-        case TokenType::Comment:      return theme.comment;
-        case TokenType::Operator:     return theme.op;
-        case TokenType::Punctuation:  return theme.punctuation;
-        case TokenType::Function:     return theme.function;
-        case TokenType::Type:         return theme.type_name;
-        case TokenType::Variable:     return theme.variable;
-        case TokenType::Constant:     return theme.constant;
-        case TokenType::Preprocessor: return theme.preprocessor;
-        case TokenType::Attribute:    return theme.attribute;
-        case TokenType::Error:        return theme.error;
-        default:                      return theme.plain;
+    case TokenType::Keyword:
+        return theme.keyword;
+    case TokenType::String:
+        return theme.string_lit;
+    case TokenType::Number:
+        return theme.number;
+    case TokenType::Comment:
+        return theme.comment;
+    case TokenType::Operator:
+        return theme.op;
+    case TokenType::Punctuation:
+        return theme.punctuation;
+    case TokenType::Function:
+        return theme.function;
+    case TokenType::Type:
+        return theme.type_name;
+    case TokenType::Variable:
+        return theme.variable;
+    case TokenType::Constant:
+        return theme.constant;
+    case TokenType::Preprocessor:
+        return theme.preprocessor;
+    case TokenType::Attribute:
+        return theme.attribute;
+    case TokenType::Error:
+        return theme.error;
+    default:
+        return theme.plain;
     }
 }
 
@@ -312,13 +329,13 @@ get_syntax_theme(const std::string& name) {
 
 struct LanguageSpec {
     std::string_view id;
-    std::vector<std::string_view> keywords;     // 20-30 common words
-    std::vector<std::string_view> type_names;   // built-in types
+    std::vector<std::string_view> keywords;    // 20-30 common words
+    std::vector<std::string_view> type_names;  // built-in types
     // Comment markers
     std::string_view line_comment = "//";
-    bool has_block_comment_c = true;            // /* */
+    bool has_block_comment_c = true;  // /* */
     bool has_hash_comment = false;
-    bool has_dash_comment = false;              // -- (sql)
+    bool has_dash_comment = false;  // -- (sql)
     // String delimiters enabled
     bool allow_single_quote = true;
     bool allow_double_quote = true;
@@ -327,75 +344,63 @@ struct LanguageSpec {
 
 // Helper: make keyword list at compile time.
 constexpr std::array<std::string_view, 31> kCppKeywords = {
-    "alignas","alignof","and","and_eq","asm","auto","bitand","bitor","bool",
-    "break","case","catch","char","char8_t","char16_t","char32_t","class",
-    "co_await","co_return","co_yield","compl","concept","const","consteval",
-    "constexpr","constinit","const_cast","continue","decltype","default","delete"
-};
+    "alignas",  "alignof",  "and",       "and_eq",    "asm",       "auto",       "bitand",
+    "bitor",    "bool",     "break",     "case",      "catch",     "char",       "char8_t",
+    "char16_t", "char32_t", "class",     "co_await",  "co_return", "co_yield",   "compl",
+    "concept",  "const",    "consteval", "constexpr", "constinit", "const_cast", "continue",
+    "decltype", "default",  "delete"};
 constexpr std::array<std::string_view, 16> kCppKeywords2 = {
-    "do","double","dynamic_cast","else","enum","explicit","export","extern",
-    "false","float","for","friend","goto","if","inline","int"
-};
+    "do",    "double", "dynamic_cast", "else",   "enum", "explicit", "export", "extern",
+    "false", "float",  "for",          "friend", "goto", "if",       "inline", "int"};
 constexpr std::array<std::string_view, 19> kCppKeywords3 = {
-    "long","mutable","namespace","new","noexcept","not","not_eq","nullptr",
-    "operator","or","or_eq","private","protected","public","register",
-    "reinterpret_cast","requires","return","short"
-};
+    "long",     "mutable",          "namespace", "new",    "noexcept", "not",       "not_eq",
+    "nullptr",  "operator",         "or",        "or_eq",  "private",  "protected", "public",
+    "register", "reinterpret_cast", "requires",  "return", "short"};
 constexpr std::array<std::string_view, 22> kCppKeywords4 = {
-    "signed","sizeof","static","static_assert","static_cast","struct","switch",
-    "template","this","thread_local","throw","true","try","typedef","typeid",
-    "typename","union","unsigned","using","virtual","void","volatile"
-};
-constexpr std::array<std::string_view, 3> kCppKeywords5 = {
-    "wchar_t","while","xor"
-};
+    "signed", "sizeof",   "static", "static_assert", "static_cast", "struct",
+    "switch", "template", "this",   "thread_local",  "throw",       "true",
+    "try",    "typedef",  "typeid", "typename",      "union",       "unsigned",
+    "using",  "virtual",  "void",   "volatile"};
+constexpr std::array<std::string_view, 3> kCppKeywords5 = {"wchar_t", "while", "xor"};
 
 constexpr std::array<std::string_view, 28> kPyKeywords = {
-    "False","None","True","and","as","assert","async","await","break","class",
-    "continue","def","del","elif","else","except","finally","for","from",
-    "global","if","import","in","is","lambda","nonlocal","not","or"
-};
-constexpr std::array<std::string_view, 7> kPyKeywords2 = {
-    "pass","raise","return","try","while","with","yield"
-};
+    "False",  "None",   "True",    "and",      "as",       "assert", "async",
+    "await",  "break",  "class",   "continue", "def",      "del",    "elif",
+    "else",   "except", "finally", "for",      "from",     "global", "if",
+    "import", "in",     "is",      "lambda",   "nonlocal", "not",    "or"};
+constexpr std::array<std::string_view, 7> kPyKeywords2 = {"pass",  "raise", "return", "try",
+                                                          "while", "with",  "yield"};
 
 constexpr std::array<std::string_view, 35> kJsKeywords = {
-    "abstract","arguments","async","await","boolean","break","byte","case",
-    "catch","char","class","const","continue","debugger","default","delete",
-    "do","double","else","enum","eval","export","extends","false","final",
-    "finally","float","for","function","goto","if","implements","import","in",
-    "instanceof"
-};
+    "abstract", "arguments", "async", "await",      "boolean", "break",    "byte",
+    "case",     "catch",     "char",  "class",      "const",   "continue", "debugger",
+    "default",  "delete",    "do",    "double",     "else",    "enum",     "eval",
+    "export",   "extends",   "false", "final",      "finally", "float",    "for",
+    "function", "goto",      "if",    "implements", "import",  "in",       "instanceof"};
 constexpr std::array<std::string_view, 26> kJsKeywords2 = {
-    "int","interface","let","long","native","new","null","package","private",
-    "protected","public","return","short","static","super","switch",
-    "synchronized","this","throw","throws","transient","true","try","typeof",
-    "var","void"
-};
-constexpr std::array<std::string_view, 7> kJsKeywords3 = {
-    "volatile","while","with","yield","of","from","as"
-};
+    "int",     "interface", "let",          "long",   "native", "new",    "null",
+    "package", "private",   "protected",    "public", "return", "short",  "static",
+    "super",   "switch",    "synchronized", "this",   "throw",  "throws", "transient",
+    "true",    "try",       "typeof",       "var",    "void"};
+constexpr std::array<std::string_view, 7> kJsKeywords3 = {"volatile", "while", "with", "yield",
+                                                          "of",       "from",  "as"};
 
 constexpr std::array<std::string_view, 27> kBashKeywords = {
-    "if","then","else","elif","fi","case","esac","for","in","done","while",
-    "until","do","function","select","time","return","exit","break",
-    "continue","local","export","readonly","declare","typeset","source","."
-};
+    "if",    "then",     "else",  "elif",   "fi",       "case",    "esac",    "for",    "in",
+    "done",  "while",    "until", "do",     "function", "select",  "time",    "return", "exit",
+    "break", "continue", "local", "export", "readonly", "declare", "typeset", "source", "."};
 
 constexpr std::array<std::string_view, 3> kJsonKeywords = {
-    "true","false","null" // JSON has no keywords — only literals
+    "true", "false", "null"  // JSON has no keywords — only literals
 };
 
 constexpr std::array<std::string_view, 3> kMdKeywords = {
     // Headings and markers are handled inline
-    "TODO","FIXME","NOTE"
-};
+    "TODO", "FIXME", "NOTE"};
 
 constexpr std::array<std::string_view, 33> kYamlKeywords = {
-    "true","false","null","yes","no","on","off","---","...",
-    "anchor","alias","mapping","sequence","block","flow","folded","literal",
-    "map","list"
-};
+    "true",  "false",   "null",     "yes",   "no",   "on",     "off",     "---", "...", "anchor",
+    "alias", "mapping", "sequence", "block", "flow", "folded", "literal", "map", "list"};
 
 /// Build LanguageSpec by id. Falls back to C-like defaults.
 [[nodiscard]] inline LanguageSpec get_language_spec(std::string_view lang) {
@@ -405,29 +410,36 @@ constexpr std::array<std::string_view, 33> kYamlKeywords = {
     auto is_lang = [&](std::initializer_list<std::string_view> names) {
         for (auto n : names) {
             if (lang == n) return true;
-            if (!lang.empty() && n.size() <= lang.size() &&
-                lang.substr(0, n.size()) == n) return true;
+            if (!lang.empty() && n.size() <= lang.size() && lang.substr(0, n.size()) == n)
+                return true;
         }
         return false;
     };
 
     // C / C++ / C# / Objective-C
-    if (is_lang({"c","cpp","c++","cxx","cc","hpp","h","hh","hxx",
-                  "csharp","cs","objective-c","m","mm"})) {
-        for (auto w : kCppKeywords)  s.keywords.push_back(w);
-        for (auto w : kCppKeywords2) s.keywords.push_back(w);
-        for (auto w : kCppKeywords3) s.keywords.push_back(w);
-        for (auto w : kCppKeywords4) s.keywords.push_back(w);
-        for (auto w : kCppKeywords5) s.keywords.push_back(w);
+    if (is_lang({"c", "cpp", "c++", "cxx", "cc", "hpp", "h", "hh", "hxx", "csharp", "cs",
+                 "objective-c", "m", "mm"})) {
+        for (auto w : kCppKeywords)
+            s.keywords.push_back(w);
+        for (auto w : kCppKeywords2)
+            s.keywords.push_back(w);
+        for (auto w : kCppKeywords3)
+            s.keywords.push_back(w);
+        for (auto w : kCppKeywords4)
+            s.keywords.push_back(w);
+        for (auto w : kCppKeywords5)
+            s.keywords.push_back(w);
         s.line_comment = "//";
         s.has_block_comment_c = true;
         s.allow_backtick = false;
         return s;
     }
 
-    if (is_lang({"py","python","python3","python2","pyi"})) {
-        for (auto w : kPyKeywords)  s.keywords.push_back(w);
-        for (auto w : kPyKeywords2) s.keywords.push_back(w);
+    if (is_lang({"py", "python", "python3", "python2", "pyi"})) {
+        for (auto w : kPyKeywords)
+            s.keywords.push_back(w);
+        for (auto w : kPyKeywords2)
+            s.keywords.push_back(w);
         s.line_comment = "#";
         s.has_hash_comment = true;
         s.has_block_comment_c = false;
@@ -437,19 +449,23 @@ constexpr std::array<std::string_view, 33> kYamlKeywords = {
         return s;
     }
 
-    if (is_lang({"js","javascript","jsx","ts","typescript","tsx",
-                  "mjs","cjs","es6","es"})) {
-        for (auto w : kJsKeywords)  s.keywords.push_back(w);
-        for (auto w : kJsKeywords2) s.keywords.push_back(w);
-        for (auto w : kJsKeywords3) s.keywords.push_back(w);
+    if (is_lang(
+            {"js", "javascript", "jsx", "ts", "typescript", "tsx", "mjs", "cjs", "es6", "es"})) {
+        for (auto w : kJsKeywords)
+            s.keywords.push_back(w);
+        for (auto w : kJsKeywords2)
+            s.keywords.push_back(w);
+        for (auto w : kJsKeywords3)
+            s.keywords.push_back(w);
         s.line_comment = "//";
         s.has_block_comment_c = true;
         s.allow_backtick = true;
         return s;
     }
 
-    if (is_lang({"bash","sh","zsh","shell","ksh","fish","dash"})) {
-        for (auto w : kBashKeywords) s.keywords.push_back(w);
+    if (is_lang({"bash", "sh", "zsh", "shell", "ksh", "fish", "dash"})) {
+        for (auto w : kBashKeywords)
+            s.keywords.push_back(w);
         s.line_comment = "#";
         s.has_hash_comment = true;
         s.has_block_comment_c = false;
@@ -459,39 +475,43 @@ constexpr std::array<std::string_view, 33> kYamlKeywords = {
         return s;
     }
 
-    if (is_lang({"json","json5","jsonc"})) {
-        for (auto w : kJsonKeywords) s.keywords.push_back(w);
+    if (is_lang({"json", "json5", "jsonc"})) {
+        for (auto w : kJsonKeywords)
+            s.keywords.push_back(w);
         s.line_comment = "";
         s.has_block_comment_c = (lang == "jsonc" || lang == "json5");
         s.allow_backtick = false;
         return s;
     }
 
-    if (is_lang({"md","markdown"})) {
-        for (auto w : kMdKeywords) s.keywords.push_back(w);
+    if (is_lang({"md", "markdown"})) {
+        for (auto w : kMdKeywords)
+            s.keywords.push_back(w);
         s.line_comment = "";
-        s.has_block_comment_c = true;   // C-style block comments not used, stub
-        s.has_hash_comment = false;     // # is heading, not comment
+        s.has_block_comment_c = true;  // C-style block comments not used, stub
+        s.has_hash_comment = false;    // # is heading, not comment
         return s;
     }
 
-    if (is_lang({"yaml","yml"})) {
-        for (auto w : kYamlKeywords) s.keywords.push_back(w);
+    if (is_lang({"yaml", "yml"})) {
+        for (auto w : kYamlKeywords)
+            s.keywords.push_back(w);
         s.line_comment = "#";
         s.has_hash_comment = true;
         s.has_block_comment_c = false;
         return s;
     }
 
-    if (is_lang({"sql","sql"})) {
+    if (is_lang({"sql", "sql"})) {
         // SQL keywords — common subset
-        for (auto w : {
-            "SELECT","FROM","WHERE","AND","OR","NOT","NULL","IN","LIKE","BETWEEN",
-            "INSERT","INTO","VALUES","UPDATE","SET","DELETE","CREATE","TABLE",
-            "DROP","ALTER","INDEX","JOIN","LEFT","RIGHT","INNER","OUTER","ON",
-            "GROUP","BY","ORDER","HAVING","LIMIT","AS","UNION","DISTINCT",
-            "PRIMARY","KEY","FOREIGN","REFERENCES","DEFAULT","UNIQUE","CHECK"
-        }) s.keywords.push_back(w);
+        for (auto w :
+             {"SELECT",  "FROM",   "WHERE",   "AND",        "OR",      "NOT",    "NULL",
+              "IN",      "LIKE",   "BETWEEN", "INSERT",     "INTO",    "VALUES", "UPDATE",
+              "SET",     "DELETE", "CREATE",  "TABLE",      "DROP",    "ALTER",  "INDEX",
+              "JOIN",    "LEFT",   "RIGHT",   "INNER",      "OUTER",   "ON",     "GROUP",
+              "BY",      "ORDER",  "HAVING",  "LIMIT",      "AS",      "UNION",  "DISTINCT",
+              "PRIMARY", "KEY",    "FOREIGN", "REFERENCES", "DEFAULT", "UNIQUE", "CHECK"})
+            s.keywords.push_back(w);
         s.line_comment = "--";
         s.has_dash_comment = true;
         s.has_block_comment_c = true;
@@ -499,8 +519,10 @@ constexpr std::array<std::string_view, 33> kYamlKeywords = {
     }
 
     // Default: C-like line comments
-    for (auto w : kCppKeywords)  s.keywords.push_back(w);
-    for (auto w : kCppKeywords2) s.keywords.push_back(w);
+    for (auto w : kCppKeywords)
+        s.keywords.push_back(w);
+    for (auto w : kCppKeywords2)
+        s.keywords.push_back(w);
     s.line_comment = "//";
     s.has_block_comment_c = true;
     return s;
@@ -513,43 +535,36 @@ constexpr std::array<std::string_view, 33> kYamlKeywords = {
 /// State for multi-line tokens (block comments / multi-line strings).
 enum class MultilineState : std::uint8_t {
     None,
-    BlockComment,   // in /* ... */
-    StringDq,       // in "...
-    StringSq,       // in '...
-    StringBt,       // in `...
+    BlockComment,  // in /* ... */
+    StringDq,      // in "...
+    StringSq,      // in '...
+    StringBt,      // in `...
 };
 
 /// Character predicate for identifier boundaries.
 [[nodiscard]] inline bool is_ident_char(char c) {
-    return (c >= 'a' && c <= 'z') ||
-           (c >= 'A' && c <= 'Z') ||
-           (c >= '0' && c <= '9') ||
-           c == '_' || c == '$' ||
-           static_cast<unsigned char>(c) >= 0x80; // rough UTF-8 pass-through
+    return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '_' ||
+           c == '$' || static_cast<unsigned char>(c) >= 0x80;  // rough UTF-8 pass-through
 }
 
 [[nodiscard]] inline bool is_ident_start(char c) {
-    return (c >= 'a' && c <= 'z') ||
-           (c >= 'A' && c <= 'Z') ||
-           c == '_' || c == '$' ||
+    return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_' || c == '$' ||
            static_cast<unsigned char>(c) >= 0x80;
 }
 
 /// Tokenize a line with full keyword/string/number/comment support.
 /// `ml_state` carries over from previous line and is updated in place.
-[[nodiscard]] inline std::vector<HighlightToken> tokenize_line_ex(
-    const std::string& line,
-    const LanguageSpec& spec,
-    MultilineState& ml_state,
-    int start_col = 0) {
+[[nodiscard]] inline std::vector<HighlightToken> tokenize_line_ex(const std::string& line,
+                                                                  const LanguageSpec& spec,
+                                                                  MultilineState& ml_state,
+                                                                  int start_col = 0) {
 
     std::vector<HighlightToken> out;
     if (line.empty()) return out;
 
     auto push = [&](TokenType t, std::string_view text, int col) {
         if (text.empty()) return;
-        out.push_back({std::string(text), t, col,
-                       col + static_cast<int>(text.size())});
+        out.push_back({std::string(text), t, col, col + static_cast<int>(text.size())});
     };
 
     int col = start_col;
@@ -557,16 +572,17 @@ enum class MultilineState : std::uint8_t {
     const size_t N = line.size();
 
     // Multi-line continuation from previous line
-    auto try_consume_until = [&](MultilineState state,
-                                  const char* end_seq,
-                                  TokenType tok) -> bool {
+    auto try_consume_until = [&](MultilineState state, const char* end_seq, TokenType tok) -> bool {
         (void)state;
         size_t es = std::char_traits<char>::length(end_seq);
         size_t p = 0;
         while (p + es <= N) {
             bool match = true;
             for (size_t k = 0; k < es; ++k)
-                if (line[p + k] != end_seq[k]) { match = false; break; }
+                if (line[p + k] != end_seq[k]) {
+                    match = false;
+                    break;
+                }
             if (match) {
                 push(tok, std::string_view(line.data() + i, p + es - i), col);
                 col += static_cast<int>(p + es - i);
@@ -575,14 +591,17 @@ enum class MultilineState : std::uint8_t {
                 return true;
             }
             // Handle escape: skip next char
-            if (line[p] == '\\') { p += 2; continue; }
+            if (line[p] == '\\') {
+                p += 2;
+                continue;
+            }
             ++p;
         }
         // Consumed rest of line (continues)
         push(tok, std::string_view(line.data() + i, N - i), col);
         col += static_cast<int>(N - i);
         i = N;
-        return true; // consumed rest
+        return true;  // consumed rest
     };
 
     if (ml_state == MultilineState::BlockComment) {
@@ -606,8 +625,7 @@ enum class MultilineState : std::uint8_t {
     auto line_comment_match = [&](size_t pos) -> size_t {
         if (!spec.line_comment.empty()) {
             size_t ll = spec.line_comment.size();
-            if (pos + ll <= N &&
-                line.substr(pos, ll) == spec.line_comment) return ll;
+            if (pos + ll <= N && line.substr(pos, ll) == spec.line_comment) return ll;
         }
         if (spec.has_hash_comment) {
             if (pos < N && line[pos] == '#') return 1;
@@ -624,18 +642,17 @@ enum class MultilineState : std::uint8_t {
 
         // Line comment — to end of line
         if (size_t ll = line_comment_match(i); ll > 0) {
-            push(TokenType::Comment,
-                 std::string_view(line.data() + i, N - i), col);
+            push(TokenType::Comment, std::string_view(line.data() + i, N - i), col);
             col += static_cast<int>(N - i);
             i = N;
             break;
         }
 
         // Block comment start
-        if (spec.has_block_comment_c &&
-            i + 1 < N && c == '/' && line[i + 1] == '*') {
+        if (spec.has_block_comment_c && i + 1 < N && c == '/' && line[i + 1] == '*') {
             ml_state = MultilineState::BlockComment;
-            i += 2; col += 2;
+            i += 2;
+            col += 2;
             // consume until */
             size_t p = i;
             bool found = false;
@@ -643,8 +660,7 @@ enum class MultilineState : std::uint8_t {
                 if (line[p] == '*' && line[p + 1] == '/') {
                     found = true;
                     push(TokenType::Comment,
-                         std::string_view(line.data() + col_start,
-                                          p + 2 - col_start),
+                         std::string_view(line.data() + col_start, p + 2 - col_start),
                          (int)col_start);
                     col = static_cast<int>(p + 2);
                     i = p + 2;
@@ -654,8 +670,7 @@ enum class MultilineState : std::uint8_t {
                 ++p;
             }
             if (!found) {
-                push(TokenType::Comment,
-                     std::string_view(line.data() + col_start, N - col_start),
+                push(TokenType::Comment, std::string_view(line.data() + col_start, N - col_start),
                      (int)col_start);
                 col = static_cast<int>(N);
                 i = N;
@@ -669,11 +684,13 @@ enum class MultilineState : std::uint8_t {
             size_t p = i + 1;
             bool found = false;
             while (p < N) {
-                if (line[p] == '\\') { p += 2; continue; }
+                if (line[p] == '\\') {
+                    p += 2;
+                    continue;
+                }
                 if (line[p] == delim) {
                     found = true;
-                    push(TokenType::String,
-                         std::string_view(line.data() + i, p + 1 - i), col);
+                    push(TokenType::String, std::string_view(line.data() + i, p + 1 - i), col);
                     col += static_cast<int>(p + 1 - i);
                     i = p + 1;
                     ml_state = MultilineState::None;
@@ -682,8 +699,7 @@ enum class MultilineState : std::uint8_t {
                 ++p;
             }
             if (!found) {
-                push(TokenType::String,
-                     std::string_view(line.data() + i, N - i), col);
+                push(TokenType::String, std::string_view(line.data() + i, N - i), col);
                 col += static_cast<int>(N - i);
                 i = N;
             }
@@ -704,43 +720,39 @@ enum class MultilineState : std::uint8_t {
 
         // Numbers
         if (isdigit(static_cast<unsigned char>(c)) ||
-            (c == '.' && i + 1 < N &&
-             isdigit(static_cast<unsigned char>(line[i + 1])))) {
+            (c == '.' && i + 1 < N && isdigit(static_cast<unsigned char>(line[i + 1])))) {
             size_t p = i;
-            if (c == '0' && i + 1 < N &&
-                (line[i + 1] == 'x' || line[i + 1] == 'X')) {
+            if (c == '0' && i + 1 < N && (line[i + 1] == 'x' || line[i + 1] == 'X')) {
                 p += 2;
                 while (p < N &&
                        (isdigit(static_cast<unsigned char>(line[p])) ||
-                        (line[p] >= 'a' && line[p] <= 'f') ||
-                        (line[p] >= 'A' && line[p] <= 'F'))) ++p;
-            } else if (c == '0' && i + 1 < N &&
-                       (line[i + 1] == 'b' || line[i + 1] == 'B')) {
+                        (line[p] >= 'a' && line[p] <= 'f') || (line[p] >= 'A' && line[p] <= 'F')))
+                    ++p;
+            } else if (c == '0' && i + 1 < N && (line[i + 1] == 'b' || line[i + 1] == 'B')) {
                 p += 2;
-                while (p < N && (line[p] == '0' || line[p] == '1')) ++p;
+                while (p < N && (line[p] == '0' || line[p] == '1'))
+                    ++p;
             } else {
-                while (p < N &&
-                       isdigit(static_cast<unsigned char>(line[p]))) ++p;
+                while (p < N && isdigit(static_cast<unsigned char>(line[p])))
+                    ++p;
                 if (p < N && line[p] == '.') {
                     ++p;
-                    while (p < N &&
-                           isdigit(static_cast<unsigned char>(line[p]))) ++p;
+                    while (p < N && isdigit(static_cast<unsigned char>(line[p])))
+                        ++p;
                 }
                 if (p < N && (line[p] == 'e' || line[p] == 'E')) {
                     ++p;
                     if (p < N && (line[p] == '+' || line[p] == '-')) ++p;
-                    while (p < N &&
-                           isdigit(static_cast<unsigned char>(line[p]))) ++p;
+                    while (p < N && isdigit(static_cast<unsigned char>(line[p])))
+                        ++p;
                 }
             }
             // Type suffixes: f, u, l, ll, etc.
-            while (p < N && (line[p] == 'f' || line[p] == 'F' ||
-                             line[p] == 'u' || line[p] == 'U' ||
-                             line[p] == 'l' || line[p] == 'L' ||
-                             line[p] == 'd' || line[p] == 'D' ||
-                             line[p] == 'm' || line[p] == 'M')) ++p;
-            push(TokenType::Number,
-                 std::string_view(line.data() + i, p - i), col);
+            while (p < N && (line[p] == 'f' || line[p] == 'F' || line[p] == 'u' || line[p] == 'U' ||
+                             line[p] == 'l' || line[p] == 'L' || line[p] == 'd' || line[p] == 'D' ||
+                             line[p] == 'm' || line[p] == 'M'))
+                ++p;
+            push(TokenType::Number, std::string_view(line.data() + i, p - i), col);
             col += static_cast<int>(p - i);
             i = p;
             continue;
@@ -749,13 +761,17 @@ enum class MultilineState : std::uint8_t {
         // Identifier / keyword
         if (is_ident_start(c)) {
             size_t p = i + 1;
-            while (p < N && is_ident_char(line[p])) ++p;
+            while (p < N && is_ident_char(line[p]))
+                ++p;
             std::string_view word(line.data() + i, p - i);
 
             // Check keywords with case-insensitive for SQL, case-sensitive rest
             bool kw = false;
             for (auto k : spec.keywords) {
-                if (k == word) { kw = true; break; }
+                if (k == word) {
+                    kw = true;
+                    break;
+                }
                 // SQL: upper-case in keyword list, match lower
                 if (k.size() == word.size()) {
                     bool eq = true;
@@ -763,10 +779,14 @@ enum class MultilineState : std::uint8_t {
                         char a = k[q], b = word[q];
                         if (a >= 'A' && a <= 'Z') a = a - 'A' + 'a';
                         if (b >= 'A' && b <= 'Z') b = b - 'A' + 'a';
-                        if (a != b) { eq = false; break; }
+                        if (a != b) {
+                            eq = false;
+                            break;
+                        }
                     }
                     if (eq && spec.has_dash_comment /*SQL marker*/) {
-                        kw = true; break;
+                        kw = true;
+                        break;
                     }
                 }
             }
@@ -776,21 +796,27 @@ enum class MultilineState : std::uint8_t {
             if (!kw && word.size() >= 2) {
                 if ((word[0] >= 'A' && word[0] <= 'Z')) type_like = true;
                 if (word.size() >= 3 && word[word.size() - 2] == '_' &&
-                    word[word.size() - 1] == 't') type_like = true; // _t suffix
+                    word[word.size() - 1] == 't')
+                    type_like = true;  // _t suffix
             }
 
             // Function call: identifier immediately followed by '('
             bool is_func = false;
             {
                 size_t pp = p;
-                while (pp < N && (line[pp] == ' ' || line[pp] == '\t')) ++pp;
+                while (pp < N && (line[pp] == ' ' || line[pp] == '\t'))
+                    ++pp;
                 if (pp < N && line[pp] == '(') is_func = true;
             }
 
-            if (kw) push(TokenType::Keyword, word, col);
-            else if (is_func) push(TokenType::Function, word, col);
-            else if (type_like) push(TokenType::Type, word, col);
-            else push(TokenType::Plain, word, col);
+            if (kw)
+                push(TokenType::Keyword, word, col);
+            else if (is_func)
+                push(TokenType::Function, word, col);
+            else if (type_like)
+                push(TokenType::Type, word, col);
+            else
+                push(TokenType::Plain, word, col);
             col += static_cast<int>(p - i);
             i = p;
             continue;
@@ -798,35 +824,54 @@ enum class MultilineState : std::uint8_t {
 
         // Operator / punctuation
         switch (c) {
-            case '+': case '-': case '*': case '/': case '%':
-            case '=': case '<': case '>': case '!':
-            case '&': case '|': case '^': case '~':
-            case '?': case ':':
-                push(TokenType::Operator,
-                     std::string_view(line.data() + i, 1), col);
-                col++; i++;
-                continue;
-            case '(': case ')': case '[': case ']': case '{': case '}':
-            case ';': case ',': case '.':
-                push(TokenType::Punctuation,
-                     std::string_view(line.data() + i, 1), col);
-                col++; i++;
-                continue;
-            default:
-                break;
+        case '+':
+        case '-':
+        case '*':
+        case '/':
+        case '%':
+        case '=':
+        case '<':
+        case '>':
+        case '!':
+        case '&':
+        case '|':
+        case '^':
+        case '~':
+        case '?':
+        case ':':
+            push(TokenType::Operator, std::string_view(line.data() + i, 1), col);
+            col++;
+            i++;
+            continue;
+        case '(':
+        case ')':
+        case '[':
+        case ']':
+        case '{':
+        case '}':
+        case ';':
+        case ',':
+        case '.':
+            push(TokenType::Punctuation, std::string_view(line.data() + i, 1), col);
+            col++;
+            i++;
+            continue;
+        default:
+            break;
         }
 
         // Fallback: single character plain
         push(TokenType::Plain, std::string_view(line.data() + i, 1), col);
-        col++; i++;
+        col++;
+        i++;
     }
 
     return out;
 }
 
 /// Compatibility wrapper: previous callers expect no multiline state.
-[[nodiscard]] inline std::vector<HighlightToken> tokenize_line(
-    const std::string& line, const std::string& language) {
+[[nodiscard]] inline std::vector<HighlightToken> tokenize_line(const std::string& line,
+                                                               const std::string& language) {
 
     auto spec = get_language_spec(language);
     MultilineState st = MultilineState::None;
@@ -834,8 +879,8 @@ enum class MultilineState : std::uint8_t {
 }
 
 /// Highlight entire source string, full engine with stateful multiline.
-[[nodiscard]] inline HighlightResult highlight_source(
-    const std::string& source, const std::string& language) {
+[[nodiscard]] inline HighlightResult highlight_source(const std::string& source,
+                                                      const std::string& language) {
 
     HighlightResult result;
     result.language_detected = language;
@@ -890,9 +935,9 @@ inline void apply_semantic_overlay(HighlightResult& result, const SemanticTokenL
 
 /// Highlight source with an optional semantic overlay. When `layer` is null or
 /// empty, the result is identical to the keyword-only highlight_source().
-[[nodiscard]] inline HighlightResult highlight_source(
-    const std::string& source, const std::string& language,
-    const SemanticTokenLayer* layer) {
+[[nodiscard]] inline HighlightResult highlight_source(const std::string& source,
+                                                      const std::string& language,
+                                                      const SemanticTokenLayer* layer) {
     auto result = highlight_source(source, language);
     if (layer && !layer->spans.empty()) {
         apply_semantic_overlay(result, *layer);
@@ -918,13 +963,12 @@ struct ColoredSegment {
 ///
 /// The ColoredTextLine Node (detail::ColoredTextLine) and this factory body
 /// live in code_highlight_impl.cpp (inline-def ratchet).
-[[nodiscard]] Element colored_text_line(
-    std::vector<ColoredSegment> segments);
+[[nodiscard]] Element colored_text_line(std::vector<ColoredSegment> segments);
 
 /// Render a single highlighted line
-[[nodiscard]] inline Element RenderHighlightedLine(
-    const HighlightedLine& line, const SyntaxTheme& theme,
-    bool show_line_nums, bool is_highlighted, int gutter_width) {
+[[nodiscard]] inline Element RenderHighlightedLine(const HighlightedLine& line,
+                                                   const SyntaxTheme& theme, bool show_line_nums,
+                                                   bool is_highlighted, int gutter_width) {
 
     std::vector<ColoredSegment> segments;
 
@@ -959,7 +1003,9 @@ struct ColoredSegment {
     } else if (line.is_diff_removed) {
         result = result | bgcolor(theme.removed_bg);
     } else if (is_highlighted) {
-        result = result | bgcolor(loom::ui::design::theme::current_theme().palette->message_actions_background);
+        result =
+            result |
+            bgcolor(loom::ui::design::theme::current_theme().palette->message_actions_background);
     }
 
     return result;
@@ -971,16 +1017,15 @@ constexpr int kFoldShownLines = 200;
 
 /// Render the full highlighted code block with optional copy corner tag,
 /// line gutter, and large-file fold.
-[[nodiscard]] inline Element RenderCodeHighlight(
-    const CodeHighlightOptions& opts, const HighlightResult& highlighted) {
+[[nodiscard]] inline Element RenderCodeHighlight(const CodeHighlightOptions& opts,
+                                                 const HighlightResult& highlighted) {
 
     SyntaxTheme theme = opts.theme.value_or(SyntaxTheme{});
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
 
     int total_lines = static_cast<int>(highlighted.lines.size());
-    int gutter_width = (total_lines > 0)
-        ? static_cast<int>(std::format("{}", total_lines).size())
-        : 1;
+    int gutter_width =
+        (total_lines > 0) ? static_cast<int>(std::format("{}", total_lines).size()) : 1;
 
     // Large-file fold: show only first kFoldShownLines + "…expand…" notice.
     // Users can scroll manually via component events to reveal more lines.
@@ -990,16 +1035,15 @@ constexpr int kFoldShownLines = 200;
     // Compute visible range
     int start = std::max(0, opts.scroll_offset);
     int end = std::min(eff_visible_lines, start + opts.visible_lines);
-    (void)end; // used implicitly below by iterate limit
+    (void)end;  // used implicitly below by iterate limit
 
     Elements lines;
     int upper = std::min(eff_visible_lines, start + opts.visible_lines);
     for (int i = start; i < upper; ++i) {
         bool is_hl = opts.highlight_line.has_value() &&
                      *opts.highlight_line == highlighted.lines[i].line_number;
-        lines.push_back(RenderHighlightedLine(
-            highlighted.lines[i], theme, opts.show_line_numbers,
-            is_hl, gutter_width));
+        lines.push_back(RenderHighlightedLine(highlighted.lines[i], theme, opts.show_line_numbers,
+                                              is_hl, gutter_width));
     }
 
     if (lines.empty()) {
@@ -1008,23 +1052,25 @@ constexpr int kFoldShownLines = 200;
 
     // Fold notice
     if (is_folded) {
-        lines.push_back(hbox({
-            text(" ") | dim,
-            filler(),
-            text(std::format("Showing first {} of {} lines… ",
-                             kFoldShownLines, total_lines))
-               | color(pal.warning),
-            text("[Expand]") | color(loom::ui::design::theme::current_theme().palette->info) | bold,
-            filler(),
-            text(" ") | dim,
-        }) | bgcolor(loom::ui::design::theme::current_theme().palette->warning_tint_bg));
+        lines.push_back(
+            hbox({
+                text(" ") | dim,
+                filler(),
+                text(std::format("Showing first {} of {} lines… ", kFoldShownLines, total_lines)) |
+                    color(pal.warning),
+                text("[Expand]") | color(loom::ui::design::theme::current_theme().palette->info) |
+                    bold,
+                filler(),
+                text(" ") | dim,
+            }) |
+            bgcolor(loom::ui::design::theme::current_theme().palette->warning_tint_bg));
     }
 
     // Status bar
     auto status = hbox({
         text(" " + highlighted.language_detected) | color(pal.muted),
-        text(std::format("  {}/{} lines",
-                         std::min(upper, total_lines), total_lines)) | color(pal.muted),
+        text(std::format("  {}/{} lines", std::min(upper, total_lines), total_lines)) |
+            color(pal.muted),
         filler(),
         text("[j/k] scroll [q] close") | color(pal.muted),
         text(" "),
@@ -1042,9 +1088,9 @@ constexpr int kFoldShownLines = 200;
     // element above the code body, on a topbar row.
     auto copy_tag = hbox({
         filler(),
-        text(" [Copy] ") | color(loom::ui::design::theme::current_theme().palette->muted)
-                        | bgcolor(loom::ui::design::theme::current_theme().palette->surface_tint_1)
-                        | borderStyled(loom::ui::design::theme::current_theme().palette->muted),
+        text(" [Copy] ") | color(loom::ui::design::theme::current_theme().palette->muted) |
+            bgcolor(loom::ui::design::theme::current_theme().palette->surface_tint_1) |
+            borderStyled(loom::ui::design::theme::current_theme().palette->muted),
     });
 
     return vbox({
@@ -1063,57 +1109,55 @@ constexpr int kFoldShownLines = 200;
         CodeHighlightOptions opts;
         HighlightResult highlighted;
     };
+
     auto state = std::make_shared<State>();
     state->opts = std::move(options);
-    state->highlighted = highlight_source(state->opts.source,
-                                          state->opts.language);
+    state->highlighted = highlight_source(state->opts.source, state->opts.language);
 
-    return Renderer([state] {
-        return RenderCodeHighlight(state->opts, state->highlighted);
-    }) | CatchEvent([state](Event event) -> bool {
-        int total = static_cast<int>(state->highlighted.lines.size());
+    return Renderer([state] { return RenderCodeHighlight(state->opts, state->highlighted); }) |
+           CatchEvent([state](Event event) -> bool {
+               int total = static_cast<int>(state->highlighted.lines.size());
 
-        if (event == Event::ArrowDown || event == Event::Character('j')) {
-            if (state->opts.scroll_offset < total - state->opts.visible_lines) {
-                state->opts.scroll_offset++;
-            }
-            return true;
-        }
-        if (event == Event::ArrowUp || event == Event::Character('k')) {
-            if (state->opts.scroll_offset > 0) {
-                state->opts.scroll_offset--;
-            }
-            return true;
-        }
-        if (event == Event::PageDown) {
-            state->opts.scroll_offset = std::min(
-                state->opts.scroll_offset + state->opts.visible_lines,
-                std::max(0, total - state->opts.visible_lines));
-            return true;
-        }
-        if (event == Event::PageUp) {
-            state->opts.scroll_offset = std::max(
-                0, state->opts.scroll_offset - state->opts.visible_lines);
-            return true;
-        }
-        if (event == Event::Home) {
-            state->opts.scroll_offset = 0;
-            return true;
-        }
-        if (event == Event::End) {
-            state->opts.scroll_offset = std::max(0, total - state->opts.visible_lines);
-            return true;
-        }
-        if (event == Event::Return) {
-            if (state->opts.on_line_select) {
-                int current_line = state->opts.scroll_offset +
-                                   state->opts.start_line;
-                state->opts.on_line_select(current_line);
-            }
-            return true;
-        }
-        return false;
-    });
+               if (event == Event::ArrowDown || event == Event::Character('j')) {
+                   if (state->opts.scroll_offset < total - state->opts.visible_lines) {
+                       state->opts.scroll_offset++;
+                   }
+                   return true;
+               }
+               if (event == Event::ArrowUp || event == Event::Character('k')) {
+                   if (state->opts.scroll_offset > 0) {
+                       state->opts.scroll_offset--;
+                   }
+                   return true;
+               }
+               if (event == Event::PageDown) {
+                   state->opts.scroll_offset =
+                       std::min(state->opts.scroll_offset + state->opts.visible_lines,
+                                std::max(0, total - state->opts.visible_lines));
+                   return true;
+               }
+               if (event == Event::PageUp) {
+                   state->opts.scroll_offset =
+                       std::max(0, state->opts.scroll_offset - state->opts.visible_lines);
+                   return true;
+               }
+               if (event == Event::Home) {
+                   state->opts.scroll_offset = 0;
+                   return true;
+               }
+               if (event == Event::End) {
+                   state->opts.scroll_offset = std::max(0, total - state->opts.visible_lines);
+                   return true;
+               }
+               if (event == Event::Return) {
+                   if (state->opts.on_line_select) {
+                       int current_line = state->opts.scroll_offset + state->opts.start_line;
+                       state->opts.on_line_select(current_line);
+                   }
+                   return true;
+               }
+               return false;
+           });
 }
 
 // ============================================================
@@ -1124,7 +1168,7 @@ constexpr int kFoldShownLines = 200;
 struct RenderCodeBlockOptions {
     std::string_view code;
     std::string_view language;
-    std::optional<std::string_view> file_path;      // optional display name
+    std::optional<std::string_view> file_path;  // optional display name
     int visible_lines = 40;
     bool show_line_numbers = true;
     bool show_copy_tag = true;
@@ -1145,16 +1189,17 @@ struct RenderCodeBlockOptions {
         Elements parts;
         parts.push_back(text(" ") | dim);
         if (opts.file_path && !opts.file_path->empty()) {
-            parts.push_back(text(std::string(*opts.file_path))
-                            | bold | color(loom::ui::design::theme::current_theme().palette->info));
+            parts.push_back(text(std::string(*opts.file_path)) | bold |
+                            color(loom::ui::design::theme::current_theme().palette->info));
         } else if (!opts.language.empty()) {
-            parts.push_back(text(std::string(opts.language))
-                            | bold | color(loom::ui::design::theme::current_theme().palette->info));
+            parts.push_back(text(std::string(opts.language)) | bold |
+                            color(loom::ui::design::theme::current_theme().palette->info));
         }
         if (opts.show_copy_tag) {
             parts.push_back(filler());
-            parts.push_back(text(" Copy ") | color(loom::ui::design::theme::current_theme().palette->muted)
-                                          | bgcolor(loom::ui::design::theme::current_theme().palette->surface_tint_1));
+            parts.push_back(
+                text(" Copy ") | color(loom::ui::design::theme::current_theme().palette->muted) |
+                bgcolor(loom::ui::design::theme::current_theme().palette->surface_tint_1));
             parts.push_back(text(" "));
         } else {
             parts.push_back(filler());
@@ -1168,4 +1213,4 @@ struct RenderCodeBlockOptions {
     });
 }
 
-} // namespace loom::ui::code_highlight
+}  // namespace loom::ui::code_highlight

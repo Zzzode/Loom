@@ -9,10 +9,11 @@
 // + dialogs.system imports from app_autocomplete.cpp.
 module;
 
-#include <cstring>
+#include <ftxui/component/event.hpp>
+
 #include <cstdio>
 #include <cstdlib>
-#include <ftxui/component/event.hpp>
+#include <cstring>
 
 module loom.ui.app.app;
 
@@ -42,115 +43,106 @@ namespace loom::ui {
 namespace agent_runtime = loom::tools::agent_runtime;
 namespace agent_cards = loom::ui::agents::cards;
 // Defined in app_extra_methods.cpp (same module); redeclared for module linkage.
-agent_cards::AgentCardData project_agent_definition_card(
-    const agent_runtime::AgentDefinition& agent);
+agent_cards::AgentCardData
+project_agent_definition_card(const agent_runtime::AgentDefinition& agent);
 
-std::string FormatAgentsMenuOutput(
-    const std::vector<agent_cards::AgentCardData>& agents,
-    int selected_position);
+std::string FormatAgentsMenuOutput(const std::vector<agent_cards::AgentCardData>& agents,
+                                   int selected_position);
 
 namespace {
-[[nodiscard]] bool is_built_in_agent(
-        const agent_cards::AgentCardData& agent) {
-        return agent.source == "built-in";
-    }
+[[nodiscard]] bool is_built_in_agent(const agent_cards::AgentCardData& agent) {
+    return agent.source == "built-in";
+}
 
-[[nodiscard]] std::vector<std::size_t> selectable_agent_indices(
-        const std::vector<agent_cards::AgentCardData>& agents) {
-        std::vector<std::size_t> out;
-        out.reserve(agents.size());
-        for (std::size_t i = 0; i < agents.size(); ++i) {
-            if (!is_built_in_agent(agents[i])) out.push_back(i);
-        }
-        return out;
+[[nodiscard]] std::vector<std::size_t>
+selectable_agent_indices(const std::vector<agent_cards::AgentCardData>& agents) {
+    std::vector<std::size_t> out;
+    out.reserve(agents.size());
+    for (std::size_t i = 0; i < agents.size(); ++i) {
+        if (!is_built_in_agent(agents[i])) out.push_back(i);
     }
+    return out;
+}
 
-[[nodiscard]] std::string agent_model_label(
-        const agent_cards::AgentCardData& agent) {
-        if (agent.model_override && !agent.model_override->empty()) {
-            return *agent.model_override;
-        }
-        return is_built_in_agent(agent) ? "inherit" : "";
+[[nodiscard]] std::string agent_model_label(const agent_cards::AgentCardData& agent) {
+    if (agent.model_override && !agent.model_override->empty()) {
+        return *agent.model_override;
     }
+    return is_built_in_agent(agent) ? "inherit" : "";
+}
 
 }  // namespace
 
 void AppAdapter::RefreshAgentsMenuOutput() {
-        screen_state_->active_local_jsx_content = FormatAgentsMenuOutput(
-            screen_state_->task_view_store.agent_cards,
-            screen_state_->active_agents_selection_position);
-    }
+    screen_state_->active_local_jsx_content =
+        FormatAgentsMenuOutput(screen_state_->task_view_store.agent_cards,
+                               screen_state_->active_agents_selection_position);
+}
 
 void AppAdapter::OpenAgentsMenu() {
-        LoadAgentCardsForMenu();
-        screen_state_->mode = repl::ReplMode::AgentsView;
-        screen_state_->dialog_store.agents_component.reset();
-        this->TriggerStatuslineUpdate();
-        PostRenderEvent();
-    }
+    LoadAgentCardsForMenu();
+    screen_state_->mode = repl::ReplMode::AgentsView;
+    screen_state_->dialog_store.agents_component.reset();
+    this->TriggerStatuslineUpdate();
+    PostRenderEvent();
+}
 
-    /// Rebuild live_teammates from native store + pane observer, then open
-    /// the TeamsView modal ('teams' footer action).
+/// Rebuild live_teammates from native store + pane observer, then open
+/// the TeamsView modal ('teams' footer action).
 void AppAdapter::OpenTeamsOverview() {
-        ProjectLiveTeammatesToScreenState();
-        screen_state_->task_view_store.teams_overview_selected_index = 0;
-        loom::ui::dialogs::triggers::PushTeamsView(
-            screen_state_->dialog_store.dialog_queue,
-            [this] {
-                screen_state_->dialog_store.PopModal();
-                PostRenderEvent();
-            });
+    ProjectLiveTeammatesToScreenState();
+    screen_state_->task_view_store.teams_overview_selected_index = 0;
+    loom::ui::dialogs::triggers::PushTeamsView(screen_state_->dialog_store.dialog_queue, [this] {
+        screen_state_->dialog_store.PopModal();
         PostRenderEvent();
-    }
+    });
+    PostRenderEvent();
+}
 
 bool AppAdapter::HandleLocalJsxEvent(const Event& ev) {
-        if (!screen_state_->active_local_jsx_command ||
-            screen_state_->active_local_jsx_command_name != "agents") {
-            return false;
-        }
-
-        const auto selectable = selectable_agent_indices(screen_state_->task_view_store.agent_cards);
-        const int item_count = 1 + static_cast<int>(selectable.size());
-        if (item_count <= 0) return false;
-
-        auto refresh_selection = [&] {
-            RefreshAgentsMenuOutput();
-            PostRenderEvent();
-        };
-
-        if (ev == Event::ArrowDown || ev == Event::Character('j')) {
-            screen_state_->active_agents_selection_position =
-                (screen_state_->active_agents_selection_position + 1) % item_count;
-            refresh_selection();
-            return true;
-        }
-        if (ev == Event::ArrowUp || ev == Event::Character('k')) {
-            screen_state_->active_agents_selection_position =
-                (screen_state_->active_agents_selection_position - 1 + item_count) %
-                item_count;
-            refresh_selection();
-            return true;
-        }
-        if (ev == Event::Return) {
-            const int selected = std::clamp(
-                screen_state_->active_agents_selection_position,
-                0,
-                item_count - 1);
-            std::string command = "/agents create";
-            if (selected > 0) {
-                const auto agent_index =
-                    selectable[static_cast<std::size_t>(selected - 1)];
-                command = "/agents configure " +
-                    screen_state_->task_view_store.agent_cards[agent_index].id;
-            }
-            ClearActiveLocalJsxCommand();
-            ResetScrollToBottom(screen_state_->messages_store);
-            HandleCommand(command);
-            PostRenderEvent();
-            return true;
-        }
+    if (!screen_state_->active_local_jsx_command ||
+        screen_state_->active_local_jsx_command_name != "agents") {
         return false;
     }
+
+    const auto selectable = selectable_agent_indices(screen_state_->task_view_store.agent_cards);
+    const int item_count = 1 + static_cast<int>(selectable.size());
+    if (item_count <= 0) return false;
+
+    auto refresh_selection = [&] {
+        RefreshAgentsMenuOutput();
+        PostRenderEvent();
+    };
+
+    if (ev == Event::ArrowDown || ev == Event::Character('j')) {
+        screen_state_->active_agents_selection_position =
+            (screen_state_->active_agents_selection_position + 1) % item_count;
+        refresh_selection();
+        return true;
+    }
+    if (ev == Event::ArrowUp || ev == Event::Character('k')) {
+        screen_state_->active_agents_selection_position =
+            (screen_state_->active_agents_selection_position - 1 + item_count) % item_count;
+        refresh_selection();
+        return true;
+    }
+    if (ev == Event::Return) {
+        const int selected =
+            std::clamp(screen_state_->active_agents_selection_position, 0, item_count - 1);
+        std::string command = "/agents create";
+        if (selected > 0) {
+            const auto agent_index = selectable[static_cast<std::size_t>(selected - 1)];
+            command =
+                "/agents configure " + screen_state_->task_view_store.agent_cards[agent_index].id;
+        }
+        ClearActiveLocalJsxCommand();
+        ResetScrollToBottom(screen_state_->messages_store);
+        HandleCommand(command);
+        PostRenderEvent();
+        return true;
+    }
+    return false;
+}
 
 namespace repl = loom::ui::repl_screen;
 namespace agent_display = loom::tools::agent_display;
@@ -159,9 +151,8 @@ namespace dsys = loom::ui::dialogs::system;
 namespace cperm = loom::ui::permissions;
 
 // ── FormatAgentsMenuOutput (moved out to remove agent_display import) ────
-std::string FormatAgentsMenuOutput(
-    const std::vector<agent_cards::AgentCardData>& agents,
-    int selected_position) {
+std::string FormatAgentsMenuOutput(const std::vector<agent_cards::AgentCardData>& agents,
+                                   int selected_position) {
     const auto selectable = selectable_agent_indices(agents);
     const int selectable_count = static_cast<int>(selectable.size());
     const int display_count = static_cast<int>(agents.size());
@@ -173,21 +164,19 @@ std::string FormatAgentsMenuOutput(
     if (selectable_count == 0) {
         out += "No agents found\n";
     } else {
-        out += std::format(
-            "{} agent{}\n",
-            display_count,
-            display_count == 1 ? "" : "s");
+        out += std::format("{} agent{}\n", display_count, display_count == 1 ? "" : "s");
     }
 
     out += "\n";
-    out += selected_position == 0 ? "› Create new agent\n"
-                                  : "  Create new agent\n";
+    out += selected_position == 0 ? "› Create new agent\n" : "  Create new agent\n";
 
     if (selectable_count == 0) {
         out += "\n";
         out += "No agents found. Create specialized subagents that Loom can delegate to.\n";
-        out += "Each subagent has its own context window, custom system prompt, and specific tools.\n";
-        out += "Try creating: Code Reviewer, Code Simplifier, Security Reviewer, Tech Lead, or UX Reviewer.\n";
+        out +=
+            "Each subagent has its own context window, custom system prompt, and specific tools.\n";
+        out += "Try creating: Code Reviewer, Code Simplifier, Security Reviewer, Tech Lead, or UX "
+               "Reviewer.\n";
     } else {
         int position = 1;
         for (const auto& group : agent_display::agent_source_groups()) {
@@ -229,9 +218,8 @@ std::string FormatAgentsMenuOutput(
     }
     if (has_built_in) {
         out += "\n────────────────────────────────────────────────────────────────\n\n";
-        out += selectable_count == 0
-            ? "Built-in (always available):\n"
-            : "Built-in agents (always available)\n";
+        out += selectable_count == 0 ? "Built-in (always available):\n"
+                                     : "Built-in agents (always available)\n";
         for (const auto& agent : agents) {
             if (!is_built_in_agent(agent)) continue;
             out += agent.name;
@@ -276,26 +264,27 @@ void AppAdapter::SyncState() {
     // AppState).
     if (has_app_store()) {
         const auto b = bridge_state();
-        screen_state_->bridge_enabled        = b.enabled;
+        screen_state_->bridge_enabled = b.enabled;
         screen_state_->bridge_explicit_remote = b.explicit_remote;
-        screen_state_->bridge_connected      = b.connected;
+        screen_state_->bridge_connected = b.connected;
         screen_state_->bridge_session_active = b.session_active;
-        screen_state_->bridge_reconnecting   = b.reconnecting;
+        screen_state_->bridge_reconnecting = b.reconnecting;
     }
 
     // Collapse chain for background-bash and similar collapsible rows.
     messages = ApplyMessageCollapsePipeline(std::move(messages));
-    loom::utils::debug("app.sync",
-        "SyncState: engine has {} messages", messages.size());
+    loom::utils::debug("app.sync", "SyncState: engine has {} messages", messages.size());
     screen_state_->messages_store.messages.clear();
     screen_state_->messages_store.messages.reserve(messages.size());
     // Assign a 24-char prefix per source Message.
     auto make_uuid24 = [](std::uint64_t msg_idx, const std::string& seed) {
         std::uint64_t h = 1469598103934665603ULL;  // FNV offset basis
-        for (char c : seed) { h ^= static_cast<std::uint64_t>(c); h *= 1099511628211ULL; }
+        for (char c : seed) {
+            h ^= static_cast<std::uint64_t>(c);
+            h *= 1099511628211ULL;
+        }
         char buf[32];
-        std::snprintf(buf, sizeof(buf), "msg_%012llx%08llx",
-                      (unsigned long long)msg_idx,
+        std::snprintf(buf, sizeof(buf), "msg_%012llx%08llx", (unsigned long long)msg_idx,
                       (unsigned long long)(h & 0xFFFFFFFFULL));
         return std::string(buf, 24);
     };
@@ -304,24 +293,25 @@ void AppAdapter::SyncState() {
         if (std::holds_alternative<loom::core::SystemMessage>(msg)) continue;
         auto projected = project_messages(msg);
         std::string seed_preview;
-        std::visit([&](const auto& m) {
-            if constexpr (requires{ m.content; }) {
-                for (const auto& blk : m.content) {
-                    if (const auto* tb = std::get_if<loom::core::TextBlock>(&blk)) {
-                        seed_preview += tb->text.substr(0, 64);
-                        break;
+        std::visit(
+            [&](const auto& m) {
+                if constexpr (requires { m.content; }) {
+                    for (const auto& blk : m.content) {
+                        if (const auto* tb = std::get_if<loom::core::TextBlock>(&blk)) {
+                            seed_preview += tb->text.substr(0, 64);
+                            break;
+                        }
                     }
                 }
-            }
-        }, msg);
+            },
+            msg);
         const std::string u24 = make_uuid24(msg_idx, seed_preview);
         for (auto& e : projected) {
             e.id = u24;
             // Enrich committed thinking entries with cached duration
             // and start time (so the chain compressor's live elapsed
             // timer keeps ticking from the original streaming start).
-            if (e.is_thinking && e.thinking_duration.count() == 0 &&
-                !e.full_content.empty()) {
+            if (e.is_thinking && e.thinking_duration.count() == 0 && !e.full_content.empty()) {
                 auto it = thinking_duration_cache_.find(e.full_content);
                 if (it != thinking_duration_cache_.end()) {
                     e.thinking_duration = it->second.duration;
@@ -334,37 +324,35 @@ void AppAdapter::SyncState() {
     }
     reconcile_tool_result_statuses(screen_state_->messages_store.messages);
     AppendLocalMessagesToScreenState();
-    std::stable_sort(
-        screen_state_->messages_store.messages.begin(),
-        screen_state_->messages_store.messages.end(),
-        [](const repl::MessageDisplayEntry& a,
-           const repl::MessageDisplayEntry& b) {
-            return a.timestamp < b.timestamp;
-        });
+    std::stable_sort(screen_state_->messages_store.messages.begin(),
+                     screen_state_->messages_store.messages.end(),
+                     [](const repl::MessageDisplayEntry& a, const repl::MessageDisplayEntry& b) {
+                         return a.timestamp < b.timestamp;
+                     });
 
     // Debug: log projected message summary
     {
         std::size_t n_user = 0, n_asst = 0, n_sys = 0, n_tool = 0;
         for (const auto& e : screen_state_->messages_store.messages) {
-            if (e.role == "user") ++n_user;
+            if (e.role == "user")
+                ++n_user;
             else if (e.role == "assistant") {
                 ++n_asst;
                 if (e.is_tool_use) ++n_tool;
-            }
-            else if (e.role == "system") ++n_sys;
+            } else if (e.role == "system")
+                ++n_sys;
         }
         loom::utils::debug("app.sync",
-            "SyncState done: {} projected entries "
-            "(user={}, asst={}, tool_use={}, sys={})",
-            screen_state_->messages_store.messages.size(),
-            n_user, n_asst, n_tool, n_sys);
+                           "SyncState done: {} projected entries "
+                           "(user={}, asst={}, tool_use={}, sys={})",
+                           screen_state_->messages_store.messages.size(), n_user, n_asst, n_tool,
+                           n_sys);
         for (std::size_t i = 0; i < screen_state_->messages_store.messages.size(); ++i) {
             const auto& e = screen_state_->messages_store.messages[i];
             if (e.role == "assistant" && !e.is_tool_use && !e.is_thinking) {
-                loom::utils::debug("app.sync",
-                    "  msg[{}] assistant text: len={}, streaming={}, preview='{}'",
-                    i, e.content_preview.size(), e.is_streaming,
-                    e.content_preview.substr(0, 80));
+                loom::utils::debug(
+                    "app.sync", "  msg[{}] assistant text: len={}, streaming={}, preview='{}'", i,
+                    e.content_preview.size(), e.is_streaming, e.content_preview.substr(0, 80));
             }
         }
     }
@@ -426,14 +414,13 @@ void AppAdapter::ConsumePendingResult() {
                 std::filesystem::current_path(bash_res->cwd, ec);
                 if (!ec) {
                     screen_state_->cwd = bash_res->cwd;
-                    static_cast<loom::core::QueryEngine*>(engine_raw())->set_working_directory(bash_res->cwd);
+                    static_cast<loom::core::QueryEngine*>(engine_raw())
+                        ->set_working_directory(bash_res->cwd);
                 }
             }
-            AppendLocalCommandMessage(
-                bash_res->output.empty()
-                    ? std::string("(no output)")
-                    : std::move(bash_res->output),
-                bash_res->is_error);
+            AppendLocalCommandMessage(bash_res->output.empty() ? std::string("(no output)")
+                                                               : std::move(bash_res->output),
+                                      bash_res->is_error);
         }
     }
 
@@ -441,8 +428,8 @@ void AppAdapter::ConsumePendingResult() {
     if (!repl::IsToolAnimating(screen_state_->task_view_store)) return;
 
     loom::utils::debug("app.consume",
-        "ConsumePendingResult firing — spinner_mode={}, calling SyncState",
-        static_cast<int>(screen_state_->task_view_store.spinner_mode));
+                       "ConsumePendingResult firing — spinner_mode={}, calling SyncState",
+                       static_cast<int>(screen_state_->task_view_store.spinner_mode));
 
     std::lock_guard lk(result_mutex_);
 
@@ -460,11 +447,11 @@ void AppAdapter::ConsumePendingResult() {
         const auto& type = pending_error->type;
         error_entry.can_continue = type == "tool_round_limit";
         error_entry.is_error = !error_entry.can_continue;
-        error_entry.is_model_error = type != "budget_exceeded" &&
-            type != "invalid_retry" && type != "hook_stop" && type != "tool_round_limit";
+        error_entry.is_model_error = type != "budget_exceeded" && type != "invalid_retry" &&
+                                     type != "hook_stop" && type != "tool_round_limit";
         error_entry.can_retry = type == "api_error" || type == "overloaded_error" ||
-            type == "rate_limit_error" || type == "network_error" ||
-            type == "transport_error";
+                                type == "rate_limit_error" || type == "network_error" ||
+                                type == "transport_error";
         screen_state_->messages_store.messages.push_back(std::move(error_entry));
     }
     repl::SetSpinner(screen_state_->task_view_store, repl::SpinnerMode::Hidden);
@@ -490,9 +477,7 @@ void AppAdapter::ConsumePendingResult() {
 // Submissions wait for clipboard completion through the worker's Custom event.
 bool AppAdapter::HasInFlightPasteReferences(const std::string& text) const {
     const auto refs = loom::utils::parse_references(text);
-    return std::ranges::any_of(refs, [this](const auto& r) {
-        return paste_.is_in_flight(r.id);
-    });
+    return std::ranges::any_of(refs, [this](const auto& r) { return paste_.is_in_flight(r.id); });
 }
 
 void AppAdapter::DrainCompletedPastesAndSubmit() {
@@ -514,7 +499,8 @@ void AppAdapter::DrainCompletedPastesAndSubmit() {
     screen_state_->input_text.swap(pending_paste_submission_->text);
     screen_state_->input_cursor = draft_cursor;
     if (HasInFlightPasteReferences(pending_paste_submission_->text) &&
-        std::chrono::steady_clock::now() < pending_paste_submission_->deadline) return;
+        std::chrono::steady_clock::now() < pending_paste_submission_->deadline)
+        return;
     auto submission = std::move(*pending_paste_submission_);
     pending_paste_submission_.reset();
     paste_submission_deadline_ms_.store(0);
@@ -525,10 +511,9 @@ void AppAdapter::DrainCompletedPastesAndSubmit() {
 // ── get_permission_callback (moved out to remove dialogs.system/triggers) ─
 std::function<bool(std::string_view, std::string_view)> AppAdapter::get_permission_callback() {
     return [this, dispatch = ui_dispatcher(), permission = permission_](
-        std::string_view tool_name, std::string_view tool_args) -> bool {
+               std::string_view tool_name, std::string_view tool_args) -> bool {
         // Fast path: always-allowed tools skip the dialog entirely.
-        if (permission->is_always_allowed(tool_name))
-            return true;
+        if (permission->is_always_allowed(tool_name)) return true;
 
         const auto token = permission->begin_permission_request();
         if (token == 0) return false;
@@ -537,8 +522,8 @@ std::function<bool(std::string_view, std::string_view)> AppAdapter::get_permissi
             return true;
         }
         const auto dialog_id = std::format("tool-permission-{}", token);
-        dispatch([this, permission, token, dialog_id,
-                  tool_name = std::string(tool_name), tool_args = std::string(tool_args)] {
+        dispatch([this, permission, token, dialog_id, tool_name = std::string(tool_name),
+                  tool_args = std::string(tool_args)] {
             if (!permission->permission_request_current(token)) return;
             dsys::ToolPermissionPayload payload;
             payload.id = dialog_id;
@@ -546,8 +531,9 @@ std::function<bool(std::string_view, std::string_view)> AppAdapter::get_permissi
             payload.description = tool_args;
             payload.can_always_allow = true;
             payload.initial_sandbox_toggle = false;
-            payload.on_response = [this, permission, token, dialog_id, tool_name](
-                dsys::ToolPermissionPayload::Decision decision, bool /*sandbox*/) {
+            payload.on_response = [this, permission, token, dialog_id,
+                                   tool_name](dsys::ToolPermissionPayload::Decision decision,
+                                              bool /*sandbox*/) {
                 // Removing this exact overlay can destroy the currently invoked
                 // callback. Keep everything needed afterward in local storage.
                 auto* app = this;
@@ -556,11 +542,12 @@ std::function<bool(std::string_view, std::string_view)> AppAdapter::get_permissi
                 const auto id = dialog_id;
                 const auto tool = tool_name;
                 using Decision = dsys::ToolPermissionPayload::Decision;
-                const bool allowed = decision == Decision::AllowOnce ||
-                                     decision == Decision::AlwaysAllow;
+                const bool allowed =
+                    decision == Decision::AllowOnce || decision == Decision::AlwaysAllow;
                 if (coordinator->resolve_permission(request, allowed,
-                    decision == Decision::AlwaysAllow ? std::string_view{tool}
-                                                      : std::string_view{})) {
+                                                    decision == Decision::AlwaysAllow
+                                                        ? std::string_view{tool}
+                                                        : std::string_view{})) {
                     // Reflect the user's decision in this UI event. The worker
                     // still owns the slot until its dispatched cleanup finishes.
                     app->screen_state_->dialog_store.RemoveDialog(id);
@@ -584,7 +571,7 @@ std::function<bool(std::string_view, std::string_view)> AppAdapter::get_permissi
                 detail.text_to_type = cu_options->text_to_type;
                 detail.first_use_in_session = permission->take_computer_use_first_use();
                 payload.description = std::format("Loom wants to control your screen: {}",
-                    cperm::action_description(cu_options->action));
+                                                  cperm::action_description(cu_options->action));
                 payload.action_kind = sp::ActionKind::Execute;
                 payload.detail = sp::ToolDetail{std::move(detail)};
             }
@@ -605,8 +592,9 @@ void AppAdapter::trigger_orphan_cleanup_for_testing() {
     if (paste_.pasted_contents().empty()) return;
     const auto refs = loom::utils::parse_references(screen_state_->input_text);
     std::unordered_set<int> referenced_ids;
-    for (const auto& r : refs) referenced_ids.insert(r.id);
-    for (auto it = paste_.pasted_contents().begin(); it != paste_.pasted_contents().end(); ) {
+    for (const auto& r : refs)
+        referenced_ids.insert(r.id);
+    for (auto it = paste_.pasted_contents().begin(); it != paste_.pasted_contents().end();) {
         if (!referenced_ids.contains(it->first)) {
             it = paste_.pasted_contents().erase(it);
         } else {

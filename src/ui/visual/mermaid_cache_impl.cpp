@@ -43,18 +43,19 @@ constexpr std::uint64_t kFnvPrime = 1099511628211ULL;
     return total;
 }
 
-} // namespace
+}  // namespace
 
 struct LayoutRowsCache::Impl {
     struct Entry {
-        std::string source;             // exact retained key bytes
-        std::uint64_t hash = 0;         // FNV-1a of source + ascii bit
+        std::string source;      // exact retained key bytes
+        std::uint64_t hash = 0;  // FNV-1a of source + ascii bit
         bool use_ascii = false;
-        detail::LayoutPayload payload; // empty rows AND plane = rejection sentinel
+        detail::LayoutPayload payload;  // empty rows AND plane = rejection sentinel
         std::size_t style_bytes = 0;
         std::size_t bytes = 0;
-        [[nodiscard]] bool matches(std::uint64_t h, std::string_view src, bool ascii) const
-            noexcept {
+
+        [[nodiscard]] bool matches(std::uint64_t h, std::string_view src,
+                                   bool ascii) const noexcept {
             return hash == h && use_ascii == ascii && source == src;
         }
     };
@@ -73,7 +74,9 @@ struct LayoutRowsCache::Impl {
     std::unordered_map<std::uint64_t, std::list<Entry>::iterator> index;
 
     Impl(std::size_t entries, std::size_t bytes)
-        : max_entries(entries), max_bytes(bytes) {}
+        : max_entries(entries)
+        , max_bytes(bytes) {}
+
     detail::LayoutPayload lookup(std::string_view source, bool use_ascii);
 };
 
@@ -86,9 +89,9 @@ LayoutRowsCache::~LayoutRowsCache() = default;
 // copy would alias the source list. Walk LRU order, copy the nodes, then
 // rebuild the hash index against the fresh iterators.
 LayoutRowsCache::LayoutRowsCache(const LayoutRowsCache& other)
-    : impl_(std::make_unique<Impl>(other.impl_->max_entries,
-                                   other.impl_->max_bytes)) {
-    for (const auto& node : other.impl_->lru) impl_->lru.push_back(node);
+    : impl_(std::make_unique<Impl>(other.impl_->max_entries, other.impl_->max_bytes)) {
+    for (const auto& node : other.impl_->lru)
+        impl_->lru.push_back(node);
     for (auto node = impl_->lru.begin(); node != impl_->lru.end(); ++node)
         impl_->index.emplace(node->hash, node);
     impl_->total_bytes = other.impl_->total_bytes;
@@ -111,8 +114,7 @@ LayoutRowsCache& LayoutRowsCache::operator=(LayoutRowsCache&&) noexcept = defaul
 detail::LayoutPayload LayoutRowsCache::Impl::lookup(std::string_view source, bool use_ascii) {
     const std::uint64_t hash = layout_cache_hash(source, use_ascii);
     if (const auto found = index.find(hash);
-        found != index.end() &&
-        found->second->matches(hash, source, use_ascii)) {
+        found != index.end() && found->second->matches(hash, source, use_ascii)) {
         // Exact key match (source bytes + ascii bit); move to the MRU end and
         // hand out a copy of the immutable rows. An empty vector reproduces
         // the cached rejection through the caller's finish path.
@@ -124,7 +126,8 @@ detail::LayoutPayload LayoutRowsCache::Impl::lookup(std::string_view source, boo
 
     // Fresh layout through the detail seam. Nullopt is normalized to the
     // present-but-empty rejection sentinel before retention.
-    auto fresh = detail::layout_mermaid_payload(source, use_ascii).value_or(detail::LayoutPayload{});
+    auto fresh =
+        detail::layout_mermaid_payload(source, use_ascii).value_or(detail::LayoutPayload{});
     const std::size_t fresh_bytes = row_bytes(fresh.rows);
     const std::size_t fresh_styles = fresh.styles.size() * sizeof(std::uint16_t);
 
@@ -133,8 +136,7 @@ detail::LayoutPayload LayoutRowsCache::Impl::lookup(std::string_view source, boo
     // call is still served correctly, just uncached.
     const bool slot_occupied = [&] {
         const auto slot = index.find(hash);
-        return slot != index.end() &&
-               !slot->second->matches(hash, source, use_ascii);
+        return slot != index.end() && !slot->second->matches(hash, source, use_ascii);
     }();
 
     // Make room LRU-first until the fresh entry fits; an entry that alone
@@ -142,8 +144,7 @@ detail::LayoutPayload LayoutRowsCache::Impl::lookup(std::string_view source, boo
     // retained, so a single oversized diagram can never evict the working
     // set on every call.
     while (!slot_occupied && !lru.empty() &&
-           (lru.size() >= max_entries ||
-            fresh_bytes > max_bytes - total_bytes)) {
+           (lru.size() >= max_entries || fresh_bytes > max_bytes - total_bytes)) {
         auto victim = lru.begin();
         total_bytes -= victim->bytes;
         total_style_bytes -= victim->style_bytes;
@@ -154,8 +155,8 @@ detail::LayoutPayload LayoutRowsCache::Impl::lookup(std::string_view source, boo
         fresh_styles > std::numeric_limits<std::size_t>::max() - total_style_bytes)
         return fresh;
 
-    lru.push_back(
-        Impl::Entry{std::string(source), hash, use_ascii, std::move(fresh), fresh_styles, fresh_bytes});
+    lru.push_back(Impl::Entry{std::string(source), hash, use_ascii, std::move(fresh), fresh_styles,
+                              fresh_bytes});
     auto inserted = std::prev(lru.end());
     index.emplace(hash, inserted);
     total_bytes += fresh_bytes;
@@ -163,13 +164,13 @@ detail::LayoutPayload LayoutRowsCache::Impl::lookup(std::string_view source, boo
     return inserted->payload;
 }
 
-std::optional<std::vector<std::string>> LayoutRowsCache::get_or_layout(
-    std::string_view source, bool use_ascii) {
+std::optional<std::vector<std::string>> LayoutRowsCache::get_or_layout(std::string_view source,
+                                                                       bool use_ascii) {
     return impl_->lookup(source, use_ascii).rows;
 }
 
-std::optional<ftxui::Element> LayoutRowsCache::render(
-    std::string_view source, bool use_ascii, ftxui::Element fallback) {
+std::optional<ftxui::Element> LayoutRowsCache::render(std::string_view source, bool use_ascii,
+                                                      ftxui::Element fallback) {
     if (!fallback) return {};
     return detail::finish_mermaid_payload(impl_->lookup(source, use_ascii), std::move(fallback));
 }
@@ -183,11 +184,28 @@ void LayoutRowsCache::clear() {
     impl_->miss_count = 0;
 }
 
-std::size_t LayoutRowsCache::size() const noexcept { return impl_->index.size(); }
-std::size_t LayoutRowsCache::byte_size() const noexcept { return impl_->total_bytes; }
-std::size_t LayoutRowsCache::entry_capacity() const noexcept { return impl_->max_entries; }
-std::size_t LayoutRowsCache::byte_capacity() const noexcept { return impl_->max_bytes; }
-std::size_t LayoutRowsCache::hits() const noexcept { return impl_->hit_count; }
-std::size_t LayoutRowsCache::misses() const noexcept { return impl_->miss_count; }
+std::size_t LayoutRowsCache::size() const noexcept {
+    return impl_->index.size();
+}
 
-} // namespace loom::ui::mermaid
+std::size_t LayoutRowsCache::byte_size() const noexcept {
+    return impl_->total_bytes;
+}
+
+std::size_t LayoutRowsCache::entry_capacity() const noexcept {
+    return impl_->max_entries;
+}
+
+std::size_t LayoutRowsCache::byte_capacity() const noexcept {
+    return impl_->max_bytes;
+}
+
+std::size_t LayoutRowsCache::hits() const noexcept {
+    return impl_->hit_count;
+}
+
+std::size_t LayoutRowsCache::misses() const noexcept {
+    return impl_->miss_count;
+}
+
+}  // namespace loom::ui::mermaid

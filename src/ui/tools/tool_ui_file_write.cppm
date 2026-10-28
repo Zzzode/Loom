@@ -5,7 +5,6 @@
 /// LICENCE:  Exported.  Imported by the tool UI registry initialization.
 module;
 
-
 export module loom.ui.tools.file_write;
 
 import std;
@@ -35,8 +34,7 @@ namespace detail {
 }
 
 /// Display path with middle ellipsis.
-[[nodiscard]] inline std::string display_path(std::string_view path,
-                                               std::size_t max_len = 60) {
+[[nodiscard]] inline std::string display_path(std::string_view path, std::size_t max_len = 60) {
     if (path.size() <= max_len) return std::string(path);
     auto last_slash = path.rfind('/');
     if (last_slash == std::string_view::npos) last_slash = path.rfind('\\');
@@ -48,8 +46,7 @@ namespace detail {
         return std::string(path.substr(0, max_len - 1)) + "\xE2\x80\xA6";
     }
     std::size_t head_len = max_len - 3 - filename.size() - 2;
-    return std::string(path.substr(0, head_len)) + "\xE2\x80\xA6/" +
-           std::string(filename);
+    return std::string(path.substr(0, head_len)) + "\xE2\x80\xA6/" + std::string(filename);
 }
 
 }  // namespace detail
@@ -61,9 +58,7 @@ namespace detail {
 [[nodiscard]] inline ToolUIFunctions make_file_write_ui() {
     ToolUIFunctions fns;
 
-    fns.user_facing_name = [](std::string_view) {
-        return std::string{"Write"};
-    };
+    fns.user_facing_name = [](std::string_view) { return std::string{"Write"}; };
 
     fns.message = [](std::string_view input_json) {
         std::string path = detail::extract_file_path(input_json);
@@ -71,12 +66,9 @@ namespace detail {
         return detail::display_path(path, 60);
     };
 
-    fns.tag = [](std::string_view) -> std::optional<std::string> {
-        return std::nullopt;
-    };
+    fns.tag = [](std::string_view) -> std::optional<std::string> { return std::nullopt; };
 
-    fns.progress = [](std::string_view input_json,
-                       std::string_view /*partial*/) {
+    fns.progress = [](std::string_view input_json, std::string_view /*partial*/) {
         std::string path = detail::extract_file_path(input_json);
         if (!path.empty()) {
             return "Writing " + detail::display_path(path, 50) + "\342\200\246";  // …
@@ -98,10 +90,8 @@ namespace detail {
     // or a structured diff (update). The heuristic's 'content' allowlist key
     // would index the raw content string even in update mode where it's NOT
     // shown — phantom. Under-count: tool_use already indexes file_path.
-    fns.extract_search_text = [](
-        std::string_view /*output_text*/,
-        std::string_view /*error_text*/) -> std::optional<std::string>
-    {
+    fns.extract_search_text = [](std::string_view /*output_text*/,
+                                 std::string_view /*error_text*/) -> std::optional<std::string> {
         return std::string{};
     };
 
@@ -110,12 +100,9 @@ namespace detail {
 
 /// Register FileWrite tool UI in the global registry.
 inline void register_file_write_ui() {
-    global_tool_ui_registry().register_tool_ui(
-        "write_file", make_file_write_ui());
-    global_tool_ui_registry().register_tool_ui(
-        "Write", make_file_write_ui());
-    global_tool_ui_registry().register_tool_ui(
-        "FileWrite", make_file_write_ui());
+    global_tool_ui_registry().register_tool_ui("write_file", make_file_write_ui());
+    global_tool_ui_registry().register_tool_ui("Write", make_file_write_ui());
+    global_tool_ui_registry().register_tool_ui("FileWrite", make_file_write_ui());
 }
 
 }  // namespace loom::ui::tools::file_write_ui

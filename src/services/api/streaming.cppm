@@ -36,12 +36,7 @@ enum class StreamEventType {
 // Content Block Types for Streaming
 // =========================================================================
 
-enum class StreamContentBlockType {
-    Text,
-    ToolUse,
-    Thinking,
-    Unknown
-};
+enum class StreamContentBlockType { Text, ToolUse, Thinking, Unknown };
 
 // =========================================================================
 // Stream Content Delta
@@ -116,9 +111,7 @@ struct StreamEvent {
 
 class SseBuffer {
 public:
-    void append(std::string_view data) {
-        buffer_ += data;
-    }
+    void append(std::string_view data) { buffer_ += data; }
 
     [[nodiscard]] std::optional<std::pair<std::string, std::string>> next_event() {
         while (true) {
@@ -146,13 +139,16 @@ public:
             } else if (line.starts_with("retry:")) {
                 try {
                     retry_ms_ = std::stoi(std::string(strip_prefix(line, "retry:")));
-                } catch (...) {}
+                } catch (...) {
+                }
             }
         }
     }
 
     [[nodiscard]] const std::string& last_event_id() const { return last_event_id_; }
+
     [[nodiscard]] int retry_ms() const { return retry_ms_; }
+
     void clear() {
         buffer_.clear();
         event_type_.clear();
@@ -160,7 +156,8 @@ public:
     }
 
 private:
-    [[nodiscard]] static std::string_view strip_prefix(std::string_view line, std::string_view prefix) {
+    [[nodiscard]] static std::string_view strip_prefix(std::string_view line,
+                                                       std::string_view prefix) {
         auto value = line.substr(prefix.size());
         if (!value.empty() && value.front() == ' ') {
             value.remove_prefix(1);
@@ -182,7 +179,7 @@ private:
 class StreamEventParser {
 public:
     [[nodiscard]] static Result<StreamEvent> parse(const std::string& event_type,
-                                                    const std::string& event_data) {
+                                                   const std::string& event_data) {
         StreamEvent event;
         event.event_id = "";  // Would be set from SSE buffer
 
@@ -229,7 +226,8 @@ private:
         if (input_tokens.is_num()) event.input_tokens = static_cast<int>(input_tokens.as_int());
         const auto cache_creation = message.get("usage").get("cache_creation_input_tokens");
         const auto cache_read = message.get("usage").get("cache_read_input_tokens");
-        if (cache_creation.is_num()) event.cache_creation_tokens = static_cast<int>(cache_creation.as_int());
+        if (cache_creation.is_num())
+            event.cache_creation_tokens = static_cast<int>(cache_creation.as_int());
         if (cache_read.is_num()) event.cache_read_tokens = static_cast<int>(cache_read.as_int());
 
         return event;
@@ -331,8 +329,11 @@ private:
         if (usage.valid()) {
             const auto cache_creation = usage.get("cache_creation_input_tokens");
             const auto cache_read = usage.get("cache_read_input_tokens");
-            if (cache_creation.is_num()) event.message_delta.usage.cache_creation_tokens = static_cast<int>(cache_creation.as_int());
-            if (cache_read.is_num()) event.message_delta.usage.cache_read_tokens = static_cast<int>(cache_read.as_int());
+            if (cache_creation.is_num())
+                event.message_delta.usage.cache_creation_tokens =
+                    static_cast<int>(cache_creation.as_int());
+            if (cache_read.is_num())
+                event.message_delta.usage.cache_read_tokens = static_cast<int>(cache_read.as_int());
             const auto input_tokens = usage.get("input_tokens");
             if (input_tokens.is_num()) {
                 event.message_delta.usage.input_tokens = static_cast<int>(input_tokens.as_int());
@@ -439,7 +440,7 @@ struct StreamState {
 // Coordinates consumer/client cancellation without detaching network work.
 class StreamTransfer {
 public:
-    template<typename Producer>
+    template <typename Producer>
     explicit StreamTransfer(Producer&& producer)
         : worker_(std::forward<Producer>(producer)) {}
 
@@ -460,13 +461,14 @@ private:
 
 class StreamParser {
 public:
-    using EventDecoder = std::function<Result<std::vector<StreamEvent>>(
-        std::string_view event_name, std::string_view data)>;
+    using EventDecoder = std::function<Result<std::vector<StreamEvent>>(std::string_view event_name,
+                                                                        std::string_view data)>;
 
 private:
     struct SharedState {
         explicit SharedState(StreamConfig cfg, EventDecoder decode)
-            : config(std::move(cfg)), decoder(std::move(decode)) {}
+            : config(std::move(cfg))
+            , decoder(std::move(decode)) {}
 
         StreamConfig config;
         ConnectionState connection = ConnectionState::Idle;
@@ -483,7 +485,9 @@ private:
     struct TransferOwner {
         explicit TransferOwner(std::shared_ptr<StreamTransfer> request)
             : transfer(std::move(request)) {}
+
         ~TransferOwner() { transfer->stop_and_join(); }
+
         std::shared_ptr<StreamTransfer> transfer;
     };
 
@@ -498,11 +502,9 @@ public:
     }
 
     // Factory method for parser setup; MessagesClient starts the HTTP transfer.
-    static std::optional<StreamParser> create(
-        const std::string&,
-        const std::string&,
-        const std::vector<std::string>&,
-        std::chrono::milliseconds timeout) {
+    static std::optional<StreamParser> create(const std::string&, const std::string&,
+                                              const std::vector<std::string>&,
+                                              std::chrono::milliseconds timeout) {
         StreamParser parser;
         {
             std::scoped_lock lock(parser.state_->mutex);
@@ -528,7 +530,8 @@ public:
             if (state_->decoder) {
                 auto events = state_->decoder(event_type, event_data);
                 if (!events) return std::unexpected(events.error());
-                for (auto& event : *events) state_->pending_events.push_back(std::move(event));
+                for (auto& event : *events)
+                    state_->pending_events.push_back(std::move(event));
             } else {
                 auto event = StreamEventParser::parse(event_type, event_data);
                 if (!event) return std::unexpected(event.error());
@@ -543,8 +546,8 @@ public:
     }
 
     // Process all available events with callback
-    template<typename Callback>
-    requires std::invocable<Callback, const StreamEvent&>
+    template <typename Callback>
+        requires std::invocable<Callback, const StreamEvent&>
     void process_events(Callback&& callback) {
         while (auto event = next_event()) {
             if (!event->has_value()) break;
@@ -561,15 +564,21 @@ public:
         std::scoped_lock lock(state_->mutex);
         return state_->connection;
     }
-    [[nodiscard]] bool is_connected() const { return connection_state() == ConnectionState::Connected; }
+
+    [[nodiscard]] bool is_connected() const {
+        return connection_state() == ConnectionState::Connected;
+    }
+
     [[nodiscard]] bool is_finished() const {
         const auto state = connection_state();
         return state == ConnectionState::Finished || state == ConnectionState::Error;
     }
+
     [[nodiscard]] bool has_error() const {
         std::scoped_lock lock(state_->mutex);
         return state_->stream_state.has_error;
     }
+
     [[nodiscard]] std::optional<ApiErrorDetails> error_details() const {
         std::scoped_lock lock(state_->mutex);
         return state_->error_details;
@@ -586,6 +595,7 @@ public:
         std::scoped_lock lock(state_->mutex);
         return state_->stream_state;
     }
+
     [[nodiscard]] std::string full_text() const {
         std::scoped_lock lock(state_->mutex);
         return state_->stream_state.full_text;
@@ -669,68 +679,68 @@ private:
         }
 
         switch (event.type) {
-            case StreamEventType::MessageStart:
-                if (event.input_tokens) state.statistics.input_tokens = *event.input_tokens;
-                break;
+        case StreamEventType::MessageStart:
+            if (event.input_tokens) state.statistics.input_tokens = *event.input_tokens;
+            break;
 
-            case StreamEventType::ContentBlockStart:
-                if (event.block_type == StreamContentBlockType::Text) {
-                    ++state.statistics.text_blocks;
-                } else if (event.block_type == StreamContentBlockType::ToolUse) {
-                    ++state.statistics.tool_use_blocks;
-                }
-                break;
+        case StreamEventType::ContentBlockStart:
+            if (event.block_type == StreamContentBlockType::Text) {
+                ++state.statistics.text_blocks;
+            } else if (event.block_type == StreamContentBlockType::ToolUse) {
+                ++state.statistics.tool_use_blocks;
+            }
+            break;
 
-            case StreamEventType::MessageDelta:
-                if (event.message_delta.usage.input_tokens) {
-                    state.statistics.input_tokens = *event.message_delta.usage.input_tokens;
-                }
-                if (event.message_delta.usage.output_tokens) {
-                    state.statistics.output_tokens = *event.message_delta.usage.output_tokens;
-                }
-                break;
+        case StreamEventType::MessageDelta:
+            if (event.message_delta.usage.input_tokens) {
+                state.statistics.input_tokens = *event.message_delta.usage.input_tokens;
+            }
+            if (event.message_delta.usage.output_tokens) {
+                state.statistics.output_tokens = *event.message_delta.usage.output_tokens;
+            }
+            break;
 
-            default:
-                break;
+        default:
+            break;
         }
     }
 
     static void update_stream_state_locked(SharedState& state, const StreamEvent& event) {
         switch (event.type) {
-            case StreamEventType::MessageStart:
-                state.stream_state.message_id = event.message_id;
-                state.stream_state.model = event.model;
-                if (event.input_tokens) state.stream_state.input_tokens = *event.input_tokens;
-                break;
+        case StreamEventType::MessageStart:
+            state.stream_state.message_id = event.message_id;
+            state.stream_state.model = event.model;
+            if (event.input_tokens) state.stream_state.input_tokens = *event.input_tokens;
+            break;
 
-            case StreamEventType::ContentBlockDelta:
-                if (event.delta.type == StreamContentBlockType::Text) {
-                    state.stream_state.full_text += event.delta.text;
-                }
-                break;
+        case StreamEventType::ContentBlockDelta:
+            if (event.delta.type == StreamContentBlockType::Text) {
+                state.stream_state.full_text += event.delta.text;
+            }
+            break;
 
-            case StreamEventType::MessageDelta:
-                if (event.message_delta.usage.input_tokens) {
-                    state.stream_state.input_tokens = *event.message_delta.usage.input_tokens;
-                }
-                if (event.message_delta.stop_reason) {
-                    state.stream_state.stop_reason = *event.message_delta.stop_reason;
-                }
-                if (event.message_delta.usage.output_tokens) {
-                    state.stream_state.output_tokens = *event.message_delta.usage.output_tokens;
-                }
-                break;
+        case StreamEventType::MessageDelta:
+            if (event.message_delta.usage.input_tokens) {
+                state.stream_state.input_tokens = *event.message_delta.usage.input_tokens;
+            }
+            if (event.message_delta.stop_reason) {
+                state.stream_state.stop_reason = *event.message_delta.stop_reason;
+            }
+            if (event.message_delta.usage.output_tokens) {
+                state.stream_state.output_tokens = *event.message_delta.usage.output_tokens;
+            }
+            break;
 
-            case StreamEventType::MessageStop:
-                state.stream_state.is_complete = true;
-                break;
+        case StreamEventType::MessageStop:
+            state.stream_state.is_complete = true;
+            break;
 
-            case StreamEventType::Error:
-                state.stream_state.has_error = true;
-                break;
+        case StreamEventType::Error:
+            state.stream_state.has_error = true;
+            break;
 
-            default:
-                break;
+        default:
+            break;
         }
     }
 
@@ -744,17 +754,26 @@ private:
 
 [[nodiscard]] inline std::string_view stream_event_type_to_string(StreamEventType type) {
     switch (type) {
-        case StreamEventType::MessageStart: return "message_start";
-        case StreamEventType::MessageDelta: return "message_delta";
-        case StreamEventType::MessageStop: return "message_stop";
-        case StreamEventType::ContentBlockStart: return "content_block_start";
-        case StreamEventType::ContentBlockDelta: return "content_block_delta";
-        case StreamEventType::ContentBlockStop: return "content_block_stop";
-        case StreamEventType::Ping: return "ping";
-        case StreamEventType::Error: return "error";
-        case StreamEventType::Other: return "other";
+    case StreamEventType::MessageStart:
+        return "message_start";
+    case StreamEventType::MessageDelta:
+        return "message_delta";
+    case StreamEventType::MessageStop:
+        return "message_stop";
+    case StreamEventType::ContentBlockStart:
+        return "content_block_start";
+    case StreamEventType::ContentBlockDelta:
+        return "content_block_delta";
+    case StreamEventType::ContentBlockStop:
+        return "content_block_stop";
+    case StreamEventType::Ping:
+        return "ping";
+    case StreamEventType::Error:
+        return "error";
+    case StreamEventType::Other:
+        return "other";
     }
     return "unknown";
 }
 
-} // namespace loom::services::api
+}  // namespace loom::services::api

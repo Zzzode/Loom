@@ -14,9 +14,12 @@ enum class Platform : unsigned char {
 
 [[nodiscard]] inline std::string managed_file_path(Platform platform) {
     switch (platform) {
-        case Platform::MacOS: return "/Library/Application Support/Loom";
-        case Platform::Windows: return "C:\\Program Files\\Loom";
-        case Platform::Linux: return "/etc/loom";
+    case Platform::MacOS:
+        return "/Library/Application Support/Loom";
+    case Platform::Windows:
+        return "C:\\Program Files\\Loom";
+    case Platform::Linux:
+        return "/etc/loom";
     }
     return "/etc/loom";
 }
@@ -30,17 +33,22 @@ enum class Platform : unsigned char {
     return out;
 }
 
-[[nodiscard]] inline std::string managed_settings_drop_in_dir(std::string_view managed_file_path_value) {
+[[nodiscard]] inline std::string
+managed_settings_drop_in_dir(std::string_view managed_file_path_value) {
     return join_path(managed_file_path_value, "managed-settings.d");
 }
 
-[[nodiscard]] inline std::string relative_settings_file_path_for_source(loom::utils::settings_sources::SettingSource source) {
+[[nodiscard]] inline std::string
+relative_settings_file_path_for_source(loom::utils::settings_sources::SettingSource source) {
     using loom::utils::settings_sources::SettingSource;
     switch (source) {
-        case SettingSource::ProjectSettings: return ".loom/settings.json";
-        case SettingSource::LocalSettings: return ".loom/settings.local.json";
-        default: return "";
+    case SettingSource::ProjectSettings:
+        return ".loom/settings.json";
+    case SettingSource::LocalSettings:
+        return ".loom/settings.local.json";
+    default:
+        return "";
     }
 }
 
-} // namespace loom::utils::settings_paths
+}  // namespace loom::utils::settings_paths

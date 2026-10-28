@@ -2,9 +2,9 @@
 /// @brief Semantic palettes and role-based color resolution.
 module;
 
-#include <cstdint>
-
 #include <ftxui/screen/color.hpp>
+
+#include <cstdint>
 
 export module loom.ui.foundation.design_tokens;
 
@@ -16,21 +16,21 @@ export namespace loom::ui::design::tokens {
 // Each Theme exposes a single color per role.  New call sites should use
 // token_by_role() rather than reaching into the palette struct by name.
 enum class Role : std::uint8_t {
-    Primary,      // Readable Loom accent; logo identity uses loom_body
-    Info,         // Info / auxiliary blue accents
-    Success,      // Green
-    Warning,      // Yellow / amber
-    Danger,       // Error / rejection
-    Muted,        // Readable secondary text
-    Subtle,       // Decorative chrome and borders
-    Suggestion,   // Typeahead suggestion foreground
-    Permission,   // Dialog frame color
-    RateLimit,    // Rate-limit pill fill
-    Chrome,       // UI chrome / background-adjacent lines
-    Brief,        // Brief-mode labels
-    Ultra,        // Ultra-thinking rainbow head
-    UserMessageBackground,      // user-bubble fill
-    UserMessageBackgroundHover, // user-bubble hover fill
+    Primary,                     // Readable Loom accent; logo identity uses loom_body
+    Info,                        // Info / auxiliary blue accents
+    Success,                     // Green
+    Warning,                     // Yellow / amber
+    Danger,                      // Error / rejection
+    Muted,                       // Readable secondary text
+    Subtle,                      // Decorative chrome and borders
+    Suggestion,                  // Typeahead suggestion foreground
+    Permission,                  // Dialog frame color
+    RateLimit,                   // Rate-limit pill fill
+    Chrome,                      // UI chrome / background-adjacent lines
+    Brief,                       // Brief-mode labels
+    Ultra,                       // Ultra-thinking rainbow head
+    UserMessageBackground,       // user-bubble fill
+    UserMessageBackgroundHover,  // user-bubble hover fill
     // ── New roles (GAP: clr-missing-42-tokens-struct) ─────────────────────
     PlanMode,
     FastMode,
@@ -55,7 +55,7 @@ struct Palette {
     ftxui::Color success;
     ftxui::Color warning;
     ftxui::Color danger;
-    ftxui::Color muted;      // readable secondary text
+    ftxui::Color muted;  // readable secondary text
     ftxui::Color subtle;
     ftxui::Color suggestion;
     ftxui::Color text;
@@ -153,29 +153,29 @@ struct Palette {
     // Subtle divider border is distinct from decorative subtle in dark themes.
     ftxui::Color border_subtle;
     // ─── Welcome screen tokens ────────────────────────────────────────────
-    ftxui::Color status_bar_background;   // welcome screen status bar fill
-    ftxui::Color spinner_gold;            // welcome spinner / logo glyph gold
+    ftxui::Color status_bar_background;  // welcome screen status bar fill
+    ftxui::Color spinner_gold;           // welcome spinner / logo glyph gold
 
     // ─── Message list role tokens (GAP: clr-missing-role-tokens) ──────────
     // Background tints for the role badge in the message list header.
-    ftxui::Color role_bg_user;            // user role badge background
-    ftxui::Color role_bg_assistant;       // assistant role badge background
-    ftxui::Color role_bg_system;          // system role badge background
-    ftxui::Color role_bg_tool;            // tool role badge background
-    ftxui::Color role_bg_thinking;        // thinking role badge background
+    ftxui::Color role_bg_user;       // user role badge background
+    ftxui::Color role_bg_assistant;  // assistant role badge background
+    ftxui::Color role_bg_system;     // system role badge background
+    ftxui::Color role_bg_tool;       // tool role badge background
+    ftxui::Color role_bg_thinking;   // thinking role badge background
     // Pill (accent bar) colors for the role badge.
-    ftxui::Color role_pill_user;          // user role accent pill
-    ftxui::Color role_pill_assistant;     // assistant role accent pill
-    ftxui::Color role_pill_system;        // system role accent pill
-    ftxui::Color role_pill_tool;          // tool role accent pill
-    ftxui::Color role_pill_thinking;      // thinking role accent pill
+    ftxui::Color role_pill_user;       // user role accent pill
+    ftxui::Color role_pill_assistant;  // assistant role accent pill
+    ftxui::Color role_pill_system;     // system role accent pill
+    ftxui::Color role_pill_tool;       // tool role accent pill
+    ftxui::Color role_pill_thinking;   // thinking role accent pill
     // Message list accents.
-    ftxui::Color message_error_accent;    // error message accent
-    ftxui::Color message_redacted_accent; // redacted message accent
-    ftxui::Color message_list_selected_bg; // selected row background
-    ftxui::Color message_list_muted_fg;   // muted foreground text
-    ftxui::Color message_list_empty_state_fg; // empty-state hint text
-    ftxui::Color message_list_streaming_fg;   // streaming indicator text
+    ftxui::Color message_error_accent;         // error message accent
+    ftxui::Color message_redacted_accent;      // redacted message accent
+    ftxui::Color message_list_selected_bg;     // selected row background
+    ftxui::Color message_list_muted_fg;        // muted foreground text
+    ftxui::Color message_list_empty_state_fg;  // empty-state hint text
+    ftxui::Color message_list_streaming_fg;    // streaming indicator text
 
     // ─── Surface tint tokens (GAP: clr-hardcoded-surface-tints) ───────────
     // Dark blue-gray backgrounds for selected rows, cards, and panels.
@@ -208,15 +208,15 @@ struct Palette {
 
     // ─── Permission rule list tokens (GAP: clr-hardcoded-perm-rule-list) ──
     // Background tints for the permission rule list entries.
-    ftxui::Color perm_rule_bg;         // base rule background
-    ftxui::Color perm_rule_bg_alt;     // alternate / highlighted background
-    ftxui::Color perm_rule_bg_hover;   // hover background
-    ftxui::Color perm_rule_bg_selected; // selected background
-    ftxui::Color perm_rule_bg_info;    // info-tinted background
-    ftxui::Color perm_rule_bg_dark;    // dark background
-    ftxui::Color perm_rule_bg_darker;  // darker background
-    ftxui::Color perm_rule_bg_active;  // active background
-    ftxui::Color perm_rule_bg_accent;  // accent-tinted background
+    ftxui::Color perm_rule_bg;           // base rule background
+    ftxui::Color perm_rule_bg_alt;       // alternate / highlighted background
+    ftxui::Color perm_rule_bg_hover;     // hover background
+    ftxui::Color perm_rule_bg_selected;  // selected background
+    ftxui::Color perm_rule_bg_info;      // info-tinted background
+    ftxui::Color perm_rule_bg_dark;      // dark background
+    ftxui::Color perm_rule_bg_darker;    // darker background
+    ftxui::Color perm_rule_bg_active;    // active background
+    ftxui::Color perm_rule_bg_accent;    // accent-tinted background
 };
 
 // ─── Concrete palettes ───────────────────────────────────────────────────────
@@ -248,41 +248,65 @@ const Palette& dark_ansi() noexcept;
 // Monochrome palette: for reduced-color / braille-only terminals.
 const Palette& monochrome() noexcept;
 
-} // namespace palette
+}  // namespace palette
 
 // ─── Role → Color resolution ─────────────────────────────────────────────────
 /// Resolve a semantic Role to its concrete ftxui::Color inside *palette*.
 [[nodiscard]] inline ftxui::Color token_by_role(const Palette& pal, Role role) noexcept {
     switch (role) {
-        case Role::Primary:    return pal.primary;
-        case Role::Info:       return pal.info;
-        case Role::Success:    return pal.success;
-        case Role::Warning:    return pal.warning;
-        case Role::Danger:     return pal.danger;
-        case Role::Muted:      return pal.muted;
-        case Role::Subtle:     return pal.subtle;
-        case Role::Suggestion: return pal.suggestion;
-        case Role::Permission: return pal.permission;
-        case Role::RateLimit:  return pal.rate_limit_fill;
-        case Role::Chrome:     return pal.chrome;
-        case Role::Brief:      return pal.brief_label;
-        case Role::Ultra:      return pal.rainbow_shimmer;
-        case Role::UserMessageBackground:     return pal.user_message_background;
-        case Role::UserMessageBackgroundHover:return pal.user_message_background_hover;
-        // New roles (clr-missing-42-tokens-struct)
-        case Role::PlanMode:       return pal.plan_mode;
-        case Role::FastMode:       return pal.fast_mode;
-        case Role::Remember:       return pal.remember;
-        case Role::SelectionBg:    return pal.selection_bg;
-        case Role::Ide:            return pal.ide;
-        case Role::BashMessageBackground: return pal.bash_message_background;
-        case Role::MemoryBackground:      return pal.memory_background;
-        case Role::BriefLabelYou:         return pal.brief_label_you;
-        case Role::BriefLabelLoom:      return pal.brief_label_loom;
-        case Role::AutoAccept:            return pal.auto_accept;
-
+    case Role::Primary:
+        return pal.primary;
+    case Role::Info:
+        return pal.info;
+    case Role::Success:
+        return pal.success;
+    case Role::Warning:
+        return pal.warning;
+    case Role::Danger:
+        return pal.danger;
+    case Role::Muted:
+        return pal.muted;
+    case Role::Subtle:
+        return pal.subtle;
+    case Role::Suggestion:
+        return pal.suggestion;
+    case Role::Permission:
+        return pal.permission;
+    case Role::RateLimit:
+        return pal.rate_limit_fill;
+    case Role::Chrome:
+        return pal.chrome;
+    case Role::Brief:
+        return pal.brief_label;
+    case Role::Ultra:
+        return pal.rainbow_shimmer;
+    case Role::UserMessageBackground:
+        return pal.user_message_background;
+    case Role::UserMessageBackgroundHover:
+        return pal.user_message_background_hover;
+    // New roles (clr-missing-42-tokens-struct)
+    case Role::PlanMode:
+        return pal.plan_mode;
+    case Role::FastMode:
+        return pal.fast_mode;
+    case Role::Remember:
+        return pal.remember;
+    case Role::SelectionBg:
+        return pal.selection_bg;
+    case Role::Ide:
+        return pal.ide;
+    case Role::BashMessageBackground:
+        return pal.bash_message_background;
+    case Role::MemoryBackground:
+        return pal.memory_background;
+    case Role::BriefLabelYou:
+        return pal.brief_label_you;
+    case Role::BriefLabelLoom:
+        return pal.brief_label_loom;
+    case Role::AutoAccept:
+        return pal.auto_accept;
     }
     return pal.text;
 }
 
-} // namespace loom::ui::design::tokens
+}  // namespace loom::ui::design::tokens

@@ -24,21 +24,21 @@ export namespace loom::ui::repl_screen {
 /// Determines which faithful permission panel renderer to use.
 /// Moved here from repl_state.cppm in RFC 0002 F3 (PermissionStore shard).
 enum class PermissionToolKind : std::uint8_t {
-    Generic,        ///< Fallback — old simple dialog
-    Bash,           ///< Bash / shell command
-    FileEdit,       ///< File edit (with diff)
-    FileWrite,      ///< File write / create
-    FileRead,       ///< File read
-    Glob,           ///< Glob search
-    Grep,           ///< Grep search
-    WebFetch,       ///< Web fetch
-    WebSearch,      ///< Web search
-    Skill,          ///< Skill execution
-    PlanMode,       ///< Enter/exit plan mode
-    MCP,            ///< MCP tool
-    LSP,            ///< LSP tool
-    Agent,          ///< Agent spawn
-    NotebookEdit,   ///< Notebook cell edit
+    Generic,       ///< Fallback — old simple dialog
+    Bash,          ///< Bash / shell command
+    FileEdit,      ///< File edit (with diff)
+    FileWrite,     ///< File write / create
+    FileRead,      ///< File read
+    Glob,          ///< Glob search
+    Grep,          ///< Grep search
+    WebFetch,      ///< Web fetch
+    WebSearch,     ///< Web search
+    Skill,         ///< Skill execution
+    PlanMode,      ///< Enter/exit plan mode
+    MCP,           ///< MCP tool
+    LSP,           ///< LSP tool
+    Agent,         ///< Agent spawn
+    NotebookEdit,  ///< Notebook cell edit
     _COUNT,
 };
 
@@ -59,13 +59,13 @@ struct PermissionRequestInfo {
     std::string bash_destructive_reason;
 
     // FileEdit / FileWrite / FileRead (shared path fields)
-    std::optional<std::string> file_old_content;    // edit: old_string / write: old_content
-    std::optional<std::string> file_new_content;    // edit: new_string / write: content
-    bool file_replace_all = false;                  // edit only
-    bool file_exists = false;                       // write only (overwrite vs create)
-    std::optional<std::string> file_language;       // syntax highlight hint
+    std::optional<std::string> file_old_content;  // edit: old_string / write: old_content
+    std::optional<std::string> file_new_content;  // edit: new_string / write: content
+    bool file_replace_all = false;                // edit only
+    bool file_exists = false;                     // write only (overwrite vs create)
+    std::optional<std::string> file_language;     // syntax highlight hint
     std::optional<std::string> file_relative_path;
-    std::optional<std::string> file_filename;       // basename
+    std::optional<std::string> file_filename;  // basename
 
     // Web
     std::optional<std::string> web_url;
@@ -87,4 +87,4 @@ struct PermissionStore {
     std::optional<PermissionRequestInfo> permission_request;
 };
 
-}  // namespace loom::ui
+}  // namespace loom::ui::repl_screen

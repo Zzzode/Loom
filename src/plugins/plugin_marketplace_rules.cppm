@@ -24,16 +24,18 @@ struct MarketplaceSource {
 
 [[nodiscard]] inline std::string lower_copy(std::string_view value) {
     std::string out(value);
-    std::transform(out.begin(), out.end(), out.begin(), [](unsigned char ch) {
-        return static_cast<char>(std::tolower(ch));
-    });
+    std::transform(out.begin(), out.end(), out.begin(),
+                   [](unsigned char ch) { return static_cast<char>(std::tolower(ch)); });
     return out;
 }
 
-[[nodiscard]] inline bool is_marketplace_auto_update(std::string_view marketplace_name, std::optional<bool> configured_auto_update = std::nullopt) {
+[[nodiscard]] inline bool
+is_marketplace_auto_update(std::string_view marketplace_name,
+                           std::optional<bool> configured_auto_update = std::nullopt) {
     if (configured_auto_update.has_value()) return *configured_auto_update;
     const auto normalized = lower_copy(marketplace_name);
-    return loom::utils::plugin_identifier::is_official_marketplace_name(normalized) && normalized != "knowledge-work-plugins";
+    return loom::utils::plugin_identifier::is_official_marketplace_name(normalized) &&
+           normalized != "knowledge-work-plugins";
 }
 
 [[nodiscard]] inline bool contains_non_ascii(std::string_view value) noexcept {
@@ -43,7 +45,8 @@ struct MarketplaceSource {
     return false;
 }
 
-[[nodiscard]] inline bool has_separator_between(std::string_view name, std::string_view first, std::string_view second) {
+[[nodiscard]] inline bool has_separator_between(std::string_view name, std::string_view first,
+                                                std::string_view second) {
     const auto first_pos = name.find(first);
     if (first_pos == std::string_view::npos) return false;
     const auto second_pos = name.find(second, first_pos + first.size());
@@ -64,19 +67,26 @@ struct MarketplaceSource {
     for (std::string_view brand : {"loom"}) {
         if (normalized.starts_with(brand)) {
             auto rest = normalized.substr(brand.size());
-            while (!rest.empty() && !((rest.front() >= 'a' && rest.front() <= 'z') || (rest.front() >= '0' && rest.front() <= '9'))) rest.erase(0, 1);
-            if (rest.starts_with("marketplace") || rest.starts_with("plugins") || rest.starts_with("official")) return true;
+            while (!rest.empty() && !((rest.front() >= 'a' && rest.front() <= 'z') ||
+                                      (rest.front() >= '0' && rest.front() <= '9')))
+                rest.erase(0, 1);
+            if (rest.starts_with("marketplace") || rest.starts_with("plugins") ||
+                rest.starts_with("official"))
+                return true;
         }
     }
     return false;
 }
 
-[[nodiscard]] inline std::optional<std::string> validate_official_name_source(std::string_view name, const MarketplaceSource& source) {
+[[nodiscard]] inline std::optional<std::string>
+validate_official_name_source(std::string_view name, const MarketplaceSource& source) {
     const auto normalized = lower_copy(name);
-    if (!loom::utils::plugin_identifier::is_official_marketplace_name(normalized)) return std::nullopt;
-    const auto message = "The name '" + std::string(name) + "' is reserved for official marketplaces.";
+    if (!loom::utils::plugin_identifier::is_official_marketplace_name(normalized))
+        return std::nullopt;
+    const auto message =
+        "The name '" + std::string(name) + "' is reserved for official marketplaces.";
     (void)source;
     return message;
 }
 
-} // namespace loom::utils::plugin_marketplace_rules
+}  // namespace loom::utils::plugin_marketplace_rules

@@ -19,12 +19,24 @@ std::string json_escape(std::string_view value) {
     out.reserve(value.size() + 8);
     for (char ch : value) {
         switch (ch) {
-            case '\\': out += R"(\\)"; break;
-            case '"': out += R"(\")"; break;
-            case '\n': out += R"(\n)"; break;
-            case '\r': out += R"(\r)"; break;
-            case '\t': out += R"(\t)"; break;
-            default: out.push_back(ch); break;
+        case '\\':
+            out += R"(\\)";
+            break;
+        case '"':
+            out += R"(\")";
+            break;
+        case '\n':
+            out += R"(\n)";
+            break;
+        case '\r':
+            out += R"(\r)";
+            break;
+        case '\t':
+            out += R"(\t)";
+            break;
+        default:
+            out.push_back(ch);
+            break;
         }
     }
     return out;
@@ -36,10 +48,8 @@ std::string timestamp_now() {
     return std::to_string(millis);
 }
 
-TeammateMessage shutdown_request_message(
-    std::string_view agent_id,
-    std::optional<std::string_view> reason
-) {
+TeammateMessage shutdown_request_message(std::string_view agent_id,
+                                         std::optional<std::string_view> reason) {
     const auto timestamp = timestamp_now();
     std::string text = R"({"type":"shutdown_request","requestId":"shutdown-)";
     text += json_escape(agent_id);
@@ -93,51 +103,39 @@ TmuxArgv tmux_has_session_argv(std::string_view session) {
 
 TmuxArgv tmux_list_windows_argv(std::string_view session) {
     TmuxArgv argv;
-    argv.args = {"list-windows", "-t", std::string(session),
-                 "-F", "#{window_name}"};
+    argv.args = {"list-windows", "-t", std::string(session), "-F", "#{window_name}"};
     return argv;
 }
 
-TmuxArgv tmux_new_session_argv(
-    std::string_view session, std::string_view window
-) {
+TmuxArgv tmux_new_session_argv(std::string_view session, std::string_view window) {
     TmuxArgv argv;
-    argv.args = {"new-session", "-d", "-s", std::string(session),
-                 "-n", std::string(window), "-P", "-F", "#{pane_id}"};
+    argv.args = {"new-session",       "-d", "-s", std::string(session), "-n",
+                 std::string(window), "-P", "-F", "#{pane_id}"};
     return argv;
 }
 
-TmuxArgv tmux_new_window_argv(
-    std::string_view session, std::string_view window
-) {
+TmuxArgv tmux_new_window_argv(std::string_view session, std::string_view window) {
     TmuxArgv argv;
-    argv.args = {"new-window", "-t", std::string(session),
-                 "-n", std::string(window), "-P", "-F", "#{pane_id}"};
+    argv.args = {"new-window", "-t", std::string(session), "-n", std::string(window),
+                 "-P",         "-F", "#{pane_id}"};
     return argv;
 }
 
 TmuxArgv tmux_list_panes_argv(std::string_view target) {
     TmuxArgv argv;
-    argv.args = {"list-panes", "-t", std::string(target),
-                 "-F", "#{pane_id}"};
+    argv.args = {"list-panes", "-t", std::string(target), "-F", "#{pane_id}"};
     return argv;
 }
 
-TmuxArgv tmux_split_window_argv(
-    std::string_view target, bool vertical
-) {
+TmuxArgv tmux_split_window_argv(std::string_view target, bool vertical) {
     TmuxArgv argv;
-    argv.args = {"split-window", "-t", std::string(target),
-                 vertical ? "-v" : "-h", "-P", "-F", "#{pane_id}"};
+    argv.args = {"split-window", "-t", std::string(target), vertical ? "-v" : "-h",
+                 "-P",           "-F", "#{pane_id}"};
     return argv;
 }
 
-ExternalSessionPlan plan_external_swarm_view(
-    bool session_exists,
-    bool window_exists,
-    std::size_t pane_count,
-    bool first_pane_used
-) {
+ExternalSessionPlan plan_external_swarm_view(bool session_exists, bool window_exists,
+                                             std::size_t pane_count, bool first_pane_used) {
     ExternalSessionPlan plan;
     plan.window_target =
         std::string(SWARM_SESSION_NAME) + ":" + std::string(SWARM_VIEW_WINDOW_NAME);
@@ -156,16 +154,15 @@ ExternalSessionPlan plan_external_swarm_view(
     return plan;
 }
 
-std::string build_capture_pane_command(
-    std::string_view pane_id, int tail_lines
-) {
+std::string build_capture_pane_command(std::string_view pane_id, int tail_lines) {
     if (tail_lines < 1) tail_lines = 1;
-    return "tmux capture-pane -p -t " + shell_quote(pane_id) +
-           " -S -" + std::to_string(tail_lines) + " 2>/dev/null";
+    return "tmux capture-pane -p -t " + shell_quote(pane_id) + " -S -" +
+           std::to_string(tail_lines) + " 2>/dev/null";
 }
 
 std::string teammate_command() {
-    if (const char* env = std::getenv("LOOM_TEAMMATE_COMMAND"); env && *env) return std::string(env);
+    if (const char* env = std::getenv("LOOM_TEAMMATE_COMMAND"); env && *env)
+        return std::string(env);
     if (const char* env = std::getenv("LOOM_BINARY"); env && *env) return std::string(env);
     return "loom";
 }
@@ -178,10 +175,13 @@ std::string build_teammate_cli_command(const TeammateSpawnConfig& config) {
     command << " --agent-id " << shell_quote(format_agent_id(config.name, config.team_name));
     command << " --agent-name " << shell_quote(config.name);
     command << " --team-name " << shell_quote(config.team_name);
-    if (config.color) command << " --agent-color " << shell_quote(std::string(agent_color_name(*config.color)));
-    if (!config.parent_session_id.empty()) command << " --parent-session-id " << shell_quote(config.parent_session_id);
+    if (config.color)
+        command << " --agent-color " << shell_quote(std::string(agent_color_name(*config.color)));
+    if (!config.parent_session_id.empty())
+        command << " --parent-session-id " << shell_quote(config.parent_session_id);
     if (config.plan_mode_required) command << " --plan-mode-required";
-    if (config.agent_type && !config.agent_type->empty()) command << " --agent-type " << shell_quote(*config.agent_type);
+    if (config.agent_type && !config.agent_type->empty())
+        command << " --agent-type " << shell_quote(*config.agent_type);
     if (!config.plan_mode_required && config.permission_mode) {
         if (*config.permission_mode == "bypassPermissions") {
             command << " --dangerously-skip-permissions";
@@ -189,7 +189,8 @@ std::string build_teammate_cli_command(const TeammateSpawnConfig& config) {
             command << " --permission-mode " << shell_quote(*config.permission_mode);
         }
     }
-    if (config.model && !config.model->empty()) command << " --model " << shell_quote(*config.model);
+    if (config.model && !config.model->empty())
+        command << " --model " << shell_quote(*config.model);
     return command.str();
 }
 
@@ -197,9 +198,10 @@ std::optional<TeammateMode> forced_mode_from_env() {
     const char* raw = std::getenv("LOOM_TEAMMATE_BACKEND");
     if (!raw || !*raw) return std::nullopt;
     std::string value(raw);
-    if (value == "in-process" || value == "inprocess" || value == "native") return TeammateMode::InProcess;
+    if (value == "in-process" || value == "inprocess" || value == "native")
+        return TeammateMode::InProcess;
     if (value == "tmux" || value == "pane") return TeammateMode::Tmux;
     return std::nullopt;
 }
 
-} // namespace loom::utils::swarm_backends::detail
+}  // namespace loom::utils::swarm_backends::detail

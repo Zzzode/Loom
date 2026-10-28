@@ -80,8 +80,8 @@ struct DispatchOutcome {
     std::string input_prompt_label;
 };
 
-using SlashHandler = std::function<DispatchOutcome(
-    const std::vector<std::string>& args, const InteractiveContext& ctx)>;
+using SlashHandler = std::function<DispatchOutcome(const std::vector<std::string>& args,
+                                                   const InteractiveContext& ctx)>;
 
 // ---------------------------------------------------------------------------
 // Local helpers (internal)
@@ -90,14 +90,17 @@ using SlashHandler = std::function<DispatchOutcome(
 namespace detail {
 
 inline std::string_view trim(std::string_view s) {
-    while (!s.empty() && std::isspace(static_cast<unsigned char>(s.front()))) s.remove_prefix(1);
-    while (!s.empty() && std::isspace(static_cast<unsigned char>(s.back()))) s.remove_suffix(1);
+    while (!s.empty() && std::isspace(static_cast<unsigned char>(s.front())))
+        s.remove_prefix(1);
+    while (!s.empty() && std::isspace(static_cast<unsigned char>(s.back())))
+        s.remove_suffix(1);
     return s;
 }
 
 inline std::string to_lower(std::string_view s) {
     std::string out(s);
-    for (char& c : out) c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+    for (char& c : out)
+        c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
     return out;
 }
 
@@ -136,11 +139,11 @@ inline std::vector<std::string> quote_aware_split(std::string_view s) {
 }
 
 inline bool is_hex(char c) {
-    return std::isdigit(static_cast<unsigned char>(c)) ||
-           (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
+    return std::isdigit(static_cast<unsigned char>(c)) || (c >= 'a' && c <= 'f') ||
+           (c >= 'A' && c <= 'F');
 }
 
-} // namespace detail
+}  // namespace detail
 
 // ---------------------------------------------------------------------------
 // Paste sanitization + detection
@@ -148,7 +151,8 @@ inline bool is_hex(char c) {
 
 namespace interactive_detail {
 inline size_t g_paste_limit = 50 * 1024;
-} // namespace interactive_detail
+}  // namespace interactive_detail
+
 using namespace interactive_detail;
 
 inline void set_paste_size_limit(size_t max_chars) {
@@ -173,8 +177,8 @@ inline std::string sanitize_paste(std::string text) {
                 out.push_back(c);
                 continue;
             }
-            if (uc <= 0x08 || uc == 0x0B || uc == 0x0C ||
-                (uc >= 0x0E && uc <= 0x1F) || uc == 0x7F) {
+            if (uc <= 0x08 || uc == 0x0B || uc == 0x0C || (uc >= 0x0E && uc <= 0x1F) ||
+                uc == 0x7F) {
                 continue;
             }
             out.push_back(c);
@@ -212,7 +216,8 @@ inline std::pair<bool, ParsedCommand::PasteKind> detect_paste_kind(std::string_v
 
     // JSON: first non-whitespace char is { or [
     size_t p = 0;
-    while (p < text.size() && std::isspace(static_cast<unsigned char>(text[p]))) ++p;
+    while (p < text.size() && std::isspace(static_cast<unsigned char>(text[p])))
+        ++p;
     if (p < text.size() && (text[p] == '{' || text[p] == '[')) {
         // Parse the first value only (YYJSON_READ_STOP_WHEN_DONE) so pasted
         // *concatenated* JSON (e.g. repeated log lines {"a":1}{"b":2}) still
@@ -231,11 +236,12 @@ inline std::pair<bool, ParsedCommand::PasteKind> detect_paste_kind(std::string_v
             size_t end = text.find('\n', pos);
             size_t lstart = pos;
             while (lstart < text.size() && lstart < end &&
-                   std::isspace(static_cast<unsigned char>(text[lstart]))) ++lstart;
-            std::string_view line = text.substr(lstart, (end == std::string_view::npos ? text.size() : end) - lstart);
+                   std::isspace(static_cast<unsigned char>(text[lstart])))
+                ++lstart;
+            std::string_view line =
+                text.substr(lstart, (end == std::string_view::npos ? text.size() : end) - lstart);
             if (line.substr(0, 9) == "diff --gi" ||  // diff --git
-                line.substr(0, 4) == "--- " ||
-                line.substr(0, 4) == "+++ ") {
+                line.substr(0, 4) == "--- " || line.substr(0, 4) == "+++ ") {
                 ++diff_lines;
             }
             if (end == std::string_view::npos) break;
@@ -247,12 +253,12 @@ inline std::pair<bool, ParsedCommand::PasteKind> detect_paste_kind(std::string_v
     // Code: shebangs or multiple keyword occurrences
     {
         static const std::regex kw(
-            R"(#!\s*/usr/bin/env|(^|\s)(function\s+[A-Za-z_]|class\s+[A-Za-z_]|def\s+[A-Za-z_]|fn\s+[A-Za-z_]|pub\s+fn\s+[A-Za-z_]|int\s+main\s*\())"
-        );
+            R"(#!\s*/usr/bin/env|(^|\s)(function\s+[A-Za-z_]|class\s+[A-Za-z_]|def\s+[A-Za-z_]|fn\s+[A-Za-z_]|pub\s+fn\s+[A-Za-z_]|int\s+main\s*\())");
         auto begin = std::cregex_iterator(text.data(), text.data() + text.size(), kw);
         auto end = std::cregex_iterator();
         int matches = 0;
-        for (auto it = begin; it != end && matches < 3; ++it, ++matches) {}
+        for (auto it = begin; it != end && matches < 3; ++it, ++matches) {
+        }
         if (matches >= 2) return {true, ParsedCommand::PasteKind::Code};
     }
 
@@ -265,9 +271,13 @@ inline std::pair<bool, ParsedCommand::PasteKind> detect_paste_kind(std::string_v
             size_t end = text.find('\n', pos);
             size_t lstart = pos;
             while (lstart < text.size() && lstart < end &&
-                   std::isspace(static_cast<unsigned char>(text[lstart]))) ++lstart;
-            std::string_view line = text.substr(lstart, (end == std::string_view::npos ? text.size() : end) - lstart);
-            if (!line.empty() && line[0] == '#' && (line.size() == 1 || line[1] == ' ' || line[1] == '#')) ++md_lines;
+                   std::isspace(static_cast<unsigned char>(text[lstart])))
+                ++lstart;
+            std::string_view line =
+                text.substr(lstart, (end == std::string_view::npos ? text.size() : end) - lstart);
+            if (!line.empty() && line[0] == '#' &&
+                (line.size() == 1 || line[1] == ' ' || line[1] == '#'))
+                ++md_lines;
             if (line.substr(0, 3) == "```") ++fences;
             if (end == std::string_view::npos) break;
             pos = end + 1;
@@ -278,8 +288,7 @@ inline std::pair<bool, ParsedCommand::PasteKind> detect_paste_kind(std::string_v
     // Log: timestamp + level patterns (e.g. "2024-01-01 12:34:56 INFO ...")
     {
         static const std::regex log_re(
-            R"(\d{4}[-/]\d{2}[-/]\d{2}[ T]\d{2}:\d{2}(:\d{2})?\s+(INFO|WARN|ERROR|DEBUG|TRACE|FATAL)\b)"
-        );
+            R"(\d{4}[-/]\d{2}[-/]\d{2}[ T]\d{2}:\d{2}(:\d{2})?\s+(INFO|WARN|ERROR|DEBUG|TRACE|FATAL)\b)");
         auto begin = std::cregex_iterator(text.data(), text.data() + text.size(), log_re);
         if (begin != std::cregex_iterator()) return {true, ParsedCommand::PasteKind::Log};
     }
@@ -394,8 +403,8 @@ parse_interactive_input(std::string_view raw, const InteractiveContext& ctx) {
     }
 
     // Dollar bash (contextual)
-    if (ctx.dollar_is_bash && trimmed.size() >= 2 &&
-        trimmed[0] == '$' && std::isspace(static_cast<unsigned char>(trimmed[1]))) {
+    if (ctx.dollar_is_bash && trimmed.size() >= 2 && trimmed[0] == '$' &&
+        std::isspace(static_cast<unsigned char>(trimmed[1]))) {
         cmd.kind = CommandKind::BashCommand;
         auto body = trimmed.substr(2);
         while (!body.empty() && std::isspace(static_cast<unsigned char>(body.front()))) {
@@ -408,15 +417,13 @@ parse_interactive_input(std::string_view raw, const InteractiveContext& ctx) {
     // At-mention scan
     {
         static const std::regex mention(R"(@([A-Za-z0-9_\-\.]+))");
-        auto begin = std::cregex_iterator(
-            trimmed.data(), trimmed.data() + trimmed.size(), mention);
+        auto begin = std::cregex_iterator(trimmed.data(), trimmed.data() + trimmed.size(), mention);
         auto end = std::cregex_iterator();
         for (auto it = begin; it != end; ++it) {
             const auto& m = *it;
             cmd.at_mentions.push_back(m[1].str());
-            cmd.at_mention_ranges.emplace_back(
-                static_cast<size_t>(m.position()),
-                static_cast<size_t>(m.length()));
+            cmd.at_mention_ranges.emplace_back(static_cast<size_t>(m.position()),
+                                               static_cast<size_t>(m.length()));
         }
     }
 
@@ -456,7 +463,8 @@ public:
         std::lock_guard lk(mu_);
         std::vector<std::string> out;
         out.reserve(impl_->handlers.size());
-        for (const auto& kv : impl_->handlers) out.push_back(kv.first);
+        for (const auto& kv : impl_->handlers)
+            out.push_back(kv.first);
         std::sort(out.begin(), out.end());
         return out;
     }
@@ -485,14 +493,16 @@ public:
     }
 
 private:
-    SlashRegistry() : impl_(std::make_unique<Impl>()) {
+    SlashRegistry()
+        : impl_(std::make_unique<Impl>()) {
         // Default registered handlers.  Each returns RouteToCommand with
         // target == name and payload == JSON-encoded args array.
         auto make_route = [](std::string name) {
             return [n = std::move(name)](const std::vector<std::string>& args,
                                          const InteractiveContext& /*ctx*/) {
                 loom::utils::json::JsonArray arr;
-                for (const auto& a : args) arr.push(a);
+                for (const auto& a : args)
+                    arr.push(a);
                 DispatchOutcome o;
                 o.action = DispatchOutcome::Action::RouteToCommand;
                 o.target = n;
@@ -501,11 +511,11 @@ private:
             };
         };
         const char* builtins[] = {
-            "help", "exit", "clear", "compact", "commit", "review", "config",
-            "doctor", "mcp", "tasks", "agents", "repl", "skill", "version",
-            "goal", "loop", "remember",
+            "help",  "exit",   "clear", "compact", "commit",  "review", "config", "doctor",   "mcp",
+            "tasks", "agents", "repl",  "skill",   "version", "goal",   "loop",   "remember",
         };
-        for (auto* b : builtins) impl_->handlers.emplace(b, make_route(b));
+        for (auto* b : builtins)
+            impl_->handlers.emplace(b, make_route(b));
     }
 
     mutable std::mutex mu_;
@@ -520,7 +530,8 @@ namespace detail {
 
 inline std::string string_vec_json(const std::vector<std::string>& v) {
     loom::utils::json::JsonArray arr;
-    for (const auto& a : v) arr.push(a);
+    for (const auto& a : v)
+        arr.push(a);
     return arr.serialize();
 }
 
@@ -531,100 +542,110 @@ inline bool is_dangerous_bash(std::string_view cmd) {
     return std::regex_search(cmd.begin(), cmd.end(), danger);
 }
 
-} // namespace detail
+}  // namespace detail
 
-inline std::expected<DispatchOutcome, std::string>
-dispatch_parsed(const ParsedCommand& cmd, const InteractiveContext& ctx) {
+inline std::expected<DispatchOutcome, std::string> dispatch_parsed(const ParsedCommand& cmd,
+                                                                   const InteractiveContext& ctx) {
     DispatchOutcome out;
 
     switch (cmd.kind) {
-        case CommandKind::Empty:
-            out.action = DispatchOutcome::Action::RejectWithReason;
-            out.reason = "empty input";
-            return out;
+    case CommandKind::Empty:
+        out.action = DispatchOutcome::Action::RejectWithReason;
+        out.reason = "empty input";
+        return out;
 
-        case CommandKind::SlashCommand: {
-            auto handler = SlashRegistry::instance().find(cmd.slash_name);
-            if (handler) {
-                return (*handler)(cmd.slash_args, ctx);
-            }
-            // Unknown slash — fall through to RouteToCommand
-            out.action = DispatchOutcome::Action::RouteToCommand;
-            out.target = cmd.slash_name;
-            out.payload_json = detail::string_vec_json(cmd.slash_args);
-            return out;
+    case CommandKind::SlashCommand: {
+        auto handler = SlashRegistry::instance().find(cmd.slash_name);
+        if (handler) {
+            return (*handler)(cmd.slash_args, ctx);
         }
+        // Unknown slash — fall through to RouteToCommand
+        out.action = DispatchOutcome::Action::RouteToCommand;
+        out.target = cmd.slash_name;
+        out.payload_json = detail::string_vec_json(cmd.slash_args);
+        return out;
+    }
 
-        case CommandKind::BashCommand: {
-            if (detail::is_dangerous_bash(cmd.bash_command_line)) {
-                out.action = DispatchOutcome::Action::AskConfirmation;
-                out.confirmation_prompt =
-                    "This command may be destructive. Confirm you want to run: " +
-                    cmd.bash_command_line;
-                out.target = cmd.bash_command_line;
-                return out;
-            }
-            out.action = DispatchOutcome::Action::RouteToBash;
+    case CommandKind::BashCommand: {
+        if (detail::is_dangerous_bash(cmd.bash_command_line)) {
+            out.action = DispatchOutcome::Action::AskConfirmation;
+            out.confirmation_prompt = "This command may be destructive. Confirm you want to run: " +
+                                      cmd.bash_command_line;
             out.target = cmd.bash_command_line;
             return out;
         }
+        out.action = DispatchOutcome::Action::RouteToBash;
+        out.target = cmd.bash_command_line;
+        return out;
+    }
 
-        case CommandKind::AtMentionOnly: {
-            auto resolved = resolve_at_mentions(cmd.normalized, ctx);
-            out.action = DispatchOutcome::Action::RouteToAtMention;
-            out.target = resolved.empty() ? (cmd.at_mentions.empty() ? std::string{}
-                                                                      : cmd.at_mentions.front())
-                                          : resolved.front();
-            out.payload_json = detail::string_vec_json(resolved.empty() ? cmd.at_mentions : resolved);
-            return out;
-        }
+    case CommandKind::AtMentionOnly: {
+        auto resolved = resolve_at_mentions(cmd.normalized, ctx);
+        out.action = DispatchOutcome::Action::RouteToAtMention;
+        out.target = resolved.empty()
+                         ? (cmd.at_mentions.empty() ? std::string{} : cmd.at_mentions.front())
+                         : resolved.front();
+        out.payload_json = detail::string_vec_json(resolved.empty() ? cmd.at_mentions : resolved);
+        return out;
+    }
 
-        case CommandKind::Paste: {
-            auto sanitized = sanitize_paste(cmd.normalized);
-            const char* kind_str = "unknown";
-            switch (cmd.paste_kind) {
-                case ParsedCommand::PasteKind::Code: kind_str = "code"; break;
-                case ParsedCommand::PasteKind::Json: kind_str = "json"; break;
-                case ParsedCommand::PasteKind::Markdown: kind_str = "markdown"; break;
-                case ParsedCommand::PasteKind::Log: kind_str = "log"; break;
-                case ParsedCommand::PasteKind::Diff: kind_str = "diff"; break;
-                default: kind_str = "unknown"; break;
-            }
-            loom::utils::json::JsonBuilder b;
-            b.str("content", sanitized)
-             .boolean("paste", true)
-             .str("paste_kind", kind_str);
-            out.action = DispatchOutcome::Action::RouteToPrompt;
-            out.payload_json = b.serialize();
-            return out;
-        }
-
-        case CommandKind::TextPrompt: {
-            loom::utils::json::JsonBuilder b;
-            b.str("content", cmd.normalized);
-            auto& doc = b.doc();
-            auto root = b.root();
-            auto arr = doc.array();
-            for (const auto& m : cmd.at_mentions) arr.append(doc.string(m));
-            root.add("mentions", arr);
-            out.action = DispatchOutcome::Action::RouteToPrompt;
-            out.payload_json = b.serialize();
-            return out;
-        }
-
-        case CommandKind::Unknown:
+    case CommandKind::Paste: {
+        auto sanitized = sanitize_paste(cmd.normalized);
+        const char* kind_str = "unknown";
+        switch (cmd.paste_kind) {
+        case ParsedCommand::PasteKind::Code:
+            kind_str = "code";
+            break;
+        case ParsedCommand::PasteKind::Json:
+            kind_str = "json";
+            break;
+        case ParsedCommand::PasteKind::Markdown:
+            kind_str = "markdown";
+            break;
+        case ParsedCommand::PasteKind::Log:
+            kind_str = "log";
+            break;
+        case ParsedCommand::PasteKind::Diff:
+            kind_str = "diff";
+            break;
         default:
-            out.action = DispatchOutcome::Action::RejectWithReason;
-            out.reason = "unknown input kind";
-            return out;
+            kind_str = "unknown";
+            break;
+        }
+        loom::utils::json::JsonBuilder b;
+        b.str("content", sanitized).boolean("paste", true).str("paste_kind", kind_str);
+        out.action = DispatchOutcome::Action::RouteToPrompt;
+        out.payload_json = b.serialize();
+        return out;
+    }
+
+    case CommandKind::TextPrompt: {
+        loom::utils::json::JsonBuilder b;
+        b.str("content", cmd.normalized);
+        auto& doc = b.doc();
+        auto root = b.root();
+        auto arr = doc.array();
+        for (const auto& m : cmd.at_mentions)
+            arr.append(doc.string(m));
+        root.add("mentions", arr);
+        out.action = DispatchOutcome::Action::RouteToPrompt;
+        out.payload_json = b.serialize();
+        return out;
+    }
+
+    case CommandKind::Unknown:
+    default:
+        out.action = DispatchOutcome::Action::RejectWithReason;
+        out.reason = "unknown input kind";
+        return out;
     }
 }
 
-inline std::expected<DispatchOutcome, std::string>
-process_complete(std::string_view raw, const InteractiveContext& ctx) {
+inline std::expected<DispatchOutcome, std::string> process_complete(std::string_view raw,
+                                                                    const InteractiveContext& ctx) {
     auto parsed = parse_interactive_input(raw, ctx);
     if (!parsed) return std::unexpected(parsed.error());
     return dispatch_parsed(*parsed, ctx);
 }
 
-} // namespace loom::bootstrap::interactive
+}  // namespace loom::bootstrap::interactive

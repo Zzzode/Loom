@@ -12,12 +12,7 @@ import std;
 export namespace loom::utils::bash {
 
 /// How dangerous a command is assessed to be
-enum class DangerLevel {
-    Safe,
-    Caution,
-    Dangerous,
-    Forbidden
-};
+enum class DangerLevel { Safe, Caution, Dangerous, Forbidden };
 
 /// Category of a command based on what system resources it interacts with
 enum class CommandCategory {
@@ -62,8 +57,10 @@ struct SandboxConfig {
 [[nodiscard]] inline auto is_command_denied(std::string_view command) -> std::optional<std::string>;
 [[nodiscard]] inline auto get_command_category(std::string_view command) -> CommandCategory;
 [[nodiscard]] inline auto get_default_denylist() -> std::vector<DenylistEntry>;
-[[nodiscard]] inline auto suggest_safe_alternative(std::string_view dangerous_command) -> std::optional<std::string>;
-[[nodiscard]] inline auto extract_file_paths_from_command(std::string_view command) -> std::vector<std::string>;
+[[nodiscard]] inline auto suggest_safe_alternative(std::string_view dangerous_command)
+    -> std::optional<std::string>;
+[[nodiscard]] inline auto extract_file_paths_from_command(std::string_view command)
+    -> std::vector<std::string>;
 
 namespace detail {
 
@@ -78,7 +75,8 @@ inline std::string extract_base_command(std::string_view command) {
     while (!cmd_view.empty()) {
         auto space_pos = cmd_view.find(' ');
         auto eq_pos = cmd_view.find('=');
-        if (eq_pos != std::string_view::npos && (space_pos == std::string_view::npos || eq_pos < space_pos)) {
+        if (eq_pos != std::string_view::npos &&
+            (space_pos == std::string_view::npos || eq_pos < space_pos)) {
             if (space_pos == std::string_view::npos) return "";
             cmd_view = cmd_view.substr(space_pos + 1);
             auto next_start = cmd_view.find_first_not_of(" \t");
@@ -112,10 +110,9 @@ inline std::string extract_base_command(std::string_view command) {
 // Check if command involves network operations
 inline bool involves_network(std::string_view command) {
     static constexpr std::array network_cmds = {
-        "curl", "wget", "nc", "ncat", "netcat", "ssh", "scp", "sftp",
-        "rsync", "ftp", "telnet", "nmap", "ping", "traceroute",
-        "dig", "nslookup", "host", "ifconfig", "ip"
-    };
+        "curl", "wget",     "nc",   "ncat",     "netcat", "ssh",  "scp",
+        "sftp", "rsync",    "ftp",  "telnet",   "nmap",   "ping", "traceroute",
+        "dig",  "nslookup", "host", "ifconfig", "ip"};
     std::string base = extract_base_command(command);
     for (auto cmd : network_cmds) {
         if (base == cmd) return true;
@@ -125,10 +122,8 @@ inline bool involves_network(std::string_view command) {
 
 // Check if command involves process management
 inline bool involves_process(std::string_view command) {
-    static constexpr std::array process_cmds = {
-        "kill", "killall", "pkill", "ps", "top", "htop",
-        "nice", "renice", "nohup", "disown", "bg", "fg"
-    };
+    static constexpr std::array process_cmds = {"kill", "killall", "pkill", "ps",     "top", "htop",
+                                                "nice", "renice",  "nohup", "disown", "bg",  "fg"};
     std::string base = extract_base_command(command);
     for (auto cmd : process_cmds) {
         if (base == cmd) return true;
@@ -139,10 +134,8 @@ inline bool involves_process(std::string_view command) {
 // Check if command involves system-level operations
 inline bool involves_system(std::string_view command) {
     static constexpr std::array system_cmds = {
-        "shutdown", "reboot", "halt", "poweroff", "systemctl",
-        "service", "init", "mount", "umount", "fdisk", "mkfs",
-        "sysctl", "modprobe", "insmod", "rmmod", "dmesg"
-    };
+        "shutdown", "reboot", "halt", "poweroff", "systemctl", "service", "init",  "mount",
+        "umount",   "fdisk",  "mkfs", "sysctl",   "modprobe",  "insmod",  "rmmod", "dmesg"};
     std::string base = extract_base_command(command);
     for (auto cmd : system_cmds) {
         if (base == cmd) return true;
@@ -150,12 +143,10 @@ inline bool involves_system(std::string_view command) {
     return false;
 }
 
-} // namespace detail
+}  // namespace detail
 
 /// Perform a comprehensive safety check on a command
-[[nodiscard]] inline auto check_command_safety(
-    std::string_view command
-) -> SafetyCheckResult {
+[[nodiscard]] inline auto check_command_safety(std::string_view command) -> SafetyCheckResult {
     SafetyCheckResult result;
     result.category = get_command_category(command);
     result.level = DangerLevel::Safe;
@@ -232,9 +223,8 @@ inline bool involves_system(std::string_view command) {
 }
 
 /// Check if a command is on the denylist; returns the reason if denied
-[[nodiscard]] inline auto is_command_denied(
-    std::string_view command
-) -> std::optional<std::string> {
+[[nodiscard]] inline auto is_command_denied(std::string_view command)
+    -> std::optional<std::string> {
     auto denylist = get_default_denylist();
     std::string cmd_str(command);
 
@@ -259,9 +249,7 @@ inline bool involves_system(std::string_view command) {
 }
 
 /// Determine the category of a command
-[[nodiscard]] inline auto get_command_category(
-    std::string_view command
-) -> CommandCategory {
+[[nodiscard]] inline auto get_command_category(std::string_view command) -> CommandCategory {
     std::string base = detail::extract_base_command(command);
 
     // Git commands
@@ -273,26 +261,22 @@ inline bool involves_system(std::string_view command) {
     }
 
     // Package managers
-    static constexpr std::array pkg_cmds = {
-        "npm", "yarn", "pnpm", "pip", "pip3", "gem", "cargo",
-        "apt", "apt-get", "yum", "dnf", "brew", "pacman", "apk"
-    };
+    static constexpr std::array pkg_cmds = {"npm", "yarn",  "pnpm",   "pip",     "pip3",
+                                            "gem", "cargo", "apt",    "apt-get", "yum",
+                                            "dnf", "brew",  "pacman", "apk"};
     for (auto cmd : pkg_cmds) {
         if (base == cmd) return CommandCategory::Package;
     }
 
     // Database
-    static constexpr std::array db_cmds = {
-        "psql", "mysql", "sqlite3", "mongosh", "redis-cli", "pg_dump"
-    };
+    static constexpr std::array db_cmds = {"psql",    "mysql",     "sqlite3",
+                                           "mongosh", "redis-cli", "pg_dump"};
     for (auto cmd : db_cmds) {
         if (base == cmd) return CommandCategory::Database;
     }
 
     // Crypto
-    static constexpr std::array crypto_cmds = {
-        "openssl", "gpg", "ssh-keygen", "age", "certbot"
-    };
+    static constexpr std::array crypto_cmds = {"openssl", "gpg", "ssh-keygen", "age", "certbot"};
     for (auto cmd : crypto_cmds) {
         if (base == cmd) return CommandCategory::Crypto;
     }
@@ -308,11 +292,9 @@ inline bool involves_system(std::string_view command) {
 
     // Filesystem (default for most file operations)
     static constexpr std::array fs_cmds = {
-        "ls", "cat", "cp", "mv", "rm", "mkdir", "rmdir", "touch",
-        "chmod", "chown", "find", "grep", "sed", "awk", "head",
-        "tail", "wc", "sort", "uniq", "tar", "zip", "unzip",
-        "ln", "stat", "du", "df", "file"
-    };
+        "ls",    "cat",  "cp",   "mv",    "rm",  "mkdir", "rmdir", "touch", "chmod",
+        "chown", "find", "grep", "sed",   "awk", "head",  "tail",  "wc",    "sort",
+        "uniq",  "tar",  "zip",  "unzip", "ln",  "stat",  "du",    "df",    "file"};
     for (auto cmd : fs_cmds) {
         if (base == cmd) return CommandCategory::FileSystem;
     }
@@ -321,9 +303,7 @@ inline bool involves_system(std::string_view command) {
 }
 
 /// Get the danger level of a command
-[[nodiscard]] inline auto get_danger_level(
-    std::string_view command
-) -> DangerLevel {
+[[nodiscard]] inline auto get_danger_level(std::string_view command) -> DangerLevel {
     // Quick denylist check
     if (is_command_denied(command)) return DangerLevel::Forbidden;
 
@@ -331,12 +311,8 @@ inline bool involves_system(std::string_view command) {
 
     // Forbidden patterns
     static constexpr std::array forbidden_patterns = {
-        ":(){ :|:& };:",
-        "rm -rf /",
-        "rm -rf /*",
-        "dd if=/dev/zero of=/dev/sd",
-        "mkfs.",
-        "> /dev/sd",
+        ":(){ :|:& };:", "rm -rf /",  "rm -rf /*", "dd if=/dev/zero of=/dev/sd",
+        "mkfs.",         "> /dev/sd",
     };
     for (auto p : forbidden_patterns) {
         if (cmd_str.find(p) != std::string::npos) return DangerLevel::Forbidden;
@@ -344,11 +320,7 @@ inline bool involves_system(std::string_view command) {
 
     // Dangerous patterns
     static constexpr std::array dangerous_patterns = {
-        "rm -rf",
-        "chmod -R 777",
-        "dd if=",
-        "format ",
-        "fdisk",
+        "rm -rf", "chmod -R 777", "dd if=", "format ", "fdisk",
     };
     for (auto p : dangerous_patterns) {
         if (cmd_str.find(p) != std::string::npos) return DangerLevel::Dangerous;
@@ -356,16 +328,7 @@ inline bool involves_system(std::string_view command) {
 
     // Caution patterns
     static constexpr std::array caution_patterns = {
-        "sudo",
-        "rm -r",
-        "chmod",
-        "chown",
-        "mv /",
-        "|sh",
-        "|bash",
-        "eval ",
-        "exec ",
-        "> /etc/",
+        "sudo", "rm -r", "chmod", "chown", "mv /", "|sh", "|bash", "eval ", "exec ", "> /etc/",
     };
     for (auto p : caution_patterns) {
         if (cmd_str.find(p) != std::string::npos) return DangerLevel::Caution;
@@ -395,10 +358,9 @@ inline bool involves_system(std::string_view command) {
 }
 
 /// Validate whether a command is allowed within a sandbox configuration
-[[nodiscard]] inline auto validate_sandbox_command(
-    std::string_view command,
-    const SandboxConfig& config
-) -> std::expected<void, std::string> {
+[[nodiscard]] inline auto validate_sandbox_command(std::string_view command,
+                                                   const SandboxConfig& config)
+    -> std::expected<void, std::string> {
     std::string cmd_str(command);
     std::string base = detail::extract_base_command(command);
 
@@ -445,9 +407,8 @@ inline bool involves_system(std::string_view command) {
 }
 
 /// Suggest a safer alternative to a dangerous command
-[[nodiscard]] inline auto suggest_safe_alternative(
-    std::string_view dangerous_command
-) -> std::optional<std::string> {
+[[nodiscard]] inline auto suggest_safe_alternative(std::string_view dangerous_command)
+    -> std::optional<std::string> {
     std::string cmd(dangerous_command);
 
     // rm -rf suggestions
@@ -472,12 +433,15 @@ inline bool involves_system(std::string_view command) {
     // curl/wget pipe suggestions
     if ((cmd.find("curl") != std::string::npos || cmd.find("wget") != std::string::npos) &&
         (cmd.find("|sh") != std::string::npos || cmd.find("|bash") != std::string::npos)) {
-        return "Download the script first, review it, then execute: 'curl -o script.sh URL && cat script.sh && bash script.sh'";
+        return "Download the script first, review it, then execute: 'curl -o script.sh URL && cat "
+               "script.sh && bash script.sh'";
     }
 
     // dd suggestions
-    if (cmd.find("dd if=/dev/zero") != std::string::npos || cmd.find("dd if=/dev/random") != std::string::npos) {
-        return "Verify the output device (of=) carefully. Consider using 'shred' for secure deletion";
+    if (cmd.find("dd if=/dev/zero") != std::string::npos ||
+        cmd.find("dd if=/dev/random") != std::string::npos) {
+        return "Verify the output device (of=) carefully. Consider using 'shred' for secure "
+               "deletion";
     }
 
     // sudo suggestions
@@ -489,9 +453,8 @@ inline bool involves_system(std::string_view command) {
 }
 
 /// Extract file paths referenced in a command
-[[nodiscard]] inline auto extract_file_paths_from_command(
-    std::string_view command
-) -> std::vector<std::string> {
+[[nodiscard]] inline auto extract_file_paths_from_command(std::string_view command)
+    -> std::vector<std::string> {
     std::vector<std::string> paths;
     std::string current;
     bool in_single_quote = false;
@@ -504,13 +467,29 @@ inline bool involves_system(std::string_view command) {
 
     for (std::size_t i = 0; i < command.size(); ++i) {
         char c = command[i];
-        if (escaped) { token += c; escaped = false; continue; }
-        if (c == '\\') { escaped = true; continue; }
-        if (c == '\'' && !in_double_quote) { in_single_quote = !in_single_quote; continue; }
-        if (c == '"' && !in_single_quote) { in_double_quote = !in_double_quote; continue; }
+        if (escaped) {
+            token += c;
+            escaped = false;
+            continue;
+        }
+        if (c == '\\') {
+            escaped = true;
+            continue;
+        }
+        if (c == '\'' && !in_double_quote) {
+            in_single_quote = !in_single_quote;
+            continue;
+        }
+        if (c == '"' && !in_single_quote) {
+            in_double_quote = !in_double_quote;
+            continue;
+        }
 
         if ((c == ' ' || c == '\t') && !in_single_quote && !in_double_quote) {
-            if (!token.empty()) { tokens.push_back(std::move(token)); token.clear(); }
+            if (!token.empty()) {
+                tokens.push_back(std::move(token));
+                token.clear();
+            }
         } else {
             token += c;
         }
@@ -534,7 +513,7 @@ inline bool involves_system(std::string_view command) {
         else if (t.find('.') != std::string::npos && t.size() > 2) {
             auto dot_pos = t.rfind('.');
             auto ext = t.substr(dot_pos);
-            if (ext.size() <= 5) { // reasonable extension length
+            if (ext.size() <= 5) {  // reasonable extension length
                 paths.push_back(t);
             }
         }
@@ -544,35 +523,46 @@ inline bool involves_system(std::string_view command) {
 }
 
 /// Get a human-readable label for a command category
-[[nodiscard]] inline constexpr auto get_category_label(
-    CommandCategory category
-) -> std::string_view {
+[[nodiscard]] inline constexpr auto get_category_label(CommandCategory category)
+    -> std::string_view {
     switch (category) {
-        case CommandCategory::FileSystem: return "File System";
-        case CommandCategory::Network:    return "Network";
-        case CommandCategory::Process:    return "Process";
-        case CommandCategory::System:     return "System";
-        case CommandCategory::Package:    return "Package";
-        case CommandCategory::Git:        return "Git";
-        case CommandCategory::Docker:     return "Docker";
-        case CommandCategory::Database:   return "Database";
-        case CommandCategory::Crypto:     return "Crypto";
-        case CommandCategory::Unknown:    return "Unknown";
+    case CommandCategory::FileSystem:
+        return "File System";
+    case CommandCategory::Network:
+        return "Network";
+    case CommandCategory::Process:
+        return "Process";
+    case CommandCategory::System:
+        return "System";
+    case CommandCategory::Package:
+        return "Package";
+    case CommandCategory::Git:
+        return "Git";
+    case CommandCategory::Docker:
+        return "Docker";
+    case CommandCategory::Database:
+        return "Database";
+    case CommandCategory::Crypto:
+        return "Crypto";
+    case CommandCategory::Unknown:
+        return "Unknown";
     }
     return "Unknown";
 }
 
 /// Get a human-readable label for a danger level
-[[nodiscard]] inline constexpr auto get_danger_label(
-    DangerLevel level
-) -> std::string_view {
+[[nodiscard]] inline constexpr auto get_danger_label(DangerLevel level) -> std::string_view {
     switch (level) {
-        case DangerLevel::Safe:      return "Safe";
-        case DangerLevel::Caution:   return "Caution";
-        case DangerLevel::Dangerous: return "Dangerous";
-        case DangerLevel::Forbidden: return "Forbidden";
+    case DangerLevel::Safe:
+        return "Safe";
+    case DangerLevel::Caution:
+        return "Caution";
+    case DangerLevel::Dangerous:
+        return "Dangerous";
+    case DangerLevel::Forbidden:
+        return "Forbidden";
     }
     return "Unknown";
 }
 
-} // namespace loom::utils::bash
+}  // namespace loom::utils::bash

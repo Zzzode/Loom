@@ -2,8 +2,9 @@
 /// @brief Keyboard hints and externally driven spinner glyphs.
 module;
 
-#include <cstdint>
 #include <ftxui/dom/elements.hpp>
+
+#include <cstdint>
 
 export module loom.ui.foundation.component_primitives;
 
@@ -31,12 +32,10 @@ using namespace loom::ui::design::theme;
 // ─── spinner (braille glyph) ─────────────────────────────────────────────────
 /// Braille spinner.  10 frames; pass an external frame counter so the
 /// caller can control the tick rate.
-inline constexpr std::array<std::string_view, 10> k_spinner_frames = {
-    "⠋","⠙","⠹","⠸","⠼","⠴","⠦","⠧","⠇","⠏"
-};
+inline constexpr std::array<std::string_view, 10> k_spinner_frames = {"⠋", "⠙", "⠹", "⠸", "⠼",
+                                                                      "⠴", "⠦", "⠧", "⠇", "⠏"};
 
-[[nodiscard]] inline ftxui::Element spinner_glyph(std::uint64_t frame,
-                                                  Role role,
+[[nodiscard]] inline ftxui::Element spinner_glyph(std::uint64_t frame, Role role,
                                                   const Theme& theme) {
     using namespace ftxui;
     auto base = theme.color_for(role);
@@ -47,4 +46,4 @@ inline constexpr std::array<std::string_view, 10> k_spinner_frames = {
     return text(std::string(k_spinner_frames[idx])) | color(base);
 }
 
-} // namespace loom::ui::design::primitives
+}  // namespace loom::ui::design::primitives

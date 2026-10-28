@@ -34,9 +34,8 @@ protected:
 
 public:
     ReactiveComponentBase() = default;
-    virtual ~ReactiveComponentBase() {
-        unsubscribe();
-    }
+
+    virtual ~ReactiveComponentBase() { unsubscribe(); }
 
     /// Connect to the store and start listening for changes
     virtual void connect(std::shared_ptr<Store<AppState, decltype(&app_reducer)>> store) {
@@ -44,9 +43,8 @@ public:
         store_ = store;
         if (auto s = store_.lock()) {
             last_state_ = s->get_state();
-            subscription_id_ = s->subscribe([this](const AppState&, const AppState&) {
-                on_state_change();
-            });
+            subscription_id_ =
+                s->subscribe([this](const AppState&, const AppState&) { on_state_change(); });
         }
     }
 
@@ -61,19 +59,13 @@ public:
     }
 
     /// Check if a re-render is needed
-    [[nodiscard]] bool needs_render() const {
-        return needs_render_.load();
-    }
+    [[nodiscard]] bool needs_render() const { return needs_render_.load(); }
 
     /// Reset the needs-render flag (call after rendering)
-    void reset_needs_render() {
-        needs_render_.store(false);
-    }
+    void reset_needs_render() { needs_render_.store(false); }
 
     /// Get the current state
-    [[nodiscard]] const AppState& get_last_state() const {
-        return last_state_;
-    }
+    [[nodiscard]] const AppState& get_last_state() const { return last_state_; }
 
 protected:
     /// Called when state changes - override to handle specific state changes
@@ -90,18 +82,17 @@ protected:
 // ============================================================
 
 /// A component that only re-renders when a specific selector's result changes
-template <typename SelectorResult>
-class SelectorComponent : public ReactiveComponentBase {
+template <typename SelectorResult> class SelectorComponent : public ReactiveComponentBase {
     std::function<SelectorResult(const AppState&)> selector_;
     SelectorResult last_selector_result_;
     std::function<void(const SelectorResult&)> on_change_;
 
 public:
-    SelectorComponent(
-        std::function<SelectorResult(const AppState&)> selector,
-        std::function<void(const SelectorResult&)> on_change = nullptr
-    ) : selector_(std::move(selector)),
-        last_selector_result_{},   // value-init (T{} for bool = false, etc.)
+    SelectorComponent(std::function<SelectorResult(const AppState&)> selector,
+                      std::function<void(const SelectorResult&)> on_change = nullptr)
+        : selector_(std::move(selector))
+        , last_selector_result_{}
+        ,  // value-init (T{} for bool = false, etc.)
         on_change_(std::move(on_change)) {}
 
     /// Override connect to compute initial selector result immediately,
@@ -150,28 +141,22 @@ protected:
 class VerboseIndicator : public SelectorComponent<bool> {
 public:
     VerboseIndicator()
-        : SelectorComponent<bool>(
-            [](const AppState& s) { return selectors::is_verbose(s); }
-        ) {}
+        : SelectorComponent<bool>([](const AppState& s) { return selectors::is_verbose(s); }) {}
 
     /// Get display text for the current status
-    [[nodiscard]] std::string get_text() const {
-        return get_selector_result() ? "VERBOSE" : "";
-    }
+    [[nodiscard]] std::string get_text() const { return get_selector_result() ? "VERBOSE" : ""; }
 };
 
 /// Component that shows the loading state
 class LoadingIndicator : public SelectorComponent<bool> {
 public:
     LoadingIndicator()
-        : SelectorComponent<bool>(
-            [](const AppState& s) { return selectors::is_loading(s) || selectors::is_streaming(s); }
-        ) {}
+        : SelectorComponent<bool>([](const AppState& s) {
+            return selectors::is_loading(s) || selectors::is_streaming(s);
+        }) {}
 
     /// Get display text for loading state
-    [[nodiscard]] std::string get_text() const {
-        return get_selector_result() ? "Loading..." : "";
-    }
+    [[nodiscard]] std::string get_text() const { return get_selector_result() ? "Loading..." : ""; }
 };
 
 /// Component that tracks message count
@@ -179,8 +164,7 @@ class MessageCounter : public SelectorComponent<std::size_t> {
 public:
     MessageCounter()
         : SelectorComponent<std::size_t>(
-            [](const AppState& s) { return selectors::get_message_count(s); }
-        ) {}
+              [](const AppState& s) { return selectors::get_message_count(s); }) {}
 
     /// Get formatted message count text
     [[nodiscard]] std::string get_text() const {
@@ -199,9 +183,8 @@ class ReactiveScreenManager {
     mutable std::mutex components_mutex_;
 
 public:
-    explicit ReactiveScreenManager(
-        std::shared_ptr<Store<AppState, decltype(&app_reducer)>> store
-    ) : store_(std::move(store)) {}
+    explicit ReactiveScreenManager(std::shared_ptr<Store<AppState, decltype(&app_reducer)>> store)
+        : store_(std::move(store)) {}
 
     /// Add a reactive component
     void add_component(std::shared_ptr<ReactiveComponentBase> component) {
@@ -250,21 +233,17 @@ public:
 
 /// Create a reactive component for a specific selector
 template <typename SelectorResult>
-[[nodiscard]] std::shared_ptr<SelectorComponent<SelectorResult>> make_selector_component(
-    std::function<SelectorResult(const AppState&)> selector,
-    std::function<void(const SelectorResult&)> on_change = nullptr
-) {
-    return std::make_shared<SelectorComponent<SelectorResult>>(
-        std::move(selector),
-        std::move(on_change)
-    );
+[[nodiscard]] std::shared_ptr<SelectorComponent<SelectorResult>>
+make_selector_component(std::function<SelectorResult(const AppState&)> selector,
+                        std::function<void(const SelectorResult&)> on_change = nullptr) {
+    return std::make_shared<SelectorComponent<SelectorResult>>(std::move(selector),
+                                                               std::move(on_change));
 }
 
 /// Create a screen manager with the default store
-[[nodiscard]] std::shared_ptr<ReactiveScreenManager> make_reactive_screen_manager(
-    std::shared_ptr<Store<AppState, decltype(&app_reducer)>> store
-) {
+[[nodiscard]] std::shared_ptr<ReactiveScreenManager>
+make_reactive_screen_manager(std::shared_ptr<Store<AppState, decltype(&app_reducer)>> store) {
     return std::make_shared<ReactiveScreenManager>(std::move(store));
 }
 
-} // namespace loom::state::ftxui
+}  // namespace loom::state::ftxui

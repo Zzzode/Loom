@@ -1,10 +1,11 @@
 // Implementations for loom.ui.prompt.prompt_input_footer.
 module;
 
-#include <cmath>
-#include <cstdio>
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/screen/string.hpp>
+
+#include <cmath>
+#include <cstdio>
 
 module loom.ui.prompt.prompt_input_footer;
 
@@ -15,9 +16,7 @@ import loom.ui.foundation.theme_provider;
 namespace loom::ui::prompt::footer {
 using namespace ftxui;
 
-[[nodiscard]] std::string GetLastPathComponents(
-    const std::string& cwd, int n)
-{
+[[nodiscard]] std::string GetLastPathComponents(const std::string& cwd, int n) {
     if (cwd.empty()) return "";
     fs::path p(cwd);
     std::vector<std::string> parts;
@@ -35,6 +34,7 @@ using namespace ftxui;
     }
     return result;
 }
+
 [[nodiscard]] std::string FormatTokensK(std::uint64_t tokens) {
     if (tokens == 0) return "0K";
     if (tokens < 1000) return std::to_string(tokens);
@@ -102,7 +102,7 @@ struct StatusField {
     int priority = 0;
     std::string selected;
 };
-} // namespace
+}  // namespace
 
 [[nodiscard]] Element RenderBuiltinStatusLine(const BuiltinStatusLineData& data) {
     if (!data.status_bar_enabled) return text("");
@@ -120,13 +120,14 @@ struct StatusField {
         fields.push_back({data.model_name, pal.text, true, true, 1, {}});
     if (data.segments.tokens) {
         const double pct = data.context_window_size > 0
-            ? 100.0 * data.context_token_count / data.context_window_size : 0.0;
+                               ? 100.0 * data.context_token_count / data.context_window_size
+                               : 0.0;
         const auto usage_color = pct >= 80.0 ? pal.danger : pct >= 50.0 ? pal.warning : pal.muted;
-        auto usage = std::format("{}{:.0f}%",
-            data.context_tokens_estimated ? "~" : "", std::round(pct));
+        auto usage =
+            std::format("{}{:.0f}%", data.context_tokens_estimated ? "~" : "", std::round(pct));
         if (!bounded || columns >= 90)
             usage += std::format(" {}/{}", FormatTokensK(data.context_token_count),
-                FormatTokensK(data.context_window_size));
+                                 FormatTokensK(data.context_window_size));
         fields.push_back({std::move(usage), usage_color, false, false, 0, {}});
     }
     if (data.segments.cost && data.cost_usd && *data.cost_usd > 0.0) {
@@ -138,8 +139,13 @@ struct StatusField {
         fields.push_back({cost, pal.muted, false, false, 5, {}});
     }
     if (data.segments.tasks && data.task_count > 0)
-        fields.push_back({std::format("{} Team Agent{}", data.task_count,
-            data.task_count == 1 ? "" : "s"), pal.muted, false, false, 6, {}});
+        fields.push_back(
+            {std::format("{} Team Agent{}", data.task_count, data.task_count == 1 ? "" : "s"),
+             pal.muted,
+             false,
+             false,
+             6,
+             {}});
     if (data.segments.agent && !data.agent_name.empty())
         fields.push_back({"@" + data.agent_name, pal.muted, false, true, 7, {}});
     if (!data.mouse_mode_label.empty())
@@ -152,14 +158,19 @@ struct StatusField {
     for (int priority = 0; priority <= 7; ++priority) {
         for (auto& field : fields) {
             if (field.priority != priority) continue;
-            if (!bounded) { field.selected = field.value; continue; }
+            if (!bounded) {
+                field.selected = field.value;
+                continue;
+            }
             const int available = remaining - (selected_any ? 3 : 0);
-            const int minimum = field.abbreviate ? (priority == 1 ? 6 : 4)
-                : string_width(field.value);
+            const int minimum =
+                field.abbreviate ? (priority == 1 ? 6 : 4) : string_width(field.value);
             if (available < minimum) continue;
-            const int cap = field.abbreviate
-                ? std::min(available, std::max(minimum, std::min(priority == 1 ? 32 : 22, columns / 3)))
-                : available;
+            const int cap =
+                field.abbreviate
+                    ? std::min(available,
+                               std::max(minimum, std::min(priority == 1 ? 32 : 22, columns / 3)))
+                    : available;
             field.selected = field.abbreviate ? Ellipsize(field.value, cap) : field.value;
             remaining -= string_width(field.selected) + (selected_any ? 3 : 0);
             selected_any = true;
@@ -179,13 +190,13 @@ struct StatusField {
 [[nodiscard]] Element RenderPromptInputFooter(const FooterOptions& opts) {
     // ── Special: suggestions overlay replaces entire footer ──────────
     if (opts.has_suggestions && opts.suggestions_content) {
-        return hbox({ text("  "), std::move(opts.suggestions_content) });
+        return hbox({text("  "), std::move(opts.suggestions_content)});
     }
 
     // ── Special: help menu replaces entire footer ────────────────────
     if (opts.help_open) {
         // Help menu content would be injected here; for now show placeholder
-        return hbox({ text("  Help menu") | dim });
+        return hbox({text("  Help menu") | dim});
     }
 
     // ── Left column ────────────────────────────────────────────────────
@@ -200,8 +211,9 @@ struct StatusField {
     // P0-6: Also show when builtin fallback data is available (standalone mode
     // where user's command returns empty or no statusLine configured).
     const bool has_builtin = opts.status_line.builtin.has_value();
-    bool show_status_line = opts.status_line.should_display
-        && (opts.is_fullscreen || !opts.status_line.content.empty() || has_builtin);
+    bool show_status_line =
+        opts.status_line.should_display &&
+        (opts.is_fullscreen || !opts.status_line.content.empty() || has_builtin);
 
     // LeftSide (always present — ModeIndicator reserves 1 row)
     left_col.push_back(RenderLeftSide(opts.left_side));
@@ -222,20 +234,14 @@ struct StatusField {
         // notification data has any active field.
         const auto& nd = opts.notification;
         const bool has_active =
-            QueueHasItems(nd.queue) ||
-            (nd.dynamic_text && !nd.dynamic_text->empty()) ||
-            nd.ide.connected ||
-            nd.is_overage_mode ||
-            nd.api_key_status == ApiKeyStatus::Invalid ||
-            nd.api_key_status == ApiKeyStatus::Missing ||
-            nd.debug_mode ||
+            QueueHasItems(nd.queue) || (nd.dynamic_text && !nd.dynamic_text->empty()) ||
+            nd.ide.connected || nd.is_overage_mode || nd.api_key_status == ApiKeyStatus::Invalid ||
+            nd.api_key_status == ApiKeyStatus::Missing || nd.debug_mode ||
             (nd.verbose && nd.api_key_status == ApiKeyStatus::Valid && nd.token_usage > 0) ||
             // P1: typed notification pills (footer-notifications-stub)
-            nd.auto_updater.has_value() ||
-            nd.new_release.has_value() ||
-            (nd.pro_renewal.has_value()
-             && nd.pro_renewal->days_remaining > 0
-             && nd.pro_renewal->days_remaining < 7);
+            nd.auto_updater.has_value() || nd.new_release.has_value() ||
+            (nd.pro_renewal.has_value() && nd.pro_renewal->days_remaining > 0 &&
+             nd.pro_renewal->days_remaining < 7);
 
         if (has_active) {
             right_col.push_back(std::move(notif_el));
@@ -252,10 +258,8 @@ struct StatusField {
     }
 
     // Bridge status indicator
-    if (opts.bridge.status != BridgeStatus::Disabled
-        && (opts.bridge.explicit_remote
-            || opts.bridge.status == BridgeStatus::Reconnecting))
-    {
+    if (opts.bridge.status != BridgeStatus::Disabled &&
+        (opts.bridge.explicit_remote || opts.bridge.status == BridgeStatus::Reconnecting)) {
         if (!bottom_row.empty()) bottom_row.push_back(text(" ") | dim);
         bottom_row.push_back(RenderBridgeStatus(opts.bridge));
     }
@@ -270,18 +274,17 @@ struct StatusField {
 
     Elements rows;
     if (show_status_line) {
-        rows.push_back(hbox({text("  "), RenderStatusLine(opts.status_line) | flex,
-            text("  ")}) | size(HEIGHT, EQUAL, 1));
+        rows.push_back(hbox({text("  "), RenderStatusLine(opts.status_line) | flex, text("  ")}) |
+                       size(HEIGHT, EQUAL, 1));
     }
     if (opts.is_narrow) {
         rows.push_back(hbox({text("  "), std::move(left_el), text("  ")}));
-        if (has_right)
-            rows.push_back(hbox({text("  "), std::move(right_el), text("  ")}));
+        if (has_right) rows.push_back(hbox({text("  "), std::move(right_el), text("  ")}));
     } else {
-        rows.push_back(hbox({text("  "), std::move(left_el), filler(),
-            std::move(right_el), text("  ")}));
+        rows.push_back(
+            hbox({text("  "), std::move(left_el), filler(), std::move(right_el), text("  ")}));
     }
     return vbox(std::move(rows));
 }
 
-} // namespace loom::ui::prompt::footer
+}  // namespace loom::ui::prompt::footer

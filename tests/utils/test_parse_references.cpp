@@ -1,11 +1,13 @@
 /// @file test_parse_references.cpp
 ///
 /// Split out of the former test_utils.cpp kitchen-sink (169 tests, 53 suites).
-/// This file covers the parse_references (image/pasted/truncated-text refs, paste truncation) suites.
+/// This file covers the parse_references (image/pasted/truncated-text refs, paste truncation)
+/// suites.
 
 #include <gtest/gtest.h>
-#include <cstdlib>
 #include <httplib.h>
+
+#include <cstdlib>
 
 import std;
 import loom.text.string;
@@ -148,9 +150,8 @@ TEST(ParseReferences, FormatPastedTextRef_WithLines) {
 TEST(ParseReferences, ExpandPastedTextRefs_ReplacesTextRefs) {
     // Simulate pasted_contents lookup: id=1 → "hello world", id=2 → no text (image)
     std::string input = "before [Pasted text #1] after [Image #2]";
-    auto expanded = loom::utils::expand_pasted_text_refs(
-        input,
-        [](int id) -> std::optional<std::string> {
+    auto expanded =
+        loom::utils::expand_pasted_text_refs(input, [](int id) -> std::optional<std::string> {
             if (id == 1) return "hello world";
             return std::nullopt;  // image or unknown
         });
@@ -168,9 +169,8 @@ TEST(ParseReferences, ExpandPastedTextRefs_NoRefs) {
 TEST(ParseReferences, ExpandPastedTextRefs_MultipleRefsReverseOrder) {
     // Verify reverse-order splicing keeps offsets correct
     std::string input = "[Pasted text #1] middle [Pasted text #2]";
-    auto expanded = loom::utils::expand_pasted_text_refs(
-        input,
-        [](int id) -> std::optional<std::string> {
+    auto expanded =
+        loom::utils::expand_pasted_text_refs(input, [](int id) -> std::optional<std::string> {
             if (id == 1) return "AAA";
             if (id == 2) return "BBB";
             return std::nullopt;
@@ -182,10 +182,8 @@ TEST(ParseReferences, ExpandPastedTextRefs_MultipleRefsReverseOrder) {
 
 TEST(ParseReferences, FormatTruncatedTextRef) {
     // TS REF: inputPaste.ts L57 formatTruncatedTextRef
-    EXPECT_EQ(loom::utils::format_truncated_text_ref(1, 0),
-              "[...Truncated text #1 +0 lines...]");
-    EXPECT_EQ(loom::utils::format_truncated_text_ref(3, 42),
-              "[...Truncated text #3 +42 lines...]");
+    EXPECT_EQ(loom::utils::format_truncated_text_ref(1, 0), "[...Truncated text #1 +0 lines...]");
+    EXPECT_EQ(loom::utils::format_truncated_text_ref(3, 42), "[...Truncated text #3 +42 lines...]");
     EXPECT_EQ(loom::utils::format_truncated_text_ref(7, 100),
               "[...Truncated text #7 +100 lines...]");
 }
@@ -240,8 +238,7 @@ TEST(ParseReferences, MaybeTruncatePaste_OverThreshold_SingleLine) {
     // Should be much shorter than original
     EXPECT_LT(result.truncated_text.size(), 1200u);
     // Should contain the truncated text ref with paste id
-    EXPECT_NE(result.truncated_text.find("[...Truncated text #3 +0 lines...]"),
-              std::string::npos);
+    EXPECT_NE(result.truncated_text.find("[...Truncated text #3 +0 lines...]"), std::string::npos);
     // Head should be first 500 chars
     EXPECT_EQ(result.truncated_text.substr(0, 500), std::string(500, 'x'));
     // Tail should be last 500 chars
@@ -255,11 +252,11 @@ TEST(ParseReferences, MaybeTruncatePaste_OverThreshold_SingleLine) {
 TEST(ParseReferences, MaybeTruncatePaste_OverThreshold_MultiLine) {
     // >10000 chars multi-line → elided line count > 0
     std::string big;
-    for (int i = 0; i < 700; ++i) big += std::string(19, 'y') + "\n";
+    for (int i = 0; i < 700; ++i)
+        big += std::string(19, 'y') + "\n";
     ASSERT_GT(big.size(), 10000u);
     auto result = loom::utils::maybe_truncate_paste(big, 1);
-    EXPECT_NE(result.truncated_text.find("[...Truncated text #1 +"),
-              std::string::npos);
+    EXPECT_NE(result.truncated_text.find("[...Truncated text #1 +"), std::string::npos);
     // Should NOT report "+0 lines..." (multi-line paste has many newlines)
     EXPECT_EQ(result.truncated_text.find("+0 lines...]"), std::string::npos);
     // Placeholder content should be non-empty (the truncated middle)
@@ -271,9 +268,8 @@ TEST(ParseReferences, MaybeTruncatePaste_OverThreshold_MultiLine) {
 TEST(ParseReferences, ExpandPastedTextRefs_TruncatedTextRefs) {
     // [...Truncated text #N] refs should also be expanded
     std::string input = "head [...Truncated text #1 +42 lines...] tail";
-    auto expanded = loom::utils::expand_pasted_text_refs(
-        input,
-        [](int id) -> std::optional<std::string> {
+    auto expanded =
+        loom::utils::expand_pasted_text_refs(input, [](int id) -> std::optional<std::string> {
             if (id == 1) return "MIDDLE_CONTENT";
             return std::nullopt;
         });
@@ -283,9 +279,8 @@ TEST(ParseReferences, ExpandPastedTextRefs_TruncatedTextRefs) {
 TEST(ParseReferences, ExpandPastedTextRefs_MixedPastedAndTruncated) {
     // Mix of [Pasted text #N] and [...Truncated text #N] refs
     std::string input = "[Pasted text #1] and [...Truncated text #2 +5 lines...]";
-    auto expanded = loom::utils::expand_pasted_text_refs(
-        input,
-        [](int id) -> std::optional<std::string> {
+    auto expanded =
+        loom::utils::expand_pasted_text_refs(input, [](int id) -> std::optional<std::string> {
             if (id == 1) return "FIRST";
             if (id == 2) return "SECOND";
             return std::nullopt;
@@ -296,9 +291,8 @@ TEST(ParseReferences, ExpandPastedTextRefs_MixedPastedAndTruncated) {
 TEST(ParseReferences, ExpandPastedTextRefs_ImageLeftAlone) {
     // [Image #N] refs should NOT be expanded
     std::string input = "[Image #1] [...Truncated text #2 +3 lines...]";
-    auto expanded = loom::utils::expand_pasted_text_refs(
-        input,
-        [](int id) -> std::optional<std::string> {
+    auto expanded =
+        loom::utils::expand_pasted_text_refs(input, [](int id) -> std::optional<std::string> {
             if (id == 2) return "EXPANDED";
             return std::nullopt;
         });

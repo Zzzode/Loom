@@ -1,6 +1,7 @@
 module;
 
 #include <ftxui/dom/elements.hpp>
+
 #include <cstddef>
 
 export module loom.ui.widgets.stats;
@@ -40,8 +41,8 @@ struct StatsData {
 
 struct StatsOptions {
     StatsData data;
-    std::string active_tab = "Overview"; // "Overview" or "Models"
-    int selected_date_range = 0; // 0: all, 1: 7d, 2: 30d
+    std::string active_tab = "Overview";  // "Overview" or "Models"
+    int selected_date_range = 0;          // 0: all, 1: 7d, 2: 30d
 };
 
 namespace detail {
@@ -51,7 +52,7 @@ std::vector<std::string> date_range_labels = {"All time", "Last 7 days", "Last 3
 ftxui::Element RenderDateRangeSelector(const StatsOptions& options) {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
     using namespace ftxui;
-    
+
     std::vector<Element> elements;
     for (size_t i = 0; i < date_range_labels.size(); ++i) {
         if (i > 0) {
@@ -63,150 +64,139 @@ ftxui::Element RenderDateRangeSelector(const StatsOptions& options) {
             elements.push_back(text(date_range_labels[i]) | dim);
         }
     }
-    
+
     return hbox(elements);
 }
 
 ftxui::Element RenderActivityHeatmap(const std::vector<DailyActivity>& activity) {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
     using namespace ftxui;
-    
+
     if (activity.empty()) {
         return emptyElement();
     }
-    
+
     std::vector<Element> rows;
     for (const auto& day : activity) {
         int intensity = std::min(day.session_count, 5);
         Color heat_color;
         switch (intensity) {
-            case 0: heat_color = pal.surface_tint_1; break;
-            case 1: heat_color = pal.stats_green_1; break;
-            case 2: heat_color = pal.stats_green_2; break;
-            case 3: heat_color = pal.stats_green_3; break;
-            case 4: heat_color = pal.stats_green_4; break;
-            default: heat_color = pal.stats_green_5; break;
+        case 0:
+            heat_color = pal.surface_tint_1;
+            break;
+        case 1:
+            heat_color = pal.stats_green_1;
+            break;
+        case 2:
+            heat_color = pal.stats_green_2;
+            break;
+        case 3:
+            heat_color = pal.stats_green_3;
+            break;
+        case 4:
+            heat_color = pal.stats_green_4;
+            break;
+        default:
+            heat_color = pal.stats_green_5;
+            break;
         }
         rows.push_back(text(std::string(loom::ui::design::figures::kSquare)) | color(heat_color));
     }
-    
-    return hbox({
-        text("Activity: ") | dim,
-        hbox(rows)
-    });
+
+    return hbox({text("Activity: ") | dim, hbox(rows)});
 }
 
-} // namespace detail
+}  // namespace detail
 
 ftxui::Element Stats(const StatsOptions& options) {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
     using namespace ftxui;
-    
+
     if (options.active_tab == "Overview") {
         std::vector<Element> elements;
-        
+
         elements.push_back(text("Stats Overview") | bold | color(pal.info));
         elements.push_back(separator());
-        
+
         // Activity heatmap
         if (!options.data.daily_activity.empty()) {
             elements.push_back(detail::RenderActivityHeatmap(options.data.daily_activity));
             elements.push_back(separator());
         }
-        
+
         // Date range
         elements.push_back(detail::RenderDateRangeSelector(options));
         elements.push_back(text(""));
-        
+
         // Two column layout
-        elements.push_back(hbox({
-            vbox({
-                hbox({
-                    text("Favorite model: ") | dim,
-                    text(options.data.favorite_model) | color(pal.primary) | bold
-                }),
-                hbox({
-                    text("Total tokens: ") | dim,
-                    text(std::format("{:L}", options.data.total_tokens)) | color(pal.info)
-                }),
-                hbox({
-                    text("Total sessions: ") | dim,
-                    text(std::to_string(options.data.total_sessions)) | color(pal.info)
-                }),
-                hbox({
-                    text("Longest session: ") | dim,
-                    text(options.data.longest_session_duration) | color(pal.info)
-                })
-            }) | flex,
-            text("  "),
-            vbox({
-                hbox({
-                    text("Active days: ") | dim,
-                    text(std::format("{}", options.data.active_days)) | color(pal.info)
-                }),
-                hbox({
-                    text("Longest streak: ") | dim,
-                    text(std::format("{} days", options.data.longest_streak)) | color(pal.info) | bold
-                }),
-                hbox({
-                    text("Current streak: ") | dim,
-                    text(std::format("{} days", options.data.current_streak)) | color(pal.success) | bold
-                }),
-                hbox({
-                    text("Peak day: ") | dim,
-                    text(options.data.peak_activity_day) | color(pal.info)
-                })
-            }) | flex
-        }));
-        
+        elements.push_back(hbox(
+            {vbox({hbox({text("Favorite model: ") | dim,
+                         text(options.data.favorite_model) | color(pal.primary) | bold}),
+                   hbox({text("Total tokens: ") | dim,
+                         text(std::format("{:L}", options.data.total_tokens)) | color(pal.info)}),
+                   hbox({text("Total sessions: ") | dim,
+                         text(std::to_string(options.data.total_sessions)) | color(pal.info)}),
+                   hbox({text("Longest session: ") | dim,
+                         text(options.data.longest_session_duration) | color(pal.info)})}) |
+                 flex,
+             text("  "),
+             vbox({hbox({text("Active days: ") | dim,
+                         text(std::format("{}", options.data.active_days)) | color(pal.info)}),
+                   hbox({text("Longest streak: ") | dim,
+                         text(std::format("{} days", options.data.longest_streak)) |
+                             color(pal.info) | bold}),
+                   hbox({text("Current streak: ") | dim,
+                         text(std::format("{} days", options.data.current_streak)) |
+                             color(pal.success) | bold}),
+                   hbox({text("Peak day: ") | dim,
+                         text(options.data.peak_activity_day) | color(pal.info)})}) |
+                 flex}));
+
         // Fun fact
         if (!options.data.fun_fact.empty()) {
             elements.push_back(text(""));
             elements.push_back(text("Note: " + options.data.fun_fact) | color(pal.info));
         }
-        
+
         elements.push_back(text(""));
-        elements.push_back(text("Press 'r' to cycle date ranges · Tab to switch tabs · Esc to close") | dim);
-        
+        elements.push_back(
+            text("Press 'r' to cycle date ranges · Tab to switch tabs · Esc to close") | dim);
+
         return vbox(elements) | borderRounded;
-    } else { // Models tab
+    } else {  // Models tab
         std::vector<Element> elements;
-        
+
         elements.push_back(text("Model Usage") | bold | color(pal.primary));
         elements.push_back(separator());
-        
+
         // Date range
         elements.push_back(detail::RenderDateRangeSelector(options));
         elements.push_back(text(""));
-        
+
         if (options.data.model_usage.empty()) {
             elements.push_back(text("No model usage data available yet") | dim);
         } else {
             for (const auto& usage : options.data.model_usage) {
                 int total_tokens = usage.input_tokens + usage.output_tokens;
-                elements.push_back(vbox({
-                    hbox({
-                        text(std::string(loom::ui::design::figures::kBullet) + " ") | color(pal.primary),
-                        text(usage.model_name) | bold | color(pal.text),
-                        text("  ") | flex,
-                        text(std::format("{:L} tokens", total_tokens)) | color(pal.muted)
-                    }),
-                    hbox({
-                        text("  Input: ") | dim,
-                        text(std::format("{:L}", usage.input_tokens)) | color(pal.info),
-                        text("  Output: ") | dim,
-                        text(std::format("{:L}", usage.output_tokens)) | color(pal.success)
-                    })
-                }));
+                elements.push_back(vbox(
+                    {hbox({text(std::string(loom::ui::design::figures::kBullet) + " ") |
+                               color(pal.primary),
+                           text(usage.model_name) | bold | color(pal.text), text("  ") | flex,
+                           text(std::format("{:L} tokens", total_tokens)) | color(pal.muted)}),
+                     hbox({text("  Input: ") | dim,
+                           text(std::format("{:L}", usage.input_tokens)) | color(pal.info),
+                           text("  Output: ") | dim,
+                           text(std::format("{:L}", usage.output_tokens)) | color(pal.success)})}));
                 elements.push_back(text(""));
             }
         }
-        
+
         elements.push_back(text(""));
-        elements.push_back(text("Press 'r' to cycle date ranges · Tab to switch tabs · Esc to close") | dim);
-        
+        elements.push_back(
+            text("Press 'r' to cycle date ranges · Tab to switch tabs · Esc to close") | dim);
+
         return vbox(elements) | borderRounded;
     }
 }
 
-} // namespace ui::components
+}  // namespace ui::components

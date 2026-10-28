@@ -9,9 +9,8 @@
 // TeamsViewPayload.
 module;
 
-
-#include <ftxui/dom/elements.hpp>
 #include <ftxui/component/event.hpp>
+#include <ftxui/dom/elements.hpp>
 
 module loom.ui.app.app_dialog_registration;
 
@@ -27,29 +26,25 @@ using namespace ftxui;
 
 namespace loom::ui::app_dialogs {
 
-void register_teams_dialog_renderer(
-    loom::ui::dialogs::system::DialogRendererRegistry& registry) {
+void register_teams_dialog_renderer(loom::ui::dialogs::system::DialogRendererRegistry& registry) {
     namespace dsys = loom::ui::dialogs::system;
 
     registry.register_dialog(
         dsys::DialogType::TeamsView,
         /*renderer=*/
-        [](dsys::DialogPayloadVariant& payload,
-           const dsys::DialogRenderContext& ctx) -> Element {
+        [](dsys::DialogPayloadVariant& payload, const dsys::DialogRenderContext& ctx) -> Element {
             auto* p = std::get_if<dsys::TeamsViewPayload>(&payload);
             if (!p) return text("");
-            const auto* s = static_cast<
-                const loom::ui::repl_screen::ReplScreenState*>(ctx.repl_state);
+            const auto* s =
+                static_cast<const loom::ui::repl_screen::ReplScreenState*>(ctx.repl_state);
             if (!s) return text("");
-            const std::string team =
-                loom::utils::get_team_name().value_or("default");
+            const std::string team = loom::utils::get_team_name().value_or("default");
             return loom::ui::teams::live::RenderTeamsOverview(
-                team, s->task_view_store.live_teammates, p->selected_index,
-                ctx.term_cols, ctx.term_rows);
+                team, s->task_view_store.live_teammates, p->selected_index, ctx.term_cols,
+                ctx.term_rows);
         },
         /*event_handler=*/
-        [](dsys::DialogPayloadVariant& payload,
-           const Event& ev) -> bool {
+        [](dsys::DialogPayloadVariant& payload, const Event& ev) -> bool {
             auto* p = std::get_if<dsys::TeamsViewPayload>(&payload);
             if (!p) return false;
             if (ev == Event::ArrowUp || ev == Event::Character('k')) {

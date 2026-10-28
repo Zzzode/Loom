@@ -44,4 +44,4 @@ void register_group_b_commands(CommandRegistry& registry) {
     registry.register_command<TagCommand>();
 }
 
-} // namespace loom::commands
+}  // namespace loom::commands

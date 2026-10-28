@@ -3,7 +3,6 @@
 /// Context visualization command for inspecting context-window state.
 module;
 
-
 export module loom.commands.ctx_viz;
 
 import std;
@@ -30,21 +29,16 @@ public:
         };
     }
 
-    [[nodiscard]] VoidResult validate(const CommandContext&) {
-        return {};
-    }
+    [[nodiscard]] VoidResult validate(const CommandContext&) { return {}; }
 
     [[nodiscard]] Result<CommandResult> execute(const CommandContext& ctx) {
         auto detail = ctx.args.empty() ? std::string{"summary"} : ctx.args.front();
-        return CommandResult::success(std::format(
-            "Context visualization mode: {}\n"
-            "Input bytes: {}\n"
-            "Arguments: {}\n"
-            "Use /context for the full context listing and /cost for token usage.",
-            detail,
-            ctx.raw_input.size(),
-            ctx.args.size()
-        ));
+        return CommandResult::success(
+            std::format("Context visualization mode: {}\n"
+                        "Input bytes: {}\n"
+                        "Arguments: {}\n"
+                        "Use /context for the full context listing and /cost for token usage.",
+                        detail, ctx.raw_input.size(), ctx.args.size()));
     }
 
     [[nodiscard]] std::vector<std::string> complete(std::string_view partial) {
@@ -56,4 +50,4 @@ public:
     }
 };
 
-} // namespace loom::commands
+}  // namespace loom::commands

@@ -4,11 +4,18 @@ module;
 export module loom.commands.break_cache;
 
 import std;
+
 export namespace loom::commands::break_cache {
 namespace fs = std::filesystem;
 
-struct CommandResponse { bool ok{true}; std::string message; };
-[[nodiscard]] inline auto name() -> std::string_view { return "break_cache"; }
+struct CommandResponse {
+    bool ok{true};
+    std::string message;
+};
+
+[[nodiscard]] inline auto name() -> std::string_view {
+    return "break_cache";
+}
 
 [[nodiscard]] inline fs::path home_path(std::string_view suffix) {
     if (const char* home = std::getenv("HOME")) return fs::path(home) / suffix;
@@ -43,12 +50,14 @@ struct CommandResponse { bool ok{true}; std::string message; };
 
     if (!failures.empty()) {
         std::string message = "Cache removal failed:\n";
-        for (const auto& failure : failures) message += "- " + failure + "\n";
+        for (const auto& failure : failures)
+            message += "- " + failure + "\n";
         return {.ok = false, .message = std::move(message)};
     }
 
-    return {.ok = true, .message = std::format(
-        "Cache break complete: removed {} filesystem entries from {} target(s)",
-        removed, existing_targets)};
+    return {.ok = true,
+            .message =
+                std::format("Cache break complete: removed {} filesystem entries from {} target(s)",
+                            removed, existing_targets)};
 }
-}
+}  // namespace loom::commands::break_cache

@@ -26,4 +26,4 @@ void register_default_commands(CommandRegistry& registry) {
     register_group_e_commands(registry);
 }
 
-} // namespace loom::commands
+}  // namespace loom::commands

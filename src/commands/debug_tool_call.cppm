@@ -5,8 +5,14 @@ import std;
 import loom.serdes.json;
 
 export namespace loom::commands::debug_tool_call {
-struct CommandResponse { bool ok{true}; std::string message; };
-[[nodiscard]] inline auto name() -> std::string_view { return "debug_tool_call"; }
+struct CommandResponse {
+    bool ok{true};
+    std::string message;
+};
+
+[[nodiscard]] inline auto name() -> std::string_view {
+    return "debug_tool_call";
+}
 
 [[nodiscard]] inline auto run(std::string_view payload = {}) -> CommandResponse {
     if (payload.empty()) {
@@ -30,15 +36,21 @@ struct CommandResponse { bool ok{true}; std::string message; };
 
     const auto name = root.get("name");
     const auto input = root.get("input");
-    std::string message = std::format(
-        "Tool-call payload valid: {} top-level field(s)", keys.size());
+    std::string message =
+        std::format("Tool-call payload valid: {} top-level field(s)", keys.size());
     if (name.is_str()) message += "\nTool: " + std::string(name.as_str());
     if (input.valid()) {
-        message += std::format("\nInput type: {}", input.is_obj() ? "object" : input.is_arr() ? "array" : input.is_str() ? "string" : input.is_num() ? "number" : input.is_bool() ? "boolean" : "null");
+        message += std::format("\nInput type: {}", input.is_obj()    ? "object"
+                                                   : input.is_arr()  ? "array"
+                                                   : input.is_str()  ? "string"
+                                                   : input.is_num()  ? "number"
+                                                   : input.is_bool() ? "boolean"
+                                                                     : "null");
     }
     message += "\nFields:";
-    for (const auto& key : keys) message += " " + key;
+    for (const auto& key : keys)
+        message += " " + key;
 
     return {.ok = true, .message = std::move(message)};
 }
-}
+}  // namespace loom::commands::debug_tool_call

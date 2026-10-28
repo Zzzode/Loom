@@ -26,7 +26,7 @@ inline McpSkillInvoker& invoker() {
     static McpSkillInvoker fn;
     return fn;
 }
-} // namespace detail
+}  // namespace detail
 
 void set_mcp_skill_invoker(McpSkillInvoker invoker) {
     std::lock_guard lock(detail::invoker_mutex());
@@ -49,7 +49,8 @@ std::vector<McpSkill> get_mcp_skills() {
 }
 
 // Invoke an MCP skill with given parameters
-std::expected<std::string, std::string> invoke_mcp_skill(McpSkill skill, std::map<std::string, std::string> params) {
+std::expected<std::string, std::string>
+invoke_mcp_skill(McpSkill skill, std::map<std::string, std::string> params) {
     if (skill.server_name.empty()) {
         return std::unexpected("MCP skill has no server name");
     }
@@ -74,4 +75,4 @@ std::expected<std::string, std::string> invoke_mcp_skill(McpSkill skill, std::ma
     return invoker(skill, merged_params);
 }
 
-} // namespace loom::skills
+}  // namespace loom::skills

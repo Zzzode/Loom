@@ -4,10 +4,11 @@
 #pragma clang diagnostic ignored "-Wmissing-designated-field-initializers"
 
 #include <gtest/gtest.h>
+#include <httplib.h>
+
 #include <cstddef>
 #include <cstdlib>
 #include <cstring>
-#include <httplib.h>
 #ifndef _WIN32
 #include <fcntl.h>
 #include <sys/file.h>
@@ -35,7 +36,7 @@ import loom.tools.web_browser;
 import loom.orchestration.tools.mcp;
 import loom.commands.mcp.core_settings_loader;
 import loom.orchestration.runtime_backends;
-import loom.tools.runtime_backends.port;  // RFC-0001 B15: set_/clear_skill_loader_executor slot API
+import loom.tools.runtime_backends.port; // RFC-0001 B15: set_/clear_skill_loader_executor slot API
 import loom.tools.image_codec.port;
 import loom.tools.worktree;
 import loom.orchestration.agent;
@@ -64,7 +65,7 @@ import loom.teams.team_helpers;
 import loom.hooks.tool_permissions;
 import loom.services.api.client;
 import loom.services.mcp.types;
-import loom.services.mcp.connection_manager;  // RFC-0001 B6: svc_mcp::McpServerSnapshot
+import loom.services.mcp.connection_manager; // RFC-0001 B6: svc_mcp::McpServerSnapshot
 import loom.tools.repl;
 import loom.tools.skill;
 import loom.orchestration.agent.utils;
@@ -75,7 +76,9 @@ namespace fs = std::filesystem;
 // The agent helpers exercised by the existing tests live in
 // loom::tools::agent::utils after the agent_tool split; re-expose them through
 // the loom::tools::agent namespace so the historical call sites still resolve.
-namespace loom::tools::agent { using namespace utils; }
+namespace loom::tools::agent {
+using namespace utils;
+}
 
 namespace {
 
@@ -83,7 +86,8 @@ struct EnvironmentGuard {
     std::string name;
     std::optional<std::string> previous;
 
-    EnvironmentGuard(std::string key, const std::string& value) : name(std::move(key)) {
+    EnvironmentGuard(std::string key, const std::string& value)
+        : name(std::move(key)) {
         if (const char* existing = std::getenv(name.c_str())) {
             previous = existing;
         }
@@ -99,7 +103,7 @@ struct EnvironmentGuard {
     }
 };
 
-} // namespace
+}  // namespace
 
 namespace loom_tmux_detection_test {
 TEST(SwarmBackends, CaptureEnvReflectsTmuxPresence) {
@@ -110,8 +114,7 @@ TEST(SwarmBackends, CaptureEnvReflectsTmuxPresence) {
     EXPECT_FALSE(EnvironmentDetection::is_inside_tmux());
 
     // A leader running inside tmux has TMUX set (and a pane target).
-    EnvironmentDetection::capture_env(
-        "/tmp/tmux-1000/default,1234,0", "%12");
+    EnvironmentDetection::capture_env("/tmp/tmux-1000/default,1234,0", "%12");
     EXPECT_TRUE(EnvironmentDetection::is_inside_tmux_sync());
     // Re-capture resets the cache, so the async/cached getter agrees.
     EXPECT_TRUE(EnvironmentDetection::is_inside_tmux());
@@ -126,12 +129,12 @@ TEST(SwarmBackends, CaptureEnvReflectsTmuxPresence) {
 
 namespace loom_pane_cleanup_test {
 
-using loom::utils::swarm_backends::PaneBackend;
-using loom::utils::swarm_backends::PaneId;
-using loom::utils::swarm_backends::CreatePaneResult;
 using loom::utils::swarm_backends::AgentColor;
 using loom::utils::swarm_backends::BackendType;
+using loom::utils::swarm_backends::CreatePaneResult;
+using loom::utils::swarm_backends::PaneBackend;
 using loom::utils::swarm_backends::PaneBackendExecutor;
+using loom::utils::swarm_backends::PaneId;
 using loom::utils::swarm_backends::TeammateSpawnConfig;
 
 // In-memory pane backend that records kill calls (no tmux required).
@@ -143,26 +146,38 @@ public:
     bool inside = false;
 
     BackendType type() const override { return BackendType::Tmux; }
+
     std::string_view display_name() const override { return "fake-tmux"; }
+
     bool supports_hide_show() const override { return false; }
+
     bool is_available() const override { return available; }
+
     bool is_running_inside() const override { return inside; }
 
     CreatePaneResult create_teammate_pane(std::string_view, AgentColor) override {
         ++create_calls;
         return CreatePaneResult{.pane_id = PaneId{"%p" + std::to_string(create_calls)},
-                               .is_first_teammate = (create_calls == 1)};
+                                .is_first_teammate = (create_calls == 1)};
     }
+
     void send_command_to_pane(const PaneId&, std::string_view, bool) override {}
+
     void set_pane_border_color(const PaneId&, AgentColor, bool) override {}
+
     void set_pane_title(const PaneId&, std::string_view, AgentColor, bool) override {}
+
     void enable_pane_border_status(std::optional<std::string_view>, bool) override {}
+
     void rebalance_panes(std::string_view, bool) override {}
+
     bool kill_pane(const PaneId& id, bool ext) override {
         killed.emplace_back(id, ext);
         return true;
     }
+
     bool hide_pane(const PaneId&, bool) override { return false; }
+
     bool show_pane(const PaneId&, std::string_view, bool) override { return false; }
 };
 
@@ -171,7 +186,7 @@ TEST(SwarmBackends, ExecutorDestructionKillsAllSpawnedPanes) {
     {
         PaneBackendExecutor exec(fake);
         TeammateSpawnConfig a{.name = "alpha", .team_name = "t1", .prompt = "task a"};
-        TeammateSpawnConfig b{.name = "beta",  .team_name = "t1", .prompt = "task b"};
+        TeammateSpawnConfig b{.name = "beta", .team_name = "t1", .prompt = "task b"};
         EXPECT_TRUE(exec.spawn(a).success);
         EXPECT_TRUE(exec.spawn(b).success);
         EXPECT_EQ(fake->create_calls, 2);
@@ -182,7 +197,8 @@ TEST(SwarmBackends, ExecutorDestructionKillsAllSpawnedPanes) {
 }
 
 TEST(SwarmBackends, SpawnDeliversInitialPromptToMailbox) {
-    const auto runtime_dir = fs::temp_directory_path() /
+    const auto runtime_dir =
+        fs::temp_directory_path() /
         ("loom_pane_prompt_" +
          std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
     fs::remove_all(runtime_dir);
@@ -191,8 +207,7 @@ TEST(SwarmBackends, SpawnDeliversInitialPromptToMailbox) {
     auto fake = std::make_shared<FakePaneBackend>();
     {
         PaneBackendExecutor exec(fake);
-        TeammateSpawnConfig cfg{
-            .name = "worker", .team_name = "t1", .prompt = "build the thing"};
+        TeammateSpawnConfig cfg{.name = "worker", .team_name = "t1", .prompt = "build the thing"};
         ASSERT_TRUE(exec.spawn(cfg).success);
         // Initial task is delivered to the pane teammate's file inbox.
         auto inbox = loom::utils::read_inbox("worker", std::optional<std::string_view>{"t1"});
@@ -221,9 +236,8 @@ struct PermissionRuntimeGuard {
     PermissionRuntimeGuard()
         : dir(fs::temp_directory_path() /
               ("loom_perm_sync_" +
-               std::to_string(std::chrono::steady_clock::now()
-                                  .time_since_epoch().count()))),
-          team_dir("LOOM_TEAM_RUNTIME_DIR", dir.string()) {
+               std::to_string(std::chrono::steady_clock::now().time_since_epoch().count())))
+        , team_dir("LOOM_TEAM_RUNTIME_DIR", dir.string()) {
         fs::remove_all(dir);
     }
 
@@ -250,8 +264,7 @@ TEST(SwarmPermissionSync, RequestLandsInLeaderMailbox) {
 
     ASSERT_TRUE(sh::PermissionSync::send_request_to_leader(request, "alpha"));
 
-    auto inbox = loom::utils::read_inbox(
-        "team-lead", std::optional<std::string_view>{"alpha"});
+    auto inbox = loom::utils::read_inbox("team-lead", std::optional<std::string_view>{"alpha"});
     ASSERT_TRUE(inbox.has_value()) << inbox.error();
     ASSERT_EQ(inbox->size(), 1u);
     EXPECT_EQ((*inbox)[0].from, "worker-a");
@@ -286,8 +299,7 @@ TEST(SwarmPermissionSync, RequestLandsInLeaderMailbox) {
 
     // Unrelated text is not a request.
     EXPECT_FALSE(sh::PermissionSync::parse_request("hello team").has_value());
-    EXPECT_FALSE(
-        sh::PermissionSync::parse_request(R"({"type":"task"})").has_value());
+    EXPECT_FALSE(sh::PermissionSync::parse_request(R"({"type":"task"})").has_value());
 }
 
 TEST(SwarmPermissionSync, ApprovedRoundTrip) {
@@ -296,15 +308,13 @@ TEST(SwarmPermissionSync, ApprovedRoundTrip) {
     auto request = make_permission_request();
 
     std::optional<sh::SwarmPermissionResponseMessage> received;
-    std::thread waiter([&] {
-        received = sh::PermissionSync::request_and_await(
-            request, "alpha", 5s, 50ms);
-    });
+    std::thread waiter(
+        [&] { received = sh::PermissionSync::request_and_await(request, "alpha", 5s, 50ms); });
 
     // Leader side: read the request and approve it.
     std::this_thread::sleep_for(100ms);
-    auto leader_inbox = loom::utils::read_inbox(
-        "team-lead", std::optional<std::string_view>{"alpha"});
+    auto leader_inbox =
+        loom::utils::read_inbox("team-lead", std::optional<std::string_view>{"alpha"});
     ASSERT_TRUE(leader_inbox.has_value());
     ASSERT_EQ(leader_inbox->size(), 1u);
     auto incoming = sh::PermissionSync::parse_request((*leader_inbox)[0].text);
@@ -314,8 +324,7 @@ TEST(SwarmPermissionSync, ApprovedRoundTrip) {
     response.type = "permission_response";
     response.request_id = incoming->request_id;
     response.subtype = "success";
-    ASSERT_TRUE(sh::PermissionSync::send_response_to_worker(
-        "worker-a", response, "alpha"));
+    ASSERT_TRUE(sh::PermissionSync::send_response_to_worker("worker-a", response, "alpha"));
 
     waiter.join();
     ASSERT_TRUE(received.has_value());
@@ -324,8 +333,8 @@ TEST(SwarmPermissionSync, ApprovedRoundTrip) {
     EXPECT_FALSE(received->error.has_value());
 
     // Remove-on-consume: the response envelope is gone from the worker inbox.
-    auto worker_inbox = loom::utils::read_inbox(
-        "worker-a", std::optional<std::string_view>{"alpha"});
+    auto worker_inbox =
+        loom::utils::read_inbox("worker-a", std::optional<std::string_view>{"alpha"});
     ASSERT_TRUE(worker_inbox.has_value());
     EXPECT_TRUE(worker_inbox->empty());
 }
@@ -336,10 +345,8 @@ TEST(SwarmPermissionSync, DeniedRoundTrip) {
     auto request = make_permission_request();
 
     std::optional<sh::SwarmPermissionResponseMessage> received;
-    std::thread waiter([&] {
-        received = sh::PermissionSync::request_and_await(
-            request, "alpha", 5s, 50ms);
-    });
+    std::thread waiter(
+        [&] { received = sh::PermissionSync::request_and_await(request, "alpha", 5s, 50ms); });
 
     std::this_thread::sleep_for(100ms);
     sh::SwarmPermissionResponseMessage response;
@@ -347,8 +354,7 @@ TEST(SwarmPermissionSync, DeniedRoundTrip) {
     response.request_id = request.request_id;
     response.subtype = "error";
     response.error = "Permission denied by team lead";
-    ASSERT_TRUE(sh::PermissionSync::send_response_to_worker(
-        "worker-a", response, "alpha"));
+    ASSERT_TRUE(sh::PermissionSync::send_response_to_worker("worker-a", response, "alpha"));
 
     waiter.join();
     ASSERT_TRUE(received.has_value());
@@ -372,8 +378,7 @@ TEST(SwarmPermissionSync, TimeoutReturnsNullopt) {
     auto request = make_permission_request();
 
     const auto start = std::chrono::steady_clock::now();
-    auto received = sh::PermissionSync::request_and_await(
-        request, "alpha", 150ms, 30ms);
+    auto received = sh::PermissionSync::request_and_await(request, "alpha", 150ms, 30ms);
     const auto elapsed = std::chrono::steady_clock::now() - start;
 
     EXPECT_FALSE(received.has_value());  // fail closed
@@ -391,18 +396,14 @@ TEST(SwarmPermissionSync, IdempotentConsume) {
     response.type = "permission_response";
     response.request_id = request.request_id;
     response.subtype = "success";
-    ASSERT_TRUE(sh::PermissionSync::send_response_to_worker(
-        "worker-a", response, "alpha"));
-    ASSERT_TRUE(sh::PermissionSync::send_response_to_worker(
-        "worker-a", response, "alpha"));
+    ASSERT_TRUE(sh::PermissionSync::send_response_to_worker("worker-a", response, "alpha"));
+    ASSERT_TRUE(sh::PermissionSync::send_response_to_worker("worker-a", response, "alpha"));
 
-    auto first = sh::PermissionSync::poll_response(
-        "worker-a", "alpha", request.request_id);
+    auto first = sh::PermissionSync::poll_response("worker-a", "alpha", request.request_id);
     ASSERT_TRUE(first.has_value());
     EXPECT_EQ(first->subtype, "success");
 
-    auto second = sh::PermissionSync::poll_response(
-        "worker-a", "alpha", request.request_id);
+    auto second = sh::PermissionSync::poll_response("worker-a", "alpha", request.request_id);
     EXPECT_FALSE(second.has_value());
 
     // Responses for a different request id remain untouched in the inbox...
@@ -411,10 +412,8 @@ TEST(SwarmPermissionSync, IdempotentConsume) {
     other.request_id = request.request_id + "-other";
     other.subtype = "error";
     other.error = "nope";
-    ASSERT_TRUE(sh::PermissionSync::send_response_to_worker(
-        "worker-a", other, "alpha"));
-    auto other_poll = sh::PermissionSync::poll_response(
-        "worker-a", "alpha", other.request_id);
+    ASSERT_TRUE(sh::PermissionSync::send_response_to_worker("worker-a", other, "alpha"));
+    auto other_poll = sh::PermissionSync::poll_response("worker-a", "alpha", other.request_id);
     ASSERT_TRUE(other_poll.has_value());
     EXPECT_EQ(other_poll->subtype, "error");
 }
@@ -433,8 +432,8 @@ struct TeamRuntimeDirGuard {
 
     TeamRuntimeDirGuard()
         : dir(fs::temp_directory_path() /
-              ("cc-teamfile-" + std::to_string(static_cast<long long>(getpid())))),
-          env("LOOM_TEAM_RUNTIME_DIR", dir.string()) {
+              ("cc-teamfile-" + std::to_string(static_cast<long long>(getpid()))))
+        , env("LOOM_TEAM_RUNTIME_DIR", dir.string()) {
         std::error_code ec;
         fs::remove_all(dir, ec);
         fs::create_directories(dir);
@@ -520,8 +519,7 @@ TEST(TeamFile, RoleResolution) {
     EXPECT_NE(path.rfind("/migration-team/config.json"), std::string::npos);
 
     // A null/empty agent id is the leader (reconnection.ts:51 isLeader = !agentId).
-    const auto leader =
-        compute_initial_team_context("migration-team", "team-lead", std::nullopt);
+    const auto leader = compute_initial_team_context("migration-team", "team-lead", std::nullopt);
     ASSERT_TRUE(leader.has_value());
     EXPECT_TRUE(leader->is_leader);
     EXPECT_FALSE(leader->self_agent_id.has_value());
@@ -529,9 +527,9 @@ TEST(TeamFile, RoleResolution) {
     EXPECT_EQ(leader->lead_agent_id, "team-lead@migration-team");
     EXPECT_EQ(leader->team_file_path, path);
 
-    const auto worker = compute_initial_team_context(
-        "migration-team", "researcher",
-        std::optional<std::string_view>{"researcher@migration-team"});
+    const auto worker =
+        compute_initial_team_context("migration-team", "researcher",
+                                     std::optional<std::string_view>{"researcher@migration-team"});
     ASSERT_TRUE(worker.has_value());
     EXPECT_FALSE(worker->is_leader);
     EXPECT_EQ(worker->self_agent_id.value_or(""), "researcher@migration-team");
@@ -539,12 +537,9 @@ TEST(TeamFile, RoleResolution) {
     EXPECT_EQ(worker->lead_agent_id, "team-lead@migration-team");
 
     // Missing team file and missing identity both resolve to nullopt.
-    EXPECT_FALSE(compute_initial_team_context(
-        "ghost-team", "team-lead", std::nullopt).has_value());
-    EXPECT_FALSE(compute_initial_team_context(
-        "migration-team", "", std::nullopt).has_value());
-    EXPECT_FALSE(compute_initial_team_context(
-        "", "team-lead", std::nullopt).has_value());
+    EXPECT_FALSE(compute_initial_team_context("ghost-team", "team-lead", std::nullopt).has_value());
+    EXPECT_FALSE(compute_initial_team_context("migration-team", "", std::nullopt).has_value());
+    EXPECT_FALSE(compute_initial_team_context("", "team-lead", std::nullopt).has_value());
 
     const auto file = read_team_file("migration-team");
     ASSERT_TRUE(file.has_value());
@@ -554,7 +549,7 @@ TEST(TeamFile, RoleResolution) {
     EXPECT_FALSE(find_team_member(*file, "ghost").has_value());
 }
 
-} // namespace loom_team_file_test
+}  // namespace loom_team_file_test
 
 namespace loom_external_reattach_test {
 
@@ -564,37 +559,31 @@ TEST(SwarmBackends, ExternalReattachArgvAndPolicy) {
     namespace detail = sb::detail;
     using detail::plan_external_swarm_view;
     using detail::tmux_has_session_argv;
+    using detail::tmux_list_panes_argv;
     using detail::tmux_list_windows_argv;
     using detail::tmux_new_session_argv;
     using detail::tmux_new_window_argv;
-    using detail::tmux_list_panes_argv;
     using detail::tmux_split_window_argv;
     using sb::detail::ExternalSessionAction;
 
     const auto has = tmux_has_session_argv("loom-swarm");
     EXPECT_EQ(has.program, "tmux");
-    EXPECT_EQ(has.args,
-              (std::vector<std::string>{"has-session", "-t", "loom-swarm"}));
+    EXPECT_EQ(has.args, (std::vector<std::string>{"has-session", "-t", "loom-swarm"}));
 
     const auto windows = tmux_list_windows_argv("loom-swarm");
-    EXPECT_EQ(windows.args,
-              (std::vector<std::string>{"list-windows", "-t", "loom-swarm",
-                                        "-F", "#{window_name}"}));
+    EXPECT_EQ(windows.args, (std::vector<std::string>{"list-windows", "-t", "loom-swarm", "-F",
+                                                      "#{window_name}"}));
 
     const auto fresh = tmux_new_session_argv("loom-swarm", "swarm-view");
-    EXPECT_EQ(fresh.args,
-              (std::vector<std::string>{"new-session", "-d", "-s",
-                                        "loom-swarm", "-n", "swarm-view",
-                                        "-P", "-F", "#{pane_id}"}));
+    EXPECT_EQ(fresh.args, (std::vector<std::string>{"new-session", "-d", "-s", "loom-swarm", "-n",
+                                                    "swarm-view", "-P", "-F", "#{pane_id}"}));
 
     const auto window = tmux_new_window_argv("loom-swarm", "swarm-view");
     EXPECT_NE(std::ranges::find(window.args, "new-window"), window.args.end());
 
     const auto panes = tmux_list_panes_argv("loom-swarm:swarm-view");
-    EXPECT_EQ(panes.args,
-              (std::vector<std::string>{"list-panes", "-t",
-                                        "loom-swarm:swarm-view", "-F",
-                                        "#{pane_id}"}));
+    EXPECT_EQ(panes.args, (std::vector<std::string>{"list-panes", "-t", "loom-swarm:swarm-view",
+                                                    "-F", "#{pane_id}"}));
 
     const auto vertical = tmux_split_window_argv("%9", true);
     EXPECT_NE(std::ranges::find(vertical.args, "-v"), vertical.args.end());
@@ -625,7 +614,9 @@ TEST(SwarmBackends, ExternalReattachArgvAndPolicy) {
 // RAII restore of the injected shell seams so later tests see real shells.
 struct ShellRunnerGuard {
     ShellRunnerGuard() = default;
+
     ~ShellRunnerGuard() { sb::detail::reset_shell_runners_for_test(); }
+
     ShellRunnerGuard(const ShellRunnerGuard&) = delete;
     ShellRunnerGuard& operator=(const ShellRunnerGuard&) = delete;
 };
@@ -638,6 +629,7 @@ TEST(SwarmBackends, ExternalReattachUsesListWindowsSeam) {
 
     // External path requires not running inside tmux.
     EnvironmentDetection::capture_env("", "");
+
     struct TmuxEnvGuard {
         ~TmuxEnvGuard() { EnvironmentDetection::capture_env("", ""); }
     } env_guard;
@@ -670,12 +662,13 @@ TEST(SwarmBackends, ExternalReattachUsesListWindowsSeam) {
     EXPECT_FALSE(result.is_first_teammate);
 }
 
-} // namespace loom_external_reattach_test
+}  // namespace loom_external_reattach_test
 
 // A tool/description containing raw JSON control bytes must be escaped so it
 // cannot corrupt the inbox JSON and permanently block all later messages.
 TEST(SwarmPermissionSync, MailboxSurvivesRawControlBytes) {
-    const auto runtime_dir = fs::temp_directory_path() /
+    const auto runtime_dir =
+        fs::temp_directory_path() /
         ("loom_ctrlbytes_" +
          std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
     fs::remove_all(runtime_dir);
@@ -686,8 +679,9 @@ TEST(SwarmPermissionSync, MailboxSurvivesRawControlBytes) {
     nasty.push_back(static_cast<char>(0x01));
     nasty += "a\bb\fc\"d\\e";
     ASSERT_TRUE(loom::utils::write_to_mailbox(
-        "worker", loom::utils::TeammateMessage{.from = "team-lead", .text = nasty},
-        std::optional<std::string_view>{"ctlteam"}).has_value());
+                    "worker", loom::utils::TeammateMessage{.from = "team-lead", .text = nasty},
+                    std::optional<std::string_view>{"ctlteam"})
+                    .has_value());
 
     // The inbox must still parse (it would throw/return error if invalid JSON
     // were written), and a normal follow-up message must be deliverable.
@@ -696,8 +690,9 @@ TEST(SwarmPermissionSync, MailboxSurvivesRawControlBytes) {
     ASSERT_EQ(first->size(), 1u);
 
     ASSERT_TRUE(loom::utils::write_to_mailbox(
-        "worker", loom::utils::TeammateMessage{.from = "team-lead", .text = "second"},
-        std::optional<std::string_view>{"ctlteam"}).has_value());
+                    "worker", loom::utils::TeammateMessage{.from = "team-lead", .text = "second"},
+                    std::optional<std::string_view>{"ctlteam"})
+                    .has_value());
     auto both = loom::utils::read_inbox("worker", std::optional<std::string_view>{"ctlteam"});
     ASSERT_TRUE(both.has_value());
     EXPECT_EQ(both->size(), 2u);
@@ -709,7 +704,8 @@ TEST(SwarmPermissionSync, MailboxSurvivesRawControlBytes) {
 // Cross-process flock must serialize concurrent inbox read-modify-write from
 // separate processes; without it two forked writers lose messages.
 TEST(SwarmPermissionSync, CrossProcessFlockSerializesInboxWrites) {
-    const auto runtime_dir = fs::temp_directory_path() /
+    const auto runtime_dir =
+        fs::temp_directory_path() /
         ("loom_flock_" +
          std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
     fs::remove_all(runtime_dir);
@@ -720,13 +716,13 @@ TEST(SwarmPermissionSync, CrossProcessFlockSerializesInboxWrites) {
     auto child_loop = [kTeam](int tag) {
         for (int i = 0; i < kPerChild; ++i) {
             for (int attempt = 0; attempt < 10; ++attempt) {
-                auto written = loom::utils::write_to_mailbox(
-                    "worker",
-                    loom::utils::TeammateMessage{
-                        .from = tag == 0 ? "child-a" : "child-b",
-                        .text = std::format("msg-{}-{}", tag, i),
-                    },
-                    std::optional<std::string_view>{kTeam});
+                auto written =
+                    loom::utils::write_to_mailbox("worker",
+                                                  loom::utils::TeammateMessage{
+                                                      .from = tag == 0 ? "child-a" : "child-b",
+                                                      .text = std::format("msg-{}-{}", tag, i),
+                                                  },
+                                                  std::optional<std::string_view>{kTeam});
                 if (written.has_value()) break;
                 std::this_thread::sleep_for(std::chrono::milliseconds(20));
             }
@@ -747,8 +743,7 @@ TEST(SwarmPermissionSync, CrossProcessFlockSerializesInboxWrites) {
     ASSERT_TRUE(WIFEXITED(status_a) && WEXITSTATUS(status_a) == 0);
     ASSERT_TRUE(WIFEXITED(status_b) && WEXITSTATUS(status_b) == 0);
 
-    auto messages =
-        loom::utils::read_inbox("worker", std::optional<std::string_view>{kTeam});
+    auto messages = loom::utils::read_inbox("worker", std::optional<std::string_view>{kTeam});
     ASSERT_TRUE(messages.has_value());
     // No lost updates: both children performed kPerChild successful appends.
     EXPECT_EQ(messages->size(), static_cast<std::size_t>(2 * kPerChild));
@@ -761,7 +756,8 @@ TEST(SwarmPermissionSync, CrossProcessFlockSerializesInboxWrites) {
 // disk so a fresh store instance simulating a pane restart also sees it).
 TEST(SwarmPermissionSync, AlwaysAllowUpdatesPersistAndGrant) {
     namespace sh = loom::utils::swarm_helpers;
-    const auto runtime_dir = fs::temp_directory_path() /
+    const auto runtime_dir =
+        fs::temp_directory_path() /
         ("loom_allow_" +
          std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
     fs::remove_all(runtime_dir);
@@ -773,15 +769,13 @@ TEST(SwarmPermissionSync, AlwaysAllowUpdatesPersistAndGrant) {
     response.type = "permission_response";
     response.request_id = "perm-1";
     response.subtype = "success";
-    response.permission_updates_json =
-        sh::build_always_allow_updates_json("Bash");
+    response.permission_updates_json = sh::build_always_allow_updates_json("Bash");
     const std::string text = sh::PermissionSync::build_response_text(response);
 
     auto parsed = sh::PermissionSync::parse_response(text);
     ASSERT_TRUE(parsed.has_value());
     ASSERT_TRUE(parsed->permission_updates_json.has_value());
-    EXPECT_NE(parsed->permission_updates_json->find("addRules"),
-              std::string::npos);
+    EXPECT_NE(parsed->permission_updates_json->find("addRules"), std::string::npos);
 
     // Fresh store instance: grants persist on disk (pane restart semantics).
     {
@@ -798,7 +792,8 @@ TEST(SwarmPermissionSync, AlwaysAllowUpdatesPersistAndGrant) {
 
     // Non-allow / malformed updates are ignored.
     sh::WorkerPermissionGrants strict(team, agent);
-    strict.apply_updates(R"([{"type":"setMode","destination":"session","mode":"bypassPermissions"}])");
+    strict.apply_updates(
+        R"([{"type":"setMode","destination":"session","mode":"bypassPermissions"}])");
     strict.apply_updates("not-json");
     EXPECT_FALSE(strict.allows("Edit"));
 
@@ -811,20 +806,18 @@ TEST(SwarmPermissionSync, PermissionInputFormatting) {
     namespace sh = loom::utils::swarm_helpers;
 
     const std::string edit = sh::format_permission_request_input(
-        "Edit",
-        R"({"file_path":"/tmp/a.txt","old_string":"one\ntwo","new_string":"one\n2"})");
+        "Edit", R"({"file_path":"/tmp/a.txt","old_string":"one\ntwo","new_string":"one\n2"})");
     EXPECT_NE(edit.find("/tmp/a.txt"), std::string::npos);
     EXPECT_NE(edit.find("- two"), std::string::npos);
     EXPECT_NE(edit.find("+ 2"), std::string::npos);
 
-    const std::string bash = sh::format_permission_request_input(
-        "Bash", R"({"command":"ls -la","timeout":30})");
+    const std::string bash =
+        sh::format_permission_request_input("Bash", R"({"command":"ls -la","timeout":30})");
     EXPECT_NE(bash.find("\"command\""), std::string::npos);
     EXPECT_NE(bash.find("ls -la"), std::string::npos);
 
     const std::string truncated = sh::format_permission_request_input(
-        "Bash", std::string("{\"command\":\"") +
-                    std::string(5000, 'x') + "\"}",
+        "Bash", std::string("{\"command\":\"") + std::string(5000, 'x') + "\"}",
         /*max_chars=*/100);
     EXPECT_LE(truncated.size(), 120u);
     EXPECT_NE(truncated.find("[truncated]"), std::string::npos);

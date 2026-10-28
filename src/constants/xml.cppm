@@ -25,7 +25,7 @@ inline constexpr std::string_view LOCAL_COMMAND_CAVEAT_TAG = "local-command-cave
 
 /// All terminal-related tags
 inline constexpr std::array<std::string_view, 6> TERMINAL_OUTPUT_TAGS = {
-    BASH_INPUT_TAG, BASH_STDOUT_TAG, BASH_STDERR_TAG,
+    BASH_INPUT_TAG,           BASH_STDOUT_TAG,          BASH_STDERR_TAG,
     LOCAL_COMMAND_STDOUT_TAG, LOCAL_COMMAND_STDERR_TAG, LOCAL_COMMAND_CAVEAT_TAG,
 };
 
@@ -66,8 +66,8 @@ inline constexpr std::string_view FORK_DIRECTIVE_PREFIX = "Your directive: ";
 // Common slash command argument patterns
 inline constexpr std::array<std::string_view, 3> COMMON_HELP_ARGS = {"help", "-h", "--help"};
 inline constexpr std::array<std::string_view, 13> COMMON_INFO_ARGS = {
-    "list", "show", "display", "current", "view", "get", "check",
-    "describe", "print", "version", "about", "status", "?",
+    "list",     "show",  "display", "current", "view",   "get", "check",
+    "describe", "print", "version", "about",   "status", "?",
 };
 
-} // namespace loom::constants::xml
+}  // namespace loom::constants::xml

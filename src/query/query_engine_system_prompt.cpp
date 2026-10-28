@@ -19,17 +19,16 @@ import loom.memdir.paths;
 // ::memdir::join_lines, ::memdir::truncate_entrypoint_content); the
 // dead-import heuristic only attributes deep loom::-namespace paths, so the
 // global ::memdir:: qualification is invisible to it.
-import loom.memdir.memdir;  // arch-check: keep-import
+import loom.memdir.memdir; // arch-check: keep-import
 import loom.constants.paths;
 import loom.process.bash.bash_execution;
 
 namespace loom::core {
 
-[[nodiscard]] std::string SystemPromptBuilder::build(
-    std::optional<std::string_view> custom_prompt,
-    std::optional<std::string_view> append_prompt,
-    const UserContext& user_ctx,
-    const SystemContext& system_ctx) {
+[[nodiscard]] std::string SystemPromptBuilder::build(std::optional<std::string_view> custom_prompt,
+                                                     std::optional<std::string_view> append_prompt,
+                                                     const UserContext& user_ctx,
+                                                     const SystemContext& system_ctx) {
     std::string prompt;
 
     // Base prompt from custom or default
@@ -93,12 +92,7 @@ When you write or edit files, always make complete, functional changes.)";
 void QueryEngine::build_and_add_system_prompt() {
     auto cwd = config_.cwd.value_or(std::filesystem::current_path().string());
 
-    UserContext user_ctx{
-        cwd,
-        "unknown",
-        "user",
-        {}
-    };
+    UserContext user_ctx{cwd, "unknown", "user", {}};
 
     // P1-12: Inject git context (branch + last commit)
     populate_git_context(user_ctx, cwd);
@@ -107,17 +101,16 @@ void QueryEngine::build_and_add_system_prompt() {
     // CLAUDE.md, whichever is nearest). The tag below names the file that
     // was actually read rather than a fixed "LOOM.md", so a legacy
     // CLAUDE.md is not mislabelled to the model as something it is not.
-    const auto memory_file =
-        loom::constants::paths::find_memory_file(std::filesystem::path(cwd));
+    const auto memory_file = loom::constants::paths::find_memory_file(std::filesystem::path(cwd));
     if (memory_file) {
         std::ifstream mem_ifs(*memory_file);
         if (mem_ifs) {
             std::string loom_md((std::istreambuf_iterator<char>(mem_ifs)), {});
             if (!loom_md.empty()) {
                 loaded_nested_memory_paths_.insert(memory_file->string());
-                user_ctx.additional_contexts.push_back(std::format(
-                    "<context name=\"{}\">\n{}\n</context>",
-                    memory_file->filename().string(), loom_md));
+                user_ctx.additional_contexts.push_back(
+                    std::format("<context name=\"{}\">\n{}\n</context>",
+                                memory_file->filename().string(), loom_md));
             }
         }
     }
@@ -127,8 +120,8 @@ void QueryEngine::build_and_add_system_prompt() {
     // memory is already covered by the walk above.
     auto user_mem = loom::memdir::get_user_memory_path();
     std::error_code equivalent_error;
-    const bool already_loaded = memory_file &&
-        std::filesystem::equivalent(*memory_file, user_mem, equivalent_error);
+    const bool already_loaded =
+        memory_file && std::filesystem::equivalent(*memory_file, user_mem, equivalent_error);
     if (!already_loaded && std::filesystem::exists(user_mem)) {
         std::ifstream um_ifs(user_mem);
         if (um_ifs) {
@@ -146,17 +139,14 @@ void QueryEngine::build_and_add_system_prompt() {
     // guarantee the directory exists so the model can write without setup.
     // The guidance covers only the memory mechanism; MEMORY.md content is
     // appended below.
-    if (auto auto_mem_dir =
-            loom::memdir::get_auto_mem_path(std::filesystem::path(cwd))) {
+    if (auto auto_mem_dir = loom::memdir::get_auto_mem_path(std::filesystem::path(cwd))) {
         std::error_code mkdir_ec;
         std::filesystem::create_directories(*auto_mem_dir, mkdir_ec);
 
-        auto guidance_lines = ::memdir::build_memory_lines(
-            "auto memory", auto_mem_dir->string());
+        auto guidance_lines = ::memdir::build_memory_lines("auto memory", auto_mem_dir->string());
         if (!guidance_lines.empty()) {
             user_ctx.additional_contexts.push_back(std::format(
-                "<context name=\"memory\">\n{}\n</context>",
-                ::memdir::join_lines(guidance_lines)));
+                "<context name=\"memory\">\n{}\n</context>", ::memdir::join_lines(guidance_lines)));
         }
 
         // Append the MEMORY.md index contents (the AutoMem entrypoint is
@@ -169,9 +159,8 @@ void QueryEngine::build_and_add_system_prompt() {
                 std::string raw((std::istreambuf_iterator<char>(mm_ifs)), {});
                 auto trunc = ::memdir::truncate_entrypoint_content(raw);
                 if (!trunc.content.empty()) {
-                    user_ctx.additional_contexts.push_back(std::format(
-                        "<context name=\"MEMORY.md\">\n{}\n</context>",
-                        trunc.content));
+                    user_ctx.additional_contexts.push_back(
+                        std::format("<context name=\"MEMORY.md\">\n{}\n</context>", trunc.content));
                 }
             }
         }
@@ -187,33 +176,26 @@ void QueryEngine::build_and_add_system_prompt() {
             summary.resize(kMaxSummaryChars);
             summary += "\n... [older session summary truncated]";
         }
-        user_ctx.additional_contexts.push_back(std::format(
-            "<context name=\"session-memory\">\n{}\n</context>",
-            summary));
+        user_ctx.additional_contexts.push_back(
+            std::format("<context name=\"session-memory\">\n{}\n</context>", summary));
     }
 
     // P1-1: Add tool descriptions to system context
-    SystemContext system_ctx{
-        {},
-        config_.model_params.model,
-        "default"
-    };
+    SystemContext system_ctx{{}, config_.model_params.model, "default"};
     for (const auto& tool : config_.tools) {
         // Keep delegation guidance consistent with the request's deny rules,
         // without changing the context listing of unrelated tools.
         if (tool.name == "Agent" || tool.name == "task_output") {
             loom::utils::tool_deny_rules::DenyToolView view;
             view.name = tool.name;
-            if (loom::utils::tool_deny_rules::is_tool_denied(config_.always_deny_rules, view)) continue;
+            if (loom::utils::tool_deny_rules::is_tool_denied(config_.always_deny_rules, view))
+                continue;
         }
         system_ctx.tool_descriptions.push_back(tool.name);
     }
 
-    auto prompt = SystemPromptBuilder::build(
-        config_.custom_system_prompt,
-        config_.append_system_prompt,
-        user_ctx,
-        system_ctx);
+    auto prompt = SystemPromptBuilder::build(config_.custom_system_prompt,
+                                             config_.append_system_prompt, user_ctx, system_ctx);
 
     SystemMessage sys_msg{};
     sys_msg.id.value = generate_id();
@@ -225,7 +207,8 @@ void QueryEngine::build_and_add_system_prompt() {
 void QueryEngine::populate_git_context(UserContext& ctx, const std::string& cwd) {
     auto run_git_cmd = [&](const char* cmd) -> std::string {
         auto full_cmd = std::format("cd \"{}\" && ( {} ) 2>/dev/null", cwd, cmd);
-        std::unique_ptr<FILE, decltype(&pclose)> pipe(loom::utils::bash::popen_spawn(full_cmd.c_str()), pclose);
+        std::unique_ptr<FILE, decltype(&pclose)> pipe(
+            loom::utils::bash::popen_spawn(full_cmd.c_str()), pclose);
         if (!pipe) return {};
         std::string result;
         char buf[256];
@@ -244,8 +227,8 @@ void QueryEngine::populate_git_context(UserContext& ctx, const std::string& cwd)
     auto status_short = run_git_cmd("git status --short | head -20");
 
     if (!branch.empty()) {
-        std::string git_ctx = std::format(
-            "<context name=\"git\">\nBranch: {}\nLast commit: {}", branch, commit);
+        std::string git_ctx =
+            std::format("<context name=\"git\">\nBranch: {}\nLast commit: {}", branch, commit);
         if (!status_short.empty()) {
             git_ctx += std::format("\nStatus:\n{}", status_short);
         }
@@ -254,4 +237,4 @@ void QueryEngine::populate_git_context(UserContext& ctx, const std::string& cwd)
     }
 }
 
-} // namespace loom::core
+}  // namespace loom::core

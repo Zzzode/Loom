@@ -7,11 +7,12 @@ module;
 // ambiguous" in downstream impl units); the std module supplies every C++
 // facility used below. errno/mode_t/open/fsync come from the opaque C
 // headers, which never declare C++ allocation functions.
-#include <cerrno>
 #include <fcntl.h>
 #include <stdio.h>  // rename (opaque C header, not <cstdio>)
 #include <sys/stat.h>
 #include <unistd.h>
+
+#include <cerrno>
 #if defined(__APPLE__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__NetBSD__)
 #include <stdlib.h>  // arc4random_buf (opaque C header, not <cstdlib>)
 #endif
@@ -19,7 +20,7 @@ module;
 export module loom.fs.atomic_replace;
 
 import std;
-import loom.fs.file_persistence;  // detail::open_for_fsync / fsync_fd
+import loom.fs.file_persistence; // detail::open_for_fsync / fsync_fd
 
 namespace fs = std::filesystem;
 
@@ -82,13 +83,10 @@ namespace atomic_replace_detail {
 /// LOCK_SH on the same sibling. rename(2) replaces the DATA inode but the
 /// lock lives on the sibling inode, which is never renamed, so SH/EX keep
 /// serializing across arbitrarily many data-inode replacements.
-inline std::expected<void, std::string> atomic_replace_file(
-    const fs::path& path,
-    std::string_view content,
-    AtomicMode mode = AtomicMode::PreserveOrUmask
-) {
-    auto fail = [&](std::string message)
-        -> std::expected<void, std::string> {
+inline std::expected<void, std::string>
+atomic_replace_file(const fs::path& path, std::string_view content,
+                    AtomicMode mode = AtomicMode::PreserveOrUmask) {
+    auto fail = [&](std::string message) -> std::expected<void, std::string> {
         return std::unexpected(std::move(message));
     };
 
@@ -97,27 +95,25 @@ inline std::expected<void, std::string> atomic_replace_file(
         std::error_code ec;
         fs::create_directories(parent, ec);
         if (ec) {
-            return fail("Cannot create parent directory for " +
-                        path.string() + ": " + ec.message());
+            return fail("Cannot create parent directory for " + path.string() + ": " +
+                        ec.message());
         }
     }
 
     // Leaf gate: only an absent path or a REGULAR file may be replaced.
     // lstat() never follows a trailing symlink; O_NOFOLLOW below only
     // protects the tmp name, so this check is what protects the data leaf.
-    struct ::stat leaf_st {};
+    struct ::stat leaf_st{};
     bool leaf_present = false;
     mode_t existing_mode = 0;
     if (::lstat(path.c_str(), &leaf_st) == 0) {
         if (S_ISLNK(leaf_st.st_mode)) {
-            return fail(path.string() +
-                        " is a symbolic link; refusing to write through a "
-                        "symlinked data file");
+            return fail(path.string() + " is a symbolic link; refusing to write through a "
+                                        "symlinked data file");
         }
         if (!S_ISREG(leaf_st.st_mode)) {
-            return fail(path.string() +
-                        " is not a regular file; refusing to replace a "
-                        "FIFO, socket, device or directory data leaf");
+            return fail(path.string() + " is not a regular file; refusing to replace a "
+                                        "FIFO, socket, device or directory data leaf");
         }
         leaf_present = true;
         existing_mode = leaf_st.st_mode & 07777;
@@ -127,8 +123,7 @@ inline std::expected<void, std::string> atomic_replace_file(
     }
 
     const bool owner_only = (mode == AtomicMode::OwnerOnly);
-    const bool preserve_mode =
-        !owner_only && leaf_present;
+    const bool preserve_mode = !owner_only && leaf_present;
 
     static std::atomic<std::uint64_t> tmp_counter{0};
     constexpr int kMaxTmpAttempts = 32;
@@ -137,25 +132,20 @@ inline std::expected<void, std::string> atomic_replace_file(
         // in advance (to pre-place a symlink) is impractical, and an
         // attacker who does race the exact name loses into EEXIST/ELOOP and
         // this loop simply picks another.
-        const fs::path temp =
-            path.string() + ".tmp." + std::to_string(::getpid()) + "." +
-            std::to_string(tmp_counter.fetch_add(1,
-                std::memory_order_relaxed)) + "." +
-            atomic_replace_detail::random_tmp_suffix();
+        const fs::path temp = path.string() + ".tmp." + std::to_string(::getpid()) + "." +
+                              std::to_string(tmp_counter.fetch_add(1, std::memory_order_relaxed)) +
+                              "." + atomic_replace_detail::random_tmp_suffix();
 
         // 0600 base for mode-managed writes (fchmod sets the exact mode
         // next); 0666 for a brand-new default-mode file so the umask is
         // applied by the kernel exactly as ofstream did (0644 @ 022).
-        const mode_t open_mode =
-            (owner_only || preserve_mode) ? 0600 : 0666;
-        const int fd = ::open(temp.c_str(),
-                              O_WRONLY | O_CREAT | O_EXCL | O_NOFOLLOW |
-                                  O_CLOEXEC,
-                              open_mode);
+        const mode_t open_mode = (owner_only || preserve_mode) ? 0600 : 0666;
+        const int fd =
+            ::open(temp.c_str(), O_WRONLY | O_CREAT | O_EXCL | O_NOFOLLOW | O_CLOEXEC, open_mode);
         if (fd < 0) {
             if (errno == EEXIST || errno == ELOOP) continue;
-            return fail("Cannot create temporary file for " +
-                        path.string() + ": " + std::error_code(errno, std::generic_category()).message());
+            return fail("Cannot create temporary file for " + path.string() + ": " +
+                        std::error_code(errno, std::generic_category()).message());
         }
 
         // Apply the mode BEFORE data lands and before the rename.
@@ -167,8 +157,7 @@ inline std::expected<void, std::string> atomic_replace_file(
                 std::error_code remove_ec;
                 fs::remove(temp, remove_ec);
                 (void)::close(fd);
-                return fail("Cannot restrict permissions on " +
-                            temp.string() + ": " +
+                return fail("Cannot restrict permissions on " + temp.string() + ": " +
                             std::error_code(saved_errno, std::generic_category()).message());
             }
         } else if (preserve_mode) {
@@ -180,8 +169,7 @@ inline std::expected<void, std::string> atomic_replace_file(
                 std::error_code remove_ec;
                 fs::remove(temp, remove_ec);
                 (void)::close(fd);
-                return fail("Cannot preserve permissions on " +
-                            temp.string() + ": " +
+                return fail("Cannot preserve permissions on " + temp.string() + ": " +
                             std::error_code(saved_errno, std::generic_category()).message());
             }
         }
@@ -190,8 +178,7 @@ inline std::expected<void, std::string> atomic_replace_file(
         int saved_errno = 0;
         std::size_t total = 0;
         while (total < content.size()) {
-            const ssize_t written = ::write(
-                fd, content.data() + total, content.size() - total);
+            const ssize_t written = ::write(fd, content.data() + total, content.size() - total);
             if (written < 0) {
                 if (errno == EINTR) continue;
                 write_ok = false;
@@ -214,8 +201,7 @@ inline std::expected<void, std::string> atomic_replace_file(
         if (!write_ok) {
             std::error_code remove_ec;
             fs::remove(temp, remove_ec);
-            return fail("Failed to write temporary file for " +
-                        path.string() + ": " +
+            return fail("Failed to write temporary file for " + path.string() + ": " +
                         std::error_code(saved_errno, std::generic_category()).message());
         }
 
@@ -223,8 +209,7 @@ inline std::expected<void, std::string> atomic_replace_file(
             // Durability: fsync the parent directory so the rename is
             // stable; best-effort.
             if (!parent.empty()) {
-                const int dir_fd =
-                    detail::open_for_fsync(parent, /*is_dir=*/true);
+                const int dir_fd = detail::open_for_fsync(parent, /*is_dir=*/true);
                 if (dir_fd >= 0) {
                     (void)detail::fsync_fd(dir_fd);
                     ::close(dir_fd);
@@ -240,8 +225,7 @@ inline std::expected<void, std::string> atomic_replace_file(
                     std::error_code(rename_errno, std::generic_category()).message());
     }
     // Exhausted unique names (an attacker racing every O_EXCL create).
-    return fail("Cannot create a unique temporary file for " +
-                path.string());
+    return fail("Cannot create a unique temporary file for " + path.string());
 }
 
 /// Outcome of read_regular_file().
@@ -261,9 +245,7 @@ struct RegularFileRead {
     RegularReadStatus status = RegularReadStatus::Unreadable;
     std::string contents;
 
-    [[nodiscard]] bool present() const noexcept {
-        return status == RegularReadStatus::Present;
-    }
+    [[nodiscard]] bool present() const noexcept { return status == RegularReadStatus::Present; }
 };
 
 /// Hardened read counterpart to atomic_replace_file(): open `path` ONCE and
@@ -286,15 +268,14 @@ struct RegularFileRead {
 ///     guarantee were ever violated.
 inline RegularFileRead read_regular_file(const fs::path& path) {
     RegularFileRead result;
-    const int fd = ::open(path.c_str(),
-                          O_RDONLY | O_NONBLOCK | O_NOFOLLOW | O_CLOEXEC);
+    const int fd = ::open(path.c_str(), O_RDONLY | O_NONBLOCK | O_NOFOLLOW | O_CLOEXEC);
     if (fd < 0) {
-        result.status = (errno == ENOENT) ? RegularReadStatus::Absent
-                                          : RegularReadStatus::Unreadable;
+        result.status =
+            (errno == ENOENT) ? RegularReadStatus::Absent : RegularReadStatus::Unreadable;
         return result;
     }
 
-    struct ::stat st {};
+    struct ::stat st{};
     if (::fstat(fd, &st) != 0 || !S_ISREG(st.st_mode)) {
         (void)::close(fd);
         result.status = RegularReadStatus::Unreadable;
@@ -303,8 +284,7 @@ inline RegularFileRead read_regular_file(const fs::path& path) {
 
     std::string& out = result.contents;
     if (st.st_size > 0) {
-        out.reserve(static_cast<std::size_t>(
-            std::min<std::int64_t>(st.st_size, 64 * 1024 * 1024)));
+        out.reserve(static_cast<std::size_t>(std::min<std::int64_t>(st.st_size, 64 * 1024 * 1024)));
     }
     constexpr std::size_t kChunk = 64 * 1024;
     int eagain_strikes = 0;

@@ -1,8 +1,9 @@
 module;
 
-#include <cstdlib>
 #include <sys/stat.h>
 #include <unistd.h>
+
+#include <cstdlib>
 
 export module loom.platform.find_executable;
 
@@ -71,4 +72,4 @@ inline std::vector<fs::path> find_all_executables(std::string_view name) {
     return results;
 }
 
-} // namespace loom::utils
+}  // namespace loom::utils

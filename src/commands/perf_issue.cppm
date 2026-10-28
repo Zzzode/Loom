@@ -5,22 +5,27 @@ import std;
 import loom.services.diagnostic.dump_diagnostic;
 
 export namespace loom::commands::perf_issue {
-struct CommandResponse { bool ok{true}; std::string message; };
-[[nodiscard]] inline auto name() -> std::string_view { return "perf_issue"; }
+struct CommandResponse {
+    bool ok{true};
+    std::string message;
+};
+
+[[nodiscard]] inline auto name() -> std::string_view {
+    return "perf_issue";
+}
 
 [[nodiscard]] inline auto run(std::string_view target = {}) -> CommandResponse {
     const auto info = loom::services::diagnostic::collect_diagnostics(
         loom::services::diagnostic::DumpLevel::Verbose);
-    return {.ok = true, .message = std::format(
-        "Performance issue snapshot\n"
-        "Target: {}\n"
-        "OS: {}\n"
-        "Memory: {} bytes\n"
-        "Working directory: {}\n"
-        "Startup profiling hint: run with LOOM_PROFILE_STARTUP=1 for phase timings.",
-        target.empty() ? "current-session" : std::string(target),
-        info.os_version,
-        info.memory_usage_bytes,
-        info.working_directory)};
+    return {.ok = true,
+            .message = std::format(
+                "Performance issue snapshot\n"
+                "Target: {}\n"
+                "OS: {}\n"
+                "Memory: {} bytes\n"
+                "Working directory: {}\n"
+                "Startup profiling hint: run with LOOM_PROFILE_STARTUP=1 for phase timings.",
+                target.empty() ? "current-session" : std::string(target), info.os_version,
+                info.memory_usage_bytes, info.working_directory)};
 }
-}
+}  // namespace loom::commands::perf_issue

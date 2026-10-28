@@ -17,27 +17,33 @@ namespace {
 namespace api = loom::services::api;
 namespace wire = loom::query::wire;
 
-[[nodiscard]] loom::utils::Result<CreateMessageRequest> resolved_request(
-    const CreateMessageRequest& request,
-    const std::shared_ptr<const loom::core::ApiExecutionContext>& context, bool messages) {
+[[nodiscard]] loom::utils::Result<CreateMessageRequest>
+resolved_request(const CreateMessageRequest& request,
+                 const std::shared_ptr<const loom::core::ApiExecutionContext>& context,
+                 bool messages) {
     if (request.max_tokens < 0)
         return std::unexpected(loom::utils::Error(loom::utils::ErrorCode::invalid_argument,
-            "Request output limit must be non-negative"));
+                                                  "Request output limit must be non-negative"));
     const auto minimum = messages && request.thinking_budget && *request.thinking_budget >= 0
-        ? static_cast<std::uint32_t>(*request.thinking_budget) + 1 : 0;
-    const auto policy = agent_model_context(context, request.model,
-        static_cast<std::uint32_t>(request.max_tokens), minimum);
+                             ? static_cast<std::uint32_t>(*request.thinking_budget) + 1
+                             : 0;
+    const auto policy = agent_model_context(
+        context, request.model, static_cast<std::uint32_t>(request.max_tokens), minimum);
     const auto output = policy.request_output_tokens.value_or(0);
     if (output > static_cast<std::uint32_t>(std::numeric_limits<int>::max()))
-        return std::unexpected(loom::utils::Error(loom::utils::ErrorCode::invalid_argument,
-            "Request output limit exceeds the native transport range"));
+        return std::unexpected(
+            loom::utils::Error(loom::utils::ErrorCode::invalid_argument,
+                               "Request output limit exceeds the native transport range"));
     if (messages && output == 0)
-        return std::unexpected(loom::utils::Error(loom::utils::ErrorCode::invalid_argument,
-            "Messages requests require a positive resolved output limit"));
+        return std::unexpected(
+            loom::utils::Error(loom::utils::ErrorCode::invalid_argument,
+                               "Messages requests require a positive resolved output limit"));
     if (messages && request.thinking_budget &&
-        (*request.thinking_budget < 0 || static_cast<std::uint32_t>(*request.thinking_budget) >= output))
-        return std::unexpected(loom::utils::Error(loom::utils::ErrorCode::invalid_argument,
-            "Manual thinking budget must be below the request output limit"));
+        (*request.thinking_budget < 0 ||
+         static_cast<std::uint32_t>(*request.thinking_budget) >= output))
+        return std::unexpected(
+            loom::utils::Error(loom::utils::ErrorCode::invalid_argument,
+                               "Manual thinking budget must be below the request output limit"));
     auto resolved = request;
     resolved.max_tokens = static_cast<int>(output);
     return resolved;
@@ -45,36 +51,36 @@ namespace wire = loom::query::wire;
 
 [[nodiscard]] loom::core::ContentBlock wire_content(const api::ContentBlock& block) {
     switch (block.type) {
-        case api::ContentBlockType::ToolUse: {
-            loom::core::ToolUseBlock value;
-            value.id.value = block.tool_use_id;
-            value.name = block.tool_name;
-            value.input_json = block.tool_input_json;
-            return value;
-        }
-        case api::ContentBlockType::ToolResult: {
-            loom::core::ToolResultBlock value;
-            value.tool_use_id.value = block.tool_use_id;
-            value.content = block.text;
-            value.is_error = block.is_error;
-            return value;
-        }
-        case api::ContentBlockType::Image: {
-            loom::core::ImageBlock value;
-            value.media_type = block.media_type;
-            value.data = block.image_data;
-            return value;
-        }
-        case api::ContentBlockType::Document:
-            return loom::core::DocumentBlock{block.media_type, block.image_data};
-        case api::ContentBlockType::Thinking:
-            return loom::core::ThinkingBlock{block.thinking, block.signature};
-        case api::ContentBlockType::RedactedThinking:
-            // OpenAI has no signed/redacted thinking representation, matching
-            // the shared backend's handling of ordinary thinking blocks.
-            return loom::core::ThinkingBlock{};
-        case api::ContentBlockType::Text:
-            return loom::core::TextBlock{block.text};
+    case api::ContentBlockType::ToolUse: {
+        loom::core::ToolUseBlock value;
+        value.id.value = block.tool_use_id;
+        value.name = block.tool_name;
+        value.input_json = block.tool_input_json;
+        return value;
+    }
+    case api::ContentBlockType::ToolResult: {
+        loom::core::ToolResultBlock value;
+        value.tool_use_id.value = block.tool_use_id;
+        value.content = block.text;
+        value.is_error = block.is_error;
+        return value;
+    }
+    case api::ContentBlockType::Image: {
+        loom::core::ImageBlock value;
+        value.media_type = block.media_type;
+        value.data = block.image_data;
+        return value;
+    }
+    case api::ContentBlockType::Document:
+        return loom::core::DocumentBlock{block.media_type, block.image_data};
+    case api::ContentBlockType::Thinking:
+        return loom::core::ThinkingBlock{block.thinking, block.signature};
+    case api::ContentBlockType::RedactedThinking:
+        // OpenAI has no signed/redacted thinking representation, matching
+        // the shared backend's handling of ordinary thinking blocks.
+        return loom::core::ThinkingBlock{};
+    case api::ContentBlockType::Text:
+        return loom::core::TextBlock{block.text};
     }
     return loom::core::TextBlock{};
 }
@@ -94,7 +100,8 @@ namespace wire = loom::query::wire;
     }
     for (const auto& message : request.messages) {
         std::vector<loom::core::ContentBlock> content;
-        for (const auto& block : message.content) content.push_back(wire_content(block));
+        for (const auto& block : message.content)
+            content.push_back(wire_content(block));
         if (message.role == "assistant") {
             loom::core::AssistantMessage value;
             value.content = std::move(content);
@@ -125,6 +132,7 @@ class OpenAiAgentDecoder {
         std::string name;
         std::string arguments;
     };
+
     std::shared_ptr<const wire::WireBackend> backend_;
     std::map<std::uint32_t, ToolCall> calls_;
     std::optional<std::uint32_t> current_call_;
@@ -141,8 +149,8 @@ public:
     explicit OpenAiAgentDecoder(std::shared_ptr<const wire::WireBackend> backend)
         : backend_(std::move(backend)) {}
 
-    [[nodiscard]] loom::utils::Result<std::vector<api::StreamEvent>> operator()(
-        std::string_view event_name, std::string_view data) {
+    [[nodiscard]] loom::utils::Result<std::vector<api::StreamEvent>>
+    operator()(std::string_view event_name, std::string_view data) {
         std::vector<api::StreamEvent> events;
         if (stopped_) return events;
         if (!started_) {
@@ -154,151 +162,165 @@ public:
         for (const auto& delta : backend_->parse_stream_event(event_name, data)) {
             using Kind = wire::StreamDelta::Kind;
             switch (delta.kind) {
-                case Kind::TextDelta: {
+            case Kind::TextDelta: {
+                api::StreamEvent start;
+                start.type = api::StreamEventType::ContentBlockStart;
+                start.block_type = api::StreamContentBlockType::Text;
+                start.block_index = block_index_;
+                events.push_back(std::move(start));
+                api::StreamEvent fragment;
+                fragment.type = api::StreamEventType::ContentBlockDelta;
+                fragment.block_index = block_index_;
+                fragment.delta.type = api::StreamContentBlockType::Text;
+                fragment.delta.text = delta.text;
+                events.push_back(std::move(fragment));
+                api::StreamEvent stop;
+                stop.type = api::StreamEventType::ContentBlockStop;
+                stop.block_index = block_index_++;
+                events.push_back(std::move(stop));
+                break;
+            }
+            case Kind::ToolUseStart: {
+                const auto index =
+                    delta.tool_index.value_or(static_cast<std::uint32_t>(calls_.size()));
+                current_call_ = index;
+                auto& call = calls_[index];
+                if (!delta.tool_id.empty()) {
+                    if (!call.id.empty() && call.id != delta.tool_id) {
+                        return std::unexpected(
+                            invalid_stream("OpenAI tool call changed id within one index"));
+                    }
+                    call.id = delta.tool_id;
+                }
+                if (!delta.tool_name.empty()) {
+                    if (!call.name.empty() && call.name != delta.tool_name) {
+                        return std::unexpected(
+                            invalid_stream("OpenAI tool call changed name within one index"));
+                    }
+                    call.name = delta.tool_name;
+                }
+                break;
+            }
+            case Kind::ToolUseInputDelta: {
+                const auto index = delta.tool_index ? delta.tool_index : current_call_;
+                if (!index || !calls_.contains(*index)) {
+                    return std::unexpected(
+                        invalid_stream("OpenAI tool arguments arrived without a tool call"));
+                }
+                calls_[*index].arguments += delta.partial_json;
+                break;
+            }
+            case Kind::Usage: {
+                api::StreamEvent usage;
+                usage.type = api::StreamEventType::MessageDelta;
+                usage.message_delta.usage.input_tokens = static_cast<int>(delta.usage.input_tokens);
+                usage.message_delta.usage.output_tokens =
+                    static_cast<int>(delta.usage.output_tokens);
+                events.push_back(std::move(usage));
+                break;
+            }
+            case Kind::MessageStop: {
+                if (!delta.stop_reason.empty()) {
+                    stop_reason_ = delta.stop_reason;
+                    break;
+                }
+                if (stop_reason_.empty()) {
+                    return std::unexpected(
+                        invalid_stream("OpenAI stream ended without a finish reason"));
+                }
+                for (const auto& [index, call] : calls_) {
+                    (void)index;
+                    if (call.id.empty() || call.name.empty()) {
+                        return std::unexpected(
+                            invalid_stream("OpenAI stream ended with an incomplete tool call"));
+                    }
+                    const auto arguments =
+                        call.arguments.empty() ? std::string("{}") : call.arguments;
+                    auto parsed = loom::utils::json::parse(arguments);
+                    if (!parsed || !parsed->root().is_obj()) {
+                        return std::unexpected(
+                            invalid_stream("OpenAI stream ended with invalid tool arguments"));
+                    }
                     api::StreamEvent start;
                     start.type = api::StreamEventType::ContentBlockStart;
-                    start.block_type = api::StreamContentBlockType::Text;
+                    start.block_type = api::StreamContentBlockType::ToolUse;
                     start.block_index = block_index_;
+                    start.tool_use_id = call.id;
+                    start.tool_name = call.name;
                     events.push_back(std::move(start));
                     api::StreamEvent fragment;
                     fragment.type = api::StreamEventType::ContentBlockDelta;
                     fragment.block_index = block_index_;
-                    fragment.delta.type = api::StreamContentBlockType::Text;
-                    fragment.delta.text = delta.text;
+                    fragment.delta.type = api::StreamContentBlockType::ToolUse;
+                    fragment.delta.partial_json = arguments;
                     events.push_back(std::move(fragment));
                     api::StreamEvent stop;
                     stop.type = api::StreamEventType::ContentBlockStop;
                     stop.block_index = block_index_++;
                     events.push_back(std::move(stop));
-                    break;
                 }
-                case Kind::ToolUseStart: {
-                    const auto index = delta.tool_index.value_or(
-                        static_cast<std::uint32_t>(calls_.size()));
-                    current_call_ = index;
-                    auto& call = calls_[index];
-                    if (!delta.tool_id.empty()) {
-                        if (!call.id.empty() && call.id != delta.tool_id) {
-                            return std::unexpected(invalid_stream("OpenAI tool call changed id within one index"));
-                        }
-                        call.id = delta.tool_id;
-                    }
-                    if (!delta.tool_name.empty()) {
-                        if (!call.name.empty() && call.name != delta.tool_name) {
-                            return std::unexpected(invalid_stream("OpenAI tool call changed name within one index"));
-                        }
-                        call.name = delta.tool_name;
-                    }
-                    break;
-                }
-                case Kind::ToolUseInputDelta: {
-                    const auto index = delta.tool_index ? delta.tool_index : current_call_;
-                    if (!index || !calls_.contains(*index)) {
-                        return std::unexpected(invalid_stream("OpenAI tool arguments arrived without a tool call"));
-                    }
-                    calls_[*index].arguments += delta.partial_json;
-                    break;
-                }
-                case Kind::Usage: {
-                    api::StreamEvent usage;
-                    usage.type = api::StreamEventType::MessageDelta;
-                    usage.message_delta.usage.input_tokens = static_cast<int>(delta.usage.input_tokens);
-                    usage.message_delta.usage.output_tokens = static_cast<int>(delta.usage.output_tokens);
-                    events.push_back(std::move(usage));
-                    break;
-                }
-                case Kind::MessageStop: {
-                    if (!delta.stop_reason.empty()) {
-                        stop_reason_ = delta.stop_reason;
-                        break;
-                    }
-                    if (stop_reason_.empty()) {
-                        return std::unexpected(invalid_stream("OpenAI stream ended without a finish reason"));
-                    }
-                    for (const auto& [index, call] : calls_) {
-                        (void)index;
-                        if (call.id.empty() || call.name.empty()) {
-                            return std::unexpected(invalid_stream("OpenAI stream ended with an incomplete tool call"));
-                        }
-                        const auto arguments = call.arguments.empty() ? std::string("{}") : call.arguments;
-                        auto parsed = loom::utils::json::parse(arguments);
-                        if (!parsed || !parsed->root().is_obj()) {
-                            return std::unexpected(invalid_stream("OpenAI stream ended with invalid tool arguments"));
-                        }
-                        api::StreamEvent start;
-                        start.type = api::StreamEventType::ContentBlockStart;
-                        start.block_type = api::StreamContentBlockType::ToolUse;
-                        start.block_index = block_index_;
-                        start.tool_use_id = call.id;
-                        start.tool_name = call.name;
-                        events.push_back(std::move(start));
-                        api::StreamEvent fragment;
-                        fragment.type = api::StreamEventType::ContentBlockDelta;
-                        fragment.block_index = block_index_;
-                        fragment.delta.type = api::StreamContentBlockType::ToolUse;
-                        fragment.delta.partial_json = arguments;
-                        events.push_back(std::move(fragment));
-                        api::StreamEvent stop;
-                        stop.type = api::StreamEventType::ContentBlockStop;
-                        stop.block_index = block_index_++;
-                        events.push_back(std::move(stop));
-                    }
-                    api::StreamEvent reason;
-                    reason.type = api::StreamEventType::MessageDelta;
-                    reason.message_delta.stop_reason = stop_reason_;
-                    events.push_back(std::move(reason));
-                    api::StreamEvent stop;
-                    stop.type = api::StreamEventType::MessageStop;
-                    events.push_back(std::move(stop));
-                    stopped_ = true;
-                    break;
-                }
-                case Kind::Error:
-                    return std::unexpected(invalid_stream(delta.text));
-                case Kind::ThinkingDelta:
-                case Kind::BlockStop:
-                case Kind::Ignored:
-                    break;
+                api::StreamEvent reason;
+                reason.type = api::StreamEventType::MessageDelta;
+                reason.message_delta.stop_reason = stop_reason_;
+                events.push_back(std::move(reason));
+                api::StreamEvent stop;
+                stop.type = api::StreamEventType::MessageStop;
+                events.push_back(std::move(stop));
+                stopped_ = true;
+                break;
+            }
+            case Kind::Error:
+                return std::unexpected(invalid_stream(delta.text));
+            case Kind::ThinkingDelta:
+            case Kind::BlockStop:
+            case Kind::Ignored:
+                break;
             }
         }
         return events;
     }
 };
-} // namespace
+}  // namespace
 
 std::vector<loom::core::Message> agent_core_messages(const std::vector<Message>& messages) {
     api::CreateMessageRequest request;
     request.messages = messages;
     auto projected = wire_input(request).messages;
     for (std::size_t index = 0; index < messages.size(); ++index) {
-        std::visit([&](auto& value) {
-            for (std::size_t block = 0; block < messages[index].content.size(); ++block) {
-                if (messages[index].content[block].type == api::ContentBlockType::RedactedThinking)
-                    value.content[block] = loom::core::ThinkingBlock{messages[index].content[block].thinking, {}};
-            }
-        }, projected[index]);
+        std::visit(
+            [&](auto& value) {
+                for (std::size_t block = 0; block < messages[index].content.size(); ++block) {
+                    if (messages[index].content[block].type ==
+                        api::ContentBlockType::RedactedThinking)
+                        value.content[block] =
+                            loom::core::ThinkingBlock{messages[index].content[block].thinking, {}};
+                }
+            },
+            projected[index]);
     }
     return projected;
 }
 
-loom::utils::Result<std::size_t> agent_serialized_request_size(api::MessagesClient& client,
-    const CreateMessageRequest& request,
+loom::utils::Result<std::size_t> agent_serialized_request_size(
+    api::MessagesClient& client, const CreateMessageRequest& request,
     const std::shared_ptr<const loom::core::ApiExecutionContext>& context) {
-    const auto protocol = context ? context->wire_api
-        : (std::getenv("LOOM_WIRE_API") ? std::getenv("LOOM_WIRE_API") : "messages");
+    const auto protocol =
+        context ? context->wire_api
+                : (std::getenv("LOOM_WIRE_API") ? std::getenv("LOOM_WIRE_API") : "messages");
     const bool messages = wire::wire_api_from_string(protocol) != wire::WireApi::OpenAi;
     auto resolved = resolved_request(request, context, messages);
     if (!resolved) return std::unexpected(resolved.error());
     if (messages) return client.prepared_stream_request_size(*resolved);
     wire::OpenAiWireBackend backend(client.config().base_url);
     auto prepared = backend.prepare(wire_input(*resolved));
-    if (!prepared) return std::unexpected(loom::utils::Error(
-        loom::utils::ErrorCode::invalid_argument, prepared.error()));
+    if (!prepared)
+        return std::unexpected(
+            loom::utils::Error(loom::utils::ErrorCode::invalid_argument, prepared.error()));
     return prepared->body.size();
 }
 
-loom::services::api::MessagesClient::Config agent_api_client_config(
-    const std::shared_ptr<const loom::core::ApiExecutionContext>& context) {
+loom::services::api::MessagesClient::Config
+agent_api_client_config(const std::shared_ptr<const loom::core::ApiExecutionContext>& context) {
     if (!context) return loom::services::api::get_default_client().config();
     api::MessagesClient::Config config;
     config.base_url = context->base_url;
@@ -309,12 +331,14 @@ loom::services::api::MessagesClient::Config agent_api_client_config(
     return config;
 }
 
-loom::utils::Result<loom::services::api::StreamParser> create_agent_model_stream(
-    api::MessagesClient& client, const CreateMessageRequest& request,
-    const std::shared_ptr<const loom::core::ApiExecutionContext>& context) {
+loom::utils::Result<loom::services::api::StreamParser>
+create_agent_model_stream(api::MessagesClient& client, const CreateMessageRequest& request,
+                          const std::shared_ptr<const loom::core::ApiExecutionContext>& context) {
     std::string protocol;
-    if (context) protocol = context->wire_api;
-    else if (const char* value = std::getenv("LOOM_WIRE_API")) protocol = value;
+    if (context)
+        protocol = context->wire_api;
+    else if (const char* value = std::getenv("LOOM_WIRE_API"))
+        protocol = value;
     const bool messages = wire::wire_api_from_string(protocol) != wire::WireApi::OpenAi;
     auto resolved = resolved_request(request, context, messages);
     if (!resolved) return std::unexpected(resolved.error());
@@ -329,12 +353,14 @@ loom::utils::Result<loom::services::api::StreamParser> create_agent_model_stream
     auto backend = std::make_shared<wire::OpenAiWireBackend>(config.base_url, std::move(headers));
     auto prepared = backend->prepare(wire_input(*resolved));
     if (!prepared) {
-        return std::unexpected(loom::utils::Error(
-            loom::utils::ErrorCode::invalid_argument, prepared.error()));
+        return std::unexpected(
+            loom::utils::Error(loom::utils::ErrorCode::invalid_argument, prepared.error()));
     }
     std::vector<std::string> raw_headers;
-    for (const auto& [name, value] : prepared->headers) raw_headers.push_back(name + ": " + value);
+    for (const auto& [name, value] : prepared->headers)
+        raw_headers.push_back(name + ": " + value);
     return client.create_prepared_stream(std::move(prepared->url), std::move(prepared->body),
-        std::move(raw_headers), OpenAiAgentDecoder(std::move(backend)));
+                                         std::move(raw_headers),
+                                         OpenAiAgentDecoder(std::move(backend)));
 }
-} // namespace loom::tools::agent::utils
+}  // namespace loom::tools::agent::utils

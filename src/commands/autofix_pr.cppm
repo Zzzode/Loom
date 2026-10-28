@@ -5,14 +5,20 @@ import std;
 import loom.process.exec_sync;
 
 export namespace loom::commands::autofix_pr {
-struct CommandResponse { bool ok{true}; std::string message; };
-[[nodiscard]] inline auto name() -> std::string_view { return "autofix_pr"; }
+struct CommandResponse {
+    bool ok{true};
+    std::string message;
+};
+
+[[nodiscard]] inline auto name() -> std::string_view {
+    return "autofix_pr";
+}
 
 [[nodiscard]] inline bool is_safe_pr_ref(std::string_view pr) {
     for (char ch : pr) {
         const bool ok = (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') ||
-                        (ch >= '0' && ch <= '9') || ch == '.' || ch == '_' ||
-                        ch == '-' || ch == '/' || ch == ':' || ch == '#';
+                        (ch >= '0' && ch <= '9') || ch == '.' || ch == '_' || ch == '-' ||
+                        ch == '/' || ch == ':' || ch == '#';
         if (!ok) return false;
     }
     return true;
@@ -31,24 +37,26 @@ struct CommandResponse { bool ok{true}; std::string message; };
     }
 
     auto pr_view = pr.empty()
-        ? loom::utils::exec_sync("gh pr view --json number,url,reviewDecision")
-        : loom::utils::exec_sync("gh pr view " + std::string(pr) + " --json number,url,reviewDecision");
+                       ? loom::utils::exec_sync("gh pr view --json number,url,reviewDecision")
+                       : loom::utils::exec_sync("gh pr view " + std::string(pr) +
+                                                " --json number,url,reviewDecision");
     if (!pr_view) {
         return {.ok = false, .message = "No pull request context found for autofix-pr"};
     }
 
-    auto comments = pr.empty()
-        ? loom::utils::exec_sync("gh pr view --json comments,reviews")
-        : loom::utils::exec_sync("gh pr view " + std::string(pr) + " --json comments,reviews");
+    auto comments =
+        pr.empty()
+            ? loom::utils::exec_sync("gh pr view --json comments,reviews")
+            : loom::utils::exec_sync("gh pr view " + std::string(pr) + " --json comments,reviews");
 
-    return {.ok = true, .message = std::format(
-        "Autofix PR preflight complete\n"
-        "Repository: {}\n"
-        "Pull request: {}\n"
-        "Review context: {}\n"
-        "Next: inspect unresolved comments, edit files, run tests, then commit intentionally.",
-        *git_root,
-        *pr_view,
-        comments ? "available" : "unavailable")};
+    return {
+        .ok = true,
+        .message = std::format(
+            "Autofix PR preflight complete\n"
+            "Repository: {}\n"
+            "Pull request: {}\n"
+            "Review context: {}\n"
+            "Next: inspect unresolved comments, edit files, run tests, then commit intentionally.",
+            *git_root, *pr_view, comments ? "available" : "unavailable")};
 }
-}
+}  // namespace loom::commands::autofix_pr

@@ -41,16 +41,14 @@ inline constexpr ModelCosts COST_HAIKU_45{1, 5, 1.25, 0.1, 0.01};
     return costs;
 }
 
-[[nodiscard]] inline ModelCosts get_opus_46_cost_tier(bool fast_mode, bool global_fast_mode_enabled = true) {
+[[nodiscard]] inline ModelCosts get_opus_46_cost_tier(bool fast_mode,
+                                                      bool global_fast_mode_enabled = true) {
     return global_fast_mode_enabled && fast_mode ? COST_TIER_30_150 : COST_TIER_5_25;
 }
 
-[[nodiscard]] inline ModelCosts get_model_costs(
-    std::string model,
-    const Usage& usage = {},
-    bool global_fast_mode_enabled = true,
-    std::string default_main_loop_model = ""
-) {
+[[nodiscard]] inline ModelCosts get_model_costs(std::string model, const Usage& usage = {},
+                                                bool global_fast_mode_enabled = true,
+                                                std::string default_main_loop_model = "") {
     (void)usage;
     (void)global_fast_mode_enabled;
     const auto short_name = canonical_model_name(model);
@@ -72,31 +70,29 @@ inline constexpr ModelCosts COST_HAIKU_45{1, 5, 1.25, 0.1, 0.01};
            usage.web_search_requests * costs.web_search_requests;
 }
 
-[[nodiscard]] inline double calculate_usd_cost(
-    std::string model,
-    const Usage& usage,
-    bool global_fast_mode_enabled = true,
-    std::string default_main_loop_model = ""
-) {
-    return tokens_to_usd_cost(get_model_costs(std::move(model), usage, global_fast_mode_enabled, std::move(default_main_loop_model)), usage);
+[[nodiscard]] inline double calculate_usd_cost(std::string model, const Usage& usage,
+                                               bool global_fast_mode_enabled = true,
+                                               std::string default_main_loop_model = "") {
+    return tokens_to_usd_cost(get_model_costs(std::move(model), usage, global_fast_mode_enabled,
+                                              std::move(default_main_loop_model)),
+                              usage);
 }
 
-[[nodiscard]] inline double calculate_cost_from_tokens(
-    std::string model,
-    double input_tokens,
-    double output_tokens,
-    double cache_read_input_tokens,
-    double cache_creation_input_tokens,
-    std::string default_main_loop_model = ""
-) {
-    return calculate_usd_cost(std::move(model), Usage{
-        .input_tokens = input_tokens,
-        .output_tokens = output_tokens,
-        .cache_read_input_tokens = cache_read_input_tokens,
-        .cache_creation_input_tokens = cache_creation_input_tokens,
-        .web_search_requests = 0,
-        .speed = std::nullopt,
-    }, true, std::move(default_main_loop_model));
+[[nodiscard]] inline double calculate_cost_from_tokens(std::string model, double input_tokens,
+                                                       double output_tokens,
+                                                       double cache_read_input_tokens,
+                                                       double cache_creation_input_tokens,
+                                                       std::string default_main_loop_model = "") {
+    return calculate_usd_cost(std::move(model),
+                              Usage{
+                                  .input_tokens = input_tokens,
+                                  .output_tokens = output_tokens,
+                                  .cache_read_input_tokens = cache_read_input_tokens,
+                                  .cache_creation_input_tokens = cache_creation_input_tokens,
+                                  .web_search_requests = 0,
+                                  .speed = std::nullopt,
+                              },
+                              true, std::move(default_main_loop_model));
 }
 
 [[nodiscard]] inline std::string format_price(double price) {
@@ -120,4 +116,4 @@ inline constexpr ModelCosts COST_HAIKU_45{1, 5, 1.25, 0.1, 0.01};
     return format_model_pricing(it->second);
 }
 
-} // namespace loom::utils::model_cost
+}  // namespace loom::utils::model_cost

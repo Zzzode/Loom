@@ -53,8 +53,7 @@ inline auto render_duration_badge(std::chrono::milliseconds duration) -> std::st
     if (ms < 1000) {
         out << ms << "ms";
     } else if (ms < 60000) {
-        out << std::fixed << std::setprecision(1)
-            << (static_cast<double>(ms) / 1000.0) << "s";
+        out << std::fixed << std::setprecision(1) << (static_cast<double>(ms) / 1000.0) << "s";
     } else {
         int minutes = static_cast<int>(ms / 60000);
         int seconds = static_cast<int>((ms % 60000) / 1000);
@@ -65,4 +64,4 @@ inline auto render_duration_badge(std::chrono::milliseconds duration) -> std::st
     return out.str();
 }
 
-} // namespace loom::ui::messages
+}  // namespace loom::ui::messages

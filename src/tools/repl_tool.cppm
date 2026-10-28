@@ -16,21 +16,23 @@
 /// multi-line / interactive inputs.
 module;
 
+#include <fcntl.h>
+#include <poll.h>
+#include <signal.h>
+#include <spawn.h>
 #include <sys/wait.h>
+#include <unistd.h>
+
 #include <cerrno>
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <ctime>
-#include <fcntl.h>
-#include <poll.h>
-#include <signal.h>
-#include <unistd.h>
-#include <spawn.h>
 
 #ifdef __APPLE__
 #include <crt_externs.h>
+
 #include <cstddef>
 #define LOOM_ENVIRON (*_NSGetEnviron())
 #else
@@ -68,7 +70,9 @@ inline auto strip_ansi(std::string s) -> std::string {
 inline void safe_close(int& fd) {
     if (fd >= 0) {
         int rc;
-        do { rc = ::close(fd); } while (rc == -1 && errno == EINTR);
+        do {
+            rc = ::close(fd);
+        } while (rc == -1 && errno == EINTR);
         fd = -1;
     }
 }
@@ -80,14 +84,14 @@ inline auto set_nonblocking(int fd) -> bool {
 }
 
 inline auto random_hex(size_t len = 8) -> std::string {
-    static thread_local std::mt19937 rng{
-        static_cast<std::mt19937::result_type>(
-            std::chrono::steady_clock::now().time_since_epoch().count() ^
-            (static_cast<uint64_t>(::getpid()) << 16))};
+    static thread_local std::mt19937 rng{static_cast<std::mt19937::result_type>(
+        std::chrono::steady_clock::now().time_since_epoch().count() ^
+        (static_cast<uint64_t>(::getpid()) << 16))};
     static const char kHex[] = "0123456789abcdef";
     std::string out;
     out.reserve(len);
-    for (size_t i = 0; i < len; ++i) out += kHex[rng() & 0xf];
+    for (size_t i = 0; i < len; ++i)
+        out += kHex[rng() & 0xf];
     return out;
 }
 
@@ -96,7 +100,9 @@ inline auto write_all(int fd, std::string_view data) -> bool {
     const char* p = data.data();
     while (remaining > 0) {
         ssize_t n;
-        do { n = ::write(fd, p, remaining); } while (n == -1 && errno == EINTR);
+        do {
+            n = ::write(fd, p, remaining);
+        } while (n == -1 && errno == EINTR);
         if (n == -1) return false;
         remaining -= static_cast<size_t>(n);
         p += n;
@@ -124,7 +130,7 @@ inline auto read_drain(int fd, std::string& out) -> bool {
     }
 }
 
-} // namespace detail
+}  // namespace detail
 
 // --------------------------------------------------------------------------
 // ReplSession
@@ -132,11 +138,11 @@ inline auto read_drain(int fd, std::string& out) -> bool {
 
 struct ReplSession {
     std::string id;
-    std::string language;   // "python3" | "node" | "bun" | "ruby"
+    std::string language;  // "python3" | "node" | "bun" | "ruby"
     ::pid_t pid{-1};
-    int stdin_fd{-1};       // parent writes here
-    int stdout_fd{-1};        // parent reads here
-    int stderr_fd{-1};       // parent reads here
+    int stdin_fd{-1};   // parent writes here
+    int stdout_fd{-1};  // parent reads here
+    int stderr_fd{-1};  // parent reads here
     std::regex prompt_regex{R"()"};
     std::vector<std::string> history;
     std::chrono::steady_clock::time_point last_used;
@@ -182,13 +188,18 @@ struct ReplSession {
         if (!alive || pid <= 0) return false;
         int status = 0;
         pid_t w = ::waitpid(pid, &status, WNOHANG);
-        if (w > 0) { alive = false; pid = -1; return false; }
+        if (w > 0) {
+            alive = false;
+            pid = -1;
+            return false;
+        }
         return true;
     }
 
     auto sentinel_line() const -> std::string {
         if (language == "python3") return "print(\"__REPL_SENTINEL__9f8e7d__\")\n";
-        if (language == "node" || language == "bun") return ";console.log(\"__REPL_SENTINEL__9f8e7d__\")\n";
+        if (language == "node" || language == "bun")
+            return ";console.log(\"__REPL_SENTINEL__9f8e7d__\")\n";
         if (language == "ruby") return "puts \"__REPL_SENTINEL__9f8e7d__\"\n";
         return std::string("echo ") + std::string(kSentinel) + "\n";
     }
@@ -207,10 +218,9 @@ public:
 
     ~ReplSessionManager() { shutdown_all(); }
 
-    auto create(
-        const std::string& language,
-        const std::optional<std::string>& requested_id = std::nullopt
-    ) -> std::expected<std::string, std::string> {
+    auto create(const std::string& language,
+                const std::optional<std::string>& requested_id = std::nullopt)
+        -> std::expected<std::string, std::string> {
         std::vector<std::string> argv_vec;
         std::regex prompt_re;
         if (language == "python3") {
@@ -229,8 +239,7 @@ public:
             return std::unexpected("unsupported REPL language: " + language);
         }
 
-        std::string id = requested_id.value_or(
-            "repl_" + language + "_" + detail::random_hex());
+        std::string id = requested_id.value_or("repl_" + language + "_" + detail::random_hex());
 
         std::unique_lock map_lock(map_mu_);
         if (sessions_.contains(id)) {
@@ -241,17 +250,24 @@ public:
         int stdout_pipe[2]{-1, -1};
         int stderr_pipe[2]{-1, -1};
         if (::pipe(stdin_pipe) != 0 || ::pipe(stdout_pipe) != 0 || ::pipe(stderr_pipe) != 0) {
-            detail::safe_close(stdin_pipe[0]); detail::safe_close(stdin_pipe[1]);
-            detail::safe_close(stdout_pipe[0]); detail::safe_close(stdout_pipe[1]);
-            detail::safe_close(stderr_pipe[0]); detail::safe_close(stderr_pipe[1]);
-            return std::unexpected(std::string("failed to create pipes for REPL: ") + std::strerror(errno));
+            detail::safe_close(stdin_pipe[0]);
+            detail::safe_close(stdin_pipe[1]);
+            detail::safe_close(stdout_pipe[0]);
+            detail::safe_close(stdout_pipe[1]);
+            detail::safe_close(stderr_pipe[0]);
+            detail::safe_close(stderr_pipe[1]);
+            return std::unexpected(std::string("failed to create pipes for REPL: ") +
+                                   std::strerror(errno));
         }
 
         posix_spawn_file_actions_t fa;
         if (::posix_spawn_file_actions_init(&fa) != 0) {
-            detail::safe_close(stdin_pipe[0]); detail::safe_close(stdin_pipe[1]);
-            detail::safe_close(stdout_pipe[0]); detail::safe_close(stdout_pipe[1]);
-            detail::safe_close(stderr_pipe[0]); detail::safe_close(stderr_pipe[1]);
+            detail::safe_close(stdin_pipe[0]);
+            detail::safe_close(stdin_pipe[1]);
+            detail::safe_close(stdout_pipe[0]);
+            detail::safe_close(stdout_pipe[1]);
+            detail::safe_close(stderr_pipe[0]);
+            detail::safe_close(stderr_pipe[1]);
             return std::unexpected("posix_spawn_file_actions_init failed");
         }
         ::posix_spawn_file_actions_adddup2(&fa, stdin_pipe[0], STDIN_FILENO);
@@ -266,12 +282,13 @@ public:
 
         std::vector<char*> argv_c;
         argv_c.reserve(argv_vec.size() + 1);
-        for (auto& s : argv_vec) argv_c.push_back(s.data());
+        for (auto& s : argv_vec)
+            argv_c.push_back(s.data());
         argv_c.push_back(nullptr);
 
         pid_t pid = 0;
-        int rc = ::posix_spawnp(&pid, argv_vec[0].c_str(), &fa, nullptr,
-                                argv_c.data(), LOOM_ENVIRON);
+        int rc =
+            ::posix_spawnp(&pid, argv_vec[0].c_str(), &fa, nullptr, argv_c.data(), LOOM_ENVIRON);
         ::posix_spawn_file_actions_destroy(&fa);
 
         detail::safe_close(stdin_pipe[0]);
@@ -283,7 +300,7 @@ public:
             detail::safe_close(stdout_pipe[0]);
             detail::safe_close(stderr_pipe[0]);
             return std::unexpected("failed to spawn REPL interpreter '" + argv_vec[0] +
-                "': " + std::strerror(rc));
+                                   "': " + std::strerror(rc));
         }
 
         (void)detail::set_nonblocking(stdout_pipe[0]);
@@ -314,7 +331,8 @@ public:
         pfds[1].fd = stderr_pipe[0];
         pfds[1].events = POLLIN;
         while (steady_clock::now() < quiet_deadline) {
-            const auto wait = duration_cast<milliseconds>(quiet_deadline - steady_clock::now()).count();
+            const auto wait =
+                duration_cast<milliseconds>(quiet_deadline - steady_clock::now()).count();
             int timeout_ms = static_cast<int>(std::clamp<long long>(wait, 0, 50));
             int pr = ::poll(pfds.data(), static_cast<nfds_t>(pfds.size()), timeout_ms);
             if (pr <= 0) break;
@@ -324,11 +342,9 @@ public:
         return id;
     }
 
-    auto eval(
-        const std::string& session_id,
-        const std::string& code,
-        std::chrono::milliseconds timeout = std::chrono::seconds(30)
-    ) -> std::expected<std::pair<std::string, std::string>, std::string> {
+    auto eval(const std::string& session_id, const std::string& code,
+              std::chrono::milliseconds timeout = std::chrono::seconds(30))
+        -> std::expected<std::pair<std::string, std::string>, std::string> {
         using namespace std::chrono;
 
         std::shared_lock map_lock(map_mu_);
@@ -365,7 +381,8 @@ public:
         while (!sentinel_seen) {
             const auto now = steady_clock::now();
             if (now >= deadline) {
-                return std::unexpected("REPL eval timed out after " +
+                return std::unexpected(
+                    "REPL eval timed out after " +
                     std::to_string(duration_cast<milliseconds>(timeout).count()) + "ms");
             }
             const auto wait_ms = duration_cast<milliseconds>(deadline - now).count();
@@ -390,7 +407,8 @@ public:
         if (sentinel_seen) {
             auto pos = out.find(kSentinel);
             if (pos != std::string::npos) {
-                while (pos > 0 && (out[pos - 1] == '\n' || out[pos - 1] == '\r')) --pos;
+                while (pos > 0 && (out[pos - 1] == '\n' || out[pos - 1] == '\r'))
+                    --pos;
                 out.resize(pos);
             }
         }
@@ -399,8 +417,10 @@ public:
         out = detail::strip_ansi(std::move(out));
         err = detail::strip_ansi(std::move(err));
 
-        while (!out.empty() && (out.back() == '\n' || out.back() == '\r')) out.pop_back();
-        while (!err.empty() && (err.back() == '\n' || err.back() == '\r')) err.pop_back();
+        while (!out.empty() && (out.back() == '\n' || out.back() == '\r'))
+            out.pop_back();
+        while (!err.empty() && (err.back() == '\n' || err.back() == '\r'))
+            err.pop_back();
 
         session.history.push_back(code);
         session.last_used = steady_clock::now();
@@ -418,7 +438,8 @@ public:
         }
     }
 
-    auto history(const std::string& session_id, size_t limit = SIZE_MAX) -> std::vector<std::string> {
+    auto history(const std::string& session_id, size_t limit = SIZE_MAX)
+        -> std::vector<std::string> {
         std::shared_lock map_lock(map_mu_);
         auto it = sessions_.find(session_id);
         if (it == sessions_.end()) return {};
@@ -457,13 +478,13 @@ private:
 // --------------------------------------------------------------------------
 
 inline auto create_session(const std::string& language,
-                       const std::optional<std::string>& requested = std::nullopt)
+                           const std::optional<std::string>& requested = std::nullopt)
     -> std::expected<std::string, std::string> {
     return ReplSessionManager::instance().create(language, requested);
 }
 
 inline auto eval_session(const std::string& id, const std::string& code,
-                        std::chrono::milliseconds timeout = std::chrono::seconds(30))
+                         std::chrono::milliseconds timeout = std::chrono::seconds(30))
     -> std::expected<std::pair<std::string, std::string>, std::string> {
     return ReplSessionManager::instance().eval(id, code, timeout);
 }
@@ -502,12 +523,12 @@ inline auto list_sessions() -> std::vector<std::pair<std::string, std::string>> 
         return c.is_num() ? c.as_int() : fallback;
     };
 
-    const std::string action        = str_or("action", "eval");
-    const std::string session_id    = str_or("session_id", "");
-    const std::string language      = str_or("language", "python3");
-    const std::string code          = str_or("code", "");
-    const int64_t     history_limit = int_or("history_limit", 50);
-    const int64_t     timeout_ms    = int_or("timeout_ms", 30000);
+    const std::string action = str_or("action", "eval");
+    const std::string session_id = str_or("session_id", "");
+    const std::string language = str_or("language", "python3");
+    const std::string code = str_or("code", "");
+    const int64_t history_limit = int_or("history_limit", 50);
+    const int64_t timeout_ms = int_or("timeout_ms", 30000);
 
     json::JsonMutDoc build;
     json::JsonMutVal build_root = build.object();
@@ -520,9 +541,8 @@ inline auto list_sessions() -> std::vector<std::pair<std::string, std::string>> 
     };
 
     if (action == "create") {
-        auto id = create_session(language, session_id.empty()
-                                     ? std::nullopt
-                                     : std::optional<std::string>{session_id});
+        auto id = create_session(
+            language, session_id.empty() ? std::nullopt : std::optional<std::string>{session_id});
         if (!id) return std::unexpected(id.error());
         return ok([&](auto& r) {
             r.add("session_id", build.string(*id));
@@ -552,10 +572,11 @@ inline auto list_sessions() -> std::vector<std::pair<std::string, std::string>> 
 
     if (action == "history") {
         if (session_id.empty()) return std::unexpected("REPL history requires session_id");
-        auto entries = history_session(session_id,
-            history_limit > 0 ? static_cast<size_t>(history_limit) : SIZE_MAX);
+        auto entries = history_session(
+            session_id, history_limit > 0 ? static_cast<size_t>(history_limit) : SIZE_MAX);
         auto arr = build.array();
-        for (const auto& entry : entries) arr.append(build.string(entry));
+        for (const auto& entry : entries)
+            arr.append(build.string(entry));
         build_root.add("history", arr);
         build_root.add("ok", build.boolean(true));
         return build.to_string();
@@ -563,8 +584,8 @@ inline auto list_sessions() -> std::vector<std::pair<std::string, std::string>> 
 
     if (action == "eval") {
         if (session_id.empty()) return std::unexpected("REPL eval requires session_id");
-        auto timeout = std::chrono::milliseconds{
-            std::clamp<int64_t>(timeout_ms, 10, 10 * 60 * 1000)};
+        auto timeout =
+            std::chrono::milliseconds{std::clamp<int64_t>(timeout_ms, 10, 10 * 60 * 1000)};
         auto result = eval_session(session_id, code, timeout);
         if (!result) return std::unexpected(result.error());
         auto [out, err] = *std::move(result);
@@ -577,4 +598,4 @@ inline auto list_sessions() -> std::vector<std::pair<std::string, std::string>> 
     return std::unexpected("REPL tool: unknown action: " + action);
 }
 
-} // namespace loom::tools::repl
+}  // namespace loom::tools::repl

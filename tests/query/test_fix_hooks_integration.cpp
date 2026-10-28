@@ -11,7 +11,6 @@
 
 #include <gtest/gtest.h>
 
-
 import std;
 import loom.query.query_engine;
 import loom.tools.tool;
@@ -23,21 +22,20 @@ import loom.types.types;
 namespace fs = std::filesystem;
 namespace he = loom::utils::hooks_execution;
 namespace hr = loom::utils::hooks_registry;
+using hr::CommandHookConfig;
+using hr::HookEventType;
+using hr::HookSource;
+using hr::IndividualHookConfig;
 using loom::core::QueryEngine;
 using loom::core::QueryEngineConfig;
 using loom::core::ToolDefinition;
 using loom::core::ToolRegistry;
 using loom::core::ToolUseBlock;
-using hr::CommandHookConfig;
-using hr::HookEventType;
-using hr::HookSource;
-using hr::IndividualHookConfig;
 
 namespace {
 
 /// Build an IndividualHookConfig for a shell-command hook.
-IndividualHookConfig make_command_hook(HookEventType event,
-                                       std::string command,
+IndividualHookConfig make_command_hook(HookEventType event, std::string command,
                                        std::string shell = "bash",
                                        std::optional<std::string> matcher = std::nullopt) {
     CommandHookConfig cfg;
@@ -57,7 +55,7 @@ fs::path create_hook_test_root() {
     const auto stamp = std::chrono::steady_clock::now().time_since_epoch().count();
     for (std::uint64_t attempt = 0;; ++attempt) {
         auto root = fs::temp_directory_path() /
-            std::format("loom-hooks-integration-test-{}-{}", stamp, attempt);
+                    std::format("loom-hooks-integration-test-{}-{}", stamp, attempt);
         if (fs::create_directory(root)) return root;
     }
 }
@@ -118,7 +116,10 @@ TEST(HooksIntegrationFixture, ConcurrentRootsSurviveIndependentCleanup) {
     const auto second_root = second.get();
     EXPECT_NE(first_root, second_root);
     const auto retained_file = second_root / "owned.txt";
-    { std::ofstream output(retained_file); output << "owned by second fixture"; }
+    {
+        std::ofstream output(retained_file);
+        output << "owned by second fixture";
+    }
     fs::remove_all(first_root);
     EXPECT_TRUE(fs::exists(retained_file));
     std::ifstream input(retained_file);
@@ -135,11 +136,8 @@ TEST(HooksIntegrationFixture, ConcurrentRootsSurviveIndependentCleanup) {
 TEST_F(HooksIntegrationTest, PreToolUseHookBlockingDeniesToolCall) {
     // `false` exits with status 1 on most shells; `exit 2` is the
     // convention a PreToolUse command uses to block. Use a portable form.
-    auto hook = make_command_hook(
-        HookEventType::PreToolUse,
-        "exit 2",
-        "bash",
-        std::optional<std::string>{"tool.name == \"Echo\""});
+    auto hook = make_command_hook(HookEventType::PreToolUse, "exit 2", "bash",
+                                  std::optional<std::string>{"tool.name == \"Echo\""});
 
     he::HookExecutionContext ctx_template;
     ctx_template.session_id = "test-session";
@@ -159,11 +157,8 @@ TEST_F(HooksIntegrationTest, PreToolUseHookBlockingDeniesToolCall) {
 // normally — guards that the engine is not spuriously blocking.
 TEST_F(HooksIntegrationTest, PreToolUseHookNonMatchingDoesNotBlock) {
     // Matcher targets a different tool, so this hook never fires for "Echo".
-    auto hook = make_command_hook(
-        HookEventType::PreToolUse,
-        "exit 2",
-        "bash",
-        std::optional<std::string>{"tool.name == \"Write\""});
+    auto hook = make_command_hook(HookEventType::PreToolUse, "exit 2", "bash",
+                                  std::optional<std::string>{"tool.name == \"Write\""});
 
     he::HookExecutionContext ctx_template;
     engine_->set_user_hooks({hook}, std::move(ctx_template));
@@ -200,8 +195,7 @@ TEST_F(HooksIntegrationTest, NoUserHooksLeavesBehaviorUnchanged) {
         if (tb) {
             EXPECT_EQ(tb->text.find("user PreToolUse hook blocked the tool call"),
                       std::string::npos);
-            EXPECT_EQ(tb->text.find("user PostToolUse hook blocked the result"),
-                      std::string::npos);
+            EXPECT_EQ(tb->text.find("user PostToolUse hook blocked the result"), std::string::npos);
         }
     }
 }
@@ -212,11 +206,8 @@ TEST_F(HooksIntegrationTest, NoUserHooksLeavesBehaviorUnchanged) {
 // blocking calls — the second blocking call must record a second denial,
 // proving the hook list is consulted on every tool call, not just once.
 TEST_F(HooksIntegrationTest, BlockingHookFiresOnEveryToolCall) {
-    auto hook = make_command_hook(
-        HookEventType::PreToolUse,
-        "exit 2",
-        "bash",
-        std::nullopt);  // no matcher -> matches everything
+    auto hook = make_command_hook(HookEventType::PreToolUse, "exit 2", "bash",
+                                  std::nullopt);  // no matcher -> matches everything
 
     he::HookExecutionContext ctx_template;
     engine_->set_user_hooks({hook}, std::move(ctx_template));

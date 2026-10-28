@@ -16,17 +16,17 @@
 /// Yes/No URL confirmation.
 module;
 
-#include <cctype>
-#include <cstdint>
-#include <ctime>
-
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/event.hpp>
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/dom/table.hpp>
 #include <ftxui/screen/color.hpp>
+
+#include <cctype>
 #include <cstddef>
+#include <cstdint>
+#include <ctime>
 
 export module loom.ui.dialogs.mcp_dialogs;
 
@@ -61,7 +61,7 @@ enum class McpTransportType {
 /// Config scope for MCP servers
 enum class McpConfigScope {
     project,
-    local_,   // trailing underscore to avoid keyword clash
+    local_,  // trailing underscore to avoid keyword clash
     user,
     enterprise,
     dynamic,
@@ -69,11 +69,16 @@ enum class McpConfigScope {
 
 [[nodiscard]] inline std::string scope_heading(McpConfigScope scope) {
     switch (scope) {
-        case McpConfigScope::project:   return "Project MCPs";
-        case McpConfigScope::local_:    return "Local MCPs";
-        case McpConfigScope::user:      return "User MCPs";
-        case McpConfigScope::enterprise:return "Enterprise MCPs";
-        case McpConfigScope::dynamic:   return "Built-in MCPs";
+    case McpConfigScope::project:
+        return "Project MCPs";
+    case McpConfigScope::local_:
+        return "Local MCPs";
+    case McpConfigScope::user:
+        return "User MCPs";
+    case McpConfigScope::enterprise:
+        return "Enterprise MCPs";
+    case McpConfigScope::dynamic:
+        return "Built-in MCPs";
     }
     return "MCPs";
 }
@@ -104,10 +109,10 @@ struct AgentMcpServerInfo {
 };
 
 enum class McpViewType {
-    list,        // Server list panel
-    server,      // Single server detail
-    tool_list,   // Tools of a server
-    tool_detail, // Single tool detail
+    list,         // Server list panel
+    server,       // Single server detail
+    tool_list,    // Tools of a server
+    tool_detail,  // Single tool detail
 };
 
 enum class CommandResultDisplay {
@@ -130,9 +135,9 @@ enum class ElicitFieldType {
     number,
     boolean_,
     enum_select,
-    multi_select,   // → CheckboxGrid bonus
-    date_time,      // bonus
-    url,            // bonus → braille resolving spinner
+    multi_select,  // → CheckboxGrid bonus
+    date_time,     // bonus
+    url,           // bonus → braille resolving spinner
 };
 
 struct ElicitFieldSchema {
@@ -146,13 +151,13 @@ struct ElicitFieldSchema {
     // For multi_select: optional columns hint (CheckboxGrid)
     int grid_columns = 3;
     // For boolean: labels
-    std::string bool_true_label  = "Yes";
+    std::string bool_true_label = "Yes";
     std::string bool_false_label = "No";
     // Defaults
-    std::optional<std::string>   default_string;
-    std::optional<int64_t>       default_int;
-    std::optional<double>        default_number;
-    std::optional<bool>          default_bool;
+    std::optional<std::string> default_string;
+    std::optional<int64_t> default_int;
+    std::optional<double> default_number;
+    std::optional<bool> default_bool;
     std::optional<std::vector<std::string>> default_multi;
     // URL resolver hint (when true, renderer shows a braille spinner
     // as-if the URL were being resolved, while the consumer actually
@@ -164,16 +169,10 @@ struct ElicitFieldSchema {
 // Value variant: a single field value in values_buffer/content.
 // ----------------------------------------------------------------
 struct ElicitNull {};
+
 using ElicitMulti = std::vector<std::string>;
 
-using ElicitValue = std::variant<
-    ElicitNull,
-    std::string,
-    int64_t,
-    double,
-    bool,
-    ElicitMulti
->;
+using ElicitValue = std::variant<ElicitNull, std::string, int64_t, double, bool, ElicitMulti>;
 
 [[nodiscard]] inline bool elicit_is_null(const ElicitValue& v) {
     return std::holds_alternative<ElicitNull>(v);
@@ -182,14 +181,19 @@ using ElicitValue = std::variant<
 [[nodiscard]] inline std::string elicit_to_string(const ElicitValue& v) {
     struct V {
         std::string operator()(ElicitNull) const { return ""; }
+
         std::string operator()(const std::string& s) const { return s; }
+
         std::string operator()(int64_t i) const { return std::to_string(i); }
+
         std::string operator()(double d) const {
             std::ostringstream os;
             os << std::setprecision(6) << d;
             return os.str();
         }
+
         std::string operator()(bool b) const { return b ? "true" : "false"; }
+
         std::string operator()(const ElicitMulti& m) const {
             std::string out;
             for (size_t i = 0; i < m.size(); ++i) {
@@ -199,6 +203,7 @@ using ElicitValue = std::variant<
             return out;
         }
     };
+
     return std::visit(V{}, v);
 }
 
@@ -224,7 +229,10 @@ struct ElicitationPayload {
     /// Optional JSON schema (opaque — renderer only checks has_value to
     /// decide FORM vs stub mode).  Consumers that need to parse it can
     /// use loom.serdes.json on the serialized string externally.
-    struct SchemaOpaque { std::string raw_json; };
+    struct SchemaOpaque {
+        std::string raw_json;
+    };
+
     std::optional<SchemaOpaque> schema;
 
     /// Per-field live values (mutated by the interactive form).
@@ -264,26 +272,28 @@ struct ElicitationPayload {
         for (const auto& f : fields) {
             if (values_buffer.count(f.name)) continue;
             switch (f.type) {
-                case ElicitFieldType::text:
-                case ElicitFieldType::url:
-                    if (f.default_string) values_buffer[f.name] = *f.default_string;
-                    break;
-                case ElicitFieldType::number:
-                    if (f.default_number)       values_buffer[f.name] = *f.default_number;
-                    else if (f.default_int)     values_buffer[f.name] = *f.default_int;
-                    break;
-                case ElicitFieldType::boolean_:
-                    if (f.default_bool)         values_buffer[f.name] = *f.default_bool;
-                    break;
-                case ElicitFieldType::enum_select:
-                    if (f.default_string)       values_buffer[f.name] = *f.default_string;
-                    break;
-                case ElicitFieldType::multi_select:
-                    if (f.default_multi)        values_buffer[f.name] = *f.default_multi;
-                    break;
-                case ElicitFieldType::date_time:
-                    if (f.default_string)       values_buffer[f.name] = *f.default_string;
-                    break;
+            case ElicitFieldType::text:
+            case ElicitFieldType::url:
+                if (f.default_string) values_buffer[f.name] = *f.default_string;
+                break;
+            case ElicitFieldType::number:
+                if (f.default_number)
+                    values_buffer[f.name] = *f.default_number;
+                else if (f.default_int)
+                    values_buffer[f.name] = *f.default_int;
+                break;
+            case ElicitFieldType::boolean_:
+                if (f.default_bool) values_buffer[f.name] = *f.default_bool;
+                break;
+            case ElicitFieldType::enum_select:
+                if (f.default_string) values_buffer[f.name] = *f.default_string;
+                break;
+            case ElicitFieldType::multi_select:
+                if (f.default_multi) values_buffer[f.name] = *f.default_multi;
+                break;
+            case ElicitFieldType::date_time:
+                if (f.default_string) values_buffer[f.name] = *f.default_string;
+                break;
             }
         }
     }
@@ -293,11 +303,11 @@ struct ElicitationPayload {
 // Rendered dialog action focus slot IDs (when focused_field < 0)
 // ============================================================
 namespace ElicitFocus {
-    constexpr int kOnButtons = -1;     // generic: on the button row
-    constexpr int kAccept    = -2;
-    constexpr int kDecline   = -3;
-    constexpr int kCancel    = -4;
-} // namespace ElicitFocus
+constexpr int kOnButtons = -1;  // generic: on the button row
+constexpr int kAccept = -2;
+constexpr int kDecline = -3;
+constexpr int kCancel = -4;
+}  // namespace ElicitFocus
 
 // ============================================================
 // Shared rendering helpers
@@ -306,10 +316,14 @@ namespace ElicitFocus {
 [[nodiscard]] inline Element RenderConnectionState(McpConnectionState state) {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
     switch (state) {
-        case McpConnectionState::connected:    return text(std::string{loom::ui::design::figures::kTick}) | color(pal.success);
-        case McpConnectionState::connecting:   return text(std::string{loom::ui::design::figures::kRefreshArrow}) | color(pal.warning);
-        case McpConnectionState::disconnected: return text(std::string{loom::ui::design::figures::kCircle}) | color(pal.muted);
-        case McpConnectionState::error:        return text(std::string{loom::ui::design::figures::kCross}) | color(pal.danger);
+    case McpConnectionState::connected:
+        return text(std::string{loom::ui::design::figures::kTick}) | color(pal.success);
+    case McpConnectionState::connecting:
+        return text(std::string{loom::ui::design::figures::kRefreshArrow}) | color(pal.warning);
+    case McpConnectionState::disconnected:
+        return text(std::string{loom::ui::design::figures::kCircle}) | color(pal.muted);
+    case McpConnectionState::error:
+        return text(std::string{loom::ui::design::figures::kCross}) | color(pal.danger);
     }
     return text("?");
 }
@@ -317,24 +331,24 @@ namespace ElicitFocus {
 [[nodiscard]] inline Element RenderServerListItem(const McpServerInfo& s, bool selected) {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
     auto state_el = RenderConnectionState(s.state);
-    auto name_el  = text(" " + s.name) | (selected ? bold : nothing);
+    auto name_el = text(" " + s.name) | (selected ? bold : nothing);
     auto tools_el = text(std::format(" ({} tools)", s.tool_count)) | dim;
     auto line = hbox({text(" "), state_el, name_el, tools_el, filler()});
     if (selected) line = line | bgcolor(pal.surface_tint_2);
     return line;
 }
 
-[[nodiscard]] inline Element RenderServerListPanel(
-    const std::vector<McpServerInfo>& servers,
-    const std::vector<AgentMcpServerInfo>& agent_servers,
-    int selected)
-{
+[[nodiscard]] inline Element
+RenderServerListPanel(const std::vector<McpServerInfo>& servers,
+                      const std::vector<AgentMcpServerInfo>& agent_servers, int selected) {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
     Elements items;
     int idx = 0;
     const std::vector<McpConfigScope> scope_order = {
-        McpConfigScope::project, McpConfigScope::local_,
-        McpConfigScope::user, McpConfigScope::enterprise,
+        McpConfigScope::project,
+        McpConfigScope::local_,
+        McpConfigScope::user,
+        McpConfigScope::enterprise,
     };
     for (auto scope : scope_order) {
         bool has_any = false;
@@ -355,7 +369,8 @@ namespace ElicitFocus {
         for (const auto& as : agent_servers) {
             auto state_el = RenderConnectionState(as.state);
             auto line = hbox({
-                text(" "), state_el,
+                text(" "),
+                state_el,
                 text(" " + as.server_name) | (idx == selected ? bold : nothing),
                 text(" (via " + as.agent_name + ")") | dim,
                 filler(),
@@ -381,9 +396,7 @@ namespace ElicitFocus {
         const auto& pal = *loom::ui::design::theme::current_theme().palette;
         const auto& tool = srv.tools[i];
         bool sel = (i == selected_tool);
-        auto en  = tool.enabled
-            ? text(" ✓ ") | color(pal.success)
-            : text(" ✗ ") | color(pal.danger);
+        auto en = tool.enabled ? text(" ✓ ") | color(pal.success) : text(" ✗ ") | color(pal.danger);
         auto name = text(tool.name) | (sel ? bold : nothing);
         auto line = hbox({en, name, filler()});
         if (sel) line = line | bgcolor(pal.surface_tint_2);
@@ -395,67 +408,63 @@ namespace ElicitFocus {
 [[nodiscard]] inline Element RenderToolDetailView(const McpTool& tool) {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
     return vbox({
-        hbox({text(" " + std::string{loom::ui::design::figures::kDiamond} + " ") | color(pal.info), text(tool.name) | bold}),
+        hbox({text(" " + std::string{loom::ui::design::figures::kDiamond} + " ") | color(pal.info),
+              text(tool.name) | bold}),
         separator(),
         text(""),
         hbox({text("  Server: "), text(tool.server_name) | dim}),
-        hbox({text("  Status: "),
-              text(tool.enabled ? "Enabled" : "Disabled")
-              | color(tool.enabled ? pal.success : pal.danger)}),
+        hbox({text("  Status: "), text(tool.enabled ? "Enabled" : "Disabled") |
+                                      color(tool.enabled ? pal.success : pal.danger)}),
         text(""),
         text("  Description:") | bold,
         paragraph("  " + tool.description) | dim,
     });
 }
 
-[[nodiscard]] inline Element RenderMcpSettings(
-    McpViewType view,
-    const std::vector<McpServerInfo>& servers,
-    const std::vector<AgentMcpServerInfo>& agent_servers,
-    int selected,
-    std::optional<int> active_server_idx)
-{
+[[nodiscard]] inline Element RenderMcpSettings(McpViewType view,
+                                               const std::vector<McpServerInfo>& servers,
+                                               const std::vector<AgentMcpServerInfo>& agent_servers,
+                                               int selected, std::optional<int> active_server_idx) {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
     Element content;
     switch (view) {
-        case McpViewType::list:
-            content = RenderServerListPanel(servers, agent_servers, selected);
-            break;
-        case McpViewType::tool_list:
-            if (active_server_idx &&
-                *active_server_idx < static_cast<int>(servers.size()))
-            {
-                content = RenderToolListView(servers[*active_server_idx], selected);
+    case McpViewType::list:
+        content = RenderServerListPanel(servers, agent_servers, selected);
+        break;
+    case McpViewType::tool_list:
+        if (active_server_idx && *active_server_idx < static_cast<int>(servers.size())) {
+            content = RenderToolListView(servers[*active_server_idx], selected);
+        } else {
+            content = text("  No server selected") | dim;
+        }
+        break;
+    case McpViewType::tool_detail:
+        if (active_server_idx && *active_server_idx < static_cast<int>(servers.size())) {
+            const auto& srv = servers[*active_server_idx];
+            if (selected < static_cast<int>(srv.tools.size())) {
+                content = RenderToolDetailView(srv.tools[selected]);
             } else {
-                content = text("  No server selected") | dim;
+                content = text("  Tool not found") | dim;
             }
-            break;
-        case McpViewType::tool_detail:
-            if (active_server_idx &&
-                *active_server_idx < static_cast<int>(servers.size()))
-            {
-                const auto& srv = servers[*active_server_idx];
-                if (selected < static_cast<int>(srv.tools.size())) {
-                    content = RenderToolDetailView(srv.tools[selected]);
-                } else {
-                    content = text("  Tool not found") | dim;
-                }
-            } else {
-                content = text("  No server selected") | dim;
-            }
-            break;
-        case McpViewType::server:
-            content = text("  Server detail view") | dim;
-            break;
+        } else {
+            content = text("  No server selected") | dim;
+        }
+        break;
+    case McpViewType::server:
+        content = text("  Server detail view") | dim;
+        break;
     }
     auto hints = hbox({
-        text(" Enter") | color(pal.info), text(": select  "),
-        text("Esc")    | color(pal.info), text(": back  "),
-        text("r")      | color(pal.info), text(": reconnect"),
-    }) | dim;
+                     text(" Enter") | color(pal.info),
+                     text(": select  "),
+                     text("Esc") | color(pal.info),
+                     text(": back  "),
+                     text("r") | color(pal.info),
+                     text(": reconnect"),
+                 }) |
+                 dim;
     auto body = vbox({content | flex, separator(), hints});
-    return window(text(" MCP Servers ") | bold | color(pal.info), body)
-         | color(pal.info);
+    return window(text(" MCP Servers ") | bold | color(pal.info), body) | color(pal.info);
 }
 
 // ============================================================
@@ -465,8 +474,9 @@ namespace ElicitFocus {
 [[nodiscard]] inline std::string BrailleSpinnerFrame(std::uint64_t tick) {
     if (loom::ui::design::theme::current_theme().a11y.reduced_motion)
         return std::string(loom::ui::design::figures::kBullet);
-    return std::string{loom::ui::design::figures::kSpinnerFrames[
-        tick % loom::ui::design::figures::kSpinnerFrameCount]};
+    return std::string{
+        loom::ui::design::figures::kSpinnerFrames[tick %
+                                                  loom::ui::design::figures::kSpinnerFrameCount]};
 }
 
 // ----------------------------------------------------------------
@@ -480,61 +490,53 @@ struct ElicitFieldRendered {
 };
 
 template <typename FocusFn>
-[[nodiscard]] inline ElicitFieldRendered RenderElicitField(
-    const ElicitFieldSchema& field,
-    const ElicitValue& value,
-    bool focused,
-    FocusFn&& focused_decorator)
-{
+[[nodiscard]] inline ElicitFieldRendered RenderElicitField(const ElicitFieldSchema& field,
+                                                           const ElicitValue& value, bool focused,
+                                                           FocusFn&& focused_decorator) {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
     Elements row;
-    auto label_txt = text("  " + field.title + (field.required ? " *" : "") + ": ")
-                   | (field.required ? bold : nothing);
+    auto label_txt = text("  " + field.title + (field.required ? " *" : "") + ": ") |
+                     (field.required ? bold : nothing);
     Element val_el;
     switch (field.type) {
-        case ElicitFieldType::text:
-        case ElicitFieldType::url:
-        case ElicitFieldType::number:
-        case ElicitFieldType::date_time: {
-            auto s = elicit_display(value);
-            val_el = text(s) | (elicit_is_null(value) ? dim : nothing);
-            break;
-        }
-        case ElicitFieldType::boolean_: {
-            bool b = std::holds_alternative<bool>(value) && std::get<bool>(value);
-            val_el = hbox({
-                text(b ? "[x]" : "[ ]")
-                    | color(b ? pal.success : pal.muted)
-                    | bold,
-                text(" " + (b ? field.bool_true_label
-                              : field.bool_false_label)) | dim,
-            });
-            break;
-        }
-        case ElicitFieldType::enum_select: {
-            auto s = elicit_display(value);
-            val_el = hbox({
-                text("▼ ") | color(pal.info),
-                text(s.empty() ? "(select one)" : s)
-                    | (s.empty() ? dim : nothing),
-            });
-            break;
-        }
-        case ElicitFieldType::multi_select: {
-            if (auto* m = std::get_if<ElicitMulti>(&value); m && !m->empty()) {
-                Elements chips;
-                for (size_t i = 0; i < m->size(); ++i) {
-                    const auto& pal = *loom::ui::design::theme::current_theme().palette;
-                    if (i) chips.push_back(text(", "));
-                    chips.push_back(text((*m)[i])
-                                     | color(pal.info) | inverted);
-                }
-                val_el = hbox(chips);
-            } else {
-                val_el = text("(none selected)") | dim;
+    case ElicitFieldType::text:
+    case ElicitFieldType::url:
+    case ElicitFieldType::number:
+    case ElicitFieldType::date_time: {
+        auto s = elicit_display(value);
+        val_el = text(s) | (elicit_is_null(value) ? dim : nothing);
+        break;
+    }
+    case ElicitFieldType::boolean_: {
+        bool b = std::holds_alternative<bool>(value) && std::get<bool>(value);
+        val_el = hbox({
+            text(b ? "[x]" : "[ ]") | color(b ? pal.success : pal.muted) | bold,
+            text(" " + (b ? field.bool_true_label : field.bool_false_label)) | dim,
+        });
+        break;
+    }
+    case ElicitFieldType::enum_select: {
+        auto s = elicit_display(value);
+        val_el = hbox({
+            text("▼ ") | color(pal.info),
+            text(s.empty() ? "(select one)" : s) | (s.empty() ? dim : nothing),
+        });
+        break;
+    }
+    case ElicitFieldType::multi_select: {
+        if (auto* m = std::get_if<ElicitMulti>(&value); m && !m->empty()) {
+            Elements chips;
+            for (size_t i = 0; i < m->size(); ++i) {
+                const auto& pal = *loom::ui::design::theme::current_theme().palette;
+                if (i) chips.push_back(text(", "));
+                chips.push_back(text((*m)[i]) | color(pal.info) | inverted);
             }
-            break;
+            val_el = hbox(chips);
+        } else {
+            val_el = text("(none selected)") | dim;
         }
+        break;
+    }
     }
     if (focused) val_el = focused_decorator(std::move(val_el));
     row.push_back(hbox({label_txt, val_el}));
@@ -552,15 +554,11 @@ template <typename FocusFn>
 // Form mode renderer (called when schema is present, or fields list
 // is non-empty in the legacy path for which we synthesize `schema`).
 // ----------------------------------------------------------------
-[[nodiscard]] inline Element RenderElicitationForm(
-    const ElicitationPayload& p,
-    int button_focus,            // one of ElicitFocus::k*
-    bool enum_popup_open,
-    int enum_popup_selected,
-    const std::vector<int>& enum_typeahead_hits,
-    std::uint64_t spinner_tick,
-    bool url_resolving)
-{
+[[nodiscard]] inline Element RenderElicitationForm(const ElicitationPayload& p,
+                                                   int button_focus,  // one of ElicitFocus::k*
+                                                   bool enum_popup_open, int enum_popup_selected,
+                                                   const std::vector<int>& enum_typeahead_hits,
+                                                   std::uint64_t spinner_tick, bool url_resolving) {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
     Elements items;
     if (!p.server_name.empty()) {
@@ -594,18 +592,16 @@ template <typename FocusFn>
         const auto& field = p.fields[i];
         const bool focused = (p.focused_field == i);
         ElicitValue val = ElicitNull{};
-        if (auto it = p.values_buffer.find(field.name);
-            it != p.values_buffer.end()) val = it->second;
-        auto row = RenderElicitField(field, val, focused,
-            [](Element e) {
-                const auto& pal = *loom::ui::design::theme::current_theme().palette;
-                return e | inverted | color(pal.info);
-            });
+        if (auto it = p.values_buffer.find(field.name); it != p.values_buffer.end())
+            val = it->second;
+        auto row = RenderElicitField(field, val, focused, [](Element e) {
+            const auto& pal = *loom::ui::design::theme::current_theme().palette;
+            return e | inverted | color(pal.info);
+        });
         items.push_back(std::move(row.body));
         // Per-field error line (if any)
         if (auto eit = p.validation_errors.find(field.name);
-            eit != p.validation_errors.end() && !eit->second.empty())
-        {
+            eit != p.validation_errors.end() && !eit->second.empty()) {
             const auto& pal = *loom::ui::design::theme::current_theme().palette;
             items.push_back(hbox({
                 text("    ! ") | color(pal.danger) | bold,
@@ -620,10 +616,9 @@ template <typename FocusFn>
             for (int ei : enum_typeahead_hits) {
                 if (ei < 0 || ei >= static_cast<int>(field.enum_values.size())) continue;
                 const bool sel = (local_idx == enum_popup_selected);
-                auto mark = text(sel ? " > " : "   ")
-                          | color(sel ? pal.warning : pal.muted);
-                auto label = text(field.enum_values[ei])
-                           | (sel ? (bold | color(pal.warning)) : nothing);
+                auto mark = text(sel ? " > " : "   ") | color(sel ? pal.warning : pal.muted);
+                auto label =
+                    text(field.enum_values[ei]) | (sel ? (bold | color(pal.warning)) : nothing);
                 popup_rows.push_back(hbox({mark, label}));
                 ++local_idx;
                 if (local_idx > 8) break;
@@ -673,14 +668,15 @@ template <typename FocusFn>
         Element body = text(std::string(label)) | color(c);
         if (hot) body = body | inverted | bold;
         return hbox({
-            text(" "),
-            body,
-            text(" "),
-        }) | border | color(c);
+                   text(" "),
+                   body,
+                   text(" "),
+               }) |
+               border | color(c);
     };
-    auto accept_btn = mk_btn("Approve ↵",   pal.success,  ElicitFocus::kAccept);
-    auto decline_btn= mk_btn("Decline D",   pal.danger,    ElicitFocus::kDecline);
-    auto cancel_btn = mk_btn("Cancel Esc",  pal.muted, ElicitFocus::kCancel);
+    auto accept_btn = mk_btn("Approve ↵", pal.success, ElicitFocus::kAccept);
+    auto decline_btn = mk_btn("Decline D", pal.danger, ElicitFocus::kDecline);
+    auto cancel_btn = mk_btn("Cancel Esc", pal.muted, ElicitFocus::kCancel);
     items.push_back(hbox({
         filler(),
         accept_btn,
@@ -693,28 +689,30 @@ template <typename FocusFn>
     // Hints
     items.push_back(text(""));
     items.push_back(hbox({
-        text(" Tab")    | color(pal.info), text(": next field  "),
-        text("S-Tab")   | color(pal.info), text(": prev  "),
-        text("Space")   | color(pal.info), text(": bool/select  "),
-        text("Enter")   | color(pal.info), text(": enum open / submit  "),
-    }) | dim);
+                        text(" Tab") | color(pal.info),
+                        text(": next field  "),
+                        text("S-Tab") | color(pal.info),
+                        text(": prev  "),
+                        text("Space") | color(pal.info),
+                        text(": bool/select  "),
+                        text("Enter") | color(pal.info),
+                        text(": enum open / submit  "),
+                    }) |
+                    dim);
 
-    auto body  = vbox(items);
-    auto title = std::string(" ") + (p.server_name.empty() ? "MCP" : p.server_name)
-               + " — Input Required ";
-    return window(text(title) | bold | color(pal.warning), body)
-         | color(pal.warning) | size(WIDTH, LESS_THAN, 80);
+    auto body = vbox(items);
+    auto title =
+        std::string(" ") + (p.server_name.empty() ? "MCP" : p.server_name) + " — Input Required ";
+    return window(text(title) | bold | color(pal.warning), body) | color(pal.warning) |
+           size(WIDTH, LESS_THAN, 80);
 }
 
 // ----------------------------------------------------------------
 // Stub-mode renderer (no schema, no fields → generic URL / YesNo).
 // ----------------------------------------------------------------
-[[nodiscard]] inline Element RenderElicitationStub(
-    const ElicitationPayload& p,
-    bool approved_highlight,
-    std::uint64_t spinner_tick,
-    bool url_resolving)
-{
+[[nodiscard]] inline Element RenderElicitationStub(const ElicitationPayload& p,
+                                                   bool approved_highlight,
+                                                   std::uint64_t spinner_tick, bool url_resolving) {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
     Elements items;
     items.push_back(hbox({
@@ -741,10 +739,11 @@ template <typename FocusFn>
         Element body = text(std::string(label)) | color(c);
         if (hot) body = body | inverted | bold;
         return hbox({
-            text(" "),
-            body,
-            text(" "),
-        }) | border | color(c);
+                   text(" "),
+                   body,
+                   text(" "),
+               }) |
+               border | color(c);
     };
     items.push_back(hbox({
         filler(),
@@ -754,27 +753,22 @@ template <typename FocusFn>
         filler(),
     }));
     return window(text(" MCP Elicitation ") | bold | color(pal.info),
-                  vbox(items) | size(WIDTH, GREATER_THAN, 44))
-         | color(pal.info);
+                  vbox(items) | size(WIDTH, GREATER_THAN, 44)) |
+           color(pal.info);
 }
 
 /// Dispatch: form vs stub (the single public renderer that takes the
 /// ElicitationPayload).
-[[nodiscard]] inline Element RenderElicitationPayload(
-    const ElicitationPayload& p,
-    int button_focus = ElicitFocus::kOnButtons,
-    bool enum_popup_open = false,
-    int enum_popup_selected = 0,
-    const std::vector<int>& enum_typeahead_hits = {},
-    std::uint64_t spinner_tick = 0,
-    bool url_resolving = false,
-    bool stub_approve_focus = true)
-{
+[[nodiscard]] inline Element
+RenderElicitationPayload(const ElicitationPayload& p, int button_focus = ElicitFocus::kOnButtons,
+                         bool enum_popup_open = false, int enum_popup_selected = 0,
+                         const std::vector<int>& enum_typeahead_hits = {},
+                         std::uint64_t spinner_tick = 0, bool url_resolving = false,
+                         bool stub_approve_focus = true) {
     const bool form_mode = p.schema.has_value() || !p.fields.empty();
     if (form_mode) {
-        return RenderElicitationForm(p, button_focus, enum_popup_open,
-                                     enum_popup_selected, enum_typeahead_hits,
-                                     spinner_tick, url_resolving);
+        return RenderElicitationForm(p, button_focus, enum_popup_open, enum_popup_selected,
+                                     enum_typeahead_hits, spinner_tick, url_resolving);
     }
     return RenderElicitationStub(p, stub_approve_focus, spinner_tick, url_resolving);
 }
@@ -787,24 +781,30 @@ template <typename FocusFn>
 // Helper: enum typeahead filter (800ms coalescing).
 // Returns vector of enum value indices that have the query as a
 // case-insensitive substring, prioritising prefix matches.
-inline std::vector<int> EnumTypeahead(const ElicitFieldSchema& field,
-                                       std::string_view query)
-{
+inline std::vector<int> EnumTypeahead(const ElicitFieldSchema& field, std::string_view query) {
     std::vector<int> hits, suffix;
     hits.reserve(field.enum_values.size());
     std::string ql;
     ql.reserve(query.size());
-    for (char c : query) ql.push_back(char(std::tolower((unsigned char)c)));
+    for (char c : query)
+        ql.push_back(char(std::tolower((unsigned char)c)));
 
     for (int i = 0; i < static_cast<int>(field.enum_values.size()); ++i) {
         const auto& v = field.enum_values[i];
         std::string vl;
         vl.reserve(v.size());
-        for (char c : v) vl.push_back(char(std::tolower((unsigned char)c)));
-        if (ql.empty()) { hits.push_back(i); continue; }
+        for (char c : v)
+            vl.push_back(char(std::tolower((unsigned char)c)));
+        if (ql.empty()) {
+            hits.push_back(i);
+            continue;
+        }
         auto pos = vl.find(ql);
         if (pos == std::string::npos) continue;
-        if (pos == 0) hits.push_back(i); else suffix.push_back(i);
+        if (pos == 0)
+            hits.push_back(i);
+        else
+            suffix.push_back(i);
     }
     hits.insert(hits.end(), suffix.begin(), suffix.end());
     return hits;
@@ -822,44 +822,48 @@ inline std::vector<int> EnumTypeahead(const ElicitFieldSchema& field,
         int selected = 0;
         std::optional<int> active_server_idx;
     };
+
     auto s = std::make_shared<State>();
     s->props = std::move(props);
     return Renderer([s] {
-        return RenderMcpSettings(s->view, s->servers, s->agent_servers,
-                                 s->selected, s->active_server_idx);
-    }) | CatchEvent([s](Event event) -> bool {
-        if (event == Event::ArrowUp || event == Event::Character('k')) {
-            s->selected = std::max(0, s->selected - 1); return true;
-        }
-        if (event == Event::ArrowDown || event == Event::Character('j')) {
-            s->selected++; return true;
-        }
-        if (event == Event::Return) {
-            if (s->view == McpViewType::list) {
-                s->active_server_idx = s->selected;
-                s->view = McpViewType::tool_list;
-                s->selected = 0;
-            } else if (s->view == McpViewType::tool_list) {
-                s->view = McpViewType::tool_detail;
-            }
-            return true;
-        }
-        if (event == Event::Escape) {
-            if (s->view == McpViewType::tool_detail) {
-                s->view = McpViewType::tool_list;
-            } else if (s->view == McpViewType::tool_list) {
-                s->view = McpViewType::list;
-                s->selected = s->active_server_idx.value_or(0);
-                s->active_server_idx = std::nullopt;
-            } else {
-                if (s->props.on_complete)
-                    s->props.on_complete(std::nullopt, CommandResultDisplay::skip);
-            }
-            return true;
-        }
-        if (event == Event::Character('r')) return true; // reconnect hook
-        return false;
-    });
+               return RenderMcpSettings(s->view, s->servers, s->agent_servers, s->selected,
+                                        s->active_server_idx);
+           }) |
+           CatchEvent([s](Event event) -> bool {
+               if (event == Event::ArrowUp || event == Event::Character('k')) {
+                   s->selected = std::max(0, s->selected - 1);
+                   return true;
+               }
+               if (event == Event::ArrowDown || event == Event::Character('j')) {
+                   s->selected++;
+                   return true;
+               }
+               if (event == Event::Return) {
+                   if (s->view == McpViewType::list) {
+                       s->active_server_idx = s->selected;
+                       s->view = McpViewType::tool_list;
+                       s->selected = 0;
+                   } else if (s->view == McpViewType::tool_list) {
+                       s->view = McpViewType::tool_detail;
+                   }
+                   return true;
+               }
+               if (event == Event::Escape) {
+                   if (s->view == McpViewType::tool_detail) {
+                       s->view = McpViewType::tool_list;
+                   } else if (s->view == McpViewType::tool_list) {
+                       s->view = McpViewType::list;
+                       s->selected = s->active_server_idx.value_or(0);
+                       s->active_server_idx = std::nullopt;
+                   } else {
+                       if (s->props.on_complete)
+                           s->props.on_complete(std::nullopt, CommandResultDisplay::skip);
+                   }
+                   return true;
+               }
+               if (event == Event::Character('r')) return true;  // reconnect hook
+               return false;
+           });
 }
 
 // ----------------------------------------------------------------
@@ -869,10 +873,10 @@ struct ElicitationInteractiveState {
     ElicitationPayload payload;
 
     // UI runtime --------------------------------------------------------
-    int button_focus = ElicitFocus::kAccept; // used when focused_field is on buttons
+    int button_focus = ElicitFocus::kAccept;  // used when focused_field is on buttons
     // enum state
     bool enum_popup_open = false;
-    int  enum_popup_selected = 0;
+    int enum_popup_selected = 0;
     std::string enum_typeahead_query;
     std::chrono::steady_clock::time_point typeahead_last_keystroke{};
     std::vector<int> enum_typeahead_cache;
@@ -881,14 +885,13 @@ struct ElicitationInteractiveState {
     // of re-opening the same popup.  Cleared on any other keypress.
     bool enum_just_committed = false;
     // spinner / animation
-    std::chrono::steady_clock::time_point start_time =
-        std::chrono::steady_clock::now();
-    bool url_resolving = true; // starts true; transitions externally or via timeout
+    std::chrono::steady_clock::time_point start_time = std::chrono::steady_clock::now();
+    bool url_resolving = true;  // starts true; transitions externally or via timeout
 
     // Boolean oneshot guards
     bool submitted = false;
     bool cancelled = false;
-    bool declined  = false;
+    bool declined = false;
 
     // Multi-select checkbox navigation (col within focused multi field)
     int multi_selected_col = 0;
@@ -898,20 +901,28 @@ struct ElicitationInteractiveState {
 
     void fire_response(std::string action) {
         if (submitted || cancelled || declined) return;
-        if (action == "approve") submitted = true;
-        else if (action == "decline") declined = true;
-        else cancelled = true;
+        if (action == "approve")
+            submitted = true;
+        else if (action == "decline")
+            declined = true;
+        else
+            cancelled = true;
         ElicitationResult r;
-        r.action  = std::move(action);
+        r.action = std::move(action);
         r.content = payload.values_buffer;
         if (payload.on_response) payload.on_response(std::move(r));
     }
+
     void fire_cancel_signal() {
-        if (payload.on_cancel) { payload.on_cancel(); return; }
+        if (payload.on_cancel) {
+            payload.on_cancel();
+            return;
+        }
         fire_response("cancel");
     }
 
     int field_count() const { return static_cast<int>(payload.fields.size()); }
+
     const ElicitFieldSchema* focused_field_schema() const {
         if (payload.focused_field < 0) return nullptr;
         if (payload.focused_field >= field_count()) return nullptr;
@@ -925,18 +936,28 @@ struct ElicitationInteractiveState {
         // slots: [fields] + Accept + Decline + Cancel
         const int n_slots = field_count() + 3;
         auto slot_to_focus = [&](int s) {
-            if (s < field_count()) { payload.focused_field = s; button_focus = 0; return; }
+            if (s < field_count()) {
+                payload.focused_field = s;
+                button_focus = 0;
+                return;
+            }
             payload.focused_field = -1;
             switch (s - field_count()) {
-                case 0: button_focus = ElicitFocus::kAccept;  break;
-                case 1: button_focus = ElicitFocus::kDecline; break;
-                default:button_focus = ElicitFocus::kCancel;  break;
+            case 0:
+                button_focus = ElicitFocus::kAccept;
+                break;
+            case 1:
+                button_focus = ElicitFocus::kDecline;
+                break;
+            default:
+                button_focus = ElicitFocus::kCancel;
+                break;
             }
         };
         auto focus_to_slot = [&]() -> int {
             if (payload.focused_field >= 0 && payload.focused_field < field_count())
                 return payload.focused_field;
-            if (button_focus == ElicitFocus::kAccept)  return field_count();
+            if (button_focus == ElicitFocus::kAccept) return field_count();
             if (button_focus == ElicitFocus::kDecline) return field_count() + 1;
             return field_count() + 2;
         };
@@ -974,7 +995,10 @@ struct ElicitationInteractiveState {
             cur = *p;
         }
         auto it = std::find(cur.begin(), cur.end(), label);
-        if (it != cur.end()) cur.erase(it); else cur.push_back(label);
+        if (it != cur.end())
+            cur.erase(it);
+        else
+            cur.push_back(label);
         payload.values_buffer[f->name] = std::move(cur);
     }
 
@@ -984,45 +1008,49 @@ struct ElicitationInteractiveState {
         const auto* f = focused_field_schema();
         if (!f) return;
         switch (f->type) {
-            case ElicitFieldType::text:
-            case ElicitFieldType::url: {
-                std::string cur;
-                if (auto* s = std::get_if<std::string>(&payload.values_buffer[f->name])) cur = *s;
-                cur.push_back(ch);
-                payload.values_buffer[f->name] = std::move(cur);
-                break;
+        case ElicitFieldType::text:
+        case ElicitFieldType::url: {
+            std::string cur;
+            if (auto* s = std::get_if<std::string>(&payload.values_buffer[f->name])) cur = *s;
+            cur.push_back(ch);
+            payload.values_buffer[f->name] = std::move(cur);
+            break;
+        }
+        case ElicitFieldType::number: {
+            std::string cur;
+            auto& vb = payload.values_buffer[f->name];
+            if (auto* s = std::get_if<std::string>(&vb))
+                cur = *s;
+            else if (std::holds_alternative<int64_t>(vb))
+                cur = std::to_string(std::get<int64_t>(vb));
+            else if (std::holds_alternative<double>(vb)) {
+                std::ostringstream os;
+                os << std::get<double>(vb);
+                cur = os.str();
             }
-            case ElicitFieldType::number: {
-                std::string cur;
-                auto& vb = payload.values_buffer[f->name];
-                if (auto* s = std::get_if<std::string>(&vb)) cur = *s;
-                else if (std::holds_alternative<int64_t>(vb)) cur = std::to_string(std::get<int64_t>(vb));
-                else if (std::holds_alternative<double>(vb)) {
-                    std::ostringstream os; os << std::get<double>(vb); cur = os.str();
-                }
-                if (cur == "0" && ch != '.') cur.clear();
-                cur.push_back(ch);
-                payload.values_buffer[f->name] = cur;
-                break;
-            }
-            case ElicitFieldType::date_time: {
-                std::string cur;
-                if (auto* s = std::get_if<std::string>(&payload.values_buffer[f->name])) cur = *s;
-                cur.push_back(ch);
-                payload.values_buffer[f->name] = std::move(cur);
-                break;
-            }
-            case ElicitFieldType::enum_select: {
-                enum_typeahead_query.push_back(char(std::tolower((unsigned char)ch)));
-                typeahead_last_keystroke = std::chrono::steady_clock::now();
-                enum_typeahead_cache = EnumTypeahead(*f, enum_typeahead_query);
-                if (!enum_popup_open) enum_popup_open = true;
-                enum_popup_selected = 0;
-                break;
-            }
-            case ElicitFieldType::boolean_:
-            case ElicitFieldType::multi_select:
-                break;
+            if (cur == "0" && ch != '.') cur.clear();
+            cur.push_back(ch);
+            payload.values_buffer[f->name] = cur;
+            break;
+        }
+        case ElicitFieldType::date_time: {
+            std::string cur;
+            if (auto* s = std::get_if<std::string>(&payload.values_buffer[f->name])) cur = *s;
+            cur.push_back(ch);
+            payload.values_buffer[f->name] = std::move(cur);
+            break;
+        }
+        case ElicitFieldType::enum_select: {
+            enum_typeahead_query.push_back(char(std::tolower((unsigned char)ch)));
+            typeahead_last_keystroke = std::chrono::steady_clock::now();
+            enum_typeahead_cache = EnumTypeahead(*f, enum_typeahead_query);
+            if (!enum_popup_open) enum_popup_open = true;
+            enum_popup_selected = 0;
+            break;
+        }
+        case ElicitFieldType::boolean_:
+        case ElicitFieldType::multi_select:
+            break;
         }
     }
 
@@ -1038,21 +1066,24 @@ struct ElicitationInteractiveState {
             }
             return;
         }
-        if (f->type == ElicitFieldType::text ||
-            f->type == ElicitFieldType::url  ||
-            f->type == ElicitFieldType::number ||
-            f->type == ElicitFieldType::date_time)
-        {
+        if (f->type == ElicitFieldType::text || f->type == ElicitFieldType::url ||
+            f->type == ElicitFieldType::number || f->type == ElicitFieldType::date_time) {
             auto& v = payload.values_buffer[f->name];
             std::string cur;
-            if (auto* s = std::get_if<std::string>(&v)) cur = *s;
+            if (auto* s = std::get_if<std::string>(&v))
+                cur = *s;
             else if (f->type == ElicitFieldType::number && std::holds_alternative<int64_t>(v))
                 cur = std::to_string(std::get<int64_t>(v));
             else if (f->type == ElicitFieldType::number && std::holds_alternative<double>(v)) {
-                std::ostringstream os; os << std::get<double>(v); cur = os.str();
+                std::ostringstream os;
+                os << std::get<double>(v);
+                cur = os.str();
             }
-            if (!cur.empty()) { cur.pop_back(); payload.values_buffer[f->name] = std::move(cur); }
-            else payload.values_buffer[f->name] = ElicitNull{};
+            if (!cur.empty()) {
+                cur.pop_back();
+                payload.values_buffer[f->name] = std::move(cur);
+            } else
+                payload.values_buffer[f->name] = ElicitNull{};
         }
     }
 
@@ -1062,8 +1093,10 @@ struct ElicitationInteractiveState {
         // they're actively typing, so the popup doesn't flicker.)
         if (enum_typeahead_query.empty()) return;
         using namespace std::chrono;
-        auto dt = duration_cast<milliseconds>(steady_clock::now() - typeahead_last_keystroke).count();
-        if (dt > 1200) { /* keep; only clear on explicit Esc in the field */ }
+        auto dt =
+            duration_cast<milliseconds>(steady_clock::now() - typeahead_last_keystroke).count();
+        if (dt > 1200) { /* keep; only clear on explicit Esc in the field */
+        }
     }
 };
 
@@ -1073,10 +1106,13 @@ struct ElicitationInteractiveState {
 [[nodiscard]] inline Component ElicitationDialogComponent(ElicitationPayload payload) {
     struct Impl : public ComponentBase {
         std::shared_ptr<ElicitationInteractiveState> st;
-        explicit Impl(ElicitationPayload p) : st(std::make_shared<ElicitationInteractiveState>()) {
+
+        explicit Impl(ElicitationPayload p)
+            : st(std::make_shared<ElicitationInteractiveState>()) {
             st->payload = std::move(p);
             st->payload.seed_defaults_from_fields();
         }
+
         Element Render() override {
             st->maybe_refresh_typeahead();
             // Enum popup: if field focus changes, ensure consistent state.
@@ -1085,13 +1121,13 @@ struct ElicitationInteractiveState {
                 st->enum_typeahead_cache = EnumTypeahead(*f, st->enum_typeahead_query);
             }
             int bf = st->button_focus;
-            if (st->payload.focused_field >= 0) bf = 0; // unused
-            return RenderElicitationPayload(
-                st->payload, bf,
-                st->enum_popup_open, st->enum_popup_selected,
-                st->enum_typeahead_cache, st->spinner_tick(),
-                st->url_resolving, st->stub_approve_focus);
+            if (st->payload.focused_field >= 0) bf = 0;  // unused
+            return RenderElicitationPayload(st->payload, bf, st->enum_popup_open,
+                                            st->enum_popup_selected, st->enum_typeahead_cache,
+                                            st->spinner_tick(), st->url_resolving,
+                                            st->stub_approve_focus);
         }
+
         bool OnEvent(Event event) override {
             if (st->submitted || st->cancelled || st->declined) return false;
 
@@ -1112,17 +1148,22 @@ struct ElicitationInteractiveState {
                 st->fire_cancel_signal();
                 return true;
             }
-            if (event == Event::Tab)          { st->move_focus(+1); return true; }
-            if (event == Event::TabReverse)   { st->move_focus(-1); return true; }
+            if (event == Event::Tab) {
+                st->move_focus(+1);
+                return true;
+            }
+            if (event == Event::TabReverse) {
+                st->move_focus(-1);
+                return true;
+            }
 
             // Arrow navigation inside an open enum popup.
             const ElicitFieldSchema* f = st->focused_field_schema();
             if (st->enum_popup_open) {
                 if (event == Event::ArrowDown) {
                     if (!st->enum_typeahead_cache.empty()) {
-                        st->enum_popup_selected =
-                            (st->enum_popup_selected + 1) %
-                                static_cast<int>(st->enum_typeahead_cache.size());
+                        st->enum_popup_selected = (st->enum_popup_selected + 1) %
+                                                  static_cast<int>(st->enum_typeahead_cache.size());
                     }
                     return true;
                 }
@@ -1169,9 +1210,15 @@ struct ElicitationInteractiveState {
                 // If focus is on a button slot, press it.
                 if (st->payload.focused_field < 0) {
                     switch (st->button_focus) {
-                        case ElicitFocus::kAccept:  st->fire_response("approve"); return true;
-                        case ElicitFocus::kDecline: st->fire_response("decline"); return true;
-                        default:                    st->fire_cancel_signal();    return true;
+                    case ElicitFocus::kAccept:
+                        st->fire_response("approve");
+                        return true;
+                    case ElicitFocus::kDecline:
+                        st->fire_response("decline");
+                        return true;
+                    default:
+                        st->fire_cancel_signal();
+                        return true;
                     }
                 }
                 // Otherwise (focused on any field — text/number/bool/enum
@@ -1187,9 +1234,15 @@ struct ElicitationInteractiveState {
                     // In button mode, Space presses the focused button.
                     if (st->payload.focused_field < 0) {
                         switch (st->button_focus) {
-                            case ElicitFocus::kAccept:  st->fire_response("approve"); return true;
-                            case ElicitFocus::kDecline: st->fire_response("decline"); return true;
-                            default:                    st->fire_cancel_signal();    return true;
+                        case ElicitFocus::kAccept:
+                            st->fire_response("approve");
+                            return true;
+                        case ElicitFocus::kDecline:
+                            st->fire_response("decline");
+                            return true;
+                        default:
+                            st->fire_cancel_signal();
+                            return true;
                         }
                     }
                     return false;
@@ -1223,9 +1276,7 @@ struct ElicitationInteractiveState {
                 return true;
             }
             // Approve keyboard shortcut
-            if (event == Event::Character('a') ||
-                event == Event::Character('A'))
-            {
+            if (event == Event::Character('a') || event == Event::Character('A')) {
                 st->fire_response("approve");
                 return true;
             }
@@ -1246,8 +1297,7 @@ struct ElicitationInteractiveState {
             if (f && f->type == ElicitFieldType::multi_select) {
                 int n_vals = std::max(1, static_cast<int>(f->enum_values.size()));
                 if (event == Event::ArrowRight) {
-                    st->multi_selected_col =
-                        std::min(n_vals - 1, st->multi_selected_col + 1);
+                    st->multi_selected_col = std::min(n_vals - 1, st->multi_selected_col + 1);
                     return true;
                 }
                 if (event == Event::ArrowLeft) {
@@ -1257,8 +1307,7 @@ struct ElicitationInteractiveState {
             }
             // Enum-select arrow navigation (opens popup)
             if (f && f->type == ElicitFieldType::enum_select &&
-                (event == Event::ArrowDown || event == Event::ArrowUp))
-            {
+                (event == Event::ArrowDown || event == Event::ArrowUp)) {
                 st->enum_popup_open = true;
                 st->enum_typeahead_cache = EnumTypeahead(*f, st->enum_typeahead_query);
                 return true;
@@ -1266,7 +1315,8 @@ struct ElicitationInteractiveState {
             return false;
         }
     };
+
     return Make<Impl>(std::move(payload));
 }
 
-} // namespace loom::ui::mcp_dialogs
+}  // namespace loom::ui::mcp_dialogs

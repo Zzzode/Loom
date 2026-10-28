@@ -15,7 +15,7 @@ export module loom.ui.app.paste_coordinator;
 
 import std;
 
-import loom.types.types;  // loom::core::ImageBlock, loom::core::ImageBlockSource
+import loom.types.types; // loom::core::ImageBlock, loom::core::ImageBlockSource
 
 export namespace loom::ui {
 
@@ -34,9 +34,7 @@ public:
     PasteCoordinator& operator=(const PasteCoordinator&) = delete;
 
     /// Allocate a new paste-id (monotonically increasing).
-    [[nodiscard]] int allocate_paste_id() noexcept {
-        return next_paste_id_++;
-    }
+    [[nodiscard]] int allocate_paste_id() noexcept { return next_paste_id_++; }
 
     /// Spawn a background thread that reads the clipboard and posts the
     /// result to pending_paste_results_ / pending_paste_text_results_ /
@@ -45,8 +43,7 @@ public:
     ///
     /// Testing: when no_real_paste_worker is true, injects a fake image
     /// synchronously (no thread).
-    void SpawnPasteWorker(int id,
-                          std::function<void()> post_render,
+    void SpawnPasteWorker(int id, std::function<void()> post_render,
                           bool no_real_paste_worker = false);
 
     /// UI-thread shutdown: wait for active reads and completion callbacks.
@@ -64,10 +61,9 @@ public:
     }
 
     /// Swap out pending results/failures (render thread drains them).
-    void drain_pending(
-        std::unordered_map<int, loom::core::ImageBlock>& results,
-        std::unordered_set<int>& failures,
-        std::unordered_map<int, std::string>& text_results) {
+    void drain_pending(std::unordered_map<int, loom::core::ImageBlock>& results,
+                       std::unordered_set<int>& failures,
+                       std::unordered_map<int, std::string>& text_results) {
         std::lock_guard lk(paste_mutex_);
         if (!pending_drain_ids_) {
             results.swap(pending_paste_results_);
@@ -89,26 +85,32 @@ public:
     [[nodiscard]] std::unordered_map<int, loom::core::ImageBlock>& pasted_contents() noexcept {
         return pasted_contents_;
     }
-    [[nodiscard]] const std::unordered_map<int, loom::core::ImageBlock>& pasted_contents() const noexcept {
+
+    [[nodiscard]] const std::unordered_map<int, loom::core::ImageBlock>&
+    pasted_contents() const noexcept {
         return pasted_contents_;
     }
+
     [[nodiscard]] std::unordered_map<int, std::string>& pasted_text_contents() noexcept {
         return pasted_text_contents_;
     }
-    [[nodiscard]] const std::unordered_map<int, std::string>& pasted_text_contents() const noexcept {
+
+    [[nodiscard]] const std::unordered_map<int, std::string>&
+    pasted_text_contents() const noexcept {
         return pasted_text_contents_;
     }
 
     // ── In-flight tracking (main-thread-only, no lock needed) ─────────
 
     void mark_in_flight(int id) { in_flight_pastes_.insert(id); }
+
     void mark_completed(int id) { in_flight_pastes_.erase(id); }
+
     [[nodiscard]] bool is_in_flight(int id) const noexcept {
         return in_flight_pastes_.contains(id);
     }
-    [[nodiscard]] bool has_in_flight() const noexcept {
-        return !in_flight_pastes_.empty();
-    }
+
+    [[nodiscard]] bool has_in_flight() const noexcept { return !in_flight_pastes_.empty(); }
 
 private:
     struct Worker {
@@ -117,8 +119,8 @@ private:
     };
 
     ImageReader read_image_;
-    std::vector<Worker> workers_; // UI-thread-owned; completed workers are reaped on spawn
-    bool stopped_ = false; // UI-thread-only
+    std::vector<Worker> workers_;  // UI-thread-owned; completed workers are reaped on spawn
+    bool stopped_ = false;         // UI-thread-only
 
     // Pasted content (render-thread-only).
     std::unordered_map<int, loom::core::ImageBlock> pasted_contents_;
@@ -131,7 +133,7 @@ private:
     std::unordered_set<int> pending_paste_failures_;
     std::unordered_map<int, std::string> pending_paste_text_results_;
 
-    std::optional<std::unordered_set<int>> pending_drain_ids_; // UI-thread-only
+    std::optional<std::unordered_set<int>> pending_drain_ids_;  // UI-thread-only
 
     // In-flight tracking (main-thread-only).
     std::unordered_set<int> in_flight_pastes_;

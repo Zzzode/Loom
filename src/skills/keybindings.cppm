@@ -15,12 +15,13 @@ export namespace loom::skills::keybindings {
     return SkillDefinition{
         .name = "keybindings",
         .description = "Keyboard shortcut reference and customization workflow",
-        .trigger_patterns = {
-            R"(keybind(?:ing)?s?)",
-            R"(shortcut)",
-            R"(key\s*(?:map|combo|binding))",
-            R"(hotkey)",
-        },
+        .trigger_patterns =
+            {
+                R"(keybind(?:ing)?s?)",
+                R"(shortcut)",
+                R"(key\s*(?:map|combo|binding))",
+                R"(hotkey)",
+            },
         .content = R"(## Keybindings Reference
 
 ### Navigation
@@ -55,4 +56,4 @@ export namespace loom::skills::keybindings {
     };
 }
 
-} // namespace loom::skills::keybindings
+}  // namespace loom::skills::keybindings

@@ -14,10 +14,10 @@
 /// register_default_renderers().
 module;
 
-#include <ftxui/dom/elements.hpp>
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/event.hpp>
+#include <ftxui/dom/elements.hpp>
 
 export module loom.ui.screens.doctor_dialog_registration;
 
@@ -37,17 +37,16 @@ namespace doctor_detail {
 struct DoctorDialogHolder : public ftxui::ComponentBase {
     ftxui::Component screen;
 
-    explicit DoctorDialogHolder(ftxui::Component s) : screen(std::move(s)) {
+    explicit DoctorDialogHolder(ftxui::Component s)
+        : screen(std::move(s)) {
         ComponentBase::Add(screen);
     }
 
     ftxui::Element Render() override { return screen->Render(); }
 
-    bool InjectEvent(const ftxui::Event& event) {
-        return ComponentBase::OnEvent(event);
-    }
+    bool InjectEvent(const ftxui::Event& event) { return ComponentBase::OnEvent(event); }
 };
-} // namespace doctor_detail
+}  // namespace doctor_detail
 
 /// Register the Doctor dialog renderer into a registry.
 /// Call this once at app startup, alongside register_default_renderers().
@@ -85,13 +84,12 @@ void register_doctor_renderer(dsys::DialogRendererRegistry& registry) {
                 opts.on_done = p->on_done;
 
                 auto screen = DoctorScreen(std::move(opts));
-                auto holder = std::make_shared<doctor_detail::DoctorDialogHolder>(
-                    std::move(screen));
+                auto holder =
+                    std::make_shared<doctor_detail::DoctorDialogHolder>(std::move(screen));
                 p->component = holder;
             }
 
-            auto holder = std::static_pointer_cast<doctor_detail::DoctorDialogHolder>(
-                p->component);
+            auto holder = std::static_pointer_cast<doctor_detail::DoctorDialogHolder>(p->component);
             return holder ? holder->Render() : ftxui::text("");
         },
         /*event_handler=*/
@@ -99,12 +97,10 @@ void register_doctor_renderer(dsys::DialogRendererRegistry& registry) {
             auto* p = std::get_if<dsys::DoctorDialogPayload>(&payload);
             if (!p || !p->component) return false;
 
-            auto holder = std::static_pointer_cast<doctor_detail::DoctorDialogHolder>(
-                p->component);
+            auto holder = std::static_pointer_cast<doctor_detail::DoctorDialogHolder>(p->component);
             if (!holder) return false;
             return holder->InjectEvent(event);
-        }
-    );
+        });
 }
 
-} // namespace loom::ui::screens::doctor_dialog_registration
+}  // namespace loom::ui::screens::doctor_dialog_registration

@@ -110,9 +110,7 @@ struct ServerSession {
         if (expires_ms == 0) return false;
         const int64_t t = now.value_or([] {
             using namespace std::chrono;
-            return duration_cast<milliseconds>(
-                       system_clock::now().time_since_epoch())
-                .count();
+            return duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count();
         }());
         return t >= expires_ms;
     }
@@ -272,62 +270,82 @@ namespace detail_serde {
 
 inline auto role_to_str(Role r) -> std::string_view {
     switch (r) {
-        case Role::Guest:      return "guest";
-        case Role::User:       return "user";
-        case Role::Admin:      return "admin";
-        case Role::Service:    return "service";
-        case Role::SuperAdmin: return "super_admin";
+    case Role::Guest:
+        return "guest";
+    case Role::User:
+        return "user";
+    case Role::Admin:
+        return "admin";
+    case Role::Service:
+        return "service";
+    case Role::SuperAdmin:
+        return "super_admin";
     }
     return "guest";
 }
+
 inline auto role_from_str(std::string_view s) -> std::optional<Role> {
-    if (s == "guest")       return Role::Guest;
-    if (s == "user")        return Role::User;
-    if (s == "admin")       return Role::Admin;
-    if (s == "service")     return Role::Service;
+    if (s == "guest") return Role::Guest;
+    if (s == "user") return Role::User;
+    if (s == "admin") return Role::Admin;
+    if (s == "service") return Role::Service;
     if (s == "super_admin") return Role::SuperAdmin;
     return std::nullopt;
 }
 
 inline auto decision_to_str(PermissionDecision d) -> std::string_view {
     switch (d) {
-        case PermissionDecision::Ask:         return "ask";
-        case PermissionDecision::AllowOnce:   return "allow_once";
-        case PermissionDecision::AlwaysAllow: return "always_allow";
-        case PermissionDecision::Deny:        return "deny";
-        case PermissionDecision::AlwaysDeny:  return "always_deny";
-        case PermissionDecision::Abort:       return "abort";
+    case PermissionDecision::Ask:
+        return "ask";
+    case PermissionDecision::AllowOnce:
+        return "allow_once";
+    case PermissionDecision::AlwaysAllow:
+        return "always_allow";
+    case PermissionDecision::Deny:
+        return "deny";
+    case PermissionDecision::AlwaysDeny:
+        return "always_deny";
+    case PermissionDecision::Abort:
+        return "abort";
     }
     return "ask";
 }
+
 inline auto decision_from_str(std::string_view s) -> std::optional<PermissionDecision> {
-    if (s == "ask")          return PermissionDecision::Ask;
-    if (s == "allow_once")   return PermissionDecision::AllowOnce;
+    if (s == "ask") return PermissionDecision::Ask;
+    if (s == "allow_once") return PermissionDecision::AllowOnce;
     if (s == "always_allow") return PermissionDecision::AlwaysAllow;
-    if (s == "deny")         return PermissionDecision::Deny;
-    if (s == "always_deny")  return PermissionDecision::AlwaysDeny;
-    if (s == "abort")        return PermissionDecision::Abort;
+    if (s == "deny") return PermissionDecision::Deny;
+    if (s == "always_deny") return PermissionDecision::AlwaysDeny;
+    if (s == "abort") return PermissionDecision::Abort;
     return std::nullopt;
 }
 
 inline auto chunk_kind_to_str(StreamChunkKind k) -> std::string_view {
     switch (k) {
-        case StreamChunkKind::ContentDelta: return "content_delta";
-        case StreamChunkKind::StopReason:   return "stop_reason";
-        case StreamChunkKind::ToolUseBegin: return "tool_use_begin";
-        case StreamChunkKind::ToolUseEnd:   return "tool_use_end";
-        case StreamChunkKind::Error:        return "error";
-        case StreamChunkKind::Heartbeat:    return "heartbeat";
+    case StreamChunkKind::ContentDelta:
+        return "content_delta";
+    case StreamChunkKind::StopReason:
+        return "stop_reason";
+    case StreamChunkKind::ToolUseBegin:
+        return "tool_use_begin";
+    case StreamChunkKind::ToolUseEnd:
+        return "tool_use_end";
+    case StreamChunkKind::Error:
+        return "error";
+    case StreamChunkKind::Heartbeat:
+        return "heartbeat";
     }
     return "heartbeat";
 }
+
 inline auto chunk_kind_from_str(std::string_view s) -> std::optional<StreamChunkKind> {
     if (s == "content_delta") return StreamChunkKind::ContentDelta;
-    if (s == "stop_reason")   return StreamChunkKind::StopReason;
+    if (s == "stop_reason") return StreamChunkKind::StopReason;
     if (s == "tool_use_begin") return StreamChunkKind::ToolUseBegin;
-    if (s == "tool_use_end")  return StreamChunkKind::ToolUseEnd;
-    if (s == "error")         return StreamChunkKind::Error;
-    if (s == "heartbeat")     return StreamChunkKind::Heartbeat;
+    if (s == "tool_use_end") return StreamChunkKind::ToolUseEnd;
+    if (s == "error") return StreamChunkKind::Error;
+    if (s == "heartbeat") return StreamChunkKind::Heartbeat;
     return std::nullopt;
 }
 
@@ -360,16 +378,19 @@ inline bool read_string_vec(loom::utils::json::JsonVal obj, std::string_view key
     obj.add("user_agent", doc.string(s.user_agent));
     obj.add("client_ip", doc.string(s.client_ip));
     auto sc = doc.array();
-    for (const auto& x : s.scopes) sc.append(doc.string(x));
+    for (const auto& x : s.scopes)
+        sc.append(doc.string(x));
     obj.add("scopes", std::move(sc));
     obj.add("created_ms", doc.number(static_cast<int64_t>(s.created_ms)));
     obj.add("expires_ms", doc.number(static_cast<int64_t>(s.expires_ms)));
     obj.add("last_active_ms", doc.number(static_cast<int64_t>(s.last_active_ms)));
-    obj.add("request_count", doc.number(static_cast<int64_t>(static_cast<int64_t>(s.request_count))));
+    obj.add("request_count",
+            doc.number(static_cast<int64_t>(static_cast<int64_t>(s.request_count))));
     obj.add("revoked", doc.boolean(s.revoked));
     doc.set_root(std::move(obj));
     return doc.to_string();
 }
+
 [[nodiscard]] inline auto ServerSession_from_json(std::string_view raw)
     -> std::expected<ServerSession, std::string> {
     using namespace loom::utils::json;
@@ -394,7 +415,11 @@ inline bool read_string_vec(loom::utils::json::JsonVal obj, std::string_view key
     s.revoked = o.get("revoked").as_bool();
     return s;
 }
-inline auto to_json(const ServerSession& s) -> std::string { return ServerSession_to_json(s); }
+
+inline auto to_json(const ServerSession& s) -> std::string {
+    return ServerSession_to_json(s);
+}
+
 inline auto from_json(std::string_view v, ServerSession*)
     -> std::expected<ServerSession, std::string> {
     return ServerSession_from_json(v);
@@ -402,7 +427,8 @@ inline auto from_json(std::string_view v, ServerSession*)
 
 // ─── DirectConnectRequest / Response ─────────────────────────────────────────
 
-[[nodiscard]] inline auto DirectConnectRequest_to_json(const DirectConnectRequest& r) -> std::string {
+[[nodiscard]] inline auto DirectConnectRequest_to_json(const DirectConnectRequest& r)
+    -> std::string {
     using namespace loom::utils::json;
     JsonMutDoc doc;
     auto o = doc.object();
@@ -414,11 +440,13 @@ inline auto from_json(std::string_view v, ServerSession*)
     }
     o.add("ttl_seconds", doc.number(static_cast<int64_t>(r.ttl_seconds)));
     auto sc = doc.array();
-    for (const auto& s : r.requested_scopes) sc.append(doc.string(s));
+    for (const auto& s : r.requested_scopes)
+        sc.append(doc.string(s));
     o.add("requested_scopes", std::move(sc));
     doc.set_root(std::move(o));
     return doc.to_string();
 }
+
 [[nodiscard]] inline auto DirectConnectRequest_from_json(std::string_view raw)
     -> std::expected<DirectConnectRequest, std::string> {
     using namespace loom::utils::json;
@@ -441,13 +469,18 @@ inline auto from_json(std::string_view v, ServerSession*)
     }
     return r;
 }
-inline auto to_json(const DirectConnectRequest& r) -> std::string { return DirectConnectRequest_to_json(r); }
+
+inline auto to_json(const DirectConnectRequest& r) -> std::string {
+    return DirectConnectRequest_to_json(r);
+}
+
 inline auto from_json(std::string_view v, DirectConnectRequest*)
     -> std::expected<DirectConnectRequest, std::string> {
     return DirectConnectRequest_from_json(v);
 }
 
-[[nodiscard]] inline auto DirectConnectResponse_to_json(const DirectConnectResponse& r) -> std::string {
+[[nodiscard]] inline auto DirectConnectResponse_to_json(const DirectConnectResponse& r)
+    -> std::string {
     using namespace loom::utils::json;
     JsonMutDoc doc;
     auto o = doc.object();
@@ -460,6 +493,7 @@ inline auto from_json(std::string_view v, DirectConnectRequest*)
     doc.set_root(std::move(o));
     return doc.to_string();
 }
+
 [[nodiscard]] inline auto DirectConnectResponse_from_json(std::string_view raw)
     -> std::expected<DirectConnectResponse, std::string> {
     using namespace loom::utils::json;
@@ -476,7 +510,11 @@ inline auto from_json(std::string_view v, DirectConnectRequest*)
     r.expires_ms = o.get("expires_ms").as_int();
     return r;
 }
-inline auto to_json(const DirectConnectResponse& r) -> std::string { return DirectConnectResponse_to_json(r); }
+
+inline auto to_json(const DirectConnectResponse& r) -> std::string {
+    return DirectConnectResponse_to_json(r);
+}
+
 inline auto from_json(std::string_view v, DirectConnectResponse*)
     -> std::expected<DirectConnectResponse, std::string> {
     return DirectConnectResponse_from_json(v);
@@ -497,11 +535,13 @@ inline auto from_json(std::string_view v, DirectConnectResponse*)
     o.add("temperature", doc.number(static_cast<double>(r.temperature)));
     o.add("stream", doc.boolean(r.stream));
     auto at = doc.array();
-    for (const auto& s : r.allowed_tools) at.append(doc.string(s));
+    for (const auto& s : r.allowed_tools)
+        at.append(doc.string(s));
     o.add("allowed_tools", std::move(at));
     doc.set_root(std::move(o));
     return doc.to_string();
 }
+
 [[nodiscard]] inline auto DirectQueryRequest_from_json(std::string_view raw)
     -> std::expected<DirectQueryRequest, std::string> {
     using namespace loom::utils::json;
@@ -523,7 +563,11 @@ inline auto from_json(std::string_view v, DirectConnectResponse*)
     }
     return r;
 }
-inline auto to_json(const DirectQueryRequest& r) -> std::string { return DirectQueryRequest_to_json(r); }
+
+inline auto to_json(const DirectQueryRequest& r) -> std::string {
+    return DirectQueryRequest_to_json(r);
+}
+
 inline auto from_json(std::string_view v, DirectQueryRequest*)
     -> std::expected<DirectQueryRequest, std::string> {
     return DirectQueryRequest_from_json(v);
@@ -539,12 +583,14 @@ inline auto from_json(std::string_view v, DirectQueryRequest*)
     o.add("model_used", doc.string(r.model_used));
     o.add("error", doc.string(r.error));
     o.add("prompt_tokens", doc.number(static_cast<int64_t>(static_cast<int64_t>(r.prompt_tokens))));
-    o.add("completion_tokens", doc.number(static_cast<int64_t>(static_cast<int64_t>(r.completion_tokens))));
+    o.add("completion_tokens",
+          doc.number(static_cast<int64_t>(static_cast<int64_t>(r.completion_tokens))));
     o.add("cost_usd", doc.number(static_cast<double>(r.cost_usd)));
     o.add("status_code", doc.number(static_cast<int64_t>(r.status_code)));
     doc.set_root(std::move(o));
     return doc.to_string();
 }
+
 [[nodiscard]] inline auto DirectQueryResult_from_json(std::string_view raw)
     -> std::expected<DirectQueryResult, std::string> {
     using namespace loom::utils::json;
@@ -564,7 +610,11 @@ inline auto from_json(std::string_view v, DirectQueryRequest*)
     r.status_code = static_cast<int>(o.get("status_code").as_int());
     return r;
 }
-inline auto to_json(const DirectQueryResult& r) -> std::string { return DirectQueryResult_to_json(r); }
+
+inline auto to_json(const DirectQueryResult& r) -> std::string {
+    return DirectQueryResult_to_json(r);
+}
+
 inline auto from_json(std::string_view v, DirectQueryResult*)
     -> std::expected<DirectQueryResult, std::string> {
     return DirectQueryResult_from_json(v);
@@ -572,7 +622,8 @@ inline auto from_json(std::string_view v, DirectQueryResult*)
 
 // ─── DirectPermissionRequest ─────────────────────────────────────────────────
 
-[[nodiscard]] inline auto DirectPermissionRequest_to_json(const DirectPermissionRequest& r) -> std::string {
+[[nodiscard]] inline auto DirectPermissionRequest_to_json(const DirectPermissionRequest& r)
+    -> std::string {
     using namespace loom::utils::json;
     JsonMutDoc doc;
     auto o = doc.object();
@@ -580,13 +631,15 @@ inline auto from_json(std::string_view v, DirectQueryResult*)
     o.add("tool_name", doc.string(r.tool_name));
     o.add("action", doc.string(r.action));
     auto ap = doc.array();
-    for (const auto& s : r.affected_paths) ap.append(doc.string(s));
+    for (const auto& s : r.affected_paths)
+        ap.append(doc.string(s));
     o.add("affected_paths", std::move(ap));
     o.add("requested", doc.string(std::string{detail_serde::decision_to_str(r.requested)}));
     o.add("reason", doc.string(r.reason));
     doc.set_root(std::move(o));
     return doc.to_string();
 }
+
 [[nodiscard]] inline auto DirectPermissionRequest_from_json(std::string_view raw)
     -> std::expected<DirectPermissionRequest, std::string> {
     using namespace loom::utils::json;
@@ -605,7 +658,11 @@ inline auto from_json(std::string_view v, DirectQueryResult*)
     r.reason = std::string{o.get("reason").as_str()};
     return r;
 }
-inline auto to_json(const DirectPermissionRequest& r) -> std::string { return DirectPermissionRequest_to_json(r); }
+
+inline auto to_json(const DirectPermissionRequest& r) -> std::string {
+    return DirectPermissionRequest_to_json(r);
+}
+
 inline auto from_json(std::string_view v, DirectPermissionRequest*)
     -> std::expected<DirectPermissionRequest, std::string> {
     return DirectPermissionRequest_from_json(v);
@@ -613,7 +670,8 @@ inline auto from_json(std::string_view v, DirectPermissionRequest*)
 
 // ─── DirectPermissionRule ────────────────────────────────────────────────────
 
-[[nodiscard]] inline auto DirectPermissionRule_to_json(const DirectPermissionRule& r) -> std::string {
+[[nodiscard]] inline auto DirectPermissionRule_to_json(const DirectPermissionRule& r)
+    -> std::string {
     using namespace loom::utils::json;
     JsonMutDoc doc;
     auto o = doc.object();
@@ -627,6 +685,7 @@ inline auto from_json(std::string_view v, DirectPermissionRequest*)
     doc.set_root(std::move(o));
     return doc.to_string();
 }
+
 [[nodiscard]] inline auto DirectPermissionRule_from_json(std::string_view raw)
     -> std::expected<DirectPermissionRule, std::string> {
     using namespace loom::utils::json;
@@ -644,7 +703,11 @@ inline auto from_json(std::string_view v, DirectPermissionRequest*)
     r.expires_ms = o.get("expires_ms").as_int();
     return r;
 }
-inline auto to_json(const DirectPermissionRule& r) -> std::string { return DirectPermissionRule_to_json(r); }
+
+inline auto to_json(const DirectPermissionRule& r) -> std::string {
+    return DirectPermissionRule_to_json(r);
+}
+
 inline auto from_json(std::string_view v, DirectPermissionRule*)
     -> std::expected<DirectPermissionRule, std::string> {
     return DirectPermissionRule_from_json(v);
@@ -652,7 +715,8 @@ inline auto from_json(std::string_view v, DirectPermissionRule*)
 
 // ─── DirectPermissionDirectory ───────────────────────────────────────────────
 
-[[nodiscard]] inline auto DirectPermissionDirectory_to_json(const DirectPermissionDirectory& d) -> std::string {
+[[nodiscard]] inline auto DirectPermissionDirectory_to_json(const DirectPermissionDirectory& d)
+    -> std::string {
     using namespace loom::utils::json;
     JsonMutDoc doc;
     auto arr = doc.array();
@@ -667,6 +731,7 @@ inline auto from_json(std::string_view v, DirectPermissionRule*)
     doc.set_root(std::move(obj));
     return doc.to_string();
 }
+
 [[nodiscard]] inline auto DirectPermissionDirectory_from_json(std::string_view raw)
     -> std::expected<DirectPermissionDirectory, std::string> {
     using namespace loom::utils::json;
@@ -685,13 +750,21 @@ inline auto from_json(std::string_view v, DirectPermissionRule*)
         JsonMutDoc tmp;
         tmp.set_root(tmp.copy_val(el));
         auto rule = DirectPermissionRule_from_json(tmp.to_string());
-        if (!rule) { ok = false; err = rule.error(); return; }
+        if (!rule) {
+            ok = false;
+            err = rule.error();
+            return;
+        }
         d.rules.push_back(std::move(*rule));
     });
     if (!ok) return std::unexpected(err);
     return d;
 }
-inline auto to_json(const DirectPermissionDirectory& d) -> std::string { return DirectPermissionDirectory_to_json(d); }
+
+inline auto to_json(const DirectPermissionDirectory& d) -> std::string {
+    return DirectPermissionDirectory_to_json(d);
+}
+
 inline auto from_json(std::string_view v, DirectPermissionDirectory*)
     -> std::expected<DirectPermissionDirectory, std::string> {
     return DirectPermissionDirectory_from_json(v);
@@ -699,7 +772,8 @@ inline auto from_json(std::string_view v, DirectPermissionDirectory*)
 
 // ─── DirectPermissionSessionState ────────────────────────────────────────────
 
-[[nodiscard]] inline auto DirectPermissionSessionState_to_json(const DirectPermissionSessionState& s) -> std::string {
+[[nodiscard]] inline auto
+DirectPermissionSessionState_to_json(const DirectPermissionSessionState& s) -> std::string {
     using namespace loom::utils::json;
     JsonMutDoc doc;
     auto o = doc.object();
@@ -713,11 +787,13 @@ inline auto from_json(std::string_view v, DirectPermissionDirectory*)
     }
     o.add("session_only_rules", std::move(sess_arr));
     auto den = doc.array();
-    for (const auto& x : s.recently_denied) den.append(doc.string(x));
+    for (const auto& x : s.recently_denied)
+        den.append(doc.string(x));
     o.add("recently_denied", std::move(den));
     doc.set_root(std::move(o));
     return doc.to_string();
 }
+
 [[nodiscard]] inline auto DirectPermissionSessionState_from_json(std::string_view raw)
     -> std::expected<DirectPermissionSessionState, std::string> {
     using namespace loom::utils::json;
@@ -744,7 +820,11 @@ inline auto from_json(std::string_view v, DirectPermissionDirectory*)
             JsonMutDoc tmp;
             tmp.set_root(tmp.copy_val(el));
             auto r = DirectPermissionRule_from_json(tmp.to_string());
-            if (!r) { ok = false; err = r.error(); return; }
+            if (!r) {
+                ok = false;
+                err = r.error();
+                return;
+            }
             s.session_only_rules.push_back(std::move(*r));
         });
         if (!ok) return std::unexpected(err);
@@ -754,7 +834,11 @@ inline auto from_json(std::string_view v, DirectPermissionDirectory*)
     }
     return s;
 }
-inline auto to_json(const DirectPermissionSessionState& s) -> std::string { return DirectPermissionSessionState_to_json(s); }
+
+inline auto to_json(const DirectPermissionSessionState& s) -> std::string {
+    return DirectPermissionSessionState_to_json(s);
+}
+
 inline auto from_json(std::string_view v, DirectPermissionSessionState*)
     -> std::expected<DirectPermissionSessionState, std::string> {
     return DirectPermissionSessionState_from_json(v);
@@ -762,7 +846,8 @@ inline auto from_json(std::string_view v, DirectPermissionSessionState*)
 
 // ─── DirectQueryStreamChunk ──────────────────────────────────────────────────
 
-[[nodiscard]] inline auto DirectQueryStreamChunk_to_json(const DirectQueryStreamChunk& c) -> std::string {
+[[nodiscard]] inline auto DirectQueryStreamChunk_to_json(const DirectQueryStreamChunk& c)
+    -> std::string {
     using namespace loom::utils::json;
     JsonMutDoc doc;
     auto o = doc.object();
@@ -778,6 +863,7 @@ inline auto from_json(std::string_view v, DirectPermissionSessionState*)
     doc.set_root(std::move(o));
     return doc.to_string();
 }
+
 [[nodiscard]] inline auto DirectQueryStreamChunk_from_json(std::string_view raw)
     -> std::expected<DirectQueryStreamChunk, std::string> {
     using namespace loom::utils::json;
@@ -797,7 +883,11 @@ inline auto from_json(std::string_view v, DirectPermissionSessionState*)
     c.error_message = std::string{o.get("error_message").as_str()};
     return c;
 }
-inline auto to_json(const DirectQueryStreamChunk& c) -> std::string { return DirectQueryStreamChunk_to_json(c); }
+
+inline auto to_json(const DirectQueryStreamChunk& c) -> std::string {
+    return DirectQueryStreamChunk_to_json(c);
+}
+
 inline auto from_json(std::string_view v, DirectQueryStreamChunk*)
     -> std::expected<DirectQueryStreamChunk, std::string> {
     return DirectQueryStreamChunk_from_json(v);

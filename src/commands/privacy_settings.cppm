@@ -8,7 +8,8 @@ import std;
 export namespace loom::commands {
 
 auto privacy_settings_path() -> std::filesystem::path {
-    if (const char* home = std::getenv("HOME")) return std::filesystem::path{home} / ".loom" / "privacy.txt";
+    if (const char* home = std::getenv("HOME"))
+        return std::filesystem::path{home} / ".loom" / "privacy.txt";
     return std::filesystem::path{".loom"} / "privacy.txt";
 }
 
@@ -18,7 +19,6 @@ auto parse_bool(std::string_view value, bool fallback) -> bool {
     return fallback;
 }
 
-
 struct PrivacySettings {
     bool telemetry;
     bool crash_reports;
@@ -26,14 +26,9 @@ struct PrivacySettings {
     std::string data_retention;
 };
 
-
 auto get_privacy_settings() -> PrivacySettings {
     PrivacySettings settings{
-        .telemetry = false,
-        .crash_reports = true,
-        .usage_stats = false,
-        .data_retention = "90d"
-    };
+        .telemetry = false, .crash_reports = true, .usage_stats = false, .data_retention = "90d"};
     std::ifstream input{privacy_settings_path()};
     std::string line;
     while (std::getline(input, line)) {
@@ -41,14 +36,17 @@ auto get_privacy_settings() -> PrivacySettings {
         if (separator == std::string::npos) continue;
         auto key = line.substr(0, separator);
         auto value = line.substr(separator + 1);
-        if (key == "telemetry") settings.telemetry = parse_bool(value, settings.telemetry);
-        else if (key == "crash_reports") settings.crash_reports = parse_bool(value, settings.crash_reports);
-        else if (key == "usage_stats") settings.usage_stats = parse_bool(value, settings.usage_stats);
-        else if (key == "data_retention") settings.data_retention = value;
+        if (key == "telemetry")
+            settings.telemetry = parse_bool(value, settings.telemetry);
+        else if (key == "crash_reports")
+            settings.crash_reports = parse_bool(value, settings.crash_reports);
+        else if (key == "usage_stats")
+            settings.usage_stats = parse_bool(value, settings.usage_stats);
+        else if (key == "data_retention")
+            settings.data_retention = value;
     }
     return settings;
 }
-
 
 auto set_privacy_settings(PrivacySettings settings) -> void {
     auto path = privacy_settings_path();
@@ -60,14 +58,15 @@ auto set_privacy_settings(PrivacySettings settings) -> void {
            << "data_retention=" << settings.data_retention << '\n';
 }
 
-
 auto show_privacy_info() -> std::string {
     auto settings = get_privacy_settings();
 
     std::string info = "Privacy Settings:\n";
     info += "  Telemetry:       " + std::string(settings.telemetry ? "Enabled" : "Disabled") + "\n";
-    info += "  Crash Reports:   " + std::string(settings.crash_reports ? "Enabled" : "Disabled") + "\n";
-    info += "  Usage Statistics: " + std::string(settings.usage_stats ? "Enabled" : "Disabled") + "\n";
+    info +=
+        "  Crash Reports:   " + std::string(settings.crash_reports ? "Enabled" : "Disabled") + "\n";
+    info +=
+        "  Usage Statistics: " + std::string(settings.usage_stats ? "Enabled" : "Disabled") + "\n";
     info += "  Data Retention:  " + settings.data_retention + "\n";
     info += "\nData Collection:\n";
     info += "  - We collect anonymized usage patterns to improve the product.\n";
@@ -77,4 +76,4 @@ auto show_privacy_info() -> std::string {
     return info;
 }
 
-} // namespace loom::commands
+}  // namespace loom::commands

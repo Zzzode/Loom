@@ -2,14 +2,14 @@
 /// @brief Dialog renderer golden tests, sandbox permission events, and
 /// REPL screen integration. Split from test_dialog_system.cpp (SLOC budget).
 
-#include <cstdlib>
-
-#include <gtest/gtest.h>
+#include <ftxui/component/component.hpp>
+#include <ftxui/component/event.hpp>
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/dom/node.hpp>
 #include <ftxui/screen/screen.hpp>
-#include <ftxui/component/component.hpp>
-#include <ftxui/component/event.hpp>
+#include <gtest/gtest.h>
+
+#include <cstdlib>
 
 #include "test_ui_helpers.h"
 
@@ -49,8 +49,8 @@ using ftxui::paragraph;
 using ftxui::text;
 using ftxui::vbox;
 using ftxui::xflex;
-using ftxui::yflex;
 using ftxui::xflex_grow;
+using ftxui::yflex;
 
 // ============================================================
 // Golden snapshot helpers (verbatim copy from tests/test_ui.cpp)
@@ -59,7 +59,7 @@ namespace dialog_test_golden {
 
 /// Directory holding golden snapshot files (derived from __FILE__).
 std::string golden_dir() {
-    
+
     return std::string(LOOM_TESTS_DIR) + "/golden/";
 }
 
@@ -87,20 +87,16 @@ void check_golden(const std::string& name, const std::string& actual) {
         return;
     }
     std::ifstream in(path, std::ios::binary);
-    ASSERT_TRUE(in.good()) << "golden missing: " << path
-                           << " (run UPDATE_GOLDENS=1 to create)";
-    std::string expected((std::istreambuf_iterator<char>(in)),
-                         std::istreambuf_iterator<char>());
+    ASSERT_TRUE(in.good()) << "golden missing: " << path << " (run UPDATE_GOLDENS=1 to create)";
+    std::string expected((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
     EXPECT_EQ(normalize_line_endings(actual), normalize_line_endings(expected))
-        << "golden mismatch for '" << name
-        << "' (run UPDATE_GOLDENS=1 to refresh)";
+        << "golden mismatch for '" << name << "' (run UPDATE_GOLDENS=1 to refresh)";
 }
 
 /// Render an Element to a fixed-size terminal buffer (includes ANSI codes).
 std::string render_to_ansi(ftxui::Element element, int width, int height) {
-    auto screen = ftxui::Screen::Create(
-        ftxui::Dimension::Fixed(width),
-        ftxui::Dimension::Fixed(height));
+    auto screen =
+        ftxui::Screen::Create(ftxui::Dimension::Fixed(width), ftxui::Dimension::Fixed(height));
     ftxui::Render(screen, element);
     return screen.ToString();
 }
@@ -115,13 +111,11 @@ std::string render_to_ansi(ftxui::Element element, int width, int height) {
     };
 }
 
-} // namespace dialog_test_golden
-
+}  // namespace dialog_test_golden
 
 // ============================================================
 // DialogType / DialogSlot / DialogPriority tests
 // ============================================================
-
 
 TEST(DialogRenderers, Golden_ToolPermissionOverlay) {
     auto theme = dialog_test_golden::get_light_theme();
@@ -130,10 +124,11 @@ TEST(DialogRenderers, Golden_ToolPermissionOverlay) {
     // captures command/cwd directly in the lambda to avoid requiring an
     // explicit import of loom.ui.permissions.single_prompt in this TU.
     const std::string kCommand = "rm -rf node_modules/";
-    const std::string kCwd     = "/home/user/proj";
+    const std::string kCwd = "/home/user/proj";
 
     dsys::DialogRendererRegistry registry;
-    registry.register_dialog(dsys::DialogType::ToolPermission,
+    registry.register_dialog(
+        dsys::DialogType::ToolPermission,
         [&, kCommand, kCwd](dsys::DialogPayloadVariant& v,
                             const dsys::DialogRenderContext&) -> ftxui::Element {
             const auto* p = std::get_if<dsys::ToolPermissionPayload>(&v);
@@ -161,11 +156,10 @@ TEST(DialogRenderers, Golden_ToolPermissionOverlay) {
                 text(""),
                 paragraph(p->description),
                 text(""),
-                            hbox({
+                hbox({
                     text(" [y] Allow once") | color(ftxui::Color::Green),
-                    p->can_always_allow
-                        ? text("  [a] Always allow") | color(ftxui::Color::Cyan)
-                        : text(""),
+                    p->can_always_allow ? text("  [a] Always allow") | color(ftxui::Color::Cyan)
+                                        : text(""),
                     text("  [n] Deny") | color(ftxui::Color::Red),
                     text("  [Esc] Cancel") | dim,
                 }),
@@ -191,9 +185,8 @@ TEST(DialogRenderers, Golden_ToolPermissionOverlay) {
     dsys::DialogPayloadVariant variant{tp};
     auto el = registry.render(variant, ctx);
     ASSERT_NE(el, nullptr);
-    dialog_test_golden::check_golden(
-        "dialog_tool_permission_overlay",
-        dialog_test_golden::render_to_ansi(std::move(el), 100, 30));
+    dialog_test_golden::check_golden("dialog_tool_permission_overlay",
+                                     dialog_test_golden::render_to_ansi(std::move(el), 100, 30));
 }
 
 TEST(DialogRenderers, Golden_SandboxPermission) {
@@ -205,16 +198,15 @@ TEST(DialogRenderers, Golden_SandboxPermission) {
     auto theme = dialog_test_golden::get_light_theme();
 
     dsys::DialogRendererRegistry registry;
-    registry.register_dialog(dsys::DialogType::SandboxPermission,
-        [](dsys::DialogPayloadVariant& v,
-           const dsys::DialogRenderContext& ctx) -> ftxui::Element {
+    registry.register_dialog(
+        dsys::DialogType::SandboxPermission,
+        [](dsys::DialogPayloadVariant& v, const dsys::DialogRenderContext& ctx) -> ftxui::Element {
             const auto* p = std::get_if<dsys::SandboxPermissionPayload>(&v);
             if (!p) return text("");
             // Delegate to the faithful renderer (TS SandboxPermissionRequest.tsx)
             return sbp::RenderDefault(*p, ctx);
         },
-        [](dsys::DialogPayloadVariant& v,
-           const ftxui::Event& e) -> bool {
+        [](dsys::DialogPayloadVariant& v, const ftxui::Event& e) -> bool {
             auto* p = std::get_if<dsys::SandboxPermissionPayload>(&v);
             if (!p) return false;
             return sbp::HandleSandboxPermissionEvent(*p, e);
@@ -225,7 +217,7 @@ TEST(DialogRenderers, Golden_SandboxPermission) {
     sp.host_pattern = "*.github.com";
     // managed_domains_only = false → all 3 options visible (TS default)
     sp.managed_domains_only = false;
-    sp.focused_index = 0;   // "Yes" focused
+    sp.focused_index = 0;  // "Yes" focused
     sp.on_response = [](bool, bool) {};
 
     dsys::DialogRenderContext ctx;
@@ -236,9 +228,8 @@ TEST(DialogRenderers, Golden_SandboxPermission) {
     dsys::DialogPayloadVariant variant{sp};
     auto el = registry.render(variant, ctx);
     ASSERT_NE(el, nullptr);
-    dialog_test_golden::check_golden(
-        "dialog_sandbox_permission",
-        dialog_test_golden::render_to_ansi(std::move(el), 100, 30));
+    dialog_test_golden::check_golden("dialog_sandbox_permission",
+                                     dialog_test_golden::render_to_ansi(std::move(el), 100, 30));
 }
 
 TEST(SandboxPermissionEvents, KeyY_AllowsOnce) {
@@ -249,7 +240,11 @@ TEST(SandboxPermissionEvents, KeyY_AllowsOnce) {
     p.host_pattern = "*.example.com";
     bool allow = false, always = true;
     int fired = 0;
-    p.on_response = [&](bool a, bool al) { allow = a; always = al; ++fired; };
+    p.on_response = [&](bool a, bool al) {
+        allow = a;
+        always = al;
+        ++fired;
+    };
 
     EXPECT_TRUE(sbp::HandleSandboxPermissionEvent(p, ftxui::Event::Character('y')));
     EXPECT_EQ(fired, 1);
@@ -264,7 +259,11 @@ TEST(SandboxPermissionEvents, KeyY_CaseInsensitive) {
     dsys::SandboxPermissionPayload p;
     int fired = 0;
     bool allow = false, always = true;
-    p.on_response = [&](bool a, bool al) { allow = a; always = al; ++fired; };
+    p.on_response = [&](bool a, bool al) {
+        allow = a;
+        always = al;
+        ++fired;
+    };
 
     EXPECT_TRUE(sbp::HandleSandboxPermissionEvent(p, ftxui::Event::Character('Y')));
     EXPECT_EQ(fired, 1);
@@ -279,7 +278,11 @@ TEST(SandboxPermissionEvents, Enter_AllowsOnce) {
     dsys::SandboxPermissionPayload p;
     int fired = 0;
     bool allow = false, always = true;
-    p.on_response = [&](bool a, bool al) { allow = a; always = al; ++fired; };
+    p.on_response = [&](bool a, bool al) {
+        allow = a;
+        always = al;
+        ++fired;
+    };
 
     EXPECT_TRUE(sbp::HandleSandboxPermissionEvent(p, ftxui::Event::Return));
     EXPECT_EQ(fired, 1);
@@ -295,7 +298,11 @@ TEST(SandboxPermissionEvents, KeyA_AlwaysAllow) {
     p.managed_domains_only = false;
     int fired = 0;
     bool allow = false, always = false;
-    p.on_response = [&](bool a, bool al) { allow = a; always = al; ++fired; };
+    p.on_response = [&](bool a, bool al) {
+        allow = a;
+        always = al;
+        ++fired;
+    };
 
     EXPECT_TRUE(sbp::HandleSandboxPermissionEvent(p, ftxui::Event::Character('a')));
     EXPECT_EQ(fired, 1);
@@ -328,7 +335,11 @@ TEST(SandboxPermissionEvents, KeyN_Denies) {
     dsys::SandboxPermissionPayload p;
     int fired = 0;
     bool allow = true, always = true;
-    p.on_response = [&](bool a, bool al) { allow = a; always = al; ++fired; };
+    p.on_response = [&](bool a, bool al) {
+        allow = a;
+        always = al;
+        ++fired;
+    };
 
     EXPECT_TRUE(sbp::HandleSandboxPermissionEvent(p, ftxui::Event::Character('n')));
     EXPECT_EQ(fired, 1);
@@ -347,7 +358,11 @@ TEST(SandboxPermissionEvents, Escape_DeniesLikeOnCancel) {
     dsys::SandboxPermissionPayload p;
     int fired = 0;
     bool allow = true, always = true;
-    p.on_response = [&](bool a, bool al) { allow = a; always = al; ++fired; };
+    p.on_response = [&](bool a, bool al) {
+        allow = a;
+        always = al;
+        ++fired;
+    };
 
     EXPECT_TRUE(sbp::HandleSandboxPermissionEvent(p, ftxui::Event::Escape));
     EXPECT_EQ(fired, 1);
@@ -444,8 +459,10 @@ TEST(DialogRenderers, Golden_PromptDialog) {
 
     struct RestoreTheme {
         Theme previous = loom::ui::design::theme::current_theme();
+
         ~RestoreTheme() { loom::ui::design::theme::set_theme(previous); }
     } restore_theme;
+
     loom::ui::design::theme::set_theme(theme);
 
     dsys::DialogRendererRegistry registry;
@@ -454,9 +471,8 @@ TEST(DialogRenderers, Golden_PromptDialog) {
     dsys::PromptDialogPayload pd;
     pd.id = "prompt-gold-1";
     pd.title = "Follow-up question";
-    pd.prompt_text =
-        "You asked for unit tests, but didn't specify a test framework. "
-        "Which framework should I use? (leave blank for project default)";
+    pd.prompt_text = "You asked for unit tests, but didn't specify a test framework. "
+                     "Which framework should I use? (leave blank for project default)";
     pd.default_value = "gtest";
     pd.on_response = [](std::optional<std::string>) {};
 
@@ -468,18 +484,17 @@ TEST(DialogRenderers, Golden_PromptDialog) {
     dsys::DialogPayloadVariant variant{pd};
     auto el = registry.render(variant, ctx);
     ASSERT_NE(el, nullptr);
-    dialog_test_golden::check_golden(
-        "dialog_prompt",
-        dialog_test_golden::render_to_ansi(std::move(el), 100, 30));
+    dialog_test_golden::check_golden("dialog_prompt",
+                                     dialog_test_golden::render_to_ansi(std::move(el), 100, 30));
 }
 
 TEST(DialogRenderers, Golden_Elicitation) {
     auto theme = dialog_test_golden::get_light_theme();
 
     dsys::DialogRendererRegistry registry;
-    registry.register_dialog(dsys::DialogType::Elicitation,
-        [&](dsys::DialogPayloadVariant& v,
-            const dsys::DialogRenderContext&) -> ftxui::Element {
+    registry.register_dialog(
+        dsys::DialogType::Elicitation,
+        [&](dsys::DialogPayloadVariant& v, const dsys::DialogRenderContext&) -> ftxui::Element {
             const auto* p = std::get_if<dsys::ElicitationPayload>(&v);
             if (!p) return text("");
 
@@ -511,9 +526,8 @@ TEST(DialogRenderers, Golden_Elicitation) {
     dsys::ElicitationPayload elp;
     elp.id = "elicit-gold-1";
     elp.server_name = "github.com";
-    elp.request_description =
-        "The github MCP server needs a repository owner and name before it "
-        "can list pull requests.  Please provide these values.";
+    elp.request_description = "The github MCP server needs a repository owner and name before it "
+                              "can list pull requests.  Please provide these values.";
     elp.request_id = 42;
     elp.on_response = [](bool) {};
 
@@ -525,9 +539,8 @@ TEST(DialogRenderers, Golden_Elicitation) {
     dsys::DialogPayloadVariant variant{elp};
     auto el = registry.render(variant, ctx);
     ASSERT_NE(el, nullptr);
-    dialog_test_golden::check_golden(
-        "dialog_elicitation",
-        dialog_test_golden::render_to_ansi(std::move(el), 100, 30));
+    dialog_test_golden::check_golden("dialog_elicitation",
+                                     dialog_test_golden::render_to_ansi(std::move(el), 100, 30));
 }
 
 TEST(DialogRenderers, Golden_CostThreshold) {
@@ -548,7 +561,7 @@ TEST(DialogRenderers, Golden_CostThreshold) {
 
     dsys::CostThresholdPayload ct;
     ct.id = "cost-gold-1";
-    ct.dollars_spent = 4.7;        // rounds to $5 per %.0f
+    ct.dollars_spent = 4.7;  // rounds to $5 per %.0f
     ct.model_name = "test-model";
     std::atomic<int> done_calls{0};
     ct.on_done = [&] { done_calls.fetch_add(1); };
@@ -562,26 +575,22 @@ TEST(DialogRenderers, Golden_CostThreshold) {
     auto el = registry.render(variant, ctx);
     ASSERT_NE(el, nullptr);
 
-    auto screen = ftxui::Screen::Create(
-        ftxui::Dimension::Fixed(100), ftxui::Dimension::Fixed(30));
+    auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(100), ftxui::Dimension::Fixed(30));
     ftxui::Render(screen, el);
     const std::string out = screen.ToString();
 
     // Contractually required content.
-    EXPECT_NE(out.find("You've spent $5 on the API this session."),
-              std::string::npos);
-    EXPECT_NE(out.find("Learn more about how to monitor your spending:"),
-              std::string::npos);
+    EXPECT_NE(out.find("You've spent $5 on the API this session."), std::string::npos);
+    EXPECT_NE(out.find("Learn more about how to monitor your spending:"), std::string::npos);
     EXPECT_EQ(out.find("code.loom.com"), std::string::npos)
         << "no docs host is configured, so no link may be rendered";
-    EXPECT_NE(out.find("(model: test-model)"),
-              std::string::npos);
+    EXPECT_NE(out.find("(model: test-model)"), std::string::npos);
     EXPECT_NE(out.find("Got it, thanks!"), std::string::npos);
 
     // Fabricated 3-action chrome MUST be absent (P0).
-    EXPECT_EQ(out.find("[c] Continue"),      std::string::npos);
-    EXPECT_EQ(out.find("Reset counter"),     std::string::npos);
-    EXPECT_EQ(out.find("[q] Quit"),          std::string::npos);
+    EXPECT_EQ(out.find("[c] Continue"), std::string::npos);
+    EXPECT_EQ(out.find("Reset counter"), std::string::npos);
+    EXPECT_EQ(out.find("[q] Quit"), std::string::npos);
 
     // Keyboard — both Enter and Escape MUST call on_done() (no data-loss).
     variant = ct;  // reset variant to fresh payload
@@ -611,26 +620,23 @@ TEST(DialogRenderers, Golden_IdleReturn) {
     auto theme = dialog_test_golden::get_light_theme();
 
     dsys::DialogRendererRegistry registry;
-    registry.register_dialog(dsys::DialogType::IdleReturn,
-        [&](dsys::DialogPayloadVariant& v,
-            const dsys::DialogRenderContext&) -> ftxui::Element {
+    registry.register_dialog(
+        dsys::DialogType::IdleReturn,
+        [&](dsys::DialogPayloadVariant& v, const dsys::DialogRenderContext&) -> ftxui::Element {
             const auto* p = std::get_if<dsys::IdleReturnPayload>(&v);
             if (!p) return text("");
 
             dframe::DialogFrameProps props;
             props.title = "Session Idle";
-            props.subtitle = std::format(
-                "Returning to idle in {} minutes — click Cancel to stay",
-                p->idle_minutes);
+            props.subtitle = std::format("Returning to idle in {} minutes — click Cancel to stay",
+                                         p->idle_minutes);
             props.style = dframe::FrameStyle::Muted;
             props.content = vbox({
-                text(std::format(
-                    "Your session has been idle for {} minutes.",
-                    p->idle_minutes)) | center,
+                text(std::format("Your session has been idle for {} minutes.", p->idle_minutes)) |
+                    center,
                 text(""),
-                paragraph(
-                    "Resuming will re-hydrate the conversation context and "
-                    "continue from where you left off."),
+                paragraph("Resuming will re-hydrate the conversation context and "
+                          "continue from where you left off."),
                 text(""),
                 hbox({
                     filler(),
@@ -655,18 +661,17 @@ TEST(DialogRenderers, Golden_IdleReturn) {
     dsys::DialogPayloadVariant variant{ir};
     auto el = registry.render(variant, ctx);
     ASSERT_NE(el, nullptr);
-    dialog_test_golden::check_golden(
-        "dialog_idle_return",
-        dialog_test_golden::render_to_ansi(std::move(el), 100, 30));
+    dialog_test_golden::check_golden("dialog_idle_return",
+                                     dialog_test_golden::render_to_ansi(std::move(el), 100, 30));
 }
 
 TEST(DialogRenderers, Golden_SettingsPanel) {
     auto theme = dialog_test_golden::get_light_theme();
 
     dsys::DialogRendererRegistry registry;
-    registry.register_dialog(dsys::DialogType::SettingsPanel,
-        [&](dsys::DialogPayloadVariant& v,
-            const dsys::DialogRenderContext&) -> ftxui::Element {
+    registry.register_dialog(
+        dsys::DialogType::SettingsPanel,
+        [&](dsys::DialogPayloadVariant& v, const dsys::DialogRenderContext&) -> ftxui::Element {
             const auto* p = std::get_if<dsys::SettingsPanelPayload>(&v);
             if (!p) return text("");
 
@@ -684,14 +689,12 @@ TEST(DialogRenderers, Golden_SettingsPanel) {
                     filler(),
                 }),
                 hbox({
-                    text("  API base") | dim
-                        | ftxui::size(ftxui::WIDTH, ftxui::EQUAL, 22),
+                    text("  API base") | dim | ftxui::size(ftxui::WIDTH, ftxui::EQUAL, 22),
                     text("(no default)"),
                     filler(),
                 }),
                 hbox({
-                    text("  Max tokens") | dim
-                        | ftxui::size(ftxui::WIDTH, ftxui::EQUAL, 22),
+                    text("  Max tokens") | dim | ftxui::size(ftxui::WIDTH, ftxui::EQUAL, 22),
                     text("8192"),
                     filler(),
                 }),
@@ -718,9 +721,8 @@ TEST(DialogRenderers, Golden_SettingsPanel) {
     dsys::DialogPayloadVariant variant{sp};
     auto el = registry.render(variant, ctx);
     ASSERT_NE(el, nullptr);
-    dialog_test_golden::check_golden(
-        "dialog_settings_panel",
-        dialog_test_golden::render_to_ansi(std::move(el), 100, 30));
+    dialog_test_golden::check_golden("dialog_settings_panel",
+                                     dialog_test_golden::render_to_ansi(std::move(el), 100, 30));
 }
 
 // ============================================================
@@ -739,12 +741,10 @@ struct MiniReplState {
 /// Local mirror of dialog_queue_render::RenderBottomDialog.
 /// Logic: peek_bottom(is_typing, !is_animation) -> render via registry ->
 /// clamp to ~40% of terminal rows.
-[[nodiscard]] inline std::optional<ftxui::Element> LocalRenderBottomDialog(
-    MiniReplState& s,        // mutable so renderers can attach UI state
-    int term_cols,
-    int term_rows)
-{
-    auto& queue = s.dialog_queue;   // mutable for peek_bottom_mut (renderer may attach UI state)
+[[nodiscard]] inline std::optional<ftxui::Element>
+LocalRenderBottomDialog(MiniReplState& s,  // mutable so renderers can attach UI state
+                        int term_cols, int term_rows) {
+    auto& queue = s.dialog_queue;  // mutable for peek_bottom_mut (renderer may attach UI state)
     if (!queue.has_any_bottom()) return std::nullopt;
 
     auto payload_opt = queue.peek_bottom_mut(
@@ -761,8 +761,7 @@ struct MiniReplState {
     if (!el) return std::nullopt;
 
     // Bottom-slot height clamp (~40% of rows)
-    return el | ftxui::size(ftxui::HEIGHT, ftxui::LESS_THAN,
-                            std::max(4, term_rows * 2 / 5));
+    return el | ftxui::size(ftxui::HEIGHT, ftxui::LESS_THAN, std::max(4, term_rows * 2 / 5));
 }
 
 TEST(ReplScreenIntegration, TypingSuppressionSkipsBottomDialogs) {
@@ -773,18 +772,17 @@ TEST(ReplScreenIntegration, TypingSuppressionSkipsBottomDialogs) {
     // Each just renders the type name so visual inspection can tell which
     // dialog was rendered.
     auto reg = [&](dsys::DialogType ty, std::string label) {
-        s.dialog_renderers.register_renderer(ty,
-            [label = std::move(label)](
-                dsys::DialogPayloadVariant&,
-                const dsys::DialogRenderContext&) -> ftxui::Element {
-                return ftxui::window(
-                    ftxui::text(" " + label + " "),
-                    ftxui::text(label + " content") | xflex);
+        s.dialog_renderers.register_renderer(
+            ty,
+            [label = std::move(label)](dsys::DialogPayloadVariant&,
+                                       const dsys::DialogRenderContext&) -> ftxui::Element {
+                return ftxui::window(ftxui::text(" " + label + " "),
+                                     ftxui::text(label + " content") | xflex);
             });
     };
     reg(dsys::DialogType::SandboxPermission, "SandboxPermission");
-    reg(dsys::DialogType::PromptDialog,      "PromptDialog");
-    reg(dsys::DialogType::CostThreshold,     "CostThreshold");
+    reg(dsys::DialogType::PromptDialog, "PromptDialog");
+    reg(dsys::DialogType::CostThreshold, "CostThreshold");
 
     // Push SandboxPermission (Band2), PromptDialog (Band3), CostThreshold (Band4)
     {
@@ -809,14 +807,12 @@ TEST(ReplScreenIntegration, TypingSuppressionSkipsBottomDialogs) {
 
     // (A) typing OFF, animation OFF → Sandbox (Band2, highest) should show
     auto el = LocalRenderBottomDialog(s, 100, 40);
-    EXPECT_TRUE(el.has_value())
-        << "(A) Sandbox Band2 should show with typing=OFF, animation=OFF";
+    EXPECT_TRUE(el.has_value()) << "(A) Sandbox Band2 should show with typing=OFF, animation=OFF";
 
     // (B) typing ON → ALL Band2..6 suppressed → nullopt
     s.is_prompt_input_active = true;
     el = LocalRenderBottomDialog(s, 100, 40);
-    EXPECT_FALSE(el.has_value())
-        << "(B) Everything must be suppressed while typing is active";
+    EXPECT_FALSE(el.has_value()) << "(B) Everything must be suppressed while typing is active";
 
     // (C) typing OFF, animation ON → Band3 (Prompt) skipped,
     //     Band2 still shows
@@ -834,16 +830,14 @@ TEST(ReplScreenIntegration, TypingSuppressionSkipsBottomDialogs) {
     // CostThreshold (Band4, reachable).
     // Next peek → CostThreshold (Band4), NOT PromptDialog (Band3, skipped).
     el = LocalRenderBottomDialog(s, 100, 40);
-    EXPECT_TRUE(el.has_value())
-        << "(C-post-pop) Band4 CostThreshold must be reachable when Band3 "
-           "PromptDialog is skipped for animation";
+    EXPECT_TRUE(el.has_value()) << "(C-post-pop) Band4 CostThreshold must be reachable when Band3 "
+                                   "PromptDialog is skipped for animation";
 
     // (D) remove CostThreshold too — next: PromptDialog (still Band3, skipped)
     s.dialog_queue.pop_bottom(false, /*animation_ok=*/false);
     el = LocalRenderBottomDialog(s, 100, 40);
-    EXPECT_FALSE(el.has_value())
-        << "(D) After CostThreshold is removed, only Band3 PromptDialog "
-           "remains; it must be suppressed while animation is ON";
+    EXPECT_FALSE(el.has_value()) << "(D) After CostThreshold is removed, only Band3 PromptDialog "
+                                    "remains; it must be suppressed while animation is ON";
 
     // Turn animation OFF → PromptDialog (Band3) now shows.
     s.is_tool_animation_active = false;
@@ -863,8 +857,7 @@ TEST(ReplScreenIntegration, PermissionVisibleAndRespondsWhileQuerySpinnerRuns) {
     namespace repl = loom::ui::repl_screen;
     using Decision = dsys::ToolPermissionPayload::Decision;
 
-    for (const auto spinner : {repl::SpinnerMode::Requesting,
-                               repl::SpinnerMode::ToolUse}) {
+    for (const auto spinner : {repl::SpinnerMode::Requesting, repl::SpinnerMode::ToolUse}) {
         for (const char key : {'y', 'n'}) {
             SCOPED_TRACE(static_cast<int>(spinner));
             SCOPED_TRACE(key);
@@ -877,14 +870,12 @@ TEST(ReplScreenIntegration, PermissionVisibleAndRespondsWhileQuerySpinnerRuns) {
             permission.id = "spinner-permission";
             permission.tool_name = "Write";
             permission.description = "PermissionSpinnerRegression";
-            permission.on_response = [&](Decision decision, bool) {
-                response = decision;
-            };
+            permission.on_response = [&](Decision decision, bool) { response = decision; };
             state->dialog_store.dialog_queue.push(
                 dsys::DialogPayloadVariant{std::move(permission)});
 
-            const auto rendered = strip_ansi(dialog_test_golden::render_to_ansi(
-                repl::RenderReplScreen(*state), 120, 40));
+            const auto rendered = strip_ansi(
+                dialog_test_golden::render_to_ansi(repl::RenderReplScreen(*state), 120, 40));
             EXPECT_NE(rendered.find("Allow once"), std::string::npos) << rendered;
             EXPECT_NE(rendered.find("Deny"), std::string::npos) << rendered;
 
@@ -912,11 +903,10 @@ TEST(ReplScreenIntegration, PermissionSuppressionUsesActualToolAnimation) {
     permission.tool_name = "Write";
     permission.description = "PermissionAnimationRegression";
     permission.on_response = [&](Decision, bool) { responded = true; };
-    state->dialog_store.dialog_queue.push(
-        dsys::DialogPayloadVariant{std::move(permission)});
+    state->dialog_store.dialog_queue.push(dsys::DialogPayloadVariant{std::move(permission)});
 
-    const auto hidden = strip_ansi(dialog_test_golden::render_to_ansi(
-        repl::RenderReplScreen(*state), 120, 40));
+    const auto hidden =
+        strip_ansi(dialog_test_golden::render_to_ansi(repl::RenderReplScreen(*state), 120, 40));
     EXPECT_EQ(hidden.find("Allow once"), std::string::npos);
     auto component = repl::ReplScreen(state, {});
     EXPECT_TRUE(component->OnEvent(ftxui::Event::Character('n')));
@@ -926,8 +916,8 @@ TEST(ReplScreenIntegration, PermissionSuppressionUsesActualToolAnimation) {
     state->input_text.clear();
     state->is_prompt_input_active = false;
     state->is_tool_animation_active = false;
-    const auto visible = strip_ansi(dialog_test_golden::render_to_ansi(
-        repl::RenderReplScreen(*state), 120, 40));
+    const auto visible =
+        strip_ansi(dialog_test_golden::render_to_ansi(repl::RenderReplScreen(*state), 120, 40));
     EXPECT_NE(visible.find("Allow once"), std::string::npos) << visible;
     EXPECT_NE(visible.find("Deny"), std::string::npos) << visible;
     EXPECT_TRUE(component->OnEvent(ftxui::Event::Character('n')));
@@ -935,5 +925,4 @@ TEST(ReplScreenIntegration, PermissionSuppressionUsesActualToolAnimation) {
     EXPECT_TRUE(state->input_text.empty());
 }
 
-
-} // namespace
+}  // namespace

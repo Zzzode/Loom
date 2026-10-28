@@ -15,19 +15,22 @@ namespace {
 namespace th = loom::ui::design::theme;
 namespace ch = loom::ui::code_highlight;
 namespace sd = loom::ui::structured_diff;
+
 struct RestoreTheme {
     th::Theme original = th::current_theme();
+
     ~RestoreTheme() { th::set_theme(original); }
 };
-constexpr std::array kVariants = {th::ThemeVariant::Light,
-    th::ThemeVariant::DarkDaltonized, th::ThemeVariant::LightDaltonized,
-    th::ThemeVariant::Monochrome};
+
+constexpr std::array kVariants = {th::ThemeVariant::Light, th::ThemeVariant::DarkDaltonized,
+                                  th::ThemeVariant::LightDaltonized, th::ThemeVariant::Monochrome};
+
 ftxui::Screen Render(ftxui::Element element) {
-    auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(80),
-                                      ftxui::Dimension::Fixed(15));
+    auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(80), ftxui::Dimension::Fixed(15));
     ftxui::Render(screen, std::move(element));
     return screen;
 }
+
 void ExpectWordColor(const ftxui::Screen& screen, std::string_view word, ftxui::Color expected) {
     bool found = false;
     for (int y = 0; y < screen.dimy(); ++y) {
@@ -39,14 +42,17 @@ void ExpectWordColor(const ftxui::Screen& screen, std::string_view word, ftxui::
             if (!matches) continue;
             found = true;
             for (std::size_t i = 0; i < word.size(); ++i)
-                EXPECT_EQ(screen.PixelAt(x + static_cast<int>(i), y).foreground_color, expected) << word;
+                EXPECT_EQ(screen.PixelAt(x + static_cast<int>(i), y).foreground_color, expected)
+                    << word;
         }
     }
     EXPECT_TRUE(found) << word;
 }
+
 std::optional<double> Luminance(ftxui::Color color) {
     const auto encoded = color.Print(false);
-    if (!encoded.starts_with("38;2;")) return std::nullopt; // ANSI colors depend on the terminal palette.
+    if (!encoded.starts_with("38;2;"))
+        return std::nullopt;  // ANSI colors depend on the terminal palette.
     std::string_view values{encoded};
     values.remove_prefix(5);
     std::array<double, 3> linear{};
@@ -61,6 +67,7 @@ std::optional<double> Luminance(ftxui::Color color) {
     }
     return 0.2126 * linear[0] + 0.7152 * linear[1] + 0.0722 * linear[2];
 }
+
 void ExpectReadableColors(ftxui::Color foreground, ftxui::Color background) {
     EXPECT_NE(foreground, background);
     const auto fg = Luminance(foreground);
@@ -68,7 +75,8 @@ void ExpectReadableColors(ftxui::Color foreground, ftxui::Color background) {
     if (fg && bg) EXPECT_GE((std::max(*fg, *bg) + 0.05) / (std::min(*fg, *bg) + 0.05), 3.0);
 }
 
-}
+}  // namespace
+
 TEST(ScreenVisualTheme, DefaultSyntaxAndDiffColorsFollowPalette) {
     RestoreTheme restore;
     for (auto variant : kVariants) {
@@ -90,17 +98,24 @@ TEST(ScreenVisualTheme, DefaultSyntaxAndDiffColorsFollowPalette) {
         ExpectWordColor(Render(sd::RenderWordHighlightedContent(line, diff)), "added", pal.success);
     }
 }
+
 TEST(ScreenVisualTheme, CachedMarkdownTokensAreRenderedWithCurrentTheme) {
     RestoreTheme restore;
     loom::ui::clear_markdown_cache();
     for (auto variant : kVariants) {
         th::set_theme(variant);
         const auto& pal = *th::current_theme().palette;
-        ExpectWordColor(Render(loom::ui::render_markdown("`code` ![image](https://example.test) $math$")), "code", pal.permission);
-        ExpectWordColor(Render(loom::ui::render_markdown("`code` ![image](https://example.test) $math$")), "image", pal.suggestion);
-        ExpectWordColor(Render(loom::ui::render_markdown("```cpp\nreturn 1;\n```")), "return", pal.primary);
+        ExpectWordColor(
+            Render(loom::ui::render_markdown("`code` ![image](https://example.test) $math$")),
+            "code", pal.permission);
+        ExpectWordColor(
+            Render(loom::ui::render_markdown("`code` ![image](https://example.test) $math$")),
+            "image", pal.suggestion);
+        ExpectWordColor(Render(loom::ui::render_markdown("```cpp\nreturn 1;\n```")), "return",
+                        pal.primary);
     }
 }
+
 TEST(ScreenVisualTheme, ExplicitSyntaxAndDiffOverridesRemainUnchanged) {
     RestoreTheme restore;
     const auto code = ch::get_theme(ch::ThemeName::Monokai);
@@ -112,16 +127,19 @@ TEST(ScreenVisualTheme, ExplicitSyntaxAndDiffOverridesRemainUnchanged) {
         EXPECT_EQ(sd::get_diff_syntax_theme("monokai")->added_fg, diff->added_fg);
         loom::ui::MarkdownOptions opts;
         opts.theme_name = "monokai";
-        ExpectWordColor(Render(loom::ui::render_markdown("```cpp\nreturn 1;\n```", opts)), "return", code.keyword);
+        ExpectWordColor(Render(loom::ui::render_markdown("```cpp\nreturn 1;\n```", opts)), "return",
+                        code.keyword);
         const auto custom = th::resolve_color("rgb(12,34,56)", th::current_theme());
         auto customized = sd::default_theme();
         customized.added_fg = custom;
         sd::StructuredDiffLine line;
         line.type = sd::StructuredDiffLine::Type::Added;
         line.content = "custom";
-        ExpectWordColor(Render(sd::RenderWordHighlightedContent(line, customized)), "custom", custom);
+        ExpectWordColor(Render(sd::RenderWordHighlightedContent(line, customized)), "custom",
+                        custom);
     }
 }
+
 TEST(ScreenVisualTheme, DoctorSeverityUsesSemanticTokensAndDistinctFigures) {
     RestoreTheme restore;
     namespace doctor = loom::ui::doctor_screen;
@@ -144,12 +162,14 @@ TEST(ScreenVisualTheme, DiffChangedWordsRemainReadableInEveryTheme) {
     for (auto variant : kVariants) {
         th::set_theme(variant);
         const auto diff = sd::default_theme();
-        for (auto type : {sd::StructuredDiffLine::Type::Added, sd::StructuredDiffLine::Type::Removed}) {
+        for (auto type :
+             {sd::StructuredDiffLine::Type::Added, sd::StructuredDiffLine::Type::Removed}) {
             sd::StructuredDiffLine line;
             line.type = type;
             line.content = "word";
-            line.word_changes.push_back({.start_col = 0, .end_col = 4,
-                .is_added = type == sd::StructuredDiffLine::Type::Added});
+            line.word_changes.push_back({.start_col = 0,
+                                         .end_col = 4,
+                                         .is_added = type == sd::StructuredDiffLine::Type::Added});
             auto screen = Render(sd::RenderWordHighlightedContent(line, diff));
             bool found = false;
             for (int y = 0; y < screen.dimy(); ++y)

@@ -38,7 +38,8 @@ namespace detail {
 [[nodiscard]] inline std::string trim_copy(std::string_view value) {
     auto first = value.begin();
     auto last = value.end();
-    while (first != last && std::isspace(static_cast<unsigned char>(*first))) ++first;
+    while (first != last && std::isspace(static_cast<unsigned char>(*first)))
+        ++first;
     while (first != last) {
         auto prev = last;
         --prev;
@@ -52,7 +53,8 @@ namespace detail {
     return value.size() >= suffix.size() && value.substr(value.size() - suffix.size()) == suffix;
 }
 
-[[nodiscard]] inline std::size_t preceding_backslash_count(std::string_view value, std::size_t index) noexcept {
+[[nodiscard]] inline std::size_t preceding_backslash_count(std::string_view value,
+                                                           std::size_t index) noexcept {
     std::size_t count = 0;
     while (index > 0 && value[index - 1] == '\\') {
         ++count;
@@ -109,7 +111,8 @@ struct PatternToken {
     return normalize_case(left, case_insensitive) == normalize_case(right, case_insensitive);
 }
 
-[[nodiscard]] inline bool match_tokens(const std::vector<PatternToken>& tokens, std::string_view command, bool case_insensitive) {
+[[nodiscard]] inline bool match_tokens(const std::vector<PatternToken>& tokens,
+                                       std::string_view command, bool case_insensitive) {
     std::size_t pi = 0;
     std::size_t ci = 0;
     std::size_t star_index = std::string_view::npos;
@@ -119,7 +122,8 @@ struct PatternToken {
         if (pi < tokens.size() && tokens[pi].wildcard) {
             star_index = pi++;
             star_command_index = ci;
-        } else if (pi < tokens.size() && literal_equals(tokens[pi].literal, command[ci], case_insensitive)) {
+        } else if (pi < tokens.size() &&
+                   literal_equals(tokens[pi].literal, command[ci], case_insensitive)) {
             ++pi;
             ++ci;
         } else if (star_index != std::string_view::npos) {
@@ -130,14 +134,17 @@ struct PatternToken {
         }
     }
 
-    while (pi < tokens.size() && tokens[pi].wildcard) ++pi;
+    while (pi < tokens.size() && tokens[pi].wildcard)
+        ++pi;
     return pi == tokens.size();
 }
 
-} // namespace detail
+}  // namespace detail
 
-[[nodiscard]] inline std::optional<std::string> permission_rule_extract_prefix(std::string_view permission_rule) {
-    if (!detail::ends_with(permission_rule, ":*") || permission_rule.size() <= 2) return std::nullopt;
+[[nodiscard]] inline std::optional<std::string>
+permission_rule_extract_prefix(std::string_view permission_rule) {
+    if (!detail::ends_with(permission_rule, ":*") || permission_rule.size() <= 2)
+        return std::nullopt;
     return std::string(permission_rule.substr(0, permission_rule.size() - 2));
 }
 
@@ -149,26 +156,29 @@ struct PatternToken {
     return false;
 }
 
-[[nodiscard]] inline bool match_wildcard_pattern(std::string_view pattern, std::string_view command, bool case_insensitive = false) {
+[[nodiscard]] inline bool match_wildcard_pattern(std::string_view pattern, std::string_view command,
+                                                 bool case_insensitive = false) {
     const auto trimmed_pattern = detail::trim_copy(pattern);
     const auto unescaped_star_count = detail::count_unescaped_stars(trimmed_pattern);
 
-    if (trimmed_pattern.size() >= 2 &&
-        trimmed_pattern.back() == '*' &&
+    if (trimmed_pattern.size() >= 2 && trimmed_pattern.back() == '*' &&
         trimmed_pattern[trimmed_pattern.size() - 2] == ' ' &&
         detail::is_unescaped_star(trimmed_pattern, trimmed_pattern.size() - 1) &&
         unescaped_star_count == 1) {
         const auto prefix = trimmed_pattern.substr(0, trimmed_pattern.size() - 2);
         if (command.size() == prefix.size()) {
-            return detail::match_tokens(detail::tokenize_pattern(prefix), command, case_insensitive);
+            return detail::match_tokens(detail::tokenize_pattern(prefix), command,
+                                        case_insensitive);
         }
         if (command.size() > prefix.size() && command[prefix.size()] == ' ') {
-            return detail::match_tokens(detail::tokenize_pattern(prefix), command.substr(0, prefix.size()), case_insensitive);
+            return detail::match_tokens(detail::tokenize_pattern(prefix),
+                                        command.substr(0, prefix.size()), case_insensitive);
         }
         return false;
     }
 
-    return detail::match_tokens(detail::tokenize_pattern(trimmed_pattern), command, case_insensitive);
+    return detail::match_tokens(detail::tokenize_pattern(trimmed_pattern), command,
+                                case_insensitive);
 }
 
 [[nodiscard]] inline ShellPermissionRule parse_permission_rule(std::string_view permission_rule) {
@@ -196,26 +206,30 @@ struct PatternToken {
     };
 }
 
-[[nodiscard]] inline std::vector<PermissionUpdate> suggestion_for_exact_command(std::string_view tool_name, std::string_view command) {
+[[nodiscard]] inline std::vector<PermissionUpdate>
+suggestion_for_exact_command(std::string_view tool_name, std::string_view command) {
     return {
         PermissionUpdate{
             .type = "addRules",
-            .rules = {PermissionUpdateRule{.tool_name = std::string(tool_name), .rule_content = std::string(command)}},
+            .rules = {PermissionUpdateRule{.tool_name = std::string(tool_name),
+                                           .rule_content = std::string(command)}},
             .behavior = "allow",
             .destination = "localSettings",
         },
     };
 }
 
-[[nodiscard]] inline std::vector<PermissionUpdate> suggestion_for_prefix(std::string_view tool_name, std::string_view prefix) {
+[[nodiscard]] inline std::vector<PermissionUpdate> suggestion_for_prefix(std::string_view tool_name,
+                                                                         std::string_view prefix) {
     return {
         PermissionUpdate{
             .type = "addRules",
-            .rules = {PermissionUpdateRule{.tool_name = std::string(tool_name), .rule_content = std::string(prefix) + ":*"}},
+            .rules = {PermissionUpdateRule{.tool_name = std::string(tool_name),
+                                           .rule_content = std::string(prefix) + ":*"}},
             .behavior = "allow",
             .destination = "localSettings",
         },
     };
 }
 
-} // namespace loom::utils::shell_rule_matching
+}  // namespace loom::utils::shell_rule_matching

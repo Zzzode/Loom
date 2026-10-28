@@ -35,9 +35,11 @@ std::string generate_inline_diff(std::string_view old_text, std::string_view new
             result += "  ";
             result += old_lines[i];
             result += "\n";
-            ++i; ++j;
+            ++i;
+            ++j;
         } else if (j < new_lines.size() &&
-                   (i >= old_lines.size() || (j + 1 < new_lines.size() && new_lines[j + 1] == old_lines[i]))) {
+                   (i >= old_lines.size() ||
+                    (j + 1 < new_lines.size() && new_lines[j + 1] == old_lines[i]))) {
             result += "+ ";
             result += new_lines[j];
             result += "\n";
@@ -68,10 +70,12 @@ std::string word_diff(std::string_view old_text, std::string_view new_text) {
         std::size_t pos = 0;
         while (pos < text.size()) {
             // Skip whitespace
-            while (pos < text.size() && std::isspace(static_cast<unsigned char>(text[pos]))) ++pos;
+            while (pos < text.size() && std::isspace(static_cast<unsigned char>(text[pos])))
+                ++pos;
             if (pos >= text.size()) break;
             auto start = pos;
-            while (pos < text.size() && !std::isspace(static_cast<unsigned char>(text[pos]))) ++pos;
+            while (pos < text.size() && !std::isspace(static_cast<unsigned char>(text[pos])))
+                ++pos;
             words.push_back(text.substr(start, pos - start));
         }
         return words;
@@ -85,7 +89,8 @@ std::string word_diff(std::string_view old_text, std::string_view new_text) {
         if (i < old_words.size() && j < new_words.size() && old_words[i] == new_words[j]) {
             result += old_words[i];
             result += " ";
-            ++i; ++j;
+            ++i;
+            ++j;
         } else if (i < old_words.size() &&
                    (j >= new_words.size() || old_words[i] != new_words[j])) {
             result += "\033[31m[-";
@@ -139,16 +144,19 @@ parse_range(std::string_view value) {
     value = trim(value);
     auto comma = value.find(',');
     auto start_view = comma == std::string_view::npos ? value : value.substr(0, comma);
-    auto count_view = comma == std::string_view::npos ? std::string_view{"1"} : value.substr(comma + 1);
+    auto count_view =
+        comma == std::string_view::npos ? std::string_view{"1"} : value.substr(comma + 1);
 
     std::size_t start = 0;
-    auto [start_ptr, start_ec] = loom::utils::from_chars(start_view.data(), start_view.data() + start_view.size(), start);
+    auto [start_ptr, start_ec] =
+        loom::utils::from_chars(start_view.data(), start_view.data() + start_view.size(), start);
     if (start_ec != std::errc{} || start_ptr != start_view.data() + start_view.size()) {
         return std::nullopt;
     }
 
     std::size_t count = 0;
-    auto [count_ptr, count_ec] = loom::utils::from_chars(count_view.data(), count_view.data() + count_view.size(), count);
+    auto [count_ptr, count_ec] =
+        loom::utils::from_chars(count_view.data(), count_view.data() + count_view.size(), count);
     if (count_ec != std::errc{} || count_ptr != count_view.data() + count_view.size()) {
         return std::nullopt;
     }
@@ -179,19 +187,17 @@ parse_range(std::string_view value) {
     };
 }
 
-[[nodiscard]] inline std::string format_context_error(
-    std::size_t line_number,
-    std::string_view expected,
-    std::string_view actual
-) {
-    return "Patch context mismatch at source line " + std::to_string(line_number) +
-        ": expected '" + std::string(expected) + "', got '" + std::string(actual) + "'";
+[[nodiscard]] inline std::string
+format_context_error(std::size_t line_number, std::string_view expected, std::string_view actual) {
+    return "Patch context mismatch at source line " + std::to_string(line_number) + ": expected '" +
+           std::string(expected) + "', got '" + std::string(actual) + "'";
 }
 
-} // namespace diff_detail
+}  // namespace diff_detail
 
 // Apply a unified diff patch to content
-std::expected<std::string, std::string> apply_patch(std::string_view content, std::string_view patch) {
+std::expected<std::string, std::string> apply_patch(std::string_view content,
+                                                    std::string_view patch) {
     auto lines = diff_detail::split_lines(content);
     auto patch_lines = diff_detail::split_lines(patch);
     const bool had_trailing_newline = content.ends_with('\n');
@@ -254,7 +260,8 @@ std::expected<std::string, std::string> apply_patch(std::string_view content, st
 
                 if (tag == ' ') {
                     if (source_index >= lines.size()) {
-                        return std::unexpected("Patch context extends beyond end of source content");
+                        return std::unexpected(
+                            "Patch context extends beyond end of source content");
                     }
                     if (lines[source_index] != text) {
                         return std::unexpected(diff_detail::format_context_error(
@@ -265,7 +272,8 @@ std::expected<std::string, std::string> apply_patch(std::string_view content, st
                     ++new_seen;
                 } else if (tag == '-') {
                     if (source_index >= lines.size()) {
-                        return std::unexpected("Patch deletion extends beyond end of source content");
+                        return std::unexpected(
+                            "Patch deletion extends beyond end of source content");
                     }
                     if (lines[source_index] != text) {
                         return std::unexpected(diff_detail::format_context_error(
@@ -277,7 +285,8 @@ std::expected<std::string, std::string> apply_patch(std::string_view content, st
                     output.emplace_back(text);
                     ++new_seen;
                 } else {
-                    return std::unexpected("Invalid unified diff hunk line: " + std::string(hunk_line));
+                    return std::unexpected("Invalid unified diff hunk line: " +
+                                           std::string(hunk_line));
                 }
 
                 ++patch_index;
@@ -312,4 +321,4 @@ std::expected<std::string, std::string> apply_patch(std::string_view content, st
     return result;
 }
 
-} // namespace loom::utils
+}  // namespace loom::utils

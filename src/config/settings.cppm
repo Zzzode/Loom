@@ -25,13 +25,14 @@ struct FlagStatusLineSettings {
 };
 
 struct FlagSettingsResult {
-    std::optional<std::string> model;        // from `model` (string) if present
-    std::optional<std::string> api_key;      // from `apiKey` (string) if present
-    std::optional<std::string> base_url;     // from `baseUrl` (string) if present
-    std::optional<FlagStatusLineSettings> status_line; // from `statusLine` if present
-    std::vector<std::string> applied_env_keys; // env vars set (in iteration order)
-    std::vector<std::string> deferred_keys;    // recognized-but-unhandled or unknown keys
-    std::vector<std::string> deny_rules;       // from permissions.deny (TS settings sources -> alwaysDenyRules)
+    std::optional<std::string> model;                   // from `model` (string) if present
+    std::optional<std::string> api_key;                 // from `apiKey` (string) if present
+    std::optional<std::string> base_url;                // from `baseUrl` (string) if present
+    std::optional<FlagStatusLineSettings> status_line;  // from `statusLine` if present
+    std::vector<std::string> applied_env_keys;          // env vars set (in iteration order)
+    std::vector<std::string> deferred_keys;             // recognized-but-unhandled or unknown keys
+    std::vector<std::string>
+        deny_rules;  // from permissions.deny (TS settings sources -> alwaysDenyRules)
 };
 
 /// EnvSetter abstraction: lets callers (tests) inject a recorder instead of
@@ -41,10 +42,8 @@ using EnvSetter = std::function<void(std::string_view name, std::string_view val
 /// EnvGetter abstraction for deterministic tests of environment precedence.
 using EnvGetter = std::function<std::optional<std::string>(std::string_view name)>;
 
-[[nodiscard]] inline std::optional<std::string> first_non_empty_env(
-    const EnvGetter& env_getter,
-    std::initializer_list<std::string_view> names
-) {
+[[nodiscard]] inline std::optional<std::string>
+first_non_empty_env(const EnvGetter& env_getter, std::initializer_list<std::string_view> names) {
     if (!env_getter) return std::nullopt;
     for (auto name : names) {
         auto value = env_getter(name);
@@ -53,13 +52,12 @@ using EnvGetter = std::function<std::optional<std::string>(std::string_view name
     return std::nullopt;
 }
 
-[[nodiscard]] inline std::string resolve_default_model_from_environment(
-    const EnvGetter& env_getter,
-    std::string_view fallback = ""
-) {
+[[nodiscard]] inline std::string
+resolve_default_model_from_environment(const EnvGetter& env_getter,
+                                       std::string_view fallback = "") {
     auto model = first_non_empty_env(env_getter, {
-        "LOOM_MODEL",
-    });
+                                                     "LOOM_MODEL",
+                                                 });
     return model.value_or(std::string(fallback));
 }
 
@@ -96,10 +94,8 @@ using EnvGetter = std::function<std::optional<std::string>(std::string_view name
 /// Keys the C++ port does NOT yet apply (permissions merge, hooks, mcpServers,
 /// managed/MDM settings, etc.) are recorded in `deferred_keys` for honest
 /// feedback rather than silently dropped.
-[[nodiscard]] inline FlagSettingsResult apply_flag_settings(
-    const loom::utils::json::JsonVal& root,
-    const EnvSetter& env_setter
-) {
+[[nodiscard]] inline FlagSettingsResult apply_flag_settings(const loom::utils::json::JsonVal& root,
+                                                            const EnvSetter& env_setter) {
     FlagSettingsResult out;
 
     if (!root.is_obj()) {
@@ -169,8 +165,9 @@ using EnvGetter = std::function<std::optional<std::string>(std::string_view name
     root.iter_obj([&](auto key, auto /*value*/) {
         if (!key.is_str()) return;
         const auto name = std::string(key.as_str());
-        if (name == "env" || name == "apiKey" || name == "baseUrl" ||
-            name == "model" || name == "statusLine" || name == "permissions") return;
+        if (name == "env" || name == "apiKey" || name == "baseUrl" || name == "model" ||
+            name == "statusLine" || name == "permissions")
+            return;
         out.deferred_keys.push_back(name);
     });
 
@@ -182,9 +179,9 @@ using SettingValue = std::variant<std::string, int, double, bool, std::vector<st
 
 /// Settings scope
 enum class SettingsScope : std::uint8_t {
-    User,       // ~/.loom/settings.json
-    Project,    // .loom/settings.json in project root
-    Local,      // .loom/settings.local.json (gitignored)
+    User,     // ~/.loom/settings.json
+    Project,  // .loom/settings.json in project root
+    Local,    // .loom/settings.local.json (gitignored)
 };
 
 /// A single settings entry
@@ -199,36 +196,32 @@ struct SettingsEntry {
 /// so a user's existing settings are found after the rename. Project scopes
 /// use the project's own cascade directory name -- reading a legacy
 /// `~/.claude` must not make new projects write into `./.claude/`.
-[[nodiscard]] inline std::filesystem::path get_settings_path(
-    SettingsScope scope,
-    const std::filesystem::path& home_dir,
-    const std::filesystem::path& project_root
-) {
+[[nodiscard]] inline std::filesystem::path
+get_settings_path(SettingsScope scope, const std::filesystem::path& home_dir,
+                  const std::filesystem::path& project_root) {
     switch (scope) {
-        case SettingsScope::User:
-            return loom::constants::paths::config_home_read_under(home_dir) /
-                   "settings.json";
-        case SettingsScope::Project:
-            return project_root / std::string{loom::constants::paths::kConfigDirName} /
-                   "settings.json";
-        case SettingsScope::Local:
-            return project_root / std::string{loom::constants::paths::kConfigDirName} /
-                   "settings.local.json";
+    case SettingsScope::User:
+        return loom::constants::paths::config_home_read_under(home_dir) / "settings.json";
+    case SettingsScope::Project:
+        return project_root / std::string{loom::constants::paths::kConfigDirName} / "settings.json";
+    case SettingsScope::Local:
+        return project_root / std::string{loom::constants::paths::kConfigDirName} /
+               "settings.local.json";
     }
     return {};
 }
 
 /// Known setting keys
 namespace keys {
-    inline constexpr std::string_view MODEL = "model";
-    inline constexpr std::string_view PERMISSION_MODE = "permissionMode";
-    inline constexpr std::string_view ALLOWED_TOOLS = "allowedTools";
-    inline constexpr std::string_view THEME = "theme";
-    inline constexpr std::string_view VERBOSE = "verbose";
-    inline constexpr std::string_view SPINNER_VERBS = "spinnerVerbs";
-    inline constexpr std::string_view BUDDY_ENABLED = "buddyEnabled";
-    inline constexpr std::string_view VIM_MODE = "vimMode";
-    inline constexpr std::string_view PREFERRED_NOT_EMPTY_RESPONSES = "preferNotEmptyResponses";
-} // namespace keys
+inline constexpr std::string_view MODEL = "model";
+inline constexpr std::string_view PERMISSION_MODE = "permissionMode";
+inline constexpr std::string_view ALLOWED_TOOLS = "allowedTools";
+inline constexpr std::string_view THEME = "theme";
+inline constexpr std::string_view VERBOSE = "verbose";
+inline constexpr std::string_view SPINNER_VERBS = "spinnerVerbs";
+inline constexpr std::string_view BUDDY_ENABLED = "buddyEnabled";
+inline constexpr std::string_view VIM_MODE = "vimMode";
+inline constexpr std::string_view PREFERRED_NOT_EMPTY_RESPONSES = "preferNotEmptyResponses";
+}  // namespace keys
 
-} // namespace loom::config
+}  // namespace loom::config

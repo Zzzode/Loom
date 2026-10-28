@@ -15,7 +15,7 @@ namespace fs = std::filesystem;
 // Information about a detected repository
 struct RepoInfo {
     fs::path root;
-    std::string type;                   // "git", "hg", "svn", etc.
+    std::string type;  // "git", "hg", "svn", etc.
     std::optional<std::string> branch;
     std::optional<std::string> remote_url;
 };
@@ -103,4 +103,4 @@ inline std::optional<RepoInfo> get_repo_info(fs::path start = fs::current_path()
     return std::nullopt;
 }
 
-} // namespace loom::utils
+}  // namespace loom::utils

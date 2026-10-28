@@ -26,16 +26,15 @@
 /// build_output_config_json_for_testing, execute_single_tool_for_testing,
 /// discovered_skills, get_conversation, model_params).
 
-#include <cstdlib>
-#include <gtest/gtest.h>
-
-#include <cstdint>
-#include <cstring>
-
 #include <arpa/inet.h>
+#include <gtest/gtest.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <unistd.h>
+
+#include <cstdint>
+#include <cstdlib>
+#include <cstring>
 
 import std;
 import loom.query.query_engine;
@@ -55,7 +54,8 @@ struct EnvironmentGuard {
     std::string name;
     std::optional<std::string> previous;
 
-    EnvironmentGuard(std::string key, const std::string& value) : name(std::move(key)) {
+    EnvironmentGuard(std::string key, const std::string& value)
+        : name(std::move(key)) {
         if (const char* existing = std::getenv(name.c_str())) {
             previous = existing;
         }
@@ -126,14 +126,13 @@ public:
     }
 
     [[nodiscard]] std::uint16_t port() const noexcept { return port_; }
-    [[nodiscard]] std::string base_url() const {
-        return std::format("http://127.0.0.1:{}", port_);
-    }
+
+    [[nodiscard]] std::string base_url() const { return std::format("http://127.0.0.1:{}", port_); }
 
     /// Wait until at least `count` request bodies have been captured.
-    [[nodiscard]] std::optional<std::vector<std::string>> wait_for_bodies(
-        std::size_t count,
-        std::chrono::milliseconds timeout = std::chrono::seconds(5)) {
+    [[nodiscard]] std::optional<std::vector<std::string>>
+    wait_for_bodies(std::size_t count,
+                    std::chrono::milliseconds timeout = std::chrono::seconds(5)) {
         std::unique_lock lock(mutex_);
         if (!cv_.wait_for(lock, timeout, [this, count] { return bodies_.size() >= count; })) {
             return std::nullopt;
@@ -141,11 +140,12 @@ public:
         return bodies_;
     }
 
-    [[nodiscard]] std::optional<std::vector<std::string>> wait_for_request_lines(
-        std::size_t count,
-        std::chrono::milliseconds timeout = std::chrono::seconds(5)) {
+    [[nodiscard]] std::optional<std::vector<std::string>>
+    wait_for_request_lines(std::size_t count,
+                           std::chrono::milliseconds timeout = std::chrono::seconds(5)) {
         std::unique_lock lock(mutex_);
-        if (!cv_.wait_for(lock, timeout, [this, count] { return request_lines_.size() >= count; })) {
+        if (!cv_.wait_for(lock, timeout,
+                          [this, count] { return request_lines_.size() >= count; })) {
             return std::nullopt;
         }
         return request_lines_;
@@ -161,7 +161,8 @@ private:
         while (running_.load()) {
             sockaddr_in client_addr{};
             socklen_t client_len = sizeof(client_addr);
-            int client_fd = ::accept(listen_fd_, reinterpret_cast<sockaddr*>(&client_addr), &client_len);
+            int client_fd =
+                ::accept(listen_fd_, reinterpret_cast<sockaddr*>(&client_addr), &client_len);
             if (client_fd < 0) {
                 if (!running_.load()) break;
                 continue;
@@ -194,7 +195,8 @@ private:
                 try {
                     content_length = static_cast<std::size_t>(
                         std::stoul(header.substr(value_start + 1, value_end - value_start - 1)));
-                } catch (...) {}
+                } catch (...) {
+                }
             }
         }
         const std::size_t body_start = header_end + 4;
@@ -204,9 +206,8 @@ private:
             request.append(buffer, buffer + n);
         }
         return {
-            .request_line = first_line_end == std::string::npos
-                ? std::string{}
-                : request.substr(0, first_line_end),
+            .request_line = first_line_end == std::string::npos ? std::string{}
+                                                                : request.substr(0, first_line_end),
             .body = request.substr(body_start, content_length),
         };
     }
@@ -216,9 +217,12 @@ private:
         if (request.request_line.empty()) return;
         const auto path_end = request.request_line.find(' ', 4);
         if (request.request_line.starts_with("GET ") && path_end != std::string::npos &&
-            std::string_view(request.request_line).substr(4, path_end - 4).ends_with("/v1/models")) {
+            std::string_view(request.request_line)
+                .substr(4, path_end - 4)
+                .ends_with("/v1/models")) {
             // Unsupported metadata must not consume scripted business responses.
-            send_all(fd, "HTTP/1.1 404 Not Found\r\nContent-Length: 0\r\nConnection: close\r\n\r\n");
+            send_all(fd,
+                     "HTTP/1.1 404 Not Found\r\nContent-Length: 0\r\nConnection: close\r\n\r\n");
             return;
         }
         std::size_t idx = 0;
@@ -236,13 +240,17 @@ private:
         }
 
         std::string reason = "OK";
-        if (resp.status == 429) reason = "Too Many Requests";
-        else if (resp.status == 529) reason = "Overloaded";
-        else if (resp.status >= 400) reason = "Error";
+        if (resp.status == 429)
+            reason = "Too Many Requests";
+        else if (resp.status == 529)
+            reason = "Overloaded";
+        else if (resp.status >= 400)
+            reason = "Error";
 
-        const auto response = std::format(
-            "HTTP/1.1 {} {}\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{}",
-            resp.status, reason, resp.body.size(), resp.body);
+        const auto response =
+            std::format("HTTP/1.1 {} {}\r\nContent-Type: application/json\r\nContent-Length: "
+                        "{}\r\nConnection: close\r\n\r\n{}",
+                        resp.status, reason, resp.body.size(), resp.body);
         send_all(fd, response);
     }
 
@@ -280,7 +288,7 @@ std::optional<std::string> first_system_prompt_text(const std::vector<loom::core
     return std::nullopt;
 }
 
-} // namespace
+}  // namespace
 
 // ===========================================================================
 // (2 already-covered seams, re-asserted here for a standalone target)
@@ -374,7 +382,8 @@ TEST(QueryEngineFix, OutputConfigInjectsResponseSchemaAndTaskBudget) {
     config.cwd = fs::temp_directory_path().string();
     config.response_schema = loom::core::QueryEngineConfig::ResponseSchema{
         .name = "result",
-        .schema_json = R"({"type":"object","properties":{"answer":{"type":"string"}},"required":["answer"]})",
+        .schema_json =
+            R"({"type":"object","properties":{"answer":{"type":"string"}},"required":["answer"]})",
     };
     config.task_budget = loom::core::QueryEngineConfig::TaskBudget{
         .total = 5'000,
@@ -415,19 +424,24 @@ struct ModelContextProbe final : loom::core::ITool {
     loom::core::ToolDefinition definition_{};
     std::vector<std::optional<std::string>> models;
     std::vector<std::string> inputs;
+
     ModelContextProbe() {
         definition_.name = "model_probe";
         definition_.permission = loom::core::ToolPermission::ReadOnly;
     }
+
     const loom::core::ToolDefinition& definition() const override { return definition_; }
-    loom::core::Result<loom::core::ToolResult> execute(const loom::core::ToolInput& input) override {
+
+    loom::core::Result<loom::core::ToolResult>
+    execute(const loom::core::ToolInput& input) override {
         models.push_back(input.parent_model);
         inputs.emplace_back(input.json());
         return loom::core::ToolResult::success("observed");
     }
+
     bool check_permission(const loom::core::ToolInput&) const override { return true; }
 };
-}
+}  // namespace
 
 TEST(QueryEngineFix, ToolModelContextTracksRuntimeModelChangesWithoutChangingJson) {
     loom::core::ToolRegistry registry;
@@ -457,8 +471,11 @@ TEST(QueryEngineFix, ToolModelContextTracksRuntimeModelChangesWithoutChangingJso
 
 TEST(QueryEngineFix, ToolModelContextUsesActualFallbackModel) {
     ScriptedHttpServer server({
-        {.status = 529, .body = R"({"type":"error","error":{"type":"overloaded_error","message":"Overloaded"}})"},
-        {.status = 200, .body = R"({"id":"msg_tool","type":"message","role":"assistant","model":"fallback-model","content":[{"type":"tool_use","id":"tool_probe","name":"model_probe","input":{}}],"stop_reason":"tool_use","usage":{"input_tokens":1,"output_tokens":1}})"},
+        {.status = 529,
+         .body = R"({"type":"error","error":{"type":"overloaded_error","message":"Overloaded"}})"},
+        {.status = 200,
+         .body =
+             R"({"id":"msg_tool","type":"message","role":"assistant","model":"fallback-model","content":[{"type":"tool_use","id":"tool_probe","name":"model_probe","input":{}}],"stop_reason":"tool_use","usage":{"input_tokens":1,"output_tokens":1}})"},
         {},
     });
     ASSERT_NE(server.port(), 0);
@@ -489,15 +506,24 @@ TEST(QueryEngineFix, ToolModelContextUsesActualFallbackModel) {
 TEST(QueryEngineFix, DiscoveredSkillsTracksSkillToolInvocations) {
     struct StubSkillTool final : loom::core::ITool {
         loom::core::ToolDefinition definition_{};
+
         StubSkillTool() {
             definition_.name = "skill";
             definition_.permission = loom::core::ToolPermission::ReadOnly;
         }
-        [[nodiscard]] const loom::core::ToolDefinition& definition() const override { return definition_; }
-        [[nodiscard]] loom::core::Result<loom::core::ToolResult> execute(const loom::core::ToolInput&) override {
+
+        [[nodiscard]] const loom::core::ToolDefinition& definition() const override {
+            return definition_;
+        }
+
+        [[nodiscard]] loom::core::Result<loom::core::ToolResult>
+        execute(const loom::core::ToolInput&) override {
             return loom::core::ToolResult::success("ok");
         }
-        [[nodiscard]] bool check_permission(const loom::core::ToolInput&) const override { return true; }
+
+        [[nodiscard]] bool check_permission(const loom::core::ToolInput&) const override {
+            return true;
+        }
     };
 
     loom::core::ToolRegistry registry;
@@ -528,7 +554,8 @@ TEST(QueryEngineFix, DiscoveredSkillsTracksSkillToolInvocations) {
     };
     (void)engine.execute_single_tool_for_testing(second);
     auto after_second = engine.discovered_skills();
-    EXPECT_NE(std::find(after_second.begin(), after_second.end(), "beta-skill"), after_second.end());
+    EXPECT_NE(std::find(after_second.begin(), after_second.end(), "beta-skill"),
+              after_second.end());
 
     // Re-invoking alpha should not duplicate (set, not vector).
     const auto alpha_count = std::count(after_second.begin(), after_second.end(), "alpha-skill");
@@ -537,16 +564,26 @@ TEST(QueryEngineFix, DiscoveredSkillsTracksSkillToolInvocations) {
     // A non-skill tool must NOT contribute to discovered_skills_.
     struct StubReadTool final : loom::core::ITool {
         loom::core::ToolDefinition definition_{};
+
         StubReadTool() {
             definition_.name = "Read";
             definition_.permission = loom::core::ToolPermission::ReadOnly;
         }
-        [[nodiscard]] const loom::core::ToolDefinition& definition() const override { return definition_; }
-        [[nodiscard]] loom::core::Result<loom::core::ToolResult> execute(const loom::core::ToolInput&) override {
+
+        [[nodiscard]] const loom::core::ToolDefinition& definition() const override {
+            return definition_;
+        }
+
+        [[nodiscard]] loom::core::Result<loom::core::ToolResult>
+        execute(const loom::core::ToolInput&) override {
             return loom::core::ToolResult::success("data");
         }
-        [[nodiscard]] bool check_permission(const loom::core::ToolInput&) const override { return true; }
+
+        [[nodiscard]] bool check_permission(const loom::core::ToolInput&) const override {
+            return true;
+        }
     };
+
     loom::core::ToolRegistry registry2;
     registry2.register_tool(std::make_unique<StubReadTool>());
     loom::core::QueryEngineConfig config2;
@@ -570,8 +607,7 @@ TEST(QueryEngineFix, DiscoveredSkillsTracksSkillToolInvocations) {
 TEST(QueryEngineFix, LoadsProjectLoomMdAndUserMemoryIntoSystemPrompt) {
     // Isolate HOME so get_user_memory_path() (~/.loom/LOOM.md) resolves
     // inside our temp dir and we do not read the developer's real user memory.
-    auto root = fs::weakly_canonical(fs::temp_directory_path()) /
-                "loom_query_engine_memory_test";
+    auto root = fs::weakly_canonical(fs::temp_directory_path()) / "loom_query_engine_memory_test";
     fs::remove_all(root);
     fs::create_directories(root);
     EnvironmentGuard home_guard("HOME", root.string());
@@ -609,8 +645,8 @@ TEST(QueryEngineFix, LoadsProjectLoomMdAndUserMemoryIntoSystemPrompt) {
 }
 
 TEST(QueryEngineFix, OmitsMemoryContextsWhenFilesAbsent) {
-    auto root = fs::weakly_canonical(fs::temp_directory_path()) /
-                "loom_query_engine_no_memory_test";
+    auto root =
+        fs::weakly_canonical(fs::temp_directory_path()) / "loom_query_engine_no_memory_test";
     fs::remove_all(root);
     fs::create_directories(root);
     EnvironmentGuard home_guard("HOME", root.string());
@@ -647,8 +683,14 @@ TEST(QueryEngineFix, FallsBackToSecondaryModelOnOverloadedError) {
     // After request 0, the engine must switch to the fallback model, so the
     // model field in the captured request-1 body should be the fallback.
     ScriptedHttpServer server({
-        ScriptedHttpServer::Response{.status = 529, .body = R"({"type":"error","error":{"type":"overloaded_error","message":"Overloaded"}})"},
-        ScriptedHttpServer::Response{.status = 200, .body = R"({"id":"msg_ok","type":"message","role":"assistant","model":"fallback-model","content":[{"type":"text","text":"done"}],"stop_reason":"end_turn","usage":{"input_tokens":1,"output_tokens":1}})"},
+        ScriptedHttpServer::Response{
+            .status = 529,
+            .body =
+                R"({"type":"error","error":{"type":"overloaded_error","message":"Overloaded"}})"},
+        ScriptedHttpServer::Response{
+            .status = 200,
+            .body =
+                R"({"id":"msg_ok","type":"message","role":"assistant","model":"fallback-model","content":[{"type":"text","text":"done"}],"stop_reason":"end_turn","usage":{"input_tokens":1,"output_tokens":1}})"},
     });
     ASSERT_NE(server.port(), 0);
 
@@ -661,7 +703,7 @@ TEST(QueryEngineFix, FallsBackToSecondaryModelOnOverloadedError) {
     config.api_key = "test-key";
     config.base_url = server.base_url();
     config.cwd = root.string();
-    config.retry_policy.max_retries = 3;       // allow the immediate fallback retry
+    config.retry_policy.max_retries = 3;  // allow the immediate fallback retry
     config.retry_policy.initial_delay = std::chrono::milliseconds(1);
     config.model_params.model = "primary-model";
     config.fallback_models = {"fallback-model"};
@@ -692,7 +734,10 @@ TEST(QueryEngineFix, FallsBackToSecondaryModelOnOverloadedError) {
 
 TEST(QueryEngineFix, PreservesPathPrefixInMessagesBaseUrl) {
     ScriptedHttpServer server({
-        ScriptedHttpServer::Response{.status = 200, .body = R"({"id":"msg_ok","type":"message","role":"assistant","model":"primary-model","content":[{"type":"text","text":"done"}],"stop_reason":"end_turn","usage":{"input_tokens":1,"output_tokens":1}})"},
+        ScriptedHttpServer::Response{
+            .status = 200,
+            .body =
+                R"({"id":"msg_ok","type":"message","role":"assistant","model":"primary-model","content":[{"type":"text","text":"done"}],"stop_reason":"end_turn","usage":{"input_tokens":1,"output_tokens":1}})"},
     });
     ASSERT_NE(server.port(), 0);
 
@@ -724,8 +769,14 @@ TEST(QueryEngineFix, PreservesPathPrefixInMessagesBaseUrl) {
 TEST(QueryEngineFix, FallsBackToSecondaryModelOnRateLimited) {
     // Request 0 → 429 (RateLimited); Request 1 → 200 (success).
     ScriptedHttpServer server({
-        ScriptedHttpServer::Response{.status = 429, .body = R"({"type":"error","error":{"type":"rate_limit_error","message":"Too many requests"}})"},
-        ScriptedHttpServer::Response{.status = 200, .body = R"({"id":"msg_ok","type":"message","role":"assistant","model":"fallback-model","content":[{"type":"text","text":"done"}],"stop_reason":"end_turn","usage":{"input_tokens":1,"output_tokens":1}})"},
+        ScriptedHttpServer::Response{
+            .status = 429,
+            .body =
+                R"({"type":"error","error":{"type":"rate_limit_error","message":"Too many requests"}})"},
+        ScriptedHttpServer::Response{
+            .status = 200,
+            .body =
+                R"({"id":"msg_ok","type":"message","role":"assistant","model":"fallback-model","content":[{"type":"text","text":"done"}],"stop_reason":"end_turn","usage":{"input_tokens":1,"output_tokens":1}})"},
     });
     ASSERT_NE(server.port(), 0);
 
@@ -758,7 +809,10 @@ TEST(QueryEngineFix, DoesNotFallBackWhenNoFallbackModelsConfigured) {
     // 529 with no fallback_models → call_api returns the error; query()
     // propagates it. The model must remain unchanged.
     ScriptedHttpServer server({
-        ScriptedHttpServer::Response{.status = 529, .body = R"({"type":"error","error":{"type":"overloaded_error","message":"Overloaded"}})"},
+        ScriptedHttpServer::Response{
+            .status = 529,
+            .body =
+                R"({"type":"error","error":{"type":"overloaded_error","message":"Overloaded"}})"},
     });
     ASSERT_NE(server.port(), 0);
 
@@ -807,14 +861,13 @@ TEST(SseEventDecoder, DecodesSingleCompleteEvent) {
 
 TEST(SseEventDecoder, DecodesAllEventTypesInOneStream) {
     loom::core::SseEventDecoder dec;
-    std::string stream =
-        "event: message_start\ndata: {\"a\":1}\n\n"
-        "event: content_block_start\ndata: {\"b\":2}\n\n"
-        "event: content_block_delta\ndata: {\"c\":3}\n\n"
-        "event: content_block_stop\ndata: {\"d\":4}\n\n"
-        "event: message_delta\ndata: {\"e\":5}\n\n"
-        "event: message_stop\ndata: {\"f\":6}\n\n"
-        "event: error\ndata: {\"g\":7}\n\n";
+    std::string stream = "event: message_start\ndata: {\"a\":1}\n\n"
+                         "event: content_block_start\ndata: {\"b\":2}\n\n"
+                         "event: content_block_delta\ndata: {\"c\":3}\n\n"
+                         "event: content_block_stop\ndata: {\"d\":4}\n\n"
+                         "event: message_delta\ndata: {\"e\":5}\n\n"
+                         "event: message_stop\ndata: {\"f\":6}\n\n"
+                         "event: error\ndata: {\"g\":7}\n\n";
     auto events = dec.feed(stream);
     ASSERT_EQ(events.size(), 7u);
     EXPECT_EQ(events[0].type, "message_start");
@@ -847,7 +900,8 @@ TEST(SseEventDecoder, ByteByByteFeedYieldsEventOnlyAtTerminator) {
         if (i + 1 < full.size()) {
             ASSERT_TRUE(ev.empty()) << "decoder emitted before terminator at byte " << i;
         }
-        for (auto& e : ev) all.push_back(std::move(e));
+        for (auto& e : ev)
+            all.push_back(std::move(e));
     }
     ASSERT_EQ(all.size(), 1u);
     EXPECT_EQ(all[0].type, "content_block_delta");
@@ -857,9 +911,8 @@ TEST(SseEventDecoder, ByteByByteFeedYieldsEventOnlyAtTerminator) {
 TEST(SseEventDecoder, EventTypePersistsAcrossBlocksWithoutEventLine) {
     loom::core::SseEventDecoder dec;
     // Block 1 sets the type; block 2 carries no `event:` line -> inherits.
-    auto events = dec.feed(
-        "event: content_block_delta\ndata: {\"i\":1}\n\n"
-        "data: {\"i\":2}\n\n");
+    auto events = dec.feed("event: content_block_delta\ndata: {\"i\":1}\n\n"
+                           "data: {\"i\":2}\n\n");
     ASSERT_EQ(events.size(), 2u);
     EXPECT_EQ(events[0].type, "content_block_delta");
     EXPECT_EQ(events[1].type, "content_block_delta");
@@ -900,7 +953,7 @@ TEST(SseEventDecoder, EmitsDoneMarkerForDispatcherToFilter) {
 TEST(SseEventDecoder, TrailingPartialBufferHeldAcrossFeeds) {
     loom::core::SseEventDecoder dec;
     EXPECT_TRUE(dec.feed("event: x\ndata: partial").empty());  // no terminator yet
-    auto events = dec.feed("_continued\n\n");                   // completes the event
+    auto events = dec.feed("_continued\n\n");                  // completes the event
     ASSERT_EQ(events.size(), 1u);
     EXPECT_EQ(events[0].data, "partial_continued");
 }
@@ -923,15 +976,22 @@ TEST(SseEventDecoder, RealisticMessagesStreamFramesCorrectly) {
         "event: message_start\n"
         "data: {\"type\":\"message_start\",\"message\":{\"id\":\"msg_1\",\"model\":\"loom-x\"}}\n\n"
         "event: content_block_start\n"
-        "data: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"text\"}}\n\n"
+        "data: "
+        "{\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"text\"}}\n\n"
         "event: content_block_delta\n"
-        "data: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Hello\"}}\n\n"
+        "data: "
+        "{\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":"
+        "\"Hello\"}}\n\n"
         "event: content_block_delta\n"
-        "data: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" world\"}}\n\n"
+        "data: "
+        "{\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":"
+        "\" world\"}}\n\n"
         "event: content_block_stop\n"
         "data: {\"type\":\"content_block_stop\",\"index\":0}\n\n"
         "event: message_delta\n"
-        "data: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\"},\"usage\":{\"output_tokens\":5}}\n\n"
+        "data: "
+        "{\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\"},\"usage\":{\"output_"
+        "tokens\":5}}\n\n"
         "event: message_stop\n"
         "data: {\"type\":\"message_stop\"}\n\n";
     auto events = dec.feed(stream);
@@ -947,18 +1007,15 @@ TEST(SseEventDecoder, RealisticMessagesStreamFramesCorrectly) {
 // prompt, and the directory created, mirroring TS loadMemoryPrompt() +
 // the AutoMem loommd injection.
 TEST(QueryEngineFix, InjectsAutoMemoryGuidanceAndMemoryIndex) {
-    auto root = fs::weakly_canonical(fs::temp_directory_path()) /
-                "loom_auto_memory_test";
+    auto root = fs::weakly_canonical(fs::temp_directory_path()) / "loom_auto_memory_test";
     fs::remove_all(root);
     fs::create_directories(root);
     EnvironmentGuard home_guard("HOME", root.string());
 
     // Pin the auto-memory dir deterministically via the SDK override.
     const auto mem_dir = root / "custom-memory";
-    EnvironmentGuard mem_guard(
-        "LOOM_COWORK_MEMORY_PATH_OVERRIDE", mem_dir.string());
-    EnvironmentGuard disable_guard(
-        "LOOM_DISABLE_AUTO_MEMORY", "0");
+    EnvironmentGuard mem_guard("LOOM_COWORK_MEMORY_PATH_OVERRIDE", mem_dir.string());
+    EnvironmentGuard disable_guard("LOOM_DISABLE_AUTO_MEMORY", "0");
 
     // Pre-existing MEMORY.md index content.
     fs::create_directories(mem_dir);
@@ -978,8 +1035,7 @@ TEST(QueryEngineFix, InjectsAutoMemoryGuidanceAndMemoryIndex) {
 
     // Guidance teaches the model how to save.
     EXPECT_NE(prompt->find("<context name=\"memory\">"), std::string::npos);
-    EXPECT_NE(prompt->find("persistent, file-based memory system"),
-              std::string::npos);
+    EXPECT_NE(prompt->find("persistent, file-based memory system"), std::string::npos);
     EXPECT_NE(prompt->find(mem_dir.string()), std::string::npos);
 
     // MEMORY.md index content injected separately.
@@ -992,13 +1048,11 @@ TEST(QueryEngineFix, InjectsAutoMemoryGuidanceAndMemoryIndex) {
 // When auto-memory is disabled, neither the guidance nor the index is
 // injected and no memory directory is required.
 TEST(QueryEngineFix, AutoMemoryDisabledOmitsGuidance) {
-    auto root = fs::weakly_canonical(fs::temp_directory_path()) /
-                "loom_auto_memory_disabled_test";
+    auto root = fs::weakly_canonical(fs::temp_directory_path()) / "loom_auto_memory_disabled_test";
     fs::remove_all(root);
     fs::create_directories(root);
     EnvironmentGuard home_guard("HOME", root.string());
-    EnvironmentGuard disable_guard(
-        "LOOM_DISABLE_AUTO_MEMORY", "1");
+    EnvironmentGuard disable_guard("LOOM_DISABLE_AUTO_MEMORY", "1");
 
     loom::core::ToolRegistry registry;
     loom::core::QueryEngineConfig config;
@@ -1017,8 +1071,7 @@ TEST(QueryEngineFix, AutoMemoryDisabledOmitsGuidance) {
 // Canonical auto-memory path resolution (TS paths.ts):
 // <LOOM_CONFIG_DIR>/projects/<sanitized-root>/memory, with override support.
 TEST(QueryEngineFix, AutoMemPathResolvesCanonicalLayoutAndOverride) {
-    auto root = fs::weakly_canonical(fs::temp_directory_path()) /
-                "loom_mem_path_test";
+    auto root = fs::weakly_canonical(fs::temp_directory_path()) / "loom_mem_path_test";
     fs::remove_all(root);
     fs::create_directories(root);
     EnvironmentGuard home_guard("HOME", root.string());
@@ -1032,11 +1085,10 @@ TEST(QueryEngineFix, AutoMemPathResolvesCanonicalLayoutAndOverride) {
     const std::string key =
         loom::memdir::sanitize_memory_key(fs::weakly_canonical(project).string());
     EXPECT_EQ(p->string(), (root / "cfg" / "projects" / key / "memory").string());
-    EXPECT_EQ(key.find(' '), std::string::npos); // spaces sanitized to '-'
+    EXPECT_EQ(key.find(' '), std::string::npos);  // spaces sanitized to '-'
     EXPECT_EQ(*loom::memdir::get_auto_mem_entrypoint(project), *p / "MEMORY.md");
 
-    EnvironmentGuard ov_set(
-        "LOOM_COWORK_MEMORY_PATH_OVERRIDE", (root / "ov").string());
+    EnvironmentGuard ov_set("LOOM_COWORK_MEMORY_PATH_OVERRIDE", (root / "ov").string());
     auto po = loom::memdir::get_auto_mem_path(project);
     ASSERT_TRUE(po.has_value());
     EXPECT_EQ(po->string(), (root / "ov").string());
@@ -1046,7 +1098,6 @@ TEST(QueryEngineFix, AutoMemPathResolvesCanonicalLayoutAndOverride) {
 
     fs::remove_all(root);
 }
-
 
 namespace {
 
@@ -1061,36 +1112,50 @@ std::string recovery_json_string(std::string_view value) {
 }
 
 std::string recovery_message_start() {
-    return recovery_sse_event("message_start",
+    return recovery_sse_event(
+        "message_start",
         R"({"type":"message_start","message":{"id":"recovery-message","type":"message","role":"assistant","model":"recovery-model","content":[],"usage":{"input_tokens":1}}})");
 }
 
 std::string recovery_message_end(std::string_view stop_reason) {
     return recovery_sse_event("content_block_stop", R"({"index":0})") +
-        recovery_sse_event("message_delta", std::format(
-            R"({{"delta":{{"stop_reason":{}}},"usage":{{"output_tokens":1}}}})",
-            recovery_json_string(stop_reason))) +
-        recovery_sse_event("message_stop", R"({"type":"message_stop"})");
+           recovery_sse_event(
+               "message_delta",
+               std::format(R"({{"delta":{{"stop_reason":{}}},"usage":{{"output_tokens":1}}}})",
+                           recovery_json_string(stop_reason))) +
+           recovery_sse_event("message_stop", R"({"type":"message_stop"})");
 }
 
-ScriptedHttpServer::Response recovery_tool_call(
-    std::string_view id, std::string_view name, std::string_view input) {
-    return {.status = 200, .body = recovery_message_start() +
-        recovery_sse_event("content_block_start", std::format(
-            R"({{"index":0,"content_block":{{"type":"tool_use","id":{},"name":{},"input":{{}}}}}})",
-            recovery_json_string(id), recovery_json_string(name))) +
-        recovery_sse_event("content_block_delta", std::format(
-            R"({{"index":0,"delta":{{"type":"input_json_delta","partial_json":{}}}}})",
-            recovery_json_string(input))) + recovery_message_end("tool_use")};
+ScriptedHttpServer::Response recovery_tool_call(std::string_view id, std::string_view name,
+                                                std::string_view input) {
+    return {
+        .status = 200,
+        .body =
+            recovery_message_start() +
+            recovery_sse_event(
+                "content_block_start",
+                std::format(
+                    R"({{"index":0,"content_block":{{"type":"tool_use","id":{},"name":{},"input":{{}}}}}})",
+                    recovery_json_string(id), recovery_json_string(name))) +
+            recovery_sse_event(
+                "content_block_delta",
+                std::format(
+                    R"({{"index":0,"delta":{{"type":"input_json_delta","partial_json":{}}}}})",
+                    recovery_json_string(input))) +
+            recovery_message_end("tool_use")};
 }
 
 ScriptedHttpServer::Response recovery_final_reply() {
-    return {.status = 200, .body = recovery_message_start() +
-        recovery_sse_event("content_block_start",
-            R"({"index":0,"content_block":{"type":"text","text":""}})") +
-        recovery_sse_event("content_block_delta",
-            R"({"index":0,"delta":{"type":"text_delta","text":"Recovered successfully"}})") +
-        recovery_message_end("end_turn")};
+    return {
+        .status = 200,
+        .body =
+            recovery_message_start() +
+            recovery_sse_event("content_block_start",
+                               R"({"index":0,"content_block":{"type":"text","text":""}})") +
+            recovery_sse_event(
+                "content_block_delta",
+                R"({"index":0,"delta":{"type":"text_delta","text":"Recovered successfully"}})") +
+            recovery_message_end("end_turn")};
 }
 
 struct RecoveryTool final : loom::core::ITool {
@@ -1103,22 +1168,26 @@ struct RecoveryTool final : loom::core::ITool {
         definition_.name = std::move(name);
         definition_.permission = loom::core::ToolPermission::ReadOnly;
     }
+
     const loom::core::ToolDefinition& definition() const override { return definition_; }
-    loom::core::Result<loom::core::ToolResult> execute(const loom::core::ToolInput& input) override {
+
+    loom::core::Result<loom::core::ToolResult>
+    execute(const loom::core::ToolInput& input) override {
         executed_inputs.emplace_back(input.json());
         if (input.json().find("broken") != std::string_view::npos) {
             return loom::core::ToolResult::error("bash: syntax error near unexpected token");
         }
         return loom::core::ToolResult::success("tool completed");
     }
+
     bool check_permission(const loom::core::ToolInput&) const override {
         ++permission_checks;
         return permitted;
     }
 };
 
-loom::core::QueryEngineConfig recovery_config(
-    const ScriptedHttpServer& server, const loom::core::ToolRegistry& registry) {
+loom::core::QueryEngineConfig recovery_config(const ScriptedHttpServer& server,
+                                              const loom::core::ToolRegistry& registry) {
     loom::core::QueryEngineConfig config;
     config.api_key = "test-key";
     config.base_url = server.base_url();
@@ -1130,8 +1199,8 @@ loom::core::QueryEngineConfig recovery_config(
     return config;
 }
 
-std::vector<loom::core::ToolResultMessage> recovery_tool_results(
-    const std::vector<loom::core::Message>& messages) {
+std::vector<loom::core::ToolResultMessage>
+recovery_tool_results(const std::vector<loom::core::Message>& messages) {
     std::vector<loom::core::ToolResultMessage> results;
     for (const auto& message : messages) {
         if (const auto* result = std::get_if<loom::core::ToolResultMessage>(&message)) {
@@ -1142,9 +1211,11 @@ std::vector<loom::core::ToolResultMessage> recovery_tool_results(
 }
 
 void expect_one_recovery_prompt(const std::vector<loom::core::Message>& messages) {
-    EXPECT_EQ(std::count_if(messages.begin(), messages.end(), [](const auto& message) {
-        return std::holds_alternative<loom::core::UserMessage>(message);
-    }), 1);
+    EXPECT_EQ(std::count_if(messages.begin(), messages.end(),
+                            [](const auto& message) {
+                                return std::holds_alternative<loom::core::UserMessage>(message);
+                            }),
+              1);
 }
 
 void expect_recovery_completed(const std::vector<loom::core::Message>& messages) {
@@ -1173,20 +1244,25 @@ void expect_wire_tool_result(std::string_view body, std::string_view id, bool er
     EXPECT_TRUE(found) << "Missing tool result " << id;
 }
 
-} // namespace
+}  // namespace
 
 TEST(QueryEngineFix, LargeToolOutputPreservesUtf8AtWireBudgetBoundary) {
     struct LargeReadTool final : loom::core::ITool {
         loom::core::ToolDefinition definition_{};
         std::string output;
-        explicit LargeReadTool(std::string value) : output(std::move(value)) {
+
+        explicit LargeReadTool(std::string value)
+            : output(std::move(value)) {
             definition_.name = "Read";
             definition_.permission = loom::core::ToolPermission::ReadOnly;
         }
+
         const loom::core::ToolDefinition& definition() const override { return definition_; }
+
         loom::core::Result<loom::core::ToolResult> execute(const loom::core::ToolInput&) override {
             return loom::core::ToolResult::success(output);
         }
+
         bool check_permission(const loom::core::ToolInput&) const override { return true; }
     };
 
@@ -1203,9 +1279,10 @@ TEST(QueryEngineFix, LargeToolOutputPreservesUtf8AtWireBudgetBoundary) {
     cases.emplace_back(std::string(30000, 'x'), std::string(30000, 'x'));
     cases.emplace_back(std::string(30001, 'x'), std::string(30000, 'x'));
     for (const auto& [output, prefix] : cases) {
-        SCOPED_TRACE(std::format("output bytes: {}, retained bytes: {}", output.size(), prefix.size()));
-        ScriptedHttpServer server({recovery_tool_call("large-read", "Read", "{}"),
-                                   recovery_final_reply()});
+        SCOPED_TRACE(
+            std::format("output bytes: {}, retained bytes: {}", output.size(), prefix.size()));
+        ScriptedHttpServer server(
+            {recovery_tool_call("large-read", "Read", "{}"), recovery_final_reply()});
         ASSERT_NE(server.port(), 0);
         loom::core::ToolRegistry registry;
         registry.register_tool(std::make_unique<LargeReadTool>(output));
@@ -1215,8 +1292,10 @@ TEST(QueryEngineFix, LargeToolOutputPreservesUtf8AtWireBudgetBoundary) {
         ASSERT_EQ(results.size(), 1u);
         ASSERT_EQ(results[0].content.size(), 1u);
         const auto& text = std::get<loom::core::TextBlock>(results[0].content[0]).text;
-        EXPECT_EQ(text, prefix + (output.size() > 30000
-            ? "\n\n[Output truncated at 30000 chars. Full output omitted.]" : ""));
+        EXPECT_EQ(text,
+                  prefix + (output.size() > 30000
+                                ? "\n\n[Output truncated at 30000 chars. Full output omitted.]"
+                                : ""));
         const auto bodies = server.wait_for_bodies(2);
         ASSERT_TRUE(bodies.has_value());
         ASSERT_EQ(bodies->size(), 2u);
@@ -1242,8 +1321,9 @@ TEST(QueryEngineFix, StreamingBashFailureRecoversWithinOriginalTurn) {
     options.on_event = [&](const auto& event) { events.push_back(event); };
     engine.stream_query("run the command", options);
 
-    EXPECT_EQ(observed->executed_inputs, (std::vector<std::string>{
-        R"({"command":"broken"})", R"({"command":"printf fixed"})"}));
+    EXPECT_EQ(
+        observed->executed_inputs,
+        (std::vector<std::string>{R"({"command":"broken"})", R"({"command":"printf fixed"})"}));
     const auto conversation = engine.get_conversation();
     expect_one_recovery_prompt(conversation);
     expect_recovery_completed(conversation);
@@ -1253,9 +1333,11 @@ TEST(QueryEngineFix, StreamingBashFailureRecoversWithinOriginalTurn) {
     EXPECT_TRUE(results[0].is_error);
     EXPECT_EQ(results[1].tool_use_id.value, "bash-corrected");
     EXPECT_FALSE(results[1].is_error);
-    EXPECT_EQ(std::count_if(events.begin(), events.end(), [](const auto& event) {
-        return std::holds_alternative<loom::core::StreamError>(event);
-    }), 0);
+    EXPECT_EQ(std::count_if(events.begin(), events.end(),
+                            [](const auto& event) {
+                                return std::holds_alternative<loom::core::StreamError>(event);
+                            }),
+              0);
     std::vector<bool> execution_errors;
     for (const auto& event : events) {
         if (const auto* ended = std::get_if<loom::core::ToolExecutionEnd>(&event)) {
@@ -1307,9 +1389,11 @@ TEST(QueryEngineFix, StreamingPermissionDenialContinuesWithoutReexecutingDeniedB
     EXPECT_NE(std::get<loom::core::TextBlock>(results[0].content[0]).text.find("Permission denied"),
               std::string::npos);
     EXPECT_FALSE(results[1].is_error);
-    EXPECT_EQ(std::count_if(events.begin(), events.end(), [](const auto& event) {
-        return std::holds_alternative<loom::core::StreamError>(event);
-    }), 0);
+    EXPECT_EQ(std::count_if(events.begin(), events.end(),
+                            [](const auto& event) {
+                                return std::holds_alternative<loom::core::StreamError>(event);
+                            }),
+              0);
     const auto bodies = server.wait_for_bodies(3);
     ASSERT_TRUE(bodies.has_value());
     ASSERT_EQ(bodies->size(), 3u);
@@ -1340,9 +1424,11 @@ TEST(QueryEngineFix, StreamingApiRetryResumesCommittedConversationWithoutRepeati
     options.attachments = {loom::core::TextBlock{"attached source contents"}};
     options.on_event = [&](const auto& event) { events.push_back(event); };
     engine.stream_query("inspect @source", options);
-    ASSERT_EQ(std::count_if(events.begin(), events.end(), [](const auto& event) {
-        return std::holds_alternative<loom::core::StreamError>(event);
-    }), 1);
+    ASSERT_EQ(std::count_if(events.begin(), events.end(),
+                            [](const auto& event) {
+                                return std::holds_alternative<loom::core::StreamError>(event);
+                            }),
+              1);
     const auto prior_results = recovery_tool_results(engine.get_conversation());
     ASSERT_EQ(prior_results.size(), 1u);
     EXPECT_FALSE(prior_results[0].is_error);
@@ -1370,9 +1456,11 @@ TEST(QueryEngineFix, StreamingApiRetryResumesCommittedConversationWithoutRepeati
                       "attached source contents");
         }
     }
-    EXPECT_EQ(std::count_if(events.begin(), events.end(), [](const auto& event) {
-        return std::holds_alternative<loom::core::StreamError>(event);
-    }), 0);
+    EXPECT_EQ(std::count_if(events.begin(), events.end(),
+                            [](const auto& event) {
+                                return std::holds_alternative<loom::core::StreamError>(event);
+                            }),
+              0);
     const auto bodies = server.wait_for_bodies(4);
     ASSERT_TRUE(bodies.has_value());
     ASSERT_EQ(bodies->size(), 4u);
@@ -1440,8 +1528,9 @@ TEST(QueryEngineFix, StreamingRecoveryStopsAtExistingToolRoundLimit) {
 TEST(QueryEngineFix, StreamingUnlimitedToolRoundBudgetCompletesBeyondTwentyRounds) {
     std::vector<ScriptedHttpServer::Response> responses;
     for (int round = 0; round < 21; ++round) {
-        responses.push_back(recovery_tool_call(std::format("bash-{}", round), "Bash",
-            std::format(R"({{"command":"printf round-{}"}})", round)));
+        responses.push_back(
+            recovery_tool_call(std::format("bash-{}", round), "Bash",
+                               std::format(R"({{"command":"printf round-{}"}})", round)));
     }
     responses.push_back(recovery_final_reply());
     ScriptedHttpServer server(std::move(responses));
@@ -1481,8 +1570,9 @@ TEST(QueryEngineFix, StreamingUnlimitedToolRoundBudgetCompletesBeyondTwentyRound
 TEST(QueryEngineFix, StreamingDefaultToolRoundBudgetPreservesNoninteractiveLimit) {
     std::vector<ScriptedHttpServer::Response> responses;
     for (int round = 0; round < 21; ++round) {
-        responses.push_back(recovery_tool_call(std::format("bash-{}", round), "Bash",
-            std::format(R"({{"command":"printf round-{}"}})", round)));
+        responses.push_back(
+            recovery_tool_call(std::format("bash-{}", round), "Bash",
+                               std::format(R"({{"command":"printf round-{}"}})", round)));
     }
     ScriptedHttpServer server(std::move(responses));
     ASSERT_NE(server.port(), 0);
@@ -1550,8 +1640,9 @@ TEST(QueryEngineFix, StreamingToolRoundBudgetContinuesWithoutRepeatingPromptAtta
     engine.stream_query("must not append another prompt", options);
 
     EXPECT_EQ(errors.size(), 2u);
-    EXPECT_EQ(observed->executed_inputs, (std::vector<std::string>{
-        R"({"command":"printf first"})", R"({"command":"printf second"})"}));
+    EXPECT_EQ(observed->executed_inputs,
+              (std::vector<std::string>{R"({"command":"printf first"})",
+                                        R"({"command":"printf second"})"}));
     const auto conversation = engine.get_conversation();
     expect_one_recovery_prompt(conversation);
     expect_recovery_completed(conversation);
@@ -1611,12 +1702,13 @@ TEST(QueryEngineFix, StreamingToolRoundContinueApiFailureRetryPreservesCommitted
     ASSERT_EQ(observed->executed_inputs.size(), 1u);
 
     engine.stream_query({}, options);
-    ASSERT_EQ(errors, (std::vector<std::string>{
-        "tool_round_limit", "overloaded_error", "tool_round_limit"}));
+    ASSERT_EQ(errors, (std::vector<std::string>{"tool_round_limit", "overloaded_error",
+                                                "tool_round_limit"}));
     engine.stream_query({}, options);
     EXPECT_EQ(errors.size(), 3u);
-    EXPECT_EQ(observed->executed_inputs, (std::vector<std::string>{
-        R"({"command":"printf first"})", R"({"command":"printf second"})"}));
+    EXPECT_EQ(observed->executed_inputs,
+              (std::vector<std::string>{R"({"command":"printf first"})",
+                                        R"({"command":"printf second"})"}));
     expect_one_recovery_prompt(engine.get_conversation());
     expect_recovery_completed(engine.get_conversation());
     ASSERT_EQ(recovery_tool_results(engine.get_conversation()).size(), 2u);
@@ -1692,8 +1784,7 @@ TEST(QueryEngineFix, StreamingUnlimitedRoundsDoNotBypassDollarBudgetOnContinue) 
     engine.stream_query("respect the cost limit", options);
     ASSERT_EQ(errors, (std::vector<std::string>{"budget_exceeded"}));
     EXPECT_TRUE(engine.budget_tracker().budget_exceeded);
-    EXPECT_GE(engine.budget_tracker().current_spend_usd,
-              engine.budget_tracker().max_budget_usd);
+    EXPECT_GE(engine.budget_tracker().current_spend_usd, engine.budget_tracker().max_budget_usd);
     const auto paused_size = engine.get_conversation().size();
     options.resume_from_conversation = true;
     engine.stream_query({}, options);
@@ -1706,12 +1797,14 @@ TEST(QueryEngineFix, StreamingUnlimitedRoundsDoNotBypassDollarBudgetOnContinue) 
 }
 
 TEST(QueryEngineFix, StreamingHttpFailuresPreservePermanentAndRetryableCategories) {
-    for (const auto& [status, expected] : std::vector<std::pair<int, std::string>>{
-             {401, "authentication_error"}, {403, "authentication_error"},
-             {400, "invalid_request_error"}, {429, "rate_limit_error"},
-             {529, "overloaded_error"}}) {
-        const ScriptedHttpServer::Response failure{.status = status,
-            .body = R"({"type":"error","error":{"message":"request failed"}})"};
+    for (const auto& [status, expected] :
+         std::vector<std::pair<int, std::string>>{{401, "authentication_error"},
+                                                  {403, "authentication_error"},
+                                                  {400, "invalid_request_error"},
+                                                  {429, "rate_limit_error"},
+                                                  {529, "overloaded_error"}}) {
+        const ScriptedHttpServer::Response failure{
+            .status = status, .body = R"({"type":"error","error":{"message":"request failed"}})"};
         ScriptedHttpServer server({failure, failure});
         ASSERT_NE(server.port(), 0);
         loom::core::ToolRegistry registry;
@@ -1759,8 +1852,8 @@ TEST(QueryEngineFix, CustomPromptReplacementDoesNotAcquireDefaultDelegationPolic
     loom::core::UserContext user{"/prompt-probe", "test-platform", "tester", {"EXTRA_CONTEXT"}};
     loom::core::SystemContext system{{"Agent", "task_output"}, "test-model", "default"};
     for (const auto& custom : {std::string("CUSTOM_BASE"), std::string{}}) {
-        const auto prompt = loom::core::SystemPromptBuilder::build(
-            custom, "APPENDED_CONSTRAINT", user, system);
+        const auto prompt =
+            loom::core::SystemPromptBuilder::build(custom, "APPENDED_CONSTRAINT", user, system);
         EXPECT_TRUE(prompt.starts_with(custom));
         EXPECT_EQ(prompt.find("You are Loom"), std::string::npos);
         EXPECT_EQ(prompt.find("# Delegation"), std::string::npos);
@@ -1771,8 +1864,9 @@ TEST(QueryEngineFix, CustomPromptReplacementDoesNotAcquireDefaultDelegationPolic
 }
 
 TEST(QueryEngineFix, AlwaysDeniedAgentIsNotAdvertisedInDefaultPrompt) {
-    const auto root = fs::temp_directory_path() / ("loom-prompt-denied-" +
-        std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
+    const auto root = fs::temp_directory_path() /
+                      ("loom-prompt-denied-" +
+                       std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
     fs::create_directories(root);
     EnvironmentGuard home("HOME", root.string());
     EnvironmentGuard memory("LOOM_DISABLE_AUTO_MEMORY", "1");
@@ -1795,19 +1889,33 @@ TEST(QueryEngineFix, AlwaysDeniedAgentIsNotAdvertisedInDefaultPrompt) {
 
 TEST(QueryEngineFix, UserInstructionsReachRealRequestsAcrossUnrelatedWorkingDirectories) {
     const auto root = fs::temp_directory_path() /
-        ("loom-global-instructions-" + std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
-    struct Cleanup { fs::path path; ~Cleanup() { std::error_code error; fs::remove_all(path, error); } } cleanup{root};
+                      ("loom-global-instructions-" +
+                       std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
+
+    struct Cleanup {
+        fs::path path;
+
+        ~Cleanup() {
+            std::error_code error;
+            fs::remove_all(path, error);
+        }
+    } cleanup{root};
+
     const auto home = root / "home";
     fs::create_directories(home / ".loom");
     fs::create_directories(home / ".agents");
-    { std::ofstream(home / ".agents" / "AGENTS.md") << "GLOBAL_USER_RULE_913"; }
+    {
+        std::ofstream(home / ".agents" / "AGENTS.md") << "GLOBAL_USER_RULE_913";
+    }
     EnvironmentGuard home_guard("HOME", home.string());
     EnvironmentGuard config_guard("LOOM_CONFIG_DIR", "");
     EnvironmentGuard auto_memory("LOOM_DISABLE_AUTO_MEMORY", "1");
     for (auto directory : {"first-project", "unrelated-project"}) {
         const auto cwd = root / directory;
         fs::create_directories(cwd);
-        { std::ofstream(cwd / "AGENTS.md") << "PROJECT_RULE_517"; }
+        {
+            std::ofstream(cwd / "AGENTS.md") << "PROJECT_RULE_517";
+        }
         ScriptedHttpServer server({ScriptedHttpServer::Response{}});
         ASSERT_NE(server.port(), 0);
         loom::core::ToolRegistry registry;
@@ -1837,13 +1945,25 @@ TEST(QueryEngineFix, UserInstructionsReachRealRequestsAcrossUnrelatedWorkingDire
 
 TEST(QueryEngineFix, ActualRequestsDeduplicateProjectAndUserInstructionsByFileIdentity) {
     const auto root = fs::temp_directory_path() /
-        ("loom-global-instruction-alias-" + std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
-    struct Cleanup { fs::path path; ~Cleanup() { std::error_code error; fs::remove_all(path, error); } } cleanup{root};
+                      ("loom-global-instruction-alias-" +
+                       std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
+
+    struct Cleanup {
+        fs::path path;
+
+        ~Cleanup() {
+            std::error_code error;
+            fs::remove_all(path, error);
+        }
+    } cleanup{root};
+
     const auto home = root / "home";
     const auto cwd = root / "project";
     fs::create_directories(home / ".loom");
     fs::create_directories(cwd);
-    { std::ofstream(cwd / "AGENTS.md") << "SHARED_INSTRUCTION_FILE_617"; }
+    {
+        std::ofstream(cwd / "AGENTS.md") << "SHARED_INSTRUCTION_FILE_617";
+    }
     fs::create_symlink(cwd / "AGENTS.md", home / ".loom" / "LOOM.md");
     EnvironmentGuard home_guard("HOME", home.string());
     EnvironmentGuard config_guard("LOOM_CONFIG_DIR", "");
@@ -1872,17 +1992,33 @@ TEST(QueryEngineFix, ActualRequestsDeduplicateProjectAndUserInstructionsByFileId
 
 TEST(QueryEngineFix, UserInstructionOverrideStaysIsolatedInActualRequest) {
     const auto root = fs::temp_directory_path() /
-        ("loom-global-instruction-isolated-" + std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
-    struct Cleanup { fs::path path; ~Cleanup() { std::error_code error; fs::remove_all(path, error); } } cleanup{root};
+                      ("loom-global-instruction-isolated-" +
+                       std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
+
+    struct Cleanup {
+        fs::path path;
+
+        ~Cleanup() {
+            std::error_code error;
+            fs::remove_all(path, error);
+        }
+    } cleanup{root};
+
     const auto home = root / "home";
     const auto cwd = root / "work";
     const auto override_path = root / "isolated" / "config";
     fs::create_directories(home / ".loom");
     fs::create_directories(cwd);
     fs::create_directories(override_path);
-    { std::ofstream(home / ".loom" / "LOOM.md") << "HOME_USER_RULE_MUST_NOT_LEAK_918"; }
-    { std::ofstream(root / "isolated" / "AGENTS.md") << "PARENT_RULE_MUST_NOT_LEAK_753"; }
-    { std::ofstream(override_path / "AGENTS.md") << "ISOLATED_USER_RULE_853"; }
+    {
+        std::ofstream(home / ".loom" / "LOOM.md") << "HOME_USER_RULE_MUST_NOT_LEAK_918";
+    }
+    {
+        std::ofstream(root / "isolated" / "AGENTS.md") << "PARENT_RULE_MUST_NOT_LEAK_753";
+    }
+    {
+        std::ofstream(override_path / "AGENTS.md") << "ISOLATED_USER_RULE_853";
+    }
     EnvironmentGuard home_guard("HOME", home.string());
     EnvironmentGuard config_guard("LOOM_CONFIG_DIR", override_path.string());
     EnvironmentGuard auto_memory("LOOM_DISABLE_AUTO_MEMORY", "1");

@@ -3,6 +3,7 @@
 module;
 
 #include <unistd.h>
+
 #include <cctype>
 #include <cstddef>
 
@@ -15,18 +16,18 @@ export namespace loom::utils {
 /// Trim whitespace from start of string
 [[nodiscard]] inline std::string LTrim(std::string_view str) {
     auto result = std::string(str);
-    result.erase(result.begin(), std::find_if(result.begin(), result.end(), [](unsigned char ch) {
-        return !std::isspace(ch);
-    }));
+    result.erase(result.begin(), std::find_if(result.begin(), result.end(),
+                                              [](unsigned char ch) { return !std::isspace(ch); }));
     return result;
 }
 
 /// Trim whitespace from end of string
 [[nodiscard]] inline std::string RTrim(std::string_view str) {
     auto result = std::string(str);
-    result.erase(std::find_if(result.rbegin(), result.rend(), [](unsigned char ch) {
-        return !std::isspace(ch);
-    }).base(), result.end());
+    result.erase(std::find_if(result.rbegin(), result.rend(),
+                              [](unsigned char ch) { return !std::isspace(ch); })
+                     .base(),
+                 result.end());
     return result;
 }
 
@@ -53,7 +54,8 @@ export namespace loom::utils {
 }
 
 /// Join strings with delimiter
-[[nodiscard]] inline std::string Join(const std::vector<std::string>& parts, std::string_view delimiter = ", ") {
+[[nodiscard]] inline std::string Join(const std::vector<std::string>& parts,
+                                      std::string_view delimiter = ", ") {
     if (parts.empty()) return "";
 
     std::string result = parts[0];
@@ -79,23 +81,22 @@ export namespace loom::utils {
 /// Convert string to lowercase
 [[nodiscard]] inline std::string ToLower(std::string_view str) {
     std::string result(str);
-    std::transform(result.begin(), result.end(), result.begin(), [](unsigned char ch) {
-        return static_cast<char>(std::tolower(ch));
-    });
+    std::transform(result.begin(), result.end(), result.begin(),
+                   [](unsigned char ch) { return static_cast<char>(std::tolower(ch)); });
     return result;
 }
 
 /// Convert string to uppercase
 [[nodiscard]] inline std::string ToUpper(std::string_view str) {
     std::string result(str);
-    std::transform(result.begin(), result.end(), result.begin(), [](unsigned char ch) {
-        return static_cast<char>(std::toupper(ch));
-    });
+    std::transform(result.begin(), result.end(), result.begin(),
+                   [](unsigned char ch) { return static_cast<char>(std::toupper(ch)); });
     return result;
 }
 
 /// Replace all occurrences of substring
-[[nodiscard]] inline std::string ReplaceAll(std::string_view str, std::string_view from, std::string_view to) {
+[[nodiscard]] inline std::string ReplaceAll(std::string_view str, std::string_view from,
+                                            std::string_view to) {
     if (from.empty()) return std::string(str);
 
     std::string result(str);
@@ -115,7 +116,8 @@ export namespace loom::utils {
 }
 
 /// Truncate string with ellipsis
-[[nodiscard]] inline std::string Truncate(std::string_view str, size_t max_length = 100, std::string_view ellipsis = "...") {
+[[nodiscard]] inline std::string Truncate(std::string_view str, size_t max_length = 100,
+                                          std::string_view ellipsis = "...") {
     if (str.size() <= max_length) {
         return std::string(str);
     }
@@ -129,9 +131,8 @@ export namespace loom::utils {
 
 /// Check if string is empty or all whitespace
 [[nodiscard]] inline bool IsBlank(std::string_view str) {
-    return str.empty() || std::all_of(str.begin(), str.end(), [](unsigned char ch) {
-        return std::isspace(ch);
-    });
+    return str.empty() ||
+           std::all_of(str.begin(), str.end(), [](unsigned char ch) { return std::isspace(ch); });
 }
 
 /// Escape string for JSON output
@@ -141,14 +142,29 @@ export namespace loom::utils {
 
     for (char ch : str) {
         switch (ch) {
-            case '"': result += "\\\""; break;
-            case '\\': result += "\\\\"; break;
-            case '\b': result += "\\b"; break;
-            case '\f': result += "\\f"; break;
-            case '\n': result += "\\n"; break;
-            case '\r': result += "\\r"; break;
-            case '\t': result += "\\t"; break;
-            default: result += ch;
+        case '"':
+            result += "\\\"";
+            break;
+        case '\\':
+            result += "\\\\";
+            break;
+        case '\b':
+            result += "\\b";
+            break;
+        case '\f':
+            result += "\\f";
+            break;
+        case '\n':
+            result += "\\n";
+            break;
+        case '\r':
+            result += "\\r";
+            break;
+        case '\t':
+            result += "\\t";
+            break;
+        default:
+            result += ch;
         }
     }
 
@@ -156,15 +172,44 @@ export namespace loom::utils {
 }
 
 namespace string {
-[[nodiscard]] inline std::string trim(std::string_view str) { return Trim(str); }
-[[nodiscard]] inline std::vector<std::string> split(std::string_view str, char delimiter = ' ') { return Split(str, delimiter); }
-[[nodiscard]] inline std::string join(const std::vector<std::string>& parts, std::string_view delimiter = ", ") { return Join(parts, delimiter); }
-[[nodiscard]] inline bool starts_with(std::string_view str, std::string_view prefix) { return StartsWith(str, prefix); }
-[[nodiscard]] inline bool ends_with(std::string_view str, std::string_view suffix) { return EndsWith(str, suffix); }
-[[nodiscard]] inline std::string to_lower(std::string_view str) { return ToLower(str); }
-[[nodiscard]] inline std::string to_upper(std::string_view str) { return ToUpper(str); }
-[[nodiscard]] inline std::string replace_all(std::string_view str, std::string_view from, std::string_view to) { return ReplaceAll(str, from, to); }
-[[nodiscard]] inline std::string truncate(std::string_view str, size_t max_length = 100, std::string_view ellipsis = "...") { return Truncate(str, max_length, ellipsis); }
+[[nodiscard]] inline std::string trim(std::string_view str) {
+    return Trim(str);
 }
 
-} // namespace loom::utils
+[[nodiscard]] inline std::vector<std::string> split(std::string_view str, char delimiter = ' ') {
+    return Split(str, delimiter);
+}
+
+[[nodiscard]] inline std::string join(const std::vector<std::string>& parts,
+                                      std::string_view delimiter = ", ") {
+    return Join(parts, delimiter);
+}
+
+[[nodiscard]] inline bool starts_with(std::string_view str, std::string_view prefix) {
+    return StartsWith(str, prefix);
+}
+
+[[nodiscard]] inline bool ends_with(std::string_view str, std::string_view suffix) {
+    return EndsWith(str, suffix);
+}
+
+[[nodiscard]] inline std::string to_lower(std::string_view str) {
+    return ToLower(str);
+}
+
+[[nodiscard]] inline std::string to_upper(std::string_view str) {
+    return ToUpper(str);
+}
+
+[[nodiscard]] inline std::string replace_all(std::string_view str, std::string_view from,
+                                             std::string_view to) {
+    return ReplaceAll(str, from, to);
+}
+
+[[nodiscard]] inline std::string truncate(std::string_view str, size_t max_length = 100,
+                                          std::string_view ellipsis = "...") {
+    return Truncate(str, max_length, ellipsis);
+}
+}  // namespace string
+
+}  // namespace loom::utils

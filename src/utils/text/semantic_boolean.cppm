@@ -10,4 +10,4 @@ export namespace loom::utils::semantic_boolean {
     return std::nullopt;
 }
 
-} // namespace loom::utils::semantic_boolean
+}  // namespace loom::utils::semantic_boolean

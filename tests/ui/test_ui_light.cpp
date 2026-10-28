@@ -1,16 +1,17 @@
 /// @file test_ui_light.cpp
-/// @brief Split from test_ui.cpp - Components, Markdown, Panels, PromptInputFooter, StatusLine (SLOC budget fix)
+/// @brief Split from test_ui.cpp - Components, Markdown, Panels, PromptInputFooter, StatusLine
+/// (SLOC budget fix)
 
-#include <cstdlib>
-
-#include <ftxui/dom/elements.hpp>
-#include <ftxui/dom/node.hpp>
-#include <ftxui/screen/screen.hpp>
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/event.hpp>
 #include <ftxui/component/mouse.hpp>
+#include <ftxui/dom/elements.hpp>
+#include <ftxui/dom/node.hpp>
+#include <ftxui/screen/screen.hpp>
 #include <gtest/gtest.h>
 #include <httplib.h>
+
+#include <cstdlib>
 
 #include "test_ui_helpers.h"
 
@@ -33,11 +34,13 @@ import loom.constants.constants;
 
 namespace {
 namespace fs = std::filesystem;
+
 struct RestoreUiTheme {
     loom::ui::design::theme::Theme original = loom::ui::design::theme::current_theme();
+
     ~RestoreUiTheme() { loom::ui::design::theme::set_theme(original); }
 };
-}
+}  // namespace
 
 TEST(PromptInputFooter, PermissionModesFollowThemeAndKeepReadableLabels) {
     namespace pif = loom::ui::prompt::footer;
@@ -45,25 +48,28 @@ TEST(PromptInputFooter, PermissionModesFollowThemeAndKeepReadableLabels) {
     using Mode = loom::ui::common::PermissionMode;
     namespace figs = loom::ui::design::figures;
     RestoreUiTheme restore;
-    for (const auto variant : {theme::ThemeVariant::Dark, theme::ThemeVariant::Light,
-            theme::ThemeVariant::DarkDaltonized, theme::ThemeVariant::LightDaltonized,
-            theme::ThemeVariant::Monochrome, theme::ThemeVariant::DarkAnsi,
-            theme::ThemeVariant::LightAnsi}) {
+    for (const auto variant :
+         {theme::ThemeVariant::Dark, theme::ThemeVariant::Light,
+          theme::ThemeVariant::DarkDaltonized, theme::ThemeVariant::LightDaltonized,
+          theme::ThemeVariant::Monochrome, theme::ThemeVariant::DarkAnsi,
+          theme::ThemeVariant::LightAnsi}) {
         theme::set_theme(variant);
         const auto& pal = *theme::current_theme().palette;
         for (const auto mode : {Mode::AcceptEdits, Mode::AcceptAll, Mode::Plan}) {
             const auto expected = mode == Mode::AcceptEdits ? pal.auto_accept
-                : mode == Mode::AcceptAll ? pal.danger : pal.plan_mode;
+                                  : mode == Mode::AcceptAll ? pal.danger
+                                                            : pal.plan_mode;
             pif::ModeIndicatorOptions opts;
             opts.permission_mode = mode;
             opts.show_hint = false;
-            auto screen = ftxui::Screen::Create(
-                ftxui::Dimension::Fixed(30), ftxui::Dimension::Fixed(1));
+            auto screen =
+                ftxui::Screen::Create(ftxui::Dimension::Fixed(30), ftxui::Dimension::Fixed(1));
             ftxui::Render(screen, pif::RenderModeIndicator(opts));
             EXPECT_EQ(screen.PixelAt(0, 0).foreground_color, expected);
             const auto text = strip_ansi(screen.ToString());
             const auto symbol = mode == Mode::AcceptEdits ? figs::kPointerSmall
-                : mode == Mode::AcceptAll ? figs::kCircleFilled : figs::kEllipsis;
+                                : mode == Mode::AcceptAll ? figs::kCircleFilled
+                                                          : figs::kEllipsis;
             EXPECT_NE(text.find(symbol), std::string::npos);
             EXPECT_NE(text.find(pif::PermissionModeTitle(mode)), std::string::npos);
             EXPECT_EQ(text.find("\xf0"), std::string::npos);
@@ -85,10 +91,9 @@ TEST(StatusLine, BuiltinUsesTextLabelsWithoutDecorativeEmoji) {
     data.mouse_mode_label = "Select text to copy";
     data.segments.tasks = true;
     data.segments.agent = true;
-    const auto text = strip_ansi(render_to_plain_text(
-        pif::RenderBuiltinStatusLine(data), 200, 1));
-    for (const auto label : {"tmp/project", "feature", "test-model",
-            "@worker", "2 Team Agents", "14%", "28.0K/200.0K", "$0.12", "Select text to copy"}) {
+    const auto text = strip_ansi(render_to_plain_text(pif::RenderBuiltinStatusLine(data), 200, 1));
+    for (const auto label : {"tmp/project", "feature", "test-model", "@worker", "2 Team Agents",
+                             "14%", "28.0K/200.0K", "$0.12", "Select text to copy"}) {
         EXPECT_NE(text.find(label), std::string::npos) << label;
     }
     EXPECT_EQ(text.find("\xf0"), std::string::npos);
@@ -105,7 +110,8 @@ TEST(PromptInputFooter, TeamAgentCountsUseSingularPluralAndHideZeroInBothRendere
             opts.teammate_count = count;
             opts.teams_selected = selected;
             opts.show_hint = false;
-            auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(32), ftxui::Dimension::Fixed(1));
+            auto screen =
+                ftxui::Screen::Create(ftxui::Dimension::Fixed(32), ftxui::Dimension::Fixed(1));
             ftxui::Render(screen, pif::RenderModeIndicator(opts));
             const auto text = strip_ansi(screen.ToString());
             if (count == 0) {
@@ -119,9 +125,15 @@ TEST(PromptInputFooter, TeamAgentCountsUseSingularPluralAndHideZeroInBothRendere
         pif::BuiltinStatusLineData data;
         data.task_count = count;
         data.columns = 32;
-        data.segments = {.cwd = false, .git = false, .model = false,
-            .tokens = false, .cost = false, .tasks = true, .agent = false};
-        auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(32), ftxui::Dimension::Fixed(1));
+        data.segments = {.cwd = false,
+                         .git = false,
+                         .model = false,
+                         .tokens = false,
+                         .cost = false,
+                         .tasks = true,
+                         .agent = false};
+        auto screen =
+            ftxui::Screen::Create(ftxui::Dimension::Fixed(32), ftxui::Dimension::Fixed(1));
         ftxui::Render(screen, pif::RenderBuiltinStatusLine(data));
         const auto text = strip_ansi(screen.ToString());
         if (count == 0) {
@@ -137,20 +149,21 @@ TEST(PromptInputFooter, BridgeAndNotificationsFollowCurrentTheme) {
     namespace pif = loom::ui::prompt::footer;
     namespace theme = loom::ui::design::theme;
     RestoreUiTheme restore;
-    for (const auto variant : {theme::ThemeVariant::Light,
-            theme::ThemeVariant::DarkDaltonized, theme::ThemeVariant::Monochrome}) {
+    for (const auto variant : {theme::ThemeVariant::Light, theme::ThemeVariant::DarkDaltonized,
+                               theme::ThemeVariant::Monochrome}) {
         theme::set_theme(variant);
         const auto& pal = *theme::current_theme().palette;
-        for (const auto status : {pif::BridgeStatus::Connected,
-                pif::BridgeStatus::Disconnected, pif::BridgeStatus::Reconnecting}) {
+        for (const auto status : {pif::BridgeStatus::Connected, pif::BridgeStatus::Disconnected,
+                                  pif::BridgeStatus::Reconnecting}) {
             pif::BridgeOptions opts;
             opts.status = status;
             opts.explicit_remote = true;
-            auto screen = ftxui::Screen::Create(
-                ftxui::Dimension::Fixed(50), ftxui::Dimension::Fixed(1));
+            auto screen =
+                ftxui::Screen::Create(ftxui::Dimension::Fixed(50), ftxui::Dimension::Fixed(1));
             ftxui::Render(screen, pif::RenderBridgeStatus(opts));
-            const auto expected = status == pif::BridgeStatus::Connected ? pal.success
-                : status == pif::BridgeStatus::Disconnected ? pal.danger : pal.warning;
+            const auto expected = status == pif::BridgeStatus::Connected      ? pal.success
+                                  : status == pif::BridgeStatus::Disconnected ? pal.danger
+                                                                              : pal.warning;
             EXPECT_EQ(screen.PixelAt(0, 0).foreground_color, expected);
         }
         for (const auto role : {"error", "warning", "success", "info"}) {
@@ -159,17 +172,17 @@ TEST(PromptInputFooter, BridgeAndNotificationsFollowCurrentTheme) {
             item.text = "Notice";
             item.color = role;
             data.queue.current = item;
-            auto screen = ftxui::Screen::Create(
-                ftxui::Dimension::Fixed(30), ftxui::Dimension::Fixed(1));
+            auto screen =
+                ftxui::Screen::Create(ftxui::Dimension::Fixed(30), ftxui::Dimension::Fixed(1));
             ftxui::Render(screen, pif::RenderNotifications(data));
-            const auto expected = std::string_view(role) == "error" ? pal.danger
-                : std::string_view(role) == "warning" ? pal.warning
-                : std::string_view(role) == "success" ? pal.success : pal.info;
+            const auto expected = std::string_view(role) == "error"     ? pal.danger
+                                  : std::string_view(role) == "warning" ? pal.warning
+                                  : std::string_view(role) == "success" ? pal.success
+                                                                        : pal.info;
             EXPECT_EQ(screen.PixelAt(0, 0).foreground_color, expected);
         }
     }
 }
-
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // loom.ui.widgets.components: reusable FTXUI render helpers
@@ -238,9 +251,7 @@ TEST(Components, TextInputRendersPlaceholderCaretWithoutNativeCursor) {
     options.cursor_blink_ms = 0;
     auto component = loom::ui::components::TextInput(options);
 
-    auto screen = ftxui::Screen::Create(
-        ftxui::Dimension::Fixed(20),
-        ftxui::Dimension::Fixed(3));
+    auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(20), ftxui::Dimension::Fixed(3));
     ftxui::Render(screen, component->Render());
 
     const auto& first_cell = screen.PixelAt(0, 0);
@@ -324,7 +335,7 @@ TEST(Components, TextInputUndoRedo) {
 
     component->OnEvent(ftxui::Event::Character("a"));
     component->OnEvent(ftxui::Event::Character("b"));
-    component->OnEvent(ftxui::Event::Backspace); // delete 'b'
+    component->OnEvent(ftxui::Event::Backspace);  // delete 'b'
 
     // Ctrl+Z undo
     component->OnEvent(ftxui::Event::Character("\x1a"));
@@ -380,11 +391,16 @@ TEST(Components, TextInputInputFilter) {
 
 TEST(Components, TextInputSuggestionsDropdown) {
     loom::ui::components::TextInputOptions opts;
-    opts.get_suggestions = [](const std::string& input, int, const loom::ui::components::PromptContext&) -> std::vector<loom::ui::components::Suggestion> {
+    opts.get_suggestions = [](const std::string& input, int,
+                              const loom::ui::components::PromptContext&)
+        -> std::vector<loom::ui::components::Suggestion> {
         if (input.starts_with('/')) {
             return {
-                {"/help", "/help", "Show help", loom::ui::components::SuggestionCategory::Command, std::nullopt, std::nullopt, std::nullopt},
-                {"/clear", "/clear", "Clear screen", loom::ui::components::SuggestionCategory::Command, std::nullopt, std::nullopt, std::nullopt},
+                {"/help", "/help", "Show help", loom::ui::components::SuggestionCategory::Command,
+                 std::nullopt, std::nullopt, std::nullopt},
+                {"/clear", "/clear", "Clear screen",
+                 loom::ui::components::SuggestionCategory::Command, std::nullopt, std::nullopt,
+                 std::nullopt},
             };
         }
         return {};
@@ -402,17 +418,18 @@ TEST(Components, TextInputSuggestionsDropdown) {
 TEST(Components, TextInputSuggestionAccept) {
     std::string accepted_text;
     loom::ui::components::TextInputOptions opts;
-    opts.get_suggestions = [](const std::string& input, int, const loom::ui::components::PromptContext&) -> std::vector<loom::ui::components::Suggestion> {
+    opts.get_suggestions = [](const std::string& input, int,
+                              const loom::ui::components::PromptContext&)
+        -> std::vector<loom::ui::components::Suggestion> {
         if (input.starts_with('/')) {
             return {
-                {"/help", "/help", "Show help", loom::ui::components::SuggestionCategory::Command, std::nullopt, std::nullopt, std::nullopt},
+                {"/help", "/help", "Show help", loom::ui::components::SuggestionCategory::Command,
+                 std::nullopt, std::nullopt, std::nullopt},
             };
         }
         return {};
     };
-    opts.on_change = [&](const std::string& text, const auto&) {
-        accepted_text = text;
-    };
+    opts.on_change = [&](const std::string& text, const auto&) { accepted_text = text; };
     auto component = loom::ui::components::TextInput(opts);
 
     component->OnEvent(ftxui::Event::Character("/"));
@@ -455,9 +472,7 @@ TEST(Components, TextInputHistorySearchAccept) {
     loom::ui::components::TextInputOptions opts;
     opts.show_history = true;
     std::string result_text;
-    opts.on_submit = [&](const std::string& text, const auto&) {
-        result_text = text;
-    };
+    opts.on_submit = [&](const std::string& text, const auto&) { result_text = text; };
     auto component = loom::ui::components::TextInput(opts);
 
     // Add some history
@@ -539,9 +554,7 @@ TEST(Components, TextInputSubmitCallback) {
     std::string submitted_text;
     loom::ui::components::TextInputOptions opts;
     opts.multiline = false;
-    opts.on_submit = [&](const std::string& text, const auto&) {
-        submitted_text = text;
-    };
+    opts.on_submit = [&](const std::string& text, const auto&) { submitted_text = text; };
     auto component = loom::ui::components::TextInput(opts);
 
     component->OnEvent(ftxui::Event::Character("h"));
@@ -624,7 +637,8 @@ TEST(Components, TextInputPasteTruncationCountsElidedLines) {
     auto impl = loom::ui::components::MakeTextInputCore({});
     // Build a >10k multi-line paste: 700 lines of 20 chars each (~14 700 chars).
     std::string big;
-    for (int i = 0; i < 700; ++i) big += std::string(19, 'y') + "\n";
+    for (int i = 0; i < 700; ++i)
+        big += std::string(19, 'y') + "\n";
     ASSERT_GT(big.size(), 10000u);
     impl->PasteText(big);
     ASSERT_TRUE(impl->HasPastePreview()) << "multi-line large paste must trigger preview";
@@ -702,13 +716,12 @@ TEST(Components, TextInputHistoryUpDown) {
 
 TEST(StatusLine, ExternalCommandDoesNotReceiveApplicationDim) {
     namespace pif = loom::ui::prompt::footer;
-    auto screen = ftxui::Screen::Create(
-        ftxui::Dimension::Fixed(120), ftxui::Dimension::Fixed(1));
+    auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(120), ftxui::Dimension::Fixed(1));
     ftxui::Render(screen, pif::RenderStatusLine(pif::StatusLineOptions{
-        .content = "\033[38;5;44mbright-status\033[0m",
-        .should_display = true,
-        .builtin = std::nullopt,
-    }));
+                              .content = "\033[38;5;44mbright-status\033[0m",
+                              .should_display = true,
+                              .builtin = std::nullopt,
+                          }));
     EXPECT_NE(strip_ansi(screen.ToString()).find("bright-status"), std::string::npos);
     EXPECT_EQ(screen.PixelAt(0, 0).foreground_color, ftxui::Color::Palette256(44));
     EXPECT_FALSE(screen.PixelAt(0, 0).bold);
@@ -732,15 +745,13 @@ TEST(StatusLine, BuiltinShowsFolderGitModelTokens) {
     data.context_window_size = 200000;
 
     // No content (user command returned empty) → builtin kicks in.
-    auto rendered = render_to_plain_text(
-        pif::RenderStatusLine(pif::StatusLineOptions{
-            .content = "",
-            .should_display = true,
-            .is_fullscreen = true,
-            .builtin = data,
-        }),
-        120,
-        1);
+    auto rendered = render_to_plain_text(pif::RenderStatusLine(pif::StatusLineOptions{
+                                             .content = "",
+                                             .should_display = true,
+                                             .is_fullscreen = true,
+                                             .builtin = data,
+                                         }),
+                                         120, 1);
 
     // Folder (last 2 path components)
     EXPECT_NE(rendered.find("cpp_migration"), std::string::npos);
@@ -762,20 +773,18 @@ TEST(StatusLine, BuiltinNoGitBranchOmitsBranch) {
 
     pif::BuiltinStatusLineData data;
     data.cwd = "/tmp/some_project";
-    data.git_branch = "";   // not a git repo
+    data.git_branch = "";  // not a git repo
     data.model_name = "test-model";
     data.context_token_count = 0;
     data.context_window_size = 200000;
 
-    auto rendered = render_to_plain_text(
-        pif::RenderStatusLine(pif::StatusLineOptions{
-            .content = "",
-            .should_display = true,
-            .is_fullscreen = true,
-            .builtin = data,
-        }),
-        120,
-        1);
+    auto rendered = render_to_plain_text(pif::RenderStatusLine(pif::StatusLineOptions{
+                                             .content = "",
+                                             .should_display = true,
+                                             .is_fullscreen = true,
+                                             .builtin = data,
+                                         }),
+                                         120, 1);
 
     // Folder shown
     EXPECT_NE(rendered.find("some_project"), std::string::npos);
@@ -793,15 +802,13 @@ TEST(StatusLine, UserContentTakesPriorityOverBuiltin) {
     data.model_name = "test-model";
 
     // User command produced output → it wins over builtin.
-    auto rendered = render_to_plain_text(
-        pif::RenderStatusLine(pif::StatusLineOptions{
-            .content = "MY CUSTOM STATUSLINE",
-            .should_display = true,
-            .is_fullscreen = true,
-            .builtin = data,
-        }),
-        120,
-        1);
+    auto rendered = render_to_plain_text(pif::RenderStatusLine(pif::StatusLineOptions{
+                                             .content = "MY CUSTOM STATUSLINE",
+                                             .should_display = true,
+                                             .is_fullscreen = true,
+                                             .builtin = data,
+                                         }),
+                                         120, 1);
 
     // User content is shown
     EXPECT_NE(rendered.find("MY CUSTOM STATUSLINE"), std::string::npos);
@@ -816,15 +823,13 @@ TEST(StatusLine, BuiltinShowsWithoutConfiguredCommand) {
     data.model_name = "opus-4.8";
 
     // Simulates: no statusLine in settings, but builtin data available.
-    auto rendered = render_to_plain_text(
-        pif::RenderStatusLine(pif::StatusLineOptions{
-            .content = "",
-            .should_display = true,
-            .is_fullscreen = true,
-            .builtin = data,
-        }),
-        120,
-        1);
+    auto rendered = render_to_plain_text(pif::RenderStatusLine(pif::StatusLineOptions{
+                                             .content = "",
+                                             .should_display = true,
+                                             .is_fullscreen = true,
+                                             .builtin = data,
+                                         }),
+                                         120, 1);
 
     EXPECT_NE(rendered.find("myrepo"), std::string::npos);
     EXPECT_NE(rendered.find("feature/xyz"), std::string::npos);
@@ -845,20 +850,17 @@ TEST(PromptInputFooter, StatusLineHasDedicatedRowAboveRightControls) {
         .explicit_remote = true,
     };
 
-    auto rendered = strip_ansi(render_to_plain_text(
-        pif::RenderPromptInputFooter(opts),
-        100,
-        4));
+    auto rendered = strip_ansi(render_to_plain_text(pif::RenderPromptInputFooter(opts), 100, 4));
 
     auto status_pos = rendered.find("custom status");
     auto bridge_pos = rendered.find("Remote Control");
     ASSERT_NE(status_pos, std::string::npos);
     ASSERT_NE(bridge_pos, std::string::npos);
-    EXPECT_LT(
-        std::count(rendered.begin(), rendered.begin() + static_cast<std::ptrdiff_t>(status_pos), '\n'),
-        std::count(rendered.begin(), rendered.begin() + static_cast<std::ptrdiff_t>(bridge_pos), '\n'));
+    EXPECT_LT(std::count(rendered.begin(),
+                         rendered.begin() + static_cast<std::ptrdiff_t>(status_pos), '\n'),
+              std::count(rendered.begin(),
+                         rendered.begin() + static_cast<std::ptrdiff_t>(bridge_pos), '\n'));
 }
-
 
 TEST(StatusLine, NarrowLayoutKeepsContextAndWholeFields) {
     namespace pif = loom::ui::prompt::footer;
@@ -872,7 +874,8 @@ TEST(StatusLine, NarrowLayoutKeepsContextAndWholeFields) {
     data.mouse_mode_label = "Select to copy (F2)";
     data.columns = 26;
     auto element = pif::RenderBuiltinStatusLine(data);
-    auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(26), ftxui::Dimension::Fit(element));
+    auto screen =
+        ftxui::Screen::Create(ftxui::Dimension::Fixed(26), ftxui::Dimension::Fit(element));
     ftxui::Render(screen, element);
     EXPECT_EQ(screen.dimy(), 1);
     const auto rendered = strip_ansi(screen.ToString());
@@ -896,8 +899,8 @@ TEST(StatusLine, WidthAbbreviationPreservesWideAndCombiningGlyphs) {
     data.model_name = "模型🙂é很长名称";
     data.context_token_count = 10000;
     data.columns = 26;
-    const auto rendered = strip_ansi(render_to_plain_text(
-        pif::RenderBuiltinStatusLine(data), 26, 1));
+    const auto rendered =
+        strip_ansi(render_to_plain_text(pif::RenderBuiltinStatusLine(data), 26, 1));
     EXPECT_NE(rendered.find("项目/织…"), std::string::npos);
     EXPECT_NE(rendered.find("模型🙂é…"), std::string::npos);
     EXPECT_NE(rendered.find("5%"), std::string::npos);
@@ -932,13 +935,15 @@ TEST(StatusLine, TinyWidthsNeverLeavePartialValuesOrSeparators) {
     data.context_token_count = 10000;
     for (int columns = 1; columns <= 10; ++columns) {
         data.columns = columns;
-        const auto rendered = strip_ansi(render_to_plain_text(
-            pif::RenderBuiltinStatusLine(data), columns, 1));
+        const auto rendered =
+            strip_ansi(render_to_plain_text(pif::RenderBuiltinStatusLine(data), columns, 1));
         EXPECT_FALSE(rendered.starts_with(" · ")) << columns;
         const auto end = rendered.find_last_not_of(' ');
         if (end != std::string::npos) EXPECT_EQ(rendered[end], '%') << columns;
-        if (columns >= 2) EXPECT_NE(rendered.find("5%"), std::string::npos) << columns;
-        else EXPECT_EQ(rendered.find("5"), std::string::npos);
+        if (columns >= 2)
+            EXPECT_NE(rendered.find("5%"), std::string::npos) << columns;
+        else
+            EXPECT_EQ(rendered.find("5"), std::string::npos);
     }
 }
 
@@ -956,8 +961,8 @@ TEST(PromptInputFooter, NarrowActiveControlsCannotStealStatusWidthOrPadding) {
     opts.notification.dynamic_text = "Notice";
     opts.bridge.status = pif::BridgeStatus::Connected;
     opts.bridge.explicit_remote = true;
-    const auto rendered = strip_ansi(render_to_plain_text(
-        pif::RenderPromptInputFooter(opts), 40, 3));
+    const auto rendered =
+        strip_ansi(render_to_plain_text(pif::RenderPromptInputFooter(opts), 40, 3));
     const auto first_row = rendered.substr(0, rendered.find('\n'));
     EXPECT_EQ(first_row.substr(0, 4), "    ");
     EXPECT_NE(first_row.find("test-model"), std::string::npos);
@@ -993,10 +998,11 @@ TEST(StatusLine, BuiltinMetadataIsNeutralReadableAndOnlyModelIsBold) {
     namespace pif = loom::ui::prompt::footer;
     namespace theme = loom::ui::design::theme;
     RestoreUiTheme restore;
-    for (const auto variant : {theme::ThemeVariant::Dark, theme::ThemeVariant::Light,
-            theme::ThemeVariant::DarkDaltonized, theme::ThemeVariant::LightDaltonized,
-            theme::ThemeVariant::Monochrome, theme::ThemeVariant::DarkAnsi,
-            theme::ThemeVariant::LightAnsi}) {
+    for (const auto variant :
+         {theme::ThemeVariant::Dark, theme::ThemeVariant::Light,
+          theme::ThemeVariant::DarkDaltonized, theme::ThemeVariant::LightDaltonized,
+          theme::ThemeVariant::Monochrome, theme::ThemeVariant::DarkAnsi,
+          theme::ThemeVariant::LightAnsi}) {
         SCOPED_TRACE(static_cast<int>(variant));
         theme::set_theme(variant);
         const auto& pal = *theme::current_theme().palette;
@@ -1013,8 +1019,8 @@ TEST(StatusLine, BuiltinMetadataIsNeutralReadableAndOnlyModelIsBold) {
         data.segments.tasks = true;
         data.segments.agent = true;
         data.columns = 200;
-        auto screen = ftxui::Screen::Create(
-            ftxui::Dimension::Fixed(200), ftxui::Dimension::Fixed(1));
+        auto screen =
+            ftxui::Screen::Create(ftxui::Dimension::Fixed(200), ftxui::Dimension::Fixed(1));
         ftxui::Render(screen, pif::RenderBuiltinStatusLine(data));
         const auto expect_label = [&](std::string_view label, ftxui::Color ink, bool bold) {
             SCOPED_TRACE(label);
@@ -1022,13 +1028,16 @@ TEST(StatusLine, BuiltinMetadataIsNeutralReadableAndOnlyModelIsBold) {
             for (int x = 0; x + static_cast<int>(label.size()) <= screen.dimx(); ++x) {
                 bool matches = true;
                 for (std::size_t i = 0; i < label.size(); ++i) {
-                    if (screen.PixelAt(x + static_cast<int>(i), 0).character
-                            != label.substr(i, 1)) {
+                    if (screen.PixelAt(x + static_cast<int>(i), 0).character !=
+                        label.substr(i, 1)) {
                         matches = false;
                         break;
                     }
                 }
-                if (matches) { start = x; break; }
+                if (matches) {
+                    start = x;
+                    break;
+                }
             }
             ASSERT_GE(start, 0);
             for (std::size_t i = 0; i < label.size(); ++i) {
@@ -1039,8 +1048,8 @@ TEST(StatusLine, BuiltinMetadataIsNeutralReadableAndOnlyModelIsBold) {
             }
         };
         expect_label("test-model", pal.text, true);
-        for (const auto label : {"tmp/project", "feature", "@worker", "2 Team Agents",
-                "14%", "28.0K/200.0K", "$0.12", "Select text to copy"})
+        for (const auto label : {"tmp/project", "feature", "@worker", "2 Team Agents", "14%",
+                                 "28.0K/200.0K", "$0.12", "Select text to copy"})
             expect_label(label, pal.muted, false);
     }
 }
@@ -1049,27 +1058,34 @@ TEST(StatusLine, ContextRetainsExactThresholdsWithoutDimAcrossThemes) {
     namespace pif = loom::ui::prompt::footer;
     namespace theme = loom::ui::design::theme;
     RestoreUiTheme restore;
-    for (const auto variant : {theme::ThemeVariant::Dark, theme::ThemeVariant::Light,
-            theme::ThemeVariant::DarkDaltonized, theme::ThemeVariant::LightDaltonized,
-            theme::ThemeVariant::Monochrome, theme::ThemeVariant::DarkAnsi,
-            theme::ThemeVariant::LightAnsi}) {
+    for (const auto variant :
+         {theme::ThemeVariant::Dark, theme::ThemeVariant::Light,
+          theme::ThemeVariant::DarkDaltonized, theme::ThemeVariant::LightDaltonized,
+          theme::ThemeVariant::Monochrome, theme::ThemeVariant::DarkAnsi,
+          theme::ThemeVariant::LightAnsi}) {
         SCOPED_TRACE(static_cast<int>(variant));
         theme::set_theme(variant);
         const auto& pal = *theme::current_theme().palette;
         for (const int percentage : {0, 49, 50, 79, 80, 100}) {
             SCOPED_TRACE(percentage);
             pif::BuiltinStatusLineData data;
-            data.segments = {.cwd = false, .git = false, .model = false,
-                .tokens = true, .cost = false, .tasks = false, .agent = false};
+            data.segments = {.cwd = false,
+                             .git = false,
+                             .model = false,
+                             .tokens = true,
+                             .cost = false,
+                             .tasks = false,
+                             .agent = false};
             data.context_window_size = 10000;
             data.context_token_count = percentage * 100;
             data.columns = 40;
-            auto screen = ftxui::Screen::Create(
-                ftxui::Dimension::Fixed(40), ftxui::Dimension::Fixed(1));
+            auto screen =
+                ftxui::Screen::Create(ftxui::Dimension::Fixed(40), ftxui::Dimension::Fixed(1));
             ftxui::Render(screen, pif::RenderBuiltinStatusLine(data));
             EXPECT_EQ(strip_ansi(screen.ToString()).find(std::to_string(percentage) + "%"), 0u);
-            const auto expected = percentage >= 80 ? pal.danger
-                : percentage >= 50 ? pal.warning : pal.muted;
+            const auto expected = percentage >= 80   ? pal.danger
+                                  : percentage >= 50 ? pal.warning
+                                                     : pal.muted;
             EXPECT_EQ(screen.PixelAt(0, 0).foreground_color, expected);
             EXPECT_FALSE(screen.PixelAt(0, 0).bold);
             EXPECT_FALSE(screen.PixelAt(0, 0).dim);
@@ -1081,40 +1097,55 @@ TEST(StatusLine, CurrentContextEstimateUses64BitCountAndMarker) {
     namespace pif = loom::ui::prompt::footer;
     for (const auto tokens : {std::uint64_t{3'000'000'000}, std::uint64_t{6'000'000'000}}) {
         pif::BuiltinStatusLineData data;
-        data.segments = {.cwd = false, .git = false, .model = false,
-            .tokens = true, .cost = false, .tasks = false, .agent = false};
+        data.segments = {.cwd = false,
+                         .git = false,
+                         .model = false,
+                         .tokens = true,
+                         .cost = false,
+                         .tasks = false,
+                         .agent = false};
         data.context_window_size = 4'000'000'000LL;
         data.context_token_count = tokens;
         data.context_tokens_estimated = true;
         data.input_tokens = 17;
         data.output_tokens = 29;
-        const auto rendered = strip_ansi(render_to_plain_text(
-            pif::RenderBuiltinStatusLine(data), 120, 1));
-        const auto expected = tokens == 3'000'000'000
-            ? "~75% 3000000.0K/4000000.0K"
-            : "~150% 6000000.0K/4000000.0K";
+        const auto rendered =
+            strip_ansi(render_to_plain_text(pif::RenderBuiltinStatusLine(data), 120, 1));
+        const auto expected =
+            tokens == 3'000'000'000 ? "~75% 3000000.0K/4000000.0K" : "~150% 6000000.0K/4000000.0K";
         EXPECT_EQ(rendered.find(expected), 0u);
     }
 }
 
 TEST(StatusLine, CostUsesSubCentMarkerOrTwoDecimalsAndOmitsAbsentTotals) {
     namespace pif = loom::ui::prompt::footer;
+
     struct Case {
         std::optional<double> cost;
         std::string_view expected;
     };
-    for (const auto& test : std::array<Case, 9>{{
-            {std::nullopt, ""}, {0.0, ""}, {-1.0, ""}, {0.0001, "<$0.01"},
-            {0.00999, "<$0.01"}, {0.01, "$0.01"}, {0.1234, "$0.12"},
-            {1.236, "$1.24"}, {1234.567, "$1234.57"}}}) {
+
+    for (const auto& test : std::array<Case, 9>{{{std::nullopt, ""},
+                                                 {0.0, ""},
+                                                 {-1.0, ""},
+                                                 {0.0001, "<$0.01"},
+                                                 {0.00999, "<$0.01"},
+                                                 {0.01, "$0.01"},
+                                                 {0.1234, "$0.12"},
+                                                 {1.236, "$1.24"},
+                                                 {1234.567, "$1234.57"}}}) {
         SCOPED_TRACE(test.expected);
         pif::BuiltinStatusLineData data;
-        data.segments = {.cwd = false, .git = false, .model = false,
-            .tokens = false, .cost = true, .tasks = false, .agent = false};
+        data.segments = {.cwd = false,
+                         .git = false,
+                         .model = false,
+                         .tokens = false,
+                         .cost = true,
+                         .tasks = false,
+                         .agent = false};
         data.cost_usd = test.cost;
         data.columns = 40;
-        auto rendered = strip_ansi(render_to_plain_text(
-            pif::RenderBuiltinStatusLine(data), 40, 1));
+        auto rendered = strip_ansi(render_to_plain_text(pif::RenderBuiltinStatusLine(data), 40, 1));
         const auto end = rendered.find_last_not_of(' ');
         rendered = end == std::string::npos ? "" : rendered.substr(0, end + 1);
         EXPECT_EQ(rendered, test.expected);
@@ -1128,8 +1159,7 @@ TEST(StatusLine, ExternalCommandRetainsExplicitDimBackgroundAndIntensityReset) {
     opts.content = "\033[2;38;2;1;2;3;48;5;24mD\033[22mR\033[0mN\nSECOND";
     opts.padding_x = 2;
     opts.columns = 20;
-    auto screen = ftxui::Screen::Create(
-        ftxui::Dimension::Fixed(20), ftxui::Dimension::Fixed(1));
+    auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(20), ftxui::Dimension::Fixed(1));
     ftxui::Render(screen, pif::RenderStatusLine(opts));
     EXPECT_EQ(screen.dimy(), 1);
     EXPECT_EQ(screen.PixelAt(0, 0).character, " ");
@@ -1156,8 +1186,18 @@ TEST(Panels, PanelTypeNamesAreStable) {
 TEST(Panels, SettingsPanelFiltersAndUpdatesEntries) {
     loom::ui::SettingsPanel panel;
     panel.load({
-        {.key = "model", .value = "sonnet", .description = "Model", .category = "core", .is_readonly = false, .allowed_values = {}},
-        {.key = "theme", .value = "dark", .description = "Theme", .category = "ui", .is_readonly = false, .allowed_values = {"dark", "light"}},
+        {.key = "model",
+         .value = "sonnet",
+         .description = "Model",
+         .category = "core",
+         .is_readonly = false,
+         .allowed_values = {}},
+        {.key = "theme",
+         .value = "dark",
+         .description = "Theme",
+         .category = "ui",
+         .is_readonly = false,
+         .allowed_values = {"dark", "light"}},
     });
 
     panel.set_filter("model");
@@ -1175,8 +1215,20 @@ TEST(Panels, McpPanelComputesStatusSummary) {
     loom::ui::McpPanel panel;
     auto now = std::chrono::steady_clock::now();
     panel.set_servers({
-        {.name = "one", .uri = "stdio://one", .status = loom::ui::McpStatus::Connected, .capabilities = {}, .error_message = std::nullopt, .tool_count = 0, .last_heartbeat = now},
-        {.name = "two", .uri = "stdio://two", .status = loom::ui::McpStatus::Disconnected, .capabilities = {}, .error_message = std::nullopt, .tool_count = 0, .last_heartbeat = now},
+        {.name = "one",
+         .uri = "stdio://one",
+         .status = loom::ui::McpStatus::Connected,
+         .capabilities = {},
+         .error_message = std::nullopt,
+         .tool_count = 0,
+         .last_heartbeat = now},
+        {.name = "two",
+         .uri = "stdio://two",
+         .status = loom::ui::McpStatus::Disconnected,
+         .capabilities = {},
+         .error_message = std::nullopt,
+         .tool_count = 0,
+         .last_heartbeat = now},
     });
 
     EXPECT_EQ(panel.status_summary(), "1/2 connected");
@@ -1185,7 +1237,13 @@ TEST(Panels, McpPanelComputesStatusSummary) {
 
 TEST(Panels, TasksPanelTracksTaskLifecycle) {
     loom::ui::TasksPanel panel;
-    panel.add_task({.id = "task-1", .description = "Run tests", .status = loom::ui::TaskStatus::Running, .progress = 0.0, .error = std::nullopt, .created_at = std::chrono::system_clock::now(), .completed_at = std::nullopt});
+    panel.add_task({.id = "task-1",
+                    .description = "Run tests",
+                    .status = loom::ui::TaskStatus::Running,
+                    .progress = 0.0,
+                    .error = std::nullopt,
+                    .created_at = std::chrono::system_clock::now(),
+                    .completed_at = std::nullopt});
     EXPECT_EQ(panel.active_count(), 1u);
 
     panel.update_progress("task-1", 0.5);
@@ -1195,7 +1253,13 @@ TEST(Panels, TasksPanelTracksTaskLifecycle) {
 
 TEST(Panels, DiffPanelAggregatesStats) {
     loom::ui::DiffPanel panel;
-    panel.set_diffs({{.file_path = "main.cpp", .hunks = {}, .additions = 3, .deletions = 1, .is_binary = false, .is_new_file = false, .is_deleted = false}});
+    panel.set_diffs({{.file_path = "main.cpp",
+                      .hunks = {},
+                      .additions = 3,
+                      .deletions = 1,
+                      .is_binary = false,
+                      .is_new_file = false,
+                      .is_deleted = false}});
 
     auto [additions, deletions] = panel.total_stats();
     EXPECT_EQ(additions, 3u);
@@ -1224,7 +1288,8 @@ TEST(Markdown, CodeBlockDoesNotInjectLineNumbers) {
 }
 
 TEST(Markdown, ParsesGfmTablesWithoutRenderingSeparatorAsParagraph) {
-    auto rendered = render_to_plain_text(loom::ui::render_markdown("| A | B |\n|---|---|\n| 1 | 2 |"));
+    auto rendered =
+        render_to_plain_text(loom::ui::render_markdown("| A | B |\n|---|---|\n| 1 | 2 |"));
 
     EXPECT_NE(rendered.find("A"), std::string::npos);
     EXPECT_NE(rendered.find("B"), std::string::npos);
@@ -1262,7 +1327,8 @@ TEST(Components, PassesClipHistoryUnderLimit) {
 TEST(Components, PassesClipHistoryOverLimit) {
     using namespace loom::ui::components::passes;
     std::vector<std::string> hist;
-    for (int i = 0; i < 20; ++i) hist.push_back("p" + std::to_string(i));
+    for (int i = 0; i < 20; ++i)
+        hist.push_back("p" + std::to_string(i));
     auto clipped = clip_history(hist, 5);
     ASSERT_EQ(clipped.size(), 5u);
     EXPECT_EQ(clipped[0], "p15");
@@ -1351,8 +1417,7 @@ TEST(Components, GroveCountNodesWithChildren) {
 }
 
 TEST(Components, GroveTruncateShort) {
-    std::string result = loom::ui::components::grove::truncate(
-        std::string_view{"hello"}, 20);
+    std::string result = loom::ui::components::grove::truncate(std::string_view{"hello"}, 20);
     EXPECT_EQ(result, "hello");
 }
 
@@ -1386,8 +1451,10 @@ TEST(Components, GroveFlattenHasDepth) {
 TEST(Components, GroveBuildTreeReturnsComponent) {
     using namespace loom::ui::components::grove;
     GroveViewState state;
-    state.roots.push_back({"id-1", "src/main.cpp", "", "src/main.cpp", 1, 20, 0.8, GroveKind::File, {}});
-    state.roots[0].children.push_back({"id-2", "main()", "", "src/main.cpp", 5, 15, 0.5, GroveKind::Symbol, {}});
+    state.roots.push_back(
+        {"id-1", "src/main.cpp", "", "src/main.cpp", 1, 20, 0.8, GroveKind::File, {}});
+    state.roots[0].children.push_back(
+        {"id-2", "main()", "", "src/main.cpp", 5, 15, 0.5, GroveKind::Symbol, {}});
     state.total_results = 2;
     auto tree = BuildGroveTree(state);
     EXPECT_NE(tree, nullptr);
@@ -1748,48 +1815,49 @@ TEST(Figures, CoreGlyphsAreSingleDisplayCell) {
     // length matches known single-cell UTF-8 sequences.
     //
     // 3-byte UTF-8 (U+25CF range, BMP): 1 cell expected.
-    EXPECT_EQ(figs::kPointer.size(), 3u);       // ❯
-    EXPECT_EQ(figs::kTick.size(), 3u);          // ✔
-    EXPECT_EQ(figs::kCross.size(), 3u);         // ✘
-    EXPECT_EQ(figs::kBullet.size(), 3u);        // ●
-    EXPECT_EQ(figs::kArrowDown.size(), 3u);     // ↓
-    EXPECT_EQ(figs::kArrowUp.size(), 3u);       // ↑
-    EXPECT_EQ(figs::kArrowLeft.size(), 3u);     // ←
-    EXPECT_EQ(figs::kArrowRight.size(), 3u);    // →
-    EXPECT_EQ(figs::kBlackCircle.size(), 3u);   // ⏺
-    EXPECT_EQ(figs::kRadioOn.size(), 3u);       // ◉
-    EXPECT_EQ(figs::kStar.size(), 3u);          // ★
-    EXPECT_EQ(figs::kHeart.size(), 3u);         // ♥
-    EXPECT_EQ(figs::kPlay.size(), 3u);          // ▶
-    EXPECT_EQ(figs::kLineVertical.size(), 3u);  // │
-    EXPECT_EQ(figs::kLineUpRight.size(), 3u);   // └
-    EXPECT_EQ(figs::kLineUpDownRight.size(), 3u); // ├
-    EXPECT_EQ(figs::kDiamondOpen.size(), 3u);   // ◇
-    EXPECT_EQ(figs::kTeardropAsterisk.size(), 3u); // ✻
-    EXPECT_EQ(figs::kLightningBolt.size(), 3u); // ↯
-    EXPECT_EQ(figs::kPauseIcon.size(), 3u);     // ⏸
-    EXPECT_EQ(figs::kRefreshArrow.size(), 3u);  // ↻
-    EXPECT_EQ(figs::kReferenceMark.size(), 3u); // ※
-    EXPECT_EQ(figs::kEffortMedium.size(), 3u);  // ◐
-    EXPECT_EQ(figs::kEffortMax.size(), 3u);     // ◉
-    EXPECT_EQ(figs::kFlagIcon.size(), 3u);      // ⚑
-    EXPECT_EQ(figs::kForkGlyph.size(), 3u);     // ⑂
-    EXPECT_EQ(figs::kCircleDouble.size(), 3u);  // ◎
-    EXPECT_EQ(figs::kTriangleUpOutline.size(), 3u); // △
-    EXPECT_EQ(figs::kTriangleRightSmall.size(), 3u); // ▸
-    EXPECT_EQ(figs::kTriangleDownSmall.size(), 3u); // ▾
-    EXPECT_EQ(figs::kSquareSmall.size(), 3u);   // ◻
-    EXPECT_EQ(figs::kSquareSmallFilled.size(), 3u); // ◼
-    EXPECT_EQ(figs::kBlockquoteBar.size(), 3u); // ▎
-    EXPECT_EQ(figs::kHeavyHorizontal.size(), 3u); // ━
-    EXPECT_EQ(figs::kBulletOperator.size(), 3u); // ∙
+    EXPECT_EQ(figs::kPointer.size(), 3u);             // ❯
+    EXPECT_EQ(figs::kTick.size(), 3u);                // ✔
+    EXPECT_EQ(figs::kCross.size(), 3u);               // ✘
+    EXPECT_EQ(figs::kBullet.size(), 3u);              // ●
+    EXPECT_EQ(figs::kArrowDown.size(), 3u);           // ↓
+    EXPECT_EQ(figs::kArrowUp.size(), 3u);             // ↑
+    EXPECT_EQ(figs::kArrowLeft.size(), 3u);           // ←
+    EXPECT_EQ(figs::kArrowRight.size(), 3u);          // →
+    EXPECT_EQ(figs::kBlackCircle.size(), 3u);         // ⏺
+    EXPECT_EQ(figs::kRadioOn.size(), 3u);             // ◉
+    EXPECT_EQ(figs::kStar.size(), 3u);                // ★
+    EXPECT_EQ(figs::kHeart.size(), 3u);               // ♥
+    EXPECT_EQ(figs::kPlay.size(), 3u);                // ▶
+    EXPECT_EQ(figs::kLineVertical.size(), 3u);        // │
+    EXPECT_EQ(figs::kLineUpRight.size(), 3u);         // └
+    EXPECT_EQ(figs::kLineUpDownRight.size(), 3u);     // ├
+    EXPECT_EQ(figs::kDiamondOpen.size(), 3u);         // ◇
+    EXPECT_EQ(figs::kTeardropAsterisk.size(), 3u);    // ✻
+    EXPECT_EQ(figs::kLightningBolt.size(), 3u);       // ↯
+    EXPECT_EQ(figs::kPauseIcon.size(), 3u);           // ⏸
+    EXPECT_EQ(figs::kRefreshArrow.size(), 3u);        // ↻
+    EXPECT_EQ(figs::kReferenceMark.size(), 3u);       // ※
+    EXPECT_EQ(figs::kEffortMedium.size(), 3u);        // ◐
+    EXPECT_EQ(figs::kEffortMax.size(), 3u);           // ◉
+    EXPECT_EQ(figs::kFlagIcon.size(), 3u);            // ⚑
+    EXPECT_EQ(figs::kForkGlyph.size(), 3u);           // ⑂
+    EXPECT_EQ(figs::kCircleDouble.size(), 3u);        // ◎
+    EXPECT_EQ(figs::kTriangleUpOutline.size(), 3u);   // △
+    EXPECT_EQ(figs::kTriangleRightSmall.size(), 3u);  // ▸
+    EXPECT_EQ(figs::kTriangleDownSmall.size(), 3u);   // ▾
+    EXPECT_EQ(figs::kSquareSmall.size(), 3u);         // ◻
+    EXPECT_EQ(figs::kSquareSmallFilled.size(), 3u);   // ◼
+    EXPECT_EQ(figs::kBlockquoteBar.size(), 3u);       // ▎
+    EXPECT_EQ(figs::kHeavyHorizontal.size(), 3u);     // ━
+    EXPECT_EQ(figs::kBulletOperator.size(), 3u);      // ∙
 }
 
 TEST(Figures, MultiByteGlyphSizesAreCorrect) {
     // These glyphs span multiple UTF-8 bytes for multi-codepoint sequences.
-    EXPECT_EQ(figs::kBridgeReadyIndicator.size(), 10u);  // ·✔︎· (4 code points: U+00B7+U+2714+U+FE0E+U+00B7 = 2+3+3+2=10 bytes)
-    EXPECT_EQ(figs::kBridgeFailedIndicator.size(), 2u); // × (U+00D7 = 2 bytes)
-    EXPECT_EQ(figs::kQuestionMarkPrefix.size(), 3u);    // (?) = 3 ASCII chars
+    EXPECT_EQ(figs::kBridgeReadyIndicator.size(),
+              10u);  // ·✔︎· (4 code points: U+00B7+U+2714+U+FE0E+U+00B7 = 2+3+3+2=10 bytes)
+    EXPECT_EQ(figs::kBridgeFailedIndicator.size(), 2u);  // × (U+00D7 = 2 bytes)
+    EXPECT_EQ(figs::kQuestionMarkPrefix.size(), 3u);     // (?) = 3 ASCII chars
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -2197,15 +2265,13 @@ TEST(BashModePrefix, HistoryRoundTrip_BashToggle) {
     // TS REF: REPL.tsx:3318 — prependModeCharacterToInput(input, inputMode)
     namespace figs = loom::ui::design::figures;
 
-    const std::string input_text = "cmd";       // clean text (no '!')
-    const bool is_bash = true;                   // user toggled via bare '!'
-    const bool text_has_prefix = !input_text.empty() &&
-        input_text[0] == figs::kBashModeChar;
+    const std::string input_text = "cmd";  // clean text (no '!')
+    const bool is_bash = true;             // user toggled via bare '!'
+    const bool text_has_prefix = !input_text.empty() && input_text[0] == figs::kBashModeChar;
 
     const std::string hist_entry =
-        (is_bash && !text_has_prefix)
-            ? figs::prepend_mode_char(input_text, figs::PromptMode::kBash)
-            : input_text;
+        (is_bash && !text_has_prefix) ? figs::prepend_mode_char(input_text, figs::PromptMode::kBash)
+                                      : input_text;
 
     EXPECT_EQ(hist_entry, "!cmd");
 
@@ -2222,15 +2288,13 @@ TEST(BashModePrefix, HistoryRoundTrip_DirectBangCmd) {
     // prepend '!' because the text already carries it.
     namespace figs = loom::ui::design::figures;
 
-    const std::string input_text = "!cmd";      // already has '!' prefix
+    const std::string input_text = "!cmd";  // already has '!' prefix
     const bool is_bash = true;
-    const bool text_has_prefix = !input_text.empty() &&
-        input_text[0] == figs::kBashModeChar;
+    const bool text_has_prefix = !input_text.empty() && input_text[0] == figs::kBashModeChar;
 
     const std::string hist_entry =
-        (is_bash && !text_has_prefix)
-            ? figs::prepend_mode_char(input_text, figs::PromptMode::kBash)
-            : input_text;
+        (is_bash && !text_has_prefix) ? figs::prepend_mode_char(input_text, figs::PromptMode::kBash)
+                                      : input_text;
 
     // Should be "!cmd", NOT "!!cmd"
     EXPECT_EQ(hist_entry, "!cmd");
@@ -2243,13 +2307,11 @@ TEST(BashModePrefix, HistoryRoundTrip_NormalMode) {
 
     const std::string input_text = "hello world";
     const bool is_bash = false;
-    const bool text_has_prefix = !input_text.empty() &&
-        input_text[0] == figs::kBashModeChar;
+    const bool text_has_prefix = !input_text.empty() && input_text[0] == figs::kBashModeChar;
 
     const std::string hist_entry =
-        (is_bash && !text_has_prefix)
-            ? figs::prepend_mode_char(input_text, figs::PromptMode::kBash)
-            : input_text;
+        (is_bash && !text_has_prefix) ? figs::prepend_mode_char(input_text, figs::PromptMode::kBash)
+                                      : input_text;
 
     EXPECT_EQ(hist_entry, "hello world");
     EXPECT_EQ(figs::get_mode_from_input(hist_entry), figs::PromptMode::kPrompt);
@@ -2268,8 +2330,7 @@ TEST(BashModePrefix, MultiCharBangCmd_StripLogic) {
     EXPECT_EQ(figs::get_mode_from_input(ch), figs::PromptMode::kBash);
     EXPECT_GT(ch.size(), 1u);  // multi-char
 
-    if (input_empty && cursor_at_zero &&
-        figs::get_mode_from_input(ch) == figs::PromptMode::kBash &&
+    if (input_empty && cursor_at_zero && figs::get_mode_from_input(ch) == figs::PromptMode::kBash &&
         ch.size() > 1) {
         // Strip '!' and insert clean text
         std::string clean(figs::strip_mode_prefix(ch));
@@ -2313,9 +2374,8 @@ TEST(BashModePrefix, ModeResetAfterSubmit) {
 TEST(CombinedHighlights, RainbowTracksCurrentTheme) {
     namespace theme = loom::ui::design::theme;
     const auto original = theme::current_theme();
-    for (const auto variant : {theme::ThemeVariant::Dark,
-                               theme::ThemeVariant::Light,
-                               theme::ThemeVariant::Monochrome}) {
+    for (const auto variant :
+         {theme::ThemeVariant::Dark, theme::ThemeVariant::Light, theme::ThemeVariant::Monochrome}) {
         const auto* palette = theme::palette_for_variant(variant);
         theme::set_theme(theme::Theme{.variant = variant, .palette = palette});
         for (std::size_t i = 0; i < 14; ++i) {
@@ -2334,13 +2394,12 @@ TEST(PromptInputFooter, IdeIndicatorTracksCurrentTheme) {
     loom::ui::prompt::footer::IdeSelectionInfo ide;
     ide.connected = true;
     ide.selected_lines = 3;
-    for (const auto variant : {theme::ThemeVariant::Dark,
-                               theme::ThemeVariant::Light,
-                               theme::ThemeVariant::Monochrome}) {
+    for (const auto variant :
+         {theme::ThemeVariant::Dark, theme::ThemeVariant::Light, theme::ThemeVariant::Monochrome}) {
         const auto* palette = theme::palette_for_variant(variant);
         theme::set_theme(theme::Theme{.variant = variant, .palette = palette});
-        auto screen = ftxui::Screen::Create(
-            ftxui::Dimension::Fixed(30), ftxui::Dimension::Fixed(1));
+        auto screen =
+            ftxui::Screen::Create(ftxui::Dimension::Fixed(30), ftxui::Dimension::Fixed(1));
         ftxui::Render(screen, loom::ui::prompt::footer::RenderIdeStatusIndicator(ide));
         EXPECT_EQ(screen.PixelAt(0, 0).foreground_color, palette->ide);
     }

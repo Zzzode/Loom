@@ -3,13 +3,14 @@
 ///        (split from test_bridge.cpp).
 
 #include <gtest/gtest.h>
-#include <cstdint>
-#include <cstdlib>
 #include <netinet/in.h>
 #include <openssl/sha.h>
-#include <sys/socket.h>
 #include <signal.h>
+#include <sys/socket.h>
 #include <unistd.h>
+
+#include <cstdint>
+#include <cstdlib>
 
 #include "bridge_test_helpers.hpp"
 
@@ -45,10 +46,11 @@ TEST(BridgeDaemon, PollsWorkAcknowledgesAndSpawnsSession) {
     });
 
     std::vector<std::string> spawned_task_ids;
-    daemon.set_session_spawner([&](std::string_view task_id) -> std::expected<std::string, std::string> {
-        spawned_task_ids.push_back(std::string(task_id));
-        return "daemon-session-1";
-    });
+    daemon.set_session_spawner(
+        [&](std::string_view task_id) -> std::expected<std::string, std::string> {
+            spawned_task_ids.push_back(std::string(task_id));
+            return "daemon-session-1";
+        });
 
     auto spawned = daemon.poll_for_work_once();
     ASSERT_TRUE(spawned.has_value()) << spawned.error();
@@ -77,17 +79,22 @@ TEST(BridgeDaemon, PollsWorkAcknowledgesAndSpawnsSession) {
     ASSERT_TRUE(sessions.front().worker_epoch.has_value());
     EXPECT_EQ(*sessions.front().worker_epoch, 42);
     ASSERT_EQ(sessions.front().work_secret_sources_json.size(), 1u);
-    EXPECT_NE(sessions.front().work_secret_sources_json.front().find(R"("id":"source-1")"), std::string::npos);
+    EXPECT_NE(sessions.front().work_secret_sources_json.front().find(R"("id":"source-1")"),
+              std::string::npos);
     ASSERT_TRUE(sessions.front().work_secret_auth_json.has_value());
-    EXPECT_NE(sessions.front().work_secret_auth_json->find(R"("name":"console")"), std::string::npos);
+    EXPECT_NE(sessions.front().work_secret_auth_json->find(R"("name":"console")"),
+              std::string::npos);
     ASSERT_TRUE(sessions.front().work_secret_mcp_config_json.has_value());
     EXPECT_NE(sessions.front().work_secret_mcp_config_json->find(R"("linear")"), std::string::npos);
     ASSERT_TRUE(sessions.front().work_secret_environment_json.has_value());
-    EXPECT_NE(sessions.front().work_secret_environment_json->find(R"("REMOTE_FLAG":"enabled")"), std::string::npos);
+    EXPECT_NE(sessions.front().work_secret_environment_json->find(R"("REMOTE_FLAG":"enabled")"),
+              std::string::npos);
     ASSERT_TRUE(sessions.front().work_secret_environment_variables.contains("REMOTE_FLAG"));
     EXPECT_EQ(sessions.front().work_secret_environment_variables.at("REMOTE_FLAG"), "enabled");
     ASSERT_TRUE(sessions.front().work_secret_raw_json.has_value());
-    EXPECT_NE(sessions.front().work_secret_raw_json->find(R"("session_ingress_token":"session-token-from-secret")"), std::string::npos);
+    EXPECT_NE(sessions.front().work_secret_raw_json->find(
+                  R"("session_ingress_token":"session-token-from-secret")"),
+              std::string::npos);
 
     auto requests = server.wait_for_requests(3);
     ASSERT_TRUE(requests.has_value());
@@ -98,12 +105,14 @@ TEST(BridgeDaemon, PollsWorkAcknowledgesAndSpawnsSession) {
 
     EXPECT_EQ((*requests)[1].method, "POST");
     EXPECT_EQ((*requests)[1].path, "/v1/environments/env_backend_1/work/work_1/ack");
-    EXPECT_NE((*requests)[1].headers.find("Authorization: Bearer session-token-from-secret"), std::string::npos);
+    EXPECT_NE((*requests)[1].headers.find("Authorization: Bearer session-token-from-secret"),
+              std::string::npos);
     EXPECT_EQ((*requests)[1].body, "{}");
 
     EXPECT_EQ((*requests)[2].method, "POST");
     EXPECT_EQ((*requests)[2].path, "/v1/code/sessions/session_1/worker/register");
-    EXPECT_NE((*requests)[2].headers.find("Authorization: Bearer session-token-from-secret"), std::string::npos);
+    EXPECT_NE((*requests)[2].headers.find("Authorization: Bearer session-token-from-secret"),
+              std::string::npos);
     EXPECT_EQ((*requests)[2].body, "{}");
 
     auto completed = daemon.complete_session("daemon-session-1", "completed");
@@ -114,12 +123,14 @@ TEST(BridgeDaemon, PollsWorkAcknowledgesAndSpawnsSession) {
     ASSERT_EQ(completion_requests->size(), 5u);
     EXPECT_EQ((*completion_requests)[3].method, "POST");
     EXPECT_EQ((*completion_requests)[3].path, "/v1/environments/env_backend_1/work/work_1/stop");
-    EXPECT_NE((*completion_requests)[3].headers.find("Authorization: Bearer oauth_token"), std::string::npos);
+    EXPECT_NE((*completion_requests)[3].headers.find("Authorization: Bearer oauth_token"),
+              std::string::npos);
     EXPECT_EQ((*completion_requests)[3].body, R"({"force":false})");
 
     EXPECT_EQ((*completion_requests)[4].method, "POST");
     EXPECT_EQ((*completion_requests)[4].path, "/v1/sessions/session_1/archive");
-    EXPECT_NE((*completion_requests)[4].headers.find("Authorization: Bearer oauth_token"), std::string::npos);
+    EXPECT_NE((*completion_requests)[4].headers.find("Authorization: Bearer oauth_token"),
+              std::string::npos);
 }
 
 TEST(BridgeDaemon, HeartbeatsRunningRemoteWorkSessions) {
@@ -169,11 +180,13 @@ TEST(BridgeDaemon, HeartbeatsRunningRemoteWorkSessions) {
     ASSERT_EQ(requests->size(), 4u);
     EXPECT_EQ((*requests)[2].method, "POST");
     EXPECT_EQ((*requests)[2].path, "/v1/code/sessions/session_1/worker/register");
-    EXPECT_NE((*requests)[2].headers.find("Authorization: Bearer session-token-from-secret"), std::string::npos);
+    EXPECT_NE((*requests)[2].headers.find("Authorization: Bearer session-token-from-secret"),
+              std::string::npos);
     EXPECT_EQ((*requests)[2].body, "{}");
     EXPECT_EQ((*requests)[3].method, "POST");
     EXPECT_EQ((*requests)[3].path, "/v1/environments/env_backend_1/work/work_1/heartbeat");
-    EXPECT_NE((*requests)[3].headers.find("Authorization: Bearer session-token-from-secret"), std::string::npos);
+    EXPECT_NE((*requests)[3].headers.find("Authorization: Bearer session-token-from-secret"),
+              std::string::npos);
     EXPECT_EQ((*requests)[3].body, "{}");
 }
 
@@ -296,16 +309,20 @@ TEST(BridgeDaemon, ForkExecsNativeHeadlessSessionThroughRemoteLifecycle) {
         ::kill(sessions.front().pid, SIGTERM);
         daemon.reap_sessions();
     }
-    ASSERT_TRUE(saw_assistant) << "stdout:\n" << [&] {
-        std::ostringstream out;
-        for (const auto& line : lines) out << line << '\n';
-        return out.str();
-    }();
-    ASSERT_TRUE(saw_result) << "stdout:\n" << [&] {
-        std::ostringstream out;
-        for (const auto& line : lines) out << line << '\n';
-        return out.str();
-    }();
+    ASSERT_TRUE(saw_assistant) << "stdout:\n"
+                               << [&] {
+                                      std::ostringstream out;
+                                      for (const auto& line : lines)
+                                          out << line << '\n';
+                                      return out.str();
+                                  }();
+    ASSERT_TRUE(saw_result) << "stdout:\n"
+                            << [&] {
+                                   std::ostringstream out;
+                                   for (const auto& line : lines)
+                                       out << line << '\n';
+                                   return out.str();
+                               }();
 
     auto requests_before_shutdown = server.wait_for_requests(1);
     ASSERT_TRUE(requests_before_shutdown.has_value());
@@ -325,7 +342,8 @@ TEST(BridgeDaemon, ForkExecsNativeHeadlessSessionThroughRemoteLifecycle) {
     ASSERT_TRUE(sessions.front().remote_session_id.has_value());
     EXPECT_EQ(*sessions.front().remote_session_id, "session_1");
 
-    auto requests = server.wait_for_requests(request_count_before_shutdown + 2, std::chrono::seconds{5});
+    auto requests =
+        server.wait_for_requests(request_count_before_shutdown + 2, std::chrono::seconds{5});
     ASSERT_TRUE(requests.has_value());
 
     auto saw_request = [&](std::string_view method, std::string_view path) {
@@ -365,12 +383,11 @@ TEST(BridgeDaemon, ForkExecsHeadlessSessionWithCcrSdkUrl) {
         out << "#!/bin/sh\n"
             << "printf '%s\\n' \"$@\"\n";
     }
-    std::filesystem::permissions(
-        script,
-        std::filesystem::perms::owner_read |
-            std::filesystem::perms::owner_write |
-            std::filesystem::perms::owner_exec,
-        std::filesystem::perm_options::replace);
+    std::filesystem::permissions(script,
+                                 std::filesystem::perms::owner_read |
+                                     std::filesystem::perms::owner_write |
+                                     std::filesystem::perms::owner_exec,
+                                 std::filesystem::perm_options::replace);
 
     auto secret = loom::bridge::decode_work_secret(bridge_test_encoded_work_secret());
     ASSERT_TRUE(secret.has_value()) << secret.error();
@@ -408,10 +425,13 @@ TEST(BridgeDaemon, ForkExecsHeadlessSessionWithCcrSdkUrl) {
         lines = daemon.session_stdout_lines(*spawned);
         for (const auto& line : lines) {
             if (line == "--sdk-url") saw_sdk_url_flag = true;
-            if (line == "http://session-ingress.local/v1/code/sessions/session_1") saw_sdk_url = true;
+            if (line == "http://session-ingress.local/v1/code/sessions/session_1")
+                saw_sdk_url = true;
         }
         auto sessions = daemon.sessions();
-        if (saw_sdk_url_flag && saw_sdk_url && !sessions.empty() && sessions.front().status == "completed") break;
+        if (saw_sdk_url_flag && saw_sdk_url && !sessions.empty() &&
+            sessions.front().status == "completed")
+            break;
         std::this_thread::sleep_for(std::chrono::milliseconds{10});
     }
 
@@ -432,14 +452,14 @@ TEST(BridgeDaemon, ForkExecsHeadlessSessionWithV1SessionIngressSdkUrl) {
         std::ofstream out(script);
         out << "#!/bin/sh\n"
             << "printf '%s\\n' \"$@\"\n"
-            << "printf 'LOOM_POST_FOR_SESSION_INGRESS_V2=%s\\n' \"$LOOM_POST_FOR_SESSION_INGRESS_V2\"\n";
+            << "printf 'LOOM_POST_FOR_SESSION_INGRESS_V2=%s\\n' "
+               "\"$LOOM_POST_FOR_SESSION_INGRESS_V2\"\n";
     }
-    std::filesystem::permissions(
-        script,
-        std::filesystem::perms::owner_read |
-            std::filesystem::perms::owner_write |
-            std::filesystem::perms::owner_exec,
-        std::filesystem::perm_options::replace);
+    std::filesystem::permissions(script,
+                                 std::filesystem::perms::owner_read |
+                                     std::filesystem::perms::owner_write |
+                                     std::filesystem::perms::owner_exec,
+                                 std::filesystem::perm_options::replace);
 
     auto secret = loom::bridge::decode_work_secret(bridge_test_encoded_v1_work_secret());
     ASSERT_TRUE(secret.has_value()) << secret.error();
@@ -482,8 +502,9 @@ TEST(BridgeDaemon, ForkExecsHeadlessSessionWithV1SessionIngressSdkUrl) {
             if (line == "LOOM_POST_FOR_SESSION_INGRESS_V2=1") saw_v1_post_env = true;
         }
         auto sessions = daemon.sessions();
-        if (saw_sdk_url_flag && saw_sdk_url && saw_v1_post_env
-            && !sessions.empty() && sessions.front().status == "completed") break;
+        if (saw_sdk_url_flag && saw_sdk_url && saw_v1_post_env && !sessions.empty() &&
+            sessions.front().status == "completed")
+            break;
         std::this_thread::sleep_for(std::chrono::milliseconds{10});
     }
 
@@ -512,12 +533,11 @@ TEST(BridgeDaemon, ForkExecsHeadlessSessionWithCcrWorkerEpochEnvironment) {
             << "printf 'ENV:LOOM_USE_CCR_V2=%s\\n' \"$LOOM_USE_CCR_V2\"\n"
             << "printf 'ENV:LOOM_REMOTE_API_BASE_URL=%s\\n' \"$LOOM_REMOTE_API_BASE_URL\"\n";
     }
-    std::filesystem::permissions(
-        script,
-        std::filesystem::perms::owner_read |
-            std::filesystem::perms::owner_write |
-            std::filesystem::perms::owner_exec,
-        std::filesystem::perm_options::replace);
+    std::filesystem::permissions(script,
+                                 std::filesystem::perms::owner_read |
+                                     std::filesystem::perms::owner_write |
+                                     std::filesystem::perms::owner_exec,
+                                 std::filesystem::perm_options::replace);
 
     auto secret = loom::bridge::decode_work_secret(bridge_test_encoded_work_secret());
     ASSERT_TRUE(secret.has_value()) << secret.error();
@@ -563,8 +583,9 @@ TEST(BridgeDaemon, ForkExecsHeadlessSessionWithCcrWorkerEpochEnvironment) {
             if (line == "ENV:LOOM_REMOTE_API_BASE_URL=" + server.base_url()) saw_api_base = true;
         }
         auto sessions = daemon.sessions();
-        if (saw_sdk_url && saw_worker_epoch && saw_ccr_v2 && saw_api_base
-            && !sessions.empty() && sessions.front().status == "completed") break;
+        if (saw_sdk_url && saw_worker_epoch && saw_ccr_v2 && saw_api_base && !sessions.empty() &&
+            sessions.front().status == "completed")
+            break;
         std::this_thread::sleep_for(std::chrono::milliseconds{10});
     }
 
@@ -584,7 +605,8 @@ TEST(BridgeDaemon, ForkExecsHeadlessSessionWithCcrWorkerEpochEnvironment) {
     ASSERT_EQ(requests->size(), 1u);
     EXPECT_EQ((*requests)[0].method, "POST");
     EXPECT_EQ((*requests)[0].path, "/v1/code/sessions/session_1/worker/register");
-    EXPECT_NE((*requests)[0].headers.find("Authorization: Bearer session-token-from-secret"), std::string::npos);
+    EXPECT_NE((*requests)[0].headers.find("Authorization: Bearer session-token-from-secret"),
+              std::string::npos);
     EXPECT_EQ((*requests)[0].body, "{}");
 
     std::filesystem::remove(script);
@@ -597,15 +619,16 @@ TEST(BridgeDaemon, PipesHeadlessChildStdinAndCapturesStdout) {
         out << "#!/bin/sh\n"
             << "while IFS= read -r line; do\n"
             << "  printf '%s\\n' \"$line\"\n"
-            << "  printf '%s\\n' '{\"type\":\"assistant\",\"message\":{\"content\":[{\"type\":\"text\",\"text\":\"child reply\"}]}}'\n"
+            << "  printf '%s\\n' "
+               "'{\"type\":\"assistant\",\"message\":{\"content\":[{\"type\":\"text\",\"text\":"
+               "\"child reply\"}]}}'\n"
             << "done\n";
     }
-    std::filesystem::permissions(
-        script,
-        std::filesystem::perms::owner_read |
-            std::filesystem::perms::owner_write |
-            std::filesystem::perms::owner_exec,
-        std::filesystem::perm_options::replace);
+    std::filesystem::permissions(script,
+                                 std::filesystem::perms::owner_read |
+                                     std::filesystem::perms::owner_write |
+                                     std::filesystem::perms::owner_exec,
+                                 std::filesystem::perm_options::replace);
 
     loom::daemon::DaemonServer daemon(loom::daemon::DaemonConfig{
         .port = 0,
@@ -625,8 +648,13 @@ TEST(BridgeDaemon, PipesHeadlessChildStdinAndCapturesStdout) {
 
     auto spawned = daemon.spawn_session("stdio-work");
     ASSERT_TRUE(spawned.has_value()) << spawned.error();
-    ASSERT_TRUE(daemon.send_session_stdin(*spawned,
-        R"({"type":"user","message":{"role":"user","content":"hello child"},"session_id":"session_1"})" "\n").has_value());
+    ASSERT_TRUE(
+        daemon
+            .send_session_stdin(
+                *spawned,
+                R"({"type":"user","message":{"role":"user","content":"hello child"},"session_id":"session_1"})"
+                "\n")
+            .has_value());
     ASSERT_TRUE(daemon.close_session_stdin(*spawned).has_value());
 
     std::vector<std::string> lines;
@@ -640,7 +668,9 @@ TEST(BridgeDaemon, PipesHeadlessChildStdinAndCapturesStdout) {
 
     ASSERT_GE(lines.size(), 2u);
     EXPECT_NE(lines[0].find(R"("content":"hello child")"), std::string::npos);
-    EXPECT_EQ(lines[1], R"({"type":"assistant","message":{"content":[{"type":"text","text":"child reply"}]}})");
+    EXPECT_EQ(
+        lines[1],
+        R"({"type":"assistant","message":{"content":[{"type":"text","text":"child reply"}]}})");
 
     daemon.reap_sessions();
     sessions = daemon.sessions();
@@ -662,12 +692,11 @@ TEST(BridgeDaemon, RpcStdinRoutesRemoteInputToHeadlessChild) {
             << "  printf '%s\\n' '{\"type\":\"result\",\"result\":\"rpc child reply\"}'\n"
             << "done\n";
     }
-    std::filesystem::permissions(
-        script,
-        std::filesystem::perms::owner_read |
-            std::filesystem::perms::owner_write |
-            std::filesystem::perms::owner_exec,
-        std::filesystem::perm_options::replace);
+    std::filesystem::permissions(script,
+                                 std::filesystem::perms::owner_read |
+                                     std::filesystem::perms::owner_write |
+                                     std::filesystem::perms::owner_exec,
+                                 std::filesystem::perm_options::replace);
 
     loom::daemon::DaemonServer daemon(loom::daemon::DaemonConfig{
         .port = 0,
@@ -697,7 +726,8 @@ TEST(BridgeDaemon, RpcStdinRoutesRemoteInputToHeadlessChild) {
 
     auto sent = client.send_stdin(
         session_id,
-        R"({"type":"user","message":{"role":"user","content":"rpc hello child"},"session_id":"session_1"})" "\n");
+        R"({"type":"user","message":{"role":"user","content":"rpc hello child"},"session_id":"session_1"})"
+        "\n");
     ASSERT_TRUE(sent.has_value()) << sent.error();
     auto closed = client.close_stdin(session_id);
     ASSERT_TRUE(closed.has_value()) << closed.error();
@@ -738,12 +768,11 @@ TEST(BridgeDaemon, RpcEventRoutesRemotePayloadToHeadlessChildStdin) {
             << "  printf '%s\\n' \"$line\"\n"
             << "done\n";
     }
-    std::filesystem::permissions(
-        script,
-        std::filesystem::perms::owner_read |
-            std::filesystem::perms::owner_write |
-            std::filesystem::perms::owner_exec,
-        std::filesystem::perm_options::replace);
+    std::filesystem::permissions(script,
+                                 std::filesystem::perms::owner_read |
+                                     std::filesystem::perms::owner_write |
+                                     std::filesystem::perms::owner_exec,
+                                 std::filesystem::perm_options::replace);
 
     loom::daemon::DaemonServer daemon(loom::daemon::DaemonConfig{
         .port = 0,
@@ -892,21 +921,14 @@ TEST(BridgeDaemon, ConsecutivePollFailuresUseExponentialBackoffCappedAtFiveMinut
     });
 
     const std::vector<std::chrono::seconds> expected_backoffs{
-        std::chrono::seconds{5},
-        std::chrono::seconds{10},
-        std::chrono::seconds{20},
-        std::chrono::seconds{40},
-        std::chrono::seconds{80},
-        std::chrono::seconds{160},
-        std::chrono::seconds{300},
-        std::chrono::seconds{300},
+        std::chrono::seconds{5},   std::chrono::seconds{10},  std::chrono::seconds{20},
+        std::chrono::seconds{40},  std::chrono::seconds{80},  std::chrono::seconds{160},
+        std::chrono::seconds{300}, std::chrono::seconds{300},
     };
     constexpr std::size_t http_attempts_per_failed_call = 4;
     server.fail_next_work_polls(
-        static_cast<int>(expected_backoffs.size() * http_attempts_per_failed_call),
-        500,
-        "Internal Server Error",
-        R"({"error":"server error"})");
+        static_cast<int>(expected_backoffs.size() * http_attempts_per_failed_call), 500,
+        "Internal Server Error", R"({"error":"server error"})");
 
     for (std::size_t i = 0; i < expected_backoffs.size(); ++i) {
         auto failed = daemon.poll_for_work_once();
@@ -919,7 +941,8 @@ TEST(BridgeDaemon, ConsecutivePollFailuresUseExponentialBackoffCappedAtFiveMinut
         EXPECT_NE(state.last_poll_error->find("HTTP 500"), std::string::npos);
     }
 
-    auto requests = server.wait_for_requests(expected_backoffs.size() * http_attempts_per_failed_call);
+    auto requests =
+        server.wait_for_requests(expected_backoffs.size() * http_attempts_per_failed_call);
     ASSERT_TRUE(requests.has_value());
     ASSERT_EQ(requests->size(), expected_backoffs.size() * http_attempts_per_failed_call);
     for (const auto& request : *requests) {

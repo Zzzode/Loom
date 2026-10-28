@@ -11,11 +11,11 @@
 /// only touch palette tokens. No RGB literals are introduced.
 module;
 
-#include <cstddef>
-#include <cstdint>
-
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/screen/string.hpp>
+
+#include <cstddef>
+#include <cstdint>
 
 export module loom.ui.features.todos.todo_panel;
 
@@ -51,9 +51,12 @@ namespace thm = loom::ui::design::theme;
 [[nodiscard]] inline const ftxui::Color& status_color(TodoDisplayItem::Status s) {
     const auto& pal = *thm::current_theme().palette;
     switch (s) {
-        case TodoDisplayItem::Status::InProgress: return pal.success;
-        case TodoDisplayItem::Status::Pending:    return pal.muted;
-        case TodoDisplayItem::Status::Completed:  return pal.muted;
+    case TodoDisplayItem::Status::InProgress:
+        return pal.success;
+    case TodoDisplayItem::Status::Pending:
+        return pal.muted;
+    case TodoDisplayItem::Status::Completed:
+        return pal.muted;
     }
     return pal.muted;
 }
@@ -61,9 +64,12 @@ namespace thm = loom::ui::design::theme;
 /// The status glyph for a todo item.
 [[nodiscard]] inline std::string_view status_glyph(TodoDisplayItem::Status s) {
     switch (s) {
-        case TodoDisplayItem::Status::InProgress: return "●";
-        case TodoDisplayItem::Status::Pending:    return "○";
-        case TodoDisplayItem::Status::Completed:  return "✓";
+    case TodoDisplayItem::Status::InProgress:
+        return "●";
+    case TodoDisplayItem::Status::Pending:
+        return "○";
+    case TodoDisplayItem::Status::Completed:
+        return "✓";
     }
     return "○";
 }
@@ -118,49 +124,52 @@ namespace thm = loom::ui::design::theme;
     const bool done = item.status == TodoDisplayItem::Status::Completed;
 
     const int columns = std::max(0, avail_cols);
-    const std::string prefix = columns == 0 ? ""
-        : std::string(detail::status_glyph(item.status)) + (columns > 1 ? " " : "");
+    const std::string prefix =
+        columns == 0 ? ""
+                     : std::string(detail::status_glyph(item.status)) + (columns > 1 ? " " : "");
     const int prefix_cols = string_width(prefix);
     const int content_cols = std::max(0, columns - prefix_cols);
     const auto label = detail::one_line(item.content, static_cast<std::size_t>(content_cols));
-    Element content = text(label)
-                    | color(done ? pal.muted : pal.text)
-                    | size(WIDTH, EQUAL, string_width(label));
+    Element content =
+        text(label) | color(done ? pal.muted : pal.text) | size(WIDTH, EQUAL, string_width(label));
     if (done) content = content | strikethrough;
     return hbox({
-        text(prefix) | color(glyph_color) | size(WIDTH, EQUAL, prefix_cols),
-        std::move(content),
-        filler() | flex,
-    }) | size(WIDTH, EQUAL, columns);
+               text(prefix) | color(glyph_color) | size(WIDTH, EQUAL, prefix_cols),
+               std::move(content),
+               filler() | flex,
+           }) |
+           size(WIDTH, EQUAL, columns);
 }
 
 /// Pinned chrome panel: a progress header + one row per todo item. Returns an
 /// empty element when there are no items (so callers can skip it), matching
 /// RenderLiveTeammateStrip's contract.
-[[nodiscard]] inline Element RenderTodoPanel(
-    const std::vector<TodoDisplayItem>& items, int term_cols = 120,
-    int max_rows = -1, bool completed_collapsed = false) {
+[[nodiscard]] inline Element RenderTodoPanel(const std::vector<TodoDisplayItem>& items,
+                                             int term_cols = 120, int max_rows = -1,
+                                             bool completed_collapsed = false) {
     if (items.empty() || max_rows == 0) return vbox({});
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
-    const auto done = std::ranges::count_if(items, [](const auto& it) {
-        return it.status == TodoDisplayItem::Status::Completed;
-    });
+    const auto done = std::ranges::count_if(
+        items, [](const auto& it) { return it.status == TodoDisplayItem::Status::Completed; });
     const bool all_completed = static_cast<std::size_t>(done) == items.size();
     if (all_completed && completed_collapsed) max_rows = 1;
-    const int detail_rows = max_rows < 0 ? static_cast<int>(items.size())
-        : std::min(static_cast<int>(items.size()), std::max(0, max_rows - 1));
+    const int detail_rows =
+        max_rows < 0 ? static_cast<int>(items.size())
+                     : std::min(static_cast<int>(items.size()), std::max(0, max_rows - 1));
     std::string header = max_rows < 0
-        ? std::format("Tasks ({}/{} done)", done, items.size())
-        : std::format("Tasks {}/{} done (+{} hidden)", done, items.size(),
-                      items.size() - static_cast<std::size_t>(detail_rows));
+                             ? std::format("Tasks ({}/{} done)", done, items.size())
+                             : std::format("Tasks {}/{} done (+{} hidden)", done, items.size(),
+                                           items.size() - static_cast<std::size_t>(detail_rows));
     if (all_completed)
-        header = std::format("{}Tasks {}/{} completed", completed_collapsed ? "✓ " : "",
-                             done, items.size());
+        header = std::format("{}Tasks {}/{} completed", completed_collapsed ? "✓ " : "", done,
+                             items.size());
     Elements rows;
-    rows.push_back(text(detail::one_line(header, static_cast<std::size_t>(std::max(0, term_cols))))
-                   | color(pal.muted) | size(WIDTH, EQUAL, std::max(0, term_cols)));
+    rows.push_back(
+        text(detail::one_line(header, static_cast<std::size_t>(std::max(0, term_cols)))) |
+        color(pal.muted) | size(WIDTH, EQUAL, std::max(0, term_cols)));
     if (max_rows < 0) {
-        for (const auto& item : items) rows.push_back(RenderTodoRow(item, term_cols));
+        for (const auto& item : items)
+            rows.push_back(RenderTodoRow(item, term_cols));
     } else {
         // Render active work first without changing the state-owned item order.
         int remaining = detail_rows;

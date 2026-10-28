@@ -24,16 +24,12 @@ public:
         return exists;
     }
 
-    void clear() noexcept {
-        cache_.clear();
-    }
+    void clear() noexcept { cache_.clear(); }
 
-    [[nodiscard]] std::size_t size() const noexcept {
-        return cache_.size();
-    }
+    [[nodiscard]] std::size_t size() const noexcept { return cache_.size(); }
 
 private:
     std::unordered_map<std::string, bool> cache_;
 };
 
-} // namespace loom::utils::binary_check
+}  // namespace loom::utils::binary_check

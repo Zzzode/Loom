@@ -47,75 +47,67 @@ enum class CommandPermission : std::uint8_t {
 /// Maps commands to their required permission levels
 [[nodiscard]] constexpr CommandPermission command_permission(std::string_view name) noexcept {
     if (name == "help" || name == "doctor" || name == "review" || name == "review-remote" ||
-        name == "security-review" || name == "ultrareview" || name == "agents" || name == "subagents" || name == "btw" ||
-        name == "advisor" || name == "brief" || name == "color" || name == "ctx-viz" ||
-        name == "effort" || name == "env" || name == "fast" || name == "feedback" || name == "files" ||
-        name == "heapdump" || name == "hooks" || name == "ide" || name == "issue" || name == "memory" ||
+        name == "security-review" || name == "ultrareview" || name == "agents" ||
+        name == "subagents" || name == "btw" || name == "advisor" || name == "brief" ||
+        name == "color" || name == "ctx-viz" || name == "effort" || name == "env" ||
+        name == "fast" || name == "feedback" || name == "files" || name == "heapdump" ||
+        name == "hooks" || name == "ide" || name == "issue" || name == "memory" ||
         name == "passes" || name == "stats" || name == "status" || name == "summary" ||
         name == "tag" || name == "ultraplan" || name == "insights" || name == "init")
         return CommandPermission::ReadOnly;
     if (name == "chrome" || name == "desktop" || name == "good-loom" || name == "mobile" ||
-        name == "stickers" || name == "ant-trace" || name == "bughunter" || name == "debug-tool-call" ||
-        name == "init-verifiers" || name == "onboarding" ||
+        name == "stickers" || name == "ant-trace" || name == "bughunter" ||
+        name == "debug-tool-call" || name == "init-verifiers" || name == "onboarding" ||
         name == "perf-issue" || name == "pr-comments" || name == "rate-limit-options" ||
-        name == "statusline" || name == "terminal-setup" ||
-        name == "thinkback-play" || name == "version")
+        name == "statusline" || name == "terminal-setup" || name == "thinkback-play" ||
+        name == "version")
         return CommandPermission::ReadOnly;
-    
-    if (name == "clear" || name == "compact" || name == "add-dir" || name == "commit" || name == "config" ||
-        name == "mcp" || name == "bridge-kick" || name == "rename" || name == "rewind" || name == "share" ||
-        name == "upgrade" || name == "install" ||
+
+    if (name == "clear" || name == "compact" || name == "add-dir" || name == "commit" ||
+        name == "config" || name == "mcp" || name == "bridge-kick" || name == "rename" ||
+        name == "rewind" || name == "share" || name == "upgrade" || name == "install" ||
         name == "autofix-pr" || name == "backfill-sessions" || name == "break-cache" ||
-        name == "bridge" || name == "create-moved-to-plugin-command" ||
-        name == "mock-limits" || name == "reload-plugins" ||
-        name == "reset-limits" ||
-        name == "plugin" || name == "plugins" || name == "marketplace")
+        name == "bridge" || name == "create-moved-to-plugin-command" || name == "mock-limits" ||
+        name == "reload-plugins" || name == "reset-limits" || name == "plugin" ||
+        name == "plugins" || name == "marketplace")
         return CommandPermission::ReadWrite;
-    
+
     return CommandPermission::None;
 }
 
 /// Central registry that owns all command instances and provides dispatch,
 /// lookup, autocompletion, permission checking, and history tracking.
 class AppCommandRegistry {
-    CommandRegistry registry_;                         // Core registry from loom.core.command
-    std::deque<CommandHistoryEntry> history_;          // Command execution history
-    std::uint32_t max_history_size_ = 100;            // Maximum history entries to retain
+    CommandRegistry registry_;                 // Core registry from loom.core.command
+    std::deque<CommandHistoryEntry> history_;  // Command execution history
+    std::uint32_t max_history_size_ = 100;     // Maximum history entries to retain
     CommandPermission current_permission_ = CommandPermission::Admin;  // Current session permission
 
 public:
     /// Construct and register all built-in commands
-    AppCommandRegistry() {
-        register_all_commands();
-    }
+    AppCommandRegistry() { register_all_commands(); }
 
     /// Execute a raw input string (e.g., "/commit --all")
-    [[nodiscard]] Result<CommandResult> execute(std::string_view input,
-                                                CommandContext ctx) {
+    [[nodiscard]] Result<CommandResult> execute(std::string_view input, CommandContext ctx) {
         // Parse the input
         auto parsed = CommandRegistry::parse(input);
         if (!parsed) {
-            return std::unexpected(Error::make(
-                ErrorCode::InvalidRequest,
-                std::format("Invalid command input: '{}'", input)
-            ));
+            return std::unexpected(Error::make(ErrorCode::InvalidRequest,
+                                               std::format("Invalid command input: '{}'", input)));
         }
 
         // Check permissions
         auto required = command_permission(parsed->name);
         if (static_cast<int>(required) > static_cast<int>(current_permission_)) {
-            return std::unexpected(Error::make(
-                ErrorCode::ToolPermissionDenied,
-                std::format("Insufficient permissions for /{}. Required: {}",
-                    parsed->name, permission_label(required))
-            ));
+            return std::unexpected(
+                Error::make(ErrorCode::ToolPermissionDenied,
+                            std::format("Insufficient permissions for /{}. Required: {}",
+                                        parsed->name, permission_label(required))));
         }
 
         if (!registry_.contains(parsed->name)) {
-            return std::unexpected(Error::make(
-                ErrorCode::InternalError,
-                std::format("Unknown command: /{}", parsed->name)
-            ));
+            return std::unexpected(Error::make(ErrorCode::InternalError,
+                                               std::format("Unknown command: /{}", parsed->name)));
         }
 
         // Prepare context with parsed args
@@ -193,14 +185,10 @@ public:
     }
 
     /// Set the current permission level for the session
-    void set_permission_level(CommandPermission level) noexcept {
-        current_permission_ = level;
-    }
+    void set_permission_level(CommandPermission level) noexcept { current_permission_ = level; }
 
     /// Check if a command exists
-    [[nodiscard]] bool has_command(std::string_view name) const {
-        return registry_.contains(name);
-    }
+    [[nodiscard]] bool has_command(std::string_view name) const { return registry_.contains(name); }
 
     /// Get all visible command definitions (for /help)
     [[nodiscard]] std::vector<const CommandDefinition*> visible_commands() const {
@@ -209,15 +197,13 @@ public:
 
     /// SL-01: hidden-command exact-name escape hatch (delegates to the core
     /// registry). See CommandRegistry::hidden_command_if_exact.
-    [[nodiscard]] const CommandDefinition* hidden_command_if_exact(
-        std::string_view name) const {
+    [[nodiscard]] const CommandDefinition* hidden_command_if_exact(std::string_view name) const {
         return registry_.hidden_command_if_exact(name);
     }
 
     /// SL-03: look up a VISIBLE command definition by exact name (for argument
     /// hints). Returns nullptr if not found or hidden.
-    [[nodiscard]] const CommandDefinition* find_definition(
-        std::string_view name) const {
+    [[nodiscard]] const CommandDefinition* find_definition(std::string_view name) const {
         for (const auto* def : registry_.visible_commands()) {
             if (def->name == name) return def;
         }
@@ -225,24 +211,18 @@ public:
     }
 
     /// Get total registered command count
-    [[nodiscard]] std::size_t command_count() const noexcept {
-        return registry_.size();
-    }
+    [[nodiscard]] std::size_t command_count() const noexcept { return registry_.size(); }
 
     [[nodiscard]] std::vector<std::string> command_names() const {
         return registry_.command_names();
     }
 
     /// Clear command history
-    void clear_history() noexcept {
-        history_.clear();
-    }
+    void clear_history() noexcept { history_.clear(); }
 
 private:
     /// Register all built-in commands (defined in command_registry_init.cpp)
-    void register_all_commands() {
-        register_default_commands(registry_);
-    }
+    void register_all_commands() { register_default_commands(registry_); }
 
     /// Find a command by name or alias
     [[nodiscard]] ICommand* find_command(std::string_view name) const {
@@ -264,15 +244,20 @@ private:
     }
 
     /// Convert permission level to display label
-    [[nodiscard]] static constexpr std::string_view permission_label(CommandPermission perm) noexcept {
+    [[nodiscard]] static constexpr std::string_view
+    permission_label(CommandPermission perm) noexcept {
         switch (perm) {
-            case CommandPermission::None:      return "none";
-            case CommandPermission::ReadOnly:  return "read-only";
-            case CommandPermission::ReadWrite: return "read-write";
-            case CommandPermission::Admin:     return "admin";
+        case CommandPermission::None:
+            return "none";
+        case CommandPermission::ReadOnly:
+            return "read-only";
+        case CommandPermission::ReadWrite:
+            return "read-write";
+        case CommandPermission::Admin:
+            return "admin";
         }
         return "unknown";
     }
 };
 
-} // namespace loom::commands
+}  // namespace loom::commands

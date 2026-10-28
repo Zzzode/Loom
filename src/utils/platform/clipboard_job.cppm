@@ -27,8 +27,8 @@ export namespace loom::utils::clipboard {
 /// Immutable input for a clipboard write job.
 struct JobInput {
     std::shared_ptr<const std::string> text;  ///< Text to write to backend stdin.
-    std::string backend_path;  ///< Resolved absolute path to the backend executable.
-    std::vector<std::string> argv;  ///< argv[0] = backend name, rest = args.
+    std::string backend_path;                 ///< Resolved absolute path to the backend executable.
+    std::vector<std::string> argv;            ///< argv[0] = backend name, rest = args.
 };
 
 /// Mutable cancellation state shared between coordinator and worker.
@@ -46,10 +46,10 @@ struct CopyResult {
         Unsupported,   ///< SSH session or no backend found — native path skipped.
     };
     Status status = Status::NativeFailed;
-    std::string backend_name;      ///< e.g. "pbcopy", "xclip", "wl-copy".
-    std::size_t bytes_sent = 0;    ///< Bytes written to backend stdin.
+    std::string backend_name;    ///< e.g. "pbcopy", "xclip", "wl-copy".
+    std::size_t bytes_sent = 0;  ///< Bytes written to backend stdin.
     std::chrono::milliseconds duration{0};
-    std::string error_detail;      ///< Non-empty on failure (for diagnostics).
+    std::string error_detail;  ///< Non-empty on failure (for diagnostics).
 };
 
 /// A single clipboard write job.
@@ -62,8 +62,7 @@ struct CopyResult {
 /// finishes. The caller is responsible for marshaling to the UI thread.
 class ClipboardJob {
 public:
-    ClipboardJob(std::shared_ptr<const JobInput> input,
-                 std::shared_ptr<CancellationState> cancel,
+    ClipboardJob(std::shared_ptr<const JobInput> input, std::shared_ptr<CancellationState> cancel,
                  std::function<void(CopyResult)> on_complete);
     ~ClipboardJob();
 

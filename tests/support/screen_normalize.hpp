@@ -36,8 +36,8 @@ namespace loom::testing {
             if (next == '[') {
                 // CSI: ESC [ ... final byte (0x40-0x7E)
                 i += 2;
-                while (i < text.size() &&
-                       !(text[i] >= 0x40 && text[i] <= 0x7e)) ++i;
+                while (i < text.size() && !(text[i] >= 0x40 && text[i] <= 0x7e))
+                    ++i;
                 if (i < text.size()) ++i;  // skip final byte
                 continue;
             }
@@ -45,9 +45,14 @@ namespace loom::testing {
                 // OSC: ESC ] ... BEL or ESC-backslash
                 i += 2;
                 while (i < text.size()) {
-                    if (text[i] == '\x07') { ++i; break; }
-                    if (text[i] == '\x1b' && i + 1 < text.size() &&
-                        text[i + 1] == '\\') { i += 2; break; }
+                    if (text[i] == '\x07') {
+                        ++i;
+                        break;
+                    }
+                    if (text[i] == '\x1b' && i + 1 < text.size() && text[i + 1] == '\\') {
+                        i += 2;
+                        break;
+                    }
                     ++i;
                 }
                 continue;
@@ -86,25 +91,24 @@ namespace loom::testing {
         std::string tmp;
         tmp.reserve(clean.size());
         for (std::size_t i = 0; i < clean.size();) {
-            if (i + 3 <= clean.size() &&
-                static_cast<unsigned char>(clean[i]) == 0xE2 &&
+            if (i + 3 <= clean.size() && static_cast<unsigned char>(clean[i]) == 0xE2 &&
                 static_cast<unsigned char>(clean[i + 1]) == 0xA0) {
                 switch (static_cast<unsigned char>(clean[i + 2])) {
-                    case 0x8B:  // ⠋ U+280B
-                    case 0x99:  // ⠙ U+2819
-                    case 0xB9:  // ⠹ U+2839
-                    case 0xB8:  // ⠸ U+2838
-                    case 0xBC:  // ⠼ U+283C
-                    case 0xB4:  // ⠴ U+2834
-                    case 0xA6:  // ⠦ U+2826
-                    case 0xA7:  // ⠧ U+2827
-                    case 0x87:  // ⠇ U+2807
-                    case 0x8F:  // ⠏ U+280F
-                        tmp += "<spinner>";
-                        i += 3;
-                        continue;
-                    default:
-                        break;
+                case 0x8B:  // ⠋ U+280B
+                case 0x99:  // ⠙ U+2819
+                case 0xB9:  // ⠹ U+2839
+                case 0xB8:  // ⠸ U+2838
+                case 0xBC:  // ⠼ U+283C
+                case 0xB4:  // ⠴ U+2834
+                case 0xA6:  // ⠦ U+2826
+                case 0xA7:  // ⠧ U+2827
+                case 0x87:  // ⠇ U+2807
+                case 0x8F:  // ⠏ U+280F
+                    tmp += "<spinner>";
+                    i += 3;
+                    continue;
+                default:
+                    break;
                 }
             }
             tmp += clean[i];
@@ -134,13 +138,11 @@ namespace loom::testing {
             const auto b3 = static_cast<unsigned char>(s[i + 2]);
             // ✻ U+273B, ✦ U+2726, ✧ U+2727, ✶ U+2736, ✷ U+2737,
             // ✸ U+2738, ✹ U+2739
-            if (b2 == 0x9C && (b3 == 0xBB || b3 == 0xA6 || b3 == 0xA7 ||
-                               b3 == 0xB6 || b3 == 0xB7 || b3 == 0xB8 ||
-                               b3 == 0xB9))
+            if (b2 == 0x9C && (b3 == 0xBB || b3 == 0xA6 || b3 == 0xA7 || b3 == 0xB6 || b3 == 0xB7 ||
+                               b3 == 0xB8 || b3 == 0xB9))
                 return true;
             // ❋ U+274B
-            if (b2 == 0x9D && b3 == 0x8B)
-                return true;
+            if (b2 == 0x9D && b3 == 0x8B) return true;
             return false;
         };
 
@@ -150,39 +152,39 @@ namespace loom::testing {
             // Anchor at the row's left edge so an inline message glyph is
             // not mistaken for the chrome spinner.
             if ((i == 0 || clean[i - 1] == '\n') &&
-                ((is_chrome_glyph(clean, i) && i + 3 < clean.size() && clean[i + 3] == ' ')
-                 || clean.compare(i, 10, "<spinner> ") == 0)) {
+                ((is_chrome_glyph(clean, i) && i + 3 < clean.size() && clean[i + 3] == ' ') ||
+                 clean.compare(i, 10, "<spinner> ") == 0)) {
                 // Match: <glyph> <verb>…<dots>
                 std::size_t j = i + (clean.compare(i, 10, "<spinner> ") == 0 ? 10 : 4);
                 const std::size_t verb_start = j;
-                while (j < clean.size() &&
-                       ((clean[j] >= 'A' && clean[j] <= 'Z') ||
-                        (clean[j] >= 'a' && clean[j] <= 'z') ||
-                        (clean[j] >= '0' && clean[j] <= '9') ||
-                        clean[j] == '_' || clean[j] == '-' ||
-                        clean[j] == '\''))
+                while (j < clean.size() && ((clean[j] >= 'A' && clean[j] <= 'Z') ||
+                                            (clean[j] >= 'a' && clean[j] <= 'z') ||
+                                            (clean[j] >= '0' && clean[j] <= '9') ||
+                                            clean[j] == '_' || clean[j] == '-' || clean[j] == '\''))
                     ++j;
                 // … is U+2026 (E2 80 A6); dots are 1-3 '.' (blink cycle).
                 if (j > verb_start && j + 3 <= clean.size() &&
                     clean.compare(j, 3, "\xE2\x80\xA6") == 0) {
                     std::size_t k = j + 3;
-                    while (k < clean.size() && clean[k] == '.') ++k;
+                    while (k < clean.size() && clean[k] == '.')
+                        ++k;
                     if (k > j + 3) {
-                        const auto label = std::string_view(clean).substr(
-                            verb_start, j - verb_start);
+                        const auto label =
+                            std::string_view(clean).substr(verb_start, j - verb_start);
                         const bool is_tool_label =
-                            label.find_first_of("_0123456789-") !=
-                                std::string_view::npos;
+                            label.find_first_of("_0123456789-") != std::string_view::npos;
                         if (is_tool_label) {
                             // Tool names are meaningful, unlike random verbs.
                             // Normalize only their animation in the pinned
                             // chrome immediately above the prompt divider.
                             const auto line_end = clean.find('\n', k);
                             const auto divider_end = line_end == std::string::npos
-                                ? std::string::npos : clean.find('\n', line_end + 1);
+                                                         ? std::string::npos
+                                                         : clean.find('\n', line_end + 1);
                             auto divider = divider_end == std::string::npos
-                                ? std::string_view{} : std::string_view(clean).substr(
-                                    line_end + 1, divider_end - line_end - 1);
+                                               ? std::string_view{}
+                                               : std::string_view(clean).substr(
+                                                     line_end + 1, divider_end - line_end - 1);
                             while (!divider.empty() &&
                                    (divider.back() == ' ' || divider.back() == '\r'))
                                 divider.remove_suffix(1);
@@ -191,8 +193,8 @@ namespace loom::testing {
                                  is_prompt_divider && cursor < divider.size(); cursor += 3) {
                                 is_prompt_divider = divider.substr(cursor, 3) == "─";
                             }
-                            is_prompt_divider = is_prompt_divider &&
-                                clean.compare(divider_end + 1, 5, " ❯ ") == 0;
+                            is_prompt_divider =
+                                is_prompt_divider && clean.compare(divider_end + 1, 5, " ❯ ") == 0;
                             if (!is_prompt_divider) {
                                 tmp += clean[i];
                                 ++i;
@@ -262,18 +264,21 @@ namespace loom::testing {
                 if (clean.compare(i, prefix.size(), prefix) != 0) continue;
                 auto j = i + prefix.size();
                 const auto digits = j;
-                while (j < clean.size() && clean[j] >= '0' && clean[j] <= '9') ++j;
+                while (j < clean.size() && clean[j] >= '0' && clean[j] <= '9')
+                    ++j;
                 if (j == digits) continue;
                 if (j + 2 < clean.size() && clean.compare(j, 2, "m ") == 0) {
                     j += 2;
                     const auto seconds = j;
-                    while (j < clean.size() && clean[j] >= '0' && clean[j] <= '9') ++j;
+                    while (j < clean.size() && clean[j] >= '0' && clean[j] <= '9')
+                        ++j;
                     if (j == seconds) continue;
                 }
                 if (j >= clean.size() || clean[j] != 's') continue;
                 const auto end = j + 1;
                 if (end < clean.size() && clean[end] != ',' && clean[end] != ' ' &&
-                    clean.compare(end, 3, "…") != 0) continue;
+                    clean.compare(end, 3, "…") != 0)
+                    continue;
                 append_thinking(i, end, word);
                 i = end;
                 normalized_stage = true;
@@ -281,15 +286,13 @@ namespace loom::testing {
             }
             if (normalized_stage) continue;
             // "Thought for <digits>..." — collapsed row or static chain
-            if (i + 12 <= clean.size() &&
-                clean.compare(i, 12, "Thought for ") == 0) {
+            if (i + 12 <= clean.size() && clean.compare(i, 12, "Thought for ") == 0) {
                 std::size_t j = i + 12;
-                while (j < clean.size() &&
-                       clean[j] >= '0' && clean[j] <= '9') ++j;
+                while (j < clean.size() && clean[j] >= '0' && clean[j] <= '9')
+                    ++j;
                 if (j > i + 12) {
                     // ms form (collapsed row, < 1s)
-                    if (j + 2 <= clean.size() &&
-                        clean.compare(j, 2, "ms") == 0) {
+                    if (j + 2 <= clean.size() && clean.compare(j, 2, "ms") == 0) {
                         append_thinking(i, j + 2, "Thought");
                         i = j + 2;
                         continue;
@@ -297,10 +300,9 @@ namespace loom::testing {
                     // decimal-seconds form (collapsed row, ≥ 1s)
                     if (j < clean.size() && clean[j] == '.') {
                         std::size_t k = j + 1;
-                        while (k < clean.size() &&
-                               clean[k] >= '0' && clean[k] <= '9') ++k;
-                        if (k > j + 1 && k < clean.size() &&
-                            clean[k] == 's') {
+                        while (k < clean.size() && clean[k] >= '0' && clean[k] <= '9')
+                            ++k;
+                        if (k > j + 1 && k < clean.size() && clean[k] == 's') {
                             append_thinking(i, k + 1, "Thought");
                             i = k + 1;
                             continue;
@@ -308,16 +310,14 @@ namespace loom::testing {
                     }
                     // whole-seconds form (static compressed chain,
                     // followed by ", " before the tool breakdown)
-                    if (j + 3 <= clean.size() &&
-                        clean.compare(j, 3, "s, ") == 0) {
+                    if (j + 3 <= clean.size() && clean.compare(j, 3, "s, ") == 0) {
                         append_thinking(i, j + 3, "Thought, ");
                         i = j + 3;
                         continue;
                     }
                     // whole-seconds form (lone thinking chain, no tool
                     // breakdown — followed by "  " before the expand hint)
-                    if (j + 2 <= clean.size() &&
-                        clean.compare(j, 2, "s ") == 0) {
+                    if (j + 2 <= clean.size() && clean.compare(j, 2, "s ") == 0) {
                         append_thinking(i, j + 2, "Thought ");
                         i = j + 2;
                         continue;
@@ -326,19 +326,16 @@ namespace loom::testing {
             }
             // "Thinking for <digits>s, " (live compressed chain with tools)
             // or "Thinking for <digits>s " (live lone thinking chain)
-            if (i + 13 <= clean.size() &&
-                clean.compare(i, 13, "Thinking for ") == 0) {
+            if (i + 13 <= clean.size() && clean.compare(i, 13, "Thinking for ") == 0) {
                 std::size_t j = i + 13;
-                while (j < clean.size() &&
-                       clean[j] >= '0' && clean[j] <= '9') ++j;
-                if (j > i + 13 && j + 3 <= clean.size() &&
-                    clean.compare(j, 3, "s, ") == 0) {
+                while (j < clean.size() && clean[j] >= '0' && clean[j] <= '9')
+                    ++j;
+                if (j > i + 13 && j + 3 <= clean.size() && clean.compare(j, 3, "s, ") == 0) {
                     append_thinking(i, j + 3, "Thinking, ");
                     i = j + 3;
                     continue;
                 }
-                if (j > i + 13 && j + 2 <= clean.size() &&
-                    clean.compare(j, 2, "s ") == 0) {
+                if (j > i + 13 && j + 2 <= clean.size() && clean.compare(j, 2, "s ") == 0) {
                     append_thinking(i, j + 2, "Thinking ");
                     i = j + 2;
                     continue;
@@ -360,13 +357,11 @@ namespace loom::testing {
             // unique to the collapsed row; the expanded row uses
             // "∴ Thinking…" (ellipsis) and the timeout form uses
             // "∴ Thinking (" (paren).
-            if (i + 3 <= clean.size() &&
-                static_cast<unsigned char>(clean[i]) == 0xE2 &&
+            if (i + 3 <= clean.size() && static_cast<unsigned char>(clean[i]) == 0xE2 &&
                 static_cast<unsigned char>(clean[i + 1]) == 0x88 &&
                 static_cast<unsigned char>(clean[i + 2]) == 0xB4) {
                 // " Thinking  " (11 bytes) follows the ∴ prefix.
-                if (i + 14 <= clean.size() &&
-                    clean.compare(i + 3, 11, " Thinking  ") == 0) {
+                if (i + 14 <= clean.size() && clean.compare(i + 3, 11, " Thinking  ") == 0) {
                     tmp += "\xE2\x88\xB4 Thought  ";
                     i += 14;
                     continue;
@@ -387,8 +382,7 @@ namespace loom::testing {
         tmp.reserve(clean.size());
         for (std::size_t i = 0; i < clean.size();) {
             // "just now" (8 chars)
-            if (i + 8 <= clean.size() &&
-                clean.compare(i, 8, "just now") == 0) {
+            if (i + 8 <= clean.size() && clean.compare(i, 8, "just now") == 0) {
                 tmp += "<timestamp>";
                 i += 8;
                 continue;
@@ -397,11 +391,10 @@ namespace loom::testing {
             // (1+ digits + unit + " ago" = digits + 5 chars)
             if (clean[i] >= '0' && clean[i] <= '9') {
                 std::size_t j = i;
-                while (j < clean.size() &&
-                       clean[j] >= '0' && clean[j] <= '9') ++j;
+                while (j < clean.size() && clean[j] >= '0' && clean[j] <= '9')
+                    ++j;
                 if (j + 5 <= clean.size() &&
-                    (clean[j] == 's' || clean[j] == 'm' ||
-                     clean[j] == 'h' || clean[j] == 'd') &&
+                    (clean[j] == 's' || clean[j] == 'm' || clean[j] == 'h' || clean[j] == 'd') &&
                     clean.compare(j + 1, 4, " ago") == 0) {
                     tmp += "<timestamp>";
                     i = j + 5;
@@ -427,28 +420,22 @@ namespace loom::testing {
         std::size_t line_start = 0;
         for (std::size_t i = 0; i <= clean.size(); ++i) {
             if (i == clean.size() || clean[i] == '\n') {
-                std::string_view ln(clean.data() + line_start,
-                                    i - line_start);
+                std::string_view ln(clean.data() + line_start, i - line_start);
                 const bool is_chain_header =
-                    ln.find("(click to expand)") !=
-                        std::string_view::npos ||
-                    ln.find("(click to collapse)") !=
-                        std::string_view::npos ||
+                    ln.find("(click to expand)") != std::string_view::npos ||
+                    ln.find("(click to collapse)") != std::string_view::npos ||
                     ln.find("[Show details]") != std::string_view::npos ||
                     ln.find("[Hide details]") != std::string_view::npos;
                 if (is_chain_header) {
                     // Dot-on: "● " = \xE2\x97\x8F + space (4 bytes)
-                    if (ln.size() >= 4 &&
-                        static_cast<unsigned char>(ln[0]) == 0xE2 &&
+                    if (ln.size() >= 4 && static_cast<unsigned char>(ln[0]) == 0xE2 &&
                         static_cast<unsigned char>(ln[1]) == 0x97 &&
-                        static_cast<unsigned char>(ln[2]) == 0x8F &&
-                        ln[3] == ' ') {
+                        static_cast<unsigned char>(ln[2]) == 0x8F && ln[3] == ' ') {
                         tmp += "<dot> ";
                         tmp += ln.substr(4);
                     }
                     // Dot-off: two spaces
-                    else if (ln.size() >= 2 && ln[0] == ' ' &&
-                             ln[1] == ' ') {
+                    else if (ln.size() >= 2 && ln[0] == ' ' && ln[1] == ' ') {
                         tmp += "<dot> ";
                         tmp += ln.substr(2);
                     } else {
@@ -476,10 +463,8 @@ namespace loom::testing {
         const std::string mac_prefix = "/var/folders/";
         std::size_t pos = 0;
         while ((pos = clean.find(mac_prefix, pos)) != std::string::npos) {
-            const std::size_t end =
-                clean.find_first_of(" \t\n\r\"'", pos);
-            const std::size_t stop =
-                (end == std::string::npos) ? clean.size() : end;
+            const std::size_t end = clean.find_first_of(" \t\n\r\"'", pos);
+            const std::size_t stop = (end == std::string::npos) ? clean.size() : end;
             const std::string seg = clean.substr(pos, stop - pos);
             if (seg.find("/T/") != std::string::npos ||
                 (seg.size() >= 2 && seg.substr(seg.size() - 2) == "/T")) {
@@ -492,16 +477,14 @@ namespace loom::testing {
         // Runtime temp dir (Linux: /tmp).  Boundary-checked so sibling
         // strings like "/tmp_backup" are left alone.
         try {
-            const std::string tmp =
-                std::filesystem::temp_directory_path().string();
+            const std::string tmp = std::filesystem::temp_directory_path().string();
             std::size_t p = 0;
             while ((p = clean.find(tmp, p)) != std::string::npos) {
                 const std::size_t after = p + tmp.size();
-                const bool boundary =
-                    after >= clean.size() || clean[after] == '/' ||
-                    clean[after] == ' ' || clean[after] == '\t' ||
-                    clean[after] == '\n' || clean[after] == '\r' ||
-                    clean[after] == '"' || clean[after] == '\'';
+                const bool boundary = after >= clean.size() || clean[after] == '/' ||
+                                      clean[after] == ' ' || clean[after] == '\t' ||
+                                      clean[after] == '\n' || clean[after] == '\r' ||
+                                      clean[after] == '"' || clean[after] == '\'';
                 if (boundary) {
                     clean.replace(p, tmp.size(), "<tmpdir>");
                     p += 8;
@@ -528,18 +511,15 @@ namespace loom::testing {
             };
             const std::string folder_prefix = "\xF0\x9F\x93\x81 ";  // 📁 + SP
             std::size_t p = 0;
-            while ((p = clean.find(folder_prefix, p)) !=
-                   std::string::npos) {
+            while ((p = clean.find(folder_prefix, p)) != std::string::npos) {
                 const std::size_t stem_start = p + folder_prefix.size();
                 std::size_t stem_end = stem_start;
                 while (stem_end < clean.size() && clean[stem_end] != ' ' &&
                        clean[stem_end] != '\n' && clean[stem_end] != '\r')
                     ++stem_end;
-                const std::string stem =
-                    clean.substr(stem_start, stem_end - stem_start);
+                const std::string stem = clean.substr(stem_start, stem_end - stem_start);
                 if (is_temp_stem(stem)) {
-                    clean.replace(stem_start, stem_end - stem_start,
-                                  "<tmpdir>");
+                    clean.replace(stem_start, stem_end - stem_start, "<tmpdir>");
                     p = stem_start + 8;  // strlen("<tmpdir>")
                 } else {
                     p = stem_end;
@@ -560,12 +540,13 @@ namespace loom::testing {
                 text.remove_prefix(1);
                 const auto percent = text.find("% ");
                 if (percent == std::string_view::npos || percent == 0 ||
-                    text.substr(0, percent).find_first_not_of("0123456789") != std::string_view::npos)
+                    text.substr(0, percent).find_first_not_of("0123456789") !=
+                        std::string_view::npos)
                     return false;
                 text.remove_prefix(percent + 2);
                 auto counts = text.substr(0, text.find("  "));
-                while (!counts.empty() && (counts.back() == ' ' ||
-                        counts.back() == '\t' || counts.back() == '\r'))
+                while (!counts.empty() &&
+                       (counts.back() == ' ' || counts.back() == '\t' || counts.back() == '\r'))
                     counts.remove_suffix(1);
                 const auto slash = counts.find('/');
                 if (slash == std::string_view::npos) return false;
@@ -575,7 +556,7 @@ namespace loom::testing {
                         return count.find_first_not_of("0123456789") == std::string_view::npos;
                     count.remove_suffix(1);
                     return !count.empty() &&
-                        count.find_first_not_of("0123456789.") == std::string_view::npos;
+                           count.find_first_not_of("0123456789.") == std::string_view::npos;
                 };
                 return is_count(counts.substr(0, slash)) && is_count(counts.substr(slash + 1));
             };
@@ -584,14 +565,14 @@ namespace loom::testing {
             while (line_start < clean.size()) {
                 auto line_end = clean.find('\n', line_start);
                 if (line_end == std::string::npos) line_end = clean.size();
-                const std::string_view line{clean.data() + line_start,
-                                            line_end - line_start};
+                const std::string_view line{clean.data() + line_start, line_end - line_start};
                 auto divider = line;
-                while (!divider.empty() && (divider.back() == ' ' ||
-                        divider.back() == '\t' || divider.back() == '\r'))
+                while (!divider.empty() &&
+                       (divider.back() == ' ' || divider.back() == '\t' || divider.back() == '\r'))
                     divider.remove_suffix(1);
                 const bool has_divider = !divider.empty();
-                while (divider.starts_with("─")) divider.remove_prefix(3);
+                while (divider.starts_with("─"))
+                    divider.remove_prefix(3);
                 const bool is_divider = has_divider && divider.empty();
                 const bool is_final_row =
                     clean.find_first_not_of(" \t\r\n", line_end) == std::string::npos;
@@ -622,8 +603,7 @@ namespace loom::testing {
                 // Without runtime path evidence, abbreviated stems stay visible.
             }
             const auto is_runtime_stem = [&runtime_stem](std::string_view stem) {
-                if (stem == "tmp" || (!runtime_stem.empty() && stem == runtime_stem))
-                    return true;
+                if (stem == "tmp" || (!runtime_stem.empty() && stem == runtime_stem)) return true;
                 if (!stem.ends_with("…") || runtime_stem.empty()) return false;
                 stem.remove_suffix(std::string_view("…").size());
                 return !stem.empty() && runtime_stem.starts_with(stem);
@@ -639,7 +619,8 @@ namespace loom::testing {
                     if (field.starts_with('~')) field.remove_prefix(1);
                     const auto percent = field.find('%');
                     if (percent != std::string_view::npos && percent > 0 &&
-                        field.substr(0, percent).find_first_not_of("0123456789") == std::string_view::npos) {
+                        field.substr(0, percent).find_first_not_of("0123456789") ==
+                            std::string_view::npos) {
                         field.remove_prefix(percent + 1);
                         if (field.empty()) return true;
                         if (field.starts_with(' ')) {
@@ -648,11 +629,12 @@ namespace loom::testing {
                             const auto is_count = [](std::string_view count) {
                                 if (count.empty()) return false;
                                 if (count.ends_with('K')) count.remove_suffix(1);
-                                return !count.empty() &&
-                                    count.find_first_not_of("0123456789.") == std::string_view::npos;
+                                return !count.empty() && count.find_first_not_of("0123456789.") ==
+                                                             std::string_view::npos;
                             };
                             if (slash != std::string_view::npos &&
-                                is_count(field.substr(0, slash)) && is_count(field.substr(slash + 1)))
+                                is_count(field.substr(0, slash)) &&
+                                is_count(field.substr(slash + 1)))
                                 return true;
                         }
                     }
@@ -673,13 +655,15 @@ namespace loom::testing {
                 while (!divider.empty() && (divider.back() == ' ' || divider.back() == '\r'))
                     divider.remove_suffix(1);
                 const bool has_divider = !divider.empty();
-                while (divider.starts_with("─")) divider.remove_prefix(3);
+                while (divider.starts_with("─"))
+                    divider.remove_prefix(3);
                 const bool is_divider = has_divider && divider.empty();
                 const bool is_input = line.starts_with(" ❯ ");
                 if (after_input_divider && line.starts_with("  ")) {
                     const auto stem_start = line.find_first_not_of(' ');
                     const auto stem_end = line.find(" · ", stem_start);
-                    if (stem_start != std::string_view::npos && stem_end != std::string_view::npos &&
+                    if (stem_start != std::string_view::npos &&
+                        stem_end != std::string_view::npos &&
                         is_runtime_stem(line.substr(stem_start, stem_end - stem_start)) &&
                         is_semantic_usage(line.substr(stem_end))) {
                         const auto original_length = stem_end - stem_start;
@@ -705,8 +689,7 @@ namespace loom::testing {
     for (std::size_t i = 0; i < clean.size(); ++i) {
         if (clean[i] == '\n') {
             while (!line.empty() &&
-                   (line.back() == ' ' || line.back() == '\t' ||
-                    line.back() == '\r'))
+                   (line.back() == ' ' || line.back() == '\t' || line.back() == '\r'))
                 line.pop_back();
             result += line;
             result += '\n';
@@ -716,9 +699,7 @@ namespace loom::testing {
         }
     }
     // Last line (Screen::ToString may not end with \n)
-    while (!line.empty() &&
-           (line.back() == ' ' || line.back() == '\t' ||
-            line.back() == '\r'))
+    while (!line.empty() && (line.back() == ' ' || line.back() == '\t' || line.back() == '\r'))
         line.pop_back();
     result += line;
 

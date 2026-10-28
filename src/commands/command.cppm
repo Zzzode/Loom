@@ -82,15 +82,16 @@ struct CommandContext {
 
     // AppState access bridge (set by app.cppm)
     void* app_store = nullptr;  // opaque: loom::state::AppStore*
-    using StateDispatchFn = void(*)(void* store, int action_type, const void* payload);
+    using StateDispatchFn = void (*)(void* store, int action_type, const void* payload);
     StateDispatchFn dispatch_fn = nullptr;
-    using StateGetFn = const void*(*)(void* store);
+    using StateGetFn = const void* (*)(void* store);
     StateGetFn get_state_fn = nullptr;
 
     // Convenience helpers
     void dispatch_action(int action_type, const void* payload = nullptr) const {
         if (dispatch_fn && app_store) dispatch_fn(app_store, action_type, payload);
     }
+
     const void* get_app_state() const {
         if (get_state_fn && app_store) return get_state_fn(app_store);
         return nullptr;
@@ -132,19 +133,33 @@ public:
     [[nodiscard]] virtual const CommandDefinition& definition() const noexcept = 0;
     [[nodiscard]] virtual VoidResult validate(const CommandContext&) = 0;
     [[nodiscard]] virtual Result<CommandResult> execute(const CommandContext& ctx) = 0;
-    [[nodiscard]] virtual std::vector<std::string> complete(std::string_view partial) { (void)partial; return {}; }
+
+    [[nodiscard]] virtual std::vector<std::string> complete(std::string_view partial) {
+        (void)partial;
+        return {};
+    }
 };
 
-template <typename Command>
-class CommandModel final : public ICommand {
+template <typename Command> class CommandModel final : public ICommand {
     Command command_{};
     CommandDefinition definition_{Command::definition()};
 
 public:
-    [[nodiscard]] const CommandDefinition& definition() const noexcept override { return definition_; }
-    [[nodiscard]] VoidResult validate(const CommandContext& ctx) override { return command_.validate(ctx); }
-    [[nodiscard]] Result<CommandResult> execute(const CommandContext& ctx) override { return command_.execute(ctx); }
-    [[nodiscard]] std::vector<std::string> complete(std::string_view partial) override { return command_.complete(partial); }
+    [[nodiscard]] const CommandDefinition& definition() const noexcept override {
+        return definition_;
+    }
+
+    [[nodiscard]] VoidResult validate(const CommandContext& ctx) override {
+        return command_.validate(ctx);
+    }
+
+    [[nodiscard]] Result<CommandResult> execute(const CommandContext& ctx) override {
+        return command_.execute(ctx);
+    }
+
+    [[nodiscard]] std::vector<std::string> complete(std::string_view partial) override {
+        return command_.complete(partial);
+    }
 };
 
 // ============================================================
@@ -165,8 +180,7 @@ public:
     CommandRegistry& operator=(CommandRegistry&&) noexcept = default;
 
     /// Register a command
-    template <typename Command>
-    void register_command() {
+    template <typename Command> void register_command() {
         auto command = std::make_unique<CommandModel<Command>>();
         auto name = command->definition().name;
         for (const auto& alias : command->definition().aliases) {
@@ -176,9 +190,7 @@ public:
     }
 
     /// Check if a command exists
-    [[nodiscard]] bool has_command(const std::string& name) const {
-        return contains(name);
-    }
+    [[nodiscard]] bool has_command(const std::string& name) const { return contains(name); }
 
     [[nodiscard]] bool contains(std::string_view name) const {
         auto key = std::string(name);
@@ -209,7 +221,8 @@ public:
         std::istringstream iss{std::string(input)};
         iss >> parsed.name;
         std::string arg;
-        while (iss >> arg) parsed.args.push_back(arg);
+        while (iss >> arg)
+            parsed.args.push_back(arg);
         if (parsed.name.empty()) return std::nullopt;
         return parsed;
     }
@@ -287,8 +300,7 @@ public:
     /// nullptr. TS lets users reach hidden commands by typing their full name
     /// (commandSuggestions.ts:391-401 hiddenExact); cpp visible_commands()
     /// otherwise hides them entirely, so this is the escape hatch.
-    [[nodiscard]] const CommandDefinition* hidden_command_if_exact(
-        std::string_view name) const {
+    [[nodiscard]] const CommandDefinition* hidden_command_if_exact(std::string_view name) const {
         for (const auto& [n, cmd] : commands_) {
             if (cmd->definition().hidden && n == name) return &cmd->definition();
         }
@@ -306,9 +318,7 @@ public:
         return names;
     }
 
-    [[nodiscard]] std::size_t size() const noexcept {
-        return commands_.size();
-    }
+    [[nodiscard]] std::size_t size() const noexcept { return commands_.size(); }
 };
 
-} // namespace loom::core
+}  // namespace loom::core

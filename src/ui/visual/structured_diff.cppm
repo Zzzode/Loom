@@ -3,13 +3,13 @@
 /// coloring, and hunk navigation.
 module;
 
-#include <cstdint>
-
-#include <ftxui/dom/elements.hpp>
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/event.hpp>
+#include <ftxui/dom/elements.hpp>
+
 #include <cstddef>
+#include <cstdint>
 
 export module loom.ui.visual.structured_diff;
 
@@ -27,15 +27,15 @@ using namespace ftxui;
 
 /// Reason the color diff module might be unavailable
 enum class ColorModuleUnavailableReason : std::uint8_t {
-    Env,        // Disabled via environment variable
-    Missing,    // Native module not found
+    Env,      // Disabled via environment variable
+    Missing,  // Native module not found
 };
 
 /// Word-level change within a line
 struct WordChange {
     int start_col;
     int end_col;
-    bool is_added;      // true = added, false = removed
+    bool is_added;  // true = added, false = removed
 };
 
 /// A single diff line with word-level annotations
@@ -51,7 +51,7 @@ struct StructuredDiffLine {
     std::string content;
     std::optional<int> old_line_num;
     std::optional<int> new_line_num;
-    std::vector<WordChange> word_changes;   // Word-level highlights
+    std::vector<WordChange> word_changes;  // Word-level highlights
 };
 
 /// A hunk in a structured patch
@@ -77,19 +77,19 @@ struct DiffDetailViewProps {
 /// Syntax theme reference for diff coloring
 struct DiffSyntaxTheme {
     std::string name;
-    Color added_fg        = loom::ui::design::theme::current_theme().palette->success;
-    Color removed_fg      = loom::ui::design::theme::current_theme().palette->danger;
-    Color context_fg      = loom::ui::design::theme::current_theme().palette->text;
+    Color added_fg = loom::ui::design::theme::current_theme().palette->success;
+    Color removed_fg = loom::ui::design::theme::current_theme().palette->danger;
+    Color context_fg = loom::ui::design::theme::current_theme().palette->text;
     // Default/custom diffs inherit the caller's canvas; explicit named themes
     // supply a matching context surface rather than borrowing a different UI theme.
     std::optional<Color> context_bg;
-    Color added_bg        = loom::ui::design::theme::current_theme().palette->success_tint_bg;
-    Color removed_bg      = loom::ui::design::theme::current_theme().palette->danger_tint_bg;
-    Color added_word_bg   = loom::ui::design::theme::current_theme().palette->surface_tint_3;
+    Color added_bg = loom::ui::design::theme::current_theme().palette->success_tint_bg;
+    Color removed_bg = loom::ui::design::theme::current_theme().palette->danger_tint_bg;
+    Color added_word_bg = loom::ui::design::theme::current_theme().palette->surface_tint_3;
     Color removed_word_bg = loom::ui::design::theme::current_theme().palette->surface_tint_3;
-    Color hunk_header_fg  = loom::ui::design::theme::current_theme().palette->info;
-    Color hunk_header_bg  = loom::ui::design::theme::current_theme().palette->info_tint_bg;
-    Color line_num_fg     = loom::ui::design::theme::current_theme().palette->muted;
+    Color hunk_header_fg = loom::ui::design::theme::current_theme().palette->info;
+    Color hunk_header_bg = loom::ui::design::theme::current_theme().palette->info_tint_bg;
+    Color line_num_fg = loom::ui::design::theme::current_theme().palette->muted;
 };
 
 /// Options for the structured diff component
@@ -133,9 +133,9 @@ enum class BlockKind : std::uint8_t {
 /// A semantic block (segment) within a source file.
 struct SemanticBlock {
     BlockKind kind = BlockKind::Unknown;
-    int start_line = 0;           // 0-indexed inclusive
-    int end_line = 0;             // 0-indexed exclusive
-    int min_indent = 999;         // minimum indent depth in block
+    int start_line = 0;    // 0-indexed inclusive
+    int end_line = 0;      // 0-indexed exclusive
+    int min_indent = 999;  // minimum indent depth in block
     std::vector<std::string> lines;
 };
 
@@ -144,28 +144,26 @@ struct SemanticBlock {
     for (auto l : seg) {
         // strip leading whitespace
         size_t j = 0;
-        while (j < l.size() && (l[j] == ' ' || l[j] == '\t')) ++j;
+        while (j < l.size() && (l[j] == ' ' || l[j] == '\t'))
+            ++j;
         if (j == l.size()) continue;
         std::string_view s = l.substr(j);
         if (s.starts_with("//") || s.starts_with("/*") || s.starts_with("*") ||
             s.starts_with("#") || s.starts_with("--") || s.starts_with("\"\"\"") ||
-            s.starts_with("'''")) return BlockKind::Comment;
-        if (s.starts_with("import ") || s.starts_with("#include") ||
-            s.starts_with("from ") || s.starts_with("require(") ||
-            s.starts_with("using ") || s.starts_with("export "))
+            s.starts_with("'''"))
+            return BlockKind::Comment;
+        if (s.starts_with("import ") || s.starts_with("#include") || s.starts_with("from ") ||
+            s.starts_with("require(") || s.starts_with("using ") || s.starts_with("export "))
             return BlockKind::Imports;
-        if (s.starts_with("def ") || s.starts_with("function ") ||
-            s.starts_with("func ") || s.starts_with("fn ") ||
-            s.starts_with("async function ") ||
+        if (s.starts_with("def ") || s.starts_with("function ") || s.starts_with("func ") ||
+            s.starts_with("fn ") || s.starts_with("async function ") ||
             (s.find('(') != std::string_view::npos &&
-             (s.starts_with("const ") || s.starts_with("let ") ||
-              s.starts_with("var ")) &&
+             (s.starts_with("const ") || s.starts_with("let ") || s.starts_with("var ")) &&
              s.find("=>") != std::string_view::npos))
             return BlockKind::Function;
         // class/struct/interface
-        if (s.starts_with("class ") || s.starts_with("struct ") ||
-            s.starts_with("interface ") || s.starts_with("type ") ||
-            s.starts_with("namespace "))
+        if (s.starts_with("class ") || s.starts_with("struct ") || s.starts_with("interface ") ||
+            s.starts_with("type ") || s.starts_with("namespace "))
             return BlockKind::Class;
         return BlockKind::Unknown;
     }
@@ -173,8 +171,7 @@ struct SemanticBlock {
 }
 
 /// Heuristic block splitter.
-[[nodiscard]] inline std::vector<SemanticBlock> split_blocks(
-    std::string_view src) {
+[[nodiscard]] inline std::vector<SemanticBlock> split_blocks(std::string_view src) {
     std::vector<SemanticBlock> out;
     if (src.empty()) return out;
 
@@ -182,7 +179,10 @@ struct SemanticBlock {
     size_t start = 0;
     while (start <= src.size()) {
         size_t p = src.find('\n', start);
-        if (p == std::string_view::npos) { lines.emplace_back(src.substr(start)); break; }
+        if (p == std::string_view::npos) {
+            lines.emplace_back(src.substr(start));
+            break;
+        }
         lines.emplace_back(src.substr(start, p - start));
         start = p + 1;
     }
@@ -195,6 +195,7 @@ struct SemanticBlock {
         std::vector<std::string_view> seg;
         int start_idx = 0;
     };
+
     auto flush = [&](Builder& b, int end_idx) {
         if (b.seg.empty()) return;
         SemanticBlock blk;
@@ -203,9 +204,11 @@ struct SemanticBlock {
         blk.end_line = end_idx;
         for (auto l : b.seg) {
             size_t k = 0;
-            while (k < l.size() && (l[k] == ' ' || l[k] == '\t')) ++k;
+            while (k < l.size() && (l[k] == ' ' || l[k] == '\t'))
+                ++k;
             int indent = static_cast<int>(k);
-            if (indent < static_cast<int>(l.size())) blk.min_indent = std::min(blk.min_indent, indent);
+            if (indent < static_cast<int>(l.size()))
+                blk.min_indent = std::min(blk.min_indent, indent);
             blk.lines.emplace_back(l);
         }
         out.push_back(std::move(blk));
@@ -218,7 +221,8 @@ struct SemanticBlock {
     for (int i = 0; i < static_cast<int>(lines.size()); ++i) {
         auto l = lines[i];
         size_t j = 0;
-        while (j < l.size() && (l[j] == ' ' || l[j] == '\t')) ++j;
+        while (j < l.size() && (l[j] == ' ' || l[j] == '\t'))
+            ++j;
         bool blank = (j == l.size());
         int indent = static_cast<int>(j);
 
@@ -233,13 +237,12 @@ struct SemanticBlock {
         // Detect a boundary if we see a dedent + top-level keyword.
         if (!cur.seg.empty() && indent <= seg_min_indent) {
             std::string_view head = l.substr(j);
-            bool is_toplevel =
-                head.starts_with("def ") || head.starts_with("class ") ||
-                head.starts_with("function ") || head.starts_with("struct ") ||
-                head.starts_with("interface ") || head.starts_with("type ") ||
-                head.starts_with("namespace ") || head.starts_with("module ") ||
-                head.starts_with("fn ") || head.starts_with("func ") ||
-                head.starts_with("async function ");
+            bool is_toplevel = head.starts_with("def ") || head.starts_with("class ") ||
+                               head.starts_with("function ") || head.starts_with("struct ") ||
+                               head.starts_with("interface ") || head.starts_with("type ") ||
+                               head.starts_with("namespace ") || head.starts_with("module ") ||
+                               head.starts_with("fn ") || head.starts_with("func ") ||
+                               head.starts_with("async function ");
             if (is_toplevel) {
                 flush(cur, i);
                 cur.start_idx = i;
@@ -258,11 +261,10 @@ struct SemanticBlock {
 /// aggregated across all blocks. Uses Myers from utils/file_edit_utils
 /// (no duplicate algorithm — per task constraints).
 [[nodiscard]] inline std::vector<loom::utils::file_edit::PatchHunk>
-compute_block_lcs_diff(std::string_view old_src,
-                       std::string_view new_src,
-                       int context = 3) {
+compute_block_lcs_diff(std::string_view old_src, std::string_view new_src, int context = 3) {
     return loom::utils::file_edit::compute_structured_patch(old_src, new_src, context);
 }
+
 /// Block-level tint status for rendering
 struct BlockDiffStatus {
     bool added_block = false;
@@ -272,23 +274,20 @@ struct BlockDiffStatus {
 
 /// Render the N-files-changed summary bar used at the top of a structured
 /// diff view (matches the DiffDetailView sub-title pattern in).
-[[nodiscard]] inline Element RenderSummaryBar(
-    int files_changed,
-    int additions,
-    int deletions) {
+[[nodiscard]] inline Element RenderSummaryBar(int files_changed, int additions, int deletions) {
 
-    auto files_label = std::format(" {} file{} changed",
-                                   files_changed,
-                                   files_changed == 1 ? "" : "s");
+    auto files_label =
+        std::format(" {} file{} changed", files_changed, files_changed == 1 ? "" : "s");
     Elements els;
-    els.push_back(text(files_label) | color(loom::ui::design::theme::current_theme().palette->muted));
+    els.push_back(text(files_label) |
+                  color(loom::ui::design::theme::current_theme().palette->muted));
     if (additions > 0) {
-        els.push_back(text(std::format(" +{}", additions))
-                      | color(loom::ui::design::theme::current_theme().palette->success) | bold);
+        els.push_back(text(std::format(" +{}", additions)) |
+                      color(loom::ui::design::theme::current_theme().palette->success) | bold);
     }
     if (deletions > 0) {
-        els.push_back(text(std::format(" -{}", deletions))
-                      | color(loom::ui::design::theme::current_theme().palette->danger) | bold);
+        els.push_back(text(std::format(" -{}", deletions)) |
+                      color(loom::ui::design::theme::current_theme().palette->danger) | bold);
     }
     return hbox(std::move(els));
 }
@@ -308,8 +307,8 @@ struct BlockDiffStatus {
 ///       single-line lengths so the quadratic cost is acceptable.
 ///       Deferred(#ui7-word-diff): export a char-level Myers from utils to
 ///       consolidate.
-[[nodiscard]] inline std::vector<WordChange> compute_word_changes(
-    const std::string& a, const std::string& b, bool is_added_side) {
+[[nodiscard]] inline std::vector<WordChange>
+compute_word_changes(const std::string& a, const std::string& b, bool is_added_side) {
 
     std::vector<WordChange> out;
     int n = static_cast<int>(a.size());
@@ -320,8 +319,10 @@ struct BlockDiffStatus {
     std::vector<std::vector<int>> dp(n + 1, std::vector<int>(m + 1, 0));
     for (int i = 1; i <= n; ++i) {
         for (int j = 1; j <= m; ++j) {
-            if (a[i - 1] == b[j - 1]) dp[i][j] = dp[i - 1][j - 1] + 1;
-            else dp[i][j] = std::max(dp[i - 1][j], dp[i][j - 1]);
+            if (a[i - 1] == b[j - 1])
+                dp[i][j] = dp[i - 1][j - 1] + 1;
+            else
+                dp[i][j] = std::max(dp[i - 1][j], dp[i][j - 1]);
         }
     }
 
@@ -333,7 +334,8 @@ struct BlockDiffStatus {
             if (a[i - 1] == b[j - 1]) {
                 a_match[i - 1] = true;
                 b_match[j - 1] = true;
-                --i; --j;
+                --i;
+                --j;
             } else if (dp[i - 1][j] >= dp[i][j - 1]) {
                 --i;
             } else {
@@ -359,7 +361,7 @@ struct BlockDiffStatus {
         return rs;
     };
 
-    auto added   = ranges_from(b_match, true);
+    auto added = ranges_from(b_match, true);
     auto removed = ranges_from(a_match, false);
 
     // Merge nearby ranges (within 2 chars) to avoid "christmas tree" effect.
@@ -377,7 +379,8 @@ struct BlockDiffStatus {
         rs = std::move(out2);
     };
 
-    merge(added); merge(removed);
+    merge(added);
+    merge(removed);
     return is_added_side ? added : removed;
 }
 
@@ -392,23 +395,24 @@ inline void annotate_word_changes(std::vector<StructuredPatchHunk>& hunks) {
             auto& a = hunk.lines[i];
             auto& b = hunk.lines[i + 1];
             if (a.type != StructuredDiffLine::Type::Removed ||
-                b.type != StructuredDiffLine::Type::Added) continue;
+                b.type != StructuredDiffLine::Type::Added)
+                continue;
             if (a.content.empty() || b.content.empty()) continue;
 
             // Levenshtein-ish similarity check via common prefix/suffix length.
             size_t common = 0;
             size_t minlen = std::min(a.content.size(), b.content.size());
-            while (common < minlen && a.content[common] == b.content[common]) ++common;
+            while (common < minlen && a.content[common] == b.content[common])
+                ++common;
             size_t as = a.content.size(), bs = b.content.size();
             size_t suf = 0;
-            while (suf + common < minlen &&
-                   a.content[as - 1 - suf] == b.content[bs - 1 - suf]) ++suf;
-            double changed_ratio = 1.0 - (double)(common + suf) /
-                                        (double)std::max(as, bs);
+            while (suf + common < minlen && a.content[as - 1 - suf] == b.content[bs - 1 - suf])
+                ++suf;
+            double changed_ratio = 1.0 - (double)(common + suf) / (double)std::max(as, bs);
             if (changed_ratio > kChangeThreshold) continue;
             a.word_changes = compute_word_changes(a.content, b.content, false);
             b.word_changes = compute_word_changes(a.content, b.content, true);
-            ++i; // skip forward so we don't re-match 'b' as 'a' of next pair.
+            ++i;  // skip forward so we don't re-match 'b' as 'a' of next pair.
         }
     }
 }
@@ -430,10 +434,10 @@ get_diff_syntax_theme(const std::string& theme_name) {
     DiffSyntaxTheme theme;
     theme.name = theme_name;
     if (theme_name == "default") return theme;
-    const auto& dark = *loom::ui::design::theme::palette_for_variant(
-        loom::ui::design::theme::ThemeVariant::Dark);
-    const auto& light = *loom::ui::design::theme::palette_for_variant(
-        loom::ui::design::theme::ThemeVariant::Light);
+    const auto& dark =
+        *loom::ui::design::theme::palette_for_variant(loom::ui::design::theme::ThemeVariant::Dark);
+    const auto& light =
+        *loom::ui::design::theme::palette_for_variant(loom::ui::design::theme::ThemeVariant::Light);
     theme.added_fg = dark.success;
     theme.removed_fg = dark.danger;
     theme.context_fg = Color::RGB(192, 192, 192);
@@ -482,15 +486,21 @@ get_diff_syntax_theme(const std::string& theme_name) {
 }
 
 /// Render a word-highlighted line content
-[[nodiscard]] inline Element RenderWordHighlightedContent(
-    const StructuredDiffLine& line, const DiffSyntaxTheme& theme) {
+[[nodiscard]] inline Element RenderWordHighlightedContent(const StructuredDiffLine& line,
+                                                          const DiffSyntaxTheme& theme) {
 
     if (line.word_changes.empty()) {
         Color fg;
         switch (line.type) {
-            case StructuredDiffLine::Type::Added:   fg = theme.added_fg; break;
-            case StructuredDiffLine::Type::Removed: fg = theme.removed_fg; break;
-            default:                                fg = theme.context_fg; break;
+        case StructuredDiffLine::Type::Added:
+            fg = theme.added_fg;
+            break;
+        case StructuredDiffLine::Type::Removed:
+            fg = theme.removed_fg;
+            break;
+        default:
+            fg = theme.context_fg;
+            break;
         }
         return text(line.content) | color(fg);
     }
@@ -498,52 +508,49 @@ get_diff_syntax_theme(const std::string& theme_name) {
     // Build element with word-level highlighting
     Elements parts;
     int pos = 0;
-    Color base_fg = (line.type == StructuredDiffLine::Type::Added)
-                    ? theme.added_fg : theme.removed_fg;
+    Color base_fg =
+        (line.type == StructuredDiffLine::Type::Added) ? theme.added_fg : theme.removed_fg;
 
     for (const auto& change : line.word_changes) {
         // Text before the change
         if (change.start_col > pos) {
-            parts.push_back(
-                text(line.content.substr(pos, change.start_col - pos))
-                | color(base_fg));
+            parts.push_back(text(line.content.substr(pos, change.start_col - pos)) |
+                            color(base_fg));
         }
 
         // The changed word
         int len = change.end_col - change.start_col;
-        auto word_bg = change.is_added ? theme.added_word_bg
-                                       : theme.removed_word_bg;
-        parts.push_back(
-            text(line.content.substr(change.start_col, len))
-            | color(base_fg) | bold | bgcolor(word_bg));
+        auto word_bg = change.is_added ? theme.added_word_bg : theme.removed_word_bg;
+        parts.push_back(text(line.content.substr(change.start_col, len)) | color(base_fg) | bold |
+                        bgcolor(word_bg));
 
         pos = change.end_col;
     }
 
     // Remaining text
     if (pos < static_cast<int>(line.content.size())) {
-        parts.push_back(
-            text(line.content.substr(pos)) | color(base_fg));
+        parts.push_back(text(line.content.substr(pos)) | color(base_fg));
     }
 
     return hbox(parts);
 }
 
 /// Render a single structured diff line
-[[nodiscard]] inline Element RenderStructuredDiffLine(
-    const StructuredDiffLine& line, const DiffSyntaxTheme& theme,
-    bool show_line_nums, int gutter_width, bool selected) {
+[[nodiscard]] inline Element RenderStructuredDiffLine(const StructuredDiffLine& line,
+                                                      const DiffSyntaxTheme& theme,
+                                                      bool show_line_nums, int gutter_width,
+                                                      bool selected) {
 
     Elements parts;
 
     // Line numbers
     if (show_line_nums) {
         std::string old_num = line.old_line_num
-            ? std::format("{:>{}}", *line.old_line_num, gutter_width) 
-            : std::string(gutter_width, ' ');
+                                  ? std::format("{:>{}}", *line.old_line_num, gutter_width)
+                                  : std::string(gutter_width, ' ');
         std::string new_num = line.new_line_num
-            ? std::format("{:>{}}", *line.new_line_num, gutter_width)
-            : std::string(gutter_width, ' ');
+                                  ? std::format("{:>{}}", *line.new_line_num, gutter_width)
+                                  : std::string(gutter_width, ' ');
 
         parts.push_back(text(old_num) | color(theme.line_num_fg));
         parts.push_back(text(" "));
@@ -553,15 +560,15 @@ get_diff_syntax_theme(const std::string& theme_name) {
 
     // Prefix character
     switch (line.type) {
-        case StructuredDiffLine::Type::Added:
-            parts.push_back(text("+") | color(theme.added_fg) | bold);
-            break;
-        case StructuredDiffLine::Type::Removed:
-            parts.push_back(text("-") | color(theme.removed_fg) | bold);
-            break;
-        default:
-            parts.push_back(text(" "));
-            break;
+    case StructuredDiffLine::Type::Added:
+        parts.push_back(text("+") | color(theme.added_fg) | bold);
+        break;
+    case StructuredDiffLine::Type::Removed:
+        parts.push_back(text("-") | color(theme.removed_fg) | bold);
+        break;
+    default:
+        parts.push_back(text(" "));
+        break;
     }
     parts.push_back(text(" "));
 
@@ -580,7 +587,9 @@ get_diff_syntax_theme(const std::string& theme_name) {
     }
 
     if (selected) {
-        result = result | bgcolor(loom::ui::design::theme::current_theme().palette->message_actions_background);
+        result =
+            result |
+            bgcolor(loom::ui::design::theme::current_theme().palette->message_actions_background);
     }
 
     return result;
@@ -594,7 +603,8 @@ get_diff_syntax_theme(const std::string& theme_name) {
 [[nodiscard]] inline Element RenderBinaryFile() {
     return vbox({
         text("") | dim,
-        text("  Binary file — cannot display diff") | color(loom::ui::design::theme::current_theme().palette->muted) | center,
+        text("  Binary file — cannot display diff") |
+            color(loom::ui::design::theme::current_theme().palette->muted) | center,
         text("") | dim,
     });
 }
@@ -608,20 +618,20 @@ get_diff_syntax_theme(const std::string& theme_name) {
             text(" (new file)") | color(loom::ui::design::theme::current_theme().palette->muted),
         }),
         separator(),
-        text("  Untracked file — full content not shown in diff") | color(loom::ui::design::theme::current_theme().palette->muted),
+        text("  Untracked file — full content not shown in diff") |
+            color(loom::ui::design::theme::current_theme().palette->muted),
     });
 }
 
 /// Render a hunk header
 [[nodiscard]] inline Element RenderHunkHeader(const StructuredPatchHunk& hunk,
-                                               const DiffSyntaxTheme& theme) {
-    auto header_text = std::format("@@ -{},{} +{},{} @@",
-        hunk.old_start, hunk.old_lines, hunk.new_start, hunk.new_lines);
+                                              const DiffSyntaxTheme& theme) {
+    auto header_text = std::format("@@ -{},{} +{},{} @@", hunk.old_start, hunk.old_lines,
+                                   hunk.new_start, hunk.new_lines);
     if (!hunk.header.empty()) {
         header_text += " " + hunk.header;
     }
-    return text(" " + header_text) | color(theme.hunk_header_fg)
-           | bgcolor(theme.hunk_header_bg);
+    return text(" " + header_text) | color(theme.hunk_header_fg) | bgcolor(theme.hunk_header_bg);
 }
 
 /// Render the full structured diff view
@@ -642,7 +652,8 @@ get_diff_syntax_theme(const std::string& theme_name) {
     elements.push_back(hbox({
         text(" ") | dim,
         text(diff.file_path) | bold | color(loom::ui::design::theme::current_theme().palette->text),
-        diff.is_large_file ? (text(" (large file)") | color(loom::ui::design::theme::current_theme().palette->warning))
+        diff.is_large_file ? (text(" (large file)") |
+                              color(loom::ui::design::theme::current_theme().palette->warning))
                            : text(""),
     }));
     elements.push_back(separator());
@@ -667,8 +678,8 @@ get_diff_syntax_theme(const std::string& theme_name) {
 
             if (total_rendered >= opts.scroll_offset &&
                 total_rendered < opts.scroll_offset + opts.visible_height) {
-                elements.push_back(RenderStructuredDiffLine(
-                    line, theme, opts.show_line_numbers, gutter_width, false));
+                elements.push_back(RenderStructuredDiffLine(line, theme, opts.show_line_numbers,
+                                                            gutter_width, false));
             }
             total_rendered++;
         }
@@ -677,12 +688,13 @@ get_diff_syntax_theme(const std::string& theme_name) {
 
     // Truncation notice
     if (diff.is_truncated || total_rendered >= opts.max_display_lines) {
-        elements.push_back(
-            text("  ... diff truncated (too many lines) ...") | color(loom::ui::design::theme::current_theme().palette->muted) | center);
+        elements.push_back(text("  ... diff truncated (too many lines) ...") |
+                           color(loom::ui::design::theme::current_theme().palette->muted) | center);
     }
 
     if (elements.size() <= 2) {
-        elements.push_back(text("  (no changes)") | color(loom::ui::design::theme::current_theme().palette->muted));
+        elements.push_back(text("  (no changes)") |
+                           color(loom::ui::design::theme::current_theme().palette->muted));
     }
 
     return vbox(elements) | vscroll_indicator | yframe | flex;
@@ -698,51 +710,50 @@ get_diff_syntax_theme(const std::string& theme_name) {
         StructuredDiffOptions opts;
         int selected_line = 0;
     };
+
     auto state = std::make_shared<State>();
     state->opts = std::move(options);
 
-    return Renderer([state] {
-        return RenderStructuredDiff(state->opts);
-    }) | CatchEvent([state](Event event) -> bool {
-        if (event == Event::ArrowDown || event == Event::Character('j')) {
-            state->opts.scroll_offset++;
-            return true;
-        }
-        if (event == Event::ArrowUp || event == Event::Character('k')) {
-            state->opts.scroll_offset = std::max(0, state->opts.scroll_offset - 1);
-            return true;
-        }
-        if (event == Event::PageDown) {
-            state->opts.scroll_offset += state->opts.visible_height;
-            return true;
-        }
-        if (event == Event::PageUp) {
-            state->opts.scroll_offset = std::max(
-                0, state->opts.scroll_offset - state->opts.visible_height);
-            return true;
-        }
-        if (event == Event::Home) {
-            state->opts.scroll_offset = 0;
-            return true;
-        }
-        if (event == Event::Character('q') || event == Event::Escape) {
-            if (state->opts.on_close) state->opts.on_close();
-            return true;
-        }
-        if (event == Event::Return) {
-            if (state->opts.on_line_select) {
-                state->opts.on_line_select(state->opts.scroll_offset);
-            }
-            return true;
-        }
-        return false;
-    });
+    return Renderer([state] { return RenderStructuredDiff(state->opts); }) |
+           CatchEvent([state](Event event) -> bool {
+               if (event == Event::ArrowDown || event == Event::Character('j')) {
+                   state->opts.scroll_offset++;
+                   return true;
+               }
+               if (event == Event::ArrowUp || event == Event::Character('k')) {
+                   state->opts.scroll_offset = std::max(0, state->opts.scroll_offset - 1);
+                   return true;
+               }
+               if (event == Event::PageDown) {
+                   state->opts.scroll_offset += state->opts.visible_height;
+                   return true;
+               }
+               if (event == Event::PageUp) {
+                   state->opts.scroll_offset =
+                       std::max(0, state->opts.scroll_offset - state->opts.visible_height);
+                   return true;
+               }
+               if (event == Event::Home) {
+                   state->opts.scroll_offset = 0;
+                   return true;
+               }
+               if (event == Event::Character('q') || event == Event::Escape) {
+                   if (state->opts.on_close) state->opts.on_close();
+                   return true;
+               }
+               if (event == Event::Return) {
+                   if (state->opts.on_line_select) {
+                       state->opts.on_line_select(state->opts.scroll_offset);
+                   }
+                   return true;
+               }
+               return false;
+           });
 }
 
 /// Convenience: render a quick diff element (non-interactive)
-[[nodiscard]] inline Element QuickDiff(
-    const std::string& file_path,
-    const std::vector<StructuredPatchHunk>& hunks) {
+[[nodiscard]] inline Element QuickDiff(const std::string& file_path,
+                                       const std::vector<StructuredPatchHunk>& hunks) {
 
     DiffDetailViewProps diff;
     diff.file_path = file_path;
@@ -770,8 +781,8 @@ struct RenderStructuredDiffInput {
     int visible_height = 40;
     int max_display_lines = 2000;
     bool show_line_numbers = true;
-    int files_changed = 1;          // for summary bar
-    int additions_override = -1;    // -1 = auto compute from hunks
+    int files_changed = 1;        // for summary bar
+    int additions_override = -1;  // -1 = auto compute from hunks
     int deletions_override = -1;
     std::optional<DiffSyntaxTheme> theme;
     std::function<void(int line)> on_line_select;
@@ -780,8 +791,8 @@ struct RenderStructuredDiffInput {
 
 /// Build hunks + summary, render the full widget.
 [[nodiscard]] inline Element RenderStructuredDiff(const RenderStructuredDiffInput& in) {
-    auto phunks = loom::utils::file_edit::compute_structured_patch(
-        in.old_content, in.new_content, in.context_lines);
+    auto phunks = loom::utils::file_edit::compute_structured_patch(in.old_content, in.new_content,
+                                                                   in.context_lines);
 
     DiffDetailViewProps props;
     props.file_path = in.file_path;
@@ -838,10 +849,11 @@ struct RenderStructuredDiffInput {
     auto body = RenderStructuredDiff(opts);
 
     return vbox({
-        summary,
-        separator(),
-        body,
-    }) | flex;
+               summary,
+               separator(),
+               body,
+           }) |
+           flex;
 }
 
-} // namespace loom::ui::structured_diff
+}  // namespace loom::ui::structured_diff

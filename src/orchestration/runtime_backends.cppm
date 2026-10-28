@@ -58,7 +58,7 @@ using loom::core::ToolResult;
 // c13b structured config runtime tool.
 [[nodiscard]] Result<ToolResult> config_backend(const ToolInput& input);
 
-} // namespace loom::orchestration::detail
+}  // namespace loom::orchestration::detail
 
 // The moved computer-use implementation unit keeps namespace loom::tools (the
 // zero-call-site-churn policy of the agent/mcp lifts).
@@ -70,7 +70,7 @@ using loom::core::ToolResult;
 
 [[nodiscard]] Result<ToolResult> execute_computer_use(const ToolInput& input);
 
-} // namespace loom::tools::detail
+}  // namespace loom::tools::detail
 
 export namespace loom::tools {
 
@@ -80,10 +80,9 @@ export namespace loom::tools {
 // unchanged; their home module is now loom.orchestration.runtime_backends.
 [[nodiscard]] std::vector<loom::core::ToolDefinition> collect_mcp_tool_definitions();
 
-[[nodiscard]] std::unordered_map<std::string, std::string>
-collect_mcp_input_schemas();
+[[nodiscard]] std::unordered_map<std::string, std::string> collect_mcp_input_schemas();
 
-} // export namespace loom::tools
+}  // namespace loom::tools
 
 export namespace loom::orchestration {
 
@@ -118,8 +117,8 @@ namespace fs = std::filesystem;
         return svc_image::ImageService::to_base64(data);
     };
 
-    result.from_base64 = [](std::string_view encoded)
-        -> std::expected<std::vector<std::uint8_t>, std::string> {
+    result.from_base64 =
+        [](std::string_view encoded) -> std::expected<std::vector<std::uint8_t>, std::string> {
         auto decoded = svc_image::ImageService::from_base64(encoded);
         if (!decoded) {
             return std::unexpected(decoded.error().message);
@@ -143,9 +142,10 @@ namespace fs = std::filesystem;
 /// these paths when the executor is built would freeze the wrong roots.
 [[nodiscard]] inline loom::tools::SkillLoaderExecutor make_skill_loader_executor() {
     return [](const loom::core::ToolInput& input)
-        -> std::optional<loom::core::Result<loom::core::ToolResult>> {
-        auto name = loom::tools::detail::json_string(input.json(), "name")
-            .or_else([&] { return loom::tools::detail::json_string(input.json(), "skill"); });
+               -> std::optional<loom::core::Result<loom::core::ToolResult>> {
+        auto name = loom::tools::detail::json_string(input.json(), "name").or_else([&] {
+            return loom::tools::detail::json_string(input.json(), "skill");
+        });
         if (!name || name->empty()) return std::nullopt;
 
         loom::skills::SkillLoader loader;
@@ -177,9 +177,7 @@ namespace fs = std::filesystem;
 /// clearing the process-global slot. Path/env resolution and the quiet load
 /// happen per call inside detail::config_backend.
 [[nodiscard]] inline loom::tools::RuntimeToolExecutor make_config_backend() {
-    return [](const loom::core::ToolInput& input) {
-        return detail::config_backend(input);
-    };
+    return [](const loom::core::ToolInput& input) { return detail::config_backend(input); };
 }
 
 /// Build the registry missing-tool fallback: route unregistered tool names
@@ -188,8 +186,7 @@ namespace fs = std::filesystem;
 /// lambdas (including std::string{input.json()}, last_error capture, and the
 /// exact ToolNotFound text); the last tried server's error, including a
 /// terminal ToolNotFound, is appended to the final message verbatim.
-[[nodiscard]] inline loom::core::ToolRegistry::MissingToolHandler
-make_missing_tool_backend() {
+[[nodiscard]] inline loom::core::ToolRegistry::MissingToolHandler make_missing_tool_backend() {
     return [](std::string_view tool_name,
               const loom::core::ToolInput& input) -> loom::core::Result<loom::core::ToolResult> {
         auto& runtime = loom::tools::NativeMcpRuntime::instance();
@@ -212,8 +209,7 @@ make_missing_tool_backend() {
             loom::core::ErrorCode::ToolNotFound,
             std::format("Tool '{}' not found in registry or on any "
                         "configured MCP server{}",
-                        tool_name,
-                        last_error.empty() ? "" : " (" + last_error + ")")));
+                        tool_name, last_error.empty() ? "" : " (" + last_error + ")")));
     };
 }
 
@@ -235,10 +231,9 @@ inline void install_runtime_backends() {
         loom::tools::set_mcp_auth_backend(&detail::mcp_auth_backend);
         // ONE slot covers both 'computer_use' and the native-wire 'computer';
         // the dispatcher funnels both names here.
-        loom::tools::set_computer_use_backend(
-            [](const loom::core::ToolInput& input) {
-                return loom::tools::detail::execute_computer_use(input);
-            });
+        loom::tools::set_computer_use_backend([](const loom::core::ToolInput& input) {
+            return loom::tools::detail::execute_computer_use(input);
+        });
         // c13b: structured user-tier config tool.
         loom::tools::set_config_backend(make_config_backend());
 
@@ -247,17 +242,12 @@ inline void install_runtime_backends() {
         // permission checker copy — install-time capture would freeze one
         // registry's checker.
         loom::tools::set_agent_tool_factory(
-            [](loom::tools::AgentConfig config,
-               int depth,
-               loom::core::ToolRegistry* registry,
+            [](loom::tools::AgentConfig config, int depth, loom::core::ToolRegistry* registry,
                loom::tools::AgentLivePermissionCheckFn permission_check,
                bool permission_hook_valid_for_background) {
-                return loom::tools::make_agent_tool(
-                    std::move(config),
-                    depth,
-                    registry,
-                    std::move(permission_check),
-                    permission_hook_valid_for_background);
+                return loom::tools::make_agent_tool(std::move(config), depth, registry,
+                                                    std::move(permission_check),
+                                                    permission_hook_valid_for_background);
             });
 
         // MCP connectivity -> hook snapshot sink (rehomed from loom_bootstrap).
@@ -265,4 +255,4 @@ inline void install_runtime_backends() {
     });
 }
 
-} // namespace loom::orchestration
+}  // namespace loom::orchestration

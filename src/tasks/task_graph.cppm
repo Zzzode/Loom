@@ -13,7 +13,7 @@ import std;
 import loom.types.types;
 import loom.coordinator.swarm;
 import loom.process.bash.bash_execution;
-import loom.tasks.task;   // canonical TaskType / TaskStatus / TaskResult / task_type_to_string
+import loom.tasks.task; // canonical TaskType / TaskStatus / TaskResult / task_type_to_string
 
 export namespace loom::core {
 
@@ -26,13 +26,20 @@ export namespace loom::core {
 /// Convert TaskStatus to display string
 [[nodiscard]] constexpr std::string_view task_status_to_string(TaskStatus status) noexcept {
     switch (status) {
-        case TaskStatus::Pending:   return "pending";
-        case TaskStatus::Running:   return "running";
-        case TaskStatus::Completed: return "completed";
-        case TaskStatus::Failed:    return "failed";
-        case TaskStatus::Cancelled: return "cancelled";
-        case TaskStatus::Killed:    return "killed";
-        case TaskStatus::TimedOut:  return "timed_out";
+    case TaskStatus::Pending:
+        return "pending";
+    case TaskStatus::Running:
+        return "running";
+    case TaskStatus::Completed:
+        return "completed";
+    case TaskStatus::Failed:
+        return "failed";
+    case TaskStatus::Cancelled:
+        return "cancelled";
+    case TaskStatus::Killed:
+        return "killed";
+    case TaskStatus::TimedOut:
+        return "timed_out";
     }
     return "unknown";
 }
@@ -41,8 +48,7 @@ export namespace loom::core {
 using BackgroundTaskId = TaskId;
 
 /// Fetch the task id as a printable short string.
-template <typename T>
-[[nodiscard]] inline std::string task_id_short_string_impl(const T& id) {
+template <typename T> [[nodiscard]] inline std::string task_id_short_string_impl(const T& id) {
     if constexpr (requires { id.value; }) {
         return std::string(id.value).substr(0, 8);
     } else {
@@ -50,6 +56,7 @@ template <typename T>
         return "--------";
     }
 }
+
 [[nodiscard]] inline std::string task_id_short_string(const TaskId& id) {
     return task_id_short_string_impl(id);
 }
@@ -57,26 +64,24 @@ template <typename T>
 /// A background task with full lifecycle metadata
 struct BackgroundTask {
     BackgroundTaskId id;
-    std::string description;               // Human-readable description
+    std::string description;  // Human-readable description
     TaskType type = TaskType::GeneralPurpose;
     TaskStatus status = TaskStatus::Pending;
-    double progress = 0.0;                 // Progress 0.0 - 1.0
-    std::optional<TaskResult> result;      // Set on completion
-    std::optional<std::string> error;      // Error message if failed
+    double progress = 0.0;             // Progress 0.0 - 1.0
+    std::optional<TaskResult> result;  // Set on completion
+    std::optional<std::string> error;  // Error message if failed
 
     std::chrono::system_clock::time_point created_at;
     std::optional<std::chrono::system_clock::time_point> started_at;
     std::optional<std::chrono::system_clock::time_point> completed_at;
 
-    std::optional<WorkerId> agent_id;      // Agent executing this task (if any)
+    std::optional<WorkerId> agent_id;                  // Agent executing this task (if any)
     std::optional<std::chrono::milliseconds> timeout;  // Maximum execution time
 
     /// Check if the task is in a terminal state
     [[nodiscard]] bool is_terminal() const noexcept {
-        return status == TaskStatus::Completed ||
-               status == TaskStatus::Failed ||
-               status == TaskStatus::Cancelled ||
-               status == TaskStatus::TimedOut;
+        return status == TaskStatus::Completed || status == TaskStatus::Failed ||
+               status == TaskStatus::Cancelled || status == TaskStatus::TimedOut;
     }
 
     /// Calculate elapsed time since start (or since creation if not started)
@@ -95,11 +100,8 @@ struct BackgroundTask {
 
     /// Format task as a status line for display
     [[nodiscard]] std::string format_status() const {
-        return std::format("[{}] {} ({}, {:.0f}%)",
-            task_id_short_string(id),
-            description,
-            task_status_to_string(status),
-            progress * 100.0);
+        return std::format("[{}] {} ({}, {:.0f}%)", task_id_short_string(id), description,
+                           task_status_to_string(status), progress * 100.0);
     }
 };
 
@@ -150,7 +152,8 @@ public:
             task.status = TaskStatus::TimedOut;
             task.completed_at = std::chrono::system_clock::now();
             active_count_.fetch_sub(1, std::memory_order_relaxed);
-            return std::unexpected(Error::make(ErrorCode::ToolTimeout, "Task timeout is non-positive"));
+            return std::unexpected(
+                Error::make(ErrorCode::ToolTimeout, "Task timeout is non-positive"));
         }
 
         // Check cancellation token
@@ -162,8 +165,7 @@ public:
         }
 
         Result<TaskResult> execution = std::unexpected(Error::make(
-            ErrorCode::NotImplemented,
-            "No task executor is configured for this task type."));
+            ErrorCode::NotImplemented, "No task executor is configured for this task type."));
         {
             std::lock_guard lock(mutex_);
             if (executor_) execution = executor_(task);
@@ -180,7 +182,8 @@ public:
                     .duration = std::chrono::milliseconds(0),
                 };
             } else {
-                execution = std::unexpected(Error::make(ErrorCode::ToolExecutionFailed, shell_result.error()));
+                execution = std::unexpected(
+                    Error::make(ErrorCode::ToolExecutionFailed, shell_result.error()));
             }
         }
 
@@ -205,8 +208,8 @@ public:
     /// Cancel a running task
     [[nodiscard]] VoidResult cancel(BackgroundTask& task) {
         if (task.is_terminal()) {
-            return std::unexpected(Error::make(
-                ErrorCode::InternalError, "Cannot cancel a task in terminal state"));
+            return std::unexpected(
+                Error::make(ErrorCode::InternalError, "Cannot cancel a task in terminal state"));
         }
         {
             std::lock_guard lock(mutex_);
@@ -254,12 +257,13 @@ private:
 class TaskScheduler {
 public:
     explicit TaskScheduler(std::uint32_t concurrency_limit = 4)
-        : runner_(concurrency_limit), concurrency_limit_(concurrency_limit) {}
+        : runner_(concurrency_limit)
+        , concurrency_limit_(concurrency_limit) {}
 
     /// Submit a new task for execution
-    [[nodiscard]] Result<TaskId> submit(std::string description,
-                                        TaskType type = TaskType::GeneralPurpose,
-                                        std::optional<std::chrono::milliseconds> timeout = std::nullopt) {
+    [[nodiscard]] Result<TaskId>
+    submit(std::string description, TaskType type = TaskType::GeneralPurpose,
+           std::optional<std::chrono::milliseconds> timeout = std::nullopt) {
         auto id = generate_task_id();
         BackgroundTask task{
             .id = id,
@@ -292,8 +296,8 @@ public:
             return std::unexpected(Error::make(ErrorCode::InternalError, "Task not found"));
         }
         if (it->second.is_terminal()) {
-            return std::unexpected(Error::make(
-                ErrorCode::InternalError, "Task already in terminal state"));
+            return std::unexpected(
+                Error::make(ErrorCode::InternalError, "Task already in terminal state"));
         }
         return runner_.cancel(it->second);
     }
@@ -326,9 +330,8 @@ public:
             }
         }
         // Sort by creation time (newest first)
-        std::ranges::sort(result, [](const auto& a, const auto& b) {
-            return a.created_at > b.created_at;
-        });
+        std::ranges::sort(result,
+                          [](const auto& a, const auto& b) { return a.created_at > b.created_at; });
         return result;
     }
 
@@ -352,15 +355,14 @@ public:
     }
 
     /// Get number of currently running tasks
-    [[nodiscard]] std::uint32_t running_count() const {
-        return runner_.active_count();
-    }
+    [[nodiscard]] std::uint32_t running_count() const { return runner_.active_count(); }
 
     /// Get number of pending (queued) tasks
     [[nodiscard]] std::size_t pending_count() const {
         std::lock_guard lock(mutex_);
-        return std::ranges::count_if(tasks_ | std::views::values,
-            [](const BackgroundTask& t) { return t.status == TaskStatus::Pending; });
+        return std::ranges::count_if(tasks_ | std::views::values, [](const BackgroundTask& t) {
+            return t.status == TaskStatus::Pending;
+        });
     }
 
     /// Check for timed-out tasks and mark them accordingly
@@ -371,9 +373,9 @@ public:
                 auto cancel_result = runner_.cancel(task);
                 task.status = TaskStatus::TimedOut;
                 task.completed_at = std::chrono::system_clock::now();
-                task.error = cancel_result
-                    ? "Task exceeded timeout limit"
-                    : "Task exceeded timeout limit; cancellation failed: " + cancel_result.error().message;
+                task.error = cancel_result ? "Task exceeded timeout limit"
+                                           : "Task exceeded timeout limit; cancellation failed: " +
+                                                 cancel_result.error().message;
             }
         }
     }
@@ -414,4 +416,4 @@ private:
     }
 };
 
-} // namespace loom::core
+}  // namespace loom::core

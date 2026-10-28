@@ -3,15 +3,15 @@
 // screen-interactive / termios closure stay out of the interface BMI.
 module;
 
-#include <unistd.h>
-#include <termios.h>  // tcgetattr/tcsetattr/termios/VLNEXT
-#include <cerrno>
-#include <csignal>
-#include <cstdio>
-
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/loop.hpp>
 #include <ftxui/component/screen_interactive.hpp>
+#include <termios.h>  // tcgetattr/tcsetattr/termios/VLNEXT
+#include <unistd.h>
+
+#include <cerrno>
+#include <csignal>
+#include <cstdio>
 
 module loom.ui.app.app;
 
@@ -35,11 +35,14 @@ void (*terminal_exit_signal_handler)(int) = nullptr;
 class ParentTerminalGuard {
 public:
     ParentTerminalGuard(const termios& original, bool have_original)
-        : original_(original), have_original_(have_original) {}
+        : original_(original)
+        , have_original_(have_original) {}
+
     void BeginUi(bool track_mouse) {
         ui_started_ = true;
         reset_mouse_ = track_mouse;
     }
+
     ~ParentTerminalGuard() {
         if (reset_mouse_) {
             std::fputs("\x1b[?1000l\x1b[?1003l\x1b[?1006l\x1b[?1015l", stdout);
@@ -51,8 +54,9 @@ public:
             (void)tcsetattr(STDIN_FILENO, ui_started_ ? TCSAFLUSH : TCSANOW, &original_);
         }
     }
+
 private:
-    termios original_ {};
+    termios original_{};
     bool have_original_;
     bool ui_started_ = false;
     bool reset_mouse_ = false;
@@ -73,14 +77,13 @@ void HandleTerminalHangup(int) {
 class TerminalHangupGuard {
 public:
     TerminalHangupGuard() {
-        struct sigaction termination {};
-        if (sigaction(SIGTERM, nullptr, &termination) != 0 ||
-            (termination.sa_flags & SA_SIGINFO) ||
+        struct sigaction termination{};
+        if (sigaction(SIGTERM, nullptr, &termination) != 0 || (termination.sa_flags & SA_SIGINFO) ||
             termination.sa_handler == SIG_DFL || termination.sa_handler == SIG_IGN) {
             throw std::runtime_error("Terminal termination handler is unavailable");
         }
         terminal_exit_signal_handler = termination.sa_handler;
-        struct sigaction hangup {};
+        struct sigaction hangup{};
         hangup.sa_handler = HandleTerminalHangup;
         sigemptyset(&hangup.sa_mask);
         hangup_relay_active.store(true, std::memory_order_release);
@@ -89,27 +92,25 @@ public:
             throw std::runtime_error("Cannot install terminal hangup handler");
         }
     }
+
     ~TerminalHangupGuard() {
         Deactivate();
         (void)sigaction(SIGHUP, &original_, nullptr);
     }
-    void Deactivate() {
-        hangup_relay_active.store(false, std::memory_order_release);
-    }
+
+    void Deactivate() { hangup_relay_active.store(false, std::memory_order_release); }
+
 private:
-    struct sigaction original_ {};
+    struct sigaction original_{};
 };
 #endif
 
-[[nodiscard]] int RunApp(
-    core::QueryEngine& engine,
-    loom::commands::AppCommandRegistry& cmd_registry,
-    const std::filesystem::path* sessions_dir,
-    loom::hooks::ToolPermissionHook* permission_hook,
-    loom::hooks::LifecycleHookRegistry* lifecycle_hooks,
-    bool mouse_mode,
-    std::uint32_t tool_round_budget
-) {
+[[nodiscard]] int RunApp(core::QueryEngine& engine,
+                         loom::commands::AppCommandRegistry& cmd_registry,
+                         const std::filesystem::path* sessions_dir,
+                         loom::hooks::ToolPermissionHook* permission_hook,
+                         loom::hooks::LifecycleHookRegistry* lifecycle_hooks, bool mouse_mode,
+                         std::uint32_t tool_round_budget) {
     // Use the alternate-screen fullscreen - the REPL owns the terminal.
     auto screen = ScreenInteractive::Fullscreen();
 
@@ -143,7 +144,7 @@ private:
     // independent of the osascript/clipboard path (setsid/closefrom there
     // remain good hygiene but were NOT the cause of keystroke loss).
 #if defined(__APPLE__) || defined(__linux__)
-    struct termios orig_termios {};
+    struct termios orig_termios{};
     const bool have_orig = (tcgetattr(STDIN_FILENO, &orig_termios) == 0);
     ParentTerminalGuard terminal_guard(orig_termios, have_orig);
     if (have_orig) {
@@ -170,21 +171,17 @@ private:
     std::unique_ptr<TerminalHangupGuard> hangup_guard;
 #endif
 
-    auto app = Make<AppAdapter>(
-        &engine,
-        lifecycle_hooks,
-        &cmd_registry,
-        sessions_dir ? std::optional<std::filesystem::path>{*sessions_dir}
-                     : std::nullopt,
-        [&screen, &should_exit]() {
-            should_exit = true;
-            screen.Exit();
-        }
-    );
+    auto app = Make<AppAdapter>(&engine, lifecycle_hooks, &cmd_registry,
+                                sessions_dir ? std::optional<std::filesystem::path>{*sessions_dir}
+                                             : std::nullopt,
+                                [&screen, &should_exit]() {
+                                    should_exit = true;
+                                    screen.Exit();
+                                });
 
     app->set_screen(&screen);
-    app->set_tool_round_budget(tool_round_budget == 0
-        ? std::nullopt : std::optional<std::uint32_t>{tool_round_budget});
+    app->set_tool_round_budget(
+        tool_round_budget == 0 ? std::nullopt : std::optional<std::uint32_t>{tool_round_budget});
 
     // RFC 0007 Phase 2: set the persistent mouse-mode hint in the status bar.
     app->set_mouse_mode_label(mouse_mode);
@@ -193,13 +190,12 @@ private:
 
     if (permission_hook && !permission_hook->is_auto_approve_mode()) {
         auto ui_callback = app->get_permission_callback();
-        permission_hook->set_ask_user_fn(
-            [ui_callback](const loom::hooks::PermissionContext& ctx) -> loom::hooks::PermissionDecision {
-                bool allowed = ui_callback(ctx.tool_name, ctx.args);
-                return allowed ? loom::hooks::PermissionDecision::allow
-                               : loom::hooks::PermissionDecision::deny;
-            }
-        );
+        permission_hook->set_ask_user_fn([ui_callback](const loom::hooks::PermissionContext& ctx)
+                                             -> loom::hooks::PermissionDecision {
+            bool allowed = ui_callback(ctx.tool_name, ctx.args);
+            return allowed ? loom::hooks::PermissionDecision::allow
+                           : loom::hooks::PermissionDecision::deny;
+        });
     }
 
     app->SyncState();
@@ -233,16 +229,14 @@ private:
 
 }  // namespace
 
-extern "C" int loom_ui_run_app_bridge(
-    loom::core::QueryEngine* engine,
-    loom::hooks::LifecycleHookRegistry* lifecycle_hooks,
-    loom::commands::AppCommandRegistry* cmd_registry,
-    const std::filesystem::path* sessions_dir,
-    loom::hooks::ToolPermissionHook* permission_hook,
-    bool mouse_mode,
-    std::uint32_t tool_round_budget
-) {
-    return loom::ui::RunApp(*engine, *cmd_registry, sessions_dir, permission_hook, lifecycle_hooks, mouse_mode, tool_round_budget);
+extern "C" int loom_ui_run_app_bridge(loom::core::QueryEngine* engine,
+                                      loom::hooks::LifecycleHookRegistry* lifecycle_hooks,
+                                      loom::commands::AppCommandRegistry* cmd_registry,
+                                      const std::filesystem::path* sessions_dir,
+                                      loom::hooks::ToolPermissionHook* permission_hook,
+                                      bool mouse_mode, std::uint32_t tool_round_budget) {
+    return loom::ui::RunApp(*engine, *cmd_registry, sessions_dir, permission_hook, lifecycle_hooks,
+                            mouse_mode, tool_round_budget);
 }
 
 }  // namespace loom::ui

@@ -18,13 +18,13 @@ using loom::services::api::Provider;
 // =========================================================================
 
 enum class ApiErrorCategory {
-    Authentication,      // 401/403 - auth failed, token expired, etc.
-    InvalidRequest,      // 400 - bad request, invalid parameters
-    RateLimited,         // 429 - too many requests
-    ServerError,         // 5xx - server-side errors
-    NetworkError,        // Connection issues, timeouts
-    Overloaded,          // 529 - server overloaded
-    Unknown              // Catch-all
+    Authentication,  // 401/403 - auth failed, token expired, etc.
+    InvalidRequest,  // 400 - bad request, invalid parameters
+    RateLimited,     // 429 - too many requests
+    ServerError,     // 5xx - server-side errors
+    NetworkError,    // Connection issues, timeouts
+    Overloaded,      // 529 - server overloaded
+    Unknown          // Catch-all
 };
 
 // =========================================================================
@@ -47,9 +47,8 @@ struct ApiErrorDetails {
     std::string error_code;
 
     [[nodiscard]] std::string to_string() const {
-        return std::format("[HTTP {}] {}: {} - {}",
-            http_status, error_type, error_message,
-            request_id ? *request_id : "no request id");
+        return std::format("[HTTP {}] {}: {} - {}", http_status, error_type, error_message,
+                           request_id ? *request_id : "no request id");
     }
 };
 
@@ -72,13 +71,7 @@ struct RetryContext {
 // Retry Decision
 // =========================================================================
 
-enum class RetryDecision {
-    RetryImmediately,
-    RetryWithDelay,
-    FallbackModel,
-    NoRetry,
-    Abort
-};
+enum class RetryDecision { RetryImmediately, RetryWithDelay, FallbackModel, NoRetry, Abort };
 
 // =========================================================================
 // Error Classifier
@@ -109,36 +102,34 @@ public:
     // Check if error is retryable
     [[nodiscard]] static bool is_retryable(const ApiErrorDetails& error) {
         switch (error.category) {
-            case ApiErrorCategory::RateLimited:
-            case ApiErrorCategory::ServerError:
-            case ApiErrorCategory::NetworkError:
-            case ApiErrorCategory::Overloaded:
-                return true;
-            case ApiErrorCategory::Authentication:
-                // Only retry auth errors if it might be a transient issue
-                return error.error_message.contains("expired") ||
-                       error.error_message.contains("timeout");
-            case ApiErrorCategory::InvalidRequest:
-            case ApiErrorCategory::Unknown:
-            default:
-                return false;
+        case ApiErrorCategory::RateLimited:
+        case ApiErrorCategory::ServerError:
+        case ApiErrorCategory::NetworkError:
+        case ApiErrorCategory::Overloaded:
+            return true;
+        case ApiErrorCategory::Authentication:
+            // Only retry auth errors if it might be a transient issue
+            return error.error_message.contains("expired") ||
+                   error.error_message.contains("timeout");
+        case ApiErrorCategory::InvalidRequest:
+        case ApiErrorCategory::Unknown:
+        default:
+            return false;
         }
     }
 
     // Check if error should trigger model fallback
     [[nodiscard]] static bool should_fallback(const ApiErrorDetails& error,
-                                             const RetryContext& context) {
-        if (error.category == ApiErrorCategory::Overloaded &&
-            context.consecutive_529_errors >= 3) {
+                                              const RetryContext& context) {
+        if (error.category == ApiErrorCategory::Overloaded && context.consecutive_529_errors >= 3) {
             return true;
         }
         return false;
     }
 
     // Calculate retry delay with exponential backoff and jitter
-    [[nodiscard]] static std::chrono::milliseconds calculate_delay(
-        const RetryContext& context,
-        const ApiErrorDetails& error) {
+    [[nodiscard]] static std::chrono::milliseconds calculate_delay(const RetryContext& context,
+                                                                   const ApiErrorDetails& error) {
 
         // Use retry-after header if provided
         if (error.retry_after_seconds) {
@@ -155,16 +146,13 @@ public:
 
         // Add jitter (±20%)
         auto jitter = static_cast<double>(std::rand()) / RAND_MAX * 0.4 - 0.2;
-        delay = std::chrono::milliseconds(
-            static_cast<long long>(delay.count() * (1 + jitter)));
+        delay = std::chrono::milliseconds(static_cast<long long>(delay.count() * (1 + jitter)));
 
         return delay;
     }
 
     // Determine retry decision
-    [[nodiscard]] static RetryDecision decide(
-        const ApiErrorDetails& error,
-        RetryContext& context) {
+    [[nodiscard]] static RetryDecision decide(const ApiErrorDetails& error, RetryContext& context) {
 
         if (context.attempt >= context.max_attempts) {
             return RetryDecision::Abort;
@@ -201,10 +189,9 @@ public:
 class ErrorFactory {
 public:
     // Create from HTTP status and message
-    [[nodiscard]] static ApiErrorDetails from_http(
-        int http_status,
-        std::string_view message,
-        std::optional<std::string> request_id = std::nullopt) {
+    [[nodiscard]] static ApiErrorDetails
+    from_http(int http_status, std::string_view message,
+              std::optional<std::string> request_id = std::nullopt) {
 
         ApiErrorDetails error;
         error.http_status = http_status;
@@ -218,10 +205,9 @@ public:
     }
 
     // Create from JSON error response
-    [[nodiscard]] static ApiErrorDetails from_json(
-        int http_status,
-        std::string_view json_body,
-        std::optional<std::string> request_id = std::nullopt) {
+    [[nodiscard]] static ApiErrorDetails
+    from_json(int http_status, std::string_view json_body,
+              std::optional<std::string> request_id = std::nullopt) {
 
         ApiErrorDetails error;
         error.http_status = http_status;
@@ -234,8 +220,7 @@ public:
     }
 
     // Create network error
-    [[nodiscard]] static ApiErrorDetails network_error(
-        std::string_view message) {
+    [[nodiscard]] static ApiErrorDetails network_error(std::string_view message) {
         ApiErrorDetails error;
         error.category = ApiErrorCategory::NetworkError;
         error.error_type = "network_error";
@@ -244,19 +229,16 @@ public:
     }
 
     // Create timeout error
-    [[nodiscard]] static ApiErrorDetails timeout_error(
-        std::chrono::milliseconds timeout) {
+    [[nodiscard]] static ApiErrorDetails timeout_error(std::chrono::milliseconds timeout) {
         ApiErrorDetails error;
         error.category = ApiErrorCategory::NetworkError;
         error.error_type = "timeout";
-        error.error_message = std::format("Request timed out after {}ms",
-            timeout.count());
+        error.error_message = std::format("Request timed out after {}ms", timeout.count());
         return error;
     }
 
     // Create parse error
-    [[nodiscard]] static ApiErrorDetails parse_error(
-        std::string_view message) {
+    [[nodiscard]] static ApiErrorDetails parse_error(std::string_view message) {
         ApiErrorDetails error;
         error.category = ApiErrorCategory::InvalidRequest;
         error.error_type = "parse_error";
@@ -265,8 +247,7 @@ public:
     }
 
 private:
-    static void parse_error_message(std::string_view message,
-                                   ApiErrorDetails& error) {
+    static void parse_error_message(std::string_view message, ApiErrorDetails& error) {
         // Simple heuristic parsing
         if (message.contains("overloaded") || message.contains("529")) {
             error.category = ApiErrorCategory::Overloaded;
@@ -275,10 +256,8 @@ private:
         } else if (message.contains("rate_limit") || message.contains("429")) {
             error.category = ApiErrorCategory::RateLimited;
             error.error_type = "rate_limit_error";
-        } else if (message.contains("authentication") ||
-                   message.contains("auth") ||
-                   message.contains("401") ||
-                   message.contains("403")) {
+        } else if (message.contains("authentication") || message.contains("auth") ||
+                   message.contains("401") || message.contains("403")) {
             error.category = ApiErrorCategory::Authentication;
             error.error_type = "authentication_error";
         } else {
@@ -287,8 +266,7 @@ private:
         error.error_message = std::string(message);
     }
 
-    static void parse_json_error(std::string_view json_body,
-                                ApiErrorDetails& error) {
+    static void parse_json_error(std::string_view json_body, ApiErrorDetails& error) {
         auto parsed = loom::utils::json::parse(json_body);
         if (!parsed) {
             error.error_message = std::string(json_body);
@@ -316,10 +294,12 @@ private:
         } else {
             error.error_message = std::string(json_body);
         }
-        if (auto retry_after = error_obj.get("retry_after_seconds"); retry_after.valid() && retry_after.is_num()) {
+        if (auto retry_after = error_obj.get("retry_after_seconds");
+            retry_after.valid() && retry_after.is_num()) {
             error.retry_after_seconds = static_cast<int>(retry_after.as_int());
         }
-        if (auto rate_limit_type = error_obj.get("rate_limit_type"); rate_limit_type.valid() && rate_limit_type.is_str()) {
+        if (auto rate_limit_type = error_obj.get("rate_limit_type");
+            rate_limit_type.valid() && rate_limit_type.is_str()) {
             error.rate_limit_type = std::string(rate_limit_type.as_str());
         }
     }
@@ -331,28 +311,26 @@ private:
 
 class ProviderErrorMessages {
 public:
-    [[nodiscard]] static std::string_view model_not_found(
-        Provider provider,
-        std::string_view) {
+    [[nodiscard]] static std::string_view model_not_found(Provider provider, std::string_view) {
         switch (provider) {
-            case Provider::Messages:
-                return "Model not found";
-            case Provider::Bedrock:
-                return "You don't have access to the model with the specified model ID";
-            case Provider::Vertex:
-                return "Model not found or not accessible";
+        case Provider::Messages:
+            return "Model not found";
+        case Provider::Bedrock:
+            return "You don't have access to the model with the specified model ID";
+        case Provider::Vertex:
+            return "Model not found or not accessible";
         }
         return "Model not found";
     }
 
     [[nodiscard]] static std::string_view quota_exceeded(Provider provider) {
         switch (provider) {
-            case Provider::Messages:
-                return "Credit balance is too low";
-            case Provider::Bedrock:
-                return "Bedrock service limits exceeded";
-            case Provider::Vertex:
-                return "Vertex AI quota exceeded";
+        case Provider::Messages:
+            return "Credit balance is too low";
+        case Provider::Bedrock:
+            return "Bedrock service limits exceeded";
+        case Provider::Vertex:
+            return "Vertex AI quota exceeded";
         }
         return "Quota exceeded";
     }
@@ -364,57 +342,52 @@ public:
 
 class UserFacingErrors {
 public:
-    [[nodiscard]] static std::string format_for_user(
-        const ApiErrorDetails& error,
-        bool is_interactive = true) {
+    [[nodiscard]] static std::string format_for_user(const ApiErrorDetails& error,
+                                                     bool is_interactive = true) {
 
         switch (error.category) {
-            case ApiErrorCategory::Authentication:
-                return is_interactive
-                    ? "Authentication failed. Check the API key or token "
-                      "configured for your endpoint."
-                    : "Authentication failed";
+        case ApiErrorCategory::Authentication:
+            return is_interactive ? "Authentication failed. Check the API key or token "
+                                    "configured for your endpoint."
+                                  : "Authentication failed";
 
-            case ApiErrorCategory::RateLimited:
-                if (error.retry_after_seconds) {
-                    return std::format("Rate limited. Retry after {}s",
-                        *error.retry_after_seconds);
-                }
-                return "Rate limit exceeded. Please try again later.";
+        case ApiErrorCategory::RateLimited:
+            if (error.retry_after_seconds) {
+                return std::format("Rate limited. Retry after {}s", *error.retry_after_seconds);
+            }
+            return "Rate limit exceeded. Please try again later.";
 
-            case ApiErrorCategory::Overloaded:
-                return "Server is overloaded. Please try again later or switch models.";
+        case ApiErrorCategory::Overloaded:
+            return "Server is overloaded. Please try again later or switch models.";
 
-            case ApiErrorCategory::InvalidRequest:
-                if (error.error_message.contains("prompt is too long")) {
-                    return "Prompt is too long. Try /compact to reduce context.";
-                }
-                if (error.error_message.contains("image")) {
-                    return "Image error. Try removing images or using smaller ones.";
-                }
-                return std::format("Invalid request: {}", error.error_message);
+        case ApiErrorCategory::InvalidRequest:
+            if (error.error_message.contains("prompt is too long")) {
+                return "Prompt is too long. Try /compact to reduce context.";
+            }
+            if (error.error_message.contains("image")) {
+                return "Image error. Try removing images or using smaller ones.";
+            }
+            return std::format("Invalid request: {}", error.error_message);
 
-            case ApiErrorCategory::NetworkError:
-                return "Network error. Check your connection and try again.";
+        case ApiErrorCategory::NetworkError:
+            return "Network error. Check your connection and try again.";
 
-            case ApiErrorCategory::ServerError:
-            case ApiErrorCategory::Unknown:
-            default:
-                return std::format("API error: {}", error.error_message);
+        case ApiErrorCategory::ServerError:
+        case ApiErrorCategory::Unknown:
+        default:
+            return std::format("API error: {}", error.error_message);
         }
     }
 
-    [[nodiscard]] static std::string prompt_too_long(
-        std::optional<int> actual_tokens,
-        std::optional<int> limit_tokens,
-        bool is_interactive = true) {
+    [[nodiscard]] static std::string prompt_too_long(std::optional<int> actual_tokens,
+                                                     std::optional<int> limit_tokens,
+                                                     bool is_interactive = true) {
 
         if (is_interactive) {
             if (actual_tokens && limit_tokens) {
-                return std::format(
-                    "Prompt is too long ({} tokens > {} limit). "
-                    "Run /compact to reduce context.",
-                    *actual_tokens, *limit_tokens);
+                return std::format("Prompt is too long ({} tokens > {} limit). "
+                                   "Run /compact to reduce context.",
+                                   *actual_tokens, *limit_tokens);
             }
             return "Prompt is too long. Run /compact to reduce context.";
         }
@@ -425,17 +398,16 @@ public:
         return "Credit balance is too low. Please add more credits.";
     }
 
-    [[nodiscard]] static std::string model_not_available(
-        std::string_view model_id,
-        std::optional<std::string> fallback_suggestion = std::nullopt) {
+    [[nodiscard]] static std::string
+    model_not_available(std::string_view model_id,
+                        std::optional<std::string> fallback_suggestion = std::nullopt) {
 
         if (fallback_suggestion) {
-            return std::format(
-                "Model {} is not available. Try switching to {}.",
-                model_id, *fallback_suggestion);
+            return std::format("Model {} is not available. Try switching to {}.", model_id,
+                               *fallback_suggestion);
         }
         return std::format("Model {} is not available.", model_id);
     }
 };
 
-} // namespace loom::services::api::errors
+}  // namespace loom::services::api::errors

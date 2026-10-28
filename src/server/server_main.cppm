@@ -1,14 +1,15 @@
 module;
-#include <unistd.h>
-#include <cctype>
-#include <cstdint>
-#include <cstdlib>
-#include <cstring>
+#include <arpa/inet.h>
 #include <netinet/in.h>
 #include <openssl/sha.h>
 #include <poll.h>
 #include <sys/socket.h>
-#include <arpa/inet.h>
+#include <unistd.h>
+
+#include <cctype>
+#include <cstdint>
+#include <cstdlib>
+#include <cstring>
 
 export module loom.server.server_main;
 
@@ -55,8 +56,10 @@ struct WsFrame {
 [[nodiscard]] inline std::string trim(std::string_view value) {
     auto begin = value.begin();
     auto end = value.end();
-    while (begin != end && std::isspace(static_cast<unsigned char>(*begin))) ++begin;
-    while (begin != end && std::isspace(static_cast<unsigned char>(*(end - 1)))) --end;
+    while (begin != end && std::isspace(static_cast<unsigned char>(*begin)))
+        ++begin;
+    while (begin != end && std::isspace(static_cast<unsigned char>(*(end - 1))))
+        --end;
     return std::string(begin, end);
 }
 
@@ -65,14 +68,30 @@ struct WsFrame {
     out.reserve(value.size() + 16);
     for (char ch : value) {
         switch (ch) {
-            case '\\': out += R"(\\)"; break;
-            case '"': out += R"(\")"; break;
-            case '\b': out += R"(\b)"; break;
-            case '\f': out += R"(\f)"; break;
-            case '\n': out += R"(\n)"; break;
-            case '\r': out += R"(\r)"; break;
-            case '\t': out += R"(\t)"; break;
-            default: out += ch; break;
+        case '\\':
+            out += R"(\\)";
+            break;
+        case '"':
+            out += R"(\")";
+            break;
+        case '\b':
+            out += R"(\b)";
+            break;
+        case '\f':
+            out += R"(\f)";
+            break;
+        case '\n':
+            out += R"(\n)";
+            break;
+        case '\r':
+            out += R"(\r)";
+            break;
+        case '\t':
+            out += R"(\t)";
+            break;
+        default:
+            out += ch;
+            break;
         }
     }
     return out;
@@ -115,11 +134,13 @@ struct WsFrame {
     std::size_t start = 0;
     while (start <= query.size()) {
         const auto amp = query.find('&', start);
-        const auto part = query.substr(start, amp == std::string_view::npos ? std::string_view::npos : amp - start);
+        const auto part = query.substr(start, amp == std::string_view::npos ? std::string_view::npos
+                                                                            : amp - start);
         if (!part.empty()) {
             const auto eq = part.find('=');
             auto key = url_decode(eq == std::string_view::npos ? part : part.substr(0, eq));
-            auto value = eq == std::string_view::npos ? std::string{} : url_decode(part.substr(eq + 1));
+            auto value =
+                eq == std::string_view::npos ? std::string{} : url_decode(part.substr(eq + 1));
             if (!key.empty()) params[std::move(key)] = std::move(value);
         }
         if (amp == std::string_view::npos) break;
@@ -130,7 +151,8 @@ struct WsFrame {
 
 [[nodiscard]] inline std::string path_without_query(std::string_view target) {
     const auto question = target.find('?');
-    return std::string(target.substr(0, question == std::string_view::npos ? target.size() : question));
+    return std::string(
+        target.substr(0, question == std::string_view::npos ? target.size() : question));
 }
 
 [[nodiscard]] inline bool send_all(int fd, std::string_view data) {
@@ -205,11 +227,8 @@ struct WsFrame {
     return req;
 }
 
-inline void add_json_value_to_params(
-    std::map<std::string, std::string>& params,
-    std::string key,
-    loom::utils::json::JsonVal value
-) {
+inline void add_json_value_to_params(std::map<std::string, std::string>& params, std::string key,
+                                     loom::utils::json::JsonVal value) {
     if (value.is_str()) {
         params[std::move(key)] = std::string(value.as_str());
     } else if (value.is_bool()) {
@@ -233,7 +252,8 @@ inline void add_json_value_to_params(
 }
 
 [[nodiscard]] inline std::string base64_encode(const unsigned char* data, std::size_t len) {
-    static constexpr char table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    static constexpr char table[] =
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
     std::string out;
     out.reserve(((len + 2) / 3) * 4);
     for (std::size_t i = 0; i < len; i += 3) {
@@ -271,7 +291,8 @@ inline void add_json_value_to_params(
         unsigned char ext[8]{};
         if (!read_exact(fd, reinterpret_cast<char*>(ext), 8)) return std::nullopt;
         len = 0;
-        for (unsigned char byte : ext) len = (len << 8) | byte;
+        for (unsigned char byte : ext)
+            len = (len << 8) | byte;
     }
     if (len > 16 * 1024 * 1024) return std::nullopt;
 
@@ -292,11 +313,8 @@ inline void add_json_value_to_params(
     return frame;
 }
 
-[[nodiscard]] inline std::optional<WsFrame> read_ws_frame_available(
-    int fd,
-    std::chrono::milliseconds timeout,
-    bool& closed
-) {
+[[nodiscard]] inline std::optional<WsFrame>
+read_ws_frame_available(int fd, std::chrono::milliseconds timeout, bool& closed) {
     closed = false;
     pollfd pfd{};
     pfd.fd = fd;
@@ -356,8 +374,10 @@ inline void add_json_value_to_params(
 [[nodiscard]] inline std::string make_id(std::string_view prefix) {
     static std::atomic<std::uint64_t> counter{0};
     const auto now = std::chrono::duration_cast<std::chrono::microseconds>(
-        std::chrono::system_clock::now().time_since_epoch()).count();
-    return std::format("{}_{}_{}", prefix, now, counter.fetch_add(1, std::memory_order_relaxed) + 1);
+                         std::chrono::system_clock::now().time_since_epoch())
+                         .count();
+    return std::format("{}_{}_{}", prefix, now,
+                       counter.fetch_add(1, std::memory_order_relaxed) + 1);
 }
 
 [[nodiscard]] inline std::string public_host_for_url(std::string_view host) {
@@ -371,10 +391,9 @@ inline void add_json_value_to_params(
     return filename.empty() ? std::string("Direct connect session") : "Direct connect: " + filename;
 }
 
-[[nodiscard]] inline std::string create_session_response(
-    const ServerConfig& config,
-    const std::map<std::string, std::string>& params
-) {
+[[nodiscard]] inline std::string
+create_session_response(const ServerConfig& config,
+                        const std::map<std::string, std::string>& params) {
     std::filesystem::path cwd = std::filesystem::current_path();
     if (auto it = params.find("cwd"); it != params.end() && !it->second.empty()) {
         cwd = std::filesystem::path{it->second};
@@ -385,7 +404,8 @@ inline void add_json_value_to_params(
     cwd = std::filesystem::weakly_canonical(cwd, ec);
     if (ec || !std::filesystem::exists(cwd) || !std::filesystem::is_directory(cwd)) {
         std::ostringstream out;
-        out << R"({"error":"invalid cwd","message":")" << server_json_escape(cwd.string()) << R"("})";
+        out << R"({"error":"invalid cwd","message":")" << server_json_escape(cwd.string())
+            << R"("})";
         return out.str();
     }
 
@@ -406,10 +426,10 @@ inline void add_json_value_to_params(
     }
 
     std::ostringstream out;
-    out << R"({"session_id":")" << server_json_escape(metadata.session_id)
-        << R"(","ws_url":"ws://)" << server_json_escape(public_host_for_url(config.host))
-        << ":" << config.port << "/sessions/ws/" << server_json_escape(metadata.session_id)
-        << R"(","work_dir":")" << server_json_escape(cwd.string()) << "\"}";
+    out << R"({"session_id":")" << server_json_escape(metadata.session_id) << R"(","ws_url":"ws://)"
+        << server_json_escape(public_host_for_url(config.host)) << ":" << config.port
+        << "/sessions/ws/" << server_json_escape(metadata.session_id) << R"(","work_dir":")"
+        << server_json_escape(cwd.string()) << "\"}";
     return out.str();
 }
 
@@ -460,9 +480,8 @@ struct ControlResponseDecision {
     loom::hooks::PermissionResponse response;
 };
 
-[[nodiscard]] inline std::optional<ControlResponseDecision> control_response_decision(
-    std::string_view payload
-) {
+[[nodiscard]] inline std::optional<ControlResponseDecision>
+control_response_decision(std::string_view payload) {
     auto resp = control::ControlResponse_from_json(payload);
     if (!resp) return std::nullopt;
     return std::visit(
@@ -493,7 +512,8 @@ struct ControlResponseDecision {
                         }
                         auto updated_permissions = b.get("updatedPermissions");
                         if (updated_permissions.is_arr()) {
-                            permission_response.updated_permissions_json = updated_permissions.to_string();
+                            permission_response.updated_permissions_json =
+                                updated_permissions.to_string();
                         }
                         auto message = b.get("message");
                         if (message.is_str()) {
@@ -516,9 +536,8 @@ struct ControlResponseDecision {
     return loom::utils::json::to_string(parsed->root());
 }
 
-[[nodiscard]] inline std::string permission_control_request_json(
-    const detail::DirectPermissionRequest& request
-) {
+[[nodiscard]] inline std::string
+permission_control_request_json(const detail::DirectPermissionRequest& request) {
     control::ControlPermissionRequest inner;
     inner.tool_name = request.tool_name;
     inner.input_json = permission_input_json(request.input_json);
@@ -535,10 +554,8 @@ struct ControlResponseDecision {
 // golden wire-compatibility gate can exercise the live serializer.
 // arch-check: keep-inline — trivial one-line format wrapper; deduplicates the
 // two former inline std::format call sites (no new interface complexity).
-[[nodiscard]] inline std::string interrupt_control_response_json(
-    std::string_view request_id,
-    bool interrupted
-) {
+[[nodiscard]] inline std::string interrupt_control_response_json(std::string_view request_id,
+                                                                 bool interrupted) {
     control::ControlSuccessResponse success;
     success.request_id = std::string(request_id);
     success.response_json = interrupted ? R"({"interrupted":true})" : R"({"interrupted":false})";
@@ -547,19 +564,15 @@ struct ControlResponseDecision {
     return control::ControlResponse_to_json(envelope);
 }
 
-[[nodiscard]] inline std::string sdk_assistant_message(
-    std::string_view session_id,
-    loom::utils::json::JsonVal response
-) {
-    const auto uuid = response.get("id").is_str()
-        ? std::string(response.get("id").as_str())
-        : make_id("msg");
+[[nodiscard]] inline std::string sdk_assistant_message(std::string_view session_id,
+                                                       loom::utils::json::JsonVal response) {
+    const auto uuid =
+        response.get("id").is_str() ? std::string(response.get("id").as_str()) : make_id("msg");
     const auto text = response.get("response").is_str()
-        ? std::string(response.get("response").as_str())
-        : std::string{};
-    const auto model = response.get("model").is_str()
-        ? std::string(response.get("model").as_str())
-        : std::string("default");
+                          ? std::string(response.get("response").as_str())
+                          : std::string{};
+    const auto model = response.get("model").is_str() ? std::string(response.get("model").as_str())
+                                                      : std::string("default");
     std::ostringstream out;
     out << R"({"type":"assistant","message":{"id":")" << server_json_escape(uuid)
         << R"(","role":"assistant","model":")" << server_json_escape(model)
@@ -569,47 +582,42 @@ struct ControlResponseDecision {
     return out.str();
 }
 
-[[nodiscard]] inline std::string sdk_result_message(
-    std::string_view session_id,
-    loom::utils::json::JsonVal response
-) {
+[[nodiscard]] inline std::string sdk_result_message(std::string_view session_id,
+                                                    loom::utils::json::JsonVal response) {
     const auto uuid = make_id("result");
     const auto text = response.get("response").is_str()
-        ? std::string(response.get("response").as_str())
-        : std::string{};
-    const auto elapsed = response.get("elapsed_ms").is_num() ? response.get("elapsed_ms").as_int() : 0;
+                          ? std::string(response.get("response").as_str())
+                          : std::string{};
+    const auto elapsed =
+        response.get("elapsed_ms").is_num() ? response.get("elapsed_ms").as_int() : 0;
     auto usage = response.get("usage");
     const auto input_tokens = usage.is_obj() && usage.get("input_tokens").is_num()
-        ? usage.get("input_tokens").as_int()
-        : 0;
+                                  ? usage.get("input_tokens").as_int()
+                                  : 0;
     const auto output_tokens = usage.is_obj() && usage.get("output_tokens").is_num()
-        ? usage.get("output_tokens").as_int()
-        : 0;
+                                   ? usage.get("output_tokens").as_int()
+                                   : 0;
     std::ostringstream out;
     out << R"({"type":"result","subtype":"success","duration_ms":)" << elapsed
-        << R"(,"duration_api_ms":)" << elapsed
-        << R"(,"is_error":false,"num_turns":1,"result":")" << server_json_escape(text)
-        << R"(","stop_reason":"end_turn","total_cost_usd":0)"
-        << R"(,"usage":{"input_tokens":)" << input_tokens
-        << R"(,"output_tokens":)" << output_tokens
+        << R"(,"duration_api_ms":)" << elapsed << R"(,"is_error":false,"num_turns":1,"result":")"
+        << server_json_escape(text) << R"(","stop_reason":"end_turn","total_cost_usd":0)"
+        << R"(,"usage":{"input_tokens":)" << input_tokens << R"(,"output_tokens":)" << output_tokens
         << R"(,"cache_creation_input_tokens":0,"cache_read_input_tokens":0,"server_tool_use":{"web_search_requests":0}})"
         << R"(,"modelUsage":{},"permission_denials":[],"uuid":")" << server_json_escape(uuid)
         << R"(","session_id":")" << server_json_escape(session_id) << "\"}";
     return out.str();
 }
 
-[[nodiscard]] inline std::string sdk_error_result(
-    std::string_view session_id,
-    std::string_view error
-) {
+[[nodiscard]] inline std::string sdk_error_result(std::string_view session_id,
+                                                  std::string_view error) {
     const auto uuid = make_id("result");
     std::ostringstream out;
     out << R"({"type":"result","subtype":"error_during_execution","duration_ms":0,"duration_api_ms":0)"
         << R"(,"is_error":true,"num_turns":1,"stop_reason":null,"total_cost_usd":0)"
         << R"(,"usage":{"input_tokens":0,"output_tokens":0,"cache_creation_input_tokens":0,"cache_read_input_tokens":0,"server_tool_use":{"web_search_requests":0}})"
         << R"(,"modelUsage":{},"permission_denials":[],"errors":[")" << server_json_escape(error)
-        << R"("],"uuid":")" << server_json_escape(uuid)
-        << R"(","session_id":")" << server_json_escape(session_id) << "\"}";
+        << R"("],"uuid":")" << server_json_escape(uuid) << R"(","session_id":")"
+        << server_json_escape(session_id) << "\"}";
     return out.str();
 }
 
@@ -619,11 +627,12 @@ struct ControlResponseDecision {
     return lowercase(upgrade->second) == "websocket";
 }
 
-} // namespace detail
+}  // namespace detail
 
 class HttpServer {
 public:
     HttpServer() = default;
+
     ~HttpServer() { stop(); }
 
     HttpServer(const HttpServer&) = delete;
@@ -666,9 +675,7 @@ public:
         listen_fd_ = fd;
         routes_ = get_default_routes();
         running_.store(true);
-        server_thread_ = std::jthread([this](std::stop_token stop) {
-            accept_loop(stop);
-        });
+        server_thread_ = std::jthread([this](std::stop_token stop) { accept_loop(stop); });
         return {};
     }
 
@@ -690,25 +697,23 @@ public:
         }
     }
 
-    [[nodiscard]] bool is_running() const {
-        return running_.load();
-    }
+    [[nodiscard]] bool is_running() const { return running_.load(); }
 
     [[nodiscard]] std::string get_url() const {
         if (!running_.load()) return {};
-        return "http://" + detail::public_host_for_url(config_.host) + ":" + std::to_string(config_.port);
+        return "http://" + detail::public_host_for_url(config_.host) + ":" +
+               std::to_string(config_.port);
     }
 
-    [[nodiscard]] const ServerConfig& get_config() const {
-        return config_;
-    }
+    [[nodiscard]] const ServerConfig& get_config() const { return config_; }
 
 private:
     void accept_loop(std::stop_token stop) {
         while (!stop.stop_requested() && running_.load()) {
             sockaddr_in client_addr{};
             socklen_t client_len = sizeof(client_addr);
-            int client_fd = ::accept(listen_fd_, reinterpret_cast<sockaddr*>(&client_addr), &client_len);
+            int client_fd =
+                ::accept(listen_fd_, reinterpret_cast<sockaddr*>(&client_addr), &client_len);
             if (client_fd < 0) {
                 if (!running_.load()) break;
                 continue;
@@ -727,12 +732,8 @@ private:
         return it->second == "Bearer " + *config_.auth_token;
     }
 
-    void send_http(
-        int fd,
-        std::string_view status,
-        std::string_view body,
-        std::string_view content_type = "application/json"
-    ) const {
+    void send_http(int fd, std::string_view status, std::string_view body,
+                   std::string_view content_type = "application/json") const {
         std::ostringstream response;
         response << "HTTP/1.1 " << status << "\r\n"
                  << "Content-Type: " << content_type << "\r\n"
@@ -775,12 +776,14 @@ private:
         }
         if (request.method == "GET" && request.path == "/status") {
             std::ostringstream out;
-            out << R"({"status":"running","url":")" << detail::server_json_escape(get_url()) << "\"}";
+            out << R"({"status":"running","url":")" << detail::server_json_escape(get_url())
+                << "\"}";
             send_http(fd, "200 OK", out.str());
             return;
         }
         if (request.method == "POST" && request.path == "/sessions") {
-            send_http(fd, "200 OK", detail::create_session_response(config_, detail::request_params(request)));
+            send_http(fd, "200 OK",
+                      detail::create_session_response(config_, detail::request_params(request)));
             return;
         }
 
@@ -807,14 +810,14 @@ private:
             return;
         }
 
-        const auto session_id = detail::url_decode(std::string_view(request.path).substr(prefix.size()));
+        const auto session_id =
+            detail::url_decode(std::string_view(request.path).substr(prefix.size()));
         const auto accept = detail::websocket_accept_key(key_it->second);
-        const auto response = std::format(
-            "HTTP/1.1 101 Switching Protocols\r\n"
-            "Upgrade: websocket\r\n"
-            "Connection: Upgrade\r\n"
-            "Sec-WebSocket-Accept: {}\r\n\r\n",
-            accept);
+        const auto response = std::format("HTTP/1.1 101 Switching Protocols\r\n"
+                                          "Upgrade: websocket\r\n"
+                                          "Connection: Upgrade\r\n"
+                                          "Sec-WebSocket-Accept: {}\r\n\r\n",
+                                          accept);
         if (!detail::send_all(fd, response)) return;
 
         run_websocket_session(fd, session_id);
@@ -833,7 +836,8 @@ private:
 
         std::mutex permission_mutex;
         std::condition_variable permission_cv;
-        std::unordered_map<std::string, std::optional<loom::hooks::PermissionResponse>> pending_permissions;
+        std::unordered_map<std::string, std::optional<loom::hooks::PermissionResponse>>
+            pending_permissions;
         bool closing_permissions = false;
 
         auto record_control_response = [&](std::string_view payload) {
@@ -886,11 +890,13 @@ private:
                 if (it != pending_permissions.end()) pending_permissions.erase(it);
                 return result;
             });
+
         struct PermissionHandlerGuard {
             std::string session_id;
             std::mutex& mutex;
             std::condition_variable& cv;
             bool& closing;
+
             ~PermissionHandlerGuard() {
                 unregister_direct_permission_handler(session_id);
                 {
@@ -922,7 +928,8 @@ private:
                     std::lock_guard lock(cancel_mutex_);
                     cancelled_sessions_.insert(session_id);
                 }
-                (void)send_ws_text(detail::interrupt_control_response_json(request_id, interrupted));
+                (void)send_ws_text(
+                    detail::interrupt_control_response_json(request_id, interrupted));
                 continue;
             }
             if (record_control_response(frame->payload) ||
@@ -944,7 +951,8 @@ private:
                 return route.method == "POST" && route.path == "/message";
             });
             if (route_it == routes_.end()) {
-                (void)send_ws_text(detail::sdk_error_result(session_id, "message route is not available"));
+                (void)send_ws_text(
+                    detail::sdk_error_result(session_id, "message route is not available"));
                 continue;
             }
 
@@ -958,9 +966,11 @@ private:
                         {"content", content_value},
                     });
                 });
-            while (running_.load() && response_future.wait_for(std::chrono::milliseconds(0)) != std::future_status::ready) {
+            while (running_.load() && response_future.wait_for(std::chrono::milliseconds(0)) !=
+                                          std::future_status::ready) {
                 bool closed = false;
-                auto pending_frame = detail::read_ws_frame_available(fd, std::chrono::milliseconds(25), closed);
+                auto pending_frame =
+                    detail::read_ws_frame_available(fd, std::chrono::milliseconds(25), closed);
                 if (closed) {
                     (void)request_direct_query_cancel(session_id);
                     return;
@@ -977,7 +987,8 @@ private:
                 }
                 if (pending_frame->opcode != 0x1 && pending_frame->opcode != 0x2) continue;
 
-                const auto pending_subtype = detail::control_request_subtype(pending_frame->payload);
+                const auto pending_subtype =
+                    detail::control_request_subtype(pending_frame->payload);
                 if (pending_subtype == "interrupt") {
                     const auto request_id = detail::control_request_id(pending_frame->payload);
                     const bool interrupted = request_direct_query_cancel(session_id);
@@ -985,11 +996,13 @@ private:
                         std::lock_guard lock(cancel_mutex_);
                         cancelled_sessions_.insert(session_id);
                     }
-                    (void)send_ws_text(detail::interrupt_control_response_json(request_id, interrupted));
+                    (void)send_ws_text(
+                        detail::interrupt_control_response_json(request_id, interrupted));
                     continue;
                 }
                 if (record_control_response(pending_frame->payload) ||
-                    pending_frame->payload.find(R"("type":"control_response")") != std::string::npos) {
+                    pending_frame->payload.find(R"("type":"control_response")") !=
+                        std::string::npos) {
                     continue;
                 }
             }
@@ -1024,4 +1037,4 @@ private:
     std::unordered_set<std::string> cancelled_sessions_;
 };
 
-} // namespace loom::server
+}  // namespace loom::server

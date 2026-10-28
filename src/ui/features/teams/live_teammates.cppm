@@ -15,11 +15,11 @@
 /// literals are introduced.
 module;
 
-#include <cstddef>
-#include <cstdint>
-
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/screen/string.hpp>
+
+#include <cstddef>
+#include <cstdint>
 
 export module loom.ui.features.teams.live_teammates;
 
@@ -38,10 +38,10 @@ using namespace ftxui;
 struct LiveTeammate {
     std::string agent_id;
     std::string name;
-    std::string color;                 // agent color NAME (e.g. "cyan"), resolved at render time
-    std::string status = "unknown";    // "running" | "idle" | "unknown"
-    std::string last_output_tail;      // single-line tail of pane/transcript output
-    std::string pane_id;               // tmux pane id; empty for in-process teammates
+    std::string color;               // agent color NAME (e.g. "cyan"), resolved at render time
+    std::string status = "unknown";  // "running" | "idle" | "unknown"
+    std::string last_output_tail;    // single-line tail of pane/transcript output
+    std::string pane_id;             // tmux pane id; empty for in-process teammates
 };
 
 namespace live_detail {
@@ -50,8 +50,7 @@ namespace thm = loom::ui::design::theme;
 
 /// Palette-only status token: running => success, idle => muted, anything
 /// else (unknown / a future awaiting-approval token) => warning.
-[[nodiscard]] inline const ftxui::Color& status_palette_color(
-    std::string_view status) {
+[[nodiscard]] inline const ftxui::Color& status_palette_color(std::string_view status) {
     const auto& pal = *thm::current_theme().palette;
     if (status == "running") return pal.success;
     if (status == "idle") return pal.muted;
@@ -77,8 +76,7 @@ namespace thm = loom::ui::design::theme;
 
 /// Collapse pane/transcript text to one trimmed line and hard-truncate to
 /// max_cols-1 with a trailing ellipsis.
-[[nodiscard]] inline std::string one_line_tail(
-    std::string_view raw, std::size_t max_cols = 160) {
+[[nodiscard]] inline std::string one_line_tail(std::string_view raw, std::size_t max_cols = 160) {
     std::string out;
     out.reserve(raw.size());
     bool last_was_space = false;
@@ -115,8 +113,7 @@ namespace thm = loom::ui::design::theme;
 /// One CoordinatorAgentStatus AgentLine row:
 ///   ● @name status  output-tail
 /// Pure render of state-owned data.
-[[nodiscard]] inline Element RenderLiveTeammateRow(
-    const LiveTeammate& t, int avail_cols) {
+[[nodiscard]] inline Element RenderLiveTeammateRow(const LiveTeammate& t, int avail_cols) {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
     const int columns = std::max(0, avail_cols);
     Elements segments;
@@ -137,7 +134,8 @@ namespace thm = loom::ui::design::theme;
     // Reserve space for status and tail before allowing a long name to grow.
     const int status_reserve = std::min(remaining / 3, string_width(" " + t.status));
     const int tail_reserve = t.last_output_tail.empty() ? 0 : std::min(remaining / 3, 12);
-    append("@" + t.name, std::max(0, remaining - status_reserve - tail_reserve), identity_color(t), true);
+    append("@" + t.name, std::max(0, remaining - status_reserve - tail_reserve), identity_color(t),
+           true);
     if (remaining > 0) {
         // Explicit spaces live in their own segment so trimming text cannot
         // concatenate name/status or status/tail.
@@ -155,19 +153,21 @@ namespace thm = loom::ui::design::theme;
 
 /// Pinned chrome strip: one status + output-tail row per teammate. Returns an
 /// empty element when there are no teammates (so callers can skip it).
-[[nodiscard]] inline Element RenderLiveTeammateStrip(
-    const std::vector<LiveTeammate>& ts, int term_cols = 120, int max_rows = -1) {
+[[nodiscard]] inline Element RenderLiveTeammateStrip(const std::vector<LiveTeammate>& ts,
+                                                     int term_cols = 120, int max_rows = -1) {
     if (ts.empty() || max_rows == 0) return vbox({});
     Elements rows;
     const bool overflow = max_rows >= 0 && static_cast<int>(ts.size()) > max_rows;
-    const int details = max_rows < 0 ? static_cast<int>(ts.size())
-        : std::min(static_cast<int>(ts.size()), max_rows - (overflow ? 1 : 0));
+    const int details = max_rows < 0
+                            ? static_cast<int>(ts.size())
+                            : std::min(static_cast<int>(ts.size()), max_rows - (overflow ? 1 : 0));
     if (overflow) {
         const auto& pal = *loom::ui::design::theme::current_theme().palette;
-        rows.push_back(text(one_line_tail(std::format("Teams {} (+{} hidden)", ts.size(),
-            ts.size() - static_cast<std::size_t>(details)),
-            static_cast<std::size_t>(std::max(0, term_cols)))) | color(pal.muted)
-            | size(WIDTH, EQUAL, std::max(0, term_cols)));
+        rows.push_back(
+            text(one_line_tail(std::format("Teams {} (+{} hidden)", ts.size(),
+                                           ts.size() - static_cast<std::size_t>(details)),
+                               static_cast<std::size_t>(std::max(0, term_cols)))) |
+            color(pal.muted) | size(WIDTH, EQUAL, std::max(0, term_cols)));
     }
     for (int i = 0; i < details; ++i)
         rows.push_back(RenderLiveTeammateRow(ts[static_cast<std::size_t>(i)], term_cols));
@@ -177,46 +177,36 @@ namespace thm = loom::ui::design::theme;
 /// TeamsView modal body (TeamsDialog TeamDetailView). Selection index
 /// lives in the queue-owned payload; it is clamped here for rendering only.
 /// The borrowed state pointer never escapes this call.
-[[nodiscard]] inline Element RenderTeamsOverview(
-    std::string_view team_name,
-    const std::vector<LiveTeammate>& ts,
-    int selected_index,
-    int term_cols = 120,
-    int term_rows = 40) {
+[[nodiscard]] inline Element RenderTeamsOverview(std::string_view team_name,
+                                                 const std::vector<LiveTeammate>& ts,
+                                                 int selected_index, int term_cols = 120,
+                                                 int term_rows = 40) {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
 
     Elements body;
     if (ts.empty()) {
         body.push_back(text(" No teammates") | dim);
     } else {
-        const int clamped = std::clamp(
-            selected_index, 0, static_cast<int>(ts.size()) - 1);
+        const int clamped = std::clamp(selected_index, 0, static_cast<int>(ts.size()) - 1);
         body.reserve(ts.size());
         for (std::size_t i = 0; i < ts.size(); ++i) {
             const auto& t = ts[i];
             const bool selected = static_cast<int>(i) == clamped;
             Elements row;
             row.reserve(5);
-            row.push_back(
-                text(selected ? "❯ " : "  ")
-                | color(selected ? pal.text : pal.muted));
-            row.push_back(
-                text("@" + t.name)
-                | color(identity_color(t))
-                | (selected ? bold : nothing));
+            row.push_back(text(selected ? "❯ " : "  ") | color(selected ? pal.text : pal.muted));
+            row.push_back(text("@" + t.name) | color(identity_color(t)) |
+                          (selected ? bold : nothing));
             if (t.status == "idle") {
                 row.push_back(text(" [idle]") | dim | color(pal.muted));
             } else {
                 row.push_back(text(""));
             }
-            row.push_back(text("  " + t.status)
-                          | color(status_color(t.status)) | dim);
+            row.push_back(text("  " + t.status) | color(status_color(t.status)) | dim);
             row.push_back(
-                text("  " + one_line_tail(
-                        t.last_output_tail,
-                        static_cast<std::size_t>(
-                            std::max(16, term_cols - 24))))
-                | dim);
+                text("  " + one_line_tail(t.last_output_tail,
+                                          static_cast<std::size_t>(std::max(16, term_cols - 24)))) |
+                dim);
             body.push_back(hbox(std::move(row)));
         }
     }
@@ -235,8 +225,8 @@ namespace thm = loom::ui::design::theme;
         separator(),
         text(" ↑/↓ select · Enter view · Esc close") | dim,
     });
-    return window(text(""), std::move(content))
-        | size(HEIGHT, LESS_THAN, std::max(6, term_rows - 4));
+    return window(text(""), std::move(content)) |
+           size(HEIGHT, LESS_THAN, std::max(6, term_rows - 4));
 }
 
 }  // namespace loom::ui::teams::live

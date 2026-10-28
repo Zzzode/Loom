@@ -22,13 +22,13 @@
 /// OWNED BY dedicated agents — this file is the framework + samples only.
 module;
 
-#include <unistd.h>
-#include <cstdint>
-
-#include <ftxui/dom/elements.hpp>
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/event.hpp>
+#include <ftxui/dom/elements.hpp>
+#include <unistd.h>
+
+#include <cstdint>
 
 export module loom.ui.dialogs.wizard_dialog;
 
@@ -56,9 +56,9 @@ struct StepCheckResult {
     std::string message;  // used when !ok
 
     static StepCheckResult pass() { return {true, {}}; }
-    static StepCheckResult fail(std::string msg) {
-        return {false, std::move(msg)};
-    }
+
+    static StepCheckResult fail(std::string msg) { return {false, std::move(msg)}; }
+
     explicit operator bool() const { return ok; }
 };
 
@@ -67,13 +67,13 @@ struct StepCheckResult {
 /// Step implementers provide callbacks for lifecycle hooks.
 /// The render callback MUST NOT be null (it is the content).
 struct WizardStep {
-    std::string id;                  ///< Unique step id (for conditional jumps)
-    std::string title;               ///< Display title
-    std::string description;         ///< Short subtitle / description line
+    std::string id;           ///< Unique step id (for conditional jumps)
+    std::string title;        ///< Display title
+    std::string description;  ///< Short subtitle / description line
     /// Compatibility factory for older UI modules that build each step as an
     /// FTXUI Component. MakeWizard still consumes render/on_event callbacks.
     std::function<Component()> create_content;
-    bool optional = false;           ///< If true, "Skip" button is shown
+    bool optional = false;  ///< If true, "Skip" button is shown
 
     /// Called BEFORE entering this step.  Return fail() to redirect/prevent.
     std::function<StepCheckResult(WizardContext&)> can_enter;
@@ -115,12 +115,18 @@ enum class WizardColor : std::uint8_t {
 [[nodiscard]] inline Color to_ftxui_color(WizardColor c) {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
     switch (c) {
-        case WizardColor::suggestion: return pal.suggestion;
-        case WizardColor::permission: return pal.permission;
-        case WizardColor::warning:    return pal.warning;
-        case WizardColor::info:       return pal.info;
-        case WizardColor::success:    return pal.success;
-        case WizardColor::danger:     return pal.danger;
+    case WizardColor::suggestion:
+        return pal.suggestion;
+    case WizardColor::permission:
+        return pal.permission;
+    case WizardColor::warning:
+        return pal.warning;
+    case WizardColor::info:
+        return pal.info;
+    case WizardColor::success:
+        return pal.success;
+    case WizardColor::danger:
+        return pal.danger;
     }
     return pal.text;
 }
@@ -128,11 +134,11 @@ enum class WizardColor : std::uint8_t {
 /// Shared wizard state passed to every step callback.
 struct WizardContext {
     // ---- navigation state ----
-    int current_step = 0;                      ///< Current step index
-    int total_steps = 0;                       ///< Total linear steps (vector size)
-    std::vector<WizardStep> steps;             ///< Steps storage (linear)
-    std::vector<int> navigation_history;       ///< Back-stack
-    bool is_completed = false;                 ///< Finish was triggered
+    int current_step = 0;                 ///< Current step index
+    int total_steps = 0;                  ///< Total linear steps (vector size)
+    std::vector<WizardStep> steps;        ///< Steps storage (linear)
+    std::vector<int> navigation_history;  ///< Back-stack
+    bool is_completed = false;            ///< Finish was triggered
 
     // ---- shared data (cross-step) ----
     /// Type-erased key/value store.  Put things like input strings,
@@ -147,13 +153,13 @@ struct WizardContext {
     std::unordered_map<std::string, std::string> errors;
 
     // ---- layout options ----
-    std::string title = "Wizard";              ///< Dialog title
-    bool show_step_counter = true;             ///< Append " (N/total)" to title
-    bool show_progress_top = true;             ///< Render progress bar + breadcrumb
-    bool show_breadcrumb = true;               ///< Render breadcrumb dots below progress
+    std::string title = "Wizard";   ///< Dialog title
+    bool show_step_counter = true;  ///< Append " (N/total)" to title
+    bool show_progress_top = true;  ///< Render progress bar + breadcrumb
+    bool show_breadcrumb = true;    ///< Render breadcrumb dots below progress
     WizardColor color = WizardColor::suggestion;
-    std::optional<std::string> subtitle;       ///< Subtitle line under title
-    std::optional<std::string> footer_text;    ///< Extra instruction line in footer
+    std::optional<std::string> subtitle;     ///< Subtitle line under title
+    std::optional<std::string> footer_text;  ///< Extra instruction line in footer
 
     // ---- conditional-branching override ----
     /// Set this from can_leave() or render() to jump to a non-linear step id
@@ -169,8 +175,7 @@ struct WizardContext {
     // ============================================================
 
     /// Helper: get a value from data with a default (safer than any_cast throw).
-    template <typename T>
-    [[nodiscard]] std::optional<T> get(const std::string& key) const {
+    template <typename T> [[nodiscard]] std::optional<T> get(const std::string& key) const {
         auto it = data.find(key);
         if (it == data.end()) return std::nullopt;
         try {
@@ -181,20 +186,18 @@ struct WizardContext {
     }
 
     /// Helper: put a value into data.
-    template <typename T>
-    void put(const std::string& key, T value) {
+    template <typename T> void put(const std::string& key, T value) {
         data[key] = std::move(value);
     }
 
     /// Return current step pointer (null if out of range).
     [[nodiscard]] WizardStep* current() {
-        if (current_step < 0 || current_step >= static_cast<int>(steps.size()))
-            return nullptr;
+        if (current_step < 0 || current_step >= static_cast<int>(steps.size())) return nullptr;
         return &steps[current_step];
     }
+
     [[nodiscard]] const WizardStep* current() const {
-        if (current_step < 0 || current_step >= static_cast<int>(steps.size()))
-            return nullptr;
+        if (current_step < 0 || current_step >= static_cast<int>(steps.size())) return nullptr;
         return &steps[current_step];
     }
 
@@ -260,8 +263,10 @@ struct WizardContext {
     const std::string_view empty_char = "░";
     std::string bar;
     bar.reserve((filled + empty) * 3);  // ~3 bytes each for UTF-8 block chars
-    for (int i = 0; i < filled; ++i) bar.append(fill);
-    for (int i = 0; i < empty; ++i) bar.append(empty_char);
+    for (int i = 0; i < filled; ++i)
+        bar.append(fill);
+    for (int i = 0; i < empty; ++i)
+        bar.append(empty_char);
 
     int pct = static_cast<int>(fraction * 100.0);
     return hbox({
@@ -303,7 +308,7 @@ struct WizardContext {
             items.push_back(text("  "));
         }
     }
-    return hbox({ text(" "), hbox(std::move(items)) });
+    return hbox({text(" "), hbox(std::move(items))});
 }
 
 /// Render the error strip (only when the current step has an error).
@@ -330,10 +335,10 @@ struct WizardContext {
 struct WizardFooterProps {
     bool can_go_back = false;
     bool can_go_next = true;
-    bool is_last = false;          // last step => Next becomes Finish
-    bool is_optional = false;      // current step is optional => Show Skip
-    bool busy = false;             // async step => disable all nav
-    std::string next_label;        // "Next" / "Finish" / custom
+    bool is_last = false;      // last step => Next becomes Finish
+    bool is_optional = false;  // current step is optional => Show Skip
+    bool busy = false;         // async step => disable all nav
+    std::string next_label;    // "Next" / "Finish" / custom
     std::string back_label = "Back";
     std::string cancel_label = "Cancel";
     std::optional<std::string> instructions;
@@ -345,7 +350,8 @@ struct WizardFooterProps {
 /// needed for the footer itself.
 [[nodiscard]] inline Element RenderFooterButtons(const WizardFooterProps& p) {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
-    auto btn = [](std::string label, bool enabled, Color col = loom::ui::design::theme::current_theme().palette->info) {
+    auto btn = [](std::string label, bool enabled,
+                  Color col = loom::ui::design::theme::current_theme().palette->info) {
         const auto& pal = *loom::ui::design::theme::current_theme().palette;
         auto body = text(" " + std::move(label) + " ");
         if (enabled) {
@@ -373,13 +379,11 @@ struct WizardFooterProps {
     row.push_back(text(" "));
 
     // Next / Finish
-    std::string lbl = p.next_label.empty()
-        ? (p.is_last ? "Finish" : "Next")
-        : p.next_label;
-    row.push_back(btn(std::move(lbl), p.can_go_next && !p.busy,
-                      p.is_last ? pal.success : pal.info));
+    std::string lbl = p.next_label.empty() ? (p.is_last ? "Finish" : "Next") : p.next_label;
+    row.push_back(
+        btn(std::move(lbl), p.can_go_next && !p.busy, p.is_last ? pal.success : pal.info));
 
-    Elements result = { hbox(std::move(row)) };
+    Elements result = {hbox(std::move(row))};
 
     // Instruction line (below buttons)
     if (p.instructions) {
@@ -432,15 +436,14 @@ namespace internal {
     if (!s) return false;
     // Textual heuristic for id-name based "async step" convention.
     const auto& id = s->id;
-    if (id.find("loading") != std::string::npos ||
-        id.find("async") != std::string::npos ||
+    if (id.find("loading") != std::string::npos || id.find("async") != std::string::npos ||
         id.find("fetch") != std::string::npos) {
         return true;
     }
     return false;
 }
 
-} // namespace internal
+}  // namespace internal
 
 /// Build the full interactive wizard component.
 ///
@@ -448,18 +451,17 @@ namespace internal {
 /// @param build_steps Callback that populates ctx.steps and ctx.data.
 ///                    Invoked once at construction time.
 /// @return           FTXUI Component suitable for Modal() / Screen rendering.
-[[nodiscard]] inline Component MakeWizard(WizardConfig config,
-                                          StepsFn build_steps) {
+[[nodiscard]] inline Component MakeWizard(WizardConfig config, StepsFn build_steps) {
     // ---- Build context ----
     auto ctx = std::make_shared<WizardContext>();
-    ctx->title              = std::move(config.title);
-    ctx->color              = config.color;
-    ctx->subtitle           = std::move(config.subtitle);
-    ctx->footer_text        = std::move(config.footer_text);
-    ctx->show_step_counter  = config.show_step_counter;
-    ctx->show_progress_top  = config.show_progress_top;
-    ctx->show_breadcrumb    = config.show_breadcrumb;
-    ctx->data               = std::move(config.initial_data);
+    ctx->title = std::move(config.title);
+    ctx->color = config.color;
+    ctx->subtitle = std::move(config.subtitle);
+    ctx->footer_text = std::move(config.footer_text);
+    ctx->show_step_counter = config.show_step_counter;
+    ctx->show_progress_top = config.show_progress_top;
+    ctx->show_breadcrumb = config.show_breadcrumb;
+    ctx->data = std::move(config.initial_data);
 
     // Invoke builder (populates ctx->steps, ctx->data etc.)
     if (build_steps) build_steps(*ctx);
@@ -472,7 +474,7 @@ namespace internal {
     auto compute_footer = [](const WizardContext& c) -> WizardFooterProps {
         WizardFooterProps p;
         p.can_go_back = (c.current_step > 0);
-        p.is_last     = c.is_last_step();
+        p.is_last = c.is_last_step();
         auto* cur = c.current();
         if (cur) p.is_optional = cur->optional;
         // can_go_next: step exists, can_leave passes (or has no guard)
@@ -504,7 +506,7 @@ namespace internal {
                 auto r = cur->can_leave(*ctx);
                 if (!r.ok) {
                     ctx->errors[cur->id] = r.message;
-                    return true;   // blocked: handled
+                    return true;  // blocked: handled
                 }
             }
             // Clear any prior error for this step now that we pass.
@@ -619,130 +621,126 @@ namespace internal {
 
     // ---- Render function ----
     return Renderer([ctx, compute_footer] {
-        const auto& pal = *loom::ui::design::theme::current_theme().palette;
-        // Header
-        std::string title = ctx->title.empty() ? "Wizard" : ctx->title;
-        if (ctx->show_step_counter && ctx->total_steps > 0) {
-            title += step_counter_label(ctx->current_step, ctx->total_steps);
-        }
-        auto header_color = to_ftxui_color(ctx->color);
+               const auto& pal = *loom::ui::design::theme::current_theme().palette;
+               // Header
+               std::string title = ctx->title.empty() ? "Wizard" : ctx->title;
+               if (ctx->show_step_counter && ctx->total_steps > 0) {
+                   title += step_counter_label(ctx->current_step, ctx->total_steps);
+               }
+               auto header_color = to_ftxui_color(ctx->color);
 
-        Elements header_lines;
-        header_lines.push_back(hbox({
-            text(" " + title + " ") | bold | color(header_color),
-        }));
-        if (ctx->subtitle) {
-            header_lines.push_back(text(" " + *ctx->subtitle) | dim);
-        }
+               Elements header_lines;
+               header_lines.push_back(hbox({
+                   text(" " + title + " ") | bold | color(header_color),
+               }));
+               if (ctx->subtitle) {
+                   header_lines.push_back(text(" " + *ctx->subtitle) | dim);
+               }
 
-        Elements body_parts;
-        body_parts.push_back(vbox(header_lines));
-        body_parts.push_back(separator() | color(header_color));
+               Elements body_parts;
+               body_parts.push_back(vbox(header_lines));
+               body_parts.push_back(separator() | color(header_color));
 
-        // Progress + breadcrumb
-        if (ctx->show_progress_top && ctx->total_steps > 1) {
-            double frac = (ctx->total_steps <= 1)
-                ? 1.0
-                : static_cast<double>(ctx->current_step) /
-                      static_cast<double>(ctx->total_steps - 1);
-            body_parts.push_back(RenderProgressBar(frac));
-        }
-        if (ctx->show_breadcrumb && ctx->total_steps > 1) {
-            body_parts.push_back(RenderBreadcrumb(*ctx));
-            body_parts.push_back(separatorLight() | dim);
-        }
+               // Progress + breadcrumb
+               if (ctx->show_progress_top && ctx->total_steps > 1) {
+                   double frac = (ctx->total_steps <= 1)
+                                     ? 1.0
+                                     : static_cast<double>(ctx->current_step) /
+                                           static_cast<double>(ctx->total_steps - 1);
+                   body_parts.push_back(RenderProgressBar(frac));
+               }
+               if (ctx->show_breadcrumb && ctx->total_steps > 1) {
+                   body_parts.push_back(RenderBreadcrumb(*ctx));
+                   body_parts.push_back(separatorLight() | dim);
+               }
 
-        // Current step content.
-        Element step_content;
-        if (ctx->steps.empty()) {
-            step_content = text("  No steps defined") | dim;
-        } else {
-            auto* s = ctx->current();
-            if (s && s->render) {
-                step_content = s->render(*ctx);
-            } else if (s) {
-                // Fallback placeholder.
-                Elements el;
-                if (!s->title.empty()) el.push_back(text("  " + s->title) | bold);
-                if (!s->description.empty()) {
-                    el.push_back(text(""));
-                    el.push_back(text("  " + s->description) | dim);
-                }
-                step_content = vbox(el);
-            } else {
-                step_content = text("  (invalid step index)") | dim | color(pal.danger);
-            }
-        }
-        body_parts.push_back(step_content | flex);
+               // Current step content.
+               Element step_content;
+               if (ctx->steps.empty()) {
+                   step_content = text("  No steps defined") | dim;
+               } else {
+                   auto* s = ctx->current();
+                   if (s && s->render) {
+                       step_content = s->render(*ctx);
+                   } else if (s) {
+                       // Fallback placeholder.
+                       Elements el;
+                       if (!s->title.empty()) el.push_back(text("  " + s->title) | bold);
+                       if (!s->description.empty()) {
+                           el.push_back(text(""));
+                           el.push_back(text("  " + s->description) | dim);
+                       }
+                       step_content = vbox(el);
+                   } else {
+                       step_content = text("  (invalid step index)") | dim | color(pal.danger);
+                   }
+               }
+               body_parts.push_back(step_content | flex);
 
-        // Error strip.
-        Element err = RenderErrorStrip(*ctx);
-        body_parts.push_back(err);
+               // Error strip.
+               Element err = RenderErrorStrip(*ctx);
+               body_parts.push_back(err);
 
-        // Footer
-        body_parts.push_back(separator() | dim);
-        auto footer_props = compute_footer(*ctx);
-        body_parts.push_back(RenderFooterButtons(footer_props));
+               // Footer
+               body_parts.push_back(separator() | dim);
+               auto footer_props = compute_footer(*ctx);
+               body_parts.push_back(RenderFooterButtons(footer_props));
 
-        return vbox(body_parts) | border | color(header_color);
-    }) | CatchEvent([ctx, actions](Event event) -> bool {
-        // ---- Step-specific event hook first ----
-        {
-            auto* s = ctx->current();
-            if (s && s->on_event) {
-                if (bool consumed = s->on_event(*ctx, event); consumed) return true;
-            }
-        }
+               return vbox(body_parts) | border | color(header_color);
+           }) |
+           CatchEvent([ctx, actions](Event event) -> bool {
+               // ---- Step-specific event hook first ----
+               {
+                   auto* s = ctx->current();
+                   if (s && s->on_event) {
+                       if (bool consumed = s->on_event(*ctx, event); consumed) return true;
+                   }
+               }
 
-        // ---- Global keyboard navigation ----
-        const bool busy = internal::is_step_busy(*ctx);
-        if (busy) {
-            // During async steps, only Esc (abort) is honored.
-            if (event == Event::Escape) return actions->try_cancel();
-            // Otherwise consume nothing so sub-components can still receive
-            // input (useful if the busy step has its own cancel handler).
-            return false;
-        }
+               // ---- Global keyboard navigation ----
+               const bool busy = internal::is_step_busy(*ctx);
+               if (busy) {
+                   // During async steps, only Esc (abort) is honored.
+                   if (event == Event::Escape) return actions->try_cancel();
+                   // Otherwise consume nothing so sub-components can still receive
+                   // input (useful if the busy step has its own cancel handler).
+                   return false;
+               }
 
-        // Cancel
-        if (event == Event::Escape) return actions->try_cancel();
+               // Cancel
+               if (event == Event::Escape) return actions->try_cancel();
 
-        // Next / Finish
-        if (event == Event::Return ||
-            event == Event::ArrowRight ||
-            event == Event::Character(' ') ||
-            event == Event::Character('n') ||
-            event == Event::Character('N')) {
-            return actions->try_advance();
-        }
+               // Next / Finish
+               if (event == Event::Return || event == Event::ArrowRight ||
+                   event == Event::Character(' ') || event == Event::Character('n') ||
+                   event == Event::Character('N')) {
+                   return actions->try_advance();
+               }
 
-        // Back
-        if (event == Event::ArrowLeft ||
-            event == Event::Backspace ||
-            event == Event::Character('b') ||
-            event == Event::Character('B')) {
-            return actions->try_back();
-        }
+               // Back
+               if (event == Event::ArrowLeft || event == Event::Backspace ||
+                   event == Event::Character('b') || event == Event::Character('B')) {
+                   return actions->try_back();
+               }
 
-        // Skip (optional step) — Tab / s
-        auto* cur = ctx->current();
-        if (cur && cur->optional) {
-            if (event == Event::Tab ||
-                event == Event::Character('s') ||
-                event == Event::Character('S')) {
-                return actions->try_skip();
-            }
-        }
+               // Skip (optional step) — Tab / s
+               auto* cur = ctx->current();
+               if (cur && cur->optional) {
+                   if (event == Event::Tab || event == Event::Character('s') ||
+                       event == Event::Character('S')) {
+                       return actions->try_skip();
+                   }
+               }
 
-        // Delegate to any interactive children: FTXUI propagates events down
-        // the component tree via OnEvent; we only wrap *our* Renderer with
-        // CatchEvent, so sub-components inside step render() must be attached
-        // separately.  If the step's render returned a Component stored on
-        // the step, this framework can't know about it.  To support this,
-        // steps should handle their own events via on_event().  For the
-        // common case (pure static render) this is fine.
-        return false;
-    });
+               // Delegate to any interactive children: FTXUI propagates events down
+               // the component tree via OnEvent; we only wrap *our* Renderer with
+               // CatchEvent, so sub-components inside step render() must be attached
+               // separately.  If the step's render returned a Component stored on
+               // the step, this framework can't know about it.  To support this,
+               // steps should handle their own events via on_event().  For the
+               // common case (pure static render) this is fine.
+               return false;
+           });
 }
 
 /// Compatibility wrapper for older migrated wizard modules that still expose
@@ -784,9 +782,8 @@ struct WizardProviderProps {
             }
             if (!step.on_event) {
                 step.on_event = [components, idx](WizardContext&, Event event) -> bool {
-                    return (*components)[idx]
-                        ? (*components)[idx]->OnEvent(std::move(event))
-                        : false;
+                    return (*components)[idx] ? (*components)[idx]->OnEvent(std::move(event))
+                                              : false;
                 };
             }
             ctx.steps.push_back(std::move(step));
@@ -808,8 +805,8 @@ struct WizardProviderProps {
 // The caller fills in the text/review entries via callbacks.
 
 struct ConfirmationSummary {
-    std::string title;                               ///< Title of the operation
-    std::string description;                         ///< Short "what this does"
+    std::string title;                                         ///< Title of the operation
+    std::string description;                                   ///< Short "what this does"
     std::vector<std::pair<std::string, std::string>> details;  ///< k/v pairs
 };
 
@@ -820,24 +817,22 @@ struct ConfirmationSummary {
 ///                   Return empty string on success; return an error string to
 ///                   block finish and show the error on step 3.
 /// @param on_cancel Optional cancel handler.
-[[nodiscard]] inline Component Make3StepConfirmation(
-    ConfirmationSummary summary,
-    std::function<std::string()> on_execute,
-    std::function<void()> on_cancel = nullptr,
-    WizardConfig base_config = {}) {
+[[nodiscard]] inline Component Make3StepConfirmation(ConfirmationSummary summary,
+                                                     std::function<std::string()> on_execute,
+                                                     std::function<void()> on_cancel = nullptr,
+                                                     WizardConfig base_config = {}) {
 
     auto config = std::move(base_config);
     if (config.title.empty()) config.title = summary.title.empty() ? "Confirm" : summary.title;
     if (!config.subtitle && !summary.description.empty()) config.subtitle = summary.description;
     config.color = WizardColor::info;
 
-    StepsFn builder = [summary = std::move(summary),
-                       on_execute = std::move(on_execute),
+    StepsFn builder = [summary = std::move(summary), on_execute = std::move(on_execute),
                        on_cancel = std::move(on_cancel)](WizardContext& ctx) {
         // Store details in shared data so steps can render them.
         ctx.put("__summary_title", summary.title);
-        ctx.put("__summary_desc",  summary.description);
-        ctx.put("__details",       summary.details);
+        ctx.put("__summary_desc", summary.description);
+        ctx.put("__details", summary.details);
 
         // ---- Step 1: Info summary ----
         WizardStep info;
@@ -850,7 +845,7 @@ struct ConfirmationSummary {
             auto t = c.get<std::string>("__summary_title");
             auto d = c.get<std::string>("__summary_desc");
             el.push_back(text(""));
-            el.push_back(hbox({ text("  ℹ  "), text(t.value_or("")) | bold | color(pal.info) }));
+            el.push_back(hbox({text("  ℹ  "), text(t.value_or("")) | bold | color(pal.info)}));
             if (d && !d->empty()) {
                 el.push_back(text(""));
                 el.push_back(paragraph("  " + *d) | dim);
@@ -870,7 +865,9 @@ struct ConfirmationSummary {
             const auto& pal = *loom::ui::design::theme::current_theme().palette;
             Elements el;
             el.push_back(text(""));
-            el.push_back(hbox({ text(("  " + std::string{loom::ui::design::figures::kReferenceMark} + "  ")), text("Detailed Review") | bold | color(pal.warning) }));
+            el.push_back(
+                hbox({text(("  " + std::string{loom::ui::design::figures::kReferenceMark} + "  ")),
+                      text("Detailed Review") | bold | color(pal.warning)}));
             el.push_back(text(""));
             auto details = c.get<std::vector<std::pair<std::string, std::string>>>("__details");
             if (details && !details->empty()) {
@@ -908,10 +905,13 @@ struct ConfirmationSummary {
             const auto& pal = *loom::ui::design::theme::current_theme().palette;
             Elements el;
             el.push_back(text(""));
-            el.push_back(hbox({ text("  ⚠  "), text("Final Confirmation") | bold | color(pal.warning) }));
+            el.push_back(
+                hbox({text("  ⚠  "), text("Final Confirmation") | bold | color(pal.warning)}));
             el.push_back(text(""));
             auto t = c.get<std::string>("__summary_title");
-            el.push_back(paragraph("  You are about to: " + std::string(t.value_or("proceed with the operation")) + ".") | color(pal.warning));
+            el.push_back(paragraph("  You are about to: " +
+                                   std::string(t.value_or("proceed with the operation")) + ".") |
+                         color(pal.warning));
             el.push_back(text(""));
             el.push_back(text("  This action cannot be undone.") | color(pal.danger) | dim);
             el.push_back(text(""));
@@ -941,11 +941,11 @@ struct ConfirmationSummary {
 
 struct InputAndConfirmConfig {
     std::string wizard_title = "Input";
-    std::string input_label  = "Enter value";
-    std::string input_hint   = "type your value here";
-    std::string placeholder  = "";
+    std::string input_label = "Enter value";
+    std::string input_hint = "type your value here";
+    std::string placeholder = "";
     std::string initial_value = "";
-    bool allow_empty = false;                 ///< If false, empty value is rejected
+    bool allow_empty = false;                          ///< If false, empty value is rejected
     std::function<std::string(std::string)> validate;  ///< Optional validator
     std::function<void(std::string)> on_confirm;       ///< Invoked on Finish with final value
     std::function<void()> on_cancel;
@@ -1003,8 +1003,8 @@ struct InputAndConfirmConfig {
             }
             return false;
         };
-        input.can_leave = [allow_empty = cfg.allow_empty,
-                           validate = std::move(cfg.validate)](WizardContext& c) -> StepCheckResult {
+        input.can_leave = [allow_empty = cfg.allow_empty, validate = std::move(cfg.validate)](
+                              WizardContext& c) -> StepCheckResult {
             auto v = c.get<std::string>("input_value").value_or("");
             if (!allow_empty && v.empty()) {
                 return StepCheckResult::fail("Value cannot be empty");
@@ -1027,14 +1027,17 @@ struct InputAndConfirmConfig {
             auto v = c.get<std::string>("input_value").value_or("");
             Elements el;
             el.push_back(text(""));
-            el.push_back(hbox({ text("  ✔  "), text("Review your input") | bold | color(pal.success) }));
+            el.push_back(
+                hbox({text("  ✔  "), text("Review your input") | bold | color(pal.success)}));
             el.push_back(text(""));
-            el.push_back(hbox({ text("    " + label + ": ") | dim, text(v) | bold | color(pal.info) }));
+            el.push_back(
+                hbox({text("    " + label + ": ") | dim, text(v) | bold | color(pal.info)}));
             el.push_back(text(""));
             el.push_back(text("  Press Enter / Finish to confirm.") | dim);
             return vbox(std::move(el)) | flex;
         };
-        confirm.can_leave = [on_confirm = std::move(cfg.on_confirm)](WizardContext& c) -> StepCheckResult {
+        confirm.can_leave = [on_confirm =
+                                 std::move(cfg.on_confirm)](WizardContext& c) -> StepCheckResult {
             if (on_confirm) {
                 auto v = c.get<std::string>("input_value").value_or("");
                 on_confirm(v);
@@ -1064,8 +1067,8 @@ struct InputAndConfirmConfig {
 struct FileWizardConfig {
     std::string wizard_title = "Export File";
     std::string default_path = "output.txt";
-    std::string content_preview;          ///< Full content to be written
-    std::vector<std::string> source_paths; ///< If >1, adds step 0 to pick a source
+    std::string content_preview;            ///< Full content to be written
+    std::vector<std::string> source_paths;  ///< If >1, adds step 0 to pick a source
     /// Callback to actually perform the write.  Return empty string on
     /// success, or an error message to block Finish and show it.
     std::function<std::string(std::string_view path, std::string_view content)> on_write;
@@ -1128,14 +1131,18 @@ inline std::vector<std::string> split_lines(std::string_view s) {
                 int sel = c.get<int>("source_index").value_or(0);
                 Elements el;
                 el.push_back(text(""));
-                el.push_back(hbox({ text(("  " + std::string{loom::ui::design::figures::kArrowDown} + " ")), text("Source file") | bold | color(pal.warning) }));
+                el.push_back(
+                    hbox({text(("  " + std::string{loom::ui::design::figures::kArrowDown} + " ")),
+                          text("Source file") | bold | color(pal.warning)}));
                 el.push_back(text(""));
                 for (int i = 0; i < static_cast<int>(paths.size()); ++i) {
                     const auto& pal = *loom::ui::design::theme::current_theme().palette;
                     std::string prefix = (i == sel) ? "  > " : "    ";
                     Element line = text(prefix + paths[i]);
-                    if (i == sel) line = line | bold | color(pal.info);
-                    else line = line | dim;
+                    if (i == sel)
+                        line = line | bold | color(pal.info);
+                    else
+                        line = line | dim;
                     el.push_back(line);
                 }
                 el.push_back(text(""));
@@ -1162,16 +1169,18 @@ inline std::vector<std::string> split_lines(std::string_view s) {
             auto v = c.get<std::string>("output_path").value_or("");
             Elements el;
             el.push_back(text(""));
-            el.push_back(hbox({ text(("  " + std::string{loom::ui::design::figures::kArrowRight} + " ")), text("Output path") | bold | color(pal.warning) }));
+            el.push_back(
+                hbox({text(("  " + std::string{loom::ui::design::figures::kArrowRight} + " ")),
+                      text("Output path") | bold | color(pal.warning)}));
             el.push_back(text(""));
             el.push_back(hbox({
                 text("    Path: ") | dim,
-                text(v.empty() ? "(type a path)" : v)
-                    | (v.empty() ? dim : bold) | color(pal.info),
+                text(v.empty() ? "(type a path)" : v) | (v.empty() ? dim : bold) | color(pal.info),
                 text("▌") | color(pal.info),
             }));
             el.push_back(text(""));
-            el.push_back(text("  Type characters, Backspace to delete, ←/→ to switch steps.") | dim);
+            el.push_back(text("  Type characters, Backspace to delete, ←/→ to switch steps.") |
+                         dim);
             return vbox(std::move(el)) | flex;
         };
         path.on_event = [](WizardContext& c, Event e) -> bool {
@@ -1207,19 +1216,19 @@ inline std::vector<std::string> split_lines(std::string_view s) {
             auto lines = split_lines(content);
             Elements el;
             el.push_back(text(""));
-            el.push_back(hbox({ text(("  " + std::string{loom::ui::design::figures::kInfo} + " ")), text("Content preview") | bold | color(pal.warning) }));
-            el.push_back(text(std::format("    {} bytes, {} line{}",
-                                          content.size(),
-                                          lines.size(),
-                                          lines.size() == 1 ? "" : "s")) | dim);
+            el.push_back(hbox({text(("  " + std::string{loom::ui::design::figures::kInfo} + " ")),
+                               text("Content preview") | bold | color(pal.warning)}));
+            el.push_back(text(std::format("    {} bytes, {} line{}", content.size(), lines.size(),
+                                          lines.size() == 1 ? "" : "s")) |
+                         dim);
             el.push_back(separatorLight());
             std::size_t shown = 0;
             for (; shown < lines.size() && shown < limit; ++shown) {
                 el.push_back(text("    " + lines[shown]));
             }
             if (shown < lines.size()) {
-                el.push_back(text(std::format("    … ({} more lines omitted)",
-                                              lines.size() - shown)) | dim);
+                el.push_back(
+                    text(std::format("    … ({} more lines omitted)", lines.size() - shown)) | dim);
             }
             if (lines.empty()) {
                 el.push_back(text("    (file is empty)") | dim);
@@ -1234,7 +1243,8 @@ inline std::vector<std::string> split_lines(std::string_view s) {
         write.id = "confirm";
         write.title = "Confirm write";
         write.description = "The file will be written when you confirm.";
-        write.can_leave = [on_write = std::move(cfg.on_write)](WizardContext& c) -> StepCheckResult {
+        write.can_leave = [on_write =
+                               std::move(cfg.on_write)](WizardContext& c) -> StepCheckResult {
             if (!on_write) return StepCheckResult::pass();
             auto p = c.get<std::string>("output_path").value_or("");
             auto content = c.get<std::string>("file_content").value_or("");
@@ -1248,13 +1258,15 @@ inline std::vector<std::string> split_lines(std::string_view s) {
             auto content = c.get<std::string>("file_content").value_or("");
             Elements el;
             el.push_back(text(""));
-            el.push_back(hbox({ text("  ⚠  "), text("Confirm file write") | bold | color(pal.warning) }));
+            el.push_back(
+                hbox({text("  ⚠  "), text("Confirm file write") | bold | color(pal.warning)}));
             el.push_back(text(""));
-            el.push_back(hbox({ text("    Path:   ") | dim, text(p) | bold | color(pal.info) }));
-            el.push_back(hbox({ text("    Size:   ") | dim,
-                                text(std::format("{} bytes", content.size())) | color(pal.text) }));
+            el.push_back(hbox({text("    Path:   ") | dim, text(p) | bold | color(pal.info)}));
+            el.push_back(hbox({text("    Size:   ") | dim,
+                               text(std::format("{} bytes", content.size())) | color(pal.text)}));
             el.push_back(text(""));
-            el.push_back(text("  This will OVERWRITE the file if it exists.") | color(pal.danger) | dim);
+            el.push_back(text("  This will OVERWRITE the file if it exists.") | color(pal.danger) |
+                         dim);
             el.push_back(text("  Press Enter / Finish to write.") | dim);
             return vbox(std::move(el)) | flex;
         };
@@ -1268,4 +1280,4 @@ inline std::vector<std::string> split_lines(std::string_view s) {
     return MakeWizard(std::move(config), std::move(builder));
 }
 
-} // namespace loom::ui::wizard_dialog
+}  // namespace loom::ui::wizard_dialog

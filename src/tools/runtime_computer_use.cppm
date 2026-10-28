@@ -22,16 +22,26 @@ using loom::core::computer_use::ActionType;
 /// Map a computer-use ActionType to its wire string.
 [[nodiscard]] inline std::string_view action_name(ActionType action) {
     switch (action) {
-        case ActionType::Screenshot: return "screenshot";
-        case ActionType::MouseMove: return "move";
-        case ActionType::MouseClick: return "click";
-        case ActionType::MouseDoubleClick: return "double_click";
-        case ActionType::MouseRightClick: return "right_click";
-        case ActionType::MouseDrag: return "drag";
-        case ActionType::KeyType: return "type";
-        case ActionType::KeyPress: return "press";
-        case ActionType::KeyHotkey: return "hotkey";
-        case ActionType::Scroll: return "scroll";
+    case ActionType::Screenshot:
+        return "screenshot";
+    case ActionType::MouseMove:
+        return "move";
+    case ActionType::MouseClick:
+        return "click";
+    case ActionType::MouseDoubleClick:
+        return "double_click";
+    case ActionType::MouseRightClick:
+        return "right_click";
+    case ActionType::MouseDrag:
+        return "drag";
+    case ActionType::KeyType:
+        return "type";
+    case ActionType::KeyPress:
+        return "press";
+    case ActionType::KeyHotkey:
+        return "hotkey";
+    case ActionType::Scroll:
+        return "scroll";
     }
     return "unknown";
 }
@@ -42,17 +52,33 @@ using loom::core::computer_use::ActionType;
     escaped.reserve(value.size());
     for (unsigned char ch : value) {
         switch (ch) {
-            case '\\': escaped += R"(\\)"; break;
-            case '"': escaped += R"(\")"; break;
-            case '\b': escaped += R"(\b)"; break;
-            case '\f': escaped += R"(\f)"; break;
-            case '\n': escaped += R"(\n)"; break;
-            case '\r': escaped += R"(\r)"; break;
-            case '\t': escaped += R"(\t)"; break;
-            default:
-                if (ch < 0x20) escaped += std::format(R"(\u{:04x})", static_cast<unsigned>(ch));
-                else escaped.push_back(static_cast<char>(ch));
-                break;
+        case '\\':
+            escaped += R"(\\)";
+            break;
+        case '"':
+            escaped += R"(\")";
+            break;
+        case '\b':
+            escaped += R"(\b)";
+            break;
+        case '\f':
+            escaped += R"(\f)";
+            break;
+        case '\n':
+            escaped += R"(\n)";
+            break;
+        case '\r':
+            escaped += R"(\r)";
+            break;
+        case '\t':
+            escaped += R"(\t)";
+            break;
+        default:
+            if (ch < 0x20)
+                escaped += std::format(R"(\u{:04x})", static_cast<unsigned>(ch));
+            else
+                escaped.push_back(static_cast<char>(ch));
+            break;
         }
     }
     return escaped;
@@ -65,7 +91,8 @@ inline void append_separator(std::string& out, bool& first) {
     first = false;
 }
 
-inline void append_string(std::string& out, std::string_view key, std::string_view value, bool& first) {
+inline void append_string(std::string& out, std::string_view key, std::string_view value,
+                          bool& first) {
     append_separator(out, first);
     out += std::format(R"("{}":"{}")", json_escape(key), json_escape(value));
 }
@@ -75,10 +102,11 @@ inline void append_int(std::string& out, std::string_view key, std::int64_t valu
     out += std::format(R"("{}":{})", json_escape(key), value);
 }
 
-} // namespace detail
+}  // namespace detail
 
 /// Build the JSON payload describing a computer-use action.
-[[nodiscard]] inline std::string command_request_json(const loom::core::computer_use::ComputerAction& action) {
+[[nodiscard]] inline std::string
+command_request_json(const loom::core::computer_use::ComputerAction& action) {
     std::string out = "{";
     bool first = true;
     detail::append_string(out, "action", action_name(action.type), first);
@@ -110,12 +138,8 @@ inline void append_int(std::string& out, std::string_view key, std::int64_t valu
         detail::append_int(out, "width", action.region->width, first);
         detail::append_int(out, "height", action.region->height, first);
         detail::append_separator(out, first);
-        out += std::format(
-            R"("region":{{"x":{},"y":{},"width":{},"height":{}}})",
-            action.region->x,
-            action.region->y,
-            action.region->width,
-            action.region->height);
+        out += std::format(R"("region":{{"x":{},"y":{},"width":{},"height":{}}})", action.region->x,
+                           action.region->y, action.region->width, action.region->height);
     }
     out += '}';
     return out;
@@ -131,4 +155,4 @@ inline void replace_all(std::string& text, std::string_view needle, std::string_
     }
 }
 
-} // namespace loom::tools::runtime_computer_use
+}  // namespace loom::tools::runtime_computer_use

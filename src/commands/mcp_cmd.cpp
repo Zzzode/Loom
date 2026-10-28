@@ -30,24 +30,22 @@ namespace loom::commands {
 }
 
 [[nodiscard]] Result<std::optional<McpStorageScope>>
-McpCommand::extract_scope_arg(std::span<const std::string> args,
-                              std::size_t start) {
+McpCommand::extract_scope_arg(std::span<const std::string> args, std::size_t start) {
     // LAST occurrence wins, matching the value the add loop keeps and the
     // value echoed in error messages.
     std::optional<McpStorageScope> resolved;
     for (std::size_t i = start; i < args.size(); ++i) {
         if (args[i] != "--scope" && args[i] != "-s") continue;
         if (i + 1 >= args.size()) {
-            return std::unexpected(Error::make(
-                ErrorCode::InvalidRequest, "--scope requires a value"));
+            return std::unexpected(
+                Error::make(ErrorCode::InvalidRequest, "--scope requires a value"));
         }
         const std::string_view label = args[i + 1];
         auto scope = ConfigManager::mcp_scope_from_label(label);
         if (!scope) {
-            return std::unexpected(Error::make(
-                ErrorCode::InvalidRequest,
-                std::format("Invalid scope '{}'. Use local | user | project",
-                            label)));
+            return std::unexpected(
+                Error::make(ErrorCode::InvalidRequest,
+                            std::format("Invalid scope '{}'. Use local | user | project", label)));
         }
         resolved = *scope;
     }
@@ -55,8 +53,7 @@ McpCommand::extract_scope_arg(std::span<const std::string> args,
 }
 
 [[nodiscard]] Result<CommandResult>
-McpCommand::execute_set_disabled(std::span<const std::string> args,
-                                 bool disabled) {
+McpCommand::execute_set_disabled(std::span<const std::string> args, bool disabled) {
     if (args.size() < 2) {
         return CommandResult::fail(
             "Usage: /mcp enable|disable <name|all> [--scope local|user|project]");
@@ -87,8 +84,7 @@ McpCommand::execute_set_disabled(std::span<const std::string> args,
     if (all) {
         outcome = config_manager_.set_all_mcp_servers_disabled(disabled);
     } else {
-        outcome = config_manager_.set_mcp_server_disabled(
-            name, disabled, *parsed_scope);
+        outcome = config_manager_.set_mcp_server_disabled(name, disabled, *parsed_scope);
     }
 
     // Categorize entries.
@@ -101,18 +97,22 @@ McpCommand::execute_set_disabled(std::span<const std::string> args,
     for (const auto& entry : outcome.entries) {
         switch (entry.status) {
             using enum loom::core::McpMutationStatus;
-            case Modified:        ++modified; break;
-            case Unchanged:       ++unchanged; break;
-            case SkippedReadOnly:
-                ++skipped;
-                skipped_names.push_back(entry.server_name);
-                break;
-            case WriteFailed:
-                failed_names.push_back(entry.server_name);
-                break;
-            case NotFound:
-                not_found_names.push_back(entry.server_name);
-                break;
+        case Modified:
+            ++modified;
+            break;
+        case Unchanged:
+            ++unchanged;
+            break;
+        case SkippedReadOnly:
+            ++skipped;
+            skipped_names.push_back(entry.server_name);
+            break;
+        case WriteFailed:
+            failed_names.push_back(entry.server_name);
+            break;
+        case NotFound:
+            not_found_names.push_back(entry.server_name);
+            break;
         }
     }
 
@@ -128,15 +128,13 @@ McpCommand::execute_set_disabled(std::span<const std::string> args,
     // ── Render ──────────────────────────────────────────────────────────
 
     // Named server, not found.
-    if (!all && modified == 0 && unchanged == 0 && skipped == 0 &&
-        failed_names.empty() && !not_found_names.empty()) {
+    if (!all && modified == 0 && unchanged == 0 && skipped == 0 && failed_names.empty() &&
+        !not_found_names.empty()) {
         if (!scope_label.empty()) {
-            return CommandResult::fail(std::format(
-                "MCP server '{}' not found in the '{}' scope",
-                name, scope_label));
+            return CommandResult::fail(
+                std::format("MCP server '{}' not found in the '{}' scope", name, scope_label));
         }
-        return CommandResult::fail(
-            std::format("MCP server '{}' not found", name));
+        return CommandResult::fail(std::format("MCP server '{}' not found", name));
     }
 
     // All servers, empty config.
@@ -145,30 +143,26 @@ McpCommand::execute_set_disabled(std::span<const std::string> args,
     }
 
     // All servers, all already in target state (no fallback entries).
-    if (all && modified == 0 && skipped == 0 && failed_names.empty() &&
-        unchanged > 0) {
+    if (all && modified == 0 && skipped == 0 && failed_names.empty() && unchanged > 0) {
         return CommandResult::success(disabled
-            ? std::string("All MCP servers are already disabled")
-            : std::string("All MCP servers are already enabled"));
+                                          ? std::string("All MCP servers are already disabled")
+                                          : std::string("All MCP servers are already enabled"));
     }
 
     // Named server, already in target state.
-    if (!all && modified == 0 && skipped == 0 && failed_names.empty() &&
-        unchanged > 0) {
-        return CommandResult::success(disabled
-            ? std::format("MCP server '{}' is already disabled", name)
-            : std::format("MCP server '{}' is already enabled", name));
+    if (!all && modified == 0 && skipped == 0 && failed_names.empty() && unchanged > 0) {
+        return CommandResult::success(
+            disabled ? std::format("MCP server '{}' is already disabled", name)
+                     : std::format("MCP server '{}' is already enabled", name));
     }
 
     // All entries are read-only fallback.
-    if (modified == 0 && unchanged == 0 && failed_names.empty() &&
-        skipped > 0) {
-        return CommandResult::fail(std::format(
-            "All MCP servers are in a read-only fallback config. "
-            "Use 'mcp add --scope user' to create writable shadows, "
-            "then {} them. Skipped: {}",
-            disabled ? "disable" : "enable",
-            join_str(skipped_names)));
+    if (modified == 0 && unchanged == 0 && failed_names.empty() && skipped > 0) {
+        return CommandResult::fail(
+            std::format("All MCP servers are in a read-only fallback config. "
+                        "Use 'mcp add --scope user' to create writable shadows, "
+                        "then {} them. Skipped: {}",
+                        disabled ? "disable" : "enable", join_str(skipped_names)));
     }
 
     // Only reload/sync when at least one file actually changed.
@@ -181,24 +175,18 @@ McpCommand::execute_set_disabled(std::span<const std::string> args,
     // Build the result message.
     std::string out;
     if (all) {
-        out = std::format(
-            "{} {} MCP server(s); takes effect on next start",
-            disabled ? "Disabled" : "Enabled", modified);
+        out = std::format("{} {} MCP server(s); takes effect on next start",
+                          disabled ? "Disabled" : "Enabled", modified);
     } else {
-        out = std::format(
-            "MCP server '{}' {}; takes effect on next start",
-            name, disabled ? "disabled" : "enabled");
+        out = std::format("MCP server '{}' {}; takes effect on next start", name,
+                          disabled ? "disabled" : "enabled");
     }
 
     if (!skipped_names.empty()) {
-        out += std::format(
-            "\nSkipped (read-only fallback): {}",
-            join_str(skipped_names));
+        out += std::format("\nSkipped (read-only fallback): {}", join_str(skipped_names));
     }
     if (!failed_names.empty()) {
-        out += std::format(
-            "\nWarning: could not write: {}",
-            join_str(failed_names));
+        out += std::format("\nWarning: could not write: {}", join_str(failed_names));
     }
 
     // If nothing was modified, it's a failure — even if some entries were

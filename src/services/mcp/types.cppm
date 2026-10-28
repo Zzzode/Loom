@@ -1,9 +1,10 @@
 // MCP Types Module
 module;
-#include <cstdint>
-#include <sys/socket.h>
 #include <netinet/in.h>
+#include <sys/socket.h>
 #include <unistd.h>
+
+#include <cstdint>
 
 export module loom.services.mcp.types;
 
@@ -46,8 +47,7 @@ enum class McpClientError {
 };
 
 // Result type for MCP operations
-template<typename T>
-using McpResult = std::expected<T, McpClientError>;
+template <typename T> using McpResult = std::expected<T, McpClientError>;
 
 // =========================================================================
 // Connection Status
@@ -64,8 +64,10 @@ enum class ConnectionStatus {
 // Callback types for connection manager events
 using ServerConnectedCallback = std::function<void(const std::string& server_name)>;
 using ServerDisconnectedCallback = std::function<void(const std::string& server_name)>;
-using ServerErrorCallback = std::function<void(const std::string& server_name, const std::string& error)>;
-using ToolsUpdatedCallback = std::function<void(const std::string& server_name, const std::vector<std::string>& tools)>;
+using ServerErrorCallback =
+    std::function<void(const std::string& server_name, const std::string& error)>;
+using ToolsUpdatedCallback =
+    std::function<void(const std::string& server_name, const std::vector<std::string>& tools)>;
 
 // =========================================================================
 // JSON-RPC types
@@ -85,12 +87,15 @@ struct JsonRpcRequest {
 };
 
 // Helper to make a request
-inline JsonRpcRequest make_request(RequestId id, std::string method, std::optional<std::string> params) {
-    return JsonRpcRequest{.id = std::move(id), .method = std::move(method), .params_json = std::move(params)};
+inline JsonRpcRequest make_request(RequestId id, std::string method,
+                                   std::optional<std::string> params) {
+    return JsonRpcRequest{
+        .id = std::move(id), .method = std::move(method), .params_json = std::move(params)};
 }
 
 // Helper to make a notification
-inline JsonRpcNotification make_notification(std::string method, std::optional<std::string> params) {
+inline JsonRpcNotification make_notification(std::string method,
+                                             std::optional<std::string> params) {
     return JsonRpcNotification{.method = std::move(method), .params_json = std::move(params)};
 }
 
@@ -317,18 +322,18 @@ struct InitializeResult {
 inline std::optional<InitializeResult> parse_initialize_result(const std::string& json_str) {
     auto doc = loom::utils::json::parse(json_str);
     if (!doc) return std::nullopt;
-    
+
     auto root = doc->root();
     auto result_node = root.get("result");
     if (!result_node.is_obj()) return std::nullopt;
-    
+
     InitializeResult result;
     auto info_node = result_node.get("serverInfo");
     if (info_node.is_obj()) {
         result.server_info.name = std::string(info_node.get("name").as_str());
         result.server_info.version = std::string(info_node.get("version").as_str());
     }
-    
+
     auto caps_node = result_node.get("capabilities");
     if (caps_node.is_obj()) {
         auto tools_node = caps_node.get("tools");
@@ -339,7 +344,8 @@ inline std::optional<InitializeResult> parse_initialize_result(const std::string
         auto resources_node = caps_node.get("resources");
         result.capabilities.resources = resources_node.valid();
         if (resources_node.is_obj()) {
-            result.capabilities.resources_list_changed = resources_node.get("listChanged").as_bool();
+            result.capabilities.resources_list_changed =
+                resources_node.get("listChanged").as_bool();
             result.capabilities.resources_subscribe = resources_node.get("subscribe").as_bool();
         }
         auto prompts_node = caps_node.get("prompts");
@@ -359,7 +365,7 @@ inline std::optional<InitializeResult> parse_initialize_result(const std::string
             });
         }
     }
-    
+
     return result;
 }
 
@@ -367,11 +373,11 @@ inline std::optional<InitializeResult> parse_initialize_result(const std::string
 inline std::optional<ListToolsResult> parse_list_tools_result(const std::string& json_str) {
     auto doc = loom::utils::json::parse(json_str);
     if (!doc) return std::nullopt;
-    
+
     auto root = doc->root();
     auto result_node = root.get("result");
     if (!result_node.is_obj()) return std::nullopt;
-    
+
     ListToolsResult result;
     auto tools_node = result_node.get("tools");
     if (tools_node.is_arr()) {
@@ -391,7 +397,7 @@ inline std::optional<ListToolsResult> parse_list_tools_result(const std::string&
             }
         });
     }
-    
+
     return result;
 }
 
@@ -399,11 +405,11 @@ inline std::optional<ListToolsResult> parse_list_tools_result(const std::string&
 inline std::optional<ToolCallResult> parse_tool_call_result(const std::string& json_str) {
     auto doc = loom::utils::json::parse(json_str);
     if (!doc) return std::nullopt;
-    
+
     auto root = doc->root();
     auto result_node = root.get("result");
     if (!result_node.is_obj()) return std::nullopt;
-    
+
     ToolCallResult result;
     result.is_error = result_node.get("isError").as_bool();
     auto content_node = result_node.get("content");
@@ -422,14 +428,18 @@ inline std::optional<ToolCallResult> parse_tool_call_result(const std::string& j
                 ContentItem ci;
                 ci.type = "image";
                 // Try direct fields first (some MCP servers use flat format)
-                if (auto mt = item.get("mimeType"); mt.is_str()) ci.media_type = mt.as_str();
-                else if (auto mt = item.get("mediaType"); mt.is_str()) ci.media_type = mt.as_str();
-                else if (auto mt = item.get("media_type"); mt.is_str()) ci.media_type = mt.as_str();
+                if (auto mt = item.get("mimeType"); mt.is_str())
+                    ci.media_type = mt.as_str();
+                else if (auto mt = item.get("mediaType"); mt.is_str())
+                    ci.media_type = mt.as_str();
+                else if (auto mt = item.get("media_type"); mt.is_str())
+                    ci.media_type = mt.as_str();
                 if (auto d = item.get("data"); d.is_str()) ci.data = d.as_str();
                 // Try nested "source" object (Messages API format)
                 if (!ci.data) {
                     if (auto src = item.get("source"); src.is_obj()) {
-                        if (auto mt = src.get("media_type"); mt.is_str()) ci.media_type = mt.as_str();
+                        if (auto mt = src.get("media_type"); mt.is_str())
+                            ci.media_type = mt.as_str();
                         if (auto d = src.get("data"); d.is_str()) ci.data = d.as_str();
                     }
                 }
@@ -440,7 +450,7 @@ inline std::optional<ToolCallResult> parse_tool_call_result(const std::string& j
             // Other types (audio, resource, resource_link) are ignored for now
         });
     }
-    
+
     return result;
 }
 
@@ -500,4 +510,4 @@ int find_available_port() {
     return static_cast<int>(port);
 }
 
-} // namespace loom::services::mcp
+}  // namespace loom::services::mcp

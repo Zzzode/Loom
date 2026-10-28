@@ -22,68 +22,71 @@ struct ExtractedLoomHints {
 };
 
 namespace detail {
-    [[nodiscard]] inline bool is_space_or_tab(char ch) noexcept {
-        return ch == ' ' || ch == '\t';
-    }
+[[nodiscard]] inline bool is_space_or_tab(char ch) noexcept {
+    return ch == ' ' || ch == '\t';
+}
 
-    [[nodiscard]] inline std::string_view trim_horizontal(std::string_view value) noexcept {
-        while (!value.empty() && is_space_or_tab(value.front())) value.remove_prefix(1);
-        while (!value.empty() && is_space_or_tab(value.back())) value.remove_suffix(1);
-        return value;
-    }
+[[nodiscard]] inline std::string_view trim_horizontal(std::string_view value) noexcept {
+    while (!value.empty() && is_space_or_tab(value.front()))
+        value.remove_prefix(1);
+    while (!value.empty() && is_space_or_tab(value.back()))
+        value.remove_suffix(1);
+    return value;
+}
 
-    [[nodiscard]] inline bool starts_with(std::string_view value, std::string_view prefix) noexcept {
-        return value.size() >= prefix.size() && value.substr(0, prefix.size()) == prefix;
-    }
+[[nodiscard]] inline bool starts_with(std::string_view value, std::string_view prefix) noexcept {
+    return value.size() >= prefix.size() && value.substr(0, prefix.size()) == prefix;
+}
 
-    [[nodiscard]] inline bool ends_with(std::string_view value, std::string_view suffix) noexcept {
-        return value.size() >= suffix.size() && value.substr(value.size() - suffix.size()) == suffix;
-    }
+[[nodiscard]] inline bool ends_with(std::string_view value, std::string_view suffix) noexcept {
+    return value.size() >= suffix.size() && value.substr(value.size() - suffix.size()) == suffix;
+}
 
-    [[nodiscard]] inline bool is_word_char(unsigned char ch) noexcept {
-        return std::isalnum(ch) != 0 || ch == '_';
-    }
+[[nodiscard]] inline bool is_word_char(unsigned char ch) noexcept {
+    return std::isalnum(ch) != 0 || ch == '_';
+}
 
-    [[nodiscard]] inline bool is_hint_tag_line(std::string_view raw_line) noexcept {
-        if (!raw_line.empty() && raw_line.back() == '\r') raw_line.remove_suffix(1);
-        const auto line = trim_horizontal(raw_line);
-        constexpr std::string_view prefix = "<loom-hint";
-        if (!starts_with(line, prefix) || !ends_with(line, "/>")) return false;
-        if (line.size() == prefix.size() + 2) return true;
-        const char after_prefix = line[prefix.size()];
-        return is_space_or_tab(after_prefix) || after_prefix == '/' || after_prefix == '>';
-    }
+[[nodiscard]] inline bool is_hint_tag_line(std::string_view raw_line) noexcept {
+    if (!raw_line.empty() && raw_line.back() == '\r') raw_line.remove_suffix(1);
+    const auto line = trim_horizontal(raw_line);
+    constexpr std::string_view prefix = "<loom-hint";
+    if (!starts_with(line, prefix) || !ends_with(line, "/>")) return false;
+    if (line.size() == prefix.size() + 2) return true;
+    const char after_prefix = line[prefix.size()];
+    return is_space_or_tab(after_prefix) || after_prefix == '/' || after_prefix == '>';
+}
 
-    [[nodiscard]] inline std::optional<int> parse_int(std::string_view value) noexcept {
-        if (value.empty()) return std::nullopt;
-        int out = 0;
-        for (unsigned char ch : value) {
-            if (ch < '0' || ch > '9') return std::nullopt;
-            const int digit = static_cast<int>(ch - '0');
-            if (out > (INT_MAX - digit) / 10) return std::nullopt;
-            out = out * 10 + digit;
+[[nodiscard]] inline std::optional<int> parse_int(std::string_view value) noexcept {
+    if (value.empty()) return std::nullopt;
+    int out = 0;
+    for (unsigned char ch : value) {
+        if (ch < '0' || ch > '9') return std::nullopt;
+        const int digit = static_cast<int>(ch - '0');
+        if (out > (INT_MAX - digit) / 10) return std::nullopt;
+        out = out * 10 + digit;
+    }
+    return out;
+}
+
+[[nodiscard]] inline std::string collapse_extra_blank_lines(std::string_view value) {
+    std::string out;
+    out.reserve(value.size());
+    std::size_t newline_run = 0;
+    for (char ch : value) {
+        if (ch == '\n') {
+            ++newline_run;
+            if (newline_run <= 2) out.push_back(ch);
+        } else {
+            newline_run = 0;
+            out.push_back(ch);
         }
-        return out;
     }
+    return out;
+}
+}  // namespace detail
 
-    [[nodiscard]] inline std::string collapse_extra_blank_lines(std::string_view value) {
-        std::string out;
-        out.reserve(value.size());
-        std::size_t newline_run = 0;
-        for (char ch : value) {
-            if (ch == '\n') {
-                ++newline_run;
-                if (newline_run <= 2) out.push_back(ch);
-            } else {
-                newline_run = 0;
-                out.push_back(ch);
-            }
-        }
-        return out;
-    }
-} // namespace detail
-
-[[nodiscard]] inline std::unordered_map<std::string, std::string> parse_attrs(std::string_view tag_body) {
+[[nodiscard]] inline std::unordered_map<std::string, std::string>
+parse_attrs(std::string_view tag_body) {
     std::unordered_map<std::string, std::string> attrs;
     std::size_t i = 0;
     while (i < tag_body.size()) {
@@ -93,7 +96,8 @@ namespace detail {
         }
 
         const std::size_t key_start = i;
-        while (i < tag_body.size() && detail::is_word_char(static_cast<unsigned char>(tag_body[i]))) ++i;
+        while (i < tag_body.size() && detail::is_word_char(static_cast<unsigned char>(tag_body[i])))
+            ++i;
         const auto key = tag_body.substr(key_start, i - key_start);
         if (i >= tag_body.size() || tag_body[i] != '=') continue;
         ++i;
@@ -102,7 +106,8 @@ namespace detail {
         if (i < tag_body.size() && tag_body[i] == '"') {
             ++i;
             const std::size_t value_start = i;
-            while (i < tag_body.size() && tag_body[i] != '"') ++i;
+            while (i < tag_body.size() && tag_body[i] != '"')
+                ++i;
             value = std::string(tag_body.substr(value_start, i - value_start));
             if (i < tag_body.size() && tag_body[i] == '"') ++i;
         } else {
@@ -120,13 +125,16 @@ namespace detail {
 }
 
 [[nodiscard]] inline std::string first_command_token(std::string_view command) {
-    while (!command.empty() && std::isspace(static_cast<unsigned char>(command.front()))) command.remove_prefix(1);
+    while (!command.empty() && std::isspace(static_cast<unsigned char>(command.front())))
+        command.remove_prefix(1);
     std::size_t end = 0;
-    while (end < command.size() && !std::isspace(static_cast<unsigned char>(command[end]))) ++end;
+    while (end < command.size() && !std::isspace(static_cast<unsigned char>(command[end])))
+        ++end;
     return std::string(command.substr(0, end));
 }
 
-[[nodiscard]] inline ExtractedLoomHints extract_loom_hints(std::string_view output, std::string_view command) {
+[[nodiscard]] inline ExtractedLoomHints extract_loom_hints(std::string_view output,
+                                                           std::string_view command) {
     if (output.find("<loom-hint") == std::string_view::npos) {
         return {.hints = {}, .stripped = std::string(output)};
     }
@@ -149,9 +157,14 @@ namespace detail {
             const auto v_it = attrs.find("v");
             const auto type_it = attrs.find("type");
             const auto value_it = attrs.find("value");
-            const auto version = v_it == attrs.end() ? std::optional<int>{} : detail::parse_int(v_it->second);
-            if (version == 1 && type_it != attrs.end() && type_it->second == "plugin" && value_it != attrs.end() && !value_it->second.empty()) {
-                result.hints.push_back(LoomHint{.v = *version, .type = type_it->second, .value = value_it->second, .source_command = source_command});
+            const auto version =
+                v_it == attrs.end() ? std::optional<int>{} : detail::parse_int(v_it->second);
+            if (version == 1 && type_it != attrs.end() && type_it->second == "plugin" &&
+                value_it != attrs.end() && !value_it->second.empty()) {
+                result.hints.push_back(LoomHint{.v = *version,
+                                                .type = type_it->second,
+                                                .value = value_it->second,
+                                                .source_command = source_command});
             }
             if (has_newline) result.stripped.push_back('\n');
         } else {
@@ -199,17 +212,13 @@ public:
         notify();
     }
 
-    void mark_shown_this_session() noexcept {
-        shown_this_session_ = true;
-    }
+    void mark_shown_this_session() noexcept { shown_this_session_ = true; }
 
     [[nodiscard]] std::optional<LoomHint> get_pending_hint_snapshot() const {
         return pending_hint_;
     }
 
-    [[nodiscard]] bool has_shown_hint_this_session() const noexcept {
-        return shown_this_session_;
-    }
+    [[nodiscard]] bool has_shown_hint_this_session() const noexcept { return shown_this_session_; }
 
     void reset() noexcept {
         pending_hint_.reset();
@@ -219,7 +228,8 @@ public:
 private:
     void notify() {
         const auto subscribers = subscribers_;
-        for (const auto& [_, callback] : subscribers) callback();
+        for (const auto& [_, callback] : subscribers)
+            callback();
     }
 
     std::optional<LoomHint> pending_hint_;
@@ -228,4 +238,4 @@ private:
     std::vector<std::pair<std::size_t, Callback>> subscribers_;
 };
 
-} // namespace loom::utils::loom_hints
+}  // namespace loom::utils::loom_hints

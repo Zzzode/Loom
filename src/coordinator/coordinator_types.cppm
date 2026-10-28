@@ -25,10 +25,14 @@ enum class CoordinatorMode : std::uint8_t {
 /// Convert CoordinatorMode to display string
 [[nodiscard]] constexpr std::string_view coordinator_mode_to_string(CoordinatorMode mode) noexcept {
     switch (mode) {
-        case CoordinatorMode::Solo: return "solo";
-        case CoordinatorMode::Parallel: return "parallel";
-        case CoordinatorMode::Sequential: return "sequential";
-        case CoordinatorMode::Team: return "team";
+    case CoordinatorMode::Solo:
+        return "solo";
+    case CoordinatorMode::Parallel:
+        return "parallel";
+    case CoordinatorMode::Sequential:
+        return "sequential";
+    case CoordinatorMode::Team:
+        return "team";
     }
     return "unknown";
 }
@@ -42,4 +46,4 @@ enum class CoordinatorMode : std::uint8_t {
     return std::nullopt;
 }
 
-} // namespace loom::coordinator
+}  // namespace loom::coordinator

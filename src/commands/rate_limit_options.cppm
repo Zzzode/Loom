@@ -7,7 +7,6 @@ import std;
 
 export namespace loom::commands {
 
-
 struct RateLimits {
     int rpm;
     int tpm;
@@ -15,7 +14,6 @@ struct RateLimits {
 };
 
 auto get_current_limits() -> RateLimits;
-
 
 auto show_rate_limit_status() -> std::string {
     auto limits = get_current_limits();
@@ -27,27 +25,26 @@ auto show_rate_limit_status() -> std::string {
     return status;
 }
 
-
 auto get_current_limits() -> RateLimits {
     auto read_int = [](const char* name, int fallback) {
         if (const char* value = std::getenv(name)) {
-            try { return std::stoi(value); } catch (...) { return fallback; }
+            try {
+                return std::stoi(value);
+            } catch (...) {
+                return fallback;
+            }
         }
         return fallback;
     };
-    return {
-        .rpm = read_int("LOOM_RATE_LIMIT_RPM", 60),
-        .tpm = read_int("LOOM_RATE_LIMIT_TPM", 100000),
-        .daily = read_int("LOOM_RATE_LIMIT_DAILY", 1000)
-    };
+    return {.rpm = read_int("LOOM_RATE_LIMIT_RPM", 60),
+            .tpm = read_int("LOOM_RATE_LIMIT_TPM", 100000),
+            .daily = read_int("LOOM_RATE_LIMIT_DAILY", 1000)};
 }
-
 
 auto suggest_rate_limit_optimization() -> std::string {
     auto limits = get_current_limits();
 
     std::string suggestion = "Rate Limit Optimization Suggestions:\n";
-
 
     if (limits.rpm < 100) {
         suggestion += "  - Consider upgrading your plan for higher RPM limits.\n";
@@ -62,4 +59,4 @@ auto suggest_rate_limit_optimization() -> std::string {
     return suggestion;
 }
 
-} // namespace loom::commands
+}  // namespace loom::commands

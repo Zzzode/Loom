@@ -31,16 +31,17 @@ std::vector<PermissionDenial> QueryEngine::get_permission_denials() const {
 }
 
 void QueryEngine::append_pending_native_agent_notifications() {
-    for (auto& notification : loom::tools::agent_runtime::native_agent_store().take_pending_task_events(session_id_.str())) {
+    for (auto& notification :
+         loom::tools::agent_runtime::native_agent_store().take_pending_task_events(
+             session_id_.str())) {
         auto msg = make_user_message(notification.model_context);
         msg.origin = std::move(notification.event);
         append_message(Message{std::move(msg)});
     }
 }
 
-std::vector<ToolResultMessage> QueryEngine::execute_pending_tools(
-    const AssistantMessage& msg,
-    const QueryOptions& options) {
+std::vector<ToolResultMessage> QueryEngine::execute_pending_tools(const AssistantMessage& msg,
+                                                                  const QueryOptions& options) {
 
     // Collect all tool_use blocks
     std::vector<const ToolUseBlock*> tool_uses;
@@ -52,12 +53,11 @@ std::vector<ToolResultMessage> QueryEngine::execute_pending_tools(
     if (tool_uses.empty()) return {};
 
     // Check if all tools are read-only (safe for parallel execution)
-    static const std::unordered_set<std::string> readonly_tools{
-        "Read", "Glob", "Grep", "LS", "FileRead"
-    };
+    static const std::unordered_set<std::string> readonly_tools{"Read", "Glob", "Grep", "LS",
+                                                                "FileRead"};
 
-    bool all_readonly = tool_uses.size() > 1 &&
-        std::ranges::all_of(tool_uses, [](const ToolUseBlock* tu) {
+    bool all_readonly =
+        tool_uses.size() > 1 && std::ranges::all_of(tool_uses, [](const ToolUseBlock* tu) {
             return readonly_tools.contains(tu->name);
         });
 
@@ -67,8 +67,8 @@ std::vector<ToolResultMessage> QueryEngine::execute_pending_tools(
         futures.reserve(tool_uses.size());
 
         for (const auto* tool_use : tool_uses) {
-            futures.push_back(std::async(std::launch::async,
-                [this, tool_use, &options]() -> ToolResultMessage {
+            futures.push_back(
+                std::async(std::launch::async, [this, tool_use, &options]() -> ToolResultMessage {
                     return execute_single_tool(*tool_use, options);
                 }));
         }
@@ -89,9 +89,8 @@ std::vector<ToolResultMessage> QueryEngine::execute_pending_tools(
     return results;
 }
 
-[[nodiscard]] ToolResultMessage QueryEngine::make_tool_error_result(
-    const ToolUseBlock& tool_use,
-    std::string message) {
+[[nodiscard]] ToolResultMessage QueryEngine::make_tool_error_result(const ToolUseBlock& tool_use,
+                                                                    std::string message) {
     ToolResultMessage result_msg{};
     result_msg.id.value = generate_id();
     result_msg.timestamp = std::chrono::system_clock::now();
@@ -103,14 +102,12 @@ std::vector<ToolResultMessage> QueryEngine::execute_pending_tools(
 }
 
 [[nodiscard]] ToolResultMessage QueryEngine::execute_single_tool(
-    const ToolUseBlock& tool_use,
-    const QueryOptions& options,
+    const ToolUseBlock& tool_use, const QueryOptions& options,
     const std::function<std::string(std::string_view)>& validate_host_input,
     const std::optional<HostAgentResumeConstraint>& host_resume) {
     if (!is_tool_enabled_for_query(tool_use.name, options)) {
         return make_tool_error_result(
-            tool_use,
-            std::format("Tool disabled for this query: {}", tool_use.name));
+            tool_use, std::format("Tool disabled for this query: {}", tool_use.name));
     }
 
     auto permission = check_tool_permission(tool_use.name, tool_use.input_json, tool_use.id.value);
@@ -119,15 +116,13 @@ std::vector<ToolResultMessage> QueryEngine::execute_pending_tools(
         // Record denial
         {
             std::lock_guard lock(state_mutex_);
-            permission_denials_.push_back(PermissionDenial{
-                tool_use.name,
-                tool_use.id.value,
-                tool_use.input_json});
+            permission_denials_.push_back(
+                PermissionDenial{tool_use.name, tool_use.id.value, tool_use.input_json});
         }
 
         return make_tool_error_result(
-            tool_use,
-            permission.message.value_or(std::format("Permission denied for tool: {}", tool_use.name)));
+            tool_use, permission.message.value_or(
+                          std::format("Permission denied for tool: {}", tool_use.name)));
     }
 
     if (validate_host_input) {
@@ -151,24 +146,20 @@ std::vector<ToolResultMessage> QueryEngine::execute_pending_tools(
     }
 
     if (lifecycle_hooks_) {
-        auto block_reason = lifecycle_hooks_->check_and_emit_pre_tool_use(loom::hooks::PreToolUseEvent{
-            .tool_name = tool_use.name,
-            .tool_input_json = effective_input_json,
-            .tool_use_id = tool_use.id.value,
-            .timestamp = std::chrono::system_clock::now()
-        });
+        auto block_reason = lifecycle_hooks_->check_and_emit_pre_tool_use(
+            loom::hooks::PreToolUseEvent{.tool_name = tool_use.name,
+                                         .tool_input_json = effective_input_json,
+                                         .tool_use_id = tool_use.id.value,
+                                         .timestamp = std::chrono::system_clock::now()});
         if (block_reason) {
             // Hook denied the tool execution
             {
                 std::lock_guard lock(state_mutex_);
-                permission_denials_.push_back(PermissionDenial{
-                    tool_use.name,
-                    tool_use.id.value,
-                    effective_input_json});
+                permission_denials_.push_back(
+                    PermissionDenial{tool_use.name, tool_use.id.value, effective_input_json});
             }
             return make_tool_error_result(
-                tool_use,
-                std::format("Hook denied tool execution: {}", *block_reason));
+                tool_use, std::format("Hook denied tool execution: {}", *block_reason));
         }
     }
 
@@ -181,8 +172,8 @@ std::vector<ToolResultMessage> QueryEngine::execute_pending_tools(
         namespace he = loom::utils::hooks_execution;
         he::HookExecutionContext ctx = user_hooks_ctx_template_;
         // Matcher needs ctx["tool"]["name"]; materialise an owned doc.
-        std::string tool_doc = std::string("{\"name\": \"") +
-            he::json_escape(tool_use.name) + "\"}";
+        std::string tool_doc =
+            std::string("{\"name\": \"") + he::json_escape(tool_use.name) + "\"}";
         if (auto td = loom::utils::json::parse(tool_doc)) {
             ctx.set_context_doc("tool", std::move(*td));
         }
@@ -192,32 +183,26 @@ std::vector<ToolResultMessage> QueryEngine::execute_pending_tools(
         }
 
         auto [modified_payload, action] = he::run_api_query_hooks(
-            user_hooks_,
-            loom::utils::hooks_registry::HookEventType::PreToolUse,
-            ctx,
+            user_hooks_, loom::utils::hooks_registry::HookEventType::PreToolUse, ctx,
             effective_input_json);
 
         using HEAction = he::HookResponseAction;
-        if (action.action == HEAction::BlockToolCall ||
-            action.action == HEAction::AbortQuery) {
+        if (action.action == HEAction::BlockToolCall || action.action == HEAction::AbortQuery) {
             {
                 std::lock_guard lock(state_mutex_);
-                permission_denials_.push_back(PermissionDenial{
-                    tool_use.name,
-                    tool_use.id.value,
-                    effective_input_json});
+                permission_denials_.push_back(
+                    PermissionDenial{tool_use.name, tool_use.id.value, effective_input_json});
             }
             std::string reason = action.reason.empty()
-                ? std::string("user PreToolUse hook blocked the tool call")
-                : action.reason;
+                                     ? std::string("user PreToolUse hook blocked the tool call")
+                                     : action.reason;
             return make_tool_error_result(tool_use, std::move(reason));
         }
         // hookUpdatedInput passthrough (toolHooks.ts:556-563): if the hook
         // produced a modified payload distinct from the input, use it.
         // `modified_payload` (the pair's first element) carries any
         // prompt-passthrough merged with the hook's modified_payload.
-        if (action.action == HEAction::RetryWithModifiedPayload &&
-            !modified_payload.empty() &&
+        if (action.action == HEAction::RetryWithModifiedPayload && !modified_payload.empty() &&
             modified_payload != effective_input_json) {
             effective_input_json = modified_payload;
         }
@@ -264,7 +249,8 @@ std::vector<ToolResultMessage> QueryEngine::execute_pending_tools(
         auto& tr = *exec_result;
         result_msg.is_error = tr.is_error;
         for (auto& content : tr.content) {
-            if (content.format && *content.format == "image" && content.media_type && content.data) {
+            if (content.format && *content.format == "image" && content.media_type &&
+                content.data) {
                 // NOTE: width/height/size_bytes are not returned by the
                 // tool-use executor (it only forwards format/media_type/data).
                 // Left as std::nullopt; user-facing renderer falls back to
@@ -272,12 +258,13 @@ std::vector<ToolResultMessage> QueryEngine::execute_pending_tools(
                 // the base64 payload.
                 ImageBlock ib;
                 ib.media_type = std::move(*content.media_type);
-                ib.data       = std::move(*content.data);
-                ib.source     = ImageBlockSource::Unknown;
+                ib.data = std::move(*content.data);
+                ib.source = ImageBlockSource::Unknown;
                 result_msg.content.push_back(std::move(ib));
                 continue;
             }
-            if (content.format && *content.format == "document" && content.media_type && content.data) {
+            if (content.format && *content.format == "document" && content.media_type &&
+                content.data) {
                 result_msg.content.push_back(DocumentBlock{
                     .media_type = std::move(*content.media_type),
                     .data = std::move(*content.data),
@@ -289,8 +276,7 @@ std::vector<ToolResultMessage> QueryEngine::execute_pending_tools(
                 std::size_t end = 30000;
                 // Keep valid UTF-8 intact: a split scalar makes the wire JSON
                 // writer reject the complete request, not just this result.
-                while (end > 0 &&
-                       (static_cast<unsigned char>(content.text[end]) & 0xC0) == 0x80) {
+                while (end > 0 && (static_cast<unsigned char>(content.text[end]) & 0xC0) == 0x80) {
                     --end;
                 }
                 auto truncated = content.text.substr(0, end);
@@ -330,15 +316,15 @@ std::vector<ToolResultMessage> QueryEngine::execute_pending_tools(
     // Emit post-tool-use lifecycle event
     if (lifecycle_hooks_) {
         auto exec_end = std::chrono::steady_clock::now();
-        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(exec_end - exec_start);
-        lifecycle_hooks_->emit_post_tool_use(loom::hooks::PostToolUseEvent{
-            .tool_name = tool_use.name,
-            .tool_use_id = tool_use.id.value,
-            .is_error = result_msg.is_error,
-            .output_preview = output_preview,
-            .duration = duration,
-            .timestamp = std::chrono::system_clock::now()
-        });
+        auto duration =
+            std::chrono::duration_cast<std::chrono::milliseconds>(exec_end - exec_start);
+        lifecycle_hooks_->emit_post_tool_use(
+            loom::hooks::PostToolUseEvent{.tool_name = tool_use.name,
+                                          .tool_use_id = tool_use.id.value,
+                                          .is_error = result_msg.is_error,
+                                          .output_preview = output_preview,
+                                          .duration = duration,
+                                          .timestamp = std::chrono::system_clock::now()});
     }
 
     // User-configured PostToolUse hooks (loom.hooks.execution engine).
@@ -350,24 +336,19 @@ std::vector<ToolResultMessage> QueryEngine::execute_pending_tools(
     if (user_hooks_configured_ && !user_hooks_.empty()) {
         namespace he = loom::utils::hooks_execution;
         he::HookExecutionContext ctx = user_hooks_ctx_template_;
-        std::string tool_doc = std::string("{\"name\": \"") +
-            he::json_escape(tool_use.name) + "\"}";
+        std::string tool_doc =
+            std::string("{\"name\": \"") + he::json_escape(tool_use.name) + "\"}";
         if (auto td = loom::utils::json::parse(tool_doc)) {
             ctx.set_context_doc("tool", std::move(*td));
         }
-        auto act = he::execute_post_tool_hooks(
-            user_hooks_,
-            ctx,
-            tool_use.name,
-            effective_input_json,
-            output_preview);
+        auto act = he::execute_post_tool_hooks(user_hooks_, ctx, tool_use.name,
+                                               effective_input_json, output_preview);
         using HEAction = he::HookResponseAction;
-        if (act.action == HEAction::BlockToolCall ||
-            act.action == HEAction::AbortQuery) {
+        if (act.action == HEAction::BlockToolCall || act.action == HEAction::AbortQuery) {
             result_msg.is_error = true;
             std::string reason = act.reason.empty()
-                ? std::string("user PostToolUse hook blocked the result")
-                : act.reason;
+                                     ? std::string("user PostToolUse hook blocked the result")
+                                     : act.reason;
             result_msg.content.clear();
             result_msg.content.push_back(TextBlock{std::move(reason)});
         }
@@ -376,10 +357,9 @@ std::vector<ToolResultMessage> QueryEngine::execute_pending_tools(
     return result_msg;
 }
 
-[[nodiscard]] QueryEngine::ToolPermissionCheck QueryEngine::check_tool_permission(
-    std::string_view tool_name,
-    std::string_view input_json,
-    std::string_view tool_use_id) {
+[[nodiscard]] QueryEngine::ToolPermissionCheck
+QueryEngine::check_tool_permission(std::string_view tool_name, std::string_view input_json,
+                                   std::string_view tool_use_id) {
     if (!permission_hook_) {
         // No hook configured — allow all (auto-approve mode)
         ToolPermissionCheck check{};
@@ -399,4 +379,4 @@ std::vector<ToolResultMessage> QueryEngine::execute_pending_tools(
     };
 }
 
-} // namespace loom::core
+}  // namespace loom::core

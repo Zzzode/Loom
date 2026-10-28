@@ -4,12 +4,12 @@
 /// items, and per-card interactions (preview / open / delete).
 module;
 
-#include <cstdint>
-
-#include <ftxui/dom/elements.hpp>
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/event.hpp>
+#include <ftxui/dom/elements.hpp>
+
+#include <cstdint>
 
 export module loom.ui.messages.attachment_message;
 
@@ -28,27 +28,27 @@ using namespace ftxui;
 
 /// Broad attachment class used for icons, coloring, and thumbnail strategy
 enum class AttachmentKind : std::uint8_t {
-    File,        // Generic file (📄)
-    Image,       // PNG/JPG/GIF etc. (🖼️)
-    Table,       // CSV, parquet preview, resultsets (📊)
-    Text,        // Plain text snippets, notes (📝)
-    Audio,       // WAV/MP3 etc. (🎵)
-    PDF,         // PDF reference
-    Video,       // Video file
-    Archive,     // zip/tar/gz
-    Memory,      // nested memory / knowledge entry
-    ToolArtifact,// tool/result artifact
+    File,          // Generic file (📄)
+    Image,         // PNG/JPG/GIF etc. (🖼️)
+    Table,         // CSV, parquet preview, resultsets (📊)
+    Text,          // Plain text snippets, notes (📝)
+    Audio,         // WAV/MP3 etc. (🎵)
+    PDF,           // PDF reference
+    Video,         // Video file
+    Archive,       // zip/tar/gz
+    Memory,        // nested memory / knowledge entry
+    ToolArtifact,  // tool/result artifact
 };
 
 /// A single attachment entry
 struct AttachmentItem {
-    std::string id;               // Stable identifier
-    std::string name;             // File / card name
-    std::string path;             // Full filesystem path (empty if virtual)
-    std::string mime_or_ext;      // "image/png", ".md", etc.
+    std::string id;           // Stable identifier
+    std::string name;         // File / card name
+    std::string path;         // Full filesystem path (empty if virtual)
+    std::string mime_or_ext;  // "image/png", ".md", etc.
     AttachmentKind kind{AttachmentKind::File};
 
-    std::size_t byte_count{0};    // 0 → hide
+    std::size_t byte_count{0};  // 0 → hide
     std::optional<int> line_count;
 
     // Optional ASCII thumbnail rows for Image/Table kind.
@@ -66,18 +66,18 @@ struct AttachmentItem {
 /// Options for the attachment grid
 struct AttachmentGridOptions {
     std::vector<AttachmentItem> items;
-    std::string title;                     // Optional header title
-    int cols{2};                           // 1 / 2 / 3 column layout
-    int page_size{10};                     // Paginate when >10 per UI5 spec
-    int page{0};                           // Current page (0-based)
-    int thumbnail_rows{3};                 // Rows of ▓ art
-    std::optional<int> selected_idx;       // Currently focused item index
+    std::string title;                // Optional header title
+    int cols{2};                      // 1 / 2 / 3 column layout
+    int page_size{10};                // Paginate when >10 per UI5 spec
+    int page{0};                      // Current page (0-based)
+    int thumbnail_rows{3};            // Rows of ▓ art
+    std::optional<int> selected_idx;  // Currently focused item index
     bool show_controls{true};
 
     // Callbacks — index is absolute index in items array
-    std::function<void(std::size_t idx)> on_preview;   // 'p' / Return on focused
-    std::function<void(std::size_t idx)> on_open;      // 'o'
-    std::function<void(std::size_t idx)> on_delete;    // 'd'
+    std::function<void(std::size_t idx)> on_preview;  // 'p' / Return on focused
+    std::function<void(std::size_t idx)> on_open;     // 'o'
+    std::function<void(std::size_t idx)> on_delete;   // 'd'
     std::function<void(int page)> on_page_change;
 };
 
@@ -98,16 +98,26 @@ inline std::string format_bytes(std::size_t n) {
 
 inline const char* kind_icon(AttachmentKind k) {
     switch (k) {
-        case AttachmentKind::File:         return "File";
-        case AttachmentKind::Image:        return "Image";
-        case AttachmentKind::Table:        return "Table";
-        case AttachmentKind::Text:         return "Text";
-        case AttachmentKind::Audio:        return "Audio";
-        case AttachmentKind::PDF:          return "PDF";
-        case AttachmentKind::Video:        return "Video";
-        case AttachmentKind::Archive:      return "Archive";
-        case AttachmentKind::Memory:       return "Memory";
-        case AttachmentKind::ToolArtifact: return "Artifact";
+    case AttachmentKind::File:
+        return "File";
+    case AttachmentKind::Image:
+        return "Image";
+    case AttachmentKind::Table:
+        return "Table";
+    case AttachmentKind::Text:
+        return "Text";
+    case AttachmentKind::Audio:
+        return "Audio";
+    case AttachmentKind::PDF:
+        return "PDF";
+    case AttachmentKind::Video:
+        return "Video";
+    case AttachmentKind::Archive:
+        return "Archive";
+    case AttachmentKind::Memory:
+        return "Memory";
+    case AttachmentKind::ToolArtifact:
+        return "Artifact";
     }
     return "File";
 }
@@ -118,17 +128,15 @@ inline Color kind_color(AttachmentKind k) {
 }
 
 /// Generate ASCII ▓-art rows of W x H that vary deterministically based on id.
-inline std::vector<std::string> generate_default_thumbnail(
-    AttachmentKind kind, std::string_view seed, int rows, int cols) {
+inline std::vector<std::string>
+generate_default_thumbnail(AttachmentKind kind, std::string_view seed, int rows, int cols) {
     // Cheap deterministic PRNG from seed bytes.
     std::uint32_t h = 2166136261u;
     for (char c : seed) {
         h ^= static_cast<std::uint32_t>(static_cast<unsigned char>(c));
         h *= 16777619u;
     }
-    static constexpr std::array<std::string_view, 6> shades = {
-        " ", "░", "▒", "▓", "█", "▓"
-    };
+    static constexpr std::array<std::string_view, 6> shades = {" ", "░", "▒", "▓", "█", "▓"};
     std::vector<std::string> out(rows);
     for (int y = 0; y < rows; ++y) {
         out[y].reserve(cols);
@@ -137,15 +145,21 @@ inline std::vector<std::string> generate_default_thumbnail(
             int s = (h >> 13) & 0x7;
             // Bias by kind: images dense, tables lighter, etc.
             switch (kind) {
-                case AttachmentKind::Image: s = std::min<int>(5, (s & 3) + 2); break;
-                case AttachmentKind::Table: s = s & 2; break;
-                case AttachmentKind::Audio: {
-                    // Vertical waveform-ish bars
-                    int bar = (h >> 8) % cols;
-                    s = (std::abs(x - bar) < 2) ? 5 : (s & 1);
-                    break;
-                }
-                default: s = s & 3; break;
+            case AttachmentKind::Image:
+                s = std::min<int>(5, (s & 3) + 2);
+                break;
+            case AttachmentKind::Table:
+                s = s & 2;
+                break;
+            case AttachmentKind::Audio: {
+                // Vertical waveform-ish bars
+                int bar = (h >> 8) % cols;
+                s = (std::abs(x - bar) < 2) ? 5 : (s & 1);
+                break;
+            }
+            default:
+                s = s & 3;
+                break;
             }
             out[y] += std::string{shades[s % shades.size()]};
         }
@@ -158,24 +172,24 @@ inline std::vector<std::string> generate_default_thumbnail(
 // ============================================================
 
 /// Render one attachment card (non-interactive Element)
-[[nodiscard]] inline Element RenderAttachmentCard(
-    const AttachmentItem& a, bool focused, int thumbnail_rows) {
+[[nodiscard]] inline Element RenderAttachmentCard(const AttachmentItem& a, bool focused,
+                                                  int thumbnail_rows) {
 
     // Thumbnail block
     Elements thumb_rows;
     const auto& art = a.ascii_thumbnail.empty()
-        ? a.kind == AttachmentKind::Image ||
-          a.kind == AttachmentKind::Table ||
-          a.kind == AttachmentKind::Audio
-            ? (std::vector<std::string>)generate_default_thumbnail(
-                  a.kind, a.id.empty() ? a.name : a.id, thumbnail_rows, 28)
-            : a.ascii_thumbnail
-        : a.ascii_thumbnail;
-    for (const auto& row : art) thumb_rows.push_back(text(row) | dim);
+                          ? a.kind == AttachmentKind::Image || a.kind == AttachmentKind::Table ||
+                                    a.kind == AttachmentKind::Audio
+                                ? (std::vector<std::string>)generate_default_thumbnail(
+                                      a.kind, a.id.empty() ? a.name : a.id, thumbnail_rows, 28)
+                                : a.ascii_thumbnail
+                          : a.ascii_thumbnail;
+    for (const auto& row : art)
+        thumb_rows.push_back(text(row) | dim);
     if (thumb_rows.empty()) {
         // Text-style fallback: one-line "icon" glyph block
-        thumb_rows.push_back(
-            text(std::string(28, ' ')) | color(loom::ui::design::theme::current_theme().palette->muted));
+        thumb_rows.push_back(text(std::string(28, ' ')) |
+                             color(loom::ui::design::theme::current_theme().palette->muted));
     }
 
     // Name + size
@@ -183,8 +197,7 @@ inline std::vector<std::string> generate_default_thumbnail(
     meta.push_back(hbox({
         text(kind_icon(a.kind)),
         text(" "),
-        text(a.name) | bold | color(kind_color(a.kind))
-            | size(WIDTH, EQUAL, 22), // clamp width
+        text(a.name) | bold | color(kind_color(a.kind)) | size(WIDTH, EQUAL, 22),  // clamp width
     }));
 
     std::string right_side;
@@ -196,7 +209,8 @@ inline std::vector<std::string> generate_default_thumbnail(
         right_side += std::format("{} lines", *a.line_count);
     }
     if (!right_side.empty()) {
-        meta.push_back(text("  " + right_side) | dim | color(loom::ui::design::theme::current_theme().palette->muted));
+        meta.push_back(text("  " + right_side) | dim |
+                       color(loom::ui::design::theme::current_theme().palette->muted));
     }
 
     if (!a.mime_or_ext.empty() || !a.caption.empty()) {
@@ -206,14 +220,15 @@ inline std::vector<std::string> generate_default_thumbnail(
             if (!line.empty()) line += " · ";
             line += a.caption;
         }
-        meta.push_back(text("  " + line) | dim | color(loom::ui::design::theme::current_theme().palette->muted));
+        meta.push_back(text("  " + line) | dim |
+                       color(loom::ui::design::theme::current_theme().palette->muted));
     }
 
     // Action hint row
     Elements actions;
     if (a.can_preview) actions.push_back(text("[p]vw ") | dim);
-    if (a.can_open)    actions.push_back(text("[o]pn ") | dim);
-    if (a.can_delete)  actions.push_back(text("[d]el ") | dim);
+    if (a.can_open) actions.push_back(text("[o]pn ") | dim);
+    if (a.can_delete) actions.push_back(text("[d]el ") | dim);
     meta.push_back(hbox(actions) | color(loom::ui::design::theme::current_theme().palette->muted));
 
     auto card = vbox({
@@ -225,7 +240,8 @@ inline std::vector<std::string> generate_default_thumbnail(
     if (focused) {
         card = card | borderRounded | inverted;
     } else {
-        card = card | borderRounded | color(loom::ui::design::theme::current_theme().palette->muted);
+        card =
+            card | borderRounded | color(loom::ui::design::theme::current_theme().palette->muted);
     }
     return card;
 }
@@ -241,25 +257,27 @@ inline std::vector<std::string> generate_default_thumbnail(
     const int max_page = std::max(0, (static_cast<int>(total) + page_size - 1) / page_size - 1);
     const int page = std::clamp(opts.page, 0, max_page);
     const std::size_t start = static_cast<std::size_t>(page * page_size);
-    const std::size_t end   = std::min(total, start + page_size);
+    const std::size_t end = std::min(total, start + page_size);
 
     Elements all;
 
     // --- Header ---
     {
         Elements h;
-        h.push_back(text((std::string(loom::ui::design::figures::kSquare) + " ")) | color(loom::ui::design::theme::current_theme().palette->info));
+        h.push_back(text((std::string(loom::ui::design::figures::kSquare) + " ")) |
+                    color(loom::ui::design::theme::current_theme().palette->info));
         if (!opts.title.empty()) {
-            h.push_back(text(opts.title) | bold | color(loom::ui::design::theme::current_theme().palette->info));
+            h.push_back(text(opts.title) | bold |
+                        color(loom::ui::design::theme::current_theme().palette->info));
         } else {
-            h.push_back(text(std::format("Attachments ({})", total))
-                        | bold | color(loom::ui::design::theme::current_theme().palette->info));
+            h.push_back(text(std::format("Attachments ({})", total)) | bold |
+                        color(loom::ui::design::theme::current_theme().palette->info));
         }
         h.push_back(filler());
         if (total > static_cast<std::size_t>(page_size)) {
-            h.push_back(text(std::format(" page {}/{}", page + 1, max_page + 1))
-                        | dim);
-            h.push_back(text("  [←/→] page") | dim | color(loom::ui::design::theme::current_theme().palette->muted));
+            h.push_back(text(std::format(" page {}/{}", page + 1, max_page + 1)) | dim);
+            h.push_back(text("  [←/→] page") | dim |
+                        color(loom::ui::design::theme::current_theme().palette->muted));
         }
         all.push_back(hbox(h));
         all.push_back(separator());
@@ -274,8 +292,8 @@ inline std::vector<std::string> generate_default_thumbnail(
     const int cols = std::max(1, opts.cols);
     Elements card_row;
     for (std::size_t i = start; i < end; ++i) {
-        const bool focused = opts.selected_idx.has_value()
-            && *opts.selected_idx == static_cast<int>(i);
+        const bool focused =
+            opts.selected_idx.has_value() && *opts.selected_idx == static_cast<int>(i);
         auto card = RenderAttachmentCard(opts.items[i], focused, opts.thumbnail_rows);
         card_row.push_back(card | flex);
         if ((i - start + 1) % static_cast<std::size_t>(cols) == 0) {
@@ -300,9 +318,8 @@ inline std::vector<std::string> generate_default_thumbnail(
         foot.push_back(text("[d]elete") | dim);
         foot.push_back(filler());
         if (total > static_cast<std::size_t>(end)) {
-            foot.push_back(
-                text(std::format(" …{} more on next page", total - end))
-                | color(loom::ui::design::theme::current_theme().palette->muted) | dim);
+            foot.push_back(text(std::format(" …{} more on next page", total - end)) |
+                           color(loom::ui::design::theme::current_theme().palette->muted) | dim);
         }
         all.push_back(separator());
         all.push_back(hbox(foot));
@@ -319,85 +336,96 @@ inline std::vector<std::string> generate_default_thumbnail(
     struct State {
         AttachmentGridOptions opts;
     };
+
     auto s = std::make_shared<State>();
     s->opts = std::move(options);
 
-    return Renderer([s] { return RenderAttachmentGrid(s->opts); })
-        | CatchEvent([s](Event event) -> bool {
-              auto& o = s->opts;
-              const int total = static_cast<int>(o.items.size());
-              const int page_size = std::max(1, o.page_size);
-              const int max_page  = std::max(0, (total + page_size - 1) / page_size - 1);
+    return Renderer([s] { return RenderAttachmentGrid(s->opts); }) |
+           CatchEvent([s](Event event) -> bool {
+               auto& o = s->opts;
+               const int total = static_cast<int>(o.items.size());
+               const int page_size = std::max(1, o.page_size);
+               const int max_page = std::max(0, (total + page_size - 1) / page_size - 1);
 
-              if (total == 0) return false;
+               if (total == 0) return false;
 
-              // Selection
-              const int sel = o.selected_idx.value_or(-1);
-              const int start = o.page * page_size;
-              const int end   = std::min(total, start + page_size);
+               // Selection
+               const int sel = o.selected_idx.value_or(-1);
+               const int start = o.page * page_size;
+               const int end = std::min(total, start + page_size);
 
-              if (event == Event::Tab || event == Event::ArrowDown ||
-                  event == Event::Character('j')) {
-                  int next;
-                  if (sel < start || sel >= end - 1) next = start;
-                  else next = sel + 1;
-                  o.selected_idx = next;
-                  return true;
-              }
-              if (event == Event::ArrowUp || event == Event::Character('k')) {
-                  int prev;
-                  if (sel <= start) prev = end - 1;
-                  else prev = sel - 1;
-                  o.selected_idx = prev;
-                  return true;
-              }
+               if (event == Event::Tab || event == Event::ArrowDown ||
+                   event == Event::Character('j')) {
+                   int next;
+                   if (sel < start || sel >= end - 1)
+                       next = start;
+                   else
+                       next = sel + 1;
+                   o.selected_idx = next;
+                   return true;
+               }
+               if (event == Event::ArrowUp || event == Event::Character('k')) {
+                   int prev;
+                   if (sel <= start)
+                       prev = end - 1;
+                   else
+                       prev = sel - 1;
+                   o.selected_idx = prev;
+                   return true;
+               }
 
-              // Pagination
-              if (event == Event::ArrowRight || event == Event::Character('l')) {
-                  if (o.page < max_page) {
-                      o.page++;
-                      if (o.on_page_change) o.on_page_change(o.page);
-                      return true;
-                  }
-              }
-              if (event == Event::ArrowLeft || event == Event::Character('h')) {
-                  if (o.page > 0) {
-                      o.page--;
-                      if (o.on_page_change) o.on_page_change(o.page);
-                      return true;
-                  }
-              }
+               // Pagination
+               if (event == Event::ArrowRight || event == Event::Character('l')) {
+                   if (o.page < max_page) {
+                       o.page++;
+                       if (o.on_page_change) o.on_page_change(o.page);
+                       return true;
+                   }
+               }
+               if (event == Event::ArrowLeft || event == Event::Character('h')) {
+                   if (o.page > 0) {
+                       o.page--;
+                       if (o.on_page_change) o.on_page_change(o.page);
+                       return true;
+                   }
+               }
 
-              // Actions on selected
-              const int act = o.selected_idx.value_or(-1);
-              if (act < 0 || act >= total) return false;
-              const auto& item = o.items[act];
+               // Actions on selected
+               const int act = o.selected_idx.value_or(-1);
+               if (act < 0 || act >= total) return false;
+               const auto& item = o.items[act];
 
-              if (event == Event::Return) {
-                  if (item.can_preview && o.on_preview)  o.on_preview(act);
-                  else if (item.can_open && o.on_open)   o.on_open(act);
-                  return true;
-              }
-              if (event == Event::Character('p') || event == Event::Character('P')) {
-                  if (item.can_preview && o.on_preview) { o.on_preview(act); return true; }
-              }
-              if (event == Event::Character('o') || event == Event::Character('O')) {
-                  if (item.can_open && o.on_open) { o.on_open(act); return true; }
-              }
-              if (event == Event::Character('d') || event == Event::Character('D')) {
-                  if (item.can_delete && o.on_delete) {
-                      o.on_delete(act);
-                      // Recompute selection after removal; host may re-sync.
-                      if (o.selected_idx && *o.selected_idx >= (int)o.items.size()) {
-                          o.selected_idx = o.items.empty()
-                              ? std::nullopt
-                              : std::optional<int>(0);
-                      }
-                      return true;
-                  }
-              }
-              return false;
-          });
+               if (event == Event::Return) {
+                   if (item.can_preview && o.on_preview)
+                       o.on_preview(act);
+                   else if (item.can_open && o.on_open)
+                       o.on_open(act);
+                   return true;
+               }
+               if (event == Event::Character('p') || event == Event::Character('P')) {
+                   if (item.can_preview && o.on_preview) {
+                       o.on_preview(act);
+                       return true;
+                   }
+               }
+               if (event == Event::Character('o') || event == Event::Character('O')) {
+                   if (item.can_open && o.on_open) {
+                       o.on_open(act);
+                       return true;
+                   }
+               }
+               if (event == Event::Character('d') || event == Event::Character('D')) {
+                   if (item.can_delete && o.on_delete) {
+                       o.on_delete(act);
+                       // Recompute selection after removal; host may re-sync.
+                       if (o.selected_idx && *o.selected_idx >= (int)o.items.size()) {
+                           o.selected_idx = o.items.empty() ? std::nullopt : std::optional<int>(0);
+                       }
+                       return true;
+                   }
+               }
+               return false;
+           });
 }
 
-} // namespace loom::ui::messages::attachment_message
+}  // namespace loom::ui::messages::attachment_message

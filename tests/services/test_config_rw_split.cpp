@@ -31,8 +31,7 @@ class TempHome {
 public:
     TempHome() {
         root_ = fs::temp_directory_path() /
-                ("loom-rw-split-" + std::to_string(::getpid()) + "-" +
-                 std::to_string(counter_++));
+                ("loom-rw-split-" + std::to_string(::getpid()) + "-" + std::to_string(counter_++));
         fs::create_directories(root_);
         if (const char* prev = std::getenv("HOME")) prev_home_ = prev;
         if (const char* prev = std::getenv("LOOM_CONFIG_DIR")) prev_config_ = prev;
@@ -41,10 +40,14 @@ public:
     }
 
     ~TempHome() {
-        if (prev_home_) ::setenv("HOME", prev_home_->c_str(), 1);
-        else ::unsetenv("HOME");
-        if (prev_config_) ::setenv("LOOM_CONFIG_DIR", prev_config_->c_str(), 1);
-        else ::unsetenv("LOOM_CONFIG_DIR");
+        if (prev_home_)
+            ::setenv("HOME", prev_home_->c_str(), 1);
+        else
+            ::unsetenv("HOME");
+        if (prev_config_)
+            ::setenv("LOOM_CONFIG_DIR", prev_config_->c_str(), 1);
+        else
+            ::unsetenv("LOOM_CONFIG_DIR");
         std::error_code ec;
         fs::remove_all(root_, ec);
     }
@@ -62,8 +65,7 @@ public:
     /// Read the contents of a settings.json file.
     [[nodiscard]] std::string read_settings(const std::string& dir_name) const {
         std::ifstream f(root_ / dir_name / "settings.json");
-        return std::string((std::istreambuf_iterator<char>(f)),
-                           std::istreambuf_iterator<char>());
+        return std::string((std::istreambuf_iterator<char>(f)), std::istreambuf_iterator<char>());
     }
 
     [[nodiscard]] bool settings_exists(const std::string& dir_name) const {
@@ -146,8 +148,7 @@ TEST(ConfigRwSplit, SaveUserWritesToLoomNotAgents) {
     ASSERT_TRUE(result.has_value()) << "set_user_setting should succeed";
 
     // ~/.loom/settings.json should now exist.
-    EXPECT_TRUE(home.settings_exists(".loom"))
-        << "save_user should create ~/.loom/settings.json";
+    EXPECT_TRUE(home.settings_exists(".loom")) << "save_user should create ~/.loom/settings.json";
 
     // ~/.agents/settings.json should be byte-unchanged.
     EXPECT_EQ(home.read_settings(".agents"), settings_with_mouse_mode(false))
@@ -198,9 +199,8 @@ TEST(ConfigRwSplit, ExplicitPathConstructorUsesFixedPaths) {
     auto user_path = home.root() / "explicit_user.json";
     std::ofstream(user_path) << settings_with_mouse_mode(false);
 
-    loom::core::ConfigManager cm(user_path,
-                                  home.root() / "project.json",
-                                  home.root() / "local.json");
+    loom::core::ConfigManager cm(user_path, home.root() / "project.json",
+                                 home.root() / "local.json");
     ASSERT_TRUE(cm.load().has_value());
     EXPECT_FALSE(cm.settings().display.mouse_mode)
         << "explicit-path constructor should use the passed-in path, "
@@ -363,19 +363,17 @@ TEST(ConfigRwSplit, FailedWriteDoesNotRebindReadPath) {
     // Create ~/.loom directory but make it read-only so the write fails.
     auto loom_dir = home.root() / ".loom";
     fs::create_directories(loom_dir);
-    fs::permissions(loom_dir, fs::perms::owner_read | fs::perms::owner_exec |
-                               fs::perms::group_read | fs::perms::group_exec |
-                               fs::perms::others_read | fs::perms::others_exec,
+    fs::permissions(loom_dir,
+                    fs::perms::owner_read | fs::perms::owner_exec | fs::perms::group_read |
+                        fs::perms::group_exec | fs::perms::others_read | fs::perms::others_exec,
                     fs::perm_options::replace);
 
     // Attempt to write — should fail because the directory is read-only.
     auto result = cm.set_user_setting("mouseMode", parse_json("true").root());
-    EXPECT_FALSE(result.has_value())
-        << "write to read-only ~/.loom should fail";
+    EXPECT_FALSE(result.has_value()) << "write to read-only ~/.loom should fail";
 
     // Restore permissions so TempHome destructor can clean up.
-    fs::permissions(loom_dir, fs::perms::owner_all | fs::perms::group_all |
-                               fs::perms::others_all,
+    fs::permissions(loom_dir, fs::perms::owner_all | fs::perms::group_all | fs::perms::others_all,
                     fs::perm_options::replace);
 
     // The read path must still be ~/.agents — the failed write must NOT

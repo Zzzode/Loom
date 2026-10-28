@@ -1,12 +1,13 @@
 module;
-#include <cerrno>
-#include <cstdint>
-#include <cstdlib>
-#include <sys/wait.h>
 #include <fcntl.h>
 #include <poll.h>
 #include <signal.h>
+#include <sys/wait.h>
 #include <unistd.h>
+
+#include <cerrno>
+#include <cstdint>
+#include <cstdlib>
 
 module loom.services.mcp.headers_helper;
 
@@ -50,12 +51,10 @@ std::optional<HeaderMap> parse_header_helper_json(std::string_view output) {
     return headers;
 }
 
-std::optional<std::string> run_headers_helper_command(
-    std::string_view server_name,
-    std::string_view server_url,
-    std::string_view command,
-    std::chrono::milliseconds timeout
-) {
+std::optional<std::string> run_headers_helper_command(std::string_view server_name,
+                                                      std::string_view server_url,
+                                                      std::string_view command,
+                                                      std::chrono::milliseconds timeout) {
     if (command.empty()) return std::nullopt;
 
     int pipe_fds[2]{-1, -1};
@@ -133,7 +132,8 @@ std::optional<std::string> run_headers_helper_command(
             return std::nullopt;
         }
 
-        const auto remaining = std::chrono::duration_cast<std::chrono::milliseconds>(deadline - now);
+        const auto remaining =
+            std::chrono::duration_cast<std::chrono::milliseconds>(deadline - now);
         const auto poll_timeout = static_cast<int>(std::min<std::int64_t>(remaining.count(), 100));
         pollfd pfd{.fd = pipe_fds[0], .events = POLLIN | POLLHUP, .revents = 0};
         (void)::poll(&pfd, 1, poll_timeout);
@@ -149,26 +149,21 @@ std::optional<std::string> run_headers_helper_command(
     return output;
 }
 
-std::optional<HeaderMap> get_mcp_headers_from_helper(
-    std::string_view server_name,
-    std::string_view server_url,
-    std::string_view helper_command,
-    std::chrono::milliseconds timeout
-) {
+std::optional<HeaderMap> get_mcp_headers_from_helper(std::string_view server_name,
+                                                     std::string_view server_url,
+                                                     std::string_view helper_command,
+                                                     std::chrono::milliseconds timeout) {
     auto output = run_headers_helper_command(server_name, server_url, helper_command, timeout);
     if (!output) return std::nullopt;
     return parse_header_helper_json(*output);
 }
 
-HeaderMap get_mcp_server_headers(
-    std::string_view server_name,
-    const HeaderMap& static_headers,
-    std::string_view server_url,
-    std::string_view helper_command,
-    std::chrono::milliseconds timeout
-) {
+HeaderMap get_mcp_server_headers(std::string_view server_name, const HeaderMap& static_headers,
+                                 std::string_view server_url, std::string_view helper_command,
+                                 std::chrono::milliseconds timeout) {
     auto result = static_headers;
-    auto dynamic_headers = get_mcp_headers_from_helper(server_name, server_url, helper_command, timeout);
+    auto dynamic_headers =
+        get_mcp_headers_from_helper(server_name, server_url, helper_command, timeout);
     if (!dynamic_headers) return result;
     for (auto& [key, value] : *dynamic_headers) {
         result[key] = value;
@@ -176,4 +171,4 @@ HeaderMap get_mcp_server_headers(
     return result;
 }
 
-} // namespace loom::services::mcp
+}  // namespace loom::services::mcp

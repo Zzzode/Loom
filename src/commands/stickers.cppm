@@ -28,7 +28,7 @@ namespace stickers_detail {
     return std::system(command.c_str()) == 0;
 }
 
-} // namespace stickers_detail
+}  // namespace stickers_detail
 
 class StickersCommand {
 public:
@@ -43,21 +43,18 @@ public:
         };
     }
 
-    [[nodiscard]] VoidResult validate(const CommandContext&) {
-        return {};
-    }
+    [[nodiscard]] VoidResult validate(const CommandContext&) { return {}; }
 
     [[nodiscard]] Result<CommandResult> execute(const CommandContext&) {
         constexpr std::string_view url = "https://www.stickermule.com/loomcode";
         if (stickers_detail::open_url(url)) {
             return CommandResult::success("Opening sticker page in browser...");
         }
-        return CommandResult::success("Could not open browser. Visit: https://www.stickermule.com/loomcode");
+        return CommandResult::success(
+            "Could not open browser. Visit: https://www.stickermule.com/loomcode");
     }
 
-    [[nodiscard]] std::vector<std::string> complete(std::string_view) {
-        return {};
-    }
+    [[nodiscard]] std::vector<std::string> complete(std::string_view) { return {}; }
 };
 
-} // namespace loom::commands
+}  // namespace loom::commands

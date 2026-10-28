@@ -51,7 +51,8 @@ namespace loom::state::selectors {
 }
 
 /// Get the REPL bridge connect URL
-[[nodiscard]] std::optional<std::string_view> get_repl_bridge_connect_url(const AppState& state) noexcept {
+[[nodiscard]] std::optional<std::string_view>
+get_repl_bridge_connect_url(const AppState& state) noexcept {
     if (state.repl_bridge_connect_url) {
         return *state.repl_bridge_connect_url;
     }
@@ -59,7 +60,8 @@ namespace loom::state::selectors {
 }
 
 /// Get the REPL bridge session URL
-[[nodiscard]] std::optional<std::string_view> get_repl_bridge_session_url(const AppState& state) noexcept {
+[[nodiscard]] std::optional<std::string_view>
+get_repl_bridge_session_url(const AppState& state) noexcept {
     if (state.repl_bridge_session_url) {
         return *state.repl_bridge_session_url;
     }
@@ -67,7 +69,8 @@ namespace loom::state::selectors {
 }
 
 /// Get the REPL bridge error
-[[nodiscard]] std::optional<std::string_view> get_repl_bridge_error(const AppState& state) noexcept {
+[[nodiscard]] std::optional<std::string_view>
+get_repl_bridge_error(const AppState& state) noexcept {
     if (state.repl_bridge_error) {
         return *state.repl_bridge_error;
     }
@@ -85,10 +88,8 @@ namespace loom::state::selectors {
 
 /// Check if any bridge-related status is active
 [[nodiscard]] bool has_any_bridge_activity(const AppState& state) noexcept {
-    return state.repl_bridge_enabled || 
-           state.repl_bridge_connected || 
-           state.repl_bridge_session_active ||
-           state.repl_bridge_reconnecting;
+    return state.repl_bridge_enabled || state.repl_bridge_connected ||
+           state.repl_bridge_session_active || state.repl_bridge_reconnecting;
 }
 
-} // namespace loom::state::selectors
+}  // namespace loom::state::selectors

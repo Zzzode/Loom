@@ -23,14 +23,14 @@
 ///   Ctrl+C                        -> on_abort() (FTXUI: Special({0x03})).
 module;
 
-#include <cstddef>
-#include <cstdint>
-
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/event.hpp>
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/dom/node.hpp>
+
+#include <cstddef>
+#include <cstdint>
 
 export module loom.ui.dialogs.prompt_dialog;
 
@@ -49,7 +49,7 @@ using namespace ftxui;
 struct PromptOption {
     std::string label;
     std::string key;
-    std::string description; // may be empty
+    std::string description;  // may be empty
 };
 
 /// Complete payload / props for the PromptDialog.
@@ -104,21 +104,18 @@ namespace detail {
 
 /// Render a single SELECT row.  Focused rows are inverted + bold, every row
 /// is prefixed with `N. ` where N == 1..9 (for the numeric shortcut).
-[[nodiscard]] inline Element RenderSelectRow(const PromptOption& opt,
-                                             int one_based_index,
-                                             bool focused)
-{
+[[nodiscard]] inline Element RenderSelectRow(const PromptOption& opt, int one_based_index,
+                                             bool focused) {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
     auto prefix = text(std::to_string(one_based_index) + ". ") | dim;
-    auto label  = text(opt.label);
+    auto label = text(opt.label);
     if (focused) label = label | bold;
 
-    auto description = opt.description.empty()
-        ? text("")
-        : hbox({
-              filler(),
-              text(opt.description) | dim,
-          });
+    auto description = opt.description.empty() ? text("")
+                                               : hbox({
+                                                     filler(),
+                                                     text(opt.description) | dim,
+                                                 });
 
     auto row = hbox({
         prefix,
@@ -131,25 +128,20 @@ namespace detail {
 }
 
 /// Render the optional subtitle line under the window title.
-[[nodiscard]] inline Element RenderSubtitle(
-    const std::optional<std::string>& tool_input_summary)
-{
+[[nodiscard]] inline Element RenderSubtitle(const std::optional<std::string>& tool_input_summary) {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
     if (!tool_input_summary || tool_input_summary->empty()) return text("");
-    return paragraph(std::string{*tool_input_summary})
-         | color(pal.warning) | dim;
+    return paragraph(std::string{*tool_input_summary}) | color(pal.warning) | dim;
 }
 
-} // namespace detail
+}  // namespace detail
 
 // =========================================================================
 // SELECT mode renderer
 // =========================================================================
 
 /// Render the dialog body for SELECT mode (options non-empty).
-[[nodiscard]] inline Element RenderSelectMode(
-    const std::shared_ptr<PromptDialogPayload>& p)
-{
+[[nodiscard]] inline Element RenderSelectMode(const std::shared_ptr<PromptDialogPayload>& p) {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
     const int n = static_cast<int>(p->options.size());
     const int sel = detail::wrap_index(p->selected_index, n);
@@ -164,30 +156,28 @@ namespace detail {
     Elements rows;
     rows.reserve(static_cast<std::size_t>(n));
     for (int i = 0; i < n; ++i) {
-        rows.push_back(detail::RenderSelectRow(
-            p->options[static_cast<std::size_t>(i)],
-            /*one_based_index=*/i + 1,
-            /*focused=*/i == sel));
+        rows.push_back(detail::RenderSelectRow(p->options[static_cast<std::size_t>(i)],
+                                               /*one_based_index=*/i + 1,
+                                               /*focused=*/i == sel));
     }
     body.push_back(vbox(std::move(rows)) | xflex);
 
     body.push_back(separator());
     body.push_back(hbox({
-        text("Enter") | bold,
-        text(" commit · "),
-        text("Esc") | bold,
-        text(" cancel · "),
-        text("1-9") | bold,
-        text(" shortcut · "),
-        text("j/k ↑/↓") | bold,
-        text(" navigate"),
-    }) | dim);
+                       text("Enter") | bold,
+                       text(" commit · "),
+                       text("Esc") | bold,
+                       text(" cancel · "),
+                       text("1-9") | bold,
+                       text(" shortcut · "),
+                       text("j/k ↑/↓") | bold,
+                       text(" navigate"),
+                   }) |
+                   dim);
 
     const std::string title = p->title.empty() ? "Select an option" : p->title;
-    return window(
-        text(" " + title + " ") | bold | color(pal.info),
-        vbox(std::move(body)) | xflex
-    ) | color(pal.info) | size(WIDTH, LESS_THAN, 92);
+    return window(text(" " + title + " ") | bold | color(pal.info), vbox(std::move(body)) | xflex) |
+           color(pal.info) | size(WIDTH, LESS_THAN, 92);
 }
 
 // =========================================================================
@@ -197,11 +187,9 @@ namespace detail {
 /// Render the dialog body for FREE-TEXT mode (options empty).
 /// We keep a lightweight internal text buffer here so tests can exercise
 /// the prompt without pulling in the full BaseTextInput component.
-[[nodiscard]] inline Element RenderFreeTextMode(
-    const std::shared_ptr<PromptDialogPayload>& p,
-    const std::shared_ptr<std::string>& buffer,
-    const std::shared_ptr<int>& cursor)
-{
+[[nodiscard]] inline Element RenderFreeTextMode(const std::shared_ptr<PromptDialogPayload>& p,
+                                                const std::shared_ptr<std::string>& buffer,
+                                                const std::shared_ptr<int>& cursor) {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
     Elements body;
     auto subtitle_el = detail::RenderSubtitle(p->tool_input_summary);
@@ -215,30 +203,28 @@ namespace detail {
     const int c = std::max(0, std::min(static_cast<int>(display.size()), *cursor));
     display.insert(static_cast<std::size_t>(c), "│");
 
-    std::string hint =
-        p->placeholder && !p->placeholder->empty()
-            ? std::string{*p->placeholder}
-            : "Type your response…";
+    std::string hint = p->placeholder && !p->placeholder->empty() ? std::string{*p->placeholder}
+                                                                  : "Type your response…";
 
     body.push_back(hbox({
-        text(display) | color(pal.text),
-        text("  ") | dim,
-        text(hint) | dim,
-    }) | xflex);
+                       text(display) | color(pal.text),
+                       text("  ") | dim,
+                       text(hint) | dim,
+                   }) |
+                   xflex);
 
     body.push_back(separator());
     body.push_back(hbox({
-        text("Enter") | bold,
-        text(" submit · "),
-        text("Esc") | bold,
-        text(" cancel"),
-    }) | dim);
+                       text("Enter") | bold,
+                       text(" submit · "),
+                       text("Esc") | bold,
+                       text(" cancel"),
+                   }) |
+                   dim);
 
     const std::string title = p->title.empty() ? "Response" : p->title;
-    return window(
-        text(" " + title + " ") | bold | color(pal.info),
-        vbox(std::move(body)) | xflex
-    ) | color(pal.info) | size(WIDTH, LESS_THAN, 92);
+    return window(text(" " + title + " ") | bold | color(pal.info), vbox(std::move(body)) | xflex) |
+           color(pal.info) | size(WIDTH, LESS_THAN, 92);
 }
 
 // =========================================================================
@@ -250,14 +236,13 @@ namespace detail {
 /// Mode dispatch:
 ///   - !payload.options.empty() -> SELECT mode.
 ///   -  payload.options.empty() -> FREE-TEXT mode.
-[[nodiscard]] inline Component MakePromptDialog(PromptDialogPayload payload)
-{
+[[nodiscard]] inline Component MakePromptDialog(PromptDialogPayload payload) {
     auto p = std::make_shared<PromptDialogPayload>(std::move(payload));
 
     // Clamp the initial selected_index into a valid range.
     if (!p->options.empty()) {
-        p->selected_index = detail::wrap_index(
-            p->selected_index, static_cast<int>(p->options.size()));
+        p->selected_index =
+            detail::wrap_index(p->selected_index, static_cast<int>(p->options.size()));
     }
 
     // ---- FREE-TEXT mode -----------------------------------------------
@@ -275,56 +260,55 @@ namespace detail {
             if (p->on_abort) p->on_abort();
         };
 
-        return Renderer([p, buffer, cursor] {
-            return RenderFreeTextMode(p, buffer, cursor);
-        }) | CatchEvent([p, buffer, cursor, submit, cancel, abort](Event event) -> bool {
-            // Ctrl+C -> on_abort (distinct from Esc path)
-            if (event == Event::Special({0x03})) {
-                abort();
-                return true;
-            }
-            if (event == Event::Return) {
-                submit();
-                return true;
-            }
-            if (event == Event::Escape) {
-                cancel();
-                return true;
-            }
-            if (event == Event::Backspace) {
-                const int c = *cursor;
-                if (c > 0) {
-                    buffer->erase(static_cast<std::size_t>(c - 1), 1);
-                    *cursor = c - 1;
-                }
-                return true;
-            }
-            if (event == Event::Delete) {
-                const std::size_t c = static_cast<std::size_t>(*cursor);
-                if (c < buffer->size()) {
-                    buffer->erase(c, 1);
-                }
-                return true;
-            }
-            if (event == Event::ArrowLeft) {
-                *cursor = std::max(0, *cursor - 1);
-                return true;
-            }
-            if (event == Event::ArrowRight) {
-                *cursor = std::min(static_cast<int>(buffer->size()), *cursor + 1);
-                return true;
-            }
-            if (event.is_character()) {
-                const char ch = event.character()[0];
-                // Ignore low control bytes other than the explicit ones above.
-                if (ch < 0x20) return true;
-                const std::size_t c = static_cast<std::size_t>(*cursor);
-                buffer->insert(c, 1, ch);
-                *cursor = static_cast<int>(c + 1);
-                return true;
-            }
-            return false;
-        });
+        return Renderer([p, buffer, cursor] { return RenderFreeTextMode(p, buffer, cursor); }) |
+               CatchEvent([p, buffer, cursor, submit, cancel, abort](Event event) -> bool {
+                   // Ctrl+C -> on_abort (distinct from Esc path)
+                   if (event == Event::Special({0x03})) {
+                       abort();
+                       return true;
+                   }
+                   if (event == Event::Return) {
+                       submit();
+                       return true;
+                   }
+                   if (event == Event::Escape) {
+                       cancel();
+                       return true;
+                   }
+                   if (event == Event::Backspace) {
+                       const int c = *cursor;
+                       if (c > 0) {
+                           buffer->erase(static_cast<std::size_t>(c - 1), 1);
+                           *cursor = c - 1;
+                       }
+                       return true;
+                   }
+                   if (event == Event::Delete) {
+                       const std::size_t c = static_cast<std::size_t>(*cursor);
+                       if (c < buffer->size()) {
+                           buffer->erase(c, 1);
+                       }
+                       return true;
+                   }
+                   if (event == Event::ArrowLeft) {
+                       *cursor = std::max(0, *cursor - 1);
+                       return true;
+                   }
+                   if (event == Event::ArrowRight) {
+                       *cursor = std::min(static_cast<int>(buffer->size()), *cursor + 1);
+                       return true;
+                   }
+                   if (event.is_character()) {
+                       const char ch = event.character()[0];
+                       // Ignore low control bytes other than the explicit ones above.
+                       if (ch < 0x20) return true;
+                       const std::size_t c = static_cast<std::size_t>(*cursor);
+                       buffer->insert(c, 1, ch);
+                       *cursor = static_cast<int>(c + 1);
+                       return true;
+                   }
+                   return false;
+               });
     }
 
     // ---- SELECT mode ---------------------------------------------------
@@ -346,56 +330,54 @@ namespace detail {
         if (p->on_abort) p->on_abort();
     };
 
-    return Renderer([p] { return RenderSelectMode(p); })
-         | CatchEvent([p, n, commit_index, cancel, abort](Event event) -> bool {
-        // Ctrl+C -> on_abort (distinct from Esc path)
-        if (event == Event::Special({0x03})) {
-            abort();
-            return true;
-        }
+    return Renderer([p] { return RenderSelectMode(p); }) |
+           CatchEvent([p, n, commit_index, cancel, abort](Event event) -> bool {
+               // Ctrl+C -> on_abort (distinct from Esc path)
+               if (event == Event::Special({0x03})) {
+                   abort();
+                   return true;
+               }
 
-        // Movement with wrap.
-        if (event == Event::ArrowUp || event == Event::Character('k') ||
-            event == Event::Character('K'))
-        {
-            p->selected_index = detail::wrap_index(p->selected_index - 1, n);
-            return true;
-        }
-        if (event == Event::ArrowDown || event == Event::Character('j') ||
-            event == Event::Character('J'))
-        {
-            p->selected_index = detail::wrap_index(p->selected_index + 1, n);
-            return true;
-        }
+               // Movement with wrap.
+               if (event == Event::ArrowUp || event == Event::Character('k') ||
+                   event == Event::Character('K')) {
+                   p->selected_index = detail::wrap_index(p->selected_index - 1, n);
+                   return true;
+               }
+               if (event == Event::ArrowDown || event == Event::Character('j') ||
+                   event == Event::Character('J')) {
+                   p->selected_index = detail::wrap_index(p->selected_index + 1, n);
+                   return true;
+               }
 
-        // Numeric 1..9 shortcuts (commit immediately).
-        if (event.is_character()) {
-            const char ch = event.character()[0];
-            if (ch >= '1' && ch <= '9') {
-                const int idx = static_cast<int>(ch - '1');
-                if (idx < n) {
-                    p->selected_index = idx;
-                    commit_index(idx);
-                    return true;
-                }
-            }
-        }
+               // Numeric 1..9 shortcuts (commit immediately).
+               if (event.is_character()) {
+                   const char ch = event.character()[0];
+                   if (ch >= '1' && ch <= '9') {
+                       const int idx = static_cast<int>(ch - '1');
+                       if (idx < n) {
+                           p->selected_index = idx;
+                           commit_index(idx);
+                           return true;
+                       }
+                   }
+               }
 
-        // Enter commits the focused option.
-        if (event == Event::Return) {
-            const int sel = detail::wrap_index(p->selected_index, n);
-            commit_index(sel);
-            return true;
-        }
+               // Enter commits the focused option.
+               if (event == Event::Return) {
+                   const int sel = detail::wrap_index(p->selected_index, n);
+                   commit_index(sel);
+                   return true;
+               }
 
-        // Escape => on_response(nullopt).
-        if (event == Event::Escape) {
-            cancel();
-            return true;
-        }
+               // Escape => on_response(nullopt).
+               if (event == Event::Escape) {
+                   cancel();
+                   return true;
+               }
 
-        return false;
-    });
+               return false;
+           });
 }
 
-} // namespace loom::ui::dialogs::prompt_dialog
+}  // namespace loom::ui::dialogs::prompt_dialog

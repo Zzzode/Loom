@@ -2,10 +2,10 @@
 // Provides git CLI wrapper functions for repository inspection
 module;
 
-#include <cstdlib>
 #include <cctype>
-#include <cstdio>
 #include <cstddef>
+#include <cstdio>
+#include <cstdlib>
 
 export module loom.scm.git.git;
 
@@ -55,8 +55,7 @@ struct CommandResult {
 // =========================================================================
 namespace detail {
 
-inline Result<std::string> exec_git(
-    const std::string& args, const fs::path& cwd = {}) {
+inline Result<std::string> exec_git(const std::string& args, const fs::path& cwd = {}) {
     std::string cmd = "git";
     if (!cwd.empty()) {
         cmd += std::format(" -C \"{}\"", cwd.string());
@@ -65,8 +64,8 @@ inline Result<std::string> exec_git(
 
     FILE* pipe = loom::utils::bash::popen_spawn(cmd.c_str());
     if (!pipe) {
-        return std::unexpected(Error(ErrorCode::io_error,
-            std::format("Failed to execute: {}", cmd)));
+        return std::unexpected(
+            Error(ErrorCode::io_error, std::format("Failed to execute: {}", cmd)));
     }
 
     std::string output;
@@ -78,7 +77,7 @@ inline Result<std::string> exec_git(
     int status = loom::utils::bash::pclose_spawn(pipe);
     if (status != 0) {
         return std::unexpected(Error(ErrorCode::internal_error,
-            std::format("Git command failed (exit {}): {}", status, cmd)));
+                                     std::format("Git command failed (exit {}): {}", status, cmd)));
     }
 
     while (!output.empty() && output.back() == '\n') {
@@ -99,13 +98,14 @@ inline std::vector<std::string> split_lines(std::string_view str) {
     return lines;
 }
 
-} // namespace detail
+}  // namespace detail
 
 // =========================================================================
 
 // =========================================================================
 
-[[nodiscard]] inline CommandResult run_git_command(const std::string& args, const fs::path& cwd = {}) {
+[[nodiscard]] inline CommandResult run_git_command(const std::string& args,
+                                                   const fs::path& cwd = {}) {
     auto result = detail::exec_git(args, cwd);
     if (!result) {
         return CommandResult{.success = false, .output = result.error().format()};
@@ -113,22 +113,24 @@ inline std::vector<std::string> split_lines(std::string_view str) {
     return CommandResult{.success = true, .output = *result};
 }
 
-[[nodiscard]] inline CommandResult clone_local(const std::string& source_cwd, const std::string& target_dir) {
-    return run_git_command(std::format("clone --no-hardlinks \"{}\" \"{}\"", source_cwd, target_dir));
+[[nodiscard]] inline CommandResult clone_local(const std::string& source_cwd,
+                                               const std::string& target_dir) {
+    return run_git_command(
+        std::format("clone --no-hardlinks \"{}\" \"{}\"", source_cwd, target_dir));
 }
 
 [[nodiscard]] inline CommandResult checkout(const std::string& repo_dir, const std::string& ref) {
     return run_git_command(std::format("checkout \"{}\"", ref), repo_dir);
 }
 
-[[nodiscard]] inline CommandResult worktree_add(
-    const std::string& source_cwd,
-    const std::string& target_dir,
-    const std::string& ref) {
-    return run_git_command(std::format("worktree add --detach \"{}\" \"{}\"", target_dir, ref), source_cwd);
+[[nodiscard]] inline CommandResult
+worktree_add(const std::string& source_cwd, const std::string& target_dir, const std::string& ref) {
+    return run_git_command(std::format("worktree add --detach \"{}\" \"{}\"", target_dir, ref),
+                           source_cwd);
 }
 
-[[nodiscard]] inline CommandResult worktree_remove(const std::string& source_cwd, const std::string& target_dir) {
+[[nodiscard]] inline CommandResult worktree_remove(const std::string& source_cwd,
+                                                   const std::string& target_dir) {
     return run_git_command(std::format("worktree remove --force \"{}\"", target_dir), source_cwd);
 }
 
@@ -143,7 +145,7 @@ inline std::vector<std::string> split_lines(std::string_view str) {
     if (current.empty()) {
         current = fs::current_path();
     }
-    
+
     while (true) {
         fs::path git_path = current / ".git";
         if (fs::exists(git_path) && (fs::is_directory(git_path) || fs::is_regular_file(git_path))) {
@@ -203,11 +205,10 @@ inline std::vector<std::string> split_lines(std::string_view str) {
     return result.has_value() ? *result : "";
 }
 
-[[nodiscard]] inline std::vector<CommitInfo> get_log(
-    std::size_t count = 10, const fs::path& cwd = {}) {
+[[nodiscard]] inline std::vector<CommitInfo> get_log(std::size_t count = 10,
+                                                     const fs::path& cwd = {}) {
 
-    auto cmd = std::format(
-        "log -n {} --format=\"%H%x00%h%x00%an%x00%aI%x00%s%x01\"", count);
+    auto cmd = std::format("log -n {} --format=\"%H%x00%h%x00%an%x00%aI%x00%s%x01\"", count);
     auto result = detail::exec_git(cmd, cwd);
     if (!result.has_value()) return {};
 
@@ -234,11 +235,21 @@ inline std::vector<std::string> split_lines(std::string_view str) {
             if (i == record.size() || record[i] == '\x00') {
                 auto field = record.substr(field_start, i - field_start);
                 switch (field_idx) {
-                    case 0: info.hash = std::string(field); break;
-                    case 1: info.short_hash = std::string(field); break;
-                    case 2: info.author = std::string(field); break;
-                    case 3: info.date = std::string(field); break;
-                    case 4: info.message = std::string(field); break;
+                case 0:
+                    info.hash = std::string(field);
+                    break;
+                case 1:
+                    info.short_hash = std::string(field);
+                    break;
+                case 2:
+                    info.author = std::string(field);
+                    break;
+                case 3:
+                    info.date = std::string(field);
+                    break;
+                case 4:
+                    info.message = std::string(field);
+                    break;
                 }
                 field_start = i + 1;
                 ++field_idx;
@@ -274,10 +285,9 @@ inline std::vector<std::string> split_lines(std::string_view str) {
     return static_cast<int>(get_worktree_paths(cwd).size());
 }
 
-[[nodiscard]] inline std::string get_remote_url(
-    std::string_view remote = "origin", const fs::path& cwd = {}) {
-    auto result = detail::exec_git(
-        std::format("remote get-url {}", remote), cwd);
+[[nodiscard]] inline std::string get_remote_url(std::string_view remote = "origin",
+                                                const fs::path& cwd = {}) {
+    auto result = detail::exec_git(std::format("remote get-url {}", remote), cwd);
     return result.has_value() ? *result : "";
 }
 
@@ -312,11 +322,12 @@ inline std::vector<std::string> split_lines(std::string_view str) {
 
 [[nodiscard]] inline std::optional<std::string> normalize_git_remote_url(std::string_view url) {
     std::string trimmed(url);
-    while (!trimmed.empty() && std::isspace(trimmed.back())) trimmed.pop_back();
-    while (!trimmed.empty() && std::isspace(trimmed.front())) trimmed.erase(0, 1);
-    
+    while (!trimmed.empty() && std::isspace(trimmed.back()))
+        trimmed.pop_back();
+    while (!trimmed.empty() && std::isspace(trimmed.front()))
+        trimmed.erase(0, 1);
+
     if (trimmed.empty()) return std::nullopt;
-    
 
     if (trimmed.starts_with("git@")) {
         size_t colon_pos = trimmed.find(':');
@@ -333,21 +344,23 @@ inline std::vector<std::string> split_lines(std::string_view str) {
             return std::format("{}/{}", host, path);
         }
     }
-    
 
-    if (trimmed.starts_with("http://") || trimmed.starts_with("https://") || trimmed.starts_with("ssh://")) {
+    if (trimmed.starts_with("http://") || trimmed.starts_with("https://") ||
+        trimmed.starts_with("ssh://")) {
         std::string_view rest = trimmed;
 
-        if (rest.starts_with("http://")) rest = rest.substr(7);
-        else if (rest.starts_with("https://")) rest = rest.substr(8);
-        else if (rest.starts_with("ssh://")) rest = rest.substr(6);
-        
+        if (rest.starts_with("http://"))
+            rest = rest.substr(7);
+        else if (rest.starts_with("https://"))
+            rest = rest.substr(8);
+        else if (rest.starts_with("ssh://"))
+            rest = rest.substr(6);
 
         size_t at_pos = std::string(rest).find('@');
         if (at_pos != std::string::npos) {
             rest = rest.substr(at_pos + 1);
         }
-        
+
         std::string result(rest);
 
         if (result.ends_with(".git")) {
@@ -358,13 +371,13 @@ inline std::vector<std::string> split_lines(std::string_view str) {
         }
         return result;
     }
-    
+
     return std::nullopt;
 }
 
 [[nodiscard]] inline std::optional<GitRepoState> get_git_state(const fs::path& cwd = {}) {
     if (!is_git_repo(cwd)) return std::nullopt;
-    
+
     GitRepoState state;
     state.commit_hash = get_head_hash(cwd);
     state.branch_name = get_branch(cwd);
@@ -372,8 +385,8 @@ inline std::vector<std::string> split_lines(std::string_view str) {
     state.is_head_on_remote = is_head_on_remote(cwd);
     state.is_clean = is_clean(cwd);
     state.worktree_count = get_worktree_count(cwd);
-    
+
     return state;
 }
 
-} // namespace loom::utils::git
+}  // namespace loom::utils::git

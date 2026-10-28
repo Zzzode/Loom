@@ -1,16 +1,18 @@
 /// @file test_ui_messages.cpp
-/// @brief Split from test_ui.cpp - ImagePaste, ImagePasteCtrlV, ImagePasteFormat, ImagePasteOrphanCleanup, ImagePasteSubmit, MessagePipeline, Messages, MessagesList, VirtualList (SLOC budget fix)
+/// @brief Split from test_ui.cpp - ImagePaste, ImagePasteCtrlV, ImagePasteFormat,
+/// ImagePasteOrphanCleanup, ImagePasteSubmit, MessagePipeline, Messages, MessagesList, VirtualList
+/// (SLOC budget fix)
 
-#include <cstdlib>
-
-#include <ftxui/dom/elements.hpp>
-#include <ftxui/dom/node.hpp>
-#include <ftxui/screen/screen.hpp>
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/event.hpp>
 #include <ftxui/component/mouse.hpp>
+#include <ftxui/dom/elements.hpp>
+#include <ftxui/dom/node.hpp>
+#include <ftxui/screen/screen.hpp>
 #include <gtest/gtest.h>
 #include <httplib.h>
+
+#include <cstdlib>
 
 #include "test_ui_helpers.h"
 
@@ -35,39 +37,44 @@ import loom.constants.constants;
 import loom.text.parse_references;
 import loom.ui.widgets.components;
 import loom.ui.widgets.all_components;
-import loom.ui.screens.messages_store;  // MessagesStore, reset_virtual_renderer_state
+import loom.ui.screens.messages_store; // MessagesStore, reset_virtual_renderer_state
 import loom.types.types;
 
 namespace {
 namespace fs = std::filesystem;
+
 struct RestoreMessageTheme {
     loom::ui::design::theme::Theme original = loom::ui::design::theme::current_theme();
+
     ~RestoreMessageTheme() { loom::ui::design::theme::set_theme(original); }
 };
-}
+}  // namespace
 
 TEST(Messages, ToolStatusUsesThemeAndRemainsDistinctInMonochrome) {
     namespace tool = loom::ui::messages::tool_use_message;
     namespace theme = loom::ui::design::theme;
     namespace figs = loom::ui::design::figures;
     RestoreMessageTheme restore;
-    for (const auto variant : {theme::ThemeVariant::Dark, theme::ThemeVariant::Light,
-            theme::ThemeVariant::DarkDaltonized, theme::ThemeVariant::LightDaltonized,
-            theme::ThemeVariant::Monochrome, theme::ThemeVariant::DarkAnsi,
-            theme::ThemeVariant::LightAnsi}) {
+    for (const auto variant :
+         {theme::ThemeVariant::Dark, theme::ThemeVariant::Light,
+          theme::ThemeVariant::DarkDaltonized, theme::ThemeVariant::LightDaltonized,
+          theme::ThemeVariant::Monochrome, theme::ThemeVariant::DarkAnsi,
+          theme::ThemeVariant::LightAnsi}) {
         theme::set_theme(variant);
         const auto& pal = *theme::current_theme().palette;
-        for (const auto status : {tool::FaithfulToolStatus::Queued,
-                tool::FaithfulToolStatus::Success, tool::FaithfulToolStatus::Error}) {
+        for (const auto status :
+             {tool::FaithfulToolStatus::Queued, tool::FaithfulToolStatus::Success,
+              tool::FaithfulToolStatus::Error}) {
             tool::FaithfulToolUseData data;
             data.user_facing_name = "Read";
             data.status = status;
             data.should_animate = false;
-            auto screen = ftxui::Screen::Create(
-                ftxui::Dimension::Fixed(30), ftxui::Dimension::Fixed(1));
+            auto screen =
+                ftxui::Screen::Create(ftxui::Dimension::Fixed(30), ftxui::Dimension::Fixed(1));
             ftxui::Render(screen, tool::RenderFaithfulToolHeader(data));
             const auto expected = status == tool::FaithfulToolStatus::Success ? pal.success
-                : status == tool::FaithfulToolStatus::Error ? pal.danger : pal.muted;
+                                  : status == tool::FaithfulToolStatus::Error ? pal.danger
+                                                                              : pal.muted;
             EXPECT_EQ(screen.PixelAt(0, 0).foreground_color, expected);
             const auto text = strip_ansi(screen.ToString());
             if (status == tool::FaithfulToolStatus::Success)
@@ -88,12 +95,12 @@ TEST(Messages, HeldAssistantComponentUpdatesColorsAfterThemeChange) {
     data.verbose = true;
     data.kind = msg::AssistantMessageKind::RateLimit;
     auto component = msg::MakeAssistantTextMessage(data, nullptr, nullptr, [] {});
-    for (const auto variant : {theme::ThemeVariant::Light,
-            theme::ThemeVariant::Monochrome, theme::ThemeVariant::DarkDaltonized}) {
+    for (const auto variant : {theme::ThemeVariant::Light, theme::ThemeVariant::Monochrome,
+                               theme::ThemeVariant::DarkDaltonized}) {
         theme::set_theme(variant);
         const auto& pal = *theme::current_theme().palette;
-        auto screen = ftxui::Screen::Create(
-            ftxui::Dimension::Fixed(80), ftxui::Dimension::Fixed(15));
+        auto screen =
+            ftxui::Screen::Create(ftxui::Dimension::Fixed(80), ftxui::Dimension::Fixed(15));
         ftxui::Render(screen, component->Render());
         bool found_button = false;
         bool found_code = false;
@@ -127,11 +134,10 @@ TEST(Messages, AssistantBubbleUsesThemeWithoutEmoji) {
     RestoreMessageTheme restore;
     msg::AssistantTextMessageData data;
     data.content = "Body";
-    for (const auto variant : {theme::ThemeVariant::Light,
-            theme::ThemeVariant::Monochrome}) {
+    for (const auto variant : {theme::ThemeVariant::Light, theme::ThemeVariant::Monochrome}) {
         theme::set_theme(variant);
-        auto screen = ftxui::Screen::Create(
-            ftxui::Dimension::Fixed(60), ftxui::Dimension::Fixed(10));
+        auto screen =
+            ftxui::Screen::Create(ftxui::Dimension::Fixed(60), ftxui::Dimension::Fixed(10));
         ftxui::Render(screen, msg::RenderAssistantTextMessageBubble(data));
         EXPECT_EQ(screen.PixelAt(0, 0).foreground_color,
                   theme::current_theme().palette->role_pill_assistant);
@@ -145,20 +151,21 @@ TEST(Messages, AssistantBubbleUsesThemeWithoutEmoji) {
 namespace {
 std::string prompt_screen_row(const ftxui::Screen& screen, int row) {
     std::string text;
-    for (int x = 0; x < screen.dimx(); ++x) text += screen.PixelAt(x, row).character;
-    while (!text.empty() && text.back() == ' ') text.pop_back();
+    for (int x = 0; x < screen.dimx(); ++x)
+        text += screen.PixelAt(x, row).character;
+    while (!text.empty() && text.back() == ' ')
+        text.pop_back();
     return text;
 }
-}
+}  // namespace
 
 TEST(Messages, SubmittedPromptUsesWideTerminalInsteadOfUtf8ByteLimit) {
     namespace msg = loom::ui::messages;
     msg::UserTextMessageData data;
-    data.content = "站在全球顶尖 UI/UX 设计师的视角看，你觉得我们现在的 Terminal UI 设计有什么问题吗？";
-    auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(120),
-                                       ftxui::Dimension::Fixed(6));
-    ftxui::Render(screen, ftxui::vbox({msg::RenderUserPromptMessage(data),
-                                      ftxui::text("AFTER")}));
+    data.content =
+        "站在全球顶尖 UI/UX 设计师的视角看，你觉得我们现在的 Terminal UI 设计有什么问题吗？";
+    auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(120), ftxui::Dimension::Fixed(6));
+    ftxui::Render(screen, ftxui::vbox({msg::RenderUserPromptMessage(data), ftxui::text("AFTER")}));
     EXPECT_EQ(prompt_screen_row(screen, 1),
               std::string(loom::ui::design::figures::kPointer) + " " + data.content);
     EXPECT_EQ(prompt_screen_row(screen, 2), "AFTER");
@@ -171,8 +178,8 @@ TEST(Messages, SubmittedPromptReflowsRetainedElementAfterTerminalResize) {
     auto element = ftxui::vbox({msg::RenderUserPromptMessage(data), ftxui::text("AFTER")});
     for (int width : {120, 40, 120}) {
         SCOPED_TRACE(width);
-        auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(width),
-                                           ftxui::Dimension::Fixed(8));
+        auto screen =
+            ftxui::Screen::Create(ftxui::Dimension::Fixed(width), ftxui::Dimension::Fixed(8));
         ftxui::Render(screen, element);
         const int body_lines = width == 40 ? 3 : 1;
         EXPECT_EQ(prompt_screen_row(screen, body_lines + 1), "AFTER");
@@ -188,10 +195,8 @@ TEST(Messages, SubmittedPromptPreservesExplicitEmptyAndTrailingLines) {
     namespace msg = loom::ui::messages;
     msg::UserTextMessageData data;
     data.content = "first\n\n第二行\n";
-    auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(120),
-                                       ftxui::Dimension::Fixed(8));
-    ftxui::Render(screen, ftxui::vbox({msg::RenderUserPromptMessage(data),
-                                      ftxui::text("AFTER")}));
+    auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(120), ftxui::Dimension::Fixed(8));
+    ftxui::Render(screen, ftxui::vbox({msg::RenderUserPromptMessage(data), ftxui::text("AFTER")}));
     EXPECT_EQ(prompt_screen_row(screen, 1),
               std::string(loom::ui::design::figures::kPointer) + " first");
     EXPECT_TRUE(prompt_screen_row(screen, 2).empty());
@@ -204,10 +209,8 @@ TEST(Messages, SubmittedPromptNarrowWrapPreservesWideAndCombiningGlyphs) {
     namespace msg = loom::ui::messages;
     msg::UserTextMessageData data;
     data.content = "中文abc中文e\xcc\x81xy";
-    auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(10),
-                                       ftxui::Dimension::Fixed(6));
-    ftxui::Render(screen, ftxui::vbox({msg::RenderUserPromptMessage(data),
-                                      ftxui::text("AFTER")}));
+    auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(10), ftxui::Dimension::Fixed(6));
+    ftxui::Render(screen, ftxui::vbox({msg::RenderUserPromptMessage(data), ftxui::text("AFTER")}));
     EXPECT_EQ(prompt_screen_row(screen, 1),
               std::string(loom::ui::design::figures::kPointer) + " 中文abc");
     EXPECT_EQ(prompt_screen_row(screen, 2), "  中文e\xcc\x81xy");
@@ -221,15 +224,15 @@ TEST(Messages, SubmittedPromptNestedTranscriptAndContinuationUseAvailableWidth) 
     for (const bool transcript : {false, true}) {
         data.is_transcript_mode = transcript;
         for (const bool margin : {false, true}) {
-            auto element = ftxui::vbox({msg::RenderUserPromptMessage(data, false, margin),
-                                       ftxui::text("AFTER")});
+            auto element = ftxui::vbox(
+                {msg::RenderUserPromptMessage(data, false, margin), ftxui::text("AFTER")});
             for (const int width : {120, 40, 120}) {
-                SCOPED_TRACE(std::format("transcript={}, margin={}, width={}",
-                                        transcript, margin, width));
+                SCOPED_TRACE(
+                    std::format("transcript={}, margin={}, width={}", transcript, margin, width));
                 const int columns = width - 3 - (!transcript && !margin ? 5 : 0);
                 const auto lines = msg::wrap_detail::WrappedPromptLines(data.content, columns);
                 auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(width),
-                                                   ftxui::Dimension::Fixed(10));
+                                                    ftxui::Dimension::Fixed(10));
                 ftxui::Render(screen, element);
                 const int first = margin ? 1 : 0;
                 EXPECT_EQ(prompt_screen_row(screen, first + static_cast<int>(lines.size())),
@@ -247,7 +250,8 @@ TEST(Messages, StreamingCompletionPreservesBodyLayout) {
     const std::vector<std::string> documents{
         "alpha beta gamma delta epsilon zeta eta theta iota kappa lambda",
         "中文输出和 English words 混排，需要保持每一行的位置。再接一段文字。",
-        "# Heading\n\nBody text that wraps at narrow widths.\n\n~~~cpp\nfirst();\n\nsecond();\n~~~\n"};
+        "# Heading\n\nBody text that wraps at narrow "
+        "widths.\n\n~~~cpp\nfirst();\n\nsecond();\n~~~\n"};
     for (int width : {24, 40, 80}) {
         for (const auto& document : documents) {
             SCOPED_TRACE(std::to_string(width) + ": " + document);
@@ -255,19 +259,18 @@ TEST(Messages, StreamingCompletionPreservesBodyLayout) {
             data.content = document;
             data.is_streaming = true;
             loom::ui::StreamingMarkdown streaming;
-            auto live = ftxui::Screen::Create(ftxui::Dimension::Fixed(width),
-                                             ftxui::Dimension::Fixed(40));
-            ftxui::Render(live, msg::RenderAssistantTextMessageFaithful(
-                data, false, false, &streaming));
+            auto live =
+                ftxui::Screen::Create(ftxui::Dimension::Fixed(width), ftxui::Dimension::Fixed(40));
+            ftxui::Render(live,
+                          msg::RenderAssistantTextMessageFaithful(data, false, false, &streaming));
             data.is_streaming = false;
-            auto final = ftxui::Screen::Create(ftxui::Dimension::Fixed(width),
-                                              ftxui::Dimension::Fixed(40));
+            auto final =
+                ftxui::Screen::Create(ftxui::Dimension::Fixed(width), ftxui::Dimension::Fixed(40));
             ftxui::Render(final, msg::RenderAssistantTextMessageFaithful(data, false));
             EXPECT_EQ(strip_ansi(live.ToString()), strip_ansi(final.ToString()));
         }
     }
 }
-
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // loom.ui.prompt.prompt_input: prompt buffer, history, typeahead, vim behavior
@@ -297,7 +300,7 @@ TEST(MessagePipeline, DedupStartDeltaStopSmoke) {
     // Post-Stop: Start / Delta / Stop all dedup dropped.
     EXPECT_FALSE(t.should_accept_start(0)) << "replay Start after Stop must be dropped";
     EXPECT_FALSE(t.should_accept_delta(0)) << "Delta after Stop must be dropped";
-    EXPECT_FALSE(t.should_accept_stop(0))  << "Second Stop must be dropped";
+    EXPECT_FALSE(t.should_accept_stop(0)) << "Second Stop must be dropped";
 
     // Other indices are unaffected.
     EXPECT_TRUE(t.should_accept_start(1));
@@ -311,7 +314,7 @@ TEST(MessagePipeline, DedupDeltaBeforeStartPromotesToOpen) {
     // create a duplicate.
     EXPECT_TRUE(t.should_accept_delta(7));
     EXPECT_EQ(t.state_of(7), pl::DedupTracker::IndexState::kOpen);
-    EXPECT_TRUE(t.should_accept_start(7));   // Start after Delta → dedup accept
+    EXPECT_TRUE(t.should_accept_start(7));  // Start after Delta → dedup accept
 }
 
 TEST(MessagePipeline, DedupToolUseExecStartAndEndOneShot) {
@@ -352,18 +355,18 @@ TEST(MessagePipeline, FilterBashInputTag) {
     auto rows = pl::filter_user_text("<bash-input>ls -la ~/Documents</bash-input>");
     ASSERT_GE(rows.size(), 1u);
     auto it = std::find_if(rows.begin(), rows.end(),
-        [](const auto& r){ return r.kind == pl::UserRowKind::kBashInput; });
+                           [](const auto& r) { return r.kind == pl::UserRowKind::kBashInput; });
     ASSERT_NE(it, rows.end());
     EXPECT_EQ(it->display_text, "ls -la ~/Documents");
 }
 
 TEST(MessagePipeline, FilterQuotedReply) {
-    auto rows = pl::filter_user_text(
-        "<quoted-reply># Old issue number 42\nsecond line</quoted-reply>\n"
-        "Please take a look");
+    auto rows =
+        pl::filter_user_text("<quoted-reply># Old issue number 42\nsecond line</quoted-reply>\n"
+                             "Please take a look");
     ASSERT_GE(rows.size(), 1u);
     auto it = std::find_if(rows.begin(), rows.end(),
-        [](const auto& r){ return r.kind == pl::UserRowKind::kQuotedReply; });
+                           [](const auto& r) { return r.kind == pl::UserRowKind::kQuotedReply; });
     ASSERT_NE(it, rows.end());
     EXPECT_EQ(it->quoted_reply, "# Old issue number 42\nsecond line");
     EXPECT_EQ(it->display_text, "Please take a look");
@@ -372,20 +375,20 @@ TEST(MessagePipeline, FilterQuotedReply) {
 TEST(MessagePipeline, FilterToolInvocation) {
     auto rows = pl::filter_user_text("<tool:BashTool>ls /tmp | head</tool:BashTool>");
     ASSERT_GE(rows.size(), 1u);
-    auto it = std::find_if(rows.begin(), rows.end(),
-        [](const auto& r){ return r.kind == pl::UserRowKind::kToolInvocation; });
+    auto it = std::find_if(rows.begin(), rows.end(), [](const auto& r) {
+        return r.kind == pl::UserRowKind::kToolInvocation;
+    });
     ASSERT_NE(it, rows.end());
     EXPECT_EQ(it->tool_name, "BashTool");
     EXPECT_EQ(it->display_text, "ls /tmp | head");
 }
 
 TEST(MessagePipeline, FilterAtMentions) {
-    auto rows = pl::filter_user_text(
-        "Please review "
-        "<at-file>src/main.cpp</at-file> and "
-        "<at-agent>SeniorEngineer</at-agent>"
-        "<at-tool>SearchTool</at-tool>");
-    auto has_attach = [](const auto& r){ return r.kind == pl::UserRowKind::kAttachment; };
+    auto rows = pl::filter_user_text("Please review "
+                                     "<at-file>src/main.cpp</at-file> and "
+                                     "<at-agent>SeniorEngineer</at-agent>"
+                                     "<at-tool>SearchTool</at-tool>");
+    auto has_attach = [](const auto& r) { return r.kind == pl::UserRowKind::kAttachment; };
     const auto attachments = std::count_if(rows.begin(), rows.end(), has_attach);
     EXPECT_GE(attachments, 3u);
     bool found_file = false, found_agent = false, found_tool = false;
@@ -402,8 +405,7 @@ TEST(MessagePipeline, FilterAtMentions) {
 
 TEST(MessagePipeline, FilterMixedContentProducesPlainTextRemainder) {
     // <bash-input> + extra plain text should also yield a plain-text row.
-    auto rows = pl::filter_user_text(
-        "<bash-input>make</bash-input>\n<at-file>Makefile</at-file>");
+    auto rows = pl::filter_user_text("<bash-input>make</bash-input>\n<at-file>Makefile</at-file>");
     // Expect at least: kBashInput + kAttachment.  Any extra whitespace/text
     // may collapse to plain-text row; verify no row has raw XML left.
     for (const auto& r : rows) {
@@ -412,9 +414,9 @@ TEST(MessagePipeline, FilterMixedContentProducesPlainTextRemainder) {
         EXPECT_EQ(r.quoted_reply.find('<'), std::string::npos);
     }
     EXPECT_TRUE(std::any_of(rows.begin(), rows.end(),
-        [](const auto& r){ return r.kind == pl::UserRowKind::kBashInput; }));
+                            [](const auto& r) { return r.kind == pl::UserRowKind::kBashInput; }));
     EXPECT_TRUE(std::any_of(rows.begin(), rows.end(),
-        [](const auto& r){ return r.kind == pl::UserRowKind::kAttachment; }));
+                            [](const auto& r) { return r.kind == pl::UserRowKind::kAttachment; }));
 }
 
 TEST(MessagePipeline, FilterEmptyInputProducesSinglePlaceholder) {
@@ -429,7 +431,7 @@ TEST(MessagePipeline, ToolAugment_TruncationFlagTriggersAboveThreshold) {
     auto a = pl::augment_tool_result(big, /*is_error=*/false);
     EXPECT_TRUE(a.truncated);
     EXPECT_EQ(a.error_code, 0);
-    EXPECT_FALSE(a.preview.empty());   // truncated or not, preview is set
+    EXPECT_FALSE(a.preview.empty());  // truncated or not, preview is set
 
     std::string small(100, 'a');
     auto b = pl::augment_tool_result(small, /*is_error=*/false);
@@ -454,16 +456,16 @@ TEST(MessagePipeline, ToolAugment_ParseErrorCodeRecognisesPatterns) {
 TEST(MessagePipeline, ToolAugment_PreviewUsesFirstNonEmptyLine) {
     const std::string input = "\n\n  \nThis is line four with content.\nLine five ignored.\n";
     auto a = pl::augment_tool_result(input, false);
-    EXPECT_NE(a.preview.find("This is line four"), std::string::npos)
-        << "preview: " << a.preview;
+    EXPECT_NE(a.preview.find("This is line four"), std::string::npos) << "preview: " << a.preview;
     EXPECT_EQ(a.preview.find("Line five"), std::string::npos)
         << "preview should only include first non-empty line";
 }
 
 TEST(MessagePipeline, ToolAugment_PreviewTruncatesTo200Codepoints) {
-    std::string line = "abcdefghij";   // 10 chars
+    std::string line = "abcdefghij";  // 10 chars
     std::string big;
-    for (int i = 0; i < 30; ++i) big += line;  // 300 chars, one line
+    for (int i = 0; i < 30; ++i)
+        big += line;  // 300 chars, one line
     auto a = pl::augment_tool_result(big, false);
     // kMaxCompactPreviewChars = 200 → preview capped at that plus ellipsis
     EXPECT_LE(a.preview.size(), 200u + 10u);
@@ -548,8 +550,7 @@ TEST(VirtualList, VisibleSliceCoversViewportPlusOverscan) {
     EXPECT_EQ(start, 0u);
     const int end_line = jh.find_visual_top_for_row(start + cnt);
     const int need = 40 + vl::kOverscanRows;
-    EXPECT_GE(end_line, need)
-        << "slice must cover viewport + overscan vertically";
+    EXPECT_GE(end_line, need) << "slice must cover viewport + overscan vertically";
 }
 
 TEST(VirtualList, VisibleSliceMiddleJump) {
@@ -557,7 +558,7 @@ TEST(VirtualList, VisibleSliceMiddleJump) {
     auto jh = vl::build_geometry(std::span{rows});
     // Jump to the row whose visual top is nearest line 2500.
     size_t target_row = jh.find_row_at_visual_line(2500);
-    ASSERT_GT(target_row, 200u);   // sanity: not in the first 200
+    ASSERT_GT(target_row, 200u);  // sanity: not in the first 200
     int scroll_top = jh.find_visual_top_for_row(target_row);
     auto [start, cnt] = vl::build_visible_slice(jh, scroll_top, 40);
     EXPECT_LE(start, target_row);
@@ -581,8 +582,7 @@ TEST(VirtualList, LargeN100K_NoOverflow) {
         size_t idx = jh.find_row_at_visual_line(line);
         ASSERT_LT(idx, rows.size());
         EXPECT_LE(jh.top_of(idx), line);
-        if (idx + 1 < jh.size())
-            EXPECT_GT(jh.top_of(idx + 1), line);
+        if (idx + 1 < jh.size()) EXPECT_GT(jh.top_of(idx + 1), line);
     }
     // slice near tail
     auto [s, c] = vl::build_visible_slice(jh, jh.total() - 100, 40);
@@ -639,8 +639,7 @@ TEST(VirtualList, BuildRowGeometrySliceMatchesPsum) {
         size_t idx = 37 + k;
         EXPECT_EQ(gs[k].row_idx, idx);
         EXPECT_EQ(gs[k].top_line, jh.find_visual_top_for_row(idx));
-        EXPECT_EQ(gs[k].height_lines,
-                  std::max(1, (int)rows[idx].estimated_height_lines));
+        EXPECT_EQ(gs[k].height_lines, std::max(1, (int)rows[idx].estimated_height_lines));
         // `height_measured` was never set → `cached == false`.
         EXPECT_FALSE(gs[k].cached);
     }
@@ -698,8 +697,8 @@ TEST(VirtualList, RenderListMediumProducesValidVBox) {
     int n_rendered = 0;
     s.callbacks.render_row = [&](size_t i, const VisibleRow&) -> ftxui::Element {
         ++n_rendered;
-        return ftxui::text("row " + std::to_string(i))
-             | ftxui::size(ftxui::HEIGHT, ftxui::EQUAL,
+        return ftxui::text("row " + std::to_string(i)) |
+               ftxui::size(ftxui::HEIGHT, ftxui::EQUAL,
                            std::max(1, rows[i].estimated_height_lines));
     };
     // Scroll to mid-list.
@@ -711,17 +710,15 @@ TEST(VirtualList, RenderListMediumProducesValidVBox) {
     // Critical invariant: # of rendered rows MUST be strictly less than
     // rows.size() (the whole point of virtual windowing).  A conservative
     // upper bound is viewport_rows + 2·kOverscanRows + 4 (for pills).
-    EXPECT_LT(n_rendered, (int)rows.size())
-        << "virtual window must not render all rows";
+    EXPECT_LT(n_rendered, (int)rows.size()) << "virtual window must not render all rows";
     const int expected_max = 40 + 2 * (int)vl::kOverscanRows + 4;
-    EXPECT_LE(n_rendered, expected_max)
-        << "rendered count cap: viewport + 2·overscan + pills";
+    EXPECT_LE(n_rendered, expected_max) << "rendered count cap: viewport + 2·overscan + pills";
     (void)screen;
 }
 
 TEST(VirtualList, ScrollZeroViewportNeverUnderflows) {
     vl::VirtualListState s;
-    s.viewport_rows = 0;   // pathological: caller supplies invalid size
+    s.viewport_rows = 0;  // pathological: caller supplies invalid size
     auto rows = make_vl_rows(10);
     s.rows.assign(rows.begin(), rows.end());
     s.jh = vl::build_geometry(std::span{s.rows});
@@ -748,9 +745,8 @@ namespace {
 /// Build N rows with cycling heights [1,3,7,11] and per-row search_key
 /// derived from `search_texts[i % search_texts.size()]`.  The search_key is
 /// lowered (as messages_list::get_cached_lowered_search_text would do).
-inline std::vector<VisibleRow> make_vl_rows_with_search(
-    size_t n,
-    std::vector<std::string> const &search_texts) {
+inline std::vector<VisibleRow>
+make_vl_rows_with_search(size_t n, std::vector<std::string> const& search_texts) {
     std::vector<VisibleRow> rows(n);
     int pat[4] = {1, 3, 7, 11};
     for (size_t i = 0; i < n; ++i) {
@@ -759,13 +755,15 @@ inline std::vector<VisibleRow> make_vl_rows_with_search(
         rows[i].backend_index = i;
         rows[i].type_hint = 0;
         if (!search_texts.empty()) {
-            std::string const &src = search_texts[i % search_texts.size()];
+            std::string const& src = search_texts[i % search_texts.size()];
             // Lower the text to simulate get_cached_lowered_search_text.
             std::string lowered;
             lowered.reserve(src.size());
             for (char c : src) {
-                if (c >= 'A' && c <= 'Z') lowered += static_cast<char>(c + ('a' - 'A'));
-                else lowered += c;
+                if (c >= 'A' && c <= 'Z')
+                    lowered += static_cast<char>(c + ('a' - 'A'));
+                else
+                    lowered += c;
             }
             rows[i].search_key = std::move(lowered);
         }
@@ -779,13 +777,13 @@ TEST(VirtualList, RunSearchFindsMatchingRows) {
     s.viewport_rows = 40;
     // Rows with varied search text; "error" appears in rows 1 and 3.
     s.rows = make_vl_rows_with_search(6, {
-        "hello world",
-        "error: something failed",
-        "all good here",
-        "error: timeout in bash",
-        "success",
-        "no problems",
-    });
+                                             "hello world",
+                                             "error: something failed",
+                                             "all good here",
+                                             "error: timeout in bash",
+                                             "success",
+                                             "no problems",
+                                         });
     s.jh = vl::build_geometry(std::span{s.rows});
 
     vl::run_search(s, "error");
@@ -806,10 +804,10 @@ TEST(VirtualList, RunSearchCountsMultipleOccurrencesPerRow) {
     s.viewport_rows = 40;
     // Row 0: "foo" appears 3x.  Row 1: "foo" appears 0x.  Row 2: "foo" appears 2x.
     s.rows = make_vl_rows_with_search(3, {
-        "foo bar foo baz foo",
-        "nothing to see",
-        "foo and foo again",
-    });
+                                             "foo bar foo baz foo",
+                                             "nothing to see",
+                                             "foo and foo again",
+                                         });
     s.jh = vl::build_geometry(std::span{s.rows});
 
     vl::run_search(s, "foo");
@@ -877,13 +875,13 @@ TEST(VirtualList, SetSearchQueryJumpsToNearestMatch) {
     // Heights: row0=1, row1=3, row2=7, row3=11, row4=1, row5=3
     // Tops:    0,    1,    4,    11,   22,   23
     s.rows = make_vl_rows_with_search(6, {
-        "intro text",
-        "chapter one",
-        "chapter two",
-        "chapter three",
-        "conclusion",
-        "appendix",
-    });
+                                             "intro text",
+                                             "chapter one",
+                                             "chapter two",
+                                             "chapter three",
+                                             "conclusion",
+                                             "appendix",
+                                         });
     s.jh = vl::build_geometry(std::span{s.rows});
     s.sticky_bottom = false;
     s.scroll_top = 5;  // near row 2 (top=4, height=7)
@@ -937,13 +935,13 @@ TEST(VirtualList, SearchStepMatchWrapsAround) {
     vl::VirtualListState s;
     s.viewport_rows = 10;
     s.rows = make_vl_rows_with_search(6, {
-        "match here",
-        "nope",
-        "match here too",
-        "nothing",
-        "match three",
-        "nada",
-    });
+                                             "match here",
+                                             "nope",
+                                             "match here too",
+                                             "nothing",
+                                             "match three",
+                                             "nada",
+                                         });
     s.jh = vl::build_geometry(std::span{s.rows});
     s.sticky_bottom = false;
 
@@ -977,11 +975,11 @@ TEST(VirtualList, GetSearchMatchInfoReturnsBadge) {
     vl::VirtualListState s;
     s.viewport_rows = 40;
     s.rows = make_vl_rows_with_search(4, {
-        "foo bar foo",      // 2 occurrences
-        "nothing",
-        "foo baz",          // 1 occurrence
-        "no match",
-    });
+                                             "foo bar foo",  // 2 occurrences
+                                             "nothing",
+                                             "foo baz",  // 1 occurrence
+                                             "no match",
+                                         });
     s.jh = vl::build_geometry(std::span{s.rows});
 
     // No search active → 0/0.
@@ -1014,13 +1012,13 @@ TEST(VirtualList, MakeSearchStepCallbackReturnsVisualLine) {
     vl::VirtualListState s;
     s.viewport_rows = 10;
     s.rows = make_vl_rows_with_search(6, {
-        "target",
-        "filler",
-        "target",
-        "filler",
-        "target",
-        "filler",
-    });
+                                             "target",
+                                             "filler",
+                                             "target",
+                                             "filler",
+                                             "target",
+                                             "filler",
+                                         });
     s.jh = vl::build_geometry(std::span{s.rows});
     s.sticky_bottom = false;
 
@@ -1051,12 +1049,12 @@ TEST(VirtualList, HandleSearchApiParity) {
     auto state = std::make_shared<vl::VirtualListState>();
     state->viewport_rows = 10;
     state->rows = make_vl_rows_with_search(5, {
-        "needle in haystack",
-        "nothing",
-        "needle needle",
-        "nope",
-        "needle",
-    });
+                                                  "needle in haystack",
+                                                  "nothing",
+                                                  "needle needle",
+                                                  "nope",
+                                                  "needle",
+                                              });
     state->jh = vl::build_geometry(std::span{state->rows});
     state->sticky_bottom = false;
 
@@ -1096,9 +1094,9 @@ TEST(VirtualList, HandleSearchApiParity) {
 namespace unseen_divider_test {
 
 using namespace loom::ui::messages_list;
+using loom::ui::messages::AssistantTextMessageData;
 using loom::ui::messages::MessageShape;
 using loom::ui::messages::UserTextMessageData;
-using loom::ui::messages::AssistantTextMessageData;
 
 /// Helper: build a minimal MessagesListInput with N alternating rows, each
 /// with a 24-char uuid of the form `<prefix>_<i>{pad}`.  Row i is user if
@@ -1112,21 +1110,20 @@ auto make_synthetic_input(std::size_t num_rows,
     for (std::size_t i = 0; i < num_rows; ++i) {
         char uuid_buf[25];
         // uuid_prefix20 is 20 chars, so with 4-digit suffix = 24 chars exactly.
-        std::snprintf(uuid_buf, sizeof(uuid_buf), "%.*s%04zu",
-                      20, uuid_prefix20.data(), i);
+        std::snprintf(uuid_buf, sizeof(uuid_buf), "%.*s%04zu", 20, uuid_prefix20.data(), i);
         in.uuids.emplace_back(uuid_buf, 24);
         if ((i & 1u) == 0u) {
             in.shapes.push_back(MessageShape::UserText);
-            in.rows.push_back(UserTextMessageData{
-                .content = std::string("User prompt #") + std::to_string(i),
-                .quoted_reply = std::nullopt,
-                .command_name = std::nullopt});
+            in.rows.push_back(
+                UserTextMessageData{.content = std::string("User prompt #") + std::to_string(i),
+                                    .quoted_reply = std::nullopt,
+                                    .command_name = std::nullopt});
         } else {
             in.shapes.push_back(MessageShape::AssistantText);
-            in.rows.push_back(AssistantTextMessageData{
-                .content = std::string("Assistant reply #") + std::to_string(i),
-                .model_name = std::nullopt,
-                .is_streaming = false});
+            in.rows.push_back(AssistantTextMessageData{.content = std::string("Assistant reply #") +
+                                                                  std::to_string(i),
+                                                       .model_name = std::nullopt,
+                                                       .is_streaming = false});
         }
     }
     in.viewport_rows = 40;
@@ -1134,7 +1131,7 @@ auto make_synthetic_input(std::size_t num_rows,
     return in;
 }
 
-} // namespace unseen_divider_test
+}  // namespace unseen_divider_test
 
 TEST(MessagesList, UnseenDivider_PrefixMatchFindsTargetRow) {
     using namespace unseen_divider_test;
@@ -1229,8 +1226,7 @@ TEST(MessagesList, UnseenDivider_RendersDividerInTranscript_Golden) {
     auto pos_row2 = snap.find("User prompt #2");
     ASSERT_NE(pos_divider, std::string::npos);
     ASSERT_NE(pos_row2, std::string::npos);
-    EXPECT_LT(pos_divider, pos_row2)
-        << "divider must render BEFORE its target payload row";
+    EXPECT_LT(pos_divider, pos_row2) << "divider must render BEFORE its target payload row";
 
     // ── Golden snapshot (TS REF: Messages.tsx L631-635 Divider element).
     //    UPDATE_GOLDENS=1 ./loom_test --gtest_filter='*Golden*' to refresh.
@@ -1243,8 +1239,7 @@ TEST(MessagesList, UnseenDivider_RendersDividerInTranscript_Golden) {
     in2.pin_to_bottom = false;
     in2.viewport_rows = 30;
     auto el2 = render_messages_list_view(std::move(in2), 0, 80);
-    check_golden("unseen_divider_in_transcript_missing",
-                 render_ansi(std::move(el2), 100, 30));
+    check_golden("unseen_divider_in_transcript_missing", render_ansi(std::move(el2), 100, 30));
 }
 
 /// Baseline golden: same 4-row transcript BUT no unseen_divider set.  Serves
@@ -1254,7 +1249,7 @@ TEST(MessagesList, UnseenDivider_NoDividerBaseline_Golden) {
     using namespace sticky_prompt_test;
 
     auto in = make_synthetic_input(4, "snap00000000000000000000");
-    in.unseen_divider.reset();   // explicit nullopt: no divider
+    in.unseen_divider.reset();  // explicit nullopt: no divider
     in.pin_to_bottom = false;
     in.viewport_rows = 30;
 
@@ -1262,8 +1257,8 @@ TEST(MessagesList, UnseenDivider_NoDividerBaseline_Golden) {
     in_assert.unseen_divider.reset();
     in_assert.pin_to_bottom = false;
     in_assert.viewport_rows = 30;
-    std::string snap = strip_ansi(render_ansi(
-        render_messages_list_view(std::move(in_assert), 0, 80), 100, 30));
+    std::string snap =
+        strip_ansi(render_ansi(render_messages_list_view(std::move(in_assert), 0, 80), 100, 30));
     // Baseline must NOT contain the divider title.
     EXPECT_EQ(snap.find("new message"), std::string::npos)
         << "baseline (unseen_divider=nullopt) must NOT render a divider";
@@ -1276,8 +1271,7 @@ TEST(MessagesList, UnseenDivider_NoDividerBaseline_Golden) {
     in_ctrl.pin_to_bottom = false;
     in_ctrl.viewport_rows = 30;
     check_golden("unseen_divider_baseline_no_divider",
-                 render_ansi(render_messages_list_view(std::move(in_ctrl), 0, 80),
-                             100, 30));
+                 render_ansi(render_messages_list_view(std::move(in_ctrl), 0, 80), 100, 30));
 }
 
 /// Edge-case test: divider anchor lands on a ThinkingBlock (skipped in TS's
@@ -1311,8 +1305,7 @@ TEST(MessagesList, UnseenDivider_AnchorWithEmptyUuidEntries_NoCrash) {
     // insertion branch when one row's uuid is empty.  We route through
     // strip_ansi so that Screen::ToString() fully traverses the Element
     // tree and exercises every node.
-    std::string snap =
-        strip_ansi(render_ansi(std::move(el), /*term_w=*/80, /*term_h=*/20));
+    std::string snap = strip_ansi(render_ansi(std::move(el), /*term_w=*/80, /*term_h=*/20));
     // Divider title for count=1 MUST appear.
     EXPECT_NE(snap.find("1 new message"), std::string::npos);
     (void)snap;
@@ -1331,16 +1324,16 @@ TEST(MessagesList, UnseenDivider_AnchorWithEmptyUuidEntries_NoCrash) {
 namespace chain_compression_test {
 
 namespace ml = loom::ui::messages_list;
+using loom::ui::messages::AssistantTextMessageData;
+using loom::ui::messages::MessageRowPayload;
+using loom::ui::messages::ToolResultOptions;
+using loom::ui::messages::UserTextMessageData;
 using loom::ui::messages::thinking_message::ThinkingMessageOptions;
 using loom::ui::messages::thinking_message::ThinkingState;
-using loom::ui::messages::tool_use_message::ToolUseRenderOptions;
 using loom::ui::messages::tool_use_message::ToolStatus;
-using loom::ui::messages::ToolResultOptions;
-using loom::ui::messages::AssistantTextMessageData;
-using loom::ui::messages::UserTextMessageData;
-using loom::ui::messages::MessageRowPayload;
-using ml::MessagesListInput;
+using loom::ui::messages::tool_use_message::ToolUseRenderOptions;
 using ml::MessageShape;
+using ml::MessagesListInput;
 
 [[nodiscard]] ThinkingMessageOptions make_thinking(std::string text) {
     ThinkingMessageOptions opts;
@@ -1350,8 +1343,8 @@ using ml::MessageShape;
     return opts;
 }
 
-[[nodiscard]] ToolUseRenderOptions make_tool_use(
-    std::string name, ToolStatus status = ToolStatus::Success) {
+[[nodiscard]] ToolUseRenderOptions make_tool_use(std::string name,
+                                                 ToolStatus status = ToolStatus::Success) {
     ToolUseRenderOptions opts;
     opts.call.tool_name = std::move(name);
     opts.call.status = status;
@@ -1375,8 +1368,8 @@ using ml::MessageShape;
 
 /// Build a MessagesListInput from (shape, payload) pairs.
 /// streaming_tail_row is set to rows.size() (not streaming).
-[[nodiscard]] MessagesListInput make_input(
-    std::vector<std::pair<MessageShape, MessageRowPayload>> rows) {
+[[nodiscard]] MessagesListInput
+make_input(std::vector<std::pair<MessageShape, MessageRowPayload>> rows) {
     MessagesListInput in;
     in.streaming_tail_row = rows.size();
     for (auto& [shape, payload] : rows) {
@@ -1388,9 +1381,8 @@ using ml::MessageShape;
 }
 
 /// Count visible rows of a given kind.
-[[nodiscard]] std::size_t count_kind(
-    const std::vector<loom::ui::messages_list::VisibleRow>& rows,
-    loom::ui::messages_list::VisibleRow::Kind kind) {
+[[nodiscard]] std::size_t count_kind(const std::vector<loom::ui::messages_list::VisibleRow>& rows,
+                                     loom::ui::messages_list::VisibleRow::Kind kind) {
     std::size_t n = 0;
     for (const auto& r : rows) {
         if (r.kind == kind) ++n;
@@ -1423,14 +1415,15 @@ using namespace std::chrono_literals;
 // The injected clock is process-global; always release it, including ASSERT exits.
 struct ClockScope {
     ~ClockScope() { loom::ui::clock::set_steady_now_for_testing(std::nullopt); }
+
     void at(std::chrono::milliseconds since_epoch) {
         loom::ui::clock::set_steady_now_for_testing(
             std::chrono::steady_clock::time_point(since_epoch));
     }
 };
 
-auto running_tool(std::string name, std::string parameters,
-                  std::chrono::milliseconds start = 100s) -> ToolUseRenderOptions {
+auto running_tool(std::string name, std::string parameters, std::chrono::milliseconds start = 100s)
+    -> ToolUseRenderOptions {
     auto tool = make_tool_use(std::move(name), ToolStatus::Running);
     tool.call.raw_parameters = std::move(parameters);
     tool.call.start_time = std::chrono::steady_clock::time_point(start);
@@ -1439,25 +1432,21 @@ auto running_tool(std::string name, std::string parameters,
 
 auto live_input() -> MessagesListInput {
     auto in = make_input({{MessageShape::AssistantToolUse,
-        running_tool("Read", R"({"file_path":"src/main.cpp"})")}});
+                           running_tool("Read", R"({"file_path":"src/main.cpp"})")}});
     in.uuids[0] = "streaming-anchor";
     in.query_running = true;
     return in;
 }
 
-auto chain_rows(const MessagesListInput& in)
-    -> std::vector<loom::ui::messages_list::VisibleRow> {
+auto chain_rows(const MessagesListInput& in) -> std::vector<loom::ui::messages_list::VisibleRow> {
     auto rows = build_visible_rows(in);
-    std::erase_if(rows, [](const auto& row) {
-        return row.kind != compressed_chain_kind();
-    });
+    std::erase_if(rows, [](const auto& row) { return row.kind != compressed_chain_kind(); });
     return rows;
 }
 
-auto screen_lines(ftxui::Element element, int columns)
-    -> std::vector<std::string> {
-    auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(columns),
-                                       ftxui::Dimension::Fixed(12));
+auto screen_lines(ftxui::Element element, int columns) -> std::vector<std::string> {
+    auto screen =
+        ftxui::Screen::Create(ftxui::Dimension::Fixed(columns), ftxui::Dimension::Fixed(12));
     ftxui::Render(screen, std::move(element));
     std::vector<std::string> lines;
     for (int y = 0; y < screen.dimy(); ++y)
@@ -1465,8 +1454,7 @@ auto screen_lines(ftxui::Element element, int columns)
     return lines;
 }
 
-auto find_line(const std::vector<std::string>& lines, std::string_view needle)
-    -> std::string {
+auto find_line(const std::vector<std::string>& lines, std::string_view needle) -> std::string {
     for (const auto& line : lines)
         if (line.find(needle) != std::string::npos) return line;
     return {};
@@ -1486,8 +1474,8 @@ TEST(MessagesList, ChainActivity_ElapsedIsOneIntervalAcrossExpansionAndCompletio
     first.call.duration = 60s;
     second.call.duration = 60s;
     auto in = make_input({{MessageShape::AssistantThinking, thought},
-        {MessageShape::AssistantToolUse, first},
-        {MessageShape::AssistantToolUse, second}});
+                          {MessageShape::AssistantToolUse, first},
+                          {MessageShape::AssistantToolUse, second}});
     in.query_running = true;
     in.uuids[0] = "stage";
     auto rows = chain_rows(in);
@@ -1526,8 +1514,8 @@ TEST(MessagesList, ChainActivity_PruneAndAnchorReplacementPreserveStartAndDisclo
     auto thought = make_thinking("Ephemeral thinking.");
     thought.data.thinking_start_time = std::chrono::steady_clock::time_point(100s);
     auto in = make_input({{MessageShape::AssistantThinking, thought},
-        {MessageShape::AssistantToolUse,
-            running_tool("Read", R"({"file_path":"file.cpp"})", 108s)}});
+                          {MessageShape::AssistantToolUse,
+                           running_tool("Read", R"({"file_path":"file.cpp"})", 108s)}});
     in.query_running = true;
     in.uuids = {"streaming", "streaming"};
     auto rows = chain_rows(in);
@@ -1583,11 +1571,11 @@ TEST(MessagesList, ChainActivity_TextBoundaryCommitKeepsDistinctExpandableStages
     using namespace chain_activity_test;
     ClockScope clock;
     clock.at(110s);
-    auto in = make_input({
-        {MessageShape::AssistantThinking, make_thinking("Before commentary.")},
-        {MessageShape::AssistantText, make_text("Inspecting the implementation.")},
-        {MessageShape::AssistantToolUse,
-            running_tool("Read", R"({"file_path":"messages.cpp"})")}});
+    auto in =
+        make_input({{MessageShape::AssistantThinking, make_thinking("Before commentary.")},
+                    {MessageShape::AssistantText, make_text("Inspecting the implementation.")},
+                    {MessageShape::AssistantToolUse,
+                     running_tool("Read", R"({"file_path":"messages.cpp"})")}});
     in.query_running = true;
     in.uuids = {"streaming", "streaming", "streaming"};
     auto rows = chain_rows(in);
@@ -1619,9 +1607,9 @@ TEST(MessagesList, ChainActivity_DuplicateBoundaryOccurrencesKeepSeparateInterva
     using namespace chain_activity_test;
     ClockScope clock;
     clock.at(110s);
-    auto in = make_input({{MessageShape::AssistantText, make_text("Same commentary")},
-        {MessageShape::AssistantToolUse,
-            running_tool("Read", R"({"file_path":"first.cpp"})")}});
+    auto in = make_input(
+        {{MessageShape::AssistantText, make_text("Same commentary")},
+         {MessageShape::AssistantToolUse, running_tool("Read", R"({"file_path":"first.cpp"})")}});
     in.uuids = {"same-id", "same-id"};
     in.query_running = true;
     auto rows = chain_rows(in);
@@ -1651,9 +1639,9 @@ TEST(MessagesList, ChainActivity_FullBoundaryTextDistinguishesIdenticalPrefixes)
     ClockScope clock;
     clock.at(110s);
     const std::string prefix(300, 'x');
-    auto in = make_input({{MessageShape::AssistantText, make_text(prefix + "first")},
-        {MessageShape::AssistantToolUse,
-            running_tool("Read", R"({"file_path":"first.cpp"})")}});
+    auto in = make_input(
+        {{MessageShape::AssistantText, make_text(prefix + "first")},
+         {MessageShape::AssistantToolUse, running_tool("Read", R"({"file_path":"first.cpp"})")}});
     in.query_running = true;
     auto rows = chain_rows(in);
     ASSERT_EQ(rows.size(), 1u);
@@ -1714,7 +1702,7 @@ TEST(MessagesList, ChainActivity_HistoryOmitsElapsedIncludingThinkingAndToolDura
     thought.data.duration = 45s;
     thought.data.thinking_start_time = std::chrono::steady_clock::time_point(100s);
     auto in = make_input({{MessageShape::AssistantThinking, thought},
-        {MessageShape::AssistantToolUse, running_tool("Read", "{}")}});
+                          {MessageShape::AssistantToolUse, running_tool("Read", "{}")}});
     auto rows = chain_rows(in);
     ASSERT_EQ(rows.size(), 1u);
     EXPECT_FALSE(rows[0].chain_elapsed.has_value());
@@ -1758,10 +1746,10 @@ TEST(MessagesList, ChainActivity_RunningPrecedesPendingAndCompletedTargetsAreOmi
     pending.call.raw_parameters = R"({"file_path":"queued.cpp"})";
     auto finished = make_tool_use("Bash");
     finished.call.raw_parameters = R"({"command":"completed-command"})";
-    auto in = make_input({{MessageShape::AssistantToolUse, pending},
-        {MessageShape::AssistantToolUse, finished},
-        {MessageShape::AssistantToolUse,
-            running_tool("Read", R"({"file_path":"active.cpp"})")}});
+    auto in = make_input(
+        {{MessageShape::AssistantToolUse, pending},
+         {MessageShape::AssistantToolUse, finished},
+         {MessageShape::AssistantToolUse, running_tool("Read", R"({"file_path":"active.cpp"})")}});
     in.query_running = true;
     auto rows = chain_rows(in);
     ASSERT_EQ(rows.size(), 1u);
@@ -1810,7 +1798,13 @@ TEST(MessagesList, ChainActivity_TargetFieldsAreAllowlistedAndUnknownToolsDoNotS
     using namespace chain_activity_test;
     ClockScope clock;
     clock.at(110s);
-    struct Example { std::string name; std::string json; std::string target; };
+
+    struct Example {
+        std::string name;
+        std::string json;
+        std::string target;
+    };
+
     const Example examples[] = {
         {"Read", R"({"file_path":"read.cpp","other":"PRIVATE"})", "read.cpp"},
         {"Grep", R"({"pattern":"needle","path":"src/","other":"PRIVATE"})", "needle in src/"},
@@ -1823,8 +1817,8 @@ TEST(MessagesList, ChainActivity_TargetFieldsAreAllowlistedAndUnknownToolsDoNotS
     };
     for (const auto& example : examples) {
         SCOPED_TRACE(example.name + " " + example.json);
-        auto in = make_input({{MessageShape::AssistantToolUse,
-            running_tool(example.name, example.json)}});
+        auto in = make_input(
+            {{MessageShape::AssistantToolUse, running_tool(example.name, example.json)}});
         in.query_running = true;
         const auto rows = chain_rows(in);
         ASSERT_EQ(rows.size(), 1u);
@@ -1837,16 +1831,18 @@ TEST(MessagesList, ChainActivity_JsonTargetsDecodeEscapesAndRejectIncompleteObje
     using namespace chain_activity_test;
     ClockScope clock;
     clock.at(110s);
-    auto in = make_input({{MessageShape::AssistantToolUse, running_tool("Bash",
-        R"({"command":"printf \"quoted\" C:\\tmp\\file \u4f60\u597d\nnext\u001b[31m"})")}});
+    auto in = make_input(
+        {{MessageShape::AssistantToolUse,
+          running_tool(
+              "Bash",
+              R"({"command":"printf \"quoted\" C:\\tmp\\file \u4f60\u597d\nnext\u001b[31m"})")}});
     in.query_running = true;
     const auto rows = chain_rows(in);
     ASSERT_EQ(rows.size(), 1u);
     EXPECT_NE(rows[0].chain_current_activity.find("printf \"quoted\" C:\\tmp\\file 你好"),
               std::string::npos);
     EXPECT_EQ(rows[0].chain_current_activity.find("\\u4f60"), std::string::npos);
-    const auto lines = screen_lines(
-        ml::render_messages_list_view(in, 0, 80, {}, false), 120);
+    const auto lines = screen_lines(ml::render_messages_list_view(in, 0, 80, {}, false), 120);
     const auto activity = find_line(lines, "Running Bash");
     ASSERT_FALSE(activity.empty());
     EXPECT_NE(activity.find("你好 next"), std::string::npos);
@@ -1856,8 +1852,8 @@ TEST(MessagesList, ChainActivity_JsonTargetsDecodeEscapesAndRejectIncompleteObje
     element->ComputeRequirement();
     EXPECT_EQ(element->requirement().min_y, 3);
 
-    for (const auto malformed : {"not JSON", "{\"command\":\"PRIVATE\"",
-                                 "{\"command\":\"PRIVATE\",", "[\"PRIVATE\"]"}) {
+    for (const auto malformed :
+         {"not JSON", "{\"command\":\"PRIVATE\"", "{\"command\":\"PRIVATE\",", "[\"PRIVATE\"]"}) {
         SCOPED_TRACE(malformed);
         std::get<ToolUseRenderOptions>(in.rows[0]).call.raw_parameters = malformed;
         const auto fallback = chain_rows(in);
@@ -1909,10 +1905,10 @@ TEST(MessagesList, ChainActivity_DisplayFiltersDoNotLeakTargetsOrMislabelToolSta
     using namespace chain_activity_test;
     ClockScope clock;
     clock.at(110s);
-    auto in = make_input({
-        {MessageShape::AssistantToolUse, make_tool_use("Brief", ToolStatus::Pending)},
-        {MessageShape::AssistantToolUse,
-            running_tool("Read", R"({"file_path":"HIDDEN_TARGET.cpp"})")}});
+    auto in =
+        make_input({{MessageShape::AssistantToolUse, make_tool_use("Brief", ToolStatus::Pending)},
+                    {MessageShape::AssistantToolUse,
+                     running_tool("Read", R"({"file_path":"HIDDEN_TARGET.cpp"})")}});
     in.query_running = true;
     in.is_brief_mode = true;
     auto rows = chain_rows(in);
@@ -1922,8 +1918,8 @@ TEST(MessagesList, ChainActivity_DisplayFiltersDoNotLeakTargetsOrMislabelToolSta
     EXPECT_EQ(rows[0].chain_current_activity.find("HIDDEN_TARGET"), std::string::npos);
 
     in = make_input({{MessageShape::AssistantThinking, make_thinking("Inspecting.")},
-        {MessageShape::AssistantToolUse, running_tool("Read", "{}")},
-        {MessageShape::UserToolResult, make_tool_result("Read")}});
+                     {MessageShape::AssistantToolUse, running_tool("Read", "{}")},
+                     {MessageShape::UserToolResult, make_tool_result("Read")}});
     in.filters.show_tool_in = false;
     in.query_running = true;
     rows = chain_rows(in);
@@ -1963,10 +1959,10 @@ TEST(MessagesList, ChainActivity_NarrowStaticAndVirtualRowsKeepDisclosureAndExac
         EXPECT_EQ(static_element->requirement().min_y, 3);
         // Both wrapped paths reserve a column for the scroll indicator.
         // Bare static rendering keeps the full width and is checked above.
-        const auto static_lines = screen_lines(
-            ml::render_messages_list_view(in, 0, 80, {}, true), width);
-        const auto virtual_lines = screen_lines(
-            ml::render_messages_list_virtual(in, 0, 12, 0), width);
+        const auto static_lines =
+            screen_lines(ml::render_messages_list_view(in, 0, 80, {}, true), width);
+        const auto virtual_lines =
+            screen_lines(ml::render_messages_list_virtual(in, 0, 12, 0), width);
         const auto static_header = find_line(static_lines, "[Show details]");
         const auto virtual_header = find_line(virtual_lines, "[Show details]");
         EXPECT_FALSE(static_header.empty());
@@ -1997,8 +1993,7 @@ TEST(MessagesList, ChainActivity_ControlCharactersCannotAddRowsOrTerminalEscapes
     auto in = live_input();
     auto& call = std::get<ToolUseRenderOptions>(in.rows[0]).call;
     call.tool_name = "mcp__lookup\n\r\t\x1b[31m\x7f\xc2\x9b";
-    const auto lines = screen_lines(
-        ml::render_messages_list_view(in, 0, 80, {}, false), 80);
+    const auto lines = screen_lines(ml::render_messages_list_view(in, 0, 80, {}, false), 80);
     const auto activity = find_line(lines, "Running mcp__lookup");
     ASSERT_FALSE(activity.empty());
     EXPECT_EQ(activity.find('\x1b'), std::string::npos);
@@ -2044,8 +2039,8 @@ TEST(MessagesList, ChainCompression_BasicThinkingPlusTool) {
     // 3 rows compressed into 1 CompressedChain.
     ASSERT_EQ(visible.size(), 1u);
     EXPECT_EQ(visible[0].kind, compressed_chain_kind());
-    EXPECT_EQ(visible[0].group_count, 1u);   // 1 thinking block
-    EXPECT_EQ(visible[0].tool_turns, 1u);     // 1 tool call
+    EXPECT_EQ(visible[0].group_count, 1u);  // 1 thinking block
+    EXPECT_EQ(visible[0].tool_turns, 1u);   // 1 tool call
 }
 
 /// Multiple thinking blocks + tool calls compressed together.
@@ -2062,8 +2057,8 @@ TEST(MessagesList, ChainCompression_MultipleThinkingAndTools) {
     auto visible = build_visible_rows(in);
     ASSERT_EQ(visible.size(), 1u);
     EXPECT_EQ(visible[0].kind, compressed_chain_kind());
-    EXPECT_EQ(visible[0].group_count, 2u);   // 2 thinking blocks
-    EXPECT_EQ(visible[0].tool_turns, 2u);     // 2 tool calls
+    EXPECT_EQ(visible[0].group_count, 2u);  // 2 thinking blocks
+    EXPECT_EQ(visible[0].tool_turns, 2u);   // 2 tool calls
 }
 
 /// Update tool (Edit) stops compression — the thinking before it is NOT
@@ -2080,8 +2075,8 @@ TEST(MessagesList, ChainCompression_UpdateToolStopsCompression) {
     // The Edit tool stops the chain, so the thinking is its own chain.
     ASSERT_EQ(visible.size(), 3u);
     EXPECT_EQ(visible[0].kind, compressed_chain_kind());  // thinking (compressed)
-    EXPECT_EQ(visible[1].kind, payload_kind());  // Edit tool_use
-    EXPECT_EQ(visible[2].kind, payload_kind());  // Edit tool_result
+    EXPECT_EQ(visible[1].kind, payload_kind());           // Edit tool_use
+    EXPECT_EQ(visible[2].kind, payload_kind());           // Edit tool_result
 }
 
 /// Assistant text stops compression — the lone thinking before text IS
@@ -2117,11 +2112,11 @@ TEST(MessagesList, ChainCompression_TwoChainsSeparatedByText) {
     // Chain1 (3 rows) + text (1 row) + Chain2 (3 rows) = 3 visible rows.
     ASSERT_EQ(visible.size(), 3u);
     EXPECT_EQ(visible[0].kind, compressed_chain_kind());
-    EXPECT_EQ(visible[0].group_count, 1u);   // 1 thinking
+    EXPECT_EQ(visible[0].group_count, 1u);  // 1 thinking
     EXPECT_EQ(visible[0].tool_turns, 1u);
     EXPECT_EQ(visible[1].kind, payload_kind());
     EXPECT_EQ(visible[2].kind, compressed_chain_kind());
-    EXPECT_EQ(visible[2].group_count, 1u);   // 1 thinking
+    EXPECT_EQ(visible[2].group_count, 1u);  // 1 thinking
     EXPECT_EQ(visible[2].tool_turns, 1u);
 }
 
@@ -2140,8 +2135,8 @@ TEST(MessagesList, ChainCompression_StreamingTailIncludedInChain) {
     // All 4 rows compressed into one chain.
     ASSERT_EQ(visible.size(), 1u);
     EXPECT_EQ(visible[0].kind, compressed_chain_kind());
-    EXPECT_EQ(visible[0].group_count, 2u);   // 2 thinking
-    EXPECT_EQ(visible[0].tool_turns, 1u);    // 1 tool call
+    EXPECT_EQ(visible[0].group_count, 2u);  // 2 thinking
+    EXPECT_EQ(visible[0].tool_turns, 1u);   // 1 tool call
     // Not live because query_running defaults to false.
     EXPECT_FALSE(visible[0].chain_is_live);
 }
@@ -2187,8 +2182,10 @@ TEST(MessagesList, ChainCompression_EarlierChainNotLive) {
     bool found_nonlive = false;
     for (const auto& vr : visible) {
         if (vr.kind == compressed_chain_kind()) {
-            if (vr.chain_is_live) found_live = true;
-            else found_nonlive = true;
+            if (vr.chain_is_live)
+                found_live = true;
+            else
+                found_nonlive = true;
         }
     }
     EXPECT_TRUE(found_live);
@@ -2264,10 +2261,9 @@ TEST(MessagesList, ChainCompression_UserTextStopsChain) {
         {MessageShape::AssistantThinking, make_thinking("Thinking.")},
         {MessageShape::AssistantToolUse, make_tool_use("Bash")},
         {MessageShape::UserToolResult, make_tool_result("Bash")},
-        {MessageShape::UserText, UserTextMessageData{
-            .content = "User reply",
-            .quoted_reply = std::nullopt,
-            .command_name = std::nullopt}},
+        {MessageShape::UserText, UserTextMessageData{.content = "User reply",
+                                                     .quoted_reply = std::nullopt,
+                                                     .command_name = std::nullopt}},
         {MessageShape::AssistantThinking, make_thinking("After user.")},
         {MessageShape::AssistantToolUse, make_tool_use("Read")},
         {MessageShape::UserToolResult, make_tool_result("Read")},
@@ -2298,10 +2294,10 @@ TEST(MessagesList, ChainCompression_WriteToolStopsCompression) {
     // + Chain2 (thinking + Bash + Bash result = 3 rows compressed).
     ASSERT_EQ(visible.size(), 4u);
     EXPECT_EQ(visible[0].kind, compressed_chain_kind());  // thinking (compressed)
-    EXPECT_EQ(visible[1].kind, payload_kind());  // Write tool_use
-    EXPECT_EQ(visible[2].kind, payload_kind());  // Write tool_result
+    EXPECT_EQ(visible[1].kind, payload_kind());           // Write tool_use
+    EXPECT_EQ(visible[2].kind, payload_kind());           // Write tool_result
     EXPECT_EQ(visible[3].kind, compressed_chain_kind());
-    EXPECT_EQ(visible[3].group_count, 1u);       // 1 thinking
+    EXPECT_EQ(visible[3].group_count, 1u);  // 1 thinking
     EXPECT_EQ(visible[3].tool_turns, 1u);
 }
 
@@ -2318,8 +2314,8 @@ TEST(MessagesList, ChainCompression_PureToolChain) {
     // 4 rows compressed into 1 CompressedChain (0 thinking, 2 tool calls).
     ASSERT_EQ(visible.size(), 1u);
     EXPECT_EQ(visible[0].kind, compressed_chain_kind());
-    EXPECT_EQ(visible[0].group_count, 0u);   // no thinking
-    EXPECT_EQ(visible[0].tool_turns, 2u);     // 2 tool calls
+    EXPECT_EQ(visible[0].group_count, 0u);  // no thinking
+    EXPECT_EQ(visible[0].tool_turns, 2u);   // 2 tool calls
 }
 
 /// A single tool call (tool_use + tool_result = 2 rows) is compressed.
@@ -2507,17 +2503,16 @@ TEST(Messages, ThinkingBlockRendersMarkdown) {
     using namespace sticky_prompt_test;
 
     thinking_message::ThinkingMessageData data;
-    data.raw_text =
-        "Found it! Line 611:\n"
-        "```cpp\n"
-        "const Color kBgColor = Color::RGB(20, 20, 22);\n"
-        "```\n"
-        "And line 711-713:\n"
-        "```cpp\n"
-        "return hbox({ text(\" \"), hbox(std::move(parts)), text(\" \") })\n"
-        "    | bgcolor(kBgColor)\n"
-        "    | s\n"
-        "```\n";
+    data.raw_text = "Found it! Line 611:\n"
+                    "```cpp\n"
+                    "const Color kBgColor = Color::RGB(20, 20, 22);\n"
+                    "```\n"
+                    "And line 711-713:\n"
+                    "```cpp\n"
+                    "return hbox({ text(\" \"), hbox(std::move(parts)), text(\" \") })\n"
+                    "    | bgcolor(kBgColor)\n"
+                    "    | s\n"
+                    "```\n";
     data.state = thinking_message::ThinkingState::Complete;
     data.is_collapsed = false;
 
@@ -2545,11 +2540,15 @@ TEST(MessagesList, RowClickTracker_TrackAndHitTest) {
     // Frame 1: track two rows.
     tracker.begin_frame();
     Box& box1 = tracker.track_row("key-abc-123");
-    box1.x_min = 10; box1.x_max = 50;
-    box1.y_min = 5;  box1.y_max = 7;
+    box1.x_min = 10;
+    box1.x_max = 50;
+    box1.y_min = 5;
+    box1.y_max = 7;
     Box& box2 = tracker.track_row("key-def-456");
-    box2.x_min = 10; box2.x_max = 50;
-    box2.y_min = 8;  box2.y_max = 10;
+    box2.x_min = 10;
+    box2.x_max = 50;
+    box2.y_min = 8;
+    box2.y_max = 10;
     tracker.end_frame();
 
     // Hit inside box1.
@@ -2574,16 +2573,25 @@ TEST(MessagesList, RowClickTracker_EndFrameTrimsStaleBoxes) {
     // Frame 1: track two rows.
     tracker.begin_frame();
     Box& b1 = tracker.track_row("key-a");
-    b1.x_min = 0; b1.x_max = 100; b1.y_min = 0; b1.y_max = 10;
+    b1.x_min = 0;
+    b1.x_max = 100;
+    b1.y_min = 0;
+    b1.y_max = 10;
     Box& b2 = tracker.track_row("key-b");
-    b2.x_min = 0; b2.x_max = 100; b2.y_min = 11; b2.y_max = 20;
+    b2.x_min = 0;
+    b2.x_max = 100;
+    b2.y_min = 11;
+    b2.y_max = 20;
     tracker.end_frame();
     EXPECT_EQ(tracker.boxes.size(), 2u);
 
     // Frame 2: only one row — stale box must be trimmed.
     tracker.begin_frame();
     Box& b3 = tracker.track_row("key-c");
-    b3.x_min = 0; b3.x_max = 100; b3.y_min = 0; b3.y_max = 5;
+    b3.x_min = 0;
+    b3.x_max = 100;
+    b3.y_min = 0;
+    b3.y_max = 5;
     tracker.end_frame();
     EXPECT_EQ(tracker.boxes.size(), 1u);
 
@@ -2603,14 +2611,20 @@ TEST(MessagesList, RowClickTracker_ReusesBoxesAcrossFrames) {
     // Frame 1.
     tracker.begin_frame();
     Box& b1 = tracker.track_row("key-a");
-    b1.x_min = 0; b1.x_max = 10; b1.y_min = 0; b1.y_max = 5;
+    b1.x_min = 0;
+    b1.x_max = 10;
+    b1.y_min = 0;
+    b1.y_max = 5;
     tracker.end_frame();
     const auto* box_ptr = tracker.boxes[0].get();
 
     // Frame 2: same count — boxes must be reused (same pointer).
     tracker.begin_frame();
     Box& b2 = tracker.track_row("key-b");
-    b2.x_min = 0; b2.x_max = 10; b2.y_min = 0; b2.y_max = 5;
+    b2.x_min = 0;
+    b2.x_max = 10;
+    b2.y_min = 0;
+    b2.y_max = 5;
     tracker.end_frame();
     EXPECT_EQ(tracker.boxes[0].get(), box_ptr);
 
@@ -2681,11 +2695,8 @@ TEST(VirtualThreshold, StreamingOscillation) {
     auto mode = VirtualRendererMode::Static;
     const std::size_t frames[] = {75, 82, 78, 85, 72};
     const VirtualRendererMode expected[] = {
-        VirtualRendererMode::Static,
-        VirtualRendererMode::Virtual,
-        VirtualRendererMode::Virtual,
-        VirtualRendererMode::Virtual,
-        VirtualRendererMode::Virtual,
+        VirtualRendererMode::Static,  VirtualRendererMode::Virtual, VirtualRendererMode::Virtual,
+        VirtualRendererMode::Virtual, VirtualRendererMode::Virtual,
     };
     for (std::size_t i = 0; i < 5; ++i) {
         mode = decide_virtual_renderer_mode(mode, frames[i]);
@@ -2753,7 +2764,6 @@ TEST(VirtualThreshold, ForceBottomFlagLifecycle) {
     EXPECT_FALSE(store.force_bottom_after_mode_switch);
     EXPECT_EQ(store.virtual_renderer_mode, VirtualRendererMode::Static);
 }
-
 
 TEST(MessagesList, ChainCompression_FailedCommandAndResultStayVisibleWithSuccessfulNeighbors) {
     using namespace chain_compression_test;

@@ -1,8 +1,9 @@
 module;
 
-#include <ftxui/dom/elements.hpp>
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/event.hpp>
+#include <ftxui/dom/elements.hpp>
+
 #include <cstddef>
 
 export module loom.ui.widgets.tag_tabs;
@@ -30,21 +31,21 @@ struct TagTabsOptions {
 ftxui::Element TagTabs(const TagTabsOptions& options) {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
     using namespace ftxui;
-    
+
     std::vector<Element> elements;
-    
+
     // Resume label
     if (options.show_resume_label) {
         elements.push_back(text("Resume") | color(pal.info) | dim);
         elements.push_back(text("  "));
     }
-    
+
     // Calculate which tabs to show
     int start_idx = 0;
     int end_idx = static_cast<int>(options.tabs.size());
     bool show_left_arrow = false;
     bool show_right_arrow = false;
-    
+
     // Simple overflow handling
     if (options.tabs.size() > 5) {
         // Center around active tab
@@ -53,13 +54,13 @@ ftxui::Element TagTabs(const TagTabsOptions& options) {
         show_left_arrow = start_idx > 0;
         show_right_arrow = end_idx < static_cast<int>(options.tabs.size());
     }
-    
+
     // Left arrow
     if (show_left_arrow) {
         elements.push_back(text("← " + std::to_string(start_idx)) | dim);
         elements.push_back(text("  "));
     }
-    
+
     // Visible tabs
     for (int i = start_idx; i < end_idx; ++i) {
         std::string display_text;
@@ -68,7 +69,7 @@ ftxui::Element TagTabs(const TagTabsOptions& options) {
         } else {
             display_text = "#" + options.tabs[i].label;
         }
-        
+
         auto label = text(display_text);
         if (i == options.active_tab) {
             label = label | bold | color(pal.text) | bgcolor(pal.message_actions_background);
@@ -80,65 +81,65 @@ ftxui::Element TagTabs(const TagTabsOptions& options) {
             elements.push_back(text(" "));
         }
     }
-    
+
     // Right arrow
     if (show_right_arrow) {
         int hidden = static_cast<int>(options.tabs.size()) - end_idx;
         elements.push_back(text("  →" + std::to_string(hidden)) | dim);
     }
-    
+
     // Hint
     elements.push_back(filler());
     elements.push_back(text(" (tab to cycle)") | dim);
-    
+
     return hbox(elements) | borderRounded;
 }
 
 ftxui::Component TagTabsComponent(const TagTabsOptions& options) {
     using namespace ftxui;
-    
+
     auto state = std::make_shared<int>(options.active_tab);
     auto tabs = options.tabs;
     auto on_change = options.on_tab_change;
-    
+
     auto renderer = Renderer([tabs, state] {
         const auto& pal = *loom::ui::design::theme::current_theme().palette;
         std::vector<Element> tab_elements;
-        
+
         for (size_t i = 0; i < tabs.size(); ++i) {
             std::string display_text = tabs[i].is_all_tab ? tabs[i].label : "#" + tabs[i].label;
             auto label = text(display_text);
-            
+
             if (static_cast<int>(i) == *state) {
                 label = label | bold | color(pal.text) | bgcolor(pal.message_actions_background);
             }
-            
+
             tab_elements.push_back(hbox({text(" "), label, text(" ")}) | borderEmpty);
             if (i < tabs.size() - 1) {
                 tab_elements.push_back(text(" "));
             }
         }
-        
+
         return hbox(tab_elements);
     });
-    
-    auto container = Container::Horizontal({
-        renderer | CatchEvent([tabs, state, on_change](ftxui::Event e) {
-            if (e == ftxui::Event::ArrowRight || e == ftxui::Event::Tab) {
-                *state = (*state + 1) % static_cast<int>(tabs.size());
-                if (on_change) on_change(*state);
-                return true;
-            }
-            if (e == ftxui::Event::ArrowLeft || e == ftxui::Event::TabReverse) {
-                *state = (*state - 1 + static_cast<int>(tabs.size())) % static_cast<int>(tabs.size());
-                if (on_change) on_change(*state);
-                return true;
-            }
-            return false;
-        })
-    });
-    
+
+    auto container = Container::Horizontal(
+        {renderer | CatchEvent([tabs, state, on_change](ftxui::Event e) {
+             if (e == ftxui::Event::ArrowRight || e == ftxui::Event::Tab) {
+                 *state = (*state + 1) % static_cast<int>(tabs.size());
+                 if (on_change) on_change(*state);
+                 return true;
+             }
+             if (e == ftxui::Event::ArrowLeft || e == ftxui::Event::TabReverse) {
+                 *state =
+                     (*state - 1 + static_cast<int>(tabs.size())) % static_cast<int>(tabs.size());
+                 if (on_change) on_change(*state);
+                 return true;
+             }
+             return false;
+         })});
+
     return container;
 }
 
-} // namespace ui::components
+}  // namespace loom::ui::components

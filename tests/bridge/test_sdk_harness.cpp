@@ -7,13 +7,13 @@
 ///        mock), and asserts the TurnResult / events / resume / permission
 ///        bridge. Tests are not in the graph_check.py module graph (it scans
 ///        src/ only), so this creates no upward edge.
+#include <gtest/gtest.h>
+#include <httplib.h>
+
 #include <atomic>
 #include <chrono>
 #include <cstdlib>
 #include <thread>
-
-#include <gtest/gtest.h>
-#include <httplib.h>
 
 import std;
 
@@ -21,10 +21,10 @@ import loom.types.types;
 import loom.types.message_origin_json;
 import loom.query.assembly;
 import loom.serdes.json;
-import loom.tools.tool;              // ToolInput, ToolResult, ToolPermission
-import loom.tools.runtime_registry;  // make_runtime_tool (detail namespace)
-import loom.hooks.tool_permissions;  // PermissionContext, PermissionResponse
-import loom.session.storage;         // append_message (resume seed)
+import loom.tools.tool;             // ToolInput, ToolResult, ToolPermission
+import loom.tools.runtime_registry; // make_runtime_tool (detail namespace)
+import loom.hooks.tool_permissions; // PermissionContext, PermissionResponse
+import loom.session.storage;        // append_message (resume seed)
 import loom.sdk.harness;
 
 namespace {
@@ -39,10 +39,10 @@ class LoopbackServer {
 public:
     LoopbackServer(std::vector<std::string> bodies, std::string content_type,
                    std::optional<std::string> summary_body = {})
-        : bodies_(std::move(bodies)), content_type_(std::move(content_type)),
-          summary_body_(std::move(summary_body)) {
-        svr_.Post("/v1/messages", [this](const httplib::Request& request,
-                                         httplib::Response& res) {
+        : bodies_(std::move(bodies))
+        , content_type_(std::move(content_type))
+        , summary_body_(std::move(summary_body)) {
+        svr_.Post("/v1/messages", [this](const httplib::Request& request, httplib::Response& res) {
             {
                 std::lock_guard lock(requests_mutex_);
                 requests_.push_back(request.body);
@@ -69,19 +69,21 @@ public:
         // accept loop (same settle as test_sse_mock's MockServerRAII).
         std::this_thread::sleep_for(std::chrono::milliseconds(50));
     }
+
     ~LoopbackServer() {
         if (port_ >= 0) {
             svr_.stop();
             if (th_.joinable()) th_.join();
         }
     }
+
     LoopbackServer(const LoopbackServer&) = delete;
     LoopbackServer& operator=(const LoopbackServer&) = delete;
 
     [[nodiscard]] bool ready() const noexcept { return port_ >= 0; }
-    [[nodiscard]] std::string base_url() const {
-        return std::format("http://127.0.0.1:{}", port_);
-    }
+
+    [[nodiscard]] std::string base_url() const { return std::format("http://127.0.0.1:{}", port_); }
+
     [[nodiscard]] std::vector<std::string> requests() const {
         std::lock_guard lock(requests_mutex_);
         return requests_;
@@ -99,8 +101,7 @@ private:
     std::atomic<std::size_t> request_count_{0};
 };
 
-std::string make_harness_config(loom::sdk::HarnessConfig& config,
-                                const std::string& base_url) {
+std::string make_harness_config(loom::sdk::HarnessConfig& config, const std::string& base_url) {
     config.model = "loom-test";
     config.base_url = base_url;
     config.api_key_provider = [] { return "sk-test"; };
@@ -145,15 +146,16 @@ constexpr std::string_view kFinalTextResponse =
 class ModelBudgetSettings {
 public:
     explicit ModelBudgetSettings(std::string_view endpoint)
-        : previous_cwd_(fs::current_path()),
-          root_(fs::temp_directory_path() / ("loom_sdk_model_budget_" +
-              std::to_string(::getpid()) + "_" +
-              std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()))) {
+        : previous_cwd_(fs::current_path())
+        , root_(fs::temp_directory_path() /
+                ("loom_sdk_model_budget_" + std::to_string(::getpid()) + "_" +
+                 std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()))) {
         fs::create_directories(root_ / "config");
         fs::create_directories(root_ / "work");
         for (const char* name : {"LOOM_CONFIG_DIR", "LOOM_MAX_TOKENS"}) {
             const auto* value = std::getenv(name);
-            environment_.emplace_back(name, value ? std::optional<std::string>{value} : std::nullopt);
+            environment_.emplace_back(name,
+                                      value ? std::optional<std::string>{value} : std::nullopt);
             unsetenv(name);
         }
         setenv("LOOM_CONFIG_DIR", (root_ / "config").string().c_str(), 1);
@@ -178,15 +180,19 @@ public:
         std::ofstream output(root_ / "config" / "settings.json");
         output << doc.to_string();
     }
+
     ~ModelBudgetSettings() {
         std::error_code error;
         fs::current_path(previous_cwd_, error);
         for (const auto& [name, value] : environment_) {
-            if (value) setenv(name.c_str(), value->c_str(), 1);
-            else unsetenv(name.c_str());
+            if (value)
+                setenv(name.c_str(), value->c_str(), 1);
+            else
+                unsetenv(name.c_str());
         }
         fs::remove_all(root_, error);
     }
+
     [[nodiscard]] fs::path sessions_dir() const { return root_ / "sessions"; }
 
 private:
@@ -206,10 +212,13 @@ std::string model_budget_checkpoint_response() {
     auto content = doc.array();
     auto block = doc.object();
     block.add("type", doc.string("text"));
-    block.add("text", doc.string("## Goal\nContinue the SDK budget test.\n"
-        "## Constraints\nKeep the current request.\n## Decisions\nUse the selected model.\n"
-        "## Progress\nLarge history accepted.\n## Next Steps\nAnswer the next request.\n"
-        "## References\nSDK model budget profiles.\n"));
+    block.add(
+        "text",
+        doc.string(
+            "## Goal\nContinue the SDK budget test.\n"
+            "## Constraints\nKeep the current request.\n## Decisions\nUse the selected model.\n"
+            "## Progress\nLarge history accepted.\n## Next Steps\nAnswer the next request.\n"
+            "## References\nSDK model budget profiles.\n"));
     content.append(block);
     response.add("content", content);
     auto usage = doc.object();
@@ -221,10 +230,9 @@ std::string model_budget_checkpoint_response() {
 }
 
 void exercise_sdk_model_budget_switch(bool streaming) {
-    LoopbackServer server{
-        {streaming ? make_sse_body() : std::string(kTextResponse)},
-        streaming ? "text/event-stream" : "application/json",
-        model_budget_checkpoint_response()};
+    LoopbackServer server{{streaming ? make_sse_body() : std::string(kTextResponse)},
+                          streaming ? "text/event-stream" : "application/json",
+                          model_budget_checkpoint_response()};
     ASSERT_TRUE(server.ready());
     ModelBudgetSettings settings(server.base_url());
     loom::sdk::HarnessConfig config;
@@ -270,7 +278,8 @@ void exercise_sdk_model_budget_switch(bool streaming) {
 
     ASSERT_TRUE(turn("sdk-window-small", "Continue with the smaller model."));
     requests = server.requests();
-    ASSERT_GT(requests.size(), 2u) << "The 256K override must summarize before its business request";
+    ASSERT_GT(requests.size(), 2u)
+        << "The 256K override must summarize before its business request";
     ASSERT_LE(requests.size(), 18u) << "Compaction keeps the shared 16-request bound";
     for (std::size_t index = 1; index + 1 < requests.size(); ++index) {
         EXPECT_NE(requests[index].find("CONTEXT CHECKPOINT"), std::string::npos);
@@ -301,7 +310,7 @@ void exercise_sdk_model_budget_switch(bool streaming) {
     EXPECT_EQ(restored->root().get("stream").as_bool(), streaming);
 }
 
-} // namespace
+}  // namespace
 
 TEST(SdkHarness, RunModelOverrideRecomputesMillionAnd256KBudgetsAndRestoresOutput) {
     exercise_sdk_model_budget_switch(false);
@@ -314,8 +323,7 @@ TEST(SdkHarness, StreamModelOverrideRecomputesMillionAnd256KBudgetsAndRestoresOu
 // §4.4: run() against a loopback HTTP server serving a canned Messages API
 // response — exercising the real transport with zero external calls.
 TEST(SdkHarness, RunAgainstLoopback) {
-    LoopbackServer server{std::vector<std::string>{std::string(kTextResponse)},
-                          "application/json"};
+    LoopbackServer server{std::vector<std::string>{std::string(kTextResponse)}, "application/json"};
     ASSERT_TRUE(server.ready());
 
     loom::sdk::HarnessConfig config;
@@ -363,8 +371,7 @@ TEST(SdkHarness, AbortBeforeRunReturnsErrorOnce) {
     options.prompt = "Hello";
     auto aborted = harness.run(options);
     ASSERT_FALSE(aborted.has_value());
-    EXPECT_NE(aborted.error().message.find("Query interrupted"),
-              std::string::npos)
+    EXPECT_NE(aborted.error().message.find("Query interrupted"), std::string::npos)
         << aborted.error().format();
 
     // The flag cleared: a subsequent run() proceeds past the abort check
@@ -372,16 +379,14 @@ TEST(SdkHarness, AbortBeforeRunReturnsErrorOnce) {
     // the abort did not poison the harness, with no external call).
     auto next = harness.run(options);
     ASSERT_FALSE(next.has_value());
-    EXPECT_EQ(next.error().message.find("Query interrupted"),
-              std::string::npos)
+    EXPECT_EQ(next.error().message.find("Query interrupted"), std::string::npos)
         << "a second run must not re-report the pre-run abort";
 }
 
 // §4.4: stream() delivers StreamEvents to the EventSink via the loopback SSE
 // response.
 TEST(SdkHarness, StreamDeliversEvents) {
-    LoopbackServer server{std::vector<std::string>{make_sse_body()},
-                          "text/event-stream"};
+    LoopbackServer server{std::vector<std::string>{make_sse_body()}, "text/event-stream"};
     ASSERT_TRUE(server.ready());
 
     loom::sdk::HarnessConfig config;
@@ -422,16 +427,15 @@ TEST(SdkHarness, StreamDeliversEvents) {
 // §4.4: resume(session_id) with sessions_dir restores a prior conversation
 // (load_messages -> parse_session_message_value -> restore_conversation).
 TEST(SdkHarness, ResumeRestoresConversation) {
-    auto sessions_dir = fs::temp_directory_path() /
-        ("loom_harness_resume_" + std::to_string(::getpid()));
+    auto sessions_dir =
+        fs::temp_directory_path() / ("loom_harness_resume_" + std::to_string(::getpid()));
     fs::create_directories(sessions_dir);
     const std::string session_id = "resume-test-session";
 
     // Seed a messages.jsonl via loom.session.storage (the same writer the
     // engine's session persistence uses).
-    ASSERT_TRUE(loom::session::append_message(
-        sessions_dir, session_id,
-        R"({"id":"msg_1","role":"user","content":"Hello"})"));
+    ASSERT_TRUE(loom::session::append_message(sessions_dir, session_id,
+                                              R"({"id":"msg_1","role":"user","content":"Hello"})"));
     ASSERT_TRUE(loom::session::append_message(
         sessions_dir, session_id,
         R"({"id":"msg_2","role":"assistant","content":"Hi there","model":"loom-test"})"));
@@ -459,24 +463,22 @@ TEST(SdkHarness, ResumeRestoresConversation) {
 // dropped every multi-block message, so thinking/tool_use chains vanished
 // on resume (the UI showed only plain text, no chain compression).
 TEST(SdkHarness, ResumeRestoresMultiBlockMessages) {
-    auto sessions_dir = fs::temp_directory_path() /
-        ("loom_harness_resume_multi_" + std::to_string(::getpid()));
+    auto sessions_dir =
+        fs::temp_directory_path() / ("loom_harness_resume_multi_" + std::to_string(::getpid()));
     fs::create_directories(sessions_dir);
     const std::string session_id = "resume-multi-block";
 
     // User message (plain string content).
     ASSERT_TRUE(loom::session::append_message(
-        sessions_dir, session_id,
-        R"({"id":"msg_1","role":"user","content":"Do the thing"})"));
+        sessions_dir, session_id, R"({"id":"msg_1","role":"user","content":"Do the thing"})"));
 
     // Assistant message with thinking + tool_use + text (array content).
     ASSERT_TRUE(loom::session::append_message(
         sessions_dir, session_id,
-        std::string(R"({"id":"msg_2","role":"assistant","content":[)")
-            + R"({"type":"thinking","thinking":"I should use Bash","signature":"sig1"},)"
-            + R"({"type":"tool_use","id":"tu_1","name":"Bash","input":{"command":"ls"}},)"
-            + R"({"type":"text","text":"Running ls..."}])"
-            + R"(,"model":"loom-test"})"));
+        std::string(R"({"id":"msg_2","role":"assistant","content":[)") +
+            R"({"type":"thinking","thinking":"I should use Bash","signature":"sig1"},)" +
+            R"({"type":"tool_use","id":"tu_1","name":"Bash","input":{"command":"ls"}},)" +
+            R"({"type":"text","text":"Running ls..."}])" + R"(,"model":"loom-test"})"));
 
     // Tool result message (role="user" with tool_result object).
     ASSERT_TRUE(loom::session::append_message(
@@ -528,18 +530,17 @@ TEST(SdkHarness, ResumeRestoresMultiBlockMessages) {
     EXPECT_FALSE(trm.is_error);
     ASSERT_EQ(trm.content.size(), 1u);
     ASSERT_TRUE(std::holds_alternative<loom::core::TextBlock>(trm.content[0]));
-    EXPECT_EQ(std::get<loom::core::TextBlock>(trm.content[0]).text,
-              "file1.txt\nfile2.txt");
+    EXPECT_EQ(std::get<loom::core::TextBlock>(trm.content[0]).text, "file1.txt\nfile2.txt");
 
     fs::remove_all(sessions_dir);
 }
+
 // permission. A mock permission-gated tool is registered via the
 // register_extra_tools seam; the canned first response calls it, the
 // callback allows it, and the second response completes the turn.
 TEST(SdkHarness, PermissionCallbackInvoked) {
     LoopbackServer server{
-        std::vector<std::string>{std::string(kToolUseResponse),
-                                 std::string(kFinalTextResponse)},
+        std::vector<std::string>{std::string(kToolUseResponse), std::string(kFinalTextResponse)},
         "application/json"};
     ASSERT_TRUE(server.ready());
 
@@ -547,25 +548,21 @@ TEST(SdkHarness, PermissionCallbackInvoked) {
     loom::sdk::HarnessConfig config;
     make_harness_config(config, server.base_url());
     config.permission_callback =
-        [&](const loom::hooks::PermissionContext& ctx)
-            -> loom::hooks::PermissionResponse {
-            EXPECT_EQ(ctx.tool_name, "mock_perm_tool");
-            permission_asks.fetch_add(1);
-            return loom::hooks::PermissionResponse{
-                .decision = loom::hooks::PermissionDecision::allow,
-                .updated_input_json = {},
-                .updated_permissions_json = {},
-                .message = {}};
-        };
+        [&](const loom::hooks::PermissionContext& ctx) -> loom::hooks::PermissionResponse {
+        EXPECT_EQ(ctx.tool_name, "mock_perm_tool");
+        permission_asks.fetch_add(1);
+        return loom::hooks::PermissionResponse{.decision = loom::hooks::PermissionDecision::allow,
+                                               .updated_input_json = {},
+                                               .updated_permissions_json = {},
+                                               .message = {}};
+    };
     // Register a mock tool that requires permission (the hook's
     // can_use_response reaches the ask_user callback when no rule matches).
     config.register_extra_tools = [](loom::core::ToolRegistry& registry) {
         registry.register_tool(loom::tools::detail::make_runtime_tool(
             "mock_perm_tool", "A mock tool that requires permission",
-            loom::core::ToolPermission::Write,
-            {}, /* no properties */
-            [](const loom::core::ToolInput&)
-                -> loom::core::Result<loom::core::ToolResult> {
+            loom::core::ToolPermission::Write, {}, /* no properties */
+            [](const loom::core::ToolInput&) -> loom::core::Result<loom::core::ToolResult> {
                 return loom::core::ToolResult::success("mock result");
             }));
     };
@@ -583,15 +580,18 @@ TEST(SdkHarness, PermissionCallbackInvoked) {
 
 TEST(SdkHarness, ResumePreservesStructuredOriginsAndLegacyXmlWithoutInference) {
     using namespace loom::core;
-    const auto sessions_dir = fs::temp_directory_path() /
+    const auto sessions_dir =
+        fs::temp_directory_path() /
         ("loom_harness_origins_" + std::to_string(::getpid()) + "_" +
          std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
     const std::string session_id = "origin-session";
     const std::string body = "<task_notification>same &amp; /private/path</task_notification>";
     const std::vector<UserMessageOrigin> origins{
         HumanInput{}, LegacyHistory{},
-        TaskEvent{"sub-1", session_id, TaskEventKind::Subagent, TaskEventStatus::Completed, "Review"},
-        TaskEvent{"tester", session_id, TaskEventKind::TeamAgent, TaskEventStatus::Stopped, "Test 中文"}};
+        TaskEvent{"sub-1", session_id, TaskEventKind::Subagent, TaskEventStatus::Completed,
+                  "Review"},
+        TaskEvent{"tester", session_id, TaskEventKind::TeamAgent, TaskEventStatus::Stopped,
+                  "Test 中文"}};
     for (const auto& origin : origins) {
         loom::utils::json::JsonMutDoc doc;
         auto object = doc.object();
@@ -601,7 +601,8 @@ TEST(SdkHarness, ResumePreservesStructuredOriginsAndLegacyXmlWithoutInference) {
         doc.set_root(object);
         ASSERT_TRUE(loom::session::append_message(sessions_dir, session_id, doc.to_string()));
     }
-    ASSERT_TRUE(loom::session::append_message(sessions_dir, session_id,
+    ASSERT_TRUE(loom::session::append_message(
+        sessions_dir, session_id,
         R"({"role":"user","content":"<task_notification>old XML</task_notification>"})"));
     loom::sdk::HarnessConfig config;
     config.model = "loom-test";
@@ -619,17 +620,19 @@ TEST(SdkHarness, ResumePreservesStructuredOriginsAndLegacyXmlWithoutInference) {
         EXPECT_EQ(std::get<TextBlock>(user.content.front()).text, body);
     }
     ASSERT_TRUE(std::holds_alternative<UserMessage>(messages.back()));
-    EXPECT_TRUE(std::holds_alternative<LegacyHistory>(std::get<UserMessage>(messages.back()).origin));
+    EXPECT_TRUE(
+        std::holds_alternative<LegacyHistory>(std::get<UserMessage>(messages.back()).origin));
     fs::remove_all(sessions_dir);
 }
 
 TEST(SdkHarness, SessionSeedParserPreservesOriginForStringAndBlockContent) {
     using namespace loom::core;
-    const TaskEvent event{"agent-1", "parent-1", TaskEventKind::TeamAgent,
-        TaskEventStatus::Failed, "Name & <literal>"};
+    const TaskEvent event{"agent-1", "parent-1", TaskEventKind::TeamAgent, TaskEventStatus::Failed,
+                          "Name & <literal>"};
     for (const bool array_content : {false, true}) {
         for (const UserMessageOrigin& origin :
-             {UserMessageOrigin{HumanInput{}}, UserMessageOrigin{LegacyHistory{}}, UserMessageOrigin{event}}) {
+             {UserMessageOrigin{HumanInput{}}, UserMessageOrigin{LegacyHistory{}},
+              UserMessageOrigin{event}}) {
             loom::utils::json::JsonMutDoc doc;
             auto object = doc.object();
             object.add("role", doc.string("user"));
@@ -653,12 +656,14 @@ TEST(SdkHarness, SessionSeedParserPreservesOriginForStringAndBlockContent) {
             const auto& user = std::get<UserMessage>(*message);
             EXPECT_EQ(user.origin, origin);
             ASSERT_EQ(user.content.size(), 1u);
-            EXPECT_EQ(std::get<TextBlock>(user.content.front()).text, "unchanged XML &amp; /private/result");
+            EXPECT_EQ(std::get<TextBlock>(user.content.front()).text,
+                      "unchanged XML &amp; /private/result");
         }
     }
     for (const auto metadata : {R"("origin":null)", R"("origin":"unknown")",
-                               R"("origin":"task_event","task_event":{})"}) {
-        auto parsed = loom::utils::json::parse(std::string{R"({"role":"user","content":"keep raw XML",)"} + metadata + "}");
+                                R"("origin":"task_event","task_event":{})"}) {
+        auto parsed = loom::utils::json::parse(
+            std::string{R"({"role":"user","content":"keep raw XML",)"} + metadata + "}");
         ASSERT_TRUE(parsed.has_value());
         auto message = loom::query::parse_session_message_value(parsed->root(), 0);
         ASSERT_TRUE(message.has_value());

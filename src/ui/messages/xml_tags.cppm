@@ -10,8 +10,8 @@ export namespace loom::ui::messages::xml_tags {
 
 /// Extract the content of the first complete `<tag_name>...</tag_name>` pair.
 /// Returns std::nullopt when either delimiter is absent.
-[[nodiscard]] inline std::optional<std::string> extract_tag(
-    std::string_view text, std::string_view tag_name) noexcept {
+[[nodiscard]] inline std::optional<std::string> extract_tag(std::string_view text,
+                                                            std::string_view tag_name) noexcept {
     if (tag_name.empty()) return std::nullopt;
 
     const std::string open = "<" + std::string(tag_name) + ">";
@@ -25,4 +25,4 @@ export namespace loom::ui::messages::xml_tags {
     return std::string(text.substr(content_start, end - content_start));
 }
 
-} // namespace loom::ui::messages::xml_tags
+}  // namespace loom::ui::messages::xml_tags

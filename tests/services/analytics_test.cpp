@@ -17,8 +17,7 @@ class TempLogDir {
 public:
     TempLogDir() {
         root_ = fs::temp_directory_path() /
-                ("loom-analytics-" + std::to_string(::getpid()) + "-" +
-                 std::to_string(counter_++));
+                ("loom-analytics-" + std::to_string(::getpid()) + "-" + std::to_string(counter_++));
         fs::create_directories(root_);
         if (const char* prev = std::getenv("LOOM_ANALYTICS_DISABLED")) {
             prev_disabled_ = prev;
@@ -27,8 +26,10 @@ public:
     }
 
     ~TempLogDir() {
-        if (prev_disabled_) ::setenv("LOOM_ANALYTICS_DISABLED", prev_disabled_->c_str(), 1);
-        else ::unsetenv("LOOM_ANALYTICS_DISABLED");
+        if (prev_disabled_)
+            ::setenv("LOOM_ANALYTICS_DISABLED", prev_disabled_->c_str(), 1);
+        else
+            ::unsetenv("LOOM_ANALYTICS_DISABLED");
         std::error_code ec;
         fs::remove_all(root_, ec);
     }
@@ -37,6 +38,7 @@ public:
     TempLogDir& operator=(const TempLogDir&) = delete;
 
     [[nodiscard]] fs::path log() const { return root_ / "analytics.ndjson"; }
+
     [[nodiscard]] fs::path root() const { return root_; }
 
 private:
@@ -96,12 +98,10 @@ TEST(LocalAnalytics, EventCarriesNameTimestampAndProperties) {
 TEST(LocalAnalytics, QuotesAndNewlinesDoNotBreakTheLine) {
     TempLogDir dir;
     loom::services::analytics::LocalAnalytics log(dir.log());
-    ASSERT_TRUE(log.log_event("prompt",
-                              {{"text", "he said \"hi\"\nsecond line\\end"}}));
+    ASSERT_TRUE(log.log_event("prompt", {{"text", "he said \"hi\"\nsecond line\\end"}}));
 
     const auto lines = read_lines(dir.log());
-    ASSERT_EQ(lines.size(), 1u)
-        << "an embedded newline must not create a second line";
+    ASSERT_EQ(lines.size(), 1u) << "an embedded newline must not create a second line";
 
     auto parsed = loom::utils::json::parse(lines[0]);
     ASSERT_TRUE(parsed) << "the line must still parse: " << lines[0];
@@ -148,8 +148,7 @@ TEST(LocalAnalytics, DisabledSwitchSuppressesWritesEntirely) {
     ::setenv("LOOM_ANALYTICS_DISABLED", "1", 1);
     EXPECT_FALSE(log.log_event("suppressed"));
     ::unsetenv("LOOM_ANALYTICS_DISABLED");
-    EXPECT_FALSE(fs::exists(dir.log()))
-        << "nothing should have been written while disabled";
+    EXPECT_FALSE(fs::exists(dir.log())) << "nothing should have been written while disabled";
 }
 
 TEST(LocalAnalytics, DisabledSwitchAcceptsTheUsualTruthySpellings) {
@@ -187,8 +186,8 @@ TEST(LocalAnalytics, DefaultPathIsUnderStateDirAndOverrideWins) {
 // the source text -- if someone adds an HTTP import to this module, this
 // fails and forces the review conversation.
 TEST(LocalAnalytics, ModuleSourceImportsNoHttpClient) {
-    const auto src = fs::path(__FILE__).parent_path().parent_path().parent_path() /
-                     "src" / "services" / "analytics.cppm";
+    const auto src = fs::path(__FILE__).parent_path().parent_path().parent_path() / "src" /
+                     "services" / "analytics.cppm";
     ASSERT_TRUE(fs::exists(src)) << "cannot find the module source at " << src;
 
     std::ifstream in(src);
@@ -196,8 +195,8 @@ TEST(LocalAnalytics, ModuleSourceImportsNoHttpClient) {
     buffer << in.rdbuf();
     const auto text = buffer.str();
 
-    for (const char* forbidden : {"loom.net.http.http", "loom.services.api", "curl",
-                                  "httplib", "socket", "getaddrinfo"}) {
+    for (const char* forbidden :
+         {"loom.net.http.http", "loom.services.api", "curl", "httplib", "socket", "getaddrinfo"}) {
         EXPECT_EQ(text.find(forbidden), std::string::npos)
             << "analytics.cppm must stay local-only, but mentions '" << forbidden
             << "'; if network reporting is genuinely wanted, that is a separate "

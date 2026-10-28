@@ -4,6 +4,7 @@
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/screen/screen.hpp>
 #include <gtest/gtest.h>
+
 #include "test_ui_helpers.h"
 
 import std;
@@ -21,29 +22,34 @@ import loom.ui.foundation.theme_provider;
 
 namespace {
 namespace msg = loom::ui::messages;
+
 std::string plain(ftxui::Element el, int width = 120, int height = 50) {
     return strip_ansi(render_to_plain_text(std::move(el), width, height));
 }
+
 std::string output_lines() {
     std::string text;
-    for (int i = 0; i < 14; ++i) text += "output-line-" + std::to_string(i) + "\n";
+    for (int i = 0; i < 14; ++i)
+        text += "output-line-" + std::to_string(i) + "\n";
     return text;
 }
-}
+}  // namespace
 
 TEST(MessageInteractions, ClickActionsAndKeyHintsRemainDistinctAcrossThemes) {
     namespace theme = loom::ui::design::theme;
     const auto original = theme::current_theme();
     for (auto variant : {theme::ThemeVariant::Dark, theme::ThemeVariant::Light,
-            theme::ThemeVariant::Monochrome, theme::ThemeVariant::DarkDaltonized}) {
+                         theme::ThemeVariant::Monochrome, theme::ThemeVariant::DarkDaltonized}) {
         theme::set_theme(variant);
-        auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(70), ftxui::Dimension::Fixed(1));
+        auto screen =
+            ftxui::Screen::Create(ftxui::Dimension::Fixed(70), ftxui::Dimension::Fixed(1));
         ftxui::Render(screen, ftxui::hbox({msg::message_action("Show more"),
-                                        msg::message_key_hint("Ctrl+E", "Toggle tools")}));
+                                           msg::message_key_hint("Ctrl+E", "Toggle tools")}));
         EXPECT_TRUE(screen.PixelAt(1, 0).underlined);
         EXPECT_TRUE(screen.PixelAt(1, 0).bold);
         EXPECT_FALSE(screen.PixelAt(1, 0).dim);
-        EXPECT_EQ(screen.PixelAt(1, 0).foreground_color, theme::current_theme().palette->suggestion);
+        EXPECT_EQ(screen.PixelAt(1, 0).foreground_color,
+                  theme::current_theme().palette->suggestion);
         EXPECT_TRUE(screen.PixelAt(13, 0).inverted);
         EXPECT_FALSE(screen.PixelAt(13, 0).underlined);
         EXPECT_FALSE(screen.PixelAt(13, 0).dim);
@@ -122,24 +128,27 @@ TEST(MessageInteractions, ThinkingActionsOnlyAppearWhenToggleCanWork) {
     namespace thinking = msg::thinking_message;
     thinking::ThinkingMessageData data;
     data.raw_text = "summary\nfull thinking details";
-    auto collapsed = plain(thinking::RenderThinkingMessageFaithful(data, false, false, false), 80, 5);
+    auto collapsed =
+        plain(thinking::RenderThinkingMessageFaithful(data, false, false, false), 80, 5);
     EXPECT_NE(collapsed.find("[Show thinking]"), std::string::npos);
     EXPECT_NE(collapsed.find("[Ctrl+O] Transcript"), std::string::npos);
     auto expanded = plain(thinking::RenderThinkingMessageFaithful(data, false, true, false));
     EXPECT_NE(expanded.find("[Hide thinking]"), std::string::npos);
     auto forced = plain(thinking::RenderThinkingMessageFaithful(data, true, true, false));
     EXPECT_EQ(forced.find("Hide thinking"), std::string::npos);
-    auto read_only = plain(thinking::RenderThinkingMessageFaithful(data, false, false, false, false));
+    auto read_only =
+        plain(thinking::RenderThinkingMessageFaithful(data, false, false, false, false));
     EXPECT_EQ(read_only.find("Show thinking"), std::string::npos);
 }
 
 TEST(MessageInteractions, AssistantPreviewAndCopyControlsHaveWorkingBindings) {
     msg::AssistantTextMessageData data;
-    for (int i = 0; i < 24; ++i) data.content += "assistant-line-" + std::to_string(i) + "\n";
+    for (int i = 0; i < 24; ++i)
+        data.content += "assistant-line-" + std::to_string(i) + "\n";
     std::string copied;
     int regenerated = 0;
-    auto component = msg::MakeAssistantTextMessage(data,
-        [&](std::string_view text) { copied = text; }, [&] { ++regenerated; });
+    auto component = msg::MakeAssistantTextMessage(
+        data, [&](std::string_view text) { copied = text; }, [&] { ++regenerated; });
     EXPECT_NE(plain(component->Render()).find("[Copy]"), std::string::npos);
     EXPECT_TRUE(component->OnEvent(ftxui::Event::Character('E')));
     auto collapsed = plain(component->Render());
@@ -160,8 +169,8 @@ TEST(MessageInteractions, MermaidMessageCopyPreservesOriginalMarkdown) {
     msg::AssistantTextMessageData data;
     data.content = "```mermaid\nflowchart LR\nA[Client] --> B[Server]\n```";
     std::string copied;
-    auto component = msg::MakeAssistantTextMessage(data,
-        [&](std::string_view text) { copied = text; });
+    auto component =
+        msg::MakeAssistantTextMessage(data, [&](std::string_view text) { copied = text; });
     const auto rendered = plain(component->Render());
     EXPECT_NE(rendered.find("Client"), std::string::npos);
     EXPECT_NE(rendered.find("Server"), std::string::npos);
@@ -173,7 +182,8 @@ TEST(MessageInteractions, MermaidMessageCopyPreservesOriginalMarkdown) {
 TEST(MessageInteractions, StaticApiErrorDoesNotAdvertiseUnavailableKeyboardActions) {
     namespace api = msg::api_error_message;
     api::APIErrorOptions opts;
-    for (int i = 0; i < 100; ++i) opts.error.message += "provider detail ";
+    for (int i = 0; i < 100; ++i)
+        opts.error.message += "provider detail ";
     opts.error.message += "API-TAIL";
     auto static_text = plain(api::RenderAPIError(opts, false), 120, 30);
     EXPECT_NE(static_text.find("API-TAIL"), std::string::npos);
@@ -220,8 +230,9 @@ TEST(MessageInteractions, LongThinkingSummaryLeavesRoomForActions) {
     msg::thinking_message::ThinkingMessageData data;
     data.raw_text = std::string(1000, 'x');
     for (int width : {60, 80}) {
-        auto text = plain(msg::thinking_message::RenderThinkingMessageFaithful(
-            data, false, false, false), width, 5);
+        auto text =
+            plain(msg::thinking_message::RenderThinkingMessageFaithful(data, false, false, false),
+                  width, 5);
         EXPECT_NE(text.find("[Show thinking]"), std::string::npos) << text;
         EXPECT_NE(text.find("[Ctrl+O] Transcript"), std::string::npos) << text;
     }
@@ -229,7 +240,8 @@ TEST(MessageInteractions, LongThinkingSummaryLeavesRoomForActions) {
 
 TEST(MessageInteractions, TranscriptLimitShortcutSurvivesNarrowWidth) {
     for (int width : {40, 60, 80}) {
-        auto text = plain(loom::ui::messages_list::detail::render_transcript_cap_divider(100), width, 5);
+        auto text =
+            plain(loom::ui::messages_list::detail::render_transcript_cap_divider(100), width, 5);
         EXPECT_NE(text.find("[Ctrl+E] Show all messages"), std::string::npos) << text;
     }
 }

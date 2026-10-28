@@ -5,10 +5,10 @@
 /// This module provides RenderDefault / HandleSandboxPermissionEvent
 /// that default_renderers delegates to.
 module;
-#include <cstdint>
-
-#include <ftxui/dom/elements.hpp>
 #include <ftxui/component/event.hpp>
+#include <ftxui/dom/elements.hpp>
+
+#include <cstdint>
 
 export module loom.ui.dialogs.sandbox_permission;
 
@@ -21,9 +21,7 @@ using namespace ftxui;
 
 /// Simple inline rendering used when the caller has not supplied a
 /// custom SandboxPermission renderer.  Keeps default_renderers lean.
-[[nodiscard]] inline Element RenderDefault(
-    std::string_view origin,
-    bool sandbox_toggle) {
+[[nodiscard]] inline Element RenderDefault(std::string_view origin, bool sandbox_toggle) {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
     auto body = vbox({
         text("Network access requested from:"),
@@ -51,11 +49,13 @@ using namespace ftxui;
 ///   ToolPermissionPayload        → .origin      + .initial_sandbox_toggle
 ///   SandboxPermissionPayload     → .host_pattern (== .origin) + always_bool toggle
 ///   WorkerSandboxPermissionPayload → .description + on_response only (stub chrome)
-[[nodiscard]] inline Element RenderDefault(
-    const auto& p, const auto& /*ctx*/) {
+[[nodiscard]] inline Element RenderDefault(const auto& p, const auto& /*ctx*/) {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
     // ToolPermissionPayload: .origin + .initial_sandbox_toggle
-    if constexpr (requires { p.origin; p.initial_sandbox_toggle; }) {
+    if constexpr (requires {
+                      p.origin;
+                      p.initial_sandbox_toggle;
+                  }) {
         return RenderDefault(std::string_view{p.origin}, p.initial_sandbox_toggle);
     }
     // SandboxPermissionPayload: .host_pattern == origin; no sandbox toggle in
@@ -73,8 +73,7 @@ using namespace ftxui;
             text(""),
             hbox({
                 text(" [y] Allow once ") | color(pal.success),
-                managed_only ? text("") :
-                    text(" [a] Always allow ") | color(pal.info),
+                managed_only ? text("") : text(" [a] Always allow ") | color(pal.info),
                 text(" [n] Deny ") | color(pal.danger),
                 text(" [Esc] Cancel") | color(pal.muted),
             }),
@@ -84,8 +83,10 @@ using namespace ftxui;
     // WorkerSandboxPermissionPayload / unknown: minimal chrome
     else {
         std::string_view origin{"<unknown>"};
-        if constexpr (requires { p.tool_name; }) origin = std::string_view{p.tool_name};
-        else if constexpr (requires { p.description; }) origin = std::string_view{p.description};
+        if constexpr (requires { p.tool_name; })
+            origin = std::string_view{p.tool_name};
+        else if constexpr (requires { p.description; })
+            origin = std::string_view{p.description};
         auto body = vbox({
             text("Worker requesting network access:"),
             text(std::string{origin}) | bold | color(pal.info),
@@ -117,9 +118,12 @@ using namespace ftxui;
 // ── Shape 1: ToolPermissionPayload (overlay) ────────────────────────────────
 template <typename PayloadT>
 inline bool HandleSandboxPermissionEvent(PayloadT& p, const Event& event)
-requires requires (PayloadT& x) {
-    x.on_response; x.can_always_allow; x.initial_sandbox_toggle; x.on_abort;
-}
+    requires requires(PayloadT& x) {
+        x.on_response;
+        x.can_always_allow;
+        x.initial_sandbox_toggle;
+        x.on_abort;
+    }
 {
     if (event == Event::Character('y') || event == Event::Character('Y') ||
         event == Event::Return) {
@@ -152,9 +156,10 @@ requires requires (PayloadT& x) {
 //       (bottom slot — host_pattern+on_response(allow,always) variant) ────────
 template <typename PayloadT>
 inline bool HandleSandboxPermissionEvent(PayloadT& p, const Event& event)
-requires requires (PayloadT& x) {
-    x.host_pattern; x.on_response;
-} && (!requires (PayloadT& x) { x.initial_sandbox_toggle; })
+    requires requires(PayloadT& x) {
+        x.host_pattern;
+        x.on_response;
+    } && (!requires(PayloadT& x) { x.initial_sandbox_toggle; })
 {
     // ── Focus navigation (ArrowUp/Down, j/k) ──────────────────────────────
     // The bottom-slot SandboxPermission dialog has selectable
@@ -223,9 +228,9 @@ requires requires (PayloadT& x) {
 //       (keeps generic code paths instantiable without link errors) ──────────
 template <typename PayloadT>
 inline bool HandleSandboxPermissionEvent(PayloadT& /*p*/, const Event& /*event*/)
-requires (!requires (PayloadT& x) { x.on_response; })
+    requires(!requires(PayloadT& x) { x.on_response; })
 {
     return false;
 }
 
-} // namespace loom::ui::dialogs::sandbox_permission
+}  // namespace loom::ui::dialogs::sandbox_permission

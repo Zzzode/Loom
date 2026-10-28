@@ -19,6 +19,7 @@ export namespace loom::keybindings::validate {
 struct ValidationError {
     std::string key_combo;
     std::string message;
+
     enum Level : std::uint8_t { Warning, Error } level;
 };
 
@@ -44,19 +45,19 @@ struct ValidationResult {
     // Single character keys
     if (key.size() == 1) {
         char c = key[0];
-        return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') ||
-               (c >= '0' && c <= '9');
+        return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9');
     }
 
     // Named keys
     static const std::vector<std::string_view> valid_names = {
-        "escape", "enter", "tab", "space", "backspace", "delete", "insert",
-        "home", "end", "pageup", "pagedown",
-        "up", "down", "left", "right",
-        "f1", "f2", "f3", "f4", "f5", "f6", "f7", "f8", "f9", "f10", "f11", "f12",
-        "capslock", "numlock", "scrolllock", "printscreen", "pause",
-        "minus", "equal", "bracketleft", "bracketright", "backslash",
-        "semicolon", "quote", "comma", "period", "slash", "backquote",
+        "escape",      "enter",     "tab",   "space",    "backspace",   "delete",
+        "insert",      "home",      "end",   "pageup",   "pagedown",    "up",
+        "down",        "left",      "right", "f1",       "f2",          "f3",
+        "f4",          "f5",        "f6",    "f7",       "f8",          "f9",
+        "f10",         "f11",       "f12",   "capslock", "numlock",     "scrolllock",
+        "printscreen", "pause",     "minus", "equal",    "bracketleft", "bracketright",
+        "backslash",   "semicolon", "quote", "comma",    "period",      "slash",
+        "backquote",
     };
 
     // Normalize to lowercase for comparison
@@ -83,8 +84,8 @@ struct ValidationResult {
 
     if (key_combo.empty()) {
         result.valid = false;
-        result.errors.push_back({
-            std::string(key_combo), "Key combination is empty", ValidationError::Error});
+        result.errors.push_back(
+            {std::string(key_combo), "Key combination is empty", ValidationError::Error});
         return result;
     }
 
@@ -102,8 +103,8 @@ struct ValidationResult {
 
     if (parts.empty()) {
         result.valid = false;
-        result.errors.push_back({
-            std::string(key_combo), "No key parts found", ValidationError::Error});
+        result.errors.push_back(
+            {std::string(key_combo), "No key parts found", ValidationError::Error});
         return result;
     }
 
@@ -132,7 +133,10 @@ struct ValidationResult {
         }
         bool found = false;
         for (const auto& valid : valid_mods) {
-            if (mod == valid) { found = true; break; }
+            if (mod == valid) {
+                found = true;
+                break;
+            }
         }
         if (!found) {
             result.valid = false;
@@ -148,9 +152,8 @@ struct ValidationResult {
 }
 
 /// Validate a set of keybinding configurations
-[[nodiscard]] inline ValidationResult validate_keybinding_config(
-    std::span<const std::pair<std::string, std::string>> bindings)
-{
+[[nodiscard]] inline ValidationResult
+validate_keybinding_config(std::span<const std::pair<std::string, std::string>> bindings) {
     ValidationResult result;
 
     for (const auto& [combo, command] : bindings) {
@@ -163,8 +166,7 @@ struct ValidationResult {
         }
         if (command.empty()) {
             result.valid = false;
-            result.errors.push_back({
-                combo, "Command must not be empty", ValidationError::Error});
+            result.errors.push_back({combo, "Command must not be empty", ValidationError::Error});
         }
     }
 
@@ -215,4 +217,4 @@ struct ValidationResult {
     return std::nullopt;
 }
 
-} // namespace loom::keybindings::validate
+}  // namespace loom::keybindings::validate

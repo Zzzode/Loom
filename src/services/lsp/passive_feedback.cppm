@@ -16,9 +16,9 @@
 // ============================================================================
 module;
 
+#include <cstddef>
 #include <cstdint>
 #include <cstdlib>
-#include <cstddef>
 
 export module loom.services.lsp.passive_feedback;
 
@@ -46,15 +46,14 @@ struct LspHealth {
 };
 
 namespace detail {
-    inline std::mutex metrics_mutex;
-    inline std::atomic<int> total_requests{0};
-    inline std::atomic<int> total_errors{0};
-    inline std::atomic<long long> total_latency_ms{0};
-} // namespace detail
+inline std::mutex metrics_mutex;
+inline std::atomic<int> total_requests{0};
+inline std::atomic<int> total_errors{0};
+inline std::atomic<long long> total_latency_ms{0};
+}  // namespace detail
 
 /// Record an LSP event for passive health tracking.
-void record_lsp_event(std::string_view event_type,
-                      std::map<std::string, std::string> data) {
+void record_lsp_event(std::string_view event_type, std::map<std::string, std::string> data) {
     detail::total_requests.fetch_add(1);
     if (event_type == "error") {
         detail::total_errors.fetch_add(1);
@@ -70,9 +69,8 @@ void record_lsp_event(std::string_view event_type,
     int errors = detail::total_errors.load();
     long long total_ms = detail::total_latency_ms.load();
 
-    auto avg = requests > 0
-        ? std::chrono::milliseconds{total_ms / requests}
-        : std::chrono::milliseconds{0};
+    auto avg = requests > 0 ? std::chrono::milliseconds{total_ms / requests}
+                            : std::chrono::milliseconds{0};
 
     return LspHealth{requests, errors, avg};
 }
@@ -90,27 +88,26 @@ void reset_lsp_metrics() {
 
 /// Outcome of an LSP diagnostic suggestion being presented to the user.
 enum class PassiveFeedbackType : int {
-    Accepted           = 0,  ///< User applied the suggested fix
-    Rejected           = 1,  ///< User dismissed the suggestion
-    PartiallyAccepted  = 2,  ///< User applied some but not all changes
+    Accepted = 0,           ///< User applied the suggested fix
+    Rejected = 1,           ///< User dismissed the suggestion
+    PartiallyAccepted = 2,  ///< User applied some but not all changes
 };
 
 /// Convert PassiveFeedbackType to canonical string name.
-[[nodiscard]] inline std::string_view feedback_type_to_string(
-    PassiveFeedbackType type
-) {
+[[nodiscard]] inline std::string_view feedback_type_to_string(PassiveFeedbackType type) {
     switch (type) {
-        case PassiveFeedbackType::Accepted:          return "Accepted";
-        case PassiveFeedbackType::Rejected:          return "Rejected";
-        case PassiveFeedbackType::PartiallyAccepted: return "PartiallyAccepted";
+    case PassiveFeedbackType::Accepted:
+        return "Accepted";
+    case PassiveFeedbackType::Rejected:
+        return "Rejected";
+    case PassiveFeedbackType::PartiallyAccepted:
+        return "PartiallyAccepted";
     }
     return "Rejected";
 }
 
 /// Parse a PassiveFeedbackType from its canonical string name.
-[[nodiscard]] inline PassiveFeedbackType feedback_type_from_string(
-    std::string_view name
-) {
+[[nodiscard]] inline PassiveFeedbackType feedback_type_from_string(std::string_view name) {
     if (name == "Accepted") return PassiveFeedbackType::Accepted;
     if (name == "PartiallyAccepted") return PassiveFeedbackType::PartiallyAccepted;
     return PassiveFeedbackType::Rejected;  // default
@@ -122,11 +119,11 @@ enum class PassiveFeedbackType : int {
 
 /// A single passive feedback record: one user reaction to one diagnostic code.
 struct PassiveFeedbackItem {
-    std::string server_name;       ///< LSP server that produced the diagnostic
-    std::string uri;               ///< File URI where the diagnostic appeared
-    std::string diagnostic_code;   ///< Diagnostic code (e.g. "TS2345")
+    std::string server_name;      ///< LSP server that produced the diagnostic
+    std::string uri;              ///< File URI where the diagnostic appeared
+    std::string diagnostic_code;  ///< Diagnostic code (e.g. "TS2345")
     PassiveFeedbackType type{PassiveFeedbackType::Rejected};
-    int64_t timestamp_ms{0};       ///< When feedback was recorded (epoch ms)
+    int64_t timestamp_ms{0};  ///< When feedback was recorded (epoch ms)
 };
 
 // ============================================================================
@@ -152,12 +149,8 @@ public:
     }
 
     /// Convenience: record feedback with explicit fields.
-    void record_feedback(
-        std::string_view server_name,
-        std::string_view uri,
-        std::string_view diagnostic_code,
-        PassiveFeedbackType type
-    ) {
+    void record_feedback(std::string_view server_name, std::string_view uri,
+                         std::string_view diagnostic_code, PassiveFeedbackType type) {
         PassiveFeedbackItem item;
         item.server_name = std::string(server_name);
         item.uri = std::string(uri);
@@ -177,9 +170,7 @@ public:
     }
 
     /// Get feedback filtered by diagnostic code.
-    std::vector<PassiveFeedbackItem> get_feedback_by_code(
-        std::string_view diagnostic_code
-    ) const {
+    std::vector<PassiveFeedbackItem> get_feedback_by_code(std::string_view diagnostic_code) const {
         std::lock_guard lock(mutex_);
         std::vector<PassiveFeedbackItem> result;
         for (const auto& item : items_) {
@@ -191,9 +182,7 @@ public:
     }
 
     /// Get feedback filtered by server name.
-    std::vector<PassiveFeedbackItem> get_feedback_by_server(
-        std::string_view server_name
-    ) const {
+    std::vector<PassiveFeedbackItem> get_feedback_by_server(std::string_view server_name) const {
         std::lock_guard lock(mutex_);
         std::vector<PassiveFeedbackItem> result;
         for (const auto& item : items_) {
@@ -218,12 +207,14 @@ public:
         for (const auto& item : items_) {
             if (item.diagnostic_code != diagnostic_code) continue;
             switch (item.type) {
-                case PassiveFeedbackType::Accepted:
-                    total_weight += 1.0; break;
-                case PassiveFeedbackType::PartiallyAccepted:
-                    total_weight += 0.5; break;
-                case PassiveFeedbackType::Rejected:
-                    break;
+            case PassiveFeedbackType::Accepted:
+                total_weight += 1.0;
+                break;
+            case PassiveFeedbackType::PartiallyAccepted:
+                total_weight += 0.5;
+                break;
+            case PassiveFeedbackType::Rejected:
+                break;
             }
             ++count;
         }
@@ -237,12 +228,14 @@ public:
         double total_weight = 0.0;
         for (const auto& item : items_) {
             switch (item.type) {
-                case PassiveFeedbackType::Accepted:
-                    total_weight += 1.0; break;
-                case PassiveFeedbackType::PartiallyAccepted:
-                    total_weight += 0.5; break;
-                case PassiveFeedbackType::Rejected:
-                    break;
+            case PassiveFeedbackType::Accepted:
+                total_weight += 1.0;
+                break;
+            case PassiveFeedbackType::PartiallyAccepted:
+                total_weight += 0.5;
+                break;
+            case PassiveFeedbackType::Rejected:
+                break;
             }
         }
         return total_weight / static_cast<double>(items_.size());
@@ -271,9 +264,7 @@ public:
 
     /// Export all feedback to a JSON file.
     /// Default path: ~/.loom/lsp-passive-feedback.json
-    Result<void> export_feedback() const {
-        return export_feedback(default_feedback_path());
-    }
+    Result<void> export_feedback() const { return export_feedback(default_feedback_path()); }
 
     /// Export feedback to a specific path.
     Result<void> export_feedback(const fs::path& path) const {
@@ -307,17 +298,15 @@ public:
         // Write to file
         std::ofstream ofs(path);
         if (!ofs) {
-            return std::unexpected(loom::utils::Error(
-                loom::utils::ErrorCode::io_error,
-                "Failed to open feedback file for writing: " + path.string()
-            ));
+            return std::unexpected(
+                loom::utils::Error(loom::utils::ErrorCode::io_error,
+                                   "Failed to open feedback file for writing: " + path.string()));
         }
         ofs << doc.to_pretty_string();
         if (!ofs) {
-            return std::unexpected(loom::utils::Error(
-                loom::utils::ErrorCode::io_error,
-                "Failed to write feedback file: " + path.string()
-            ));
+            return std::unexpected(
+                loom::utils::Error(loom::utils::ErrorCode::io_error,
+                                   "Failed to write feedback file: " + path.string()));
         }
 
         dirty_ = false;
@@ -326,9 +315,7 @@ public:
 
     /// Import feedback from the default JSON file.
     /// Merges with existing items (does not clear).
-    Result<void> import_feedback() {
-        return import_feedback(default_feedback_path());
-    }
+    Result<void> import_feedback() { return import_feedback(default_feedback_path()); }
 
     /// Import feedback from a specific path.
     Result<void> import_feedback(const fs::path& path) {
@@ -399,9 +386,8 @@ private:
     /// Get current time in milliseconds since epoch.
     static int64_t current_time_ms() {
         auto now = std::chrono::system_clock::now();
-        return std::chrono::duration_cast<std::chrono::milliseconds>(
-            now.time_since_epoch()
-        ).count();
+        return std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch())
+            .count();
     }
 
     mutable std::mutex mutex_;
@@ -434,10 +420,8 @@ struct DiagnosticHandlerRegistrationResult {
 /// notifications are counted in diagnostic_failures) but records NO
 /// feedback; genuine Accepted/Rejected items must come from explicit
 /// quick-fix user gestures wired separately.
-inline DiagnosticHandlerRegistrationResult register_lsp_notification_handlers(
-    LSPServerManager& manager,
-    PassiveFeedbackCollector& feedback
-) {
+inline DiagnosticHandlerRegistrationResult
+register_lsp_notification_handlers(LSPServerManager& manager, PassiveFeedbackCollector& feedback) {
     DiagnosticHandlerRegistrationResult result;
     (void)feedback;  // no server-push → user-feedback mapping (see above)
 
@@ -472,4 +456,4 @@ inline DiagnosticHandlerRegistrationResult register_lsp_notification_handlers(
     return result;
 }
 
-} // namespace loom::services::lsp
+}  // namespace loom::services::lsp

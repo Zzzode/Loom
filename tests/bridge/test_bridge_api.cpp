@@ -2,13 +2,14 @@
 /// @brief Bridge API client and work-secret tests (split from test_bridge.cpp).
 
 #include <gtest/gtest.h>
-#include <cstdint>
-#include <cstdlib>
 #include <netinet/in.h>
 #include <openssl/sha.h>
-#include <sys/socket.h>
 #include <signal.h>
+#include <sys/socket.h>
 #include <unistd.h>
+
+#include <cstdint>
+#include <cstdlib>
 
 #include "bridge_test_helpers.hpp"
 
@@ -37,15 +38,17 @@ TEST(BridgeApi, ValidatesSafeIdsAndNormalizesSessionIds) {
 TEST(BridgeCore, WorkerSessionUrlPreservesProtocolPathAndNormalizesBase) {
     EXPECT_EQ(loom::bridge::build_worker_session_url("https://ingress.example.test", "session_1"),
               "https://ingress.example.test/v1/code/sessions/session_1");
-    EXPECT_EQ(loom::bridge::build_worker_session_url("https://ingress.example.test///", "session_1"),
-              "https://ingress.example.test/v1/code/sessions/session_1");
+    EXPECT_EQ(
+        loom::bridge::build_worker_session_url("https://ingress.example.test///", "session_1"),
+        "https://ingress.example.test/v1/code/sessions/session_1");
     EXPECT_EQ(loom::bridge::build_worker_session_url("http://127.0.0.1:1234/proxy/", "session_1"),
               "http://127.0.0.1:1234/proxy/v1/code/sessions/session_1");
 }
 
 TEST(BridgeCore, WorkerClientAndReplTransportStartDisconnected) {
     loom::bridge::CcrWorkerClient::Params params;
-    params.session_url = loom::bridge::build_worker_session_url("https://ingress.example.test", "session_1");
+    params.session_url =
+        loom::bridge::build_worker_session_url("https://ingress.example.test", "session_1");
     params.session_id = "session_1";
     loom::bridge::CcrWorkerClient client(std::move(params));
     EXPECT_FALSE(client.is_registered());
@@ -58,8 +61,8 @@ TEST(BridgeCore, WorkerClientAndReplTransportStartDisconnected) {
     EXPECT_EQ(write.error(), "CCR client not registered");
 
     loom::bridge::ReplTransport transport(
-        loom::bridge::build_worker_session_url("https://ingress.example.test", "session_1"),
-        "", "session_1", 42);
+        loom::bridge::build_worker_session_url("https://ingress.example.test", "session_1"), "",
+        "session_1", 42);
     EXPECT_FALSE(transport.is_connected());
     EXPECT_FALSE(transport.connect().has_value());
     EXPECT_FALSE(transport.is_connected());
@@ -101,7 +104,8 @@ TEST(BridgeWorkSecret, DecodesExtendedRemotePayload) {
     EXPECT_EQ(decoded->environment_variables.at("REMOTE_FLAG"), "enabled");
     ASSERT_TRUE(decoded->environment_variables.contains("REMOTE_COUNT"));
     EXPECT_EQ(decoded->environment_variables.at("REMOTE_COUNT"), "42");
-    EXPECT_NE(decoded->raw_json.find(R"("session_ingress_token":"session-token-from-secret")"), std::string::npos);
+    EXPECT_NE(decoded->raw_json.find(R"("session_ingress_token":"session-token-from-secret")"),
+              std::string::npos);
 }
 
 TEST(BridgeApi, ParsesRegistrationPollAndLifecycleResponsesFromServer) {
@@ -126,7 +130,8 @@ TEST(BridgeApi, ParsesRegistrationPollAndLifecycleResponsesFromServer) {
     EXPECT_EQ(registration->environment_id, "env_backend_1");
     EXPECT_EQ(registration->environment_secret, "env_secret_1");
 
-    auto work = client.poll_for_work(registration->environment_id, registration->environment_secret, 12345);
+    auto work =
+        client.poll_for_work(registration->environment_id, registration->environment_secret, 12345);
     ASSERT_TRUE(work.has_value()) << work.error().format();
     ASSERT_TRUE(work->has_value());
     EXPECT_EQ((*work)->id, "work_1");
@@ -142,10 +147,12 @@ TEST(BridgeApi, ParsesRegistrationPollAndLifecycleResponsesFromServer) {
     ASSERT_TRUE(worker_registration.has_value()) << worker_registration.error().format();
     EXPECT_EQ(worker_registration->worker_epoch, 42);
 
-    auto ack = client.acknowledge_work(registration->environment_id, (*work)->id, "session-token-from-secret");
+    auto ack = client.acknowledge_work(registration->environment_id, (*work)->id,
+                                       "session-token-from-secret");
     ASSERT_TRUE(ack.has_value()) << ack.error().format();
 
-    auto heartbeat = client.heartbeat_work(registration->environment_id, (*work)->id, "session-token-from-secret");
+    auto heartbeat = client.heartbeat_work(registration->environment_id, (*work)->id,
+                                           "session-token-from-secret");
     ASSERT_TRUE(heartbeat.has_value()) << heartbeat.error().format();
     EXPECT_TRUE(heartbeat->lease_extended);
     EXPECT_EQ(heartbeat->state, "active");
@@ -178,31 +185,37 @@ TEST(BridgeApi, ParsesRegistrationPollAndLifecycleResponsesFromServer) {
     EXPECT_EQ((*requests)[0].method, "POST");
     EXPECT_EQ((*requests)[0].path, "/v1/environments/bridge");
     EXPECT_NE((*requests)[0].headers.find("Authorization: Bearer oauth_token"), std::string::npos);
-    EXPECT_NE((*requests)[0].headers.find("X-Trusted-Device-Token: trusted_device"), std::string::npos);
+    EXPECT_NE((*requests)[0].headers.find("X-Trusted-Device-Token: trusted_device"),
+              std::string::npos);
     EXPECT_NE((*requests)[0].body.find(R"("transport":"websocket")"), std::string::npos);
 
     EXPECT_EQ((*requests)[1].method, "GET");
-    EXPECT_EQ((*requests)[1].path, "/v1/environments/env_backend_1/work/poll?reclaim_older_than_ms=12345");
+    EXPECT_EQ((*requests)[1].path,
+              "/v1/environments/env_backend_1/work/poll?reclaim_older_than_ms=12345");
     EXPECT_NE((*requests)[1].headers.find("Authorization: Bearer env_secret_1"), std::string::npos);
 
     EXPECT_EQ((*requests)[2].method, "POST");
     EXPECT_EQ((*requests)[2].path, "/v1/code/sessions/session_1/worker/register");
-    EXPECT_NE((*requests)[2].headers.find("Authorization: Bearer session-token-from-secret"), std::string::npos);
+    EXPECT_NE((*requests)[2].headers.find("Authorization: Bearer session-token-from-secret"),
+              std::string::npos);
     EXPECT_EQ((*requests)[2].body, "{}");
 
     EXPECT_EQ((*requests)[3].method, "POST");
     EXPECT_EQ((*requests)[3].path, "/v1/environments/env_backend_1/work/work_1/ack");
-    EXPECT_NE((*requests)[3].headers.find("Authorization: Bearer session-token-from-secret"), std::string::npos);
+    EXPECT_NE((*requests)[3].headers.find("Authorization: Bearer session-token-from-secret"),
+              std::string::npos);
     EXPECT_EQ((*requests)[3].body, "{}");
 
     EXPECT_EQ((*requests)[4].method, "POST");
     EXPECT_EQ((*requests)[4].path, "/v1/environments/env_backend_1/work/work_1/heartbeat");
-    EXPECT_NE((*requests)[4].headers.find("Authorization: Bearer session-token-from-secret"), std::string::npos);
+    EXPECT_NE((*requests)[4].headers.find("Authorization: Bearer session-token-from-secret"),
+              std::string::npos);
     EXPECT_EQ((*requests)[4].body, "{}");
 
     EXPECT_EQ((*requests)[5].method, "POST");
     EXPECT_EQ((*requests)[5].path, "/v1/sessions/session_1/events");
-    EXPECT_NE((*requests)[5].headers.find("Authorization: Bearer session-token-from-secret"), std::string::npos);
+    EXPECT_NE((*requests)[5].headers.find("Authorization: Bearer session-token-from-secret"),
+              std::string::npos);
     EXPECT_NE((*requests)[5].body.find(R"("events":[)"), std::string::npos);
     EXPECT_NE((*requests)[5].body.find(R"("type":"control_response")"), std::string::npos);
     EXPECT_NE((*requests)[5].body.find(R"("request_id":"permission-1")"), std::string::npos);

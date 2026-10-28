@@ -42,7 +42,7 @@ fs::path sidecar_path() {
 
 long long now_ms() {
     return std::chrono::duration_cast<std::chrono::milliseconds>(
-        std::chrono::system_clock::now().time_since_epoch())
+               std::chrono::system_clock::now().time_since_epoch())
         .count();
 }
 

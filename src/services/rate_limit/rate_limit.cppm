@@ -7,12 +7,9 @@ export module loom.services.rate_limit;
 
 import std;
 
-
 export namespace loom::services {
 
-
 enum class RateLimitTier { free, pro, team, enterprise };
-
 
 struct RateLimitInfo {
     int64_t requests_remaining{-1};
@@ -21,14 +18,12 @@ struct RateLimitInfo {
     std::chrono::milliseconds retry_after{0};
 };
 
-
 struct RateLimitMockConfig {
     bool simulate_429{false};
     int remaining_requests{0};
     int remaining_tokens{0};
     std::chrono::milliseconds retry_after{1000};
 };
-
 
 struct RateLimitState {
     RateLimitInfo current_info{};
@@ -39,39 +34,29 @@ struct RateLimitState {
     std::chrono::system_clock::time_point last_request_at{};
 };
 
-
 class RateLimitManager {
     RateLimitState state_{};
     std::mt19937 rng_{std::random_device{}()};
 
 public:
-
     void update_from_headers(const std::unordered_map<std::string, std::string>& headers) {
         if (auto it = headers.find("x-ratelimit-remaining-requests"); it != headers.end())
             state_.current_info.requests_remaining = std::stoll(it->second);
         if (auto it = headers.find("x-ratelimit-remaining-tokens"); it != headers.end())
             state_.current_info.tokens_remaining = std::stoll(it->second);
         if (auto it = headers.find("retry-after"); it != headers.end())
-            state_.current_info.retry_after = std::chrono::milliseconds(std::stoll(it->second) * 1000);
+            state_.current_info.retry_after =
+                std::chrono::milliseconds(std::stoll(it->second) * 1000);
 
         state_.consecutive_429s = 0;
     }
 
+    void record_rate_limit_hit() { ++state_.consecutive_429s; }
 
-    void record_rate_limit_hit() {
-        ++state_.consecutive_429s;
-    }
-
-
-    [[nodiscard]] auto should_retry() const -> bool {
-        return state_.consecutive_429s < 5;
-    }
-
+    [[nodiscard]] auto should_retry() const -> bool { return state_.consecutive_429s < 5; }
 
     [[nodiscard]] auto get_retry_delay() -> std::chrono::milliseconds {
-        if (state_.current_info.retry_after.count() > 0)
-            return state_.current_info.retry_after;
-        
+        if (state_.current_info.retry_after.count() > 0) return state_.current_info.retry_after;
 
         int64_t base_ms = 1000LL * (1LL << std::min(state_.consecutive_429s, 4));
 
@@ -79,23 +64,25 @@ public:
         return std::chrono::milliseconds(base_ms + jitter(rng_));
     }
 
-
     [[nodiscard]] auto get_warning_message() const -> std::optional<std::string> {
-        if (state_.current_info.requests_remaining >= 0 && state_.current_info.requests_remaining < 5)
-            return "approaching request limit, " + std::to_string(state_.current_info.requests_remaining) + " requests remaining";
-        if (state_.current_info.tokens_remaining >= 0 && state_.current_info.tokens_remaining < 10000)
-            return "approaching token limit, " + std::to_string(state_.current_info.tokens_remaining) + " tokens remaining";
+        if (state_.current_info.requests_remaining >= 0 &&
+            state_.current_info.requests_remaining < 5)
+            return "approaching request limit, " +
+                   std::to_string(state_.current_info.requests_remaining) + " requests remaining";
+        if (state_.current_info.tokens_remaining >= 0 &&
+            state_.current_info.tokens_remaining < 10000)
+            return "approaching token limit, " +
+                   std::to_string(state_.current_info.tokens_remaining) + " tokens remaining";
         if (state_.consecutive_429s > 0)
-            return "rate limited, waiting to retry (attempt " + std::to_string(state_.consecutive_429s) + ")";
+            return "rate limited, waiting to retry (attempt " +
+                   std::to_string(state_.consecutive_429s) + ")";
         return std::nullopt;
     }
-
 
     [[nodiscard]] auto is_rate_limited() const -> bool {
         if (state_.is_mocked) return state_.mock_config.simulate_429;
         return state_.consecutive_429s > 0 || state_.current_info.requests_remaining == 0;
     }
-
 
     void mock_rate_limit(RateLimitMockConfig config) {
         state_.is_mocked = true;
@@ -104,17 +91,19 @@ public:
 
     void clear_mock() { state_.is_mocked = false; }
 
-
     [[nodiscard]] static auto get_tier_limits(RateLimitTier tier) -> RateLimitInfo {
         switch (tier) {
-            case RateLimitTier::free: return {.requests_remaining = 50, .tokens_remaining = 40'000};
-            case RateLimitTier::pro: return {.requests_remaining = 1000, .tokens_remaining = 800'000};
-            case RateLimitTier::team: return {.requests_remaining = 2000, .tokens_remaining = 1'600'000};
-            case RateLimitTier::enterprise: return {.requests_remaining = 4000, .tokens_remaining = 4'000'000};
+        case RateLimitTier::free:
+            return {.requests_remaining = 50, .tokens_remaining = 40'000};
+        case RateLimitTier::pro:
+            return {.requests_remaining = 1000, .tokens_remaining = 800'000};
+        case RateLimitTier::team:
+            return {.requests_remaining = 2000, .tokens_remaining = 1'600'000};
+        case RateLimitTier::enterprise:
+            return {.requests_remaining = 4000, .tokens_remaining = 4'000'000};
         }
         return {};
     }
-
 
     void record_request(size_t /*input_tokens*/, size_t /*output_tokens*/) {
         state_.last_request_at = std::chrono::system_clock::now();
@@ -122,7 +111,8 @@ public:
     }
 
     void reset() { state_ = RateLimitState{}; }
+
     [[nodiscard]] auto get_state() const -> const RateLimitState& { return state_; }
 };
 
-} // namespace loom::services
+}  // namespace loom::services

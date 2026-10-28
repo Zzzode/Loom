@@ -40,11 +40,11 @@
 ///   "user bailed out — do not send a response back to the server".
 module;
 
-#include <cstdint>
-
-#include <ftxui/dom/elements.hpp>
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/event.hpp>
+#include <ftxui/dom/elements.hpp>
+
+#include <cstdint>
 
 export module loom.ui.dialogs.elicitation;
 
@@ -68,18 +68,15 @@ using Theme = loom::ui::design::theme::Theme;
 /// Render the Elicitation dialog (simple form).
 ///
 /// A DialogFrame with title/subtitle/body/request-id row / buttons row.
-[[nodiscard]] inline Element RenderElicitation(
-    const dsys::ElicitationPayload& p,
-    const dsys::DialogRenderContext& ctx)
-{
+[[nodiscard]] inline Element RenderElicitation(const dsys::ElicitationPayload& p,
+                                               const dsys::DialogRenderContext& ctx) {
     const auto& theme = ctx.theme;
 
     dframe::DialogFrameProps props;
     // Compressed form for narrow terminals:
     props.title = "MCP Server Request";
-    props.subtitle = p.server_name.empty()
-        ? std::string{"An MCP server needs additional input"}
-        : std::string{p.server_name + " needs additional input"};
+    props.subtitle = p.server_name.empty() ? std::string{"An MCP server needs additional input"}
+                                           : std::string{p.server_name + " needs additional input"};
     props.style = dframe::FrameStyle::Permission;
 
     // Body:
@@ -91,9 +88,8 @@ using Theme = loom::ui::design::theme::Theme;
     Elements body;
 
     // --- Question paragraph ---
-    const std::string display_server = p.server_name.empty()
-        ? std::string{"the MCP server"}
-        : p.server_name;
+    const std::string display_server =
+        p.server_name.empty() ? std::string{"the MCP server"} : p.server_name;
     body.push_back(hbox({
         text("Allow connecting to "),
         text(display_server) | bold,
@@ -110,9 +106,10 @@ using Theme = loom::ui::design::theme::Theme;
 
     // --- Request ID row ---
     body.push_back(hbox({
-        text("Request ID: "),
-        text(std::to_string(p.request_id)),
-    }) | color(theme.palette->muted));
+                       text("Request ID: "),
+                       text(std::to_string(p.request_id)),
+                   }) |
+                   color(theme.palette->muted));
 
     body.push_back(text(""));
 
@@ -149,10 +146,7 @@ using Theme = loom::ui::design::theme::Theme;
 ///                   MCP server — Esc is an out-of-band dismiss).
 ///
 /// Returns true if the event was handled.
-inline bool HandleElicitationEvent(
-    dsys::ElicitationPayload& p,
-    const Event& event)
-{
+inline bool HandleElicitationEvent(dsys::ElicitationPayload& p, const Event& event) {
     // y / Y — allow
     if (event == Event::Character('y') || event == Event::Character('Y')) {
         if (p.on_response) p.on_response(/*approve=*/true);
@@ -190,8 +184,7 @@ inline bool HandleElicitationEvent(
 /// (The default set of registrations lives in
 /// loom.ui.dialogs.default_renderers — callers that want to opt-in to
 /// only this specific dialog can do so directly via this helper.)
-inline void RegisterElicitationDialog(dsys::DialogRendererRegistry& registry)
-{
+inline void RegisterElicitationDialog(dsys::DialogRendererRegistry& registry) {
     registry.register_dialog(
         dsys::DialogType::Elicitation,
         /*renderer=*/
@@ -206,8 +199,7 @@ inline void RegisterElicitationDialog(dsys::DialogRendererRegistry& registry)
             auto* p = std::get_if<dsys::ElicitationPayload>(&payload);
             if (!p) return false;
             return HandleElicitationEvent(*p, event);
-        }
-    );
+        });
 }
 
-} // namespace loom::ui::dialogs::elicitation
+}  // namespace loom::ui::dialogs::elicitation

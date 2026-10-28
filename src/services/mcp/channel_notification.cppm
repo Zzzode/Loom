@@ -34,16 +34,15 @@ export namespace loom::services::mcp {
 
 using namespace std::string_view_literals;
 using loom::utils::json::JsonVal;
-using loom::utils::plugin_identifier::ParsedPluginIdentifier;
 using loom::utils::plugin_identifier::parse_plugin_identifier;
+using loom::utils::plugin_identifier::ParsedPluginIdentifier;
 
 // =========================================================================
 // JSON-RPC method constants
 // =========================================================================
 
 // Inbound: server → CC — a channel message (user typed something in Slack, etc.)
-inline constexpr std::string_view CHANNEL_MESSAGE_METHOD =
-    "notifications/loom/channel";
+inline constexpr std::string_view CHANNEL_MESSAGE_METHOD = "notifications/loom/channel";
 
 // Inbound: server → CC — a structured permission reply (user approved/denied)
 inline constexpr std::string_view CHANNEL_PERMISSION_METHOD =
@@ -84,27 +83,35 @@ struct ChannelPermissionRequestParams {
 
 // Kinds of channel-related notifications that can flow through the bus
 enum class ChannelNotificationType {
-    ServerStarted,       // server connected and initialized
-    ServerStopped,       // server disconnected
-    ToolListChanged,     // server's tools/list changed
-    ResourceListChanged, // server's resources/list changed
-    PromptListChanged,   // server's prompts/list changed
-    ServerError,         // server health-check failure
-    ChannelMessage,      // notifications/loom/channel inbound
-    ChannelPermission,   // notifications/loom/channel/permission inbound
+    ServerStarted,        // server connected and initialized
+    ServerStopped,        // server disconnected
+    ToolListChanged,      // server's tools/list changed
+    ResourceListChanged,  // server's resources/list changed
+    PromptListChanged,    // server's prompts/list changed
+    ServerError,          // server health-check failure
+    ChannelMessage,       // notifications/loom/channel inbound
+    ChannelPermission,    // notifications/loom/channel/permission inbound
 };
 
 // Convert notification type to a readable string (for logging/debug)
 [[nodiscard]] inline auto to_string(ChannelNotificationType type) -> std::string_view {
     switch (type) {
-        case ChannelNotificationType::ServerStarted:       return "server_started";
-        case ChannelNotificationType::ServerStopped:       return "server_stopped";
-        case ChannelNotificationType::ToolListChanged:     return "tool_list_changed";
-        case ChannelNotificationType::ResourceListChanged: return "resource_list_changed";
-        case ChannelNotificationType::PromptListChanged:   return "prompt_list_changed";
-        case ChannelNotificationType::ServerError:         return "server_error";
-        case ChannelNotificationType::ChannelMessage:      return "channel_message";
-        case ChannelNotificationType::ChannelPermission:   return "channel_permission";
+    case ChannelNotificationType::ServerStarted:
+        return "server_started";
+    case ChannelNotificationType::ServerStopped:
+        return "server_stopped";
+    case ChannelNotificationType::ToolListChanged:
+        return "tool_list_changed";
+    case ChannelNotificationType::ResourceListChanged:
+        return "resource_list_changed";
+    case ChannelNotificationType::PromptListChanged:
+        return "prompt_list_changed";
+    case ChannelNotificationType::ServerError:
+        return "server_error";
+    case ChannelNotificationType::ChannelMessage:
+        return "channel_message";
+    case ChannelNotificationType::ChannelPermission:
+        return "channel_permission";
     }
     return "unknown";
 }
@@ -136,7 +143,7 @@ enum class ChannelEntryKind { Plugin, Server };
 struct ChannelEntry {
     ChannelEntryKind kind;
     std::string name;
-    std::optional<std::string> marketplace; // only for Plugin kind
+    std::optional<std::string> marketplace;  // only for Plugin kind
     bool dev = false;                        // --dangerously-load-development-channels
 };
 
@@ -203,12 +210,24 @@ struct ChannelGateResult {
     result.reserve(value.size());
     for (char ch : value) {
         switch (ch) {
-            case '&':  result += "&amp;"; break;
-            case '<':  result += "&lt;"; break;
-            case '>':  result += "&gt;"; break;
-            case '"':  result += "&quot;"; break;
-            case '\'': result += "&apos;"; break;
-            default:   result.push_back(ch); break;
+        case '&':
+            result += "&amp;";
+            break;
+        case '<':
+            result += "&lt;";
+            break;
+        case '>':
+            result += "&gt;";
+            break;
+        case '"':
+            result += "&quot;";
+            break;
+        case '\'':
+            result += "&apos;";
+            break;
+        default:
+            result.push_back(ch);
+            break;
         }
     }
     return result;
@@ -220,11 +239,10 @@ struct ChannelGateResult {
 
 // Wrap a channel message's content in a <channel> tag with source and meta
 // attributes. Returns the wrapped XML string ready to enqueue.
-[[nodiscard]] inline auto wrap_channel_message(
-    std::string_view server_name,
-    std::string_view content,
-    const std::optional<std::map<std::string, std::string>>& meta = std::nullopt
-) -> std::string {
+[[nodiscard]] inline auto
+wrap_channel_message(std::string_view server_name, std::string_view content,
+                     const std::optional<std::map<std::string, std::string>>& meta = std::nullopt)
+    -> std::string {
     using loom::constants::xml::CHANNEL_TAG;
 
     std::string attrs;
@@ -235,14 +253,8 @@ struct ChannelGateResult {
             }
         }
     }
-    return std::format(
-        "<{} source=\"{}\"{}>\n{}\n</{}>",
-        CHANNEL_TAG,
-        escape_xml_attr(server_name),
-        attrs,
-        content,
-        CHANNEL_TAG
-    );
+    return std::format("<{} source=\"{}\"{}>\n{}\n</{}>", CHANNEL_TAG, escape_xml_attr(server_name),
+                       attrs, content, CHANNEL_TAG);
 }
 
 // =========================================================================
@@ -254,10 +266,9 @@ struct ChannelGateResult {
 // the second segment of plugin:X:Y. Returns the matching entry so callers
 // can read its kind — that's the user's trust declaration, not inferred
 // from runtime shape.
-[[nodiscard]] inline auto find_channel_entry(
-    std::string_view server_name,
-    const std::vector<ChannelEntry>& channels
-) -> std::optional<ChannelEntry> {
+[[nodiscard]] inline auto find_channel_entry(std::string_view server_name,
+                                             const std::vector<ChannelEntry>& channels)
+    -> std::optional<ChannelEntry> {
     // split unconditionally — for a bare name like 'slack', parts has size 1
     // and the plugin-kind branch correctly never matches.
     std::vector<std::string_view> parts;
@@ -296,10 +307,10 @@ struct ChannelGateResult {
 // allowedChannelPlugins in managed settings — when set, it REPLACES the
 // GrowthBook ledger (admin owns the trust decision). std::nullopt falls
 // back to the ledger. Unmanaged users always get the ledger.
-[[nodiscard]] inline auto get_effective_channel_allowlist(
-    bool is_managed_org,
-    const std::optional<std::vector<ChannelAllowlistEntry>>& org_list
-) -> std::pair<std::vector<ChannelAllowlistEntry>, AllowlistSource> {
+[[nodiscard]] inline auto
+get_effective_channel_allowlist(bool is_managed_org,
+                                const std::optional<std::vector<ChannelAllowlistEntry>>& org_list)
+    -> std::pair<std::vector<ChannelAllowlistEntry>, AllowlistSource> {
     if (is_managed_org && org_list.has_value()) {
         return {*org_list, AllowlistSource::Org};
     }
@@ -329,47 +340,39 @@ struct ChannelGateResult {
 //   - allowed_channels: user's --channels entries
 //   - org_allowed_plugins: org-managed allowedChannelPlugins
 //   - plugin_source: the plugin's marketplace source (for plugin-kind entries)
-[[nodiscard]] inline auto gate_channel_server(
-    std::string_view server_name,
-    const ServerCapabilities& capabilities,
-    bool channels_enabled,
-    bool is_managed_org,
-    bool managed_channels_enabled,
-    const std::vector<ChannelEntry>& allowed_channels,
-    const std::optional<std::vector<ChannelAllowlistEntry>>& org_allowed_plugins,
-    const std::optional<std::string>& plugin_source = std::nullopt
-) -> ChannelGateResult {
+[[nodiscard]] inline auto
+gate_channel_server(std::string_view server_name, const ServerCapabilities& capabilities,
+                    bool channels_enabled, bool is_managed_org, bool managed_channels_enabled,
+                    const std::vector<ChannelEntry>& allowed_channels,
+                    const std::optional<std::vector<ChannelAllowlistEntry>>& org_allowed_plugins,
+                    const std::optional<std::string>& plugin_source = std::nullopt)
+    -> ChannelGateResult {
     // Channel servers declare `experimental['loom/channel']: {}` (MCP's
     // presence-signal idiom — same as `tools: {}`). Presence in the map
     // covers `{}` and `true`; absent/undefined/explicit-`false` all fail.
     auto exp_it = capabilities.experimental.find("loom/channel");
     if (exp_it == capabilities.experimental.end()) {
-        return ChannelGateResult{
-            .action = ChannelGateAction::Skip,
-            .skip_kind = ChannelGateSkipKind::Capability,
-            .reason = "server did not declare loom/channel capability"
-        };
+        return ChannelGateResult{.action = ChannelGateAction::Skip,
+                                 .skip_kind = ChannelGateSkipKind::Capability,
+                                 .reason = "server did not declare loom/channel capability"};
     }
 
     // Overall runtime gate. After capability so normal MCP servers never hit
     // this path. Before auth/policy so the killswitch works regardless of
     // session state.
     if (!channels_enabled) {
-        return ChannelGateResult{
-            .action = ChannelGateAction::Skip,
-            .skip_kind = ChannelGateSkipKind::Disabled,
-            .reason = "channels feature is not currently available"
-        };
+        return ChannelGateResult{.action = ChannelGateAction::Skip,
+                                 .skip_kind = ChannelGateSkipKind::Disabled,
+                                 .reason = "channels feature is not currently available"};
     }
 
     // Teams/Enterprise opt-in. Managed orgs must explicitly enable channels.
     // Default OFF — absent or false blocks.
     if (is_managed_org && !managed_channels_enabled) {
-        return ChannelGateResult{
-            .action = ChannelGateAction::Skip,
-            .skip_kind = ChannelGateSkipKind::Policy,
-            .reason = "channels not enabled by org policy (set channelsEnabled: true in managed settings)"
-        };
+        return ChannelGateResult{.action = ChannelGateAction::Skip,
+                                 .skip_kind = ChannelGateSkipKind::Policy,
+                                 .reason = "channels not enabled by org policy (set "
+                                           "channelsEnabled: true in managed settings)"};
     }
 
     // User-level session opt-in. A server must be explicitly listed in
@@ -379,8 +382,8 @@ struct ChannelGateResult {
         return ChannelGateResult{
             .action = ChannelGateAction::Skip,
             .skip_kind = ChannelGateSkipKind::Session,
-            .reason = std::format("server {} not in --channels list for this session", server_name)
-        };
+            .reason =
+                std::format("server {} not in --channels list for this session", server_name)};
     }
 
     const auto& matched = *entry;
@@ -400,45 +403,37 @@ struct ChannelGateResult {
             return ChannelGateResult{
                 .action = ChannelGateAction::Skip,
                 .skip_kind = ChannelGateSkipKind::Marketplace,
-                .reason = std::format(
-                    "you asked for plugin:{}@{} but the installed {} plugin is from {}",
-                    matched.name,
-                    matched.marketplace.value_or("unknown"),
-                    matched.name,
-                    actual_marketplace.value_or("an unknown source")
-                )
-            };
+                .reason =
+                    std::format("you asked for plugin:{}@{} but the installed {} plugin is from {}",
+                                matched.name, matched.marketplace.value_or("unknown"), matched.name,
+                                actual_marketplace.value_or("an unknown source"))};
         }
 
         // Approved-plugin allowlist. entry.dev bypasses — so accepting the dev
         // dialog for one entry doesn't leak allowlist-bypass to --channels entries.
         if (!matched.dev) {
-            auto [entries, source] = get_effective_channel_allowlist(
-                is_managed_org, org_allowed_plugins
-            );
-            bool found = std::any_of(entries.begin(), entries.end(),
-                [&](const ChannelAllowlistEntry& e) {
+            auto [entries, source] =
+                get_effective_channel_allowlist(is_managed_org, org_allowed_plugins);
+            bool found =
+                std::any_of(entries.begin(), entries.end(), [&](const ChannelAllowlistEntry& e) {
                     return e.plugin == matched.name &&
                            e.marketplace == matched.marketplace.value_or("");
                 });
             if (!found) {
                 std::string reason;
                 if (source == AllowlistSource::Org) {
-                    reason = std::format(
-                        "plugin {}@{} is not on your org's approved channels list (set allowedChannelPlugins in managed settings)",
-                        matched.name, matched.marketplace.value_or("")
-                    );
+                    reason = std::format("plugin {}@{} is not on your org's approved channels list "
+                                         "(set allowedChannelPlugins in managed settings)",
+                                         matched.name, matched.marketplace.value_or(""));
                 } else {
-                    reason = std::format(
-                        "plugin {}@{} is not on the approved channels allowlist (use --dangerously-load-development-channels for local dev)",
-                        matched.name, matched.marketplace.value_or("")
-                    );
+                    reason =
+                        std::format("plugin {}@{} is not on the approved channels allowlist (use "
+                                    "--dangerously-load-development-channels for local dev)",
+                                    matched.name, matched.marketplace.value_or(""));
                 }
-                return ChannelGateResult{
-                    .action = ChannelGateAction::Skip,
-                    .skip_kind = ChannelGateSkipKind::Allowlist,
-                    .reason = std::move(reason)
-                };
+                return ChannelGateResult{.action = ChannelGateAction::Skip,
+                                         .skip_kind = ChannelGateSkipKind::Allowlist,
+                                         .reason = std::move(reason)};
             }
         }
     } else {
@@ -449,19 +444,14 @@ struct ChannelGateResult {
             return ChannelGateResult{
                 .action = ChannelGateAction::Skip,
                 .skip_kind = ChannelGateSkipKind::Allowlist,
-                .reason = std::format(
-                    "server {} is not on the approved channels allowlist (use --dangerously-load-development-channels for local dev)",
-                    matched.name
-                )
-            };
+                .reason = std::format("server {} is not on the approved channels allowlist (use "
+                                      "--dangerously-load-development-channels for local dev)",
+                                      matched.name)};
         }
     }
 
     return ChannelGateResult{
-        .action = ChannelGateAction::Register,
-        .skip_kind = std::nullopt,
-        .reason = ""
-    };
+        .action = ChannelGateAction::Register, .skip_kind = std::nullopt, .reason = ""};
 }
 
 // =========================================================================
@@ -470,9 +460,8 @@ struct ChannelGateResult {
 
 // Parse a notifications/loom/channel notification's params from JSON.
 // Returns std::nullopt if the JSON is malformed or missing required fields.
-[[nodiscard]] inline auto parse_channel_message_params(
-    const std::string& params_json
-) -> std::optional<ChannelMessageParams> {
+[[nodiscard]] inline auto parse_channel_message_params(const std::string& params_json)
+    -> std::optional<ChannelMessageParams> {
     auto doc = loom::utils::json::parse(params_json);
     if (!doc) return std::nullopt;
 
@@ -500,9 +489,8 @@ struct ChannelGateResult {
 }
 
 // Parse a notifications/loom/channel/permission notification's params.
-[[nodiscard]] inline auto parse_channel_permission_params(
-    const std::string& params_json
-) -> std::optional<ChannelPermissionParams> {
+[[nodiscard]] inline auto parse_channel_permission_params(const std::string& params_json)
+    -> std::optional<ChannelPermissionParams> {
     auto doc = loom::utils::json::parse(params_json);
     if (!doc) return std::nullopt;
 
@@ -518,16 +506,13 @@ struct ChannelGateResult {
     auto behavior = std::string(behavior_node.as_str());
     if (behavior != "allow" && behavior != "deny") return std::nullopt;
 
-    return ChannelPermissionParams{
-        .request_id = std::string(req_id_node.as_str()),
-        .behavior = std::move(behavior)
-    };
+    return ChannelPermissionParams{.request_id = std::string(req_id_node.as_str()),
+                                   .behavior = std::move(behavior)};
 }
 
 // Serialize a permission request to JSON for sending to the channel server.
-[[nodiscard]] inline auto serialize_permission_request_params(
-    const ChannelPermissionRequestParams& params
-) -> std::string {
+[[nodiscard]] inline auto
+serialize_permission_request_params(const ChannelPermissionRequestParams& params) -> std::string {
     loom::utils::json::JsonMutDoc doc;
     auto root = doc.object();
     root.add("request_id", doc.string(params.request_id));
@@ -552,7 +537,8 @@ public:
     SubscriptionHandle() = default;
 
     SubscriptionHandle(int id, std::function<void(int)> unsub_fn)
-        : id_(id), unsub_fn_(std::move(unsub_fn)) {}
+        : id_(id)
+        , unsub_fn_(std::move(unsub_fn)) {}
 
     ~SubscriptionHandle() { reset(); }
 
@@ -560,7 +546,8 @@ public:
     auto operator=(const SubscriptionHandle&) -> SubscriptionHandle& = delete;
 
     SubscriptionHandle(SubscriptionHandle&& other) noexcept
-        : id_(other.id_), unsub_fn_(std::move(other.unsub_fn_)) {
+        : id_(other.id_)
+        , unsub_fn_(std::move(other.unsub_fn_)) {
         other.id_ = -1;
         other.unsub_fn_ = nullptr;
     }
@@ -585,6 +572,7 @@ public:
     }
 
     [[nodiscard]] auto id() const -> int { return id_; }
+
     [[nodiscard]] auto valid() const -> bool { return id_ >= 0; }
 
 private:
@@ -597,7 +585,7 @@ namespace detail {
 // Internal subscription record
 struct SubscriptionRecord {
     int id;
-    std::optional<std::string> server_filter; // nullopt = all servers
+    std::optional<std::string> server_filter;  // nullopt = all servers
     ChannelNotificationType type_filter;
     ChannelNotificationHandler handler;
 };
@@ -608,23 +596,21 @@ inline std::map<int, SubscriptionRecord> bus_subscriptions;
 // Track which servers have active channel handlers (for get_active_servers)
 inline std::set<std::string> active_servers;
 
-} // namespace detail
+}  // namespace detail
 
 // Subscribe to notifications from a specific server + type.
 // Returns a RAII SubscriptionHandle that unsubscribes on destruction.
-[[nodiscard]] inline auto subscribe_channel_notification(
-    std::string_view server_name,
-    ChannelNotificationType type,
-    ChannelNotificationHandler handler
-) -> SubscriptionHandle {
+[[nodiscard]] inline auto subscribe_channel_notification(std::string_view server_name,
+                                                         ChannelNotificationType type,
+                                                         ChannelNotificationHandler handler)
+    -> SubscriptionHandle {
     std::lock_guard lock(detail::bus_mutex);
     int id = detail::next_subscription_id.fetch_add(1);
-    detail::bus_subscriptions[id] = detail::SubscriptionRecord{
-        .id = id,
-        .server_filter = std::string(server_name),
-        .type_filter = type,
-        .handler = std::move(handler)
-    };
+    detail::bus_subscriptions[id] =
+        detail::SubscriptionRecord{.id = id,
+                                   .server_filter = std::string(server_name),
+                                   .type_filter = type,
+                                   .handler = std::move(handler)};
     detail::active_servers.insert(std::string(server_name));
 
     return SubscriptionHandle(id, [](int sub_id) {
@@ -651,18 +637,15 @@ inline std::set<std::string> active_servers;
 }
 
 // Subscribe to notifications of a given type from ALL servers.
-[[nodiscard]] inline auto subscribe_all_channel_notifications(
-    ChannelNotificationType type,
-    ChannelNotificationHandler handler
-) -> SubscriptionHandle {
+[[nodiscard]] inline auto subscribe_all_channel_notifications(ChannelNotificationType type,
+                                                              ChannelNotificationHandler handler)
+    -> SubscriptionHandle {
     std::lock_guard lock(detail::bus_mutex);
     int id = detail::next_subscription_id.fetch_add(1);
-    detail::bus_subscriptions[id] = detail::SubscriptionRecord{
-        .id = id,
-        .server_filter = std::nullopt,
-        .type_filter = type,
-        .handler = std::move(handler)
-    };
+    detail::bus_subscriptions[id] = detail::SubscriptionRecord{.id = id,
+                                                               .server_filter = std::nullopt,
+                                                               .type_filter = type,
+                                                               .handler = std::move(handler)};
 
     return SubscriptionHandle(id, [](int sub_id) {
         std::lock_guard lock2(detail::bus_mutex);
@@ -672,10 +655,8 @@ inline std::set<std::string> active_servers;
 
 // Emit a channel notification to all matching handlers.
 // Handlers are called synchronously under the bus lock — keep handlers light.
-inline auto emit_channel_notification(
-    std::string_view server_name,
-    const ChannelNotification& notification
-) -> void {
+inline auto emit_channel_notification(std::string_view server_name,
+                                      const ChannelNotification& notification) -> void {
     // Copy the matching handlers under the lock, then release before calling
     // them to avoid deadlocks if a handler tries to subscribe/unsubscribe.
     std::vector<ChannelNotificationHandler> matching;
@@ -694,45 +675,38 @@ inline auto emit_channel_notification(
 
 // Convenience: emit a ServerStarted notification
 inline auto emit_server_started(std::string_view server_name) -> void {
-    ChannelNotification notif{
-        .type = ChannelNotificationType::ServerStarted,
-        .server_name = std::string(server_name),
-        .timestamp = std::chrono::system_clock::now(),
-        .data_json = "{}"
-    };
+    ChannelNotification notif{.type = ChannelNotificationType::ServerStarted,
+                              .server_name = std::string(server_name),
+                              .timestamp = std::chrono::system_clock::now(),
+                              .data_json = "{}"};
     emit_channel_notification(server_name, notif);
 }
 
 // Convenience: emit a ServerStopped notification
 inline auto emit_server_stopped(std::string_view server_name) -> void {
-    ChannelNotification notif{
-        .type = ChannelNotificationType::ServerStopped,
-        .server_name = std::string(server_name),
-        .timestamp = std::chrono::system_clock::now(),
-        .data_json = "{}"
-    };
+    ChannelNotification notif{.type = ChannelNotificationType::ServerStopped,
+                              .server_name = std::string(server_name),
+                              .timestamp = std::chrono::system_clock::now(),
+                              .data_json = "{}"};
     emit_channel_notification(server_name, notif);
 }
 
 // Convenience: emit a ToolListChanged notification
 inline auto emit_tool_list_changed(std::string_view server_name) -> void {
-    ChannelNotification notif{
-        .type = ChannelNotificationType::ToolListChanged,
-        .server_name = std::string(server_name),
-        .timestamp = std::chrono::system_clock::now(),
-        .data_json = "{}"
-    };
+    ChannelNotification notif{.type = ChannelNotificationType::ToolListChanged,
+                              .server_name = std::string(server_name),
+                              .timestamp = std::chrono::system_clock::now(),
+                              .data_json = "{}"};
     emit_channel_notification(server_name, notif);
 }
 
 // Convenience: emit a ServerError notification
-inline auto emit_server_error(std::string_view server_name, std::string_view error_message) -> void {
-    ChannelNotification notif{
-        .type = ChannelNotificationType::ServerError,
-        .server_name = std::string(server_name),
-        .timestamp = std::chrono::system_clock::now(),
-        .data_json = std::string(error_message)
-    };
+inline auto emit_server_error(std::string_view server_name, std::string_view error_message)
+    -> void {
+    ChannelNotification notif{.type = ChannelNotificationType::ServerError,
+                              .server_name = std::string(server_name),
+                              .timestamp = std::chrono::system_clock::now(),
+                              .data_json = std::string(error_message)};
     emit_channel_notification(server_name, notif);
 }
 
@@ -769,32 +743,25 @@ inline auto emit_server_error(std::string_view server_name, std::string_view err
 // Notify all subscribers of a channel update event (legacy string-based API).
 // Kept for backward compatibility — prefer emit_channel_notification for new code.
 auto notify_channel_update(std::string_view channel, std::string_view event) -> void {
-    ChannelNotification notif{
-        .type = ChannelNotificationType::ChannelMessage,
-        .server_name = std::string(channel),
-        .timestamp = std::chrono::system_clock::now(),
-        .data_json = std::string(event)
-    };
+    ChannelNotification notif{.type = ChannelNotificationType::ChannelMessage,
+                              .server_name = std::string(channel),
+                              .timestamp = std::chrono::system_clock::now(),
+                              .data_json = std::string(event)};
     emit_channel_notification(channel, notif);
 }
 
 // Subscribe to events on a specific channel (legacy string-based API).
 // Returns a subscription ID for unsubscribe().
 // Prefer subscribe_channel_notification + SubscriptionHandle for new code.
-auto subscribe_channel_events(
-    std::string_view channel,
-    std::function<void(std::string)> callback
-) -> int {
+auto subscribe_channel_events(std::string_view channel, std::function<void(std::string)> callback)
+    -> int {
     std::lock_guard lock(detail::bus_mutex);
     int id = detail::next_subscription_id.fetch_add(1);
     detail::bus_subscriptions[id] = detail::SubscriptionRecord{
         .id = id,
         .server_filter = std::string(channel),
         .type_filter = ChannelNotificationType::ChannelMessage,
-        .handler = [cb = std::move(callback)](const ChannelNotification& n) {
-            cb(n.data_json);
-        }
-    };
+        .handler = [cb = std::move(callback)](const ChannelNotification& n) { cb(n.data_json); }};
     detail::active_servers.insert(std::string(channel));
     return id;
 }
@@ -828,23 +795,19 @@ auto unsubscribe(int id) -> void {
 
 // Convenience: emit a ResourceListChanged notification
 inline auto emit_resource_list_changed(std::string_view server_name) -> void {
-    ChannelNotification notif{
-        .type = ChannelNotificationType::ResourceListChanged,
-        .server_name = std::string(server_name),
-        .timestamp = std::chrono::system_clock::now(),
-        .data_json = "{}"
-    };
+    ChannelNotification notif{.type = ChannelNotificationType::ResourceListChanged,
+                              .server_name = std::string(server_name),
+                              .timestamp = std::chrono::system_clock::now(),
+                              .data_json = "{}"};
     emit_channel_notification(server_name, notif);
 }
 
 // Convenience: emit a PromptListChanged notification
 inline auto emit_prompt_list_changed(std::string_view server_name) -> void {
-    ChannelNotification notif{
-        .type = ChannelNotificationType::PromptListChanged,
-        .server_name = std::string(server_name),
-        .timestamp = std::chrono::system_clock::now(),
-        .data_json = "{}"
-    };
+    ChannelNotification notif{.type = ChannelNotificationType::PromptListChanged,
+                              .server_name = std::string(server_name),
+                              .timestamp = std::chrono::system_clock::now(),
+                              .data_json = "{}"};
     emit_channel_notification(server_name, notif);
 }
 
@@ -856,11 +819,10 @@ inline auto emit_prompt_list_changed(std::string_view server_name) -> void {
 // notification arrives, the content is wrapped in a <channel> tag and the
 // whole thing is emitted to the bus. Subscribers (e.g. the query engine)
 // read `wrapped` to enqueue the message and `content`/`meta` for detail.
-inline auto emit_channel_message(
-    std::string_view server_name,
-    std::string_view content,
-    const std::optional<std::map<std::string, std::string>>& meta = std::nullopt
-) -> void {
+inline auto
+emit_channel_message(std::string_view server_name, std::string_view content,
+                     const std::optional<std::map<std::string, std::string>>& meta = std::nullopt)
+    -> void {
     auto wrapped = wrap_channel_message(server_name, content, meta);
 
     // Build JSON payload: { content, wrapped, meta? }
@@ -877,12 +839,10 @@ inline auto emit_channel_message(
     }
     doc.set_root(root);
 
-    ChannelNotification notif{
-        .type = ChannelNotificationType::ChannelMessage,
-        .server_name = std::string(server_name),
-        .timestamp = std::chrono::system_clock::now(),
-        .data_json = doc.to_string()
-    };
+    ChannelNotification notif{.type = ChannelNotificationType::ChannelMessage,
+                              .server_name = std::string(server_name),
+                              .timestamp = std::chrono::system_clock::now(),
+                              .data_json = doc.to_string()};
     emit_channel_notification(server_name, notif);
 }
 
@@ -890,23 +850,18 @@ inline auto emit_channel_message(
 // notifications/loom/channel/permission notification arrives, the
 // structured permission reply is emitted to the bus. Subscribers match
 // request_id against their pending permission map.
-inline auto emit_channel_permission(
-    std::string_view server_name,
-    std::string_view request_id,
-    std::string_view behavior
-) -> void {
+inline auto emit_channel_permission(std::string_view server_name, std::string_view request_id,
+                                    std::string_view behavior) -> void {
     loom::utils::json::JsonMutDoc doc;
     auto root = doc.object();
     root.add("request_id", doc.string(request_id));
     root.add("behavior", doc.string(behavior));
     doc.set_root(root);
 
-    ChannelNotification notif{
-        .type = ChannelNotificationType::ChannelPermission,
-        .server_name = std::string(server_name),
-        .timestamp = std::chrono::system_clock::now(),
-        .data_json = doc.to_string()
-    };
+    ChannelNotification notif{.type = ChannelNotificationType::ChannelPermission,
+                              .server_name = std::string(server_name),
+                              .timestamp = std::chrono::system_clock::now(),
+                              .data_json = doc.to_string()};
     emit_channel_notification(server_name, notif);
 }
 
@@ -954,9 +909,7 @@ public:
 
     ChannelHealthMonitor() = default;
 
-    ~ChannelHealthMonitor() {
-        stop();
-    }
+    ~ChannelHealthMonitor() { stop(); }
 
     // Non-copyable, non-movable (owns a thread).
     ChannelHealthMonitor(const ChannelHealthMonitor&) = delete;
@@ -967,15 +920,14 @@ public:
     // Start the health-monitor thread. Idempotent — calling start() on
     // an already-running monitor is a no-op.
     auto start() -> void {
-        if (running_.exchange(true)) return; // already running
-        monitor_thread_ = std::jthread([this](std::stop_token stoken) {
-            monitor_loop(std::move(stoken));
-        });
+        if (running_.exchange(true)) return;  // already running
+        monitor_thread_ =
+            std::jthread([this](std::stop_token stoken) { monitor_loop(std::move(stoken)); });
     }
 
     // Stop the health-monitor thread and join. Idempotent.
     auto stop() -> void {
-        if (!running_.exchange(false)) return; // already stopped
+        if (!running_.exchange(false)) return;  // already stopped
         if (monitor_thread_.joinable()) {
             monitor_thread_.request_stop();
             monitor_thread_.join();
@@ -984,11 +936,8 @@ public:
 
     // Register a server for health monitoring. If the monitor is not yet
     // running, it is started automatically.
-    auto register_server(
-        std::string server_name,
-        PingFunction ping_fn,
-        ReconnectFunction reconnect_fn = nullptr
-    ) -> void {
+    auto register_server(std::string server_name, PingFunction ping_fn,
+                         ReconnectFunction reconnect_fn = nullptr) -> void {
         {
             std::lock_guard lock(mutex_);
             ping_functions_[server_name] = std::move(ping_fn);
@@ -1070,8 +1019,7 @@ private:
             // Sleep for the ping interval, checking for stop requests.
             {
                 std::unique_lock lock(mutex_);
-                cv_.wait_for(lock, stoken, kPingInterval,
-                    [&]{ return stoken.stop_requested(); });
+                cv_.wait_for(lock, stoken, kPingInterval, [&] { return stoken.stop_requested(); });
             }
             if (stoken.stop_requested()) break;
 
@@ -1081,6 +1029,7 @@ private:
                 PingFunction ping;
                 ReconnectFunction reconnect;
             };
+
             std::vector<ServerPingEntry> entries;
             {
                 std::lock_guard lock(mutex_);
@@ -1090,9 +1039,8 @@ private:
                     entries.push_back(ServerPingEntry{
                         .name = name,
                         .ping = fn,
-                        .reconnect = recon_it != reconnect_functions_.end()
-                            ? recon_it->second : nullptr
-                    });
+                        .reconnect =
+                            recon_it != reconnect_functions_.end() ? recon_it->second : nullptr});
                 }
             }
 
@@ -1105,11 +1053,8 @@ private:
     }
 
     // Ping a single server and update its health state.
-    auto ping_server(
-        const std::string& server_name,
-        const PingFunction& ping_fn,
-        const ReconnectFunction& reconnect_fn
-    ) -> void {
+    auto ping_server(const std::string& server_name, const PingFunction& ping_fn,
+                     const ReconnectFunction& reconnect_fn) -> void {
         if (!ping_fn) return;
 
         bool healthy = false;
@@ -1121,7 +1066,7 @@ private:
 
         std::lock_guard lock(mutex_);
         auto it = health_states_.find(server_name);
-        if (it == health_states_.end()) return; // unregistered while pinging
+        if (it == health_states_.end()) return;  // unregistered while pinging
 
         auto& state = it->second;
         state.last_ping_attempt = std::chrono::steady_clock::now();
@@ -1140,8 +1085,8 @@ private:
             if (state.consecutive_failures >= kErrorThreshold && !state.error_emitted) {
                 state.error_emitted = true;
                 emit_server_error(server_name,
-                    std::format("server {} failed {} consecutive health checks",
-                        server_name, state.consecutive_failures));
+                                  std::format("server {} failed {} consecutive health checks",
+                                              server_name, state.consecutive_failures));
             }
 
             // Attempt reconnect with exponential backoff if a reconnect
@@ -1152,16 +1097,14 @@ private:
                 } else {
                     // Double the backoff, capped at kMaxBackoff.
                     auto next = state.current_backoff.count() * 2;
-                    state.current_backoff = std::chrono::milliseconds{
-                        std::min(next, kMaxBackoff.count())
-                    };
+                    state.current_backoff =
+                        std::chrono::milliseconds{std::min(next, kMaxBackoff.count())};
                 }
 
                 // Fire reconnect asynchronously so we don't block the
                 // monitor loop. Detached thread is safe — the reconnect
                 // function owns its own lifetime.
-                std::thread([reconnect_fn, server_name,
-                             delay = state.current_backoff]() {
+                std::thread([reconnect_fn, server_name, delay = state.current_backoff]() {
                     std::this_thread::sleep_for(delay);
                     try {
                         (void)reconnect_fn(server_name);
@@ -1209,12 +1152,10 @@ private:
 //   has_notifications — whether the server declares notifications capability
 //   ping_fn         — optional health-check function (required for monitoring)
 //   reconnect_fn    — optional reconnect function for auto-recovery
-inline auto on_mcp_server_connected(
-    std::string_view server_name,
-    bool has_notifications,
-    ChannelHealthMonitor::PingFunction ping_fn = nullptr,
-    ChannelHealthMonitor::ReconnectFunction reconnect_fn = nullptr
-) -> void {
+inline auto on_mcp_server_connected(std::string_view server_name, bool has_notifications,
+                                    ChannelHealthMonitor::PingFunction ping_fn = nullptr,
+                                    ChannelHealthMonitor::ReconnectFunction reconnect_fn = nullptr)
+    -> void {
     // Always emit ServerStarted — even non-channel servers benefit from
     // UI awareness of connection state.
     emit_server_started(server_name);
@@ -1222,11 +1163,8 @@ inline auto on_mcp_server_connected(
     // Only register for health monitoring if the server supports
     // notifications and a ping function was provided.
     if (has_notifications && ping_fn) {
-        get_global_health_monitor().register_server(
-            std::string(server_name),
-            std::move(ping_fn),
-            std::move(reconnect_fn)
-        );
+        get_global_health_monitor().register_server(std::string(server_name), std::move(ping_fn),
+                                                    std::move(reconnect_fn));
     }
 }
 
@@ -1256,10 +1194,8 @@ inline auto on_mcp_prompts_changed(std::string_view server_name) -> void {
 // Called when a server encounters a non-fatal error (e.g., a single
 // tool call fails). Does NOT emit ServerError — that's reserved for
 // health-check failures from the monitor.
-inline auto on_mcp_server_error(
-    std::string_view server_name,
-    std::string_view error_message
-) -> void {
+inline auto on_mcp_server_error(std::string_view server_name, std::string_view error_message)
+    -> void {
     emit_server_error(server_name, error_message);
 }
 
@@ -1285,43 +1221,30 @@ inline auto on_mcp_server_error(
 // McpConnectionManager (which lives in a different module). Callers must
 // import both modules.
 template <typename ConnectionManagerT>
-auto wire_channel_bus_to_manager(
-    ConnectionManagerT& mgr,
-    ChannelHealthMonitor::PingFunction ping_fn,
-    ChannelHealthMonitor::ReconnectFunction reconnect_fn = nullptr
-) -> void {
+auto wire_channel_bus_to_manager(ConnectionManagerT& mgr,
+                                 ChannelHealthMonitor::PingFunction ping_fn,
+                                 ChannelHealthMonitor::ReconnectFunction reconnect_fn = nullptr)
+    -> void {
     // Wire connect → emit ServerStarted + register health monitor
-    mgr.set_server_connected_callback(
-        [ping_fn, reconnect_fn](const std::string& server_name) {
-            on_mcp_server_connected(
-                server_name,
-                /*has_notifications=*/true,
-                ping_fn,
-                reconnect_fn
-            );
-        }
-    );
+    mgr.set_server_connected_callback([ping_fn, reconnect_fn](const std::string& server_name) {
+        on_mcp_server_connected(server_name,
+                                /*has_notifications=*/true, ping_fn, reconnect_fn);
+    });
 
     // Wire disconnect → emit ServerStopped + unregister
     mgr.set_server_disconnected_callback(
-        [](const std::string& server_name) {
-            on_mcp_server_disconnected(server_name);
-        }
-    );
+        [](const std::string& server_name) { on_mcp_server_disconnected(server_name); });
 
     // Wire tools updated → emit ToolListChanged
     mgr.set_tools_updated_callback(
         [](const std::string& server_name, const std::vector<std::string>& /*tools*/) {
             on_mcp_tools_changed(server_name);
-        }
-    );
+        });
 
     // Wire server error → emit ServerError
-    mgr.set_server_error_callback(
-        [](const std::string& server_name, const std::string& error) {
-            on_mcp_server_error(server_name, error);
-        }
-    );
+    mgr.set_server_error_callback([](const std::string& server_name, const std::string& error) {
+        on_mcp_server_error(server_name, error);
+    });
 }
 
-} // namespace loom::services::mcp
+}  // namespace loom::services::mcp

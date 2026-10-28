@@ -3,7 +3,6 @@
 /// Sets the effort level for the model.
 module;
 
-
 export module loom.commands.effort;
 
 import std;
@@ -28,12 +27,16 @@ public:
     [[nodiscard]] static CommandDefinition definition() {
         return CommandDefinition{
             .name = "effort",
-            .description = "Set or show the effort level (low/medium/high/max/auto). Run without arguments to see current level.",
-            .args = {
-                CommandArg{.name = "level", .description = "Effort level: low, medium, high, max, auto",
-                           .type = ArgType::Choice, .required = false,
-                           .choices = {"low", "medium", "high", "max", "auto"}},
-            },
+            .description = "Set or show the effort level (low/medium/high/max/auto). Run without "
+                           "arguments to see current level.",
+            .args =
+                {
+                    CommandArg{.name = "level",
+                               .description = "Effort level: low, medium, high, max, auto",
+                               .type = ArgType::Choice,
+                               .required = false,
+                               .choices = {"low", "medium", "high", "max", "auto"}},
+                },
             .category = "configuration",
             .aliases = {},
             .hidden = false,
@@ -47,7 +50,9 @@ public:
             if (!is_valid_level(level)) {
                 return std::unexpected(Error::make(
                     ErrorCode::InvalidRequest,
-                    std::format("Invalid argument: {}. Valid options are: low, medium, high, max, auto", level)));
+                    std::format(
+                        "Invalid argument: {}. Valid options are: low, medium, high, max, auto",
+                        level)));
             }
         }
         return {};
@@ -69,9 +74,7 @@ public:
     [[nodiscard]] std::vector<std::string> complete(std::string_view partial) {
         std::vector<std::string> suggestions;
 
-        static constexpr std::array levels = {
-            "low", "medium", "high", "max", "auto"
-        };
+        static constexpr std::array levels = {"low", "medium", "high", "max", "auto"};
 
         for (const auto& level : levels) {
             if (std::string_view(level).starts_with(partial)) {
@@ -84,10 +87,8 @@ public:
 
 private:
     [[nodiscard]] static bool is_valid_level(std::string_view level) {
-        static constexpr std::array valid_levels = {
-            "low", "medium", "high", "max", "auto",
-            "help", "-h", "--help"
-        };
+        static constexpr std::array valid_levels = {"low",  "medium", "high", "max",
+                                                    "auto", "help",   "-h",   "--help"};
         return std::ranges::find(valid_levels, level) != valid_levels.end();
     }
 
@@ -119,7 +120,7 @@ private:
     }
 
     [[nodiscard]] static Result<CommandResult> set_effort(const CommandContext& ctx,
-                                                           std::string_view level) {
+                                                          std::string_view level) {
         std::string level_str{level};
         ctx.dispatch_action(ACTION_SET_EFFORT_VALUE, &level_str);
         const auto description = get_effort_description(level);
@@ -128,4 +129,4 @@ private:
     }
 };
 
-} // namespace loom::commands
+}  // namespace loom::commands

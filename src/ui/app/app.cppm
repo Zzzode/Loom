@@ -3,14 +3,14 @@
 ///        the production QueryEngine.
 module;
 
-
-#include <unistd.h>
-#include <ftxui/dom/elements.hpp>
-#include <ftxui/screen/screen.hpp>
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/event.hpp>
 #include <ftxui/component/screen_interactive.hpp>
+#include <ftxui/dom/elements.hpp>
+#include <ftxui/screen/screen.hpp>
+#include <unistd.h>
+
 #include <cctype>
 
 export module loom.ui.app.app;
@@ -18,23 +18,23 @@ export module loom.ui.app.app;
 import std;
 
 import loom.types.types;
-import loom.ui.visual.markdown;  // arch-check: keep-import (StreamingMarkdown field)
+import loom.ui.visual.markdown; // arch-check: keep-import (StreamingMarkdown field)
 import loom.ui.screens.repl_state;
-import loom.ui.screens.messages_store;   // MessageDisplayEntry (project_message / local_command_messages_)
-import loom.ui.screens.task_view_store;  // PendingSpinner mode
+import loom.ui.screens.messages_store; // MessageDisplayEntry (project_message / local_command_messages_)
+import loom.ui.screens.task_view_store; // PendingSpinner mode
 import loom.ui.prompt.autocomplete_sources;
 // P0-2: 7-stage message pipeline utilities (dedup / tag filter / tool augment).
 import loom.ui.messages.message_pipeline;
 // P3-1c: async statusline worker (jthread + debounce/memo state).
-import loom.ui.app.statusline_coordinator;  // arch-check: keep-import (member)
+import loom.ui.app.statusline_coordinator; // arch-check: keep-import (member)
 // P3-1a: teammate inbox/permission state (PIMPL + self-contained methods).
-import loom.ui.app.teammate_coordinator;  // arch-check: keep-import (member)
+import loom.ui.app.teammate_coordinator; // arch-check: keep-import (member)
 // P4-1b: async clipboard paste state + worker.
-import loom.ui.app.paste_coordinator;  // arch-check: keep-import (member)
+import loom.ui.app.paste_coordinator; // arch-check: keep-import (member)
 // P4-1d: tool-permission + elicitation + ask-user blocking-response state.
-import loom.ui.app.permission_coordinator;  // arch-check: keep-import (member)
+import loom.ui.app.permission_coordinator; // arch-check: keep-import (member)
 // RFC 0007 Phase 1: async clipboard copy coordinator.
-import loom.platform.clipboard_coordinator;  // arch-check: keep-import (member)
+import loom.platform.clipboard_coordinator; // arch-check: keep-import (member)
 
 export namespace loom::ui {
 
@@ -42,6 +42,7 @@ export namespace loom::ui {
 // Forward-declared here so the interface can hold a unique_ptr without
 // importing the heavy modules its member objects require.
 struct AppImpl;
+
 // Deleter whose call operator is defined in the :impl partition (where
 // AppImpl is complete). This lets unique_ptr<AppImpl> be destroyed from any
 // translation unit — including the out-of-line constructor's implicit
@@ -53,6 +54,7 @@ struct AppImplDeleter {
 // Nested PIMPL for settings (disk load + file-watch). Defined in
 // app_settings.cpp; keeps loom.config.settings_manager out of the :impl BMI.
 struct SettingsState;
+
 struct SettingsStateDeleter {
     void operator()(SettingsState* p) const noexcept;
 };
@@ -87,26 +89,22 @@ namespace acsrc = loom::ui::autocomplete_sources;
 // (RFC 0001 Phase C batch 1). Plain declarations here (inline dropped;
 // the impl unit holds the single strong definition).
 [[nodiscard]] std::optional<std::string> non_empty_env(const char* name);
-[[nodiscard]] std::optional<std::string> first_non_empty_env(
-    std::initializer_list<const char*> names);
+[[nodiscard]] std::optional<std::string>
+first_non_empty_env(std::initializer_list<const char*> names);
 [[nodiscard]] std::optional<bool> parse_bool_text(const std::string& value);
 [[nodiscard]] std::optional<int> parse_int_text(const std::string& value);
 [[nodiscard]] std::string trim_ascii_copy(std::string_view value);
-[[nodiscard]] std::string summarize_agent_description(
-    std::string_view description);
+[[nodiscard]] std::string summarize_agent_description(std::string_view description);
 [[nodiscard]] std::string lowercase_ascii(std::string_view value);
 
 // Session-transcript helpers shared between the session picker
 // (app_handle_submit.cpp) and autocomplete (app_autocomplete.cpp).  Both read
 // messages.jsonl only — the legacy messages.json format is no longer
 // supported.  Bodies in app_handle_submit.cpp.
-[[nodiscard]] int count_session_messages(
-    const std::filesystem::path& sessions_dir,
-    const std::string& session_id);
-[[nodiscard]] std::string first_user_message_as_title(
-    const std::filesystem::path& sessions_dir,
-    const std::string& session_id);
-
+[[nodiscard]] int count_session_messages(const std::filesystem::path& sessions_dir,
+                                         const std::string& session_id);
+[[nodiscard]] std::string first_user_message_as_title(const std::filesystem::path& sessions_dir,
+                                                      const std::string& session_id);
 
 struct AutocompleteToken {
     std::size_t start = 0;
@@ -120,9 +118,7 @@ struct AutocompleteToken {
 // Body in app_autocomplete.cpp (RFC 0001 Phase C batch 2) — sole caller
 // is RefreshAutocompleteSuggestions in the same TU. inline dropped; the
 // impl unit holds the single strong definition.
-[[nodiscard]] AutocompleteToken token_around_cursor(
-    std::string_view input,
-    std::size_t cursor);
+[[nodiscard]] AutocompleteToken token_around_cursor(std::string_view input, std::size_t cursor);
 
 // AT-12: fuzzy_match_ascii / fuzzy_rank_ascii removed — all autocomplete
 // ranking now delegates to loom::ui::prompt::fuzzy_rank_nucleo (frn::), which
@@ -149,8 +145,7 @@ struct AutocompleteToken {
 // Non-assistant messages and assistant messages with a single block kind
 // still project to exactly one entry (identical to project_message).
 // ============================================================
-[[nodiscard]] std::vector<repl::MessageDisplayEntry>
-project_messages(const Message& msg);
+[[nodiscard]] std::vector<repl::MessageDisplayEntry> project_messages(const Message& msg);
 
 void reconcile_tool_result_statuses(std::vector<repl::MessageDisplayEntry>& rows);
 
@@ -186,8 +181,7 @@ private:
     // keeping those closures out of this BMI.  The sessions directory is
     // NOT type-erased: it is a standard fs::path resolved once in
     // construct_impl and exposed via sessions_dir().
-    void construct_impl(void* engine, void* lifecycle_hooks,
-                        void* cmd_registry,
+    void construct_impl(void* engine, void* lifecycle_hooks, void* cmd_registry,
                         std::optional<std::filesystem::path> sessions_dir);
     void construct_settings();
     [[nodiscard]] void* engine_raw() const noexcept;
@@ -199,13 +193,13 @@ private:
 
     // OSC 7501 lifecycle stays behind AppImpl; painting never sends reports.
     void StartProgramStatusWithWriter(bool interactive,
-        std::function<bool(std::string_view)> writer);
+                                      std::function<bool(std::string_view)> writer);
     [[nodiscard]] std::uint64_t BeginProgramStatusOperation();
     void CancelProgramStatusOperation();
     void CompleteProgramStatusOperation(std::uint64_t generation, bool error, bool paused);
     [[nodiscard]] bool HandleProgramStatusControl(const Event& event);
     void PrepareProgramStatusInput(Event& event);
-    [[nodiscard]] std::pair<bool, bool> ProgramStatusBlocks(); // permission, question
+    [[nodiscard]] std::pair<bool, bool> ProgramStatusBlocks();  // permission, question
     void UpdateProgramStatusSnapshot();
     void RefreshProgramStatus() noexcept;
 
@@ -228,6 +222,7 @@ private:
     std::string agent_instances_session_;
     std::shared_ptr<void> agent_instances_state_;
     std::jthread agent_operation_thread_;
+
     struct AgentConversationView {
         std::shared_ptr<repl::ReplScreenState> state;
         Component component;
@@ -236,12 +231,13 @@ private:
         std::string id;
         std::string title;
     };
+
     std::unordered_map<std::string, AgentConversationView> agent_conversation_views_;
     std::string active_agent_conversation_;
     void OpenAgentConversation(std::string session, std::string id);
     void RefreshAgentConversation();
     [[nodiscard]] bool SubmitAgentConversation(std::string session, std::string id,
-        const std::string& text, repl::InputMode mode);
+                                               const std::string& text, repl::InputMode mode);
     [[nodiscard]] bool RootDialogTakesPriority();
     [[nodiscard]] Component VisibleConversationComponent();
     [[nodiscard]] bool HandleAgentConversationEvent(const Event& event);
@@ -302,37 +298,44 @@ private:
     std::atomic<std::int64_t> generation_rate_deadline_ms_{0};
     std::atomic<std::int64_t> todo_collapse_deadline_ms_{0};
     std::atomic<bool> conversation_projection_dirty_{true};
+
     struct CachedMessageProjection {
         Message source;
         std::vector<repl::MessageDisplayEntry> rows;
     };
+
     std::vector<CachedMessageProjection> committed_projection_cache_;
     std::size_t committed_row_count_ = 0;
     std::uint64_t committed_source_count_ = 0;
+
     struct PendingPasteSubmission {
         std::string text;
         repl::InputMode mode;
         std::chrono::steady_clock::time_point deadline;
     };
+
     std::optional<PendingPasteSubmission> pending_paste_submission_;
     std::mutex result_mutex_;
+
     // RFC 0018: staged under result_mutex_; only the UI projects the rate.
     struct GenerationRate {
         struct Sample {
             std::chrono::steady_clock::time_point at;
             std::size_t tokens;
         };
+
         std::optional<std::uint32_t> block_index;
         std::optional<std::chrono::steady_clock::time_point> last_delta;
         std::deque<Sample> samples;
         std::optional<double> value;
         bool suppressed = false;
     } generation_rate_;
+
     // Caller holds result_mutex_. Reset retains cancellation suppression.
     void ResetGenerationRate(bool suppress = false);
-    void ObserveGenerationDelta(std::uint32_t index,
-                                std::chrono::steady_clock::time_point now);
+    void ObserveGenerationDelta(std::uint32_t index, std::chrono::steady_clock::time_point now);
     void ProjectGenerationRate();
+
     /// Pending error from a StreamError event.  Carries the error_type so
     /// ConsumePendingResult can distinguish API/network errors (retriable,
     /// show countdown + Retry button) from tool errors (not retriable,
@@ -341,12 +344,15 @@ private:
         std::string type;
         std::string message;
     };
+
     std::optional<PendingError> pending_error_;
+
     // Worker-owned stream transitions; applied to the plain store on the UI thread.
     struct PendingSpinner {
         repl::SpinnerMode mode;
         std::optional<std::string> verb;
     };
+
     std::optional<PendingSpinner> pending_spinner_;
     bool pending_markdown_reset_ = false;
     std::atomic<bool> statusline_update_pending_{false};
@@ -360,12 +366,14 @@ private:
     // pending_paste_results_ handoff pattern so local_command_messages_ /
     // SyncState are only ever mutated on the render thread.
     std::mutex bash_result_mutex_;
+
     struct PendingBashResult {
-        std::string output;   // combined stdout+stderr (already trimmed)
+        std::string output;  // combined stdout+stderr (already trimmed)
         bool is_error = false;
         std::string cwd;
         std::string session_id;
     };
+
     std::optional<PendingBashResult> pending_bash_result_;  // bg→UI
     // AT-09: inbound IDE at_mentioned tokens staged by the MCP receive
     // thread (bg→UI), drained on the render thread in
@@ -392,6 +400,7 @@ private:
     /// starts with a fresh frame.  Used by
     /// RenderAssistantTextMessageFaithful via MessagesListInput.streaming_md.
     ::loom::ui::StreamingMarkdown streaming_markdown_;
+
     struct StreamingToolPreview {
         std::string tool_name;
         std::string tool_use_id;  ///< M6: matches ToolExecution* events
@@ -399,18 +408,19 @@ private:
         std::string result_preview;  ///< M6: live streaming result preview
         // P0-2 Stage 5: Augmented tool result fields (lazy computed once on
         // ToolExecutionEnd — used by collapsed tool card + transcript.
-        std::string compact_preview;   /// 200-char one-liner
-        int         error_code      = 0;  /// 0=none, >0 shell exit/HTTP code
-        bool        truncated       = false;/// result > 4 KiB threshold
-        bool complete = false;       ///< ContentBlockStop: input_json fully streamed
-        bool exec_started = false;   ///< Execution state is independent of output text
-        bool exec_done = false;      ///< ToolExecutionEnd: tool has finished executing
+        std::string compact_preview;  /// 200-char one-liner
+        int error_code = 0;           /// 0=none, >0 shell exit/HTTP code
+        bool truncated = false;       /// result > 4 KiB threshold
+        bool complete = false;        ///< ContentBlockStop: input_json fully streamed
+        bool exec_started = false;    ///< Execution state is independent of output text
+        bool exec_done = false;       ///< ToolExecutionEnd: tool has finished executing
         bool is_error = false;
         /// Wall-clock start time (steady_clock) — set on ContentBlockStart.
         /// Used by the chain compressor to include tool call time in the
         /// live elapsed timer (now - earliest_start across thinking + tools).
         std::optional<std::chrono::steady_clock::time_point> streaming_started_at;
     };
+
     // StreamingThinking preview { text, complete, streaming_ended_at,
     // streaming_started_at }.  streaming_ended_at enables the 3s grace
     // period after thinking stops (matching kThinkingCollapseGrace in
@@ -422,6 +432,7 @@ private:
         std::optional<std::chrono::steady_clock::time_point> streaming_ended_at;
         std::optional<std::chrono::steady_clock::time_point> streaming_started_at;
     };
+
     std::map<std::uint32_t, StreamingToolPreview> streaming_tools_;
     std::map<std::uint32_t, StreamingThinkingPreview> streaming_thinking_;
 
@@ -437,8 +448,8 @@ private:
         std::chrono::milliseconds duration{0};
         std::chrono::steady_clock::time_point start_time{};
     };
-    std::unordered_map<std::string, ThinkingTiming>
-        thinking_duration_cache_;
+
+    std::unordered_map<std::string, ThinkingTiming> thinking_duration_cache_;
 
     // Returns true when any streaming thinking block is still being streamed,
     // OR when a recently-completed thinking block is within the 3-second
@@ -460,13 +471,15 @@ private:
     // Clicks without drag pass through to existing handlers (hyperlink,
     // click-to-expand) which all listen on Released events.
     struct TextSelection {
-        bool active = false;     // true once drag threshold exceeded
-        bool potential = false;  // true after press, before threshold
-        bool copied = false;     // true only after native clipboard completion
+        bool active = false;           // true once drag threshold exceeded
+        bool potential = false;        // true after press, before threshold
+        bool copied = false;           // true only after native clipboard completion
         std::size_t copied_chars = 0;  // UTF-8 char count for the toast
-        std::optional<std::string> copy_feedback; // Confirmed copy or unconfirmed terminal request.
+        std::optional<std::string>
+            copy_feedback;  // Confirmed copy or unconfirmed terminal request.
         int start_x = 0, start_y = 0;
         int end_x = 0, end_y = 0;
+
         // Transcript endpoints are content rows; other selections use screen
         // rows. Retain only frames visited during this selection gesture.
         struct TranscriptRows {
@@ -475,12 +488,14 @@ private:
             int width = 0;
             bool invalid = false;
         };
+
         std::shared_ptr<TranscriptRows> rows;
         std::pair<int, int> start_row{}, end_row{};
         bool virtual_mode = false;
         int content_height = 0;
         std::uint64_t source_revision = 0;
     };
+
     TextSelection text_selection_;
     // ScreenInteractive clears its pixels after flushing each frame. Keep the
     // last rendered frame for selection extraction between render passes.
@@ -491,6 +506,7 @@ private:
     // request post; re-checked in the result callback to discard stale
     // notifications from superseded selections.
     std::atomic<std::uint64_t> copy_generation_{0};
+
     // Pending copy result from the worker thread, drained on the UI thread.
     // The worker stores the result + generation here and calls PostRenderEvent;
     // the UI thread drains it in DrainCopyResult() (called from OnEvent/Render).
@@ -499,6 +515,7 @@ private:
         loom::utils::clipboard::CopyResult result;
         std::shared_ptr<const std::string> text;  // for OSC 52 fallback
     };
+
     std::mutex copy_result_mutex_;
     std::optional<PendingCopyResult> pending_copy_result_;
 
@@ -645,9 +662,7 @@ private:
     /// entry.  Kept in the app layer because command handlers do not own the
     /// adapter's explicit session-storage override.
     bool ResumeSessionFromDirectory(const std::filesystem::path& sessions_dir,
-                                    std::string_view session_id,
-                                    std::string_view status_message);
-
+                                    std::string_view session_id, std::string_view status_message);
 
     // Run a user-initiated `!` command LOCALLY (never an LLM turn).  It runs
     // the command with the sandbox disabled, renders a <bash-input> user row
@@ -673,7 +688,6 @@ private:
 
     void RefreshAutocompleteSuggestions();
 
-
     // Agents menu methods are defined in app_agent_menu.cpp so the
     // agent_cards closure stays out of this interface BMI.
     void RefreshAgentsMenuOutput();
@@ -685,27 +699,24 @@ private:
     // Skills-menu helpers — bodies in app_skills_menu.cpp (RFC 0001
     // Phase C batch 1).
     [[nodiscard]] static int skill_source_order(std::string_view source);
-    [[nodiscard]] static bool is_visible_skills_menu_source(
-        std::string_view source);
+    [[nodiscard]] static bool is_visible_skills_menu_source(std::string_view source);
 
     // UTF-16 code-unit / rough-JS-token estimates — bodies in
     // app_helpers.cpp (RFC 0001 Phase C batch 1).
     [[nodiscard]] static bool utf8_continuation(unsigned char ch);
-    [[nodiscard]] static std::size_t utf16_code_unit_count(
-        std::string_view value);
-    [[nodiscard]] static std::size_t rough_js_token_count(
-        std::string_view value);
+    [[nodiscard]] static std::size_t utf16_code_unit_count(std::string_view value);
+    [[nodiscard]] static std::size_t rough_js_token_count(std::string_view value);
 
     // Skills-menu formatting + open — bodies in app_skills_menu.cpp
     // (RFC 0001 Phase C batch 1). OpenSkillsMenu mutates screen_state_ and
     // calls PostRenderEvent() (body in app_animation.cpp since batch 2).
-    [[nodiscard]] static std::size_t skills_menu_token_estimate(
-        const acsrc::SkillSuggestionData& skill);
+    [[nodiscard]] static std::size_t
+    skills_menu_token_estimate(const acsrc::SkillSuggestionData& skill);
     [[nodiscard]] static std::string collapse_home_path(std::string path);
-    [[nodiscard]] static std::string skill_source_group_title(
-        const acsrc::SkillSuggestionData& skill);
-    [[nodiscard]] static std::string FormatSkillsMenuOutput(
-        std::vector<acsrc::SkillSuggestionData> skills);
+    [[nodiscard]] static std::string
+    skill_source_group_title(const acsrc::SkillSuggestionData& skill);
+    [[nodiscard]] static std::string
+    FormatSkillsMenuOutput(std::vector<acsrc::SkillSuggestionData> skills);
     void OpenSkillsMenu();
 
 public:
@@ -714,15 +725,12 @@ public:
     void StartProgramStatus(bool interactive) noexcept;
     void FinishProgramStatus(bool normal) noexcept;
 
-    AppAdapter(void* engine, void* lifecycle_hooks,
-               void* cmd_registry,
-               std::optional<std::filesystem::path> sessions_dir,
-               std::function<void()> on_exit);
+    AppAdapter(void* engine, void* lifecycle_hooks, void* cmd_registry,
+               std::optional<std::filesystem::path> sessions_dir, std::function<void()> on_exit);
 
     void HandleSubmit(const std::string& text,
                       repl::InputMode submit_mode = repl::InputMode::Normal,
-                      bool wait_for_pastes = true,
-                      bool retry_request = false);
+                      bool wait_for_pastes = true, bool retry_request = false);
 
     void set_tool_round_budget(std::optional<std::uint32_t> budget);
 
@@ -759,9 +767,7 @@ public:
     // Out-of-line in app_constructor.cpp so loom.ui.app.statusline_runner,
     // loom.utils.model and loom.constants stay out of this interface's BMI.
     [[nodiscard]] std::string BuildStatuslineInputJson();
-    bool ExecuteStatuslineCommand(std::string_view command,
-                                  std::string json_input,
-                                  int timeout_ms,
+    bool ExecuteStatuslineCommand(std::string_view command, std::string json_input, int timeout_ms,
                                   std::string& output);
 
     // Apply a chain of collapse passes to the message list before projecting
@@ -781,8 +787,8 @@ public:
     // view (collapse gated on isFullscreenEnvEnabled()).  `verbose=false`:
     // there is no ctrl+O verbose transcript toggle at this layer yet, so we use
     // the default collapsed presentation (each item shown only in verbose).
-    [[nodiscard]] std::vector<Message> ApplyMessageCollapsePipeline(
-        std::vector<Message> messages) const;
+    [[nodiscard]] std::vector<Message>
+    ApplyMessageCollapsePipeline(std::vector<Message> messages) const;
 
     void SyncState();
 
@@ -811,9 +817,7 @@ public:
 
     Component ActiveChild() override;
 
-    void set_screen(ScreenInteractive* screen) {
-        screen_.store(screen, std::memory_order_release);
-    }
+    void set_screen(ScreenInteractive* screen) { screen_.store(screen, std::memory_order_release); }
 
     // ── Async clipboard paste worker ──────────────────────────────────────
     // Spawns a detached thread that reads the clipboard image.  On success
@@ -951,8 +955,8 @@ private:
 
     [[nodiscard]] bool is_agents_view_for_testing() const noexcept;
 
-    [[nodiscard]] bool is_local_jsx_command_for_testing(
-        std::string_view command_name) const noexcept;
+    [[nodiscard]] bool
+    is_local_jsx_command_for_testing(std::string_view command_name) const noexcept;
 
     [[nodiscard]] int active_agents_selection_position_for_testing() const noexcept;
 
@@ -984,22 +988,19 @@ private:
     [[nodiscard]] bool mouse_tracking_on_for_testing() const noexcept;
 
     // RFC 0007: copy result pipeline for stale-result/OSC 52 tests.
-    void inject_copy_result_for_testing(
-        std::uint64_t generation,
-        loom::utils::clipboard::CopyResult result,
-        std::string text);
+    void inject_copy_result_for_testing(std::uint64_t generation,
+                                        loom::utils::clipboard::CopyResult result,
+                                        std::string text);
     void drain_copy_result_for_testing();
     [[nodiscard]] std::string footer_notification_text_for_testing() const;
     void set_copy_generation_for_testing(std::uint64_t gen);
 
     // ── Virtual renderer hysteresis (RFC 0008) ─────────────────────
-    void set_virtual_renderer_state_for_testing(
-        bool is_virtual, std::uint64_t switch_count, bool force_bottom);
+    void set_virtual_renderer_state_for_testing(bool is_virtual, std::uint64_t switch_count,
+                                                bool force_bottom);
     [[nodiscard]] bool virtual_renderer_is_virtual_for_testing() const noexcept;
-    [[nodiscard]] std::uint64_t
-    virtual_mode_switch_count_for_testing() const noexcept;
-    [[nodiscard]] bool
-    force_bottom_after_mode_switch_for_testing() const noexcept;
+    [[nodiscard]] std::uint64_t virtual_mode_switch_count_for_testing() const noexcept;
+    [[nodiscard]] bool force_bottom_after_mode_switch_for_testing() const noexcept;
     /// Trigger the on_clear_session callback (session-expired card path).
     void trigger_clear_session_for_testing();
 };
@@ -1023,23 +1024,24 @@ struct AppTestingSeams {
     AppAdapter* app;
 
     // Exercise production geometry on deterministic rendered cells.
-    [[nodiscard]] static std::string selected_text_for_testing(
-        const ftxui::Screen& screen, int x0, int y0, int x1, int y1);
-    [[nodiscard]] static ftxui::Element selection_highlight_for_testing(
-        ftxui::Element child, int x0, int y0, int x1, int y1);
+    [[nodiscard]] static std::string selected_text_for_testing(const ftxui::Screen& screen, int x0,
+                                                               int y0, int x1, int y1);
+    [[nodiscard]] static ftxui::Element
+    selection_highlight_for_testing(ftxui::Element child, int x0, int y0, int x1, int y1);
     [[nodiscard]] std::optional<std::string> copy_feedback_for_testing() const;
 
     // UI-thread-only inspection; workers must never mutate the returned state.
     [[nodiscard]] std::shared_ptr<const repl::ReplScreenState> screen_state_for_testing() const;
-    [[nodiscard]] std::shared_ptr<repl::ReplScreenState> agent_conversation_state_for_testing() const;
+    [[nodiscard]] std::shared_ptr<repl::ReplScreenState>
+    agent_conversation_state_for_testing() const;
     [[nodiscard]] std::string active_agent_conversation_for_testing() const;
     [[nodiscard]] bool stop_background_workers_for_testing();
     [[nodiscard]] std::size_t pending_ui_action_count_for_testing() const;
     [[nodiscard]] std::function<void()> runtime_agent_change_callback_for_testing();
     [[nodiscard]] std::shared_ptr<std::atomic<bool>> runtime_agent_dirty_for_testing() const;
     [[nodiscard]] std::function<void(std::function<void()>)> ui_dispatcher_for_testing();
-    [[nodiscard]] bool resume_session_for_testing(
-        const std::filesystem::path& sessions_dir, std::string session_id);
+    [[nodiscard]] bool resume_session_for_testing(const std::filesystem::path& sessions_dir,
+                                                  std::string session_id);
     void start_program_status_for_testing(std::function<bool(std::string_view)> writer);
     void enqueue_program_status_completion_for_testing(bool error, bool paused = false);
 
@@ -1093,8 +1095,8 @@ struct AppTestingSeams {
 
     // ── Agents view ────────────────────────────────────────────────
     [[nodiscard]] bool is_agents_view_for_testing() const noexcept;
-    [[nodiscard]] bool is_local_jsx_command_for_testing(
-        std::string_view command_name) const noexcept;
+    [[nodiscard]] bool
+    is_local_jsx_command_for_testing(std::string_view command_name) const noexcept;
     [[nodiscard]] int active_agents_selection_position_for_testing() const noexcept;
     [[nodiscard]] std::size_t agent_card_count_for_testing() const noexcept;
 
@@ -1120,10 +1122,9 @@ struct AppTestingSeams {
 
     // ── Copy result pipeline (RFC 0007) ────────────────────────────
     /// Inject a pending copy result as if the worker thread posted it.
-    void inject_copy_result_for_testing(
-        std::uint64_t generation,
-        loom::utils::clipboard::CopyResult result,
-        std::string text);
+    void inject_copy_result_for_testing(std::uint64_t generation,
+                                        loom::utils::clipboard::CopyResult result,
+                                        std::string text);
     /// Drain pending copy results on the UI thread.
     void drain_copy_result_for_testing();
     /// Get the current footer notification text (empty if none).
@@ -1133,17 +1134,14 @@ struct AppTestingSeams {
 
     // ── Virtual renderer hysteresis (RFC 0008) ─────────────────────
     /// Set the persistent virtual renderer state (mode, counter, flag).
-    void set_virtual_renderer_state_for_testing(
-        bool is_virtual, std::uint64_t switch_count,
-        bool force_bottom);
+    void set_virtual_renderer_state_for_testing(bool is_virtual, std::uint64_t switch_count,
+                                                bool force_bottom);
     /// True when the renderer is in Virtual mode.
     [[nodiscard]] bool virtual_renderer_is_virtual_for_testing() const noexcept;
     /// Number of Static↔Virtual mode switches since last reset.
-    [[nodiscard]] std::uint64_t
-    virtual_mode_switch_count_for_testing() const noexcept;
+    [[nodiscard]] std::uint64_t virtual_mode_switch_count_for_testing() const noexcept;
     /// Persistent bottom-anchor flag after a mode-switch scroll reset.
-    [[nodiscard]] bool
-    force_bottom_after_mode_switch_for_testing() const noexcept;
+    [[nodiscard]] bool force_bottom_after_mode_switch_for_testing() const noexcept;
     /// Trigger the on_clear_session callback (session-expired card path).
     void trigger_clear_session_for_testing();
 };
@@ -1160,4 +1158,4 @@ struct AppTestingSeams {
 // Main Application Runner
 // ============================================================
 
-} // namespace loom::ui
+}  // namespace loom::ui

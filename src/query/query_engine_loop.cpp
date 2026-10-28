@@ -16,9 +16,8 @@ import loom.constants.cost_tracker;
 
 namespace loom::core {
 
-[[nodiscard]] Result<QueryResponse> QueryEngine::query(
-    std::string_view user_message,
-    const QueryOptions& options) {
+[[nodiscard]] Result<QueryResponse> QueryEngine::query(std::string_view user_message,
+                                                       const QueryOptions& options) {
     auto start = std::chrono::steady_clock::now();
 
     // Reset abort flag for new query
@@ -27,11 +26,10 @@ namespace loom::core {
 
     // Check budget first
     if (budget_tracker_.budget_exceeded) {
-        return std::unexpected(Error::make(
-            ErrorCode::ContextWindowExceeded,
-            std::format("Budget exceeded: ${:.4f} of ${:.4f}",
-                budget_tracker_.current_spend_usd,
-                budget_tracker_.max_budget_usd)));
+        return std::unexpected(Error::make(ErrorCode::ContextWindowExceeded,
+                                           std::format("Budget exceeded: ${:.4f} of ${:.4f}",
+                                                       budget_tracker_.current_spend_usd,
+                                                       budget_tracker_.max_budget_usd)));
     }
 
     // Construct user message and append to history
@@ -57,28 +55,21 @@ namespace loom::core {
     messages_since_last_extraction_ += 2;  // user + assistant
     maybe_run_memory_extraction();
 
-    return QueryResponse{
-        std::move(response_msg),
-        usage,
-        rounds,
-        elapsed,
-        budget_tracker_.budget_exceeded,
-        true,
-        {}
-    };
+    return QueryResponse{std::move(response_msg),         usage, rounds, elapsed,
+                         budget_tracker_.budget_exceeded, true,  {}};
 }
 
-void QueryEngine::stream_query(
-    std::string_view user_message,
-    const QueryOptions& options) {
+void QueryEngine::stream_query(std::string_view user_message, const QueryOptions& options) {
     // RFC 0004: install the commit callback and ensure on_end_query fires
     // on ALL exit paths (including the budget-exceeded early return below)
     // via RAII. The commit callback is cleared on scope exit so subsequent
     // headless query() calls on the same engine instance don't fire it.
     on_commit_callback_ = options.on_commit.value_or(std::function<void(const Message&)>{});
+
     struct EndQueryGuard {
         const QueryOptions& opts;
         QueryEngine& engine;
+
         ~EndQueryGuard() {
             engine.on_commit_callback_ = {};
             if (opts.on_end_query) (*opts.on_end_query)();
@@ -91,8 +82,8 @@ void QueryEngine::stream_query(
             (!std::holds_alternative<UserMessage>(conversation.back()) &&
              !std::holds_alternative<ToolResultMessage>(conversation.back()))) {
             if (options.on_event) {
-                (*options.on_event)(StreamError{"invalid_retry",
-                    "There is no unfinished model request to retry"});
+                (*options.on_event)(
+                    StreamError{"invalid_retry", "There is no unfinished model request to retry"});
             }
             return;
         }
@@ -100,10 +91,9 @@ void QueryEngine::stream_query(
 
     if (budget_tracker_.budget_exceeded) {
         if (options.on_event) {
-            StreamError err{"budget_exceeded",
-                std::format("Budget exceeded: ${:.4f} of ${:.4f}",
-                    budget_tracker_.current_spend_usd,
-                    budget_tracker_.max_budget_usd)};
+            StreamError err{"budget_exceeded", std::format("Budget exceeded: ${:.4f} of ${:.4f}",
+                                                           budget_tracker_.current_spend_usd,
+                                                           budget_tracker_.max_budget_usd)};
             (*options.on_event)(err);
         }
         return;
@@ -116,11 +106,10 @@ void QueryEngine::stream_query(
 
     // Emit query start hook
     if (lifecycle_hooks_) {
-        lifecycle_hooks_->emit_query_start(loom::hooks::QueryStartEvent{
-            .query_text = std::string(user_message),
-            .model = config_.model_params.model,
-            .timestamp = std::chrono::system_clock::now()
-        });
+        lifecycle_hooks_->emit_query_start(
+            loom::hooks::QueryStartEvent{.query_text = std::string(user_message),
+                                         .model = config_.model_params.model,
+                                         .timestamp = std::chrono::system_clock::now()});
     }
 
     if (!options.resume_from_conversation) {
@@ -139,14 +128,15 @@ void QueryEngine::stream_query(
     std::uint32_t max_tokens_retries = 0;
     const auto max_rounds = options.max_tool_rounds;
 
-    while ((!max_rounds || round < *max_rounds) && !should_abort() && !budget_tracker_.budget_exceeded) {
+    while ((!max_rounds || round < *max_rounds) && !should_abort() &&
+           !budget_tracker_.budget_exceeded) {
         // Check stop hooks before each iteration
         if (lifecycle_hooks_) {
             if (auto stop_reason = lifecycle_hooks_->check_stop_hooks()) {
                 request_failed = true;
                 if (options.on_event) {
                     StreamError err{"hook_stop",
-                        std::format("Query stopped by hook: {}", *stop_reason)};
+                                    std::format("Query stopped by hook: {}", *stop_reason)};
                     (*options.on_event)(err);
                 }
                 break;
@@ -169,16 +159,16 @@ void QueryEngine::stream_query(
 
         // Sync to global CostTracker so /cost reads real values
         global_cost_tracker().record(config_.model_params.model, round_usage,
-            std::format("round_{}", round));
+                                     std::format("round_{}", round));
 
         append_message(Message{assistant_msg});
 
         // P1-3: Max output tokens recovery (streaming path)
         if (assistant_msg.stop_reason == "max_tokens" && max_tokens_retries < 3) {
             // Continue under the original request policy, including explicit limits.
-            auto resume = make_user_message(
-                "Your previous response was cut off at the token limit. "
-                "Please continue from where you left off.");
+            auto resume =
+                make_user_message("Your previous response was cut off at the token limit. "
+                                  "Please continue from where you left off.");
             append_message(Message{std::move(resume)}, false);
             ++max_tokens_retries;
             ++round;
@@ -192,10 +182,9 @@ void QueryEngine::stream_query(
                 auto used = cumulative_usage_.output_tokens;
                 if (used < static_cast<std::uint32_t>(token_budget_ * 0.9)) {
                     auto pct = (used * 100) / token_budget_;
-                    auto nudge = std::format(
-                        "You've used {}% of the output budget ({}/{} tokens). "
-                        "Keep working — do not summarize or stop early.",
-                        pct, used, token_budget_);
+                    auto nudge = std::format("You've used {}% of the output budget ({}/{} tokens). "
+                                             "Keep working — do not summarize or stop early.",
+                                             pct, used, token_budget_);
                     auto cont_msg = make_user_message(nudge);
                     append_message(Message{std::move(cont_msg)}, false);
                     ++continuation_count;
@@ -218,9 +207,9 @@ void QueryEngine::stream_query(
     if (max_rounds && round >= *max_rounds && !should_abort() && !budget_tracker_.budget_exceeded) {
         request_failed = true;
         if (options.on_event) {
-            (*options.on_event)(StreamError{"tool_round_limit",
-                std::format("Tool-round budget reached ({}). Progress saved.",
-                            *max_rounds)});
+            (*options.on_event)(StreamError{
+                "tool_round_limit",
+                std::format("Tool-round budget reached ({}). Progress saved.", *max_rounds)});
         }
     }
 
@@ -237,12 +226,12 @@ void QueryEngine::stream_query(
             .rounds = round,
             .tools_executed = round,  // Approximate
             .duration = query_duration,
-            .timestamp = std::chrono::system_clock::now()
-        });
+            .timestamp = std::chrono::system_clock::now()});
     }
 }
 
-[[nodiscard]] Result<QueryEngine::ToolLoopResult> QueryEngine::execute_tool_loop(const QueryOptions& options) {
+[[nodiscard]] Result<QueryEngine::ToolLoopResult>
+QueryEngine::execute_tool_loop(const QueryOptions& options) {
     TokenUsage loop_usage{};
     std::uint32_t round = 0;
     std::uint32_t max_tokens_retries = 0;
@@ -252,9 +241,9 @@ void QueryEngine::stream_query(
         // Check stop hooks before each iteration
         if (lifecycle_hooks_) {
             if (auto stop_reason = lifecycle_hooks_->check_stop_hooks()) {
-                return std::unexpected(Error::make(
-                    ErrorCode::InternalError,
-                    std::format("Query stopped by hook: {}", *stop_reason)));
+                return std::unexpected(
+                    Error::make(ErrorCode::InternalError,
+                                std::format("Query stopped by hook: {}", *stop_reason)));
             }
         }
 
@@ -270,11 +259,10 @@ void QueryEngine::stream_query(
         budget_tracker_.add_usage(usage, config_.model_params.model, model_cost_);
         // Sync to global CostTracker so /cost reads real values
         global_cost_tracker().record(config_.model_params.model, usage,
-            std::format("round_{}", round));
+                                     std::format("round_{}", round));
         if (budget_tracker_.budget_exceeded) {
-            return std::unexpected(Error::make(
-                ErrorCode::ContextWindowExceeded,
-                "Budget limit exceeded"));
+            return std::unexpected(
+                Error::make(ErrorCode::ContextWindowExceeded, "Budget limit exceeded"));
         }
 
         // P1-3: Max output tokens recovery
@@ -282,9 +270,9 @@ void QueryEngine::stream_query(
             // Continue under the original request policy, including explicit limits.
             // Append partial response and a resume nudge
             append_message(Message{msg});
-            auto resume = make_user_message(
-                "Your previous response was cut off at the token limit. "
-                "Please continue from where you left off.");
+            auto resume =
+                make_user_message("Your previous response was cut off at the token limit. "
+                                  "Please continue from where you left off.");
             append_message(Message{std::move(resume)}, false);
             ++max_tokens_retries;
             ++round;
@@ -314,9 +302,9 @@ void QueryEngine::stream_query(
         ++round;
     }
 
-    return std::unexpected(Error::make(
-        ErrorCode::InternalError,
-        std::format("Tool loop exceeded maximum rounds ({})", max_rounds)));
+    return std::unexpected(
+        Error::make(ErrorCode::InternalError,
+                    std::format("Tool loop exceeded maximum rounds ({})", max_rounds)));
 }
 
 void QueryEngine::account_compaction_usage(const TokenUsage& usage) {
@@ -325,23 +313,20 @@ void QueryEngine::account_compaction_usage(const TokenUsage& usage) {
     global_cost_tracker().record(config_.model_params.model, usage, "compaction");
 }
 
-[[nodiscard]] Result<QueryEngine::ApiCallResult> QueryEngine::call_api(const QueryOptions& options) {
+[[nodiscard]] Result<QueryEngine::ApiCallResult>
+QueryEngine::call_api(const QueryOptions& options) {
     auto& policy = config_.retry_policy;
     auto delay = policy.initial_delay;
     std::size_t fallback_idx = 0;
 
     for (std::uint32_t attempt = 0; attempt <= policy.max_retries; ++attempt) {
         if (should_abort()) {
-            return std::unexpected(Error::make(
-                ErrorCode::InternalError,
-                "Query aborted"));
+            return std::unexpected(Error::make(ErrorCode::InternalError, "Query aborted"));
         }
 
         auto result = send_request(options);
         if (should_abort()) {
-            return std::unexpected(Error::make(
-                ErrorCode::InternalError,
-                "Query aborted"));
+            return std::unexpected(Error::make(ErrorCode::InternalError, "Query aborted"));
         }
         if (result) return *result;
 
@@ -368,14 +353,11 @@ void QueryEngine::account_compaction_usage(const TokenUsage& usage) {
 
         // Exponential backoff with cap
         delay = std::chrono::milliseconds(
-            std::min<long long>(
-                static_cast<long long>(delay.count() * policy.backoff_multiplier),
-                policy.max_delay.count()));
+            std::min<long long>(static_cast<long long>(delay.count() * policy.backoff_multiplier),
+                                policy.max_delay.count()));
     }
 
-    return std::unexpected(Error::make(
-        ErrorCode::InternalError,
-        "Retry logic exhausted"));
+    return std::unexpected(Error::make(ErrorCode::InternalError, "Retry logic exhausted"));
 }
 
-} // namespace loom::core
+}  // namespace loom::core

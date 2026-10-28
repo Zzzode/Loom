@@ -1,12 +1,12 @@
 /// @file test_settings_layout.cpp
 /// @brief Public settings component regressions at real allocated narrow sizes.
-#include <cstdlib>
-
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/event.hpp>
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/screen/screen.hpp>
 #include <gtest/gtest.h>
+
+#include <cstdlib>
 
 import std;
 import loom.config.config;
@@ -18,14 +18,17 @@ using namespace ftxui;
 namespace settings = loom::ui::dialogs::settings_dialog;
 namespace theme = loom::ui::design::theme;
 constexpr std::array kThemes{
-    theme::ThemeVariant::Dark, theme::ThemeVariant::Light,
+    theme::ThemeVariant::Dark,           theme::ThemeVariant::Light,
     theme::ThemeVariant::DarkDaltonized, theme::ThemeVariant::LightDaltonized,
-    theme::ThemeVariant::Monochrome, theme::ThemeVariant::LightAnsi,
+    theme::ThemeVariant::Monochrome,     theme::ThemeVariant::LightAnsi,
     theme::ThemeVariant::DarkAnsi};
+
 struct RestoreTheme {
     theme::Theme saved = theme::current_theme();
+
     ~RestoreTheme() { theme::set_theme(saved); }
 };
+
 // A project save also discovers a Git root from the process working directory.
 // Isolate both the explicit config path and cwd; a stray /tmp/.git must not
 // redirect ConfigManager's ignore maintenance into an unrelated work tree.
@@ -35,13 +38,14 @@ struct TempSettings {
     std::filesystem::path file;
 
     static bool AncestryClean(const std::filesystem::path& base) {
-        for (auto current = base; ; current = current.parent_path()) {
+        for (auto current = base;; current = current.parent_path()) {
             std::error_code error;
             const bool marker = std::filesystem::exists(current / ".git", error);
             if (error || marker) return false;
             if (current == current.parent_path()) return true;
         }
     }
+
     static std::filesystem::path CleanBase() {
         std::vector<std::filesystem::path> candidates;
         for (const char* variable : {"XDG_RUNTIME_DIR", "TMPDIR"})
@@ -53,18 +57,21 @@ struct TempSettings {
             std::error_code error;
             const auto canonical = std::filesystem::canonical(candidate, error);
             if (!error && std::filesystem::is_directory(canonical, error) && !error &&
-                AncestryClean(canonical)) return canonical;
+                AncestryClean(canonical))
+                return canonical;
         }
-        throw std::runtime_error("Settings layout tests require a Git-ancestry-clean temporary base");
+        throw std::runtime_error(
+            "Settings layout tests require a Git-ancestry-clean temporary base");
     }
+
     TempSettings() {
         static std::atomic<unsigned> sequence{0};
         const auto base = CleanBase();
         for (int attempt = 0; attempt < 64; ++attempt) {
-            directory = base /
-                std::format("loom-settings-layout-{}-{}-{}",
-                    std::chrono::steady_clock::now().time_since_epoch().count(),
-                    std::random_device{}(), sequence.fetch_add(1));
+            directory =
+                base / std::format("loom-settings-layout-{}-{}-{}",
+                                   std::chrono::steady_clock::now().time_since_epoch().count(),
+                                   std::random_device{}(), sequence.fetch_add(1));
             if (!std::filesystem::create_directory(directory)) continue;
             file = directory / "settings.json";
             std::error_code error;
@@ -76,8 +83,10 @@ struct TempSettings {
         }
         throw std::runtime_error("Could not allocate a unique settings layout directory");
     }
+
     TempSettings(const TempSettings&) = delete;
     TempSettings& operator=(const TempSettings&) = delete;
+
     ~TempSettings() {
         std::error_code error;
         std::filesystem::current_path(previous, error);
@@ -99,20 +108,23 @@ Screen Paint(const Component& component, int columns = 40, int rows = 18) {
     Render(screen, component->Render());
     return screen;
 }
+
 Screen PaintText(const std::string& value, int columns) {
     auto element = settings::SettingsText(value, columns);
     element->ComputeRequirement();
-    auto screen = Screen::Create(Dimension::Fixed(columns),
-                                 Dimension::Fixed(element->requirement().min_y));
+    auto screen =
+        Screen::Create(Dimension::Fixed(columns), Dimension::Fixed(element->requirement().min_y));
     Render(screen, element);
     return screen;
 }
+
 std::optional<std::pair<int, int>> Find(const Screen& screen, std::string_view word) {
     for (int y = 0; y < screen.dimy(); ++y)
         for (int x = 0; x + static_cast<int>(word.size()) <= screen.dimx(); ++x) {
             bool match = true;
             for (std::size_t i = 0; i < word.size(); ++i)
-                if (screen.PixelAt(x + static_cast<int>(i), y).character != std::string(1, word[i])) {
+                if (screen.PixelAt(x + static_cast<int>(i), y).character !=
+                    std::string(1, word[i])) {
                     match = false;
                     break;
                 }
@@ -120,6 +132,7 @@ std::optional<std::pair<int, int>> Find(const Screen& screen, std::string_view w
         }
     return std::nullopt;
 }
+
 void FooterVisible(const Screen& screen) {
     for (auto shortcut : {"Ctrl+S", "Ctrl+R", "Esc", "PgUp/PgDn", "scroll"}) {
         const auto where = Find(screen, shortcut);
@@ -129,6 +142,7 @@ void FooterVisible(const Screen& screen) {
     for (auto action : {"Save", "Reset", "Close"})
         EXPECT_TRUE(Find(screen, action)) << action << '\n' << screen.ToString();
 }
+
 // Remove row padding and box-drawing cells so a token split over multiple
 // physical rows can be found without imposing a particular line break.
 std::string Ink(const Screen& screen) {
@@ -139,27 +153,32 @@ std::string Ink(const Screen& screen) {
             if (glyph == " " || glyph == "\t" || glyph == "\n" || glyph.empty()) continue;
             if (glyph.size() == 3 && static_cast<unsigned char>(glyph[0]) == 0xe2 &&
                 static_cast<unsigned char>(glyph[1]) >= 0x94 &&
-                static_cast<unsigned char>(glyph[1]) <= 0x97) continue;
+                static_cast<unsigned char>(glyph[1]) <= 0x97)
+                continue;
             result += glyph;
         }
     return result;
 }
-std::vector<std::string> UniqueChunks(std::string_view prefix, int count = 20,
-                                      bool utf8 = false) {
+
+std::vector<std::string> UniqueChunks(std::string_view prefix, int count = 20, bool utf8 = false) {
     std::vector<std::string> chunks;
     for (int i = 0; i < count; ++i)
         chunks.push_back(std::format("{}{:02}{}", prefix, i, utf8 ? "诊断文本" : "aBcDeFgH"));
     return chunks;
 }
+
 std::string Join(const std::vector<std::string>& chunks) {
     std::string result;
-    for (const auto& chunk : chunks) result += chunk;
+    for (const auto& chunk : chunks)
+        result += chunk;
     return result;
 }
+
 void AllChunksVisible(std::string_view pages, const std::vector<std::string>& chunks) {
     for (const auto& chunk : chunks)
         EXPECT_NE(pages.find(chunk), std::string::npos) << "Missing or truncated chunk: " << chunk;
 }
+
 std::string ScanPages(const Component& component, int count = 32) {
     std::string result;
     for (int page = 0; page < count; ++page) {
@@ -170,10 +189,16 @@ std::string ScanPages(const Component& component, int count = 32) {
     }
     return result;
 }
-Event Control(char key) { return Event::Special(std::string(1, key - 'a' + 1)); }
-void FocusLastGeneral(const Component& component) {
-    for (int row = 0; row < 6; ++row) component->OnEvent(Event::Tab);
+
+Event Control(char key) {
+    return Event::Special(std::string(1, key - 'a' + 1));
 }
+
+void FocusLastGeneral(const Component& component) {
+    for (int row = 0; row < 6; ++row)
+        component->OnEvent(Event::Tab);
+}
+
 void Click(const Component& component, std::string_view label) {
     const auto screen = Paint(component);
     const auto where = Find(screen, label);
@@ -188,11 +213,12 @@ void Click(const Component& component, std::string_view label) {
     mouse.motion = Mouse::Released;
     component->OnEvent(Event::Mouse("", mouse));
 }
+
 std::string Read(const std::filesystem::path& path) {
     std::ifstream stream(path);
     return {std::istreambuf_iterator<char>(stream), {}};
 }
-}
+}  // namespace
 
 TEST(SettingsLayout, EverySectionKeepsAllActionsVisibleAtFortyColumnsInEveryTheme) {
     RestoreTheme restore;
@@ -220,19 +246,20 @@ TEST(SettingsLayout, EverySectionKeepsAllActionsVisibleAtFortyColumnsInEveryThem
             options.initial_tab = static_cast<settings::SettingsTabId>(tab);
             auto component = settings::MakeSettingsDialog(config, options);
             for (int rows : {18, 28}) {
-                SCOPED_TRACE(std::format("theme={},tab={},rows={}", theme::variant_name(variant), tab, rows));
+                SCOPED_TRACE(std::format("theme={},tab={},rows={}", theme::variant_name(variant),
+                                         tab, rows));
                 component->OnEvent(Event::Home);
                 const auto first = Paint(component, 40, rows);
                 FooterVisible(first);
                 EXPECT_NE(Ink(first).find(body_tokens[tab].first), std::string::npos)
-                    << "Missing first body content: " << body_tokens[tab].first
-                    << '\n' << first.ToString();
+                    << "Missing first body content: " << body_tokens[tab].first << '\n'
+                    << first.ToString();
                 component->OnEvent(Event::End);
                 const auto last = Paint(component, 40, rows);
                 FooterVisible(last);
                 EXPECT_NE(Ink(last).find(body_tokens[tab].second), std::string::npos)
-                    << "Missing last body content: " << body_tokens[tab].second
-                    << '\n' << last.ToString();
+                    << "Missing last body content: " << body_tokens[tab].second << '\n'
+                    << last.ToString();
             }
         }
     }
@@ -263,8 +290,7 @@ TEST(SettingsLayout, ProseKeepsWholeEnglishWordsAtFortyColumns) {
     for (auto word : {"Minimal", "output", "formatting", "smaller", "terminals"})
         EXPECT_TRUE(Find(screen, word)) << word << '\n' << screen.ToString();
 
-    const auto prose = PaintText(
-        "Automatically continue tool-use chains without confirmation", 40);
+    const auto prose = PaintText("Automatically continue tool-use chains without confirmation", 40);
     for (auto word : {"Automatically", "continue", "tool-use", "chains", "without", "confirmation"})
         EXPECT_TRUE(Find(prose, word)) << word << '\n' << prose.ToString();
 }
@@ -291,7 +317,7 @@ TEST(SettingsLayout, WordWrapPreservesHardLinesIndentationAndUtf8) {
 
 TEST(SettingsLayout, OverlongUrlRemainsLosslessAcrossPhysicalRows) {
     const std::string endpoint = "https://example.invalid/" + Join(UniqueChunks("URL")) +
-        "/路径?query=value%2Fother&last=URLTAIL";
+                                 "/路径?query=value%2Fother&last=URLTAIL";
     for (int columns : {7, 40}) {
         SCOPED_TRACE(columns);
         const auto screen = PaintText(endpoint, columns);
@@ -307,13 +333,14 @@ TEST(SettingsLayout, OverlongUrlRemainsLosslessAcrossPhysicalRows) {
 
 TEST(SettingsLayout, UrlPathAndQueryFragmentsStayWholeOnPhysicalRows) {
     const std::string endpoint = "https://example.invalid/settings-layout/section-00/section-01"
-        "?mode=preview&filter=value%2Fother#ENDPOINT-TAIL";
+                                 "?mode=preview&filter=value%2Fother#ENDPOINT-TAIL";
     for (int columns : {36, 40}) {
         const auto screen = PaintText(endpoint, columns);
-        for (auto fragment : {"https://example.invalid/", "settings-layout/", "section-00/",
-                              "section-01?", "mode=", "preview&", "filter=",
-                              "value%2Fother#", "ENDPOINT-TAIL"})
-            EXPECT_TRUE(Find(screen, fragment)) << columns << ':' << fragment << '\n' << screen.ToString();
+        for (auto fragment :
+             {"https://example.invalid/", "settings-layout/", "section-00/", "section-01?",
+              "mode=", "preview&", "filter=", "value%2Fother#", "ENDPOINT-TAIL"})
+            EXPECT_TRUE(Find(screen, fragment)) << columns << ':' << fragment << '\n'
+                                                << screen.ToString();
         EXPECT_EQ(Ink(screen), endpoint);
     }
     const std::string adjacent = "https://example.invalid//path?&key=value&&empty=#TAIL";
@@ -321,8 +348,9 @@ TEST(SettingsLayout, UrlPathAndQueryFragmentsStayWholeOnPhysicalRows) {
 }
 
 TEST(SettingsLayout, UrlOversizedFragmentsPreserveEscapesUtf8AndExactFitSegments) {
-    const std::string endpoint = "https://example.invalid/" + std::string(35, 'x') +
-        "%2F" + std::string(41, 'y') + "/路径?filter=cafe\u0301&last=URLTAIL#fragment";
+    const std::string endpoint = "https://example.invalid/" + std::string(35, 'x') + "%2F" +
+                                 std::string(41, 'y') +
+                                 "/路径?filter=cafe\u0301&last=URLTAIL#fragment";
     for (int columns : {7, 36, 40}) {
         const auto screen = PaintText(endpoint, columns);
         EXPECT_EQ(Ink(screen), endpoint);
@@ -335,7 +363,7 @@ TEST(SettingsLayout, UrlOversizedFragmentsPreserveEscapesUtf8AndExactFitSegments
     EXPECT_TRUE(Find(screen, exact)) << screen.ToString();
     EXPECT_EQ(Ink(screen), "https://example.invalid/" + exact + "/TAIL");
     const std::string escape_at_edge = "https://" + std::string(27, 'h') + "/" +
-        std::string(35, 'q') + "%2F" + std::string(41, 'r');
+                                       std::string(35, 'q') + "%2F" + std::string(41, 'r');
     const auto escaped = PaintText(escape_at_edge, 36);
     EXPECT_TRUE(Find(escaped, "%2F")) << escaped.ToString();
     EXPECT_EQ(Ink(escaped), escape_at_edge);
@@ -349,18 +377,21 @@ TEST(SettingsLayout, ApiUrlSegmentsRemainReadableAndUnchangedAfterSave) {
     TempSettings temp;
     loom::core::ConfigManager config(temp.file);
     const std::string endpoint = "https://example.invalid/settings-layout/section-00/section-01"
-        "?mode=preview&filter=value%2Fother#ENDPOINT-TAIL";
+                                 "?mode=preview&filter=value%2Fother#ENDPOINT-TAIL";
     // Save preserves existing endpoint leaves; it deliberately does not emit
     // credential-bearing baseUrl values newly introduced in memory.
-    { std::ofstream stream(temp.file); stream << "{\"baseUrl\":\"" << endpoint << "\"}"; }
+    {
+        std::ofstream stream(temp.file);
+        stream << "{\"baseUrl\":\"" << endpoint << "\"}";
+    }
     config.settings_mut().network.base_url = endpoint;
     settings::SettingsDialogOptions options;
     options.initial_tab = settings::SettingsTabId::API;
     auto component = settings::MakeSettingsDialog(config, options);
     const auto screen = Paint(component, 40, 28);
     FooterVisible(screen);
-    for (auto fragment : {"settings-layout/", "section-00/", "section-01?", "mode=",
-                          "preview&", "filter=", "value%2Fother#", "ENDPOINT-TAIL"})
+    for (auto fragment : {"settings-layout/", "section-00/", "section-01?", "mode=", "preview&",
+                          "filter=", "value%2Fother#", "ENDPOINT-TAIL"})
         EXPECT_TRUE(Find(screen, fragment)) << fragment << '\n' << screen.ToString();
     // Change a separate API field so Save writes the unchanged URL to disk.
     component->OnEvent(Event::Tab);
@@ -411,8 +442,8 @@ TEST(SettingsLayout, ReadOnlyStatusAllowsPagingToUtf8TailAndReturningHome) {
     options.initial_tab = settings::SettingsTabId::Status;
     const auto chunks = UniqueChunks("S", 24, true);
     const std::string message = Join(chunks) + "STATUSTAILMARKER";
-    options.status_rows.push_back({"Subsystem", settings::HealthState::Down,
-        std::chrono::system_clock::now(), message});
+    options.status_rows.push_back(
+        {"Subsystem", settings::HealthState::Down, std::chrono::system_clock::now(), message});
     auto component = settings::MakeSettingsDialog(config, options);
     const auto pages = ScanPages(component);
     AllChunksVisible(pages, chunks);
@@ -433,12 +464,14 @@ TEST(SettingsLayout, UsageCardsAndLongModelRemainReachableByPaging) {
         snapshot.total_requests = 314159;
         snapshot.total_input_tokens = 271828;
         snapshot.total_output_tokens = 161803;
-        snapshot.per_model.push_back({std::string(100, 'm') + "MODELTAILMARKER", 42, 123, 456, 1.25});
+        snapshot.per_model.push_back(
+            {std::string(100, 'm') + "MODELTAILMARKER", 42, 123, 456, 1.25});
     };
     auto component = settings::MakeSettingsDialog(config, options);
     const auto pages = ScanPages(component);
     for (auto value : {"314159", "271828", "161803", "MODELTAILMARKER", "$1.2500"})
-        EXPECT_NE(pages.find(value), std::string::npos) << value << "\nCollected page ink:\n" << pages;
+        EXPECT_NE(pages.find(value), std::string::npos) << value << "\nCollected page ink:\n"
+                                                        << pages;
 }
 
 TEST(SettingsLayout, McpEndpointWrapsAndSelectedServerRemovalTargetsExactEntry) {
@@ -472,7 +505,10 @@ TEST(SettingsLayout, McpEndpointWrapsAndSelectedServerRemovalTargetsExactEntry) 
 
 TEST(SettingsLayout, KeyboardSaveResetAndCloseKeepWritesHermeticAndPreserveUnknownKeys) {
     TempSettings temp;
-    { std::ofstream stream(temp.file); stream << R"({"preservedProbe":{"keep":"opaque"},"theme":"dark"})"; }
+    {
+        std::ofstream stream(temp.file);
+        stream << R"({"preservedProbe":{"keep":"opaque"},"theme":"dark"})";
+    }
     loom::core::ConfigManager config(temp.file);
     ASSERT_TRUE(config.load());
     config.settings_mut().display.compact_mode = false;
@@ -480,7 +516,8 @@ TEST(SettingsLayout, KeyboardSaveResetAndCloseKeepWritesHermeticAndPreserveUnkno
     std::optional<std::string> close_message;
     settings::SettingsDialogOptions options;
     options.on_close = [&](std::optional<std::string> message, settings::CommandResultDisplay) {
-        ++closed; close_message = std::move(message);
+        ++closed;
+        close_message = std::move(message);
     };
     auto component = settings::MakeSettingsDialog(config, options);
     (void)Paint(component);
@@ -508,7 +545,9 @@ TEST(SettingsLayout, VisibleFooterMouseActionsUseSameSaveResetAndCloseBehavior) 
     config.settings_mut().display.compact_mode = false;
     int closed = 0;
     settings::SettingsDialogOptions options;
-    options.on_close = [&](std::optional<std::string>, settings::CommandResultDisplay) { ++closed; };
+    options.on_close = [&](std::optional<std::string>, settings::CommandResultDisplay) {
+        ++closed;
+    };
     auto component = settings::MakeSettingsDialog(config, options);
     (void)Paint(component);
     FocusLastGeneral(component);
@@ -523,12 +562,14 @@ TEST(SettingsLayout, VisibleFooterMouseActionsUseSameSaveResetAndCloseBehavior) 
     EXPECT_EQ(closed, 1);
 }
 
-
 TEST(SettingsLayout, LongSaveFailurePreservesBodyActionsAndScrollableDiagnostic) {
     TempSettings temp;
     const auto chunks = UniqueChunks("ERR", 12);
     const auto blocker = temp.directory / (Join(chunks) + "SAVEERRTAILMARKER");
-    { std::ofstream stream(blocker); stream << "ordinary file blocks config directory creation"; }
+    {
+        std::ofstream stream(blocker);
+        stream << "ordinary file blocks config directory creation";
+    }
     loom::core::ConfigManager config(blocker / "settings.json");
     auto component = settings::MakeSettingsDialog(config);
     (void)Paint(component);
@@ -552,7 +593,6 @@ TEST(SettingsLayout, LongSaveFailurePreservesBodyActionsAndScrollableDiagnostic)
     EXPECT_EQ(Read(blocker), "ordinary file blocks config directory creation");
 }
 
-
 TEST(SettingsLayout, PermissionListsRemainReachableByFieldNavigation) {
     TempSettings temp;
     loom::core::ConfigManager config(temp.file);
@@ -561,7 +601,8 @@ TEST(SettingsLayout, PermissionListsRemainReachableByFieldNavigation) {
     options.initial_tab = settings::SettingsTabId::Permissions;
     auto component = settings::MakeSettingsDialog(config, options);
     (void)Paint(component);
-    for (int field = 0; field < 6; ++field) component->OnEvent(Event::Tab);
+    for (int field = 0; field < 6; ++field)
+        component->OnEvent(Event::Tab);
     const auto screen = Paint(component);
     FooterVisible(screen);
     EXPECT_TRUE(Find(screen, "Allowed commands")) << screen.ToString();
@@ -573,7 +614,6 @@ TEST(SettingsLayout, PermissionListsRemainReachableByFieldNavigation) {
     for (int column = 0; column < 11; ++column)
         EXPECT_TRUE(screen.PixelAt(x + column, y).inverted);
 }
-
 
 TEST(SettingsLayout, McpLifecycleHelpAndAddDelegationRemainInSection) {
     TempSettings temp;
@@ -622,7 +662,8 @@ TEST(SettingsLayout, UnrelatedSavePreservesAutomaticGenerationDefaults) {
     EXPECT_FALSE(config.settings().model.thinking_budget.has_value());
     EXPECT_FALSE(config.settings().model.temperature.has_value());
     const auto saved = Read(temp.file);
-    for (auto key : {"maxOutputTokens", "extendedThinking", "thinkingBudget", "temperature", "contextWindowSize"})
+    for (auto key : {"maxOutputTokens", "extendedThinking", "thinkingBudget", "temperature",
+                     "contextWindowSize"})
         EXPECT_EQ(saved.find(key), std::string::npos) << key << '\n' << saved;
     const auto general = Ink(Paint(component, 120, 40));
     EXPECT_EQ(general.find("Defaulttemperature"), std::string::npos);
@@ -634,7 +675,11 @@ TEST(SettingsLayout, UnrelatedSavePreservesAutomaticGenerationDefaults) {
 
 TEST(SettingsLayout, UnrelatedSavePreservesExplicitGenerationOverrides) {
     TempSettings temp;
-    { std::ofstream stream(temp.file); stream << R"({"maxOutputTokens":4096,"extendedThinking":false,"thinkingBudget":2048,"temperature":0.3,"contextWindowSize":1048576})"; }
+    {
+        std::ofstream stream(temp.file);
+        stream
+            << R"({"maxOutputTokens":4096,"extendedThinking":false,"thinkingBudget":2048,"temperature":0.3,"contextWindowSize":1048576})";
+    }
     loom::core::ConfigManager config(temp.file);
     ASSERT_TRUE(config.load());
     auto component = settings::MakeSettingsDialog(config);

@@ -5,10 +5,10 @@
  * and launches the full interactive FTXUI-based UI.
  */
 
+#include <csignal>
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
-#include <csignal>
 #ifndef _WIN32
 #include <unistd.h>
 #endif
@@ -45,14 +45,10 @@ import loom.config.settings_manager;
 namespace fs = std::filesystem;
 
 extern "C" [[nodiscard]] int loom_ui_run_app_bridge(
-    loom::core::QueryEngine* engine,
-    loom::hooks::LifecycleHookRegistry* lifecycle_hooks,
-    loom::commands::AppCommandRegistry* cmd_registry,
-    const std::filesystem::path* sessions_dir,
-    loom::hooks::ToolPermissionHook* permission_hook,
-    bool mouse_mode,
-    std::uint32_t tool_round_budget
-);
+    loom::core::QueryEngine* engine, loom::hooks::LifecycleHookRegistry* lifecycle_hooks,
+    loom::commands::AppCommandRegistry* cmd_registry, const std::filesystem::path* sessions_dir,
+    loom::hooks::ToolPermissionHook* permission_hook, bool mouse_mode,
+    std::uint32_t tool_round_budget);
 
 /**
  * Parsed command-line options
@@ -63,7 +59,7 @@ struct CliOptions {
     bool debug = false;
     bool use_simple_ui = false;  // Fallback to simple text UI if FTXUI fails
     bool headless = false;
-    bool permissions = false;    // Enable permission checking (disables auto-approve)
+    bool permissions = false;  // Enable permission checking (disables auto-approve)
     bool list_runtime_tools = false;
     bool list_runtime_commands = false;
     bool server = false;
@@ -225,7 +221,8 @@ auto parse_args(int argc, const char* argv[]) -> std::expected<CliOptions, std::
             }
             opts.output_format = std::string(argv[i]);
         } else if (arg.starts_with("--output-format=")) {
-            opts.output_format = std::string(arg.substr(std::string_view("--output-format=").size()));
+            opts.output_format =
+                std::string(arg.substr(std::string_view("--output-format=").size()));
         } else if (arg == "--replay-user-messages") {
             opts.replay_user_messages = true;
         } else if (arg == "--sdk-url") {
@@ -247,14 +244,16 @@ auto parse_args(int argc, const char* argv[]) -> std::expected<CliOptions, std::
             }
             opts.runtime_tool_name = std::string(argv[i]);
         } else if (arg.starts_with("--run-runtime-tool=")) {
-            opts.runtime_tool_name = std::string(arg.substr(std::string_view("--run-runtime-tool=").size()));
+            opts.runtime_tool_name =
+                std::string(arg.substr(std::string_view("--run-runtime-tool=").size()));
         } else if (arg == "--runtime-tool-input") {
             if (++i >= argc) {
                 return std::unexpected("--runtime-tool-input requires a JSON value");
             }
             opts.runtime_tool_input_json = std::string(argv[i]);
         } else if (arg.starts_with("--runtime-tool-input=")) {
-            opts.runtime_tool_input_json = std::string(arg.substr(std::string_view("--runtime-tool-input=").size()));
+            opts.runtime_tool_input_json =
+                std::string(arg.substr(std::string_view("--runtime-tool-input=").size()));
         } else if (arg == "--server") {
             opts.server = true;
         } else if (arg == "--bridge-daemon") {
@@ -276,7 +275,8 @@ auto parse_args(int argc, const char* argv[]) -> std::expected<CliOptions, std::
             }
             opts.permission_mode = std::string(argv[i]);
         } else if (arg.starts_with("--permission-mode=")) {
-            opts.permission_mode = std::string(arg.substr(std::string_view("--permission-mode=").size()));
+            opts.permission_mode =
+                std::string(arg.substr(std::string_view("--permission-mode=").size()));
         } else if (arg == "--agent-id") {
             if (++i >= argc) {
                 return std::unexpected("--agent-id requires a value");
@@ -351,7 +351,8 @@ auto parse_args(int argc, const char* argv[]) -> std::expected<CliOptions, std::
             }
         } else if (arg.starts_with("--task-budget=")) {
             try {
-                const auto value = std::string(arg.substr(std::string_view("--task-budget=").size()));
+                const auto value =
+                    std::string(arg.substr(std::string_view("--task-budget=").size()));
                 const auto parsed = std::stoul(value);
                 if (parsed == 0 || parsed > std::numeric_limits<std::uint32_t>::max()) {
                     return std::unexpected("--task-budget must be a positive integer");
@@ -381,7 +382,8 @@ auto parse_args(int argc, const char* argv[]) -> std::expected<CliOptions, std::
             }
             opts.session_store_path = std::string(argv[i]);
         } else if (arg.starts_with("--session-store=")) {
-            opts.session_store_path = std::string(arg.substr(std::string_view("--session-store=").size()));
+            opts.session_store_path =
+                std::string(arg.substr(std::string_view("--session-store=").size()));
         } else if (arg == "--server-host") {
             if (++i >= argc) {
                 return std::unexpected("--server-host requires a value");
@@ -411,35 +413,40 @@ auto parse_args(int argc, const char* argv[]) -> std::expected<CliOptions, std::
             }
             opts.bridge_work_api_url = std::string(argv[i]);
         } else if (arg.starts_with("--bridge-work-api-url=")) {
-            opts.bridge_work_api_url = std::string(arg.substr(std::string_view("--bridge-work-api-url=").size()));
+            opts.bridge_work_api_url =
+                std::string(arg.substr(std::string_view("--bridge-work-api-url=").size()));
         } else if (arg == "--bridge-environment-id") {
             if (++i >= argc) {
                 return std::unexpected("--bridge-environment-id requires a value");
             }
             opts.bridge_environment_id = std::string(argv[i]);
         } else if (arg.starts_with("--bridge-environment-id=")) {
-            opts.bridge_environment_id = std::string(arg.substr(std::string_view("--bridge-environment-id=").size()));
+            opts.bridge_environment_id =
+                std::string(arg.substr(std::string_view("--bridge-environment-id=").size()));
         } else if (arg == "--bridge-environment-secret") {
             if (++i >= argc) {
                 return std::unexpected("--bridge-environment-secret requires a value");
             }
             opts.bridge_environment_secret = std::string(argv[i]);
         } else if (arg.starts_with("--bridge-environment-secret=")) {
-            opts.bridge_environment_secret = std::string(arg.substr(std::string_view("--bridge-environment-secret=").size()));
+            opts.bridge_environment_secret =
+                std::string(arg.substr(std::string_view("--bridge-environment-secret=").size()));
         } else if (arg == "--bridge-access-token") {
             if (++i >= argc) {
                 return std::unexpected("--bridge-access-token requires a value");
             }
             opts.bridge_access_token = std::string(argv[i]);
         } else if (arg.starts_with("--bridge-access-token=")) {
-            opts.bridge_access_token = std::string(arg.substr(std::string_view("--bridge-access-token=").size()));
+            opts.bridge_access_token =
+                std::string(arg.substr(std::string_view("--bridge-access-token=").size()));
         } else if (arg == "--bridge-session-binary") {
             if (++i >= argc) {
                 return std::unexpected("--bridge-session-binary requires a value");
             }
             opts.bridge_session_binary = std::string(argv[i]);
         } else if (arg.starts_with("--bridge-session-binary=")) {
-            opts.bridge_session_binary = std::string(arg.substr(std::string_view("--bridge-session-binary=").size()));
+            opts.bridge_session_binary =
+                std::string(arg.substr(std::string_view("--bridge-session-binary=").size()));
         } else if (arg == "--bridge-daemon-wait-ms") {
             if (++i >= argc) {
                 return std::unexpected("--bridge-daemon-wait-ms requires a value");
@@ -455,7 +462,8 @@ auto parse_args(int argc, const char* argv[]) -> std::expected<CliOptions, std::
             }
         } else if (arg.starts_with("--bridge-daemon-wait-ms=")) {
             try {
-                const auto value = std::string(arg.substr(std::string_view("--bridge-daemon-wait-ms=").size()));
+                const auto value =
+                    std::string(arg.substr(std::string_view("--bridge-daemon-wait-ms=").size()));
                 const auto parsed = std::stoul(value);
                 if (parsed == 0 || parsed > 600000) {
                     return std::unexpected("--bridge-daemon-wait-ms must be between 1 and 600000");
@@ -494,7 +502,7 @@ void apply_flag_status_line_environment(const loom::config::FlagStatusLineSettin
     const bool has_command = status_line.command && !status_line.command->empty();
     const bool type_allows_command = !status_line.type || *status_line.type == "command";
     const bool enabled = status_line.enabled.value_or(has_command && type_allows_command) &&
-        has_command && type_allows_command;
+                         has_command && type_allows_command;
 
     if (has_command) {
         set_env_value("LOOM_STATUS_LINE_COMMAND", *status_line.command);
@@ -515,19 +523,17 @@ void apply_flag_status_line_environment(const loom::config::FlagStatusLineSettin
 ///   - Otherwise, treat it as a file path and read it.
 /// On invalid JSON or unreadable file, prints the TS-faithful error and exits.
 /// Returns the parsed result so the caller can override model/apiKey.
-std::optional<loom::config::FlagSettingsResult> load_flag_settings(
-    const std::string& settings_arg,
-    const loom::config::EnvSetter& env_setter,
-    std::optional<std::string>& out_model_override,
-    std::optional<std::string>& out_api_key_override
-) {
+std::optional<loom::config::FlagSettingsResult>
+load_flag_settings(const std::string& settings_arg, const loom::config::EnvSetter& env_setter,
+                   std::optional<std::string>& out_model_override,
+                   std::optional<std::string>& out_api_key_override) {
     auto trimmed = settings_arg;
     while (!trimmed.empty() && (trimmed.front() == ' ' || trimmed.front() == '\t' ||
-                                 trimmed.front() == '\n' || trimmed.front() == '\r')) {
+                                trimmed.front() == '\n' || trimmed.front() == '\r')) {
         trimmed.erase(trimmed.begin());
     }
     while (!trimmed.empty() && (trimmed.back() == ' ' || trimmed.back() == '\t' ||
-                                 trimmed.back() == '\n' || trimmed.back() == '\r')) {
+                                trimmed.back() == '\n' || trimmed.back() == '\r')) {
         trimmed.pop_back();
     }
 
@@ -594,12 +600,10 @@ std::string tool_result_text(const loom::core::ToolResult& result) {
     return out;
 }
 
-loom::tools::AgentLivePermissionCheck check_agent_tool_permission(
-    loom::hooks::ToolPermissionHook& permission_hook,
-    std::string_view tool_name,
-    std::string_view input_json,
-    std::string_view tool_use_id
-) {
+loom::tools::AgentLivePermissionCheck
+check_agent_tool_permission(loom::hooks::ToolPermissionHook& permission_hook,
+                            std::string_view tool_name, std::string_view input_json,
+                            std::string_view tool_use_id) {
     // WORKER permission forwarding: a pane/in-process teammate (identity set
     // via --agent-name + --team-name; the leader itself never has an agent
     // name) must not pop its own local dialog in a background pane. It asks
@@ -607,8 +611,7 @@ loom::tools::AgentLivePermissionCheck check_agent_tool_permission(
     // closed on timeout.
     const char* w_agent = std::getenv("LOOM_AGENT_NAME");
     const char* w_team = std::getenv("LOOM_TEAM_NAME");
-    const bool is_worker_teammate =
-        (w_agent && *w_agent) && (w_team && *w_team);
+    const bool is_worker_teammate = (w_agent && *w_agent) && (w_team && *w_team);
 
     if (is_worker_teammate) {
         namespace sh = loom::utils::swarm_helpers;
@@ -630,14 +633,13 @@ loom::tools::AgentLivePermissionCheck check_agent_tool_permission(
         req.description = std::string(tool_name) + " requests permission";
         req.input_json = std::string(input_json);
 
-        auto response = sh::PermissionSync::request_and_await(
-            req, std::string_view(w_team));
+        auto response = sh::PermissionSync::request_and_await(req, std::string_view(w_team));
         loom::tools::AgentLivePermissionCheck check;
         if (!response || response->subtype != "success") {
             check.allowed = false;
             check.message = response && response->error
-                ? *response->error
-                : std::string("timed out waiting for team leader approval");
+                                ? *response->error
+                                : std::string("timed out waiting for team leader approval");
             return check;
         }
         // Persist any "Always allow" rules the leader attached so matching
@@ -646,8 +648,7 @@ loom::tools::AgentLivePermissionCheck check_agent_tool_permission(
             grants.apply_updates(*response->permission_updates_json);
         }
         check.allowed = true;
-        if (response->updated_input_json &&
-            !response->updated_input_json->empty()) {
+        if (response->updated_input_json && !response->updated_input_json->empty()) {
             check.updated_input_json = *response->updated_input_json;
         }
         return check;
@@ -667,10 +668,8 @@ loom::tools::AgentLivePermissionCheck check_agent_tool_permission(
 
 auto load_config(bool& mouse_mode) -> loom::core::Result<loom::core::QueryEngineConfig>;
 
-int run_runtime_tool_once(
-    const CliOptions& opts,
-    const std::optional<std::string>& settings_model_override
-) {
+int run_runtime_tool_once(const CliOptions& opts,
+                          const std::optional<std::string>& settings_model_override) {
     if (!opts.runtime_tool_name || opts.runtime_tool_name->empty()) {
         std::println(stderr, "--run-runtime-tool requires a tool name");
         return 1;
@@ -682,23 +681,24 @@ int run_runtime_tool_once(
         return 1;
     }
     auto config = std::move(*loaded_config);
-    if (opts.model) config.model_params.model = *opts.model;
+    if (opts.model)
+        config.model_params.model = *opts.model;
     else if (settings_model_override && !settings_model_override->empty()) {
         config.model_params.model = *settings_model_override;
     }
     loom::core::prepare_model_metadata(config);
     auto tool_registry = loom::core::ToolRegistry{};
-    loom::tools::register_runtime_tools(tool_registry, loom::tools::RuntimeToolOptions{
-        .parent_permission_mode = parent_permission_mode_from_options(opts),
-        .default_model = config.model_params.model,
-        .api_context = loom::core::make_api_execution_context(config),
-    });
+    loom::tools::register_runtime_tools(
+        tool_registry, loom::tools::RuntimeToolOptions{
+                           .parent_permission_mode = parent_permission_mode_from_options(opts),
+                           .default_model = config.model_params.model,
+                           .api_context = loom::core::make_api_execution_context(config),
+                       });
     // Fallback: route unregistered tool names to MCP servers.
     // RFC-0001 B15: the fallback (NativeMcpRuntime iteration, last_error,
     // exact ToolNotFound text) is built directly from loom.orchestration;
     // main binds it onto this registry itself, there is no seam slot.
-    tool_registry.set_missing_tool_handler(
-        loom::orchestration::make_missing_tool_backend());
+    tool_registry.set_missing_tool_handler(loom::orchestration::make_missing_tool_backend());
     auto input = loom::core::ToolInput::from_json(opts.runtime_tool_input_json.value_or("{}"));
     input.parent_model = config.model_params.model;
     input.api_context = loom::core::make_api_execution_context(config);
@@ -795,8 +795,9 @@ auto load_config(bool& mouse_mode) -> loom::core::Result<loom::core::QueryEngine
     config.cwd = fs::current_path().string();
     config.model_params.max_tokens = file_config.settings().model.max_output_tokens;
     config.model_params.temperature = file_config.settings().model.temperature;
-    config.thinking_config = loom::core::resolve_thinking_config(
-        file_config.settings().model.extended_thinking, file_config.settings().model.thinking_budget);
+    config.thinking_config =
+        loom::core::resolve_thinking_config(file_config.settings().model.extended_thinking,
+                                            file_config.settings().model.thinking_budget);
     config.retry_policy.max_retries = 3;
     config.context_window.max_context_tokens = file_config.settings().model.context_window_size;
     config.model_context_limits = file_config.settings().model.context_limits;
@@ -809,8 +810,8 @@ auto load_config(bool& mouse_mode) -> loom::core::Result<loom::core::QueryEngine
         const auto& sl = file_config.settings().status_line;
         const bool has_command = sl.command && !sl.command->empty();
         const bool type_allows = !sl.type || *sl.type == "command";
-        const bool enabled = sl.enabled.value_or(has_command && type_allows) &&
-            has_command && type_allows;
+        const bool enabled =
+            sl.enabled.value_or(has_command && type_allows) && has_command && type_allows;
 
         auto set_if_unset = [](const char* key, const std::string& val) {
             if (!std::getenv(key)) set_env_value(key, val);
@@ -836,15 +837,14 @@ std::vector<loom::core::Message> compact_runtime_messages(void* state) {
 loom::core::VoidResult compact_runtime_apply(void* state) {
     auto* engine = static_cast<loom::core::QueryEngine*>(state);
     if (!engine) {
-        return std::unexpected(loom::core::Error::make(
-            loom::core::ErrorCode::InternalError,
-            "No active query engine is available for compaction"));
+        return std::unexpected(
+            loom::core::Error::make(loom::core::ErrorCode::InternalError,
+                                    "No active query engine is available for compaction"));
     }
     auto compacted = engine->compact_conversation();
     if (!compacted) {
-        return std::unexpected(loom::core::Error::make(
-            loom::core::ErrorCode::InternalError,
-            compacted.error().format()));
+        return std::unexpected(loom::core::Error::make(loom::core::ErrorCode::InternalError,
+                                                       compacted.error().format()));
     }
     return loom::core::VoidResult{};
 }
@@ -888,7 +888,8 @@ struct SessionIngressLifecycleGuard {
 
     ~SessionIngressLifecycleGuard() {
         if (!active) return;
-        (void)loom::services::api::send_ingress_lifecycle_event("stopped", optional_view(bridge_work_id));
+        (void)loom::services::api::send_ingress_lifecycle_event("stopped",
+                                                                optional_view(bridge_work_id));
         loom::services::api::close_ingress();
     }
 };
@@ -898,14 +899,30 @@ std::string json_escape(std::string_view value) {
     out.reserve(value.size() + 8);
     for (char ch : value) {
         switch (ch) {
-            case '\\': out += R"(\\)"; break;
-            case '"': out += R"(\")"; break;
-            case '\b': out += R"(\b)"; break;
-            case '\f': out += R"(\f)"; break;
-            case '\n': out += R"(\n)"; break;
-            case '\r': out += R"(\r)"; break;
-            case '\t': out += R"(\t)"; break;
-            default: out.push_back(ch); break;
+        case '\\':
+            out += R"(\\)";
+            break;
+        case '"':
+            out += R"(\")";
+            break;
+        case '\b':
+            out += R"(\b)";
+            break;
+        case '\f':
+            out += R"(\f)";
+            break;
+        case '\n':
+            out += R"(\n)";
+            break;
+        case '\r':
+            out += R"(\r)";
+            break;
+        case '\t':
+            out += R"(\t)";
+            break;
+        default:
+            out.push_back(ch);
+            break;
         }
     }
     return out;
@@ -914,7 +931,8 @@ std::string json_escape(std::string_view value) {
 std::string make_headless_message_id() {
     static std::atomic<std::uint64_t> counter{0};
     const auto now = std::chrono::duration_cast<std::chrono::microseconds>(
-        std::chrono::system_clock::now().time_since_epoch()).count();
+                         std::chrono::system_clock::now().time_since_epoch())
+                         .count();
     return std::format("msg_{}_{}", now, counter.fetch_add(1));
 }
 
@@ -937,12 +955,11 @@ std::string headless_session_id(const CliOptions& opts) {
     return "headless-session";
 }
 
-std::string headless_session_id(
-    const CliOptions& opts,
-    loom::core::ConversationStore* conversation_store
-) {
+std::string headless_session_id(const CliOptions& opts,
+                                loom::core::ConversationStore* conversation_store) {
     if (opts.continue_session && conversation_store) {
-        if (auto active = conversation_store->active_conversation_id(); active && !active->empty()) {
+        if (auto active = conversation_store->active_conversation_id();
+            active && !active->empty()) {
             return *active;
         }
     }
@@ -976,11 +993,9 @@ std::string title_from_messages(const std::vector<loom::core::Message>& messages
     return "Headless Session";
 }
 
-loom::core::VoidResult save_engine_conversation(
-    loom::core::QueryEngine& engine,
-    loom::core::ConversationStore& store,
-    std::string_view conversation_id
-) {
+loom::core::VoidResult save_engine_conversation(loom::core::QueryEngine& engine,
+                                                loom::core::ConversationStore& store,
+                                                std::string_view conversation_id) {
     auto messages = engine.get_conversation();
     auto* conversation = store.get_or_create_conversation(std::string(conversation_id));
     conversation->clear();
@@ -991,11 +1006,9 @@ loom::core::VoidResult save_engine_conversation(
     return store.save_all();
 }
 
-loom::core::VoidResult restore_engine_conversation(
-    loom::core::QueryEngine& engine,
-    loom::core::ConversationStore& store,
-    const CliOptions& opts
-) {
+loom::core::VoidResult restore_engine_conversation(loom::core::QueryEngine& engine,
+                                                   loom::core::ConversationStore& store,
+                                                   const CliOptions& opts) {
     if (!opts.continue_session && !opts.resume_session_id) return {};
 
     auto loaded = store.load_all();
@@ -1011,25 +1024,17 @@ loom::core::VoidResult restore_engine_conversation(
     return {};
 }
 
-std::string sdk_user_event(
-    std::string_view session_id,
-    std::string_view user_text,
-    std::string_view message_id
-) {
+std::string sdk_user_event(std::string_view session_id, std::string_view user_text,
+                           std::string_view message_id) {
     std::ostringstream out;
-    out << R"({"type":"user","message":{"role":"user","content":")"
-        << json_escape(user_text)
+    out << R"({"type":"user","message":{"role":"user","content":")" << json_escape(user_text)
         << R"("},"parent_tool_use_id":null,"uuid":")" << json_escape(message_id)
         << R"(","session_id":")" << json_escape(session_id) << "\"}";
     return out.str();
 }
 
-std::string sdk_assistant_event(
-    std::string_view session_id,
-    std::string_view assistant_id,
-    std::string_view content,
-    std::string_view model
-) {
+std::string sdk_assistant_event(std::string_view session_id, std::string_view assistant_id,
+                                std::string_view content, std::string_view model) {
     std::ostringstream out;
     out << R"({"type":"assistant","message":{"id":")" << json_escape(assistant_id)
         << R"(","role":"assistant","model":")" << json_escape(model)
@@ -1039,13 +1044,9 @@ std::string sdk_assistant_event(
     return out.str();
 }
 
-std::string sdk_result_event(
-    std::string_view session_id,
-    std::string_view assistant_id,
-    std::string_view content,
-    std::string_view model,
-    const loom::core::QueryResponse& response
-) {
+std::string sdk_result_event(std::string_view session_id, std::string_view assistant_id,
+                             std::string_view content, std::string_view model,
+                             const loom::core::QueryResponse& response) {
     std::ostringstream out;
     out << R"({"type":"result","subtype":"success","duration_ms":)" << response.elapsed.count()
         << R"(,"duration_api_ms":)" << response.elapsed.count()
@@ -1057,17 +1058,13 @@ std::string sdk_result_event(
         << R"(,"cache_creation_input_tokens":0,"cache_read_input_tokens":0)"
         << R"(,"server_tool_use":{"web_search_requests":0}})"
         << R"(,"modelUsage":{},"permission_denials":[],"tool_rounds":)" << response.tool_rounds
-        << R"(,"model":")" << json_escape(model)
-        << R"(","uuid":"result_)" << json_escape(assistant_id)
-        << R"(","session_id":")" << json_escape(session_id) << "\"}";
+        << R"(,"model":")" << json_escape(model) << R"(","uuid":"result_)"
+        << json_escape(assistant_id) << R"(","session_id":")" << json_escape(session_id) << "\"}";
     return out.str();
 }
 
-std::string sdk_error_result_event(
-    std::string_view session_id,
-    std::string_view message_id,
-    std::string_view error
-) {
+std::string sdk_error_result_event(std::string_view session_id, std::string_view message_id,
+                                   std::string_view error) {
     std::ostringstream out;
     out << R"({"type":"result","subtype":"error","duration_ms":0,"duration_api_ms":0)"
         << R"(,"is_error":true,"num_turns":0,"result":")" << json_escape(error)
@@ -1075,8 +1072,8 @@ std::string sdk_error_result_event(
         << R"(,"usage":{"input_tokens":0,"output_tokens":0,"cache_creation_input_tokens":0,"cache_read_input_tokens":0)"
         << R"(,"server_tool_use":{"web_search_requests":0}})"
         << R"(,"modelUsage":{},"permission_denials":[],"tool_rounds":0)"
-        << R"(,"uuid":"result_)" << json_escape(message_id)
-        << R"(","session_id":")" << json_escape(session_id) << "\"}";
+        << R"(,"uuid":"result_)" << json_escape(message_id) << R"(","session_id":")"
+        << json_escape(session_id) << "\"}";
     return out.str();
 }
 
@@ -1124,10 +1121,11 @@ std::optional<std::string> extract_headless_user_text(std::string_view line) {
     if (type_text == "update_environment_variables") {
         auto variables = root.get("variables");
         if (variables.is_obj()) {
-            variables.iter_obj([](loom::utils::json::JsonVal key, loom::utils::json::JsonVal value) {
-                if (!key.is_str() || !value.is_str()) return;
-                set_env_value(std::string(key.as_str()).c_str(), std::string(value.as_str()));
-            });
+            variables.iter_obj(
+                [](loom::utils::json::JsonVal key, loom::utils::json::JsonVal value) {
+                    if (!key.is_str() || !value.is_str()) return;
+                    set_env_value(std::string(key.as_str()).c_str(), std::string(value.as_str()));
+                });
         }
         return std::nullopt;
     }
@@ -1141,12 +1139,8 @@ std::optional<std::string> extract_headless_user_text(std::string_view line) {
 }
 
 bool process_headless_stream_json_line(
-    loom::core::QueryEngine& engine,
-    const CliOptions& opts,
-    std::string_view session_id,
-    std::string_view line,
-    loom::core::ConversationStore* conversation_store = nullptr
-) {
+    loom::core::QueryEngine& engine, const CliOptions& opts, std::string_view session_id,
+    std::string_view line, loom::core::ConversationStore* conversation_store = nullptr) {
     if (line.empty()) return false;
 
     auto user_text = extract_headless_user_text(line);
@@ -1160,10 +1154,13 @@ bool process_headless_stream_json_line(
     auto query_result = engine.query(*user_text);
     auto assistant_id = make_headless_message_id();
     if (!query_result) {
-        write_headless_event(sdk_error_result_event(session_id, assistant_id, query_result.error().format()));
+        write_headless_event(
+            sdk_error_result_event(session_id, assistant_id, query_result.error().format()));
         if (conversation_store) {
-            if (auto saved = save_engine_conversation(engine, *conversation_store, session_id); !saved && opts.debug) {
-                std::println(stderr, "Failed to save headless conversation: {}", saved.error().format());
+            if (auto saved = save_engine_conversation(engine, *conversation_store, session_id);
+                !saved && opts.debug) {
+                std::println(stderr, "Failed to save headless conversation: {}",
+                             saved.error().format());
             }
         }
         return true;
@@ -1174,15 +1171,18 @@ bool process_headless_stream_json_line(
     write_headless_event(sdk_assistant_event(session_id, assistant_id, content, model));
     write_headless_event(sdk_result_event(session_id, assistant_id, content, model, *query_result));
     if (conversation_store) {
-        if (auto saved = save_engine_conversation(engine, *conversation_store, session_id); !saved && opts.debug) {
-            std::println(stderr, "Failed to save headless conversation: {}", saved.error().format());
+        if (auto saved = save_engine_conversation(engine, *conversation_store, session_id);
+            !saved && opts.debug) {
+            std::println(stderr, "Failed to save headless conversation: {}",
+                         saved.error().format());
         }
     }
     return true;
 }
 
 std::string strip_trailing_slashes(std::string value) {
-    while (!value.empty() && value.back() == '/') value.pop_back();
+    while (!value.empty() && value.back() == '/')
+        value.pop_back();
     return value;
 }
 
@@ -1204,7 +1204,7 @@ std::optional<std::string> headless_sse_url_from_sdk_url(std::string_view sdk_ur
 
 bool is_headless_websocket_sdk_url(std::string_view sdk_url) {
     return (sdk_url.starts_with("ws://") || sdk_url.starts_with("wss://")) &&
-        sdk_url.find("/session_ingress/ws/") != std::string_view::npos;
+           sdk_url.find("/session_ingress/ws/") != std::string_view::npos;
 }
 
 struct HeadlessSsePayload {
@@ -1212,7 +1212,8 @@ struct HeadlessSsePayload {
     std::optional<std::string> event_id;
 };
 
-std::optional<HeadlessSsePayload> payload_from_headless_sse_event(const loom::utils::SseEvent& event) {
+std::optional<HeadlessSsePayload>
+payload_from_headless_sse_event(const loom::utils::SseEvent& event) {
     auto parsed = loom::utils::json::parse(event.data);
     if (!parsed || !parsed->root().is_obj()) return std::nullopt;
     auto root = parsed->root();
@@ -1249,22 +1250,21 @@ std::optional<HeadlessSsePayload> payload_from_headless_sse_event(const loom::ut
 
 bool is_headless_remote_auth_failure(std::string_view message) {
     return message.find("401") != std::string_view::npos ||
-        message.find("403") != std::string_view::npos ||
-        message.find("Unauthorized") != std::string_view::npos ||
-        message.find("unauthorized") != std::string_view::npos ||
-        message.find("Forbidden") != std::string_view::npos ||
-        message.find("forbidden") != std::string_view::npos;
+           message.find("403") != std::string_view::npos ||
+           message.find("Unauthorized") != std::string_view::npos ||
+           message.find("unauthorized") != std::string_view::npos ||
+           message.find("Forbidden") != std::string_view::npos ||
+           message.find("forbidden") != std::string_view::npos;
 }
 
-int run_headless_stream_json_sse(
-    loom::core::QueryEngine& engine,
-    const CliOptions& opts,
-    std::string_view session_id,
-    loom::core::ConversationStore* conversation_store
-) {
+int run_headless_stream_json_sse(loom::core::QueryEngine& engine, const CliOptions& opts,
+                                 std::string_view session_id,
+                                 loom::core::ConversationStore* conversation_store) {
     auto sse_url = headless_sse_url_from_sdk_url(*opts.sdk_url);
     if (!sse_url) {
-        std::println(stderr, "Error: --sdk-url must be http(s), ws, or wss for headless remote stream-json input.");
+        std::println(
+            stderr,
+            "Error: --sdk-url must be http(s), ws, or wss for headless remote stream-json input.");
         return 1;
     }
 
@@ -1295,37 +1295,32 @@ int run_headless_stream_json_sse(
         } else {
             headers.erase("Last-Event-ID");
         }
-        auto streamed = http.stream_sse(
-            *sse_url,
-            headers,
-            [&](const loom::utils::SseEvent& event) {
-                if (!event.id.empty()) {
-                    last_sse_event_id = event.id;
-                }
-                auto payload = payload_from_headless_sse_event(event);
-                if (!payload) return;
-                if (payload->event_id) {
-                    (void)loom::services::api::send_worker_delivery(*payload->event_id, "received");
-                }
-                (void)loom::services::api::send_worker_state("running");
-                (void)process_headless_stream_json_line(
-                    engine,
-                    opts,
-                    session_id,
-                    payload->payload_json,
-                    conversation_store);
-                (void)loom::services::api::send_worker_state("idle");
-                if (payload->event_id) {
-                    (void)loom::services::api::send_worker_delivery(*payload->event_id, "processed");
-                }
-            });
+        auto streamed = http.stream_sse(*sse_url, headers, [&](const loom::utils::SseEvent& event) {
+            if (!event.id.empty()) {
+                last_sse_event_id = event.id;
+            }
+            auto payload = payload_from_headless_sse_event(event);
+            if (!payload) return;
+            if (payload->event_id) {
+                (void)loom::services::api::send_worker_delivery(*payload->event_id, "received");
+            }
+            (void)loom::services::api::send_worker_state("running");
+            (void)process_headless_stream_json_line(engine, opts, session_id, payload->payload_json,
+                                                    conversation_store);
+            (void)loom::services::api::send_worker_state("idle");
+            if (payload->event_id) {
+                (void)loom::services::api::send_worker_delivery(*payload->event_id, "processed");
+            }
+        });
         if (!streamed) {
             if (is_headless_remote_auth_failure(streamed.error().message)) {
-                std::println(stderr, "Error: headless --sdk-url SSE authentication failed: {}", streamed.error().message);
+                std::println(stderr, "Error: headless --sdk-url SSE authentication failed: {}",
+                             streamed.error().message);
                 return 1;
             }
             if (opts.debug) {
-                std::println(stderr, "headless --sdk-url SSE stream error: {}", streamed.error().message);
+                std::println(stderr, "headless --sdk-url SSE stream error: {}",
+                             streamed.error().message);
             }
         }
         auto now = std::chrono::steady_clock::now();
@@ -1341,12 +1336,9 @@ int run_headless_stream_json_sse(
     return 0;
 }
 
-int run_headless_stream_json_websocket(
-    loom::core::QueryEngine& engine,
-    const CliOptions& opts,
-    std::string_view session_id,
-    loom::core::ConversationStore* conversation_store
-) {
+int run_headless_stream_json_websocket(loom::core::QueryEngine& engine, const CliOptions& opts,
+                                       std::string_view session_id,
+                                       loom::core::ConversationStore* conversation_store) {
     auto token = env_string("LOOM_SESSION_ACCESS_TOKEN");
     std::optional<std::string_view> bearer_token;
     if (token && !token->empty()) bearer_token = std::string_view(*token);
@@ -1354,17 +1346,21 @@ int run_headless_stream_json_websocket(
     while (!g_should_exit.load()) {
         loom::cli::WebSocketTransport transport;
         transport.on_message([&](std::string_view message) {
-            (void)process_headless_stream_json_line(engine, opts, session_id, message, conversation_store);
+            (void)process_headless_stream_json_line(engine, opts, session_id, message,
+                                                    conversation_store);
         });
 
         auto connected = transport.connect(*opts.sdk_url, bearer_token);
         if (!connected) {
             if (is_headless_remote_auth_failure(connected.error())) {
-                std::println(stderr, "Error: headless --sdk-url WebSocket authentication failed: {}", connected.error());
+                std::println(stderr,
+                             "Error: headless --sdk-url WebSocket authentication failed: {}",
+                             connected.error());
                 return 1;
             }
             if (opts.debug) {
-                std::println(stderr, "headless --sdk-url WebSocket connect error: {}", connected.error());
+                std::println(stderr, "headless --sdk-url WebSocket connect error: {}",
+                             connected.error());
             }
             if (!g_should_exit.load()) {
                 std::this_thread::sleep_for(std::chrono::milliseconds{500});
@@ -1383,11 +1379,8 @@ int run_headless_stream_json_websocket(
     return 0;
 }
 
-int run_headless_stream_json(
-    loom::core::QueryEngine& engine,
-    const CliOptions& opts,
-    loom::core::ConversationStore* conversation_store
-) {
+int run_headless_stream_json(loom::core::QueryEngine& engine, const CliOptions& opts,
+                             loom::core::ConversationStore* conversation_store) {
     const auto session_id = headless_session_id(opts, conversation_store);
     if (opts.sdk_url && !opts.sdk_url->empty()) {
         if (is_headless_websocket_sdk_url(*opts.sdk_url)) {
@@ -1434,10 +1427,8 @@ int run_direct_connect_server(const CliOptions& opts) {
     return 0;
 }
 
-std::optional<std::string> option_or_env(
-    const std::optional<std::string>& value,
-    std::initializer_list<const char*> names
-) {
+std::optional<std::string> option_or_env(const std::optional<std::string>& value,
+                                         std::initializer_list<const char*> names) {
     if (value && !value->empty()) return value;
     for (const auto* name : names) {
         if (auto env = env_string(name)) return env;
@@ -1464,34 +1455,34 @@ struct BridgeDaemonSettings {
     std::string access_token;
 };
 
-std::expected<BridgeDaemonSettings, std::string> bridge_daemon_settings_from_options(
-    const CliOptions& opts,
-    std::string_view flag_name
-) {
+std::expected<BridgeDaemonSettings, std::string>
+bridge_daemon_settings_from_options(const CliOptions& opts, std::string_view flag_name) {
     auto work_api_url = option_or_env(opts.bridge_work_api_url, {
-        "LOOM_BRIDGE_WORK_API_URL",
-        "LOOM_BRIDGE_WORK_API_URL",
-        "LOOM_BRIDGE_BASE_URL",
-    });
-    auto environment_id = option_or_env(opts.bridge_environment_id, {
-        "LOOM_BRIDGE_ENVIRONMENT_ID",
-        "LOOM_BRIDGE_ENVIRONMENT_ID",
-    });
-    auto environment_secret = option_or_env(opts.bridge_environment_secret, {
-        "LOOM_BRIDGE_ENVIRONMENT_SECRET",
-        "LOOM_BRIDGE_ENVIRONMENT_SECRET",
-    });
+                                                                    "LOOM_BRIDGE_WORK_API_URL",
+                                                                    "LOOM_BRIDGE_WORK_API_URL",
+                                                                    "LOOM_BRIDGE_BASE_URL",
+                                                                });
+    auto environment_id =
+        option_or_env(opts.bridge_environment_id, {
+                                                      "LOOM_BRIDGE_ENVIRONMENT_ID",
+                                                      "LOOM_BRIDGE_ENVIRONMENT_ID",
+                                                  });
+    auto environment_secret =
+        option_or_env(opts.bridge_environment_secret, {
+                                                          "LOOM_BRIDGE_ENVIRONMENT_SECRET",
+                                                          "LOOM_BRIDGE_ENVIRONMENT_SECRET",
+                                                      });
     auto access_token = option_or_env(opts.bridge_access_token, {
-        "LOOM_BRIDGE_ACCESS_TOKEN",
-        "LOOM_BRIDGE_ACCESS_TOKEN",
-        "LOOM_BRIDGE_OAUTH_TOKEN",
-    });
+                                                                    "LOOM_BRIDGE_ACCESS_TOKEN",
+                                                                    "LOOM_BRIDGE_ACCESS_TOKEN",
+                                                                    "LOOM_BRIDGE_OAUTH_TOKEN",
+                                                                });
 
     if (!work_api_url || !environment_id || !environment_secret || !access_token) {
-        return std::unexpected(std::format(
-            "{} requires --bridge-work-api-url, --bridge-environment-id, "
-            "--bridge-environment-secret, and --bridge-access-token.",
-            flag_name));
+        return std::unexpected(
+            std::format("{} requires --bridge-work-api-url, --bridge-environment-id, "
+                        "--bridge-environment-secret, and --bridge-access-token.",
+                        flag_name));
     }
 
     return BridgeDaemonSettings{
@@ -1502,10 +1493,8 @@ std::expected<BridgeDaemonSettings, std::string> bridge_daemon_settings_from_opt
     };
 }
 
-loom::daemon::DaemonConfig bridge_daemon_config_from_settings(
-    const CliOptions& opts,
-    const BridgeDaemonSettings& settings
-) {
+loom::daemon::DaemonConfig
+bridge_daemon_config_from_settings(const CliOptions& opts, const BridgeDaemonSettings& settings) {
     return loom::daemon::DaemonConfig{
         .port = 0,
         .pid_file = {},
@@ -1522,32 +1511,24 @@ loom::daemon::DaemonConfig bridge_daemon_config_from_settings(
     };
 }
 
-bool daemon_session_has_result(
-    loom::daemon::DaemonServer& daemon,
-    std::string_view session_id
-) {
+bool daemon_session_has_result(loom::daemon::DaemonServer& daemon, std::string_view session_id) {
     for (const auto& line : daemon.session_stdout_lines(session_id)) {
         if (line.find(R"("type":"result")") != std::string::npos) return true;
     }
     return false;
 }
 
-std::optional<loom::daemon::DaemonSession> daemon_session_by_id(
-    loom::daemon::DaemonServer& daemon,
-    std::string_view session_id
-) {
+std::optional<loom::daemon::DaemonSession> daemon_session_by_id(loom::daemon::DaemonServer& daemon,
+                                                                std::string_view session_id) {
     auto sessions = daemon.sessions();
-    auto it = std::ranges::find_if(sessions, [&](const auto& session) {
-        return session.id == session_id;
-    });
+    auto it = std::ranges::find_if(sessions,
+                                   [&](const auto& session) { return session.id == session_id; });
     if (it == sessions.end()) return std::nullopt;
     return *it;
 }
 
-void request_daemon_child_shutdown(
-    loom::daemon::DaemonServer& daemon,
-    std::string_view session_id
-) {
+void request_daemon_child_shutdown(loom::daemon::DaemonServer& daemon,
+                                   std::string_view session_id) {
 #ifndef _WIN32
     auto session = daemon_session_by_id(daemon, session_id);
     if (session && session->pid > 0) {
@@ -1575,10 +1556,8 @@ void request_all_daemon_children_shutdown(loom::daemon::DaemonServer& daemon) {
     }
 }
 
-void wait_for_daemon_children_to_finish(
-    loom::daemon::DaemonServer& daemon,
-    std::chrono::milliseconds timeout
-) {
+void wait_for_daemon_children_to_finish(loom::daemon::DaemonServer& daemon,
+                                        std::chrono::milliseconds timeout) {
     const auto deadline = std::chrono::steady_clock::now() + timeout;
     while (std::chrono::steady_clock::now() < deadline) {
         daemon.reap_sessions();
@@ -1711,10 +1690,8 @@ int run_bridge_daemon(const CliOptions& opts) {
 /**
  * Simple fallback UI if FTXUI fails
  */
-auto run_simple_ui(
-    loom::core::QueryEngine* engine,
-    loom::commands::AppCommandRegistry& cmd_registry
-) -> int {
+auto run_simple_ui(loom::core::QueryEngine* engine,
+                   loom::commands::AppCommandRegistry& cmd_registry) -> int {
     std::println("╭─────────────────────────────────────────╮");
     std::println("│      LOOM (C++23)                       │");
     std::println("│  Type /help for available commands      │");
@@ -1749,7 +1726,8 @@ auto run_simple_ui(
         }
 
         if (engine == nullptr) {
-            std::println("Error: LOOM_API_KEY is required for model queries. Slash commands remain available.");
+            std::println("Error: LOOM_API_KEY is required for model queries. Slash commands remain "
+                         "available.");
             continue;
         }
 
@@ -1780,8 +1758,7 @@ auto run_simple_ui(
 
         // Print cost info
         auto cost = engine->get_usage();
-        std::println("\n📊 Usage: {} in / {} out tokens",
-            cost.input_tokens, cost.output_tokens);
+        std::println("\n📊 Usage: {} in / {} out tokens", cost.input_tokens, cost.output_tokens);
     }
 
     return 0;
@@ -1822,11 +1799,11 @@ int main(int argc, const char* argv[]) {
     if (opts.settings && !opts.settings->empty()) {
         auto applied = load_flag_settings(
             *opts.settings,
-            /*env_setter=*/[](std::string_view name, std::string_view value) {
+            /*env_setter=*/
+            [](std::string_view name, std::string_view value) {
                 set_env_value(std::string(name).c_str(), std::string(value));
             },
-            settings_model_override,
-            settings_api_key_override);
+            settings_model_override, settings_api_key_override);
         if (!applied) {
             // load_flag_settings already printed the faithful error message.
             return 1;
@@ -1861,7 +1838,7 @@ int main(int argc, const char* argv[]) {
             }
             if (applied->status_line) {
                 std::println(stderr, "[settings] statusLine override: {}",
-                    applied->status_line->command.value_or("<none>"));
+                             applied->status_line->command.value_or("<none>"));
             }
             for (const auto& key : applied->deferred_keys) {
                 std::println(stderr, "[settings] deferred key (not yet applied): {}", key);
@@ -1932,9 +1909,10 @@ int main(int argc, const char* argv[]) {
 
     if (opts.list_runtime_tools) {
         auto tool_registry = loom::core::ToolRegistry{};
-        loom::tools::register_runtime_tools(tool_registry, loom::tools::RuntimeToolOptions{
-            .parent_permission_mode = parent_permission_mode_from_options(opts),
-        });
+        loom::tools::register_runtime_tools(
+            tool_registry, loom::tools::RuntimeToolOptions{
+                               .parent_permission_mode = parent_permission_mode_from_options(opts),
+                           });
         std::vector<std::string> names;
         for (auto name : tool_registry.tool_names()) {
             names.emplace_back(name);
@@ -1996,7 +1974,8 @@ int main(int argc, const char* argv[]) {
         return run_simple_ui(nullptr, cmd_registry);
     }
     if (config.api_key.empty() && config.auth_token.empty()) {
-        std::println(stderr, "Error: no API credentials found (set LOOM_API_KEY or LOOM_AUTH_TOKEN,");
+        std::println(stderr,
+                     "Error: no API credentials found (set LOOM_API_KEY or LOOM_AUTH_TOKEN,");
         std::println(stderr, "or provide them via --settings <file>).");
         return 1;
     }
@@ -2007,10 +1986,12 @@ int main(int argc, const char* argv[]) {
     }
 
     SessionIngressLifecycleGuard ingress_guard;
-    if (auto ingress = loom::services::api::create_ingress_from_environment(); ingress && *ingress) {
+    if (auto ingress = loom::services::api::create_ingress_from_environment();
+        ingress && *ingress) {
         ingress_guard.active = true;
         ingress_guard.bridge_work_id = bridge_work_id_from_environment();
-        (void)loom::services::api::send_ingress_lifecycle_event("started", optional_view(ingress_guard.bridge_work_id));
+        (void)loom::services::api::send_ingress_lifecycle_event(
+            "started", optional_view(ingress_guard.bridge_work_id));
     } else if (!ingress && opts.debug) {
         std::println(stderr, "Session ingress initialization skipped: {}", ingress.error());
     }
@@ -2023,19 +2004,20 @@ int main(int argc, const char* argv[]) {
     // Initialize tool registry and register all built-in tools
     loom::core::prepare_model_metadata(config);
     auto tool_registry = loom::core::ToolRegistry{};
-    loom::tools::register_runtime_tools(tool_registry, loom::tools::RuntimeToolOptions{
-        .parent_permission_mode = parent_permission_mode_from_options(opts),
-        .permission_check = [&permission_hook](
-            std::string_view tool_name,
-            std::string_view input_json,
-            std::string_view tool_use_id
-        ) {
-            return check_agent_tool_permission(permission_hook, tool_name, input_json, tool_use_id);
-        },
-        .permission_hook_valid_for_background = true,
-        .default_model = config.model_params.model,
-        .api_context = loom::core::make_api_execution_context(config),
-    });
+    loom::tools::register_runtime_tools(
+        tool_registry,
+        loom::tools::RuntimeToolOptions{
+            .parent_permission_mode = parent_permission_mode_from_options(opts),
+            .permission_check =
+                [&permission_hook](std::string_view tool_name, std::string_view input_json,
+                                   std::string_view tool_use_id) {
+                    return check_agent_tool_permission(permission_hook, tool_name, input_json,
+                                                       tool_use_id);
+                },
+            .permission_hook_valid_for_background = true,
+            .default_model = config.model_params.model,
+            .api_context = loom::core::make_api_execution_context(config),
+        });
 
     // ── MCP tool fallback handler ────────────────────────────────────
     // Each MCP server's tools are registered as
@@ -2055,8 +2037,7 @@ int main(int argc, const char* argv[]) {
     // RFC-0001 B15: the unified missing-tool fallback (all_statuses order,
     // std::string{input.json()}, exact ToolNotFound text) is built by
     // loom.orchestration; the per-site lambdas are gone.
-    tool_registry.set_missing_tool_handler(
-        loom::orchestration::make_missing_tool_backend());
+    tool_registry.set_missing_tool_handler(loom::orchestration::make_missing_tool_backend());
 
     // Populate config.tools with definitions for the API request body
     config.tools = tool_registry.get_visible_definitions();
@@ -2068,9 +2049,7 @@ int main(int argc, const char* argv[]) {
     };
     // Surface connected MCP servers' verbatim input schemas so the request
     // keeps nested parameter shapes the simplified schema cannot represent.
-    config.mcp_input_schema_provider = [] {
-        return loom::tools::collect_mcp_input_schemas();
-    };
+    config.mcp_input_schema_provider = [] { return loom::tools::collect_mcp_input_schemas(); };
 
     // Initialize command registry with all migrated commands
     auto cmd_registry = loom::commands::AppCommandRegistry{};
@@ -2082,8 +2061,7 @@ int main(int argc, const char* argv[]) {
     if (opts.resume_session_id && !opts.resume_session_id->empty()) {
         config.session_id_override = *opts.resume_session_id;
     } else if (opts.continue_session) {
-        if (auto active = conversation_store.active_conversation_id();
-            active && !active->empty()) {
+        if (auto active = conversation_store.active_conversation_id(); active && !active->empty()) {
             config.session_id_override = *active;
         }
     }
@@ -2104,7 +2082,8 @@ int main(int argc, const char* argv[]) {
     if (opts.headless) {
         if (opts.input_format == "stream-json" || opts.output_format == "stream-json") {
             if (opts.input_format != "stream-json" || opts.output_format != "stream-json") {
-                std::println(stderr, "Error: stream-json headless mode requires both --input-format=stream-json and --output-format=stream-json.");
+                std::println(stderr, "Error: stream-json headless mode requires both "
+                                     "--input-format=stream-json and --output-format=stream-json.");
                 return 1;
             }
             return run_headless_stream_json(engine, opts, &conversation_store);
@@ -2120,7 +2099,9 @@ int main(int argc, const char* argv[]) {
         if (opts.use_simple_ui) {
             return run_simple_ui(&engine, cmd_registry);
         } else {
-            return loom_ui_run_app_bridge(&engine, &lifecycle_hooks, &cmd_registry, nullptr, &permission_hook, mouse_mode, opts.max_tool_rounds.value_or(0));
+            return loom_ui_run_app_bridge(&engine, &lifecycle_hooks, &cmd_registry, nullptr,
+                                          &permission_hook, mouse_mode,
+                                          opts.max_tool_rounds.value_or(0));
         }
     } catch (const std::exception& e) {
         std::println(stderr, "UI startup failed: {}", e.what());

@@ -34,20 +34,28 @@ struct ChannelMessageEntry {
 [[nodiscard]] inline Element render_channel_message(const ChannelMessageEntry& entry) {
     auto source_color = [&]() -> Color {
         switch (entry.source) {
-            case ChannelSource::User: return loom::ui::design::theme::current_theme().palette->brief_label_you;
-            case ChannelSource::Assistant: return loom::ui::design::theme::current_theme().palette->brief_label_loom;
-            case ChannelSource::System: return loom::ui::design::theme::current_theme().palette->info;
-            case ChannelSource::Tool: return loom::ui::design::theme::current_theme().palette->info;
+        case ChannelSource::User:
+            return loom::ui::design::theme::current_theme().palette->brief_label_you;
+        case ChannelSource::Assistant:
+            return loom::ui::design::theme::current_theme().palette->brief_label_loom;
+        case ChannelSource::System:
+            return loom::ui::design::theme::current_theme().palette->info;
+        case ChannelSource::Tool:
+            return loom::ui::design::theme::current_theme().palette->info;
         }
         return loom::ui::design::theme::current_theme().palette->text;
     }();
 
-    auto sender = entry.sender_name.value_or([&]{
+    auto sender = entry.sender_name.value_or([&] {
         switch (entry.source) {
-            case ChannelSource::User: return "user";
-            case ChannelSource::Assistant: return "assistant";
-            case ChannelSource::System: return "system";
-            case ChannelSource::Tool: return "tool";
+        case ChannelSource::User:
+            return "user";
+        case ChannelSource::Assistant:
+            return "assistant";
+        case ChannelSource::System:
+            return "system";
+        case ChannelSource::Tool:
+            return "tool";
         }
         return "unknown";
     }());
@@ -59,4 +67,4 @@ struct ChannelMessageEntry {
     });
 }
 
-} // namespace loom::ui::messages
+}  // namespace loom::ui::messages

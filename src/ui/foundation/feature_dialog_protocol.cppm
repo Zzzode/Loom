@@ -69,11 +69,11 @@ struct FeatureWizardRequest {
 /// features area never imports trust_dialog. The composition root maps
 /// td::TrustChoice <-> this enum 1:1.
 enum class TrustChoice : std::uint8_t {
-    AllowOnce,      // Allow this single action
-    AlwaysAllow,    // Persist: skip prompt for this path/plugin
-    ViewFile,       // Show file contents before deciding (High tier only)
-    EnableAnyway,   // Critical tier: user typed YES to override
-    Cancel,         // Block / do nothing
+    AllowOnce,     // Allow this single action
+    AlwaysAllow,   // Persist: skip prompt for this path/plugin
+    ViewFile,      // Show file contents before deciding (High tier only)
+    EnableAnyway,  // Critical tier: user typed YES to override
+    Cancel,        // Block / do nothing
 };
 
 /// A neutral trust-dialog request: the trust data + a neutral on_done.

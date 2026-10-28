@@ -60,7 +60,7 @@ namespace {
 // ---------------------------------------------------------------------------
 
 std::string golden_dir() {
-    
+
     return std::string(LOOM_TESTS_DIR) + "/golden/sdk_control/";
 }
 
@@ -91,13 +91,10 @@ void check_golden_normalized(const std::string& name, const std::string& normali
         return;
     }
     std::ifstream in(path, std::ios::binary);
-    ASSERT_TRUE(in.good()) << "golden missing: " << path
-                           << " (run UPDATE_GOLDENS=1 to create)";
-    std::string expected((std::istreambuf_iterator<char>(in)),
-                         std::istreambuf_iterator<char>());
+    ASSERT_TRUE(in.good()) << "golden missing: " << path << " (run UPDATE_GOLDENS=1 to create)";
+    std::string expected((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
     EXPECT_EQ(normalized, expected)
-        << "golden mismatch for '" << name
-        << "' (run UPDATE_GOLDENS=1 to refresh)";
+        << "golden mismatch for '" << name << "' (run UPDATE_GOLDENS=1 to refresh)";
 }
 
 /// Compare actual output against the golden fixture (byte-exact after pid
@@ -118,12 +115,10 @@ std::string read_golden(const std::string& name) {
     const std::string path = golden_dir() + name + ".json";
     std::ifstream in(path, std::ios::binary);
     if (!in.good()) {
-        ADD_FAILURE() << "golden missing: " << path
-                      << " (run UPDATE_GOLDENS=1 to create)";
+        ADD_FAILURE() << "golden missing: " << path << " (run UPDATE_GOLDENS=1 to create)";
         return {};
     }
-    return std::string((std::istreambuf_iterator<char>(in)),
-                       std::istreambuf_iterator<char>());
+    return std::string((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
 }
 
 // Bring the hand-rolled server functions into scope. They live in
@@ -133,29 +128,22 @@ namespace srv = loom::server::detail;
 
 /// Drive handle_server_control_request with a write_event sink and return the
 /// exact event string it emitted.
-std::string run_handle_request(
-    const loom::bridge::SDKControlRequest& request,
-    loom::bridge::ServerControlRequestHandlers handlers
-) {
+std::string run_handle_request(const loom::bridge::SDKControlRequest& request,
+                               loom::bridge::ServerControlRequestHandlers handlers) {
     std::string captured;
-    handlers.write_event = [&captured](const std::string& event) {
-        captured = event;
-    };
+    handlers.write_event = [&captured](const std::string& event) { captured = event; };
     loom::bridge::handle_server_control_request(request, handlers);
     return captured;
 }
 
-loom::bridge::SDKControlRequest make_control_request(
-    std::string request_id,
-    std::string subtype
-) {
+loom::bridge::SDKControlRequest make_control_request(std::string request_id, std::string subtype) {
     loom::bridge::SDKControlRequest req;
     req.request_id = std::move(request_id);
     req.request.subtype = std::move(subtype);
     return req;
 }
 
-} // namespace
+}  // namespace
 
 // ===========================================================================
 // Server serializers — exact bytes the live server speaks
@@ -169,8 +157,7 @@ TEST(SdkControlGolden, ServerCanUseToolRequest) {
         .input_json = R"({"command":"ls -la","description":"list files"})",
         .tool_use_id = "toolu_001",
     };
-    check_golden("server_can_use_tool_request",
-                 srv::permission_control_request_json(request));
+    check_golden("server_can_use_tool_request", srv::permission_control_request_json(request));
 }
 
 TEST(SdkControlGolden, ServerCanUseToolRequestInvalidInputFallsBackToEmptyObject) {
@@ -205,13 +192,13 @@ TEST(SdkControlGolden, ServerExtractsControlRequestSubtypeAndId) {
         std::string subtype;
         std::string id;
     };
+
     const Case cases[] = {
         {"bridge_control_request_initialize", "initialize", "init_req_001"},
         {"bridge_control_request_set_model", "set_model", "model_req_001"},
-        {"bridge_control_request_set_max_thinking_tokens",
-         "set_max_thinking_tokens", "think_req_001"},
-        {"bridge_control_request_set_permission_mode",
-         "set_permission_mode", "mode_req_001"},
+        {"bridge_control_request_set_max_thinking_tokens", "set_max_thinking_tokens",
+         "think_req_001"},
+        {"bridge_control_request_set_permission_mode", "set_permission_mode", "mode_req_001"},
         {"bridge_control_request_interrupt", "interrupt", "intr_req_001"},
         {"bridge_control_request_unknown", "reload_config", "unk_req_001"},
     };
@@ -229,8 +216,8 @@ TEST(SdkControlGolden, ServerControlRequestSubtypeRejectsNonControl) {
     EXPECT_FALSE(srv::control_request_subtype("not json").has_value());
     // Missing request_id → generated fallback id (non-deterministic, so only
     // shape is asserted, not golden-ed).
-    const auto fallback = srv::control_request_id(
-        R"({"type":"control_request","request":{"subtype":"interrupt"}})");
+    const auto fallback =
+        srv::control_request_id(R"({"type":"control_request","request":{"subtype":"interrupt"}})");
     EXPECT_FALSE(fallback.empty());
     EXPECT_NE(fallback.find("control_"), std::string::npos);
 }
@@ -240,23 +227,22 @@ TEST(SdkControlGolden, ServerControlRequestSubtypeRejectsNonControl) {
 // ===========================================================================
 
 TEST(SdkControlGolden, ServerParsesControlResponseAllow) {
-    const auto decision = srv::control_response_decision(
-        read_golden("server_control_response_allow"));
+    const auto decision =
+        srv::control_response_decision(read_golden("server_control_response_allow"));
     ASSERT_TRUE(decision.has_value());
     EXPECT_EQ(decision->request_id, "perm_req_100");
     EXPECT_EQ(decision->response.decision, loom::hooks::PermissionDecision::allow);
     ASSERT_TRUE(decision->response.updated_input_json.has_value());
     EXPECT_EQ(*decision->response.updated_input_json, R"({"command":"ls"})");
     ASSERT_TRUE(decision->response.updated_permissions_json.has_value());
-    EXPECT_EQ(*decision->response.updated_permissions_json,
-              R"([{"tool_name":"Bash"}])");
+    EXPECT_EQ(*decision->response.updated_permissions_json, R"([{"tool_name":"Bash"}])");
     ASSERT_TRUE(decision->response.message.has_value());
     EXPECT_EQ(*decision->response.message, "ok");
 }
 
 TEST(SdkControlGolden, ServerParsesControlResponseError) {
-    const auto decision = srv::control_response_decision(
-        read_golden("server_control_response_error"));
+    const auto decision =
+        srv::control_response_decision(read_golden("server_control_response_error"));
     ASSERT_TRUE(decision.has_value());
     EXPECT_EQ(decision->request_id, "perm_req_101");
     // Error subtype → deny with the error string as the message.
@@ -268,8 +254,8 @@ TEST(SdkControlGolden, ServerParsesControlResponseError) {
 }
 
 TEST(SdkControlGolden, ServerParsesControlResponseDeny) {
-    const auto decision = srv::control_response_decision(
-        read_golden("server_control_response_deny"));
+    const auto decision =
+        srv::control_response_decision(read_golden("server_control_response_deny"));
     ASSERT_TRUE(decision.has_value());
     EXPECT_EQ(decision->request_id, "perm_req_102");
     EXPECT_EQ(decision->response.decision, loom::hooks::PermissionDecision::deny);
@@ -279,8 +265,8 @@ TEST(SdkControlGolden, ServerParsesControlResponseDeny) {
 }
 
 TEST(SdkControlGolden, ServerControlResponseDecisionRejectsNonControl) {
-    EXPECT_FALSE(srv::control_response_decision(
-        R"({"type":"control_request","request":{}})").has_value());
+    EXPECT_FALSE(
+        srv::control_response_decision(R"({"type":"control_request","request":{}})").has_value());
     EXPECT_FALSE(srv::control_response_decision("not json").has_value());
 }
 
@@ -312,8 +298,8 @@ TEST(SdkControlGolden, BridgeParsesControlRequestSetModel) {
 }
 
 TEST(SdkControlGolden, BridgeParsesControlRequestSetMaxThinkingTokens) {
-    auto parsed = loom::utils::json::parse(
-        read_golden("bridge_control_request_set_max_thinking_tokens"));
+    auto parsed =
+        loom::utils::json::parse(read_golden("bridge_control_request_set_max_thinking_tokens"));
     ASSERT_TRUE(parsed.has_value());
     const auto req = loom::bridge::parse_control_request(parsed->root());
     EXPECT_EQ(req.request_id, "think_req_001");
@@ -323,8 +309,8 @@ TEST(SdkControlGolden, BridgeParsesControlRequestSetMaxThinkingTokens) {
 }
 
 TEST(SdkControlGolden, BridgeParsesControlRequestSetPermissionMode) {
-    auto parsed = loom::utils::json::parse(
-        read_golden("bridge_control_request_set_permission_mode"));
+    auto parsed =
+        loom::utils::json::parse(read_golden("bridge_control_request_set_permission_mode"));
     ASSERT_TRUE(parsed.has_value());
     const auto req = loom::bridge::parse_control_request(parsed->root());
     EXPECT_EQ(req.request_id, "mode_req_001");
@@ -378,8 +364,7 @@ TEST(SdkControlGolden, BridgeParsesControlResponseError) {
 }
 
 TEST(SdkControlGolden, BridgeTypeGuardsRejectForeignShapes) {
-    auto user_msg = loom::utils::json::parse(
-        R"({"type":"user","message":{"content":"hi"}})");
+    auto user_msg = loom::utils::json::parse(R"({"type":"user","message":{"content":"hi"}})");
     ASSERT_TRUE(user_msg.has_value());
     EXPECT_FALSE(loom::bridge::is_sdk_control_request(user_msg->root()));
     EXPECT_FALSE(loom::bridge::is_sdk_control_response(user_msg->root()));
@@ -390,15 +375,15 @@ TEST(SdkControlGolden, BridgeTypeGuardsRejectForeignShapes) {
 // ===========================================================================
 
 TEST(SdkControlGolden, BridgeBuildsControlResponseEventSuccess) {
-    check_golden("bridge_control_response_event_success",
-                 loom::bridge::build_control_response_event(
-                     "sess_001", "req_300", "success", "{}"));
+    check_golden(
+        "bridge_control_response_event_success",
+        loom::bridge::build_control_response_event("sess_001", "req_300", "success", "{}"));
 }
 
 TEST(SdkControlGolden, BridgeBuildsControlResponseEventError) {
-    check_golden("bridge_control_response_event_error",
-                 loom::bridge::build_control_response_event(
-                     "sess_001", "req_301", "error", "{}", "boom"));
+    check_golden(
+        "bridge_control_response_event_error",
+        loom::bridge::build_control_response_event("sess_001", "req_301", "error", "{}", "boom"));
 }
 
 // ===========================================================================
@@ -410,9 +395,7 @@ TEST(SdkControlGolden, BridgeHandlesInitialize) {
     loom::bridge::ServerControlRequestHandlers handlers;
     handlers.session_id = "sess_001";
     check_golden("bridge_handle_initialize",
-                 run_handle_request(
-                     make_control_request("init_req_001", "initialize"),
-                     handlers));
+                 run_handle_request(make_control_request("init_req_001", "initialize"), handlers));
 }
 
 TEST(SdkControlGolden, BridgeHandlesSetModel) {
@@ -420,9 +403,7 @@ TEST(SdkControlGolden, BridgeHandlesSetModel) {
     handlers.session_id = "sess_001";
     handlers.on_set_model = [](const std::optional<std::string>&) {};
     check_golden("bridge_handle_set_model",
-                 run_handle_request(
-                     make_control_request("model_req_001", "set_model"),
-                     handlers));
+                 run_handle_request(make_control_request("model_req_001", "set_model"), handlers));
 }
 
 TEST(SdkControlGolden, BridgeHandlesSetMaxThinkingTokens) {
@@ -431,8 +412,7 @@ TEST(SdkControlGolden, BridgeHandlesSetMaxThinkingTokens) {
     handlers.on_set_max_thinking_tokens = [](std::optional<int64_t>) {};
     check_golden("bridge_handle_set_max_thinking_tokens",
                  run_handle_request(
-                     make_control_request("think_req_001", "set_max_thinking_tokens"),
-                     handlers));
+                     make_control_request("think_req_001", "set_max_thinking_tokens"), handlers));
 }
 
 TEST(SdkControlGolden, BridgeHandlesSetPermissionModeOk) {
@@ -441,10 +421,9 @@ TEST(SdkControlGolden, BridgeHandlesSetPermissionModeOk) {
     handlers.on_set_permission_mode = [](const std::string&) {
         return std::pair<bool, std::string>{true, ""};
     };
-    check_golden("bridge_handle_set_permission_mode_ok",
-                 run_handle_request(
-                     make_control_request("mode_req_001", "set_permission_mode"),
-                     handlers));
+    check_golden(
+        "bridge_handle_set_permission_mode_ok",
+        run_handle_request(make_control_request("mode_req_001", "set_permission_mode"), handlers));
 }
 
 TEST(SdkControlGolden, BridgeHandlesSetPermissionModeError) {
@@ -453,10 +432,9 @@ TEST(SdkControlGolden, BridgeHandlesSetPermissionModeError) {
     handlers.on_set_permission_mode = [](const std::string&) {
         return std::pair<bool, std::string>{false, "mode rejected"};
     };
-    check_golden("bridge_handle_set_permission_mode_err",
-                 run_handle_request(
-                     make_control_request("mode_req_002", "set_permission_mode"),
-                     handlers));
+    check_golden(
+        "bridge_handle_set_permission_mode_err",
+        run_handle_request(make_control_request("mode_req_002", "set_permission_mode"), handlers));
 }
 
 TEST(SdkControlGolden, BridgeHandlesSetPermissionModeNoCallback) {
@@ -464,10 +442,9 @@ TEST(SdkControlGolden, BridgeHandlesSetPermissionModeNoCallback) {
     // success).
     loom::bridge::ServerControlRequestHandlers handlers;
     handlers.session_id = "sess_001";
-    check_golden("bridge_handle_set_permission_mode_no_callback",
-                 run_handle_request(
-                     make_control_request("mode_req_003", "set_permission_mode"),
-                     handlers));
+    check_golden(
+        "bridge_handle_set_permission_mode_no_callback",
+        run_handle_request(make_control_request("mode_req_003", "set_permission_mode"), handlers));
 }
 
 TEST(SdkControlGolden, BridgeHandlesInterrupt) {
@@ -475,18 +452,15 @@ TEST(SdkControlGolden, BridgeHandlesInterrupt) {
     handlers.session_id = "sess_001";
     handlers.on_interrupt = [] {};
     check_golden("bridge_handle_interrupt",
-                 run_handle_request(
-                     make_control_request("intr_req_001", "interrupt"),
-                     handlers));
+                 run_handle_request(make_control_request("intr_req_001", "interrupt"), handlers));
 }
 
 TEST(SdkControlGolden, BridgeHandlesUnknownSubtype) {
     loom::bridge::ServerControlRequestHandlers handlers;
     handlers.session_id = "sess_001";
-    check_golden("bridge_handle_unknown",
-                 run_handle_request(
-                     make_control_request("unk_req_001", "reload_config"),
-                     handlers));
+    check_golden(
+        "bridge_handle_unknown",
+        run_handle_request(make_control_request("unk_req_001", "reload_config"), handlers));
 }
 
 TEST(SdkControlGolden, BridgeHandlesOutboundOnlyRejectsMutableRequest) {
@@ -496,9 +470,7 @@ TEST(SdkControlGolden, BridgeHandlesOutboundOnlyRejectsMutableRequest) {
     handlers.session_id = "sess_001";
     handlers.outbound_only = true;
     check_golden("bridge_handle_outbound_only",
-                 run_handle_request(
-                     make_control_request("model_req_002", "set_model"),
-                     handlers));
+                 run_handle_request(make_control_request("model_req_002", "set_model"), handlers));
 }
 
 // ===========================================================================
@@ -519,13 +491,11 @@ TEST(SdkControlGolden, ServerResultMessage) {
         R"({"id":"msg_001","response":"done","model":"test-model",)"
         R"("elapsed_ms":1500,"usage":{"input_tokens":100,"output_tokens":50}})");
     ASSERT_TRUE(resp.has_value());
-    check_golden_result("server_result_message",
-                        srv::sdk_result_message("sess_001", resp->root()));
+    check_golden_result("server_result_message", srv::sdk_result_message("sess_001", resp->root()));
 }
 
 TEST(SdkControlGolden, ServerErrorResult) {
-    check_golden_result("server_error_result",
-                        srv::sdk_error_result("sess_001", "boom"));
+    check_golden_result("server_error_result", srv::sdk_error_result("sess_001", "boom"));
 }
 
 TEST(SdkControlGolden, ServerResultIngressEvent) {
@@ -543,7 +513,7 @@ TEST(SdkControlGolden, ServerResultIngressEvent) {
 }
 
 TEST(SdkControlGolden, BridgeSerializeResultMessage) {
-    check_golden_result("bridge_serialize_result_message",
-                        loom::bridge::serialize_result_message(
-                            loom::bridge::make_result_message("sess_001")));
+    check_golden_result(
+        "bridge_serialize_result_message",
+        loom::bridge::serialize_result_message(loom::bridge::make_result_message("sess_001")));
 }

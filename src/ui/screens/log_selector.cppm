@@ -31,16 +31,16 @@
 /// with mandatory 5 s countdown (UI8, reused — not reimplemented).
 module;
 
-#include <unistd.h>
-#include <ctime>
-#include <cctype>
-#include <cstdint>
-
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/event.hpp>
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/screen/color.hpp>
+#include <unistd.h>
+
+#include <cctype>
+#include <cstdint>
+#include <ctime>
 
 export module loom.ui.screens.log_selector;
 
@@ -60,10 +60,10 @@ using namespace ftxui;
 // ─── Cross-module imports (tokens / UI8 trust primitives) ────────────────────
 namespace dt = loom::ui::design::tokens;
 namespace tu = loom::ui::trust_utils;
+using loom::ui::trust_dialog::MakeTrustDialogComponent;
+using loom::ui::trust_dialog::TrustDialogProps;
 using tu::RiskLevel;
 using tu::TrustChoice;
-using loom::ui::trust_dialog::TrustDialogProps;
-using loom::ui::trust_dialog::MakeTrustDialogComponent;
 
 // =========================================================================
 // 1. Enums
@@ -82,24 +82,36 @@ enum class Tab : std::uint8_t {
 
 [[nodiscard]] constexpr std::string_view to_string(Tab t) {
     switch (t) {
-        case Tab::Recent:   return "Recent";
-        case Tab::Projects: return "Projects";
-        case Tab::Drafts:   return "Drafts";
-        case Tab::Archive:  return "Archive";
-        case Tab::Remote:   return "Remote";
-        case Tab::Trash:    return "Trash";
+    case Tab::Recent:
+        return "Recent";
+    case Tab::Projects:
+        return "Projects";
+    case Tab::Drafts:
+        return "Drafts";
+    case Tab::Archive:
+        return "Archive";
+    case Tab::Remote:
+        return "Remote";
+    case Tab::Trash:
+        return "Trash";
     }
     return "Recent";
 }
 
 [[nodiscard]] constexpr std::string_view tab_icon(Tab t) {
     switch (t) {
-        case Tab::Recent:   return loom::ui::design::figures::kEllipsis;
-        case Tab::Projects: return loom::ui::design::figures::kSquareSmall;
-        case Tab::Drafts:   return loom::ui::design::figures::kSquareSmall;
-        case Tab::Archive:  return loom::ui::design::figures::kSquareSmallFilled;
-        case Tab::Remote:   return loom::ui::design::figures::kArrowUp;
-        case Tab::Trash:    return loom::ui::design::figures::kCross;
+    case Tab::Recent:
+        return loom::ui::design::figures::kEllipsis;
+    case Tab::Projects:
+        return loom::ui::design::figures::kSquareSmall;
+    case Tab::Drafts:
+        return loom::ui::design::figures::kSquareSmall;
+    case Tab::Archive:
+        return loom::ui::design::figures::kSquareSmallFilled;
+    case Tab::Remote:
+        return loom::ui::design::figures::kArrowUp;
+    case Tab::Trash:
+        return loom::ui::design::figures::kCross;
     }
     return "•";
 }
@@ -107,31 +119,41 @@ enum class Tab : std::uint8_t {
 /// Lifecycle status of a single log entry.  Each tab primarily exposes one
 /// status, but filtering allows overlays (e.g. Archived pinned entries).
 enum class Status : std::uint8_t {
-    Active = 0,   // Recent tab
-    Draft,        // Drafts tab
-    Archived,     // Archive tab
-    Trashed,      // Trash tab
-    Remote,       // Remote / cloud
+    Active = 0,  // Recent tab
+    Draft,       // Drafts tab
+    Archived,    // Archive tab
+    Trashed,     // Trash tab
+    Remote,      // Remote / cloud
 };
 
 [[nodiscard]] constexpr std::string_view to_string(Status s) {
     switch (s) {
-        case Status::Active:   return "Active";
-        case Status::Draft:    return "Draft";
-        case Status::Archived: return "Archived";
-        case Status::Trashed:  return "Trashed";
-        case Status::Remote:   return "Remote";
+    case Status::Active:
+        return "Active";
+    case Status::Draft:
+        return "Draft";
+    case Status::Archived:
+        return "Archived";
+    case Status::Trashed:
+        return "Trashed";
+    case Status::Remote:
+        return "Remote";
     }
     return "Active";
 }
 
 [[nodiscard]] Color status_color(Status s) {
     switch (s) {
-        case Status::Active:   return loom::ui::design::theme::current_theme().palette->success;
-        case Status::Draft:    return loom::ui::design::theme::current_theme().palette->warning;
-        case Status::Archived: return loom::ui::design::theme::current_theme().palette->text;
-        case Status::Trashed:  return loom::ui::design::theme::current_theme().palette->danger;
-        case Status::Remote:   return loom::ui::design::theme::current_theme().palette->info;
+    case Status::Active:
+        return loom::ui::design::theme::current_theme().palette->success;
+    case Status::Draft:
+        return loom::ui::design::theme::current_theme().palette->warning;
+    case Status::Archived:
+        return loom::ui::design::theme::current_theme().palette->text;
+    case Status::Trashed:
+        return loom::ui::design::theme::current_theme().palette->danger;
+    case Status::Remote:
+        return loom::ui::design::theme::current_theme().palette->info;
     }
     return loom::ui::design::theme::current_theme().palette->text;
 }
@@ -228,8 +250,8 @@ struct LogSelectorOptions {
 
     /// Triggered lazily when the right preview panel is shown for a session
     /// that doesn't yet have preview_messages filled in.
-    std::function<std::vector<std::pair<std::string, std::string>>(
-        const std::string& id, std::size_t limit)>
+    std::function<std::vector<std::pair<std::string, std::string>>(const std::string& id,
+                                                                   std::size_t limit)>
         load_preview;
 
     /// Dismiss / close the panel.  Fires on Esc / q.
@@ -253,18 +275,26 @@ inline ftxui::Decorator padding(int top, int right, int bottom, int left) {
     using namespace ftxui;
     return [=](Element e) -> Element {
         Elements rows;
-        for (int i = 0; i < top; ++i) rows.push_back(text(""));
+        for (int i = 0; i < top; ++i)
+            rows.push_back(text(""));
         {
             Elements lp, rp;
-            for (int i = 0; i < left; ++i) lp.push_back(text(" "));
-            for (int i = 0; i < right; ++i) rp.push_back(text(" "));
+            for (int i = 0; i < left; ++i)
+                lp.push_back(text(" "));
+            for (int i = 0; i < right; ++i)
+                rp.push_back(text(" "));
             rows.push_back(hbox({hbox(std::move(lp)), std::move(e), hbox(std::move(rp))}));
         }
-        for (int i = 0; i < bottom; ++i) rows.push_back(text(""));
+        for (int i = 0; i < bottom; ++i)
+            rows.push_back(text(""));
         return vbox(std::move(rows));
     };
 }
-inline ftxui::Decorator padding(int all) { return padding(all, all, all, all); }
+
+inline ftxui::Decorator padding(int all) {
+    return padding(all, all, all, all);
+}
+
 inline ftxui::Decorator padding(int horizontal, int vertical) {
     return padding(vertical, horizontal, vertical, horizontal);
 }
@@ -275,26 +305,22 @@ inline ftxui::Decorator padding(int horizontal, int vertical) {
     return std::string{s.substr(0, max - 3)} + "...";
 }
 
-[[nodiscard]] inline std::string format_relative(
-    std::chrono::system_clock::time_point tp)
-{
+[[nodiscard]] inline std::string format_relative(std::chrono::system_clock::time_point tp) {
     using namespace std::chrono;
     const auto now = system_clock::now();
     const auto diff = duration_cast<minutes>(now - tp);
-    if (diff.count() < 1)       return "just now";
-    if (diff.count() < 60)      return std::format("{}m ago", diff.count());
+    if (diff.count() < 1) return "just now";
+    if (diff.count() < 60) return std::format("{}m ago", diff.count());
     const auto h = duration_cast<hours>(diff);
-    if (h.count() < 24)         return std::format("{}h ago", h.count());
+    if (h.count() < 24) return std::format("{}h ago", h.count());
     const long days = h.count() / 24;
-    if (days < 7)               return std::format("{}d ago", days);
-    if (days < 30)              return std::format("{}w ago", days / 7);
-    if (days < 365)             return std::format("{}mo ago", days / 30);
+    if (days < 7) return std::format("{}d ago", days);
+    if (days < 30) return std::format("{}w ago", days / 7);
+    if (days < 365) return std::format("{}mo ago", days / 30);
     return std::format("{}y ago", days / 365);
 }
 
-[[nodiscard]] inline std::string format_absolute(
-    std::chrono::system_clock::time_point tp)
-{
+[[nodiscard]] inline std::string format_absolute(std::chrono::system_clock::time_point tp) {
     const auto t = std::chrono::system_clock::to_time_t(tp);
     std::tm tm_buf{};
 #if defined(_WIN32)
@@ -307,9 +333,7 @@ inline ftxui::Decorator padding(int horizontal, int vertical) {
     return std::string{buf};
 }
 
-[[nodiscard]] inline std::string format_month_key(
-    std::chrono::system_clock::time_point tp)
-{
+[[nodiscard]] inline std::string format_month_key(std::chrono::system_clock::time_point tp) {
     const auto t = std::chrono::system_clock::to_time_t(tp);
     std::tm tm_buf{};
 #if defined(_WIN32)
@@ -322,34 +346,37 @@ inline ftxui::Decorator padding(int horizontal, int vertical) {
     return std::string{buf};
 }
 
-[[nodiscard]] inline bool icontains(std::string_view hay,
-                                    std::string_view needle)
-{
+[[nodiscard]] inline bool icontains(std::string_view hay, std::string_view needle) {
     if (needle.empty()) return true;
     if (hay.size() < needle.size()) return false;
     const auto lc = [](unsigned char c) { return static_cast<char>(std::tolower(c)); };
     for (std::size_t i = 0; i + needle.size() <= hay.size(); ++i) {
         bool ok = true;
         for (std::size_t j = 0; j < needle.size(); ++j) {
-            if (lc(hay[i + j]) != lc(needle[j])) { ok = false; break; }
+            if (lc(hay[i + j]) != lc(needle[j])) {
+                ok = false;
+                break;
+            }
         }
         if (ok) return true;
     }
     return false;
 }
 
-[[nodiscard]] inline bool in_date_range(
-    std::chrono::system_clock::time_point tp, DateRange r)
-{
+[[nodiscard]] inline bool in_date_range(std::chrono::system_clock::time_point tp, DateRange r) {
     if (r == DateRange::Any) return true;
     using namespace std::chrono;
     const auto now = system_clock::now();
     const auto days = duration_cast<hours>(now - tp).count() / 24;
     switch (r) {
-        case DateRange::Today:   return days < 1;
-        case DateRange::Last7d:  return days <= 7;
-        case DateRange::Last30d: return days <= 30;
-        default:                 return true;  // Custom handled outside
+    case DateRange::Today:
+        return days < 1;
+    case DateRange::Last7d:
+        return days <= 7;
+    case DateRange::Last30d:
+        return days <= 30;
+    default:
+        return true;  // Custom handled outside
     }
 }
 
@@ -362,90 +389,90 @@ inline ftxui::Decorator padding(int horizontal, int vertical) {
 // =========================================================================
 namespace ui19_style {
 
-    /// Identical Element layout to resume_screen::RenderSessionCard.
-    /// Uses SessionLogEntry instead of SessionMetaRow — fields are 1:1.
-    [[nodiscard]] inline Element RenderSessionCard(
-        const SessionLogEntry& r,
-        bool selected, bool hovered, bool pinned)
+/// Identical Element layout to resume_screen::RenderSessionCard.
+/// Uses SessionLogEntry instead of SessionMetaRow — fields are 1:1.
+[[nodiscard]] inline Element RenderSessionCard(const SessionLogEntry& r, bool selected,
+                                               bool hovered, bool pinned) {
+    const auto& palette = *loom::ui::design::theme::current_theme().palette;
+    Elements left_col;
+    const std::string title = truncate(r.title, 45);
+    left_col.push_back(hbox({
+        text(std::string(pinned ? std::string{loom::ui::design::figures::kStar}
+                                : std::string{loom::ui::design::figures::kSquareSmall}) +
+             " ") |
+            dim,
+        text(title) | (selected ? (bold | color(palette.success)) : (bold | color(palette.text))),
+    }));
+    left_col.push_back(hbox({
+        text("    ") | dim,
+        text(truncate(r.preview_summary, 60)) | dim | color(palette.muted),
+    }));
+    const std::string model = r.model ? *r.model : std::string{"(model)"};
+    left_col.push_back(hbox({
+        text("    ") | dim,
+        text((std::string{loom::ui::design::figures::kCircleFilled} + " ")) | dim,
+        text(truncate(model, 28)) | dim | color(palette.info),
+        text("  ") | dim,
+        text((std::string{loom::ui::design::figures::kCircle} + " ")) | dim,
+        text(format_relative(r.updated)) | dim | color(palette.muted),
+    }));
+
+    Elements right_col;
+    right_col.push_back(hbox({
+        text(format_absolute(r.updated)) | dim | color(palette.muted),
+        text("  ") | dim,
+        text(std::to_string(r.msg_count)) | bold | color(palette.info),
+        text(" msg") | dim | color(palette.muted),
+    }));
     {
-        const auto& palette = *loom::ui::design::theme::current_theme().palette;
-        Elements left_col;
-        const std::string title = truncate(r.title, 45);
-        left_col.push_back(hbox({
-            text(std::string(pinned ? std::string{loom::ui::design::figures::kStar} : std::string{loom::ui::design::figures::kSquareSmall}) + " ") | dim,
-            text(title) | (selected ? (bold | color(palette.success))
-                                    : (bold | color(palette.text))),
-        }));
-        left_col.push_back(hbox({
-            text("    ") | dim,
-            text(truncate(r.preview_summary, 60)) | dim | color(palette.muted),
-        }));
-        const std::string model = r.model ? *r.model : std::string{"(model)"};
-        left_col.push_back(hbox({
-            text("    ") | dim,
-            text((std::string{loom::ui::design::figures::kCircleFilled} + " ")) | dim,
-            text(truncate(model, 28)) | dim | color(palette.info),
-            text("  ") | dim,
-            text((std::string{loom::ui::design::figures::kCircle} + " ")) | dim,
-            text(format_relative(r.updated)) | dim | color(palette.muted),
-        }));
-
-        Elements right_col;
-        right_col.push_back(hbox({
-            text(format_absolute(r.updated)) | dim | color(palette.muted),
-            text("  ") | dim,
-            text(std::to_string(r.msg_count)) | bold | color(palette.info),
-            text(" msg") | dim | color(palette.muted),
-        }));
-        {
-            Elements row;
-            if (r.cost_usd > 0) {
-                row.push_back(text(std::format("${:.2f}", r.cost_usd))
-                    | color(palette.success) | dim);
-                row.push_back(text("  ") | dim);
-            }
-            row.push_back(text(std::to_string(r.turns)) | dim | color(palette.muted));
-            row.push_back(text(" turns") | dim | color(palette.muted));
-            right_col.push_back(hbox(std::move(row)));
+        Elements row;
+        if (r.cost_usd > 0) {
+            row.push_back(text(std::format("${:.2f}", r.cost_usd)) | color(palette.success) | dim);
+            row.push_back(text("  ") | dim);
         }
-        if (r.project) {
-            right_col.push_back(hbox({
-                text((std::string{loom::ui::design::figures::kLozenge} + " ")) | dim,
-                text(truncate(*r.project, 20)) | dim | color(palette.warning),
-            }));
-        }
-        if (hovered) {
-            right_col.push_back(text(""));
-            right_col.push_back(hbox({
-                text("[a]rchive  ") | dim | color(palette.warning),
-                text("[d]el  ") | dim | color(palette.danger),
-                text("[p]in  ") | dim | color(palette.info),
-            }));
-        } else {
-            right_col.push_back(hbox({ text("") }));
-            right_col.push_back(hbox({ text("···") | dim | color(palette.muted) }));
-        }
-
-        Element card = hbox({
-            vbox(std::move(left_col)) | flex,
-            text("   "),
-            vbox(std::move(right_col)) | align_right,
-        }) | padding(1);
-
-        if (selected) {
-            card = card | bgcolor(loom::ui::design::theme::current_theme().palette->surface_tint_1)
-                        | borderStyled(palette.success);
-        } else {
-            card = card | borderLight;
-        }
-
-        const std::string chev = selected ? " ❯ " : "   ";
-        return hbox({
-            text(chev) | color(selected ? palette.success : Color{}),
-            card | flex,
-        });
+        row.push_back(text(std::to_string(r.turns)) | dim | color(palette.muted));
+        row.push_back(text(" turns") | dim | color(palette.muted));
+        right_col.push_back(hbox(std::move(row)));
     }
-} // namespace ui19_style
+    if (r.project) {
+        right_col.push_back(hbox({
+            text((std::string{loom::ui::design::figures::kLozenge} + " ")) | dim,
+            text(truncate(*r.project, 20)) | dim | color(palette.warning),
+        }));
+    }
+    if (hovered) {
+        right_col.push_back(text(""));
+        right_col.push_back(hbox({
+            text("[a]rchive  ") | dim | color(palette.warning),
+            text("[d]el  ") | dim | color(palette.danger),
+            text("[p]in  ") | dim | color(palette.info),
+        }));
+    } else {
+        right_col.push_back(hbox({text("")}));
+        right_col.push_back(hbox({text("···") | dim | color(palette.muted)}));
+    }
+
+    Element card = hbox({
+                       vbox(std::move(left_col)) | flex,
+                       text("   "),
+                       vbox(std::move(right_col)) | align_right,
+                   }) |
+                   padding(1);
+
+    if (selected) {
+        card = card | bgcolor(loom::ui::design::theme::current_theme().palette->surface_tint_1) |
+               borderStyled(palette.success);
+    } else {
+        card = card | borderLight;
+    }
+
+    const std::string chev = selected ? " ❯ " : "   ";
+    return hbox({
+        text(chev) | color(selected ? palette.success : Color{}),
+        card | flex,
+    });
+}
+}  // namespace ui19_style
 
 // =========================================================================
 // 5. Internal state struct
@@ -456,7 +483,7 @@ struct SelectorState {
 
     // --- data ---
     std::vector<SessionLogEntry> all_sessions;
-    std::vector<ProjectEntry>    projects;
+    std::vector<ProjectEntry> projects;
 
     // --- navigation ---
     Tab tab = Tab::Recent;
@@ -472,16 +499,16 @@ struct SelectorState {
     // --- filters ---
     std::string search;
     bool search_focused = false;
-    std::unordered_set<Status>    status_filter;   // empty = all
-    std::string                   model_filter;
-    std::string                   tag_filter;
-    std::string                   project_filter;
-    DateRange                     date_range = DateRange::Any;
-    int                           filter_chip_cursor = 0; // 0..n_chips-1
+    std::unordered_set<Status> status_filter;  // empty = all
+    std::string model_filter;
+    std::string tag_filter;
+    std::string project_filter;
+    DateRange date_range = DateRange::Any;
+    int filter_chip_cursor = 0;  // 0..n_chips-1
 
     // --- Projects tab state ---
     std::vector<std::string> collapsed_projects;
-    std::size_t project_cursor = 0;   // flat row cursor into Projects list
+    std::size_t project_cursor = 0;  // flat row cursor into Projects list
 
     // --- Archive tab: grouped by YYYY-MM ---
     std::vector<std::pair<std::string, std::vector<std::size_t>>> archive_groups;
@@ -508,12 +535,18 @@ struct SelectorState {
 
 inline Status primary_status_for_tab(Tab t) {
     switch (t) {
-        case Tab::Recent:   return Status::Active;
-        case Tab::Drafts:   return Status::Draft;
-        case Tab::Archive:  return Status::Archived;
-        case Tab::Remote:   return Status::Remote;
-        case Tab::Trash:    return Status::Trashed;
-        default:            return Status::Active; // Projects: mixed
+    case Tab::Recent:
+        return Status::Active;
+    case Tab::Drafts:
+        return Status::Draft;
+    case Tab::Archive:
+        return Status::Archived;
+    case Tab::Remote:
+        return Status::Remote;
+    case Tab::Trash:
+        return Status::Trashed;
+    default:
+        return Status::Active;  // Projects: mixed
     }
 }
 
@@ -521,10 +554,18 @@ inline Status primary_status_for_tab(Tab t) {
 // Forward declarations for helpers called inside refresh_view.
 inline void refresh_archive_groups(SelectorState& s);
 inline void rebuild_project_cursor(SelectorState& s);
+
 inline void refresh_view(SelectorState& s) {
     s.view.clear();
-    if (s.tab == Tab::Projects) { refresh_archive_groups(s); rebuild_project_cursor(s); return; }
-    if (s.tab == Tab::Archive)  { refresh_archive_groups(s); return; }
+    if (s.tab == Tab::Projects) {
+        refresh_archive_groups(s);
+        rebuild_project_cursor(s);
+        return;
+    }
+    if (s.tab == Tab::Archive) {
+        refresh_archive_groups(s);
+        return;
+    }
 
     const Status primary = primary_status_for_tab(s.tab);
 
@@ -538,14 +579,17 @@ inline void refresh_view(SelectorState& s) {
             if (e.status != Status::Remote) continue;
         }
 
-        if (!s.status_filter.empty() && !s.status_filter.count(e.status))
-            continue;
+        if (!s.status_filter.empty() && !s.status_filter.count(e.status)) continue;
         if (!s.model_filter.empty()) {
             if (!e.model || !icontains(*e.model, s.model_filter)) continue;
         }
         if (!s.tag_filter.empty()) {
             bool hit = false;
-            for (const auto& t : e.tags) if (icontains(t, s.tag_filter)) { hit = true; break; }
+            for (const auto& t : e.tags)
+                if (icontains(t, s.tag_filter)) {
+                    hit = true;
+                    break;
+                }
             if (!hit) continue;
         }
         if (!s.project_filter.empty()) {
@@ -553,11 +597,14 @@ inline void refresh_view(SelectorState& s) {
         }
         if (!in_date_range(e.updated, s.date_range)) continue;
         if (!s.search.empty()) {
-            const bool hit = icontains(e.title, s.search)
-                          || icontains(e.preview_summary, s.search)
-                          || (e.project && icontains(*e.project, s.search))
-                          || (e.model && icontains(*e.model, s.search))
-                          || [&]{ for (auto& t:e.tags) if (icontains(t,s.search)) return true; return false; }();
+            const bool hit = icontains(e.title, s.search) ||
+                             icontains(e.preview_summary, s.search) ||
+                             (e.project && icontains(*e.project, s.search)) ||
+                             (e.model && icontains(*e.model, s.search)) || [&] {
+                                 for (auto& t : e.tags)
+                                     if (icontains(t, s.search)) return true;
+                                 return false;
+                             }();
             if (!hit) continue;
         }
         s.view.push_back(i);
@@ -579,9 +626,11 @@ inline void refresh_view(SelectorState& s) {
 //     compiler happy in a single-module world.
 inline void SelectorState_refresh_archive_groups(SelectorState& s);
 inline void SelectorState_rebuild_project_cursor(SelectorState& s);
+
 inline void refresh_archive_groups(SelectorState& s) {
     SelectorState_refresh_archive_groups(s);
 }
+
 inline void rebuild_project_cursor(SelectorState& s) {
     SelectorState_rebuild_project_cursor(s);
 }
@@ -593,8 +642,7 @@ inline void SelectorState_refresh_archive_groups(SelectorState& s) {
         const auto& e = s.all_sessions[i];
         if (e.status != Status::Archived) continue;
         if (!s.search.empty()) {
-            const bool hit = icontains(e.title, s.search)
-                          || icontains(e.preview_summary, s.search);
+            const bool hit = icontains(e.title, s.search) || icontains(e.preview_summary, s.search);
             if (!hit) continue;
         }
         by_month[format_month_key(e.updated)].push_back(i);
@@ -621,58 +669,74 @@ inline void SelectorState_rebuild_project_cursor(SelectorState& /*s*/) {
 
 [[nodiscard]] inline Element TabBadge(std::size_t count) {
     if (count == 0) return text("");
-    return text(std::format(" ({})", count)) | dim | color(loom::ui::design::theme::current_theme().palette->text);
+    return text(std::format(" ({})", count)) | dim |
+           color(loom::ui::design::theme::current_theme().palette->text);
 }
 
 [[nodiscard]] inline Element RenderSidebar(SelectorState& s) {
     const auto count_status = [&](Status st) -> std::size_t {
         return std::count_if(s.all_sessions.begin(), s.all_sessions.end(),
-            [=](const auto& e) { return e.status == st; });
+                             [=](const auto& e) { return e.status == st; });
     };
     const auto cnt_projects = s.projects.size();
 
-    struct TabRowDef { Tab t; std::string_view hotkey; std::size_t count; };
+    struct TabRowDef {
+        Tab t;
+        std::string_view hotkey;
+        std::size_t count;
+    };
+
     const std::array<TabRowDef, 6> rows{{
-        { Tab::Recent,   "1", count_status(Status::Active)   },
-        { Tab::Projects, "2", cnt_projects                   },
-        { Tab::Drafts,   "3", count_status(Status::Draft)    },
-        { Tab::Archive,  "4", count_status(Status::Archived) },
-        { Tab::Remote,   "5", count_status(Status::Remote)   },
-        { Tab::Trash,    "6", count_status(Status::Trashed)  },
+        {Tab::Recent, "1", count_status(Status::Active)},
+        {Tab::Projects, "2", cnt_projects},
+        {Tab::Drafts, "3", count_status(Status::Draft)},
+        {Tab::Archive, "4", count_status(Status::Archived)},
+        {Tab::Remote, "5", count_status(Status::Remote)},
+        {Tab::Trash, "6", count_status(Status::Trashed)},
     }};
 
     Elements items;
 
     // Search box
     const bool sf = s.search_focused;
-    items.push_back(hbox({
-        text(sf ? " / " : (" " + std::string{loom::ui::design::figures::kInfo} + " "))
-            | color(sf ? loom::ui::design::theme::current_theme().palette->info : loom::ui::design::theme::current_theme().palette->text),
-        s.search.empty()
-            ? text("Search…") | dim
-            : text(s.search) | color(loom::ui::design::theme::current_theme().palette->text),
-        text(sf ? "│" : " ") | (sf && !loom::ui::design::theme::current_theme().a11y.reduced_motion ? blink : nothing),
-    }) | borderLight | size(WIDTH, EQUAL, 26));
+    items.push_back(
+        hbox({
+            text(sf ? " / " : (" " + std::string{loom::ui::design::figures::kInfo} + " ")) |
+                color(sf ? loom::ui::design::theme::current_theme().palette->info
+                         : loom::ui::design::theme::current_theme().palette->text),
+            s.search.empty()
+                ? text("Search…") | dim
+                : text(s.search) | color(loom::ui::design::theme::current_theme().palette->text),
+            text(sf ? "│" : " ") |
+                (sf && !loom::ui::design::theme::current_theme().a11y.reduced_motion ? blink
+                                                                                     : nothing),
+        }) |
+        borderLight | size(WIDTH, EQUAL, 26));
 
     items.push_back(text(""));
 
     // Tabs
     for (const auto& r : rows) {
         const bool sel = (s.tab == r.t);
-        Color chev_col = sel ? Color(loom::ui::design::theme::current_theme().palette->success) : Color(Color{});
+        Color chev_col =
+            sel ? Color(loom::ui::design::theme::current_theme().palette->success) : Color(Color{});
         Element line = hbox({
-            text(sel ? (std::string{loom::ui::design::figures::kTriangleRightSmall} + " ") : "  ") | color(chev_col),
+            text(sel ? (std::string{loom::ui::design::figures::kTriangleRightSmall} + " ") : "  ") |
+                color(chev_col),
             text(std::string{tab_icon(r.t)}) | dim,
             text(" ") | dim,
-            text(std::string{to_string(r.t)})
-                | (sel ? (bold | color(loom::ui::design::theme::current_theme().palette->success)) : color(loom::ui::design::theme::current_theme().palette->text)),
+            text(std::string{to_string(r.t)}) |
+                (sel ? (bold | color(loom::ui::design::theme::current_theme().palette->success))
+                     : color(loom::ui::design::theme::current_theme().palette->text)),
             filler(),
             TabBadge(r.count),
             text(" [") | dim,
-            text(std::string{r.hotkey}) | bold | color(loom::ui::design::theme::current_theme().palette->info),
+            text(std::string{r.hotkey}) | bold |
+                color(loom::ui::design::theme::current_theme().palette->info),
             text("]") | dim,
         });
-        if (sel) line = line | bgcolor(loom::ui::design::theme::current_theme().palette->surface_tint_1);
+        if (sel)
+            line = line | bgcolor(loom::ui::design::theme::current_theme().palette->surface_tint_1);
         items.push_back(line | size(WIDTH, EQUAL, 28));
     }
 
@@ -681,14 +745,14 @@ inline void SelectorState_rebuild_project_cursor(SelectorState& /*s*/) {
 
     // New session button
     items.push_back(hbox({
-        text((std::string{loom::ui::design::figures::kStar} + " ")) | color(loom::ui::design::theme::current_theme().palette->warning),
-        text("[N] New session") | bold | color(loom::ui::design::theme::current_theme().palette->warning),
-    }) | size(WIDTH, EQUAL, 28));
+                        text((std::string{loom::ui::design::figures::kStar} + " ")) |
+                            color(loom::ui::design::theme::current_theme().palette->warning),
+                        text("[N] New session") | bold |
+                            color(loom::ui::design::theme::current_theme().palette->warning),
+                    }) |
+                    size(WIDTH, EQUAL, 28));
 
-    return vbox(std::move(items))
-         | borderRounded
-         | size(WIDTH, EQUAL, 32)
-         | padding(1);
+    return vbox(std::move(items)) | borderRounded | size(WIDTH, EQUAL, 32) | padding(1);
 }
 
 // =========================================================================
@@ -697,7 +761,7 @@ inline void SelectorState_rebuild_project_cursor(SelectorState& /*s*/) {
 
 struct ChipDef {
     std::string label;
-    std::string value;   // current value text (empty = inactive)
+    std::string value;  // current value text (empty = inactive)
     std::string hotkey;
 };
 
@@ -706,41 +770,49 @@ struct ChipDef {
     // Status: 5-tuple multi-select pill
     {
         std::string val;
-        if (s.status_filter.empty()) val = "all";
+        if (s.status_filter.empty())
+            val = "all";
         else {
-            for (auto st : { Status::Active, Status::Draft, Status::Archived,
-                             Status::Trashed, Status::Remote })
-            {
+            for (auto st : {Status::Active, Status::Draft, Status::Archived, Status::Trashed,
+                            Status::Remote}) {
                 if (s.status_filter.count(st)) {
                     if (!val.empty()) val += ",";
                     val += to_string(st).substr(0, 3);
                 }
             }
         }
-        out.push_back({ "Status", val, "s" });
+        out.push_back({"Status", val, "s"});
     }
-    out.push_back({ "Model",
-                    s.model_filter.empty() ? "any" : s.model_filter, "m" });
-    out.push_back({ "Tag",
-                    s.tag_filter.empty() ? "any" : s.tag_filter, "#" });
-    out.push_back({ "Project",
-                    s.project_filter.empty() ? "any" : s.project_filter, "P" });
+    out.push_back({"Model", s.model_filter.empty() ? "any" : s.model_filter, "m"});
+    out.push_back({"Tag", s.tag_filter.empty() ? "any" : s.tag_filter, "#"});
+    out.push_back({"Project", s.project_filter.empty() ? "any" : s.project_filter, "P"});
     std::string dr;
     switch (s.date_range) {
-        case DateRange::Any:     dr = "any"; break;
-        case DateRange::Today:   dr = "today"; break;
-        case DateRange::Last7d:  dr = "7d"; break;
-        case DateRange::Last30d: dr = "30d"; break;
-        case DateRange::Custom:  dr = "custom"; break;
+    case DateRange::Any:
+        dr = "any";
+        break;
+    case DateRange::Today:
+        dr = "today";
+        break;
+    case DateRange::Last7d:
+        dr = "7d";
+        break;
+    case DateRange::Last30d:
+        dr = "30d";
+        break;
+    case DateRange::Custom:
+        dr = "custom";
+        break;
     }
-    out.push_back({ "Date", dr, "d" });
+    out.push_back({"Date", dr, "d"});
     return out;
 }
 
 [[nodiscard]] inline Element RenderFilterChips(SelectorState& s) {
     const auto chips = MakeChips(s);
     Elements row;
-    row.push_back(text(" [f] filter ") | bold | color(loom::ui::design::theme::current_theme().palette->info));
+    row.push_back(text(" [f] filter ") | bold |
+                  color(loom::ui::design::theme::current_theme().palette->info));
     for (std::size_t i = 0; i < chips.size(); ++i) {
         const bool focus = (i == static_cast<std::size_t>(s.filter_chip_cursor));
         const auto& c = chips[i];
@@ -751,9 +823,12 @@ struct ChipDef {
                                       ? loom::ui::design::theme::current_theme().palette->text
                                       : loom::ui::design::theme::current_theme().palette->info),
         });
-        if (focus) chip = chip | bold | bgcolor(loom::ui::design::theme::current_theme().palette->surface_tint_1)
-                                | borderStyled(loom::ui::design::theme::current_theme().palette->success);
-        else        chip = chip | borderLight;
+        if (focus)
+            chip = chip | bold |
+                   bgcolor(loom::ui::design::theme::current_theme().palette->surface_tint_1) |
+                   borderStyled(loom::ui::design::theme::current_theme().palette->success);
+        else
+            chip = chip | borderLight;
         chip = chip | padding(0, 1);
         row.push_back(text(" "));
         row.push_back(chip);
@@ -767,9 +842,7 @@ struct ChipDef {
 
 /// Shared helper: fetch the SessionLogEntry* under `cursor` for flat-tab
 /// views.  Returns nullptr when the view is empty.
-[[nodiscard]] inline const SessionLogEntry* current_entry(
-    const SelectorState& s)
-{
+[[nodiscard]] inline const SessionLogEntry* current_entry(const SelectorState& s) {
     if (s.view.empty()) return nullptr;
     const auto c = std::min(s.cursor, s.view.size() - 1);
     return &s.all_sessions[s.view[c]];
@@ -779,14 +852,15 @@ struct ChipDef {
     Elements cards;
     // Header
     cards.push_back(hbox({
-        text(" " + std::string{to_string(s.tab)} + " ") | bold | color(loom::ui::design::theme::current_theme().palette->success),
+        text(" " + std::string{to_string(s.tab)} + " ") | bold |
+            color(loom::ui::design::theme::current_theme().palette->success),
         text(std::format("({})", s.view.size())) | dim,
         filler(),
-        text(s.selected_ids.empty()
-                 ? std::string{}
-                 : std::format("{} selected ", s.selected_ids.size()))
-            | color(loom::ui::design::theme::current_theme().palette->info),
-        text(s.visual_mode ? "VISUAL" : "") | color(loom::ui::design::theme::current_theme().palette->warning) | bold,
+        text(s.selected_ids.empty() ? std::string{}
+                                    : std::format("{} selected ", s.selected_ids.size())) |
+            color(loom::ui::design::theme::current_theme().palette->info),
+        text(s.visual_mode ? "VISUAL" : "") |
+            color(loom::ui::design::theme::current_theme().palette->warning) | bold,
     }));
     cards.push_back(separator());
     cards.push_back(RenderFilterChips(s));
@@ -821,9 +895,7 @@ struct ChipDef {
         const auto& e = s.all_sessions[s.view[i]];
         const bool sel = (i == s.cursor);
         const bool in_batch = s.selected_ids.count(e.id) > 0;
-        cards.push_back(
-            ui19_style::RenderSessionCard(e, sel || in_batch, sel, e.pinned)
-        );
+        cards.push_back(ui19_style::RenderSessionCard(e, sel || in_batch, sel, e.pinned));
         if (i + 1 < s.view.size()) cards.push_back(text(" "));
     }
 
@@ -832,23 +904,24 @@ struct ChipDef {
         cards.push_back(separatorLight());
         if (s.remote_loading) {
             cards.push_back(hbox({
-                text(" ⠋ ") | (loom::ui::design::theme::current_theme().a11y.reduced_motion ? nothing : blink) | color(loom::ui::design::theme::current_theme().palette->info),
-                text(std::format(" Loading more… ({} fetched so far) ",
-                                 s.remote_fetched))
-                    | color(loom::ui::design::theme::current_theme().palette->info),
+                text(" ⠋ ") |
+                    (loom::ui::design::theme::current_theme().a11y.reduced_motion ? nothing
+                                                                                  : blink) |
+                    color(loom::ui::design::theme::current_theme().palette->info),
+                text(std::format(" Loading more… ({} fetched so far) ", s.remote_fetched)) |
+                    color(loom::ui::design::theme::current_theme().palette->info),
             }));
         } else {
             cards.push_back(hbox({
                 text(" ∞ ") | dim,
                 text(std::format(" Load more ({} fetched) — press j to reach bottom ",
-                                 s.view.size()))
-                    | dim,
+                                 s.view.size())) |
+                    dim,
             }));
         }
     }
 
-    return vbox(std::move(cards))
-         | yframe | vscroll_indicator | flex;
+    return vbox(std::move(cards)) | yframe | vscroll_indicator | flex;
 }
 
 // ─── Projects tab: collapsible groups, each group exposes its cards.
@@ -868,42 +941,46 @@ struct ChipDef {
     std::size_t total_rows = 0;
 
     for (auto& p : s.projects) {
-        const bool is_collapsed = std::any_of(
-            s.collapsed_projects.begin(), s.collapsed_projects.end(),
-            [&](const auto& n) { return n == p.name; });
-        total_rows += 1;                         // header
+        const bool is_collapsed =
+            std::any_of(s.collapsed_projects.begin(), s.collapsed_projects.end(),
+                        [&](const auto& n) { return n == p.name; });
+        total_rows += 1;  // header
         if (!is_collapsed) total_rows += p.sessions.size();
     }
 
     // Clamp cursor
-    if (s.project_cursor >= total_rows && total_rows > 0)
-        s.project_cursor = total_rows - 1;
+    if (s.project_cursor >= total_rows && total_rows > 0) s.project_cursor = total_rows - 1;
 
     for (auto& p : s.projects) {
-        const bool is_collapsed = std::any_of(
-            s.collapsed_projects.begin(), s.collapsed_projects.end(),
-            [&](const auto& n) { return n == p.name; });
+        const bool is_collapsed =
+            std::any_of(s.collapsed_projects.begin(), s.collapsed_projects.end(),
+                        [&](const auto& n) { return n == p.name; });
         const bool header_focus = (flat_index == s.project_cursor);
-        Color hdr_fg = header_focus ? Color(loom::ui::design::theme::current_theme().palette->success) : Color(Color{});
+        Color hdr_fg = header_focus
+                           ? Color(loom::ui::design::theme::current_theme().palette->success)
+                           : Color(Color{});
 
         // Group header
         {
             Element hdr = hbox({
-                text(header_focus ? (std::string{loom::ui::design::figures::kTriangleRightSmall} + " ") : "  ")
-                    | color(hdr_fg),
-                text(is_collapsed ? "▸ " : "▾ ")
-                    | color(loom::ui::design::theme::current_theme().palette->info) | bold,
+                text(header_focus
+                         ? (std::string{loom::ui::design::figures::kTriangleRightSmall} + " ")
+                         : "  ") |
+                    color(hdr_fg),
+                text(is_collapsed ? "▸ " : "▾ ") |
+                    color(loom::ui::design::theme::current_theme().palette->info) | bold,
                 text((std::string{loom::ui::design::figures::kSquareSmall} + " ")) | dim,
                 text(p.name) | bold | color(loom::ui::design::theme::current_theme().palette->info),
                 text(std::format(" ({} sessions)", p.sessions.size())) | dim,
                 filler(),
-                text(p.total_cost_usd > 0
-                         ? std::format("${:.2f}", p.total_cost_usd)
-                         : "") | color(loom::ui::design::theme::current_theme().palette->success) | dim,
+                text(p.total_cost_usd > 0 ? std::format("${:.2f}", p.total_cost_usd) : "") |
+                    color(loom::ui::design::theme::current_theme().palette->success) | dim,
                 text("  "),
                 text(format_relative(p.last_activity)) | dim,
             });
-            if (header_focus) hdr = hdr | bgcolor(loom::ui::design::theme::current_theme().palette->surface_tint_1);
+            if (header_focus)
+                hdr =
+                    hdr | bgcolor(loom::ui::design::theme::current_theme().palette->surface_tint_1);
             cards.push_back(hdr | padding(0, 1));
         }
         ++flat_index;
@@ -914,15 +991,14 @@ struct ChipDef {
             const bool row_focus = (flat_index == s.project_cursor);
             const auto& e = p.sessions[si];
             const bool in_batch = s.selected_ids.count(e.id) > 0;
-            cards.push_back(ui19_style::RenderSessionCard(
-                e, row_focus || in_batch, row_focus, e.pinned));
+            cards.push_back(
+                ui19_style::RenderSessionCard(e, row_focus || in_batch, row_focus, e.pinned));
             cards.push_back(text(" "));
             ++flat_index;
         }
     }
 
-    return vbox(std::move(cards))
-         | yframe | vscroll_indicator | flex;
+    return vbox(std::move(cards)) | yframe | vscroll_indicator | flex;
 }
 
 /// Archive tab: YYYY-MM timeline groups → session rows.
@@ -939,35 +1015,38 @@ struct ChipDef {
 
     // Compute total rows across groups for cursor clamp.
     std::size_t total = 0;
-    for (const auto& [_, v] : s.archive_groups) total += 1 + v.size();
-    if (s.archive_cursor >= total && total > 0)
-        s.archive_cursor = total - 1;
+    for (const auto& [_, v] : s.archive_groups)
+        total += 1 + v.size();
+    if (s.archive_cursor >= total && total > 0) s.archive_cursor = total - 1;
 
     std::size_t flat = 0;
     for (const auto& [month, rows] : s.archive_groups) {
         const bool hdr_sel = (flat == s.archive_cursor);
-        Color hdr_col = hdr_sel ? Color(loom::ui::design::theme::current_theme().palette->success) : Color(Color{});
-        cards.push_back(hbox({
-            text(hdr_sel ? (std::string{loom::ui::design::figures::kTriangleRightSmall} + " ") : "  ")
-                | color(hdr_col),
-            text(" " + std::string{loom::ui::design::figures::kCircle} + " ") | dim,
-            text(month) | bold | color(loom::ui::design::theme::current_theme().palette->warning),
-            text(std::format(" ({} entries)", rows.size())) | dim,
-            filler(),
-        }) | padding(0, 1));
+        Color hdr_col = hdr_sel ? Color(loom::ui::design::theme::current_theme().palette->success)
+                                : Color(Color{});
+        cards.push_back(
+            hbox({
+                text(hdr_sel ? (std::string{loom::ui::design::figures::kTriangleRightSmall} + " ")
+                             : "  ") |
+                    color(hdr_col),
+                text(" " + std::string{loom::ui::design::figures::kCircle} + " ") | dim,
+                text(month) | bold |
+                    color(loom::ui::design::theme::current_theme().palette->warning),
+                text(std::format(" ({} entries)", rows.size())) | dim,
+                filler(),
+            }) |
+            padding(0, 1));
         ++flat;
         for (std::size_t i = 0; i < rows.size(); ++i) {
             const bool sel = (flat == s.archive_cursor);
             const auto& e = s.all_sessions[rows[i]];
             const bool in_batch = s.selected_ids.count(e.id) > 0;
-            cards.push_back(ui19_style::RenderSessionCard(
-                e, sel || in_batch, sel, e.pinned));
+            cards.push_back(ui19_style::RenderSessionCard(e, sel || in_batch, sel, e.pinned));
             if (i + 1 < rows.size()) cards.push_back(text(" "));
             ++flat;
         }
     }
-    return vbox(std::move(cards))
-         | yframe | vscroll_indicator | flex;
+    return vbox(std::move(cards)) | yframe | vscroll_indicator | flex;
 }
 
 // =========================================================================
@@ -980,9 +1059,9 @@ struct ChipDef {
         // Walk projects to find the cursor.
         std::size_t flat = 0;
         for (auto& p : s.projects) {
-            const bool collapsed = std::any_of(
-                s.collapsed_projects.begin(), s.collapsed_projects.end(),
-                [&](const auto& n) { return n == p.name; });
+            const bool collapsed =
+                std::any_of(s.collapsed_projects.begin(), s.collapsed_projects.end(),
+                            [&](const auto& n) { return n == p.name; });
             ++flat;
             if (collapsed) continue;
             for (auto& e : p.sessions) {
@@ -1005,7 +1084,8 @@ struct ChipDef {
 
     Elements body;
     body.push_back(hbox({
-        text(std::string{loom::ui::design::figures::kInfo} + " Preview") | bold | color(loom::ui::design::theme::current_theme().palette->info),
+        text(std::string{loom::ui::design::figures::kInfo} + " Preview") | bold |
+            color(loom::ui::design::theme::current_theme().palette->info),
         filler(),
     }));
     body.push_back(separator());
@@ -1018,20 +1098,17 @@ struct ChipDef {
     }
 
     // Lazy load preview messages
-    if ((!entry->preview_messages
-         || entry->preview_messages->empty())
-        && s.opts.load_preview)
-    {
+    if ((!entry->preview_messages || entry->preview_messages->empty()) && s.opts.load_preview) {
         entry->preview_messages = s.opts.load_preview(entry->id, 10);
     }
 
     // Metadata
     body.push_back(hbox({
-        text(truncate(entry->title, 30)) | bold | color(loom::ui::design::theme::current_theme().palette->success),
+        text(truncate(entry->title, 30)) | bold |
+            color(loom::ui::design::theme::current_theme().palette->success),
     }));
     body.push_back(hbox({
-        text(std::string{to_string(entry->status)})
-            | color(status_color(entry->status)) | bold,
+        text(std::string{to_string(entry->status)}) | color(status_color(entry->status)) | bold,
         entry->pinned ? text((" " + std::string{loom::ui::design::figures::kStar} + "")) : text(""),
         filler(),
         text("#" + entry->id.substr(0, 8)) | dim,
@@ -1040,21 +1117,24 @@ struct ChipDef {
 
     body.push_back(hbox({
         text("Model:   ") | dim,
-        text(entry->model ? *entry->model : "-") | color(loom::ui::design::theme::current_theme().palette->info),
+        text(entry->model ? *entry->model : "-") |
+            color(loom::ui::design::theme::current_theme().palette->info),
     }));
     body.push_back(hbox({
         text("Msgs:    ") | dim,
-        text(std::to_string(entry->msg_count)) | color(loom::ui::design::theme::current_theme().palette->text),
+        text(std::to_string(entry->msg_count)) |
+            color(loom::ui::design::theme::current_theme().palette->text),
         text("  Turns: ") | dim,
         text(std::to_string(entry->turns)),
     }));
     body.push_back(hbox({
         text("Cost:    ") | dim,
-        text(std::format("${:.3f}", entry->cost_usd)) | color(loom::ui::design::theme::current_theme().palette->success),
+        text(std::format("${:.3f}", entry->cost_usd)) |
+            color(loom::ui::design::theme::current_theme().palette->success),
         text("  Tokens: ") | dim,
-        text(std::format("{}k/{}k",
-            (entry->tokens_in + 500) / 1000,
-            (entry->tokens_out + 500) / 1000)) | dim,
+        text(std::format("{}k/{}k", (entry->tokens_in + 500) / 1000,
+                         (entry->tokens_out + 500) / 1000)) |
+            dim,
     }));
     body.push_back(hbox({
         text("Updated: ") | dim,
@@ -1063,13 +1143,15 @@ struct ChipDef {
     if (entry->project) {
         body.push_back(hbox({
             text("Project: ") | dim,
-            text(*entry->project) | color(loom::ui::design::theme::current_theme().palette->warning),
+            text(*entry->project) |
+                color(loom::ui::design::theme::current_theme().palette->warning),
         }));
     }
     if (!entry->tags.empty()) {
         Elements tags_els;
         for (const auto& t : entry->tags) {
-            tags_els.push_back(text(" " + t + " ") | borderLight | color(loom::ui::design::theme::current_theme().palette->info));
+            tags_els.push_back(text(" " + t + " ") | borderLight |
+                               color(loom::ui::design::theme::current_theme().palette->info));
         }
         body.push_back(hbox({
             text("Tags:    ") | dim,
@@ -1080,7 +1162,8 @@ struct ChipDef {
 
     // Messages (compressed)
     body.push_back(hbox({
-        text("Last 10 messages") | bold | color(loom::ui::design::theme::current_theme().palette->info),
+        text("Last 10 messages") | bold |
+            color(loom::ui::design::theme::current_theme().palette->info),
     }));
     body.push_back(text(""));
 
@@ -1090,10 +1173,19 @@ struct ChipDef {
         for (const auto& [role, text_] : *entry->preview_messages) {
             Color col = loom::ui::design::theme::current_theme().palette->text;
             std::string icon = "  ";
-            if (role == "user")      { col = loom::ui::design::theme::current_theme().palette->role_pill_user;   icon = (std::string{loom::ui::design::figures::kCircle} + " "); }
-            else if (role == "assistant") { col = loom::ui::design::theme::current_theme().palette->role_pill_assistant;  icon = (std::string{loom::ui::design::figures::kBullet} + " "); }
-            else if (role == "tool")      { col = loom::ui::design::theme::current_theme().palette->role_pill_tool;icon = (std::string{loom::ui::design::figures::kSquareSmallFilled} + " "); }
-            else if (role == "system")    { col = loom::ui::design::theme::current_theme().palette->role_pill_system; icon = (std::string{loom::ui::design::figures::kInfo} + " "); }
+            if (role == "user") {
+                col = loom::ui::design::theme::current_theme().palette->role_pill_user;
+                icon = (std::string{loom::ui::design::figures::kCircle} + " ");
+            } else if (role == "assistant") {
+                col = loom::ui::design::theme::current_theme().palette->role_pill_assistant;
+                icon = (std::string{loom::ui::design::figures::kBullet} + " ");
+            } else if (role == "tool") {
+                col = loom::ui::design::theme::current_theme().palette->role_pill_tool;
+                icon = (std::string{loom::ui::design::figures::kSquareSmallFilled} + " ");
+            } else if (role == "system") {
+                col = loom::ui::design::theme::current_theme().palette->role_pill_system;
+                icon = (std::string{loom::ui::design::figures::kInfo} + " ");
+            }
             body.push_back(hbox({
                 text(icon) | color(col),
                 text(truncate(text_, 60)) | color(col) | dim,
@@ -1101,9 +1193,7 @@ struct ChipDef {
         }
     }
 
-    return vbox(std::move(body))
-         | borderRounded | padding(1)
-         | size(WIDTH, EQUAL, 42);
+    return vbox(std::move(body)) | borderRounded | padding(1) | size(WIDTH, EQUAL, 42);
 }
 
 // =========================================================================
@@ -1121,25 +1211,26 @@ struct ChipDef {
     };
     Element row = hbox({
         pill("a", "archive", loom::ui::design::theme::current_theme().palette->warning),
-        pill("d", "delete",  loom::ui::design::theme::current_theme().palette->danger),
+        pill("d", "delete", loom::ui::design::theme::current_theme().palette->danger),
         pill("r", "restore", loom::ui::design::theme::current_theme().palette->success),
-        pill("e", "export",  loom::ui::design::theme::current_theme().palette->info),
-        pill("i", "import",  loom::ui::design::theme::current_theme().palette->info),
-        pill("p", "pin",     loom::ui::design::theme::current_theme().palette->info),
-        pill("t", "tag",     loom::ui::design::theme::current_theme().palette->primary),
+        pill("e", "export", loom::ui::design::theme::current_theme().palette->info),
+        pill("i", "import", loom::ui::design::theme::current_theme().palette->info),
+        pill("p", "pin", loom::ui::design::theme::current_theme().palette->info),
+        pill("t", "tag", loom::ui::design::theme::current_theme().palette->primary),
         filler(),
-        pill("/", "search",  loom::ui::design::theme::current_theme().palette->info),
+        pill("/", "search", loom::ui::design::theme::current_theme().palette->info),
         pill("Enter", "open", loom::ui::design::theme::current_theme().palette->success),
         pill("Esc/q", "close", loom::ui::design::theme::current_theme().palette->danger),
     });
     std::string extra;
-    if (s.visual_mode)            extra += "  VISUAL-MODE (v to exit) ";
-    if (!s.selected_ids.empty())  extra += std::format("  {} selected",
-                                                       s.selected_ids.size());
+    if (s.visual_mode) extra += "  VISUAL-MODE (v to exit) ";
+    if (!s.selected_ids.empty()) extra += std::format("  {} selected", s.selected_ids.size());
     return vbox({
         separatorLight(),
         row,
-        extra.empty() ? text("") : text(extra) | color(loom::ui::design::theme::current_theme().palette->warning) | dim,
+        extra.empty()
+            ? text("")
+            : text(extra) | color(loom::ui::design::theme::current_theme().palette->warning) | dim,
     });
 }
 
@@ -1150,25 +1241,32 @@ struct ChipDef {
 [[nodiscard]] inline Element RenderImportDialog(SelectorState& s) {
     Elements body;
     body.push_back(hbox({
-        text((std::string{loom::ui::design::figures::kArrowDown} + " Import JSONL session file")) | bold | color(loom::ui::design::theme::current_theme().palette->info),
+        text((std::string{loom::ui::design::figures::kArrowDown} + " Import JSONL session file")) |
+            bold | color(loom::ui::design::theme::current_theme().palette->info),
     }));
     body.push_back(separator());
     body.push_back(text(" Path to .jsonl / .json export:") | dim);
     body.push_back(text(""));
     Element field = hbox({
         text((" " + std::string{loom::ui::design::figures::kSquareSmall} + " ")) | dim,
-        text(s.import_path.empty() ? std::string{"(enter path)"} : s.import_path)
-            | color(s.import_error ? loom::ui::design::theme::current_theme().palette->danger : loom::ui::design::theme::current_theme().palette->text),
-        text("│") | (loom::ui::design::theme::current_theme().a11y.reduced_motion ? nothing : blink) | color(loom::ui::design::theme::current_theme().palette->info),
+        text(s.import_path.empty() ? std::string{"(enter path)"} : s.import_path) |
+            color(s.import_error ? loom::ui::design::theme::current_theme().palette->danger
+                                 : loom::ui::design::theme::current_theme().palette->text),
+        text("│") |
+            (loom::ui::design::theme::current_theme().a11y.reduced_motion ? nothing : blink) |
+            color(loom::ui::design::theme::current_theme().palette->info),
     });
-    if (s.import_error) field = field | borderStyled(loom::ui::design::theme::current_theme().palette->danger)
-                                       | bgcolor(loom::ui::design::theme::current_theme().palette->danger_tint_bg);
-    else                field = field | borderLight;
+    if (s.import_error)
+        field = field | borderStyled(loom::ui::design::theme::current_theme().palette->danger) |
+                bgcolor(loom::ui::design::theme::current_theme().palette->danger_tint_bg);
+    else
+        field = field | borderLight;
     body.push_back(field | padding(1));
     if (s.import_error) {
         body.push_back(hbox({
             text(" ⚠ ") | color(loom::ui::design::theme::current_theme().palette->danger),
-            text("File not found — enter a valid path.") | color(loom::ui::design::theme::current_theme().palette->danger),
+            text("File not found — enter a valid path.") |
+                color(loom::ui::design::theme::current_theme().palette->danger),
         }));
     }
     body.push_back(text(""));
@@ -1181,8 +1279,7 @@ struct ChipDef {
         text("Tab") | bold | dim,
         text(" paste (clipboard path via manual input)") | dim,
     }));
-    return vbox(std::move(body)) | borderRounded | padding(1)
-         | size(WIDTH, EQUAL, 60) | center;
+    return vbox(std::move(body)) | borderRounded | padding(1) | size(WIDTH, EQUAL, 60) | center;
 }
 
 // =========================================================================
@@ -1192,18 +1289,18 @@ struct ChipDef {
 [[nodiscard]] inline Element RenderLogSelector(SelectorState& s) {
     Element main;
     switch (s.tab) {
-        case Tab::Recent:
-        case Tab::Drafts:
-        case Tab::Remote:
-        case Tab::Trash:
-            main = RenderCardGrid(s);
-            break;
-        case Tab::Projects:
-            main = RenderProjects(s);
-            break;
-        case Tab::Archive:
-            main = RenderArchive(s);
-            break;
+    case Tab::Recent:
+    case Tab::Drafts:
+    case Tab::Remote:
+    case Tab::Trash:
+        main = RenderCardGrid(s);
+        break;
+    case Tab::Projects:
+        main = RenderProjects(s);
+        break;
+    case Tab::Archive:
+        main = RenderArchive(s);
+        break;
     }
 
     Element layout = hbox({
@@ -1214,12 +1311,15 @@ struct ChipDef {
 
     Element full = vbox({
         hbox({
-            text((" " + std::string{loom::ui::design::figures::kSquareSmall} + " Log Selector ")) | bold | color(loom::ui::design::theme::current_theme().palette->success),
+            text((" " + std::string{loom::ui::design::figures::kSquareSmall} + " Log Selector ")) |
+                bold | color(loom::ui::design::theme::current_theme().palette->success),
             filler(),
-            text(s.search_focused ? " SEARCH " : " LIST ")
-                | color(loom::ui::design::theme::current_theme().palette->info) | bold,
-            s.import_open ? text(" · IMPORT") | color(loom::ui::design::theme::current_theme().palette->warning) | bold
-                          : text(""),
+            text(s.search_focused ? " SEARCH " : " LIST ") |
+                color(loom::ui::design::theme::current_theme().palette->info) | bold,
+            s.import_open
+                ? text(" · IMPORT") |
+                      color(loom::ui::design::theme::current_theme().palette->warning) | bold
+                : text(""),
         }),
         separator(),
         layout | flex,
@@ -1242,22 +1342,22 @@ struct ChipDef {
 
 /// Collect currently-selected IDs.  If nothing explicitly selected, returns
 /// the single cursor row (acts like a default selection for ops).
-[[nodiscard]] inline std::vector<std::string> collect_selection(
-    SelectorState& s)
-{
+[[nodiscard]] inline std::vector<std::string> collect_selection(SelectorState& s) {
     if (!s.selected_ids.empty()) {
-        return { s.selected_ids.begin(), s.selected_ids.end() };
+        return {s.selected_ids.begin(), s.selected_ids.end()};
     }
     // Fallback: use cursor row
     std::vector<std::string> out;
-    auto add = [&](const SessionLogEntry* e) { if (e) out.push_back(e->id); };
+    auto add = [&](const SessionLogEntry* e) {
+        if (e) out.push_back(e->id);
+    };
 
     if (s.tab == Tab::Projects) {
         std::size_t flat = 0;
         for (auto& p : s.projects) {
-            const bool collapsed = std::any_of(
-                s.collapsed_projects.begin(), s.collapsed_projects.end(),
-                [&](const auto& n) { return n == p.name; });
+            const bool collapsed =
+                std::any_of(s.collapsed_projects.begin(), s.collapsed_projects.end(),
+                            [&](const auto& n) { return n == p.name; });
             ++flat;
             if (collapsed) continue;
             for (auto& e : p.sessions) {
@@ -1270,8 +1370,7 @@ struct ChipDef {
         for (auto& [_, rows] : s.archive_groups) {
             ++flat;
             for (auto i : rows) {
-                if (flat == s.archive_cursor)
-                    out.push_back(s.all_sessions[i].id);
+                if (flat == s.archive_cursor) out.push_back(s.all_sessions[i].id);
                 ++flat;
             }
         }
@@ -1282,13 +1381,13 @@ struct ChipDef {
 }
 
 inline void toggle_selected(SelectorState& s, const std::string& id) {
-    if (s.selected_ids.count(id)) s.selected_ids.erase(id);
-    else s.selected_ids.insert(id);
+    if (s.selected_ids.count(id))
+        s.selected_ids.erase(id);
+    else
+        s.selected_ids.insert(id);
 }
 
-inline void toggle_selected_range(SelectorState& s,
-                                  std::size_t a, std::size_t b)
-{
+inline void toggle_selected_range(SelectorState& s, std::size_t a, std::size_t b) {
     if (a > b) std::swap(a, b);
     for (std::size_t i = a; i <= b && i < s.view.size(); ++i) {
         toggle_selected(s, s.all_sessions[s.view[i]].id);
@@ -1297,23 +1396,19 @@ inline void toggle_selected_range(SelectorState& s,
 
 /// Build a TrustDialogProps for delete / purge.  The caller is expected to
 /// overlay UI8's TrustDialog; we just pre-format the summary + risk level.
-[[nodiscard]] inline TrustDialogProps MakeDeleteTrustProps(
-    SelectorState& s, bool purge)
-{
+[[nodiscard]] inline TrustDialogProps MakeDeleteTrustProps(SelectorState& s, bool purge) {
     const auto ids = collect_selection(s);
     TrustDialogProps p;
     p.action = tu::ActionType::PathWrite;
     p.action_label = purge ? "Purge permanently" : "Delete sessions";
-    p.forced_level = purge ? RiskLevel::High :
-                    (ids.size() > 10 ? RiskLevel::Medium : RiskLevel::Low);
+    p.forced_level =
+        purge ? RiskLevel::High : (ids.size() > 10 ? RiskLevel::Medium : RiskLevel::Low);
     tu::RiskSummary summary;
     summary.level = p.forced_level;
-    std::string fmt_template = purge
-        ? "You are about to PERMANENTLY purge {} session(s)."
-        : "You are about to soft-delete {} session(s).";
+    std::string fmt_template = purge ? "You are about to PERMANENTLY purge {} session(s)."
+                                     : "You are about to soft-delete {} session(s).";
     const auto n_ids = static_cast<unsigned long>(ids.size());
-    summary.action_summary = std::vformat(
-        fmt_template, std::make_format_args(n_ids));
+    summary.action_summary = std::vformat(fmt_template, std::make_format_args(n_ids));
     summary.risk_factors.push_back(
         purge ? "Action is irreversible.  5-second countdown enforced."
               : "Sessions move to Trash and will be auto-purged in 30 days.");
@@ -1322,14 +1417,13 @@ inline void toggle_selected_range(SelectorState& s,
             std::format("Bulk operation affecting {} items", ids.size()));
     }
     p.summary = std::move(summary);
-    for (const auto& i : ids) p.paths.push_back(std::format("[session:{}]", i));
+    for (const auto& i : ids)
+        p.paths.push_back(std::format("[session:{}]", i));
     p.on_done = [&s, purge, ids](TrustChoice c) mutable {
-        if (c == TrustChoice::AllowOnce || c == TrustChoice::AlwaysAllow
-            || c == TrustChoice::EnableAnyway)
-        {
+        if (c == TrustChoice::AllowOnce || c == TrustChoice::AlwaysAllow ||
+            c == TrustChoice::EnableAnyway) {
             if (s.opts.on_batch) {
-                s.opts.on_batch(purge ? BatchOp::Purge : BatchOp::Delete,
-                                std::move(ids));
+                s.opts.on_batch(purge ? BatchOp::Purge : BatchOp::Delete, std::move(ids));
             }
         }
         // Dismiss import-open overlay (defensive, shouldn't be up).
@@ -1360,7 +1454,10 @@ inline bool HandleEvents(SelectorState& s, Event event) {
             if (!s.import_path.empty()) {
                 ok = std::filesystem::exists(s.import_path, ec);
             }
-            if (!ok) { s.import_error = true; return true; }
+            if (!ok) {
+                s.import_error = true;
+                return true;
+            }
             if (s.opts.on_import) s.opts.on_import(s.import_path);
             s.import_open = false;
             s.import_path.clear();
@@ -1411,9 +1508,8 @@ inline bool HandleEvents(SelectorState& s, Event event) {
     // ──────────────────────────────────────────────────────────────────
     // Global: close
     // ──────────────────────────────────────────────────────────────────
-    if (event == Event::Escape || event == Event::Character('q')
-        || event == Event::Character('Q'))
-    {
+    if (event == Event::Escape || event == Event::Character('q') ||
+        event == Event::Character('Q')) {
         if (s.opts.on_cancel) s.opts.on_cancel();
         return true;
     }
@@ -1428,9 +1524,7 @@ inline bool HandleEvents(SelectorState& s, Event event) {
     }
     if (event == Event::Character('f') || event == Event::Character('F')) {
         const auto chips = MakeChips(s);
-        s.filter_chip_cursor =
-            (s.filter_chip_cursor + 1) %
-            std::max<std::size_t>(1, chips.size());
+        s.filter_chip_cursor = (s.filter_chip_cursor + 1) % std::max<std::size_t>(1, chips.size());
         return true;
     }
 
@@ -1466,8 +1560,9 @@ inline bool HandleEvents(SelectorState& s, Event event) {
             // Only include entries that match the current tab semantics.
             Status p = primary_status_for_tab(s.tab);
             if (s.tab == Tab::Recent && e.status != Status::Active) continue;
-            if (s.tab != Tab::Recent && s.tab != Tab::Projects
-                && s.tab != Tab::Remote && e.status != p) continue;
+            if (s.tab != Tab::Recent && s.tab != Tab::Projects && s.tab != Tab::Remote &&
+                e.status != p)
+                continue;
             s.selected_ids.insert(e.id);
         }
         return true;
@@ -1479,9 +1574,8 @@ inline bool HandleEvents(SelectorState& s, Event event) {
     }
     if (event == Event::Character('v') || event == Event::Character('V')) {
         s.visual_mode = !s.visual_mode;
-        if (s.tab == Tab::Recent || s.tab == Tab::Drafts
-            || s.tab == Tab::Remote || s.tab == Tab::Trash)
-        {
+        if (s.tab == Tab::Recent || s.tab == Tab::Drafts || s.tab == Tab::Remote ||
+            s.tab == Tab::Trash) {
             s.visual_anchor = s.cursor;
         }
         return true;
@@ -1490,16 +1584,19 @@ inline bool HandleEvents(SelectorState& s, Event event) {
     // ──────────────────────────────────────────────────────────────────
     // Navigation: arrow + j/k + Shift+j/k (range) + Shift+↑/↓ pin reorder
     // ──────────────────────────────────────────────────────────────────
-    const bool flat_tab = (s.tab == Tab::Recent || s.tab == Tab::Drafts
-                        || s.tab == Tab::Remote || s.tab == Tab::Trash);
+    const bool flat_tab = (s.tab == Tab::Recent || s.tab == Tab::Drafts || s.tab == Tab::Remote ||
+                           s.tab == Tab::Trash);
 
     auto shift_move = [&](bool down) {
         // FTXUI reports Shift+Arrow via `Shift+ArrowUp` / `Shift+ArrowDown`
         // strings, but simpler bindings are: 'J' / 'K' for range select
         // and '{' / '}' for pin reorder (mapped per spec "Shift+↑/↓").
         if (flat_tab) {
-            if (down) { if (s.cursor + 1 < s.view.size()) ++s.cursor; }
-            else      { if (s.cursor > 0) --s.cursor; }
+            if (down) {
+                if (s.cursor + 1 < s.view.size()) ++s.cursor;
+            } else {
+                if (s.cursor > 0) --s.cursor;
+            }
             if (s.visual_mode) {
                 // Re-select the whole range each keypress (simple).
                 s.selected_ids.clear();
@@ -1509,48 +1606,52 @@ inline bool HandleEvents(SelectorState& s, Event event) {
                 }
             }
         } else if (s.tab == Tab::Projects) {
-            if (down) s.project_cursor++; else s.project_cursor--;
+            if (down)
+                s.project_cursor++;
+            else
+                s.project_cursor--;
         } else if (s.tab == Tab::Archive) {
-            if (down) s.archive_cursor++; else s.archive_cursor--;
+            if (down)
+                s.archive_cursor++;
+            else
+                s.archive_cursor--;
         }
     };
 
-    if (event == Event::ArrowDown || event == Event::Character('j'))
-    { shift_move(true); return true; }
-    if (event == Event::ArrowUp || event == Event::Character('k'))
-    { shift_move(false); return true; }
+    if (event == Event::ArrowDown || event == Event::Character('j')) {
+        shift_move(true);
+        return true;
+    }
+    if (event == Event::ArrowUp || event == Event::Character('k')) {
+        shift_move(false);
+        return true;
+    }
 
     // Shift+arrow / J / K range extend
-    if (event == Event::Character('J')
-        || event.input() == "\x1b[1;2B")  // Shift+Down xterm
+    if (event == Event::Character('J') || event.input() == "\x1b[1;2B")  // Shift+Down xterm
     {
         s.visual_mode = true;
         if (s.view.size() > s.cursor + 1) {
             s.visual_anchor = s.cursor;
             ++s.cursor;
-            if (flat_tab) toggle_selected(
-                s, s.all_sessions[s.view[s.cursor]].id);
+            if (flat_tab) toggle_selected(s, s.all_sessions[s.view[s.cursor]].id);
         }
         return true;
     }
-    if (event == Event::Character('K')
-        || event.input() == "\x1b[1;2A")  // Shift+Up xterm
+    if (event == Event::Character('K') || event.input() == "\x1b[1;2A")  // Shift+Up xterm
     {
         s.visual_mode = true;
         if (s.cursor > 0) {
             s.visual_anchor = s.cursor;
             --s.cursor;
-            if (flat_tab) toggle_selected(
-                s, s.all_sessions[s.view[s.cursor]].id);
+            if (flat_tab) toggle_selected(s, s.all_sessions[s.view[s.cursor]].id);
         }
         return true;
     }
 
     // Pin reorder: Shift+↑/↓ (handled via { / } as well since many terminals
     // don't emit distinct Shift+Arrow sequences).
-    if (flat_tab && (event == Event::Character('{')
-                     || event.input() == "\x1b[1;2A_pin"))
-    {
+    if (flat_tab && (event == Event::Character('{') || event.input() == "\x1b[1;2A_pin")) {
         if (s.view.size() > 1 && s.cursor > 0) {
             // Swap only pinned with pinned to preserve semantics.
             auto& cur = s.all_sessions[s.view[s.cursor]];
@@ -1560,9 +1661,7 @@ inline bool HandleEvents(SelectorState& s, Event event) {
         }
         return true;
     }
-    if (flat_tab && (event == Event::Character('}')
-                     || event.input() == "\x1b[1;2B_pin"))
-    {
+    if (flat_tab && (event == Event::Character('}') || event.input() == "\x1b[1;2B_pin")) {
         if (s.cursor + 1 < s.view.size()) {
             auto& cur = s.all_sessions[s.view[s.cursor]];
             auto& nxt = s.all_sessions[s.view[s.cursor + 1]];
@@ -1578,8 +1677,7 @@ inline bool HandleEvents(SelectorState& s, Event event) {
         return true;
     }
     if (flat_tab && event == Event::PageDown) {
-        s.cursor = std::min(
-            s.view.empty() ? 0 : s.view.size() - 1, s.cursor + 10);
+        s.cursor = std::min(s.view.empty() ? 0 : s.view.size() - 1, s.cursor + 10);
         return true;
     }
 
@@ -1601,7 +1699,8 @@ inline bool HandleEvents(SelectorState& s, Event event) {
     };
 
     if (event == Event::Character('a') || event == Event::Character('A')) {
-        emit_batch(BatchOp::Archive); return true;
+        emit_batch(BatchOp::Archive);
+        return true;
     }
     if (event == Event::Character('d') || event == Event::Character('D')) {
         const auto ids = collect_selection(s);
@@ -1615,13 +1714,16 @@ inline bool HandleEvents(SelectorState& s, Event event) {
         return true;
     }
     if (event == Event::Character('r') || event == Event::Character('R')) {
-        emit_batch(BatchOp::Restore); return true;
+        emit_batch(BatchOp::Restore);
+        return true;
     }
     if (event == Event::Character('p') || event == Event::Character('P')) {
-        emit_batch(BatchOp::PinToggle); return true;
+        emit_batch(BatchOp::PinToggle);
+        return true;
     }
     if (event == Event::Character('t') || event == Event::Character('T')) {
-        emit_batch(BatchOp::TagAssign); return true;
+        emit_batch(BatchOp::TagAssign);
+        return true;
     }
     if (event == Event::Character('e') || event == Event::Character('E')) {
         const auto ids = collect_selection(s);
@@ -1656,16 +1758,15 @@ inline bool HandleEvents(SelectorState& s, Event event) {
         if (s.tab == Tab::Projects) {
             std::size_t flat = 0;
             for (auto& p : s.projects) {
-                const bool collapsed = std::any_of(
-                    s.collapsed_projects.begin(), s.collapsed_projects.end(),
-                    [&](const auto& n) { return n == p.name; });
+                const bool collapsed =
+                    std::any_of(s.collapsed_projects.begin(), s.collapsed_projects.end(),
+                                [&](const auto& n) { return n == p.name; });
                 if (flat == s.project_cursor) {
                     // Toggle collapse.
                     if (collapsed) {
-                        s.collapsed_projects.erase(
-                            std::remove(s.collapsed_projects.begin(),
-                                        s.collapsed_projects.end(), p.name),
-                            s.collapsed_projects.end());
+                        s.collapsed_projects.erase(std::remove(s.collapsed_projects.begin(),
+                                                               s.collapsed_projects.end(), p.name),
+                                                   s.collapsed_projects.end());
                     } else {
                         s.collapsed_projects.push_back(p.name);
                     }
@@ -1711,11 +1812,10 @@ inline bool HandleEvents(SelectorState& s, Event event) {
 /// Build the full LogSelector screen as a self-contained FTXUI component.
 /// All data access flows through the lambdas in `options`; no state is read
 /// from any business module directly (keeps the module UI-only).
-[[nodiscard]] inline Component MakeLogSelector(LogSelectorOptions options)
-{
+[[nodiscard]] inline Component MakeLogSelector(LogSelectorOptions options) {
     auto state = std::make_shared<SelectorState>();
     state->opts = std::move(options);
-    state->tab  = state->opts.initial_tab;
+    state->tab = state->opts.initial_tab;
 
     // Prime data sources once.  (Callers are expected to re-mount the
     // component if they want to react to provider churn; alternatively the
@@ -1730,9 +1830,7 @@ inline bool HandleEvents(SelectorState& s, Event event) {
     refresh_view(*state);
 
     auto base = Renderer([state] { return RenderLogSelector(*state); });
-    return base | CatchEvent([state](Event ev) {
-        return HandleEvents(*state, std::move(ev));
-    });
+    return base | CatchEvent([state](Event ev) { return HandleEvents(*state, std::move(ev)); });
 }
 
-} // namespace loom::ui::screens::log_selector
+}  // namespace loom::ui::screens::log_selector

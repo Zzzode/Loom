@@ -5,12 +5,12 @@
 //   └─ optional output block below, up to N lines
 module;
 
-#include <climits>
-
-#include <ftxui/dom/elements.hpp>
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/event.hpp>
+#include <ftxui/dom/elements.hpp>
+
+#include <climits>
 #include <cstddef>
 
 export module loom.ui.messages.message_user_command;
@@ -24,11 +24,11 @@ using namespace ftxui;
 
 /// Data for a user command message
 struct UserCommandData {
-    std::string command_name;              // e.g., "help", "config", "model"
-    std::vector<std::string> args;         // Command arguments
-    std::optional<std::string> output;     // Command output/result
-    bool success = true;                   // Whether command succeeded
-    bool is_skill_format = false;          // Render as "Skill(name)" chip
+    std::string command_name;           // e.g., "help", "config", "model"
+    std::vector<std::string> args;      // Command arguments
+    std::optional<std::string> output;  // Command output/result
+    bool success = true;                // Whether command succeeded
+    bool is_skill_format = false;       // Render as "Skill(name)" chip
 };
 
 /// ─── Stateless element renderer (kept for non-interactive contexts) ───
@@ -45,19 +45,22 @@ struct UserCommandData {
     } else {
         // Command line:  $ /name arg1 arg2 ...
         Elements cmd_parts;
-        cmd_parts.push_back(text("$ ") | bold | color(loom::ui::design::theme::current_theme().palette->primary));
-        cmd_parts.push_back(text("/" + data.command_name)
-                                | bold | color(loom::ui::design::theme::current_theme().palette->primary));
+        cmd_parts.push_back(text("$ ") | bold |
+                            color(loom::ui::design::theme::current_theme().palette->primary));
+        cmd_parts.push_back(text("/" + data.command_name) | bold |
+                            color(loom::ui::design::theme::current_theme().palette->primary));
 
         for (const auto& arg : data.args) {
-            cmd_parts.push_back(text(" " + arg) | color(loom::ui::design::theme::current_theme().palette->text));
+            cmd_parts.push_back(text(" " + arg) |
+                                color(loom::ui::design::theme::current_theme().palette->text));
         }
         elements.push_back(hbox(cmd_parts));
     }
 
     // Output
     if (data.output && !data.output->empty()) {
-        auto output_color = data.success ? loom::ui::design::theme::current_theme().palette->text : loom::ui::design::theme::current_theme().palette->danger;
+        auto output_color = data.success ? loom::ui::design::theme::current_theme().palette->text
+                                         : loom::ui::design::theme::current_theme().palette->danger;
 
         // Split output into lines, limit display
         std::string_view out = *data.output;
@@ -87,23 +90,26 @@ struct UserCommandData {
 // ─── Interactive component (copy button + expand) ──────────────────────
 
 class UserCommandMessageComponent : public ComponentBase {
-  public:
+public:
     using OnCopyFn = std::function<void(std::string_view)>;
 
-    explicit UserCommandMessageComponent(UserCommandData data,
-                                         OnCopyFn on_copy = nullptr)
-        : data_(std::move(data)), on_copy_(std::move(on_copy))
-    {
-        copy_btn_ = Button(" copy", [this] {
-            if (on_copy_) on_copy_(BuildFullCommand());
-        }) | size(WIDTH, EQUAL, 12) | bold;
+    explicit UserCommandMessageComponent(UserCommandData data, OnCopyFn on_copy = nullptr)
+        : data_(std::move(data))
+        , on_copy_(std::move(on_copy)) {
+        copy_btn_ = Button(" copy",
+                           [this] {
+                               if (on_copy_) on_copy_(BuildFullCommand());
+                           }) |
+                    size(WIDTH, EQUAL, 12) | bold;
         Add(copy_btn_);
 
-        toggle_btn_ = Button(" show all", [this] {
-            show_all_output_ = !show_all_output_;
-            // Update label text via re-creating button is too heavy; we rely on
-            // the Render() call using ->Render() directly with conditional.
-        }) | dim;
+        toggle_btn_ = Button(" show all",
+                             [this] {
+                                 show_all_output_ = !show_all_output_;
+                                 // Update label text via re-creating button is too heavy; we rely
+                                 // on the Render() call using ->Render() directly with conditional.
+                             }) |
+                      dim;
         Add(toggle_btn_);
     }
 
@@ -117,24 +123,31 @@ class UserCommandMessageComponent : public ComponentBase {
                 text(")") | dim,
             }));
         } else {
-            header_parts.push_back(text("$ ") | bold | color(loom::ui::design::theme::current_theme().palette->primary));
-            header_parts.push_back(text("/" + data_.command_name)
-                                       | bold | color(loom::ui::design::theme::current_theme().palette->primary));
+            header_parts.push_back(
+                text("$ ") | bold |
+                color(loom::ui::design::theme::current_theme().palette->primary));
+            header_parts.push_back(
+                text("/" + data_.command_name) | bold |
+                color(loom::ui::design::theme::current_theme().palette->primary));
             for (const auto& a : data_.args)
-                header_parts.push_back(text(" " + a) | color(loom::ui::design::theme::current_theme().palette->text));
+                header_parts.push_back(
+                    text(" " + a) | color(loom::ui::design::theme::current_theme().palette->text));
         }
 
         auto full_cmd = BuildFullCommand();
         auto header = hbox({
-            hbox(std::move(header_parts)) | flex,
-            filler(),
-            copy_btn_->Render(),
-        }) | color(loom::ui::design::theme::current_theme().palette->primary);
+                          hbox(std::move(header_parts)) | flex,
+                          filler(),
+                          copy_btn_->Render(),
+                      }) |
+                      color(loom::ui::design::theme::current_theme().palette->primary);
 
         // Output section
         Elements output_rows;
         if (data_.output && !data_.output->empty()) {
-            auto output_color = data_.success ? loom::ui::design::theme::current_theme().palette->text : loom::ui::design::theme::current_theme().palette->danger;
+            auto output_color = data_.success
+                                    ? loom::ui::design::theme::current_theme().palette->text
+                                    : loom::ui::design::theme::current_theme().palette->danger;
             std::string_view out = *data_.output;
             const int max_lines = show_all_output_ ? INT32_MAX : 10;
             size_t pos = 0;
@@ -168,18 +181,19 @@ class UserCommandMessageComponent : public ComponentBase {
             all.push_back(separatorEmpty());
             all.push_back(vbox(std::move(output_rows)));
         }
-        return vbox(std::move(all)) | borderLight | color(loom::ui::design::theme::current_theme().palette->primary);
+        return vbox(std::move(all)) | borderLight |
+               color(loom::ui::design::theme::current_theme().palette->primary);
     }
 
     bool OnEvent(Event event) override {
-        if (event == Event::Special({3})) {   // Ctrl+C
+        if (event == Event::Special({3})) {  // Ctrl+C
             if (on_copy_) on_copy_(BuildFullCommand());
             return true;
         }
         return ComponentBase::OnEvent(event);
     }
 
-  private:
+private:
     std::string BuildFullCommand() const {
         std::string s = "/" + data_.command_name;
         for (const auto& a : data_.args) {
@@ -196,11 +210,10 @@ class UserCommandMessageComponent : public ComponentBase {
     Component toggle_btn_;
 };
 
-[[nodiscard]] inline Component MakeUserCommandMessage(
-    UserCommandData data,
-    UserCommandMessageComponent::OnCopyFn on_copy = nullptr)
-{
+[[nodiscard]] inline Component
+MakeUserCommandMessage(UserCommandData data,
+                       UserCommandMessageComponent::OnCopyFn on_copy = nullptr) {
     return Make<UserCommandMessageComponent>(std::move(data), std::move(on_copy));
 }
 
-} // namespace loom::ui::messages::user_command
+}  // namespace loom::ui::messages::user_command

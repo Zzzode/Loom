@@ -25,16 +25,17 @@ public:
         return CommandDefinition{
             .name = "memory",
             .description = "Edit persistent memory files (LOOM.md)",
-            .args = {CommandArg{.name = "action", .description = "view or edit", .type = ArgType::Text, .required = false}},
+            .args = {CommandArg{.name = "action",
+                                .description = "view or edit",
+                                .type = ArgType::Text,
+                                .required = false}},
             .category = "config",
             .aliases = {"mem"},
             .hidden = false,
         };
     }
 
-    [[nodiscard]] VoidResult validate(const CommandContext&) {
-        return {};
-    }
+    [[nodiscard]] VoidResult validate(const CommandContext&) { return {}; }
 
     [[nodiscard]] Result<CommandResult> execute(const CommandContext&) {
         // Memory file locations (in priority order)
@@ -86,4 +87,4 @@ public:
     }
 };
 
-} // namespace loom::commands
+}  // namespace loom::commands

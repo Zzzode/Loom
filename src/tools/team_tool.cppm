@@ -1,8 +1,8 @@
 // TeamTool - Team management for parallel multi-agent coordination
 module;
 #include <cctype>
-#include <cstdlib>
 #include <cstddef>
+#include <cstdlib>
 
 export module loom.tools.team;
 
@@ -25,11 +25,16 @@ enum class MemberStatus {
 
 constexpr auto member_status_name(MemberStatus s) -> std::string_view {
     switch (s) {
-        case MemberStatus::Idle:    return "idle";
-        case MemberStatus::Working: return "working";
-        case MemberStatus::Done:    return "done";
-        case MemberStatus::Error:   return "error";
-        default:                    return "unknown";
+    case MemberStatus::Idle:
+        return "idle";
+    case MemberStatus::Working:
+        return "working";
+    case MemberStatus::Done:
+        return "done";
+    case MemberStatus::Error:
+        return "error";
+    default:
+        return "unknown";
     }
 }
 
@@ -50,10 +55,14 @@ enum class MemberRole {
 
 constexpr auto member_role_name(MemberRole r) -> std::string_view {
     switch (r) {
-        case MemberRole::Leader:   return "leader";
-        case MemberRole::Worker:   return "worker";
-        case MemberRole::Reviewer: return "reviewer";
-        default:                   return "unknown";
+    case MemberRole::Leader:
+        return "leader";
+    case MemberRole::Worker:
+        return "worker";
+    case MemberRole::Reviewer:
+        return "reviewer";
+    default:
+        return "unknown";
     }
 }
 
@@ -79,16 +88,26 @@ enum class TeamError {
 
 constexpr auto format_error(TeamError err) -> std::string_view {
     switch (err) {
-        case TeamError::IdEmpty:           return "Team ID is empty";
-        case TeamError::NameEmpty:         return "Team name is empty";
-        case TeamError::TeamNotFound:      return "Team not found";
-        case TeamError::TeamAlreadyExists: return "Team with this ID already exists";
-        case TeamError::MemberNotFound:    return "Team member not found";
-        case TeamError::TooManyMembers:    return "Maximum team member limit reached";
-        case TeamError::TooManyTeams:      return "Maximum team limit reached";
-        case TeamError::TaskListFull:      return "Shared task list is full";
-        case TeamError::InvalidOperation:  return "Invalid operation on team";
-        default:                           return "Unknown team error";
+    case TeamError::IdEmpty:
+        return "Team ID is empty";
+    case TeamError::NameEmpty:
+        return "Team name is empty";
+    case TeamError::TeamNotFound:
+        return "Team not found";
+    case TeamError::TeamAlreadyExists:
+        return "Team with this ID already exists";
+    case TeamError::MemberNotFound:
+        return "Team member not found";
+    case TeamError::TooManyMembers:
+        return "Maximum team member limit reached";
+    case TeamError::TooManyTeams:
+        return "Maximum team limit reached";
+    case TeamError::TaskListFull:
+        return "Shared task list is full";
+    case TeamError::InvalidOperation:
+        return "Invalid operation on team";
+    default:
+        return "Unknown team error";
     }
 }
 
@@ -124,12 +143,24 @@ struct Team {
     out.reserve(value.size() + 8);
     for (char ch : value) {
         switch (ch) {
-            case '\\': out += R"(\\)"; break;
-            case '"': out += R"(\")"; break;
-            case '\n': out += R"(\n)"; break;
-            case '\r': out += R"(\r)"; break;
-            case '\t': out += R"(\t)"; break;
-            default: out.push_back(ch); break;
+        case '\\':
+            out += R"(\\)";
+            break;
+        case '"':
+            out += R"(\")";
+            break;
+        case '\n':
+            out += R"(\n)";
+            break;
+        case '\r':
+            out += R"(\r)";
+            break;
+        case '\t':
+            out += R"(\t)";
+            break;
+        default:
+            out.push_back(ch);
+            break;
         }
     }
     return out;
@@ -159,7 +190,8 @@ struct Team {
     return team_runtime_dir() / (safe_team_filename(id) + ".json");
 }
 
-inline void write_optional_string(std::ostream& out, std::string_view name, const std::optional<std::string>& value) {
+inline void write_optional_string(std::ostream& out, std::string_view name,
+                                  const std::optional<std::string>& value) {
     if (value) out << R"(,")" << name << R"(":")" << team_json_escape(*value) << '"';
 }
 
@@ -170,15 +202,14 @@ inline bool persist_team_record(const Team& team) {
     // c16: assemble the exact pre-existing bytes, then land them through
     // the atomic symlink/FIFO-safe replace instead of a truncating open.
     std::ostringstream out;
-    out << R"({"id":")" << team_json_escape(team.id)
-        << R"(","name":")" << team_json_escape(team.name)
-        << R"(","members":[)";
+    out << R"({"id":")" << team_json_escape(team.id) << R"(","name":")"
+        << team_json_escape(team.name) << R"(","members":[)";
     for (std::size_t i = 0; i < team.members.size(); ++i) {
         const auto& member = team.members[i];
         if (i != 0) out << ',';
-        out << R"({"agent_id":")" << team_json_escape(member.agent_id)
-            << R"(","role":")" << member_role_name(member.role)
-            << R"(","status":")" << member_status_name(member.status) << '"';
+        out << R"({"agent_id":")" << team_json_escape(member.agent_id) << R"(","role":")"
+            << member_role_name(member.role) << R"(","status":")"
+            << member_status_name(member.status) << '"';
         write_optional_string(out, "current_task", member.current_task);
         write_optional_string(out, "last_result", member.last_result);
         out << '}';
@@ -187,16 +218,15 @@ inline bool persist_team_record(const Team& team) {
     for (std::size_t i = 0; i < team.task_list.size(); ++i) {
         const auto& task = team.task_list[i];
         if (i != 0) out << ',';
-        out << R"({"id":")" << team_json_escape(task.id)
-            << R"(","description":")" << team_json_escape(task.description)
-            << R"(","completed":)" << (task.completed ? "true" : "false");
+        out << R"({"id":")" << team_json_escape(task.id) << R"(","description":")"
+            << team_json_escape(task.description) << R"(","completed":)"
+            << (task.completed ? "true" : "false");
         write_optional_string(out, "assigned_to", task.assigned_to);
         write_optional_string(out, "result", task.result);
         out << '}';
     }
     out << "]}";
-    return loom::utils::atomic_replace_file(team_record_path(team.id),
-                                          out.str()).has_value();
+    return loom::utils::atomic_replace_file(team_record_path(team.id), out.str()).has_value();
 }
 
 [[nodiscard]] inline std::optional<Team> load_team_record_from_path(const fs::path& path) {
@@ -226,11 +256,12 @@ inline bool persist_team_record(const Team& team) {
             if (agent_id.empty()) return;
             TeamMember member{
                 .agent_id = std::move(agent_id),
-                .role = member_role_from_string(item.get_string("role")).value_or(MemberRole::Worker),
-                .status = member_status_from_string(item.get_string("status")).value_or(MemberStatus::Idle),
+                .role =
+                    member_role_from_string(item.get_string("role")).value_or(MemberRole::Worker),
+                .status = member_status_from_string(item.get_string("status"))
+                              .value_or(MemberStatus::Idle),
                 .current_task = std::nullopt,
-                .last_result = std::nullopt
-            };
+                .last_result = std::nullopt};
             auto current_task = item.get("current_task");
             if (current_task.is_str()) member.current_task = std::string(current_task.as_str());
             auto last_result = item.get("last_result");
@@ -245,13 +276,12 @@ inline bool persist_team_record(const Team& team) {
             auto id = item.get_string("id");
             auto description = item.get_string("description");
             if (id.empty() || description.empty()) return;
-            SharedTaskItem task{
-                .id = std::move(id),
-                .description = std::move(description),
-                .assigned_to = std::nullopt,
-                .completed = item.get("completed").is_bool() && item.get("completed").as_bool(),
-                .result = std::nullopt
-            };
+            SharedTaskItem task{.id = std::move(id),
+                                .description = std::move(description),
+                                .assigned_to = std::nullopt,
+                                .completed = item.get("completed").is_bool() &&
+                                             item.get("completed").as_bool(),
+                                .result = std::nullopt};
             auto assigned_to = item.get("assigned_to");
             if (assigned_to.is_str()) task.assigned_to = std::string(assigned_to.as_str());
             auto result = item.get("result");
@@ -281,7 +311,8 @@ public:
 
     auto get_by_id_or_name(const std::string& key) -> std::expected<Team, TeamError>;
 
-    auto add_member(const std::string& team_key, TeamMember member) -> std::expected<void, TeamError>;
+    auto add_member(const std::string& team_key, TeamMember member)
+        -> std::expected<void, TeamError>;
 
     auto remove(const std::string& id) -> std::expected<void, TeamError>;
 
@@ -291,15 +322,12 @@ public:
     auto assign_task(const std::string& team_id, const std::string& task_id,
                      const std::string& agent_id) -> std::expected<void, TeamError>;
 
-    auto complete_task(const std::string& team_id, const std::string& task_id,
-                       std::string result) -> std::expected<void, TeamError>;
+    auto complete_task(const std::string& team_id, const std::string& task_id, std::string result)
+        -> std::expected<void, TeamError>;
 
-    auto update_member_status(
-        const std::string& team_key,
-        const std::string& agent_id,
-        MemberStatus status,
-        std::optional<std::string> result = std::nullopt
-    ) -> std::expected<void, TeamError>;
+    auto update_member_status(const std::string& team_key, const std::string& agent_id,
+                              MemberStatus status, std::optional<std::string> result = std::nullopt)
+        -> std::expected<void, TeamError>;
 
     void clear_for_testing();
 
@@ -321,7 +349,8 @@ inline TeamStore& global_team_store() {
 class TeamCreateTool {
 public:
     static constexpr std::string_view name = "team_create";
-    static constexpr std::string_view description = "Create a team of agents for parallel task execution";
+    static constexpr std::string_view description =
+        "Create a team of agents for parallel task execution";
 
     auto execute(std::string id, std::string team_name, std::vector<TeamMember> members)
         -> std::expected<Team, TeamError>;
@@ -359,7 +388,8 @@ public:
     }},
     "required": ["name", "members"]
   }}
-}})", name, description);
+}})",
+                           name, description);
     }
 };
 
@@ -384,8 +414,9 @@ public:
     }},
     "required": ["team_id"]
   }}
-}})", name, description);
+}})",
+                           name, description);
     }
 };
 
-} // namespace loom::tools
+}  // namespace loom::tools

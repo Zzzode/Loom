@@ -2,9 +2,10 @@
 /// @brief TerminalSetupCommand and ResumeCommand tests.
 
 #include <gtest/gtest.h>
-#include <cstdlib>
-#include <atomic>
 #include <unistd.h>
+
+#include <atomic>
+#include <cstdlib>
 
 import std;
 import loom.commands.command;
@@ -41,7 +42,8 @@ struct EnvironmentGuard {
     std::string name;
     std::optional<std::string> previous;
 
-    EnvironmentGuard(std::string key, const std::string& value) : name(std::move(key)) {
+    EnvironmentGuard(std::string key, const std::string& value)
+        : name(std::move(key)) {
         if (const char* existing = std::getenv(name.c_str())) {
             previous = existing;
         }
@@ -61,7 +63,8 @@ struct EnvironmentUnsetGuard {
     std::string name;
     std::optional<std::string> previous;
 
-    explicit EnvironmentUnsetGuard(std::string key) : name(std::move(key)) {
+    explicit EnvironmentUnsetGuard(std::string key)
+        : name(std::move(key)) {
         if (const char* existing = std::getenv(name.c_str())) {
             previous = existing;
         }
@@ -85,7 +88,7 @@ loom::core::CommandContext ctx(std::vector<std::string> args = {}, std::string r
     };
 }
 
-} // namespace
+}  // namespace
 
 // ============================================================================
 // terminal-setup OSC 8 hyperlink support
@@ -101,6 +104,7 @@ namespace fs = std::filesystem;
 struct TerminalSetupHomeGuard {
     std::optional<std::string> previous;
     fs::path tmp;
+
     explicit TerminalSetupHomeGuard() {
         if (const char* h = std::getenv("HOME")) previous = h;
         auto base = fs::temp_directory_path();
@@ -111,6 +115,7 @@ struct TerminalSetupHomeGuard {
         fs::create_directories(tmp);
         setenv("HOME", tmp.c_str(), 1);
     }
+
     ~TerminalSetupHomeGuard() {
         if (previous) {
             setenv("HOME", previous->c_str(), 1);
@@ -122,7 +127,7 @@ struct TerminalSetupHomeGuard {
     }
 };
 
-} // namespace
+}  // namespace
 
 TEST(TerminalSetupCommand, PreviewAndApplyWrapDisplayPathsInOsc8Links) {
     TerminalSetupHomeGuard home;
@@ -136,8 +141,7 @@ TEST(TerminalSetupCommand, PreviewAndApplyWrapDisplayPathsInOsc8Links) {
     // 1) Preview mode: header path is hyperlinked but plain text still present.
     auto r1 = ts::run("--shell=zsh");
     ASSERT_TRUE(r1.ok);
-    EXPECT_NE(r1.message.find("RC file  : \x1b]8;;file://" + rc),
-              std::string::npos);
+    EXPECT_NE(r1.message.find("RC file  : \x1b]8;;file://" + rc), std::string::npos);
     EXPECT_NE(r1.message.find(rc), std::string::npos);
 
     // Pre-create the rc file so apply takes the backup-existing-file path.
@@ -151,18 +155,15 @@ TEST(TerminalSetupCommand, PreviewAndApplyWrapDisplayPathsInOsc8Links) {
     auto r2 = ts::run("--apply --shell=zsh");
     ASSERT_TRUE(r2.ok);
     // OSC8 opener with ST = ESC-backslash.
-    EXPECT_NE(r2.message.find("\x1b]8;;file://" + rc + "\x1b\\"),
-              std::string::npos);
+    EXPECT_NE(r2.message.find("\x1b]8;;file://" + rc + "\x1b\\"), std::string::npos);
     // Plain path human-readable between opener and closer.
     EXPECT_NE(r2.message.find(rc), std::string::npos);
     // Closing OSC8 marker.
     EXPECT_NE(r2.message.find("\x1b]8;;\x1b\\"), std::string::npos);
-    EXPECT_NE(r2.message.find("Successfully applied terminal-setup snippet"),
-              std::string::npos);
+    EXPECT_NE(r2.message.find("Successfully applied terminal-setup snippet"), std::string::npos);
     EXPECT_NE(r2.message.find("Backup created at:"), std::string::npos);
     // Backup path is also linked (timestamp suffix means prefix match).
-    EXPECT_NE(r2.message.find("\x1b]8;;file://" +
-                              (home.tmp / ".zshrc.bak-").string()),
+    EXPECT_NE(r2.message.find("\x1b]8;;file://" + (home.tmp / ".zshrc.bak-").string()),
               std::string::npos);
     // The executable `source <rc>` instruction must stay plain: no ESC bytes
     // between "source " and the rc path.
@@ -171,8 +172,7 @@ TEST(TerminalSetupCommand, PreviewAndApplyWrapDisplayPathsInOsc8Links) {
     // The snippet must actually have been written to disk.
     std::ifstream ifs(rc, std::ios::binary);
     ASSERT_TRUE(ifs.is_open());
-    std::string on_disk((std::istreambuf_iterator<char>(ifs)),
-                        std::istreambuf_iterator<char>());
+    std::string on_disk((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
     EXPECT_NE(on_disk.find("# >>> loom terminal-setup"), std::string::npos);
 }
 
@@ -193,26 +193,22 @@ TEST(TerminalSetupCommand, HyperlinkGateMatchesTsTerminalMatrix) {
 
     // TERM_PROGRAM whitelist (TS ADDITIONAL_HYPERLINK_TERMINALS + base set).
     for (const char* prog :
-         {"ghostty", "Hyper", "kitty", "alacritty", "iTerm.app", "iTerm2",
-          "WezTerm", "vscode"}) {
+         {"ghostty", "Hyper", "kitty", "alacritty", "iTerm.app", "iTerm2", "WezTerm", "vscode"}) {
         EXPECT_TRUE(with_env({{"TERM_PROGRAM", prog}},
                              {"WT_SESSION", "VTE_VERSION", "TERM", "LC_TERMINAL"}))
             << "TERM_PROGRAM=" << prog;
     }
     // LC_TERMINAL (preserved inside tmux where TERM_PROGRAM becomes tmux).
-    EXPECT_TRUE(with_env({{"LC_TERMINAL", "iTerm2"},
-                          {"TERM_PROGRAM", "tmux"}},
+    EXPECT_TRUE(with_env({{"LC_TERMINAL", "iTerm2"}, {"TERM_PROGRAM", "tmux"}},
                          {"WT_SESSION", "VTE_VERSION", "TERM"}));
     // TERM contains kitty.
     EXPECT_TRUE(with_env({{"TERM", "xterm-kitty"}},
-                         {"TERM_PROGRAM", "WT_SESSION", "VTE_VERSION",
-                          "LC_TERMINAL"}));
+                         {"TERM_PROGRAM", "WT_SESSION", "VTE_VERSION", "LC_TERMINAL"}));
     // Unknown terminal stays off.
-    EXPECT_FALSE(with_env({},
-                          {"TERM_PROGRAM", "WT_SESSION", "VTE_VERSION",
-                           "TERM", "LC_TERMINAL"}));
-    EXPECT_FALSE(with_env({{"TERM_PROGRAM", "dumb"}},
-                          {"WT_SESSION", "VTE_VERSION", "TERM", "LC_TERMINAL"}));
+    EXPECT_FALSE(
+        with_env({}, {"TERM_PROGRAM", "WT_SESSION", "VTE_VERSION", "TERM", "LC_TERMINAL"}));
+    EXPECT_FALSE(
+        with_env({{"TERM_PROGRAM", "dumb"}}, {"WT_SESSION", "VTE_VERSION", "TERM", "LC_TERMINAL"}));
 }
 
 TEST(TerminalSetupCommand, UnsupportedTerminalEmitsBarePathsWithoutEscapes) {
@@ -241,17 +237,13 @@ TEST(TerminalSetupCommand, PathToFileUrlEncodingAndHyperlinkGate) {
     // every other byte is uppercased percent-encoded (UTF-8 bytes for non-ASCII).
     // Safe set verified empirically against Node v22: '[' ']' ARE encoded
     // (%5B/%5D) while '&' stays raw.
-    EXPECT_EQ(cu::path_to_file_url("/home/u/.zshrc"),
-              "file:///home/u/.zshrc");
-    EXPECT_EQ(cu::path_to_file_url("/home/u/a b/keymap.json"),
-              "file:///home/u/a%20b/keymap.json");
+    EXPECT_EQ(cu::path_to_file_url("/home/u/.zshrc"), "file:///home/u/.zshrc");
+    EXPECT_EQ(cu::path_to_file_url("/home/u/a b/keymap.json"), "file:///home/u/a%20b/keymap.json");
     EXPECT_EQ(cu::path_to_file_url("/tmp/a#b?c%&[1].fish"),
               "file:///tmp/a%23b%3Fc%25&%5B1%5D.fish");
-    EXPECT_EQ(cu::path_to_file_url("/tmp/caf\xC3\xA9.rc"),
-              "file:///tmp/caf%C3%A9.rc");
+    EXPECT_EQ(cu::path_to_file_url("/tmp/caf\xC3\xA9.rc"), "file:///tmp/caf%C3%A9.rc");
     // Tilde is encoded by Node (not in the unreserved set).
-    EXPECT_EQ(cu::path_to_file_url("/tmp/a~b"),
-              "file:///tmp/a%7Eb");
+    EXPECT_EQ(cu::path_to_file_url("/tmp/a~b"), "file:///tmp/a%7Eb");
 
     const std::string url = "file:///home/u/.zshrc";
     const std::string text = "/home/u/.zshrc";
@@ -293,7 +285,8 @@ TEST(ResumeCommand, ListsSessionsFromDisk) {
     // Override HOME so load_sessions() resolves ~/.loom/sessions to a temp dir.
     EnvironmentUnsetGuard config_dir_guard("LOOM_CONFIG_DIR");
     const char* old_home = std::getenv("HOME");
-    const auto temp_home = fs::temp_directory_path() /
+    const auto temp_home =
+        fs::temp_directory_path() /
         ("loom_resume_cmd_test_" +
          std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
     fs::create_directories(temp_home / ".loom" / "sessions");
@@ -322,16 +315,16 @@ TEST(ResumeCommand, ListsSessionsFromDisk) {
     // /resume last returns metadata with the session ID for direct resume.
     auto resumed = cmd.execute(ctx({"last"}));
     ASSERT_TRUE(resumed.has_value());
-    EXPECT_NE(resumed->message.find("Resuming session"), std::string::npos)
-        << resumed->message;
-    EXPECT_NE(resumed->message.find("My Session"), std::string::npos)
-        << resumed->message;
+    EXPECT_NE(resumed->message.find("Resuming session"), std::string::npos) << resumed->message;
+    EXPECT_NE(resumed->message.find("My Session"), std::string::npos) << resumed->message;
     ASSERT_TRUE(resumed->metadata.has_value());
     EXPECT_EQ(*resumed->metadata, "UI:resume:abc12345-def");
 
     // Restore HOME and clean up.
-    if (old_home) setenv("HOME", old_home, 1);
-    else unsetenv("HOME");
+    if (old_home)
+        setenv("HOME", old_home, 1);
+    else
+        unsetenv("HOME");
     fs::remove_all(temp_home);
 }
 
@@ -339,7 +332,8 @@ TEST(ResumeCommand, FiltersEmptySessionsAndShowsUsefulInfo) {
     // Override HOME so load_sessions() resolves ~/.loom/sessions to a temp dir.
     EnvironmentUnsetGuard config_dir_guard("LOOM_CONFIG_DIR");
     const char* old_home = std::getenv("HOME");
-    const auto temp_home = fs::temp_directory_path() /
+    const auto temp_home =
+        fs::temp_directory_path() /
         ("loom_resume_filter_test_" +
          std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
     fs::create_directories(temp_home / ".loom" / "sessions");
@@ -397,8 +391,10 @@ TEST(ResumeCommand, FiltersEmptySessionsAndShowsUsefulInfo) {
     EXPECT_EQ(msg.find("session_ —"), std::string::npos) << msg;
 
     // Restore HOME and clean up.
-    if (old_home) setenv("HOME", old_home, 1);
-    else unsetenv("HOME");
+    if (old_home)
+        setenv("HOME", old_home, 1);
+    else
+        unsetenv("HOME");
     fs::remove_all(temp_home);
 }
 
@@ -408,7 +404,8 @@ TEST(ResumeCommand, FiltersEmptySessionsAndShowsUsefulInfo) {
 TEST(ResumeCommand, TitleExtractionHandlesArrayContent) {
     EnvironmentUnsetGuard config_dir_guard("LOOM_CONFIG_DIR");
     const char* old_home = std::getenv("HOME");
-    const auto temp_home = fs::temp_directory_path() /
+    const auto temp_home =
+        fs::temp_directory_path() /
         ("loom_resume_array_test_" +
          std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
     fs::create_directories(temp_home / ".loom" / "sessions");
@@ -421,7 +418,8 @@ TEST(ResumeCommand, TitleExtractionHandlesArrayContent) {
             << R"({"id":"arr12345-test","title":"Session","model":"test","message_count":3})";
         // Array-format content (multi-block or non-TextBlock messages).
         std::ofstream(dir / "messages.jsonl")
-            << "{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"Fix the array parsing bug\"}]}\n"
+            << "{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"Fix the array "
+               "parsing bug\"}]}\n"
             << "{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"Done\"}]}\n";
     }
 
@@ -431,13 +429,16 @@ TEST(ResumeCommand, TitleExtractionHandlesArrayContent) {
     EXPECT_NE(listed->message.find("Fix the array parsing bug"), std::string::npos)
         << listed->message;
 
-    if (old_home) setenv("HOME", old_home, 1);
-    else unsetenv("HOME");
+    if (old_home)
+        setenv("HOME", old_home, 1);
+    else
+        unsetenv("HOME");
     fs::remove_all(temp_home);
 }
 
 TEST(ResumeCommand, FindsPickerVisibleSessionBeyondFirstTwenty) {
-    const auto temp_home = fs::temp_directory_path() /
+    const auto temp_home =
+        fs::temp_directory_path() /
         ("loom_resume_window_test_" +
          std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
     EnvironmentUnsetGuard config_dir_guard("LOOM_CONFIG_DIR");
@@ -451,9 +452,7 @@ TEST(ResumeCommand, FindsPickerVisibleSessionBeyondFirstTwenty) {
         const auto dir = sessions_dir / id;
         fs::create_directories(dir);
         std::ofstream(dir / "metadata.json")
-            << std::format(
-                R"({{"id":"{}","last_active":{},"message_count":1}})",
-                id, 1000 - i);
+            << std::format(R"({{"id":"{}","last_active":{},"message_count":1}})", id, 1000 - i);
         std::ofstream(dir / "messages.jsonl")
             << R"({"role":"user","content":"resume fixture"})" << '\n';
         if (i == 24) target_id = id;
@@ -473,16 +472,19 @@ TEST(ResumeCommand, FindsPickerVisibleSessionBeyondFirstTwenty) {
 // ============================================================================
 
 TEST(CopyCommand, Osc52EmitsRequestAndReportsUnconfirmedDelivery) {
-    const auto tmp = fs::temp_directory_path() /
-        ("loom-copy-command-test-" + std::to_string(::getpid()));
+    const auto tmp =
+        fs::temp_directory_path() / ("loom-copy-command-test-" + std::to_string(::getpid()));
     fs::create_directories(tmp);
+
     struct TempDirectoryGuard {
         fs::path path;
+
         ~TempDirectoryGuard() {
             std::error_code ec;
             fs::remove_all(path, ec);
         }
     } cleanup{tmp};
+
     EnvironmentGuard tmpdir("TMPDIR", tmp.string());
 
     loom::commands::CopyCommand command;
@@ -495,8 +497,7 @@ TEST(CopyCommand, Osc52EmitsRequestAndReportsUnconfirmedDelivery) {
     ASSERT_TRUE(result.has_value());
     EXPECT_TRUE(result->ok);
     EXPECT_EQ(output, "\033]52;c;YWJj\a");
-    EXPECT_TRUE(result->message.starts_with(
-        "Copy sent to terminal · paste to verify"));
+    EXPECT_TRUE(result->message.starts_with("Copy sent to terminal · paste to verify"));
     EXPECT_EQ(result->message.find("Copied"), std::string::npos);
     EXPECT_NE(result->message.find("3 bytes"), std::string::npos);
     EXPECT_NE(result->message.find("Also written to"), std::string::npos);

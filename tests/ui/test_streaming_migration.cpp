@@ -15,6 +15,7 @@
 /// To regenerate golden files after an intentional rendering change:
 ///   LOOM_UPDATE_SNAPSHOTS=1 ctest --preset debug -R StreamingMigration
 
+#include <ftxui/component/component.hpp>
 #include <gtest/gtest.h>
 
 #include <cstdlib>
@@ -22,11 +23,9 @@
 #include <string>
 #include <string_view>
 
-#include <ftxui/component/component.hpp>
-
-#include "streaming_replay.hpp"
 #include "invariant_checker.hpp"
 #include "screen_normalize.hpp"
+#include "streaming_replay.hpp"
 #include "test_ui_helpers.h"
 
 import std;
@@ -39,9 +38,9 @@ namespace fs = std::filesystem;
 
 /// Play a fixture through a fresh AppAdapter + QueryEngine and return the
 /// checkpoint snapshots. All objects are local and destroyed before return.
-[[nodiscard]] std::map<std::string, std::string> play_fixture(
-    std::string_view fixture_name,
-    std::optional<std::chrono::seconds> frame_gap = std::nullopt) {
+[[nodiscard]] std::map<std::string, std::string>
+play_fixture(std::string_view fixture_name,
+             std::optional<std::chrono::seconds> frame_gap = std::nullopt) {
     // Golden frames own their model identity, independent of user settings.
     ScopedEnvVar fixture_model("LOOM_MODEL");
     fixture_model.set("model_api/experimental_0812_256k");
@@ -52,34 +51,33 @@ namespace fs = std::filesystem;
     loom::core::QueryEngine engine(std::move(config), tools);
 
     loom::commands::AppCommandRegistry commands;
-    const auto storage_root = fs::temp_directory_path() /
+    const auto storage_root =
+        fs::temp_directory_path() /
         ("loom_streaming_migration_" + std::string(fixture_name) + "_" +
-         std::to_string(
-             std::chrono::steady_clock::now().time_since_epoch().count()));
+         std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
 
-    auto app = ftxui::Make<loom::ui::AppAdapter>(
-        &engine, nullptr, &commands, storage_root, [] {});
+    auto app = ftxui::Make<loom::ui::AppAdapter>(&engine, nullptr, &commands, storage_root, [] {});
 
     // StreamingMigration tests verify individual row rendering (tool result
     // cards, ⎿ connectors, raw result formats) — bypass chain compression
     // so those rows remain visible.
-    loom::ui::test_seams(app.get())
-        .set_disable_chain_compression_for_testing(true);
+    loom::ui::test_seams(app.get()).set_disable_chain_compression_for_testing(true);
 
     auto steps = loom::testing::load_fixture(fixture_name);
     loom::testing::InvariantChecker checker(steps);
     loom::testing::StreamReplayHarness harness(*app, engine);
-    const auto replay_start = std::chrono::steady_clock::time_point{
-        std::chrono::seconds(3'000'000)};
-    auto snapshots = harness.play_with_invariants(steps,
+    const auto replay_start =
+        std::chrono::steady_clock::time_point{std::chrono::seconds(3'000'000)};
+    auto snapshots = harness.play_with_invariants(
+        steps,
         [&checker, frame_gap, replay_start](std::string_view screen, std::size_t step_idx) {
             checker.check(screen, step_idx);
             if (frame_gap) {
-                loom::ui::clock::set_steady_now_for_testing(
-                    replay_start + *frame_gap * (step_idx + 1));
+                loom::ui::clock::set_steady_now_for_testing(replay_start +
+                                                            *frame_gap * (step_idx + 1));
             }
-        }, 120, 40, frame_gap
-            ? std::optional{replay_start} : std::nullopt);
+        },
+        120, 40, frame_gap ? std::optional{replay_start} : std::nullopt);
 
     // Tear down the app before removing its storage root so background
     // flush threads cannot repopulate the directory mid-remove_all.
@@ -93,13 +91,11 @@ namespace fs = std::filesystem;
 
 /// Assert that a snapshot map contains every expected checkpoint and that
 /// each snapshot is non-empty.
-void expect_checkpoints(
-    const std::map<std::string, std::string>& snapshots,
-    std::initializer_list<std::string_view> expected) {
+void expect_checkpoints(const std::map<std::string, std::string>& snapshots,
+                        std::initializer_list<std::string_view> expected) {
     for (const auto name : expected) {
         auto it = snapshots.find(std::string(name));
-        ASSERT_NE(it, snapshots.end())
-            << "missing checkpoint '" << name << "'";
+        ASSERT_NE(it, snapshots.end()) << "missing checkpoint '" << name << "'";
         EXPECT_FALSE(it->second.empty())
             << "checkpoint '" << name << "' produced an empty snapshot";
     }
@@ -109,10 +105,8 @@ void expect_checkpoints(
 
 [[nodiscard]] fs::path streaming_golden_path(std::string_view fixture_name,
                                              std::string_view checkpoint_name) {
-    return fs::path(LOOM_TESTS_DIR) / "fixtures" /
-           "streaming_snapshots" /
-           (std::string(fixture_name) + "." +
-            std::string(checkpoint_name) + ".txt");
+    return fs::path(LOOM_TESTS_DIR) / "fixtures" / "streaming_snapshots" /
+           (std::string(fixture_name) + "." + std::string(checkpoint_name) + ".txt");
 }
 
 // ── Snapshot comparison ─────────────────────────────────────────────
@@ -121,8 +115,7 @@ void expect_checkpoints(
 ///
 /// With LOOM_UPDATE_SNAPSHOTS=1 the golden file is (re)written and the
 /// check passes; otherwise the screen text must match byte-for-byte.
-void expect_streaming_snapshot(std::string_view fixture_name,
-                               std::string_view checkpoint_name,
+void expect_streaming_snapshot(std::string_view fixture_name, std::string_view checkpoint_name,
                                std::string_view actual_text) {
     fs::path path = streaming_golden_path(fixture_name, checkpoint_name);
 
@@ -131,8 +124,7 @@ void expect_streaming_snapshot(std::string_view fixture_name,
         fs::create_directories(path.parent_path());
         std::ofstream out(path);
         out << actual_text << '\n';
-        SUCCEED() << "Updated snapshot: " << fixture_name << "."
-                  << checkpoint_name;
+        SUCCEED() << "Updated snapshot: " << fixture_name << "." << checkpoint_name;
         return;
     }
 
@@ -144,11 +136,9 @@ void expect_streaming_snapshot(std::string_view fixture_name,
 
     // Read expected
     std::ifstream in(path);
-    std::string expected((std::istreambuf_iterator<char>(in)),
-                          std::istreambuf_iterator<char>());
+    std::string expected((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
     // Writer adds a trailing newline; strip it for comparison
-    if (!expected.empty() && expected.back() == '\n')
-        expected.pop_back();
+    if (!expected.empty() && expected.back() == '\n') expected.pop_back();
 
     // Re-normalize the golden with the current normalize_screen so goldens
     // written by older builds (before temp-path / folder-pill normalization
@@ -164,19 +154,16 @@ void expect_streaming_snapshot(std::string_view fixture_name,
 }
 
 /// Assert that `needle` appears in `haystack`.
-void expect_contains(std::string_view haystack, std::string_view needle,
-                     std::string_view context) {
+void expect_contains(std::string_view haystack, std::string_view needle, std::string_view context) {
     EXPECT_NE(haystack.find(needle), std::string_view::npos)
-        << "Expected to find '" << needle << "' in screen (" << context
-        << ").";
+        << "Expected to find '" << needle << "' in screen (" << context << ").";
 }
 
 /// Assert that `needle` does NOT appear in `haystack`.
 void expect_not_contains(std::string_view haystack, std::string_view needle,
                          std::string_view context) {
     EXPECT_EQ(haystack.find(needle), std::string_view::npos)
-        << "Did NOT expect to find '" << needle << "' in screen (" << context
-        << ").";
+        << "Did NOT expect to find '" << needle << "' in screen (" << context << ").";
 }
 
 // ============================================================
@@ -191,10 +178,8 @@ void expect_not_contains(std::string_view haystack, std::string_view needle,
 TEST(StreamingMigration, StatuslineVisibleAfterSubmit) {
     auto snapshots = play_fixture("e2e_statusline");
     expect_checkpoints(snapshots, {"after_commit", "after_end_query"});
-    expect_streaming_snapshot("e2e_statusline", "after_commit",
-                              snapshots.at("after_commit"));
-    expect_streaming_snapshot("e2e_statusline", "after_end_query",
-                              snapshots.at("after_end_query"));
+    expect_streaming_snapshot("e2e_statusline", "after_commit", snapshots.at("after_commit"));
+    expect_streaming_snapshot("e2e_statusline", "after_end_query", snapshots.at("after_end_query"));
 
     // At this fixture's narrow width the status row keeps the complete
     // context percentage, anchored below the prompt's lower divider.
@@ -211,8 +196,7 @@ TEST(StreamingMigration, StatuslineVisibleAfterSubmit) {
 /// visible after the tool result round-trip.
 TEST(StreamingMigration, McpToolUseBlockRendersWithNameAndInput) {
     auto snapshots = play_fixture("e2e_tool_use_render");
-    expect_checkpoints(snapshots, {"after_tool_commit", "after_text_commit",
-                                   "after_end_query"});
+    expect_checkpoints(snapshots, {"after_tool_commit", "after_text_commit", "after_end_query"});
     expect_streaming_snapshot("e2e_tool_use_render", "after_tool_commit",
                               snapshots.at("after_tool_commit"));
     expect_streaming_snapshot("e2e_tool_use_render", "after_text_commit",
@@ -233,16 +217,12 @@ TEST(StreamingMigration, McpToolUseBlockRendersWithNameAndInput) {
 /// AssistantToolUse rendering instead of UserToolResult.
 TEST(StreamingMigration, McpToolResultRendersAsSeparateCard) {
     auto snapshots = play_fixture("e2e_tool_result_separate_card");
-    expect_checkpoints(snapshots, {"after_tool_result", "after_text_commit",
-                                   "after_end_query"});
-    expect_streaming_snapshot("e2e_tool_result_separate_card",
-                              "after_tool_result",
+    expect_checkpoints(snapshots, {"after_tool_result", "after_text_commit", "after_end_query"});
+    expect_streaming_snapshot("e2e_tool_result_separate_card", "after_tool_result",
                               snapshots.at("after_tool_result"));
-    expect_streaming_snapshot("e2e_tool_result_separate_card",
-                              "after_text_commit",
+    expect_streaming_snapshot("e2e_tool_result_separate_card", "after_text_commit",
                               snapshots.at("after_text_commit"));
-    expect_streaming_snapshot("e2e_tool_result_separate_card",
-                              "after_end_query",
+    expect_streaming_snapshot("e2e_tool_result_separate_card", "after_end_query",
                               snapshots.at("after_end_query"));
 
     const auto& screen = snapshots.at("after_end_query");
@@ -256,8 +236,7 @@ TEST(StreamingMigration, McpToolResultRendersAsSeparateCard) {
         << "No ⎿ connector found — tool result is not a separate card.";
     if (conn_pos != std::string_view::npos) {
         // Result content must appear after the connector.
-        EXPECT_NE(screen.find("solid black square", conn_pos),
-                  std::string_view::npos)
+        EXPECT_NE(screen.find("solid black square", conn_pos), std::string_view::npos)
             << "Result content not found after ⎿ connector.";
     }
 
@@ -271,8 +250,7 @@ TEST(StreamingMigration, McpToolResultRendersAsSeparateCard) {
 /// unwrap _result_summary or [{"text":...}] arrays.
 TEST(StreamingMigration, McpResultSummaryFormatShownRaw) {
     auto snapshots = play_fixture("e2e_result_summary_raw");
-    expect_checkpoints(snapshots, {"after_tool_result", "after_text_commit",
-                                   "after_end_query"});
+    expect_checkpoints(snapshots, {"after_tool_result", "after_text_commit", "after_end_query"});
     expect_streaming_snapshot("e2e_result_summary_raw", "after_tool_result",
                               snapshots.at("after_tool_result"));
     expect_streaming_snapshot("e2e_result_summary_raw", "after_text_commit",
@@ -294,8 +272,8 @@ TEST(StreamingMigration, McpResultSummaryFormatShownRaw) {
 /// being forwarded after ToolExecutionEnd (exec_done=true).
 TEST(StreamingMigration, McpToolResultSuppressedInToolUseCardDuringStreaming) {
     auto snapshots = play_fixture("e2e_no_output_in_tooluse");
-    expect_checkpoints(snapshots, {"after_tool_exec", "after_tool_result",
-                                   "after_text_commit", "after_end_query"});
+    expect_checkpoints(snapshots, {"after_tool_exec", "after_tool_result", "after_text_commit",
+                                   "after_end_query"});
     expect_streaming_snapshot("e2e_no_output_in_tooluse", "after_tool_exec",
                               snapshots.at("after_tool_exec"));
     expect_streaming_snapshot("e2e_no_output_in_tooluse", "after_tool_result",
@@ -323,8 +301,7 @@ TEST(StreamingMigration, McpToolResultSuppressedInToolUseCardDuringStreaming) {
     // ToolExecutionEnd, causing an "Output:" section in the tool_use card.
     const auto first_tool = screen.find("Analyze Image");
     if (first_tool != std::string_view::npos) {
-        const auto search_end =
-            std::min(first_tool + 300, screen.size());
+        const auto search_end = std::min(first_tool + 300, screen.size());
         const std::string after_tool =
             std::string(screen.substr(first_tool, search_end - first_tool));
         EXPECT_EQ(after_tool.find("Output:"), std::string_view::npos)
@@ -337,17 +314,14 @@ TEST(StreamingMigration, McpToolResultSuppressedInToolUseCardDuringStreaming) {
 /// expire with the thinking grace period. Advance the existing clock seam
 /// across that period between every replay step, without wall-clock sleeps.
 TEST(StreamingMigration, McpToolResultSurvivesDelayedFrames) {
-    for (const auto fixture : {"e2e_tool_result_separate_card",
-                              "e2e_result_summary_raw",
-                              "e2e_no_output_in_tooluse"}) {
+    for (const auto fixture :
+         {"e2e_tool_result_separate_card", "e2e_result_summary_raw", "e2e_no_output_in_tooluse"}) {
         SCOPED_TRACE(fixture);
         const auto immediate = play_fixture(fixture, std::chrono::seconds(0));
         const auto delayed = play_fixture(fixture, std::chrono::seconds(60));
         ASSERT_TRUE(delayed.contains("after_tool_result"));
-        EXPECT_NE(delayed.at("after_tool_result").find("\xe2\x8e\xbf"),
-                  std::string::npos);
-        EXPECT_NE(delayed.at("after_tool_result").find("result_summary"),
-                  std::string::npos);
+        EXPECT_NE(delayed.at("after_tool_result").find("\xe2\x8e\xbf"), std::string::npos);
+        EXPECT_NE(delayed.at("after_tool_result").find("result_summary"), std::string::npos);
         EXPECT_EQ(delayed, immediate);
     }
 }
@@ -359,10 +333,9 @@ TEST(StreamingMigration, McpToolResultSurvivesDelayedFrames) {
 /// regression in the full conversation flow.
 TEST(StreamingMigration, FullConversationGoldenSnapshot) {
     auto snapshots = play_fixture("e2e_full_conversation");
-    expect_checkpoints(snapshots, {"after_user", "after_tool_result",
-                                   "after_text_commit", "after_end_query"});
-    expect_streaming_snapshot("e2e_full_conversation", "after_user",
-                              snapshots.at("after_user"));
+    expect_checkpoints(snapshots,
+                       {"after_user", "after_tool_result", "after_text_commit", "after_end_query"});
+    expect_streaming_snapshot("e2e_full_conversation", "after_user", snapshots.at("after_user"));
     expect_streaming_snapshot("e2e_full_conversation", "after_tool_result",
                               snapshots.at("after_tool_result"));
     expect_streaming_snapshot("e2e_full_conversation", "after_text_commit",
@@ -399,13 +372,12 @@ TEST(StreamingMigration, StreamingToolUseShowsSpinnerAndLoadingState) {
                               snapshots.at("after_end_query"));
 
     // During streaming: the tool name must be visible.
-    expect_contains(snapshots.at("during_streaming"), "Bash",
-                    "streamed tool name");
+    expect_contains(snapshots.at("during_streaming"), "Bash", "streamed tool name");
 
     // After query end: the chrome spinner line ("<spinner> <verb>…") must
     // be gone — loading is complete.
-    expect_not_contains(snapshots.at("after_end_query"),
-                        "<spinner> <verb>", "chrome spinner after end_query");
+    expect_not_contains(snapshots.at("after_end_query"), "<spinner> <verb>",
+                        "chrome spinner after end_query");
 }
 
 /// Migrated from AppRuntime.StreamingThinkingShowsSpinnerAndFinalContent.
@@ -415,8 +387,7 @@ TEST(StreamingMigration, StreamingToolUseShowsSpinnerAndLoadingState) {
 /// is visible.
 TEST(StreamingMigration, StreamingThinkingShowsSpinnerAndFinalContent) {
     auto snapshots = play_fixture("e2e_streaming_thinking");
-    expect_checkpoints(snapshots, {"during_thinking", "after_commit",
-                                   "after_end_query"});
+    expect_checkpoints(snapshots, {"during_thinking", "after_commit", "after_end_query"});
     expect_streaming_snapshot("e2e_streaming_thinking", "during_thinking",
                               snapshots.at("during_thinking"));
     expect_streaming_snapshot("e2e_streaming_thinking", "after_commit",
@@ -425,12 +396,12 @@ TEST(StreamingMigration, StreamingThinkingShowsSpinnerAndFinalContent) {
                               snapshots.at("after_end_query"));
 
     // During streaming: the thinking content must be visible.
-    expect_contains(snapshots.at("during_thinking"),
-                    "private streaming thinking", "streamed thinking content");
+    expect_contains(snapshots.at("during_thinking"), "private streaming thinking",
+                    "streamed thinking content");
 
     // After query end: the final assistant text must be visible.
-    expect_contains(snapshots.at("after_end_query"),
-                    "visible answer after thinking", "final assistant text");
+    expect_contains(snapshots.at("after_end_query"), "visible answer after thinking",
+                    "final assistant text");
 }
 
 }  // namespace

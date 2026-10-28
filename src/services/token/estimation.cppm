@@ -7,14 +7,13 @@ export module loom.services.token_estimation;
 
 import std;
 
-
 export namespace loom::services {
-
 
 struct TokenEstimate {
     size_t input_tokens{0};
     size_t output_tokens{0};
     size_t cache_read_tokens{0};
+
     size_t total() const { return input_tokens + output_tokens + cache_read_tokens; }
 };
 
@@ -22,16 +21,14 @@ struct ContentTokens {
     size_t text_tokens{0};
     size_t image_tokens{0};
     size_t tool_tokens{0};
+
     size_t total() const { return text_tokens + image_tokens + tool_tokens; }
 };
 
-
 enum class ImageDetail { low, high, auto_detect };
-
 
 class TokenEstimator {
 public:
-
     [[nodiscard]] static auto estimate_text(std::string_view text) -> size_t {
         size_t count = 0;
         size_t i = 0;
@@ -48,7 +45,8 @@ public:
 
                 size_t ascii_run = 0;
                 while (i < text.size() && static_cast<unsigned char>(text[i]) < 0x80) {
-                    ++i; ++ascii_run;
+                    ++i;
+                    ++ascii_run;
                 }
                 count += (ascii_run + 3) / 4;
             }
@@ -56,8 +54,8 @@ public:
         return count == 0 ? 1 : count;
     }
 
-
-    [[nodiscard]] static auto estimate_image(int width, int height, ImageDetail detail = ImageDetail::high) -> size_t {
+    [[nodiscard]] static auto estimate_image(int width, int height,
+                                             ImageDetail detail = ImageDetail::high) -> size_t {
         if (detail == ImageDetail::low) return 85;
 
         int tiles_w = (width + 511) / 512;
@@ -65,27 +63,25 @@ public:
         return static_cast<size_t>(170 * tiles_w * tiles_h + 85);
     }
 
-
-    [[nodiscard]] static auto estimate_tool_use(std::string_view tool_name, std::string_view input_json) -> size_t {
+    [[nodiscard]] static auto estimate_tool_use(std::string_view tool_name,
+                                                std::string_view input_json) -> size_t {
 
         return 50 + estimate_text(tool_name) + estimate_text(input_json);
     }
 
-
     [[nodiscard]] static auto estimate_tool_result(std::string_view output) -> size_t {
         return 10 + estimate_text(output);
     }
-
 
     [[nodiscard]] static auto get_model_limit(std::string_view model_id) -> size_t {
         (void)model_id;
         return 100'000;
     }
 
-
-    [[nodiscard]] static auto fits_in_context(size_t estimated_tokens, std::string_view model_id) -> bool {
+    [[nodiscard]] static auto fits_in_context(size_t estimated_tokens, std::string_view model_id)
+        -> bool {
         return estimated_tokens < get_model_limit(model_id);
     }
 };
 
-} // namespace loom::services
+}  // namespace loom::services

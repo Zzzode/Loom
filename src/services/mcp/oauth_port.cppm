@@ -7,18 +7,20 @@
 /// environment override. RFC 8252 §7.3 (Native Apps): loopback redirect URIs
 /// match any port as long as the path matches.
 module;
-#include <unistd.h>
 #include <arpa/inet.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <unistd.h>
+
 #include <cerrno>
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#include <netinet/in.h>
-#include <sys/socket.h>
 export module loom.services.mcp.oauth_port;
 
 import std;
+
 export namespace loom::services::mcp {
 
 // Final fallback when random probing fails. Kept as a named constant so the
@@ -77,7 +79,7 @@ namespace detail {
     return ok;
 }
 
-} // namespace detail
+}  // namespace detail
 
 /// Find an available port for the OAuth redirect.
 ///
@@ -111,4 +113,4 @@ namespace detail {
     return std::unexpected(std::string{"No available ports for OAuth redirect"});
 }
 
-} // namespace loom::services::mcp
+}  // namespace loom::services::mcp

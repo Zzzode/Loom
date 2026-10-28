@@ -3,7 +3,6 @@
 /// Opens the Loom Desktop download page for the current platform.
 module;
 
-
 export module loom.commands.desktop;
 
 import std;
@@ -33,7 +32,7 @@ inline void open_in_browser(std::string_view url) {
     return "";
 }
 
-} // namespace loom::commands
+}  // namespace loom::commands
 
 export namespace loom::commands {
 
@@ -52,9 +51,7 @@ public:
         };
     }
 
-    [[nodiscard]] static VoidResult validate(const CommandContext&) {
-        return {};
-    }
+    [[nodiscard]] static VoidResult validate(const CommandContext&) { return {}; }
 
     [[nodiscard]] static Result<CommandResult> execute(const CommandContext&) {
         auto url = desktop_download_url();
@@ -65,9 +62,7 @@ public:
         return CommandResult::success(std::move(out));
     }
 
-    [[nodiscard]] static std::vector<std::string> complete(std::string_view) {
-        return {};
-    }
+    [[nodiscard]] static std::vector<std::string> complete(std::string_view) { return {}; }
 };
 
-} // namespace loom::commands
+}  // namespace loom::commands

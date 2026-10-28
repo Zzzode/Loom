@@ -1,7 +1,6 @@
 // GlobTool - File system glob pattern matching
 module;
 
-
 export module loom.tools.glob;
 
 import std;
@@ -12,13 +11,13 @@ import loom.serdes.json;
 
 export namespace loom::tools::glob {
 
-using loom::core::Tool;
-using loom::core::ToolInput;
-using loom::core::ToolResult;
-using loom::core::ToolDefinition;
-using loom::core::ToolPermission;
 using loom::core::InputSchema;
 using loom::core::SchemaProperty;
+using loom::core::Tool;
+using loom::core::ToolDefinition;
+using loom::core::ToolInput;
+using loom::core::ToolPermission;
+using loom::core::ToolResult;
 using loom::utils::Result;
 
 namespace fs = std::filesystem;
@@ -60,44 +59,39 @@ namespace fs = std::filesystem;
 class GlobTool {
 public:
     static constexpr std::string_view kName = "Glob";
-    static constexpr std::string_view kDescription = 
+    static constexpr std::string_view kDescription =
         "Find files and directories matching a glob pattern (e.g., **/*.ts, src/**).";
-    
+
     static ToolDefinition definition() {
         return ToolDefinition{
             .name = std::string(kName),
             .description = std::string(kDescription),
-            .input_schema = InputSchema{
-                .properties = {
-                    SchemaProperty{
-                        .name = "pattern",
-                        .type = "string",
-                        .description = "Glob pattern to match (e.g., **/*.cpp)",
-                        .required = true,
-                        .default_value = std::nullopt,
-                        .enum_values = std::nullopt
-                    },
-                    SchemaProperty{
-                        .name = "path",
-                        .type = "string",
-                        .description = "Directory to search in (default: current)",
-                        .required = false,
-                        .default_value = std::nullopt,
-                        .enum_values = std::nullopt
-                    }
-                }
-            },
+            .input_schema =
+                InputSchema{
+                    .properties = {SchemaProperty{.name = "pattern",
+                                                  .type = "string",
+                                                  .description =
+                                                      "Glob pattern to match (e.g., **/*.cpp)",
+                                                  .required = true,
+                                                  .default_value = std::nullopt,
+                                                  .enum_values = std::nullopt},
+                                   SchemaProperty{.name = "path",
+                                                  .type = "string",
+                                                  .description =
+                                                      "Directory to search in (default: current)",
+                                                  .required = false,
+                                                  .default_value = std::nullopt,
+                                                  .enum_values = std::nullopt}}},
             .permission = ToolPermission::ReadOnly,
-            .category = "filesystem"
-        };
+            .category = "filesystem"};
     }
-    
+
     GlobTool() = default;
-    
+
     [[nodiscard]] bool check_permission([[maybe_unused]] const ToolInput& input) const {
         return true;
     }
-    
+
     [[nodiscard]] Result<ToolResult> execute(const ToolInput& input) {
         using namespace loom::utils::json;
 
@@ -122,19 +116,20 @@ public:
         if (pattern.empty()) {
             return ToolResult::error("Missing 'pattern' field");
         }
-        
+
         // Simple glob implementation
         try {
             std::vector<fs::path> matches;
             fs::path base_path = fs::current_path();
-            
+
             auto path_node = root.get("path");
             if (path_node.is_str()) {
                 base_path = std::string(path_node.as_str());
             }
-            
+
             auto regex_pattern = std::regex(glob_to_regex(pattern));
-            auto recursive = pattern.find("**") != std::string::npos || pattern.find('/') != std::string::npos;
+            auto recursive =
+                pattern.find("**") != std::string::npos || pattern.find('/') != std::string::npos;
             auto consider = [&](const fs::directory_entry& entry) {
                 auto rel = slash_path(fs::relative(entry.path(), base_path));
                 auto name = entry.path().filename().generic_string();
@@ -144,57 +139,63 @@ public:
             };
 
             if (recursive) {
-                for (const auto& entry : fs::recursive_directory_iterator(base_path, fs::directory_options::skip_permission_denied)) {
+                for (const auto& entry : fs::recursive_directory_iterator(
+                         base_path, fs::directory_options::skip_permission_denied)) {
                     consider(entry);
                     if (matches.size() >= 1000) break;
                 }
             } else {
-                for (const auto& entry : fs::directory_iterator(base_path, fs::directory_options::skip_permission_denied)) {
+                for (const auto& entry : fs::directory_iterator(
+                         base_path, fs::directory_options::skip_permission_denied)) {
                     consider(entry);
                     if (matches.size() >= 1000) break;
                 }
             }
 
             std::ranges::sort(matches);
-            
+
             // Format results
             std::string result;
             result = std::format("Found {} matches for '{}':\n", matches.size(), pattern);
             for (const auto& match : matches) {
                 result += std::format("- {}\n", match.string());
             }
-            
+
             return ToolResult::success(result);
-            
+
         } catch (const std::exception& e) {
             return ToolResult::error(std::format("Glob error: {}", e.what()));
         }
     }
 };
 
-} // namespace loom::tools::glob
+}  // namespace loom::tools::glob
 
 // Export main tool class
 export namespace loom::tools {
-    using loom::tools::glob::GlobTool;
+using loom::tools::glob::GlobTool;
 
-    /// Factory: create GlobTool wrapped as ITool (adapts Result types across modules)
-    [[nodiscard]] auto make_glob_tool() -> std::unique_ptr<loom::core::ITool> {
-        struct Adapter final : loom::core::ITool {
-            GlobTool tool_;
-            loom::core::ToolDefinition def_ = GlobTool::definition();
+/// Factory: create GlobTool wrapped as ITool (adapts Result types across modules)
+[[nodiscard]] auto make_glob_tool() -> std::unique_ptr<loom::core::ITool> {
+    struct Adapter final : loom::core::ITool {
+        GlobTool tool_;
+        loom::core::ToolDefinition def_ = GlobTool::definition();
 
-            const loom::core::ToolDefinition& definition() const override { return def_; }
-            std::expected<loom::core::ToolResult, loom::core::Error> execute(const loom::core::ToolInput& input) override {
-                auto result = tool_.execute(input);
-                if (result) return std::move(*result);
-                return std::unexpected(loom::core::Error::make(
-                    loom::core::ErrorCode::ToolExecutionFailed, result.error().format()));
-            }
-            bool check_permission(const loom::core::ToolInput& input) const override {
-                return tool_.check_permission(input);
-            }
-        };
-        return std::make_unique<Adapter>();
-    }
+        const loom::core::ToolDefinition& definition() const override { return def_; }
+
+        std::expected<loom::core::ToolResult, loom::core::Error>
+        execute(const loom::core::ToolInput& input) override {
+            auto result = tool_.execute(input);
+            if (result) return std::move(*result);
+            return std::unexpected(loom::core::Error::make(
+                loom::core::ErrorCode::ToolExecutionFailed, result.error().format()));
+        }
+
+        bool check_permission(const loom::core::ToolInput& input) const override {
+            return tool_.check_permission(input);
+        }
+    };
+
+    return std::make_unique<Adapter>();
 }
+}  // namespace loom::tools

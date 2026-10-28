@@ -6,8 +6,14 @@ import loom.text.parse_int;
 import loom.services.rate_limit.rate_limit_hook;
 
 export namespace loom::commands::mock_limits {
-struct CommandResponse { bool ok{true}; std::string message; };
-[[nodiscard]] inline auto name() -> std::string_view { return "mock_limits"; }
+struct CommandResponse {
+    bool ok{true};
+    std::string message;
+};
+
+[[nodiscard]] inline auto name() -> std::string_view {
+    return "mock_limits";
+}
 
 [[nodiscard]] inline int parse_retry_after(std::string_view text) {
     if (text.empty()) return 60;
@@ -24,11 +30,12 @@ struct CommandResponse { bool ok{true}; std::string message; };
     }
 
     const int retry_after = parse_retry_after(mode);
-    const bool retry = loom::services::rate_limit::handle_rate_limit_response(
-        429, std::to_string(retry_after));
+    const bool retry =
+        loom::services::rate_limit::handle_rate_limit_response(429, std::to_string(retry_after));
     const auto state = loom::services::rate_limit::check_rate_limit_state();
-    return {.ok = true, .message = std::format(
-        "Synthetic rate limit active: retry_after={}s, retry_allowed={}, total_retries={}",
-        retry_after, retry ? "true" : "false", state.total_retries)};
+    return {.ok = true,
+            .message = std::format(
+                "Synthetic rate limit active: retry_after={}s, retry_allowed={}, total_retries={}",
+                retry_after, retry ? "true" : "false", state.total_retries)};
 }
-}
+}  // namespace loom::commands::mock_limits

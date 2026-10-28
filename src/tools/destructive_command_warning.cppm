@@ -58,62 +58,47 @@ inline const std::vector<DestructivePattern>& get_destructive_patterns() {
         // ------------------------------------------------------------------
 
         // git reset --hard
-        v.push_back(DestructivePattern{
-            re{R"(\bgit\s+reset\s+--hard\b)"},
-            "Note: may discard uncommitted changes"
-        });
+        v.push_back(DestructivePattern{re{R"(\bgit\s+reset\s+--hard\b)"},
+                                       "Note: may discard uncommitted changes"});
 
         // git push --force / -f / --force-with-lease
         v.push_back(DestructivePattern{
             re{R"(\bgit\s+push\b[^;&|\n]*[ \t](--force|--force-with-lease|-f)\b)"},
-            "Note: may overwrite remote history"
-        });
+            "Note: may overwrite remote history"});
 
         // git clean -fd / -f (but not dry-run variants)
         v.push_back(DestructivePattern{
             re{R"(\bgit\s+clean\b(?![^;&|\n]*(?:-[a-zA-Z]*n|--dry-run))[^;&|\n]*-[a-zA-Z]*f)"},
-            "Note: may permanently delete untracked files"
-        });
+            "Note: may permanently delete untracked files"});
 
         // git checkout -- .  (discard all working tree changes)
-        v.push_back(DestructivePattern{
-            re{R"(\bgit\s+checkout\s+(--\s+)?\.[ \t]*($|[;&|\n]))"},
-            "Note: may discard all working tree changes"
-        });
+        v.push_back(DestructivePattern{re{R"(\bgit\s+checkout\s+(--\s+)?\.[ \t]*($|[;&|\n]))"},
+                                       "Note: may discard all working tree changes"});
 
         // git restore -- .  (discard all working tree changes)
-        v.push_back(DestructivePattern{
-            re{R"(\bgit\s+restore\s+(--\s+)?\.[ \t]*($|[;&|\n]))"},
-            "Note: may discard all working tree changes"
-        });
+        v.push_back(DestructivePattern{re{R"(\bgit\s+restore\s+(--\s+)?\.[ \t]*($|[;&|\n]))"},
+                                       "Note: may discard all working tree changes"});
 
         // git stash drop / clear
-        v.push_back(DestructivePattern{
-            re{R"(\bgit\s+stash[ \t]+(drop|clear)\b)"},
-            "Note: may permanently remove stashed changes"
-        });
+        v.push_back(DestructivePattern{re{R"(\bgit\s+stash[ \t]+(drop|clear)\b)"},
+                                       "Note: may permanently remove stashed changes"});
 
         // git branch -D / --delete --force
         v.push_back(DestructivePattern{
             re{R"(\bgit\s+branch\s+(-D[ \t]|--delete\s+--force|--force\s+--delete)\b)"},
-            "Note: may force-delete a branch"
-        });
+            "Note: may force-delete a branch"});
 
         // ------------------------------------------------------------------
         // Git — safety bypass
         // ------------------------------------------------------------------
 
         // git (commit|push|merge) --no-verify
-        v.push_back(DestructivePattern{
-            re{R"(\bgit\s+(commit|push|merge)\b[^;&|\n]*--no-verify\b)"},
-            "Note: may skip safety hooks"
-        });
+        v.push_back(DestructivePattern{re{R"(\bgit\s+(commit|push|merge)\b[^;&|\n]*--no-verify\b)"},
+                                       "Note: may skip safety hooks"});
 
         // git commit --amend
-        v.push_back(DestructivePattern{
-            re{R"(\bgit\s+commit\b[^;&|\n]*--amend\b)"},
-            "Note: may rewrite the last commit"
-        });
+        v.push_back(DestructivePattern{re{R"(\bgit\s+commit\b[^;&|\n]*--amend\b)"},
+                                       "Note: may rewrite the last commit"});
 
         // ------------------------------------------------------------------
         // File deletion
@@ -125,52 +110,39 @@ inline const std::vector<DestructivePattern>& get_destructive_patterns() {
         // rm -rf / -rRf / -fRr  (combined recursive + force)
         v.push_back(DestructivePattern{
             re{R"((^|[;&|\n]\s*)rm\s+-[a-zA-Z]*[rR][a-zA-Z]*f|(^|[;&|\n]\s*)rm\s+-[a-zA-Z]*f[a-zA-Z]*[rR])"},
-            "Note: may recursively force-remove files"
-        });
+            "Note: may recursively force-remove files"});
 
         // rm -r / -R  (recursive only)
-        v.push_back(DestructivePattern{
-            re{R"((^|[;&|\n]\s*)rm\s+-[a-zA-Z]*[rR])"},
-            "Note: may recursively remove files"
-        });
+        v.push_back(DestructivePattern{re{R"((^|[;&|\n]\s*)rm\s+-[a-zA-Z]*[rR])"},
+                                       "Note: may recursively remove files"});
 
         // rm -f  (force only)
-        v.push_back(DestructivePattern{
-            re{R"((^|[;&|\n]\s*)rm\s+-[a-zA-Z]*f)"},
-            "Note: may force-remove files"
-        });
+        v.push_back(DestructivePattern{re{R"((^|[;&|\n]\s*)rm\s+-[a-zA-Z]*f)"},
+                                       "Note: may force-remove files"});
 
         // ------------------------------------------------------------------
         // Database
         // ------------------------------------------------------------------
 
         // DROP / TRUNCATE (TABLE|DATABASE|SCHEMA) — case-insensitive
-        v.push_back(DestructivePattern{
-            re{R"(\b(DROP|TRUNCATE)\s+(TABLE|DATABASE|SCHEMA)\b)", ic},
-            "Note: may drop or truncate database objects"
-        });
+        v.push_back(DestructivePattern{re{R"(\b(DROP|TRUNCATE)\s+(TABLE|DATABASE|SCHEMA)\b)", ic},
+                                       "Note: may drop or truncate database objects"});
 
         // DELETE FROM table (no WHERE clause risk)
-        v.push_back(DestructivePattern{
-            re{R"(\bDELETE\s+FROM\s+\w+[ \t]*(;|"|'|\n|$))", ic},
-            "Note: may delete all rows from a database table"
-        });
+        v.push_back(DestructivePattern{re{R"(\bDELETE\s+FROM\s+\w+[ \t]*(;|"|'|\n|$))", ic},
+                                       "Note: may delete all rows from a database table"});
 
         // ------------------------------------------------------------------
         // Infrastructure
         // ------------------------------------------------------------------
 
         // kubectl delete
-        v.push_back(DestructivePattern{
-            re{R"(\bkubectl\s+delete\b)"},
-            "Note: may delete Kubernetes resources"
-        });
+        v.push_back(DestructivePattern{re{R"(\bkubectl\s+delete\b)"},
+                                       "Note: may delete Kubernetes resources"});
 
         // terraform destroy
-        v.push_back(DestructivePattern{
-            re{R"(\bterraform\s+destroy\b)"},
-            "Note: may destroy Terraform infrastructure"
-        });
+        v.push_back(DestructivePattern{re{R"(\bterraform\s+destroy\b)"},
+                                       "Note: may destroy Terraform infrastructure"});
 
         return v;
     }();
@@ -198,24 +170,29 @@ struct DangerClassification {
 
 #if LOOM_HAS_TREE_SITTER
     // Attempt AST-based classification for higher precision.
-    auto ast_result = loom::utils::tree_sitter::bash::classify_dangerous(
-        std::filesystem::path{}, command);
+    auto ast_result =
+        loom::utils::tree_sitter::bash::classify_dangerous(std::filesystem::path{}, command);
     if (!ast_result.parse_error) {
         out.used_ast = true;
         out.parse_error = false;
         if (ast_result.is_dangerous) {
             out.is_dangerous = true;
             switch (ast_result.severity) {
-                case loom::utils::tree_sitter::bash::Severity::Critical:
-                    out.severity = DangerSeverity::Critical; break;
-                case loom::utils::tree_sitter::bash::Severity::High:
-                    out.severity = DangerSeverity::High; break;
-                case loom::utils::tree_sitter::bash::Severity::Medium:
-                    out.severity = DangerSeverity::Medium; break;
-                case loom::utils::tree_sitter::bash::Severity::Low:
-                    out.severity = DangerSeverity::Low; break;
-                default:
-                    out.severity = DangerSeverity::None; break;
+            case loom::utils::tree_sitter::bash::Severity::Critical:
+                out.severity = DangerSeverity::Critical;
+                break;
+            case loom::utils::tree_sitter::bash::Severity::High:
+                out.severity = DangerSeverity::High;
+                break;
+            case loom::utils::tree_sitter::bash::Severity::Medium:
+                out.severity = DangerSeverity::Medium;
+                break;
+            case loom::utils::tree_sitter::bash::Severity::Low:
+                out.severity = DangerSeverity::Low;
+                break;
+            default:
+                out.severity = DangerSeverity::None;
+                break;
             }
             out.matched_patterns = ast_result.matched_patterns;
             out.summary = ast_result.summary;
@@ -282,4 +259,4 @@ getDestructiveCommandWarning(std::string_view command) {
     return get_destructive_command_warning(command).has_value();
 }
 
-} // namespace loom::tools::bash_validation
+}  // namespace loom::tools::bash_validation

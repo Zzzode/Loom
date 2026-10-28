@@ -5,7 +5,6 @@
 /// LICENCE:  Exported.  Imported by the tool UI registry initialization.
 module;
 
-
 export module loom.ui.tools.mcp;
 
 import std;
@@ -91,14 +90,13 @@ namespace detail {
         return std::nullopt;
     };
 
-    fns.progress = [](std::string_view input_json,
-                       std::string_view partial_result) {
+    fns.progress = [](std::string_view input_json, std::string_view partial_result) {
         std::string tool = detail::extract_tool_name(input_json);
         if (!partial_result.empty()) {
             auto nl = partial_result.find('\n');
             std::string line = (nl == std::string_view::npos)
-                ? std::string(partial_result)
-                : std::string(partial_result.substr(0, nl));
+                                   ? std::string(partial_result)
+                                   : std::string(partial_result.substr(0, nl));
             if (line.size() > 60) {
                 line = line.substr(0, 57) + "\xE2\x80\xA6";
             }
@@ -125,10 +123,8 @@ namespace detail {
 
     // MCP tool output (text content from MCP server responses) is visible
     // on screen; index it for search.
-    fns.extract_search_text = [](
-        std::string_view output_text,
-        std::string_view /*error_text*/) -> std::optional<std::string>
-    {
+    fns.extract_search_text = [](std::string_view output_text,
+                                 std::string_view /*error_text*/) -> std::optional<std::string> {
         return std::string{output_text};
     };
 

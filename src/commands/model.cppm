@@ -24,9 +24,9 @@ using namespace loom::core;
 // full store header at every call site; the values are verified against
 // the enum via static_assert in the test suite.
 // ---------------------------------------------------------------------------
-inline constexpr int ACTION_SWITCH_MODEL       = 8;   // ActionType::SwitchModel
+inline constexpr int ACTION_SWITCH_MODEL = 8;         // ActionType::SwitchModel
 inline constexpr int ACTION_SET_MAIN_LOOP_MODEL = 9;  // ActionType::SetMainLoopModel
-inline constexpr int ACTION_SET_SETTINGS_MODEL  = 33; // ActionType::SetSettingsModel
+inline constexpr int ACTION_SET_SETTINGS_MODEL = 33;  // ActionType::SetSettingsModel
 
 /// ModelCommand implements the /model slash command.
 /// Allows switching models, listing available ones, and showing current model.
@@ -38,13 +38,18 @@ public:
         return CommandDefinition{
             .name = "model",
             .description = "Switch or display the active model",
-            .args = {
-                CommandArg{.name = "subcommand", .description = "list | set | info",
-                           .type = ArgType::Choice, .required = false,
-                           .choices = {"list", "set", "info"}},
-                CommandArg{.name = "model_name", .description = "Model identifier to switch to",
-                           .type = ArgType::Text, .required = false},
-            },
+            .args =
+                {
+                    CommandArg{.name = "subcommand",
+                               .description = "list | set | info",
+                               .type = ArgType::Choice,
+                               .required = false,
+                               .choices = {"list", "set", "info"}},
+                    CommandArg{.name = "model_name",
+                               .description = "Model identifier to switch to",
+                               .type = ArgType::Text,
+                               .required = false},
+                },
             .category = "config",
             .aliases = {},
             .hidden = false,
@@ -60,13 +65,13 @@ public:
             if (!is_valid_model(sub, ctx)) {
                 return std::unexpected(Error::make(
                     ErrorCode::InvalidRequest,
-                    std::format("Unknown model: '{}'. Use /model list to see available models.", sub)
-                ));
+                    std::format("Unknown model: '{}'. Use /model list to see available models.",
+                                sub)));
             }
         }
         if (sub == "set" && ctx.args.size() < 2) {
-            return std::unexpected(Error::make(
-                ErrorCode::InvalidRequest, "Usage: /model set <model_name>"));
+            return std::unexpected(
+                Error::make(ErrorCode::InvalidRequest, "Usage: /model set <model_name>"));
         }
         return {};
     }
@@ -88,9 +93,8 @@ public:
             return CommandResult::success(format_model_list(ctx));
         }
         if (sub == "info") {
-            auto model_id = ctx.args.size() > 1
-                ? std::string(ctx.args[1])
-                : get_current_model_id(ctx);
+            auto model_id =
+                ctx.args.size() > 1 ? std::string(ctx.args[1]) : get_current_model_id(ctx);
             return format_model_info(model_id, ctx);
         }
         if (sub == "set") {
@@ -161,7 +165,8 @@ private:
     }
 
     /// Get available models from AppState, or fallback to hardcoded list.
-    [[nodiscard]] static std::vector<FallbackModel> get_available_models(const CommandContext& ctx) {
+    [[nodiscard]] static std::vector<FallbackModel>
+    get_available_models(const CommandContext& ctx) {
         if (const void* raw = ctx.get_app_state()) {
             const auto* state = static_cast<const loom::state::AppState*>(raw);
             if (!state->available_models.empty()) {
@@ -185,10 +190,10 @@ private:
 
     /// Try to find a model by ID in AppState's available_models.
     /// Returns the matching ModelConfig if found, nullopt otherwise.
-    [[nodiscard]] static std::optional<loom::state::ModelConfig> find_model_config(
-            const loom::state::AppState& state, std::string_view model_id) {
+    [[nodiscard]] static std::optional<loom::state::ModelConfig>
+    find_model_config(const loom::state::AppState& state, std::string_view model_id) {
         auto it = std::ranges::find_if(state.available_models,
-            [&](const auto& m) { return m.model_id == model_id; });
+                                       [&](const auto& m) { return m.model_id == model_id; });
         if (it != state.available_models.end()) {
             return *it;
         }
@@ -217,44 +222,40 @@ private:
         for (const auto& m : models) {
             std::string marker = (m.id == current_id) ? "  * " : "    ";
             const auto context = m.context_window > 0
-                ? std::format("{}K context", m.context_window / 1000)
-                : std::string{"context unknown"};
-            out += std::format("{}{} ({}, ${:.2f}/${:.2f} per MTok)\n",
-                               marker, m.id, context,
+                                     ? std::format("{}K context", m.context_window / 1000)
+                                     : std::string{"context unknown"};
+            out += std::format("{}{} ({}, ${:.2f}/${:.2f} per MTok)\n", marker, m.id, context,
                                m.input_cost_per_mtok, m.output_cost_per_mtok);
         }
         out += std::format("\nCurrent model: {}", current_id);
         return out;
     }
 
-    [[nodiscard]] static Result<CommandResult> format_model_info(
-            const std::string& model_id, const CommandContext& ctx) {
+    [[nodiscard]] static Result<CommandResult> format_model_info(const std::string& model_id,
+                                                                 const CommandContext& ctx) {
         // Try AppState first for richer info
         if (const void* raw = ctx.get_app_state()) {
             const auto* state = static_cast<const loom::state::AppState*>(raw);
             if (auto cfg = find_model_config(*state, model_id); cfg.has_value()) {
-                auto info = std::format(
-                    "Model: {}\nDisplay: {}\nContext: unknown\n"
-                    "Input cost: ${:.2f}/MTok\nOutput cost: ${:.2f}/MTok",
-                    cfg->model_id, cfg->display_name,
-                    cfg->input_cost_per_mtok, cfg->output_cost_per_mtok);
+                auto info = std::format("Model: {}\nDisplay: {}\nContext: unknown\n"
+                                        "Input cost: ${:.2f}/MTok\nOutput cost: ${:.2f}/MTok",
+                                        cfg->model_id, cfg->display_name, cfg->input_cost_per_mtok,
+                                        cfg->output_cost_per_mtok);
                 return CommandResult::success(std::move(info));
             }
         }
 
         // Fallback: search hardcoded list
         auto models = fallback_models();
-        auto it = std::ranges::find_if(models,
-            [&](const auto& m) { return m.id == model_id; });
+        auto it = std::ranges::find_if(models, [&](const auto& m) { return m.id == model_id; });
         if (it == models.end()) {
             return std::unexpected(Error::make(ErrorCode::InvalidRequest,
-                std::format("Model '{}' not found.", model_id)));
+                                               std::format("Model '{}' not found.", model_id)));
         }
-        auto info = std::format(
-            "Model: {}\nDisplay: {}\nContext: {}K tokens\n"
-            "Input cost: ${:.2f}/MTok\nOutput cost: ${:.2f}/MTok",
-            it->id, it->display_name, it->context_window / 1000,
-            it->input_cost_per_mtok, it->output_cost_per_mtok);
+        auto info = std::format("Model: {}\nDisplay: {}\nContext: {}K tokens\n"
+                                "Input cost: ${:.2f}/MTok\nOutput cost: ${:.2f}/MTok",
+                                it->id, it->display_name, it->context_window / 1000,
+                                it->input_cost_per_mtok, it->output_cost_per_mtok);
         return CommandResult::success(std::move(info));
     }
 
@@ -262,11 +263,11 @@ private:
     // Model switching — dispatches actions to AppState
     // -----------------------------------------------------------------------
 
-    [[nodiscard]] static Result<CommandResult> switch_model(
-            const std::string& model_id, const CommandContext& ctx) {
+    [[nodiscard]] static Result<CommandResult> switch_model(const std::string& model_id,
+                                                            const CommandContext& ctx) {
         if (!is_valid_model(model_id, ctx)) {
             return std::unexpected(Error::make(ErrorCode::InvalidRequest,
-                std::format("Unknown model: '{}'", model_id)));
+                                               std::format("Unknown model: '{}'", model_id)));
         }
 
         auto previous_id = get_current_model_id(ctx);
@@ -286,8 +287,7 @@ private:
         if (!found_in_state) {
             // Build from fallback list
             auto models = fallback_models();
-            auto it = std::ranges::find_if(models,
-                [&](const auto& m) { return m.id == model_id; });
+            auto it = std::ranges::find_if(models, [&](const auto& m) { return m.id == model_id; });
             if (it != models.end()) {
                 model_cfg.model_id = it->id;
                 model_cfg.display_name = it->display_name;
@@ -323,4 +323,4 @@ private:
     }
 };
 
-} // namespace loom::commands
+}  // namespace loom::commands

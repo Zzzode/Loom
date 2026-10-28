@@ -6,20 +6,20 @@
 /// MCP server auths. The id_token is cached in secure storage and reused until
 /// expiry.
 module;
-#include <cctype>
 #include <arpa/inet.h>
+#include <httplib.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <unistd.h>
+
+#include <cctype>
 #include <cerrno>
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <ctime>
-#include <netinet/in.h>
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <unistd.h>
-
-#include <httplib.h>
 
 export module loom.services.mcp.xaa_idp_login;
 
@@ -36,8 +36,8 @@ export namespace loom::services::mcp {
 
 using loom::utils::Error;
 using loom::utils::ErrorCode;
-using loom::utils::Result;
 using loom::utils::open_browser;
+using loom::utils::Result;
 using loom::utils::json::JsonDoc;
 using loom::utils::json::JsonMutDoc;
 using loom::utils::json::JsonVal;
@@ -48,9 +48,9 @@ namespace fs = std::filesystem;
 
 // ─── Constants ────────────────────────────────────────────────────────────
 
-inline constexpr int kIdpLoginTimeoutMs = 5 * 60 * 1000;      // 5 minutes
-inline constexpr int kIdpRequestTimeoutMs = 30000;             // 30 seconds
-inline constexpr int kIdTokenExpiryBufferS = 60;               // 1 minute safety margin
+inline constexpr int kIdpLoginTimeoutMs = 5 * 60 * 1000;  // 5 minutes
+inline constexpr int kIdpRequestTimeoutMs = 30000;        // 30 seconds
+inline constexpr int kIdTokenExpiryBufferS = 60;          // 1 minute safety margin
 
 // ─── Types ────────────────────────────────────────────────────────────────
 
@@ -85,8 +85,8 @@ struct OidcMetadata {
 /// for; that is a wrong answer, not an error. `/mcp xaa setup` already rejects
 /// such values at parse time (parse_port), so an out-of-range configured value
 /// can only come from a hand-edited config file.
-[[nodiscard]] constexpr std::optional<uint16_t> validated_callback_port(
-    std::optional<int> configured) noexcept {
+[[nodiscard]] constexpr std::optional<uint16_t>
+validated_callback_port(std::optional<int> configured) noexcept {
     if (!configured) return std::nullopt;
     const int p = *configured;
     if (p < 1 || p > 65535) return std::nullopt;
@@ -111,21 +111,25 @@ struct XaaLoginResult {
     auto scheme_end = s.find("://");
     if (scheme_end == std::string::npos) {
         // Not a URL, just strip trailing slashes
-        while (!s.empty() && s.back() == '/') s.pop_back();
+        while (!s.empty() && s.back() == '/')
+            s.pop_back();
         return s;
     }
     auto host_start = scheme_end + 3;
     auto path_start = s.find('/', host_start);
     std::string host = path_start == std::string::npos
-        ? s.substr(host_start)
-        : s.substr(host_start, path_start - host_start);
+                           ? s.substr(host_start)
+                           : s.substr(host_start, path_start - host_start);
     // Lowercase host
-    for (auto& c : host) c = static_cast<char>(std::tolower(c));
+    for (auto& c : host)
+        c = static_cast<char>(std::tolower(c));
     std::string path = path_start == std::string::npos ? "" : s.substr(path_start);
     // Strip trailing slashes from path
-    while (!path.empty() && path.back() == '/') path.pop_back();
+    while (!path.empty() && path.back() == '/')
+        path.pop_back();
     std::string scheme = s.substr(0, scheme_end);
-    for (auto& c : scheme) c = static_cast<char>(std::tolower(c));
+    for (auto& c : scheme)
+        c = static_cast<char>(std::tolower(c));
     return scheme + "://" + host + path;
 }
 
@@ -148,9 +152,8 @@ namespace detail {
     static const std::regex sensitive_re(
         R"REGEX("(access_token|refresh_token|id_token|assertion|subject_token|client_secret)"\s*:\s*"[^"]*")REGEX");
     std::string s(raw);
-    return std::regex_replace(s, sensitive_re,
-        "\"$1\":\"[REDACTED]\"",
-        std::regex_constants::format_default);
+    return std::regex_replace(s, sensitive_re, "\"$1\":\"[REDACTED]\"",
+                              std::regex_constants::format_default);
 }
 
 /// Storage path for XAA IdP tokens: ~/.config/loom/xaa/idp_tokens.json
@@ -179,10 +182,7 @@ inline void ensure_owner_only_store_dir(const fs::path& file_path) {
     if (dir.empty()) return;
     std::error_code ec;
     fs::create_directories(dir, ec);
-    fs::permissions(dir,
-                    fs::perms::owner_all,
-                    fs::perm_options::replace,
-                    ec);
+    fs::permissions(dir, fs::perms::owner_all, fs::perm_options::replace, ec);
 }
 
 /// Read cached id_token for the given IdP issuer from secure storage.
@@ -192,8 +192,8 @@ struct CachedIdpToken {
     int64_t expires_at_ms;  // epoch milliseconds
 };
 
-[[nodiscard]] inline std::optional<CachedIdpToken> read_cached_idp_token(
-    std::string_view idp_issuer) {
+[[nodiscard]] inline std::optional<CachedIdpToken>
+read_cached_idp_token(std::string_view idp_issuer) {
     auto path = idp_token_storage_path();
     if (!fs::exists(path)) return std::nullopt;
 
@@ -220,7 +220,8 @@ struct CachedIdpToken {
 
     // Check if still valid (with buffer)
     auto now_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
-        std::chrono::system_clock::now().time_since_epoch()).count();
+                      std::chrono::system_clock::now().time_since_epoch())
+                      .count();
     auto remaining_ms = cached.expires_at_ms - now_ms;
     if (remaining_ms <= static_cast<int64_t>(kIdTokenExpiryBufferS) * 1000) {
         return std::nullopt;
@@ -228,10 +229,8 @@ struct CachedIdpToken {
     return cached;
 }
 
-inline void write_cached_idp_token(
-    std::string_view idp_issuer,
-    std::string_view id_token,
-    int64_t expires_at_ms) {
+inline void write_cached_idp_token(std::string_view idp_issuer, std::string_view id_token,
+                                   int64_t expires_at_ms) {
     auto path = idp_token_storage_path();
     // RFC-0001 B followup c17a: owner-only at rest (0700 dir / 0600 file).
     ensure_owner_only_store_dir(path);
@@ -270,7 +269,7 @@ inline void write_cached_idp_token(
     // (0644) and followed symlinks. Best-effort like before: a store write
     // failure does not fail the login that produced the token.
     (void)loom::utils::atomic_replace_file(path, doc.to_string(),
-                                         loom::utils::AtomicMode::OwnerOnly);
+                                           loom::utils::AtomicMode::OwnerOnly);
 }
 
 inline void remove_cached_idp_token(std::string_view idp_issuer) {
@@ -292,12 +291,10 @@ inline void remove_cached_idp_token(std::string_view idp_issuer) {
 
     // c17a: owner-only atomic write (see write_cached_idp_token).
     (void)loom::utils::atomic_replace_file(path, doc.to_string(),
-                                         loom::utils::AtomicMode::OwnerOnly);
+                                           loom::utils::AtomicMode::OwnerOnly);
 }
 
-inline void write_idp_client_secret(
-    std::string_view idp_issuer,
-    std::string_view client_secret) {
+inline void write_idp_client_secret(std::string_view idp_issuer, std::string_view client_secret) {
     auto path = idp_token_storage_path();
     // RFC-0001 B followup c17a: owner-only at rest (0700 dir / 0600 file).
     ensure_owner_only_store_dir(path);
@@ -327,11 +324,11 @@ inline void write_idp_client_secret(
     // c17a: owner-only atomic write (see write_cached_idp_token). The secret
     // store must never be world-readable.
     (void)loom::utils::atomic_replace_file(path, doc.to_string(),
-                                         loom::utils::AtomicMode::OwnerOnly);
+                                           loom::utils::AtomicMode::OwnerOnly);
 }
 
-[[nodiscard]] inline std::optional<std::string> read_idp_client_secret(
-    std::string_view idp_issuer) {
+[[nodiscard]] inline std::optional<std::string>
+read_idp_client_secret(std::string_view idp_issuer) {
     auto path = idp_token_storage_path();
     if (!fs::exists(path)) return std::nullopt;
 
@@ -373,15 +370,15 @@ inline void remove_idp_client_secret(std::string_view idp_issuer) {
 
     // c17a: owner-only atomic write (see write_cached_idp_token).
     (void)loom::utils::atomic_replace_file(path, doc.to_string(),
-                                         loom::utils::AtomicMode::OwnerOnly);
+                                           loom::utils::AtomicMode::OwnerOnly);
 }
 
-} // namespace detail
+}  // namespace detail
 
 // ─── Public IdP token storage API ─────────────────────────────────────────
 
-[[nodiscard]] inline std::optional<std::string> get_cached_idp_id_token(
-    std::string_view idp_issuer) {
+[[nodiscard]] inline std::optional<std::string>
+get_cached_idp_id_token(std::string_view idp_issuer) {
     auto cached = detail::read_cached_idp_token(idp_issuer);
     if (!cached) return std::nullopt;
     return cached->id_token;
@@ -389,15 +386,12 @@ inline void remove_idp_client_secret(std::string_view idp_issuer) {
 
 /// Save an externally-obtained id_token. Parses JWT exp for TTL.
 /// Returns the computed expiresAt in ms.
-inline int64_t save_idp_id_token_from_jwt(
-    std::string_view idp_issuer,
-    std::string_view id_token) {
+inline int64_t save_idp_id_token_from_jwt(std::string_view idp_issuer, std::string_view id_token) {
     auto exp_from_jwt = jwt_exp(id_token);
     auto now_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
-        std::chrono::system_clock::now().time_since_epoch()).count();
-    int64_t expires_at_ms = exp_from_jwt
-        ? *exp_from_jwt * 1000
-        : now_ms + 3600 * 1000;
+                      std::chrono::system_clock::now().time_since_epoch())
+                      .count();
+    int64_t expires_at_ms = exp_from_jwt ? *exp_from_jwt * 1000 : now_ms + 3600 * 1000;
     detail::write_cached_idp_token(idp_issuer, id_token, expires_at_ms);
     return expires_at_ms;
 }
@@ -406,14 +400,11 @@ inline void clear_idp_id_token(std::string_view idp_issuer) {
     detail::remove_cached_idp_token(idp_issuer);
 }
 
-[[nodiscard]] inline std::optional<std::string> get_idp_client_secret(
-    std::string_view idp_issuer) {
+[[nodiscard]] inline std::optional<std::string> get_idp_client_secret(std::string_view idp_issuer) {
     return detail::read_idp_client_secret(idp_issuer);
 }
 
-inline void save_idp_client_secret(
-    std::string_view idp_issuer,
-    std::string_view client_secret) {
+inline void save_idp_client_secret(std::string_view idp_issuer, std::string_view client_secret) {
     detail::write_idp_client_secret(idp_issuer, client_secret);
 }
 
@@ -454,8 +445,7 @@ inline void clear_idp_client_secret(std::string_view idp_issuer) {
 namespace detail {
 
 /// Parse a string array from a JSON value.
-[[nodiscard]] inline std::optional<std::vector<std::string>> parse_string_array(
-    JsonVal val) {
+[[nodiscard]] inline std::optional<std::vector<std::string>> parse_string_array(JsonVal val) {
     if (!val.is_arr()) return std::nullopt;
     std::vector<std::string> result;
     val.iter([&](JsonVal item) {
@@ -466,34 +456,29 @@ namespace detail {
 
 /// Parse URL into base + path components for httplib.
 struct ParsedUrl {
-    std::string base;   // "https://host:port"
-    std::string path;   // "/path"
+    std::string base;  // "https://host:port"
+    std::string path;  // "/path"
 };
 
 [[nodiscard]] inline std::expected<ParsedUrl, Error> parse_url(std::string_view url) {
     auto scheme_end = url.find("://");
     if (scheme_end == std::string_view::npos) {
-        return std::unexpected(Error(ErrorCode::invalid_argument,
-            "URL must include scheme"));
+        return std::unexpected(Error(ErrorCode::invalid_argument, "URL must include scheme"));
     }
     auto authority_start = scheme_end + 3;
     auto path_start = url.find('/', authority_start);
     ParsedUrl result;
-    result.base = path_start == std::string_view::npos
-        ? std::string(url)
-        : std::string(url.substr(0, path_start));
-    result.path = path_start == std::string_view::npos
-        ? "/"
-        : std::string(url.substr(path_start));
+    result.base = path_start == std::string_view::npos ? std::string(url)
+                                                       : std::string(url.substr(0, path_start));
+    result.path = path_start == std::string_view::npos ? "/" : std::string(url.substr(path_start));
     return result;
 }
 
-} // namespace detail
+}  // namespace detail
 
 /// OIDC Discovery §4.1: {issuer}/.well-known/openid-configuration
 /// Path APPEND, not replace — trailing-slash base + relative path is correct.
-[[nodiscard]] inline Result<OidcMetadata> discover_oidc(
-    std::string_view idp_issuer) {
+[[nodiscard]] inline Result<OidcMetadata> discover_oidc(std::string_view idp_issuer) {
     // Build discovery URL: append .well-known/openid-configuration to issuer
     std::string base(idp_issuer);
     if (!base.empty() && base.back() != '/') base += '/';
@@ -507,30 +492,31 @@ struct ParsedUrl {
     client.set_connection_timeout(10, 0);
     client.set_read_timeout(kIdpRequestTimeoutMs / 1000, (kIdpRequestTimeoutMs % 1000) * 1000);
 
-    auto response = client.Get(parsed->path, httplib::Headers{
-        {"Accept", "application/json"}});
+    auto response = client.Get(parsed->path, httplib::Headers{{"Accept", "application/json"}});
     if (!response) {
-        return std::unexpected(Error(ErrorCode::network_error,
-            "XAA IdP: OIDC discovery request failed for " + discovery_url));
+        return std::unexpected(
+            Error(ErrorCode::network_error,
+                  "XAA IdP: OIDC discovery request failed for " + discovery_url));
     }
     if (response->status < 200 || response->status >= 300) {
-        return std::unexpected(Error(ErrorCode::network_error,
-            "XAA IdP: OIDC discovery failed: HTTP " + std::to_string(response->status)
-            + " at " + discovery_url));
+        return std::unexpected(
+            Error(ErrorCode::network_error, "XAA IdP: OIDC discovery failed: HTTP " +
+                                                std::to_string(response->status) + " at " +
+                                                discovery_url));
     }
 
     // Captive portals and proxy auth pages return 200 with HTML.
     auto body_parsed = loom::utils::json::parse(response->body);
     if (!body_parsed) {
-        return std::unexpected(Error(ErrorCode::parse_error,
-            "XAA IdP: OIDC discovery returned non-JSON at " + discovery_url
-            + " (captive portal or proxy?)"));
+        return std::unexpected(
+            Error(ErrorCode::parse_error, "XAA IdP: OIDC discovery returned non-JSON at " +
+                                              discovery_url + " (captive portal or proxy?)"));
     }
 
     auto root = body_parsed->root();
     if (!root.is_obj()) {
-        return std::unexpected(Error(ErrorCode::parse_error,
-            "XAA IdP: invalid OIDC metadata: not a JSON object"));
+        return std::unexpected(
+            Error(ErrorCode::parse_error, "XAA IdP: invalid OIDC metadata: not a JSON object"));
     }
 
     OidcMetadata meta;
@@ -540,15 +526,16 @@ struct ParsedUrl {
 
     if (meta.token_endpoint.empty()) {
         return std::unexpected(Error(ErrorCode::parse_error,
-            "XAA IdP: invalid OIDC metadata: missing token_endpoint"));
+                                     "XAA IdP: invalid OIDC metadata: missing token_endpoint"));
     }
 
     // Validate HTTPS for token endpoint
-    if (!meta.token_endpoint.starts_with("https://")
-        && !meta.token_endpoint.starts_with("http://localhost:")
-        && !meta.token_endpoint.starts_with("http://127.0.0.1:")) {
-        return std::unexpected(Error(ErrorCode::permission_denied,
-            "XAA IdP: refusing non-HTTPS token endpoint: " + meta.token_endpoint));
+    if (!meta.token_endpoint.starts_with("https://") &&
+        !meta.token_endpoint.starts_with("http://localhost:") &&
+        !meta.token_endpoint.starts_with("http://127.0.0.1:")) {
+        return std::unexpected(
+            Error(ErrorCode::permission_denied,
+                  "XAA IdP: refusing non-HTTPS token endpoint: " + meta.token_endpoint));
     }
 
     if (auto val = root.get("userinfo_endpoint"); val.is_str()) {
@@ -591,7 +578,7 @@ namespace detail {
     return loom::utils::crypto::base64_encode(bytes);
 }
 
-} // namespace detail
+}  // namespace detail
 
 // ─── Callback Server ──────────────────────────────────────────────────────
 
@@ -606,7 +593,9 @@ struct CallbackOutcome {
 /// RAII wrapper for a listening socket.
 class CallbackServer {
 public:
-    explicit CallbackServer(uint16_t port) : port_(port) {}
+    explicit CallbackServer(uint16_t port)
+        : port_(port) {}
+
     ~CallbackServer() { stop(); }
 
     CallbackServer(const CallbackServer&) = delete;
@@ -628,8 +617,8 @@ public:
         if (::bind(fd_, reinterpret_cast<struct sockaddr*>(&addr), sizeof(addr)) < 0) {
             ::close(fd_);
             fd_ = -1;
-            return std::unexpected(std::string("Failed to bind port ")
-                + std::to_string(port_) + ": " + std::strerror(errno));
+            return std::unexpected(std::string("Failed to bind port ") + std::to_string(port_) +
+                                   ": " + std::strerror(errno));
         }
 
         // If port was 0, get the assigned port
@@ -704,8 +693,8 @@ public:
 
         // Parse path and query
         auto query_start = full_path.find('?');
-        std::string path = query_start == std::string::npos
-            ? full_path : full_path.substr(0, query_start);
+        std::string path =
+            query_start == std::string::npos ? full_path : full_path.substr(0, query_start);
 
         if (path != "/callback") {
             send_error_response(client_fd, 404, "Not Found");
@@ -736,8 +725,8 @@ public:
                 err_msg += " — " + it_desc->second;
             }
             send_html_response(client_fd, 400,
-                "<html><body><h3>IdP login failed</h3><p>"
-                + it_err->second + "</p></body></html>");
+                               "<html><body><h3>IdP login failed</h3><p>" + it_err->second +
+                                   "</p></body></html>");
             ::close(client_fd);
             return std::unexpected(err_msg);
         }
@@ -747,14 +736,14 @@ public:
         auto it_code = params.find("code");
 
         if (it_code == params.end() || it_code->second.empty()) {
-            send_html_response(client_fd, 400,
-                "<html><body><h3>Missing code</h3></body></html>");
+            send_html_response(client_fd, 400, "<html><body><h3>Missing code</h3></body></html>");
             ::close(client_fd);
             return std::unexpected("XAA IdP: callback missing code");
         }
 
         // Send success response
-        send_html_response(client_fd, 200,
+        send_html_response(
+            client_fd, 200,
             "<html><body><h3>IdP login complete — you can close this window.</h3></body></html>");
         ::close(client_fd);
 
@@ -776,24 +765,28 @@ public:
 private:
     static void send_html_response(int fd, int status, std::string_view body) {
         std::string status_text = (status == 200) ? "OK" : "Error";
-        std::string response = "HTTP/1.1 " + std::to_string(status) + " " + status_text + "\r\n"
-            "Content-Type: text/html\r\n"
-            "Content-Length: " + std::to_string(body.size()) + "\r\n"
-            "Connection: close\r\n"
-            "\r\n" + std::string(body);
+        std::string response = "HTTP/1.1 " + std::to_string(status) + " " + status_text +
+                               "\r\n"
+                               "Content-Type: text/html\r\n"
+                               "Content-Length: " +
+                               std::to_string(body.size()) +
+                               "\r\n"
+                               "Connection: close\r\n"
+                               "\r\n" +
+                               std::string(body);
         ::send(fd, response.data(), response.size(), 0);
     }
 
     static void send_error_response(int fd, int status, std::string_view text) {
         send_html_response(fd, status,
-            "<html><body><h3>" + std::string(text) + "</h3></body></html>");
+                           "<html><body><h3>" + std::string(text) + "</h3></body></html>");
     }
 
     int fd_{-1};
     uint16_t port_;
 };
 
-} // namespace detail
+}  // namespace detail
 
 // ─── Loopback Listener Options (observable seam) ──────────────────────────
 
@@ -810,15 +803,14 @@ private:
 ///
 /// nullopt means "no fixed port configured": the caller then picks one via
 /// find_available_oauth_port(), i.e. a random port exactly as before c17.
-[[nodiscard]] inline Result<std::optional<uint16_t>> resolve_login_callback_port(
-    const IdpLoginOptions& opts) {
+[[nodiscard]] inline Result<std::optional<uint16_t>>
+resolve_login_callback_port(const IdpLoginOptions& opts) {
     if (opts.callback_port) {
         return *opts.callback_port;
     }
     auto port_result = find_available_oauth_port();
     if (!port_result) {
-        return std::unexpected(Error(ErrorCode::unavailable,
-            "XAA IdP: " + port_result.error()));
+        return std::unexpected(Error(ErrorCode::unavailable, "XAA IdP: " + port_result.error()));
     }
     return std::optional<uint16_t>(*port_result);
 }
@@ -827,8 +819,7 @@ private:
 
 /// Acquire an id_token from the IdP: return cached if valid, otherwise run
 /// the full OIDC authorization_code + PKCE flow (one browser pop).
-[[nodiscard]] inline Result<std::string> acquire_idp_id_token(
-    const IdpLoginOptions& opts) {
+[[nodiscard]] inline Result<std::string> acquire_idp_id_token(const IdpLoginOptions& opts) {
     // 1. Check cache first
     auto cached = get_cached_idp_id_token(opts.idp_issuer);
     if (cached && !cached->empty()) {
@@ -855,21 +846,19 @@ private:
     auto state = detail::generate_state();
 
     // 5. Build authorization URL
-    std::string auth_url = metadata->authorization_endpoint
-        + "?response_type=code"
-        + "&client_id=" + detail::url_encode(opts.idp_client_id)
-        + "&redirect_uri=" + detail::url_encode(redirect_uri)
-        + "&scope=openid"
-        + "&code_challenge=" + detail::url_encode(code_challenge)
-        + "&code_challenge_method=S256"
-        + "&state=" + detail::url_encode(state);
+    std::string auth_url = metadata->authorization_endpoint + "?response_type=code" +
+                           "&client_id=" + detail::url_encode(opts.idp_client_id) +
+                           "&redirect_uri=" + detail::url_encode(redirect_uri) + "&scope=openid" +
+                           "&code_challenge=" + detail::url_encode(code_challenge) +
+                           "&code_challenge_method=S256" + "&state=" + detail::url_encode(state);
 
     // 6. Start callback server
     detail::CallbackServer server(port);
     auto bound_port = server.start();
     if (!bound_port) {
-        return std::unexpected(Error(ErrorCode::network_error,
-            "XAA IdP: failed to start callback server: " + bound_port.error()));
+        return std::unexpected(
+            Error(ErrorCode::network_error,
+                  "XAA IdP: failed to start callback server: " + bound_port.error()));
     }
 
     // 7. Notify caller and open browser (after server is bound)
@@ -883,42 +872,42 @@ private:
     // 8. Wait for callback
     auto callback = server.wait_for_callback(kIdpLoginTimeoutMs);
     if (!callback) {
-        return std::unexpected(Error(ErrorCode::timeout,
-            "XAA IdP: " + callback.error()));
+        return std::unexpected(Error(ErrorCode::timeout, "XAA IdP: " + callback.error()));
     }
 
     // 9. Validate state
     if (callback->state != state) {
-        return std::unexpected(Error(ErrorCode::permission_denied,
-            "XAA IdP: state mismatch (possible CSRF)"));
+        return std::unexpected(
+            Error(ErrorCode::permission_denied, "XAA IdP: state mismatch (possible CSRF)"));
     }
 
     // 10. Exchange authorization code for tokens
     // Determine auth method: if client_secret provided, check what IdP supports
-    std::string body = std::string("grant_type=authorization_code")
-        + "&code=" + detail::url_encode(callback->code)
-        + "&redirect_uri=" + detail::url_encode(redirect_uri)
-        + "&code_verifier=" + detail::url_encode(code_verifier)
-        + "&client_id=" + detail::url_encode(opts.idp_client_id);
+    std::string body = std::string("grant_type=authorization_code") +
+                       "&code=" + detail::url_encode(callback->code) +
+                       "&redirect_uri=" + detail::url_encode(redirect_uri) +
+                       "&code_verifier=" + detail::url_encode(code_verifier) +
+                       "&client_id=" + detail::url_encode(opts.idp_client_id);
 
-    httplib::Headers headers{
-        {"Accept", "application/json"},
-        {"Content-Type", "application/x-www-form-urlencoded"}};
+    httplib::Headers headers{{"Accept", "application/json"},
+                             {"Content-Type", "application/x-www-form-urlencoded"}};
 
     // If client_secret is available and IdP supports basic auth, use it
     if (opts.idp_client_secret && !opts.idp_client_secret->empty()) {
         auto methods = metadata->token_endpoint_auth_methods_supported;
-        bool supports_basic = !methods || std::ranges::any_of(*methods,
-            [](const auto& m) { return m == "client_secret_basic"; });
-        bool supports_post = methods && std::ranges::any_of(*methods,
-            [](const auto& m) { return m == "client_secret_post"; });
+        bool supports_basic = !methods || std::ranges::any_of(*methods, [](const auto& m) {
+            return m == "client_secret_basic";
+        });
+        bool supports_post = methods && std::ranges::any_of(*methods, [](const auto& m) {
+                                 return m == "client_secret_post";
+                             });
 
         if (supports_basic || !methods) {
             // Default to basic auth
-            auto basic_payload = detail::url_encode(opts.idp_client_id)
-                + ":" + detail::url_encode(*opts.idp_client_secret);
+            auto basic_payload = detail::url_encode(opts.idp_client_id) + ":" +
+                                 detail::url_encode(*opts.idp_client_secret);
             headers.emplace("Authorization",
-                "Basic " + loom::utils::crypto::base64_encode(basic_payload));
+                            "Basic " + loom::utils::crypto::base64_encode(basic_payload));
         } else if (supports_post) {
             body += "&client_secret=" + detail::url_encode(*opts.idp_client_secret);
         }
@@ -931,14 +920,13 @@ private:
     token_client.set_follow_location(true);
     token_client.set_connection_timeout(10, 0);
     token_client.set_read_timeout(kIdpRequestTimeoutMs / 1000,
-        (kIdpRequestTimeoutMs % 1000) * 1000);
+                                  (kIdpRequestTimeoutMs % 1000) * 1000);
 
-    auto token_response = token_client.Post(
-        token_endpoint->path, headers, body,
-        "application/x-www-form-urlencoded");
+    auto token_response =
+        token_client.Post(token_endpoint->path, headers, body, "application/x-www-form-urlencoded");
     if (!token_response) {
-        return std::unexpected(Error(ErrorCode::network_error,
-            "XAA IdP: token exchange request failed"));
+        return std::unexpected(
+            Error(ErrorCode::network_error, "XAA IdP: token exchange request failed"));
     }
     if (token_response->status < 200 || token_response->status >= 300) {
         // RFC-0001 followup c20: redact the echoed body before it reaches the
@@ -946,24 +934,25 @@ private:
         // client_secret) in a 400 body, and every `/mcp xaa setup
         // --client-secret` user now has the secret on this leg. Mirrors the
         // C2 leg's wrap in xaa.cppm (shared detail::redact_tokens).
-        return std::unexpected(Error(ErrorCode::permission_denied,
-            "XAA IdP: token exchange failed: HTTP "
-            + std::to_string(token_response->status) + ": "
-            + detail::redact_tokens(
-                std::string_view(token_response->body).substr(0, 200))));
+        return std::unexpected(Error(
+            ErrorCode::permission_denied,
+            "XAA IdP: token exchange failed: HTTP " + std::to_string(token_response->status) +
+                ": " +
+                detail::redact_tokens(std::string_view(token_response->body).substr(0, 200))));
     }
 
     auto token_parsed = loom::utils::json::parse(token_response->body);
     if (!token_parsed) {
-        return std::unexpected(Error(ErrorCode::parse_error,
-            "XAA IdP: token exchange returned non-JSON"));
+        return std::unexpected(
+            Error(ErrorCode::parse_error, "XAA IdP: token exchange returned non-JSON"));
     }
 
     auto token_root = token_parsed->root();
     auto id_token_val = token_root.get("id_token");
     if (!id_token_val.is_str() || id_token_val.as_str().empty()) {
-        return std::unexpected(Error(ErrorCode::parse_error,
-            "XAA IdP: token response missing id_token (check scope=openid)"));
+        return std::unexpected(
+            Error(ErrorCode::parse_error,
+                  "XAA IdP: token response missing id_token (check scope=openid)"));
     }
 
     std::string id_token(id_token_val.as_str());
@@ -971,14 +960,15 @@ private:
     // 11. Compute expiry and cache
     auto exp_from_jwt = jwt_exp(id_token);
     auto now_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
-        std::chrono::system_clock::now().time_since_epoch()).count();
+                      std::chrono::system_clock::now().time_since_epoch())
+                      .count();
     int64_t expires_at_ms;
     if (exp_from_jwt) {
         expires_at_ms = *exp_from_jwt * 1000;
     } else {
         auto expires_in_val = token_root.get("expires_in");
-        int64_t expires_in = expires_in_val.is_num()
-            ? static_cast<int64_t>(expires_in_val.as_int()) : 3600;
+        int64_t expires_in =
+            expires_in_val.is_num() ? static_cast<int64_t>(expires_in_val.as_int()) : 3600;
         expires_at_ms = now_ms + expires_in * 1000;
     }
 
@@ -1001,8 +991,8 @@ private:
 /// request), and an absent store yields nullopt, preserving the PKCE-only
 /// behavior exactly. get_idp_client_secret() itself returns nullopt for an
 /// absent file, so this is a thin, observable wrapper.
-[[nodiscard]] inline std::optional<std::string> resolve_login_client_secret(
-    std::string_view idp_url) {
+[[nodiscard]] inline std::optional<std::string>
+resolve_login_client_secret(std::string_view idp_url) {
     auto secret = get_idp_client_secret(idp_url);
     if (!secret || secret->empty()) return std::nullopt;
     return secret;
@@ -1027,10 +1017,9 @@ private:
 /// `/mcp xaa setup` writes. It is not a parameter because a caller could not
 /// supply a secret it does not read; resolving it in this seam keeps the
 /// forwarding symmetric with the callback port and testable hermetically.
-[[nodiscard]] inline IdpLoginOptions build_login_options(
-    std::string_view idp_url,
-    std::string_view client_id,
-    std::optional<int> configured_callback_port = std::nullopt) {
+[[nodiscard]] inline IdpLoginOptions
+build_login_options(std::string_view idp_url, std::string_view client_id,
+                    std::optional<int> configured_callback_port = std::nullopt) {
     IdpLoginOptions login_opts;
     login_opts.idp_issuer = std::string(idp_url);
     login_opts.idp_client_id = std::string(client_id);
@@ -1064,14 +1053,12 @@ private:
 /// confidential IdP client no longer silently degrades to PKCE-only on this
 /// path. When no secret is stored the options carry nullopt — exactly the
 /// previous behavior.
-[[nodiscard]] inline std::expected<XaaLoginResult, std::string> perform_xaa_login(
-    std::string_view idp_url,
-    std::string_view client_id,
-    std::optional<std::string_view> scope = std::nullopt,
-    std::optional<int> callback_port = std::nullopt) {
+[[nodiscard]] inline std::expected<XaaLoginResult, std::string>
+perform_xaa_login(std::string_view idp_url, std::string_view client_id,
+                  std::optional<std::string_view> scope = std::nullopt,
+                  std::optional<int> callback_port = std::nullopt) {
 
-    IdpLoginOptions login_opts = build_login_options(
-        idp_url, client_id, callback_port);
+    IdpLoginOptions login_opts = build_login_options(idp_url, client_id, callback_port);
     if (scope && !scope->empty()) {
         // scope is passed to the authorization URL; for IdP login it's
         // typically "openid" which is already the default in acquire_idp_id_token.
@@ -1094,4 +1081,4 @@ private:
     return result;
 }
 
-} // namespace loom::services::mcp
+}  // namespace loom::services::mcp

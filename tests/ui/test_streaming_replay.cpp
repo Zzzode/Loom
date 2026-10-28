@@ -10,15 +10,14 @@
 /// To regenerate golden files after an intentional rendering change:
 ///   LOOM_UPDATE_SNAPSHOTS=1 ctest --preset debug -R StreamingReplay
 
+#include <ftxui/component/component.hpp>
 #include <gtest/gtest.h>
 
 #include <cstdlib>
 #include <iterator>
 
-#include <ftxui/component/component.hpp>
-
-#include "streaming_replay.hpp"
 #include "invariant_checker.hpp"
+#include "streaming_replay.hpp"
 #include "test_ui_helpers.h"
 
 import std;
@@ -31,8 +30,7 @@ namespace fs = std::filesystem;
 
 /// Play a fixture through a fresh AppAdapter + QueryEngine and return the
 /// checkpoint snapshots. All objects are local and destroyed before return.
-[[nodiscard]] std::map<std::string, std::string> play_fixture(
-    std::string_view fixture_name) {
+[[nodiscard]] std::map<std::string, std::string> play_fixture(std::string_view fixture_name) {
     // Golden frames own their model identity, independent of user settings.
     ScopedEnvVar fixture_model("LOOM_MODEL");
     fixture_model.set("model_api/experimental_0812_256k");
@@ -43,19 +41,18 @@ namespace fs = std::filesystem;
     loom::core::QueryEngine engine(std::move(config), tools);
 
     loom::commands::AppCommandRegistry commands;
-    const auto storage_root = fs::temp_directory_path() /
+    const auto storage_root =
+        fs::temp_directory_path() /
         ("loom_streaming_replay_" + std::string(fixture_name) + "_" +
-         std::to_string(
-             std::chrono::steady_clock::now().time_since_epoch().count()));
+         std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
 
-    auto app = ftxui::Make<loom::ui::AppAdapter>(
-        &engine, nullptr, &commands, storage_root, [] {});
+    auto app = ftxui::Make<loom::ui::AppAdapter>(&engine, nullptr, &commands, storage_root, [] {});
 
     auto steps = loom::testing::load_fixture(fixture_name);
     loom::testing::InvariantChecker checker(steps);
     loom::testing::StreamReplayHarness harness(*app, engine);
-    auto snapshots = harness.play_with_invariants(steps,
-        [&checker](std::string_view screen, std::size_t step_idx) {
+    auto snapshots = harness.play_with_invariants(
+        steps, [&checker](std::string_view screen, std::size_t step_idx) {
             checker.check(screen, step_idx);
         });
 
@@ -70,13 +67,11 @@ namespace fs = std::filesystem;
 
 /// Assert that a snapshot map contains every expected checkpoint and that
 /// each snapshot is non-empty.
-void expect_checkpoints(
-    const std::map<std::string, std::string>& snapshots,
-    std::initializer_list<std::string_view> expected) {
+void expect_checkpoints(const std::map<std::string, std::string>& snapshots,
+                        std::initializer_list<std::string_view> expected) {
     for (const auto name : expected) {
         auto it = snapshots.find(std::string(name));
-        ASSERT_NE(it, snapshots.end())
-            << "missing checkpoint '" << name << "'";
+        ASSERT_NE(it, snapshots.end()) << "missing checkpoint '" << name << "'";
         EXPECT_FALSE(it->second.empty())
             << "checkpoint '" << name << "' produced an empty snapshot";
     }
@@ -86,10 +81,8 @@ void expect_checkpoints(
 
 [[nodiscard]] fs::path streaming_golden_path(std::string_view fixture_name,
                                              std::string_view checkpoint_name) {
-    return fs::path(LOOM_TESTS_DIR) / "fixtures" /
-           "streaming_snapshots" /
-           (std::string(fixture_name) + "." +
-            std::string(checkpoint_name) + ".txt");
+    return fs::path(LOOM_TESTS_DIR) / "fixtures" / "streaming_snapshots" /
+           (std::string(fixture_name) + "." + std::string(checkpoint_name) + ".txt");
 }
 
 // ── Snapshot comparison ─────────────────────────────────────────────
@@ -98,8 +91,7 @@ void expect_checkpoints(
 ///
 /// With LOOM_UPDATE_SNAPSHOTS=1 the golden file is (re)written and the
 /// check passes; otherwise the screen text must match byte-for-byte.
-void expect_streaming_snapshot(std::string_view fixture_name,
-                               std::string_view checkpoint_name,
+void expect_streaming_snapshot(std::string_view fixture_name, std::string_view checkpoint_name,
                                std::string_view actual_text) {
     fs::path path = streaming_golden_path(fixture_name, checkpoint_name);
 
@@ -108,8 +100,7 @@ void expect_streaming_snapshot(std::string_view fixture_name,
         fs::create_directories(path.parent_path());
         std::ofstream out(path);
         out << actual_text << '\n';
-        SUCCEED() << "Updated snapshot: " << fixture_name << "."
-                  << checkpoint_name;
+        SUCCEED() << "Updated snapshot: " << fixture_name << "." << checkpoint_name;
         return;
     }
 
@@ -121,11 +112,9 @@ void expect_streaming_snapshot(std::string_view fixture_name,
 
     // Read expected
     std::ifstream in(path);
-    std::string expected((std::istreambuf_iterator<char>(in)),
-                          std::istreambuf_iterator<char>());
+    std::string expected((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
     // Writer adds a trailing newline; strip it for comparison
-    if (!expected.empty() && expected.back() == '\n')
-        expected.pop_back();
+    if (!expected.empty() && expected.back() == '\n') expected.pop_back();
 
     // Re-normalize the golden with the current normalize_screen so goldens
     // written by older builds (before temp-path / folder-pill normalization
@@ -154,17 +143,17 @@ TEST(StreamingReplay, PlainFooterTempPathNormalization) {
         const std::string small_usage = "  ctx ▯▯▯▯▯▯▯▯▯▯ 0% 512/200.0K";
         EXPECT_EQ(normalize_screen(divider + "   " + stem + small_usage),
                   divider + "   <tmpdir>" + small_usage);
-        EXPECT_EQ(normalize_screen("────────────────────     \n   " +
-                    std::string(stem) + small_usage + " \n"),
+        EXPECT_EQ(normalize_screen("────────────────────     \n   " + std::string(stem) +
+                                   small_usage + " \n"),
                   divider + "   <tmpdir>" + small_usage);
     }
     EXPECT_EQ(normalize_screen(divider + "   \xF0\x9F\x93\x81 tmp" + usage),
               divider + "   \xF0\x9F\x93\x81 <tmpdir>" + usage);
-    for (const auto& content : {divider + "   Loom/project" + usage,
-            "body\n   tmp" + usage, "body\n   mac-hash/T" + usage,
-            divider + "   tmp  ctx usage", divider + "   tmp" + usage + "\nbody",
-            std::string{"body\n   tmp  ctx usage"},
-            std::string{"body\n   mac-hash/T  ctx usage"}}) {
+    for (const auto& content :
+         {divider + "   Loom/project" + usage, "body\n   tmp" + usage,
+          "body\n   mac-hash/T" + usage, divider + "   tmp  ctx usage",
+          divider + "   tmp" + usage + "\nbody", std::string{"body\n   tmp  ctx usage"},
+          std::string{"body\n   mac-hash/T  ctx usage"}}) {
         EXPECT_EQ(normalize_screen(content), content);
     }
     const std::string input = divider + " ❯ wrapped input\n   continuation\n" + divider;
@@ -174,11 +163,12 @@ TEST(StreamingReplay, PlainFooterTempPathNormalization) {
     std::string runtime_stem = temp_path.filename().string();
     const auto parent = temp_path.parent_path().filename().string();
     if (!parent.empty()) runtime_stem = parent + "/" + runtime_stem;
-    const std::string abbreviated = runtime_stem.substr(0, std::min<std::size_t>(3, runtime_stem.size())) + "…";
+    const std::string abbreviated =
+        runtime_stem.substr(0, std::min<std::size_t>(3, runtime_stem.size())) + "…";
     for (const auto& stem : {std::string{"tmp"}, runtime_stem, abbreviated}) {
-        for (const auto fields : {" · 0%", " · test-model · 14% 28.0K/200.0K · $0.1234",
-                " · 2% 512/200.0K", " · ~0%", " · ~2% 5.3K/256.0K",
-                " · test-model · ~119% 305.1K/256.0K · $0.1234"}) {
+        for (const auto fields :
+             {" · 0%", " · test-model · 14% 28.0K/200.0K · $0.1234", " · 2% 512/200.0K", " · ~0%",
+              " · ~2% 5.3K/256.0K", " · test-model · ~119% 305.1K/256.0K · $0.1234"}) {
             const auto raw = input + "  " + stem + fields + "  \n  2 tasks";
             const auto expected_semantic = input + "  <tmpdir>" + fields + "\n  2 tasks";
             const auto normalized = normalize_screen(raw);
@@ -186,45 +176,45 @@ TEST(StreamingReplay, PlainFooterTempPathNormalization) {
             EXPECT_EQ(normalize_screen(normalized), normalized);
         }
     }
-    for (const auto& content : {input + "  project/longdirname… · 0%",
-            input + "  arbitrary… · 0%", input + "  tmp · usage 0%",
-            input + "  tmp · 0% invalid-counts", divider + "  " + abbreviated + " · 0%",
-            std::string{"body\n  "} + abbreviated + " · 0%",
-            input + "  project/T · 0%", input + "  tmp · 0% garbage/200K",
-            input + "  tmp · ~~2%", input + "  tmp · ~%",
-            input + "  tmp · ~2% garbage/200K",
-            std::string{"body\n  "} + abbreviated + " · ~2%"}) {
+    for (const auto& content :
+         {input + "  project/longdirname… · 0%", input + "  arbitrary… · 0%",
+          input + "  tmp · usage 0%", input + "  tmp · 0% invalid-counts",
+          divider + "  " + abbreviated + " · 0%", std::string{"body\n  "} + abbreviated + " · 0%",
+          input + "  project/T · 0%", input + "  tmp · 0% garbage/200K", input + "  tmp · ~~2%",
+          input + "  tmp · ~%", input + "  tmp · ~2% garbage/200K",
+          std::string{"body\n  "} + abbreviated + " · ~2%"}) {
         EXPECT_EQ(normalize_screen(content), content);
     }
-
 }
 
 TEST(StreamingReplay, TextSimple) {
     auto snapshots = play_fixture("text_simple");
     expect_checkpoints(snapshots, {"after_commit", "after_end_query"});
-    expect_streaming_snapshot("text_simple", "after_commit",
-                              snapshots.at("after_commit"));
-    expect_streaming_snapshot("text_simple", "after_end_query",
-                              snapshots.at("after_end_query"));
+    expect_streaming_snapshot("text_simple", "after_commit", snapshots.at("after_commit"));
+    expect_streaming_snapshot("text_simple", "after_end_query", snapshots.at("after_end_query"));
 }
 
 TEST(StreamingReplay, ThinkingThenText) {
     auto snapshots = play_fixture("thinking_then_text");
     expect_checkpoints(snapshots, {"after_commit", "after_end_query"});
-    expect_streaming_snapshot("thinking_then_text", "after_commit",
-                              snapshots.at("after_commit"));
+    expect_streaming_snapshot("thinking_then_text", "after_commit", snapshots.at("after_commit"));
     expect_streaming_snapshot("thinking_then_text", "after_end_query",
                               snapshots.at("after_end_query"));
 }
 
 TEST(StreamingReplay, CompressedChainCurrentActivityFollowsCommittedToolLifecycle) {
     const auto snapshots = play_fixture("compressed_chain_activity");
-    expect_checkpoints(snapshots, {"preparing", "running", "progress", "empty_progress", "first_done", "second_running", "waiting", "completed"});
-    for (const auto* checkpoint : {"preparing", "running", "progress", "empty_progress", "first_done", "second_running", "waiting", "completed"})
-        expect_streaming_snapshot("compressed_chain_activity", checkpoint, snapshots.at(checkpoint));
-    EXPECT_NE(snapshots.at("preparing").find("Preparing Read src/query/query_engine.cppm"), std::string::npos);
+    expect_checkpoints(snapshots, {"preparing", "running", "progress", "empty_progress",
+                                   "first_done", "second_running", "waiting", "completed"});
+    for (const auto* checkpoint : {"preparing", "running", "progress", "empty_progress",
+                                   "first_done", "second_running", "waiting", "completed"})
+        expect_streaming_snapshot("compressed_chain_activity", checkpoint,
+                                  snapshots.at(checkpoint));
+    EXPECT_NE(snapshots.at("preparing").find("Preparing Read src/query/query_engine.cppm"),
+              std::string::npos);
     for (const auto* checkpoint : {"running", "progress", "empty_progress"}) {
-        EXPECT_NE(snapshots.at(checkpoint).find("Running Read src/query/query_engine.cppm"), std::string::npos);
+        EXPECT_NE(snapshots.at(checkpoint).find("Running Read src/query/query_engine.cppm"),
+                  std::string::npos);
         EXPECT_EQ(snapshots.at(checkpoint).find("file-preview-secret-body"), std::string::npos);
     }
     // Thinking grace must not duplicate a committed call's target/count.
@@ -233,9 +223,12 @@ TEST(StreamingReplay, CompressedChainCurrentActivityFollowsCommittedToolLifecycl
     ASSERT_NE(target, std::string::npos);
     EXPECT_EQ(running.find("src/query/query_engine.cppm", target + 1), std::string::npos);
     EXPECT_NE(running.find("2 file reads"), std::string::npos);
-    EXPECT_NE(snapshots.at("first_done").find("Preparing Read src/query/wire_protocol.cppm"), std::string::npos);
-    EXPECT_NE(snapshots.at("second_running").find("Running Read src/query/wire_protocol.cppm"), std::string::npos);
-    EXPECT_EQ(snapshots.at("second_running").find("Running Read src/query/query_engine.cppm"), std::string::npos);
+    EXPECT_NE(snapshots.at("first_done").find("Preparing Read src/query/wire_protocol.cppm"),
+              std::string::npos);
+    EXPECT_NE(snapshots.at("second_running").find("Running Read src/query/wire_protocol.cppm"),
+              std::string::npos);
+    EXPECT_EQ(snapshots.at("second_running").find("Running Read src/query/query_engine.cppm"),
+              std::string::npos);
     EXPECT_NE(snapshots.at("waiting").find("Waiting for model"), std::string::npos);
     EXPECT_NE(snapshots.at("completed").find("Worked"), std::string::npos);
     EXPECT_EQ(snapshots.at("completed").find("Waiting for model"), std::string::npos);
@@ -268,8 +261,7 @@ TEST(StreamingReplay, ThinkingLongTruncated) {
 TEST(StreamingReplay, ThinkingMultiple) {
     auto snapshots = play_fixture("thinking_multiple");
     expect_checkpoints(snapshots, {"after_commit", "after_end_query"});
-    expect_streaming_snapshot("thinking_multiple", "after_commit",
-                              snapshots.at("after_commit"));
+    expect_streaming_snapshot("thinking_multiple", "after_commit", snapshots.at("after_commit"));
     expect_streaming_snapshot("thinking_multiple", "after_end_query",
                               snapshots.at("after_end_query"));
 }
@@ -279,14 +271,12 @@ TEST(StreamingReplay, ToolCallBash) {
     expect_checkpoints(snapshots, {"after_tool_result", "after_end_query"});
     expect_streaming_snapshot("tool_call_bash", "after_tool_result",
                               snapshots.at("after_tool_result"));
-    expect_streaming_snapshot("tool_call_bash", "after_end_query",
-                              snapshots.at("after_end_query"));
+    expect_streaming_snapshot("tool_call_bash", "after_end_query", snapshots.at("after_end_query"));
 }
 
 TEST(StreamingReplay, ToolCallThenText) {
     auto snapshots = play_fixture("tool_call_then_text");
-    expect_checkpoints(snapshots, {"after_tool_commit", "after_text_commit",
-                                   "after_end_query"});
+    expect_checkpoints(snapshots, {"after_tool_commit", "after_text_commit", "after_end_query"});
     expect_streaming_snapshot("tool_call_then_text", "after_tool_commit",
                               snapshots.at("after_tool_commit"));
     expect_streaming_snapshot("tool_call_then_text", "after_text_commit",
@@ -319,22 +309,23 @@ TEST(StreamingReplay, ToolUseAndTextSameTurn) {
 
     // After __commit__ (query still running): committed + streaming
     // coexistence is expected (up to 2 occurrences — INV-03 accepts this).
-    EXPECT_LE(loom::testing::InvariantChecker::count_text_on_screen(
-                  snapshots.at("after_commit"), kText), 2)
+    EXPECT_LE(
+        loom::testing::InvariantChecker::count_text_on_screen(snapshots.at("after_commit"), kText),
+        2)
         << "committed + streaming coexistence should be at most 2";
 
     // After __end_query__: the streaming row must be cleared — exactly 1
     // occurrence (the committed row only). Without the Bug 1 fix, the
     // streaming text persists and this count is 2.
-    EXPECT_EQ(loom::testing::InvariantChecker::count_text_on_screen(
-                  snapshots.at("after_end_query"), kText), 1)
+    EXPECT_EQ(loom::testing::InvariantChecker::count_text_on_screen(snapshots.at("after_end_query"),
+                                                                    kText),
+              1)
         << "streaming text not cleared after tool completion (Bug 1)";
 }
 
 TEST(StreamingReplay, MultiTurnWithThinking) {
     auto snapshots = play_fixture("multi_turn_with_thinking");
-    expect_checkpoints(snapshots, {"after_tool_commit", "after_text_commit",
-                                   "after_end_query"});
+    expect_checkpoints(snapshots, {"after_tool_commit", "after_text_commit", "after_end_query"});
     expect_streaming_snapshot("multi_turn_with_thinking", "after_tool_commit",
                               snapshots.at("after_tool_commit"));
     expect_streaming_snapshot("multi_turn_with_thinking", "after_text_commit",
@@ -346,15 +337,13 @@ TEST(StreamingReplay, MultiTurnWithThinking) {
 TEST(StreamingReplay, ErrorOverloaded) {
     auto snapshots = play_fixture("error_overloaded");
     expect_checkpoints(snapshots, {"after_error"});
-    expect_streaming_snapshot("error_overloaded", "after_error",
-                              snapshots.at("after_error"));
+    expect_streaming_snapshot("error_overloaded", "after_error", snapshots.at("after_error"));
 }
 
 TEST(StreamingReplay, ErrorRateLimit) {
     auto snapshots = play_fixture("error_rate_limit");
     expect_checkpoints(snapshots, {"after_error"});
-    expect_streaming_snapshot("error_rate_limit", "after_error",
-                              snapshots.at("after_error"));
+    expect_streaming_snapshot("error_rate_limit", "after_error", snapshots.at("after_error"));
 }
 
 // ── Phase 5: edge-case fixtures (RFC 0003 §6.3) ─────────────────────
@@ -362,34 +351,27 @@ TEST(StreamingReplay, ErrorRateLimit) {
 TEST(StreamingReplay, EmptyContent) {
     auto snapshots = play_fixture("empty_content");
     expect_checkpoints(snapshots, {"after_commit", "after_end_query"});
-    expect_streaming_snapshot("empty_content", "after_commit",
-                              snapshots.at("after_commit"));
-    expect_streaming_snapshot("empty_content", "after_end_query",
-                              snapshots.at("after_end_query"));
+    expect_streaming_snapshot("empty_content", "after_commit", snapshots.at("after_commit"));
+    expect_streaming_snapshot("empty_content", "after_end_query", snapshots.at("after_end_query"));
 }
 
 TEST(StreamingReplay, VeryLongText) {
     auto snapshots = play_fixture("very_long_text");
     expect_checkpoints(snapshots, {"after_commit", "after_end_query"});
-    expect_streaming_snapshot("very_long_text", "after_commit",
-                              snapshots.at("after_commit"));
-    expect_streaming_snapshot("very_long_text", "after_end_query",
-                              snapshots.at("after_end_query"));
+    expect_streaming_snapshot("very_long_text", "after_commit", snapshots.at("after_commit"));
+    expect_streaming_snapshot("very_long_text", "after_end_query", snapshots.at("after_end_query"));
 }
 
 TEST(StreamingReplay, CjkAndEmoji) {
     auto snapshots = play_fixture("cjk_and_emoji");
     expect_checkpoints(snapshots, {"after_commit", "after_end_query"});
-    expect_streaming_snapshot("cjk_and_emoji", "after_commit",
-                              snapshots.at("after_commit"));
-    expect_streaming_snapshot("cjk_and_emoji", "after_end_query",
-                              snapshots.at("after_end_query"));
+    expect_streaming_snapshot("cjk_and_emoji", "after_commit", snapshots.at("after_commit"));
+    expect_streaming_snapshot("cjk_and_emoji", "after_end_query", snapshots.at("after_end_query"));
 }
 
 TEST(StreamingReplay, MultipleToolsParallel) {
     auto snapshots = play_fixture("multiple_tools_parallel");
-    expect_checkpoints(snapshots, {"after_tools", "after_commit",
-                                   "after_end_query"});
+    expect_checkpoints(snapshots, {"after_tools", "after_commit", "after_end_query"});
     expect_streaming_snapshot("multiple_tools_parallel", "after_tools",
                               snapshots.at("after_tools"));
     expect_streaming_snapshot("multiple_tools_parallel", "after_commit",
@@ -417,8 +399,7 @@ TEST(StreamingReplay, ToolResultWithImage) {
 TEST(StreamingReplay, DuplicateEvents) {
     auto snapshots = play_fixture("duplicate_events");
     expect_checkpoints(snapshots, {"after_commit", "after_end_query"});
-    expect_streaming_snapshot("duplicate_events", "after_commit",
-                              snapshots.at("after_commit"));
+    expect_streaming_snapshot("duplicate_events", "after_commit", snapshots.at("after_commit"));
     expect_streaming_snapshot("duplicate_events", "after_end_query",
                               snapshots.at("after_end_query"));
 }
@@ -440,8 +421,7 @@ namespace {
 /// "∴ Thinking…" — U+2234 + " Thinking" + U+2026. The EXPANDED label,
 /// shown only while a thinking row is the streaming tail (or forced
 /// expanded by the grace/transcript path).
-constexpr std::string_view kExpandedThinkingLabel =
-    "\xE2\x88\xB4 Thinking\xE2\x80\xA6";
+constexpr std::string_view kExpandedThinkingLabel = "\xE2\x88\xB4 Thinking\xE2\x80\xA6";
 
 /// Only collapsed rows advertise the Show thinking click action; use it as
 /// the marker rather than the glyph shared with the expanded heading.
@@ -456,8 +436,7 @@ TEST(StreamingReplay, ThinkingGraceExpiry) {
     // the ContentBlockStop that writes streaming_ended_at) is timestamped
     // at t0. Advancing to t0 + 4s then simulates collapse-grace expiry
     // without sleeping.
-    const auto t0 = std::chrono::steady_clock::time_point{
-        std::chrono::seconds(1'000'000)};
+    const auto t0 = std::chrono::steady_clock::time_point{std::chrono::seconds(1'000'000)};
 
     loom::core::ToolRegistry tools;
     loom::core::QueryEngineConfig config;
@@ -466,13 +445,12 @@ TEST(StreamingReplay, ThinkingGraceExpiry) {
     loom::core::QueryEngine engine(std::move(config), tools);
 
     loom::commands::AppCommandRegistry commands;
-    const auto storage_root = fs::temp_directory_path() /
+    const auto storage_root =
+        fs::temp_directory_path() /
         ("loom_grace_expiry_" +
-         std::to_string(
-             std::chrono::steady_clock::now().time_since_epoch().count()));
+         std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
 
-    auto app = ftxui::Make<loom::ui::AppAdapter>(
-        &engine, nullptr, &commands, storage_root, [] {});
+    auto app = ftxui::Make<loom::ui::AppAdapter>(&engine, nullptr, &commands, storage_root, [] {});
 
     // Disable chain compression so the grace-period behavior (expanded →
     // collapsed thinking row) is tested without chain compression hiding
@@ -482,10 +460,12 @@ TEST(StreamingReplay, ThinkingGraceExpiry) {
     auto steps = loom::testing::load_fixture("thinking_grace_expiry");
     loom::testing::InvariantChecker checker(steps);
     loom::testing::StreamReplayHarness harness(*app, engine);
-    auto snapshots = harness.play_with_invariants(steps,
+    auto snapshots = harness.play_with_invariants(
+        steps,
         [&checker](std::string_view screen, std::size_t step_idx) {
             checker.check(screen, step_idx);
-        }, 120, 40, t0);
+        },
+        120, 40, t0);
 
     expect_checkpoints(snapshots, {"before_expiry", "after_end_query"});
     expect_streaming_snapshot("thinking_grace_expiry", "before_expiry",
@@ -510,8 +490,7 @@ TEST(StreamingReplay, ThinkingGraceExpiry) {
     // Advance the clock past the 3s collapse grace and re-render: the row
     // collapses to the "∴ Thought for Xs <summary> (ctrl+o to expand)"
     // label (INV-07).
-    loom::ui::clock::set_steady_now_for_testing(
-        t0 + std::chrono::seconds(4));
+    loom::ui::clock::set_steady_now_for_testing(t0 + std::chrono::seconds(4));
     const std::string after_expiry = harness.render_now();
     EXPECT_NE(after_expiry.find(kCollapsedThinkingHint), std::string::npos)
         << "thinking row should collapse after the 3s grace";
@@ -551,8 +530,7 @@ TEST(StreamingReplay, ThinkingCollapseGrace) {
     // Pin the clock so every mark_streaming() call during replay records
     // t0, and the post-play was_recently_streaming() checks measure elapsed
     // time against t0.
-    const auto t0 = std::chrono::steady_clock::time_point{
-        std::chrono::seconds(2'000'000)};
+    const auto t0 = std::chrono::steady_clock::time_point{std::chrono::seconds(2'000'000)};
 
     loom::core::ToolRegistry tools;
     loom::core::QueryEngineConfig config;
@@ -561,13 +539,12 @@ TEST(StreamingReplay, ThinkingCollapseGrace) {
     loom::core::QueryEngine engine(std::move(config), tools);
 
     loom::commands::AppCommandRegistry commands;
-    const auto storage_root = fs::temp_directory_path() /
+    const auto storage_root =
+        fs::temp_directory_path() /
         ("loom_collapse_grace_" +
-         std::to_string(
-             std::chrono::steady_clock::now().time_since_epoch().count()));
+         std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
 
-    auto app = ftxui::Make<loom::ui::AppAdapter>(
-        &engine, nullptr, &commands, storage_root, [] {});
+    auto app = ftxui::Make<loom::ui::AppAdapter>(&engine, nullptr, &commands, storage_root, [] {});
 
     // Disable chain compression so the grace-period behavior (expanded →
     // collapsed thinking row) is tested without chain compression hiding
@@ -582,10 +559,12 @@ TEST(StreamingReplay, ThinkingCollapseGrace) {
     auto steps = loom::testing::load_fixture("thinking_collapse_grace");
     loom::testing::InvariantChecker checker(steps);
     loom::testing::StreamReplayHarness harness(*app, engine);
-    auto snapshots = harness.play_with_invariants(steps,
+    auto snapshots = harness.play_with_invariants(
+        steps,
         [&checker](std::string_view screen, std::size_t step_idx) {
             checker.check(screen, step_idx);
-        }, 120, 40, t0);
+        },
+        120, 40, t0);
 
     expect_checkpoints(snapshots, {"after_commit", "after_end_query"});
     expect_streaming_snapshot("thinking_collapse_grace", "after_commit",
@@ -612,8 +591,7 @@ TEST(StreamingReplay, ThinkingCollapseGrace) {
 
     // Advance the clock past the 3s collapse grace and re-render: the row
     // collapses to the "∴ Thinking  <summary> (ctrl+o to expand)" label.
-    loom::ui::clock::set_steady_now_for_testing(
-        t0 + std::chrono::seconds(4));
+    loom::ui::clock::set_steady_now_for_testing(t0 + std::chrono::seconds(4));
     const std::string after_grace = harness.render_now();
     EXPECT_NE(after_grace.find(kCollapsedThinkingHint), std::string::npos)
         << "thinking row should collapse after the 3s grace";
@@ -639,13 +617,11 @@ TEST(StreamingReplay, ThinkingCollapseGrace) {
 
 TEST(StreamingReplay, ClockResetBetweenFixtures) {
     // A fixed instant far from any real steady_clock reading.
-    const auto t0 = std::chrono::steady_clock::time_point{
-        std::chrono::seconds(3'000'000)};
+    const auto t0 = std::chrono::steady_clock::time_point{std::chrono::seconds(3'000'000)};
 
     // Simulate a leftover override from a previous fixture.
     loom::ui::clock::set_steady_now_for_testing(t0);
-    ASSERT_EQ(loom::ui::clock::steady_now(), t0)
-        << "clock override should be active before play()";
+    ASSERT_EQ(loom::ui::clock::steady_now(), t0) << "clock override should be active before play()";
 
     // play_fixture() builds a fresh harness and plays through
     // play_with_invariants(), which clears the override at startup.
@@ -672,9 +648,9 @@ TEST(StreamingReplay, ToolSpinnerPhasesPreserveLabelsAndMessageContent) {
                 EXPECT_EQ(normalize_screen(normalized), normalized);
                 EXPECT_EQ(normalize_screen(spinner + "   \n────────────────────   \n ❯ draft"),
                           normalized);
-                for (const auto& body : {spinner, "body\n" + spinner + "\nnext",
-                         "quoted " + spinner + prompt, "  " + spinner + prompt,
-                         spinner + "\n────────────────────\nbody"}) {
+                for (const auto& body :
+                     {spinner, "body\n" + spinner + "\nnext", "quoted " + spinner + prompt,
+                      "  " + spinner + prompt, spinner + "\n────────────────────\nbody"}) {
                     EXPECT_EQ(normalize_screen(body), body);
                 }
                 EXPECT_EQ(normalize_screen(std::string(glyph) + " Thinking…" + dots),
@@ -692,7 +668,6 @@ TEST(StreamingReplay, ToolSpinnerPhasesPreserveLabelsAndMessageContent) {
         EXPECT_EQ(normalize_screen("quoted " + spinner + prompt),
                   "quoted <spinner> mcp__server_2__read-file…..." + prompt);
     }
-
 }
 
 TEST(StreamingReplay, DetailsActionsKeepBlinkingDotSnapshotsDeterministic) {
@@ -707,12 +682,12 @@ TEST(StreamingReplay, DetailsActionsKeepBlinkingDotSnapshotsDeterministic) {
         auto aligned = [&](std::string label) {
             return label + std::string(60 - label.size(), ' ') + std::string(action);
         };
-        for (const auto& labels : {
-                 std::pair{"Thought for 0s, ran 1 shell command", "Thought, ran 1 shell command"},
-                 std::pair{"Thought for 12s", "Thought"},
-                 std::pair{"Worked for 12s, ran 1 shell command", "Worked, ran 1 shell command"},
-                 std::pair{"Working for 1m 12s, read 2 files…", "Working, read 2 files…"},
-                 std::pair{"Thinking for 0s…", "Thinking…"}}) {
+        for (const auto& labels :
+             {std::pair{"Thought for 0s, ran 1 shell command", "Thought, ran 1 shell command"},
+              std::pair{"Thought for 12s", "Thought"},
+              std::pair{"Worked for 12s, ran 1 shell command", "Worked, ran 1 shell command"},
+              std::pair{"Working for 1m 12s, read 2 files…", "Working, read 2 files…"},
+              std::pair{"Thinking for 0s…", "Thinking…"}}) {
             const auto timed = normalize_screen("● " + aligned(labels.first));
             const auto untimed = normalize_screen("● " + aligned(labels.second));
             EXPECT_EQ(timed, untimed);

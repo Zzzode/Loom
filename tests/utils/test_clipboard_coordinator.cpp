@@ -5,8 +5,9 @@
 /// before starting new one, generation counter, pending_reaps_ sweep,
 /// and shutdown behavior.
 
-#include <chrono>
 #include <gtest/gtest.h>
+
+#include <chrono>
 
 import std;
 import loom.platform.clipboard_coordinator;
@@ -49,9 +50,9 @@ struct FakeSlowBackend {
     std::string old_ssh_tty;
 
     FakeSlowBackend() {
-        auto base = std::filesystem::temp_directory_path() /
-            ("loom_fake_xclip_" +
-             std::to_string(steady_clock::now().time_since_epoch().count()));
+        auto base =
+            std::filesystem::temp_directory_path() /
+            ("loom_fake_xclip_" + std::to_string(steady_clock::now().time_since_epoch().count()));
         dir = base;
         std::filesystem::create_directories(dir);
         // Fake xclip: sleep forever (until killed).
@@ -60,10 +61,9 @@ struct FakeSlowBackend {
             std::ofstream f(script);
             f << "#!/bin/sh\nexec sleep 100\n";
         }
-        std::filesystem::permissions(script,
-            std::filesystem::perms::owner_all |
-            std::filesystem::perms::group_read |
-            std::filesystem::perms::others_read);
+        std::filesystem::permissions(script, std::filesystem::perms::owner_all |
+                                                 std::filesystem::perms::group_read |
+                                                 std::filesystem::perms::others_read);
         // Prepend our dir to PATH so find_executable finds our fake xclip.
         old_path = std::getenv("PATH") ? std::getenv("PATH") : "";
         auto new_path = dir.string() + ":" + old_path;
@@ -111,11 +111,9 @@ struct FakeSlowBackend {
 };
 
 /// Make a copy request with a callback that stores the result.
-clip::CopyRequest make_request(
-    std::string text,
-    std::mutex& mutex,
-    std::optional<clip::CopyResult>& result,
-    std::condition_variable& cv) {
+clip::CopyRequest make_request(std::string text, std::mutex& mutex,
+                               std::optional<clip::CopyResult>& result,
+                               std::condition_variable& cv) {
     clip::CopyRequest req;
     req.text = std::make_shared<const std::string>(std::move(text));
     req.on_complete = [&](clip::CopyResult r) {
@@ -164,16 +162,17 @@ TEST(ClipboardCoordinator, GenerationCounterIncrements) {
     clip::ClipboardCoordinator coordinator;
 
     auto cat = find_cmd("cat");
-    if (cat.empty()) { coordinator.shutdown(); GTEST_SKIP() << "cat not found"; }
+    if (cat.empty()) {
+        coordinator.shutdown();
+        GTEST_SKIP() << "cat not found";
+    }
 
     std::mutex mutex;
     std::optional<clip::CopyResult> result;
     std::condition_variable cv;
 
-    auto gen1 = coordinator.post(
-        make_request("first", mutex, result, cv));
-    auto gen2 = coordinator.post(
-        make_request("second", mutex, result, cv));
+    auto gen1 = coordinator.post(make_request("first", mutex, result, cv));
+    auto gen2 = coordinator.post(make_request("second", mutex, result, cv));
 
     EXPECT_GT(gen2, gen1);
 
@@ -229,9 +228,8 @@ TEST(ClipboardCoordinator, SlowJobCancelledBeforeNewJobStarts) {
     [[maybe_unused]] auto gen_fast = coordinator.post(std::move(fast_req));
 
     // Wait for at least one result.
-    EXPECT_TRUE(wait_for([&] {
-        return completed_count.load(std::memory_order_acquire) >= 1;
-    }, std::chrono::seconds(10)));
+    EXPECT_TRUE(wait_for([&] { return completed_count.load(std::memory_order_acquire) >= 1; },
+                         std::chrono::seconds(10)));
 
     // The first job should have been cancelled (NativeFailed, not NativeCopied).
     // The second job may or may not have completed yet (it also uses the fake
@@ -270,8 +268,8 @@ TEST(ClipboardCoordinator, ShutdownDuringActiveCopyDoesNotHang) {
     // Shutdown should cancel the in-flight job and complete within ~1.1s.
     auto start = steady_clock::now();
     coordinator.shutdown();
-    auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
-        steady_clock::now() - start);
+    auto elapsed =
+        std::chrono::duration_cast<std::chrono::milliseconds>(steady_clock::now() - start);
 
     // Generous watchdog: 5s (the internal bound is ~1.1s).
     EXPECT_LT(elapsed.count(), 5000);

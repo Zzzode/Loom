@@ -22,13 +22,10 @@ namespace loom::ui::app_dialogs {
 void register_default_dialog_renderers(
     loom::ui::dialogs::system::DialogRendererRegistry& registry) {
     loom::ui::dialogs::default_renderers::register_default_renderers(registry);
-    loom::ui::dialogs::plugin_dialog_renderer::register_plugin_dialog_renderer(
-        registry);
+    loom::ui::dialogs::plugin_dialog_renderer::register_plugin_dialog_renderer(registry);
     // Doctor renderer — registered from the screens side (RFC 0002 F2 row 4).
-    loom::ui::screens::doctor_dialog_registration::register_doctor_renderer(
-        registry);
+    loom::ui::screens::doctor_dialog_registration::register_doctor_renderer(registry);
     // Statusline segment toggle — same screens-side registration pattern.
-    loom::ui::screens::statusline_dialog::register_statusline_dialog_renderer(
-        registry);
+    loom::ui::screens::statusline_dialog::register_statusline_dialog_renderer(registry);
 }
 }  // namespace loom::ui::app_dialogs

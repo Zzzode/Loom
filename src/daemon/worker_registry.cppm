@@ -11,10 +11,10 @@
 
 module;
 
+#include <cstddef>
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
-#include <cstddef>
 
 export module loom.daemon.worker_registry;
 
@@ -133,8 +133,7 @@ public:
     /// their current values.  The last_heartbeat_ms field is always advanced to "now"
     /// unless the caller explicitly passed an unhealthy health (which the registry
     /// preserves as-is for diagnostic purposes).
-    auto heartbeat(std::string_view id,
-                   std::optional<double> cpu = std::nullopt,
+    auto heartbeat(std::string_view id, std::optional<double> cpu = std::nullopt,
                    std::optional<uint64_t> mem = std::nullopt,
                    std::optional<int> cur_tasks = std::nullopt,
                    std::optional<WorkerHealth> health = std::nullopt)
@@ -161,9 +160,8 @@ public:
     auto expire_stale(std::chrono::duration<Rep, Period> ttl = kDefaultTTL) -> size_t {
         using namespace std::chrono;
         const auto ttl_ms = duration_cast<milliseconds>(ttl).count();
-        const auto now_ms = duration_cast<milliseconds>(
-                                system_clock::now().time_since_epoch())
-                                .count();
+        const auto now_ms =
+            duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count();
         const int64_t cutoff = now_ms - static_cast<int64_t>(ttl_ms);
         return expire_older_than(cutoff);
     }
@@ -185,6 +183,7 @@ public:
         /// Sum of current_tasks across non-expired workers.
         size_t capacity_used = 0;
     };
+
     auto stats() const -> Stats;
 
     // ─── JSON ser/de ───────────────────────────────────────────────────────────
@@ -212,16 +211,16 @@ struct WorkerRegistry::Impl {
     std::vector<std::string> insertion_order;
 };
 
-inline WorkerRegistry::WorkerRegistry() : impl_(std::make_unique<Impl>()) {}
+inline WorkerRegistry::WorkerRegistry()
+    : impl_(std::make_unique<Impl>()) {}
+
 inline WorkerRegistry::~WorkerRegistry() = default;
 
 namespace worker_detail {
 
 auto now_ms() -> int64_t {
     using namespace std::chrono;
-    return duration_cast<milliseconds>(
-               system_clock::now().time_since_epoch())
-        .count();
+    return duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count();
 }
 
 auto gen_id() -> std::string {
@@ -232,6 +231,7 @@ auto gen_id() -> std::string {
 }
 
 }  // namespace worker_detail
+
 using namespace worker_detail;
 
 // ─── Mutations ───────────────────────────────────────────────────────────────
@@ -270,10 +270,8 @@ inline auto WorkerRegistry::unregister_worker(std::string_view id) -> bool {
     return true;
 }
 
-inline auto WorkerRegistry::heartbeat(std::string_view id,
-                                      std::optional<double> cpu,
-                                      std::optional<uint64_t> mem,
-                                      std::optional<int> cur_tasks,
+inline auto WorkerRegistry::heartbeat(std::string_view id, std::optional<double> cpu,
+                                      std::optional<uint64_t> mem, std::optional<int> cur_tasks,
                                       std::optional<WorkerHealth> health)
     -> std::expected<void, std::string> {
     std::unique_lock lock{impl_->mu};
@@ -314,8 +312,7 @@ auto satisfies(const WorkerInfo& w, const WorkerQueryFilters& f, int64_t now_ms)
     if (f.kind.has_value() && w.kind != *f.kind) return false;
     if (!f.capability_required.empty()) {
         const auto& tag = f.capability_required;
-        if (std::find(w.capabilities.begin(), w.capabilities.end(), tag)
-            == w.capabilities.end()) {
+        if (std::find(w.capabilities.begin(), w.capabilities.end(), tag) == w.capabilities.end()) {
             return false;
         }
     }
@@ -335,6 +332,7 @@ double load_ratio(const WorkerInfo& w) noexcept {
 }
 
 }  // namespace worker_detail
+
 using namespace worker_detail;
 
 inline auto WorkerRegistry::find_matching(const WorkerQueryFilters& filters) const
@@ -366,18 +364,27 @@ inline auto WorkerRegistry::pick_best(const WorkerQueryFilters& filters) const
         }
         const double cur_ratio = load_ratio(w);
         const double best_ratio = load_ratio(*best);
-        if (cur_ratio < best_ratio) { best = &w; best_insertion = static_cast<int>(i); continue; }
+        if (cur_ratio < best_ratio) {
+            best = &w;
+            best_insertion = static_cast<int>(i);
+            continue;
+        }
         if (cur_ratio > best_ratio) continue;
         // Equal load ratio — prefer more free memory.
-        const uint64_t cur_free  = w.memory_limit_bytes > w.memory_used_bytes
-                                       ? w.memory_limit_bytes - w.memory_used_bytes
-                                       : 0;
+        const uint64_t cur_free = w.memory_limit_bytes > w.memory_used_bytes
+                                      ? w.memory_limit_bytes - w.memory_used_bytes
+                                      : 0;
         const uint64_t best_free = best->memory_limit_bytes > best->memory_used_bytes
                                        ? best->memory_limit_bytes - best->memory_used_bytes
                                        : 0;
-        if (cur_free > best_free) { best = &w; best_insertion = static_cast<int>(i); continue; }
+        if (cur_free > best_free) {
+            best = &w;
+            best_insertion = static_cast<int>(i);
+            continue;
+        }
         if (cur_free == best_free && static_cast<int>(i) < best_insertion) {
-            best = &w; best_insertion = static_cast<int>(i);
+            best = &w;
+            best_insertion = static_cast<int>(i);
         }
     }
     if (!best) return std::nullopt;
@@ -435,7 +442,7 @@ inline auto WorkerRegistry::stats() const -> Stats {
         const int64_t age = t - w.last_heartbeat_ms;
         if (age > ttl_ms) s.expired++;
         s.capacity_total += static_cast<size_t>(w.max_concurrent_tasks);
-        s.capacity_used  += static_cast<size_t>(std::max(0, w.current_tasks));
+        s.capacity_used += static_cast<size_t>(std::max(0, w.current_tasks));
     }
     return s;
 }
@@ -452,33 +459,44 @@ namespace worker_detail {
 
 auto kind_to_str(WorkerKind k) -> std::string_view {
     switch (k) {
-        case WorkerKind::InProcess:    return "in_process";
-        case WorkerKind::Subprocess:   return "subprocess";
-        case WorkerKind::RemoteGrpc:   return "remote_grpc";
-        case WorkerKind::RemoteBridge: return "remote_bridge";
+    case WorkerKind::InProcess:
+        return "in_process";
+    case WorkerKind::Subprocess:
+        return "subprocess";
+    case WorkerKind::RemoteGrpc:
+        return "remote_grpc";
+    case WorkerKind::RemoteBridge:
+        return "remote_bridge";
     }
     return "unknown";
 }
+
 auto kind_from_str(std::string_view s) -> std::optional<WorkerKind> {
-    if (s == "in_process")    return WorkerKind::InProcess;
-    if (s == "subprocess")   return WorkerKind::Subprocess;
-    if (s == "remote_grpc")  return WorkerKind::RemoteGrpc;
+    if (s == "in_process") return WorkerKind::InProcess;
+    if (s == "subprocess") return WorkerKind::Subprocess;
+    if (s == "remote_grpc") return WorkerKind::RemoteGrpc;
     if (s == "remote_bridge") return WorkerKind::RemoteBridge;
     return std::nullopt;
 }
+
 auto health_to_str(WorkerHealth h) -> std::string_view {
     switch (h) {
-        case WorkerHealth::Unknown:   return "unknown";
-        case WorkerHealth::Healthy:   return "healthy";
-        case WorkerHealth::Degraded:  return "degraded";
-        case WorkerHealth::Unhealthy: return "unhealthy";
+    case WorkerHealth::Unknown:
+        return "unknown";
+    case WorkerHealth::Healthy:
+        return "healthy";
+    case WorkerHealth::Degraded:
+        return "degraded";
+    case WorkerHealth::Unhealthy:
+        return "unhealthy";
     }
     return "unknown";
 }
+
 auto health_from_str(std::string_view s) -> std::optional<WorkerHealth> {
-    if (s == "unknown")   return WorkerHealth::Unknown;
-    if (s == "healthy")   return WorkerHealth::Healthy;
-    if (s == "degraded")  return WorkerHealth::Degraded;
+    if (s == "unknown") return WorkerHealth::Unknown;
+    if (s == "healthy") return WorkerHealth::Healthy;
+    if (s == "degraded") return WorkerHealth::Degraded;
     if (s == "unhealthy") return WorkerHealth::Unhealthy;
     return std::nullopt;
 }
@@ -491,7 +509,8 @@ auto worker_info_to_json(const WorkerInfo& w, loom::utils::json::JsonMutDoc& doc
     obj.add("hostname", doc.string(w.hostname));
     obj.add("port", doc.number(static_cast<int64_t>(w.port)));
     auto caps = doc.array();
-    for (const auto& c : w.capabilities) caps.append(doc.string(c));
+    for (const auto& c : w.capabilities)
+        caps.append(doc.string(c));
     obj.add("capabilities", caps);
     obj.add("max_concurrent_tasks", doc.number(static_cast<int64_t>(w.max_concurrent_tasks)));
     obj.add("current_tasks", doc.number(static_cast<int64_t>(w.current_tasks)));
@@ -507,7 +526,8 @@ auto worker_info_to_json(const WorkerInfo& w, loom::utils::json::JsonMutDoc& doc
     return obj;
 }
 
-} // namespace worker_detail
+}  // namespace worker_detail
+
 using namespace worker_detail;  // namespace
 
 inline auto WorkerRegistry::to_json(const std::vector<WorkerInfo>& workers) -> std::string {
@@ -535,19 +555,25 @@ inline auto WorkerRegistry::from_json(std::string_view raw)
     bool ok = true;
     std::string err;
     root.iter([&](JsonVal el) {
-        if (!ok || !el.is_obj()) { ok = false; err = "element not object"; return; }
+        if (!ok || !el.is_obj()) {
+            ok = false;
+            err = "element not object";
+            return;
+        }
         WorkerInfo w;
         w.id = std::string{el.get("id").as_str()};
         auto k = kind_from_str(el.get("kind").as_str());
-        if (!k) { ok = false; err = "bad kind"; return; }
+        if (!k) {
+            ok = false;
+            err = "bad kind";
+            return;
+        }
         w.kind = *k;
         w.hostname = std::string{el.get("hostname").as_str()};
         w.port = static_cast<int>(el.get("port").as_int());
         JsonVal caps = el.get("capabilities");
         if (caps.is_arr()) {
-            caps.iter([&](JsonVal v) {
-                w.capabilities.emplace_back(v.as_str());
-            });
+            caps.iter([&](JsonVal v) { w.capabilities.emplace_back(v.as_str()); });
         }
         w.max_concurrent_tasks = static_cast<int>(el.get("max_concurrent_tasks").as_int());
         w.current_tasks = static_cast<int>(el.get("current_tasks").as_int());
@@ -555,13 +581,17 @@ inline auto WorkerRegistry::from_json(std::string_view raw)
         w.last_heartbeat_ms = el.get("last_heartbeat_ms").as_int();
         w.started_at_ms = el.get("started_at_ms").as_int();
         w.cpu_usage_pct = el.get("cpu_usage_pct").as_double();
-        w.memory_used_bytes  = static_cast<uint64_t>(el.get("memory_used_bytes").as_int());
+        w.memory_used_bytes = static_cast<uint64_t>(el.get("memory_used_bytes").as_int());
         w.memory_limit_bytes = static_cast<uint64_t>(el.get("memory_limit_bytes").as_int());
         w.version = std::string{el.get("version").as_str()};
         w.cordoned = el.get("cordoned").as_bool();
         auto h = health_from_str(el.get("health").as_str());
         if (h) w.health = *h;
-        if (w.id.empty()) { ok = false; err = "empty id"; return; }
+        if (w.id.empty()) {
+            ok = false;
+            err = "empty id";
+            return;
+        }
         if (w.max_concurrent_tasks <= 0) w.max_concurrent_tasks = 1;
         out.push_back(std::move(w));
     });

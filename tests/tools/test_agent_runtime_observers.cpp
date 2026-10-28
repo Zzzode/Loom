@@ -2,6 +2,7 @@
 #pragma clang diagnostic ignored "-Wmissing-designated-field-initializers"
 
 #include <gtest/gtest.h>
+
 #include <cstdlib>
 
 import std;
@@ -13,23 +14,29 @@ namespace {
 namespace runtime = loom::tools::agent_runtime;
 
 struct ObserverSandbox {
-    std::filesystem::path path = std::filesystem::temp_directory_path() /
-        ("loom_agent_observers_" + std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
+    std::filesystem::path path =
+        std::filesystem::temp_directory_path() /
+        ("loom_agent_observers_" +
+         std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
     std::optional<std::string> previous;
     runtime::NativeAgentStore store;
+
     ObserverSandbox() {
         if (const auto* value = std::getenv("LOOM_AGENT_RUNTIME_DIR")) previous = value;
         std::filesystem::create_directories(path);
         ::setenv("LOOM_AGENT_RUNTIME_DIR", path.c_str(), 1);
     }
+
     ~ObserverSandbox() {
         store.wait_for_background_agents();
-        if (previous) ::setenv("LOOM_AGENT_RUNTIME_DIR", previous->c_str(), 1);
-        else ::unsetenv("LOOM_AGENT_RUNTIME_DIR");
+        if (previous)
+            ::setenv("LOOM_AGENT_RUNTIME_DIR", previous->c_str(), 1);
+        else
+            ::unsetenv("LOOM_AGENT_RUNTIME_DIR");
         std::filesystem::remove_all(path);
     }
 };
-} // namespace
+}  // namespace
 
 TEST(NativeAgentObservers, PublishesPersistedLifecycleAndProgressAfterUnlocking) {
     ObserverSandbox sandbox;
@@ -83,7 +90,8 @@ TEST(NativeAgentObservers, ObserverExceptionsCannotFailMutationsOrOtherObservers
     ObserverSandbox sandbox;
     auto& store = sandbox.store;
     int calls = 0;
-    const auto throwing = store.subscribe_changed([] { throw std::runtime_error("observer failure"); });
+    const auto throwing =
+        store.subscribe_changed([] { throw std::runtime_error("observer failure"); });
     const auto healthy = store.subscribe_changed([&] { ++calls; });
     EXPECT_NO_THROW(store.upsert(runtime::NativeAgentRecord{.agent_id = "exception"}));
     EXPECT_NO_THROW(store.mark_completed("exception", "stored result"));
@@ -109,10 +117,15 @@ TEST(NativeAgentObservers, UnsubscribeDoesNotWaitForAnAdmittedBlockedCallback) {
     auto mutation = std::async(std::launch::async, [&] {
         store.upsert(runtime::NativeAgentRecord{.agent_id = "blocked"});
     });
+
     struct ReleaseGuard {
         std::shared_ptr<std::promise<void>> promise;
-        ~ReleaseGuard() { if (promise) promise->set_value(); }
+
+        ~ReleaseGuard() {
+            if (promise) promise->set_value();
+        }
     } guard{release};
+
     ASSERT_EQ(entered_future.wait_for(std::chrono::seconds(3)), std::future_status::ready);
     auto unsubscribe = std::async(std::launch::async, [&] { store.unsubscribe_changed(token); });
     const auto status = unsubscribe.wait_for(std::chrono::seconds(3));
@@ -136,11 +149,11 @@ TEST(NativeAgentObservers, BackgroundWorkerTerminalMutationWakesAnIdleSubscriber
     const auto token = store.subscribe_changed([&] {
         const auto records = store.list();
         if (!records.empty() && records.front().status == runtime::NativeAgentStatus::Completed &&
-            !delivered.exchange(true)) completed.set_value();
+            !delivered.exchange(true))
+            completed.set_value();
     });
-    store.run_background_agent("background", [&] {
-        store.finish_agent("background", std::string("background result"));
-    });
+    store.run_background_agent(
+        "background", [&] { store.finish_agent("background", std::string("background result")); });
     EXPECT_EQ(completed_future.wait_for(std::chrono::seconds(3)), std::future_status::ready);
     store.wait_for_background_agents();
     store.unsubscribe_changed(token);
@@ -159,7 +172,9 @@ TEST(NativeAgentObservers, RejectedExecutionPublishesPersistedCancellationIntent
         ASSERT_EQ(records.size(), 1u);
         EXPECT_TRUE(records.front().cancel_requested);
     });
-    EXPECT_THROW(store.begin_execution(runtime::NativeAgentRecord{.agent_id = "rejected"}, owner.get_token()), std::runtime_error);
+    EXPECT_THROW(store.begin_execution(runtime::NativeAgentRecord{.agent_id = "rejected"},
+                                       owner.get_token()),
+                 std::runtime_error);
     EXPECT_EQ(calls, 1);
     store.unsubscribe_changed(token);
 }
@@ -169,7 +184,9 @@ TEST(NativeAgentObservers, PersistenceRefreshKeepsTheStoresOriginalCreationTime)
     auto& store = sandbox.store;
     const auto original = std::chrono::system_clock::time_point{std::chrono::seconds{123}};
     store.upsert(runtime::NativeAgentRecord{
-        .agent_id = "stable-order", .background = true, .created_at = original,
+        .agent_id = "stable-order",
+        .background = true,
+        .created_at = original,
         .parent_session_id = std::string("notification-session"),
     });
     EXPECT_EQ(store.list().front().created_at, original);
@@ -198,10 +215,15 @@ TEST(NativeAgentObservers, DestructionJoinsAnOwnedWorkerWithAnAdmittedUnsubscrib
     // Declare the future before the guard so failed assertions release the
     // callback before the future destructor waits for store destruction.
     std::future<void> destruction;
+
     struct CallbackReleaseGuard {
         std::shared_ptr<std::promise<void>> promise;
-        ~CallbackReleaseGuard() { if (promise) promise->set_value(); }
+
+        ~CallbackReleaseGuard() {
+            if (promise) promise->set_value();
+        }
     } guard{release};
+
     const auto token = raw_store->subscribe_changed([&] {
         const auto record = raw_store->get("owned-callback");
         if (!record || record->progress != 0.5 || admitted.exchange(true)) return;
@@ -226,10 +248,10 @@ TEST(NativeAgentObservers, DestructionJoinsAnOwnedWorkerWithAnAdmittedUnsubscrib
     start_worker.set_value();
     EXPECT_EQ(entered_future.wait_for(std::chrono::seconds(3)), std::future_status::ready);
     raw_store->unsubscribe_changed(token);
-    destruction = std::async(std::launch::async, [owned = std::move(store)]() mutable {
-        owned.reset();
-    });
-    ASSERT_EQ(destruction_observed_future.wait_for(std::chrono::seconds(6)), std::future_status::ready);
+    destruction =
+        std::async(std::launch::async, [owned = std::move(store)]() mutable { owned.reset(); });
+    ASSERT_EQ(destruction_observed_future.wait_for(std::chrono::seconds(6)),
+              std::future_status::ready);
     ASSERT_TRUE(destruction_observed_future.get());
     // No scheduling-time assumption: the destructor has entered, and its owned
     // worker cannot exit until this already-admitted callback is released.
@@ -244,7 +266,8 @@ TEST(NativeAgentObservers, DestructionJoinsAnOwnedWorkerWithAnAdmittedUnsubscrib
 TEST(NativeAgentAdmission, ReservationRejectsConcurrentResumeWithoutRecordMutation) {
     ObserverSandbox sandbox;
     auto& store = sandbox.store;
-    runtime::NativeAgentRecord record{.agent_id = "reserved", .status = runtime::NativeAgentStatus::Failed};
+    runtime::NativeAgentRecord record{.agent_id = "reserved",
+                                      .status = runtime::NativeAgentStatus::Failed};
     record.error = "retained error";
     record.transcript = {"retained transcript"};
     record.notification_delivered = true;
@@ -257,7 +280,8 @@ TEST(NativeAgentAdmission, ReservationRejectsConcurrentResumeWithoutRecordMutati
         const auto result = store.reserve_resume("reserved");
         if (result) ++accepted;
         ++attempted;
-        while (attempted.load() != 2) std::this_thread::yield();
+        while (attempted.load() != 2)
+            std::this_thread::yield();
         if (result) store.release_resume("reserved");
     };
     std::jthread first(reserve);
@@ -295,7 +319,8 @@ TEST(NativeAgentOwnership, HostStopRequiresActualSessionAndRegistryOwner) {
     auto& store = sandbox.store;
     std::stop_source owner;
     std::stop_source foreign;
-    runtime::NativeAgentRecord record{.agent_id = "owned", .status = runtime::NativeAgentStatus::Running};
+    runtime::NativeAgentRecord record{.agent_id = "owned",
+                                      .status = runtime::NativeAgentStatus::Running};
     record.parent_session_id = "session";
     store.upsert(record);
     EXPECT_FALSE(store.request_owned_cancel("owned", "session", owner.get_token()));
@@ -336,8 +361,9 @@ TEST(NativeAgentAdmission, MailboxDuringTerminalCleanupDoesNotResetResult) {
 TEST(NativeAgentAdmission, HostConstraintRechecksOwnerAndIdentityUnderReservationMutex) {
     ObserverSandbox sandbox;
     auto& store = sandbox.store;
-    runtime::NativeAgentRecord record{.agent_id = "host-target", .agent_type = "general-purpose",
-        .status = runtime::NativeAgentStatus::Failed};
+    runtime::NativeAgentRecord record{.agent_id = "host-target",
+                                      .agent_type = "general-purpose",
+                                      .status = runtime::NativeAgentStatus::Failed};
     record.parent_session_id = "owner";
     record.transcript = {"retained context"};
     store.upsert(record);
@@ -366,14 +392,16 @@ TEST(NativeAgentInput, StartupAndFinalizationHaveAtomicAdmissionBoundaries) {
     auto record = runtime::make_native_agent_record("interactive", "general-purpose");
     record.parent_session_id = "owner";
     store.begin_execution(record, owner.get_token());
-    EXPECT_FALSE(store.enqueue_owned_message("interactive", "owner", owner.get_token(), "too early"));
+    EXPECT_FALSE(
+        store.enqueue_owned_message("interactive", "owner", owner.get_token(), "too early"));
     store.mark_running("interactive");
     ASSERT_TRUE(store.open_input("interactive"));
     ASSERT_TRUE(store.enqueue_owned_message("interactive", "owner", owner.get_token(), "accepted"));
     EXPECT_FALSE(store.close_input_if_idle("interactive"));
     EXPECT_EQ(store.take_pending_messages("interactive"), (std::vector<std::string>{"accepted"}));
     EXPECT_TRUE(store.close_input_if_idle("interactive"));
-    EXPECT_FALSE(store.enqueue_owned_message("interactive", "owner", owner.get_token(), "too late"));
+    EXPECT_FALSE(
+        store.enqueue_owned_message("interactive", "owner", owner.get_token(), "too late"));
     EXPECT_TRUE(store.get("interactive")->pending_messages.empty());
     store.finish_agent("interactive", std::string("finished"));
     store.end_execution("interactive");
@@ -393,7 +421,8 @@ TEST(NativeAgentInput, SimultaneousSendAndEndTurnNeverLoseAnAcceptedMessage) {
     bool closed = false;
     std::jthread sender([&] {
         boundary.arrive_and_wait();
-        accepted = store.enqueue_owned_message("boundary", "owner", owner.get_token(), "late input").has_value();
+        accepted = store.enqueue_owned_message("boundary", "owner", owner.get_token(), "late input")
+                       .has_value();
     });
     boundary.arrive_and_wait();
     closed = store.close_input_if_idle("boundary");
@@ -415,8 +444,10 @@ TEST(NativeAgentInput, RegistrySessionAndCancellationScopeAreRecheckedBeforeEnqu
     store.begin_execution(record, owner.get_token());
     store.mark_running("target");
     ASSERT_TRUE(store.open_input("target"));
-    EXPECT_FALSE(store.enqueue_owned_message("target", "other-session", owner.get_token(), "foreign"));
-    EXPECT_FALSE(store.enqueue_owned_message("target", "owner", sibling.get_token(), "foreign registry"));
+    EXPECT_FALSE(
+        store.enqueue_owned_message("target", "other-session", owner.get_token(), "foreign"));
+    EXPECT_FALSE(
+        store.enqueue_owned_message("target", "owner", sibling.get_token(), "foreign registry"));
     ASSERT_TRUE(store.enqueue_owned_message("target", "owner", owner.get_token(), "kept"));
     ASSERT_TRUE(store.request_owned_cancel("target", "owner", owner.get_token()));
     EXPECT_FALSE(store.enqueue_owned_message("target", "owner", owner.get_token(), "cancelled"));
@@ -430,7 +461,8 @@ TEST(NativeAgentLiveText, BoundedUtf8TailIsTransientAndSurvivesDiskRefresh) {
     auto& store = sandbox.store;
     store.upsert(runtime::make_native_agent_record("live", "general-purpose"));
     std::string text;
-    for (int i = 0; i < 30000; ++i) text += "界";
+    for (int i = 0; i < 30000; ++i)
+        text += "界";
     store.append_live_text("live", text);
     const auto current = store.get("live")->live_text;
     EXPECT_LE(current.size(), 64u * 1024u);
@@ -443,7 +475,8 @@ TEST(NativeAgentLiveText, BoundedUtf8TailIsTransientAndSurvivesDiskRefresh) {
     EXPECT_TRUE(runtime::load_native_agent_record("live")->live_text.empty());
     (void)store.take_pending_task_events("owner");
     EXPECT_EQ(store.get("live")->live_text, current);
-    store.append_sidechain_message("live", "assistant", R"([{"type":"text","text":"committed"}])", "committed");
+    store.append_sidechain_message("live", "assistant", R"([{"type":"text","text":"committed"}])",
+                                   "committed");
     EXPECT_TRUE(store.get("live")->live_text.empty());
 }
 
@@ -475,41 +508,51 @@ struct TeamObserverSandbox {
     ObserverSandbox runtime;
     std::optional<std::string> previous;
     loom::tools::TeamStore store;
+
     TeamObserverSandbox() {
         if (const char* value = std::getenv("LOOM_TEAM_RUNTIME_DIR")) previous = value;
         ::setenv("LOOM_TEAM_RUNTIME_DIR", (runtime.path / "teams").c_str(), 1);
     }
+
     ~TeamObserverSandbox() {
-        if (previous) ::setenv("LOOM_TEAM_RUNTIME_DIR", previous->c_str(), 1);
-        else ::unsetenv("LOOM_TEAM_RUNTIME_DIR");
+        if (previous)
+            ::setenv("LOOM_TEAM_RUNTIME_DIR", previous->c_str(), 1);
+        else
+            ::unsetenv("LOOM_TEAM_RUNTIME_DIR");
     }
 };
-}
+}  // namespace
 
 TEST(TeamStoreConcurrency, PublicSnapshotsCannotMutateStoreAndRefreshExplicitly) {
     TeamObserverSandbox sandbox;
-    auto created = sandbox.store.create("snapshot", "snapshot", {loom::tools::TeamMember{.agent_id = "member"}});
+    auto created = sandbox.store.create("snapshot", "snapshot",
+                                        {loom::tools::TeamMember{.agent_id = "member"}});
     ASSERT_TRUE(created);
     created->members.front().status = loom::tools::MemberStatus::Error;
-    EXPECT_EQ(sandbox.store.get("snapshot")->members.front().status, loom::tools::MemberStatus::Idle);
-    ASSERT_TRUE(sandbox.store.update_member_status("snapshot", "member", loom::tools::MemberStatus::Working));
+    EXPECT_EQ(sandbox.store.get("snapshot")->members.front().status,
+              loom::tools::MemberStatus::Idle);
+    ASSERT_TRUE(sandbox.store.update_member_status("snapshot", "member",
+                                                   loom::tools::MemberStatus::Working));
     EXPECT_EQ(created->members.front().status, loom::tools::MemberStatus::Error);
     const auto refreshed = sandbox.store.get_by_id_or_name("snapshot");
     ASSERT_TRUE(refreshed);
     EXPECT_EQ(refreshed->members.front().status, loom::tools::MemberStatus::Working);
-    EXPECT_EQ(loom::tools::load_team_record("snapshot")->members.front().status, loom::tools::MemberStatus::Working);
+    EXPECT_EQ(loom::tools::load_team_record("snapshot")->members.front().status,
+              loom::tools::MemberStatus::Working);
 }
 
 TEST(TeamStoreConcurrency, SiblingStatusWritersAndSnapshotsPreserveBothPersistedResults) {
     TeamObserverSandbox sandbox;
     auto& store = sandbox.store;
-    ASSERT_TRUE(store.create("siblings", "siblings", {
-        loom::tools::TeamMember{.agent_id = "A"}, loom::tools::TeamMember{.agent_id = "B"}}));
+    ASSERT_TRUE(store.create(
+        "siblings", "siblings",
+        {loom::tools::TeamMember{.agent_id = "A"}, loom::tools::TeamMember{.agent_id = "B"}}));
     std::barrier start(4);
     const auto update = [&](const std::string& id) {
         start.arrive_and_wait();
         for (int i = 0; i < 24; ++i) {
-            EXPECT_TRUE(store.update_member_status("siblings", id, loom::tools::MemberStatus::Working));
+            EXPECT_TRUE(
+                store.update_member_status("siblings", id, loom::tools::MemberStatus::Working));
             EXPECT_TRUE(store.update_member_status("siblings", id, loom::tools::MemberStatus::Done,
                                                    id + "-" + std::to_string(i)));
         }
@@ -543,7 +586,8 @@ TEST(TeamStoreConcurrency, SiblingStatusWritersAndSnapshotsPreserveBothPersisted
 TEST(TeamStoreConcurrency, RemovedMembershipBetweenSnapshotAndWorkingCannotBeRecreated) {
     TeamObserverSandbox sandbox;
     auto& store = sandbox.store;
-    ASSERT_TRUE(store.create("removed", "removed", {loom::tools::TeamMember{.agent_id = "member"}}));
+    ASSERT_TRUE(
+        store.create("removed", "removed", {loom::tools::TeamMember{.agent_id = "member"}}));
     std::barrier boundary(2);
     std::expected<void, loom::tools::TeamError> admitted;
     std::jthread resume([&] {
@@ -551,7 +595,8 @@ TEST(TeamStoreConcurrency, RemovedMembershipBetweenSnapshotAndWorkingCannotBeRec
         EXPECT_TRUE(before && before->members.size() == 1u);
         boundary.arrive_and_wait();
         boundary.arrive_and_wait();
-        admitted = store.update_member_status("removed", "member", loom::tools::MemberStatus::Working);
+        admitted =
+            store.update_member_status("removed", "member", loom::tools::MemberStatus::Working);
     });
     boundary.arrive_and_wait();
     EXPECT_TRUE(store.remove("removed"));
@@ -566,7 +611,8 @@ TEST(TeamStoreConcurrency, RemovedMembershipBetweenSnapshotAndWorkingCannotBeRec
 TEST(TeamStoreConcurrency, ConcurrentAddRemoveLookupKeepsOwnedSnapshotsIndependent) {
     TeamObserverSandbox sandbox;
     auto& store = sandbox.store;
-    ASSERT_TRUE(store.create("changing", "changing", {loom::tools::TeamMember{.agent_id = "stable"}}));
+    ASSERT_TRUE(
+        store.create("changing", "changing", {loom::tools::TeamMember{.agent_id = "stable"}}));
     const auto retained = store.get("changing");
     std::barrier start(3);
     std::jthread writer([&] {
@@ -583,9 +629,11 @@ TEST(TeamStoreConcurrency, ConcurrentAddRemoveLookupKeepsOwnedSnapshotsIndepende
             const auto snapshot = store.get_by_id_or_name("changing");
             if (snapshot) {
                 EXPECT_LE(snapshot->members.size(), 1u);
-                if (!snapshot->members.empty()) EXPECT_TRUE(snapshot->members.front().agent_id == "stable" ||
-                                                           snapshot->members.front().agent_id == "new");
-            } else EXPECT_EQ(snapshot.error(), loom::tools::TeamError::TeamNotFound);
+                if (!snapshot->members.empty())
+                    EXPECT_TRUE(snapshot->members.front().agent_id == "stable" ||
+                                snapshot->members.front().agent_id == "new");
+            } else
+                EXPECT_EQ(snapshot.error(), loom::tools::TeamError::TeamNotFound);
         }
     });
     start.arrive_and_wait();
@@ -601,8 +649,13 @@ TEST(NativeAgentAdmission, RemovedTeamMemberBeforeHostAdmissionPropagatesWithout
     TeamObserverSandbox sandbox;
     auto& teams = loom::tools::global_team_store();
     teams.clear_for_testing();
-    struct ClearTeams { ~ClearTeams() { loom::tools::global_team_store().clear_for_testing(); } } clear_teams;
-    ASSERT_TRUE(teams.create("admission", "admission", {loom::tools::TeamMember{.agent_id = "member"}}));
+
+    struct ClearTeams {
+        ~ClearTeams() { loom::tools::global_team_store().clear_for_testing(); }
+    } clear_teams;
+
+    ASSERT_TRUE(
+        teams.create("admission", "admission", {loom::tools::TeamMember{.agent_id = "member"}}));
     auto& store = sandbox.runtime.store;
     auto record = runtime::make_native_agent_record("member", "general-purpose");
     record.parent_session_id = "owner";
@@ -611,9 +664,15 @@ TEST(NativeAgentAdmission, RemovedTeamMemberBeforeHostAdmissionPropagatesWithout
     record.status = runtime::NativeAgentStatus::Failed;
     record.transcript = {"retained context"};
     store.upsert(record);
-    const loom::core::HostAgentResumeConstraint target{
-        "member", "general-purpose", "owner", record.cwd, record.team_name,
-        record.name, record.teammate_backend, record.teammate_task_id, record.teammate_pane_id};
+    const loom::core::HostAgentResumeConstraint target{"member",
+                                                       "general-purpose",
+                                                       "owner",
+                                                       record.cwd,
+                                                       record.team_name,
+                                                       record.name,
+                                                       record.teammate_backend,
+                                                       record.teammate_task_id,
+                                                       record.teammate_pane_id};
     std::barrier boundary(2);
     std::expected<void, std::string> admitted;
     std::jthread caller([&] {

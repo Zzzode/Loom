@@ -84,21 +84,21 @@ inline bool is_env_truthy(const char* name) {
     const char* v = std::getenv(name);
     if (!v || !*v) return false;
     std::string_view s(v);
-    return s == "1" || s == "true" || s == "yes" || s == "on"
-        || s == "TRUE" || s == "YES" || s == "ON";
+    return s == "1" || s == "true" || s == "yes" || s == "on" || s == "TRUE" || s == "YES" ||
+           s == "ON";
 }
 
 /// Helper: check if an env var is explicitly defined and falsy (0, false, no, off).
 inline bool is_env_defined_falsy(const char* name) {
     const char* v = std::getenv(name);
     if (!v) return false;  // not defined at all
-    if (!*v) return true;   // empty string = falsy
+    if (!*v) return true;  // empty string = falsy
     std::string_view s(v);
-    return s == "0" || s == "false" || s == "no" || s == "off"
-        || s == "FALSE" || s == "NO" || s == "OFF";
+    return s == "0" || s == "false" || s == "no" || s == "off" || s == "FALSE" || s == "NO" ||
+           s == "OFF";
 }
 
-} // namespace detail
+}  // namespace detail
 
 /// Detects if running inside tmux -CC control mode (iTerm2 integration).
 /// Uses env-heuristic only (no subprocess probe): checks $TMUX is set AND
@@ -187,18 +187,14 @@ struct HorizontalScrollWindow {
  * @param selected_idx     Index of selected item (must stay visible)
  * @param first_item_has_separator Whether first item's width includes a leading separator
  */
-HorizontalScrollWindow calculate_horizontal_scroll_window(
-    const std::vector<int>& item_widths,
-    int available_width,
-    int arrow_width,
-    size_t selected_idx,
-    bool first_item_has_separator);
+HorizontalScrollWindow calculate_horizontal_scroll_window(const std::vector<int>& item_widths,
+                                                          int available_width, int arrow_width,
+                                                          size_t selected_idx,
+                                                          bool first_item_has_separator);
 
 /// Overload with first_item_has_separator defaulting to true
-HorizontalScrollWindow calculate_horizontal_scroll_window(
-    const std::vector<int>& item_widths,
-    int available_width,
-    int arrow_width,
-    size_t selected_idx);
+HorizontalScrollWindow calculate_horizontal_scroll_window(const std::vector<int>& item_widths,
+                                                          int available_width, int arrow_width,
+                                                          size_t selected_idx);
 
-} // namespace loom::utils
+}  // namespace loom::utils

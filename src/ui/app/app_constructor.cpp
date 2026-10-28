@@ -9,10 +9,10 @@
 // ASTReader::FindExternalVisibleDeclsByName during DefineUsedVTables.
 module;
 
+#include <ftxui/component/event.hpp>
+
 #include <cstdio>
 #include <cstdlib>
-
-#include <ftxui/component/event.hpp>
 
 module loom.ui.app.app;
 
@@ -55,13 +55,12 @@ void AppAdapter::set_tool_round_budget(std::optional<std::uint32_t> budget) {
 }
 
 // ── Constructor (moved out of app_autocomplete.cpp to reduce import closure) ──
-AppAdapter::AppAdapter(void* engine, void* lifecycle_hooks,
-                       void* cmd_registry,
+AppAdapter::AppAdapter(void* engine, void* lifecycle_hooks, void* cmd_registry,
                        std::optional<std::filesystem::path> sessions_dir,
                        std::function<void()> on_exit)
-    : impl_(nullptr),
-      on_exit_(std::move(on_exit)),
-      screen_state_(std::make_shared<repl::ReplScreenState>()) {
+    : impl_(nullptr)
+    , on_exit_(std::move(on_exit))
+    , screen_state_(std::make_shared<repl::ReplScreenState>()) {
     construct_impl(engine, lifecycle_hooks, cmd_registry, std::move(sessions_dir));
     if (on_exit_) {
         auto exit = std::move(on_exit_);
@@ -72,8 +71,7 @@ AppAdapter::AppAdapter(void* engine, void* lifecycle_hooks,
     }
     construct_settings();
     auto* engine_ = static_cast<loom::core::QueryEngine*>(engine);
-    auto* lifecycle_hooks_ =
-        static_cast<loom::hooks::LifecycleHookRegistry*>(lifecycle_hooks);
+    auto* lifecycle_hooks_ = static_cast<loom::hooks::LifecycleHookRegistry*>(lifecycle_hooks);
 
     // ── M7: Register default dialog renderers in the registry ────
     loom::ui::dialogs::default_renderers::register_default_renderers(
@@ -81,7 +79,8 @@ AppAdapter::AppAdapter(void* engine, void* lifecycle_hooks,
 
     // ── SL-11: deterministic next-action suggestion on QueryEnd ──
     if (lifecycle_hooks_) {
-        wire_prompt_suggestion_hook(lifecycle_hooks_, engine_,
+        wire_prompt_suggestion_hook(
+            lifecycle_hooks_, engine_,
             [this, dispatch = ui_dispatcher()](std::optional<std::string> suggestion) {
                 dispatch([this, suggestion = std::move(suggestion)]() mutable {
                     screen_state_->next_action_suggestion = std::move(suggestion);
@@ -162,9 +161,8 @@ AppAdapter::AppAdapter(void* engine, void* lifecycle_hooks,
     // Dynamic skill discovery.
     skills_changed_unsubscribe_ = loom::skills::SkillRegistry::instance().on_skills_changed(
         [this, dispatch = ui_dispatcher()]() {
-            dispatch([this] {
-                cached_skills_ = acsrc::collect_skill_suggestions(screen_state_->cwd);
-            });
+            dispatch(
+                [this] { cached_skills_ = acsrc::collect_skill_suggestions(screen_state_->cwd); });
         });
 
     // Re-project settings whenever they change on disk.
@@ -192,8 +190,7 @@ AppAdapter::AppAdapter(void* engine, void* lifecycle_hooks,
             // double-press and never leaves a stale footer from a previous
             // idle press.
             static_cast<loom::core::QueryEngine*>(engine_raw())->abort();
-            if (query_thread_.joinable())
-                query_thread_.request_stop();
+            if (query_thread_.joinable()) query_thread_.request_stop();
             screen_state_->task_view_store.spinner_tip = "Cancelling...";
             reset_exit_handler();
             screen_state_->exit_message_until.reset();
@@ -229,8 +226,7 @@ AppAdapter::AppAdapter(void* engine, void* lifecycle_hooks,
     // Esc double-press persists the original value before clearing. Same
     // persistence call as the submit path (app_handle_submit.cpp:110).
     cbs.on_save_to_history = [this](const std::string& text) {
-        acsrc::append_prompt_history(text, current_session_id_,
-                                     screen_state_->cwd);
+        acsrc::append_prompt_history(text, current_session_id_, screen_state_->cwd);
     };
     cbs.on_permission_response = [this](bool /*allowed*/, std::optional<bool> /*always*/) {
         // Legacy trust/sandbox panels have no native request token. Their
@@ -250,52 +246,45 @@ AppAdapter::AppAdapter(void* engine, void* lifecycle_hooks,
         }
         screen_state_->mode = repl::ReplMode::Normal;
     };
-    cbs.on_mode_change = [this](repl::ReplMode) {
-        this->TriggerStatuslineUpdate();
-    };
-    cbs.enqueue_slash_command = [this](const std::string& cmd) {
-        this->HandleCommand(cmd);
-    };
+    cbs.on_mode_change = [this](repl::ReplMode) { this->TriggerStatuslineUpdate(); };
+    cbs.enqueue_slash_command = [this](const std::string& cmd) { this->HandleCommand(cmd); };
     cbs.on_local_jsx_cancel = [this] {
-        const std::string command_name =
-            screen_state_->active_local_jsx_command_name;
-        this->DismissLocalJsxCommand(
-            command_name == "agents"
-                ? "Agents dialog dismissed"
-                : "Skills dialog dismissed");
+        const std::string command_name = screen_state_->active_local_jsx_command_name;
+        this->DismissLocalJsxCommand(command_name == "agents" ? "Agents dialog dismissed"
+                                                              : "Skills dialog dismissed");
     };
-    cbs.on_local_jsx_event = [this](const Event& ev) {
-        return this->HandleLocalJsxEvent(ev);
-    };
-    cbs.on_permission_cycle = [](loom::ui::prompt::footer::PermissionMode mode) {
-        (void)mode;
-    };
+    cbs.on_local_jsx_event = [this](const Event& ev) { return this->HandleLocalJsxEvent(ev); };
+    cbs.on_permission_cycle = [](loom::ui::prompt::footer::PermissionMode mode) { (void)mode; };
 
     // P2 gap api-error-retry: Retry button.
     cbs.on_retry = [this]() {
         if (query_running_.load()) return;
         const auto& messages = screen_state_->messages_store.messages;
-        if (messages.empty() || !messages.back().is_error ||
-            !messages.back().is_model_error || !messages.back().can_retry) return;
+        if (messages.empty() || !messages.back().is_error || !messages.back().is_model_error ||
+            !messages.back().can_retry)
+            return;
         const auto conversation =
             static_cast<loom::core::QueryEngine*>(engine_raw())->get_conversation();
         if (conversation.empty() ||
             (!std::holds_alternative<loom::core::UserMessage>(conversation.back()) &&
-             !std::holds_alternative<loom::core::ToolResultMessage>(conversation.back()))) return;
+             !std::holds_alternative<loom::core::ToolResultMessage>(conversation.back())))
+            return;
         this->HandleSubmit(last_submitted_text_, repl::InputMode::Normal, false, true);
     };
 
     cbs.on_continue = [this]() {
         if (query_running_.load() || !screen_state_->input_text.empty() ||
             screen_state_->mode != repl::ReplMode::Normal ||
-            !screen_state_->dialog_store.dialog_queue.empty()) return;
+            !screen_state_->dialog_store.dialog_queue.empty())
+            return;
         const auto& messages = screen_state_->messages_store.messages;
         if (messages.empty() || !messages.back().can_continue) return;
         const auto conversation =
             static_cast<loom::core::QueryEngine*>(engine_raw())->get_conversation();
         if (conversation.empty() ||
             (!std::holds_alternative<loom::core::UserMessage>(conversation.back()) &&
-             !std::holds_alternative<loom::core::ToolResultMessage>(conversation.back()))) return;
+             !std::holds_alternative<loom::core::ToolResultMessage>(conversation.back())))
+            return;
         this->HandleSubmit(last_submitted_text_, repl::InputMode::Normal, false, true);
     };
 
@@ -319,8 +308,7 @@ AppAdapter::AppAdapter(void* engine, void* lifecycle_hooks,
     // Dismiss error card: remove the last error entry from the message list.
     cbs.on_dismiss_error = [this]() {
         auto& messages = screen_state_->messages_store.messages;
-        if (!query_running_.load() && !messages.empty() &&
-            messages.back().is_model_error) {
+        if (!query_running_.load() && !messages.empty() && messages.back().is_model_error) {
             messages.pop_back();
         }
     };
@@ -352,8 +340,7 @@ AppAdapter::AppAdapter(void* engine, void* lifecycle_hooks,
 
                     cost_threshold_shown_ = true;
                     dtrig::PushCostThreshold(
-                        screen_state_->dialog_store.dialog_queue,
-                        data.session_cost,
+                        screen_state_->dialog_store.dialog_queue, data.session_cost,
                         std::optional<std::string>{screen_state_->chrome_store.model_display_name},
                         [this] {
                             screen_state_->dialog_store.PopBottom(
@@ -367,9 +354,9 @@ AppAdapter::AppAdapter(void* engine, void* lifecycle_hooks,
 
     // ── MCP elicitation responder (M7.5) ────────────────────────────
     loom::services::mcp::set_elicitation_responder(
-        [this, dispatch = ui_dispatcher(), permission = permission_](const loom::services::mcp::ElicitationRequest& req)
-            -> std::expected<std::map<std::string, std::string>, std::string>
-        {
+        [this, dispatch = ui_dispatcher(),
+         permission = permission_](const loom::services::mcp::ElicitationRequest& req)
+            -> std::expected<std::map<std::string, std::string>, std::string> {
             const auto token = permission->begin_elicitation_request();
             if (token == 0) {
                 return std::unexpected(std::string{"Application is shutting down"});
@@ -401,14 +388,14 @@ AppAdapter::AppAdapter(void* engine, void* lifecycle_hooks,
             if (approved) {
                 return std::map<std::string, std::string>{};
             }
-            return std::unexpected(std::string{"User declined elicitation request from "} + req.server_name);
+            return std::unexpected(std::string{"User declined elicitation request from "} +
+                                   req.server_name);
         });
 
     // ── IDE at_mentioned responder (AT-09) ───────────────────────────
     loom::services::mcp::set_at_mention_responder(
-        [this, dispatch = ui_dispatcher()](const loom::services::mcp::AtMentionNotification& n)
-            -> void
-        {
+        [this,
+         dispatch = ui_dispatcher()](const loom::services::mcp::AtMentionNotification& n) -> void {
             if (n.file_path.empty()) return;
             std::string token = "@" + n.file_path;
             if (n.line_start.has_value()) {
@@ -425,19 +412,16 @@ AppAdapter::AppAdapter(void* engine, void* lifecycle_hooks,
 
     // ── Ask-user tool → PromptDialog (M7.5) ────────────────────────
     loom::tools::set_global_ask_user_responder(
-        [this, dispatch = ui_dispatcher(), permission = permission_](std::string_view question,
-               std::optional<std::string> default_answer)
-            -> std::optional<std::string>
-        {
+        [this, dispatch = ui_dispatcher(), permission = permission_](
+            std::string_view question,
+            std::optional<std::string> default_answer) -> std::optional<std::string> {
             std::string dialog_id;
             {
                 permission->reset_ask_user_response();
 
                 dsys::PromptDialogPayload p;
                 p.id = "ask_user_" +
-                    std::to_string(std::chrono::steady_clock::now()
-                                       .time_since_epoch()
-                                       .count());
+                       std::to_string(std::chrono::steady_clock::now().time_since_epoch().count());
                 p.title = "Question";
                 p.prompt_text = std::string(question);
                 p.default_value = std::move(default_answer);
@@ -452,9 +436,7 @@ AppAdapter::AppAdapter(void* engine, void* lifecycle_hooks,
 
             auto result = permission->wait_ask_user_response();
 
-            dispatch([this, dialog_id] {
-                screen_state_->dialog_store.RemoveDialog(dialog_id);
-            });
+            dispatch([this, dialog_id] { screen_state_->dialog_store.RemoveDialog(dialog_id); });
 
             return result;
         });
@@ -465,13 +447,11 @@ AppAdapter::AppAdapter(void* engine, void* lifecycle_hooks,
     // The coordinator owns the jthread + debounce/memo state.  Callbacks
     // bridge back into AppAdapter for context-dependent operations.
     statusline_.Start(
-        /*execute_command=*/[this](std::string_view cmd, std::string json,
-                                   int timeout_ms, std::string& output) {
+        /*execute_command=*/
+        [this](std::string_view cmd, std::string json, int timeout_ms, std::string& output) {
             return ExecuteStatuslineCommand(cmd, std::move(json), timeout_ms, output);
         },
-        /*post_render=*/[dispatch = ui_dispatcher()] {
-            dispatch({});
-        },
+        /*post_render=*/[dispatch = ui_dispatcher()] { dispatch({}); },
         /*debounce_ms=*/300);
     TriggerStatuslineUpdate();
 
@@ -490,101 +470,99 @@ void AppAdapter::TriggerStatuslineUpdate() {
         statusline_update_pending_.store(true);
         return;
     }
-    statusline_.TriggerUpdate(command, command.empty() ? std::string{} : BuildStatuslineInputJson());
+    statusline_.TriggerUpdate(command,
+                              command.empty() ? std::string{} : BuildStatuslineInputJson());
 }
 
 // Build the StatusLineCommandInput payload from current engine state.
 // Kept out of the app.cppm BMI along with the statusline_runner/model/constants imports.
 [[nodiscard]] std::string AppAdapter::BuildStatuslineInputJson() {
-        namespace sl = loom::utils::statusline;
+    namespace sl = loom::utils::statusline;
 
-        sl::StatusLineCommandInput input;
+    sl::StatusLineCommandInput input;
 
-        // Model info
-        const auto& model = static_cast<loom::core::QueryEngine*>(engine_raw())->model_params().model;
-        input.model.id = model;
-        input.model.display_name = loom::utils::get_model_display_name(model);
+    // Model info
+    const auto& model = static_cast<loom::core::QueryEngine*>(engine_raw())->model_params().model;
+    input.model.id = model;
+    input.model.display_name = loom::utils::get_model_display_name(model);
 
-        // Workspace
-        const auto cwd = static_cast<loom::core::QueryEngine*>(engine_raw())->working_directory();
-        input.workspace.current_dir = cwd;
-        input.workspace.project_dir = cwd;
-        // added_dirs: not easily accessible at the app level; populated by
-        // tool permission context when additional directories are configured.
-        // Left empty (empty vector) to match the default-config semantics.
-        input.workspace.added_dirs = {};
+    // Workspace
+    const auto cwd = static_cast<loom::core::QueryEngine*>(engine_raw())->working_directory();
+    input.workspace.current_dir = cwd;
+    input.workspace.project_dir = cwd;
+    // added_dirs: not easily accessible at the app level; populated by
+    // tool permission context when additional directories are configured.
+    // Left empty (empty vector) to match the default-config semantics.
+    input.workspace.added_dirs = {};
 
-        // Output style from settings
-        input.output_style_name = output_style_setting();
+    // Output style from settings
+    input.output_style_name = output_style_setting();
 
-        // Cost / usage
-        const auto& usage = static_cast<loom::core::QueryEngine*>(engine_raw())->get_usage();
-        const auto& budget = static_cast<loom::core::QueryEngine*>(engine_raw())->budget_tracker();
-        input.cost.total_cost_usd = budget.current_spend_usd;
-        // Session duration: time since AppAdapter construction
-        auto session_dur = std::chrono::steady_clock::now() - session_start_time_;
-        input.cost.total_duration_ms =
-            std::chrono::duration_cast<std::chrono::milliseconds>(session_dur).count();
-        // total_api_duration_ms: not separately tracked at the app layer
-        // (would require summing individual API call durations).
-        input.cost.total_api_duration_ms = 0;
-        // total_lines_added / total_lines_removed: not tracked at this level
-        // (would need to aggregate from FileEditTool results).
-        input.cost.total_lines_added = 0;
-        input.cost.total_lines_removed = 0;
+    // Cost / usage
+    const auto& usage = static_cast<loom::core::QueryEngine*>(engine_raw())->get_usage();
+    const auto& budget = static_cast<loom::core::QueryEngine*>(engine_raw())->budget_tracker();
+    input.cost.total_cost_usd = budget.current_spend_usd;
+    // Session duration: time since AppAdapter construction
+    auto session_dur = std::chrono::steady_clock::now() - session_start_time_;
+    input.cost.total_duration_ms =
+        std::chrono::duration_cast<std::chrono::milliseconds>(session_dur).count();
+    // total_api_duration_ms: not separately tracked at the app layer
+    // (would require summing individual API call durations).
+    input.cost.total_api_duration_ms = 0;
+    // total_lines_added / total_lines_removed: not tracked at this level
+    // (would need to aggregate from FileEditTool results).
+    input.cost.total_lines_added = 0;
+    input.cost.total_lines_removed = 0;
 
-        // Context window
-        const auto context = static_cast<loom::core::QueryEngine*>(engine_raw())->context_usage();
-        input.context_window.total_input_tokens = usage.input_tokens;
-        input.context_window.total_output_tokens = usage.output_tokens;
-        input.context_window.context_window_size = context.window_tokens;
-        input.context_window.current_context_tokens = context.tokens;
-        input.context_window.current_context_is_estimated = true;
-        if (context.last_request_usage) {
-            const auto& current = *context.last_request_usage;
-            input.context_window.current_usage = sl::StatusLineCurrentUsageInfo{
-                .input_tokens = current.input_tokens,
-                .output_tokens = current.output_tokens,
-                .cache_creation_input_tokens = current.cache_creation_tokens,
-                .cache_read_input_tokens = current.cache_read_tokens,
-            };
-        }
-        if (context.window_tokens > 0) {
-            const double pct = 100.0 * static_cast<double>(context.tokens) / context.window_tokens;
-            input.context_window.used_percentage = pct;
-            input.context_window.remaining_percentage = std::max(0.0, 100.0 - pct);
-        }
+    // Context window
+    const auto context = static_cast<loom::core::QueryEngine*>(engine_raw())->context_usage();
+    input.context_window.total_input_tokens = usage.input_tokens;
+    input.context_window.total_output_tokens = usage.output_tokens;
+    input.context_window.context_window_size = context.window_tokens;
+    input.context_window.current_context_tokens = context.tokens;
+    input.context_window.current_context_is_estimated = true;
+    if (context.last_request_usage) {
+        const auto& current = *context.last_request_usage;
+        input.context_window.current_usage = sl::StatusLineCurrentUsageInfo{
+            .input_tokens = current.input_tokens,
+            .output_tokens = current.output_tokens,
+            .cache_creation_input_tokens = current.cache_creation_tokens,
+            .cache_read_input_tokens = current.cache_read_tokens,
+        };
+    }
+    if (context.window_tokens > 0) {
+        const double pct = 100.0 * static_cast<double>(context.tokens) / context.window_tokens;
+        input.context_window.used_percentage = pct;
+        input.context_window.remaining_percentage = std::max(0.0, 100.0 - pct);
+    }
 
-        // 200k threshold flag
-        input.exceeds_200k_tokens = context.tokens > 200'000;
+    // 200k threshold flag
+    input.exceeds_200k_tokens = context.tokens > 200'000;
 
-        // Session name: use session id as identifier (getCurrentSessionTitle
-        // derives from the first user message; session id is always available)
-        input.session_name = current_session_id_;
-        // session_id: used by user scripts for the #hashtag display
-        // (e.g. #a1b2c3). Same value as session_name.
-        input.session_id = current_session_id_;
+    // Session name: use session id as identifier (getCurrentSessionTitle
+    // derives from the first user message; session id is always available)
+    input.session_name = current_session_id_;
+    // session_id: used by user scripts for the #hashtag display
+    // (e.g. #a1b2c3). Same value as session_name.
+    input.session_id = current_session_id_;
 
-        // Vim mode (optional — only populated if vim enabled)
-        if (auto mode_str = vim_statusline_label()) {
-            input.vim = sl::StatusLineVimInfo{.mode = std::move(*mode_str)};
-        }
+    // Vim mode (optional — only populated if vim enabled)
+    if (auto mode_str = vim_statusline_label()) {
+        input.vim = sl::StatusLineVimInfo{.mode = std::move(*mode_str)};
+    }
 
-        // rate_limits, agent, remote, worktree: not available at the app level
-        // (would require additional service wiring). Left unpopulated (nullopt)
-        // which matches the semantics where undefined fields are omitted from JSON.
+    // rate_limits, agent, remote, worktree: not available at the app level
+    // (would require additional service wiring). Left unpopulated (nullopt)
+    // which matches the semantics where undefined fields are omitted from JSON.
 
     return sl::to_json(input);
 }
 
-bool AppAdapter::ExecuteStatuslineCommand(std::string_view command,
-                                       std::string json_input,
-                                       int timeout_ms,
-                                       std::string& output) {
+bool AppAdapter::ExecuteStatuslineCommand(std::string_view command, std::string json_input,
+                                          int timeout_ms, std::string& output) {
     namespace sl = loom::utils::statusline;
     if (command.empty()) return false;
-    auto result = sl::execute_statusline_command_json(
-        command, std::move(json_input), timeout_ms);
+    auto result = sl::execute_statusline_command_json(command, std::move(json_input), timeout_ms);
     if (!result.success) return false;
     output = std::move(result.output);
     return true;

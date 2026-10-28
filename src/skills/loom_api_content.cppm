@@ -32,13 +32,13 @@ struct ModelVar {
 };
 
 constexpr std::array<ModelVar, 7> SKILL_MODEL_VARS{{
-    {"OPUS_ID",         "opus-model-id"},
-    {"OPUS_NAME",       "Opus"},
-    {"SONNET_ID",       "sonnet-model-id"},
-    {"SONNET_NAME",     "Sonnet"},
-    {"HAIKU_ID",        "haiku-model-id"},
-    {"HAIKU_NAME",      "Haiku"},
-    {"PREV_SONNET_ID",  "previous-sonnet-model-id"},
+    {"OPUS_ID", "opus-model-id"},
+    {"OPUS_NAME", "Opus"},
+    {"SONNET_ID", "sonnet-model-id"},
+    {"SONNET_NAME", "Sonnet"},
+    {"HAIKU_ID", "haiku-model-id"},
+    {"HAIKU_NAME", "Haiku"},
+    {"PREV_SONNET_ID", "previous-sonnet-model-id"},
 }};
 
 /// Replace every `{{KEY}}` occurrence in `text` with the matching value from
@@ -65,8 +65,7 @@ constexpr std::array<ModelVar, 7> SKILL_MODEL_VARS{{
         if (!found) {
             out.append(m[0].first, m[0].second);
         }
-        last = static_cast<std::size_t>(m.position()) +
-               static_cast<std::size_t>(m.length());
+        last = static_cast<std::size_t>(m.position()) + static_cast<std::size_t>(m.length());
     }
     out.append(text, last, text.size() - last);
     return out;
@@ -95,45 +94,45 @@ constexpr std::array<ModelVar, 7> SKILL_MODEL_VARS{{
 // `LANGUAGE_INDICATORS`. Scans `cwd` for file / directory names that
 // strongly imply a primary project language.
 // ============================================================
-enum class DetectedLanguage {
-    Python,
-    TypeScript,
-    Java,
-    Go,
-    Ruby,
-    CSharp,
-    Php,
-    Curl,
-    Unknown
-};
+enum class DetectedLanguage { Python, TypeScript, Java, Go, Ruby, CSharp, Php, Curl, Unknown };
 
 struct LangIndicator {
     DetectedLanguage lang;
-    std::vector<std::string_view> markers; // filename or suffix (".xxx")
+    std::vector<std::string_view> markers;  // filename or suffix (".xxx")
 };
 
 const std::array<LangIndicator, 8> LANGUAGE_INDICATORS{{
-    {DetectedLanguage::Python,     {".py", "requirements.txt", "pyproject.toml", "setup.py", "Pipfile"}},
+    {DetectedLanguage::Python,
+     {".py", "requirements.txt", "pyproject.toml", "setup.py", "Pipfile"}},
     {DetectedLanguage::TypeScript, {".ts", ".tsx", "tsconfig.json", "package.json"}},
-    {DetectedLanguage::Java,       {".java", "pom.xml", "build.gradle"}},
-    {DetectedLanguage::Go,         {".go", "go.mod"}},
-    {DetectedLanguage::Ruby,       {".rb", "Gemfile"}},
-    {DetectedLanguage::CSharp,     {".cs", ".csproj"}},
-    {DetectedLanguage::Php,        {".php", "composer.json"}},
-    {DetectedLanguage::Curl,       {}},
+    {DetectedLanguage::Java, {".java", "pom.xml", "build.gradle"}},
+    {DetectedLanguage::Go, {".go", "go.mod"}},
+    {DetectedLanguage::Ruby, {".rb", "Gemfile"}},
+    {DetectedLanguage::CSharp, {".cs", ".csproj"}},
+    {DetectedLanguage::Php, {".php", "composer.json"}},
+    {DetectedLanguage::Curl, {}},
 }};
 
 [[nodiscard]] inline std::string_view to_string(DetectedLanguage l) {
     switch (l) {
-        case DetectedLanguage::Python:     return "python";
-        case DetectedLanguage::TypeScript: return "typescript";
-        case DetectedLanguage::Java:       return "java";
-        case DetectedLanguage::Go:         return "go";
-        case DetectedLanguage::Ruby:       return "ruby";
-        case DetectedLanguage::CSharp:     return "csharp";
-        case DetectedLanguage::Php:        return "php";
-        case DetectedLanguage::Curl:       return "curl";
-        case DetectedLanguage::Unknown:    return "unknown";
+    case DetectedLanguage::Python:
+        return "python";
+    case DetectedLanguage::TypeScript:
+        return "typescript";
+    case DetectedLanguage::Java:
+        return "java";
+    case DetectedLanguage::Go:
+        return "go";
+    case DetectedLanguage::Ruby:
+        return "ruby";
+    case DetectedLanguage::CSharp:
+        return "csharp";
+    case DetectedLanguage::Php:
+        return "php";
+    case DetectedLanguage::Curl:
+        return "curl";
+    case DetectedLanguage::Unknown:
+        return "unknown";
     }
     return "unknown";
 }
@@ -142,8 +141,7 @@ const std::array<LangIndicator, 8> LANGUAGE_INDICATORS{{
 /// matched language or Unknown. Mirrors `detectLanguage()` semantics:
 ///   * marker starting with "." -> suffix match on any entry
 ///   * otherwise               -> exact filename match
-[[nodiscard]] inline DetectedLanguage detect_language(
-    const std::filesystem::path& dir) noexcept {
+[[nodiscard]] inline DetectedLanguage detect_language(const std::filesystem::path& dir) noexcept {
     std::vector<std::filesystem::path> entries;
     std::error_code ec;
     for (const auto& e : std::filesystem::directory_iterator(dir, ec)) {
@@ -153,13 +151,13 @@ const std::array<LangIndicator, 8> LANGUAGE_INDICATORS{{
     for (const auto& [lang, markers] : LANGUAGE_INDICATORS) {
         if (markers.empty()) continue;
         for (const auto& marker : markers) {
-            const bool is_suffix =
-                !marker.empty() && marker.front() == '.';
+            const bool is_suffix = !marker.empty() && marker.front() == '.';
             const auto match = [&](const std::filesystem::path& f) {
                 if (is_suffix) {
                     auto ext = f.extension().string();
-                    std::ranges::transform(ext, ext.begin(),
-                        [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+                    std::ranges::transform(ext, ext.begin(), [](unsigned char c) {
+                        return static_cast<char>(std::tolower(c));
+                    });
                     return ext == marker;
                 }
                 return f.filename().string() == marker;
@@ -227,8 +225,8 @@ The relevant documentation for your detected language ("{lang}") is cross-refere
 | {{SONNET_NAME}}  | {{SONNET_ID}}          |
 | {{HAIKU_NAME}}   | {{HAIKU_ID}}           |
 )raw");
-    return substitute_model_vars(std::regex_replace(
-        std::string(tmpl), std::regex(R"(\{lang\})"), std::string(lang)));
+    return substitute_model_vars(
+        std::regex_replace(std::string(tmpl), std::regex(R"(\{lang\})"), std::string(lang)));
 }
 
 // ============================================================
@@ -325,9 +323,7 @@ directly or via the official SDKs.
 //   base prompt -> reading guide per language -> fallback language hint ->
 //   when-to-use-webfetch + pitfalls -> user request args.
 // ============================================================
-[[nodiscard]] inline std::string build_prompt(
-    DetectedLanguage lang,
-    std::string_view args) {
+[[nodiscard]] inline std::string build_prompt(DetectedLanguage lang, std::string_view args) {
 
     std::vector<std::string> parts;
     parts.push_back(base_prompt_section());
@@ -337,11 +333,10 @@ directly or via the official SDKs.
         parts.push_back(build_reading_guide(lang_label));
     } else {
         parts.push_back(build_reading_guide("unknown"));
-        parts.emplace_back(
-            "No project language was auto-detected from the working directory. "
-            "Ask the user which language / SDK they are targeting, then refer "
-            "to the matching docs in the Reading Guide above. Until they "
-            "reply, default to `curl` + `python` examples.");
+        parts.emplace_back("No project language was auto-detected from the working directory. "
+                           "Ask the user which language / SDK they are targeting, then refer "
+                           "to the matching docs in the Reading Guide above. Until they "
+                           "reply, default to `curl` + `python` examples.");
     }
 
     parts.push_back(when_to_use_web_fetch_section());
@@ -371,41 +366,41 @@ directly or via the official SDKs.
 [[nodiscard]] inline SkillDefinition make_loom_api_content_skill() {
     return SkillDefinition{
         .name = "loom-api-content",
-        .description =
-            "Build apps with the Loom API.\n"
-            "TRIGGER when: code imports `loom_agent_sdk`, or user asks about "
-            "Loom API, Messages endpoint, tool_use, prompt caching, streaming, "
-            "batches, or files-api.\n"
-            "DO NOT TRIGGER when: code imports `openai` / other AI SDK, "
-            "general programming, or ML/data-science tasks.",
-        .trigger_patterns = {
-            // Explicit skill invocation or product-name mentions
-            R"(/loom-api\b)",
-            R"(\bloom\s*api\b)",
-            R"(\bmessages\s*api\b)",
+        .description = "Build apps with the Loom API.\n"
+                       "TRIGGER when: code imports `loom_agent_sdk`, or user asks about "
+                       "Loom API, Messages endpoint, tool_use, prompt caching, streaming, "
+                       "batches, or files-api.\n"
+                       "DO NOT TRIGGER when: code imports `openai` / other AI SDK, "
+                       "general programming, or ML/data-science tasks.",
+        .trigger_patterns =
+            {
+                // Explicit skill invocation or product-name mentions
+                R"(/loom-api\b)",
+                R"(\bloom\s*api\b)",
+                R"(\bmessages\s*api\b)",
 
-            // API surface keywords
-            R"(\bmessages\s+endpoint\b)",
-            R"(v1/messages\b)",
-            R"(\btool_use\b)",
-            R"(\btool_result\b)",
-            R"(prompt\s+cach(?:ing|e))",
-            R"(cache_control\b)",
-            R"(stream(?:ing)?\s*(?:tokens|response|sse))",
-            R"(\bmessage\s+batch(?:es)?\b)",
-            R"(\bfiles\s+api\b)",
-            R"(\bloom\s*agent\s*sdk\b)",
-            R"(\bagent\s+sdk\b.*(?:python|typescript|ts))",
-        },
+                // API surface keywords
+                R"(\bmessages\s+endpoint\b)",
+                R"(v1/messages\b)",
+                R"(\btool_use\b)",
+                R"(\btool_result\b)",
+                R"(prompt\s+cach(?:ing|e))",
+                R"(cache_control\b)",
+                R"(stream(?:ing)?\s*(?:tokens|response|sse))",
+                R"(\bmessage\s+batch(?:es)?\b)",
+                R"(\bfiles\s+api\b)",
+                R"(\bloom\s*agent\s*sdk\b)",
+                R"(\bagent\s+sdk\b.*(?:python|typescript|ts))",
+            },
         .content =
             // Default content (no args, cwd unknown). build_prompt() is
-            // exposed separately so callers that *do* know the language or
-            // user args can assemble a tailored prompt at runtime.
-            build_prompt(DetectedLanguage::Unknown, ""),
+        // exposed separately so callers that *do* know the language or
+        // user args can assemble a tailored prompt at runtime.
+        build_prompt(DetectedLanguage::Unknown, ""),
         .is_builtin = true,
         .author = std::nullopt,
         .version = "1.0.0",
     };
 }
 
-} // namespace loom::skills::loom_api_content
+}  // namespace loom::skills::loom_api_content

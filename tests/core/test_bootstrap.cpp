@@ -2,10 +2,10 @@
 /// @brief Tests for P1-05 (history / task_types / teammate_view_helpers)
 ///        and P1-06 (bootstrap/interactive_helpers).
 
+#include <gtest/gtest.h>
+
 #include <cstdlib>
 #include <cstring>
-
-#include <gtest/gtest.h>
 
 import std;
 import loom.bootstrap.interactive;
@@ -20,16 +20,16 @@ import loom.session.history;
 using namespace std::literals;
 
 namespace bi = loom::bootstrap::interactive;
-namespace h  = loom::history;
-namespace t  = loom::tasks;
+namespace h = loom::history;
+namespace t = loom::tasks;
 namespace tv = loom::state::teammate_view;
 
 static std::filesystem::path make_tmp_path(std::string_view suffix) {
     auto base = std::filesystem::temp_directory_path();
     auto stamp = std::chrono::steady_clock::now().time_since_epoch().count();
     static std::atomic<long> counter{0};
-    auto name = "loom-test-" + std::to_string(stamp) + "-" +
-                std::to_string(counter.fetch_add(1)) + std::string(suffix);
+    auto name = "loom-test-" + std::to_string(stamp) + "-" + std::to_string(counter.fetch_add(1)) +
+                std::string(suffix);
     return base / name;
 }
 
@@ -106,7 +106,8 @@ TEST(Interactive, PasteDetectJson) {
     ctx.paste_min_chars = 500;
     std::string body;
     std::string snippet = R"({"a":[1,2,3]})";
-    while (body.size() < 600) body += snippet;
+    while (body.size() < 600)
+        body += snippet;
     auto cmd = bi::parse_interactive_input(body, ctx);
     ASSERT_TRUE(cmd);
     EXPECT_EQ(cmd->kind, bi::CommandKind::Paste);
@@ -118,7 +119,8 @@ TEST(Interactive, PasteDetectCode) {
     ctx.paste_min_chars = 500;
     std::string body;
     std::string snippet = "int main() { return 0; }\nfunction foo() { void bar(); }\n";
-    while (body.size() < 650) body += snippet;
+    while (body.size() < 650)
+        body += snippet;
     auto cmd = bi::parse_interactive_input(body, ctx);
     ASSERT_TRUE(cmd);
     EXPECT_EQ(cmd->kind, bi::CommandKind::Paste);
@@ -372,9 +374,14 @@ TEST(TaskTypes, Serde) {
 
 TEST(TaskTypes, DescendantDetection) {
     std::unordered_map<std::string, t::Task> idx;
-    t::Task a; a.id = "a";
-    t::Task b; b.id = "b"; b.parent_id = "a";
-    t::Task c; c.id = "c"; c.parent_id = "b";
+    t::Task a;
+    a.id = "a";
+    t::Task b;
+    b.id = "b";
+    b.parent_id = "a";
+    t::Task c;
+    c.id = "c";
+    c.parent_id = "b";
     idx.emplace("a", a);
     idx.emplace("b", b);
     idx.emplace("c", c);
@@ -388,13 +395,12 @@ TEST(TaskTypes, DescendantDetection) {
 
 TEST(TaskTypes, IdGeneration) {
     std::set<std::string> ids;
-    auto is_hex = [](char c) {
-        return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f');
-    };
+    auto is_hex = [](char c) { return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f'); };
     for (int i = 0; i < 100; ++i) {
         auto id = t::generate_task_id();
         ASSERT_EQ(id.size(), 24u);
-        for (char c : id) EXPECT_TRUE(is_hex(c)) << "bad hex char: " << c;
+        for (char c : id)
+            EXPECT_TRUE(is_hex(c)) << "bad hex char: " << c;
         EXPECT_TRUE(ids.insert(id).second) << "duplicate id: " << id;
     }
 }
@@ -404,8 +410,7 @@ TEST(TaskTypes, IdGeneration) {
 // ============================================================================
 
 static tv::TeammateStateView make_tv(std::string id, std::string name,
-                                     tv::TeammateStateView::OnlineState s,
-                                     int active = 0,
+                                     tv::TeammateStateView::OnlineState s, int active = 0,
                                      int64_t hb = 0) {
     tv::TeammateStateView m;
     m.agent_id = std::move(id);
@@ -459,7 +464,7 @@ TEST(TeammateView, HideOffline) {
     ASSERT_EQ(res.size(), 2u);
     std::set<std::string> got{res[0].agent_id, res[1].agent_id};
     EXPECT_TRUE(got.contains("a"));
-    EXPECT_TRUE(got.contains("c")); // crashed is still visible
+    EXPECT_TRUE(got.contains("c"));  // crashed is still visible
 }
 
 TEST(TeammateView, PinToggle) {
@@ -493,7 +498,7 @@ namespace {
 
 loom::core::TaskEvent sample_task_event() {
     return {"agent-1", "session-1", loom::core::TaskEventKind::TeamAgent,
-        loom::core::TaskEventStatus::Completed, "Review 中文 & <result>"};
+            loom::core::TaskEventStatus::Completed, "Review 中文 & <result>"};
 }
 
 std::string origin_json(const loom::core::UserMessageOrigin& origin) {
@@ -504,14 +509,14 @@ std::string origin_json(const loom::core::UserMessageOrigin& origin) {
     return doc.to_string();
 }
 
-} // namespace
+}  // namespace
 
 TEST(MessageOrigin, LocalCodecRoundTripsEveryOriginAndTerminalStatus) {
     using namespace loom::core;
     std::vector<UserMessageOrigin> origins{HumanInput{}, LegacyHistory{}};
     for (auto kind : {TaskEventKind::Subagent, TaskEventKind::TeamAgent}) {
-        for (auto status : {TaskEventStatus::Completed, TaskEventStatus::Failed,
-                            TaskEventStatus::Stopped}) {
+        for (auto status :
+             {TaskEventStatus::Completed, TaskEventStatus::Failed, TaskEventStatus::Stopped}) {
             auto event = sample_task_event();
             event.kind = kind;
             event.status = status;
@@ -529,15 +534,15 @@ TEST(MessageOrigin, LocalCodecRoundTripsEveryOriginAndTerminalStatus) {
 
 TEST(MessageOrigin, LocalCodecFailsClosedForMalformedOrUnknownMetadata) {
     using namespace loom::core;
-    for (const auto input : {
-        R"({"origin":null})", R"({"origin":1})", R"({"origin":"future"})",
-        R"({"task_event":{}})", R"({"origin":"task_event"})",
-        R"({"origin":"task_event","task_event":null})",
-        R"({"origin":"legacy_history","task_event":{}})",
-        R"({"origin":"human","task_event":{}})"}) {
+    for (const auto input :
+         {R"({"origin":null})", R"({"origin":1})", R"({"origin":"future"})", R"({"task_event":{}})",
+          R"({"origin":"task_event"})", R"({"origin":"task_event","task_event":null})",
+          R"({"origin":"legacy_history","task_event":{}})",
+          R"({"origin":"human","task_event":{}})"}) {
         auto parsed = loom::utils::json::parse(input);
         ASSERT_TRUE(parsed.has_value());
-        EXPECT_TRUE(std::holds_alternative<HumanInput>(read_user_message_origin(parsed->root()))) << input;
+        EXPECT_TRUE(std::holds_alternative<HumanInput>(read_user_message_origin(parsed->root())))
+            << input;
     }
     const auto valid = origin_json(sample_task_event());
     const std::vector<std::pair<std::string, std::string>> changes{
@@ -551,7 +556,8 @@ TEST(MessageOrigin, LocalCodecFailsClosedForMalformedOrUnknownMetadata) {
         {R"("task_id":"agent-1")", R"("task_id":"bad\u0000id")"},
         {R"("parent_session_id":"session-1")", R"("parent_session_id":false)"},
         {R"("display_name":"Review 中文 & <result>")", R"("display_name":null)"},
-        {R"("display_name":"Review 中文 & <result>")", R"("display_name":")" + std::string(4097, 'x') + '"'},
+        {R"("display_name":"Review 中文 & <result>")",
+         R"("display_name":")" + std::string(4097, 'x') + '"'},
     };
     for (const auto& [before, after] : changes) {
         auto input = valid;
@@ -560,7 +566,8 @@ TEST(MessageOrigin, LocalCodecFailsClosedForMalformedOrUnknownMetadata) {
         input.replace(position, before.size(), after);
         auto parsed = loom::utils::json::parse(input);
         ASSERT_TRUE(parsed.has_value()) << input;
-        EXPECT_TRUE(std::holds_alternative<HumanInput>(read_user_message_origin(parsed->root()))) << input;
+        EXPECT_TRUE(std::holds_alternative<HumanInput>(read_user_message_origin(parsed->root())))
+            << input;
     }
     auto old = loom::utils::json::parse(R"({"content":"old XML"})");
     ASSERT_TRUE(old.has_value());
@@ -575,16 +582,23 @@ TEST(MessageOrigin, LocalCodecFailsClosedForMalformedOrUnknownMetadata) {
 TEST(MessageOrigin, ValidatorEnforcesUtf8ByteBoundsAndIdentityControls) {
     using namespace loom::core;
     auto event = sample_task_event();
-    const std::vector<std::string> malformed{
-        std::string("\x80", 1), std::string("\xc0\xaf", 2),
-        std::string("\xe0\x80\xaf", 3), std::string("\xed\xa0\x80", 3),
-        std::string("\xf0\x80\x80\xaf", 4), std::string("\xf4\x90\x80\x80", 4),
-        std::string("\xf5\x80\x80\x80", 4), std::string("\xe2\x82", 2),
-        std::string("\xe2\x41\xac", 3), std::string{}, std::string(4097, 'x')};
+    const std::vector<std::string> malformed{std::string("\x80", 1),
+                                             std::string("\xc0\xaf", 2),
+                                             std::string("\xe0\x80\xaf", 3),
+                                             std::string("\xed\xa0\x80", 3),
+                                             std::string("\xf0\x80\x80\xaf", 4),
+                                             std::string("\xf4\x90\x80\x80", 4),
+                                             std::string("\xf5\x80\x80\x80", 4),
+                                             std::string("\xe2\x82", 2),
+                                             std::string("\xe2\x41\xac", 3),
+                                             std::string{},
+                                             std::string(4097, 'x')};
     for (const auto& text : malformed) {
         for (int field = 0; field < 3; ++field) {
             event = sample_task_event();
-            (field == 0 ? event.task_id : field == 1 ? event.parent_session_id : event.display_name) = text;
+            (field == 0   ? event.task_id
+             : field == 1 ? event.parent_session_id
+                          : event.display_name) = text;
             EXPECT_FALSE(is_valid_task_event(event));
             auto parsed = loom::utils::json::parse(origin_json(event));
             ASSERT_TRUE(parsed.has_value());
@@ -620,7 +634,8 @@ TEST(MessageOrigin, ConversationStorePreservesAllOriginsAndXmlContent) {
     using namespace loom::core;
     const auto path = make_tmp_path("-origins.json");
     const std::string body = "<task_notification>raw &amp; /private/output</task_notification>";
-    const std::vector<UserMessageOrigin> origins{HumanInput{}, LegacyHistory{}, sample_task_event()};
+    const std::vector<UserMessageOrigin> origins{HumanInput{}, LegacyHistory{},
+                                                 sample_task_event()};
     {
         ConversationStore store(path.string());
         auto* conversation = store.create_conversation();
@@ -652,7 +667,8 @@ TEST(MessageOrigin, ConversationStoreResavesMissingMetadataAsLegacySentinel) {
     const auto path = make_tmp_path("-legacy-origin.json");
     {
         std::ofstream output(path);
-        output << R"({"version":1,"active_conversation_id":"old","conversations":[{"id":"old","messages":[{"role":"user","id":"old-xml","timestamp_ms":0,"content":[{"type":"text","text":"<task_notification>old XML</task_notification>"}]},{"role":"user","origin":null,"content":[{"type":"text","text":"<task_notification>invalid metadata</task_notification>"}]}]}]})";
+        output
+            << R"({"version":1,"active_conversation_id":"old","conversations":[{"id":"old","messages":[{"role":"user","id":"old-xml","timestamp_ms":0,"content":[{"type":"text","text":"<task_notification>old XML</task_notification>"}]},{"role":"user","origin":null,"content":[{"type":"text","text":"<task_notification>invalid metadata</task_notification>"}]}]}]})";
     }
     ConversationStore store(path.string());
     ASSERT_TRUE(store.load_all().has_value());

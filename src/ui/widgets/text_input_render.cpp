@@ -11,9 +11,9 @@
 // (the textual FTXUI includes keep the reduced-BMI writer happy).
 module;
 
-#include <ftxui/dom/elements.hpp>
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
+#include <ftxui/dom/elements.hpp>
 #include <ftxui/screen/string.hpp>  // for string_width
 
 module loom.ui.widgets.text_input;
@@ -32,17 +32,28 @@ namespace ui::components {
 Color suggest_util::category_color(SuggestionCategory cat) {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
     switch (cat) {
-        case SuggestionCategory::Command:      return pal.info;
-        case SuggestionCategory::File:         return pal.text;
-        case SuggestionCategory::Directory:    return pal.text;
-        case SuggestionCategory::History:      return pal.muted;
-        case SuggestionCategory::Agent:        return pal.primary;
-        case SuggestionCategory::MCPResource:  return pal.info;
-        case SuggestionCategory::Shell:        return pal.bash_border;
-        case SuggestionCategory::SlackChannel: return pal.info;
-        case SuggestionCategory::CustomTitle:  return pal.info;
-        case SuggestionCategory::None:         return pal.text;
-        default:                               return pal.text;
+    case SuggestionCategory::Command:
+        return pal.info;
+    case SuggestionCategory::File:
+        return pal.text;
+    case SuggestionCategory::Directory:
+        return pal.text;
+    case SuggestionCategory::History:
+        return pal.muted;
+    case SuggestionCategory::Agent:
+        return pal.primary;
+    case SuggestionCategory::MCPResource:
+        return pal.info;
+    case SuggestionCategory::Shell:
+        return pal.bash_border;
+    case SuggestionCategory::SlackChannel:
+        return pal.info;
+    case SuggestionCategory::CustomTitle:
+        return pal.info;
+    case SuggestionCategory::None:
+        return pal.text;
+    default:
+        return pal.text;
     }
 }
 
@@ -116,13 +127,15 @@ Element TextInputImpl::RenderPastePreviewOverlay() const {
 }
 
 /// Render just the input/caret/multiline/selection area (no dropdown).
-Element TextInputImpl::RenderInputAreaPub() { return RenderInputArea(); }
+Element TextInputImpl::RenderInputAreaPub() {
+    return RenderInputArea();
+}
 
 /// Render a suggestions dropdown from an externally-supplied list.
 /// `selected` is clamped to [0, suggestions.size()-1]; -1 disables.
 /// Used by repl_screen to surface autocomplete_suggestions inline.
 Element TextInputImpl::RenderSuggestionsFromListPub(const std::vector<Suggestion>& sugs,
-                                                     int selected) {
+                                                    int selected) {
     // Temporarily install the supplied list + selection and reuse the
     // private dropdown renderer.  We do not mutate suggestions_ long
     // term because this is a pure render primitive called per-frame.
@@ -131,12 +144,11 @@ Element TextInputImpl::RenderSuggestionsFromListPub(const std::vector<Suggestion
     const auto old_sugs = suggestions_;
     suggestions_ = sugs;
     showing_suggestions_ = !sugs.empty();
-    selected_suggestion_ = sugs.empty() ? 0
-        : ((selected < 0) ? 0
-           : std::min(selected, static_cast<int>(sugs.size()) - 1));
-    Element out = (showing_suggestions_ && !suggestions_.empty())
-        ? RenderSuggestionsDropdown()
-        : ftxui::text("");
+    selected_suggestion_ =
+        sugs.empty() ? 0
+                     : ((selected < 0) ? 0 : std::min(selected, static_cast<int>(sugs.size()) - 1));
+    Element out = (showing_suggestions_ && !suggestions_.empty()) ? RenderSuggestionsDropdown()
+                                                                  : ftxui::text("");
     // Restore prior state so this call is side-effect-free for callers
     // that also use the interactive path.
     suggestions_ = old_sugs;
@@ -152,6 +164,7 @@ struct InputRow {
     int line;
     bool continuation;
 };
+
 struct InputLayout {
     std::vector<InputRow> rows;
     int prefix_width;
@@ -175,26 +188,32 @@ int next_display_glyph(const std::string& value, int pos, bool masked) {
     }
     return end;
 }
+
 int display_width(const std::string& value, int begin, int end, bool masked) {
     if (!masked) return string_width(value.substr(begin, end - begin));
     int width = 0;
-    while (begin < end) { begin = detail::glyph_forward(value, begin); ++width; }
+    while (begin < end) {
+        begin = detail::glyph_forward(value, begin);
+        ++width;
+    }
     return width;
 }
-InputLayout input_layout(const std::string& value, int cursor,
-                         const TextInputOptions& options) {
+
+InputLayout input_layout(const std::string& value, int cursor, const TextInputOptions& options) {
     InputLayout out;
     out.prefix_width = string_width(options.prefix);
     const int line_count = 1 + static_cast<int>(std::count(value.begin(), value.end(), '\n'));
     out.number_width = options.show_line_numbers && line_count > 1
-        ? std::max(2, static_cast<int>(std::to_string(line_count).size())) + 1 : 0;
+                           ? std::max(2, static_cast<int>(std::to_string(line_count).size())) + 1
+                           : 0;
     out.text_width = options.columns > 0
-        ? std::max(1, options.columns - out.prefix_width - out.number_width)
-        : std::numeric_limits<int>::max();
+                         ? std::max(1, options.columns - out.prefix_width - out.number_width)
+                         : std::numeric_limits<int>::max();
     int begin = 0;
     for (int line = 0; line < line_count; ++line) {
         int end = begin;
-        while (end < static_cast<int>(value.size()) && value[end] != '\n') ++end;
+        while (end < static_cast<int>(value.size()) && value[end] != '\n')
+            ++end;
         int row_begin = begin, pos = begin, cells = 0;
         bool continuation = false;
         while (pos < end) {
@@ -228,6 +247,7 @@ InputLayout input_layout(const std::string& value, int cursor,
     }
     return out;
 }
+
 std::string fit_display_text(const std::string& value, int columns) {
     int pos = 0, cells = 0;
     while (pos < static_cast<int>(value.size())) {
@@ -239,7 +259,7 @@ std::string fit_display_text(const std::string& value, int columns) {
     }
     return value.substr(0, pos);
 }
-} // namespace
+}  // namespace
 
 std::pair<int, int> TextInputImpl::visual_cursor_position() const {
     const auto layout = input_layout(text_, cursor_, options_);
@@ -279,12 +299,12 @@ Element TextInputImpl::RenderInputArea() {
         namespace ph = loom::ui::placeholder;
         const auto placeholder = fit_display_text(options_.placeholder, layout.text_width);
         auto rendered = ph::RenderPlaceholder(
-            placeholder.empty() ? std::nullopt : std::optional<std::string_view>(placeholder),
-            "", cursor_visible, cursor_visible, options_.terminal_focus,
-            options_.prefix, options_.prefix_color.value_or(pal.prompt_border));
+            placeholder.empty() ? std::nullopt : std::optional<std::string_view>(placeholder), "",
+            cursor_visible, cursor_visible, options_.terminal_focus, options_.prefix,
+            options_.prefix_color.value_or(pal.prompt_border));
         if (rendered.element) return *std::move(rendered.element);
         return hbox({ftxui::text(options_.prefix) |
-                     color(options_.prefix_color.value_or(pal.prompt_border)),
+                         color(options_.prefix_color.value_or(pal.prompt_border)),
                      ftxui::text(" ") | inverted | color(pal.text)});
     }
     const int sel_begin = has_selection() ? std::min(sel_start_, sel_end_) : -1;
@@ -298,24 +318,25 @@ Element TextInputImpl::RenderInputArea() {
     }
     Elements rows;
     const int last = options_.max_visible_rows > 0
-        ? std::min(static_cast<int>(layout.rows.size()), layout.first_row + options_.max_visible_rows)
-        : static_cast<int>(layout.rows.size());
+                         ? std::min(static_cast<int>(layout.rows.size()),
+                                    layout.first_row + options_.max_visible_rows)
+                         : static_cast<int>(layout.rows.size());
     for (int index = layout.first_row; index < last; ++index) {
         const auto& row = layout.rows[index];
         Elements parts;
         if (index == 0) {
             auto prefix = ftxui::text(options_.prefix) |
-                color(options_.prefix_color.value_or(pal.prompt_border));
+                          color(options_.prefix_color.value_or(pal.prompt_border));
             if (options_.prefix_bold) prefix = prefix | bold;
             parts.push_back(std::move(prefix));
         } else {
             parts.push_back(ftxui::text(std::string(layout.prefix_width, ' ')));
         }
         if (layout.number_width > 0) {
-            parts.push_back(ftxui::text(row.continuation
-                ? std::string(layout.number_width, ' ')
-                : std::format("{:>{}} ", row.line + 1, layout.number_width - 1)) |
-                dim | color(pal.muted));
+            parts.push_back(ftxui::text(row.continuation ? std::string(layout.number_width, ' ')
+                                                         : std::format("{:>{}} ", row.line + 1,
+                                                                       layout.number_width - 1)) |
+                            dim | color(pal.muted));
         }
         enum class Paint { Plain, Selection, Caret };
         Paint previous = Paint::Plain;
@@ -332,11 +353,13 @@ Element TextInputImpl::RenderInputArea() {
             Paint paint = Paint::Plain;
             if (pos < sel_end && next > sel_begin && has_selection()) {
                 paint = Paint::Selection;
-            } else if ((pos >= cursor_ && pos < chip_end) ||
-                       (pos == cursor_ && cursor_visible)) {
+            } else if ((pos >= cursor_ && pos < chip_end) || (pos == cursor_ && cursor_visible)) {
                 paint = Paint::Caret;
             }
-            if (paint != previous) { flush(); previous = paint; }
+            if (paint != previous) {
+                flush();
+                previous = paint;
+            }
             run += options_.mask_input ? std::string(1, options_.mask_char)
                                        : text_.substr(pos, next - pos);
             pos = next;
@@ -345,8 +368,8 @@ Element TextInputImpl::RenderInputArea() {
         int used = display_width(text_, row.begin, row.end, options_.mask_input);
         const bool cursor_at_end = index == layout.cursor_row && cursor_ == row.end;
         if (cursor_at_end && !has_selection() && used < layout.text_width) {
-            parts.push_back(ftxui::text(" ") |
-                (cursor_visible ? inverted : nothing) | color(pal.text));
+            parts.push_back(ftxui::text(" ") | (cursor_visible ? inverted : nothing) |
+                            color(pal.text));
             ++used;
         }
         auto append_hint = [&](const std::string& value, Color hint_color) {
@@ -357,8 +380,8 @@ Element TextInputImpl::RenderInputArea() {
         if (cursor_at_end && !has_selection() && !options_.mask_input) {
             append_hint(options_.inline_ghost_text, pal.muted);
         }
-        if (row.line == 0 && !row.continuation && text_.starts_with('/') &&
-            cursor_ > 0 && !options_.argument_hint.empty()) {
+        if (row.line == 0 && !row.continuation && text_.starts_with('/') && cursor_ > 0 &&
+            !options_.argument_hint.empty()) {
             append_hint("  " + options_.argument_hint, pal.info);
         }
         rows.push_back(hbox(std::move(parts)));
@@ -369,9 +392,7 @@ Element TextInputImpl::RenderInputArea() {
 Element TextInputImpl::RenderSuggestionsDropdown() const {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
     using namespace ftxui;
-    const size_t visible = std::min(
-        options_.max_visible_suggestions,
-        suggestions_.size());
+    const size_t visible = std::min(options_.max_visible_suggestions, suggestions_.size());
 
     int start_idx = 0;
     if ((size_t)selected_suggestion_ >= visible) {
@@ -410,8 +431,7 @@ Element TextInputImpl::RenderSuggestionsDropdown() const {
         // Display text (or text if display_text empty)
         std::string label = s.display_text.empty() ? s.text : s.display_text;
         Element label_el = ftxui::text(label);
-        Color accent = s.color_hint.value_or(
-            suggest_util::category_color(s.category));
+        Color accent = s.color_hint.value_or(suggest_util::category_color(s.category));
         if (selected) {
             label_el = label_el | bgcolor(pal.selection_bg) | color(pal.text) | bold;
         } else {
@@ -436,13 +456,10 @@ Element TextInputImpl::RenderSuggestionsDropdown() const {
 
     // Footer hint
     rows.push_back(separator() | dim);
-    rows.push_back(
-        ftxui::text("  [↑/↓] navigate    [Tab] cycle    [Enter] accept    [Esc] close")
-            | dim | color(pal.muted));
+    rows.push_back(ftxui::text("  [↑/↓] navigate    [Tab] cycle    [Enter] accept    [Esc] close") |
+                   dim | color(pal.muted));
 
-    return vbox(std::move(rows))
-         | border
-         | color(pal.prompt_border);
+    return vbox(std::move(rows)) | border | color(pal.prompt_border);
 }
 
 Element TextInputImpl::RenderSearchMode() const {
@@ -459,9 +476,9 @@ Element TextInputImpl::RenderSearchMode() const {
         if (search_matches_.empty()) {
             parts.push_back(ftxui::text("(no matches)") | dim | color(pal.danger));
         } else {
-            parts.push_back(ftxui::text(
-                std::format("{} of {}", (int)search_selected_ + 1, (int)search_matches_.size()))
-                | dim);
+            parts.push_back(ftxui::text(std::format("{} of {}", (int)search_selected_ + 1,
+                                                    (int)search_matches_.size())) |
+                            dim);
         }
         rows.push_back(hbox(std::move(parts)));
     }
@@ -470,16 +487,13 @@ Element TextInputImpl::RenderSearchMode() const {
     if (!search_matches_.empty()) {
         const std::string& match = search_matches_[search_selected_];
         rows.push_back(separator() | dim);
-        rows.push_back(
-            ftxui::text(match) | color(pal.success)
-        );
+        rows.push_back(ftxui::text(match) | color(pal.success));
     }
 
     // Hint
     rows.push_back(separator() | dim);
-    rows.push_back(
-        ftxui::text("[Enter] accept  [Esc] cancel  [Ctrl+R] next  [↑/↓] navigate")
-            | dim | color(pal.muted));
+    rows.push_back(ftxui::text("[Enter] accept  [Esc] cancel  [Ctrl+R] next  [↑/↓] navigate") |
+                   dim | color(pal.muted));
 
     return vbox(std::move(rows)) | border | color(pal.warning);
 }
@@ -491,19 +505,17 @@ Element TextInputImpl::RenderSearchMode() const {
 /// `out_impl` (optional, non-null) is populated with the internal pointer.
 /// Default arguments live on the exported declaration in the primary;
 /// this out-of-line definition repeats neither.
-Component TextInput(const TextInputOptions& options,
-                    std::shared_ptr<TextInputImpl>* out_impl) {
+Component TextInput(const TextInputOptions& options, std::shared_ptr<TextInputImpl>* out_impl) {
     auto impl = std::make_shared<TextInputImpl>(options);
     if (out_impl) *out_impl = impl;
 
     // Periodic blink refresh: we use the renderer closure itself to trigger
     // TickBlink() every frame (FTXUI redraws 30-60fps — more than enough).
     return Renderer([impl] {
-        impl->TickBlink();
-        return impl->Render();
-    }) | CatchEvent([impl](Event e) {
-        return impl->HandleEvent(e);
-    });
+               impl->TickBlink();
+               return impl->Render();
+           }) |
+           CatchEvent([impl](Event e) { return impl->HandleEvent(e); });
 }
 
 }  // namespace ui::components

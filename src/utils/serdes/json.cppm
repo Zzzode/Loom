@@ -33,7 +33,6 @@ using loom::utils::Error;
 using loom::utils::ErrorCode;
 using loom::utils::Result;
 
-
 class JsonVal;
 class JsonMutVal;
 class JsonMutDoc;
@@ -43,11 +42,12 @@ class JsonMutDoc;
 // =========================================================================
 class JsonVal {
 public:
-    explicit JsonVal(yyjson_val* val = nullptr) noexcept : val_(val) {}
+    explicit JsonVal(yyjson_val* val = nullptr) noexcept
+        : val_(val) {}
 
     [[nodiscard]] bool valid() const noexcept { return val_ != nullptr; }
-    explicit operator bool() const noexcept { return valid(); }
 
+    explicit operator bool() const noexcept { return valid(); }
 
     [[nodiscard]] bool is_null() const noexcept;
     [[nodiscard]] bool is_bool() const noexcept;
@@ -60,39 +60,33 @@ public:
     [[nodiscard]] bool is_arr() const noexcept;
     [[nodiscard]] bool is_obj() const noexcept;
 
-
     [[nodiscard]] std::string_view as_str() const noexcept;
     [[nodiscard]] int64_t as_int() const noexcept;
     [[nodiscard]] double as_double() const noexcept;
     [[nodiscard]] bool as_bool() const noexcept;
 
-
     [[nodiscard]] JsonVal get(std::string_view key) const noexcept;
-
 
     [[nodiscard]] JsonVal at(std::size_t index) const noexcept;
 
-
     [[nodiscard]] std::size_t size() const noexcept;
-
 
     // Type-erased iteration shells: the trampoline is a non-capturing static
     // function (convertible to the IterCb function pointer) and the caller's
     // callable — capturing lambdas included — rides through as an opaque
     // context pointer. The yyjson walk itself lives in json_iter.cpp.
-    template<class Fn>
-    void iter(Fn&& fn) const {
-        iter_impl([](void* c, JsonVal item) {
-            (*static_cast<std::remove_reference_t<Fn>*>(c))(item);
-        }, static_cast<void*>(std::addressof(fn)));
+    template <class Fn> void iter(Fn&& fn) const {
+        iter_impl(
+            [](void* c, JsonVal item) { (*static_cast<std::remove_reference_t<Fn>*>(c))(item); },
+            static_cast<void*>(std::addressof(fn)));
     }
 
-
-    template<class Fn>
-    void iter_obj(Fn&& fn) const {
-        iter_obj_impl([](void* c, JsonVal key, JsonVal value) {
-            (*static_cast<std::remove_reference_t<Fn>*>(c))(key, value);
-        }, static_cast<void*>(std::addressof(fn)));
+    template <class Fn> void iter_obj(Fn&& fn) const {
+        iter_obj_impl(
+            [](void* c, JsonVal key, JsonVal value) {
+                (*static_cast<std::remove_reference_t<Fn>*>(c))(key, value);
+            },
+            static_cast<void*>(std::addressof(fn)));
     }
 
     [[nodiscard]] yyjson_val* raw() const noexcept { return val_; }
@@ -110,8 +104,8 @@ public:
     [[nodiscard]] std::string to_string() const;
 
 private:
-    using IterCb = void(*)(void* ctx, JsonVal item);
-    using IterObjCb = void(*)(void* ctx, JsonVal key, JsonVal value);
+    using IterCb = void (*)(void* ctx, JsonVal item);
+    using IterObjCb = void (*)(void* ctx, JsonVal key, JsonVal value);
 
     void iter_impl(IterCb cb, void* ctx) const;
     void iter_obj_impl(IterObjCb cb, void* ctx) const;
@@ -124,20 +118,25 @@ private:
 // =========================================================================
 class JsonDoc {
 public:
-    JsonDoc() noexcept : doc_(nullptr) {}
-    explicit JsonDoc(yyjson_doc* doc) noexcept : doc_(doc) {}
+    JsonDoc() noexcept
+        : doc_(nullptr) {}
+
+    explicit JsonDoc(yyjson_doc* doc) noexcept
+        : doc_(doc) {}
 
     ~JsonDoc();
 
-
     JsonDoc(const JsonDoc&) = delete;
     JsonDoc& operator=(const JsonDoc&) = delete;
-    JsonDoc(JsonDoc&& other) noexcept : doc_(std::exchange(other.doc_, nullptr)) {}
+
+    JsonDoc(JsonDoc&& other) noexcept
+        : doc_(std::exchange(other.doc_, nullptr)) {}
+
     JsonDoc& operator=(JsonDoc&& other) noexcept;
 
     [[nodiscard]] bool valid() const noexcept { return doc_ != nullptr; }
-    explicit operator bool() const noexcept { return valid(); }
 
+    explicit operator bool() const noexcept { return valid(); }
 
     [[nodiscard]] JsonVal root() const noexcept;
 
@@ -158,25 +157,30 @@ private:
 // =========================================================================
 class JsonMutVal {
 public:
-    JsonMutVal() noexcept : val_(nullptr), doc_(nullptr) {}
+    JsonMutVal() noexcept
+        : val_(nullptr)
+        , doc_(nullptr) {}
+
     JsonMutVal(yyjson_mut_val* val, yyjson_mut_doc* doc) noexcept
-        : val_(val), doc_(doc) {}
+        : val_(val)
+        , doc_(doc) {}
 
     [[nodiscard]] bool valid() const noexcept { return val_ != nullptr; }
+
     explicit operator bool() const noexcept { return valid(); }
 
     [[nodiscard]] bool is_null() const noexcept;
     [[nodiscard]] bool is_bool() const noexcept;
-    [[nodiscard]] bool is_num()  const noexcept;
-    [[nodiscard]] bool is_str()  const noexcept;
-    [[nodiscard]] bool is_arr()  const noexcept;
-    [[nodiscard]] bool is_obj()  const noexcept;
+    [[nodiscard]] bool is_num() const noexcept;
+    [[nodiscard]] bool is_str() const noexcept;
+    [[nodiscard]] bool is_arr() const noexcept;
+    [[nodiscard]] bool is_obj() const noexcept;
 
     /// Read-typed accessors (read the *mut* value as a primitive).
     [[nodiscard]] std::string_view as_str() const noexcept;
-    [[nodiscard]] int64_t as_int()   const noexcept;
-    [[nodiscard]] double  as_double() const noexcept;
-    [[nodiscard]] bool    as_bool() const noexcept;
+    [[nodiscard]] int64_t as_int() const noexcept;
+    [[nodiscard]] double as_double() const noexcept;
+    [[nodiscard]] bool as_bool() const noexcept;
     [[nodiscard]] std::size_t size() const noexcept;
 
     /// Add / replace a key on an object.  If the key already exists it is replaced
@@ -217,26 +221,25 @@ public:
 
     // Iteration helpers — the shells forward to type-erased *_impl walkers
     // (json_iter.cpp) so the inline interface never names yyjson functions.
-    template<class Fn>
-    void iter_obj(Fn&& fn) const {
-        iter_obj_impl([](void* c, JsonMutVal k, JsonMutVal v) {
-            (*static_cast<std::remove_reference_t<Fn>*>(c))(k, v);
-        }, static_cast<void*>(std::addressof(fn)));
+    template <class Fn> void iter_obj(Fn&& fn) const {
+        iter_obj_impl([](void* c, JsonMutVal k,
+                         JsonMutVal v) { (*static_cast<std::remove_reference_t<Fn>*>(c))(k, v); },
+                      static_cast<void*>(std::addressof(fn)));
     }
 
-    template<class Fn>
-    void iter(Fn&& fn) const {
-        iter_impl([](void* c, JsonMutVal v, std::size_t i) {
-            (*static_cast<std::remove_reference_t<Fn>*>(c))(v, i);
-        }, static_cast<void*>(std::addressof(fn)));
+    template <class Fn> void iter(Fn&& fn) const {
+        iter_impl([](void* c, JsonMutVal v,
+                     std::size_t i) { (*static_cast<std::remove_reference_t<Fn>*>(c))(v, i); },
+                  static_cast<void*>(std::addressof(fn)));
     }
 
     [[nodiscard]] yyjson_mut_val* raw() const noexcept { return val_; }
+
     [[nodiscard]] yyjson_mut_doc* doc() const noexcept { return doc_; }
 
 private:
-    using IterCb = void(*)(void* ctx, JsonMutVal v, std::size_t i);
-    using IterObjCb = void(*)(void* ctx, JsonMutVal k, JsonMutVal v);
+    using IterCb = void (*)(void* ctx, JsonMutVal v, std::size_t i);
+    using IterObjCb = void (*)(void* ctx, JsonMutVal k, JsonMutVal v);
 
     void iter_impl(IterCb cb, void* ctx) const;
     void iter_obj_impl(IterObjCb cb, void* ctx) const;
@@ -255,9 +258,11 @@ public:
 
     JsonMutDoc(const JsonMutDoc&) = delete;
     JsonMutDoc& operator=(const JsonMutDoc&) = delete;
-    JsonMutDoc(JsonMutDoc&& other) noexcept : doc_(std::exchange(other.doc_, nullptr)) {}
-    JsonMutDoc& operator=(JsonMutDoc&& other) noexcept;
 
+    JsonMutDoc(JsonMutDoc&& other) noexcept
+        : doc_(std::exchange(other.doc_, nullptr)) {}
+
+    JsonMutDoc& operator=(JsonMutDoc&& other) noexcept;
 
     [[nodiscard]] JsonMutVal object();
     [[nodiscard]] JsonMutVal array();
@@ -273,7 +278,6 @@ public:
     // Parse a raw JSON string and embed it as a mutable value in this document
     [[nodiscard]] JsonMutVal raw_json(std::string_view json_str);
 
-
     void set_root(JsonMutVal val);
 
     /// Mutable-root accessor.  Returns a mutable view of the document's root
@@ -281,9 +285,7 @@ public:
     /// reads/edits of an already-committed tree without re-parsing.
     [[nodiscard]] JsonMutVal root_mut() noexcept;
 
-
     [[nodiscard]] std::string to_string() const;
-
 
     [[nodiscard]] std::string to_pretty_string() const;
 
@@ -337,7 +339,6 @@ private:
 
 // =========================================================================
 
-
 /// Fluent builder over JsonMutDoc for declarative object construction.
 /// Provides chainable str/boolean/num setters; doc()/root() expose the
 /// underlying mutable document for nested array/object assembly, and
@@ -373,7 +374,6 @@ private:
 /// the whole document on trailing content.  Mirrors parse() otherwise.
 [[nodiscard]] Result<JsonDoc> parse_first(std::string_view json_str);
 
-
 [[nodiscard]] Result<JsonDoc> parse_file_string(const std::string& path_string);
 
 [[nodiscard]] Result<JsonDoc> parse_file(std::string_view path);
@@ -382,11 +382,9 @@ private:
 
 [[nodiscard]] Result<JsonDoc> parse_file(const char* path);
 
-template <typename Path>
-[[nodiscard]] inline Result<JsonDoc> parse_file(const Path& path) {
+template <typename Path> [[nodiscard]] inline Result<JsonDoc> parse_file(const Path& path) {
     return parse_file_string(path.string());
 }
-
 
 [[nodiscard]] std::string to_string(const JsonDoc& doc);
 
@@ -394,4 +392,4 @@ template <typename Path>
 
 [[nodiscard]] std::string to_string(JsonVal val);
 
-} // namespace loom::utils::json
+}  // namespace loom::utils::json

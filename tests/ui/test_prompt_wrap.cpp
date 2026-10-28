@@ -1,8 +1,9 @@
+#include <ftxui/component/event.hpp>
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/screen/screen.hpp>
 #include <ftxui/screen/string.hpp>
-#include <ftxui/component/event.hpp>
 #include <gtest/gtest.h>
+
 #include "test_ui_helpers.h"
 
 import std;
@@ -15,6 +16,7 @@ import loom.ui.prompt.prompt_input_footer;
 namespace {
 namespace input = ::ui::components;
 namespace repl = loom::ui::repl_screen;
+
 input::TextInputOptions options(int columns = 10) {
     input::TextInputOptions out;
     out.columns = columns;
@@ -23,18 +25,21 @@ input::TextInputOptions options(int columns = 10) {
     out.placeholder.clear();
     return out;
 }
+
 ftxui::Screen paint(input::TextInputImpl& value, int columns, int rows) {
-    auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(columns),
-                                       ftxui::Dimension::Fixed(rows));
+    auto screen =
+        ftxui::Screen::Create(ftxui::Dimension::Fixed(columns), ftxui::Dimension::Fixed(rows));
     ftxui::Render(screen, value.RenderInputAreaPub());
     return screen;
 }
+
 std::string row_text(const ftxui::Screen& screen, int columns, int row) {
     std::string out;
-    for (int x = 0; x < columns; ++x) out += screen.PixelAt(x, row).character;
+    for (int x = 0; x < columns; ++x)
+        out += screen.PixelAt(x, row).character;
     return out;
 }
-}
+}  // namespace
 
 TEST(PromptWrap, LongAsciiWrapsWithoutChangingSubmitBytes) {
     auto opts = options();
@@ -51,6 +56,7 @@ TEST(PromptWrap, LongAsciiWrapsWithoutChangingSubmitBytes) {
     EXPECT_TRUE(value.HandleEvent(ftxui::Event::Return));
     EXPECT_EQ(submitted, "abcdefghijklmnopqrstuvwxyz");
 }
+
 TEST(PromptWrap, FullWidthEndCaretHasVisibleContinuationCell) {
     input::TextInputImpl value(options());
     value.set_text("abcdefgh");
@@ -59,6 +65,7 @@ TEST(PromptWrap, FullWidthEndCaretHasVisibleContinuationCell) {
     EXPECT_TRUE(screen.PixelAt(2, 1).inverted);
     EXPECT_EQ(value.text(), "abcdefgh");
 }
+
 TEST(PromptWrap, ChineseEmojiAndCombiningMarksUseDisplayCells) {
     input::TextInputImpl value(options());
     value.set_text("中文😀ab中e\xcc\x81");
@@ -67,6 +74,7 @@ TEST(PromptWrap, ChineseEmojiAndCombiningMarksUseDisplayCells) {
     EXPECT_NE(row_text(screen, 10, 1).find("中e\xcc\x81"), std::string::npos);
     EXPECT_EQ(value.visual_cursor_position(), (std::pair{5, 1}));
 }
+
 TEST(PromptWrap, ExplicitEmptyLinesRemainAndMiddleCaretUsesWrappedRow) {
     input::TextInputImpl value(options());
     value.set_text("abcdefghij\n\nklm");
@@ -77,6 +85,7 @@ TEST(PromptWrap, ExplicitEmptyLinesRemainAndMiddleCaretUsesWrappedRow) {
     EXPECT_NE(row_text(screen, 10, 3).find("klm"), std::string::npos);
     EXPECT_EQ(value.cursor_line(), 0);
 }
+
 TEST(PromptWrap, ResizeReflowsHeldWidgetWithoutChangingSelectionOrBuffer) {
     input::TextInputImpl value(options());
     value.set_text("abcdefghijklmnop");
@@ -92,6 +101,7 @@ TEST(PromptWrap, ResizeReflowsHeldWidgetWithoutChangingSelectionOrBuffer) {
     value.update_render_options(update);
     EXPECT_EQ(value.visual_cursor_position(), (std::pair{15, 0}));
 }
+
 TEST(PromptWrap, SelectionAcrossWrapUsesSourceByteOffsets) {
     input::TextInputImpl value(options());
     value.set_text("abcdefghij");
@@ -103,6 +113,7 @@ TEST(PromptWrap, SelectionAcrossWrapUsesSourceByteOffsets) {
     EXPECT_EQ(screen.PixelAt(3, 1).background_color, selection_color);
     EXPECT_NE(screen.PixelAt(7, 0).background_color, selection_color);
 }
+
 TEST(PromptWrap, MaskedUnicodeWrapAndCaretUseDisplayedMaskCells) {
     auto opts = options(6);
     opts.mask_input = true;
@@ -113,6 +124,7 @@ TEST(PromptWrap, MaskedUnicodeWrapAndCaretUseDisplayedMaskCells) {
     EXPECT_EQ(row_text(screen, 6, 1), "  **  ");
     EXPECT_EQ(value.visual_cursor_position(), (std::pair{4, 1}));
 }
+
 TEST(PromptWrap, ImageChipInversionSurvivesSoftWrap) {
     input::TextInputImpl value(options());
     value.set_text("xx[Image #1]z");
@@ -124,6 +136,7 @@ TEST(PromptWrap, ImageChipInversionSurvivesSoftWrap) {
     EXPECT_TRUE(screen.PixelAt(5, 1).inverted);
     EXPECT_FALSE(screen.PixelAt(6, 1).inverted);
 }
+
 TEST(PromptWrap, BoundedViewportFollowsCaretAndAllowsDisplayRowNavigation) {
     auto opts = options();
     opts.max_visible_rows = 2;
@@ -140,6 +153,7 @@ TEST(PromptWrap, BoundedViewportFollowsCaretAndAllowsDisplayRowNavigation) {
     EXPECT_EQ(value.cursor(), 18);
     EXPECT_EQ(value.text(), "abcdefghijklmnopqrstuvwxyz");
 }
+
 TEST(PromptWrap, PrefixAndLineNumbersAreDeductedFromWidth) {
     auto opts = options(12);
     opts.prefix = "😀 ";
@@ -151,6 +165,7 @@ TEST(PromptWrap, PrefixAndLineNumbersAreDeductedFromWidth) {
     EXPECT_NE(row_text(screen, 12, 1).find("gh"), std::string::npos);
     EXPECT_EQ(value.visual_cursor_position(), (std::pair{8, 2}));
 }
+
 TEST(PromptWrap, UnconstrainedDefaultPreservesStandaloneExplicitLines) {
     input::TextInputImpl value(options(0));
     value.set_text("abcdefghijklmnop\n中文");
@@ -158,6 +173,7 @@ TEST(PromptWrap, UnconstrainedDefaultPreservesStandaloneExplicitLines) {
     auto screen = paint(value, 30, 2);
     EXPECT_NE(row_text(screen, 30, 0).find("abcdefghijklmnop"), std::string::npos);
 }
+
 TEST(PromptWrap, RealReplCaretAndArrowNavigationShareGeometryAndHeldState) {
     auto state = std::make_shared<repl::ReplScreenState>();
     state->input_text = "abcdefghijklmnopqrstuvwxyz";
@@ -175,6 +191,7 @@ TEST(PromptWrap, RealReplCaretAndArrowNavigationShareGeometryAndHeldState) {
     EXPECT_EQ(screen.cursor().x, 5);
     EXPECT_EQ(screen.cursor().y, 2);
 }
+
 TEST(PromptWrap, GhostAndArgumentHintsFitRemainingCellsWithoutMovingCaret) {
     auto opts = options(12);
     opts.inline_ghost_text = "中文abcdef";
@@ -193,6 +210,7 @@ TEST(PromptWrap, GhostAndArgumentHintsFitRemainingCellsWithoutMovingCaret) {
     EXPECT_NE(row_text(screen, 12, 0).find("long"), std::string::npos);
     EXPECT_EQ(hint.text(), "/go");
 }
+
 TEST(PromptWrap, PlaceholderUsesBoundedCellsAndNeverEntersBuffer) {
     auto opts = options(9);
     opts.placeholder = "中文😀abcdefgh";
@@ -202,6 +220,7 @@ TEST(PromptWrap, PlaceholderUsesBoundedCellsAndNeverEntersBuffer) {
     EXPECT_EQ(value.text(), "");
     EXPECT_EQ(value.visual_cursor_position(), (std::pair{2, 0}));
 }
+
 TEST(PromptWrap, ReplHistoryAndAutocompleteKeepArrowPrecedence) {
     auto state = std::make_shared<repl::ReplScreenState>();
     state->input_history = {"old", "older"};
@@ -218,6 +237,7 @@ TEST(PromptWrap, ReplHistoryAndAutocompleteKeepArrowPrecedence) {
     EXPECT_EQ(state->autocomplete_index, 0);
     EXPECT_EQ(state->input_cursor, std::string::npos);
 }
+
 TEST(PromptWrap, ReplNativeCaretIncludesVimAndStashRows) {
     repl::ReplScreenState state;
     state.input_text = "abcdefghijklmnop";
@@ -240,7 +260,8 @@ TEST(StatusLine, ContextWindowMetadataSupportsFullEngineRange) {
     footer::BuiltinStatusLineData data;
     data.context_window_size = state.chrome_store.status_bar.context_window_size;
     data.context_token_count = 200000000;
-    const auto text = strip_ansi(render_to_plain_text(footer::RenderBuiltinStatusLine(data), 120, 1));
+    const auto text =
+        strip_ansi(render_to_plain_text(footer::RenderBuiltinStatusLine(data), 120, 1));
     EXPECT_NE(text.find("5% 200000.0K/4000000.0K"), std::string::npos);
     EXPECT_EQ(state.chrome_store.status_bar.context_window_size, 4000000000LL);
 }

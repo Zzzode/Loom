@@ -1,7 +1,7 @@
 // repl_screen_layout.cpp - impl unit for loom.ui.screens.repl_screen
-// (RFC 0001 Phase C batch 9). RouteDialog and RenderReplScreen - terminal probe, unseen divider, the
-// FullscreenLayout slot composition (scrollable/header/bottom) with both
-// sticky/pill lambdas, and final dialog-queue layering.
+// (RFC 0001 Phase C batch 9). RouteDialog and RenderReplScreen - terminal probe, unseen divider,
+// the FullscreenLayout slot composition (scrollable/header/bottom) with both sticky/pill lambdas,
+// and final dialog-queue layering.
 //
 // Phase A (#184957): textual FTXUI GMF headers + `import std;`
 // (the textual FTXUI includes keep the reduced-BMI writer happy).
@@ -36,8 +36,7 @@ using namespace ftxui;
 /// Priority matches getFocusedInputDialog():
 ///   Exit > message-selector > sandbox > permissions/hook/elicit >
 ///   cost/idle/ultraplan > onboarding > recs > panels.
-[[nodiscard]] std::optional<Element> RouteDialog(
-    ReplMode m, const ReplScreenState& s) {
+[[nodiscard]] std::optional<Element> RouteDialog(ReplMode m, const ReplScreenState& s) {
     (void)s;
     // M7: All legacy ReplMode dialog routing is retired.  Dialogs now flow
     // exclusively via the 4-slot DialogQueue with priority
@@ -47,7 +46,9 @@ using namespace ftxui;
     // preserves the file's historical RouteDialog() API so downstream
     // callers (RenderReplScreen) don't need another rewrite.
     switch (m) {
-      default: break; }
+    default:
+        break;
+    }
     return std::nullopt;
 }
 
@@ -61,7 +62,7 @@ using namespace ftxui;
 ///   scrollable slot (flex-grow region) =
 ///     [WelcomeHeader (fresh session)] | Messages | Spinner | Tasks/Teams
 ///   bottom slot (pinned, fixed-height) =
-    ///     PromptInput | Footer
+///     PromptInput | Footer
 ///   modal slot (dbox overlay, bottom-anchored) =
 ///     RouteDialog() when non-null (with MODAL_TRANSCRIPT_PEEK peek)
 ///   overlay slot =
@@ -69,25 +70,25 @@ using namespace ftxui;
 ///      currently permission flows through RouteDialog as the modal slot,
 ///      matching how it rendered before.)
 ///
-    /// All existing render functions are PRESERVED (RenderWelcomeHeader,
-    /// RenderMessages, RenderSpinner, RenderPromptInput,
+/// All existing render functions are PRESERVED (RenderWelcomeHeader,
+/// RenderMessages, RenderSpinner, RenderPromptInput,
 /// RouteDialog) — only HOW they are composed changed.  Visual order is
 /// preserved: messages scroll above, status/prompt pinned below.
 ///
 /// Fix #1: welcome header atop the list on a fresh session.
-    /// Fix #7: StatusLine lives inside the prompt footer.
+/// Fix #7: StatusLine lives inside the prompt footer.
 /// Fix #11: terminal size probed once per frame for adaptive clamping.
-[[nodiscard]] Element RenderReplScreen(ReplScreenState& s,
-    // Recovery for the current failed model request, owned by screen shortcuts.
-    std::function<void()> on_retry,
-    // P2 gap api-error-retry: clear-session callback threaded through to
-    // RenderMessages for session-expired error cards.
-    std::function<void()> on_clear_session,
-    // Shared StreamingMarkdown instance for the streaming-text tail row.
-    ::loom::ui::StreamingMarkdown* streaming_md,
-    // Dismiss callback for API error cards (ESC / q).
-    std::function<void()> on_dismiss_error,
-    std::function<void()> on_continue) {
+[[nodiscard]] Element
+RenderReplScreen(ReplScreenState& s,
+                 // Recovery for the current failed model request, owned by screen shortcuts.
+                 std::function<void()> on_retry,
+                 // P2 gap api-error-retry: clear-session callback threaded through to
+                 // RenderMessages for session-expired error cards.
+                 std::function<void()> on_clear_session,
+                 // Shared StreamingMarkdown instance for the streaming-text tail row.
+                 ::loom::ui::StreamingMarkdown* streaming_md,
+                 // Dismiss callback for API error cards (ESC / q).
+                 std::function<void()> on_dismiss_error, std::function<void()> on_continue) {
     s.task_view_store.activity_hit_targets = {};
     s.messages_store.continue_action_box = {.x_min = 0, .x_max = -1, .y_min = 0, .y_max = -1};
     // Probe terminal size once per frame for adaptive layout (fix #11).
@@ -104,11 +105,9 @@ using namespace ftxui;
     // Static layout records the message yframe itself, excluding recovery
     // action rows in the surrounding scrollable slot. Keep that measurement
     // for both scroll bounds and focus positioning on the next frame.
-    if (!s.messages_store.rendered_content_height_lines ||
-        s.messages_store.virtual_list_active) {
-        s.messages_store.viewport_height_lines = have_measured
-            ? std::max(1, sb.y_max - sb.y_min + 1)
-            : std::max(1, term_rows - 5);
+    if (!s.messages_store.rendered_content_height_lines || s.messages_store.virtual_list_active) {
+        s.messages_store.viewport_height_lines =
+            have_measured ? std::max(1, sb.y_max - sb.y_min + 1) : std::max(1, term_rows - 5);
     }
     s.messages_store.viewport_width_cols = term_cols;
 
@@ -116,23 +115,26 @@ using namespace ftxui;
         return dialog_queue_render::RenderStandaloneDialog(s, term_cols, term_rows);
     auto prepared_dialogs = dialog_queue_render::PrepareDialogLayers(
         s, s.is_prompt_input_active, !s.is_tool_animation_active, term_cols, term_rows);
-    const bool current_failure = !s.query_running && !s.messages_store.messages.empty()
-        && s.messages_store.messages.back().is_model_error
-        && s.messages_store.messages.back().is_error;
-    const bool emphasize_work = !HasOuterFocusOwner(s.mode)
-        && !prepared_dialogs.takes_focus && !current_failure;
+    const bool current_failure = !s.query_running && !s.messages_store.messages.empty() &&
+                                 s.messages_store.messages.back().is_model_error &&
+                                 s.messages_store.messages.back().is_error;
+    const bool emphasize_work =
+        !HasOuterFocusOwner(s.mode) && !prepared_dialogs.takes_focus && !current_failure;
     const bool show_work_spinner = emphasize_work && IsToolAnimating(s.task_view_store);
-    const bool background_running = std::ranges::any_of(
-        s.task_view_store.runtime_agents, [](const auto& instance) {
-            return instance.background && instance.status == agents::runtime::Status::Running;
-        }) || std::ranges::any_of(s.task_view_store.live_teammates,
-            [](const auto& teammate) { return teammate.status == "running"; });
-    const bool background_queued = std::ranges::any_of(
-        s.task_view_store.runtime_agents, [](const auto& instance) {
+    const bool background_running =
+        std::ranges::any_of(s.task_view_store.runtime_agents,
+                            [](const auto& instance) {
+                                return instance.background &&
+                                       instance.status == agents::runtime::Status::Running;
+                            }) ||
+        std::ranges::any_of(s.task_view_store.live_teammates,
+                            [](const auto& teammate) { return teammate.status == "running"; });
+    const bool background_queued =
+        std::ranges::any_of(s.task_view_store.runtime_agents, [](const auto& instance) {
             return instance.background && instance.status == agents::runtime::Status::Queued;
         });
-    const bool show_background_status = emphasize_work && !show_work_spinner
-        && (background_running || background_queued);
+    const bool show_background_status =
+        emphasize_work && !show_work_spinner && (background_running || background_queued);
     const bool show_work_status = show_work_spinner || show_background_status;
 
     // Time-based spinner frame: 100 ms per frame (10 fps), matching the
@@ -148,9 +150,11 @@ using namespace ftxui;
     } else {
         last_spinner_mode = SpinnerMode::Hidden;
     }
-    const int spinner_frame = static_cast<int>(
-        std::chrono::duration_cast<std::chrono::milliseconds>(
-            std::chrono::steady_clock::now() - spinner_start_time).count() / 100);
+    const int spinner_frame =
+        static_cast<int>(std::chrono::duration_cast<std::chrono::milliseconds>(
+                             std::chrono::steady_clock::now() - spinner_start_time)
+                             .count() /
+                         100);
 
     // ── Unseen-divider computation ────────────────────────────────────
     // When the user has scrolled away from bottom, compute the in-transcript
@@ -168,7 +172,8 @@ using namespace ftxui;
         } else {
             s.messages_store.unseen_divider = ComputeUnseenDivider(s);
             if (s.messages_store.unseen_divider.has_value()) {
-                s.messages_store.unseen_message_count = static_cast<int>(s.messages_store.unseen_divider->count);
+                s.messages_store.unseen_message_count =
+                    static_cast<int>(s.messages_store.unseen_divider->count);
                 s.messages_store.pill_visible = true;
             }
         }
@@ -195,7 +200,8 @@ using namespace ftxui;
     // messages; (b) as messages arrive and pin-to-bottom engages, the logo
     // scrolls out of the visible viewport naturally.
     Elements L;
-    Elements scroll_rows; scroll_rows.reserve(2);
+    Elements scroll_rows;
+    scroll_rows.reserve(2);
     const auto& visible_messages = BuildVisibleMessages(s);
 
     // ── Welcome / logo card (passed as leading element inside yframe) ───
@@ -213,9 +219,8 @@ using namespace ftxui;
     const bool has_real_messages = !s.messages_store.messages.empty();
     const bool has_command_overlay = s.active_local_jsx_command;
     if (s.conversation_breadcrumb.empty() && (has_real_messages || !has_command_overlay)) {
-        logo_leading.push_back(
-            RenderWelcomeHeader(s, spinner_frame, term_cols)
-            | size(WIDTH, EQUAL, term_cols));
+        logo_leading.push_back(RenderWelcomeHeader(s, spinner_frame, term_cols) |
+                               size(WIDTH, EQUAL, term_cols));
     }
 
     // ── Messages yframe (logo prepended INSIDE, fills scrollable) ───────
@@ -227,16 +232,9 @@ using namespace ftxui;
     scroll_rows.push_back(RenderMessages(
         visible_messages, s.messages_store.selected_message_idx,
         s.messages_store.viewport_height_lines, s.messages_store.scroll_offset,
-        s.messages_store.scroll_pinned_to_bottom, spinner_frame,
-        s.messages_store.unseen_divider,
-        std::move(logo_leading),
-        s.is_brief_mode,
-        s.expanded_keys,
-        s.is_transcript_mode,
-        s.show_all_in_transcript,
-        s.disable_chain_compression,
-        s.query_running,
-        on_retry,
+        s.messages_store.scroll_pinned_to_bottom, spinner_frame, s.messages_store.unseen_divider,
+        std::move(logo_leading), s.is_brief_mode, s.expanded_keys, s.is_transcript_mode,
+        s.show_all_in_transcript, s.disable_chain_compression, s.query_running, on_retry,
         // P2 gap api-error-retry: thread on_clear_session for session-expired
         // error cards.
         on_clear_session,
@@ -255,33 +253,33 @@ using namespace ftxui;
         s.messages_store.messages.back().is_model_error &&
         s.messages_store.messages.back().is_error) {
         Elements actions;
-        if (on_retry && s.input_text.empty() &&
-            s.messages_store.messages.back().can_retry &&
+        if (on_retry && s.input_text.empty() && s.messages_store.messages.back().can_retry &&
             !s.messages_store.messages.back().session_expired)
             actions.push_back(messages::message_key_hint("R", "Retry request"));
         actions.push_back(messages::message_key_hint("Esc", "Dismiss error"));
         scroll_rows.push_back(hbox(std::move(actions)));
     }
     if (on_continue && s.mode == ReplMode::Normal && s.dialog_store.dialog_queue.empty() &&
-        !s.query_running && s.input_text.empty() &&
-        !s.messages_store.messages.empty() &&
+        !s.query_running && s.input_text.empty() && !s.messages_store.messages.empty() &&
         s.messages_store.messages.back().can_continue) {
-        scroll_rows.push_back(hbox({
-            messages::message_action("Continue") | reflect(s.messages_store.continue_action_box),
-            text(" "), messages::message_key_hint("C", "Continue from saved progress")}));
+        scroll_rows.push_back(hbox(
+            {messages::message_action("Continue") | reflect(s.messages_store.continue_action_box),
+             text(" "), messages::message_key_hint("C", "Continue from saved progress")}));
     }
     // Spinner lives in the chrome BETWEEN messages list and prompt input
     // (BriefSpinner top margin = 1, NOT a message row inside scroll content).
     Element spinner_chrome = text("");
     if (show_work_spinner)
-        spinner_chrome = RenderSpinner(s.task_view_store.spinner_mode, s.task_view_store.spinner_verb,
-                                       s.task_view_store.spinner_tip, spinner_frame,
-                                       s.task_view_store.estimated_generation_tps);
+        spinner_chrome =
+            RenderSpinner(s.task_view_store.spinner_mode, s.task_view_store.spinner_verb,
+                          s.task_view_store.spinner_tip, spinner_frame,
+                          s.task_view_store.estimated_generation_tps);
     else if (show_background_status) {
         const auto& palette = *loom::ui::design::theme::current_theme().palette;
-        spinner_chrome = hbox({text("● ") | color(palette.primary),
-            text(background_running ? "Background agents running" : "Background agents queued")
-                | color(palette.muted)});
+        spinner_chrome = hbox(
+            {text("● ") | color(palette.primary),
+             text(background_running ? "Background agents running" : "Background agents queued") |
+                 color(palette.muted)});
     }
     // M7.5: Panel views (Tasks/Teams/Help/Settings/About/QuickOpen) are
     // now rendered as modal dialogs via DialogQueue — no longer inlined
@@ -301,13 +299,15 @@ using namespace ftxui;
     {
         namespace logo = loom::ui::logo;
         const std::string model_line = !s.chrome_store.model_display_name.empty()
-            ? s.chrome_store.model_display_name
-            : s.settings_model;
-        if (s.conversation_breadcrumb.empty()) slots.header = logo::render_logo_header_bar(model_line, term_cols);
+                                           ? s.chrome_store.model_display_name
+                                           : s.settings_model;
+        if (s.conversation_breadcrumb.empty())
+            slots.header = logo::render_logo_header_bar(model_line, term_cols);
         else {
             const auto& palette = *design::theme::current_theme().palette;
             slots.header = vbox({text(s.conversation_breadcrumb) | color(palette.primary) | bold,
-                text(s.conversation_return_hint) | color(palette.muted)}) | size(WIDTH, EQUAL, term_cols);
+                                 text(s.conversation_return_hint) | color(palette.muted)}) |
+                           size(WIDTH, EQUAL, term_cols);
         }
     }
 
@@ -338,8 +338,7 @@ using namespace ftxui;
         //   - Text may contain ANSI escape codes for coloring
         const bool is_fullscreen = loom::utils::is_fullscreen_enabled();
         const bool is_short = is_fullscreen && term_rows < 24;
-        const bool status_line_configured =
-            s.status_line_enabled && !s.status_line_command.empty();
+        const bool status_line_configured = s.status_line_enabled && !s.status_line_command.empty();
 
         // P0-6 builtin statusline: populate fallback data from screen state.
         // When the user's command returns empty (or no command configured),
@@ -349,8 +348,8 @@ using namespace ftxui;
         builtin_data.git_branch = s.chrome_store.git_branch;
         // Prefer model_display_name (human-friendly), fall back to model_name.
         builtin_data.model_name = !s.chrome_store.model_display_name.empty()
-            ? s.chrome_store.model_display_name
-            : s.chrome_store.status_bar.model_name;
+                                      ? s.chrome_store.model_display_name
+                                      : s.chrome_store.status_bar.model_name;
         builtin_data.input_tokens = s.chrome_store.status_bar.input_tokens;
         builtin_data.output_tokens = s.chrome_store.status_bar.output_tokens;
         builtin_data.context_token_count = s.chrome_store.status_bar.context_token_count;
@@ -372,12 +371,10 @@ using namespace ftxui;
         //   (b) builtin data is available (always, since cwd is set)
         // Same mode guards apply: prompt mode, not bash, not short terminal.
         const bool in_prompt_mode =
-            s.prompt_store.input_mode == InputMode::Normal &&
-            !effective_is_bash(s) &&
-            !is_short;
-        status_line_opts.should_display = in_prompt_mode &&
-            (status_line_configured || !status_line_opts.content.empty() ||
-             status_line_opts.builtin.has_value());
+            s.prompt_store.input_mode == InputMode::Normal && !effective_is_bash(s) && !is_short;
+        status_line_opts.should_display =
+            in_prompt_mode && (status_line_configured || !status_line_opts.content.empty() ||
+                               status_line_opts.builtin.has_value());
         status_line_opts.is_fullscreen = is_fullscreen;
         status_line_opts.padding_x = s.status_line_padding;
 
@@ -408,25 +405,28 @@ using namespace ftxui;
         // Reserve bounded feedback first; work text uses the remaining cells.
         // Both sides stay on one row even with a long Unicode clipboard toast.
         const int feedback_padding = term_cols >= 5 ? 2 : 0;
-        const auto feedback_label = s.copy_toast_text
-            ? teams::live::one_line_tail(*s.copy_toast_text,
-                static_cast<std::size_t>(std::max(0, term_cols - 2 * feedback_padding)))
-            : std::string{};
-        Element copy_feedback = s.copy_toast_text
-            ? hbox({text(std::string(feedback_padding, ' ')), text(feedback_label) | dim,
-                    text(std::string(feedback_padding, ' '))})
-            : text("");
+        const auto feedback_label =
+            s.copy_toast_text
+                ? teams::live::one_line_tail(
+                      *s.copy_toast_text,
+                      static_cast<std::size_t>(std::max(0, term_cols - 2 * feedback_padding)))
+                : std::string{};
+        Element copy_feedback =
+            s.copy_toast_text
+                ? hbox({text(std::string(feedback_padding, ' ')), text(feedback_label) | dim,
+                        text(std::string(feedback_padding, ' '))})
+                : text("");
         copy_feedback->ComputeRequirement();
         const int feedback_columns = s.copy_toast_text ? copy_feedback->requirement().min_x : 0;
         copy_feedback = copy_feedback | size(WIDTH, EQUAL, feedback_columns);
         L.push_back(!show_work_status && s.copy_toast_text
-            ? hbox({filler(), copy_feedback}) | size(HEIGHT, EQUAL, 1)
-            : text(""));
+                        ? hbox({filler(), copy_feedback}) | size(HEIGHT, EQUAL, 1)
+                        : text(""));
         const int work_columns = std::max(0, term_cols - feedback_columns);
         const bool has_visible_response_parent = show_work_status && work_columns > 0;
         if (show_work_status) {
-            auto bounded_work = spinner_chrome | xflex_shrink | xframe
-                | size(WIDTH, EQUAL, work_columns);
+            auto bounded_work =
+                spinner_chrome | xflex_shrink | xframe | size(WIDTH, EQUAL, work_columns);
             L.push_back(hbox({std::move(bounded_work), copy_feedback}) | size(HEIGHT, EQUAL, 1));
         }
         // Activity is inserted here after fixed chrome has been measured.
@@ -457,22 +457,22 @@ using namespace ftxui;
                 s.exit_message_until.reset();
             }
         }
-        left_opts.mode_indicator.mode                 = footer_mode;
-        left_opts.mode_indicator.permission_mode      = s.permission_mode;
+        left_opts.mode_indicator.mode = footer_mode;
+        left_opts.mode_indicator.permission_mode = s.permission_mode;
         left_opts.mode_indicator.background_task_count = s.task_view_store.background_task_count;
-        left_opts.mode_indicator.teammate_count        = s.task_view_store.teammate_count;
-        left_opts.mode_indicator.teams_selected        = s.task_view_store.teams_footer_selected;
+        left_opts.mode_indicator.teammate_count = s.task_view_store.teammate_count;
+        left_opts.mode_indicator.teams_selected = s.task_view_store.teams_footer_selected;
         // Show "esc to interrupt" in the footer while a query is running.
-        left_opts.mode_indicator.is_loading            = IsToolAnimating(s.task_view_store);
+        left_opts.mode_indicator.is_loading = IsToolAnimating(s.task_view_store);
         // Transcript/brief mode pills (is_transcript_mode + is_brief_mode).
-        left_opts.mode_indicator.is_transcript_mode    = s.is_transcript_mode;
-        left_opts.mode_indicator.is_brief_mode         = s.is_brief_mode;
+        left_opts.mode_indicator.is_transcript_mode = s.is_transcript_mode;
+        left_opts.mode_indicator.is_brief_mode = s.is_brief_mode;
         if (status_line_opts.should_display) {
             left_opts.mode_indicator.show_hint = false;
         }
         pif::FooterOptions footer_opts;
         footer_opts.status_line = std::move(status_line_opts);
-        footer_opts.left_side   = std::move(left_opts);
+        footer_opts.left_side = std::move(left_opts);
         footer_opts.is_fullscreen = is_fullscreen;
         footer_opts.is_narrow = term_cols < 80;
 
@@ -531,7 +531,8 @@ using namespace ftxui;
             return element->requirement().min_y;
         };
         int fixed_rows = measure(footer);
-        for (const auto& element : L) fixed_rows += measure(element);
+        for (const auto& element : L)
+            fixed_rows += measure(element);
         const int header_rows = slots.header ? measure(slots.header) : 0;
         // Reserve the maximum one row used by the scroll spacer/sticky
         // header. A clicked prompt may use none, but overlays can restore it.
@@ -544,11 +545,12 @@ using namespace ftxui;
         if (!s.autocomplete_suggestions.empty()) {
             const auto minimum_prompt = RenderPromptInput(s, term_cols, 1);
             const int popup_overhead = is_fullscreen ? 2 : 0;
-            const int item_capacity = std::max(0,
-                bottom_limit - fixed_rows - measure(minimum_prompt) - popup_overhead);
-            auto popup = RenderPromptSuggestions(s, term_cols,
-                /*is_overlay=*/is_fullscreen, /*term_rows=*/term_rows,
-                /*max_visible_items=*/item_capacity);
+            const int item_capacity =
+                std::max(0, bottom_limit - fixed_rows - measure(minimum_prompt) - popup_overhead);
+            auto popup =
+                RenderPromptSuggestions(s, term_cols,
+                                        /*is_overlay=*/is_fullscreen, /*term_rows=*/term_rows,
+                                        /*max_visible_items=*/item_capacity);
             if (popup) {
                 fixed_rows += measure(popup);
                 L.push_back(std::move(popup));
@@ -560,8 +562,9 @@ using namespace ftxui;
         int prompt_height = measure(prompt);
         const bool multiline = prompt_height > 3;
         const int transcript_floor = std::min(multiline || have_popup ? 8 : 12, term_rows / 2);
-        const int fixed_limit = std::min(bottom_limit,
-            std::max(0, term_rows - header_rows - scroll_chrome_rows - transcript_floor));
+        const int fixed_limit =
+            std::min(bottom_limit,
+                     std::max(0, term_rows - header_rows - scroll_chrome_rows - transcript_floor));
         // Reduce the held editor's viewport before activity allocation; input
         // bytes and caret/selection ownership remain with the same component.
         while (prompt_rows > 1 && fixed_rows + prompt_height > fixed_limit) {
@@ -570,24 +573,24 @@ using namespace ftxui;
             prompt_height = measure(prompt);
         }
         fixed_rows += prompt_height;
-        const int activity_budget = std::max(0, std::min({
-            bottom_limit - fixed_rows,
-            term_rows - header_rows - scroll_chrome_rows - transcript_floor - fixed_rows}));
+        const int activity_budget = std::max(
+            0, std::min({bottom_limit - fixed_rows, term_rows - header_rows - scroll_chrome_rows -
+                                                        transcript_floor - fixed_rows}));
         // One response envelope contains peer headings and indented children.
         // A full-width copy toast can leave no visible work parent to attach to.
         const auto response_prefix = has_visible_response_parent ? "  ⎿  " : "";
         Elements activity;
-        if (activity_budget > 0 && (!s.todo_store.items.empty()
-                || !s.task_view_store.runtime_agents.empty()
-                || !s.task_view_store.live_teammates.empty())) {
+        if (activity_budget > 0 &&
+            (!s.todo_store.items.empty() || !s.task_view_store.runtime_agents.empty() ||
+             !s.task_view_store.live_teammates.empty())) {
             activity.push_back(agents::runtime::RenderRuntimeAgentActivity(
                 s.task_view_store.runtime_agents, s.todo_store.items,
                 s.task_view_store.live_teammates, term_cols, activity_budget,
                 s.todo_store.completed_collapsed, response_prefix,
                 &s.task_view_store.activity_hit_targets));
         }
-        L.insert(L.begin() + static_cast<std::ptrdiff_t>(activity_position),
-                 activity.begin(), activity.end());
+        L.insert(L.begin() + static_cast<std::ptrdiff_t>(activity_position), activity.begin(),
+                 activity.end());
         L.push_back(std::move(prompt));
         L.push_back(std::move(footer));
 
@@ -601,14 +604,14 @@ using namespace ftxui;
     // ── M1 FullscreenLayout: 3-state sticky prompt chrome ─────────────
     // 3-state discriminant,
     // collapsed-padding resolution, header-prompt guard.
-    slots.sticky_prompt         = s.messages_store.sticky_prompt;
-    slots.sticky_clicked        = s.messages_store.sticky_prompt_clicked;
-    slots.hide_sticky           = false;
-    slots.pill_visible          = s.messages_store.pill_visible;
-    slots.hide_pill             = false;
-    slots.new_message_count     = s.messages_store.unseen_message_count;
-    slots.pill_hit_box          = &s.messages_store.new_messages_pill_box;
-    slots.scrollable_box        = &s.messages_store.scrollable_box;
+    slots.sticky_prompt = s.messages_store.sticky_prompt;
+    slots.sticky_clicked = s.messages_store.sticky_prompt_clicked;
+    slots.hide_sticky = false;
+    slots.pill_visible = s.messages_store.pill_visible;
+    slots.hide_pill = false;
+    slots.new_message_count = s.messages_store.unseen_message_count;
+    slots.pill_hit_box = &s.messages_store.new_messages_pill_box;
+    slots.scrollable_box = &s.messages_store.scrollable_box;
 
     // Local JSX views have no normal above-editor row; retain their existing
     // scroll-region copy feedback placement.
@@ -644,18 +647,16 @@ using namespace ftxui;
             total = s.messages_store.virtual_jh.total();
         } else {
             total = s.messages_store.rendered_content_height_lines
-                ? *s.messages_store.rendered_content_height_lines
-                : EstimateTranscriptRows(BuildVisibleMessages(s),
-                    s.messages_store.viewport_width_cols);
+                        ? *s.messages_store.rendered_content_height_lines
+                        : EstimateTranscriptRows(BuildVisibleMessages(s),
+                                                 s.messages_store.viewport_width_cols);
         }
         int max_top = std::max(0, total - viewport);
         // When pinned to bottom, scroll_offset is 0 but the view is at
         // max_top.  Use the effective position so the delta is correct.
         const bool pinned = s.messages_store.scroll_pinned_to_bottom;
-        int current = pinned
-            ? max_top
-            : std::max(0, s.messages_store.scroll_offset);
-        int delta   = static_cast<int>(sp.scroll_target_row) - current;
+        int current = pinned ? max_top : std::max(0, s.messages_store.scroll_offset);
+        int delta = static_cast<int>(sp.scroll_target_row) - current;
         if (delta != 0) {
             // We need to call ScrollTranscript which takes
             // shared_ptr<ReplScreenState>.  Here we only have a bare ref;
@@ -666,7 +667,7 @@ using namespace ftxui;
             // a direct offset mutation achieves the same effect without
             // requiring the shared_ptr here.
             int old_top = std::clamp(current, 0, max_top);
-            int target  = std::clamp(old_top + delta, 0, max_top);
+            int target = std::clamp(old_top + delta, 0, max_top);
             if (target != old_top) {
                 const bool was_pinned = s.messages_store.scroll_pinned_to_bottom;
                 s.messages_store.scroll_offset = target;
@@ -679,8 +680,7 @@ using namespace ftxui;
                 if (s.messages_store.virtual_list_state) {
                     namespace vl = loom::ui::messages::virtual_list;
                     s.messages_store.virtual_list_state->scroll_top = target;
-                    vl::update_sticky_after_scroll(*s.messages_store.virtual_list_state,
-                                                    old_top);
+                    vl::update_sticky_after_scroll(*s.messages_store.virtual_list_state, old_top);
                 }
             }
         }
@@ -695,11 +695,12 @@ using namespace ftxui;
 
     Element base = fl::ComposeFullscreen(std::move(slots));
     auto dlg = RouteDialog(s.mode, s);
-    if (dlg) base = dbox({
-        std::move(base) | dim,
-        vbox({ filler(),
-               hbox({ filler(), std::move(*dlg) | flex_shrink, filler() })
-               | flex_shrink, filler() }) | flex });
+    if (dlg)
+        base = dbox({std::move(base) | dim,
+                     vbox({filler(),
+                           hbox({filler(), std::move(*dlg) | flex_shrink, filler()}) | flex_shrink,
+                           filler()}) |
+                         flex});
 
     // M7: Layer Bottom + Overlay + Modal dialogs from the dialog_queue.
     // ModalContext provides actual

@@ -16,6 +16,10 @@
 /// Execution strategy: forkpty -> setenv -> execl -> read PTY master -> kill.
 /// All comments and output in English.
 
+#include <fcntl.h>
+#include <libgen.h>
+#include <limits.h>
+
 #include <algorithm>
 #include <array>
 #include <cerrno>
@@ -27,10 +31,6 @@
 #include <string>
 #include <string_view>
 #include <vector>
-
-#include <fcntl.h>
-#include <libgen.h>
-#include <limits.h>
 #if defined(__APPLE__)
 #include <util.h>  // forkpty
 #else
@@ -48,14 +48,17 @@ namespace fs = std::filesystem;
 // ---------------------------------------------------------------------------
 // DECSET sequence constants
 // ---------------------------------------------------------------------------
-static constexpr std::string_view SEQ_ALT_SCREEN   = "\x1b[?1049h";
-static constexpr std::string_view SEQ_MOUSE_X11    = "\x1b[?1000h";
+static constexpr std::string_view SEQ_ALT_SCREEN = "\x1b[?1049h";
+static constexpr std::string_view SEQ_MOUSE_X11 = "\x1b[?1000h";
 static constexpr std::string_view SEQ_MOUSE_MOTION = "\x1b[?1003h";
-static constexpr std::string_view SEQ_MOUSE_URXVT  = "\x1b[?1015h";
-static constexpr std::string_view SEQ_MOUSE_SGR    = "\x1b[?1006h";
+static constexpr std::string_view SEQ_MOUSE_URXVT = "\x1b[?1015h";
+static constexpr std::string_view SEQ_MOUSE_SGR = "\x1b[?1006h";
 
 static const std::vector<std::string_view> MOUSE_SEQS = {
-    SEQ_MOUSE_X11, SEQ_MOUSE_MOTION, SEQ_MOUSE_URXVT, SEQ_MOUSE_SGR,
+    SEQ_MOUSE_X11,
+    SEQ_MOUSE_MOTION,
+    SEQ_MOUSE_URXVT,
+    SEQ_MOUSE_SGR,
 };
 
 // ---------------------------------------------------------------------------
@@ -80,7 +83,7 @@ static std::string locate_repl_binary(const char* argv0) {
         here + "/../../build/debug/bin/loom",  // from <build>/tests/e2e/
         here + "/../build/debug/bin/loom",
         here + "/build/debug/bin/loom",
-        "build/debug/bin/loom",                 // from repo root
+        "build/debug/bin/loom",  // from repo root
     };
     for (const auto& c : candidates) {
         if (file_exists_executable(c)) return c;
@@ -122,9 +125,9 @@ struct EnvVar {
 };
 
 struct PtyResult {
-    int         exit_code = -1;
-    std::string output;      // combined stdout+stderr from the PTY
-    bool        spawn_ok = false;
+    int exit_code = -1;
+    std::string output;  // combined stdout+stderr from the PTY
+    bool spawn_ok = false;
 };
 
 /// Install() flushes alternate-screen and mouse modes before Draw() emits
@@ -140,10 +143,8 @@ static bool has_completed_terminal_install(std::string_view output) {
 /// Spawn `binary_path` in a PTY, capture until terminal installation is
 /// observable (or the child closes the PTY), then kill and reap it. CTest's
 /// existing process timeout bounds a child that never reaches readiness.
-static PtyResult run_pty_and_capture(
-    const std::string& binary_path,
-    const std::vector<EnvVar>& env_vars)
-{
+static PtyResult run_pty_and_capture(const std::string& binary_path,
+                                     const std::vector<EnvVar>& env_vars) {
     PtyResult result;
 
     int master_fd = -1;
@@ -204,9 +205,12 @@ static PtyResult run_pty_and_capture(
     ::close(master_fd);
 
     int status = 0;
-    while (::waitpid(pid, &status, 0) < 0 && errno == EINTR) {}
-    if (WIFEXITED(status)) result.exit_code = WEXITSTATUS(status);
-    else if (WIFSIGNALED(status)) result.exit_code = -WTERMSIG(status);
+    while (::waitpid(pid, &status, 0) < 0 && errno == EINTR) {
+    }
+    if (WIFEXITED(status))
+        result.exit_code = WEXITSTATUS(status);
+    else if (WIFSIGNALED(status))
+        result.exit_code = -WTERMSIG(status);
 
     return result;
 }
@@ -221,12 +225,18 @@ static void print_visible(const std::string& data, size_t max_bytes = 2048) {
     printf("    \"");
     for (size_t i = 0; i < n; ++i) {
         const unsigned char c = static_cast<unsigned char>(data[i]);
-        if (c == 0x1b)       printf("\\x1b");
-        else if (c == '\n')  printf("\\n");
-        else if (c == '\r')  printf("\\r");
-        else if (c == '\t')  printf("\\t");
-        else if (c < 32 || c == 127) printf("\\x%02x", c);
-        else                 putchar(c);
+        if (c == 0x1b)
+            printf("\\x1b");
+        else if (c == '\n')
+            printf("\\n");
+        else if (c == '\r')
+            printf("\\r");
+        else if (c == '\t')
+            printf("\\t");
+        else if (c < 32 || c == 127)
+            printf("\\x%02x", c);
+        else
+            putchar(c);
     }
     printf("\"\n");
     if (data.size() > max_bytes) {
@@ -257,18 +267,21 @@ static void print_hex_dump(const std::string& data, size_t max_bytes = 512) {
 /// Build the base environment shared by all tests.
 static std::vector<EnvVar> base_env(const std::string& home_dir) {
     return {
-        {"TERM",          "xterm-256color"},
-        {"HOME",          home_dir},
-        {"LOOM_API_KEY",  "test-key"},
-        {"LOOM_MODEL",    "test-model"},
+        {"TERM", "xterm-256color"},
+        {"HOME", home_dir},
+        {"LOOM_API_KEY", "test-key"},
+        {"LOOM_MODEL", "test-model"},
     };
 }
 
 /// Add or override an env var in the vector.
-static void set_env(std::vector<EnvVar>& envs, const std::string& key,
-                    const std::string& value) {
+static void set_env(std::vector<EnvVar>& envs, const std::string& key, const std::string& value) {
     for (auto& ev : envs) {
-        if (ev.key == key) { ev.value = value; ev.unset = false; return; }
+        if (ev.key == key) {
+            ev.value = value;
+            ev.unset = false;
+            return;
+        }
     }
     envs.push_back({key, value, false});
 }
@@ -276,7 +289,10 @@ static void set_env(std::vector<EnvVar>& envs, const std::string& key,
 /// Mark an env var for unset in the vector.
 static void unset_env(std::vector<EnvVar>& envs, const std::string& key) {
     for (auto& ev : envs) {
-        if (ev.key == key) { ev.unset = true; return; }
+        if (ev.key == key) {
+            ev.unset = true;
+            return;
+        }
     }
     envs.push_back({key, "", true});
 }
@@ -312,10 +328,9 @@ int main(int /*argc*/, char* argv[]) {
     // so readiness also works when the PTY splits escape sequences.
     {
         printf("\n[E2E-4] Regression: wait for complete terminal installation\n");
-        const std::string install = std::string(SEQ_ALT_SCREEN) +
-            "\x1b[?7l" + std::string(SEQ_MOUSE_X11) +
-            std::string(SEQ_MOUSE_MOTION) + std::string(SEQ_MOUSE_URXVT) +
-            std::string(SEQ_MOUSE_SGR);
+        const std::string install = std::string(SEQ_ALT_SCREEN) + "\x1b[?7l" +
+                                    std::string(SEQ_MOUSE_X11) + std::string(SEQ_MOUSE_MOTION) +
+                                    std::string(SEQ_MOUSE_URXVT) + std::string(SEQ_MOUSE_SGR);
         std::string captured = "startup\x1b[?25h";
         bool premature = has_completed_terminal_install(captured);
         for (const char byte : install) {
@@ -332,7 +347,7 @@ int main(int /*argc*/, char* argv[]) {
         check("complete first frame ends capture", has_completed_terminal_install(captured));
         check("all mouse sequences captured before readiness",
               std::all_of(MOUSE_SEQS.begin(), MOUSE_SEQS.end(),
-                  [&](std::string_view seq) { return contains(captured, seq); }));
+                          [&](std::string_view seq) { return contains(captured, seq); }));
     }
 
     // On failure, print captured output for debugging.
@@ -341,8 +356,7 @@ int main(int /*argc*/, char* argv[]) {
             printf("  (no output captured)\n");
             return;
         }
-        printf("  --- captured output (%zu bytes, exit=%d) ---\n",
-               r.output.size(), r.exit_code);
+        printf("  --- captured output (%zu bytes, exit=%d) ---\n", r.output.size(), r.exit_code);
         print_visible(r.output);
         printf("  --- hex dump (first 256 bytes) ---\n");
         print_hex_dump(r.output, 256);
@@ -361,8 +375,7 @@ int main(int /*argc*/, char* argv[]) {
             ++failed;
         } else {
             // settings.json with model but NO mouseMode key
-            write_file(fs::path(cfg_dir) / "settings.json",
-                       "{\"model\": \"test-model\"}");
+            write_file(fs::path(cfg_dir) / "settings.json", "{\"model\": \"test-model\"}");
 
             auto envs = base_env(home_dir);
             set_env(envs, "LOOM_CONFIG_DIR", cfg_dir);
@@ -371,10 +384,10 @@ int main(int /*argc*/, char* argv[]) {
             PtyResult r = run_pty_and_capture(bin, envs);
             printf("  exit=%d, captured %zu bytes\n", r.exit_code, r.output.size());
 
-            const bool has_alt   = contains(r.output, SEQ_ALT_SCREEN);
-            const bool has_mouse = std::all_of(
-                MOUSE_SEQS.begin(), MOUSE_SEQS.end(),
-                [&](std::string_view seq) { return contains(r.output, seq); });
+            const bool has_alt = contains(r.output, SEQ_ALT_SCREEN);
+            const bool has_mouse =
+                std::all_of(MOUSE_SEQS.begin(), MOUSE_SEQS.end(),
+                            [&](std::string_view seq) { return contains(r.output, seq); });
 
             check("?1049h present (TUI started)", has_alt);
             check("all mouse DECSET sequences present by default", has_mouse);
@@ -408,22 +421,15 @@ int main(int /*argc*/, char* argv[]) {
             PtyResult r = run_pty_and_capture(bin, envs);
             printf("  exit=%d, captured %zu bytes\n", r.exit_code, r.output.size());
 
-            check("?1049h present (TUI started)",
-                  contains(r.output, SEQ_ALT_SCREEN));
-            check("?1000h (X11 mouse tracking)",
-                  contains(r.output, SEQ_MOUSE_X11));
-            check("?1003h (any-motion tracking)",
-                  contains(r.output, SEQ_MOUSE_MOTION));
-            check("?1015h (urxvt mouse encoding)",
-                  contains(r.output, SEQ_MOUSE_URXVT));
-            check("?1006h (SGR mouse encoding)",
-                  contains(r.output, SEQ_MOUSE_SGR));
+            check("?1049h present (TUI started)", contains(r.output, SEQ_ALT_SCREEN));
+            check("?1000h (X11 mouse tracking)", contains(r.output, SEQ_MOUSE_X11));
+            check("?1003h (any-motion tracking)", contains(r.output, SEQ_MOUSE_MOTION));
+            check("?1015h (urxvt mouse encoding)", contains(r.output, SEQ_MOUSE_URXVT));
+            check("?1006h (SGR mouse encoding)", contains(r.output, SEQ_MOUSE_SGR));
 
             const bool any_fail =
-                !contains(r.output, SEQ_ALT_SCREEN) ||
-                !contains(r.output, SEQ_MOUSE_X11) ||
-                !contains(r.output, SEQ_MOUSE_MOTION) ||
-                !contains(r.output, SEQ_MOUSE_URXVT) ||
+                !contains(r.output, SEQ_ALT_SCREEN) || !contains(r.output, SEQ_MOUSE_X11) ||
+                !contains(r.output, SEQ_MOUSE_MOTION) || !contains(r.output, SEQ_MOUSE_URXVT) ||
                 !contains(r.output, SEQ_MOUSE_SGR);
             if (any_fail) dump_on_fail(r);
 
@@ -444,8 +450,7 @@ int main(int /*argc*/, char* argv[]) {
             printf("  FAIL: cannot create temp dirs\n");
             ++failed;
         } else {
-            write_file(fs::path(cfg_dir) / "settings.json",
-                       "{\"model\": \"test-model\"}");
+            write_file(fs::path(cfg_dir) / "settings.json", "{\"model\": \"test-model\"}");
 
             auto envs = base_env(home_dir);
             set_env(envs, "LOOM_CONFIG_DIR", cfg_dir);
@@ -455,8 +460,7 @@ int main(int /*argc*/, char* argv[]) {
 
             // Explicitly assert ?1049h — this proves the app entered the TUI
             // event loop (Install() was called), not just printed a banner.
-            check("?1049h present (entered TUI event loop)",
-                  contains(r.output, SEQ_ALT_SCREEN));
+            check("?1049h present (entered TUI event loop)", contains(r.output, SEQ_ALT_SCREEN));
 
             if (!contains(r.output, SEQ_ALT_SCREEN)) dump_on_fail(r);
 
@@ -493,12 +497,11 @@ int main(int /*argc*/, char* argv[]) {
             printf("  exit=%d, captured %zu bytes\n", r.exit_code, r.output.size());
 
             // LOOM_CONFIG_DIR takes precedence: mouse DECSET must be present.
-            const bool has_mouse = std::any_of(
-                MOUSE_SEQS.begin(), MOUSE_SEQS.end(),
-                [&](std::string_view seq) { return contains(r.output, seq); });
+            const bool has_mouse =
+                std::any_of(MOUSE_SEQS.begin(), MOUSE_SEQS.end(),
+                            [&](std::string_view seq) { return contains(r.output, seq); });
 
-            check("?1049h present (TUI started)",
-                  contains(r.output, SEQ_ALT_SCREEN));
+            check("?1049h present (TUI started)", contains(r.output, SEQ_ALT_SCREEN));
             check("mouse DECSET present (LOOM_CONFIG_DIR wins)", has_mouse);
 
             if (!has_mouse) dump_on_fail(r);
@@ -533,12 +536,11 @@ int main(int /*argc*/, char* argv[]) {
 
             // settings_home_read() falls back to ~/.agents/settings.json,
             // so mouse DECSET must be present.
-            const bool has_mouse = std::any_of(
-                MOUSE_SEQS.begin(), MOUSE_SEQS.end(),
-                [&](std::string_view seq) { return contains(r.output, seq); });
+            const bool has_mouse =
+                std::any_of(MOUSE_SEQS.begin(), MOUSE_SEQS.end(),
+                            [&](std::string_view seq) { return contains(r.output, seq); });
 
-            check("?1049h present (TUI started)",
-                  contains(r.output, SEQ_ALT_SCREEN));
+            check("?1049h present (TUI started)", contains(r.output, SEQ_ALT_SCREEN));
             check("mouse DECSET present (~/.agents fallback)", has_mouse);
 
             if (!has_mouse) dump_on_fail(r);
@@ -568,9 +570,9 @@ int main(int /*argc*/, char* argv[]) {
             printf("  exit=%d, captured %zu bytes\n", r.exit_code, r.output.size());
 
             const bool has_alt = contains(r.output, SEQ_ALT_SCREEN);
-            const bool has_mouse = std::any_of(
-                MOUSE_SEQS.begin(), MOUSE_SEQS.end(),
-                [&](std::string_view seq) { return contains(r.output, seq); });
+            const bool has_mouse =
+                std::any_of(MOUSE_SEQS.begin(), MOUSE_SEQS.end(),
+                            [&](std::string_view seq) { return contains(r.output, seq); });
             check("?1049h present (TUI started)", has_alt);
             check("explicit false emits no mouse DECSET sequences", !has_mouse);
             if (!has_alt || has_mouse) dump_on_fail(r);
@@ -600,9 +602,9 @@ int main(int /*argc*/, char* argv[]) {
             printf("  exit=%d, captured %zu bytes\n", r.exit_code, r.output.size());
 
             const bool has_alt = contains(r.output, SEQ_ALT_SCREEN);
-            const bool has_mouse = std::any_of(
-                MOUSE_SEQS.begin(), MOUSE_SEQS.end(),
-                [&](std::string_view seq) { return contains(r.output, seq); });
+            const bool has_mouse =
+                std::any_of(MOUSE_SEQS.begin(), MOUSE_SEQS.end(),
+                            [&](std::string_view seq) { return contains(r.output, seq); });
             check("?1049h present (TUI started)", has_alt);
             check("fallback false emits no mouse DECSET sequences", !has_mouse);
             if (!has_alt || has_mouse) dump_on_fail(r);

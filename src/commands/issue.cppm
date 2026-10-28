@@ -3,7 +3,6 @@
 /// Issue management command for tracker workflows.
 module;
 
-
 export module loom.commands.issue;
 
 import std;
@@ -30,19 +29,15 @@ public:
         };
     }
 
-    [[nodiscard]] VoidResult validate(const CommandContext&) {
-        return {};
-    }
+    [[nodiscard]] VoidResult validate(const CommandContext&) { return {}; }
 
     [[nodiscard]] Result<CommandResult> execute(const CommandContext&) {
-        return CommandResult::success(
-            "The /issue command is not available in this native build. "
-            "Use the GitHub CLI (`gh issue list|create|view <n>`) or the github-issues skill for issue tracking.");
+        return CommandResult::success("The /issue command is not available in this native build. "
+                                      "Use the GitHub CLI (`gh issue list|create|view <n>`) or the "
+                                      "github-issues skill for issue tracking.");
     }
 
-    [[nodiscard]] std::vector<std::string> complete(std::string_view) {
-        return {};
-    }
+    [[nodiscard]] std::vector<std::string> complete(std::string_view) { return {}; }
 };
 
-} // namespace loom::commands
+}  // namespace loom::commands

@@ -15,13 +15,16 @@ public:
         "binary/hidden files during directory searches. Requires rg on PATH.";
 
     [[nodiscard]] static loom::core::ToolDefinition definition();
+
     [[nodiscard]] bool check_permission(const loom::core::ToolInput&) const { return true; }
-    [[nodiscard]] loom::utils::Result<loom::core::ToolResult> execute(const loom::core::ToolInput& input);
+
+    [[nodiscard]] loom::utils::Result<loom::core::ToolResult>
+    execute(const loom::core::ToolInput& input);
 };
 
-} // namespace loom::tools::grep
+}  // namespace loom::tools::grep
 
 export namespace loom::tools {
-    using loom::tools::grep::GrepTool;
-    [[nodiscard]] std::unique_ptr<loom::core::ITool> make_grep_tool();
-}
+using loom::tools::grep::GrepTool;
+[[nodiscard]] std::unique_ptr<loom::core::ITool> make_grep_tool();
+}  // namespace loom::tools

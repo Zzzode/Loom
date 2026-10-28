@@ -22,11 +22,12 @@
 // SKIP_*_AUTH env-var doubles; token-fetch tests mock with httplib::Server
 // and environment variable overrides.
 
-#include <cstdio>
-#include <cstdlib>
-#include <unistd.h>
 #include <gtest/gtest.h>
 #include <httplib.h>
+#include <unistd.h>
+
+#include <cstdio>
+#include <cstdlib>
 
 import std;
 import loom.crypto.crypto;
@@ -47,19 +48,27 @@ namespace {
 class ScopedEnv {
 public:
     ScopedEnv(std::string_view key, std::string_view value)
-        : key_(key), prev_(loom::utils::env::get_env(key)) {
+        : key_(key)
+        , prev_(loom::utils::env::get_env(key)) {
         loom::utils::env::set_env(key, value);
     }
+
     ScopedEnv(std::string_view key, std::nullptr_t)
-        : key_(key), prev_(loom::utils::env::get_env(key)) {
+        : key_(key)
+        , prev_(loom::utils::env::get_env(key)) {
         loom::utils::env::unset_env(key);
     }
+
     ~ScopedEnv() {
-        if (prev_) loom::utils::env::set_env(key_, *prev_);
-        else loom::utils::env::unset_env(key_);
+        if (prev_)
+            loom::utils::env::set_env(key_, *prev_);
+        else
+            loom::utils::env::unset_env(key_);
     }
+
     ScopedEnv(const ScopedEnv&) = delete;
     ScopedEnv& operator=(const ScopedEnv&) = delete;
+
 private:
     std::string key_;
     std::optional<std::string> prev_;
@@ -69,15 +78,15 @@ struct EnvRollback {
     // Use setenv() / unsetenv() directly for the subprocess env vars httplib
     // doesn't affect (httplib runs in-process).
     std::vector<std::unique_ptr<ScopedEnv>> overrides;
+
     void set(std::string_view k, std::string_view v) {
         overrides.push_back(std::make_unique<ScopedEnv>(k, v));
     }
-    void unset(std::string_view k) {
-        overrides.push_back(std::make_unique<ScopedEnv>(k, nullptr));
-    }
+
+    void unset(std::string_view k) { overrides.push_back(std::make_unique<ScopedEnv>(k, nullptr)); }
 };
 
-} // anon ns
+}  // namespace
 
 // ===========================================================================
 // SECTION 1: Crypto + encoding invariants.
@@ -91,24 +100,20 @@ TEST(EnterpriseAuth_Crypto, HmacSha256_Rfc4231_TestCase2) {
     auto digest = loom::utils::crypto::hmac_sha256(key, data);
     std::string hex = loom::utils::crypto::sha256_bytes_to_hex(digest);
     // RFC 4231 §4.2 — 32-byte key, 28-byte input, 32-byte expected output.
-    EXPECT_EQ(hex,
-        "198a607eb44bfbc69903a0f1cf2bbdc5ba0aa3f3d9ae3c1c7a3b1696a0b68cf7");
+    EXPECT_EQ(hex, "198a607eb44bfbc69903a0f1cf2bbdc5ba0aa3f3d9ae3c1c7a3b1696a0b68cf7");
 }
 
 TEST(EnterpriseAuth_Crypto, HmacSha256_Rfc4231_TestCase3) {
     // Key = "Jefe" (4 bytes), data = "what do ya want for nothing?" (28 bytes)
-    auto hex = loom::utils::crypto::hmac_sha256_hex("Jefe",
-        "what do ya want for nothing?");
-    EXPECT_EQ(hex,
-        "5bdcc146bf60754e6a042426089575c75a003f089d2739839dec58b964ec3843");
+    auto hex = loom::utils::crypto::hmac_sha256_hex("Jefe", "what do ya want for nothing?");
+    EXPECT_EQ(hex, "5bdcc146bf60754e6a042426089575c75a003f089d2739839dec58b964ec3843");
 }
 
 TEST(EnterpriseAuth_Crypto, HmacSha256_EmptyData) {
     // HMAC of empty data with empty key — must match reference from echo -n ''
     // | openssl dgst -sha256 -hmac ''
     auto hex = loom::utils::crypto::hmac_sha256_hex("", "");
-    EXPECT_EQ(hex,
-        "b613679a0814d9ec772f95d778c35fc5ff1697c493715653c6c712144292c5ad");
+    EXPECT_EQ(hex, "b613679a0814d9ec772f95d778c35fc5ff1697c493715653c6c712144292c5ad");
 }
 
 TEST(EnterpriseAuth_Encoding, UriEncode_UnreservedPassthrough) {
@@ -132,8 +137,8 @@ TEST(EnterpriseAuth_Encoding, UriEncode_ReservedPercentEncoded) {
 
 TEST(EnterpriseAuth_Encoding, UriEncodePath_KeepsForwardSlash) {
     EXPECT_EQ(loom::utils::http::uri_encode_path(
-        "/model/anthropic.test-model-v1:0/invoke-with-response-stream"),
-        "/model/anthropic.test-model-v1%3A0/invoke-with-response-stream");
+                  "/model/anthropic.test-model-v1:0/invoke-with-response-stream"),
+              "/model/anthropic.test-model-v1%3A0/invoke-with-response-stream");
     // Colons are NOT unreserved — they MUST be percent-encoded even in paths.
 }
 
@@ -143,11 +148,12 @@ TEST(EnterpriseAuth_Encoding, FormEncode_SpaceBecomesPlus) {
 }
 
 TEST(EnterpriseAuth_Encoding, UrlDecode_RoundTrip) {
-    std::vector<std::string> cases = {"hello world", "key=val&x=日本語",
-        "unreserved-._~09AZ", "a+b=c"};
+    std::vector<std::string> cases = {"hello world", "key=val&x=日本語", "unreserved-._~09AZ",
+                                      "a+b=c"};
     for (const auto& c : cases) {
         EXPECT_EQ(loom::utils::http::url_decode(loom::utils::http::form_encode(c),
-                                              /*plus_is_space=*/true), c);
+                                                /*plus_is_space=*/true),
+                  c);
     }
     // Strict %2F vs slash decode.
     EXPECT_EQ(loom::utils::http::url_decode("a%2Fb"), "a/b");
@@ -172,15 +178,13 @@ TEST(EnterpriseAuth_Encoding, ConstantTimeCompare) {
 TEST(EnterpriseAuth_SigV4, DeriveSigningKey_KnownVector) {
     // Credentials from AWS SigV4 test suite.
     const std::string secret = "wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY";
-    const std::string date   = "20150830";
+    const std::string date = "20150830";
     const std::string region = "us-east-1";
     const std::string service = "service";
-    auto kSigning = loom::services::auth::aws::derive_signing_key(
-        secret, date, region, service);
+    auto kSigning = loom::services::auth::aws::derive_signing_key(secret, date, region, service);
     // Known-good kSigning hex for this input (from Python HMAC-SHA256).
     std::string hex = loom::utils::crypto::sha256_bytes_to_hex(kSigning);
-    EXPECT_EQ(hex,
-        "938127b5336810ddb6a5d6af445fcac9e371f9ed418ed386b022aed82901be75");
+    EXPECT_EQ(hex, "938127b5336810ddb6a5d6af445fcac9e371f9ed418ed386b022aed82901be75");
 }
 
 TEST(EnterpriseAuth_SigV4, CanonicalHeaders_OrderAndLowercase) {
@@ -194,7 +198,8 @@ TEST(EnterpriseAuth_SigV4, CanonicalHeaders_OrderAndLowercase) {
     });
     // Lowercased keys, sorted.
     std::vector<std::string> keys;
-    for (const auto& [k, _] : canon) keys.push_back(k);
+    for (const auto& [k, _] : canon)
+        keys.push_back(k);
     ASSERT_EQ(keys.size(), 5u);
     EXPECT_EQ(keys[0], "content-type");
     EXPECT_EQ(keys[1], "host");
@@ -226,39 +231,29 @@ TEST(EnterpriseAuth_SigV4, SignRequest_BedrockPost_PayloadHash) {
     EnvRollback env;
     env.unset("AWS_ACCESS_KEY_ID");
     env.unset("AWS_SECRET_ACCESS_KEY");
-    loom::services::auth::aws::AwsCredentials creds{
-        "AKIAIOSFODNN7EXAMPLE",
-        "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
-        ""};
+    loom::services::auth::aws::AwsCredentials creds{"AKIAIOSFODNN7EXAMPLE",
+                                                    "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY", ""};
     const auto tp = std::chrono::system_clock::from_time_t(
         /*2024-06-01T12:00:00Z = 1717243200*/ 1717243200);
     const std::string body = R"({"model":"anthropic.test-model:0","max_tokens":2048})";
-    auto signed_r = sign_request(
-        "POST",
-        "bedrock-runtime.us-east-1.amazonaws.com",
-        "/model/anthropic.test-model-v1:0/invoke-with-response-stream",
-        /*query=*/{},
-        body,
-        {{"Content-Type", "application/json"},
-         {"Accept", "application/vnd.amazon.eventstream"},
-         {"x-app", "cli"}},
-        creds,
-        "us-east-1",
-        "bedrock",
-        tp);
+    auto signed_r = sign_request("POST", "bedrock-runtime.us-east-1.amazonaws.com",
+                                 "/model/anthropic.test-model-v1:0/invoke-with-response-stream",
+                                 /*query=*/{}, body,
+                                 {{"Content-Type", "application/json"},
+                                  {"Accept", "application/vnd.amazon.eventstream"},
+                                  {"x-app", "cli"}},
+                                 creds, "us-east-1", "bedrock", tp);
     ASSERT_TRUE(signed_r.has_value());
     // Invariants (not exact signature — we verified derive_signing_key above).
-    EXPECT_TRUE(signed_r->authorization.starts_with(
-        "AWS4-HMAC-SHA256 Credential=AKIAIOSFODNN7EXAMPLE/"));
-    EXPECT_NE(signed_r->authorization.find("/us-east-1/bedrock/aws4_request, "),
-              std::string::npos);
+    EXPECT_TRUE(
+        signed_r->authorization.starts_with("AWS4-HMAC-SHA256 Credential=AKIAIOSFODNN7EXAMPLE/"));
+    EXPECT_NE(signed_r->authorization.find("/us-east-1/bedrock/aws4_request, "), std::string::npos);
     EXPECT_NE(signed_r->authorization.find("SignedHeaders="), std::string::npos);
     EXPECT_NE(signed_r->authorization.find("Signature="), std::string::npos);
     // Required signed headers are always present.
     EXPECT_NE(signed_r->signed_headers.find("host"), std::string::npos);
     EXPECT_NE(signed_r->signed_headers.find("x-amz-date"), std::string::npos);
-    EXPECT_NE(signed_r->signed_headers.find("x-amz-content-sha256"),
-              std::string::npos);
+    EXPECT_NE(signed_r->signed_headers.find("x-amz-content-sha256"), std::string::npos);
     EXPECT_EQ(signed_r->headers.at("x-amz-date"), "20240601T120000Z");
     // No session token header present.
     EXPECT_EQ(signed_r->headers.count("x-amz-security-token"), 0u);
@@ -268,16 +263,14 @@ TEST(EnterpriseAuth_SigV4, SignRequest_IncludesSessionToken) {
     using namespace loom::services::auth::aws;
     AwsCredentials creds{"AKIAX", "SK", "SESSION_TOK_123"};
     const auto tp = std::chrono::system_clock::from_time_t(1717243200);
-    auto signed_r = sign_request(
-        "GET", "sts.amazonaws.com", "/",
-        {{"Action", "GetCallerIdentity"}, {"Version", "2011-06-15"}},
-        /*body=*/"", {{"Accept", "application/json"}},
-        creds, "us-east-1", "sts", tp);
+    auto signed_r =
+        sign_request("GET", "sts.amazonaws.com", "/",
+                     {{"Action", "GetCallerIdentity"}, {"Version", "2011-06-15"}},
+                     /*body=*/"", {{"Accept", "application/json"}}, creds, "us-east-1", "sts", tp);
     ASSERT_TRUE(signed_r.has_value());
     EXPECT_EQ(signed_r->headers.count("x-amz-security-token"), 1u);
     EXPECT_EQ(signed_r->headers.at("x-amz-security-token"), "SESSION_TOK_123");
-    EXPECT_NE(signed_r->signed_headers.find("x-amz-security-token"),
-              std::string::npos);
+    EXPECT_NE(signed_r->signed_headers.find("x-amz-security-token"), std::string::npos);
 }
 
 TEST(EnterpriseAuth_SigV4, CredentialsFromEnv_HonorsAwsVars) {
@@ -338,7 +331,7 @@ TEST(EnterpriseAuth_SigV4, ResolveRegion_DefaultChain) {
     EXPECT_EQ(resolve_region(), "us-east-1");
     env.set("AWS_DEFAULT_REGION", "eu-west-1");
     EXPECT_EQ(resolve_region(), "eu-west-1");
-    env.set("AWS_REGION", "ap-south-1");   // higher priority
+    env.set("AWS_REGION", "ap-south-1");  // higher priority
     EXPECT_EQ(resolve_region(), "ap-south-1");
 }
 
@@ -358,10 +351,8 @@ TEST(EnterpriseAuth_Gcp, ParseAdcJson_ServiceAccount) {
     auto adc = parse_adc_json(kSaJson, "/tmp/sa.json");
     EXPECT_EQ(adc.type, AdcType::ServiceAccount);
     EXPECT_EQ(adc.project_id, "my-gcp-project-123");
-    EXPECT_EQ(adc.client_email,
-              "my-sa@my-gcp-project-123.iam.gserviceaccount.com");
-    EXPECT_TRUE(adc.private_key_pem.starts_with(
-        "-----BEGIN PRIVATE KEY-----"));
+    EXPECT_EQ(adc.client_email, "my-sa@my-gcp-project-123.iam.gserviceaccount.com");
+    EXPECT_TRUE(adc.private_key_pem.starts_with("-----BEGIN PRIVATE KEY-----"));
     EXPECT_EQ(adc.token_uri, "https://oauth2.googleapis.com/token");
     EXPECT_EQ(adc.source_path, "/tmp/sa.json");
 }
@@ -385,8 +376,7 @@ TEST(EnterpriseAuth_Gcp, ParseAdcJson_AuthorizedUser) {
 TEST(EnterpriseAuth_Gcp, ParseAdcJson_UnknownType) {
     using namespace loom::services::auth::gcp;
     EXPECT_EQ(parse_adc_json("{}", "x.json").type, AdcType::Unknown);
-    EXPECT_EQ(parse_adc_json("not json at all", "x.json").type,
-              AdcType::Unknown);
+    EXPECT_EQ(parse_adc_json("not json at all", "x.json").type, AdcType::Unknown);
     EXPECT_EQ(parse_adc_json(R"({"type":"external_account"})", "x.json").type,
               AdcType::ExternalAccount);
 }
@@ -404,11 +394,11 @@ TEST(EnterpriseAuth_Gcp, VertexRegion_GlobalOnly) {
 TEST(EnterpriseAuth_Gcp, MakeVertexBaseUrl_Format) {
     using namespace loom::services::auth::gcp;
     EXPECT_EQ(make_vertex_base_url("us-central1", "my-project"),
-        "https://us-central1-aiplatform.googleapis.com"
-        "/v1/projects/my-project/locations/us-central1");
+              "https://us-central1-aiplatform.googleapis.com"
+              "/v1/projects/my-project/locations/us-central1");
     EXPECT_EQ(make_vertex_base_url("asia-southeast1", "foo-bar-7"),
-        "https://asia-southeast1-aiplatform.googleapis.com"
-        "/v1/projects/foo-bar-7/locations/asia-southeast1");
+              "https://asia-southeast1-aiplatform.googleapis.com"
+              "/v1/projects/foo-bar-7/locations/asia-southeast1");
 }
 
 // ===========================================================================
@@ -418,22 +408,18 @@ TEST(EnterpriseAuth_Azure, ResolveFoundryBaseUrl_Resource) {
     using namespace loom::services::auth::azure;
     FoundryAuthMode m;
     m.resource = "my-company-eastus";
-    EXPECT_EQ(resolve_foundry_base_url(m),
-              "https://my-company-eastus.services.ai.azure.com");
+    EXPECT_EQ(resolve_foundry_base_url(m), "https://my-company-eastus.services.ai.azure.com");
     // base_url beats resource.
     m.base_url = "https://custom.example.internal/v1";
-    EXPECT_EQ(resolve_foundry_base_url(m),
-              "https://custom.example.internal/v1");
+    EXPECT_EQ(resolve_foundry_base_url(m), "https://custom.example.internal/v1");
     // Trailing slash stripped.
     m.base_url = "https://a.services.ai.azure.com/";
-    EXPECT_EQ(resolve_foundry_base_url(m),
-              "https://a.services.ai.azure.com");
+    EXPECT_EQ(resolve_foundry_base_url(m), "https://a.services.ai.azure.com");
 }
 
 TEST(EnterpriseAuth_Azure, FormEncode_UsedInTokenBodyChars) {
     // Side-check: client_secret values often contain '/' / '+' — must be encoded.
-    EXPECT_EQ(loom::utils::http::form_encode("GOCSPX+abc/def="),
-              "GOCSPX%2Babc%2Fdef%3D");
+    EXPECT_EQ(loom::utils::http::form_encode("GOCSPX+abc/def="), "GOCSPX%2Babc%2Fdef%3D");
 }
 
 // ===========================================================================
@@ -443,7 +429,7 @@ TEST(EnterpriseAuth_ProviderSelector, Priority_BedrockBeatsVertexAndFoundry) {
     using namespace loom::services::auth::byoc;
     EnvRollback env;
     env.set("LOOM_USE_BEDROCK", "1");
-    env.set("LOOM_USE_VERTEX",  "true");
+    env.set("LOOM_USE_VERTEX", "true");
     env.set("LOOM_USE_FOUNDRY", "1");
     EXPECT_EQ(detect_active_provider(), EnterpriseProvider::Bedrock);
 }
@@ -452,7 +438,7 @@ TEST(EnterpriseAuth_ProviderSelector, Priority_VertexBeatsFoundry) {
     using namespace loom::services::auth::byoc;
     EnvRollback env;
     env.unset("LOOM_USE_BEDROCK");
-    env.set("LOOM_USE_VERTEX",  "1");
+    env.set("LOOM_USE_VERTEX", "1");
     env.set("LOOM_USE_FOUNDRY", "1");
     EXPECT_EQ(detect_active_provider(), EnterpriseProvider::Vertex);
 }
@@ -484,13 +470,12 @@ TEST(EnterpriseAuth_ProviderSelector, FirstParty_BaseUrlFromEnv) {
     env.set("LOOM_BASE_URL", "https://api.example.com/v1");
     EnterpriseAuthContext ctx;
     ASSERT_EQ(ctx.provider(), EnterpriseProvider::FirstParty);
-    auto r = ctx.resolve_auth_for_request(
-        "test-model", "POST", "", /*streaming=*/false, {});
+    auto r = ctx.resolve_auth_for_request("test-model", "POST", "", /*streaming=*/false, {});
     ASSERT_TRUE(r.has_value());
     // Base URL comes from LOOM_BASE_URL (no hardcoded default).
     EXPECT_EQ(r->base_url, "https://api.example.com/v1");
     EXPECT_EQ(r->model_id, "test-model");
-    EXPECT_TRUE(r->headers.empty()); // no auth header yet — caller adds x-api-key
+    EXPECT_TRUE(r->headers.empty());  // no auth header yet — caller adds x-api-key
 }
 
 TEST(EnterpriseAuth_ProviderSelector, Bedrock_BaseUrlAndPath) {
@@ -503,16 +488,13 @@ TEST(EnterpriseAuth_ProviderSelector, Bedrock_BaseUrlAndPath) {
     env.set("AWS_SECRET_ACCESS_KEY", "y");
     EnterpriseAuthContext ctx;
     ASSERT_EQ(ctx.provider(), EnterpriseProvider::Bedrock);
-    auto r = ctx.resolve_auth_for_request(
-        "test-model-v1:0", "POST", "{}", /*streaming=*/true,
-        {{"Content-Type", "application/json"}});
+    auto r = ctx.resolve_auth_for_request("test-model-v1:0", "POST", "{}", /*streaming=*/true,
+                                          {{"Content-Type", "application/json"}});
     ASSERT_TRUE(r.has_value());
     EXPECT_EQ(ctx.bedrock_region(), "eu-west-2");
-    EXPECT_EQ(r->base_url,
-              "https://bedrock-runtime.eu-west-2.amazonaws.com");
+    EXPECT_EQ(r->base_url, "https://bedrock-runtime.eu-west-2.amazonaws.com");
     // Streaming path variant.
-    EXPECT_NE(r->bedrock_path.find("invoke-with-response-stream"),
-              std::string::npos);
+    EXPECT_NE(r->bedrock_path.find("invoke-with-response-stream"), std::string::npos);
     // Model ID passed through as-is (no Bedrock prefix mapping).
     EXPECT_EQ(r->model_id, "test-model-v1:0");
     // Skip auth → no headers attached.
@@ -530,12 +512,10 @@ TEST(EnterpriseAuth_ProviderSelector, Vertex_SkipAuthFillsBaseUrlFromFallback) {
     env.set("CLOUD_ML_REGION", "europe-west4");
     EnterpriseAuthContext ctx;
     ASSERT_EQ(ctx.provider(), EnterpriseProvider::Vertex);
-    auto r = ctx.resolve_auth_for_request(
-        "test-model", "POST", "{}", /*streaming=*/true, {});
+    auto r = ctx.resolve_auth_for_request("test-model", "POST", "{}", /*streaming=*/true, {});
     ASSERT_TRUE(r.has_value()) << r.error().message();
     EXPECT_EQ(ctx.vertex_region(), "europe-west4");
-    EXPECT_TRUE(r->base_url.starts_with(
-        "https://europe-west4-aiplatform.googleapis.com"));
+    EXPECT_TRUE(r->base_url.starts_with("https://europe-west4-aiplatform.googleapis.com"));
     EXPECT_NE(r->base_url.find("projects/fallback-42"), std::string::npos);
     EXPECT_NE(r->base_url.find("locations/europe-west4"), std::string::npos);
     // Model ID Vertex @-format.
@@ -549,14 +529,12 @@ TEST(EnterpriseAuth_ProviderSelector, Bedrock_BearerTokenModeSkipsSigning) {
     env.set("AWS_BEARER_TOKEN_BEDROCK", "iam-identity-center-bearer-token-xyz");
     env.set("AWS_REGION", "us-east-1");
     EnterpriseAuthContext ctx;
-    auto r = ctx.resolve_auth_for_request(
-        "test-model-v1", "POST", "{}", /*streaming=*/false, {});
+    auto r = ctx.resolve_auth_for_request("test-model-v1", "POST", "{}", /*streaming=*/false, {});
     ASSERT_TRUE(r.has_value());
     // Bearer token directly attached.
     bool found_auth = false;
     for (const auto& [k, v] : r->headers) {
-        if (k == "Authorization" &&
-            v == "Bearer iam-identity-center-bearer-token-xyz") {
+        if (k == "Authorization" && v == "Bearer iam-identity-center-bearer-token-xyz") {
             found_auth = true;
         }
     }
@@ -577,12 +555,10 @@ TEST(EnterpriseAuth_SigV4, SignRequest_Deterministic) {
     AwsCredentials creds{"AK", "SK", ""};
     auto tp = std::chrono::system_clock::from_time_t(1717243200);
     const std::string body = R"({"prompt":"hello"})";
-    auto r1 = sign_request("POST", "bedrock.us-east-1.amazonaws.com",
-                           "/invoke", {}, body, {}, creds, "us-east-1",
-                           "bedrock", tp);
-    auto r2 = sign_request("POST", "bedrock.us-east-1.amazonaws.com",
-                           "/invoke", {}, body, {}, creds, "us-east-1",
-                           "bedrock", tp);
+    auto r1 = sign_request("POST", "bedrock.us-east-1.amazonaws.com", "/invoke", {}, body, {},
+                           creds, "us-east-1", "bedrock", tp);
+    auto r2 = sign_request("POST", "bedrock.us-east-1.amazonaws.com", "/invoke", {}, body, {},
+                           creds, "us-east-1", "bedrock", tp);
     ASSERT_TRUE(r1.has_value() && r2.has_value());
     EXPECT_EQ(r1->authorization, r2->authorization);
 }

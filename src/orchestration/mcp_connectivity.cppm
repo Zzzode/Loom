@@ -45,30 +45,34 @@ inline auto to_hook_status(loom::services::mcp::ConnectionStatus s)
     -> loom::hooks::notifs::McpServerStatus {
     using CS = loom::services::mcp::ConnectionStatus;
     switch (s) {
-        case CS::Connected:    return loom::hooks::notifs::McpServerStatus::Connected;
-        case CS::Connecting:   return loom::hooks::notifs::McpServerStatus::Connecting;
-        case CS::NeedsAuth:    return loom::hooks::notifs::McpServerStatus::Error;   // surfaced for auth nudge
-        case CS::Error:        return loom::hooks::notifs::McpServerStatus::Error;
-        case CS::Disconnected:
-        default:               return loom::hooks::notifs::McpServerStatus::Disconnected;
+    case CS::Connected:
+        return loom::hooks::notifs::McpServerStatus::Connected;
+    case CS::Connecting:
+        return loom::hooks::notifs::McpServerStatus::Connecting;
+    case CS::NeedsAuth:
+        return loom::hooks::notifs::McpServerStatus::Error;  // surfaced for auth nudge
+    case CS::Error:
+        return loom::hooks::notifs::McpServerStatus::Error;
+    case CS::Disconnected:
+    default:
+        return loom::hooks::notifs::McpServerStatus::Disconnected;
     }
 }
 
 // Projection body: both ids copy snap.name, last_error is copied, and every
 // row shares one now-ms stamp. The clock is the hook module's OWN exported
 // detail::now_ms(), the same clock the deleted direct leg used to read.
-inline auto project_connectivity(
-    std::vector<loom::services::mcp::McpServerSnapshot> snapshots
-) -> std::vector<loom::hooks::notifs::McpConnectivityInfo> {
+inline auto project_connectivity(std::vector<loom::services::mcp::McpServerSnapshot> snapshots)
+    -> std::vector<loom::hooks::notifs::McpConnectivityInfo> {
     std::vector<loom::hooks::notifs::McpConnectivityInfo> infos;
     infos.reserve(snapshots.size());
     const int64_t now = loom::hooks::notifs::detail::now_ms();
     for (const auto& snap : snapshots) {
         loom::hooks::notifs::McpConnectivityInfo info;
-        info.server_id    = snap.name;
+        info.server_id = snap.name;
         info.display_name = snap.name;
-        info.state        = to_hook_status(snap.status);
-        info.last_error   = snap.last_error;
+        info.state = to_hook_status(snap.status);
+        info.last_error = snap.last_error;
         info.last_seen_ms = now;
         infos.push_back(std::move(info));
     }
@@ -82,9 +86,8 @@ inline auto project_connectivity(
 inline void wire_mcp_connectivity() {
     loom::tools::set_mcp_snapshots_sink(
         [](std::vector<loom::services::mcp::McpServerSnapshot> snaps) {
-            loom::hooks::notifs::set_raw_mcp_connectivity(
-                project_connectivity(std::move(snaps)));
+            loom::hooks::notifs::set_raw_mcp_connectivity(project_connectivity(std::move(snaps)));
         });
 }
 
-} // export namespace loom::orchestration::mcp_connectivity
+}  // namespace loom::orchestration::mcp_connectivity

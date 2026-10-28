@@ -21,38 +21,57 @@ using namespace loom::core;
 
 /// Conventional Commit type categories
 enum class CommitType : std::uint8_t {
-    Feat, Fix, Docs, Style, Refactor, Perf, Test, Build, Ci, Chore,
+    Feat,
+    Fix,
+    Docs,
+    Style,
+    Refactor,
+    Perf,
+    Test,
+    Build,
+    Ci,
+    Chore,
 };
 
 /// Map CommitType to its string prefix
 [[nodiscard]] constexpr std::string_view commit_type_str(CommitType type) noexcept {
     switch (type) {
-        case CommitType::Feat:     return "feat";
-        case CommitType::Fix:      return "fix";
-        case CommitType::Docs:     return "docs";
-        case CommitType::Style:    return "style";
-        case CommitType::Refactor: return "refactor";
-        case CommitType::Perf:     return "perf";
-        case CommitType::Test:     return "test";
-        case CommitType::Build:    return "build";
-        case CommitType::Ci:       return "ci";
-        case CommitType::Chore:    return "chore";
+    case CommitType::Feat:
+        return "feat";
+    case CommitType::Fix:
+        return "fix";
+    case CommitType::Docs:
+        return "docs";
+    case CommitType::Style:
+        return "style";
+    case CommitType::Refactor:
+        return "refactor";
+    case CommitType::Perf:
+        return "perf";
+    case CommitType::Test:
+        return "test";
+    case CommitType::Build:
+        return "build";
+    case CommitType::Ci:
+        return "ci";
+    case CommitType::Chore:
+        return "chore";
     }
     return "chore";
 }
 
 /// Options parsed from command arguments
 struct CommitOptions {
-    bool amend = false;           // --amend: amend the last commit
-    bool all = false;             // --all/-a: stage all tracked changes
+    bool amend = false;                  // --amend: amend the last commit
+    bool all = false;                    // --all/-a: stage all tracked changes
     std::optional<std::string> message;  // -m: user-supplied message (skip LLM)
 };
 
 /// Git state collected before generating commit message
 struct GitState {
-    std::string status;           // Output of `git status --short`
-    std::string diff;             // Output of `git diff --cached` (staged changes)
-    std::string recent_log;       // Output of `git log --oneline -10`
+    std::string status;      // Output of `git status --short`
+    std::string diff;        // Output of `git diff --cached` (staged changes)
+    std::string recent_log;  // Output of `git log --oneline -10`
 };
 
 /// CommitCommand implements the /commit slash command.
@@ -64,14 +83,22 @@ public:
         return CommandDefinition{
             .name = "commit",
             .description = "Generate a conventional commit message and commit staged changes",
-            .args = {
-                CommandArg{.name = "--amend", .description = "Amend the previous commit",
-                           .type = ArgType::None, .required = false},
-                CommandArg{.name = "--all", .description = "Stage all tracked file changes before committing",
-                           .type = ArgType::None, .required = false},
-                CommandArg{.name = "-m", .description = "Provide commit message directly (skip LLM generation)",
-                           .type = ArgType::Text, .required = false},
-            },
+            .args =
+                {
+                    CommandArg{.name = "--amend",
+                               .description = "Amend the previous commit",
+                               .type = ArgType::None,
+                               .required = false},
+                    CommandArg{.name = "--all",
+                               .description = "Stage all tracked file changes before committing",
+                               .type = ArgType::None,
+                               .required = false},
+                    CommandArg{.name = "-m",
+                               .description =
+                                   "Provide commit message directly (skip LLM generation)",
+                               .type = ArgType::Text,
+                               .required = false},
+                },
             .category = "git",
             .aliases = {"ci"},
             .hidden = false,
@@ -83,10 +110,8 @@ public:
         auto opts = parse_options(ctx.args);
         // If -m is used, ensure a message follows
         if (opts.message && opts.message->empty()) {
-            return std::unexpected(Error::make(
-                ErrorCode::InvalidRequest,
-                "The -m flag requires a non-empty commit message"
-            ));
+            return std::unexpected(Error::make(ErrorCode::InvalidRequest,
+                                               "The -m flag requires a non-empty commit message"));
         }
         return {};
     }
@@ -123,9 +148,7 @@ public:
         auto commit_result = execute_commit(commit_msg, opts);
         if (!commit_result) return std::unexpected(commit_result.error());
 
-        return CommandResult::success(
-            std::format("Committed: {}", commit_msg.substr(0, 72))
-        );
+        return CommandResult::success(std::format("Committed: {}", commit_msg.substr(0, 72)));
     }
 
     /// Provide completions for partial argument input
@@ -163,19 +186,16 @@ private:
         // Run git status
         state.status = run_git_command("status --short");
         if (state.status.starts_with("fatal:")) {
-            return std::unexpected(Error::make(
-                ErrorCode::ToolExecutionFailed, "Not a git repository"
-            ));
+            return std::unexpected(
+                Error::make(ErrorCode::ToolExecutionFailed, "Not a git repository"));
         }
 
         // Stage all tracked changes if --all flag
         if (opts.all) {
             const auto add_output = run_git_command("add -u");
             if (add_output.starts_with("fatal:") || add_output.starts_with("error:")) {
-                return std::unexpected(Error::make(
-                    ErrorCode::ToolExecutionFailed,
-                    std::format("Git add failed: {}", add_output)
-                ));
+                return std::unexpected(Error::make(ErrorCode::ToolExecutionFailed,
+                                                   std::format("Git add failed: {}", add_output)));
             }
         }
 
@@ -204,23 +224,21 @@ private:
             "- Keep the first line under 72 characters\n"
             "- Add body if the change is complex\n"
             "- Reply ONLY with the commit message, no other text.\n\n"
-            "Note: Git commands (git diff, git log, git status, etc.) are allowed via the Bash tool if you need more context.",
-            state.status, state.diff, state.recent_log
-        );
+            "Note: Git commands (git diff, git log, git status, etc.) are allowed via the Bash "
+            "tool if you need more context.",
+            state.status, state.diff, state.recent_log);
     }
 
     /// Validate that a commit message follows conventional commit format
     [[nodiscard]] static VoidResult validate_commit_message(std::string_view msg) {
         if (msg.empty()) {
-            return std::unexpected(Error::make(
-                ErrorCode::InvalidRequest, "Commit message cannot be empty"
-            ));
+            return std::unexpected(
+                Error::make(ErrorCode::InvalidRequest, "Commit message cannot be empty"));
         }
 
         // Pattern: type(optional scope): description
         static const std::regex pattern(
-            R"(^(feat|fix|docs|style|refactor|perf|test|build|ci|chore)(\(.+\))?!?:\s.+)"
-        );
+            R"(^(feat|fix|docs|style|refactor|perf|test|build|ci|chore)(\(.+\))?!?:\s.+)");
 
         auto first_line = msg.substr(0, msg.find('\n'));
         if (!std::regex_match(std::string(first_line), pattern)) {
@@ -246,9 +264,8 @@ private:
     }
 
     /// Execute the actual git commit with the given message and options
-    [[nodiscard]] static VoidResult execute_commit(
-        const std::string& message, const CommitOptions& opts
-    ) {
+    [[nodiscard]] static VoidResult execute_commit(const std::string& message,
+                                                   const CommitOptions& opts) {
         std::string cmd = "commit";
         if (opts.amend) cmd += " --amend";
         cmd += std::format(" -m \"{}\"", message);
@@ -256,10 +273,8 @@ private:
         auto output = run_git_command(cmd);
         if (output.find("error") != std::string::npos ||
             output.find("fatal") != std::string::npos) {
-            return std::unexpected(Error::make(
-                ErrorCode::ToolExecutionFailed,
-                std::format("Git commit failed: {}", output)
-            ));
+            return std::unexpected(Error::make(ErrorCode::ToolExecutionFailed,
+                                               std::format("Git commit failed: {}", output)));
         }
         return {};
     }
@@ -283,4 +298,4 @@ private:
     }
 };
 
-} // namespace loom::commands
+}  // namespace loom::commands

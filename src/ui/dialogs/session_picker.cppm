@@ -14,10 +14,10 @@
 /// Standalone-slot (fullscreen) rather than Modal.
 module;
 
-#include <cctype>
-
-#include <ftxui/dom/elements.hpp>
 #include <ftxui/component/event.hpp>
+#include <ftxui/dom/elements.hpp>
+
+#include <cctype>
 #include <cstddef>
 
 export module loom.ui.dialogs.session_picker;
@@ -44,8 +44,7 @@ using SessionPickerEntry = dsys::SessionPickerEntry;
 /// Matches query characters in order within title, cwd, or session_id.
 [[nodiscard]] inline auto filter_sessions(std::span<const SessionPickerEntry> sessions,
                                           std::string_view query)
-    -> std::vector<SessionPickerEntry>
-{
+    -> std::vector<SessionPickerEntry> {
     if (query.empty()) {
         return std::vector<SessionPickerEntry>(sessions.begin(), sessions.end());
     }
@@ -93,10 +92,8 @@ using SessionPickerEntry = dsys::SessionPickerEntry;
 
 /// Render the SessionPicker dialog using FTXUI + DialogFrame.
 /// Standalone slot: fills the terminal with a small margin.
-[[nodiscard]] inline Element RenderSessionPicker(
-    const dsys::SessionPickerPayload& p,
-    const dsys::DialogRenderContext& ctx)
-{
+[[nodiscard]] inline Element RenderSessionPicker(const dsys::SessionPickerPayload& p,
+                                                 const dsys::DialogRenderContext& ctx) {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
     auto filtered = filter_sessions(p.sessions, p.query);
     int count = static_cast<int>(filtered.size());
@@ -121,31 +118,24 @@ using SessionPickerEntry = dsys::SessionPickerEntry;
     namespace pc = loom::ui::permissions::components;
 
     if (filtered.empty()) {
-        list_els.push_back(
-            hbox({
-                text("  "),
-                text("No sessions found") | color(pal.muted),
-            })
-        );
+        list_els.push_back(hbox({
+            text("  "),
+            text("No sessions found") | color(pal.muted),
+        }));
     } else {
         for (int i = start; i < end; ++i) {
             const auto& pal = *loom::ui::design::theme::current_theme().palette;
             const auto& s = filtered[i];
             bool is_selected = (i == selected);
 
-            auto prefix = is_selected
-                ? text("❯ ") | color(pal.info)
-                : text("  ");
+            auto prefix = is_selected ? text("❯ ") | color(pal.info) : text("  ");
 
-            auto title_el = is_selected
-                ? text(s.title) | bold
-                : text(s.title);
+            auto title_el = is_selected ? text(s.title) | bold : text(s.title);
 
             // Right-aligned metadata: age · N msgs · cwd
-            auto meta = std::format("{}  ·  {} msgs  ·  {}",
-                s.age_string, s.message_count, s.cwd);
+            auto meta = std::format("{}  ·  {} msgs  ·  {}", s.age_string, s.message_count, s.cwd);
 
-            Elements row_els = { prefix, title_el, filler(), text(meta) | color(pal.muted) };
+            Elements row_els = {prefix, title_el, filler(), text(meta) | color(pal.muted)};
 
             auto row = hbox(std::move(row_els));
             if (is_selected) {
@@ -157,31 +147,27 @@ using SessionPickerEntry = dsys::SessionPickerEntry;
         // Scroll indicators
         if (start > 0) {
             list_els.insert(list_els.begin(),
-                hbox({
-                    text("  ↑ "),
-                    text(std::to_string(start) + " more") | color(pal.muted),
-                    filler(),
-                })
-            );
+                            hbox({
+                                text("  ↑ "),
+                                text(std::to_string(start) + " more") | color(pal.muted),
+                                filler(),
+                            }));
         }
         int remaining = count - end;
         if (remaining > 0) {
-            list_els.push_back(
-                hbox({
-                    text("  ↓ "),
-                    text(std::to_string(remaining) + " more") | color(pal.muted),
-                    filler(),
-                })
-            );
+            list_els.push_back(hbox({
+                text("  ↓ "),
+                text(std::to_string(remaining) + " more") | color(pal.muted),
+                filler(),
+            }));
         }
     }
 
     auto list_el = vbox(std::move(list_els));
 
     // ---- Search input row ----
-    auto query_display = p.query.empty()
-        ? text("Type to search sessions...") | color(pal.muted)
-        : text(p.query) | bold;
+    auto query_display = p.query.empty() ? text("Type to search sessions...") | color(pal.muted)
+                                         : text(p.query) | bold;
 
     auto search_row = hbox({
         text("❯ ") | color(pal.info),
@@ -212,9 +198,8 @@ using SessionPickerEntry = dsys::SessionPickerEntry;
 
     const int avail_cols = std::max(40, ctx.term_cols - 2);
     const int avail_rows = std::max(10, ctx.term_rows - 2);
-    return dframe::DialogFrame(props, ctx.theme)
-        | size(WIDTH, EQUAL, avail_cols)
-        | size(HEIGHT, EQUAL, avail_rows);
+    return dframe::DialogFrame(props, ctx.theme) | size(WIDTH, EQUAL, avail_cols) |
+           size(HEIGHT, EQUAL, avail_rows);
 }
 
 // ============================================================
@@ -223,17 +208,13 @@ using SessionPickerEntry = dsys::SessionPickerEntry;
 
 /// Handle keyboard events for the SessionPicker dialog.
 /// Returns true if the event was handled.
-inline bool HandleSessionPickerEvent(
-    dsys::SessionPickerPayload& p,
-    const Event& event)
-{
+inline bool HandleSessionPickerEvent(dsys::SessionPickerPayload& p, const Event& event) {
     auto filtered = filter_sessions(p.sessions, p.query);
     int count = static_cast<int>(filtered.size());
 
     // Navigation
     if (event == Event::ArrowUp || event == Event::Character('k') ||
-        event == Event::Character('K'))
-    {
+        event == Event::Character('K')) {
         if (p.selected_index > 0) {
             p.selected_index--;
         } else if (count > 0) {
@@ -242,8 +223,7 @@ inline bool HandleSessionPickerEvent(
         return true;
     }
     if (event == Event::ArrowDown || event == Event::Character('j') ||
-        event == Event::Character('J'))
-    {
+        event == Event::Character('J')) {
         if (p.selected_index < count - 1) {
             p.selected_index++;
         } else {
@@ -314,4 +294,4 @@ inline bool HandleSessionPickerEvent(
     return false;
 }
 
-} // namespace loom::ui::dialogs::session_picker
+}  // namespace loom::ui::dialogs::session_picker

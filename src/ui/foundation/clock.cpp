@@ -24,15 +24,14 @@ namespace {
 // Not atomic: the seam is for single-threaded test replay (RFC 0003 §8.3).
 std::optional<std::chrono::steady_clock::time_point> now_override;
 
-} // namespace
+}  // namespace
 
 std::chrono::steady_clock::time_point steady_now() noexcept {
     return now_override.value_or(std::chrono::steady_clock::now());
 }
 
-void set_steady_now_for_testing(
-    std::optional<std::chrono::steady_clock::time_point> now) noexcept {
+void set_steady_now_for_testing(std::optional<std::chrono::steady_clock::time_point> now) noexcept {
     now_override = std::move(now);
 }
 
-} // namespace loom::ui::clock
+}  // namespace loom::ui::clock

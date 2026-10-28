@@ -22,7 +22,7 @@ import std;
 
 import loom.serdes.json;
 import loom.tools.agent_runtime;
-import loom.model.effort;  // arch-check: keep-import (EffortLevel alias, line 39)
+import loom.model.effort; // arch-check: keep-import (EffortLevel alias, line 39)
 
 export namespace loom::server::control {
 
@@ -224,14 +224,9 @@ struct PermissionRemoveDirectories {
 };
 
 /// Discriminated union of permission updates.
-using PermissionUpdate = std::variant<
-    PermissionAddRules,
-    PermissionReplaceRules,
-    PermissionRemoveRules,
-    PermissionSetMode,
-    PermissionAddDirectories,
-    PermissionRemoveDirectories
->;
+using PermissionUpdate =
+    std::variant<PermissionAddRules, PermissionReplaceRules, PermissionRemoveRules,
+                 PermissionSetMode, PermissionAddDirectories, PermissionRemoveDirectories>;
 
 /// Classification of permission decision for telemetry.
 enum class PermissionDecisionClassification : std::uint8_t {
@@ -288,12 +283,8 @@ struct McpSdkServerConfig {
 };
 
 /// Union of process-transport MCP server configurations.
-using McpServerConfig = std::variant<
-    McpStdioServerConfig,
-    McpSSEServerConfig,
-    McpHttpServerConfig,
-    McpSdkServerConfig
->;
+using McpServerConfig =
+    std::variant<McpStdioServerConfig, McpSSEServerConfig, McpHttpServerConfig, McpSdkServerConfig>;
 
 /// Loom AI proxy server config (output-only).
 struct McpLoomAIProxyServerConfig {
@@ -725,30 +716,16 @@ struct ControlGetContextUsageResponse {
 // ============================================================================
 
 /// Union of all control request inner types.
-using ControlRequestInner = std::variant<
-    ControlInitializeRequest,
-    ControlInterruptRequest,
-    ControlPermissionRequest,
-    ControlSetPermissionModeRequest,
-    ControlSetModelRequest,
-    ControlSetMaxThinkingTokensRequest,
-    ControlMcpStatusRequest,
-    ControlGetContextUsageRequest,
-    ControlRewindFilesRequest,
-    ControlCancelAsyncMessageRequest,
-    ControlSeedReadStateRequest,
-    HookCallbackRequest,
-    ControlMcpMessageRequest,
-    ControlMcpSetServersRequest,
-    ControlReloadPluginsRequest,
-    ControlMcpReconnectRequest,
-    ControlMcpToggleRequest,
-    ControlStopTaskRequest,
-    ControlApplyFlagSettingsRequest,
-    ControlGetSettingsRequest,
-    ControlElicitationRequest,
-    ControlRawRequest
->;
+using ControlRequestInner =
+    std::variant<ControlInitializeRequest, ControlInterruptRequest, ControlPermissionRequest,
+                 ControlSetPermissionModeRequest, ControlSetModelRequest,
+                 ControlSetMaxThinkingTokensRequest, ControlMcpStatusRequest,
+                 ControlGetContextUsageRequest, ControlRewindFilesRequest,
+                 ControlCancelAsyncMessageRequest, ControlSeedReadStateRequest, HookCallbackRequest,
+                 ControlMcpMessageRequest, ControlMcpSetServersRequest, ControlReloadPluginsRequest,
+                 ControlMcpReconnectRequest, ControlMcpToggleRequest, ControlStopTaskRequest,
+                 ControlApplyFlagSettingsRequest, ControlGetSettingsRequest,
+                 ControlElicitationRequest, ControlRawRequest>;
 
 /// SDK Control Request wrapper.
 struct ControlRequest {
@@ -932,11 +909,13 @@ struct SDKPartialAssistantMessage {
 struct SDKCompactBoundaryMessage {
     std::string trigger;
     int pre_tokens = 0;
+
     struct PreservedSegment {
         std::string head_uuid;
         std::string anchor_uuid;
         std::string tail_uuid;
     };
+
     std::optional<PreservedSegment> preserved_segment;
     std::string uuid;
     std::string session_id;
@@ -991,43 +970,24 @@ struct SDKStreamlinedToolUseSummaryMessage {
 };
 
 /// Union of all SDK message types.
-using SDKMessage = std::variant<
-    SDKAssistantMessage,
-    SDKUserMessage,
-    SDKUserMessageReplay,
-    SDKResultSuccess,
-    SDKResultError,
-    SDKSystemMessage,
-    SDKPartialAssistantMessage,
-    SDKCompactBoundaryMessage,
-    SDKStatusMessage,
-    SDKToolProgressMessage
->;
+using SDKMessage =
+    std::variant<SDKAssistantMessage, SDKUserMessage, SDKUserMessageReplay, SDKResultSuccess,
+                 SDKResultError, SDKSystemMessage, SDKPartialAssistantMessage,
+                 SDKCompactBoundaryMessage, SDKStatusMessage, SDKToolProgressMessage>;
 
 // ============================================================================
 // Stdin/Stdout envelopes (moved from loom.sdk.control_types)
 // ============================================================================
 
 /// Messages written to stdout by the CLI.
-using StdoutMessage = std::variant<
-    SDKMessage,
-    SDKStreamlinedTextMessage,
-    SDKStreamlinedToolUseSummaryMessage,
-    SDKPostTurnSummaryMessage,
-    ControlResponse,
-    ControlRequest,
-    ControlCancelRequest,
-    KeepAliveMessage
->;
+using StdoutMessage =
+    std::variant<SDKMessage, SDKStreamlinedTextMessage, SDKStreamlinedToolUseSummaryMessage,
+                 SDKPostTurnSummaryMessage, ControlResponse, ControlRequest, ControlCancelRequest,
+                 KeepAliveMessage>;
 
 /// Messages read from stdin by the CLI.
-using StdinMessage = std::variant<
-    SDKUserMessage,
-    ControlRequest,
-    ControlResponse,
-    KeepAliveMessage,
-    UpdateEnvironmentVariablesMessage
->;
+using StdinMessage = std::variant<SDKUserMessage, ControlRequest, ControlResponse, KeepAliveMessage,
+                                  UpdateEnvironmentVariablesMessage>;
 
 // ============================================================================
 // Ser/de — enum string helpers
@@ -1037,12 +997,16 @@ namespace detail_serde {
 
 [[nodiscard]] inline std::string_view fast_mode_state_to_str(FastModeState v) {
     switch (v) {
-        case FastModeState::Off: return "off";
-        case FastModeState::Cooldown: return "cooldown";
-        case FastModeState::On: return "on";
+    case FastModeState::Off:
+        return "off";
+    case FastModeState::Cooldown:
+        return "cooldown";
+    case FastModeState::On:
+        return "on";
     }
     return "off";
 }
+
 [[nodiscard]] inline std::optional<FastModeState> fast_mode_state_from_str(std::string_view s) {
     if (s == "off") return FastModeState::Off;
     if (s == "cooldown") return FastModeState::Cooldown;
@@ -1052,14 +1016,20 @@ namespace detail_serde {
 
 [[nodiscard]] inline std::string_view permission_mode_to_str(PermissionMode v) {
     switch (v) {
-        case PermissionMode::Default: return "default";
-        case PermissionMode::AcceptEdits: return "acceptEdits";
-        case PermissionMode::BypassPermissions: return "bypassPermissions";
-        case PermissionMode::Plan: return "plan";
-        case PermissionMode::DontAsk: return "dontAsk";
+    case PermissionMode::Default:
+        return "default";
+    case PermissionMode::AcceptEdits:
+        return "acceptEdits";
+    case PermissionMode::BypassPermissions:
+        return "bypassPermissions";
+    case PermissionMode::Plan:
+        return "plan";
+    case PermissionMode::DontAsk:
+        return "dontAsk";
     }
     return "default";
 }
+
 [[nodiscard]] inline std::optional<PermissionMode> permission_mode_from_str(std::string_view s) {
     if (s == "default") return PermissionMode::Default;
     if (s == "acceptEdits") return PermissionMode::AcceptEdits;
@@ -1071,15 +1041,22 @@ namespace detail_serde {
 
 [[nodiscard]] inline std::string_view mcp_connection_status_to_str(McpConnectionStatus v) {
     switch (v) {
-        case McpConnectionStatus::Connected: return "connected";
-        case McpConnectionStatus::Failed: return "failed";
-        case McpConnectionStatus::NeedsAuth: return "needs_auth";
-        case McpConnectionStatus::Pending: return "pending";
-        case McpConnectionStatus::Disabled: return "disabled";
+    case McpConnectionStatus::Connected:
+        return "connected";
+    case McpConnectionStatus::Failed:
+        return "failed";
+    case McpConnectionStatus::NeedsAuth:
+        return "needs_auth";
+    case McpConnectionStatus::Pending:
+        return "pending";
+    case McpConnectionStatus::Disabled:
+        return "disabled";
     }
     return "pending";
 }
-[[nodiscard]] inline std::optional<McpConnectionStatus> mcp_connection_status_from_str(std::string_view s) {
+
+[[nodiscard]] inline std::optional<McpConnectionStatus>
+mcp_connection_status_from_str(std::string_view s) {
     if (s == "connected") return McpConnectionStatus::Connected;
     if (s == "failed") return McpConnectionStatus::Failed;
     if (s == "needs_auth") return McpConnectionStatus::NeedsAuth;
@@ -1090,23 +1067,32 @@ namespace detail_serde {
 
 [[nodiscard]] inline std::string_view result_error_subtype_to_str(ResultErrorSubtype v) {
     switch (v) {
-        case ResultErrorSubtype::ErrorDuringExecution: return "error_during_execution";
-        case ResultErrorSubtype::ErrorMaxTurns: return "error_max_turns";
-        case ResultErrorSubtype::ErrorMaxBudgetUsd: return "error_max_budget_usd";
-        case ResultErrorSubtype::ErrorMaxStructuredOutputRetries: return "error_max_structured_output_retries";
+    case ResultErrorSubtype::ErrorDuringExecution:
+        return "error_during_execution";
+    case ResultErrorSubtype::ErrorMaxTurns:
+        return "error_max_turns";
+    case ResultErrorSubtype::ErrorMaxBudgetUsd:
+        return "error_max_budget_usd";
+    case ResultErrorSubtype::ErrorMaxStructuredOutputRetries:
+        return "error_max_structured_output_retries";
     }
     return "error_during_execution";
 }
 
 [[nodiscard]] inline std::string_view elicitation_action_to_str(ElicitationAction v) {
     switch (v) {
-        case ElicitationAction::Accept: return "accept";
-        case ElicitationAction::Decline: return "decline";
-        case ElicitationAction::Cancel: return "cancel";
+    case ElicitationAction::Accept:
+        return "accept";
+    case ElicitationAction::Decline:
+        return "decline";
+    case ElicitationAction::Cancel:
+        return "cancel";
     }
     return "accept";
 }
-[[nodiscard]] inline std::optional<ElicitationAction> elicitation_action_from_str(std::string_view s) {
+
+[[nodiscard]] inline std::optional<ElicitationAction>
+elicitation_action_from_str(std::string_view s) {
     if (s == "accept") return ElicitationAction::Accept;
     if (s == "decline") return ElicitationAction::Decline;
     if (s == "cancel") return ElicitationAction::Cancel;
@@ -1115,44 +1101,66 @@ namespace detail_serde {
 
 [[nodiscard]] inline std::string_view settings_source_name_to_str(SettingsSourceName v) {
     switch (v) {
-        case SettingsSourceName::UserSettings: return "userSettings";
-        case SettingsSourceName::ProjectSettings: return "projectSettings";
-        case SettingsSourceName::LocalSettings: return "localSettings";
-        case SettingsSourceName::FlagSettings: return "flagSettings";
-        case SettingsSourceName::PolicySettings: return "policySettings";
+    case SettingsSourceName::UserSettings:
+        return "userSettings";
+    case SettingsSourceName::ProjectSettings:
+        return "projectSettings";
+    case SettingsSourceName::LocalSettings:
+        return "localSettings";
+    case SettingsSourceName::FlagSettings:
+        return "flagSettings";
+    case SettingsSourceName::PolicySettings:
+        return "policySettings";
     }
     return "userSettings";
 }
 
-[[nodiscard]] inline std::string_view permission_update_destination_to_str(PermissionUpdateDestination v) {
+[[nodiscard]] inline std::string_view
+permission_update_destination_to_str(PermissionUpdateDestination v) {
     switch (v) {
-        case PermissionUpdateDestination::UserSettings: return "userSettings";
-        case PermissionUpdateDestination::ProjectSettings: return "projectSettings";
-        case PermissionUpdateDestination::LocalSettings: return "localSettings";
-        case PermissionUpdateDestination::Session: return "session";
-        case PermissionUpdateDestination::CliArg: return "cliArg";
+    case PermissionUpdateDestination::UserSettings:
+        return "userSettings";
+    case PermissionUpdateDestination::ProjectSettings:
+        return "projectSettings";
+    case PermissionUpdateDestination::LocalSettings:
+        return "localSettings";
+    case PermissionUpdateDestination::Session:
+        return "session";
+    case PermissionUpdateDestination::CliArg:
+        return "cliArg";
     }
     return "userSettings";
 }
 
 [[nodiscard]] inline std::string_view permission_behavior_to_str(PermissionBehavior v) {
     switch (v) {
-        case PermissionBehavior::Allow: return "allow";
-        case PermissionBehavior::Deny: return "deny";
-        case PermissionBehavior::Ask: return "ask";
+    case PermissionBehavior::Allow:
+        return "allow";
+    case PermissionBehavior::Deny:
+        return "deny";
+    case PermissionBehavior::Ask:
+        return "ask";
     }
     return "allow";
 }
 
-[[nodiscard]] inline std::string_view sdk_assistant_message_error_to_str(SDKAssistantMessageError v) {
+[[nodiscard]] inline std::string_view
+sdk_assistant_message_error_to_str(SDKAssistantMessageError v) {
     switch (v) {
-        case SDKAssistantMessageError::AuthenticationFailed: return "authentication_failed";
-        case SDKAssistantMessageError::BillingError: return "billing_error";
-        case SDKAssistantMessageError::RateLimit: return "rate_limit";
-        case SDKAssistantMessageError::InvalidRequest: return "invalid_request";
-        case SDKAssistantMessageError::ServerError: return "server_error";
-        case SDKAssistantMessageError::Unknown: return "unknown";
-        case SDKAssistantMessageError::MaxOutputTokens: return "max_output_tokens";
+    case SDKAssistantMessageError::AuthenticationFailed:
+        return "authentication_failed";
+    case SDKAssistantMessageError::BillingError:
+        return "billing_error";
+    case SDKAssistantMessageError::RateLimit:
+        return "rate_limit";
+    case SDKAssistantMessageError::InvalidRequest:
+        return "invalid_request";
+    case SDKAssistantMessageError::ServerError:
+        return "server_error";
+    case SDKAssistantMessageError::Unknown:
+        return "unknown";
+    case SDKAssistantMessageError::MaxOutputTokens:
+        return "max_output_tokens";
     }
     return "unknown";
 }
@@ -1164,18 +1172,16 @@ namespace detail_serde {
 }
 
 /// Read an optional string field.
-[[nodiscard]] inline std::optional<std::string> read_optional_string(
-    loom::utils::json::JsonVal obj, std::string_view key
-) {
+[[nodiscard]] inline std::optional<std::string> read_optional_string(loom::utils::json::JsonVal obj,
+                                                                     std::string_view key) {
     auto v = obj.get(key);
     if (v.is_str()) return std::string(v.as_str());
     return std::nullopt;
 }
 
 /// Read an optional int field.
-[[nodiscard]] inline std::optional<int64_t> read_optional_int(
-    loom::utils::json::JsonVal obj, std::string_view key
-) {
+[[nodiscard]] inline std::optional<int64_t> read_optional_int(loom::utils::json::JsonVal obj,
+                                                              std::string_view key) {
     auto v = obj.get(key);
     if (v.is_num()) return v.as_int();
     return std::nullopt;
@@ -1183,27 +1189,24 @@ namespace detail_serde {
 
 /// Read an optional double field (yyjson stores 30.0 as a real, not an int;
 /// read_optional_int would return 0 for it).
-[[nodiscard]] inline std::optional<double> read_optional_double(
-    loom::utils::json::JsonVal obj, std::string_view key
-) {
+[[nodiscard]] inline std::optional<double> read_optional_double(loom::utils::json::JsonVal obj,
+                                                                std::string_view key) {
     auto v = obj.get(key);
     if (v.is_num()) return v.as_double();
     return std::nullopt;
 }
 
 /// Read an optional bool field.
-[[nodiscard]] inline std::optional<bool> read_optional_bool(
-    loom::utils::json::JsonVal obj, std::string_view key
-) {
+[[nodiscard]] inline std::optional<bool> read_optional_bool(loom::utils::json::JsonVal obj,
+                                                            std::string_view key) {
     auto v = obj.get(key);
     if (v.is_bool()) return v.as_bool();
     return std::nullopt;
 }
 
 /// Read a string vector field.
-[[nodiscard]] inline std::vector<std::string> read_string_vec(
-    loom::utils::json::JsonVal obj, std::string_view key
-) {
+[[nodiscard]] inline std::vector<std::string> read_string_vec(loom::utils::json::JsonVal obj,
+                                                              std::string_view key) {
     std::vector<std::string> out;
     auto arr = obj.get(key);
     if (arr.is_arr()) {
@@ -1214,7 +1217,7 @@ namespace detail_serde {
     return out;
 }
 
-} // namespace detail_serde
+}  // namespace detail_serde
 
 /// Public string conversion for PermissionMode (the detail_serde
 /// version is module-internal; bridge_messaging needs the wire string).
@@ -1228,28 +1231,44 @@ namespace detail_serde {
 
 [[nodiscard]] std::string SlashCommand_to_json(const SlashCommand& v);
 [[nodiscard]] std::expected<SlashCommand, std::string> SlashCommand_from_json(std::string_view raw);
-inline std::string to_json(const SlashCommand& v) { return SlashCommand_to_json(v); }
+
+inline std::string to_json(const SlashCommand& v) {
+    return SlashCommand_to_json(v);
+}
+
 inline std::expected<SlashCommand, std::string> from_json(std::string_view raw, SlashCommand*) {
     return SlashCommand_from_json(raw);
 }
 
 [[nodiscard]] std::string AgentInfo_to_json(const AgentInfo& v);
 [[nodiscard]] std::expected<AgentInfo, std::string> AgentInfo_from_json(std::string_view raw);
-inline std::string to_json(const AgentInfo& v) { return AgentInfo_to_json(v); }
+
+inline std::string to_json(const AgentInfo& v) {
+    return AgentInfo_to_json(v);
+}
+
 inline std::expected<AgentInfo, std::string> from_json(std::string_view raw, AgentInfo*) {
     return AgentInfo_from_json(raw);
 }
 
 [[nodiscard]] std::string ModelInfo_to_json(const ModelInfo& v);
 [[nodiscard]] std::expected<ModelInfo, std::string> ModelInfo_from_json(std::string_view raw);
-inline std::string to_json(const ModelInfo& v) { return ModelInfo_to_json(v); }
+
+inline std::string to_json(const ModelInfo& v) {
+    return ModelInfo_to_json(v);
+}
+
 inline std::expected<ModelInfo, std::string> from_json(std::string_view raw, ModelInfo*) {
     return ModelInfo_from_json(raw);
 }
 
 [[nodiscard]] std::string AccountInfo_to_json(const AccountInfo& v);
 [[nodiscard]] std::expected<AccountInfo, std::string> AccountInfo_from_json(std::string_view raw);
-inline std::string to_json(const AccountInfo& v) { return AccountInfo_to_json(v); }
+
+inline std::string to_json(const AccountInfo& v) {
+    return AccountInfo_to_json(v);
+}
+
 inline std::expected<AccountInfo, std::string> from_json(std::string_view raw, AccountInfo*) {
     return AccountInfo_from_json(raw);
 }
@@ -1258,7 +1277,11 @@ inline std::expected<AccountInfo, std::string> from_json(std::string_view raw, A
 // stay snake_case; only the JSON keys differ.
 [[nodiscard]] std::string ModelUsage_to_json(const ModelUsage& v);
 [[nodiscard]] std::expected<ModelUsage, std::string> ModelUsage_from_json(std::string_view raw);
-inline std::string to_json(const ModelUsage& v) { return ModelUsage_to_json(v); }
+
+inline std::string to_json(const ModelUsage& v) {
+    return ModelUsage_to_json(v);
+}
+
 inline std::expected<ModelUsage, std::string> from_json(std::string_view raw, ModelUsage*) {
     return ModelUsage_from_json(raw);
 }
@@ -1278,22 +1301,28 @@ inline std::expected<ModelUsage, std::string> from_json(std::string_view raw, Mo
 // ── ControlPermissionRequest (golden-gate) ──────────────────────────────────
 
 [[nodiscard]] std::string ControlPermissionRequest_to_json(const ControlPermissionRequest& v);
-[[nodiscard]] std::expected<ControlPermissionRequest, std::string> ControlPermissionRequest_from_json(loom::utils::json::JsonVal inner);
+[[nodiscard]] std::expected<ControlPermissionRequest, std::string>
+ControlPermissionRequest_from_json(loom::utils::json::JsonVal inner);
 
 // ── ControlSetPermissionModeRequest (golden-gate) ───────────────────────────
 
-[[nodiscard]] std::string ControlSetPermissionModeRequest_to_json(     const ControlSetPermissionModeRequest& v );
-[[nodiscard]] std::expected<ControlSetPermissionModeRequest, std::string> ControlSetPermissionModeRequest_from_json(loom::utils::json::JsonVal inner);
+[[nodiscard]] std::string
+ControlSetPermissionModeRequest_to_json(const ControlSetPermissionModeRequest& v);
+[[nodiscard]] std::expected<ControlSetPermissionModeRequest, std::string>
+ControlSetPermissionModeRequest_from_json(loom::utils::json::JsonVal inner);
 
 // ── ControlSetModelRequest (golden-gate) ────────────────────────────────────
 
 [[nodiscard]] std::string ControlSetModelRequest_to_json(const ControlSetModelRequest& v);
-[[nodiscard]] std::expected<ControlSetModelRequest, std::string> ControlSetModelRequest_from_json(loom::utils::json::JsonVal inner);
+[[nodiscard]] std::expected<ControlSetModelRequest, std::string>
+ControlSetModelRequest_from_json(loom::utils::json::JsonVal inner);
 
 // ── ControlSetMaxThinkingTokensRequest (golden-gate) ────────────────────────
 
-[[nodiscard]] std::string ControlSetMaxThinkingTokensRequest_to_json(     const ControlSetMaxThinkingTokensRequest& v );
-[[nodiscard]] std::expected<ControlSetMaxThinkingTokensRequest, std::string> ControlSetMaxThinkingTokensRequest_from_json(loom::utils::json::JsonVal inner);
+[[nodiscard]] std::string
+ControlSetMaxThinkingTokensRequest_to_json(const ControlSetMaxThinkingTokensRequest& v);
+[[nodiscard]] std::expected<ControlSetMaxThinkingTokensRequest, std::string>
+ControlSetMaxThinkingTokensRequest_from_json(loom::utils::json::JsonVal inner);
 
 // ── ControlRawRequest (unknown subtypes) ────────────────────────────────────
 
@@ -1302,67 +1331,88 @@ inline std::expected<ModelUsage, std::string> from_json(std::string_view raw, Mo
 // ── McpServerConfig variant ─────────────────────────────────────────────────
 
 [[nodiscard]] std::string McpStdioServerConfig_to_json(const McpStdioServerConfig& v);
-[[nodiscard]] std::expected<McpStdioServerConfig, std::string> McpStdioServerConfig_from_json(loom::utils::json::JsonVal o);
+[[nodiscard]] std::expected<McpStdioServerConfig, std::string>
+McpStdioServerConfig_from_json(loom::utils::json::JsonVal o);
 
 [[nodiscard]] std::string McpSSEServerConfig_to_json(const McpSSEServerConfig& v);
-[[nodiscard]] std::expected<McpSSEServerConfig, std::string> McpSSEServerConfig_from_json(loom::utils::json::JsonVal o);
+[[nodiscard]] std::expected<McpSSEServerConfig, std::string>
+McpSSEServerConfig_from_json(loom::utils::json::JsonVal o);
 
 [[nodiscard]] std::string McpHttpServerConfig_to_json(const McpHttpServerConfig& v);
-[[nodiscard]] std::expected<McpHttpServerConfig, std::string> McpHttpServerConfig_from_json(loom::utils::json::JsonVal o);
+[[nodiscard]] std::expected<McpHttpServerConfig, std::string>
+McpHttpServerConfig_from_json(loom::utils::json::JsonVal o);
 
 [[nodiscard]] std::string McpSdkServerConfig_to_json(const McpSdkServerConfig& v);
-[[nodiscard]] std::expected<McpSdkServerConfig, std::string> McpSdkServerConfig_from_json(loom::utils::json::JsonVal o);
+[[nodiscard]] std::expected<McpSdkServerConfig, std::string>
+McpSdkServerConfig_from_json(loom::utils::json::JsonVal o);
 
 [[nodiscard]] std::string McpServerConfig_to_json(const McpServerConfig& v);
-[[nodiscard]] std::expected<McpServerConfig, std::string> McpServerConfig_from_json(loom::utils::json::JsonVal o);
-[[nodiscard]] std::expected<McpServerConfig, std::string> McpServerConfig_from_json(std::string_view raw);
+[[nodiscard]] std::expected<McpServerConfig, std::string>
+McpServerConfig_from_json(loom::utils::json::JsonVal o);
+[[nodiscard]] std::expected<McpServerConfig, std::string>
+McpServerConfig_from_json(std::string_view raw);
 
 // ── ControlInitializeRequest (full parse) ───────────────────────────────────
 
-[[nodiscard]] std::expected<ControlInitializeRequest, std::string> ControlInitializeRequest_from_json(loom::utils::json::JsonVal inner);
+[[nodiscard]] std::expected<ControlInitializeRequest, std::string>
+ControlInitializeRequest_from_json(loom::utils::json::JsonVal inner);
 
 // ── Remaining control request subtypes ──────────────────────────────────────
 
-[[nodiscard]] std::string ControlMcpStatusRequest_to_json(     const ControlMcpStatusRequest& );
+[[nodiscard]] std::string ControlMcpStatusRequest_to_json(const ControlMcpStatusRequest&);
 
-[[nodiscard]] std::string ControlGetContextUsageRequest_to_json(     const ControlGetContextUsageRequest& );
+[[nodiscard]] std::string
+ControlGetContextUsageRequest_to_json(const ControlGetContextUsageRequest&);
 
-[[nodiscard]] std::string ControlRewindFilesRequest_to_json(     const ControlRewindFilesRequest& v );
-[[nodiscard]] std::expected<ControlRewindFilesRequest, std::string> ControlRewindFilesRequest_from_json(loom::utils::json::JsonVal inner);
+[[nodiscard]] std::string ControlRewindFilesRequest_to_json(const ControlRewindFilesRequest& v);
+[[nodiscard]] std::expected<ControlRewindFilesRequest, std::string>
+ControlRewindFilesRequest_from_json(loom::utils::json::JsonVal inner);
 
-[[nodiscard]] std::string ControlCancelAsyncMessageRequest_to_json(     const ControlCancelAsyncMessageRequest& v );
-[[nodiscard]] std::expected<ControlCancelAsyncMessageRequest, std::string> ControlCancelAsyncMessageRequest_from_json(loom::utils::json::JsonVal inner);
+[[nodiscard]] std::string
+ControlCancelAsyncMessageRequest_to_json(const ControlCancelAsyncMessageRequest& v);
+[[nodiscard]] std::expected<ControlCancelAsyncMessageRequest, std::string>
+ControlCancelAsyncMessageRequest_from_json(loom::utils::json::JsonVal inner);
 
-[[nodiscard]] std::string ControlSeedReadStateRequest_to_json(     const ControlSeedReadStateRequest& v );
-[[nodiscard]] std::expected<ControlSeedReadStateRequest, std::string> ControlSeedReadStateRequest_from_json(loom::utils::json::JsonVal inner);
+[[nodiscard]] std::string ControlSeedReadStateRequest_to_json(const ControlSeedReadStateRequest& v);
+[[nodiscard]] std::expected<ControlSeedReadStateRequest, std::string>
+ControlSeedReadStateRequest_from_json(loom::utils::json::JsonVal inner);
 
 [[nodiscard]] std::string HookCallbackRequest_to_json(const HookCallbackRequest& v);
-[[nodiscard]] std::expected<HookCallbackRequest, std::string> HookCallbackRequest_from_json(loom::utils::json::JsonVal inner);
+[[nodiscard]] std::expected<HookCallbackRequest, std::string>
+HookCallbackRequest_from_json(loom::utils::json::JsonVal inner);
 
-[[nodiscard]] std::string ControlMcpMessageRequest_to_json(     const ControlMcpMessageRequest& v );
-[[nodiscard]] std::expected<ControlMcpMessageRequest, std::string> ControlMcpMessageRequest_from_json(loom::utils::json::JsonVal inner);
+[[nodiscard]] std::string ControlMcpMessageRequest_to_json(const ControlMcpMessageRequest& v);
+[[nodiscard]] std::expected<ControlMcpMessageRequest, std::string>
+ControlMcpMessageRequest_from_json(loom::utils::json::JsonVal inner);
 
-[[nodiscard]] std::string ControlMcpSetServersRequest_to_json(     const ControlMcpSetServersRequest& v );
-[[nodiscard]] std::expected<ControlMcpSetServersRequest, std::string> ControlMcpSetServersRequest_from_json(loom::utils::json::JsonVal inner);
+[[nodiscard]] std::string ControlMcpSetServersRequest_to_json(const ControlMcpSetServersRequest& v);
+[[nodiscard]] std::expected<ControlMcpSetServersRequest, std::string>
+ControlMcpSetServersRequest_from_json(loom::utils::json::JsonVal inner);
 
-[[nodiscard]] std::string ControlReloadPluginsRequest_to_json(     const ControlReloadPluginsRequest& );
+[[nodiscard]] std::string ControlReloadPluginsRequest_to_json(const ControlReloadPluginsRequest&);
 
-[[nodiscard]] std::string ControlMcpReconnectRequest_to_json(     const ControlMcpReconnectRequest& v );
-[[nodiscard]] std::expected<ControlMcpReconnectRequest, std::string> ControlMcpReconnectRequest_from_json(loom::utils::json::JsonVal inner);
+[[nodiscard]] std::string ControlMcpReconnectRequest_to_json(const ControlMcpReconnectRequest& v);
+[[nodiscard]] std::expected<ControlMcpReconnectRequest, std::string>
+ControlMcpReconnectRequest_from_json(loom::utils::json::JsonVal inner);
 
-[[nodiscard]] std::string ControlMcpToggleRequest_to_json(     const ControlMcpToggleRequest& v );
-[[nodiscard]] std::expected<ControlMcpToggleRequest, std::string> ControlMcpToggleRequest_from_json(loom::utils::json::JsonVal inner);
+[[nodiscard]] std::string ControlMcpToggleRequest_to_json(const ControlMcpToggleRequest& v);
+[[nodiscard]] std::expected<ControlMcpToggleRequest, std::string>
+ControlMcpToggleRequest_from_json(loom::utils::json::JsonVal inner);
 
-[[nodiscard]] std::string ControlStopTaskRequest_to_json(     const ControlStopTaskRequest& v );
-[[nodiscard]] std::expected<ControlStopTaskRequest, std::string> ControlStopTaskRequest_from_json(loom::utils::json::JsonVal inner);
+[[nodiscard]] std::string ControlStopTaskRequest_to_json(const ControlStopTaskRequest& v);
+[[nodiscard]] std::expected<ControlStopTaskRequest, std::string>
+ControlStopTaskRequest_from_json(loom::utils::json::JsonVal inner);
 
-[[nodiscard]] std::string ControlApplyFlagSettingsRequest_to_json(     const ControlApplyFlagSettingsRequest& v );
-[[nodiscard]] std::expected<ControlApplyFlagSettingsRequest, std::string> ControlApplyFlagSettingsRequest_from_json(loom::utils::json::JsonVal inner);
+[[nodiscard]] std::string
+ControlApplyFlagSettingsRequest_to_json(const ControlApplyFlagSettingsRequest& v);
+[[nodiscard]] std::expected<ControlApplyFlagSettingsRequest, std::string>
+ControlApplyFlagSettingsRequest_from_json(loom::utils::json::JsonVal inner);
 
-[[nodiscard]] std::string ControlGetSettingsRequest_to_json(     const ControlGetSettingsRequest& );
+[[nodiscard]] std::string ControlGetSettingsRequest_to_json(const ControlGetSettingsRequest&);
 
-[[nodiscard]] std::string ControlElicitationRequest_to_json(     const ControlElicitationRequest& v );
-[[nodiscard]] std::expected<ControlElicitationRequest, std::string> ControlElicitationRequest_from_json(loom::utils::json::JsonVal inner);
+[[nodiscard]] std::string ControlElicitationRequest_to_json(const ControlElicitationRequest& v);
+[[nodiscard]] std::expected<ControlElicitationRequest, std::string>
+ControlElicitationRequest_from_json(loom::utils::json::JsonVal inner);
 
 // ── Variant dispatch: ControlRequestInner → JSON ───────────────────────────
 
@@ -1373,7 +1423,8 @@ inline std::expected<ModelUsage, std::string> from_json(std::string_view raw, Mo
 
 /// Parse a ControlRequestInner from a subtype string + the inner JSON object.
 /// Unknown subtypes produce a ControlRawRequest (never a parse failure).
-[[nodiscard]] ControlRequestInner parse_control_request_inner(     std::string_view subtype,     loom::utils::json::JsonVal inner );
+[[nodiscard]] ControlRequestInner parse_control_request_inner(std::string_view subtype,
+                                                              loom::utils::json::JsonVal inner);
 
 // ============================================================================
 // Ser/de — control response subtypes
@@ -1381,9 +1432,11 @@ inline std::expected<ModelUsage, std::string> from_json(std::string_view raw, Mo
 
 // ── ControlInitializeResponse (golden-gate) ─────────────────────────────────
 
-[[nodiscard]] std::string ControlInitializeResponse_to_json(     const ControlInitializeResponse& v );
-[[nodiscard]] std::expected<ControlInitializeResponse, std::string> ControlInitializeResponse_from_json(loom::utils::json::JsonVal inner);
-[[nodiscard]] std::expected<ControlInitializeResponse, std::string> ControlInitializeResponse_from_json(std::string_view raw);
+[[nodiscard]] std::string ControlInitializeResponse_to_json(const ControlInitializeResponse& v);
+[[nodiscard]] std::expected<ControlInitializeResponse, std::string>
+ControlInitializeResponse_from_json(loom::utils::json::JsonVal inner);
+[[nodiscard]] std::expected<ControlInitializeResponse, std::string>
+ControlInitializeResponse_from_json(std::string_view raw);
 
 // ============================================================================
 // Ser/de — control wrappers (golden-gate)
@@ -1392,20 +1445,29 @@ inline std::expected<ModelUsage, std::string> from_json(std::string_view raw, Mo
 // ── ControlSuccessResponse ──────────────────────────────────────────────────
 
 [[nodiscard]] std::string ControlSuccessResponse_to_json(const ControlSuccessResponse& v);
-[[nodiscard]] std::expected<ControlSuccessResponse, std::string> ControlSuccessResponse_from_json(loom::utils::json::JsonVal inner);
-[[nodiscard]] std::expected<ControlSuccessResponse, std::string> ControlSuccessResponse_from_json(std::string_view raw);
+[[nodiscard]] std::expected<ControlSuccessResponse, std::string>
+ControlSuccessResponse_from_json(loom::utils::json::JsonVal inner);
+[[nodiscard]] std::expected<ControlSuccessResponse, std::string>
+ControlSuccessResponse_from_json(std::string_view raw);
 
 // ── ControlErrorResponse ────────────────────────────────────────────────────
 
 [[nodiscard]] std::string ControlErrorResponse_to_json(const ControlErrorResponse& v);
-[[nodiscard]] std::expected<ControlErrorResponse, std::string> ControlErrorResponse_from_json(loom::utils::json::JsonVal inner);
-[[nodiscard]] std::expected<ControlErrorResponse, std::string> ControlErrorResponse_from_json(std::string_view raw);
+[[nodiscard]] std::expected<ControlErrorResponse, std::string>
+ControlErrorResponse_from_json(loom::utils::json::JsonVal inner);
+[[nodiscard]] std::expected<ControlErrorResponse, std::string>
+ControlErrorResponse_from_json(std::string_view raw);
 
 // ── ControlRequest envelope ─────────────────────────────────────────────────
 
 [[nodiscard]] std::string ControlRequest_to_json(const ControlRequest& v);
-[[nodiscard]] std::expected<ControlRequest, std::string> ControlRequest_from_json(     std::string_view raw );
-inline std::string to_json(const ControlRequest& v) { return ControlRequest_to_json(v); }
+[[nodiscard]] std::expected<ControlRequest, std::string>
+ControlRequest_from_json(std::string_view raw);
+
+inline std::string to_json(const ControlRequest& v) {
+    return ControlRequest_to_json(v);
+}
+
 inline std::expected<ControlRequest, std::string> from_json(std::string_view raw, ControlRequest*) {
     return ControlRequest_from_json(raw);
 }
@@ -1414,14 +1476,21 @@ inline std::expected<ControlRequest, std::string> from_json(std::string_view raw
 
 namespace detail_serde {
 
-[[nodiscard]] std::string control_response_inner_to_json(     const std::variant<ControlSuccessResponse, ControlErrorResponse>& inner );
+[[nodiscard]] std::string control_response_inner_to_json(
+    const std::variant<ControlSuccessResponse, ControlErrorResponse>& inner);
 
-} // namespace detail_serde
+}  // namespace detail_serde
 
 [[nodiscard]] std::string ControlResponse_to_json(const ControlResponse& v);
-[[nodiscard]] std::expected<ControlResponse, std::string> ControlResponse_from_json(     std::string_view raw );
-inline std::string to_json(const ControlResponse& v) { return ControlResponse_to_json(v); }
-inline std::expected<ControlResponse, std::string> from_json(std::string_view raw, ControlResponse*) {
+[[nodiscard]] std::expected<ControlResponse, std::string>
+ControlResponse_from_json(std::string_view raw);
+
+inline std::string to_json(const ControlResponse& v) {
+    return ControlResponse_to_json(v);
+}
+
+inline std::expected<ControlResponse, std::string> from_json(std::string_view raw,
+                                                             ControlResponse*) {
     return ControlResponse_from_json(raw);
 }
 
@@ -1431,98 +1500,128 @@ inline std::expected<ControlResponse, std::string> from_json(std::string_view ra
 
 namespace detail_serde {
 
-[[nodiscard]] std::string string_map_to_json(     const std::unordered_map<std::string, std::string>& m );
+[[nodiscard]] std::string string_map_to_json(const std::unordered_map<std::string, std::string>& m);
 
-[[nodiscard]] std::unordered_map<std::string, std::string> string_map_from_json(     loom::utils::json::JsonVal o );
+[[nodiscard]] std::unordered_map<std::string, std::string>
+string_map_from_json(loom::utils::json::JsonVal o);
 
-[[nodiscard]] std::optional<SDKAssistantMessageError> sdk_assistant_message_error_from_str(std::string_view s);
+[[nodiscard]] std::optional<SDKAssistantMessageError>
+sdk_assistant_message_error_from_str(std::string_view s);
 
 [[nodiscard]] std::optional<ResultErrorSubtype> result_error_subtype_from_str(std::string_view s);
 
-} // namespace detail_serde
+}  // namespace detail_serde
 
 // ── SDKPermissionDenial ─────────────────────────────────────────────────────
 
 [[nodiscard]] std::string SDKPermissionDenial_to_json(const SDKPermissionDenial& v);
-[[nodiscard]] std::expected<SDKPermissionDenial, std::string> SDKPermissionDenial_from_json(loom::utils::json::JsonVal o);
+[[nodiscard]] std::expected<SDKPermissionDenial, std::string>
+SDKPermissionDenial_from_json(loom::utils::json::JsonVal o);
 
 // ── SDKUserMessage ──────────────────────────────────────────────────────────
 
 [[nodiscard]] std::string SDKUserMessage_to_json(const SDKUserMessage& v);
-[[nodiscard]] std::expected<SDKUserMessage, std::string> SDKUserMessage_from_json(loom::utils::json::JsonVal o);
-[[nodiscard]] std::expected<SDKUserMessage, std::string> SDKUserMessage_from_json(std::string_view raw);
+[[nodiscard]] std::expected<SDKUserMessage, std::string>
+SDKUserMessage_from_json(loom::utils::json::JsonVal o);
+[[nodiscard]] std::expected<SDKUserMessage, std::string>
+SDKUserMessage_from_json(std::string_view raw);
 
 // ── SDKUserMessageReplay ────────────────────────────────────────────────────
 
 [[nodiscard]] std::string SDKUserMessageReplay_to_json(const SDKUserMessageReplay& v);
-[[nodiscard]] std::expected<SDKUserMessageReplay, std::string> SDKUserMessageReplay_from_json(loom::utils::json::JsonVal o);
-[[nodiscard]] std::expected<SDKUserMessageReplay, std::string> SDKUserMessageReplay_from_json(std::string_view raw);
+[[nodiscard]] std::expected<SDKUserMessageReplay, std::string>
+SDKUserMessageReplay_from_json(loom::utils::json::JsonVal o);
+[[nodiscard]] std::expected<SDKUserMessageReplay, std::string>
+SDKUserMessageReplay_from_json(std::string_view raw);
 
 // ── SDKAssistantMessage ─────────────────────────────────────────────────────
 
 [[nodiscard]] std::string SDKAssistantMessage_to_json(const SDKAssistantMessage& v);
-[[nodiscard]] std::expected<SDKAssistantMessage, std::string> SDKAssistantMessage_from_json(loom::utils::json::JsonVal o);
-[[nodiscard]] std::expected<SDKAssistantMessage, std::string> SDKAssistantMessage_from_json(std::string_view raw);
+[[nodiscard]] std::expected<SDKAssistantMessage, std::string>
+SDKAssistantMessage_from_json(loom::utils::json::JsonVal o);
+[[nodiscard]] std::expected<SDKAssistantMessage, std::string>
+SDKAssistantMessage_from_json(std::string_view raw);
 
 // ── SDKResultSuccess ────────────────────────────────────────────────────────
 
 [[nodiscard]] std::string SDKResultSuccess_to_json(const SDKResultSuccess& v);
-[[nodiscard]] std::expected<SDKResultSuccess, std::string> SDKResultSuccess_from_json(loom::utils::json::JsonVal o);
-[[nodiscard]] std::expected<SDKResultSuccess, std::string> SDKResultSuccess_from_json(std::string_view raw);
+[[nodiscard]] std::expected<SDKResultSuccess, std::string>
+SDKResultSuccess_from_json(loom::utils::json::JsonVal o);
+[[nodiscard]] std::expected<SDKResultSuccess, std::string>
+SDKResultSuccess_from_json(std::string_view raw);
 
 // ── SDKResultError ──────────────────────────────────────────────────────────
 
 [[nodiscard]] std::string SDKResultError_to_json(const SDKResultError& v);
-[[nodiscard]] std::expected<SDKResultError, std::string> SDKResultError_from_json(loom::utils::json::JsonVal o);
-[[nodiscard]] std::expected<SDKResultError, std::string> SDKResultError_from_json(std::string_view raw);
+[[nodiscard]] std::expected<SDKResultError, std::string>
+SDKResultError_from_json(loom::utils::json::JsonVal o);
+[[nodiscard]] std::expected<SDKResultError, std::string>
+SDKResultError_from_json(std::string_view raw);
 
 // ── SDKSystemMessage ────────────────────────────────────────────────────────
 
 [[nodiscard]] std::string SDKSystemMessage_to_json(const SDKSystemMessage& v);
-[[nodiscard]] std::expected<SDKSystemMessage, std::string> SDKSystemMessage_from_json(loom::utils::json::JsonVal o);
-[[nodiscard]] std::expected<SDKSystemMessage, std::string> SDKSystemMessage_from_json(std::string_view raw);
+[[nodiscard]] std::expected<SDKSystemMessage, std::string>
+SDKSystemMessage_from_json(loom::utils::json::JsonVal o);
+[[nodiscard]] std::expected<SDKSystemMessage, std::string>
+SDKSystemMessage_from_json(std::string_view raw);
 
 // ── SDKPartialAssistantMessage ──────────────────────────────────────────────
 
-[[nodiscard]] std::string SDKPartialAssistantMessage_to_json(     const SDKPartialAssistantMessage& v );
-[[nodiscard]] std::expected<SDKPartialAssistantMessage, std::string> SDKPartialAssistantMessage_from_json(loom::utils::json::JsonVal o);
-[[nodiscard]] std::expected<SDKPartialAssistantMessage, std::string> SDKPartialAssistantMessage_from_json(std::string_view raw);
+[[nodiscard]] std::string SDKPartialAssistantMessage_to_json(const SDKPartialAssistantMessage& v);
+[[nodiscard]] std::expected<SDKPartialAssistantMessage, std::string>
+SDKPartialAssistantMessage_from_json(loom::utils::json::JsonVal o);
+[[nodiscard]] std::expected<SDKPartialAssistantMessage, std::string>
+SDKPartialAssistantMessage_from_json(std::string_view raw);
 
 // ── SDKCompactBoundaryMessage ───────────────────────────────────────────────
 
-[[nodiscard]] std::string SDKCompactBoundaryMessage_to_json(     const SDKCompactBoundaryMessage& v );
-[[nodiscard]] std::expected<SDKCompactBoundaryMessage, std::string> SDKCompactBoundaryMessage_from_json(loom::utils::json::JsonVal o);
-[[nodiscard]] std::expected<SDKCompactBoundaryMessage, std::string> SDKCompactBoundaryMessage_from_json(std::string_view raw);
+[[nodiscard]] std::string SDKCompactBoundaryMessage_to_json(const SDKCompactBoundaryMessage& v);
+[[nodiscard]] std::expected<SDKCompactBoundaryMessage, std::string>
+SDKCompactBoundaryMessage_from_json(loom::utils::json::JsonVal o);
+[[nodiscard]] std::expected<SDKCompactBoundaryMessage, std::string>
+SDKCompactBoundaryMessage_from_json(std::string_view raw);
 
 // ── SDKStatusMessage ────────────────────────────────────────────────────────
 
 [[nodiscard]] std::string SDKStatusMessage_to_json(const SDKStatusMessage& v);
-[[nodiscard]] std::expected<SDKStatusMessage, std::string> SDKStatusMessage_from_json(loom::utils::json::JsonVal o);
-[[nodiscard]] std::expected<SDKStatusMessage, std::string> SDKStatusMessage_from_json(std::string_view raw);
+[[nodiscard]] std::expected<SDKStatusMessage, std::string>
+SDKStatusMessage_from_json(loom::utils::json::JsonVal o);
+[[nodiscard]] std::expected<SDKStatusMessage, std::string>
+SDKStatusMessage_from_json(std::string_view raw);
 
 // ── SDKToolProgressMessage ──────────────────────────────────────────────────
 
-[[nodiscard]] std::string SDKToolProgressMessage_to_json(     const SDKToolProgressMessage& v );
-[[nodiscard]] std::expected<SDKToolProgressMessage, std::string> SDKToolProgressMessage_from_json(loom::utils::json::JsonVal o);
-[[nodiscard]] std::expected<SDKToolProgressMessage, std::string> SDKToolProgressMessage_from_json(std::string_view raw);
+[[nodiscard]] std::string SDKToolProgressMessage_to_json(const SDKToolProgressMessage& v);
+[[nodiscard]] std::expected<SDKToolProgressMessage, std::string>
+SDKToolProgressMessage_from_json(loom::utils::json::JsonVal o);
+[[nodiscard]] std::expected<SDKToolProgressMessage, std::string>
+SDKToolProgressMessage_from_json(std::string_view raw);
 
 // ── SDKPostTurnSummaryMessage ───────────────────────────────────────────────
 
-[[nodiscard]] std::string SDKPostTurnSummaryMessage_to_json(     const SDKPostTurnSummaryMessage& v );
-[[nodiscard]] std::expected<SDKPostTurnSummaryMessage, std::string> SDKPostTurnSummaryMessage_from_json(loom::utils::json::JsonVal o);
-[[nodiscard]] std::expected<SDKPostTurnSummaryMessage, std::string> SDKPostTurnSummaryMessage_from_json(std::string_view raw);
+[[nodiscard]] std::string SDKPostTurnSummaryMessage_to_json(const SDKPostTurnSummaryMessage& v);
+[[nodiscard]] std::expected<SDKPostTurnSummaryMessage, std::string>
+SDKPostTurnSummaryMessage_from_json(loom::utils::json::JsonVal o);
+[[nodiscard]] std::expected<SDKPostTurnSummaryMessage, std::string>
+SDKPostTurnSummaryMessage_from_json(std::string_view raw);
 
 // ── SDKStreamlinedTextMessage ───────────────────────────────────────────────
 
-[[nodiscard]] std::string SDKStreamlinedTextMessage_to_json(     const SDKStreamlinedTextMessage& v );
-[[nodiscard]] std::expected<SDKStreamlinedTextMessage, std::string> SDKStreamlinedTextMessage_from_json(loom::utils::json::JsonVal o);
-[[nodiscard]] std::expected<SDKStreamlinedTextMessage, std::string> SDKStreamlinedTextMessage_from_json(std::string_view raw);
+[[nodiscard]] std::string SDKStreamlinedTextMessage_to_json(const SDKStreamlinedTextMessage& v);
+[[nodiscard]] std::expected<SDKStreamlinedTextMessage, std::string>
+SDKStreamlinedTextMessage_from_json(loom::utils::json::JsonVal o);
+[[nodiscard]] std::expected<SDKStreamlinedTextMessage, std::string>
+SDKStreamlinedTextMessage_from_json(std::string_view raw);
 
 // ── SDKStreamlinedToolUseSummaryMessage ─────────────────────────────────────
 
-[[nodiscard]] std::string SDKStreamlinedToolUseSummaryMessage_to_json(     const SDKStreamlinedToolUseSummaryMessage& v );
-[[nodiscard]] std::expected<SDKStreamlinedToolUseSummaryMessage, std::string> SDKStreamlinedToolUseSummaryMessage_from_json(loom::utils::json::JsonVal o);
-[[nodiscard]] std::expected<SDKStreamlinedToolUseSummaryMessage, std::string> SDKStreamlinedToolUseSummaryMessage_from_json(std::string_view raw);
+[[nodiscard]] std::string
+SDKStreamlinedToolUseSummaryMessage_to_json(const SDKStreamlinedToolUseSummaryMessage& v);
+[[nodiscard]] std::expected<SDKStreamlinedToolUseSummaryMessage, std::string>
+SDKStreamlinedToolUseSummaryMessage_from_json(loom::utils::json::JsonVal o);
+[[nodiscard]] std::expected<SDKStreamlinedToolUseSummaryMessage, std::string>
+SDKStreamlinedToolUseSummaryMessage_from_json(std::string_view raw);
 
 // ── SDKMessage variant dispatch ─────────────────────────────────────────────
 
@@ -1537,39 +1636,46 @@ namespace detail_serde {
 // ── ControlCancelRequest ────────────────────────────────────────────────────
 
 [[nodiscard]] std::string ControlCancelRequest_to_json(const ControlCancelRequest& v);
-[[nodiscard]] std::expected<ControlCancelRequest, std::string> ControlCancelRequest_from_json(std::string_view raw);
+[[nodiscard]] std::expected<ControlCancelRequest, std::string>
+ControlCancelRequest_from_json(std::string_view raw);
+
 inline std::string to_json(const ControlCancelRequest& v) {
     return ControlCancelRequest_to_json(v);
 }
-inline std::expected<ControlCancelRequest, std::string> from_json(
-    std::string_view raw, ControlCancelRequest*
-) {
+
+inline std::expected<ControlCancelRequest, std::string> from_json(std::string_view raw,
+                                                                  ControlCancelRequest*) {
     return ControlCancelRequest_from_json(raw);
 }
 
 // ── KeepAliveMessage ────────────────────────────────────────────────────────
 
 [[nodiscard]] std::string KeepAliveMessage_to_json(const KeepAliveMessage&);
-[[nodiscard]] std::expected<KeepAliveMessage, std::string> KeepAliveMessage_from_json(std::string_view raw);
+[[nodiscard]] std::expected<KeepAliveMessage, std::string>
+KeepAliveMessage_from_json(std::string_view raw);
+
 inline std::string to_json(const KeepAliveMessage& v) {
     return KeepAliveMessage_to_json(v);
 }
-inline std::expected<KeepAliveMessage, std::string> from_json(
-    std::string_view raw, KeepAliveMessage*
-) {
+
+inline std::expected<KeepAliveMessage, std::string> from_json(std::string_view raw,
+                                                              KeepAliveMessage*) {
     return KeepAliveMessage_from_json(raw);
 }
 
 // ── UpdateEnvironmentVariablesMessage ───────────────────────────────────────
 
-[[nodiscard]] std::string UpdateEnvironmentVariablesMessage_to_json(     const UpdateEnvironmentVariablesMessage& v );
-[[nodiscard]] std::expected<UpdateEnvironmentVariablesMessage, std::string> UpdateEnvironmentVariablesMessage_from_json(std::string_view raw);
+[[nodiscard]] std::string
+UpdateEnvironmentVariablesMessage_to_json(const UpdateEnvironmentVariablesMessage& v);
+[[nodiscard]] std::expected<UpdateEnvironmentVariablesMessage, std::string>
+UpdateEnvironmentVariablesMessage_from_json(std::string_view raw);
+
 inline std::string to_json(const UpdateEnvironmentVariablesMessage& v) {
     return UpdateEnvironmentVariablesMessage_to_json(v);
 }
-inline std::expected<UpdateEnvironmentVariablesMessage, std::string> from_json(
-    std::string_view raw, UpdateEnvironmentVariablesMessage*
-) {
+
+inline std::expected<UpdateEnvironmentVariablesMessage, std::string>
+from_json(std::string_view raw, UpdateEnvironmentVariablesMessage*) {
     return UpdateEnvironmentVariablesMessage_from_json(raw);
 }
 
@@ -1577,7 +1683,8 @@ inline std::expected<UpdateEnvironmentVariablesMessage, std::string> from_json(
 
 [[nodiscard]] std::string StdoutMessage_to_json(const StdoutMessage& v);
 
-[[nodiscard]] std::expected<StdoutMessage, std::string> StdoutMessage_from_json(std::string_view raw);
+[[nodiscard]] std::expected<StdoutMessage, std::string>
+StdoutMessage_from_json(std::string_view raw);
 
 // ── StdinMessage envelope ───────────────────────────────────────────────────
 
@@ -1585,4 +1692,4 @@ inline std::expected<UpdateEnvironmentVariablesMessage, std::string> from_json(
 
 [[nodiscard]] std::expected<StdinMessage, std::string> StdinMessage_from_json(std::string_view raw);
 
-} // namespace loom::server::control
+}  // namespace loom::server::control

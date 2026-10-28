@@ -23,21 +23,18 @@ namespace loom::ui::autocomplete_sources {
 namespace fs = std::filesystem;
 namespace agent_runtime = loom::tools::agent_runtime;
 
-inline void add_unique_skill(
-    std::vector<SkillSuggestionData>& rows,
-    std::unordered_set<std::string>& seen,
-    const loom::skills::SkillDefinition& def,
-    std::string source,
-    std::string source_detail = {}) {
+inline void add_unique_skill(std::vector<SkillSuggestionData>& rows,
+                             std::unordered_set<std::string>& seen,
+                             const loom::skills::SkillDefinition& def, std::string source,
+                             std::string source_detail = {}) {
     if (def.name.empty() || seen.contains(def.name)) return;
     seen.insert(def.name);
     const auto token_estimate =
         static_cast<std::size_t>(std::max<std::size_t>(1, def.content.size() / 4));
     rows.push_back(SkillSuggestionData{
         .name = def.name,
-        .description = def.description.empty()
-            ? std::string("Skill: ") + def.name
-            : def.description,
+        .description =
+            def.description.empty() ? std::string("Skill: ") + def.name : def.description,
         .source = std::move(source),
         .source_detail = std::move(source_detail),
         .kind = def.kind.value_or(""),
@@ -104,20 +101,15 @@ std::vector<SkillSuggestionData> collect_skill_suggestions(std::string_view cwd)
     return rows;
 }
 
-std::optional<SkillSuggestionData> find_skill_suggestion(
-    std::string_view cwd,
-    std::string_view name) {
+std::optional<SkillSuggestionData> find_skill_suggestion(std::string_view cwd,
+                                                         std::string_view name) {
     auto rows = collect_skill_suggestions(cwd);
-    auto it = std::ranges::find_if(rows, [name](const auto& row) {
-        return row.name == name;
-    });
+    auto it = std::ranges::find_if(rows, [name](const auto& row) { return row.name == name; });
     if (it == rows.end()) return std::nullopt;
     return *it;
 }
 
-std::string skill_invocation_prompt(
-    const SkillSuggestionData& skill,
-    std::string_view user_text) {
+std::string skill_invocation_prompt(const SkillSuggestionData& skill, std::string_view user_text) {
     // SL-12: inline-substitute the $ARGUMENTS placeholder with the user's args,
     // skill content declares $ARGUMENTS where the user's input should flow
     // in. When present, the args are inlined and no separate "User request"
@@ -125,18 +117,15 @@ std::string skill_invocation_prompt(
     std::string content = skill.content;
     bool has_placeholder = false;
     const std::string args(user_text);
-    for (std::size_t pos = 0;
-         (pos = content.find("$ARGUMENTS", pos)) != std::string::npos;) {
+    for (std::size_t pos = 0; (pos = content.find("$ARGUMENTS", pos)) != std::string::npos;) {
         has_placeholder = true;
         content.replace(pos, std::string_view("$ARGUMENTS").size(), args);
         pos += args.size();
     }
 
-    std::string prompt = std::format(
-        "<selected_skill name=\"{}\" source=\"{}\">\n{}\n</selected_skill>\n",
-        skill.name,
-        skill.source,
-        content);
+    std::string prompt =
+        std::format("<selected_skill name=\"{}\" source=\"{}\">\n{}\n</selected_skill>\n",
+                    skill.name, skill.source, content);
     if (has_placeholder) {
         if (args.empty()) prompt += "\nApply this skill to the current task.";
     } else if (!args.empty()) {
@@ -177,9 +166,8 @@ std::vector<PluginCommandSuggestionData> collect_plugin_commands(std::string_vie
 
             auto root_node = parsed->root();
             auto name_node = root_node.get("name");
-            const std::string plugin_name =
-                name_node.is_str() ? std::string(name_node.as_str())
-                                   : entry.path().filename().string();
+            const std::string plugin_name = name_node.is_str() ? std::string(name_node.as_str())
+                                                               : entry.path().filename().string();
             auto caps = root_node.get("capabilities");
             if (!caps.valid() || !caps.is_obj()) continue;
             auto commands = caps.get("commands");
@@ -222,14 +210,13 @@ std::vector<McpResourceSuggestionData> collect_mcp_resource_suggestions() {
     if (!resources) return out;
 
     for (const auto& resource : *resources) {
-        const bool channel_like =
-            resource.name.starts_with("#") ||
-            resource.uri.find("channel") != std::string::npos ||
-            resource.uri.find("slack") != std::string::npos;
+        const bool channel_like = resource.name.starts_with("#") ||
+                                  resource.uri.find("channel") != std::string::npos ||
+                                  resource.uri.find("slack") != std::string::npos;
         out.push_back(McpResourceSuggestionData{
             .display = resource.name,
-            .description = resource.description.value_or(
-                channel_like ? "MCP channel" : "MCP resource"),
+            .description =
+                resource.description.value_or(channel_like ? "MCP channel" : "MCP resource"),
             .insert_text = std::format("{}:{}", resource.server_name, resource.uri),
             .server_name = resource.server_name,
             .channel_like = channel_like,
@@ -271,11 +258,11 @@ std::vector<AgentSuggestionData> collect_agent_suggestions(std::string_view cwd)
         }
 
         result.push_back(AgentSuggestionData{
-            .name        = agent.agent_type,
+            .name = agent.agent_type,
             .description = std::move(desc),
-            .source      = "agent",
-            .color       = agent.color,
-            .status      = std::nullopt,
+            .source = "agent",
+            .color = agent.color,
+            .status = std::nullopt,
             .is_subagent = false,
         });
     }
@@ -286,11 +273,11 @@ std::vector<AgentSuggestionData> collect_agent_suggestions(std::string_view cwd)
     // a user/plugin definition already claims the name).
     if (seen_names.insert("loom").second) {
         result.push_back(AgentSuggestionData{
-            .name        = "loom",
+            .name = "loom",
             .description = "Loom main session",
-            .source      = "agent",
-            .color       = std::nullopt,
-            .status      = std::nullopt,
+            .source = "agent",
+            .color = std::nullopt,
+            .status = std::nullopt,
             .is_subagent = false,
         });
     }
@@ -311,11 +298,11 @@ std::vector<AgentSuggestionData> collect_agent_suggestions(std::string_view cwd)
         }
 
         result.push_back(AgentSuggestionData{
-            .name        = std::move(name),
+            .name = std::move(name),
             .description = std::move(desc),
-            .source      = "teammate",
-            .color       = record.teammate_color,
-            .status      = status,
+            .source = "teammate",
+            .color = record.teammate_color,
+            .status = status,
             .is_subagent = true,
         });
     }
@@ -350,8 +337,8 @@ namespace {
 // LogEntry { display, pastedContents, timestamp, project, sessionId }.
 // We keep a minimal subset for the autocomplete source.
 struct PromptHistoryEntry {
-    std::string display;       // first line of prompt (for display)
-    std::string full_text;     // complete prompt text
+    std::string display;    // first line of prompt (for display)
+    std::string full_text;  // complete prompt text
     std::int64_t timestamp_ms = 0;
     std::string session_id;
     std::string project;
@@ -428,13 +415,10 @@ struct PromptHistoryEntry {
     return entries;
 }
 
-} // anonymous namespace
+}  // anonymous namespace
 
-void append_prompt_history(
-    std::string_view prompt_text,
-    std::string_view session_id,
-    std::string_view project_path)
-{
+void append_prompt_history(std::string_view prompt_text, std::string_view session_id,
+                           std::string_view project_path) {
     if (prompt_text.empty()) return;
 
     const auto path = prompt_history_file_path();
@@ -457,7 +441,8 @@ void append_prompt_history(
     }
 
     const auto now_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
-        std::chrono::system_clock::now().time_since_epoch()).count();
+                            std::chrono::system_clock::now().time_since_epoch())
+                            .count();
 
     // Build JSON line manually to avoid heavy JSON doc construction.
     // JSONL format with escaped display text.
@@ -466,12 +451,24 @@ void append_prompt_history(
         out.reserve(s.size() + 8);
         for (char c : s) {
             switch (c) {
-                case '"':  out += "\\\""; break;
-                case '\\': out += "\\\\"; break;
-                case '\n': out += "\\n";  break;
-                case '\r': out += "\\r";  break;
-                case '\t': out += "\\t";  break;
-                default:   out += c;      break;
+            case '"':
+                out += "\\\"";
+                break;
+            case '\\':
+                out += "\\\\";
+                break;
+            case '\n':
+                out += "\\n";
+                break;
+            case '\r':
+                out += "\\r";
+                break;
+            case '\t':
+                out += "\\t";
+                break;
+            default:
+                out += c;
+                break;
             }
         }
         return out;
@@ -479,11 +476,8 @@ void append_prompt_history(
 
     std::string json_line = std::format(
         R"({{"display":"{}","full_text":"{}","timestamp":{},"sessionId":"{}","project":"{}"}})",
-        escape_json(display),
-        escape_json(std::string(prompt_text)),
-        now_ms,
-        escape_json(std::string(session_id)),
-        escape_json(std::string(project_path)));
+        escape_json(display), escape_json(std::string(prompt_text)), now_ms,
+        escape_json(std::string(session_id)), escape_json(std::string(project_path)));
 
     // File lock protects concurrent writes.  We use a simple static mutex
     // for in-process serialization; cross-process locking is out of scope
@@ -503,10 +497,8 @@ void append_prompt_history(
 // in different sessions (or multiple times in the same session) appears as
 // multiple entries, matching user expectation that Up-arrow recall shows
 // the full history.
-std::vector<std::string> load_recent_prompt_texts(
-    std::string_view project_path,
-    std::size_t max_entries)
-{
+std::vector<std::string> load_recent_prompt_texts(std::string_view project_path,
+                                                  std::size_t max_entries) {
     // Read all entries — read_history_recent already loads the entire file
     // into memory, and a small batch (max_entries * 2) can miss the current
     // project's entries when many newer entries from other projects (e.g.
@@ -534,10 +526,8 @@ std::vector<std::string> load_recent_prompt_texts(
 // Search does a case-sensitive substring match via lastIndexOf.  We use
 // case-insensitive to match the user expectation of a search box (the
 // HistorySearchDialog uses case-insensitive matching).
-std::vector<HistorySuggestionData> collect_history_suggestions(
-    std::string_view query,
-    std::size_t max_entries)
-{
+std::vector<HistorySuggestionData> collect_history_suggestions(std::string_view query,
+                                                               std::size_t max_entries) {
     // Read all entries — same rationale as load_recent_prompt_texts:
     // a small batch can miss the current project's entries when newer
     // entries from other projects fill the batch.
@@ -547,8 +537,7 @@ std::vector<HistorySuggestionData> collect_history_suggestions(
     std::string query_lower;
     query_lower.reserve(query.size());
     for (char c : query) {
-        query_lower.push_back(static_cast<char>(
-            std::tolower(static_cast<unsigned char>(c))));
+        query_lower.push_back(static_cast<char>(std::tolower(static_cast<unsigned char>(c))));
     }
 
     std::vector<HistorySuggestionData> result;
@@ -565,14 +554,14 @@ std::vector<HistorySuggestionData> collect_history_suggestions(
             std::string display_lower;
             display_lower.reserve(entry.display.size());
             for (char c : entry.display) {
-                display_lower.push_back(static_cast<char>(
-                    std::tolower(static_cast<unsigned char>(c))));
+                display_lower.push_back(
+                    static_cast<char>(std::tolower(static_cast<unsigned char>(c))));
             }
             std::string full_lower;
             full_lower.reserve(entry.full_text.size());
             for (char c : entry.full_text) {
-                full_lower.push_back(static_cast<char>(
-                    std::tolower(static_cast<unsigned char>(c))));
+                full_lower.push_back(
+                    static_cast<char>(std::tolower(static_cast<unsigned char>(c))));
             }
             if (display_lower.find(query_lower) == std::string::npos &&
                 full_lower.find(query_lower) == std::string::npos) {
@@ -584,10 +573,10 @@ std::vector<HistorySuggestionData> collect_history_suggestions(
         if (!seen_display.insert(entry.display).second) continue;
 
         result.push_back(HistorySuggestionData{
-            .prompt_text   = entry.display,
-            .full_text     = entry.full_text,
-            .timestamp_ms  = entry.timestamp_ms,
-            .session_id    = entry.session_id,
+            .prompt_text = entry.display,
+            .full_text = entry.full_text,
+            .timestamp_ms = entry.timestamp_ms,
+            .session_id = entry.session_id,
             .message_count = 0,
         });
 
@@ -608,8 +597,7 @@ namespace {
 [[nodiscard]] std::string format_relative_time(std::int64_t timestamp_ms) {
     if (timestamp_ms <= 0) return {};
     using namespace std::chrono;
-    auto now = duration_cast<milliseconds>(
-        system_clock::now().time_since_epoch()).count();
+    auto now = duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count();
     auto ds = (now - timestamp_ms) / 1000;
     if (ds < 60) return "just now";
     if (ds < 3600) return std::format("{}m ago", ds / 60);
@@ -617,14 +605,12 @@ namespace {
     return std::format("{}d ago", ds / 86400);
 }
 
-} // anonymous namespace
+}  // anonymous namespace
 
-std::vector<FormattedSuggestion> build_history_suggestions(
-    std::string_view query,
-    std::size_t replacement_start,
-    std::size_t replacement_end,
-    std::size_t max_entries)
-{
+std::vector<FormattedSuggestion> build_history_suggestions(std::string_view query,
+                                                           std::size_t replacement_start,
+                                                           std::size_t replacement_end,
+                                                           std::size_t max_entries) {
     auto entries = collect_history_suggestions(query, max_entries);
     std::vector<FormattedSuggestion> result;
     result.reserve(entries.size());
@@ -636,8 +622,7 @@ std::vector<FormattedSuggestion> build_history_suggestions(
         std::string desc = "History";
         auto rel = format_relative_time(entry.timestamp_ms);
         if (!rel.empty()) desc += " · " + rel;
-        if (!entry.session_id.empty())
-            desc += std::format(" · {}", entry.session_id.substr(0, 8));
+        if (!entry.session_id.empty()) desc += std::format(" · {}", entry.session_id.substr(0, 8));
 
         result.push_back(FormattedSuggestion{
             .display_text = std::move(display),
@@ -654,12 +639,10 @@ std::vector<FormattedSuggestion> build_history_suggestions(
     return result;
 }
 
-std::vector<FormattedSuggestion> build_agent_suggestions(
-    std::string_view cwd,
-    std::string_view query,
-    std::size_t token_start,
-    std::size_t token_end)
-{
+std::vector<FormattedSuggestion> build_agent_suggestions(std::string_view cwd,
+                                                         std::string_view query,
+                                                         std::size_t token_start,
+                                                         std::size_t token_end) {
     namespace frn = loom::ui::prompt::fuzzy_rank_nucleo;
 
     auto agents = collect_agent_suggestions(cwd);
@@ -681,11 +664,12 @@ std::vector<FormattedSuggestion> build_agent_suggestions(
             .replacement_end = token_end,
             .submit_on_return = false,
             .id = (ag.is_subagent ? "teammate:" : "agent:") + ag.name,
-            .icon = ag.is_subagent ? loom::ui::design::figures::kPointer.data() : loom::ui::design::figures::kBullet.data(),
+            .icon = ag.is_subagent ? loom::ui::design::figures::kPointer.data()
+                                   : loom::ui::design::figures::kBullet.data(),
             .color_name = ag.color.value_or(""),
         });
     }
     return result;
 }
 
-} // namespace loom::ui::autocomplete_sources
+}  // namespace loom::ui::autocomplete_sources

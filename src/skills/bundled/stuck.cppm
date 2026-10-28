@@ -157,12 +157,13 @@ bool detect_stuck_pattern(std::span<std::string> recent_outputs) {
     // Pattern 2: 3+ rows in a row mention Error/error/failed.
     int error_count = 0;
     for (const auto& o : recent_outputs) {
-        const bool has_err =
-            o.find("Error") != std::string::npos ||
-            o.find("error") != std::string::npos ||
-            o.find("failed") != std::string::npos;
-        if (has_err) ++error_count;
-        else         error_count  = 0;
+        const bool has_err = o.find("Error") != std::string::npos ||
+                             o.find("error") != std::string::npos ||
+                             o.find("failed") != std::string::npos;
+        if (has_err)
+            ++error_count;
+        else
+            error_count = 0;
         if (error_count >= 3) return true;
     }
 
@@ -183,12 +184,11 @@ bool detect_stuck_pattern(std::span<std::string> recent_outputs) {
 std::string suggest_unstuck_action(std::string_view context) {
     std::string ctx(context);
     std::transform(ctx.begin(), ctx.end(), ctx.begin(),
-                   [](unsigned char c){ return std::tolower(c); });
+                   [](unsigned char c) { return std::tolower(c); });
 
     // ---- TS-aligned diagnostics (per spec checklist) --------------------
     // 429 rate limit
-    if (ctx.find("429") != std::string::npos ||
-        ctx.find("rate limit") != std::string::npos ||
+    if (ctx.find("429") != std::string::npos || ctx.find("rate limit") != std::string::npos ||
         ctx.find("too many requests") != std::string::npos) {
         return "Hitting API rate limits (429).  Try: 1) Reduce request "
                "concurrency, 2) Add exponential backoff, 3) Request a higher "
@@ -196,11 +196,9 @@ std::string suggest_unstuck_action(std::string_view context) {
                "under token-per-minute caps.";
     }
     // Auth / API key
-    if (ctx.find("401") != std::string::npos ||
-        ctx.find("403") != std::string::npos ||
+    if (ctx.find("401") != std::string::npos || ctx.find("403") != std::string::npos ||
         ctx.find("unauthorized") != std::string::npos ||
-        ctx.find("invalid key") != std::string::npos ||
-        ctx.find("api key") != std::string::npos ||
+        ctx.find("invalid key") != std::string::npos || ctx.find("api key") != std::string::npos ||
         ctx.find("auth") != std::string::npos) {
         return "Authentication failure.  Try: 1) Verify the API key or token "
                "configured for your endpoint, 2) Confirm the endpoint URL is "
@@ -208,8 +206,7 @@ std::string suggest_unstuck_action(std::string_view context) {
                "scoped incorrectly.";
     }
     // Timeout (covers tool timeouts + child process hangs).
-    if (ctx.find("timeout") != std::string::npos ||
-        ctx.find("timed out") != std::string::npos) {
+    if (ctx.find("timeout") != std::string::npos || ctx.find("timed out") != std::string::npos) {
         return "The operation is timing out.  Try: 1) Check network "
                "connectivity (traceroute / curl to endpoint), 2) Increase "
                "the per-tool timeout via settings, 3) Try a smaller batch / "
@@ -217,8 +214,7 @@ std::string suggest_unstuck_action(std::string_view context) {
                "with `pgrep -lP <parent_pid>`.";
     }
     // Permission denied (filesystem).
-    if (ctx.find("permission") != std::string::npos ||
-        ctx.find("denied") != std::string::npos ||
+    if (ctx.find("permission") != std::string::npos || ctx.find("denied") != std::string::npos ||
         ctx.find("eacces") != std::string::npos) {
         return "Permission error.  Try: 1) Check file/directory ownership "
                "and mode with `ls -la <path>`, 2) Run with elevated perms if "
@@ -226,18 +222,15 @@ std::string suggest_unstuck_action(std::string_view context) {
                "restricted directory (tmpfs, SIP, read-only mount).";
     }
     // File encoding.
-    if (ctx.find("encoding") != std::string::npos ||
-        ctx.find("utf-8") != std::string::npos ||
-        ctx.find("invalid byte") != std::string::npos ||
-        ctx.find("bom") != std::string::npos) {
+    if (ctx.find("encoding") != std::string::npos || ctx.find("utf-8") != std::string::npos ||
+        ctx.find("invalid byte") != std::string::npos || ctx.find("bom") != std::string::npos) {
         return "File-encoding issue.  Try: 1) Confirm encoding with `file "
                "-bi <path>`, 2) Re-save as UTF-8 without BOM, 3) Convert "
                "Latin-1 / GBK files with `iconv -f OLD -t utf-8`, 4) Exclude "
                "binary files from glob patterns.";
     }
     // Sub-agent / remote session non-response.
-    if (ctx.find("sub-agent") != std::string::npos ||
-        ctx.find("subagent") != std::string::npos ||
+    if (ctx.find("sub-agent") != std::string::npos || ctx.find("subagent") != std::string::npos ||
         ctx.find("agent.*no.*response") != std::string::npos) {
         return "Sub-agent appears unresponsive.  Try: 1) Reduce input size "
                "passed to the sub-agent, 2) Give it a narrower scope, 3) "
@@ -245,18 +238,15 @@ std::string suggest_unstuck_action(std::string_view context) {
                "Switch to a smaller model for the sub-task.";
     }
     // ---- Original (pre-existing) patterns retained ----------------------
-    if (ctx.find("not found") != std::string::npos ||
-        ctx.find("no such") != std::string::npos) {
+    if (ctx.find("not found") != std::string::npos || ctx.find("no such") != std::string::npos) {
         return "Verify the path/resource exists.  Try listing the directory "
                "or searching for the correct name.";
     }
-    if (ctx.find("syntax") != std::string::npos ||
-        ctx.find("parse") != std::string::npos) {
+    if (ctx.find("syntax") != std::string::npos || ctx.find("parse") != std::string::npos) {
         return "Syntax/parsing error.  Try: 1) Validate the input format, "
                "2) Check for missing delimiters, 3) Simplify the input.";
     }
-    if (ctx.find("import") != std::string::npos ||
-        ctx.find("module") != std::string::npos) {
+    if (ctx.find("import") != std::string::npos || ctx.find("module") != std::string::npos) {
         return "Module/import issue.  Try: 1) Verify the dependency is "
                "installed, 2) Check import paths, 3) Clear module cache.";
     }
@@ -268,17 +258,13 @@ std::string suggest_unstuck_action(std::string_view context) {
 
 /// Return a list of 2-4 alternative strategies given a description of the
 /// current (stalled) approach.  Augments the pre-existing list.
-std::vector<std::string> get_alternative_approaches(
-    std::string_view current_approach)
-{
+std::vector<std::string> get_alternative_approaches(std::string_view current_approach) {
     std::vector<std::string> out;
     std::string a(current_approach);
-    std::transform(a.begin(), a.end(), a.begin(),
-        [](unsigned char c){ return std::tolower(c); });
+    std::transform(a.begin(), a.end(), a.begin(), [](unsigned char c) { return std::tolower(c); });
 
     // Edit/modify loop.
-    if (a.find("edit") != std::string::npos ||
-        a.find("modify") != std::string::npos) {
+    if (a.find("edit") != std::string::npos || a.find("modify") != std::string::npos) {
         out.emplace_back("Rewrite the file from scratch instead of editing "
                          "in place");
         out.emplace_back("Create a new file with the desired content, then "
@@ -287,22 +273,19 @@ std::vector<std::string> get_alternative_approaches(
                          "block-based)");
     }
     // Search/find loop.
-    if (a.find("search") != std::string::npos ||
-        a.find("find") != std::string::npos) {
+    if (a.find("search") != std::string::npos || a.find("find") != std::string::npos) {
         out.emplace_back("Try broader search terms or patterns");
         out.emplace_back("Search in different directories or file types");
         out.emplace_back("Use semantic search instead of text matching");
     }
     // Build/compile loop.
-    if (a.find("build") != std::string::npos ||
-        a.find("compile") != std::string::npos) {
+    if (a.find("build") != std::string::npos || a.find("compile") != std::string::npos) {
         out.emplace_back("Clean build artifacts and rebuild from scratch");
         out.emplace_back("Check for missing or conflicting dependencies");
         out.emplace_back("Try building individual components in isolation");
     }
     // Tool loop / bash loop.
-    if (a.find("bash") != std::string::npos ||
-        a.find("tool.*loop") != std::string::npos) {
+    if (a.find("bash") != std::string::npos || a.find("tool.*loop") != std::string::npos) {
         out.emplace_back("Abort the bash loop with an explicit exit status");
         out.emplace_back("Replace the script with a single focused command");
         out.emplace_back("Check the subprocess's child tree with pgrep -lP");
@@ -324,16 +307,22 @@ std::vector<std::string> get_alternative_approaches(
 loom::skills::SkillManifest get_stuck_skill_manifest() {
     return loom::skills::SkillManifest{
         .name = "stuck",
-        .description =
-            "Investigate frozen/stuck/slow Loom sessions "
-            "on this machine and post a diagnostic report to "
-            "#loom-feedback.",
+        .description = "Investigate frozen/stuck/slow Loom sessions "
+                       "on this machine and post a diagnostic report to "
+                       "#loom-feedback.",
         .version = "1.1.0",
-        .triggers = {
-            "stuck", "frozen", "session hung", "100% cpu",
-            "high cpu", "slow session", "not responding",
-            "loomcode stuck", "/stuck",
-        },
+        .triggers =
+            {
+                "stuck",
+                "frozen",
+                "session hung",
+                "100% cpu",
+                "high cpu",
+                "slow session",
+                "not responding",
+                "loomcode stuck",
+                "/stuck",
+            },
         .directory = {},
     };
 }
@@ -344,22 +333,22 @@ loom::skills::SkillManifest get_stuck_skill_manifest() {
 [[nodiscard]] inline loom::skills::SkillDefinition make_stuck_skill() {
     return loom::skills::SkillDefinition{
         .name = "stuck",
-        .description =
-            "Investigate frozen/stuck/slow Loom sessions "
-            "on this machine and post a diagnostic report to "
-            "#loom-feedback.",
-        .trigger_patterns = {
-            R"(/stuck)",
-            R"(\bstuck\b)",
-            R"(frozen.*session)",
-            R"(session.*hung)",
-            R"(100\s*%.*cpu)",
-            R"(high\s+cpu.*(?:loom|cli))",
-            R"(slow.*(?:session|loop))",
-            R"(not\s+responding.*loom)",
-        },
+        .description = "Investigate frozen/stuck/slow Loom sessions "
+                       "on this machine and post a diagnostic report to "
+                       "#loom-feedback.",
+        .trigger_patterns =
+            {
+                R"(/stuck)",
+                R"(\bstuck\b)",
+                R"(frozen.*session)",
+                R"(session.*hung)",
+                R"(100\s*%.*cpu)",
+                R"(high\s+cpu.*(?:loom|cli))",
+                R"(slow.*(?:session|loop))",
+                R"(not\s+responding.*loom)",
+            },
         .content = std::string(kStuckPrompt) +
-R"(
+                   R"(
 ## Supplementary offline checks (fast-path, pre-LLM)
 
 If you are not sure you need to run `ps`, first evaluate these cheap
@@ -383,4 +372,4 @@ tip immediately without shelling out.)",
     };
 }
 
-} // namespace loom::skills::bundled
+}  // namespace loom::skills::bundled

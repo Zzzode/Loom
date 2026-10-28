@@ -5,8 +5,9 @@
 /// SSH_TTY environment variables, and that resolve_native_backend()
 /// returns nullopt on SSH sessions.
 
-#include <cstdlib>
 #include <gtest/gtest.h>
+
+#include <cstdlib>
 
 import std;
 import loom.platform.clipboard;
@@ -38,7 +39,8 @@ struct EnvUnsetGuard {
     std::string name;
     std::optional<std::string> previous;
 
-    explicit EnvUnsetGuard(std::string key) : name(std::move(key)) {
+    explicit EnvUnsetGuard(std::string key)
+        : name(std::move(key)) {
         if (const char* existing = std::getenv(name.c_str())) {
             previous = existing;
         }

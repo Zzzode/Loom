@@ -22,7 +22,7 @@ inline std::string normalize(std::string value, const std::vector<NormalizeMode>
             }
         } else if (mode == "lower") {
             std::transform(value.begin(), value.end(), value.begin(),
-                          [](unsigned char c) { return std::tolower(c); });
+                           [](unsigned char c) { return std::tolower(c); });
         } else if (mode == "collapseWhitespace") {
             std::string result;
             bool in_space = false;
@@ -43,10 +43,9 @@ inline std::string normalize(std::string value, const std::vector<NormalizeMode>
     return value;
 }
 
-inline std::pair<bool, std::optional<std::string>> evaluate_assertion(
-    const std::string& text,
-    const Assertion& assertion) {
-    
+inline std::pair<bool, std::optional<std::string>> evaluate_assertion(const std::string& text,
+                                                                      const Assertion& assertion) {
+
     if (std::holds_alternative<AssertionExact>(assertion)) {
         const auto& exact = std::get<AssertionExact>(assertion);
         auto actual = normalize(text, exact.normalize);
@@ -57,7 +56,7 @@ inline std::pair<bool, std::optional<std::string>> evaluate_assertion(
             return {false, "expected exact match"};
         }
     }
-    
+
     if (std::holds_alternative<AssertionIncludes>(assertion)) {
         const auto& includes = std::get<AssertionIncludes>(assertion);
         auto actual = normalize(text, includes.normalize);
@@ -68,7 +67,7 @@ inline std::pair<bool, std::optional<std::string>> evaluate_assertion(
             return {false, "expected text to include substring"};
         }
     }
-    
+
     if (std::holds_alternative<AssertionRegex>(assertion)) {
         const auto& regex_assertion = std::get<AssertionRegex>(assertion);
         std::regex::flag_type flags = std::regex::ECMAScript;
@@ -89,8 +88,8 @@ inline std::pair<bool, std::optional<std::string>> evaluate_assertion(
             return {false, std::string("regex error: ") + e.what()};
         }
     }
-    
+
     return {false, "unknown assertion type"};
 }
 
-} // namespace loom::benchmarks::pare
+}  // namespace loom::benchmarks::pare

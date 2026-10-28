@@ -11,7 +11,7 @@ export module loom.tools.file_edit_prompt;
 import std;
 
 import loom.tools.file_edit_types;
-import loom.text.string_utils;     // for first_line_of
+import loom.text.string_utils; // for first_line_of
 
 export namespace loom::tools::file_edit {
 
@@ -33,8 +33,7 @@ inline std::string get_pre_read_instruction(std::string_view read_tool_name) {
 /// (always describe both so the model can adapt) unless the caller
 /// explicitly overrides.
 inline std::string get_line_prefix_format_description(bool compact_mode) {
-    return compact_mode ? "line number + tab"
-                        : "spaces + line number + arrow";
+    return compact_mode ? "line number + tab" : "spaces + line number + arrow";
 }
 
 /// Returns the full tool prompt used for the Edit tool description.
@@ -42,9 +41,8 @@ inline std::string get_line_prefix_format_description(bool compact_mode) {
 /// \p read_tool_name   - the `Read` tool name (FileReadTool's kToolName).
 /// \p compact_prefix   - isCompactLinePrefixEnabled() flag value.
 inline std::string get_edit_tool_description(
-    std::string_view read_tool_name = "Read", // = FILE_READ_TOOL_NAME from TS
-    bool compact_prefix = false
-) {
+    std::string_view read_tool_name = "Read",  // = FILE_READ_TOOL_NAME from TS
+    bool compact_prefix = false) {
     const auto prefix_fmt = get_line_prefix_format_description(compact_prefix);
 
     const std::string minimal_uniqueness_hint =
@@ -55,8 +53,7 @@ inline std::string get_edit_tool_description(
     std::ostringstream oss;
     oss << "Performs exact string replacements in files.\n"
         << "\n"
-        << "Usage:"
-        << get_pre_read_instruction(read_tool_name)
+        << "Usage:" << get_pre_read_instruction(read_tool_name)
         << "\n- When editing text from Read tool output, ensure you preserve "
            "the exact indentation (tabs/spaces) as it appears AFTER the line "
            "number prefix. The line number prefix format is: "
@@ -90,13 +87,12 @@ inline std::string get_edit_tool_description(
 /// NOTE: the full implementation also checks the plans directory; callers that
 /// need that can pass the plans_dir prefix explicitly. When empty, we
 /// just fall back to "Update" semantics.
-inline std::string user_facing_name(
-    const FileEditInput* input,      // may be null
-    std::string_view plans_dir_prefix = {}  // plans directory result
+inline std::string user_facing_name(const FileEditInput* input,  // may be null
+                                    std::string_view plans_dir_prefix = {}
+                                    // plans directory result
 ) {
     if (!input) return "Update";
-    if (!plans_dir_prefix.empty() &&
-        input->file_path.string().starts_with(plans_dir_prefix)) {
+    if (!plans_dir_prefix.empty() && input->file_path.string().starts_with(plans_dir_prefix)) {
         return "Updated plan";
     }
     if (input->old_string.empty()) return "Create";
@@ -113,22 +109,19 @@ inline std::string get_tool_use_summary(const FileEditInput* input) {
 
 /// Returns the human-readable success line sent back to the model as the
 /// tool_result content.
-inline std::string format_tool_result_block(
-    const FileEditOutput& out,
-    [[maybe_unused]] std::string_view tool_use_id
-) {
-    const std::string modified_note = out.user_modified
-        ? ".  The user modified your proposed changes before accepting them. "
-        : "";
+inline std::string format_tool_result_block(const FileEditOutput& out,
+                                            [[maybe_unused]] std::string_view tool_use_id) {
+    const std::string modified_note =
+        out.user_modified ? ".  The user modified your proposed changes before accepting them. "
+                          : "";
 
     std::ostringstream oss;
     if (out.replace_all) {
-        oss << "The file " << out.file_path.string()
-            << " has been updated" << modified_note
+        oss << "The file " << out.file_path.string() << " has been updated" << modified_note
             << ". All occurrences were successfully replaced.";
     } else {
-        oss << "The file " << out.file_path.string()
-            << " has been updated successfully" << modified_note << ".";
+        oss << "The file " << out.file_path.string() << " has been updated successfully"
+            << modified_note << ".";
     }
     return oss.str();
 }
@@ -140,10 +133,7 @@ inline std::string format_tool_result_block(
 
 /// Format a unified-diff style preview for an edit (used by permission /
 /// rejection UI builders). Takes the FileEditInput type.
-inline std::string format_edit_preview(
-    const FileEditInput& op,
-    int context_lines = 3
-) {
+inline std::string format_edit_preview(const FileEditInput& op, int context_lines = 3) {
     std::ostringstream oss;
     oss << "--- " << op.file_path.string() << "\n";
     oss << "+++ " << op.file_path.string() << " (modified)\n";
@@ -165,9 +155,8 @@ inline std::string format_edit_preview(
 
     auto old_lines = split_lines(op.old_string);
     auto new_lines = split_lines(op.new_string);
-    const auto max_preview_lines = context_lines < 0
-        ? std::size_t{0}
-        : static_cast<std::size_t>(context_lines);
+    const auto max_preview_lines =
+        context_lines < 0 ? std::size_t{0} : static_cast<std::size_t>(context_lines);
 
     oss << "@@ removal/addition @@\n";
 
@@ -208,15 +197,13 @@ inline std::string generate_edit_summary(const EditSummaryInfo& result) {
     std::ostringstream oss;
 
     if (result.success) {
-        oss << "[OK] Edit successful: " << result.replacements
-            << " replacement(s) made";
+        oss << "[OK] Edit successful: " << result.replacements << " replacement(s) made";
         if (!result.affected_lines.empty()) {
             oss << " at line(s) ";
             for (size_t i = 0; i < result.affected_lines.size(); ++i) {
                 if (i > 0) oss << ", ";
                 if (i >= 5) {
-                    oss << "... and " << (result.affected_lines.size() - i)
-                        << " more";
+                    oss << "... and " << (result.affected_lines.size() - i) << " more";
                     break;
                 }
                 oss << result.affected_lines[i];
@@ -229,4 +216,4 @@ inline std::string generate_edit_summary(const EditSummaryInfo& result) {
     return oss.str();
 }
 
-} // namespace loom::tools::file_edit
+}  // namespace loom::tools::file_edit

@@ -3,10 +3,9 @@
 // HTML serializer; this file tests the production FTXUI renderer that the
 // terminal UI uses.
 
-#include <gtest/gtest.h>
-
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/screen/screen.hpp>
+#include <gtest/gtest.h>
 
 #include <sstream>
 #include <string>
@@ -24,9 +23,7 @@ namespace {
 
 // Render an element to a string at the given width (single row).
 std::string render_row(ftxui::Element el, int width = 200) {
-    auto screen = ftxui::Screen::Create(
-        ftxui::Dimension::Fixed(width),
-        ftxui::Dimension::Fixed(3));
+    auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(width), ftxui::Dimension::Fixed(3));
     ftxui::Render(screen, el);
     return screen.ToString();
 }
@@ -64,8 +61,8 @@ std::string strip_ansi(std::string_view text) {
             if (next == '[') {
                 // CSI: ESC [ ... final byte (0x40-0x7E)
                 i += 2;
-                while (i < text.size() &&
-                       !(text[i] >= 0x40 && text[i] <= 0x7e)) ++i;
+                while (i < text.size() && !(text[i] >= 0x40 && text[i] <= 0x7e))
+                    ++i;
                 if (i < text.size()) ++i;  // skip final byte
                 continue;
             }
@@ -73,9 +70,14 @@ std::string strip_ansi(std::string_view text) {
                 // OSC: ESC ] ... BEL or ESC-backslash
                 i += 2;
                 while (i < text.size()) {
-                    if (text[i] == '\x07') { ++i; break; }
-                    if (text[i] == '\x1b' && i + 1 < text.size() &&
-                        text[i + 1] == '\\') { i += 2; break; }
+                    if (text[i] == '\x07') {
+                        ++i;
+                        break;
+                    }
+                    if (text[i] == '\x1b' && i + 1 < text.size() && text[i + 1] == '\\') {
+                        i += 2;
+                        break;
+                    }
                     ++i;
                 }
                 continue;
@@ -110,7 +112,7 @@ std::string normalize_for_comparison(std::string_view text) {
     return result.substr(start, end - start + 1);
 }
 
-} // namespace
+}  // namespace
 
 // ── Character swallowing tests ──────────────────────────────────────────
 
@@ -120,13 +122,13 @@ TEST(MarkdownRender, MixedChineseEnglishBold) {
     std::string md = "比较特别的一点：**整棵 C++23 named modules**（`import std;`），没有任何依赖";
     auto el = render_markdown(md);
     std::string out = render_row(el);
-    std::cerr << "TOKENS:\n" << describe_tokens(detail::lex_blocks(md).empty()
-        ? std::vector<InlineToken>{}
-        : detail::lex_blocks(md).at(0).inlines);
+    std::cerr << "TOKENS:\n"
+              << describe_tokens(detail::lex_blocks(md).empty()
+                                     ? std::vector<InlineToken>{}
+                                     : detail::lex_blocks(md).at(0).inlines);
     std::cerr << "RENDERED:\n" << out << "\n";
     // "modules" must appear in the output
-    EXPECT_NE(out.find("modules"), std::string::npos)
-        << "bold content 'modules' was swallowed";
+    EXPECT_NE(out.find("modules"), std::string::npos) << "bold content 'modules' was swallowed";
 }
 
 TEST(MarkdownRender, InlineCodeWithMixedText) {
@@ -141,7 +143,8 @@ TEST(MarkdownRender, InlineCodeWithMixedText) {
 
 TEST(MarkdownRender, LongChineseText) {
     // The user reported that "代码库移植的；设计意图记录在" is swallowed.
-    std::string md = "它是从一个已删除的 TypeScript 代码库移植的；设计意图记录在 docs/decisions/design-decisions.md。";
+    std::string md = "它是从一个已删除的 TypeScript 代码库移植的；设计意图记录在 "
+                     "docs/decisions/design-decisions.md。";
     auto el = render_markdown(md);
     std::string out = render_row(el);
     std::cerr << "RENDERED:\n" << out << "\n";
@@ -174,17 +177,15 @@ TEST(MarkdownRender, SimpleChineseBold) {
 TEST(MarkdownRender, StreamingMarkdownFullContent) {
     // Simulate StreamingMarkdown::update with the full final content.
     // This is the path used for streaming assistant messages.
-    std::string md =
-        "比较特别的一点：**整棵 C++23 named modules**（`import std;`），"
-        "没有任何 TypeScript/Bun/npm 依赖——它是从一个已删除的 TypeScript "
-        "代码库移植的；设计意图记录在 docs/decisions/design-decisions.md。"
-        "目前处于活跃开发阶段，设";
+    std::string md = "比较特别的一点：**整棵 C++23 named modules**（`import std;`），"
+                     "没有任何 TypeScript/Bun/npm 依赖——它是从一个已删除的 TypeScript "
+                     "代码库移植的；设计意图记录在 docs/decisions/design-decisions.md。"
+                     "目前处于活跃开发阶段，设";
     StreamingMarkdown sm;
     auto el = sm.update(md);
     std::string out = render_row(el);
     std::cerr << "STREAMING RENDERED:\n" << out << "\n";
-    EXPECT_NE(out.find("modules"), std::string::npos)
-        << "bold content 'modules' was swallowed";
+    EXPECT_NE(out.find("modules"), std::string::npos) << "bold content 'modules' was swallowed";
     EXPECT_NE(out.find("import std;"), std::string::npos)
         << "code content 'import std;' was truncated";
     EXPECT_NE(out.find("代码库移植的"), std::string::npos)
@@ -196,9 +197,8 @@ TEST(MarkdownRender, StreamingMarkdownFullContent) {
 TEST(MarkdownRender, StreamingMarkdownIncremental) {
     // Simulate streaming: content arrives in chunks.
     StreamingMarkdown sm;
-    std::string full =
-        "比较特别的一点：**整棵 C++23 named modules**（`import std;`），"
-        "没有任何依赖。";
+    std::string full = "比较特别的一点：**整棵 C++23 named modules**（`import std;`），"
+                       "没有任何依赖。";
     // Feed in chunks
     std::vector<std::string> chunks = {
         "比较特别的一点：**整棵 C++23 named ",
@@ -225,8 +225,8 @@ TEST(MarkdownRender, StreamingMarkdownIncremental) {
 // uncached render_markdown, and reset() must not corrupt later documents.
 TEST(MarkdownRender, StreamingMarkdownMermaidRowsAcrossFramesAndReset) {
     auto capture = [](ftxui::Element element) {
-        auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(200),
-                                            ftxui::Dimension::Fixed(24));
+        auto screen =
+            ftxui::Screen::Create(ftxui::Dimension::Fixed(200), ftxui::Dimension::Fixed(24));
         ftxui::Render(screen, std::move(element));
         std::string result;
         for (int y = 0; y < screen.dimy(); ++y) {
@@ -236,18 +236,15 @@ TEST(MarkdownRender, StreamingMarkdownMermaidRowsAcrossFramesAndReset) {
         }
         return result;
     };
-    const std::string doc1 =
-        "intro\n```mermaid\nflowchart TD\nA[X] --> B[Y]\n```\n";
-    const std::string doc2 =
-        "other\n```mermaid\nflowchart TD\nC[One] --> D[Two]\n```\n";
+    const std::string doc1 = "intro\n```mermaid\nflowchart TD\nA[X] --> B[Y]\n```\n";
+    const std::string doc2 = "other\n```mermaid\nflowchart TD\nC[One] --> D[Two]\n```\n";
 
     StreamingMarkdown sm;
     // Growing-delta frames keep the closed fence stable; cached rows must
     // produce exactly the uncached surface on every frame.
     for (const std::string suffix : {"", "m", "mo", "mor", "more text"}) {
         const std::string grown = doc1 + suffix;
-        EXPECT_EQ(capture(sm.update(grown)), capture(render_markdown(grown)))
-            << "frame: " << grown;
+        EXPECT_EQ(capture(sm.update(grown)), capture(render_markdown(grown))) << "frame: " << grown;
     }
     // A brand-new document after reset renders correctly and independently.
     sm.reset();
@@ -271,12 +268,10 @@ static int count_nonempty_lines(const std::string& s) {
 
 TEST(MarkdownRender, LongTextWrapsToMultipleLines) {
     // A long paragraph must wrap to multiple lines at a narrow width.
-    std::string md =
-        "This is a long English paragraph that should wrap to multiple "
-        "lines when rendered at a narrow terminal width.";
+    std::string md = "This is a long English paragraph that should wrap to multiple "
+                     "lines when rendered at a narrow terminal width.";
     auto el = render_markdown(md);
-    auto screen = ftxui::Screen::Create(
-        ftxui::Dimension::Fixed(40), ftxui::Dimension::Fixed(10));
+    auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(40), ftxui::Dimension::Fixed(10));
     ftxui::Render(screen, el);
     std::string out = screen.ToString();
     int lines = count_nonempty_lines(out);
@@ -290,12 +285,10 @@ TEST(MarkdownRender, LongTextWrapsToMultipleLines) {
 
 TEST(MarkdownRender, LongChineseTextWraps) {
     // CJK text has no spaces — each character is a potential break point.
-    std::string md =
-        "这是一段很长的中文文本用来测试折行功能是否正常工作"
-        "当终端宽度不够时应该能够在任意中文字符之间换行";
+    std::string md = "这是一段很长的中文文本用来测试折行功能是否正常工作"
+                     "当终端宽度不够时应该能够在任意中文字符之间换行";
     auto el = render_markdown(md);
-    auto screen = ftxui::Screen::Create(
-        ftxui::Dimension::Fixed(30), ftxui::Dimension::Fixed(10));
+    auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(30), ftxui::Dimension::Fixed(10));
     ftxui::Render(screen, el);
     std::string out = screen.ToString();
     int lines = count_nonempty_lines(out);
@@ -308,14 +301,12 @@ TEST(MarkdownRender, LongChineseTextWraps) {
 
 TEST(MarkdownRender, MixedContentWraps) {
     // Mixed Chinese/English with bold and code — the original bug report.
-    std::string md =
-        "比较特别的一点：**整棵 C++23 named modules**（`import std;`），"
-        "没有任何 TypeScript/Bun/npm 依赖——它是从一个已删除的 TypeScript "
-        "代码库移植的；设计意图记录在 docs/decisions/design-decisions.md。"
-        "目前处于活跃开发阶段，设";
+    std::string md = "比较特别的一点：**整棵 C++23 named modules**（`import std;`），"
+                     "没有任何 TypeScript/Bun/npm 依赖——它是从一个已删除的 TypeScript "
+                     "代码库移植的；设计意图记录在 docs/decisions/design-decisions.md。"
+                     "目前处于活跃开发阶段，设";
     auto el = render_markdown(md);
-    auto screen = ftxui::Screen::Create(
-        ftxui::Dimension::Fixed(60), ftxui::Dimension::Fixed(10));
+    auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(60), ftxui::Dimension::Fixed(10));
     ftxui::Render(screen, el);
     std::string out = screen.ToString();
     int lines = count_nonempty_lines(out);
@@ -345,33 +336,28 @@ TEST(MarkdownRender, VeryLongSingleWord) {
     // segfault or assert.
     std::string word(500, 'a');
     auto el = render_markdown(word);
-    auto screen = ftxui::Screen::Create(
-        ftxui::Dimension::Fixed(40), ftxui::Dimension::Fixed(20));
+    auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(40), ftxui::Dimension::Fixed(20));
     ftxui::Render(screen, el);
     std::string out = strip_ansi(screen.ToString());
     // The beginning of the word must be present (not swallowed entirely).
-    EXPECT_NE(out.find("aaaaaaaaaa"), std::string::npos)
-        << "long word was entirely swallowed";
+    EXPECT_NE(out.find("aaaaaaaaaa"), std::string::npos) << "long word was entirely swallowed";
     // The output should contain at least 40 'a' characters (one screen width).
     std::size_t a_count = 0;
     for (char c : out) {
         if (c == 'a') ++a_count;
     }
-    EXPECT_GE(a_count, 40u)
-        << "long word was truncated too aggressively: only " << a_count
-        << " chars visible";
+    EXPECT_GE(a_count, 40u) << "long word was truncated too aggressively: only " << a_count
+                            << " chars visible";
 }
 
 TEST(MarkdownRender, LongUrl) {
     // A long URL must be present in the output, not truncated.
-    std::string url =
-        "https://example.com/very/long/path/with/many/segments/"
-        "that/exceeds/normal/width?param=value&other=123";
+    std::string url = "https://example.com/very/long/path/with/many/segments/"
+                      "that/exceeds/normal/width?param=value&other=123";
     std::string md = "See " + url + " for details";
     auto el = render_markdown(md);
     std::string out = strip_ansi(render_row(el));
-    EXPECT_NE(out.find(url), std::string::npos)
-        << "long URL was truncated or swallowed";
+    EXPECT_NE(out.find(url), std::string::npos) << "long URL was truncated or swallowed";
 }
 
 // ── Code block character swallowing tests ──────────────────────────────
@@ -382,13 +368,11 @@ TEST(MarkdownRender, CodeBlockLongLineTruncatesAtEdge) {
     // The hbox path routed overwidth lines through
     // box_helper::ComputeShrinkHard, which scaled each token down and
     // swallowed characters from the middle of the line.
-    std::string code_line =
-        "auto result = some_function(arg1, arg2, arg3, arg4, arg5, "
-        "arg6, arg7, arg8, arg9, arg10);";
+    std::string code_line = "auto result = some_function(arg1, arg2, arg3, arg4, arg5, "
+                            "arg6, arg7, arg8, arg9, arg10);";
     std::string md = "```cpp\n" + code_line + "\n```";
     auto el = render_markdown(md);
-    auto screen = ftxui::Screen::Create(
-        ftxui::Dimension::Fixed(40), ftxui::Dimension::Fixed(5));
+    auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(40), ftxui::Dimension::Fixed(5));
     ftxui::Render(screen, el);
     std::string out = strip_ansi(screen.ToString());
     std::cerr << "CODE BLOCK (40 cols):\n" << out << "\n";
@@ -409,13 +393,11 @@ TEST(MarkdownRender, CodeBlockLongLineMiddleTokensIntact) {
     // so a mid-line token like "configuration_value" was rendered as
     // "configuration_valu" or similar. With the fix, only the right edge
     // is cut.
-    std::string code_line =
-        "int configuration_value = compute(parameters, options, "
-        "overrides, defaults, settings, preferences, modifiers);";
+    std::string code_line = "int configuration_value = compute(parameters, options, "
+                            "overrides, defaults, settings, preferences, modifiers);";
     std::string md = "```cpp\n" + code_line + "\n```";
     auto el = render_markdown(md);
-    auto screen = ftxui::Screen::Create(
-        ftxui::Dimension::Fixed(50), ftxui::Dimension::Fixed(5));
+    auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(50), ftxui::Dimension::Fixed(5));
     ftxui::Render(screen, el);
     std::string out = strip_ansi(screen.ToString());
     std::cerr << "CODE BLOCK (50 cols):\n" << out << "\n";
@@ -432,8 +414,7 @@ TEST(MarkdownRender, CodeBlockLongLineMiddleTokensIntact) {
 TEST(MarkdownRender, StreamingMatchesFullRender) {
     // StreamingMarkdown::update(full) should produce the same text as
     // render_markdown(full) for a document without block boundaries.
-    std::string md =
-        "Hello **world** with `code` and [link](https://example.com)";
+    std::string md = "Hello **world** with `code` and [link](https://example.com)";
     auto full_el = render_markdown(md);
     std::string full_out = normalize_for_comparison(render_row(full_el));
 
@@ -441,10 +422,9 @@ TEST(MarkdownRender, StreamingMatchesFullRender) {
     auto stream_el = sm.update(md);
     std::string stream_out = normalize_for_comparison(render_row(stream_el));
 
-    EXPECT_EQ(stream_out, full_out)
-        << "streaming render differs from full render\n"
-        << "  stream: " << stream_out << "\n"
-        << "  full:   " << full_out;
+    EXPECT_EQ(stream_out, full_out) << "streaming render differs from full render\n"
+                                    << "  stream: " << stream_out << "\n"
+                                    << "  full:   " << full_out;
 }
 
 TEST(MarkdownRender, StreamingPrefixesPreserveFullDocumentLayout) {
@@ -466,9 +446,9 @@ TEST(MarkdownRender, StreamingPrefixesPreserveFullDocumentLayout) {
             for (const auto& prefix : prefixes) {
                 SCOPED_TRACE(std::to_string(width) + ": " + prefix);
                 auto live = ftxui::Screen::Create(ftxui::Dimension::Fixed(width),
-                                                 ftxui::Dimension::Fixed(80));
-                auto final = ftxui::Screen::Create(ftxui::Dimension::Fixed(width),
                                                   ftxui::Dimension::Fixed(80));
+                auto final = ftxui::Screen::Create(ftxui::Dimension::Fixed(width),
+                                                   ftxui::Dimension::Fixed(80));
                 ftxui::Render(live, streaming.update(prefix));
                 ftxui::Render(final, render_markdown(prefix));
                 // Compare exact rows and styles, not whitespace-normalized text.
@@ -482,8 +462,8 @@ TEST(MarkdownRender, StreamingLongDocumentKeepsFullLayout) {
     std::string document;
     for (int section = 0; section < 120; ++section) {
         document += "## Section " + std::to_string(section) +
-            "\n\nA completed paragraph with **emphasis**, `inline code`, and words "
-            "that wrap across the terminal viewport. Keep every word readable.\n\n";
+                    "\n\nA completed paragraph with **emphasis**, `inline code`, and words "
+                    "that wrap across the terminal viewport. Keep every word readable.\n\n";
     }
     StreamingMarkdown streaming;
     std::int64_t total_us = 0;
@@ -491,19 +471,18 @@ TEST(MarkdownRender, StreamingLongDocumentKeepsFullLayout) {
     int frames = 0;
     for (std::size_t size = 128; size < document.size(); size += 128) {
         const auto started = std::chrono::steady_clock::now();
-        auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(80),
-                                           ftxui::Dimension::Fixed(40));
+        auto screen =
+            ftxui::Screen::Create(ftxui::Dimension::Fixed(80), ftxui::Dimension::Fixed(40));
         ftxui::Render(screen, streaming.update(std::string_view(document).substr(0, size)));
         const auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(
-            std::chrono::steady_clock::now() - started).count();
+                                 std::chrono::steady_clock::now() - started)
+                                 .count();
         total_us += elapsed;
         max_us = std::max(max_us, elapsed);
         ++frames;
     }
-    auto live = ftxui::Screen::Create(ftxui::Dimension::Fixed(80),
-                                     ftxui::Dimension::Fixed(600));
-    auto final = ftxui::Screen::Create(ftxui::Dimension::Fixed(80),
-                                      ftxui::Dimension::Fixed(600));
+    auto live = ftxui::Screen::Create(ftxui::Dimension::Fixed(80), ftxui::Dimension::Fixed(600));
+    auto final = ftxui::Screen::Create(ftxui::Dimension::Fixed(80), ftxui::Dimension::Fixed(600));
     ftxui::Render(live, streaming.update(document));
     ftxui::Render(final, render_markdown(document));
     EXPECT_EQ(live.ToString(), final.ToString());
@@ -517,9 +496,8 @@ TEST(MarkdownRender, StreamingLongDocumentKeepsFullLayout) {
 TEST(MarkdownRender, StreamingIncrementalNoLoss) {
     // Feeding content in chunks should produce the same final text as
     // feeding the full content at once.
-    std::string full =
-        "比较特别的一点：**整棵 C++23 named modules**（`import std;`），"
-        "没有任何依赖。";
+    std::string full = "比较特别的一点：**整棵 C++23 named modules**（`import std;`），"
+                       "没有任何依赖。";
     std::vector<std::string> chunks = {
         "比较特别的一点：**整棵 C++23 named ",
         "modules**（`import std;`），",
@@ -554,10 +532,10 @@ TEST(MarkdownRender, StreamingRepeatedFramesResizeReplaceAndReset) {
         "# Heading\n\nReplacement", ""};
     for (const auto& document : documents) {
         for (int width : {24, 80, 24}) {
-            auto live = ftxui::Screen::Create(ftxui::Dimension::Fixed(width),
-                                             ftxui::Dimension::Fixed(40));
-            auto final = ftxui::Screen::Create(ftxui::Dimension::Fixed(width),
-                                              ftxui::Dimension::Fixed(40));
+            auto live =
+                ftxui::Screen::Create(ftxui::Dimension::Fixed(width), ftxui::Dimension::Fixed(40));
+            auto final =
+                ftxui::Screen::Create(ftxui::Dimension::Fixed(width), ftxui::Dimension::Fixed(40));
             ftxui::Render(live, streaming.update(document));
             ftxui::Render(final, render_markdown(document));
             EXPECT_EQ(live.ToString(), final.ToString());
@@ -576,8 +554,8 @@ std::string mermaid_fence(std::string_view source) {
 }
 
 std::string render_document(ftxui::Element element, int width = 120) {
-    auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(width),
-                                       ftxui::Dimension::Fixed(256));
+    auto screen =
+        ftxui::Screen::Create(ftxui::Dimension::Fixed(width), ftxui::Dimension::Fixed(256));
     ftxui::Render(screen, element);
     return strip_ansi(screen.ToString());
 }
@@ -588,16 +566,18 @@ std::string mermaid_document(std::string_view source, int width = 120) {
 
 void expect_diagram(const std::string& rendered, std::string_view header) {
     EXPECT_EQ(rendered.find(header), std::string::npos) << rendered;
-    EXPECT_TRUE(rendered.find("┌") != std::string::npos ||
-                rendered.find("╭") != std::string::npos) << rendered;
+    EXPECT_TRUE(rendered.find("┌") != std::string::npos || rendered.find("╭") != std::string::npos)
+        << rendered;
 }
 
 std::pair<int, int> text_position(const std::string& rendered, std::string_view label) {
     const auto offset = rendered.find(label);
     if (offset == std::string::npos) return {-1, -1};
-    const auto row = static_cast<int>(std::count(rendered.begin(), rendered.begin() + offset, '\n'));
+    const auto row =
+        static_cast<int>(std::count(rendered.begin(), rendered.begin() + offset, '\n'));
     const auto last_newline = rendered.rfind('\n', offset);
-    return {row, static_cast<int>(last_newline == std::string::npos ? offset : offset - last_newline - 1)};
+    return {row, static_cast<int>(last_newline == std::string::npos ? offset
+                                                                    : offset - last_newline - 1)};
 }
 
 int diagram_arrows(const std::string& rendered) {
@@ -611,12 +591,12 @@ int diagram_arrows(const std::string& rendered) {
     }
     return count;
 }
-}
+}  // namespace
 
 TEST(MarkdownMermaid, FlowchartBranchesKeepNodesEdgesAndLabels) {
-    const auto rendered = mermaid_document(
-        "flowchart TD\nStart[Begin] --> Gate{Ready?}\n"
-        "Gate -->|yes| Success(Complete)\nGate -->|no| Retry[Try again]");
+    const auto rendered =
+        mermaid_document("flowchart TD\nStart[Begin] --> Gate{Ready?}\n"
+                         "Gate -->|yes| Success(Complete)\nGate -->|no| Retry[Try again]");
     expect_diagram(rendered, "flowchart TD");
     for (const auto* label : {"Begin", "Ready?", "Complete", "Try again", "yes", "no"})
         EXPECT_NE(rendered.find(label), std::string::npos) << rendered;
@@ -629,8 +609,8 @@ TEST(MarkdownMermaid, FlowchartBranchesKeepNodesEdgesAndLabels) {
 TEST(MarkdownMermaid, FlowDirectionsPreserveGeometricMeaning) {
     for (const auto* direction : {"TD", "TB", "BT", "LR", "RL"}) {
         SCOPED_TRACE(direction);
-        const auto rendered = mermaid_document(std::string("graph ") + direction +
-            "\nA[Origin] --> B[Destination]");
+        const auto rendered =
+            mermaid_document(std::string("graph ") + direction + "\nA[Origin] --> B[Destination]");
         expect_diagram(rendered, "graph ");
         const auto origin = text_position(rendered, "Origin");
         const auto target = text_position(rendered, "Destination");
@@ -640,30 +620,35 @@ TEST(MarkdownMermaid, FlowDirectionsPreserveGeometricMeaning) {
         const auto* arrow = value == "LR" ? "▶" : value == "RL" ? "◀" : value == "BT" ? "▲" : "▼";
         EXPECT_NE(rendered.find(arrow), std::string::npos) << rendered;
         EXPECT_EQ(diagram_arrows(rendered), 1) << rendered;
-        if (value == "LR") EXPECT_LT(origin.second, target.second);
-        else if (value == "RL") EXPECT_GT(origin.second, target.second);
-        else if (value == "BT") EXPECT_GT(origin.first, target.first);
-        else EXPECT_LT(origin.first, target.first);
+        if (value == "LR")
+            EXPECT_LT(origin.second, target.second);
+        else if (value == "RL")
+            EXPECT_GT(origin.second, target.second);
+        else if (value == "BT")
+            EXPECT_GT(origin.first, target.first);
+        else
+            EXPECT_LT(origin.first, target.first);
     }
 }
 
 TEST(MarkdownMermaid, CyclesAndSelfEdgesRemainConnectedDiagrams) {
-    for (const auto* source : {
-            "flowchart TD\nA[First] --> B[Second]\nB -->|back| A",
-            "flowchart LR\nA[Loop] -->|again| A"}) {
+    for (const auto* source : {"flowchart TD\nA[First] --> B[Second]\nB -->|back| A",
+                               "flowchart LR\nA[Loop] -->|again| A"}) {
         const auto rendered = mermaid_document(source);
         expect_diagram(rendered, "flowchart ");
         EXPECT_EQ(rendered.find("-->"), std::string::npos);
-        EXPECT_EQ(diagram_arrows(rendered), std::string_view(source).find("back") != std::string_view::npos ? 2 : 1)
+        EXPECT_EQ(diagram_arrows(rendered),
+                  std::string_view(source).find("back") != std::string_view::npos ? 2 : 1)
             << rendered;
         EXPECT_TRUE(rendered.find("back") != std::string::npos ||
-                    rendered.find("again") != std::string::npos) << rendered;
+                    rendered.find("again") != std::string::npos)
+            << rendered;
     }
 }
 
 TEST(MarkdownMermaid, QuotedChineseAndCombiningLabelsRemainWhole) {
-    const auto rendered = mermaid_document(
-        "flowchart LR\nA[\"中文客户端\"] -->|请求| B[\"Café 服务\"]");
+    const auto rendered =
+        mermaid_document("flowchart LR\nA[\"中文客户端\"] -->|请求| B[\"Café 服务\"]");
     expect_diagram(rendered, "flowchart LR");
     EXPECT_NE(rendered.find("中文客户端"), std::string::npos) << rendered;
     EXPECT_NE(rendered.find("Café 服务"), std::string::npos) << rendered;
@@ -679,15 +664,16 @@ TEST(MarkdownMermaid, ReferencesAllowLaterConsistentDeclarations) {
 }
 
 TEST(MarkdownMermaid, SequenceParticipantsAliasesAndMessagesRemainVisible) {
-    const auto rendered = mermaid_document(
-        "sequenceDiagram\nparticipant A as Client\nparticipant B as Service\n"
-        "A->>B: Request\nB-->>A: Response\nB->>B: Local step");
+    const auto rendered =
+        mermaid_document("sequenceDiagram\nparticipant A as Client\nparticipant B as Service\n"
+                         "A->>B: Request\nB-->>A: Response\nB->>B: Local step");
     expect_diagram(rendered, "sequenceDiagram");
     for (const auto* label : {"Client", "Service", "Request", "Response", "Local step"})
         EXPECT_NE(rendered.find(label), std::string::npos) << rendered;
     EXPECT_LT(text_position(rendered, "Client").second, text_position(rendered, "Service").second);
     EXPECT_LT(text_position(rendered, "Request").first, text_position(rendered, "Response").first);
-    EXPECT_LT(text_position(rendered, "Response").first, text_position(rendered, "Local step").first);
+    EXPECT_LT(text_position(rendered, "Response").first,
+              text_position(rendered, "Local step").first);
     EXPECT_EQ(diagram_arrows(rendered), 3) << rendered;
     EXPECT_NE(rendered.find("▶"), std::string::npos);
     const auto first_left = rendered.find("◀");
@@ -696,8 +682,8 @@ TEST(MarkdownMermaid, SequenceParticipantsAliasesAndMessagesRemainVisible) {
 }
 
 TEST(MarkdownMermaid, SequenceImplicitParticipantsKeepFirstAppearanceOrder) {
-    const auto rendered = mermaid_document(
-        "sequenceDiagram\nZ->>A: First\nparticipant A as Alpha\nA-->>Z: Reply");
+    const auto rendered =
+        mermaid_document("sequenceDiagram\nZ->>A: First\nparticipant A as Alpha\nA-->>Z: Reply");
     expect_diagram(rendered, "sequenceDiagram");
     EXPECT_LT(text_position(rendered, "Z").second, text_position(rendered, "Alpha").second);
     EXPECT_NE(rendered.find("Reply"), std::string::npos);
@@ -722,48 +708,43 @@ TEST(MarkdownMermaid, SequenceUnclosedActivationRetainsItsOwnedTail) {
 }
 
 TEST(MarkdownMermaid, UnsupportedConstructsKeepEntireOriginalSource) {
-    for (const std::string source : {
-            "classDiagram\nclass PreservedClass\nclick PreservedClass \"https://example.com\"",
-            "flowchart TD\nA --> B\nclick A \"https://example.com\"",
-            "flowchart TD\nA[before &amp; after] --> B",
-            "flowchart TD\nA[`rich`] --> B",
-            "flowchart TD\nA[\"#quot;\"] --> B",
-            "flowchart TD\nA[\"a\\\\b\"] --> B",
-            "flowchart TD\nA --> end",
-            "flowchart TD\nA --> B\nend",
-            "flowchart TD\nA[\"a\u061cb\"] --> B",
-            "flowchart TD\nA[\"a\u200eb\"] --> B",
-            "flowchart TD\nA[\"a\u200fb\"] --> B",
-            "flowchart TD\nA --> B\nA[one]\nA[two]",
-            "flowchart TD\n%%{init: {}}%%\nA --> B",
-            "flowchart TD\nA --> B residual",
-            "sequenceDiagram\nloop->>A: Ping",
-            "sequenceDiagram\nEND->>A: Ping",
-            "sequenceDiagram\nparticipant Loop\nLoop->>A: Ping",
-            "sequenceDiagram\nA->>B: Request\nnote left of B: retained\nunknown directive",
-            "sequenceDiagram\nparticipant A as \"#quot;\"\nA->>B: Request"}) {
+    for (const std::string source :
+         {"classDiagram\nclass PreservedClass\nclick PreservedClass \"https://example.com\"",
+          "flowchart TD\nA --> B\nclick A \"https://example.com\"",
+          "flowchart TD\nA[before &amp; after] --> B", "flowchart TD\nA[`rich`] --> B",
+          "flowchart TD\nA[\"#quot;\"] --> B", "flowchart TD\nA[\"a\\\\b\"] --> B",
+          "flowchart TD\nA --> end", "flowchart TD\nA --> B\nend",
+          "flowchart TD\nA[\"a\u061cb\"] --> B", "flowchart TD\nA[\"a\u200eb\"] --> B",
+          "flowchart TD\nA[\"a\u200fb\"] --> B", "flowchart TD\nA --> B\nA[one]\nA[two]",
+          "flowchart TD\n%%{init: {}}%%\nA --> B", "flowchart TD\nA --> B residual",
+          "sequenceDiagram\nloop->>A: Ping", "sequenceDiagram\nEND->>A: Ping",
+          "sequenceDiagram\nparticipant Loop\nLoop->>A: Ping",
+          "sequenceDiagram\nA->>B: Request\nnote left of B: retained\nunknown directive",
+          "sequenceDiagram\nparticipant A as \"#quot;\"\nA->>B: Request"}) {
         SCOPED_TRACE(source);
         const auto expected = render_document(render_markdown("```text\n" + source + "\n```"));
         EXPECT_EQ(mermaid_document(source), expected);
     }
-    expect_diagram(mermaid_document("flowchart TD\nA --> B\nsubgraph PreservedGroup\nC\nend"), "flowchart TD");
+    expect_diagram(mermaid_document("flowchart TD\nA --> B\nsubgraph PreservedGroup\nC\nend"),
+                   "flowchart TD");
     expect_diagram(mermaid_document("flowchart TD\nA[before<br/>after] --> B"), "flowchart TD");
     expect_diagram(mermaid_document("flowchart TD\nA[\"end\"] --> B[Finish]"), "flowchart TD");
-    expect_diagram(mermaid_document("sequenceDiagram\nparticipant A as loop\nA->>B: end"), "sequenceDiagram");
+    expect_diagram(mermaid_document("sequenceDiagram\nparticipant A as loop\nA->>B: end"),
+                   "sequenceDiagram");
     // The source-identical semicolon case is now supported; the decoded
     // delimiter remains one message label rather than a second statement.
     const auto semicolon = mermaid_document("sequenceDiagram\nA->>B: before #59; A->>B: after");
-    expect_diagram(semicolon,"sequenceDiagram");
-    EXPECT_NE(semicolon.find("before ; A->>B: after"),std::string::npos);
-    EXPECT_EQ(semicolon.find("#59;"),std::string::npos);
-    EXPECT_EQ(diagram_arrows(semicolon),1);
+    expect_diagram(semicolon, "sequenceDiagram");
+    EXPECT_NE(semicolon.find("before ; A->>B: after"), std::string::npos);
+    EXPECT_EQ(semicolon.find("#59;"), std::string::npos);
+    EXPECT_EQ(diagram_arrows(semicolon), 1);
 }
 
 TEST(MarkdownMermaid, MalformedOrIncompleteSyntaxKeepsSource) {
-    for (const std::string source : {"", "flowchart TD", "flowchart UNKNOWN\nA --> B",
-            "flowchart TD\nA[unclosed --> B", "flowchart TD\nA -->",
-            "sequenceDiagram\nA->>B", "sequenceDiagram\nparticipant",
-            "flowchart TD\nA[\"unterminated] --> B"}) {
+    for (const std::string source :
+         {"", "flowchart TD", "flowchart UNKNOWN\nA --> B", "flowchart TD\nA[unclosed --> B",
+          "flowchart TD\nA -->", "sequenceDiagram\nA->>B", "sequenceDiagram\nparticipant",
+          "flowchart TD\nA[\"unterminated] --> B"}) {
         const auto expected = render_document(render_markdown("```text\n" + source + "\n```"));
         EXPECT_EQ(mermaid_document(source), expected) << source;
     }
@@ -772,10 +753,13 @@ TEST(MarkdownMermaid, MalformedOrIncompleteSyntaxKeepsSource) {
 TEST(MarkdownMermaid, OnlyClosedExactLanguageFencesRenderDiagrams) {
     const std::string body = "flowchart TD\nA[First] --> B[Second]";
     for (const auto* language : {"text", "MERMAID", "mermaid-extra"}) {
-        EXPECT_NE(render_document(render_markdown(std::string("```") + language + "\n" + body + "\n```"))
-            .find("flowchart TD"), std::string::npos);
+        EXPECT_NE(
+            render_document(render_markdown(std::string("```") + language + "\n" + body + "\n```"))
+                .find("flowchart TD"),
+            std::string::npos);
     }
-    EXPECT_NE(render_document(render_markdown("```mermaid\n" + body)).find("flowchart TD"), std::string::npos);
+    EXPECT_NE(render_document(render_markdown("```mermaid\n" + body)).find("flowchart TD"),
+              std::string::npos);
     expect_diagram(render_document(render_markdown(mermaid_fence(body))), "flowchart TD");
 }
 
@@ -783,7 +767,7 @@ TEST(MarkdownMermaid, StreamingPrefixesReplacementAndResetPreserveLayout) {
     const std::string complete = mermaid_fence("flowchart LR\nA[Client] --> B[Server]");
     StreamingMarkdown streaming;
     for (std::size_t end = complete.find("flowchart") + std::string("flowchart LR").size();
-            end < complete.size(); ++end) {
+         end < complete.size(); ++end) {
         const auto prefix = complete.substr(0, end);
         const auto element = streaming.update(prefix);
         EXPECT_EQ(render_document(element), render_document(render_markdown(prefix))) << end;
@@ -792,14 +776,16 @@ TEST(MarkdownMermaid, StreamingPrefixesReplacementAndResetPreserveLayout) {
     const auto diagram = render_document(streaming.update(complete));
     expect_diagram(diagram, "flowchart LR");
     EXPECT_EQ(render_document(streaming.update(complete)), diagram);
-    EXPECT_NE(render_document(streaming.update("replacement paragraph")).find("replacement paragraph"), std::string::npos);
+    EXPECT_NE(
+        render_document(streaming.update("replacement paragraph")).find("replacement paragraph"),
+        std::string::npos);
     streaming.reset();
     EXPECT_EQ(render_document(streaming.update(complete)), diagram);
 }
 
 TEST(MarkdownMermaid, SameNodeResizesToSourceAndBackWithoutLosingFollowingText) {
-    const auto markdown = mermaid_fence(
-        "flowchart LR\nA[Long client label] -->|request| B[Long server label]") +
+    const auto markdown =
+        mermaid_fence("flowchart LR\nA[Long client label] -->|request| B[Long server label]") +
         "\n\nFOLLOWING_SENTINEL";
     const auto node = render_markdown(markdown);
     const auto wide = render_document(node, 160);
@@ -808,7 +794,9 @@ TEST(MarkdownMermaid, SameNodeResizesToSourceAndBackWithoutLosingFollowingText) 
     const auto narrow = render_document(node, 24);
     EXPECT_NE(narrow.find("flowchart LR"), std::string::npos) << narrow;
     EXPECT_NE(narrow.find("FOLLOWING_SENTINEL"), std::string::npos) << narrow;
-    const auto plain_source = std::string("```text\nflowchart LR\nA[Long client label] -->|request| B[Long server label]\n```") +
+    const auto plain_source =
+        std::string(
+            "```text\nflowchart LR\nA[Long client label] -->|request| B[Long server label]\n```") +
         "\n\nFOLLOWING_SENTINEL";
     EXPECT_EQ(narrow, render_document(render_markdown(plain_source), 24));
     EXPECT_EQ(render_document(node, 160), wide);
@@ -829,23 +817,29 @@ TEST(MarkdownMermaid, NestedListAndQuoteFencesRetainClosureState) {
 TEST(MarkdownMermaid, ResourceLimitsPreserveSourceWithoutPartialGraph) {
     std::vector<std::string> sources;
     std::string many_nodes = "flowchart TD\n";
-    for (int i = 0; i < 65; ++i) many_nodes += "N" + std::to_string(i) + "\n";
+    for (int i = 0; i < 65; ++i)
+        many_nodes += "N" + std::to_string(i) + "\n";
     sources.push_back(many_nodes);
     sources.push_back("flowchart TD\nA[" + std::string(257, 'x') + "] --> B");
     std::string many_messages = "sequenceDiagram\n";
-    for (int i = 0; i < 129; ++i) many_messages += "A->>B: Message\n";
+    for (int i = 0; i < 129; ++i)
+        many_messages += "A->>B: Message\n";
     sources.push_back(many_messages);
     sources.push_back("flowchart TD\n%%" + std::string(65536, 'x') + "\nA --> B");
     std::string many_edges = "flowchart TD\n";
-    for (int i = 0; i < 129; ++i) many_edges += "A --> B\n";
+    for (int i = 0; i < 129; ++i)
+        many_edges += "A --> B\n";
     sources.push_back(many_edges);
     std::string many_participants = "sequenceDiagram\n";
-    for (int i = 0; i < 33; ++i) many_participants += "participant P" + std::to_string(i) + "\n";
+    for (int i = 0; i < 33; ++i)
+        many_participants += "participant P" + std::to_string(i) + "\n";
     sources.push_back(many_participants);
-    sources.push_back("flowchart LR\nA[" + std::string(220, 'a') + "] --> B[" + std::string(220, 'b') + "]");
+    sources.push_back("flowchart LR\nA[" + std::string(220, 'a') + "] --> B[" +
+                      std::string(220, 'b') + "]");
     for (const auto& source : sources) {
         SCOPED_TRACE(source.substr(0, 60));
-        EXPECT_EQ(mermaid_document(source), render_document(render_markdown("```text\n" + source + "\n```")));
+        EXPECT_EQ(mermaid_document(source),
+                  render_document(render_markdown("```text\n" + source + "\n```")));
     }
 }
 
@@ -870,12 +864,13 @@ TEST(MarkdownMermaid, CumulativeCanvasWorkBudgetFallsBackForOtherwiseAdmittedCha
     // shared per-block work budget, rather than resetting it for each edge.
     const auto bounded = chain(64, 100);
     ASSERT_LT(bounded.size(), 65536U);
-    EXPECT_EQ(mermaid_document(bounded), render_document(render_markdown("```text\n" + bounded + "\n```")));
+    EXPECT_EQ(mermaid_document(bounded),
+              render_document(render_markdown("```text\n" + bounded + "\n```")));
 }
 
 TEST(MarkdownMermaid, DiagramAfterLongPlainPrefaceStillUsesMarkdownParser) {
-    const auto document = std::string(600, 'x') + "\n" +
-        mermaid_fence("flowchart LR\nA[Client] --> B[Server]");
+    const auto document =
+        std::string(600, 'x') + "\n" + mermaid_fence("flowchart LR\nA[Client] --> B[Server]");
     const auto rendered = render_document(render_markdown(document));
     expect_diagram(rendered, "flowchart LR");
     EXPECT_NE(rendered.find("Client"), std::string::npos);
@@ -899,16 +894,17 @@ TEST(MarkdownMermaid, FullSyntaxScanHandlesLongNumericRunsAndNumericPrefaces) {
 // official corpus/grammar. They are not original upstream fixture passes.
 TEST(MarkdownMermaid, OfficialFontAwesomeLabelsKeepSourceRatherThanLiteralIcons) {
     for (const auto* family : {"fa", "fab", "fak", "fal", "far", "fas"}) {
-        for (const auto& source : {
-                std::string("flowchart LR\nA[") + family + ":fa-car Car] --> B[Done]",
-                std::string("flowchart LR\nA[\"") + family + ":fa-car Car\"] --> B[Done]",
-                std::string("flowchart LR\nA -->|prefix ") + family + ":fa-car Car| B"}) {
+        for (const auto& source :
+             {std::string("flowchart LR\nA[") + family + ":fa-car Car] --> B[Done]",
+              std::string("flowchart LR\nA[\"") + family + ":fa-car Car\"] --> B[Done]",
+              std::string("flowchart LR\nA -->|prefix ") + family + ":fa-car Car| B"}) {
             SCOPED_TRACE(source);
             EXPECT_EQ(mermaid_document(source),
                       render_document(render_markdown("```text\n" + source + "\n```")));
         }
     }
-    expect_diagram(mermaid_document("flowchart LR\nA[fa:description] --> B[fa:fa-]"), "flowchart LR");
+    expect_diagram(mermaid_document("flowchart LR\nA[fa:description] --> B[fa:fa-]"),
+                   "flowchart LR");
 }
 
 // Preserve the exact four former fallback controls as mandatory drawing
@@ -916,61 +912,84 @@ TEST(MarkdownMermaid, OfficialFontAwesomeLabelsKeepSourceRatherThanLiteralIcons)
 // directly from each full source; ordinary text never earns drawing credit.
 TEST(MarkdownMermaid, FormerClassicShapeFallbacksRequireCompleteGeometry) {
     namespace flow = loom::test::mermaid_flow;
-    struct Example { std::string_view source, label; flow::Shape shape; };
-    constexpr std::array<Example,4> cases{{
-        {"flowchart LR\nA[/Lean right/] --> B","Lean right",flow::Shape::Parallelogram},
-        {"flowchart LR\nA[\\Lean left\\] --> B","Lean left",flow::Shape::ParallelogramAlt},
-        {"flowchart LR\nA[/Trapezoid\\] --> B","Trapezoid",flow::Shape::Trapezoid},
-        {"flowchart LR\nA[\\Inverse trapezoid/] --> B","Inverse trapezoid",flow::Shape::TrapezoidAlt},
+
+    struct Example {
+        std::string_view source, label;
+        flow::Shape shape;
+    };
+
+    constexpr std::array<Example, 4> cases{{
+        {"flowchart LR\nA[/Lean right/] --> B", "Lean right", flow::Shape::Parallelogram},
+        {"flowchart LR\nA[\\Lean left\\] --> B", "Lean left", flow::Shape::ParallelogramAlt},
+        {"flowchart LR\nA[/Trapezoid\\] --> B", "Trapezoid", flow::Shape::Trapezoid},
+        {"flowchart LR\nA[\\Inverse trapezoid/] --> B", "Inverse trapezoid",
+         flow::Shape::TrapezoidAlt},
     }};
-    for (const auto& item:cases) {
+    for (const auto& item : cases) {
         SCOPED_TRACE(item.source);
         flow::OracleWork work{flow::kFlow400SceneLimit};
-        work.spend(65536u+32u*sizeof(flow::Grid)+32u*sizeof(flow::Model)+256u*sizeof(std::string));
-        const auto fenced=[&](std::string_view language) {
-            return "```"+std::string(language)+"\n"+std::string(item.source)+"\n```\n"+std::string(flow::kSentinel);
+        work.spend(65536u + 32u * sizeof(flow::Grid) + 32u * sizeof(flow::Model) +
+                   256u * sizeof(std::string));
+        const auto fenced = [&](std::string_view language) {
+            return "```" + std::string(language) + "\n" + std::string(item.source) + "\n```\n" +
+                   std::string(flow::kSentinel);
         };
-        work.product(item.source.size(),32u);
-        auto element=render_markdown(fenced("mermaid"));
-        auto ordinary=render_markdown(fenced("text"));
-        std::array<flow::Grid,5> frames;
-        constexpr std::array<int,5> widths{{120,40,120,120,40}};
-        for (std::size_t n=0;n<frames.size();++n)
-            frames[n]=flow::capture(n<3u?element:ordinary,widths[n],32,&work);
-        for (const auto& frame:frames) static_cast<void>(flow::flow400_following(frame,work));
-        ASSERT_FALSE(flow::flow400_same(frames[0],frames[3],work));
-        ASSERT_TRUE(flow::flow400_same(frames[0],frames[2],work));
-        const flow::Model model{"LR",{{"A",std::string(item.label),item.shape},{"B","B",flow::Shape::Rectangle}},{{0,1,"","solid",false,true}},{}};
-        for (std::size_t n=0;n<3u;++n) {
-            if (n==1u&&flow::flow400_same(frames[1],frames[4],work)) continue;
-            const auto errors=flow::flow400_geometry(frames[n],model,work);
+        work.product(item.source.size(), 32u);
+        auto element = render_markdown(fenced("mermaid"));
+        auto ordinary = render_markdown(fenced("text"));
+        std::array<flow::Grid, 5> frames;
+        constexpr std::array<int, 5> widths{{120, 40, 120, 120, 40}};
+        for (std::size_t n = 0; n < frames.size(); ++n)
+            frames[n] = flow::capture(n < 3u ? element : ordinary, widths[n], 32, &work);
+        for (const auto& frame : frames)
+            static_cast<void>(flow::flow400_following(frame, work));
+        ASSERT_FALSE(flow::flow400_same(frames[0], frames[3], work));
+        ASSERT_TRUE(flow::flow400_same(frames[0], frames[2], work));
+        const flow::Model model{
+            "LR",
+            {{"A", std::string(item.label), item.shape}, {"B", "B", flow::Shape::Rectangle}},
+            {{0, 1, "", "solid", false, true}},
+            {}};
+        for (std::size_t n = 0; n < 3u; ++n) {
+            if (n == 1u && flow::flow400_same(frames[1], frames[4], work)) continue;
+            const auto errors = flow::flow400_geometry(frames[n], model, work);
             ASSERT_TRUE(errors.empty()) << flow::errors_text(errors);
         }
-        flow::flow_typed_expect_model_rejected(frames[0],model,work,[](flow::Model& bad){bad.nodes[0].shape=flow::Shape::Rectangle;},"former fallback shape");
-        flow::flow_typed_expect_model_rejected(frames[0],model,work,[](flow::Model& bad){bad.nodes[0].label+="x";},"former fallback caption");
-        flow::flow_typed_expect_model_rejected(frames[0],model,work,[](flow::Model& bad){bad.edges[0].to=0;},"former fallback endpoint");
-        ASSERT_EQ(frames[0].at({119,0})," ");
-        flow::flow_typed_expect_rejected(frames[0],model,work,[](flow::Grid& bad){bad.put({119,0},"X");},"former fallback unowned physical ink");
+        flow::flow_typed_expect_model_rejected(
+            frames[0], model, work,
+            [](flow::Model& bad) { bad.nodes[0].shape = flow::Shape::Rectangle; },
+            "former fallback shape");
+        flow::flow_typed_expect_model_rejected(
+            frames[0], model, work, [](flow::Model& bad) { bad.nodes[0].label += "x"; },
+            "former fallback caption");
+        flow::flow_typed_expect_model_rejected(
+            frames[0], model, work, [](flow::Model& bad) { bad.edges[0].to = 0; },
+            "former fallback endpoint");
+        ASSERT_EQ(frames[0].at({119, 0}), " ");
+        flow::flow_typed_expect_rejected(
+            frames[0], model, work, [](flow::Grid& bad) { bad.put({119, 0}, "X"); },
+            "former fallback unowned physical ink");
     }
-    RecordProperty("retained_complete_sources",4);
-    RecordProperty("semantic_mutations",12);
-    RecordProperty("physical_mutations",4);
+    RecordProperty("retained_complete_sources", 4);
+    RecordProperty("semantic_mutations", 12);
+    RecordProperty("physical_mutations", 4);
 }
 
 TEST(MarkdownMermaid, OfficialUnsupportedShapeOpenersKeepSource) {
-    const auto* source="flowchart LR\nA(-Ellipse-) --> B";
+    const auto* source = "flowchart LR\nA(-Ellipse-) --> B";
     EXPECT_EQ(mermaid_document(source),
-              render_document(render_markdown(std::string("```text\n")+source+"\n```")));
-    expect_diagram(mermaid_document("flowchart LR\nA[\"/data/\"] --> B(\"-literal-\")"),"flowchart LR");
+              render_document(render_markdown(std::string("```text\n") + source + "\n```")));
+    expect_diagram(mermaid_document("flowchart LR\nA[\"/data/\"] --> B(\"-literal-\")"),
+                   "flowchart LR");
 }
 
 TEST(MarkdownMermaid, SequenceWrapPrefixesRespectSourceCase) {
     for (const auto* prefix : {"WRAP:", "NoWrap:", ":WRAP:", ":NoWrap:"}) {
         for (const bool actor : {false, true}) {
             const std::string label = std::string(prefix) + (actor ? " Client" : " Message");
-            const std::string source = actor
-                ? "sequenceDiagram\nparticipant A as " + label + "\nA->>B: Request"
-                : "sequenceDiagram\nA->>B: " + label;
+            const std::string source =
+                actor ? "sequenceDiagram\nparticipant A as " + label + "\nA->>B: Request"
+                      : "sequenceDiagram\nA->>B: " + label;
             SCOPED_TRACE(source);
             const auto element = render_markdown(mermaid_fence(source));
             const auto rendered = render_document(element);
@@ -982,11 +1001,15 @@ TEST(MarkdownMermaid, SequenceWrapPrefixesRespectSourceCase) {
             EXPECT_EQ(diagram_arrows(rendered), 1);
         }
     }
-    expect_diagram(mermaid_document("sequenceDiagram\nA->>B: Ordinary WRAP word"), "sequenceDiagram");
+    expect_diagram(mermaid_document("sequenceDiagram\nA->>B: Ordinary WRAP word"),
+                   "sequenceDiagram");
 }
 
 TEST(MarkdownMermaid, ReviewedSequenceTextAndReplacementRulesDrawCompleteLabels) {
-    struct Example { std::string source, text, absent; };
+    struct Example {
+        std::string source, text, absent;
+    };
+
     const std::array<Example, 10> examples{{
         {"sequenceDiagram\nparticipant A as \"Client\"\nA->>B: Request", "\"Client\"", ""},
         {"sequenceDiagram\nA->>B: \"Hello\"", "\"Hello\"", ""},
@@ -995,9 +1018,11 @@ TEST(MarkdownMermaid, ReviewedSequenceTextAndReplacementRulesDrawCompleteLabels)
         {"sequenceDiagram\nA->>B: :wrap: Hello", "Hello", ":wrap:"},
         {"sequenceDiagram\nA->>B: :nowrap: Hello", "Hello", ":nowrap:"},
         {"sequenceDiagram\nA->>B: \"#35;\"", "\"#\"", "#35;"},
-        {"sequenceDiagram\nparticipant A as \"a\u200fb\"\nA->>B: Request", "\"a\\u{200F}b\"", "a\u200fb"},
+        {"sequenceDiagram\nparticipant A as \"a\u200fb\"\nA->>B: Request", "\"a\\u{200F}b\"",
+         "a\u200fb"},
         {"sequenceDiagram\nA->>B: \"a\u061cb\"", "\"a\\u{061C}b\"", "a\u061cb"},
-        {"sequenceDiagram\nparticipant A as One\nparticipant A as Two\nA->>B: Request", "Two", "One"},
+        {"sequenceDiagram\nparticipant A as One\nparticipant A as Two\nA->>B: Request", "Two",
+         "One"},
     }};
     for (const auto& example : examples) {
         SCOPED_TRACE(example.source);

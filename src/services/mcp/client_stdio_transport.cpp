@@ -2,11 +2,12 @@
 // Out-of-line so the POSIX GMF below never enters the module interface BMI.
 module;
 
-#include <cerrno>
-#include <stdlib.h>
 #include <signal.h>
+#include <stdlib.h>
 #include <sys/wait.h>
 #include <unistd.h>
+
+#include <cerrno>
 
 module loom.services.mcp.client;
 
@@ -154,4 +155,4 @@ void StdioTransport::close() {
     connected_ = false;
 }
 
-} // namespace loom::services::mcp
+}  // namespace loom::services::mcp

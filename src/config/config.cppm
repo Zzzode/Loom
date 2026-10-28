@@ -4,14 +4,15 @@
 /// environment variable integration, feature flags, and JSON persistence.
 module;
 
-#include <cstdlib>
+#include <fcntl.h>
+#include <sys/file.h>
+#include <sys/stat.h>
+#include <unistd.h>
+
+#include <cerrno>
 #include <cstdint>
 #include <cstdio>
-#include <cerrno>
-#include <fcntl.h>
-#include <unistd.h>
-#include <sys/stat.h>
-#include <sys/file.h>
+#include <cstdlib>
 
 export module loom.config.config;
 
@@ -32,29 +33,25 @@ export namespace loom::core {
 
 /// Named feature flags that can be toggled at build or runtime
 enum class FeatureFlag : std::uint32_t {
-    Proactive          = 1 << 0,   // Proactive suggestions
-    BridgeMode         = 1 << 1,   // IDE bridge integration
-    Daemon             = 1 << 3,   // Background daemon mode
-    AgentTriggers      = 1 << 4,   // Automatic agent triggering
-    MonitorTool        = 1 << 5,   // System monitoring tool
-    Templates          = 1 << 6,   // Template system
-    BackgroundSessions = 1 << 7,   // Background session support
-    ExtendedThinking   = 1 << 8,   // Extended thinking mode
-    MultiAgent         = 1 << 9,   // Multi-agent orchestration
-    SkillSystem        = 1 << 10,  // Skill loading system
+    Proactive = 1 << 0,           // Proactive suggestions
+    BridgeMode = 1 << 1,          // IDE bridge integration
+    Daemon = 1 << 3,              // Background daemon mode
+    AgentTriggers = 1 << 4,       // Automatic agent triggering
+    MonitorTool = 1 << 5,         // System monitoring tool
+    Templates = 1 << 6,           // Template system
+    BackgroundSessions = 1 << 7,  // Background session support
+    ExtendedThinking = 1 << 8,    // Extended thinking mode
+    MultiAgent = 1 << 9,          // Multi-agent orchestration
+    SkillSystem = 1 << 10,        // Skill loading system
 };
 
 /// Bitwise operations for combining feature flags
 [[nodiscard]] constexpr FeatureFlag operator|(FeatureFlag a, FeatureFlag b) noexcept {
-    return static_cast<FeatureFlag>(
-        static_cast<std::uint32_t>(a) | static_cast<std::uint32_t>(b)
-    );
+    return static_cast<FeatureFlag>(static_cast<std::uint32_t>(a) | static_cast<std::uint32_t>(b));
 }
 
 [[nodiscard]] constexpr FeatureFlag operator&(FeatureFlag a, FeatureFlag b) noexcept {
-    return static_cast<FeatureFlag>(
-        static_cast<std::uint32_t>(a) & static_cast<std::uint32_t>(b)
-    );
+    return static_cast<FeatureFlag>(static_cast<std::uint32_t>(a) & static_cast<std::uint32_t>(b));
 }
 
 /// Feature flag set with runtime toggle support
@@ -63,7 +60,9 @@ class FeatureFlags {
 
 public:
     FeatureFlags() = default;
-    explicit FeatureFlags(std::uint32_t raw) : flags_(raw) {}
+
+    explicit FeatureFlags(std::uint32_t raw)
+        : flags_(raw) {}
 
     /// Check if a flag is enabled
     [[nodiscard]] bool is_enabled(FeatureFlag flag) const noexcept {
@@ -71,18 +70,17 @@ public:
     }
 
     /// Enable a feature flag
-    void enable(FeatureFlag flag) noexcept {
-        flags_ |= static_cast<std::uint32_t>(flag);
-    }
+    void enable(FeatureFlag flag) noexcept { flags_ |= static_cast<std::uint32_t>(flag); }
 
     /// Disable a feature flag
-    void disable(FeatureFlag flag) noexcept {
-        flags_ &= ~static_cast<std::uint32_t>(flag);
-    }
+    void disable(FeatureFlag flag) noexcept { flags_ &= ~static_cast<std::uint32_t>(flag); }
 
     /// Set flag state explicitly
     void set(FeatureFlag flag, bool enabled) noexcept {
-        if (enabled) enable(flag); else disable(flag);
+        if (enabled)
+            enable(flag);
+        else
+            disable(flag);
     }
 
     /// Get raw flag bits
@@ -95,7 +93,7 @@ public:
 
 /// Model-specific settings
 struct ModelSettings {
-    std::string default_model;  // No default — must be explicitly configured
+    std::string default_model;            // No default — must be explicitly configured
     std::uint32_t max_output_tokens = 0;  // Zero selects automatic provider policy.
     std::optional<double> temperature;
     std::optional<bool> extended_thinking;
@@ -106,40 +104,40 @@ struct ModelSettings {
 
 /// Permission settings for tool execution
 struct PermissionSettings {
-    bool allow_bash = true;                    // Allow bash command execution
-    bool allow_file_write = true;              // Allow file modifications
-    bool allow_network = true;                 // Allow network requests
-    std::vector<std::string> allowed_paths;    // Whitelisted file paths
-    std::vector<std::string> denied_paths;     // Blacklisted file paths
-    std::vector<std::string> allowed_commands; // Whitelisted shell commands
+    bool allow_bash = true;                     // Allow bash command execution
+    bool allow_file_write = true;               // Allow file modifications
+    bool allow_network = true;                  // Allow network requests
+    std::vector<std::string> allowed_paths;     // Whitelisted file paths
+    std::vector<std::string> denied_paths;      // Blacklisted file paths
+    std::vector<std::string> allowed_commands;  // Whitelisted shell commands
     // Raw permissions.deny rules (TS alwaysDenyRules) filtered from the tool
     // list before each API request. Parsed identically by interactive and
     // headless engines so neither path can bypass them.
     std::vector<std::string> deny_rules;
-    std::string permission_mode;               // Flat key: permissionMode
-    std::vector<std::string> allowed_tools;    // Flat key: allowedTools
+    std::string permission_mode;             // Flat key: permissionMode
+    std::vector<std::string> allowed_tools;  // Flat key: allowedTools
 };
 
 /// Display and UI settings
 struct DisplaySettings {
-    bool show_thinking = true;                 // Display thinking blocks
-    bool show_token_usage = false;             // Show token counters
-    bool compact_mode = false;                 // Minimal output formatting
-    std::optional<std::uint32_t> line_width;   // Terminal line width override
+    bool show_thinking = true;                // Display thinking blocks
+    bool show_token_usage = false;            // Show token counters
+    bool compact_mode = false;                // Minimal output formatting
+    std::optional<std::uint32_t> line_width;  // Terminal line width override
     std::string theme = "auto";               // Color theme (auto, dark, light)
-    bool verbose = false;                      // Flat key: verbose
-    bool vim_mode = false;                     // Flat key: vimMode
-    bool mouse_mode = true;                    // Flat key: mouseMode (RFC 0010)
+    bool verbose = false;                     // Flat key: verbose
+    bool vim_mode = false;                    // Flat key: vimMode
+    bool mouse_mode = true;                   // Flat key: mouseMode (RFC 0010)
 };
 
 /// Network and API connection settings
 struct NetworkSettings {
-    std::optional<std::string> api_key;            // API key
-    std::optional<std::string> base_url;           // Custom API endpoint
-    std::optional<std::string> proxy;              // HTTP proxy URL
-    std::uint32_t timeout_seconds = 120;           // Request timeout
-    std::uint32_t max_retries = 3;                 // Retry attempts
-    bool verify_ssl = true;                        // SSL certificate verification
+    std::optional<std::string> api_key;   // API key
+    std::optional<std::string> base_url;  // Custom API endpoint
+    std::optional<std::string> proxy;     // HTTP proxy URL
+    std::uint32_t timeout_seconds = 120;  // Request timeout
+    std::uint32_t max_retries = 3;        // Retry attempts
+    bool verify_ssl = true;               // SSL certificate verification
 };
 
 struct XaaIdpSettings {
@@ -154,11 +152,11 @@ struct XaaIdpSettings {
 /// When `command` is set, the command-based path runs (shell → stdout).
 /// When `command` is empty, the built-in renderer uses `segments` toggles.
 struct StatusLineSettings {
-    std::optional<std::string> type;      // "command" or "builtin"
-    std::optional<std::string> command;   // Shell command to execute
-    std::optional<bool> enabled;          // Explicit on/off; null = auto
-    std::optional<int> padding;           // Left padding in columns
-    std::map<std::string, bool> segments; // Built-in renderer segment toggles
+    std::optional<std::string> type;       // "command" or "builtin"
+    std::optional<std::string> command;    // Shell command to execute
+    std::optional<bool> enabled;           // Explicit on/off; null = auto
+    std::optional<int> padding;            // Left padding in columns
+    std::map<std::string, bool> segments;  // Built-in renderer segment toggles
 };
 
 /// Top-level settings aggregating all configuration sections
@@ -171,7 +169,7 @@ struct Settings {
     std::vector<McpServerConfig> mcp_servers;      // Configured MCP servers
     std::optional<std::string> system_prompt;      // Custom system prompt override
     std::vector<std::string> custom_instructions;  // Additional context instructions
-    XaaIdpSettings xaa_idp;                         // XAA IdP configuration
+    XaaIdpSettings xaa_idp;                        // XAA IdP configuration
     StatusLineSettings status_line;                // Status line config (command + builtin)
 };
 
@@ -182,9 +180,9 @@ struct Settings {
 /// Physical MCP config file tiers. Same-name resolution, highest first:
 /// Local > Project > User.
 enum class McpStorageScope : std::uint8_t {
-    User   = 0, // $LOOM_CONFIG_DIR/settings.json, else ~/.loom/settings.json
-    Project= 1, // <project>/.loom/settings.json (tracked by VCS)
-    Local  = 2, // <project>/.loom/settings.local.json (gitignored)
+    User = 0,     // $LOOM_CONFIG_DIR/settings.json, else ~/.loom/settings.json
+    Project = 1,  // <project>/.loom/settings.json (tracked by VCS)
+    Local = 2,    // <project>/.loom/settings.local.json (gitignored)
 };
 
 // ── MCP fallback mutation model (RFC 0007 Phase 2) ──────────────────────
@@ -209,19 +207,19 @@ struct McpPhysicalSource {
 
 /// Status of a single MCP mutation entry.
 enum class McpMutationStatus : std::uint8_t {
-    Modified,        ///< Writable owner was patched successfully
-    Unchanged,       ///< Writable owner already in target state (no-op)
-    SkippedReadOnly, ///< Fallback entry, skipped (not writable)
-    WriteFailed,     ///< Writable owner had I/O error
-    NotFound,        ///< Server not found in any layer
+    Modified,         ///< Writable owner was patched successfully
+    Unchanged,        ///< Writable owner already in target state (no-op)
+    SkippedReadOnly,  ///< Fallback entry, skipped (not writable)
+    WriteFailed,      ///< Writable owner had I/O error
+    NotFound,         ///< Server not found in any layer
 };
 
 /// One entry in an MCP mutation outcome.
 struct McpMutationEntry {
     std::string server_name;
-    std::optional<McpPhysicalSource> source; // nullopt for NotFound
+    std::optional<McpPhysicalSource> source;  // nullopt for NotFound
     McpMutationStatus status = McpMutationStatus::NotFound;
-    std::string detail; // error message or empty
+    std::string detail;  // error message or empty
 };
 
 /// Outcome of an MCP mutation (remove/enable/disable, named or all).
@@ -229,8 +227,8 @@ struct McpMutationOutcome {
     std::vector<McpMutationEntry> entries;
 
     [[nodiscard]] std::size_t modified_count() const {
-        return static_cast<std::size_t>(std::ranges::count_if(
-            entries, [](const McpMutationEntry& e) {
+        return static_cast<std::size_t>(
+            std::ranges::count_if(entries, [](const McpMutationEntry& e) {
                 return e.status == McpMutationStatus::Modified;
             }));
     }
@@ -243,10 +241,9 @@ struct McpMutationOutcome {
 
     /// True when every entry is SkippedReadOnly (empty → false).
     [[nodiscard]] bool all_read_only() const {
-        return !entries.empty() &&
-               std::ranges::all_of(entries, [](const McpMutationEntry& e) {
-                   return e.status == McpMutationStatus::SkippedReadOnly;
-               });
+        return !entries.empty() && std::ranges::all_of(entries, [](const McpMutationEntry& e) {
+            return e.status == McpMutationStatus::SkippedReadOnly;
+        });
     }
 
     [[nodiscard]] bool is_empty() const { return entries.empty(); }
@@ -290,15 +287,15 @@ enum class UserSettingKind : std::uint8_t {
 /// short human-readable summary consumed by surfaces that list keys
 /// (e.g. the /config command's completion metadata).
 struct UserSettingSpec {
-    std::string_view key;       // Canonical flat key, e.g. "temperature".
-    std::string_view section;   // Top-level JSON section.
-    std::string_view leaf;      // Leaf name inside the section.
+    std::string_view key;      // Canonical flat key, e.g. "temperature".
+    std::string_view section;  // Top-level JSON section.
+    std::string_view leaf;     // Leaf name inside the section.
     UserSettingKind kind;
     bool writable;
-    bool positive;              // UInteger: reject 0 when true.
-    std::string_view type;      // JSON type token: string|boolean|integer|number.
-    std::string_view env_var;   // Env override name, or empty.
-    std::string_view description; // Short human-readable summary.
+    bool positive;                 // UInteger: reject 0 when true.
+    std::string_view type;         // JSON type token: string|boolean|integer|number.
+    std::string_view env_var;      // Env override name, or empty.
+    std::string_view description;  // Short human-readable summary.
     std::array<std::string_view, 4> enum_values{};
     std::uint8_t enum_count = 0;
 };
@@ -368,9 +365,8 @@ class ConfigManager {
         return hash;
     }
 
-    [[nodiscard]] static TierSignature
-    tier_signature(const std::filesystem::path& path) noexcept {
-        struct ::stat st {};
+    [[nodiscard]] static TierSignature tier_signature(const std::filesystem::path& path) noexcept {
+        struct ::stat st{};
         if (::lstat(path.c_str(), &st) != 0) return {};
         TierSignature sig;
         sig.exists = true;
@@ -380,7 +376,7 @@ class ConfigManager {
         return sig;
     }
 
-    Settings settings_;                     // Resolved effective settings
+    Settings settings_;  // Resolved effective settings
     // RFC 0007 Phase 2: read/write path split. The READ path follows the
     // full cascade ($LOOM_CONFIG_DIR > ~/.loom > ~/.agents) via
     // settings_home_read(); the WRITE path is always ~/.loom (or
@@ -390,9 +386,9 @@ class ConfigManager {
     std::filesystem::path user_read_path_;   // Path to read user config from
     std::filesystem::path user_write_path_;  // Path to write user config to
     bool default_path_mode_ = false;         // true: re-resolve read path on load()
-    std::filesystem::path project_path_;    // Path to project config file
-    std::filesystem::path local_path_;      // Path to local (gitignored) config file
-    bool dirty_ = false;                   // Whether unsaved changes exist
+    std::filesystem::path project_path_;     // Path to project config file
+    std::filesystem::path local_path_;       // Path to local (gitignored) config file
+    bool dirty_ = false;                     // Whether unsaved changes exist
 
     // RFC-0001 B followup c6 per-tier MCP bookkeeping, repopulated by load().
     // Index order matches McpStorageScope.
@@ -469,8 +465,7 @@ public:
         , local_path_(derive_local_config_path(project_path_)) {}
 
     /// Initialize with explicit paths for all three tiers (hermetic tests).
-    ConfigManager(std::filesystem::path user,
-                  std::filesystem::path project,
+    ConfigManager(std::filesystem::path user, std::filesystem::path project,
                   std::filesystem::path local)
         : user_read_path_(user)
         , user_write_path_(std::move(user))
@@ -502,8 +497,10 @@ public:
 
         // Reset the per-tier MCP bookkeeping used by overlay merge and §B.
         mcp_owner_.clear();
-        for (auto& names : mcp_physical_names_) names.clear();
-        for (auto& list : mcp_file_servers_) list.clear();
+        for (auto& names : mcp_physical_names_)
+            names.clear();
+        for (auto& list : mcp_file_servers_)
+            list.clear();
         mcp_tier_unparseable_.fill(false);
         mcp_bookkeeping_loaded_ = true;
 
@@ -578,28 +575,24 @@ public:
             if (ec) {
                 return std::unexpected(Error::make(
                     ErrorCode::ConfigWriteError,
-                    std::format("Failed to create config directory: {}", parent.string())
-                ));
+                    std::format("Failed to create config directory: {}", parent.string())));
             }
         }
 
         // c21: compute the known-section fragments once. The mutator is
         // replayed per CAS attempt but the in-memory state does not change.
         const SaveFragments frag = build_save_fragments();
-        const Error strict_error = Error::make(
-            ErrorCode::ConfigParseError,
-            std::format("{} is not valid JSON; repair or move it aside before "
-                        "saving configuration", path.string()));
+        const Error strict_error =
+            Error::make(ErrorCode::ConfigParseError,
+                        std::format("{} is not valid JSON; repair or move it aside before "
+                                    "saving configuration",
+                                    path.string()));
         SalvageResult salvage_out = SalvageResult::Untouched;
-        auto patched = patch_object_file(path,
-            [&](loom::utils::json::JsonMutVal& root,
-                loom::utils::json::JsonMutDoc& doc) -> VoidResult {
-                return apply_save_fragments(root, doc, frag);
-            },
-            /*owner_only=*/false,
-            SalvageMode::Strict,
-            strict_error,
-            salvage_out);
+        auto patched = patch_object_file(
+            path,
+            [&](loom::utils::json::JsonMutVal& root, loom::utils::json::JsonMutDoc& doc)
+                -> VoidResult { return apply_save_fragments(root, doc, frag); },
+            /*owner_only=*/false, SalvageMode::Strict, strict_error, salvage_out);
         if (!patched) return std::unexpected(patched.error());
         dirty_ = false;
 
@@ -622,9 +615,9 @@ public:
     /// global settings rather than a project-local file.
     [[nodiscard]] VoidResult save_user() {
         if (user_write_path_.empty()) {
-            return std::unexpected(Error::make(
-                ErrorCode::ConfigWriteError,
-                "No user configuration file is configured for writes"));
+            return std::unexpected(
+                Error::make(ErrorCode::ConfigWriteError,
+                            "No user configuration file is configured for writes"));
         }
 
         // Fail closed on a symlinked leaf before touching anything.
@@ -640,34 +633,29 @@ public:
             if (ec) {
                 return std::unexpected(Error::make(
                     ErrorCode::ConfigWriteError,
-                    std::format("Failed to create config directory: {}", parent.string())
-                ));
+                    std::format("Failed to create config directory: {}", parent.string())));
             }
         }
 
         const SaveFragments frag = build_save_fragments();
-        const Error strict_error = Error::make(
-            ErrorCode::ConfigParseError,
-            std::format("{} is not valid JSON; repair or move it aside before "
-                        "saving configuration", user_write_path_.string()));
+        const Error strict_error =
+            Error::make(ErrorCode::ConfigParseError,
+                        std::format("{} is not valid JSON; repair or move it aside before "
+                                    "saving configuration",
+                                    user_write_path_.string()));
         SalvageResult salvage_out = SalvageResult::Untouched;
-        auto patched = patch_object_file(user_write_path_,
-            [&](loom::utils::json::JsonMutVal& root,
-                loom::utils::json::JsonMutDoc& doc) -> VoidResult {
-                return apply_save_fragments(root, doc, frag);
-            },
-            /*owner_only=*/false,
-            SalvageMode::Strict,
-            strict_error,
-            salvage_out);
+        auto patched = patch_object_file(
+            user_write_path_,
+            [&](loom::utils::json::JsonMutVal& root, loom::utils::json::JsonMutDoc& doc)
+                -> VoidResult { return apply_save_fragments(root, doc, frag); },
+            /*owner_only=*/false, SalvageMode::Strict, strict_error, salvage_out);
         if (!patched) return std::unexpected(patched.error());
         dirty_ = false;
 
         // Refresh the user-tier signature so tier_files_changed() doesn't
         // mistake our own write for an external edit.
         if (!user_read_path_.empty()) {
-            tier_signatures_[scope_index(McpStorageScope::User)] =
-                tier_signature(user_read_path_);
+            tier_signatures_[scope_index(McpStorageScope::User)] = tier_signature(user_read_path_);
         }
         return {};
     }
@@ -695,8 +683,7 @@ public:
             if ((!spec.env_var.empty() || spec.key == "extendedThinking" ||
                  spec.key == "contextWindowSize") &&
                 spec.section == section && spec.leaf == leaf) {
-                env_explicit_leaves_.emplace(std::string(section),
-                                             std::string(leaf));
+                env_explicit_leaves_.emplace(std::string(section), std::string(leaf));
                 return;
             }
         }
@@ -738,8 +725,7 @@ public:
 
     /// Find a projected spec by its canonical flat key (e.g.
     /// "temperature"). Returns nullptr outside the closed 16-key set.
-    [[nodiscard]] static const UserSettingSpec*
-    find_user_setting(std::string_view dotted) noexcept;
+    [[nodiscard]] static const UserSettingSpec* find_user_setting(std::string_view dotted) noexcept;
 
     /// The recognized-but-blocked key table with owner-surface guidance.
     [[nodiscard]] static std::span<const BlockedSetting> blocked_settings() noexcept;
@@ -768,8 +754,7 @@ public:
     /// load(). The TUI composition root calls this after a load to surface
     /// them as toasts; the CLI command path does not drain (it receives the
     /// stderr println instead). The vector is reset on every load().
-    [[nodiscard]] std::vector<ConfigLoadDiagnostic>
-    drain_load_diagnostics() {
+    [[nodiscard]] std::vector<ConfigLoadDiagnostic> drain_load_diagnostics() {
         std::vector<ConfigLoadDiagnostic> out;
         out.swap(load_diagnostics_);
         return out;
@@ -785,10 +770,12 @@ public:
     /// signatures; load() and save() own that, so a transient external change
     /// is not masked.
     [[nodiscard]] bool tier_files_changed() const {
-        return (!user_read_path_.empty()
-                && tier_signature(user_read_path_) != tier_signatures_[scope_index(McpStorageScope::User)])
-            || tier_signature(project_path_) != tier_signatures_[scope_index(McpStorageScope::Project)]
-            || tier_signature(local_path_) != tier_signatures_[scope_index(McpStorageScope::Local)];
+        return (!user_read_path_.empty() &&
+                tier_signature(user_read_path_) !=
+                    tier_signatures_[scope_index(McpStorageScope::User)]) ||
+               tier_signature(project_path_) !=
+                   tier_signatures_[scope_index(McpStorageScope::Project)] ||
+               tier_signature(local_path_) != tier_signatures_[scope_index(McpStorageScope::Local)];
     }
 
     /// Compact JSON object of the 16 projected keys grouped by section
@@ -815,8 +802,7 @@ public:
     /// keys return the terminal D1 errors; a hard failure of the
     /// post-write reload still returns success with `reload_warning`.
     [[nodiscard]] Result<UserSettingSetOutcome>
-    set_user_setting(std::string_view dotted,
-                     const loom::utils::json::JsonVal& value);
+    set_user_setting(std::string_view dotted, const loom::utils::json::JsonVal& value);
 
     // ================================================================
     // MCP per-tier routing (RFC-0001 B followup c6)
@@ -826,8 +812,8 @@ public:
     /// labels.
     [[nodiscard]] static std::optional<McpStorageScope>
     mcp_scope_from_label(std::string_view label) noexcept {
-        if (label == "local")   return McpStorageScope::Local;
-        if (label == "user")    return McpStorageScope::User;
+        if (label == "local") return McpStorageScope::Local;
+        if (label == "user") return McpStorageScope::User;
         if (label == "project") return McpStorageScope::Project;
         return std::nullopt;
     }
@@ -880,21 +866,20 @@ public:
     /// the shadow exists (and is byte-unchanged).  No-op when the target scope
     /// IS the user tier, when the user tier is writable, or when the server is
     /// not physically present in the fallback file.
-    void append_fallback_shadow(McpMutationOutcome& outcome,
-                                std::string_view name,
+    void append_fallback_shadow(McpMutationOutcome& outcome, std::string_view name,
                                 McpStorageScope target_scope) const {
         if (target_scope == McpStorageScope::User) return;
         if (is_scope_writable(McpStorageScope::User)) return;
-        if (!mcp_physical_names_[scope_index(McpStorageScope::User)]
-                .contains(std::string(name)))
+        if (!mcp_physical_names_[scope_index(McpStorageScope::User)].contains(std::string(name)))
             return;
         outcome.entries.push_back(McpMutationEntry{
             .server_name = std::string(name),
-            .source = McpPhysicalSource{
-                .scope = McpStorageScope::User,
-                .path = mcp_read_path_for_scope(McpStorageScope::User),
-                .writable = false,
-            },
+            .source =
+                McpPhysicalSource{
+                    .scope = McpStorageScope::User,
+                    .path = mcp_read_path_for_scope(McpStorageScope::User),
+                    .writable = false,
+                },
             .status = McpMutationStatus::SkippedReadOnly,
             .detail = "read-only fallback shadow",
         });
@@ -904,39 +889,40 @@ public:
     /// Never touches the other tiers. Against a user/local file that is not a
     /// parseable JSON object (§A) this fails with an actionable message and
     /// leaves the bytes untouched.
-    [[nodiscard]] VoidResult
-    upsert_mcp_server(McpStorageScope scope, const McpServerConfig& server) {
+    [[nodiscard]] VoidResult upsert_mcp_server(McpStorageScope scope,
+                                               const McpServerConfig& server) {
         const auto* path = path_for_scope(scope);
         if (path == nullptr || path->empty()) {
-            return std::unexpected(Error::make(
-                ErrorCode::ConfigWriteError,
-                std::format("No config file is configured for the '{}' scope",
-                            mcp_scope_label(scope))));
+            return std::unexpected(
+                Error::make(ErrorCode::ConfigWriteError,
+                            std::format("No config file is configured for the '{}' scope",
+                                        mcp_scope_label(scope))));
         }
         if (mcp_tier_unparseable_[scope_index(scope)]) {
             // RFC 0007 Phase 2: in fallback mode the unparseable flag
             // reflects the READ path (~/.agents).  When the write path
             // (~/.loom) does not exist yet, the write is creating a new
             // file — the read-path's unparseability is irrelevant.
-            const bool fallback_creating_new =
-                scope == McpStorageScope::User && is_user_fallback() &&
-                !std::filesystem::exists(*path);
+            const bool fallback_creating_new = scope == McpStorageScope::User &&
+                                               is_user_fallback() &&
+                                               !std::filesystem::exists(*path);
             if (!fallback_creating_new) {
-                return std::unexpected(Error::make(
-                    ErrorCode::ConfigParseError,
-                    std::format("{} is not valid JSON; move it aside first "
-                                "(use 'loom mcp' to edit MCP configuration)",
-                                path->string())));
+                return std::unexpected(
+                    Error::make(ErrorCode::ConfigParseError,
+                                std::format("{} is not valid JSON; move it aside first "
+                                            "(use 'loom mcp' to edit MCP configuration)",
+                                            path->string())));
             }
         }
         if (server.name.empty()) {
-            return std::unexpected(Error::make(
-                ErrorCode::InvalidInput, "MCP server name must not be empty"));
+            return std::unexpected(
+                Error::make(ErrorCode::InvalidInput, "MCP server name must not be empty"));
         }
 
         const std::string fragment = serialize_server_object(server);
         const std::string name = server.name;
-        auto patched = patch_mcp_file(*path,
+        auto patched = patch_mcp_file(
+            *path,
             [&](loom::utils::json::JsonMutVal& servers,
                 loom::utils::json::JsonMutDoc& doc) -> VoidResult {
                 // raw_json strict-parses and deep-copies the fragment into
@@ -984,8 +970,7 @@ public:
     /// are patched via their WRITE path (never the fallback read path).
     /// An absent name yields a single NotFound entry.
     [[nodiscard]] Result<McpMutationOutcome>
-    remove_mcp_server(std::string_view name,
-                      std::optional<McpStorageScope> scope = std::nullopt) {
+    remove_mcp_server(std::string_view name, std::optional<McpStorageScope> scope = std::nullopt) {
         McpMutationOutcome outcome;
 
         // Build candidate list from READ paths (for disk-presence checks).
@@ -1011,11 +996,12 @@ public:
             if (!is_scope_writable(candidate_scope)) {
                 outcome.entries.push_back(McpMutationEntry{
                     .server_name = std::string(name),
-                    .source = McpPhysicalSource{
-                        .scope = candidate_scope,
-                        .path = read_path,
-                        .writable = false,
-                    },
+                    .source =
+                        McpPhysicalSource{
+                            .scope = candidate_scope,
+                            .path = read_path,
+                            .writable = false,
+                        },
                     .status = McpMutationStatus::SkippedReadOnly,
                     .detail = "read-only fallback",
                 });
@@ -1028,11 +1014,12 @@ public:
             if (write_path == nullptr || write_path->empty()) {
                 outcome.entries.push_back(McpMutationEntry{
                     .server_name = std::string(name),
-                    .source = McpPhysicalSource{
-                        .scope = candidate_scope,
-                        .path = read_path,
-                        .writable = true,
-                    },
+                    .source =
+                        McpPhysicalSource{
+                            .scope = candidate_scope,
+                            .path = read_path,
+                            .writable = true,
+                        },
                     .status = McpMutationStatus::WriteFailed,
                     .detail = "no config file configured for scope",
                 });
@@ -1040,35 +1027,37 @@ public:
             }
 
             auto patched = patch_mcp_file(*write_path,
-                [&](loom::utils::json::JsonMutVal& servers,
-                    loom::utils::json::JsonMutDoc&) -> VoidResult {
-                    (void)servers.remove(name);
-                    return {};
-                });
+                                          [&](loom::utils::json::JsonMutVal& servers,
+                                              loom::utils::json::JsonMutDoc&) -> VoidResult {
+                                              (void)servers.remove(name);
+                                              return {};
+                                          });
             if (patched) {
                 outcome.entries.push_back(McpMutationEntry{
                     .server_name = std::string(name),
-                    .source = McpPhysicalSource{
-                        .scope = candidate_scope,
-                        .path = *write_path,
-                        .writable = true,
-                    },
+                    .source =
+                        McpPhysicalSource{
+                            .scope = candidate_scope,
+                            .path = *write_path,
+                            .writable = true,
+                        },
                     .status = McpMutationStatus::Modified,
                     .detail = "",
                 });
                 const auto tier = scope_index(candidate_scope);
                 mcp_physical_names_[tier].erase(std::string(name));
                 std::erase_if(mcp_file_servers_[tier],
-                    [&](const McpServerConfig& entry) { return entry.name == name; });
+                              [&](const McpServerConfig& entry) { return entry.name == name; });
                 changed_tiers.push_back(candidate_scope);
             } else {
                 outcome.entries.push_back(McpMutationEntry{
                     .server_name = std::string(name),
-                    .source = McpPhysicalSource{
-                        .scope = candidate_scope,
-                        .path = *write_path,
-                        .writable = true,
-                    },
+                    .source =
+                        McpPhysicalSource{
+                            .scope = candidate_scope,
+                            .path = *write_path,
+                            .writable = true,
+                        },
                     .status = McpMutationStatus::WriteFailed,
                     .detail = patched.error().message,
                 });
@@ -1098,9 +1087,8 @@ public:
     /// Whether a tier file currently has `name` as a key under mcpServers.
     /// Missing files and unparseable/non-object content report false (an
     /// unparseable tier cannot physically contain an MCP entry).
-    [[nodiscard]] static bool
-    file_contains_mcp_server(const std::filesystem::path& path,
-                             std::string_view name) {
+    [[nodiscard]] static bool file_contains_mcp_server(const std::filesystem::path& path,
+                                                       std::string_view name) {
         if (path.empty()) return false;
         std::error_code ec;
         if (!std::filesystem::exists(path, ec) || ec) return false;
@@ -1139,15 +1127,14 @@ public:
             }
         }
         std::erase_if(settings_.mcp_servers,
-            [&](const McpServerConfig& entry) { return entry.name == name; });
+                      [&](const McpServerConfig& entry) { return entry.name == name; });
 
         for (int tier = 2; tier >= 0; --tier) {
             auto& retained = mcp_file_servers_[static_cast<std::size_t>(tier)];
             auto it = std::ranges::find(retained, name, &McpServerConfig::name);
             if (it == retained.end()) continue;
             auto inserted = settings_.mcp_servers.insert(
-                settings_.mcp_servers.begin() +
-                    std::min(position, settings_.mcp_servers.size()),
+                settings_.mcp_servers.begin() + std::min(position, settings_.mcp_servers.size()),
                 *it);
             (void)inserted;
             mcp_owner_[name] = static_cast<McpStorageScope>(tier);
@@ -1169,14 +1156,13 @@ public:
         McpStorageScope target_scope = McpStorageScope::User;
         if (scope) {
             target_scope = *scope;
-            if (!mcp_physical_names_[scope_index(target_scope)]
-                    .contains(std::string(name))) {
+            if (!mcp_physical_names_[scope_index(target_scope)].contains(std::string(name))) {
                 outcome.entries.push_back(McpMutationEntry{
                     .server_name = std::string(name),
                     .source = std::nullopt,
                     .status = McpMutationStatus::NotFound,
-                    .detail = std::format("not found in the {} config",
-                                          mcp_scope_label(target_scope)),
+                    .detail =
+                        std::format("not found in the {} config", mcp_scope_label(target_scope)),
                 });
                 return outcome;
             }
@@ -1198,11 +1184,12 @@ public:
         if (!is_scope_writable(target_scope)) {
             outcome.entries.push_back(McpMutationEntry{
                 .server_name = std::string(name),
-                .source = McpPhysicalSource{
-                    .scope = target_scope,
-                    .path = mcp_read_path_for_scope(target_scope),
-                    .writable = false,
-                },
+                .source =
+                    McpPhysicalSource{
+                        .scope = target_scope,
+                        .path = mcp_read_path_for_scope(target_scope),
+                        .writable = false,
+                    },
                 .status = McpMutationStatus::SkippedReadOnly,
                 .detail = "read-only fallback",
             });
@@ -1223,18 +1210,18 @@ public:
 
         // Check if already in target state (idempotent no-op).
         auto& retained = mcp_file_servers_[scope_index(target_scope)];
-        auto existing = std::ranges::find(retained, std::string(name),
-                                          &McpServerConfig::name);
-        const bool already = (existing != retained.end() &&
-                              existing->disabled.value_or(false) == disabled);
+        auto existing = std::ranges::find(retained, std::string(name), &McpServerConfig::name);
+        const bool already =
+            (existing != retained.end() && existing->disabled.value_or(false) == disabled);
         if (already) {
             outcome.entries.push_back(McpMutationEntry{
                 .server_name = std::string(name),
-                .source = McpPhysicalSource{
-                    .scope = target_scope,
-                    .path = *path,
-                    .writable = true,
-                },
+                .source =
+                    McpPhysicalSource{
+                        .scope = target_scope,
+                        .path = *path,
+                        .writable = true,
+                    },
                 .status = McpMutationStatus::Unchanged,
                 .detail = "",
             });
@@ -1244,28 +1231,28 @@ public:
 
         const std::string owned_name(name);
         auto patched = set_mcp_servers_disabled_in(
-            target_scope,
-            std::span<const std::string>(&owned_name, 1),
-            disabled);
+            target_scope, std::span<const std::string>(&owned_name, 1), disabled);
         if (patched) {
             outcome.entries.push_back(McpMutationEntry{
                 .server_name = std::string(name),
-                .source = McpPhysicalSource{
-                    .scope = target_scope,
-                    .path = *path,
-                    .writable = true,
-                },
+                .source =
+                    McpPhysicalSource{
+                        .scope = target_scope,
+                        .path = *path,
+                        .writable = true,
+                    },
                 .status = McpMutationStatus::Modified,
                 .detail = "",
             });
         } else {
             outcome.entries.push_back(McpMutationEntry{
                 .server_name = std::string(name),
-                .source = McpPhysicalSource{
-                    .scope = target_scope,
-                    .path = *path,
-                    .writable = true,
-                },
+                .source =
+                    McpPhysicalSource{
+                        .scope = target_scope,
+                        .path = *path,
+                        .writable = true,
+                    },
                 .status = McpMutationStatus::WriteFailed,
                 .detail = patched.error().message,
             });
@@ -1279,8 +1266,7 @@ public:
     /// Writable owners that are already in the target state are Unchanged;
     /// fallback owners are SkippedReadOnly; writable owners that need
     /// changing are grouped by scope and patched in one write per file.
-    [[nodiscard]] McpMutationOutcome
-    set_all_mcp_servers_disabled(bool disabled) {
+    [[nodiscard]] McpMutationOutcome set_all_mcp_servers_disabled(bool disabled) {
         McpMutationOutcome outcome;
 
         // Group names by writable scope for batch patching.
@@ -1304,11 +1290,12 @@ public:
             if (!is_scope_writable(owner)) {
                 outcome.entries.push_back(McpMutationEntry{
                     .server_name = name,
-                    .source = McpPhysicalSource{
-                        .scope = owner,
-                        .path = mcp_read_path_for_scope(owner),
-                        .writable = false,
-                    },
+                    .source =
+                        McpPhysicalSource{
+                            .scope = owner,
+                            .path = mcp_read_path_for_scope(owner),
+                            .writable = false,
+                        },
                     .status = McpMutationStatus::SkippedReadOnly,
                     .detail = "read-only fallback",
                 });
@@ -1317,19 +1304,19 @@ public:
 
             // Check if already in target state.
             auto& retained = mcp_file_servers_[scope_index(owner)];
-            auto existing = std::ranges::find(retained, name,
-                                              &McpServerConfig::name);
-            const bool already = (existing != retained.end() &&
-                                  existing->disabled.value_or(false) == disabled);
+            auto existing = std::ranges::find(retained, name, &McpServerConfig::name);
+            const bool already =
+                (existing != retained.end() && existing->disabled.value_or(false) == disabled);
             if (already) {
                 const auto* path = path_for_scope(owner);
                 outcome.entries.push_back(McpMutationEntry{
                     .server_name = name,
-                    .source = McpPhysicalSource{
-                        .scope = owner,
-                        .path = path ? *path : std::filesystem::path{},
-                        .writable = true,
-                    },
+                    .source =
+                        McpPhysicalSource{
+                            .scope = owner,
+                            .path = path ? *path : std::filesystem::path{},
+                            .writable = true,
+                        },
                     .status = McpMutationStatus::Unchanged,
                     .detail = "",
                 });
@@ -1348,8 +1335,8 @@ public:
                         .server_name = name,
                         .source = std::nullopt,
                         .status = McpMutationStatus::WriteFailed,
-                        .detail = std::format("no config file for '{}' scope",
-                                              mcp_scope_label(scope)),
+                        .detail =
+                            std::format("no config file for '{}' scope", mcp_scope_label(scope)),
                     });
                 }
                 continue;
@@ -1360,11 +1347,12 @@ public:
                 for (const auto& name : names) {
                     outcome.entries.push_back(McpMutationEntry{
                         .server_name = name,
-                        .source = McpPhysicalSource{
-                            .scope = scope,
-                            .path = *path,
-                            .writable = true,
-                        },
+                        .source =
+                            McpPhysicalSource{
+                                .scope = scope,
+                                .path = *path,
+                                .writable = true,
+                            },
                         .status = McpMutationStatus::Modified,
                         .detail = "",
                     });
@@ -1373,11 +1361,12 @@ public:
                 for (const auto& name : names) {
                     outcome.entries.push_back(McpMutationEntry{
                         .server_name = name,
-                        .source = McpPhysicalSource{
-                            .scope = scope,
-                            .path = *path,
-                            .writable = true,
-                        },
+                        .source =
+                            McpPhysicalSource{
+                                .scope = scope,
+                                .path = *path,
+                                .writable = true,
+                            },
                         .status = McpMutationStatus::WriteFailed,
                         .detail = patched.error().message,
                     });
@@ -1392,18 +1381,18 @@ public:
     /// SAME tier file, in one read-modify-write. Used by "mcp enable/disable
     /// all" so each distinct owner file is patched exactly once; sibling and
     /// unknown keys are preserved.
-    [[nodiscard]] VoidResult
-    set_mcp_servers_disabled_in(McpStorageScope scope,
-                                std::span<const std::string> names,
-                                bool disabled) {
+    [[nodiscard]] VoidResult set_mcp_servers_disabled_in(McpStorageScope scope,
+                                                         std::span<const std::string> names,
+                                                         bool disabled) {
         const auto* path = path_for_scope(scope);
         if (path == nullptr || path->empty()) {
-            return std::unexpected(Error::make(
-                ErrorCode::ConfigWriteError,
-                std::format("No config file is configured for the '{}' scope",
-                            mcp_scope_label(scope))));
+            return std::unexpected(
+                Error::make(ErrorCode::ConfigWriteError,
+                            std::format("No config file is configured for the '{}' scope",
+                                        mcp_scope_label(scope))));
         }
-        auto patched = patch_mcp_file(*path,
+        auto patched = patch_mcp_file(
+            *path,
             [&](loom::utils::json::JsonMutVal& servers,
                 loom::utils::json::JsonMutDoc&) -> VoidResult {
                 for (const auto& name : names) {
@@ -1411,8 +1400,8 @@ public:
                     if (!entry.is_obj()) {
                         return std::unexpected(Error::make(
                             ErrorCode::ConfigParseError,
-                            std::format("MCP server '{}' entry is not a JSON object in {}",
-                                        name, path->string())));
+                            std::format("MCP server '{}' entry is not a JSON object in {}", name,
+                                        path->string())));
                     }
                     entry.set("disabled", disabled);
                 }
@@ -1440,8 +1429,7 @@ public:
     find_mcp_server_files(std::string_view name) const {
         std::vector<std::pair<McpStorageScope, std::filesystem::path>> result;
         for (const auto& [scope, path] : mcp_scope_paths()) {
-            if (mcp_physical_names_[scope_index(scope)]
-                    .contains(std::string(name))) {
+            if (mcp_physical_names_[scope_index(scope)].contains(std::string(name))) {
                 result.emplace_back(scope, path);
             }
         }
@@ -1449,8 +1437,7 @@ public:
     }
 
     /// Highest-precedence tier owning `name` after the last load(), or nullopt.
-    [[nodiscard]] std::optional<McpStorageScope>
-    mcp_server_owner(std::string_view name) const {
+    [[nodiscard]] std::optional<McpStorageScope> mcp_server_owner(std::string_view name) const {
         auto found = mcp_owner_.find(std::string(name));
         if (found == mcp_owner_.end()) return std::nullopt;
         return found->second;
@@ -1462,23 +1449,20 @@ private:
     /// root is a hard error for project; for user/local (soft_tier)
     /// the tier contributes zero entries plus one stderr diagnostic and
     /// loading continues (§A).
-    [[nodiscard]] VoidResult
-    load_tier(const std::filesystem::path& path, McpStorageScope scope,
-              bool soft_tier, bool quiet) {
+    [[nodiscard]] VoidResult load_tier(const std::filesystem::path& path, McpStorageScope scope,
+                                       bool soft_tier, bool quiet) {
         if (path.empty()) return {};
         if (!std::filesystem::exists(path)) {
-            return std::unexpected(Error::make(
-                ErrorCode::ConfigNotFound,
-                std::format("Config file not found: {}", path.string())
-            ));
+            return std::unexpected(
+                Error::make(ErrorCode::ConfigNotFound,
+                            std::format("Config file not found: {}", path.string())));
         }
 
         std::ifstream file(path);
         if (!file.is_open()) {
-            return std::unexpected(Error::make(
-                ErrorCode::ConfigParseError,
-                std::format("Cannot open config file: {}", path.string())
-            ));
+            return std::unexpected(
+                Error::make(ErrorCode::ConfigParseError,
+                            std::format("Cannot open config file: {}", path.string())));
         }
 
         std::string content((std::istreambuf_iterator<char>(file)),
@@ -1491,13 +1475,11 @@ private:
             // MISSING: the tier contributes nothing, emits no warning, and a
             // later upsert creates it fresh (rather than rejecting it as
             // invalid JSON). Garbage/non-object content keeps the §A policy.
-            const bool blank =
-                json_text.find_first_not_of(" \t\r\n") == std::string::npos;
+            const bool blank = json_text.find_first_not_of(" \t\r\n") == std::string::npos;
             if (soft_tier && blank) {
-                return std::unexpected(Error::make(
-                    ErrorCode::ConfigNotFound,
-                    std::format("Config file is empty: {}", path.string())
-                ));
+                return std::unexpected(
+                    Error::make(ErrorCode::ConfigNotFound,
+                                std::format("Config file is empty: {}", path.string())));
             }
             if (soft_tier) {
                 mcp_tier_unparseable_[scope_index(scope)] = true;
@@ -1505,19 +1487,16 @@ private:
                 // composition root after a load). Collected on every
                 // encounter; the toast queue dedups by key and load()
                 // resets the vector each time.
-                load_diagnostics_.push_back({
-                    path.string(),
-                    std::format("ignoring {}: not valid JSON "
-                                "(use 'loom mcp' to edit MCP configuration)",
-                                path.string())
-                });
+                load_diagnostics_.push_back(
+                    {path.string(), std::format("ignoring {}: not valid JSON "
+                                                "(use 'loom mcp' to edit MCP configuration)",
+                                                path.string())});
                 // One stderr diagnostic per path per instance: the CLI
                 // command path loads twice (initial + post-mutation reload).
                 // The quiet agent backend neither prints nor marks the path
                 // as warned, so a later audible load keeps the warning.
                 if (!quiet && mcp_warned_paths_.insert(path.string()).second) {
-                    std::println(stderr, "warning: {}",
-                                 load_diagnostics_.back().message);
+                    std::println(stderr, "warning: {}", load_diagnostics_.back().message);
                 }
                 return {};
             }
@@ -1525,9 +1504,7 @@ private:
                 ErrorCode::ConfigParseError,
                 doc_result
                     ? std::string("Config JSON root must be an object")
-                    : std::string("Failed to parse config JSON: ") +
-                          doc_result.error().message()
-            ));
+                    : std::string("Failed to parse config JSON: ") + doc_result.error().message()));
         }
 
         return merge_parsed(doc_result->root(), scope);
@@ -1537,8 +1514,7 @@ private:
 
     /// Parse JSON content and merge into current settings.
     /// Uses yyjson via loom::utils::json to deserialize fields.
-    [[nodiscard]] VoidResult
-    merge_parsed(loom::utils::json::JsonVal root, McpStorageScope scope) {
+    [[nodiscard]] VoidResult merge_parsed(loom::utils::json::JsonVal root, McpStorageScope scope) {
         if (auto limits = merge_model_context_limits(root); !limits) return limits;
         // c13b: every successfully-applied leaf whose disk provenance is
         // queried is recorded: projected leaves feed setting_source()'s
@@ -1692,8 +1668,9 @@ private:
                 McpServerConfig cfg;
                 cfg.name = std::string(key.as_str());
                 cfg.transport = json_string(val, "type")
-                    .or_else([&] { return json_string(val, "transport"); })
-                    .value_or(val.get("url").is_str() ? std::string("http") : std::string("stdio"));
+                                    .or_else([&] { return json_string(val, "transport"); })
+                                    .value_or(val.get("url").is_str() ? std::string("http")
+                                                                      : std::string("stdio"));
                 if (auto cmd = val.get("command"); cmd.is_str()) {
                     cfg.command = std::string(cmd.as_str());
                 }
@@ -1721,27 +1698,32 @@ private:
                         }
                     });
                 }
-                cfg.headers_helper = json_string(val, "headersHelper")
-                    .or_else([&] { return json_string(val, "headers_helper"); });
+                cfg.headers_helper = json_string(val, "headersHelper").or_else([&] {
+                    return json_string(val, "headers_helper");
+                });
                 // disabled is optional<bool>: an explicit JSON false must be
                 // captured, while an absent key stays nullopt.
                 if (auto disabled = val.get("disabled"); disabled.is_bool()) {
                     cfg.disabled = disabled.as_bool();
                 }
                 cfg.config_scope = json_string(val, "configScope")
-                    .or_else([&] { return json_string(val, "config_scope"); })
-                    .value_or("project");
+                                       .or_else([&] { return json_string(val, "config_scope"); })
+                                       .value_or("project");
                 if (auto oauth = val.get("oauth"); oauth.is_obj()) {
                     McpOAuthConfig oauth_cfg;
-                    oauth_cfg.auth_server_metadata_url = json_string(oauth, "authServerMetadataUrl")
-                        .or_else([&] { return json_string(oauth, "auth_server_metadata_url"); });
+                    oauth_cfg.auth_server_metadata_url =
+                        json_string(oauth, "authServerMetadataUrl").or_else([&] {
+                            return json_string(oauth, "auth_server_metadata_url");
+                        });
                     if (auto callback_port = oauth.get("callbackPort"); callback_port.is_num()) {
                         oauth_cfg.callback_port = static_cast<int>(callback_port.as_int());
-                    } else if (auto callback_port = oauth.get("callback_port"); callback_port.is_num()) {
+                    } else if (auto callback_port = oauth.get("callback_port");
+                               callback_port.is_num()) {
                         oauth_cfg.callback_port = static_cast<int>(callback_port.as_int());
                     }
-                    oauth_cfg.client_id = json_string(oauth, "clientId")
-                        .or_else([&] { return json_string(oauth, "client_id"); });
+                    oauth_cfg.client_id = json_string(oauth, "clientId").or_else([&] {
+                        return json_string(oauth, "client_id");
+                    });
                     if (auto xaa = oauth.get("xaa"); xaa.is_bool()) {
                         oauth_cfg.xaa = xaa.as_bool();
                     }
@@ -1750,10 +1732,9 @@ private:
                 }
                 // Overlay: drop any same-named entry from lower tiers, then
                 // append this file's value as the effective one.
-                std::erase_if(settings_.mcp_servers,
-                    [&](const McpServerConfig& existing) {
-                        return existing.name == cfg.name;
-                    });
+                std::erase_if(settings_.mcp_servers, [&](const McpServerConfig& existing) {
+                    return existing.name == cfg.name;
+                });
                 settings_.mcp_servers.push_back(cfg);
                 // Retain this file's OWN value and ownership data for §B.
                 mcp_file_servers_[tier].push_back(cfg);
@@ -1950,8 +1931,7 @@ private:
             if (auto segs = sl.get("segments"); segs.is_obj()) {
                 segs.iter_obj([&](auto key, auto val) {
                     if (key.is_str() && val.is_bool()) {
-                        settings_.status_line.segments[
-                            std::string(key.as_str())] = val.as_bool();
+                        settings_.status_line.segments[std::string(key.as_str())] = val.as_bool();
                     }
                 });
             }
@@ -2057,50 +2037,43 @@ private:
     /// model keys are affected by the env guard; apiKey /
     /// baseUrl / proxy have always been omitted (no credential bytes leave
     /// a save), which this preserves bit for bit.
-    [[nodiscard]] SaveFragments
-    build_save_fragments() const {
+    [[nodiscard]] SaveFragments build_save_fragments() const {
         SaveFragments frag;
         // Whether an env-overridable leaf was EXPLICITLY written this
         // session. Derived from the spec table: only specs with a non-empty
         // env_var carry provenance, so a new env-overridable key gets the
         // guard without touching this code.
-        auto env_explicitly_set = [&](std::string_view section,
-                                      std::string_view leaf) {
+        auto env_explicitly_set = [&](std::string_view section, std::string_view leaf) {
             for (const auto& spec : user_setting_specs()) {
-                if (!spec.env_var.empty() &&
-                    spec.section == section && spec.leaf == leaf) {
-                    return env_explicit_leaves_.contains(
-                        std::pair<std::string, std::string>(
-                            std::string(section), std::string(leaf)));
+                if (!spec.env_var.empty() && spec.section == section && spec.leaf == leaf) {
+                    return env_explicit_leaves_.contains(std::pair<std::string, std::string>(
+                        std::string(section), std::string(leaf)));
                 }
             }
             return false;
         };
-        const bool model_still_env =
-            env_model_value_.has_value() &&
-            settings_.model.default_model == *env_model_value_ &&
-            !env_explicitly_set("", "model");
-        const bool tokens_still_env =
-            env_tokens_value_.has_value() &&
-            settings_.model.max_output_tokens == *env_tokens_value_ &&
-            !env_explicitly_set("", "maxOutputTokens");
+        const bool model_still_env = env_model_value_.has_value() &&
+                                     settings_.model.default_model == *env_model_value_ &&
+                                     !env_explicitly_set("", "model");
+        const bool tokens_still_env = env_tokens_value_.has_value() &&
+                                      settings_.model.max_output_tokens == *env_tokens_value_ &&
+                                      !env_explicitly_set("", "maxOutputTokens");
         // value_or is belt-and-braces: a *still_env* leaf always has a backup
         // (both are captured together by apply_environment_variables).
         const std::string model_to_emit =
-            model_still_env
-                ? env_backup_default_model_.value_or(settings_.model.default_model)
-                : settings_.model.default_model;
+            model_still_env ? env_backup_default_model_.value_or(settings_.model.default_model)
+                            : settings_.model.default_model;
         const std::uint32_t tokens_to_emit =
             tokens_still_env
                 ? env_backup_max_output_tokens_.value_or(settings_.model.max_output_tokens)
                 : settings_.model.max_output_tokens;
 
-        frag.model =
-            std::format("\"{}\"", escape_json(model_to_emit));
+        frag.model = std::format("\"{}\"", escape_json(model_to_emit));
         // An unset value is omitted on a fresh save. Explicit clears patch
         // null even if a previous same-instance save created the old value
         // after load() recorded disk leaves. Null retains tier inheritance.
-        if (tokens_to_emit > 0) frag.max_output_tokens = std::to_string(tokens_to_emit);
+        if (tokens_to_emit > 0)
+            frag.max_output_tokens = std::to_string(tokens_to_emit);
         else if (disk_leaves_.contains({"", "maxOutputTokens"}) ||
                  env_explicit_leaves_.contains({"", "maxOutputTokens"}))
             frag.max_output_tokens = "null";
@@ -2116,39 +2089,27 @@ private:
         frag.temperature = settings_.model.temperature;
         frag.thinking_budget = settings_.model.thinking_budget;
 
-        frag.show_thinking =
-            settings_.display.show_thinking ? "true" : "false";
-        frag.show_token_usage =
-            settings_.display.show_token_usage ? "true" : "false";
-        frag.compact_mode =
-            settings_.display.compact_mode ? "true" : "false";
-        frag.theme =
-            std::format("\"{}\"", escape_json(settings_.display.theme));
-        frag.verbose =
-            settings_.display.verbose ? "true" : "false";
-        frag.vim_mode =
-            settings_.display.vim_mode ? "true" : "false";
-        frag.mouse_mode =
-            settings_.display.mouse_mode ? "true" : "false";
+        frag.show_thinking = settings_.display.show_thinking ? "true" : "false";
+        frag.show_token_usage = settings_.display.show_token_usage ? "true" : "false";
+        frag.compact_mode = settings_.display.compact_mode ? "true" : "false";
+        frag.theme = std::format("\"{}\"", escape_json(settings_.display.theme));
+        frag.verbose = settings_.display.verbose ? "true" : "false";
+        frag.vim_mode = settings_.display.vim_mode ? "true" : "false";
+        frag.mouse_mode = settings_.display.mouse_mode ? "true" : "false";
 
-        frag.timeout_seconds =
-            std::to_string(settings_.network.timeout_seconds);
-        frag.max_retries =
-            std::to_string(settings_.network.max_retries);
-        frag.verify_ssl =
-            settings_.network.verify_ssl ? "true" : "false";
+        frag.timeout_seconds = std::to_string(settings_.network.timeout_seconds);
+        frag.max_retries = std::to_string(settings_.network.max_retries);
+        frag.verify_ssl = settings_.network.verify_ssl ? "true" : "false";
 
         frag.features = std::to_string(settings_.features.raw());
 
         // §B mcpServers secret-boundary filter.
         for (const McpServerConfig* server : mcp_servers_for_save()) {
-            frag.mcp_servers.emplace_back(
-                server->name, serialize_server_object(*server));
+            frag.mcp_servers.emplace_back(server->name, serialize_server_object(*server));
         }
 
         if (settings_.system_prompt) {
-            frag.system_prompt =
-                std::format("\"{}\"", escape_json(*settings_.system_prompt));
+            frag.system_prompt = std::format("\"{}\"", escape_json(*settings_.system_prompt));
         }
         if (!settings_.custom_instructions.empty()) {
             std::string arr;
@@ -2161,16 +2122,13 @@ private:
         // on this to remove the section on rewrite. This section is outside
         // the §B mcpServers secret-boundary filter.
         const auto& xaa = settings_.xaa_idp;
-        if (!xaa.issuer.empty() || !xaa.client_id.empty() ||
-            xaa.callback_port.has_value()) {
+        if (!xaa.issuer.empty() || !xaa.client_id.empty() || xaa.callback_port.has_value()) {
             frag.xaa_present = true;
             if (!xaa.issuer.empty()) {
-                frag.xaa_issuer =
-                    std::format("\"{}\"", escape_json(xaa.issuer));
+                frag.xaa_issuer = std::format("\"{}\"", escape_json(xaa.issuer));
             }
             if (!xaa.client_id.empty()) {
-                frag.xaa_client_id =
-                    std::format("\"{}\"", escape_json(xaa.client_id));
+                frag.xaa_client_id = std::format("\"{}\"", escape_json(xaa.client_id));
             }
             if (xaa.callback_port.has_value()) {
                 frag.xaa_callback_port = std::to_string(*xaa.callback_port);
@@ -2181,23 +2139,19 @@ private:
         // type/command/enabled/padding/segments as present. When all fields
         // are unset, the key is left untouched (nullopt).
         const auto& sl = settings_.status_line;
-        if (sl.type || sl.command || sl.enabled || sl.padding ||
-            !sl.segments.empty()) {
+        if (sl.type || sl.command || sl.enabled || sl.padding || !sl.segments.empty()) {
             std::string obj = "{";
             bool first = true;
-            auto append_kv = [&](std::string_view key,
-                                 const std::string& token) {
+            auto append_kv = [&](std::string_view key, const std::string& token) {
                 if (!first) obj += ",";
                 obj += std::format("\"{}\":{}", key, token);
                 first = false;
             };
             if (sl.type) {
-                append_kv("type",
-                    std::format("\"{}\"", escape_json(*sl.type)));
+                append_kv("type", std::format("\"{}\"", escape_json(*sl.type)));
             }
             if (sl.command) {
-                append_kv("command",
-                    std::format("\"{}\"", escape_json(*sl.command)));
+                append_kv("command", std::format("\"{}\"", escape_json(*sl.command)));
             }
             if (sl.enabled) {
                 append_kv("enabled", *sl.enabled ? "true" : "false");
@@ -2210,8 +2164,7 @@ private:
                 bool seg_first = true;
                 for (const auto& [key, val] : sl.segments) {
                     if (!seg_first) segs += ",";
-                    segs += std::format("\"{}\":{}", key,
-                                        val ? "true" : "false");
+                    segs += std::format("\"{}\":{}", key, val ? "true" : "false");
                     seg_first = false;
                 }
                 segs += "}";
@@ -2237,37 +2190,33 @@ private:
     /// (parsed after structured sections in merge_parsed). The `model` key
     /// is replaced outright (string replaces object) since JSON cannot hold
     /// both.
-    static VoidResult
-    apply_save_fragments(loom::utils::json::JsonMutVal& root,
-                         loom::utils::json::JsonMutDoc& doc,
-                         const SaveFragments& frag) {
-        auto patch_leaf = [&](loom::utils::json::JsonMutVal& section,
-                              std::string_view leaf,
+    static VoidResult apply_save_fragments(loom::utils::json::JsonMutVal& root,
+                                           loom::utils::json::JsonMutDoc& doc,
+                                           const SaveFragments& frag) {
+        auto patch_leaf = [&](loom::utils::json::JsonMutVal& section, std::string_view leaf,
                               const std::string& token) -> VoidResult {
             auto val = doc.raw_json(token);
             if (!val.valid()) {
-                return std::unexpected(Error::make(
-                    ErrorCode::InternalError,
-                    "Internal error: serialized setting is not valid JSON"));
+                return std::unexpected(
+                    Error::make(ErrorCode::InternalError,
+                                "Internal error: serialized setting is not valid JSON"));
             }
             section.add(leaf, val);
             return {};
         };
 
         // model — flat string at root (replaces any legacy model object)
-        if (auto r = patch_leaf(root, "model",
-                                frag.model); !r) return r;
+        if (auto r = patch_leaf(root, "model", frag.model); !r) return r;
         if (frag.max_output_tokens) {
-            if (auto r = patch_leaf(root, "maxOutputTokens",
-                                    *frag.max_output_tokens); !r) return r;
+            if (auto r = patch_leaf(root, "maxOutputTokens", *frag.max_output_tokens); !r) return r;
         }
         if (frag.extended_thinking) {
-            if (auto r = patch_leaf(root, "extendedThinking",
-                                    *frag.extended_thinking); !r) return r;
+            if (auto r = patch_leaf(root, "extendedThinking", *frag.extended_thinking); !r)
+                return r;
         }
         if (frag.context_window_size) {
-            if (auto r = patch_leaf(root, "contextWindowSize",
-                                    *frag.context_window_size); !r) return r;
+            if (auto r = patch_leaf(root, "contextWindowSize", *frag.context_window_size); !r)
+                return r;
         }
         // Optional model leaves: patch only when set, so a save re-emits
         // them on a rebuilt-from-scratch file while an unset in-memory
@@ -2275,38 +2224,28 @@ private:
         if (frag.temperature) {
             loom::utils::json::JsonMutDoc num_doc;
             num_doc.set_root(num_doc.number(*frag.temperature));
-            if (auto r = patch_leaf(root, "temperature",
-                                    num_doc.to_string()); !r) return r;
+            if (auto r = patch_leaf(root, "temperature", num_doc.to_string()); !r) return r;
         }
         if (frag.thinking_budget) {
-            if (auto r = patch_leaf(root, "thinkingBudget",
-                                    std::to_string(*frag.thinking_budget)); !r) return r;
+            if (auto r = patch_leaf(root, "thinkingBudget", std::to_string(*frag.thinking_budget));
+                !r)
+                return r;
         }
 
         // display — flat camelCase at root
-        if (auto r = patch_leaf(root, "showThinking",
-                                frag.show_thinking); !r) return r;
-        if (auto r = patch_leaf(root, "showTokenUsage",
-                                frag.show_token_usage); !r) return r;
-        if (auto r = patch_leaf(root, "compactMode",
-                                frag.compact_mode); !r) return r;
-        if (auto r = patch_leaf(root, "theme",
-                                frag.theme); !r) return r;
-        if (auto r = patch_leaf(root, "verbose",
-                                frag.verbose); !r) return r;
-        if (auto r = patch_leaf(root, "vimMode",
-                                frag.vim_mode); !r) return r;
-        if (auto r = patch_leaf(root, "mouseMode",
-                                frag.mouse_mode); !r) return r;
+        if (auto r = patch_leaf(root, "showThinking", frag.show_thinking); !r) return r;
+        if (auto r = patch_leaf(root, "showTokenUsage", frag.show_token_usage); !r) return r;
+        if (auto r = patch_leaf(root, "compactMode", frag.compact_mode); !r) return r;
+        if (auto r = patch_leaf(root, "theme", frag.theme); !r) return r;
+        if (auto r = patch_leaf(root, "verbose", frag.verbose); !r) return r;
+        if (auto r = patch_leaf(root, "vimMode", frag.vim_mode); !r) return r;
+        if (auto r = patch_leaf(root, "mouseMode", frag.mouse_mode); !r) return r;
 
         // network — flat camelCase at root (apiKey/baseUrl NOT saved:
         // credentials are user-tier only, never written to VCS-tracked file)
-        if (auto r = patch_leaf(root, "timeoutSeconds",
-                                frag.timeout_seconds); !r) return r;
-        if (auto r = patch_leaf(root, "maxRetries",
-                                frag.max_retries); !r) return r;
-        if (auto r = patch_leaf(root, "verifySsl",
-                                frag.verify_ssl); !r) return r;
+        if (auto r = patch_leaf(root, "timeoutSeconds", frag.timeout_seconds); !r) return r;
+        if (auto r = patch_leaf(root, "maxRetries", frag.max_retries); !r) return r;
+        if (auto r = patch_leaf(root, "verifySsl", frag.verify_ssl); !r) return r;
 
         // features (top-level scalar)
         if (auto r = patch_leaf(root, "features", frag.features); !r) return r;
@@ -2321,8 +2260,7 @@ private:
             emit_names.insert(name);
         }
         std::vector<std::string> to_remove;
-        servers.iter_obj([&](loom::utils::json::JsonMutVal k,
-                             loom::utils::json::JsonMutVal) {
+        servers.iter_obj([&](loom::utils::json::JsonMutVal k, loom::utils::json::JsonMutVal) {
             std::string name(k.as_str());
             if (!emit_names.contains(name)) {
                 to_remove.push_back(std::move(name));
@@ -2334,25 +2272,24 @@ private:
         for (const auto& [name, fragment] : frag.mcp_servers) {
             auto val = doc.raw_json(fragment);
             if (!val.valid()) {
-                return std::unexpected(Error::make(
-                    ErrorCode::InternalError,
-                    "Internal error: serialized MCP server is not valid JSON"));
+                return std::unexpected(
+                    Error::make(ErrorCode::InternalError,
+                                "Internal error: serialized MCP server is not valid JSON"));
             }
             servers.add(name, val);
         }
 
         // systemPrompt — add when set, remove when unset.
         if (frag.system_prompt) {
-            if (auto r = patch_leaf(root, "systemPrompt",
-                                    *frag.system_prompt); !r) return r;
+            if (auto r = patch_leaf(root, "systemPrompt", *frag.system_prompt); !r) return r;
         } else {
             (void)root.remove("systemPrompt");
         }
 
         // customInstructions
         if (frag.custom_instructions) {
-            if (auto r = patch_leaf(root, "customInstructions",
-                                    *frag.custom_instructions); !r) return r;
+            if (auto r = patch_leaf(root, "customInstructions", *frag.custom_instructions); !r)
+                return r;
         } else {
             (void)root.remove("customInstructions");
         }
@@ -2363,20 +2300,17 @@ private:
         if (frag.xaa_present) {
             auto xaa = root.ensure_object("xaaIdp");
             if (frag.xaa_issuer) {
-                if (auto r = patch_leaf(xaa, "issuer",
-                                        *frag.xaa_issuer); !r) return r;
+                if (auto r = patch_leaf(xaa, "issuer", *frag.xaa_issuer); !r) return r;
             } else {
                 (void)xaa.remove("issuer");
             }
             if (frag.xaa_client_id) {
-                if (auto r = patch_leaf(xaa, "clientId",
-                                        *frag.xaa_client_id); !r) return r;
+                if (auto r = patch_leaf(xaa, "clientId", *frag.xaa_client_id); !r) return r;
             } else {
                 (void)xaa.remove("clientId");
             }
             if (frag.xaa_callback_port) {
-                if (auto r = patch_leaf(xaa, "callbackPort",
-                                        *frag.xaa_callback_port); !r) return r;
+                if (auto r = patch_leaf(xaa, "callbackPort", *frag.xaa_callback_port); !r) return r;
             } else {
                 (void)xaa.remove("callbackPort");
             }
@@ -2389,9 +2323,8 @@ private:
         if (frag.status_line_json) {
             auto val = doc.raw_json(*frag.status_line_json);
             if (!val.valid()) {
-                return std::unexpected(Error::make(
-                    ErrorCode::InternalError,
-                    "Failed to serialize statusLine fragment"));
+                return std::unexpected(Error::make(ErrorCode::InternalError,
+                                                   "Failed to serialize statusLine fragment"));
             }
             (void)root.add("statusLine", val);
         }
@@ -2404,14 +2337,30 @@ private:
         out.reserve(value.size());
         for (char ch : value) {
             switch (ch) {
-                case '\\': out += R"(\\)"; break;
-                case '"':  out += R"(\")"; break;
-                case '\b': out += R"(\b)"; break;
-                case '\f': out += R"(\f)"; break;
-                case '\n': out += R"(\n)"; break;
-                case '\r': out += R"(\r)"; break;
-                case '\t': out += R"(\t)"; break;
-                default:   out += ch; break;
+            case '\\':
+                out += R"(\\)";
+                break;
+            case '"':
+                out += R"(\")";
+                break;
+            case '\b':
+                out += R"(\b)";
+                break;
+            case '\f':
+                out += R"(\f)";
+                break;
+            case '\n':
+                out += R"(\n)";
+                break;
+            case '\r':
+                out += R"(\r)";
+                break;
+            case '\t':
+                out += R"(\t)";
+                break;
+            default:
+                out += ch;
+                break;
             }
         }
         return out;
@@ -2426,10 +2375,8 @@ private:
         json += "]";
     }
 
-    static void append_string_map(
-        std::string& json,
-        const std::unordered_map<std::string, std::string>& values
-    ) {
+    static void append_string_map(std::string& json,
+                                  const std::unordered_map<std::string, std::string>& values) {
         json += "{";
         std::size_t index = 0;
         for (const auto& [key, value] : values) {
@@ -2451,11 +2398,11 @@ private:
     /// the project file are omitted. Without any prior load() the
     /// per-tier data does not exist; the legacy /config set path lands
     /// here and keeps the full-merged behavior.
-    [[nodiscard]] std::vector<const McpServerConfig*>
-    mcp_servers_for_save() const {
+    [[nodiscard]] std::vector<const McpServerConfig*> mcp_servers_for_save() const {
         std::vector<const McpServerConfig*> result;
         if (!mcp_bookkeeping_loaded_) {
-            for (const auto& server : settings_.mcp_servers) result.push_back(&server);
+            for (const auto& server : settings_.mcp_servers)
+                result.push_back(&server);
             return result;
         }
         const auto project_idx = scope_index(McpStorageScope::Project);
@@ -2472,8 +2419,7 @@ private:
                 continue;
             }
             auto owner = mcp_owner_.find(server.name);
-            if (owner != mcp_owner_.end() &&
-                owner->second == McpStorageScope::Project) {
+            if (owner != mcp_owner_.end() && owner->second == McpStorageScope::Project) {
                 result.push_back(&server);
             }
             // user/local-only: omitted.
@@ -2498,8 +2444,10 @@ private:
             wrote_field = true;
         };
 
-        add_field(std::format("\"type\": \"{}\"",
-            escape_json(server.transport.empty() ? std::string_view("stdio") : std::string_view(server.transport))));
+        add_field(
+            std::format("\"type\": \"{}\"", escape_json(server.transport.empty()
+                                                            ? std::string_view("stdio")
+                                                            : std::string_view(server.transport))));
         if (!server.command.empty()) {
             add_field(std::format("\"command\": \"{}\"", escape_json(server.command)));
         }
@@ -2522,7 +2470,8 @@ private:
             add_field(std::move(headers_json));
         }
         if (server.headers_helper) {
-            add_field(std::format("\"headersHelper\": \"{}\"", escape_json(*server.headers_helper)));
+            add_field(
+                std::format("\"headersHelper\": \"{}\"", escape_json(*server.headers_helper)));
         }
         // disabled is optional<bool>: omit when unset so "absent"
         // round-trips; explicit true/false is always written.
@@ -2542,13 +2491,14 @@ private:
             };
             if (server.oauth->auth_server_metadata_url) {
                 add_oauth(std::format("\"authServerMetadataUrl\": \"{}\"",
-                    escape_json(*server.oauth->auth_server_metadata_url)));
+                                      escape_json(*server.oauth->auth_server_metadata_url)));
             }
             if (server.oauth->callback_port) {
                 add_oauth(std::format("\"callbackPort\": {}", *server.oauth->callback_port));
             }
             if (server.oauth->client_id) {
-                add_oauth(std::format("\"clientId\": \"{}\"", escape_json(*server.oauth->client_id)));
+                add_oauth(
+                    std::format("\"clientId\": \"{}\"", escape_json(*server.oauth->client_id)));
             }
             if (server.oauth->xaa) {
                 add_oauth("\"xaa\": true");
@@ -2563,10 +2513,8 @@ private:
         return json;
     }
 
-    [[nodiscard]] static std::optional<std::string> json_string(
-        loom::utils::json::JsonVal value,
-        std::string_view key
-    ) {
+    [[nodiscard]] static std::optional<std::string> json_string(loom::utils::json::JsonVal value,
+                                                                std::string_view key) {
         auto child = value.get(key);
         if (!child.is_str()) return std::nullopt;
         return std::string(child.as_str());
@@ -2582,8 +2530,7 @@ private:
     /// 2-arg test ctor: root/project.json -> root/project.local.json.
     [[nodiscard]] static std::filesystem::path
     derive_local_config_path(const std::filesystem::path& project_path) {
-        return project_path.parent_path() /
-               (project_path.stem().string() + ".local.json");
+        return project_path.parent_path() / (project_path.stem().string() + ".local.json");
     }
 
     [[nodiscard]] static std::size_t scope_index(McpStorageScope scope) noexcept {
@@ -2592,9 +2539,12 @@ private:
 
     [[nodiscard]] static std::string_view mcp_scope_label(McpStorageScope scope) noexcept {
         switch (scope) {
-            case McpStorageScope::User:    return "user";
-            case McpStorageScope::Project: return "project";
-            case McpStorageScope::Local:   return "local";
+        case McpStorageScope::User:
+            return "user";
+        case McpStorageScope::Project:
+            return "project";
+        case McpStorageScope::Local:
+            return "local";
         }
         return "unknown";
     }
@@ -2602,9 +2552,12 @@ private:
     [[nodiscard]] const std::filesystem::path*
     path_for_scope(McpStorageScope scope) const noexcept {
         switch (scope) {
-            case McpStorageScope::User:    return &user_write_path_;
-            case McpStorageScope::Project: return &project_path_;
-            case McpStorageScope::Local:   return &local_path_;
+        case McpStorageScope::User:
+            return &user_write_path_;
+        case McpStorageScope::Project:
+            return &project_path_;
+        case McpStorageScope::Local:
+            return &local_path_;
         }
         return nullptr;
     }
@@ -2615,17 +2568,17 @@ private:
     /// McpPhysicalSource::path so the source reflects the true physical file.
     [[nodiscard]] std::filesystem::path
     mcp_read_path_for_scope(McpStorageScope scope) const noexcept {
-        if (scope == McpStorageScope::User)    return user_read_path_;
+        if (scope == McpStorageScope::User) return user_read_path_;
         if (scope == McpStorageScope::Project) return project_path_;
-        if (scope == McpStorageScope::Local)   return local_path_;
+        if (scope == McpStorageScope::Local) return local_path_;
         return {};
     }
 
     /// Mutator receives the mcpServers object (created if absent) and the
     /// owning mutable document (needed to embed raw_json fragments). A
     /// returned error aborts the write; the file bytes stay untouched.
-    using McpPatchFn = std::function<VoidResult(
-        loom::utils::json::JsonMutVal&, loom::utils::json::JsonMutDoc&)>;
+    using McpPatchFn =
+        std::function<VoidResult(loom::utils::json::JsonMutVal&, loom::utils::json::JsonMutDoc&)>;
 
     // ================================================================
     // c13b user-setting private machinery
@@ -2635,8 +2588,7 @@ private:
     /// parse like their plain-JSON contents (editors on Windows frequently
     /// save one). Applied at every config read path: tier loads, the strict
     /// patcher parse, and parse_first salvage.
-    [[nodiscard]] static std::string_view
-    strip_leading_bom(std::string_view text) noexcept {
+    [[nodiscard]] static std::string_view strip_leading_bom(std::string_view text) noexcept {
         constexpr std::string_view kBom = "\xEF\xBB\xBF";
         if (text.starts_with(kBom)) text.remove_prefix(kBom.size());
         return text;
@@ -2649,16 +2601,13 @@ private:
         bool null_clear = false;
     };
 
-    [[nodiscard]] static std::string_view
-    trim_setting_text(std::string_view text) noexcept {
-        while (!text.empty() &&
-               (text.front() == ' ' || text.front() == '\t' ||
-                text.front() == '\r' || text.front() == '\n')) {
+    [[nodiscard]] static std::string_view trim_setting_text(std::string_view text) noexcept {
+        while (!text.empty() && (text.front() == ' ' || text.front() == '\t' ||
+                                 text.front() == '\r' || text.front() == '\n')) {
             text.remove_prefix(1);
         }
-        while (!text.empty() &&
-               (text.back() == ' ' || text.back() == '\t' ||
-                text.back() == '\r' || text.back() == '\n')) {
+        while (!text.empty() && (text.back() == ' ' || text.back() == '\t' || text.back() == '\r' ||
+                                 text.back() == '\n')) {
             text.remove_suffix(1);
         }
         return text;
@@ -2666,18 +2615,17 @@ private:
 
     /// Parse a decimal unsigned integer from text: ASCII digits only (a
     /// leading sign is rejected), full consumption, int64 range.
-    [[nodiscard]] static Result<std::int64_t>
-    parse_uint_token(std::string_view text) {
+    [[nodiscard]] static Result<std::int64_t> parse_uint_token(std::string_view text) {
         if (text.empty() ||
             !std::ranges::all_of(text, [](char c) { return c >= '0' && c <= '9'; })) {
-            return std::unexpected(Error::make(
-                ErrorCode::InvalidInput, "must be a non-negative integer"));
+            return std::unexpected(
+                Error::make(ErrorCode::InvalidInput, "must be a non-negative integer"));
         }
         std::int64_t value = 0;
         for (char c : text) {
             if (value > (std::numeric_limits<std::int64_t>::max() - (c - '0')) / 10) {
-                return std::unexpected(Error::make(
-                    ErrorCode::InvalidInput, "integer value is out of range"));
+                return std::unexpected(
+                    Error::make(ErrorCode::InvalidInput, "integer value is out of range"));
             }
             value = value * 10 + (c - '0');
         }
@@ -2685,12 +2633,10 @@ private:
     }
 
     /// Parse a finite double from text with full consumption.
-    [[nodiscard]] static Result<double>
-    parse_double_token(std::string_view raw_text) {
+    [[nodiscard]] static Result<double> parse_double_token(std::string_view raw_text) {
         const std::string_view text = trim_setting_text(raw_text);
         if (text.empty()) {
-            return std::unexpected(Error::make(
-                ErrorCode::InvalidInput, "must be a number"));
+            return std::unexpected(Error::make(ErrorCode::InvalidInput, "must be a number"));
         }
         // Preserve std::from_chars(chars_format::general) strictness that
         // plain strtod lacks: only [0-9.eE+-] characters (this also rejects
@@ -2702,16 +2648,15 @@ private:
         for (const char ch : text) {
             const bool digit = (ch >= '0' && ch <= '9');
             saw_digit = saw_digit || digit;
-            const bool allowed = digit || ch == '.' || ch == 'e' ||
-                                 ch == 'E' || ch == '+' || ch == '-';
+            const bool allowed =
+                digit || ch == '.' || ch == 'e' || ch == 'E' || ch == '+' || ch == '-';
             if (!allowed) {
-                return std::unexpected(Error::make(
-                    ErrorCode::InvalidInput, "must be a finite number"));
+                return std::unexpected(
+                    Error::make(ErrorCode::InvalidInput, "must be a finite number"));
             }
         }
         if (!saw_digit) {
-            return std::unexpected(Error::make(
-                ErrorCode::InvalidInput, "must be a finite number"));
+            return std::unexpected(Error::make(ErrorCode::InvalidInput, "must be a finite number"));
         }
         // Portable strtod parse (mirrors src/utils/serdes/yaml.cppm):
         // std::from_chars(double) is macOS-26-gated in Apple libc++.
@@ -2720,10 +2665,8 @@ private:
         char* end = nullptr;
         const char* begin = buffer.c_str();
         const double value = std::strtod(begin, &end);
-        if (errno == ERANGE || end != begin + buffer.size() ||
-            !std::isfinite(value)) {
-            return std::unexpected(Error::make(
-                ErrorCode::InvalidInput, "must be a finite number"));
+        if (errno == ERANGE || end != begin + buffer.size() || !std::isfinite(value)) {
+            return std::unexpected(Error::make(ErrorCode::InvalidInput, "must be a finite number"));
         }
         return value;
     }
@@ -2734,14 +2677,11 @@ private:
     /// positive uint32 range [1, uint32_max] (max_output_tokens is a
     /// positive uint). Sign text, junk, 0, and over-range values never
     /// engage, so get-source and set-shadow can never disagree.
-    [[nodiscard]] static std::optional<std::uint32_t>
-    parse_env_max_tokens(const char* raw) {
+    [[nodiscard]] static std::optional<std::uint32_t> parse_env_max_tokens(const char* raw) {
         if (raw == nullptr) return std::nullopt;
         const std::string_view text = trim_setting_text(raw);
         if (text.empty()) return std::nullopt;
-        if (!std::ranges::all_of(text, [](char c) {
-                return c >= '0' && c <= '9';
-            })) {
+        if (!std::ranges::all_of(text, [](char c) { return c >= '0' && c <= '9'; })) {
             return std::nullopt;
         }
         std::int64_t value = 0;
@@ -2764,41 +2704,34 @@ private:
     /// Fractional, negative, and > uint32-max doubles are rejected so
     /// 4096.0 is accepted but 4096.5 / 4294967296.0 are not (D7).
     [[nodiscard]] static Result<std::int64_t>
-    integral_json_number(const loom::utils::json::JsonVal& value,
-                         std::string_view key) {
+    integral_json_number(const loom::utils::json::JsonVal& value, std::string_view key) {
         if (value.is_int()) return value.as_int();
         if (value.is_num()) {
             const double real = value.as_double();
-            constexpr double kMax =
-                static_cast<double>(std::numeric_limits<std::uint32_t>::max());
-            if (std::isfinite(real) && real >= 0.0 && real <= kMax &&
-                real == std::floor(real)) {
+            constexpr double kMax = static_cast<double>(std::numeric_limits<std::uint32_t>::max());
+            if (std::isfinite(real) && real >= 0.0 && real <= kMax && real == std::floor(real)) {
                 return static_cast<std::int64_t>(real);
             }
         }
         return std::unexpected(Error::make(
-            ErrorCode::InvalidInput,
-            std::format("'{}' must be a non-negative integer", key)));
+            ErrorCode::InvalidInput, std::format("'{}' must be a non-negative integer", key)));
     }
 
     /// Kind-level coercion (D7). Key-specific ranges (temperature [0,1],
     /// thinking_budget >=1024/0-clear) are applied by set_user_setting.
     [[nodiscard]] static Result<CoercedUserValue>
-    coerce_user_value(const UserSettingSpec& spec,
-                      const loom::utils::json::JsonVal& value) {
+    coerce_user_value(const UserSettingSpec& spec, const loom::utils::json::JsonVal& value) {
         CoercedUserValue out;
         switch (spec.kind) {
         case UserSettingKind::String: {
             if (!value.is_str()) {
-                return std::unexpected(Error::make(
-                    ErrorCode::InvalidInput,
-                    std::format("'{}' must be a string", spec.key)));
+                return std::unexpected(Error::make(ErrorCode::InvalidInput,
+                                                   std::format("'{}' must be a string", spec.key)));
             }
             const std::string_view trimmed = trim_setting_text(value.as_str());
             if (trimmed.empty()) {
                 return std::unexpected(Error::make(
-                    ErrorCode::InvalidInput,
-                    std::format("'{}' must not be empty", spec.key)));
+                    ErrorCode::InvalidInput, std::format("'{}' must not be empty", spec.key)));
             }
             loom::utils::json::JsonMutDoc doc;
             doc.set_root(doc.string(trimmed));
@@ -2818,8 +2751,7 @@ private:
                 }
             }
             return std::unexpected(Error::make(
-                ErrorCode::InvalidInput,
-                std::format("'{}' must be true or false", spec.key)));
+                ErrorCode::InvalidInput, std::format("'{}' must be true or false", spec.key)));
         }
         case UserSettingKind::UInteger: {
             std::int64_t parsed = 0;
@@ -2832,25 +2764,22 @@ private:
                 if (!text_result) return std::unexpected(text_result.error());
                 parsed = *text_result;
             } else {
-                return std::unexpected(Error::make(
-                    ErrorCode::InvalidInput,
-                    std::format("'{}' must be a non-negative integer", spec.key)));
+                return std::unexpected(
+                    Error::make(ErrorCode::InvalidInput,
+                                std::format("'{}' must be a non-negative integer", spec.key)));
             }
             if (parsed < 0) {
                 return std::unexpected(Error::make(
-                    ErrorCode::InvalidInput,
-                    std::format("'{}' must not be negative", spec.key)));
+                    ErrorCode::InvalidInput, std::format("'{}' must not be negative", spec.key)));
             }
             if (static_cast<std::uint64_t>(parsed) >
                 static_cast<std::uint64_t>(std::numeric_limits<std::uint32_t>::max())) {
-                return std::unexpected(Error::make(
-                    ErrorCode::InvalidInput,
-                    std::format("'{}' is out of range", spec.key)));
+                return std::unexpected(Error::make(ErrorCode::InvalidInput,
+                                                   std::format("'{}' is out of range", spec.key)));
             }
             if (spec.positive && parsed == 0) {
                 return std::unexpected(Error::make(
-                    ErrorCode::InvalidInput,
-                    std::format("'{}' must be at least 1", spec.key)));
+                    ErrorCode::InvalidInput, std::format("'{}' must be at least 1", spec.key)));
             }
             out.token = std::to_string(parsed);
             return out;
@@ -2869,9 +2798,9 @@ private:
                 if (!text_result) return std::unexpected(text_result.error());
                 parsed = *text_result;
             } else {
-                return std::unexpected(Error::make(
-                    ErrorCode::InvalidInput,
-                    std::format("'{}' must be a number or null", spec.key)));
+                return std::unexpected(
+                    Error::make(ErrorCode::InvalidInput,
+                                std::format("'{}' must be a number or null", spec.key)));
             }
             loom::utils::json::JsonMutDoc doc;
             doc.set_root(doc.number(parsed));
@@ -2880,14 +2809,16 @@ private:
         }
         case UserSettingKind::Enumeration: {
             if (!value.is_str()) {
-                return std::unexpected(Error::make(
-                    ErrorCode::InvalidInput,
-                    std::format("'{}' must be a string", spec.key)));
+                return std::unexpected(Error::make(ErrorCode::InvalidInput,
+                                                   std::format("'{}' must be a string", spec.key)));
             }
             const std::string_view text = value.as_str();
             bool matched = false;
             for (std::uint8_t i = 0; i < spec.enum_count; ++i) {
-                if (spec.enum_values[i] == text) { matched = true; break; }
+                if (spec.enum_values[i] == text) {
+                    matched = true;
+                    break;
+                }
             }
             if (!matched) {
                 std::string allowed;
@@ -2895,9 +2826,9 @@ private:
                     if (i) allowed += ", ";
                     allowed += std::string(spec.enum_values[i]);
                 }
-                return std::unexpected(Error::make(
-                    ErrorCode::InvalidInput,
-                    std::format("'{}' must be one of: {}", spec.key, allowed)));
+                return std::unexpected(
+                    Error::make(ErrorCode::InvalidInput,
+                                std::format("'{}' must be one of: {}", spec.key, allowed)));
             }
             loom::utils::json::JsonMutDoc doc;
             doc.set_root(doc.string(text));
@@ -2905,8 +2836,7 @@ private:
             return out;
         }
         }
-        return std::unexpected(Error::make(
-            ErrorCode::InternalError, "unhandled setting kind"));
+        return std::unexpected(Error::make(ErrorCode::InternalError, "unhandled setting kind"));
     }
 
     /// thinking_budget-specific coercion: null or 0 clears, otherwise a
@@ -2930,34 +2860,29 @@ private:
             parsed = *text_result;
         } else {
             return std::unexpected(Error::make(
-                ErrorCode::InvalidInput,
-                std::format("'{}' must be an integer or null", key)));
+                ErrorCode::InvalidInput, std::format("'{}' must be an integer or null", key)));
         }
         if (parsed == 0) return CoercedUserValue{"null", true};
         if (parsed < 1024) {
-            return std::unexpected(Error::make(
-                ErrorCode::InvalidInput,
-                std::format("'{}' must be at least 1024 (the API minimum)",
-                            key)));
+            return std::unexpected(
+                Error::make(ErrorCode::InvalidInput,
+                            std::format("'{}' must be at least 1024 (the API minimum)", key)));
         }
         if (static_cast<std::uint64_t>(parsed) >
             static_cast<std::uint64_t>(std::numeric_limits<std::uint32_t>::max())) {
-            return std::unexpected(Error::make(
-                ErrorCode::InvalidInput,
-                std::format("'{}' is out of range", key)));
+            return std::unexpected(
+                Error::make(ErrorCode::InvalidInput, std::format("'{}' is out of range", key)));
         }
         return CoercedUserValue{std::to_string(parsed), false};
     }
 
     /// Effective source token: env override engaged > file leaf seen >
     /// built-in default (precision-note pinned classification).
-    [[nodiscard]] std::string_view
-    setting_source(const UserSettingSpec& spec) const noexcept {
+    [[nodiscard]] std::string_view setting_source(const UserSettingSpec& spec) const noexcept {
         if (spec.env_var == "LOOM_MODEL" && env_model_engaged_) return "env";
         if (spec.env_var == "LOOM_MAX_TOKENS" && env_max_tokens_engaged_) return "env";
-        if (disk_leaves_.contains(
-                std::pair<std::string, std::string>(
-                    std::string(spec.section), std::string(spec.leaf)))) {
+        if (disk_leaves_.contains(std::pair<std::string, std::string>(std::string(spec.section),
+                                                                      std::string(spec.leaf)))) {
             return "file";
         }
         return "default";
@@ -2972,47 +2897,89 @@ private:
         const auto& n = settings_.network;
         const auto& p = settings_.permissions;
         const std::string_view key = spec.key;
-        if (key == "model") { token.set("value", m.default_model); return; }
+        if (key == "model") {
+            token.set("value", m.default_model);
+            return;
+        }
         if (key == "maxOutputTokens") {
-            if (m.max_output_tokens > 0) token.set("value", static_cast<std::int64_t>(m.max_output_tokens));
-            else token.add("value", token.make_null());
+            if (m.max_output_tokens > 0)
+                token.set("value", static_cast<std::int64_t>(m.max_output_tokens));
+            else
+                token.add("value", token.make_null());
             return;
         }
         if (key == "temperature") {
-            if (m.temperature) token.add("value", token.make_real(*m.temperature));
-            else token.add("value", token.make_null());
+            if (m.temperature)
+                token.add("value", token.make_real(*m.temperature));
+            else
+                token.add("value", token.make_null());
             return;
         }
         if (key == "extendedThinking") {
-            if (m.extended_thinking.has_value()) token.set("value", *m.extended_thinking);
-            else token.add("value", token.make_null());
+            if (m.extended_thinking.has_value())
+                token.set("value", *m.extended_thinking);
+            else
+                token.add("value", token.make_null());
             return;
         }
         if (key == "thinkingBudget") {
-            if (m.thinking_budget) token.set("value", static_cast<std::int64_t>(*m.thinking_budget));
-            else token.add("value", token.make_null());
+            if (m.thinking_budget)
+                token.set("value", static_cast<std::int64_t>(*m.thinking_budget));
+            else
+                token.add("value", token.make_null());
             return;
         }
-        if (key == "contextWindowSize") { token.set("value", static_cast<std::int64_t>(m.context_window_size)); return; }
-        if (key == "showThinking") { token.set("value", d.show_thinking); return; }
-        if (key == "showTokenUsage") { token.set("value", d.show_token_usage); return; }
-        if (key == "compactMode") { token.set("value", d.compact_mode); return; }
-        if (key == "theme") { token.set("value", d.theme); return; }
+        if (key == "contextWindowSize") {
+            token.set("value", static_cast<std::int64_t>(m.context_window_size));
+            return;
+        }
+        if (key == "showThinking") {
+            token.set("value", d.show_thinking);
+            return;
+        }
+        if (key == "showTokenUsage") {
+            token.set("value", d.show_token_usage);
+            return;
+        }
+        if (key == "compactMode") {
+            token.set("value", d.compact_mode);
+            return;
+        }
+        if (key == "theme") {
+            token.set("value", d.theme);
+            return;
+        }
         if (key == "lineWidth") {
-            if (d.line_width) token.set("value", static_cast<std::int64_t>(*d.line_width));
-            else token.add("value", token.make_null());
+            if (d.line_width)
+                token.set("value", static_cast<std::int64_t>(*d.line_width));
+            else
+                token.add("value", token.make_null());
             return;
         }
-        if (key == "timeoutSeconds") { token.set("value", static_cast<std::int64_t>(n.timeout_seconds)); return; }
-        if (key == "maxRetries") { token.set("value", static_cast<std::int64_t>(n.max_retries)); return; }
-        if (key == "permissions.allow_bash") { token.set("value", p.allow_bash); return; }
-        if (key == "permissions.allow_file_write") { token.set("value", p.allow_file_write); return; }
-        if (key == "permissions.allow_network") { token.set("value", p.allow_network); return; }
+        if (key == "timeoutSeconds") {
+            token.set("value", static_cast<std::int64_t>(n.timeout_seconds));
+            return;
+        }
+        if (key == "maxRetries") {
+            token.set("value", static_cast<std::int64_t>(n.max_retries));
+            return;
+        }
+        if (key == "permissions.allow_bash") {
+            token.set("value", p.allow_bash);
+            return;
+        }
+        if (key == "permissions.allow_file_write") {
+            token.set("value", p.allow_file_write);
+            return;
+        }
+        if (key == "permissions.allow_network") {
+            token.set("value", p.allow_network);
+            return;
+        }
     }
 
     /// Build the single-key projection object as compact JSON.
-    [[nodiscard]] std::string
-    build_setting_token(const UserSettingSpec& spec) const {
+    [[nodiscard]] std::string build_setting_token(const UserSettingSpec& spec) const {
         loom::utils::json::JsonMutDoc doc;
         auto token = doc.object();
         token.set("key", spec.key);
@@ -3025,10 +2992,8 @@ private:
         token.set("source", setting_source(spec));
         // The interactive resolver additionally honors these for the model;
         // ConfigManager itself does not model them (D1 source_note).
-        if (spec.key == "model" &&
-            std::getenv("LOOM_MODEL") != nullptr) {
-            token.set("source_note",
-                "LOOM_MODEL also overrides interactive model resolution");
+        if (spec.key == "model" && std::getenv("LOOM_MODEL") != nullptr) {
+            token.set("source_note", "LOOM_MODEL also overrides interactive model resolution");
         }
         append_effective_value(token, spec);
         doc.set_root(token);
@@ -3063,9 +3028,9 @@ private:
     enum class SalvageMode : std::uint8_t { Strict, SalvageTrailing };
 
     enum class SalvageResult : std::uint8_t {
-        Untouched,             // Fresh/blank file or a strict-valid object.
-        TrailingJunkDropped,   // Leading OBJECT kept; trailing bytes dropped.
-        ReplacedUnparseable,   // No recoverable OBJECT; file rebuilt from {}.
+        Untouched,            // Fresh/blank file or a strict-valid object.
+        TrailingJunkDropped,  // Leading OBJECT kept; trailing bytes dropped.
+        ReplacedUnparseable,  // No recoverable OBJECT; file rebuilt from {}.
     };
 
     /// Identity signature of a target config file: every successful atomic
@@ -3077,9 +3042,8 @@ private:
         std::uint64_t inode = 0;
     };
 
-    [[nodiscard]] static FileSignature
-    file_signature(const std::filesystem::path& path) noexcept {
-        struct ::stat st {};
+    [[nodiscard]] static FileSignature file_signature(const std::filesystem::path& path) noexcept {
+        struct ::stat st{};
         if (::lstat(path.c_str(), &st) != 0) return {};
         return {true, static_cast<std::uint64_t>(st.st_ino)};
     }
@@ -3088,13 +3052,10 @@ private:
     /// tier_files_changed() has a baseline to compare against.
     void record_tier_signatures() {
         if (!user_read_path_.empty()) {
-            tier_signatures_[scope_index(McpStorageScope::User)] =
-                tier_signature(user_read_path_);
+            tier_signatures_[scope_index(McpStorageScope::User)] = tier_signature(user_read_path_);
         }
-        tier_signatures_[scope_index(McpStorageScope::Project)] =
-            tier_signature(project_path_);
-        tier_signatures_[scope_index(McpStorageScope::Local)] =
-            tier_signature(local_path_);
+        tier_signatures_[scope_index(McpStorageScope::Project)] = tier_signature(project_path_);
+        tier_signatures_[scope_index(McpStorageScope::Local)] = tier_signature(local_path_);
     }
 
     /// c23: refresh just the saved tier's signature after a successful save().
@@ -3103,8 +3064,7 @@ private:
     /// reload, re-applying env overlays (breaking the c19 same-session
     /// get-after-set invariant).
     void refresh_tier_signature() {
-        tier_signatures_[scope_index(McpStorageScope::Project)] =
-            tier_signature(project_path_);
+        tier_signatures_[scope_index(McpStorageScope::Project)] = tier_signature(project_path_);
     }
 
     /// 16 hex chars (64 bits) of tmp-name randomness, so pre-spraying
@@ -3139,18 +3099,15 @@ private:
             return std::nullopt;
         }
         if (status.type() == std::filesystem::file_type::symlink) {
-            return Error::make(
-                ErrorCode::ConfigWriteError,
-                std::format(
-                    "{} is a symbolic link; refusing to write through a "
-                    "symlinked configuration file",
-                    path.string()));
+            return Error::make(ErrorCode::ConfigWriteError,
+                               std::format("{} is a symbolic link; refusing to write through a "
+                                           "symlinked configuration file",
+                                           path.string()));
         }
         if (status.type() != std::filesystem::file_type::regular) {
             return Error::make(
                 ErrorCode::ConfigWriteError,
-                std::format("Cannot open config file for editing: {}",
-                            path.string()));
+                std::format("Cannot open config file for editing: {}", path.string()));
         }
         return std::nullopt;
     }
@@ -3161,21 +3118,18 @@ private:
     /// artifact that would otherwise block writes forever). A directory is
     /// kept refused (it may contain real data). Returns false (with error)
     /// only for that directory case or a failed unlink.
-    [[nodiscard]] static bool
-    clear_legacy_tmp(const std::filesystem::path& path, Error& error_out) {
+    [[nodiscard]] static bool clear_legacy_tmp(const std::filesystem::path& path,
+                                               Error& error_out) {
         const std::filesystem::path legacy_tmp = path.string() + ".tmp";
         std::error_code probe_ec;
-        const auto probe =
-            std::filesystem::symlink_status(legacy_tmp, probe_ec);
-        if (probe_ec ||
-            probe.type() == std::filesystem::file_type::not_found) {
+        const auto probe = std::filesystem::symlink_status(legacy_tmp, probe_ec);
+        if (probe_ec || probe.type() == std::filesystem::file_type::not_found) {
             return true;
         }
         if (probe.type() == std::filesystem::file_type::directory) {
             error_out = Error::make(
                 ErrorCode::ConfigWriteError,
-                std::format("Cannot open config file for writing: {}",
-                            legacy_tmp.string()));
+                std::format("Cannot open config file for writing: {}", legacy_tmp.string()));
             return false;
         }
         std::error_code remove_ec;
@@ -3183,8 +3137,7 @@ private:
         if (remove_ec) {
             error_out = Error::make(
                 ErrorCode::ConfigWriteError,
-                std::format("Cannot open config file for writing: {}",
-                            legacy_tmp.string()));
+                std::format("Cannot open config file for writing: {}", legacy_tmp.string()));
             return false;
         }
         return true;
@@ -3200,8 +3153,8 @@ private:
     /// Outcome of acquiring a ConfigFileLock.
     enum class ConfigLockState : std::uint8_t {
         Locked,
-        Timeout,   // Another holder kept the lock for the whole bounded wait.
-        Symlink,   // The lock path itself is a pre-placed symlink.
+        Timeout,  // Another holder kept the lock for the whole bounded wait.
+        Symlink,  // The lock path itself is a pre-placed symlink.
         Failed,
     };
 
@@ -3237,12 +3190,10 @@ private:
             }
             // O_NOFOLLOW: a pre-placed symlink at the lock name can never
             // be locked or followed (open fails ELOOP).
-            fd = ::open(lock_path.c_str(),
-                        O_RDWR | O_CREAT | O_CLOEXEC | O_NOFOLLOW, 0600);
+            fd = ::open(lock_path.c_str(), O_RDWR | O_CREAT | O_CLOEXEC | O_NOFOLLOW, 0600);
             if (fd < 0) {
-                state = (errno == ELOOP || errno == EMLINK)
-                    ? ConfigLockState::Symlink
-                    : ConfigLockState::Failed;
+                state = (errno == ELOOP || errno == EMLINK) ? ConfigLockState::Symlink
+                                                            : ConfigLockState::Failed;
                 return;
             }
             // Require a regular file: O_NOFOLLOW only rejects symlinks.
@@ -3252,16 +3203,14 @@ private:
             // failure rather than locking a non-regular file. Reported as
             // Failed (not Symlink): the specific symlink wording is
             // reserved for the ELOOP/EMLINK path.
-            struct stat lock_stat {};
-            if (::fstat(fd, &lock_stat) != 0 ||
-                !S_ISREG(lock_stat.st_mode)) {
+            struct stat lock_stat{};
+            if (::fstat(fd, &lock_stat) != 0 || !S_ISREG(lock_stat.st_mode)) {
                 ::close(fd);
                 fd = -1;
                 state = ConfigLockState::Failed;
                 return;
             }
-            const auto deadline =
-                std::chrono::steady_clock::now() + kLockWaitTimeout;
+            const auto deadline = std::chrono::steady_clock::now() + kLockWaitTimeout;
             for (;;) {
                 // Deadline gate BEFORE the attempt: once expired, never
                 // call flock again, so no overshot sleep can acquire past
@@ -3281,13 +3230,13 @@ private:
                     // scheduler-stalled sleep still re-enters at the
                     // deadline gate above and times out rather than
                     // acquiring.
-                    const auto remaining =
-                        deadline - std::chrono::steady_clock::now();
+                    const auto remaining = deadline - std::chrono::steady_clock::now();
                     if (remaining <= std::chrono::steady_clock::duration::zero()) {
                         continue;  // top-of-loop gate closes this out
                     }
-                    const auto poll = std::chrono::duration_cast<
-                        std::chrono::steady_clock::duration>(kLockPollInterval);
+                    const auto poll =
+                        std::chrono::duration_cast<std::chrono::steady_clock::duration>(
+                            kLockPollInterval);
                     std::this_thread::sleep_for(std::min(poll, remaining));
                     continue;
                 }
@@ -3298,17 +3247,18 @@ private:
                 return;
             }
         }
+
         ConfigFileLock(const ConfigFileLock&) = delete;
         ConfigFileLock& operator=(const ConfigFileLock&) = delete;
+
         ~ConfigFileLock() {
             if (fd >= 0) {
                 (void)::flock(fd, LOCK_UN);
                 (void)::close(fd);
             }
         }
-        [[nodiscard]] bool locked() const noexcept {
-            return state == ConfigLockState::Locked;
-        }
+
+        [[nodiscard]] bool locked() const noexcept { return state == ConfigLockState::Locked; }
 
         /// Terminal error for a non-Locked acquisition, or nullopt.
         [[nodiscard]] std::optional<Error> error() const {
@@ -3318,36 +3268,28 @@ private:
             case ConfigLockState::Timeout:
                 return Error::make(
                     ErrorCode::ConfigWriteError,
-                    std::format(
-                        "Timed out waiting for the configuration lock at {} "
-                        "(another Loom process is updating this configuration)",
-                        lock_path.string()));
+                    std::format("Timed out waiting for the configuration lock at {} "
+                                "(another Loom process is updating this configuration)",
+                                lock_path.string()));
             case ConfigLockState::Symlink:
-                return Error::make(
-                    ErrorCode::ConfigWriteError,
-                    std::format(
-                        "{} is a symbolic link; refusing to write through a "
-                        "symlinked configuration lock file",
-                        lock_path.string()));
+                return Error::make(ErrorCode::ConfigWriteError,
+                                   std::format("{} is a symbolic link; refusing to write through a "
+                                               "symlinked configuration lock file",
+                                               lock_path.string()));
             case ConfigLockState::Failed:
                 return Error::make(
                     ErrorCode::ConfigWriteError,
-                    std::format("Cannot open config file for writing: {}",
-                                lock_path.string()));
+                    std::format("Cannot open config file for writing: {}", lock_path.string()));
             }
-            return Error::make(ErrorCode::ConfigWriteError,
-                               "Cannot acquire configuration lock");
+            return Error::make(ErrorCode::ConfigWriteError, "Cannot acquire configuration lock");
         }
     };
 
     [[nodiscard]] static VoidResult
     patch_object_file(const std::filesystem::path& path,
-                      const std::function<VoidResult(
-                          loom::utils::json::JsonMutVal& root,
-                          loom::utils::json::JsonMutDoc& doc)>& mutate,
-                      bool owner_only,
-                      SalvageMode salvage,
-                      const Error& strict_error,
+                      const std::function<VoidResult(loom::utils::json::JsonMutVal& root,
+                                                     loom::utils::json::JsonMutDoc& doc)>& mutate,
+                      bool owner_only, SalvageMode salvage, const Error& strict_error,
                       SalvageResult& salvage_out) {
         // Bounded optimistic-concurrency loop (defense in depth behind the
         // flock): each attempt reads the current file, applies the
@@ -3372,7 +3314,7 @@ private:
             std::string content;
 
             {
-                struct ::stat direct_st {};
+                struct ::stat direct_st{};
                 if (::lstat(path.c_str(), &direct_st) == 0) {
                     // Only a regular file (or absent path) is patchable; a
                     // symlink leaf gets its specific fail-closed refusal.
@@ -3384,8 +3326,7 @@ private:
                     if (!S_ISREG(direct_st.st_mode)) {
                         return std::unexpected(Error::make(
                             ErrorCode::ConfigWriteError,
-                            std::format("Cannot open config file for editing: {}",
-                                        path.string())));
+                            std::format("Cannot open config file for editing: {}", path.string())));
                     }
                     file_present = true;
                 }
@@ -3451,13 +3392,10 @@ private:
             // Signature of the file this attempt started from: the real
             // inode for a present (including blank) file, an absent marker
             // when the path did not exist.
-            const FileSignature expected = file_present
-                ? file_signature(path)
-                : FileSignature{};
+            const FileSignature expected = file_present ? file_signature(path) : FileSignature{};
             Error write_error = Error::make(ErrorCode::InternalError, {});
             const AtomicWriteOutcome outcome = write_config_file_replace(
-                path, doc.to_pretty_string(), owner_only, &expected,
-                write_error);
+                path, doc.to_pretty_string(), owner_only, &expected, write_error);
             if (outcome == AtomicWriteOutcome::Renamed) return {};
             if (outcome == AtomicWriteOutcome::Failed) {
                 return std::unexpected(write_error);
@@ -3465,9 +3403,9 @@ private:
             // Conflict: a concurrent replace landed; restart from the new
             // bytes. The mutator is replayed on a fresh document.
         }
-        return std::unexpected(Error::make(
-            ErrorCode::ConfigWriteError,
-            std::format("Failed to replace config file: {}", path.string())));
+        return std::unexpected(
+            Error::make(ErrorCode::ConfigWriteError,
+                        std::format("Failed to replace config file: {}", path.string())));
     }
 
     /// Read-modify-write one MCP tier file. Thin wrapper over
@@ -3476,30 +3414,30 @@ private:
     /// object dropped (other top-level sections preserved), LOCAL-tier
     /// owner-only mode, and the local gitignore guard after every
     /// successful write.
-    [[nodiscard]] VoidResult
-    patch_mcp_file(const std::filesystem::path& path, const McpPatchFn& mutator) {
+    [[nodiscard]] VoidResult patch_mcp_file(const std::filesystem::path& path,
+                                            const McpPatchFn& mutator) {
         // The LOCAL tier is the documented secret holder (it shadows tracked
         // files precisely to keep Authorization headers out of VCS): create
         // it owner-only, like ssh-style secret files. Applied to the tmp
         // BEFORE rename so the final file never briefly exists world-readable.
         const bool target_is_local = (path == local_path_);
-        const McpStorageScope target_scope =
-            target_is_local ? McpStorageScope::Local
-            : (path == project_path_) ? McpStorageScope::Project
-            : (path == user_read_path_ || path == user_write_path_) ? McpStorageScope::User
-            : McpStorageScope::User;
+        const McpStorageScope target_scope = target_is_local           ? McpStorageScope::Local
+                                             : (path == project_path_) ? McpStorageScope::Project
+                                             : (path == user_read_path_ || path == user_write_path_)
+                                                 ? McpStorageScope::User
+                                                 : McpStorageScope::User;
         // The exact pre-extraction inline parse-failure error: same code and
         // literal, path interpolated here so the C6-pinned refusal text
         // stays byte-identical.
         const Error strict_error = Error::make(
-            ErrorCode::ConfigParseError,
-            std::format("{} is not valid JSON; move it aside first "
-                        "(use 'loom mcp' to edit MCP configuration)",
-                        path.string()));
+            ErrorCode::ConfigParseError, std::format("{} is not valid JSON; move it aside first "
+                                                     "(use 'loom mcp' to edit MCP configuration)",
+                                                     path.string()));
         // Strict mode always reports Untouched; the tri-state exists for
         // the c13b salvage caller, so discard it here.
         SalvageResult salvage_out = SalvageResult::Untouched;
-        auto patched = patch_object_file(path,
+        auto patched = patch_object_file(
+            path,
             [&](loom::utils::json::JsonMutVal& root,
                 loom::utils::json::JsonMutDoc& doc) -> VoidResult {
                 auto servers = root.ensure_object("mcpServers");
@@ -3512,17 +3450,13 @@ private:
                 }
                 return {};
             },
-            /*owner_only=*/target_is_local,
-            SalvageMode::Strict,
-            strict_error,
-            salvage_out);
+            /*owner_only=*/target_is_local, SalvageMode::Strict, strict_error, salvage_out);
         if (!patched) return std::unexpected(patched.error());
         (void)salvage_out;
         // Local tier: data + lock both ignored (secret holder). Project
         // tier: the data file stays VCS-tracked, only its .lock sibling is
         // ignored. Idempotent and never fatal.
-        if (target_scope == McpStorageScope::Local ||
-            target_scope == McpStorageScope::Project) {
+        if (target_scope == McpStorageScope::Local || target_scope == McpStorageScope::Project) {
             ensure_config_gitignored(target_scope);
         }
         return {};
@@ -3547,14 +3481,10 @@ private:
     /// in-memory document intentionally replaces the file, still under the
     /// caller-held flock.
     [[nodiscard]] static AtomicWriteOutcome
-    write_config_file_replace(const std::filesystem::path& path,
-                              const std::string& content,
-                              bool owner_only,
-                              const FileSignature* expected,
-                              Error& error_out) {
+    write_config_file_replace(const std::filesystem::path& path, const std::string& content,
+                              bool owner_only, const FileSignature* expected, Error& error_out) {
         auto fail = [&](std::string message) {
-            error_out = Error::make(ErrorCode::ConfigWriteError,
-                                    std::move(message));
+            error_out = Error::make(ErrorCode::ConfigWriteError, std::move(message));
             return AtomicWriteOutcome::Failed;
         };
         auto parent = path.parent_path();
@@ -3562,18 +3492,17 @@ private:
             std::error_code ec;
             std::filesystem::create_directories(parent, ec);
             if (ec) {
-                return fail(std::format("Failed to create config directory: {}",
-                                        parent.string()));
+                return fail(std::format("Failed to create config directory: {}", parent.string()));
             }
         }
         // Capture the existing file's mode before the tmp replaces it.
         std::error_code status_ec;
         const auto existing_status = std::filesystem::status(path, status_ec);
         const bool preserve_mode = !owner_only && !status_ec &&
-            existing_status.type() != std::filesystem::file_type::not_found;
-        const auto existing_perms = preserve_mode
-            ? (existing_status.permissions() & std::filesystem::perms::mask)
-            : std::filesystem::perms::unknown;
+                                   existing_status.type() != std::filesystem::file_type::not_found;
+        const auto existing_perms =
+            preserve_mode ? (existing_status.permissions() & std::filesystem::perms::mask)
+                          : std::filesystem::perms::unknown;
 
         // Neutralize the pre-c13c fixed tmp name (`<path>.tmp`, no pid
         // suffix). A symlink is unlinked (link only, target untouched);
@@ -3593,34 +3522,28 @@ private:
             // EEXIST/ELOOP and this loop picks another.
             const std::filesystem::path temp =
                 path.string() + ".tmp." + std::to_string(::getpid()) + "." +
-                std::to_string(tmp_counter.fetch_add(1,
-                    std::memory_order_relaxed)) + "." +
+                std::to_string(tmp_counter.fetch_add(1, std::memory_order_relaxed)) + "." +
                 random_tmp_suffix();
 
             // 0600 base for mode-managed writes (fchmod sets the exact mode
             // next); 0666 for a brand-new default-mode file so the umask is
             // applied by the kernel exactly as ofstream did (0644 @ 022).
-            const mode_t open_mode =
-                (owner_only || preserve_mode) ? 0600 : 0666;
+            const mode_t open_mode = (owner_only || preserve_mode) ? 0600 : 0666;
             const int fd = ::open(temp.c_str(),
-                                  O_WRONLY | O_CREAT | O_EXCL | O_NOFOLLOW |
-                                      O_CLOEXEC,
-                                  open_mode);
+                                  O_WRONLY | O_CREAT | O_EXCL | O_NOFOLLOW | O_CLOEXEC, open_mode);
             if (fd < 0) {
                 // Raced on the unique name, or a symlink was pre-placed at
                 // it (O_NOFOLLOW → ELOOP): take a fresh random name.
                 if (errno == EEXIST || errno == ELOOP) continue;
-                return fail(std::format(
-                    "Cannot open config file for writing: {}", path.string()));
+                return fail(std::format("Cannot open config file for writing: {}", path.string()));
             }
 
             // Apply the mode BEFORE data lands and before the rename.
             if (owner_only) {
                 if (::fchmod(fd, S_IRUSR | S_IWUSR) != 0) {
-                    std::println(stderr,
-                        "warning: could not restrict permissions on {}: {}",
-                        path.string(),
-                        std::error_code(errno, std::generic_category()).message());
+                    std::println(stderr, "warning: could not restrict permissions on {}: {}",
+                                 path.string(),
+                                 std::error_code(errno, std::generic_category()).message());
                 }
             } else if (preserve_mode) {
                 // Keep the pre-existing inode's mode across the replace;
@@ -3631,8 +3554,7 @@ private:
             bool write_ok = true;
             std::size_t total = 0;
             while (total < content.size()) {
-                const ssize_t written = ::write(
-                    fd, content.data() + total, content.size() - total);
+                const ssize_t written = ::write(fd, content.data() + total, content.size() - total);
                 if (written < 0) {
                     if (errno == EINTR) continue;
                     write_ok = false;
@@ -3646,8 +3568,7 @@ private:
             if (!write_ok) {
                 std::error_code remove_ec;
                 std::filesystem::remove(temp, remove_ec);
-                return fail(std::format("Failed to write config file: {}",
-                                       path.string()));
+                return fail(std::format("Failed to write config file: {}", path.string()));
             }
 
             // CAS gate immediately before rename: the target must still
@@ -3657,8 +3578,7 @@ private:
             // (expected == nullptr) skips the compare by design.
             if (expected != nullptr) {
                 const FileSignature current = file_signature(path);
-                if (current.exists != expected->exists ||
-                    current.inode != expected->inode) {
+                if (current.exists != expected->exists || current.inode != expected->inode) {
                     std::error_code remove_ec;
                     std::filesystem::remove(temp, remove_ec);
                     return AtomicWriteOutcome::Conflict;
@@ -3670,20 +3590,17 @@ private:
             }
             // ENOENT/ENOTDIR here means the directory entry raced away in a
             // way that changes the target identity — re-read and retry.
-            if (expected != nullptr &&
-                (errno == ENOENT || errno == ENOTDIR || errno == EISDIR)) {
+            if (expected != nullptr && (errno == ENOENT || errno == ENOTDIR || errno == EISDIR)) {
                 std::error_code remove_ec;
                 std::filesystem::remove(temp, remove_ec);
                 return AtomicWriteOutcome::Conflict;
             }
             std::error_code remove_ec;
             std::filesystem::remove(temp, remove_ec);
-            return fail(std::format("Failed to replace config file: {}",
-                                   path.string()));
+            return fail(std::format("Failed to replace config file: {}", path.string()));
         }
         // Exhausted unique names (an attacker racing every O_EXCL create).
-        return fail(std::format("Cannot open config file for writing: {}",
-                                path.string()));
+        return fail(std::format("Cannot open config file for writing: {}", path.string()));
     }
 
     /// Walk UP from `start` (cwd) to the filesystem root looking for a git
@@ -3720,26 +3637,23 @@ private:
     /// "config.local.json" look present. Idempotent; copes with a missing
     /// trailing newline; an existing but unwritable .gitignore is best
     /// effort and non-fatal.
-    void append_gitignore_basenames(
-        std::span<const std::string_view> basenames) const {
+    void append_gitignore_basenames(std::span<const std::string_view> basenames) const {
         if (basenames.empty()) return;
-        const auto repo_root =
-            find_git_worktree_root(std::filesystem::current_path());
+        const auto repo_root = find_git_worktree_root(std::filesystem::current_path());
         if (!repo_root) return;
         const auto gitignore = *repo_root / ".gitignore";
         std::string content;
         std::error_code ec;
         if (std::filesystem::exists(gitignore, ec)) {
             std::ifstream in(gitignore);
-            content.assign(std::istreambuf_iterator<char>(in),
-                           std::istreambuf_iterator<char>());
+            content.assign(std::istreambuf_iterator<char>(in), std::istreambuf_iterator<char>());
         }
         const auto has_line = [&](std::string_view wanted) {
             std::size_t pos = 0;
             while (pos < content.size()) {
                 const std::size_t nl = content.find('\n', pos);
                 std::string_view line(content.data() + pos,
-                    (nl == std::string::npos ? content.size() : nl) - pos);
+                                      (nl == std::string::npos ? content.size() : nl) - pos);
                 if (!line.empty() && line.back() == '\r') line.remove_suffix(1);
                 if (line == wanted) return true;
                 if (nl == std::string::npos) break;
@@ -3767,8 +3681,8 @@ private:
     /// file and lock are both secret-bearing and both ignored. User
     /// tiers never touch a .gitignore.
     void ensure_config_gitignored(McpStorageScope scope) const {
-        static constexpr std::string_view local[] = {
-            "settings.local.json", "settings.local.json.lock"};
+        static constexpr std::string_view local[] = {"settings.local.json",
+                                                     "settings.local.json.lock"};
         static constexpr std::string_view project[] = {"settings.json.lock"};
         switch (scope) {
         case McpStorageScope::Local:
@@ -3800,31 +3714,36 @@ inline void ConfigManager::migrate_legacy_config() {
     const auto project_dir = fs::current_path() / ".loom";
 
     const TierPath tiers[] = {
-        {user_dir / "config.json",       user_dir / "settings.json"},
-        {project_dir / "config.json",    project_dir / "settings.json"},
+        {user_dir / "config.json", user_dir / "settings.json"},
+        {project_dir / "config.json", project_dir / "settings.json"},
         {project_dir / "config.local.json", project_dir / "settings.local.json"},
     };
 
     // Structured section → flat key mapping (leaf name → flat camelCase key)
-    struct KeyMap { std::string_view section; std::string_view leaf; std::string_view flat; };
+    struct KeyMap {
+        std::string_view section;
+        std::string_view leaf;
+        std::string_view flat;
+    };
+
     static constexpr KeyMap key_map[] = {
-        {"model", "default_model",       "model"},
-        {"model", "max_output_tokens",   "maxOutputTokens"},
-        {"model", "temperature",         "temperature"},
-        {"model", "extended_thinking",   "extendedThinking"},
-        {"model", "thinking_budget",     "thinkingBudget"},
+        {"model", "default_model", "model"},
+        {"model", "max_output_tokens", "maxOutputTokens"},
+        {"model", "temperature", "temperature"},
+        {"model", "extended_thinking", "extendedThinking"},
+        {"model", "thinking_budget", "thinkingBudget"},
         {"model", "context_window_size", "contextWindowSize"},
-        {"display", "theme",             "theme"},
-        {"display", "show_thinking",     "showThinking"},
-        {"display", "show_token_usage",  "showTokenUsage"},
-        {"display", "compact_mode",      "compactMode"},
-        {"display", "line_width",        "lineWidth"},
-        {"network", "api_key",           "apiKey"},
-        {"network", "base_url",          "baseUrl"},
-        {"network", "proxy",             "proxy"},
-        {"network", "timeout_seconds",   "timeoutSeconds"},
-        {"network", "max_retries",       "maxRetries"},
-        {"network", "verify_ssl",        "verifySsl"},
+        {"display", "theme", "theme"},
+        {"display", "show_thinking", "showThinking"},
+        {"display", "show_token_usage", "showTokenUsage"},
+        {"display", "compact_mode", "compactMode"},
+        {"display", "line_width", "lineWidth"},
+        {"network", "api_key", "apiKey"},
+        {"network", "base_url", "baseUrl"},
+        {"network", "proxy", "proxy"},
+        {"network", "timeout_seconds", "timeoutSeconds"},
+        {"network", "max_retries", "maxRetries"},
+        {"network", "verify_ssl", "verifySsl"},
     };
 
     for (const auto& tier : tiers) {
@@ -3835,8 +3754,7 @@ inline void ConfigManager::migrate_legacy_config() {
         // Read old file
         std::ifstream in(tier.old_path);
         if (!in.is_open()) continue;
-        std::string content((std::istreambuf_iterator<char>(in)),
-                             std::istreambuf_iterator<char>());
+        std::string content((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
         // Strip a UTF-8 BOM; json::parse rejects a leading BOM and the
         // migration would silently skip the file otherwise.
         if (content.starts_with("\xEF\xBB\xBF")) content = content.substr(3);
@@ -3905,9 +3823,8 @@ inline void ConfigManager::migrate_legacy_config() {
         const auto bak_path = fs::path(tier.old_path.string() + ".bak");
         fs::rename(tier.old_path, bak_path, ec);
 
-        std::println(stderr, "[migrate] {} → {} (old file saved as {})",
-                     tier.old_path.string(), tier.new_path.string(),
-                     bak_path.string());
+        std::println(stderr, "[migrate] {} → {} (old file saved as {})", tier.old_path.string(),
+                     tier.new_path.string(), bak_path.string());
     }
 }
 
@@ -3915,91 +3832,74 @@ inline void ConfigManager::migrate_legacy_config() {
 // c13b structured user settings — out-of-class definitions
 // ================================================================
 
-[[nodiscard]] inline std::span<const UserSettingSpec>
-ConfigManager::user_setting_specs() noexcept {
+[[nodiscard]] inline std::span<const UserSettingSpec> ConfigManager::user_setting_specs() noexcept {
     // The CLOSED projected set: 8 writable server-direct-query scalars
     // followed by the 9 read-only metadata keys. Flat camelCase keys at
     // root level (unified settings.json format); section is "" for root.
     static constexpr UserSettingSpec specs[] = {
         // ── writable (8) ──
-        {"model",            "", "model",
-         UserSettingKind::String,    true, true, "string", "LOOM_MODEL",
+        {"model", "", "model", UserSettingKind::String, true, true, "string", "LOOM_MODEL",
          "LLM model to use"},
-        {"maxOutputTokens",  "", "maxOutputTokens",
-         UserSettingKind::UInteger,  true, true, "integer", "LOOM_MAX_TOKENS",
-         "Explicit per-request output limit (null = automatic)"},
-        {"temperature",      "", "temperature",
-         UserSettingKind::Number,    true, false, "number", "",
+        {"maxOutputTokens", "", "maxOutputTokens", UserSettingKind::UInteger, true, true, "integer",
+         "LOOM_MAX_TOKENS", "Explicit per-request output limit (null = automatic)"},
+        {"temperature", "", "temperature", UserSettingKind::Number, true, false, "number", "",
          "Sampling temperature"},
-        {"extendedThinking", "", "extendedThinking",
-         UserSettingKind::Boolean,   true, false, "boolean", "",
-         "Override extended thinking (null = provider default)"},
-        {"thinkingBudget",   "", "thinkingBudget",
-         UserSettingKind::UInteger,  true, true, "integer", "",
-         "Extended thinking token budget"},
-        {"contextWindowSize","", "contextWindowSize",
-         UserSettingKind::UInteger,  true, true, "integer", "",
-         "Fallback context capacity when no model-specific limit is known"},
-        {"maxRetries",       "", "maxRetries",
-         UserSettingKind::UInteger,  true, false, "integer", "",
+        {"extendedThinking", "", "extendedThinking", UserSettingKind::Boolean, true, false,
+         "boolean", "", "Override extended thinking (null = provider default)"},
+        {"thinkingBudget", "", "thinkingBudget", UserSettingKind::UInteger, true, true, "integer",
+         "", "Extended thinking token budget"},
+        {"contextWindowSize", "", "contextWindowSize", UserSettingKind::UInteger, true, true,
+         "integer", "", "Fallback context capacity when no model-specific limit is known"},
+        {"maxRetries", "", "maxRetries", UserSettingKind::UInteger, true, false, "integer", "",
          "Max retry attempts"},
-        {"mouseMode",        "", "mouseMode",
-         UserSettingKind::Boolean,   true, false, "boolean", "",
+        {"mouseMode", "", "mouseMode", UserSettingKind::Boolean, true, false, "boolean", "",
          "Enable in-app mouse tracking (disables native text selection)"},
         // ── read-only metadata (9) ──
-        {"showThinking",     "", "showThinking",
-         UserSettingKind::Boolean,   false, false, "boolean", "",
+        {"showThinking", "", "showThinking", UserSettingKind::Boolean, false, false, "boolean", "",
          "Show thinking blocks"},
-        {"showTokenUsage",   "", "showTokenUsage",
-         UserSettingKind::Boolean,   false, false, "boolean", "",
-         "Show token usage counters"},
-        {"compactMode",      "", "compactMode",
-         UserSettingKind::Boolean,   false, false, "boolean", "",
+        {"showTokenUsage", "", "showTokenUsage", UserSettingKind::Boolean, false, false, "boolean",
+         "", "Show token usage counters"},
+        {"compactMode", "", "compactMode", UserSettingKind::Boolean, false, false, "boolean", "",
          "Minimal output formatting"},
-        {"theme",            "", "theme",
-         UserSettingKind::Enumeration, false, false, "string", "",
+        {"theme",
+         "",
+         "theme",
+         UserSettingKind::Enumeration,
+         false,
+         false,
+         "string",
+         "",
          "Color theme (auto/dark/light)",
-         {"auto", "dark", "light"}, 3},
-        {"lineWidth",        "", "lineWidth",
-         UserSettingKind::UInteger,  false, true, "integer", "",
+         {"auto", "dark", "light"},
+         3},
+        {"lineWidth", "", "lineWidth", UserSettingKind::UInteger, false, true, "integer", "",
          "Terminal line width override"},
-        {"timeoutSeconds",   "", "timeoutSeconds",
-         UserSettingKind::UInteger,  false, true, "integer", "",
-         "Request timeout in seconds"},
-        {"permissions.allow_bash",       "permissions", "allow_bash",
-         UserSettingKind::Boolean,   false, false, "boolean", "",
-         "Allow bash execution"},
+        {"timeoutSeconds", "", "timeoutSeconds", UserSettingKind::UInteger, false, true, "integer",
+         "", "Request timeout in seconds"},
+        {"permissions.allow_bash", "permissions", "allow_bash", UserSettingKind::Boolean, false,
+         false, "boolean", "", "Allow bash execution"},
         {"permissions.allow_file_write", "permissions", "allow_file_write",
-         UserSettingKind::Boolean,   false, false, "boolean", "",
-         "Allow file modifications"},
-        {"permissions.allow_network",    "permissions", "allow_network",
-         UserSettingKind::Boolean,   false, false, "boolean", "",
-         "Allow network requests"},
+         UserSettingKind::Boolean, false, false, "boolean", "", "Allow file modifications"},
+        {"permissions.allow_network", "permissions", "allow_network", UserSettingKind::Boolean,
+         false, false, "boolean", "", "Allow network requests"},
     };
     return specs;
 }
 
-[[nodiscard]] inline std::span<const BlockedSetting>
-ConfigManager::blocked_settings() noexcept {
+[[nodiscard]] inline std::span<const BlockedSetting> ConfigManager::blocked_settings() noexcept {
     static constexpr BlockedSetting blocked[] = {
-        {"apiKey",
-         "Set the LOOM_API_KEY environment variable to configure the API "
-         "key; this tool never reads or writes credential values."},
-        {"baseUrl",
-         "Set the LOOM_BASE_URL environment variable to configure the "
-         "endpoint."},
-        {"proxy",
-         "Set the HTTPS_PROXY environment variable (HTTP_PROXY is used as a "
-         "fallback) to configure the proxy."},
-        {"verifySsl",
-         "TLS certificate verification is a security kill switch and cannot "
-         "be changed through this tool."},
-        {"permissions.deny_rules",
-         "Permission deny rules are managed through the mcp and allow "
-         "permission surfaces, not this tool."},
-        {"permissions.deny",
-         "Permission deny rules are managed through the mcp and allow "
-         "permission surfaces, not this tool."},
+        {"apiKey", "Set the LOOM_API_KEY environment variable to configure the API "
+                   "key; this tool never reads or writes credential values."},
+        {"baseUrl", "Set the LOOM_BASE_URL environment variable to configure the "
+                    "endpoint."},
+        {"proxy", "Set the HTTPS_PROXY environment variable (HTTP_PROXY is used as a "
+                  "fallback) to configure the proxy."},
+        {"verifySsl", "TLS certificate verification is a security kill switch and cannot "
+                      "be changed through this tool."},
+        {"permissions.deny_rules", "Permission deny rules are managed through the mcp and allow "
+                                   "permission surfaces, not this tool."},
+        {"permissions.deny", "Permission deny rules are managed through the mcp and allow "
+                             "permission surfaces, not this tool."},
         {"permissions.allowed_paths",
          "Permission path lists are managed through the permission surfaces, "
          "not this tool."},
@@ -4009,19 +3909,14 @@ ConfigManager::blocked_settings() noexcept {
         {"permissions.allowed_commands",
          "Permission command lists are managed through the permission "
          "surfaces, not this tool."},
-        {"systemPrompt",
-         "System prompt overrides are session-scoped prompt injection and "
-         "cannot be written through this tool."},
-        {"customInstructions",
-         "Custom instructions are session-scoped and cannot be written "
-         "through this tool."},
-        {"features",
-         "The features bitmask is build/runtime-internal and cannot be "
-         "changed through this tool."},
-        {"mcpServers",
-         "Use the mcp tool or the 'loom mcp' command to manage MCP servers."},
-        {"xaaIdp",
-         "Use '/mcp xaa' to configure the XAA identity provider."},
+        {"systemPrompt", "System prompt overrides are session-scoped prompt injection and "
+                         "cannot be written through this tool."},
+        {"customInstructions", "Custom instructions are session-scoped and cannot be written "
+                               "through this tool."},
+        {"features", "The features bitmask is build/runtime-internal and cannot be "
+                     "changed through this tool."},
+        {"mcpServers", "Use the mcp tool or the 'loom mcp' command to manage MCP servers."},
+        {"xaaIdp", "Use '/mcp xaa' to configure the XAA identity provider."},
     };
     return blocked;
 }
@@ -4034,8 +3929,7 @@ ConfigManager::blocked_setting_message(std::string_view dotted) noexcept {
     return std::nullopt;
 }
 
-[[nodiscard]] inline std::string
-ConfigManager::serialize_user_setting_specs_json() {
+[[nodiscard]] inline std::string ConfigManager::serialize_user_setting_specs_json() {
     namespace json = loom::utils::json;
     json::JsonMutDoc doc;
     auto root = doc.object();
@@ -4078,15 +3972,14 @@ ConfigManager::serialize_user_setting_specs_json() {
     null_clear.append(doc.string("thinkingBudget"));
     root.add("null_clear_keys", null_clear);
     root.set("null_clear_note",
-        "A JSON null clears the leaf in the USER tier file only; a value in "
-        "a lower-tier file still wins through the tier merge.");
+             "A JSON null clears the leaf in the USER tier file only; a value in "
+             "a lower-tier file still wins through the tier merge.");
 
     doc.set_root(root);
     return doc.to_string();
 }
 
-[[nodiscard]] inline std::string
-ConfigManager::serialize_agent_settings_json() const {
+[[nodiscard]] inline std::string ConfigManager::serialize_agent_settings_json() const {
     namespace json = loom::utils::json;
     json::JsonMutDoc doc;
     auto root = doc.object();
@@ -4102,8 +3995,7 @@ ConfigManager::serialize_agent_settings_json() const {
     std::vector<std::string_view> nested_sections;
     for (const auto& spec : user_setting_specs()) {
         if (spec.section.empty()) continue;
-        if (std::ranges::find(nested_sections, spec.section) ==
-            nested_sections.end()) {
+        if (std::ranges::find(nested_sections, spec.section) == nested_sections.end()) {
             nested_sections.push_back(spec.section);
         }
     }
@@ -4151,8 +4043,7 @@ ConfigManager::agent_secret_presence_json(std::string_view dotted) const {
     std::string_view source = "none";
     if (env_value != nullptr) {
         source = "env";
-    } else if (disk_leaves_.contains(
-                   std::pair<std::string, std::string>("", leaf))) {
+    } else if (disk_leaves_.contains(std::pair<std::string, std::string>("", leaf))) {
         source = "file";
     }
 
@@ -4166,34 +4057,33 @@ ConfigManager::agent_secret_presence_json(std::string_view dotted) const {
 }
 
 [[nodiscard]] inline Result<UserSettingSetOutcome>
-ConfigManager::set_user_setting(std::string_view dotted,
-                                const loom::utils::json::JsonVal& value) {
+ConfigManager::set_user_setting(std::string_view dotted, const loom::utils::json::JsonVal& value) {
     // Classification is against the writable spec set ONLY: blocked keys
     // get owner-surface guidance, projected keys get the terminal
     // not-writable error, everything else is an unknown-key error.
     if (auto guidance = blocked_setting_message(dotted); guidance) {
-        return std::unexpected(Error::make(
-            ErrorCode::InvalidInput,
-            std::format("'{}' cannot be set with this tool. {}",
-                        dotted, *guidance)));
+        return std::unexpected(
+            Error::make(ErrorCode::InvalidInput,
+                        std::format("'{}' cannot be set with this tool. {}", dotted, *guidance)));
     }
     const UserSettingSpec* spec = find_user_setting(dotted);
     if (spec == nullptr) {
-        return std::unexpected(Error::make(
-            ErrorCode::InvalidInput,
-            std::format("Unknown configuration key '{}'. Run action=list to "
-                        "see the supported keys.", dotted)));
+        return std::unexpected(
+            Error::make(ErrorCode::InvalidInput,
+                        std::format("Unknown configuration key '{}'. Run action=list to "
+                                    "see the supported keys.",
+                                    dotted)));
     }
     if (!spec->writable) {
-        return std::unexpected(Error::make(
-            ErrorCode::InvalidInput,
-            std::format("'{}' is not writable through this tool; no runtime "
-                        "component consumes this setting.", dotted)));
+        return std::unexpected(
+            Error::make(ErrorCode::InvalidInput,
+                        std::format("'{}' is not writable through this tool; no runtime "
+                                    "component consumes this setting.",
+                                    dotted)));
     }
     if (user_write_path_.empty()) {
-        return std::unexpected(Error::make(
-            ErrorCode::ConfigWriteError,
-            "No user configuration file is configured for writes"));
+        return std::unexpected(Error::make(ErrorCode::ConfigWriteError,
+                                           "No user configuration file is configured for writes"));
     }
 
     // Key-specific validation, then kind coercion.
@@ -4210,13 +4100,11 @@ ConfigManager::set_user_setting(std::string_view dotted,
         coerced = *generic;
         if (dotted == "temperature" && !coerced.null_clear) {
             auto reparsed = loom::utils::json::parse(coerced.token);
-            const double temperature =
-                reparsed ? reparsed->root().as_double() : 0.0;
+            const double temperature = reparsed ? reparsed->root().as_double() : 0.0;
             if (temperature < 0.0 || temperature > 1.0) {
                 return std::unexpected(Error::make(
-                    ErrorCode::InvalidInput,
-                    "temperature must be between 0 and 1 (or null to "
-                    "clear the user-tier value)"));
+                    ErrorCode::InvalidInput, "temperature must be between 0 and 1 (or null to "
+                                             "clear the user-tier value)"));
             }
         }
     }
@@ -4245,23 +4133,23 @@ ConfigManager::set_user_setting(std::string_view dotted,
     // SalvageTrailing never returns this error (it is the strict-mode
     // channel), but the generic patcher requires the caller's pinned
     // literal; this is the config-tool wording.
-    const Error strict_error = Error::make(
-        ErrorCode::ConfigParseError,
-        std::format("{} is not valid JSON; repair or move it aside before "
-                    "changing configuration settings", user_write_path_.string()));
+    const Error strict_error =
+        Error::make(ErrorCode::ConfigParseError,
+                    std::format("{} is not valid JSON; repair or move it aside before "
+                                "changing configuration settings",
+                                user_write_path_.string()));
     SalvageResult salvage_out = SalvageResult::Untouched;
     auto patched = patch_object_file(
         user_write_path_,
-        [&](loom::utils::json::JsonMutVal& root,
-            loom::utils::json::JsonMutDoc& doc) -> VoidResult {
+        [&](loom::utils::json::JsonMutVal& root, loom::utils::json::JsonMutDoc& doc) -> VoidResult {
             // raw_json("null") yields a valid JSON-null value that
             // yyjson_mut_obj_put KEEPS (only a null pointer deletes), so
             // the explicit null-clear is written into the user file.
             auto leaf_value = doc.raw_json(token);
             if (!leaf_value.valid()) {
-                return std::unexpected(Error::make(
-                    ErrorCode::InternalError,
-                    "Internal error: serialized setting is not valid JSON"));
+                return std::unexpected(
+                    Error::make(ErrorCode::InternalError,
+                                "Internal error: serialized setting is not valid JSON"));
             }
             // Flat keys (section == "") patch at root level; nested keys
             // (e.g. permissions.allow_bash) patch inside their section.
@@ -4273,10 +4161,7 @@ ConfigManager::set_user_setting(std::string_view dotted,
             }
             return {};
         },
-        /*owner_only=*/false,
-        SalvageMode::SalvageTrailing,
-        strict_error,
-        salvage_out);
+        /*owner_only=*/false, SalvageMode::SalvageTrailing, strict_error, salvage_out);
     if (!patched) return std::unexpected(patched.error());
 
     switch (salvage_out) {
@@ -4299,4 +4184,4 @@ ConfigManager::set_user_setting(std::string_view dotted,
     return outcome;
 }
 
-} // namespace loom::core
+}  // namespace loom::core

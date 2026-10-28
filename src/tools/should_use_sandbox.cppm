@@ -27,7 +27,6 @@ export module loom.tools.should_use_sandbox;
 
 import std;
 
-
 export namespace loom::tools::sandbox {
 
 // ---------------------------------------------------------------------------
@@ -45,9 +44,9 @@ struct SandboxInput {
 /// Type of a user-configured excluded-command rule.  Mirrors TS
 /// bashPermissionRule() which inspects a pattern string for `:` and `*`.
 enum class PermissionRuleType {
-    kPrefix,   // e.g. "bazel" — any command starting with "bazel " or equal to "bazel"
-    kExact,    // e.g. "make=" — the "=" suffix pins to exact match
-    kWildcard, // e.g. "npm run *:test"  or any pattern containing '*'
+    kPrefix,    // e.g. "bazel" — any command starting with "bazel " or equal to "bazel"
+    kExact,     // e.g. "make=" — the "=" suffix pins to exact match
+    kWildcard,  // e.g. "npm run *:test"  or any pattern containing '*'
 };
 
 struct BashPermissionRule {
@@ -74,8 +73,7 @@ struct SandboxRuntimeConfig {
 
 /// Parse a raw user-supplied excluded-command rule string into its structured
 /// equivalent.  Mirrors TS bashPermissionRule() in bashPermissions.ts.
-[[nodiscard]] inline BashPermissionRule
-parse_permission_rule(std::string_view raw_pattern) {
+[[nodiscard]] inline BashPermissionRule parse_permission_rule(std::string_view raw_pattern) {
     const std::string pattern(raw_pattern);
     BashPermissionRule r{
         .type = PermissionRuleType::kPrefix,
@@ -106,8 +104,8 @@ parse_permission_rule(std::string_view raw_pattern) {
 /// Match a wildcard pattern containing '*' against a candidate string.
 /// '*' matches any sequence of non-separator characters (does NOT cross
 /// space boundaries).  Mirrors TS matchWildcardPattern.
-[[nodiscard]] inline bool
-match_wildcard_pattern(std::string_view pattern, std::string_view candidate) {
+[[nodiscard]] inline bool match_wildcard_pattern(std::string_view pattern,
+                                                 std::string_view candidate) {
     // Simple DP-style matcher.  Since '*' can appear any number of times we
     // use two-pointer greedy matching (correct when '*' is the only metachar).
     size_t pi = 0, ci = 0, star_pi = std::string_view::npos, star_ci = 0;
@@ -117,10 +115,10 @@ match_wildcard_pattern(std::string_view pattern, std::string_view candidate) {
             star_ci = ci;
             continue;
         }
-        if (pi < pattern.size() &&
-            (pattern[pi] == candidate[ci] ||
-             pattern[pi] == '?' /* treat ? as single-char glob too */)) {
-            ++pi; ++ci;
+        if (pi < pattern.size() && (pattern[pi] == candidate[ci] ||
+                                    pattern[pi] == '?' /* treat ? as single-char glob too */)) {
+            ++pi;
+            ++ci;
             continue;
         }
         if (star_pi != std::string_view::npos) {
@@ -131,7 +129,8 @@ match_wildcard_pattern(std::string_view pattern, std::string_view candidate) {
         }
         return false;
     }
-    while (pi < pattern.size() && pattern[pi] == '*') ++pi;
+    while (pi < pattern.size() && pattern[pi] == '*')
+        ++pi;
     return pi == pattern.size();
 }
 
@@ -139,8 +138,7 @@ match_wildcard_pattern(std::string_view pattern, std::string_view candidate) {
 /// the front of a command string.  Mirrors TS stripAllLeadingEnvVars.
 /// Known binary-hijack variable names are treated as heuristic matches — any
 /// name that looks like an uppercase NAME=value assignment is stripped.
-[[nodiscard]] inline std::string
-strip_all_leading_env_vars(std::string_view command) {
+[[nodiscard]] inline std::string strip_all_leading_env_vars(std::string_view command) {
     // The TS uses BINARY_HIJACK_VARS as a known-set; in C++ we use a general
     // regex /^[A-Z_][A-Z0-9_]*=\S+\s*/ to match common env-var assignments.
     // This is a superset of TS behaviour.
@@ -163,42 +161,54 @@ strip_all_leading_env_vars(std::string_view command) {
 /// Mirrors TS stripSafeWrappers.  The TS text version is narrower than the
 /// argv-level version in path_validation; we match the text version here
 /// because we operate on raw subcommand strings.
-[[nodiscard]] inline std::string
-strip_safe_wrappers(std::string_view command) {
+[[nodiscard]] inline std::string strip_safe_wrappers(std::string_view command) {
     std::string s(command);
     for (;;) {
         auto ws = s.find_first_not_of(" \t");
         if (ws == std::string::npos) return s;
-        std::string_view v(s); v.remove_prefix(ws);
-        if (v.starts_with("time "))     { s = std::string(v.substr(5)); continue; }
-        if (v == "time")                { s.clear(); return s; }
-        if (v.starts_with("nohup "))    { s = std::string(v.substr(6)); continue; }
-        if (v == "nohup")               { s.clear(); return s; }
+        std::string_view v(s);
+        v.remove_prefix(ws);
+        if (v.starts_with("time ")) {
+            s = std::string(v.substr(5));
+            continue;
+        }
+        if (v == "time") {
+            s.clear();
+            return s;
+        }
+        if (v.starts_with("nohup ")) {
+            s = std::string(v.substr(6));
+            continue;
+        }
+        if (v == "nohup") {
+            s.clear();
+            return s;
+        }
         // timeout [flags] DURATION
         if (v.starts_with("timeout") && (v.size() == 7 || v[7] == ' ')) {
             size_t i = 7;
-            while (i < v.size() && v[i] == ' ') ++i;
+            while (i < v.size() && v[i] == ' ')
+                ++i;
             // Skip [-s SIG] [-k SIG] [-v] [--preserve-status] etc.
             static const std::regex flag_re{
                 R"((--[a-z-]+(?:=[A-Za-z0-9_.+-]+)?|-[vks][A-Za-z0-9_.+-]*|--)\s*)"};
             std::string tail(v.substr(i));
             std::smatch m;
-            while (!tail.empty() &&
-                   std::regex_search(tail, m, flag_re) &&
-                   m.position() == 0) {
+            while (!tail.empty() && std::regex_search(tail, m, flag_re) && m.position() == 0) {
                 tail = m.suffix().str();
             }
             // Now tail should start with DURATION (digits, optional decimal, optional s/m/h/d)
             size_t d_end = 0;
-            while (d_end < tail.size() && std::isdigit(static_cast<unsigned char>(tail[d_end]))) ++d_end;
+            while (d_end < tail.size() && std::isdigit(static_cast<unsigned char>(tail[d_end])))
+                ++d_end;
             if (d_end > 0 && d_end < tail.size() && tail[d_end] == '.') {
                 ++d_end;
-                while (d_end < tail.size() && std::isdigit(static_cast<unsigned char>(tail[d_end]))) ++d_end;
+                while (d_end < tail.size() && std::isdigit(static_cast<unsigned char>(tail[d_end])))
+                    ++d_end;
             }
-            if (d_end == 0) return s; // not a valid timeout call
-            if (d_end < tail.size() &&
-                (tail[d_end] == 's' || tail[d_end] == 'm' ||
-                 tail[d_end] == 'h' || tail[d_end] == 'd')) {
+            if (d_end == 0) return s;  // not a valid timeout call
+            if (d_end < tail.size() && (tail[d_end] == 's' || tail[d_end] == 'm' ||
+                                        tail[d_end] == 'h' || tail[d_end] == 'd')) {
                 ++d_end;
             }
             s = tail.substr(d_end);
@@ -207,20 +217,25 @@ strip_safe_wrappers(std::string_view command) {
         // nice [-n N] / nice -N
         if (v.starts_with("nice") && (v.size() == 4 || v[4] == ' ')) {
             size_t i = 4;
-            while (i < v.size() && v[i] == ' ') ++i;
+            while (i < v.size() && v[i] == ' ')
+                ++i;
             std::string_view rest = v.substr(i);
             if (rest.starts_with("-n")) {
                 i += 2;
-                while (i < v.size() && v[i] == ' ') ++i;
+                while (i < v.size() && v[i] == ' ')
+                    ++i;
                 // consume an integer (optional sign, digits)
                 if (i < v.size() && (v[i] == '-' || v[i] == '+')) ++i;
-                while (i < v.size() && std::isdigit(static_cast<unsigned char>(v[i]))) ++i;
+                while (i < v.size() && std::isdigit(static_cast<unsigned char>(v[i])))
+                    ++i;
                 s = std::string(v.substr(i));
                 continue;
             }
-            if (rest.size() >= 2 && rest[0] == '-' && std::isdigit(static_cast<unsigned char>(rest[1]))) {
+            if (rest.size() >= 2 && rest[0] == '-' &&
+                std::isdigit(static_cast<unsigned char>(rest[1]))) {
                 size_t j = 2;
-                while (j < rest.size() && std::isdigit(static_cast<unsigned char>(rest[j]))) ++j;
+                while (j < rest.size() && std::isdigit(static_cast<unsigned char>(rest[j])))
+                    ++j;
                 s = std::string(rest.substr(j));
                 continue;
             }
@@ -249,7 +264,10 @@ split_subcommands_for_exclude(std::string_view input) {
 
     auto flush = [&] {
         size_t b = current.find_first_not_of(" \t\n\r");
-        if (b == std::string::npos) { current.clear(); return; }
+        if (b == std::string::npos) {
+            current.clear();
+            return;
+        }
         size_t e = current.find_last_not_of(" \t\n\r");
         result.push_back(current.substr(b, e - b + 1));
         current.clear();
@@ -257,20 +275,46 @@ split_subcommands_for_exclude(std::string_view input) {
 
     for (size_t i = 0; i < input.size(); ++i) {
         char c = input[i];
-        if (escaped) { current.push_back(c); escaped = false; continue; }
-        if (!quote && c == '\\') { current.push_back(c); escaped = true; continue; }
+        if (escaped) {
+            current.push_back(c);
+            escaped = false;
+            continue;
+        }
+        if (!quote && c == '\\') {
+            current.push_back(c);
+            escaped = true;
+            continue;
+        }
         if (quote == 0) {
-            if (c == '\'' || c == '"') { quote = c; current.push_back(c); continue; }
-            if (c == '&' && i + 1 < input.size() && input[i + 1] == '&') { flush(); ++i; continue; }
-            if (c == '|' && i + 1 < input.size() && input[i + 1] == '|') { flush(); ++i; continue; }
-            if (c == '|' || c == ';' || c == '\n') { flush(); continue; }
+            if (c == '\'' || c == '"') {
+                quote = c;
+                current.push_back(c);
+                continue;
+            }
+            if (c == '&' && i + 1 < input.size() && input[i + 1] == '&') {
+                flush();
+                ++i;
+                continue;
+            }
+            if (c == '|' && i + 1 < input.size() && input[i + 1] == '|') {
+                flush();
+                ++i;
+                continue;
+            }
+            if (c == '|' || c == ';' || c == '\n') {
+                flush();
+                continue;
+            }
             current.push_back(c);
         } else if (quote == '\'') {
             current.push_back(c);
             if (c == '\'') quote = 0;
         } else {
             current.push_back(c);
-            if (c == '\\' && i + 1 < input.size()) { escaped = true; continue; }
+            if (c == '\\' && i + 1 < input.size()) {
+                escaped = true;
+                continue;
+            }
             if (c == '"') quote = 0;
         }
     }
@@ -310,7 +354,8 @@ build_match_candidates(std::string_view trimmed_subcmd) {
 
 /// Trim a string_view's leading whitespace.
 inline std::string_view trim_leading(std::string_view s) {
-    while (!s.empty() && (s.front() == ' ' || s.front() == '\t')) s.remove_prefix(1);
+    while (!s.empty() && (s.front() == ' ' || s.front() == '\t'))
+        s.remove_prefix(1);
     return s;
 }
 
@@ -324,10 +369,8 @@ inline std::string_view base_command_of(std::string_view trimmed) {
 /// Returns true iff the command should NOT be sandboxed because it matches
 /// a user-configured excluded-command pattern.
 [[nodiscard]] inline bool
-contains_excluded_command(
-    std::string_view command,
-    std::span<const std::string> user_excluded_patterns)
-{
+contains_excluded_command(std::string_view command,
+                          std::span<const std::string> user_excluded_patterns) {
     if (user_excluded_patterns.empty()) return false;
 
     auto subcommands = split_subcommands_for_exclude(command);
@@ -342,20 +385,19 @@ contains_excluded_command(
             const auto rule = parse_permission_rule(raw_pattern);
             for (const auto& cand : candidates) {
                 switch (rule.type) {
-                    case PermissionRuleType::kPrefix:
-                        if (cand == rule.prefix ||
-                            cand.starts_with(rule.prefix + " ")) {
-                            return true;
-                        }
-                        break;
-                    case PermissionRuleType::kExact:
-                        if (cand == rule.command) return true;
-                        break;
-                    case PermissionRuleType::kWildcard:
-                        if (match_wildcard_pattern(rule.pattern, cand)) {
-                            return true;
-                        }
-                        break;
+                case PermissionRuleType::kPrefix:
+                    if (cand == rule.prefix || cand.starts_with(rule.prefix + " ")) {
+                        return true;
+                    }
+                    break;
+                case PermissionRuleType::kExact:
+                    if (cand == rule.command) return true;
+                    break;
+                case PermissionRuleType::kWildcard:
+                    if (match_wildcard_pattern(rule.pattern, cand)) {
+                        return true;
+                    }
+                    break;
                 }
             }
         }
@@ -373,22 +415,17 @@ contains_excluded_command(
 /// @param runtime            Snapshot of runtime sandbox config.
 ///
 /// @returns true when the command MUST run inside the sandbox.
-[[nodiscard]] inline bool
-should_use_sandbox(
-    const SandboxInput& input,
-    const SandboxRuntimeConfig& runtime)
-{
+[[nodiscard]] inline bool should_use_sandbox(const SandboxInput& input,
+                                             const SandboxRuntimeConfig& runtime) {
     if (!runtime.sandboxing_enabled) return false;
 
-    if (input.dangerously_disable_sandbox &&
-        runtime.unsandboxed_commands_allowed) {
+    if (input.dangerously_disable_sandbox && runtime.unsandboxed_commands_allowed) {
         return false;
     }
 
     if (!input.command || input.command->empty()) return false;
 
-    if (contains_excluded_command(*input.command,
-                                   runtime.user_excluded_commands)) {
+    if (contains_excluded_command(*input.command, runtime.user_excluded_commands)) {
         return false;
     }
 
@@ -399,11 +436,8 @@ should_use_sandbox(
 /// string + optional dangerously_disable_sandbox, with sensible runtime
 /// defaults.  Useful for call sites that don't want to construct a full
 /// SandboxRuntimeConfig.
-[[nodiscard]] inline bool
-should_use_sandbox(
-    std::optional<std::string> command,
-    bool dangerously_disable_sandbox = false)
-{
+[[nodiscard]] inline bool should_use_sandbox(std::optional<std::string> command,
+                                             bool dangerously_disable_sandbox = false) {
     SandboxInput input{
         .command = std::move(command),
         .dangerously_disable_sandbox = dangerously_disable_sandbox,
@@ -415,21 +449,18 @@ should_use_sandbox(
 // TS-compatible camelCase aliases
 // ---------------------------------------------------------------------------
 
-[[nodiscard]] inline bool shouldUseSandbox(
-    const SandboxInput& in,
-    const SandboxRuntimeConfig& cfg) {
+[[nodiscard]] inline bool shouldUseSandbox(const SandboxInput& in,
+                                           const SandboxRuntimeConfig& cfg) {
     return should_use_sandbox(in, cfg);
 }
 
-[[nodiscard]] inline bool shouldUseSandbox(
-    std::optional<std::string> command,
-    bool disable = false) {
+[[nodiscard]] inline bool shouldUseSandbox(std::optional<std::string> command,
+                                           bool disable = false) {
     return should_use_sandbox(std::move(command), disable);
 }
 
-[[nodiscard]] inline bool containsExcludedCommand(
-    std::string_view c,
-    std::span<const std::string> p) {
+[[nodiscard]] inline bool containsExcludedCommand(std::string_view c,
+                                                  std::span<const std::string> p) {
     return contains_excluded_command(c, p);
 }
 
@@ -441,4 +472,4 @@ inline bool matchWildcardPattern(std::string_view p, std::string_view c) {
     return match_wildcard_pattern(p, c);
 }
 
-} // namespace loom::tools::sandbox
+}  // namespace loom::tools::sandbox

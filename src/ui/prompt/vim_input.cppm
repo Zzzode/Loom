@@ -3,13 +3,13 @@
 /// Visual, and Command-line modes for the prompt input.
 module;
 
-#include <cctype>
-#include <cstdint>
-
-#include <ftxui/dom/elements.hpp>
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/event.hpp>
+#include <ftxui/dom/elements.hpp>
+
+#include <cctype>
+#include <cstdint>
 
 export module loom.ui.prompt.vim_input;
 
@@ -17,8 +17,8 @@ import loom.ui.foundation.theme_provider;
 
 import std;
 
-import loom.ui.foundation.ui_types;  // canonical VimMode lives here
-import loom.vim.vim_controller;  // unified VimController state
+import loom.ui.foundation.ui_types; // canonical VimMode lives here
+import loom.vim.vim_controller;     // unified VimController state
 
 export namespace loom::ui::prompt::vim_input {
 using namespace ftxui;
@@ -66,13 +66,13 @@ enum class CursorShape : std::uint8_t {
 /// Vim-specific state (mode, registers, pending operators) lives in the
 /// VimController field; text buffer state (text, cursor, undo) lives here.
 struct VimState {
-    loom::vim::VimController vim;          ///< Mode, registers, pending ops.
+    loom::vim::VimController vim;  ///< Mode, registers, pending ops.
     std::string text;
     int cursor_pos = 0;
-    int visual_start = -1;               ///< Start of visual selection (-1 = none).
-    std::string command_line;            ///< Content of : command line.
-    std::string last_search;             ///< Last / search pattern.
-    std::string status_message;          ///< Shown in status area.
+    int visual_start = -1;       ///< Start of visual selection (-1 = none).
+    std::string command_line;    ///< Content of : command line.
+    std::string last_search;     ///< Last / search pattern.
+    std::string status_message;  ///< Shown in status area.
     std::vector<std::string> undo_stack;
     int undo_index = -1;
 };
@@ -97,9 +97,11 @@ struct VimInputOptions {
     if (pos <= 0) return 0;
     int p = pos - 1;
     // Skip whitespace
-    while (p > 0 && std::isspace(static_cast<unsigned char>(text[p]))) --p;
+    while (p > 0 && std::isspace(static_cast<unsigned char>(text[p])))
+        --p;
     // Skip word chars
-    while (p > 0 && !std::isspace(static_cast<unsigned char>(text[p - 1]))) --p;
+    while (p > 0 && !std::isspace(static_cast<unsigned char>(text[p - 1])))
+        --p;
     return p;
 }
 
@@ -109,9 +111,11 @@ struct VimInputOptions {
     if (pos >= len) return len;
     int p = pos;
     // Skip current word
-    while (p < len && !std::isspace(static_cast<unsigned char>(text[p]))) ++p;
+    while (p < len && !std::isspace(static_cast<unsigned char>(text[p])))
+        ++p;
     // Skip whitespace
-    while (p < len && std::isspace(static_cast<unsigned char>(text[p]))) ++p;
+    while (p < len && std::isspace(static_cast<unsigned char>(text[p])))
+        ++p;
     return p;
 }
 
@@ -122,10 +126,12 @@ struct VimInputOptions {
     int p = pos;
     // Skip current word chars
     if (!std::isspace(static_cast<unsigned char>(text[p]))) {
-        while (p < len && !std::isspace(static_cast<unsigned char>(text[p]))) ++p;
+        while (p < len && !std::isspace(static_cast<unsigned char>(text[p])))
+            ++p;
     }
     // Skip whitespace
-    while (p < len && std::isspace(static_cast<unsigned char>(text[p]))) ++p;
+    while (p < len && std::isspace(static_cast<unsigned char>(text[p])))
+        ++p;
     return p;
 }
 
@@ -134,9 +140,11 @@ struct VimInputOptions {
     if (pos <= 0) return 0;
     int p = pos - 1;
     // Skip whitespace
-    while (p > 0 && std::isspace(static_cast<unsigned char>(text[p]))) --p;
+    while (p > 0 && std::isspace(static_cast<unsigned char>(text[p])))
+        --p;
     // Skip word chars backward
-    while (p > 0 && !std::isspace(static_cast<unsigned char>(text[p - 1]))) --p;
+    while (p > 0 && !std::isspace(static_cast<unsigned char>(text[p - 1])))
+        --p;
     return p;
 }
 
@@ -149,13 +157,20 @@ struct VimInputOptions {
 /// underline for replace).
 [[nodiscard]] inline CursorShape cursor_for_mode(VimMode mode) {
     switch (mode) {
-        case VimMode::Normal:      return CursorShape::Block;
-        case VimMode::Insert:      return CursorShape::Bar;
-        case VimMode::Visual:      return CursorShape::Block;
-        case VimMode::VisualLine:  return CursorShape::Block;
-        case VimMode::VisualBlock: return CursorShape::Block;
-        case VimMode::Replace:     return CursorShape::Underline;
-        case VimMode::Command:     return CursorShape::Bar;
+    case VimMode::Normal:
+        return CursorShape::Block;
+    case VimMode::Insert:
+        return CursorShape::Bar;
+    case VimMode::Visual:
+        return CursorShape::Block;
+    case VimMode::VisualLine:
+        return CursorShape::Block;
+    case VimMode::VisualBlock:
+        return CursorShape::Block;
+    case VimMode::Replace:
+        return CursorShape::Underline;
+    case VimMode::Command:
+        return CursorShape::Bar;
     }
     return CursorShape::Block;
 }
@@ -164,13 +179,20 @@ struct VimInputOptions {
 /// Theme roles distinguish insertion, selection, and overwrite modes.
 [[nodiscard]] inline std::pair<std::string, Color> mode_display(VimMode mode) {
     switch (mode) {
-        case VimMode::Normal:      return {"NORMAL",      loom::ui::design::theme::current_theme().palette->muted};
-        case VimMode::Insert:      return {"INSERT",      loom::ui::design::theme::current_theme().palette->primary};
-        case VimMode::Visual:      return {"VISUAL",      loom::ui::design::theme::current_theme().palette->selection_bg};
-        case VimMode::VisualLine:  return {"V-LINE",      loom::ui::design::theme::current_theme().palette->selection_bg};
-        case VimMode::VisualBlock: return {"V-BLOCK",     loom::ui::design::theme::current_theme().palette->selection_bg};
-        case VimMode::Replace:     return {"REPLACE",     loom::ui::design::theme::current_theme().palette->danger};
-        case VimMode::Command:     return {"COMMAND",     loom::ui::design::theme::current_theme().palette->primary};
+    case VimMode::Normal:
+        return {"NORMAL", loom::ui::design::theme::current_theme().palette->muted};
+    case VimMode::Insert:
+        return {"INSERT", loom::ui::design::theme::current_theme().palette->primary};
+    case VimMode::Visual:
+        return {"VISUAL", loom::ui::design::theme::current_theme().palette->selection_bg};
+    case VimMode::VisualLine:
+        return {"V-LINE", loom::ui::design::theme::current_theme().palette->selection_bg};
+    case VimMode::VisualBlock:
+        return {"V-BLOCK", loom::ui::design::theme::current_theme().palette->selection_bg};
+    case VimMode::Replace:
+        return {"REPLACE", loom::ui::design::theme::current_theme().palette->danger};
+    case VimMode::Command:
+        return {"COMMAND", loom::ui::design::theme::current_theme().palette->primary};
     }
     return {"???", loom::ui::design::theme::current_theme().palette->text};
 }
@@ -180,8 +202,9 @@ struct VimInputOptions {
     auto [mode_label, mode_color] = mode_display(state.vim.mode);
 
     // Mode indicator badge
-    auto mode_badge = text(" " + mode_label + " ") | bold
-                      | color(loom::ui::design::theme::current_theme().palette->inverse_text) | bgcolor(mode_color);
+    auto mode_badge = text(" " + mode_label + " ") | bold |
+                      color(loom::ui::design::theme::current_theme().palette->inverse_text) |
+                      bgcolor(mode_color);
 
     // Text with cursor
     Elements text_parts;
@@ -189,8 +212,7 @@ struct VimInputOptions {
 
     // Visual selection range
     int sel_start = -1, sel_end = -1;
-    bool is_visual = (state.vim.mode == VimMode::Visual ||
-                      state.vim.mode == VimMode::VisualLine ||
+    bool is_visual = (state.vim.mode == VimMode::Visual || state.vim.mode == VimMode::VisualLine ||
                       state.vim.mode == VimMode::VisualBlock);
     if (is_visual && state.visual_start >= 0) {
         sel_start = std::min(state.visual_start, state.cursor_pos);
@@ -205,7 +227,10 @@ struct VimInputOptions {
                 if (state.vim.mode == VimMode::Normal || is_visual) {
                     text_parts.push_back(text(ch) | inverted | bold);
                 } else {
-                    text_parts.push_back(text("|") | color(loom::ui::design::theme::current_theme().palette->info) | (loom::ui::design::theme::current_theme().a11y.reduced_motion ? nothing : blink));
+                    text_parts.push_back(
+                        text("|") | color(loom::ui::design::theme::current_theme().palette->info) |
+                        (loom::ui::design::theme::current_theme().a11y.reduced_motion ? nothing
+                                                                                      : blink));
                     text_parts.push_back(text(ch));
                 }
             } else {
@@ -213,13 +238,18 @@ struct VimInputOptions {
                 if (state.vim.mode == VimMode::Normal || is_visual) {
                     text_parts.push_back(text(" ") | inverted);
                 } else {
-                    text_parts.push_back(text("|") | color(loom::ui::design::theme::current_theme().palette->info) | (loom::ui::design::theme::current_theme().a11y.reduced_motion ? nothing : blink));
+                    text_parts.push_back(
+                        text("|") | color(loom::ui::design::theme::current_theme().palette->info) |
+                        (loom::ui::design::theme::current_theme().a11y.reduced_motion ? nothing
+                                                                                      : blink));
                 }
             }
         } else if (i < len) {
             std::string ch(1, state.text[i]);
             if (sel_start >= 0 && i >= sel_start && i <= sel_end) {
-                text_parts.push_back(text(ch) | bgcolor(loom::ui::design::theme::current_theme().palette->surface_tint_2));
+                text_parts.push_back(
+                    text(ch) |
+                    bgcolor(loom::ui::design::theme::current_theme().palette->surface_tint_2));
             } else {
                 text_parts.push_back(text(ch));
             }
@@ -229,7 +259,8 @@ struct VimInputOptions {
     auto input_line = hbox(text_parts);
     if (state.text.empty() && state.vim.mode == VimMode::Insert) {
         input_line = hbox({
-            text("|") | color(loom::ui::design::theme::current_theme().palette->info) | (loom::ui::design::theme::current_theme().a11y.reduced_motion ? nothing : blink),
+            text("|") | color(loom::ui::design::theme::current_theme().palette->info) |
+                (loom::ui::design::theme::current_theme().a11y.reduced_motion ? nothing : blink),
             text("Type your message...") | dim,
         });
     }
@@ -237,17 +268,18 @@ struct VimInputOptions {
     // Status bar at bottom
     Elements status_parts = {mode_badge, text(" ")};
     if (!state.vim.pending_operator.empty()) {
-        status_parts.push_back(text(state.vim.pending_operator) | color(loom::ui::design::theme::current_theme().palette->warning));
+        status_parts.push_back(text(state.vim.pending_operator) |
+                               color(loom::ui::design::theme::current_theme().palette->warning));
     }
     if (state.vim.count_prefix > 0) {
-        status_parts.push_back(text(std::to_string(state.vim.count_prefix)) | color(loom::ui::design::theme::current_theme().palette->info));
+        status_parts.push_back(text(std::to_string(state.vim.count_prefix)) |
+                               color(loom::ui::design::theme::current_theme().palette->info));
     }
     status_parts.push_back(filler());
     if (!state.status_message.empty()) {
         status_parts.push_back(text(state.status_message) | dim);
     }
-    status_parts.push_back(
-        text(std::format(" {}:{} ", state.cursor_pos + 1, len)) | dim);
+    status_parts.push_back(text(std::format(" {}:{} ", state.cursor_pos + 1, len)) | dim);
 
     auto status_bar = hbox(status_parts);
 
@@ -259,7 +291,9 @@ struct VimInputOptions {
             hbox({
                 text(":") | color(loom::ui::design::theme::current_theme().palette->warning) | bold,
                 text(state.command_line),
-                text("|") | color(loom::ui::design::theme::current_theme().palette->info) | (loom::ui::design::theme::current_theme().a11y.reduced_motion ? nothing : blink),
+                text("|") | color(loom::ui::design::theme::current_theme().palette->info) |
+                    (loom::ui::design::theme::current_theme().a11y.reduced_motion ? nothing
+                                                                                  : blink),
             }),
         });
     }
@@ -289,333 +323,339 @@ struct VimInputOptions {
     state->undo_stack.push_back(state->text);
     state->undo_index = 0;
 
-    return Renderer([state] {
-        return RenderVimInput(*state);
-    }) | CatchEvent([state, opts](Event event) -> bool {
-        auto save_undo = [&] {
-            if (state->undo_index < static_cast<int>(state->undo_stack.size()) - 1) {
-                state->undo_stack.resize(state->undo_index + 1);
-            }
-            state->undo_stack.push_back(state->text);
-            if (static_cast<int>(state->undo_stack.size()) > opts->max_undo) {
-                state->undo_stack.erase(state->undo_stack.begin());
-            }
-            state->undo_index = static_cast<int>(state->undo_stack.size()) - 1;
-        };
+    return Renderer([state] { return RenderVimInput(*state); }) |
+           CatchEvent([state, opts](Event event) -> bool {
+               auto save_undo = [&] {
+                   if (state->undo_index < static_cast<int>(state->undo_stack.size()) - 1) {
+                       state->undo_stack.resize(state->undo_index + 1);
+                   }
+                   state->undo_stack.push_back(state->text);
+                   if (static_cast<int>(state->undo_stack.size()) > opts->max_undo) {
+                       state->undo_stack.erase(state->undo_stack.begin());
+                   }
+                   state->undo_index = static_cast<int>(state->undo_stack.size()) - 1;
+               };
 
-        auto notify_change = [&] {
-            if (opts->on_change) opts->on_change(state->text);
-        };
+               auto notify_change = [&] {
+                   if (opts->on_change) opts->on_change(state->text);
+               };
 
-        auto set_mode = [&](VimMode m) {
-            state->vim.mode = m;
-            if (opts->on_mode_change) opts->on_mode_change(m);
-        };
+               auto set_mode = [&](VimMode m) {
+                   state->vim.mode = m;
+                   if (opts->on_mode_change) opts->on_mode_change(m);
+               };
 
-        int len = static_cast<int>(state->text.size());
+               int len = static_cast<int>(state->text.size());
 
-        // --- COMMAND MODE ---
-        if (state->vim.mode == VimMode::Command) {
-            if (event == Event::Escape) {
-                state->command_line.clear();
-                set_mode(VimMode::Normal);
-                return true;
-            }
-            if (event == Event::Return) {
-                if (opts->on_command) opts->on_command(state->command_line);
-                state->command_line.clear();
-                set_mode(VimMode::Normal);
-                return true;
-            }
-            if (event == Event::Backspace) {
-                if (!state->command_line.empty()) {
-                    state->command_line.pop_back();
-                } else {
-                    set_mode(VimMode::Normal);
-                }
-                return true;
-            }
-            if (event.is_character()) {
-                state->command_line += event.character();
-                return true;
-            }
-            return false;
-        }
+               // --- COMMAND MODE ---
+               if (state->vim.mode == VimMode::Command) {
+                   if (event == Event::Escape) {
+                       state->command_line.clear();
+                       set_mode(VimMode::Normal);
+                       return true;
+                   }
+                   if (event == Event::Return) {
+                       if (opts->on_command) opts->on_command(state->command_line);
+                       state->command_line.clear();
+                       set_mode(VimMode::Normal);
+                       return true;
+                   }
+                   if (event == Event::Backspace) {
+                       if (!state->command_line.empty()) {
+                           state->command_line.pop_back();
+                       } else {
+                           set_mode(VimMode::Normal);
+                       }
+                       return true;
+                   }
+                   if (event.is_character()) {
+                       state->command_line += event.character();
+                       return true;
+                   }
+                   return false;
+               }
 
-        // --- INSERT MODE ---
-        if (state->vim.mode == VimMode::Insert) {
-            if (event == Event::Escape) {
-                set_mode(VimMode::Normal);
-                if (state->cursor_pos > 0) state->cursor_pos--;
-                save_undo();
-                return true;
-            }
-            if (event == Event::Return) {
-                if (opts->on_submit) opts->on_submit(state->text);
-                return true;
-            }
-            if (event == Event::Backspace) {
-                if (state->cursor_pos > 0) {
-                    state->text.erase(state->cursor_pos - 1, 1);
-                    state->cursor_pos--;
-                    notify_change();
-                }
-                return true;
-            }
-            if (event.is_character()) {
-                state->text.insert(state->cursor_pos, event.character());
-                state->cursor_pos += static_cast<int>(event.character().size());
-                notify_change();
-                return true;
-            }
-            return false;
-        }
+               // --- INSERT MODE ---
+               if (state->vim.mode == VimMode::Insert) {
+                   if (event == Event::Escape) {
+                       set_mode(VimMode::Normal);
+                       if (state->cursor_pos > 0) state->cursor_pos--;
+                       save_undo();
+                       return true;
+                   }
+                   if (event == Event::Return) {
+                       if (opts->on_submit) opts->on_submit(state->text);
+                       return true;
+                   }
+                   if (event == Event::Backspace) {
+                       if (state->cursor_pos > 0) {
+                           state->text.erase(state->cursor_pos - 1, 1);
+                           state->cursor_pos--;
+                           notify_change();
+                       }
+                       return true;
+                   }
+                   if (event.is_character()) {
+                       state->text.insert(state->cursor_pos, event.character());
+                       state->cursor_pos += static_cast<int>(event.character().size());
+                       notify_change();
+                       return true;
+                   }
+                   return false;
+               }
 
-        // --- REPLACE MODE ---
-        // Replace mode (R) replaces characters at cursor until Escape
-        // exits back to Normal.
-        if (state->vim.mode == VimMode::Replace) {
-            if (event == Event::Escape) {
-                set_mode(VimMode::Normal);
-                if (state->cursor_pos > 0) state->cursor_pos--;
-                return true;
-            }
-            if (event == Event::Return) {
-                if (opts->on_submit) opts->on_submit(state->text);
-                return true;
-            }
-            if (event.is_character()) {
-                // Replace character at cursor position
-                if (state->cursor_pos < len) {
-                    state->vim.unnamed_register = state->text.substr(state->cursor_pos, 1);
-                    state->text[state->cursor_pos] = event.character()[0];
-                    state->cursor_pos++;
-                    save_undo();
-                    notify_change();
-                } else {
-                    // At end: behave like insert
-                    state->text.insert(state->cursor_pos, event.character());
-                    state->cursor_pos += static_cast<int>(event.character().size());
-                    notify_change();
-                }
-                return true;
-            }
-            return false;
-        }
+               // --- REPLACE MODE ---
+               // Replace mode (R) replaces characters at cursor until Escape
+               // exits back to Normal.
+               if (state->vim.mode == VimMode::Replace) {
+                   if (event == Event::Escape) {
+                       set_mode(VimMode::Normal);
+                       if (state->cursor_pos > 0) state->cursor_pos--;
+                       return true;
+                   }
+                   if (event == Event::Return) {
+                       if (opts->on_submit) opts->on_submit(state->text);
+                       return true;
+                   }
+                   if (event.is_character()) {
+                       // Replace character at cursor position
+                       if (state->cursor_pos < len) {
+                           state->vim.unnamed_register = state->text.substr(state->cursor_pos, 1);
+                           state->text[state->cursor_pos] = event.character()[0];
+                           state->cursor_pos++;
+                           save_undo();
+                           notify_change();
+                       } else {
+                           // At end: behave like insert
+                           state->text.insert(state->cursor_pos, event.character());
+                           state->cursor_pos += static_cast<int>(event.character().size());
+                           notify_change();
+                       }
+                       return true;
+                   }
+                   return false;
+               }
 
-        // --- NORMAL / VISUAL MODE ---
-        // NORMAL mode handles all vim commands.
-        // Visual modes share motion keys with Normal; Escape exits back to Normal.
-        bool is_any_visual = (state->vim.mode == VimMode::Visual ||
-                              state->vim.mode == VimMode::VisualLine ||
-                              state->vim.mode == VimMode::VisualBlock);
-        if (state->vim.mode == VimMode::Normal || is_any_visual) {
-            // Mode transitions from Normal
-            if (state->vim.mode == VimMode::Normal) {
-                if (event == Event::Character('i')) {
-                    set_mode(VimMode::Insert);
-                    return true;
-                }
-                if (event == Event::Character('a')) {
-                    set_mode(VimMode::Insert);
-                    if (state->cursor_pos < len) state->cursor_pos++;
-                    return true;
-                }
-                if (event == Event::Character('I')) {
-                    set_mode(VimMode::Insert);
-                    state->cursor_pos = 0;
-                    return true;
-                }
-                if (event == Event::Character('A')) {
-                    set_mode(VimMode::Insert);
-                    state->cursor_pos = len;
-                    return true;
-                }
-                if (event == Event::Character('R')) {
-                    set_mode(VimMode::Replace);
-                    return true;
-                }
-            }
+               // --- NORMAL / VISUAL MODE ---
+               // NORMAL mode handles all vim commands.
+               // Visual modes share motion keys with Normal; Escape exits back to Normal.
+               bool is_any_visual =
+                   (state->vim.mode == VimMode::Visual || state->vim.mode == VimMode::VisualLine ||
+                    state->vim.mode == VimMode::VisualBlock);
+               if (state->vim.mode == VimMode::Normal || is_any_visual) {
+                   // Mode transitions from Normal
+                   if (state->vim.mode == VimMode::Normal) {
+                       if (event == Event::Character('i')) {
+                           set_mode(VimMode::Insert);
+                           return true;
+                       }
+                       if (event == Event::Character('a')) {
+                           set_mode(VimMode::Insert);
+                           if (state->cursor_pos < len) state->cursor_pos++;
+                           return true;
+                       }
+                       if (event == Event::Character('I')) {
+                           set_mode(VimMode::Insert);
+                           state->cursor_pos = 0;
+                           return true;
+                       }
+                       if (event == Event::Character('A')) {
+                           set_mode(VimMode::Insert);
+                           state->cursor_pos = len;
+                           return true;
+                       }
+                       if (event == Event::Character('R')) {
+                           set_mode(VimMode::Replace);
+                           return true;
+                       }
+                   }
 
-            // Visual mode entry (works from Normal mode)
-            if (event == Event::Character('v') && state->vim.mode == VimMode::Normal) {
-                set_mode(VimMode::Visual);
-                state->visual_start = state->cursor_pos;
-                return true;
-            }
-            // Toggle off visual when pressing 'v' again in Visual mode
-            if (event == Event::Character('v') && state->vim.mode == VimMode::Visual) {
-                set_mode(VimMode::Normal);
-                state->visual_start = -1;
-                return true;
-            }
-            // V = VisualLine (line-wise selection)
-            if (event == Event::Character('V')) {
-                if (state->vim.mode == VimMode::VisualLine) {
-                    set_mode(VimMode::Normal);
-                    state->visual_start = -1;
-                } else {
-                    set_mode(VimMode::VisualLine);
-                    state->visual_start = state->cursor_pos;
-                }
-                return true;
-            }
-            // Ctrl+V = VisualBlock (block-wise selection)
-            if (event == Event::Character('\x16')) {
-                if (state->vim.mode == VimMode::VisualBlock) {
-                    set_mode(VimMode::Normal);
-                    state->visual_start = -1;
-                } else {
-                    set_mode(VimMode::VisualBlock);
-                    state->visual_start = state->cursor_pos;
-                }
-                return true;
-            }
+                   // Visual mode entry (works from Normal mode)
+                   if (event == Event::Character('v') && state->vim.mode == VimMode::Normal) {
+                       set_mode(VimMode::Visual);
+                       state->visual_start = state->cursor_pos;
+                       return true;
+                   }
+                   // Toggle off visual when pressing 'v' again in Visual mode
+                   if (event == Event::Character('v') && state->vim.mode == VimMode::Visual) {
+                       set_mode(VimMode::Normal);
+                       state->visual_start = -1;
+                       return true;
+                   }
+                   // V = VisualLine (line-wise selection)
+                   if (event == Event::Character('V')) {
+                       if (state->vim.mode == VimMode::VisualLine) {
+                           set_mode(VimMode::Normal);
+                           state->visual_start = -1;
+                       } else {
+                           set_mode(VimMode::VisualLine);
+                           state->visual_start = state->cursor_pos;
+                       }
+                       return true;
+                   }
+                   // Ctrl+V = VisualBlock (block-wise selection)
+                   if (event == Event::Character('\x16')) {
+                       if (state->vim.mode == VimMode::VisualBlock) {
+                           set_mode(VimMode::Normal);
+                           state->visual_start = -1;
+                       } else {
+                           set_mode(VimMode::VisualBlock);
+                           state->visual_start = state->cursor_pos;
+                       }
+                       return true;
+                   }
 
-            if (event == Event::Character(':')) {
-                set_mode(VimMode::Command);
-                state->command_line.clear();
-                return true;
-            }
+                   if (event == Event::Character(':')) {
+                       set_mode(VimMode::Command);
+                       state->command_line.clear();
+                       return true;
+                   }
 
-            // Motions
-            if (event == Event::Character('h') || event == Event::ArrowLeft) {
-                if (state->cursor_pos > 0) state->cursor_pos--;
-                return true;
-            }
-            if (event == Event::Character('l') || event == Event::ArrowRight) {
-                if (state->cursor_pos < len - 1) state->cursor_pos++;
-                return true;
-            }
-            if (event == Event::Character('0') && state->vim.count_prefix == 0) {
-                state->cursor_pos = 0;
-                return true;
-            }
-            if (event == Event::Character('$')) {
-                state->cursor_pos = std::max(0, len - 1);
-                return true;
-            }
-            if (event == Event::Character('w')) {
-                state->cursor_pos = next_word(state->text, state->cursor_pos);
-                if (state->cursor_pos >= len) state->cursor_pos = std::max(0, len - 1);
-                return true;
-            }
-            if (event == Event::Character('b')) {
-                state->cursor_pos = prev_word(state->text, state->cursor_pos);
-                return true;
-            }
+                   // Motions
+                   if (event == Event::Character('h') || event == Event::ArrowLeft) {
+                       if (state->cursor_pos > 0) state->cursor_pos--;
+                       return true;
+                   }
+                   if (event == Event::Character('l') || event == Event::ArrowRight) {
+                       if (state->cursor_pos < len - 1) state->cursor_pos++;
+                       return true;
+                   }
+                   if (event == Event::Character('0') && state->vim.count_prefix == 0) {
+                       state->cursor_pos = 0;
+                       return true;
+                   }
+                   if (event == Event::Character('$')) {
+                       state->cursor_pos = std::max(0, len - 1);
+                       return true;
+                   }
+                   if (event == Event::Character('w')) {
+                       state->cursor_pos = next_word(state->text, state->cursor_pos);
+                       if (state->cursor_pos >= len) state->cursor_pos = std::max(0, len - 1);
+                       return true;
+                   }
+                   if (event == Event::Character('b')) {
+                       state->cursor_pos = prev_word(state->text, state->cursor_pos);
+                       return true;
+                   }
 
-            // Operators: dd (delete line), yy (yank line)
-            // Operator pending state tracks the first 'd' or 'y' waiting
-            // for a motion or second key.
-            if (event == Event::Character('d')) {
-                if (state->vim.pending_operator == "d") {
-                    // dd = delete current line
-                    int line_start = state->cursor_pos;
-                    while (line_start > 0 && state->text[line_start - 1] != '\n')
-                        --line_start;
-                    int line_end = state->cursor_pos;
-                    while (line_end < len && state->text[line_end] != '\n')
-                        ++line_end;
-                    if (line_end < len) ++line_end; // include '\n'
-                    state->vim.unnamed_register = state->text.substr(line_start, line_end - line_start);
-                    state->vim.yank_is_linewise = true;
-                    state->text.erase(line_start, line_end - line_start);
-                    state->cursor_pos = std::min(line_start, static_cast<int>(state->text.size()));
-                    state->vim.pending_operator.clear();
-                    save_undo();
-                    notify_change();
-                } else {
-                    state->vim.pending_operator = "d";
-                }
-                return true;
-            }
-            if (event == Event::Character('y')) {
-                if (state->vim.pending_operator == "y") {
-                    // yy = yank current line
-                    int line_start = state->cursor_pos;
-                    while (line_start > 0 && state->text[line_start - 1] != '\n')
-                        --line_start;
-                    int line_end = state->cursor_pos;
-                    while (line_end < len && state->text[line_end] != '\n')
-                        ++line_end;
-                    if (line_end < len) ++line_end;
-                    state->vim.unnamed_register = state->text.substr(line_start, line_end - line_start);
-                    state->vim.yank_is_linewise = true;
-                    state->vim.pending_operator.clear();
-                } else {
-                    state->vim.pending_operator = "y";
-                }
-                return true;
-            }
+                   // Operators: dd (delete line), yy (yank line)
+                   // Operator pending state tracks the first 'd' or 'y' waiting
+                   // for a motion or second key.
+                   if (event == Event::Character('d')) {
+                       if (state->vim.pending_operator == "d") {
+                           // dd = delete current line
+                           int line_start = state->cursor_pos;
+                           while (line_start > 0 && state->text[line_start - 1] != '\n')
+                               --line_start;
+                           int line_end = state->cursor_pos;
+                           while (line_end < len && state->text[line_end] != '\n')
+                               ++line_end;
+                           if (line_end < len) ++line_end;  // include '\n'
+                           state->vim.unnamed_register =
+                               state->text.substr(line_start, line_end - line_start);
+                           state->vim.yank_is_linewise = true;
+                           state->text.erase(line_start, line_end - line_start);
+                           state->cursor_pos =
+                               std::min(line_start, static_cast<int>(state->text.size()));
+                           state->vim.pending_operator.clear();
+                           save_undo();
+                           notify_change();
+                       } else {
+                           state->vim.pending_operator = "d";
+                       }
+                       return true;
+                   }
+                   if (event == Event::Character('y')) {
+                       if (state->vim.pending_operator == "y") {
+                           // yy = yank current line
+                           int line_start = state->cursor_pos;
+                           while (line_start > 0 && state->text[line_start - 1] != '\n')
+                               --line_start;
+                           int line_end = state->cursor_pos;
+                           while (line_end < len && state->text[line_end] != '\n')
+                               ++line_end;
+                           if (line_end < len) ++line_end;
+                           state->vim.unnamed_register =
+                               state->text.substr(line_start, line_end - line_start);
+                           state->vim.yank_is_linewise = true;
+                           state->vim.pending_operator.clear();
+                       } else {
+                           state->vim.pending_operator = "y";
+                       }
+                       return true;
+                   }
 
-            // Editing
-            if (event == Event::Character('x')) {
-                if (state->cursor_pos < len) {
-                    state->vim.unnamed_register = state->text.substr(state->cursor_pos, 1);
-                    state->text.erase(state->cursor_pos, 1);
-                    if (state->cursor_pos >= static_cast<int>(state->text.size()) && state->cursor_pos > 0) {
-                        state->cursor_pos--;
-                    }
-                    save_undo();
-                    notify_change();
-                }
-                return true;
-            }
-            if (event == Event::Character('u')) {
-                // Undo
-                if (state->undo_index > 0) {
-                    state->undo_index--;
-                    state->text = state->undo_stack[state->undo_index];
-                    state->cursor_pos = std::min(state->cursor_pos,
-                        std::max(0, static_cast<int>(state->text.size()) - 1));
-                    notify_change();
-                }
-                return true;
-            }
-            // Ctrl+R = redo
-            if (event == Event::Character('\x12')) {
-                if (state->undo_index < static_cast<int>(state->undo_stack.size()) - 1) {
-                    state->undo_index++;
-                    state->text = state->undo_stack[state->undo_index];
-                    state->cursor_pos = std::min(state->cursor_pos,
-                        std::max(0, static_cast<int>(state->text.size()) - 1));
-                    notify_change();
-                }
-                return true;
-            }
-            if (event == Event::Character('p')) {
-                // Paste after cursor
-                if (!state->vim.unnamed_register.empty()) {
-                    int insert_pos = std::min(state->cursor_pos + 1, len);
-                    state->text.insert(insert_pos, state->vim.unnamed_register);
-                    state->cursor_pos = insert_pos +
-                        static_cast<int>(state->vim.unnamed_register.size()) - 1;
-                    save_undo();
-                    notify_change();
-                }
-                return true;
-            }
+                   // Editing
+                   if (event == Event::Character('x')) {
+                       if (state->cursor_pos < len) {
+                           state->vim.unnamed_register = state->text.substr(state->cursor_pos, 1);
+                           state->text.erase(state->cursor_pos, 1);
+                           if (state->cursor_pos >= static_cast<int>(state->text.size()) &&
+                               state->cursor_pos > 0) {
+                               state->cursor_pos--;
+                           }
+                           save_undo();
+                           notify_change();
+                       }
+                       return true;
+                   }
+                   if (event == Event::Character('u')) {
+                       // Undo
+                       if (state->undo_index > 0) {
+                           state->undo_index--;
+                           state->text = state->undo_stack[state->undo_index];
+                           state->cursor_pos =
+                               std::min(state->cursor_pos,
+                                        std::max(0, static_cast<int>(state->text.size()) - 1));
+                           notify_change();
+                       }
+                       return true;
+                   }
+                   // Ctrl+R = redo
+                   if (event == Event::Character('\x12')) {
+                       if (state->undo_index < static_cast<int>(state->undo_stack.size()) - 1) {
+                           state->undo_index++;
+                           state->text = state->undo_stack[state->undo_index];
+                           state->cursor_pos =
+                               std::min(state->cursor_pos,
+                                        std::max(0, static_cast<int>(state->text.size()) - 1));
+                           notify_change();
+                       }
+                       return true;
+                   }
+                   if (event == Event::Character('p')) {
+                       // Paste after cursor
+                       if (!state->vim.unnamed_register.empty()) {
+                           int insert_pos = std::min(state->cursor_pos + 1, len);
+                           state->text.insert(insert_pos, state->vim.unnamed_register);
+                           state->cursor_pos =
+                               insert_pos + static_cast<int>(state->vim.unnamed_register.size()) -
+                               1;
+                           save_undo();
+                           notify_change();
+                       }
+                       return true;
+                   }
 
-            // Submit with Enter in normal mode
-            if (event == Event::Return) {
-                if (opts->on_submit) opts->on_submit(state->text);
-                return true;
-            }
+                   // Submit with Enter in normal mode
+                   if (event == Event::Return) {
+                       if (opts->on_submit) opts->on_submit(state->text);
+                       return true;
+                   }
 
-            if (event == Event::Escape) {
-                if (is_any_visual) {
-                    set_mode(VimMode::Normal);
-                    state->visual_start = -1;
-                }
-                state->vim.pending_operator.clear();
-                state->vim.count_prefix = 0;
-                return true;
-            }
-        }
+                   if (event == Event::Escape) {
+                       if (is_any_visual) {
+                           set_mode(VimMode::Normal);
+                           state->visual_start = -1;
+                       }
+                       state->vim.pending_operator.clear();
+                       state->vim.count_prefix = 0;
+                       return true;
+                   }
+               }
 
-        return false;
-    });
+               return false;
+           });
 }
 
-} // namespace loom::ui::prompt::vim_input
+}  // namespace loom::ui::prompt::vim_input

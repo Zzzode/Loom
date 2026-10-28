@@ -7,15 +7,11 @@ import std;
 
 export namespace loom::commands {
 
-
-enum class TrustLevel {
-    Untrusted,
-    Trusted,
-    Verified
-};
+enum class TrustLevel { Untrusted, Trusted, Verified };
 
 auto trust_config_path() -> std::filesystem::path {
-    if (const char* home = std::getenv("HOME")) return std::filesystem::path{home} / ".loom" / "plugin-trust.txt";
+    if (const char* home = std::getenv("HOME"))
+        return std::filesystem::path{home} / ".loom" / "plugin-trust.txt";
     return std::filesystem::path{".loom"} / "plugin-trust.txt";
 }
 
@@ -23,7 +19,6 @@ auto trust_to_string(TrustLevel level) -> std::string;
 auto string_to_trust(std::string_view value) -> TrustLevel;
 auto read_trust_config() -> std::map<std::string, TrustLevel>;
 auto write_trust_config(const std::map<std::string, TrustLevel>& config) -> void;
-
 
 auto get_trust_level(std::string_view plugin_id) -> TrustLevel {
     if (plugin_id.empty()) {
@@ -34,7 +29,6 @@ auto get_trust_level(std::string_view plugin_id) -> TrustLevel {
     return found == config.end() ? TrustLevel::Untrusted : found->second;
 }
 
-
 auto set_trust_level(std::string_view plugin_id, TrustLevel level) -> void {
     if (plugin_id.empty()) {
         return;
@@ -44,17 +38,16 @@ auto set_trust_level(std::string_view plugin_id, TrustLevel level) -> void {
     write_trust_config(config);
 }
 
-
 auto prompt_trust_dialog(std::string_view plugin_id, std::string_view permissions) -> bool {
     if (plugin_id.empty()) {
         return false;
     }
     auto level = get_trust_level(plugin_id);
     if (level == TrustLevel::Verified) return true;
-    if (level == TrustLevel::Trusted && permissions.find("unsafe") == std::string_view::npos) return true;
+    if (level == TrustLevel::Trusted && permissions.find("unsafe") == std::string_view::npos)
+        return true;
     return false;
 }
-
 
 auto get_plugin_permissions(std::string_view id) -> std::vector<std::string> {
     if (id.empty()) {
@@ -73,9 +66,12 @@ auto get_plugin_permissions(std::string_view id) -> std::vector<std::string> {
 
 auto trust_to_string(TrustLevel level) -> std::string {
     switch (level) {
-        case TrustLevel::Verified: return "verified";
-        case TrustLevel::Trusted: return "trusted";
-        case TrustLevel::Untrusted: return "untrusted";
+    case TrustLevel::Verified:
+        return "verified";
+    case TrustLevel::Trusted:
+        return "trusted";
+    case TrustLevel::Untrusted:
+        return "untrusted";
     }
     return "untrusted";
 }
@@ -102,7 +98,8 @@ auto write_trust_config(const std::map<std::string, TrustLevel>& config) -> void
     auto path = trust_config_path();
     std::filesystem::create_directories(path.parent_path());
     std::ofstream output{path, std::ios::trunc};
-    for (const auto& [id, level] : config) output << id << '=' << trust_to_string(level) << '\n';
+    for (const auto& [id, level] : config)
+        output << id << '=' << trust_to_string(level) << '\n';
 }
 
-} // namespace loom::commands
+}  // namespace loom::commands

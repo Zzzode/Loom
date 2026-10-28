@@ -15,13 +15,13 @@ import loom.utils.error;
 
 export namespace loom::tools::team_delete {
 
-using loom::core::Tool;
-using loom::core::ToolInput;
-using loom::core::ToolResult;
-using loom::core::ToolDefinition;
-using loom::core::ToolPermission;
 using loom::core::InputSchema;
 using loom::core::SchemaProperty;
+using loom::core::Tool;
+using loom::core::ToolDefinition;
+using loom::core::ToolInput;
+using loom::core::ToolPermission;
+using loom::core::ToolResult;
 
 /// Input parameters for TeamDeleteTool (empty - operates on current team)
 struct TeamDeleteInput {
@@ -48,32 +48,30 @@ public:
         "clears the team context from app state.";
 
     static ToolDefinition definition() {
-        return ToolDefinition{
-            .name = std::string(kName),
-            .description = std::string(kDescription),
-            .input_schema = InputSchema{
-                .properties = {
-                    SchemaProperty{
-                        .name = "team_id",
-                        .type = "string",
-                        .description = "Team id to delete",
-                        .required = false,
-                        .default_value = std::nullopt,
-                        .enum_values = std::nullopt,
-                    },
-                    SchemaProperty{
-                        .name = "team_name",
-                        .type = "string",
-                        .description = "Team name to delete",
-                        .required = false,
-                        .default_value = std::nullopt,
-                        .enum_values = std::nullopt,
-                    },
-                }
-            },
-            .permission = ToolPermission::Write,
-            .category = "team"
-        };
+        return ToolDefinition{.name = std::string(kName),
+                              .description = std::string(kDescription),
+                              .input_schema =
+                                  InputSchema{.properties =
+                                                  {
+                                                      SchemaProperty{
+                                                          .name = "team_id",
+                                                          .type = "string",
+                                                          .description = "Team id to delete",
+                                                          .required = false,
+                                                          .default_value = std::nullopt,
+                                                          .enum_values = std::nullopt,
+                                                      },
+                                                      SchemaProperty{
+                                                          .name = "team_name",
+                                                          .type = "string",
+                                                          .description = "Team name to delete",
+                                                          .required = false,
+                                                          .default_value = std::nullopt,
+                                                          .enum_values = std::nullopt,
+                                                      },
+                                                  }},
+                              .permission = ToolPermission::Write,
+                              .category = "team"};
     }
 
     [[nodiscard]] auto execute(const ToolInput& input) -> loom::utils::Result<ToolResult>;
@@ -85,8 +83,7 @@ public:
     [[nodiscard]] auto validate_can_delete() -> std::optional<std::string>;
 
     /// Get list of active (non-lead, non-idle) members
-    [[nodiscard]] auto get_active_members(const std::string& team_name)
-        -> std::vector<std::string>;
+    [[nodiscard]] auto get_active_members(const std::string& team_name) -> std::vector<std::string>;
 
     /// Clean up team directories (team file, task dirs, worktrees)
     [[nodiscard]] auto cleanup_team_directories(const std::string& team_name)
@@ -104,10 +101,8 @@ public:
 
 namespace detail {
 
-[[nodiscard]] std::optional<std::string> json_string_field(
-    loom::utils::json::JsonVal object,
-    std::string_view key
-) {
+[[nodiscard]] std::optional<std::string> json_string_field(loom::utils::json::JsonVal object,
+                                                           std::string_view key) {
     auto value = object.get(key);
     if (!value.is_str()) return std::nullopt;
     auto text = std::string(value.as_str());
@@ -115,7 +110,8 @@ namespace detail {
 }
 
 [[nodiscard]] std::optional<std::string> env_team_name() {
-    if (const char* value = std::getenv("LOOM_TEAM_NAME"); value && *value) return std::string(value);
+    if (const char* value = std::getenv("LOOM_TEAM_NAME"); value && *value)
+        return std::string(value);
     return std::nullopt;
 }
 
@@ -124,27 +120,31 @@ namespace detail {
         return std::format(R"({{"team_id":"{}"}})", loom::tools::team_json_escape(*input.team_id));
     }
     if (input.team_name && !input.team_name->empty()) {
-        return std::format(R"({{"team_name":"{}"}})", loom::tools::team_json_escape(*input.team_name));
+        return std::format(R"({{"team_name":"{}"}})",
+                           loom::tools::team_json_escape(*input.team_name));
     }
     return "{}";
 }
 
-} // namespace detail
+}  // namespace detail
 
 std::expected<TeamDeleteInput, std::string> TeamDeleteInput::from_json(std::string_view json) {
     TeamDeleteInput input;
     auto parsed = loom::utils::json::parse(json);
     if (parsed && parsed->root().is_obj()) {
         auto root = parsed->root();
-        input.team_id = detail::json_string_field(root, "team_id")
-            .or_else([&] { return detail::json_string_field(root, "id"); });
-        input.team_name = detail::json_string_field(root, "team_name")
-            .or_else([&] { return detail::json_string_field(root, "name"); });
+        input.team_id = detail::json_string_field(root, "team_id").or_else([&] {
+            return detail::json_string_field(root, "id");
+        });
+        input.team_name = detail::json_string_field(root, "team_name").or_else([&] {
+            return detail::json_string_field(root, "name");
+        });
     } else if (!json.empty() && json != "{}") {
         return std::unexpected("team_delete input must be a JSON object");
     }
     if (!input.team_id && !input.team_name) input.team_name = detail::env_team_name();
-    if (!input.team_id && !input.team_name) return std::unexpected("team_delete requires team_id or team_name");
+    if (!input.team_id && !input.team_name)
+        return std::unexpected("team_delete requires team_id or team_name");
     return input;
 }
 
@@ -158,19 +158,22 @@ loom::utils::Result<ToolResult> TeamDeleteTool::execute(const ToolInput& input) 
     // outer TeamDeleteTool is already permission-gated by its caller — so the
     // inner delegation uses an allow-all checker rather than fail-closed
     // denial for the Write-level "team_delete" runtime tool.
-    loom::tools::register_runtime_tools(registry, loom::tools::RuntimeToolOptions{
-        .parent_permission_mode = std::nullopt,
-        .permission_check = loom::tools::agent::AgentLivePermissionCheckFn{[](
-            std::string_view, std::string_view, std::string_view) {
-            return loom::tools::agent::AgentLivePermissionCheck{
-                .allowed = true,
-                .updated_input_json = std::nullopt,
-                .message = std::nullopt,
-            };
-        }},
-        .permission_hook_valid_for_background = false,
-    });
-    auto delegated = registry.execute("team_delete", ToolInput::from_json(detail::delete_input_json_for_target(*parsed)));
+    loom::tools::register_runtime_tools(
+        registry, loom::tools::RuntimeToolOptions{
+                      .parent_permission_mode = std::nullopt,
+                      .permission_check =
+                          loom::tools::agent::AgentLivePermissionCheckFn{
+                              [](std::string_view, std::string_view, std::string_view) {
+                                  return loom::tools::agent::AgentLivePermissionCheck{
+                                      .allowed = true,
+                                      .updated_input_json = std::nullopt,
+                                      .message = std::nullopt,
+                                  };
+                              }},
+                      .permission_hook_valid_for_background = false,
+                  });
+    auto delegated = registry.execute(
+        "team_delete", ToolInput::from_json(detail::delete_input_json_for_target(*parsed)));
     if (!delegated) return ToolResult::error(delegated.error().format());
     return std::move(*delegated);
 }
@@ -183,7 +186,8 @@ std::optional<std::string> TeamDeleteTool::validate_can_delete() {
     auto team_name = detail::env_team_name();
     if (!team_name) return "no current team context";
     auto active = get_active_members(*team_name);
-    if (!active.empty()) return std::format("{} active team member(s) still running", active.size());
+    if (!active.empty())
+        return std::format("{} active team member(s) still running", active.size());
     return std::nullopt;
 }
 
@@ -203,7 +207,8 @@ std::vector<std::string> TeamDeleteTool::get_active_members(const std::string& t
     return active;
 }
 
-std::expected<void, std::string> TeamDeleteTool::cleanup_team_directories(const std::string& team_name) {
+std::expected<void, std::string>
+TeamDeleteTool::cleanup_team_directories(const std::string& team_name) {
     namespace fs = std::filesystem;
     std::error_code ec;
     auto root = loom::tools::team_runtime_dir();
@@ -223,9 +228,9 @@ void TeamDeleteTool::unregister_from_cleanup(const std::string&) {}
 
 void TeamDeleteTool::clear_teammate_colors() {}
 
-} // namespace loom::tools::team_delete
+}  // namespace loom::tools::team_delete
 
 export namespace loom::tools {
-    using loom::tools::team_delete::TeamDeleteInput;
-    using loom::tools::team_delete::TeamDeleteOutput;
-}
+using loom::tools::team_delete::TeamDeleteInput;
+using loom::tools::team_delete::TeamDeleteOutput;
+}  // namespace loom::tools

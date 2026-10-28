@@ -12,6 +12,7 @@
 module;
 
 #include <unistd.h>
+
 #include <cctype>
 #include <cstdint>
 #include <cstring>
@@ -19,6 +20,7 @@ module;
 #if LOOM_HAS_TREE_SITTER
 extern "C" {
 #include <tree_sitter/api.h>
+
 #include <cstddef>
 }
 #endif
@@ -83,17 +85,17 @@ enum class CheckType : uint8_t {
 /// A single text-level check: capture @capture_name must satisfy `type` against `value`.
 struct TextCheck {
     const char* capture_name;
-    CheckType   type;
+    CheckType type;
     const char* value;
 };
 
 struct QueryDef {
     const char* name;
-    Severity    severity;
+    Severity severity;
     const char* pattern;
     /// Text checks that must ALL pass for the match to count.
     /// Terminated by an entry with capture_name == nullptr.
-    TextCheck   checks[4];
+    TextCheck checks[4];
 };
 
 // clang-format off
@@ -183,11 +185,12 @@ constexpr std::array<QueryDef, 10> kAllQueries = {{
 struct CompiledCatalogue {
     struct Entry {
         std::string name;
-        Severity    severity;
-        Query       query;
+        Severity severity;
+        Query query;
         /// Text-level checks copied from QueryDef.
-        TextCheck   checks[4];
+        TextCheck checks[4];
     };
+
     std::vector<Entry> entries;
     bool all_ok = false;
 };
@@ -219,8 +222,7 @@ auto compile_catalogue(const void* lang) -> const CompiledCatalogue& {
 // ─── Text-check helpers ────────────────────────────────────────────────────
 // Extract the source text of a capture given its name.  Returns empty string_view
 // if no capture with that name is found.
-auto capture_text_by_name(const std::vector<Query::Capture>& caps,
-                          std::string_view name,
+auto capture_text_by_name(const std::vector<Query::Capture>& caps, std::string_view name,
                           std::string_view src) -> std::string_view {
     for (const auto& c : caps) {
         if (c.name == name) {
@@ -235,46 +237,43 @@ auto capture_text_by_name(const std::vector<Query::Capture>& caps,
 
 // Run a single TextCheck against a set of captures.  Returns true if the check
 // passes (or if the check has a null capture_name, i.e. it's the sentinel).
-bool run_text_check(const TextCheck& check,
-                    const std::vector<Query::Capture>& caps,
+bool run_text_check(const TextCheck& check, const std::vector<Query::Capture>& caps,
                     std::string_view src) {
     if (!check.capture_name) return true;  // sentinel -> trivially passes
     std::string_view text = capture_text_by_name(caps, check.capture_name, src);
     switch (check.type) {
-        case CheckType::Eq:
-            return text == check.value;
-        case CheckType::AnyOf: {
-            // Split `check.value` on '|' and check if `text` equals any token.
-            std::string_view list = check.value;
-            while (!list.empty()) {
-                size_t pipe = list.find('|');
-                std::string_view token = (pipe == std::string_view::npos)
-                    ? list : list.substr(0, pipe);
-                if (text == token) return true;
-                if (pipe == std::string_view::npos) break;
-                list.remove_prefix(pipe + 1);
-            }
+    case CheckType::Eq:
+        return text == check.value;
+    case CheckType::AnyOf: {
+        // Split `check.value` on '|' and check if `text` equals any token.
+        std::string_view list = check.value;
+        while (!list.empty()) {
+            size_t pipe = list.find('|');
+            std::string_view token = (pipe == std::string_view::npos) ? list : list.substr(0, pipe);
+            if (text == token) return true;
+            if (pipe == std::string_view::npos) break;
+            list.remove_prefix(pipe + 1);
+        }
+        return false;
+    }
+    case CheckType::Match: {
+        try {
+            std::regex re{check.value,
+                          std::regex_constants::ECMAScript | std::regex_constants::optimize};
+            const std::string text_str{text};
+            return std::regex_search(text_str, re);
+        } catch (const std::regex_error&) {
+            // Bad regex — treat as not-matching (fail-closed).
             return false;
         }
-        case CheckType::Match: {
-            try {
-                std::regex re{check.value,
-                    std::regex_constants::ECMAScript | std::regex_constants::optimize};
-                const std::string text_str{text};
-                return std::regex_search(text_str, re);
-            } catch (const std::regex_error&) {
-                // Bad regex — treat as not-matching (fail-closed).
-                return false;
-            }
-        }
+    }
     }
     return false;
 }
 
 // Run all checks in the entry's checks array (null-terminated).  Returns true
 // only if every non-null check passes.
-bool all_checks_pass(const CompiledCatalogue::Entry& entry,
-                     const std::vector<Query::Capture>& caps,
+bool all_checks_pass(const CompiledCatalogue::Entry& entry, const std::vector<Query::Capture>& caps,
                      std::string_view src) {
     for (size_t i = 0; i < 4; ++i) {
         if (!entry.checks[i].capture_name) break;  // end of list
@@ -284,8 +283,8 @@ bool all_checks_pass(const CompiledCatalogue::Entry& entry,
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
-void record_match(BashClassifierResult& out, const std::string& name, Severity sev,
-                  uint32_t start, uint32_t end) {
+void record_match(BashClassifierResult& out, const std::string& name, Severity sev, uint32_t start,
+                  uint32_t end) {
     out.is_dangerous = true;
     out.matched_patterns.push_back(name);
     out.byte_ranges.emplace_back(start, end);
@@ -296,11 +295,16 @@ void record_match(BashClassifierResult& out, const std::string& name, Severity s
 
 auto severity_label(Severity s) -> std::string_view {
     switch (s) {
-        case Severity::None:     return "None";
-        case Severity::Low:      return "Low";
-        case Severity::Medium:   return "Medium";
-        case Severity::High:     return "High";
-        case Severity::Critical: return "Critical";
+    case Severity::None:
+        return "None";
+    case Severity::Low:
+        return "Low";
+    case Severity::Medium:
+        return "Medium";
+    case Severity::High:
+        return "High";
+    case Severity::Critical:
+        return "Critical";
     }
     return "Unknown";
 }
@@ -315,32 +319,39 @@ void regex_scan(BashClassifierResult& out, std::string_view script) {
         Severity sev;
         const char* pattern;
     };
+
     static constexpr std::array<Rule, 10> rules{{
-        {"piped_rm",              Severity::Critical, R"(\|[^|\n]*\brm\b)"},
-        {"dangerous_subshell",    Severity::High,     R"(\$\([^)]*\b(rm|mkfs|dd|wipefs|fsck|fdisk)\b|\`[^\`]*\b(rm|mkfs|dd|wipefs|fsck|fdisk)\b\`)"},
-        {"heredoc_destructive",   Severity::High,     R"(<<[-]?[-]?['\"]?\w+['\"]?\s*(?s:.*?)\b(rm|mkfs|dd|wipefs|fsck|fdisk)\b)"},
-        {"env_injection_risk",    Severity::Medium,   R"((?:^|[\s;&|`(])\$\{?[A-Za-z_][A-Za-z_0-9]*\}?\s*(?:$|[;&|]))"},
-        {"sudo_used",             Severity::Medium,   R"(\bsudo\b)"},
-        {"recursive_rm_root",     Severity::Critical, R"(\brm\s+(?:-[a-zA-Z]*r[a-zA-Z]*|--recursive)\s+.*?\b(/|/etc|/bin|/usr|/var|/boot|/lib|\$HOME)\b)"},
-        {"pipe_to_shell",         Severity::Critical, R"(\b(wget|curl)\b[^|&\n]*\|\s*\b(sh|bash|zsh|fish)\b)"},
-        {"eval_used",             Severity::Medium,   R"(\beval\b)"},
-        {"unsafe_chmod",          Severity::High,     R"(\bchmod\s+(?:777|[a-z]*\+s)\s+.*?\b(/|/etc|/bin|/usr|/var|/boot|/lib)\b)"},
-        {"fork_bomb_detected",    Severity::Critical, R"(:\s*\(\s*\)\s*\{\s*:\s*\|\s*:\s*&\s*\}\s*;?\s*:)"},
+        {"piped_rm", Severity::Critical, R"(\|[^|\n]*\brm\b)"},
+        {"dangerous_subshell", Severity::High,
+         R"(\$\([^)]*\b(rm|mkfs|dd|wipefs|fsck|fdisk)\b|\`[^\`]*\b(rm|mkfs|dd|wipefs|fsck|fdisk)\b\`)"},
+        {"heredoc_destructive", Severity::High,
+         R"(<<[-]?[-]?['\"]?\w+['\"]?\s*(?s:.*?)\b(rm|mkfs|dd|wipefs|fsck|fdisk)\b)"},
+        {"env_injection_risk", Severity::Medium,
+         R"((?:^|[\s;&|`(])\$\{?[A-Za-z_][A-Za-z_0-9]*\}?\s*(?:$|[;&|]))"},
+        {"sudo_used", Severity::Medium, R"(\bsudo\b)"},
+        {"recursive_rm_root", Severity::Critical,
+         R"(\brm\s+(?:-[a-zA-Z]*r[a-zA-Z]*|--recursive)\s+.*?\b(/|/etc|/bin|/usr|/var|/boot|/lib|\$HOME)\b)"},
+        {"pipe_to_shell", Severity::Critical,
+         R"(\b(wget|curl)\b[^|&\n]*\|\s*\b(sh|bash|zsh|fish)\b)"},
+        {"eval_used", Severity::Medium, R"(\beval\b)"},
+        {"unsafe_chmod", Severity::High,
+         R"(\bchmod\s+(?:777|[a-z]*\+s)\s+.*?\b(/|/etc|/bin|/usr|/var|/boot|/lib)\b)"},
+        {"fork_bomb_detected", Severity::Critical,
+         R"(:\s*\(\s*\)\s*\{\s*:\s*\|\s*:\s*&\s*\}\s*;?\s*:)"},
     }};
 
     const std::string text{script};
     for (const auto& r : rules) {
         try {
-            std::regex re{r.pattern, std::regex_constants::ECMAScript |
-                                       std::regex_constants::optimize};
+            std::regex re{r.pattern,
+                          std::regex_constants::ECMAScript | std::regex_constants::optimize};
             auto begin = std::sregex_iterator(text.begin(), text.end(), re);
-            auto end   = std::sregex_iterator();
+            auto end = std::sregex_iterator();
             for (auto it = begin; it != end; ++it) {
                 const auto& m = *it;
                 const size_t start = static_cast<size_t>(m.position());
                 const size_t endpos = start + static_cast<size_t>(m.length());
-                record_match(out, r.name, r.sev,
-                             static_cast<uint32_t>(start),
+                record_match(out, r.name, r.sev, static_cast<uint32_t>(start),
                              static_cast<uint32_t>(endpos));
                 // Only record the first hit per pattern; repeated matches in the same
                 // script do not add signal.
@@ -353,6 +364,7 @@ void regex_scan(BashClassifierResult& out, std::string_view script) {
 }
 
 }  // namespace bash_detail
+
 using namespace bash_detail;
 
 // ─── Public API ─────────────────────────────────────────────────────────────
@@ -413,10 +425,10 @@ using namespace bash_detail;
                     // Use the capture with the widest span as the representative
                     // byte range.
                     uint32_t start = m.captures.front().start_byte;
-                    uint32_t end   = m.captures.front().end_byte;
+                    uint32_t end = m.captures.front().end_byte;
                     for (const auto& c : m.captures) {
                         start = std::min(start, c.start_byte);
-                        end   = std::max(end, c.end_byte);
+                        end = std::max(end, c.end_byte);
                     }
                     record_match(out, entry.name, entry.severity, start, end);
                     break;  // first match is enough signal per pattern
@@ -437,8 +449,8 @@ using namespace bash_detail;
         regex_scan(fallback, script);
         for (size_t i = 0; i < fallback.matched_patterns.size(); ++i) {
             const auto& name = fallback.matched_patterns[i];
-            if (std::find(out.matched_patterns.begin(), out.matched_patterns.end(),
-                          name) == out.matched_patterns.end()) {
+            if (std::find(out.matched_patterns.begin(), out.matched_patterns.end(), name) ==
+                out.matched_patterns.end()) {
                 auto it = std::find_if(kAllQueries.begin(), kAllQueries.end(),
                                        [&](const QueryDef& d) { return d.name == name; });
                 Severity sev = Severity::Medium;

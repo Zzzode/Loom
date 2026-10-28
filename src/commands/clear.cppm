@@ -37,10 +37,10 @@ constexpr int ACTION_ADD_NOTIFICATION = 18;
 
 /// What to clear when executing the command
 enum class ClearScope : std::uint8_t {
-    Screen,          // Clear terminal display only
-    Conversation,    // Reset conversation history
-    Cache,           // Clear cached data (completions, tool results)
-    All,             // Clear everything
+    Screen,        // Clear terminal display only
+    Conversation,  // Reset conversation history
+    Cache,         // Clear cached data (completions, tool results)
+    All,           // Clear everything
 };
 
 /// ClearCommand implements the /clear slash command.
@@ -53,39 +53,44 @@ public:
         return CommandDefinition{
             .name = "clear",
             .description = "Clear the screen and optionally reset conversation state",
-            .args = {
-                CommandArg{.name = "--reset", .description = "Also reset conversation history",
-                           .type = ArgType::None, .required = false},
-                CommandArg{.name = "--cache", .description = "Clear cached data",
-                           .type = ArgType::None, .required = false},
-                CommandArg{.name = "--all", .description = "Clear screen, conversation, and cache",
-                           .type = ArgType::None, .required = false},
-            },
+            .args =
+                {
+                    CommandArg{.name = "--reset",
+                               .description = "Also reset conversation history",
+                               .type = ArgType::None,
+                               .required = false},
+                    CommandArg{.name = "--cache",
+                               .description = "Clear cached data",
+                               .type = ArgType::None,
+                               .required = false},
+                    CommandArg{.name = "--all",
+                               .description = "Clear screen, conversation, and cache",
+                               .type = ArgType::None,
+                               .required = false},
+                },
             .category = "session",
             .aliases = {"cls"},
             .hidden = false,
         };
     }
 
-    [[nodiscard]] VoidResult validate(const CommandContext& /*ctx*/) {
-        return {};
-    }
+    [[nodiscard]] VoidResult validate(const CommandContext& /*ctx*/) { return {}; }
 
     [[nodiscard]] Result<CommandResult> execute(const CommandContext& ctx) {
         auto scope = parse_scope(ctx.args);
 
         switch (scope) {
-            case ClearScope::Screen:
-                return execute_screen_clear(ctx);
+        case ClearScope::Screen:
+            return execute_screen_clear(ctx);
 
-            case ClearScope::Cache:
-                return execute_cache_clear(ctx);
+        case ClearScope::Cache:
+            return execute_cache_clear(ctx);
 
-            case ClearScope::Conversation:
-                return execute_conversation_reset(ctx);
+        case ClearScope::Conversation:
+            return execute_conversation_reset(ctx);
 
-            case ClearScope::All:
-                return execute_full_reset(ctx);
+        case ClearScope::All:
+            return execute_full_reset(ctx);
         }
 
         return CommandResult::fail("Unknown clear scope");
@@ -104,11 +109,15 @@ public:
 
     /// Callback for actually clearing the terminal (set by the renderer)
     using ScreenClearFn = std::function<void()>;
+
     void set_screen_clear_fn(ScreenClearFn fn) { screen_clear_fn_ = std::move(fn); }
 
     /// Callback for resetting conversation (set by the session manager)
     using ConversationResetFn = std::function<VoidResult()>;
-    void set_conversation_reset_fn(ConversationResetFn fn) { conversation_reset_fn_ = std::move(fn); }
+
+    void set_conversation_reset_fn(ConversationResetFn fn) {
+        conversation_reset_fn_ = std::move(fn);
+    }
 
 private:
     ScreenClearFn screen_clear_fn_;
@@ -200,9 +209,9 @@ private:
     /// Parse the scope from command arguments
     [[nodiscard]] static ClearScope parse_scope(std::span<const std::string> args) {
         for (const auto& arg : args) {
-            if (arg == "--all" || arg == "-a")    return ClearScope::All;
-            if (arg == "--reset" || arg == "-r")  return ClearScope::Conversation;
-            if (arg == "--cache" || arg == "-c")  return ClearScope::Cache;
+            if (arg == "--all" || arg == "-a") return ClearScope::All;
+            if (arg == "--reset" || arg == "-r") return ClearScope::Conversation;
+            if (arg == "--cache" || arg == "-c") return ClearScope::Cache;
         }
         return ClearScope::Screen;
     }
@@ -278,4 +287,4 @@ private:
     }
 };
 
-} // namespace loom::commands
+}  // namespace loom::commands

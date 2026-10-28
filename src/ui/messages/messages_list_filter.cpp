@@ -48,7 +48,8 @@ namespace brief_detail {
 /// Extract tool_name from a MessageRowPayload if it is a tool_use or
 /// tool_result variant.  Returns empty string otherwise.
 [[nodiscard]] std::string_view extract_tool_name(const MessageRowPayload& p) {
-    if (auto* opts = std::get_if<::loom::ui::messages::tool_use_message::ToolUseRenderOptions>(&p)) {
+    if (auto* opts =
+            std::get_if<::loom::ui::messages::tool_use_message::ToolUseRenderOptions>(&p)) {
         return opts->call.tool_name;
     }
     if (auto* grp = std::get_if<::loom::ui::messages::tool_use_message::GroupedToolsOptions>(&p)) {
@@ -65,8 +66,7 @@ namespace brief_detail {
 [[nodiscard]] bool is_failed_tool_row(const MessageRowPayload& payload) {
     namespace tu = ::loom::ui::messages::tool_use_message;
     const auto failed_call = [](const tu::ToolUseCallData& call) {
-        return call.status == tu::ToolStatus::Error ||
-               call.status == tu::ToolStatus::Cancelled;
+        return call.status == tu::ToolStatus::Error || call.status == tu::ToolStatus::Cancelled;
     };
     if (const auto* opts = std::get_if<tu::ToolUseRenderOptions>(&payload)) {
         return failed_call(opts->call);
@@ -83,64 +83,62 @@ namespace brief_detail {
 }  // namespace brief_detail
 
 /// Returns true if the row at index `i` should be VISIBLE in brief mode.
-auto passes_brief_filter(
-    MessageShape shape,
-    const MessageRowPayload& payload) -> bool {
+auto passes_brief_filter(MessageShape shape, const MessageRowPayload& payload) -> bool {
     using S = MessageShape;
     namespace bd = brief_detail;
 
     if (bd::is_failed_tool_row(payload)) return true;
 
     switch (shape) {
-        // System rows: always visible (system messages must stay visible
-        // for user feedback; api_metrics subtype dropped but not tagged in CPP)
-        case S::SystemText:
-        case S::SystemRateLimit:
-        case S::SystemPlanApproval:
-        case S::SystemHookProgress:
-        case S::SystemShutdown:
-        case S::SystemCompactBoundary:
-        case S::SystemAdvisor:
-        case S::SystemTaskAssignment:
-        case S::SystemCollapsedContent:
-        case S::SystemAPIError:
-            return true;
+    // System rows: always visible (system messages must stay visible
+    // for user feedback; api_metrics subtype dropped but not tagged in CPP)
+    case S::SystemText:
+    case S::SystemRateLimit:
+    case S::SystemPlanApproval:
+    case S::SystemHookProgress:
+    case S::SystemShutdown:
+    case S::SystemCompactBoundary:
+    case S::SystemAdvisor:
+    case S::SystemTaskAssignment:
+    case S::SystemCollapsedContent:
+    case S::SystemAPIError:
+        return true;
 
-        // Assistant rows: only brief tool uses are visible
-        case S::AssistantToolUse:
-        case S::AssistantGroupedTools:
-            return bd::is_brief_tool_name(bd::extract_tool_name(payload));
+    // Assistant rows: only brief tool uses are visible
+    case S::AssistantToolUse:
+    case S::AssistantGroupedTools:
+        return bd::is_brief_tool_name(bd::extract_tool_name(payload));
 
-        // Assistant text + thinking: hidden in brief mode
-        case S::AssistantText:
-        case S::AssistantThinking:
-        case S::AssistantRedactedThinking:
-            return false;
+    // Assistant text + thinking: hidden in brief mode
+    case S::AssistantText:
+    case S::AssistantThinking:
+    case S::AssistantRedactedThinking:
+        return false;
 
-        // User input: always visible (real user text + command chips)
-        case S::UserText:
-        case S::UserPrompt:
-        case S::UserCommand:
-        case S::UserBashInput:
-        case S::UserBashOutput:
-        case S::UserLocalCommandOutput:
-        case S::UserLocalJsxOutput:
-        case S::UserImage:
-        case S::UserTeammate:
-        case S::UserChannel:
-        case S::UserAgentNotification:
-        case S::UserMemoryInput:
-        case S::UserPlan:
-        case S::UserResourceUpdate:
-        case S::UserAttachments:
-            return true;
+    // User input: always visible (real user text + command chips)
+    case S::UserText:
+    case S::UserPrompt:
+    case S::UserCommand:
+    case S::UserBashInput:
+    case S::UserBashOutput:
+    case S::UserLocalCommandOutput:
+    case S::UserLocalJsxOutput:
+    case S::UserImage:
+    case S::UserTeammate:
+    case S::UserChannel:
+    case S::UserAgentNotification:
+    case S::UserMemoryInput:
+    case S::UserPlan:
+    case S::UserResourceUpdate:
+    case S::UserAttachments:
+        return true;
 
-        // Tool results: only brief-tool results visible
-        case S::UserToolResult:
-            return bd::is_brief_tool_name(bd::extract_tool_name(payload));
+    // Tool results: only brief-tool results visible
+    case S::UserToolResult:
+        return bd::is_brief_tool_name(bd::extract_tool_name(payload));
 
-        default:
-            return true;
+    default:
+        return true;
     }
 }
 
@@ -158,15 +156,14 @@ auto passes_brief_filter(
 //
 // Returns a vector<bool> mask (true = KEEP the row, false = DROP it).
 // ---------------------------------------------------------------------------
-[[nodiscard]] std::vector<bool> compute_drop_text_mask(
-    const std::vector<MessageShape>& shapes,
-    const std::vector<MessageRowPayload>& payloads)
-{
+[[nodiscard]] std::vector<bool>
+compute_drop_text_mask(const std::vector<MessageShape>& shapes,
+                       const std::vector<MessageRowPayload>& payloads) {
     using S = MessageShape;
     namespace bd = brief_detail;
 
     const auto N = shapes.size();
-    std::vector<bool> keep(N, true);   // default: keep everything
+    std::vector<bool> keep(N, true);  // default: keep everything
 
     // First pass: find which turns contain a Brief tool_use.
     std::set<std::size_t> turns_with_brief;
@@ -179,12 +176,10 @@ auto passes_brief_filter(
         // Real user message (non-tool_result) → advance turn counter.
         const bool is_real_user =
             (sh == S::UserText || sh == S::UserPrompt || sh == S::UserCommand ||
-             sh == S::UserBashInput || sh == S::UserBashOutput ||
-             sh == S::UserLocalCommandOutput || sh == S::UserLocalJsxOutput ||
-             sh == S::UserImage || sh == S::UserPlan || sh == S::UserResourceUpdate ||
-             sh == S::UserMemoryInput || sh == S::UserChannel ||
-             sh == S::UserAgentNotification || sh == S::UserTeammate ||
-             sh == S::UserAttachments);
+             sh == S::UserBashInput || sh == S::UserBashOutput || sh == S::UserLocalCommandOutput ||
+             sh == S::UserLocalJsxOutput || sh == S::UserImage || sh == S::UserPlan ||
+             sh == S::UserResourceUpdate || sh == S::UserMemoryInput || sh == S::UserChannel ||
+             sh == S::UserAgentNotification || sh == S::UserTeammate || sh == S::UserAttachments);
         if (is_real_user) {
             ++turn;
             continue;
@@ -199,7 +194,7 @@ auto passes_brief_filter(
         }
     }
 
-    if (turns_with_brief.empty()) return keep;   // no brief turns → keep all
+    if (turns_with_brief.empty()) return keep;  // no brief turns → keep all
 
     // Second pass: mark assistant text rows for dropping if their turn had Brief.
     for (std::size_t i = 0; i < N; ++i) {
@@ -218,10 +213,8 @@ auto passes_brief_filter(
 // and its corresponding tool_result share the same key and expand together.
 // For other rows, returns the uuid (or empty string if not available).
 // ---------------------------------------------------------------------------
-[[nodiscard]] std::string compute_expand_key(
-    MessageShape shape,
-    const MessageRowPayload& payload,
-    std::string_view uuid) {
+[[nodiscard]] std::string compute_expand_key(MessageShape shape, const MessageRowPayload& payload,
+                                             std::string_view uuid) {
     using S = MessageShape;
     namespace bd = brief_detail;
 
@@ -237,9 +230,7 @@ auto passes_brief_filter(
 
 /// Returns true if the row supports click-to-expand: tool results that are
 /// truncated, collapsed read/search groups, or advisor tool results.
-[[nodiscard]] bool is_row_clickable(
-    MessageShape shape,
-    const MessageRowPayload& payload) {
+[[nodiscard]] bool is_row_clickable(MessageShape shape, const MessageRowPayload& payload) {
     using S = MessageShape;
     namespace bd = brief_detail;
 
@@ -251,8 +242,7 @@ auto passes_brief_filter(
     // result with content is potentially expandable.
     if (shape == S::UserToolResult) {
         if (auto* opts = std::get_if<::loom::ui::messages::ToolResultOptions>(&payload)) {
-            return opts->is_truncated ||
-                   (opts->output && !opts->output->empty()) ||
+            return opts->is_truncated || (opts->output && !opts->output->empty()) ||
                    (opts->content_items && !opts->content_items->empty());
         }
     }
@@ -260,20 +250,19 @@ auto passes_brief_filter(
     // Tool uses: clickable if they have a result preview (means they have content
     // that could be expanded)
     if (shape == S::AssistantToolUse) {
-        if (auto* opts = std::get_if<::loom::ui::messages::tool_use_message::ToolUseRenderOptions>(&payload)) {
-            return opts->call.result_preview.has_value() &&
-                   !opts->call.result_preview->empty();
+        if (auto* opts = std::get_if<::loom::ui::messages::tool_use_message::ToolUseRenderOptions>(
+                &payload)) {
+            return opts->call.result_preview.has_value() && !opts->call.result_preview->empty();
         }
     }
 
     // Thinking blocks: clickable if they have content to expand.
     // Redacted thinking is excluded — the placeholder has nothing to reveal.
     if (shape == S::AssistantThinking) {
-        if (auto* opts = std::get_if<
-                ::loom::ui::messages::thinking_message::ThinkingMessageOptions>(
-                &payload)) {
-            return !opts->data.raw_text.empty() ||
-                   !opts->data.sections.empty();
+        if (auto* opts =
+                std::get_if<::loom::ui::messages::thinking_message::ThinkingMessageOptions>(
+                    &payload)) {
+            return !opts->data.raw_text.empty() || !opts->data.sections.empty();
         }
     }
 
@@ -283,13 +272,11 @@ auto passes_brief_filter(
 /// Returns true if the row at index `i` is currently "expanded" (user has
 /// toggled it open via Enter/Space).  Expanded rows render with verbose=true
 /// showing full content instead of truncated summaries.
-[[nodiscard]] bool is_row_expanded(
-    const MessagesListInput& input,
-    std::size_t row_idx) {
+[[nodiscard]] bool is_row_expanded(const MessagesListInput& input, std::size_t row_idx) {
     if (input.expanded_keys.empty()) return false;
     if (row_idx >= input.shapes.size() || row_idx >= input.rows.size()) return false;
-    std::string_view uuid = (row_idx < input.uuids.size())
-        ? std::string_view(input.uuids[row_idx]) : std::string_view{};
+    std::string_view uuid = (row_idx < input.uuids.size()) ? std::string_view(input.uuids[row_idx])
+                                                           : std::string_view{};
     auto key = compute_expand_key(input.shapes[row_idx], input.rows[row_idx], uuid);
     if (key.empty()) return false;
     return input.expanded_keys.count(key) > 0;
@@ -318,11 +305,9 @@ auto lowered(std::string s) -> std::string {
 //
 // Cache is keyed by row_idx (parallel to input.rows) — messages are
 // append-only and immutable, so a cached entry is always valid.
-[[nodiscard]] auto get_cached_lowered_search_text(
-    const MessagesListInput& input,
-    std::size_t row_idx,
-    MessageShape shape) -> std::string
-{
+[[nodiscard]] auto get_cached_lowered_search_text(const MessagesListInput& input,
+                                                  std::size_t row_idx, MessageShape shape)
+    -> std::string {
     if (row_idx >= input.rows.size()) return {};
 
     // Grow cache to match rows size on first access.
@@ -332,14 +317,14 @@ auto lowered(std::string s) -> std::string {
 
     auto& slot = input.lowered_search_cache[row_idx];
     if (slot.has_value()) {
-        return *slot;   // cache hit — zero alloc
+        return *slot;  // cache hit — zero alloc
     }
 
     // Cache miss: compute + store.  extract_search_text does the 2-tier
     // lookup (tool-owned extract_search_text preferred, payload_preview
     // fallback); we lower once here and cache the result.
-    std::string lowered_text = detail::lowered(
-        detail::extract_search_text(input.rows[row_idx], shape));
+    std::string lowered_text =
+        detail::lowered(detail::extract_search_text(input.rows[row_idx], shape));
     slot = lowered_text;
     return lowered_text;
 }
@@ -348,83 +333,75 @@ auto lowered(std::string s) -> std::string {
 /// (system / tool_use / tool_result / thinking / compacted).
 auto shape_category(MessageShape s) -> std::string_view {
     switch (s) {
-        // system family
-        case MessageShape::SystemText:
-        case MessageShape::SystemRateLimit:
-        case MessageShape::SystemPlanApproval:
-        case MessageShape::SystemHookProgress:
-        case MessageShape::SystemShutdown:
-        case MessageShape::SystemCompactBoundary:
-        case MessageShape::SystemAdvisor:
-        case MessageShape::SystemTaskAssignment:
-        case MessageShape::SystemCollapsedContent:
-        case MessageShape::SystemAPIError:
-            return "system";
-        // tool-in (assistant issuing a tool_use)
-        case MessageShape::AssistantToolUse:
-        case MessageShape::AssistantGroupedTools:
-            return "tool_in";
-        // tool-out (user returning tool_result, bash, local cmd)
-        case MessageShape::UserToolResult:
-        case MessageShape::UserBashInput:
-        case MessageShape::UserBashOutput:
-        case MessageShape::UserLocalCommandOutput:
-            return "tool_out";
-        // thinking
-        case MessageShape::AssistantThinking:
-        case MessageShape::AssistantRedactedThinking:
-            return "thinking";
-        default:
-            return "other";
+    // system family
+    case MessageShape::SystemText:
+    case MessageShape::SystemRateLimit:
+    case MessageShape::SystemPlanApproval:
+    case MessageShape::SystemHookProgress:
+    case MessageShape::SystemShutdown:
+    case MessageShape::SystemCompactBoundary:
+    case MessageShape::SystemAdvisor:
+    case MessageShape::SystemTaskAssignment:
+    case MessageShape::SystemCollapsedContent:
+    case MessageShape::SystemAPIError:
+        return "system";
+    // tool-in (assistant issuing a tool_use)
+    case MessageShape::AssistantToolUse:
+    case MessageShape::AssistantGroupedTools:
+        return "tool_in";
+    // tool-out (user returning tool_result, bash, local cmd)
+    case MessageShape::UserToolResult:
+    case MessageShape::UserBashInput:
+    case MessageShape::UserBashOutput:
+    case MessageShape::UserLocalCommandOutput:
+        return "tool_out";
+    // thinking
+    case MessageShape::AssistantThinking:
+    case MessageShape::AssistantRedactedThinking:
+        return "thinking";
+    default:
+        return "other";
     }
 }
 
 auto passes_filters(MessageShape s, const Filters& f) -> bool {
     auto cat = shape_category(s);
-    if (cat == "system"   && !f.show_system)   return false;
-    if (cat == "tool_in"  && !f.show_tool_in)  return false;
+    if (cat == "system" && !f.show_system) return false;
+    if (cat == "tool_in" && !f.show_tool_in) return false;
     if (cat == "tool_out" && !f.show_tool_out) return false;
     if (cat == "thinking" && !f.show_thinking) return false;
     return true;
 }
 
-} // namespace detail
+}  // namespace detail
 
 // Shapes that can participate in a compressed chain: thinking blocks,
 // tool calls, tool results, grouped tools, bash I/O.  Everything else
 // (user messages, assistant text, system rows, update tools) stops the chain.
 [[nodiscard]] auto is_chain_compressible(MessageShape sh) -> bool {
-    return sh == MessageShape::AssistantThinking ||
-           sh == MessageShape::AssistantRedactedThinking ||
-           sh == MessageShape::AssistantToolUse ||
-           sh == MessageShape::AssistantGroupedTools ||
-           sh == MessageShape::UserToolResult ||
-           sh == MessageShape::UserBashInput ||
+    return sh == MessageShape::AssistantThinking || sh == MessageShape::AssistantRedactedThinking ||
+           sh == MessageShape::AssistantToolUse || sh == MessageShape::AssistantGroupedTools ||
+           sh == MessageShape::UserToolResult || sh == MessageShape::UserBashInput ||
            sh == MessageShape::UserBashOutput;
 }
 
 // Returns true if the row is an update tool (Edit/Write) — either the
 // tool_use itself or its tool_result.  Update tools are never compressed;
 // they stop the chain and are shown individually.
-[[nodiscard]] auto is_update_tool_row(
-    MessageShape sh, const MessageRowPayload& payload) -> bool {
+[[nodiscard]] auto is_update_tool_row(MessageShape sh, const MessageRowPayload& payload) -> bool {
     if (sh == MessageShape::AssistantToolUse) {
-        return tool_use_message::is_file_edit_tool(
-            brief_detail::extract_tool_name(payload));
+        return tool_use_message::is_file_edit_tool(brief_detail::extract_tool_name(payload));
     }
     if (sh == MessageShape::AssistantGroupedTools) {
-        if (auto* grp = std::get_if<
-                tool_use_message::GroupedToolsOptions>(&payload)) {
+        if (auto* grp = std::get_if<tool_use_message::GroupedToolsOptions>(&payload)) {
             for (const auto& call : grp->calls) {
-                if (tool_use_message::is_file_edit_tool(call.tool_name))
-                    return true;
+                if (tool_use_message::is_file_edit_tool(call.tool_name)) return true;
             }
         }
         return false;
     }
     if (sh == MessageShape::UserToolResult) {
-        return tool_use_message::is_file_edit_tool(
-            brief_detail::extract_tool_name(payload));
+        return tool_use_message::is_file_edit_tool(brief_detail::extract_tool_name(payload));
     }
     return false;
 }
@@ -440,8 +417,7 @@ auto passes_filters(MessageShape s, const Filters& f) -> bool {
     using namespace tool_use_message;
     if (const auto* thinking = std::get_if<thinking_message::ThinkingMessageOptions>(&row))
         return thinking->data.thinking_start_time;
-    if (const auto* tool = std::get_if<ToolUseRenderOptions>(&row))
-        return tool->call.start_time;
+    if (const auto* tool = std::get_if<ToolUseRenderOptions>(&row)) return tool->call.start_time;
     std::chrono::steady_clock::time_point earliest{};
     if (const auto* group = std::get_if<GroupedToolsOptions>(&row)) {
         for (const auto& call : group->calls) {
@@ -472,8 +448,8 @@ auto passes_filters(MessageShape s, const Filters& f) -> bool {
     for (std::size_t i = 0; i < count;) {
         if (!is_chain_row(input.shapes[i], input.rows[i])) {
             const auto text = detail::payload_preview(input.rows[i]);
-            const auto base = std::to_string(static_cast<int>(input.shapes[i])) +
-                ":" + std::to_string(text.size()) + ":" + text;
+            const auto base = std::to_string(static_cast<int>(input.shapes[i])) + ":" +
+                              std::to_string(text.size()) + ":" + text;
             boundary = base + ":" + std::to_string(occurrences[base]++);
             ++i;
             continue;
@@ -508,18 +484,19 @@ auto passes_filters(MessageShape s, const Filters& f) -> bool {
             } else if (earliest != decltype(earliest){} && earliest < timing.started_at) {
                 timing.started_at = earliest;
             }
-            timing.elapsed = std::max(*timing.elapsed,
+            timing.elapsed = std::max(
+                *timing.elapsed,
                 std::chrono::duration_cast<std::chrono::milliseconds>(now - timing.started_at));
             if (!live) timing.finished = true;
         }
-        for (auto r = begin; r < i; ++r) timing_for_row[r] = &timing;
+        for (auto r = begin; r < i; ++r)
+            timing_for_row[r] = &timing;
     }
     return timing_for_row;
 }
 
 // Keep only public display arguments; unknown tools never spill arbitrary JSON.
-[[nodiscard]] std::string current_tool_description(
-    const tool_use_message::ToolUseCallData& call) {
+[[nodiscard]] std::string current_tool_description(const tool_use_message::ToolUseCallData& call) {
     const auto document = loom::utils::json::parse(call.raw_parameters);
     const auto field = [&](std::string_view name) {
         if (!document) return std::string{};
@@ -527,7 +504,8 @@ auto passes_filters(MessageShape s, const Filters& f) -> bool {
         return value.is_str() ? std::string(value.as_str()) : std::string{};
     };
     std::string target;
-    if (call.tool_name == "Bash") target = field("command");
+    if (call.tool_name == "Bash")
+        target = field("command");
     else if (call.tool_name == "Read") {
         target = field("file_path");
         if (target.empty()) target = field("path");
@@ -535,25 +513,32 @@ auto passes_filters(MessageShape s, const Filters& f) -> bool {
         target = field("pattern");
         const auto path = field("path");
         if (!path.empty()) target += " in " + path;
-    } else if (call.tool_name == "WebSearch") target = field("query");
-    else if (call.tool_name == "WebFetch") target = field("url");
+    } else if (call.tool_name == "WebSearch")
+        target = field("query");
+    else if (call.tool_name == "WebFetch")
+        target = field("url");
     return call.tool_name + (target.empty() ? "" : " " + target);
 }
 
-[[nodiscard]] std::string current_chain_activity(
-    const MessagesListInput& input, std::size_t begin, std::size_t end,
-    const std::vector<bool>& row_passes, const std::vector<bool>& consumed_by_group) {
+[[nodiscard]] std::string current_chain_activity(const MessagesListInput& input, std::size_t begin,
+                                                 std::size_t end,
+                                                 const std::vector<bool>& row_passes,
+                                                 const std::vector<bool>& consumed_by_group) {
     using namespace tool_use_message;
     std::vector<const ToolUseCallData*> running, pending;
     const auto add = [&](const ToolUseCallData& call) {
-        if (call.status == ToolStatus::Running) running.push_back(&call);
-        else if (call.status == ToolStatus::Pending) pending.push_back(&call);
+        if (call.status == ToolStatus::Running)
+            running.push_back(&call);
+        else if (call.status == ToolStatus::Pending)
+            pending.push_back(&call);
     };
     for (auto i = begin; i < end; ++i) {
         if (!row_passes[i] || consumed_by_group[i]) continue;
-        if (const auto* tool = std::get_if<ToolUseRenderOptions>(&input.rows[i])) add(tool->call);
+        if (const auto* tool = std::get_if<ToolUseRenderOptions>(&input.rows[i]))
+            add(tool->call);
         else if (const auto* group = std::get_if<GroupedToolsOptions>(&input.rows[i]))
-            for (const auto& call : group->calls) add(call);
+            for (const auto& call : group->calls)
+                add(call);
     }
     const auto& active = running.empty() ? pending : running;
     if (active.empty()) return "Waiting for model";
@@ -567,26 +552,25 @@ auto passes_filters(MessageShape s, const Filters& f) -> bool {
 }
 
 // Add one tool call to the breakdown vector (increment count or append).
-void add_tool_to_breakdown(
-    std::vector<std::pair<std::string, std::size_t>>& breakdown,
-    std::string_view name) {
+void add_tool_to_breakdown(std::vector<std::pair<std::string, std::size_t>>& breakdown,
+                           std::string_view name) {
     if (name.empty()) return;
     for (auto& [n, c] : breakdown) {
-        if (n == name) { ++c; return; }
+        if (n == name) {
+            ++c;
+            return;
+        }
     }
     breakdown.emplace_back(std::string(name), 1);
 }
 
 // Count tool calls in a row and add them to the breakdown.
-void count_row_tools(
-    MessageShape sh, const MessageRowPayload& payload,
-    std::vector<std::pair<std::string, std::size_t>>& breakdown) {
+void count_row_tools(MessageShape sh, const MessageRowPayload& payload,
+                     std::vector<std::pair<std::string, std::size_t>>& breakdown) {
     if (sh == MessageShape::AssistantToolUse) {
-        add_tool_to_breakdown(breakdown,
-            brief_detail::extract_tool_name(payload));
+        add_tool_to_breakdown(breakdown, brief_detail::extract_tool_name(payload));
     } else if (sh == MessageShape::AssistantGroupedTools) {
-        if (auto* grp = std::get_if<
-                tool_use_message::GroupedToolsOptions>(&payload)) {
+        if (auto* grp = std::get_if<tool_use_message::GroupedToolsOptions>(&payload)) {
             for (const auto& call : grp->calls) {
                 add_tool_to_breakdown(breakdown, call.tool_name);
             }
@@ -611,7 +595,7 @@ auto build_visible_rows(const MessagesListInput& input) -> std::vector<VisibleRo
     const auto chain_timings = update_chain_timings(input);
     // ---- Step 0 : pre-compute lowered search needle (empty = skip search)
     const std::string needle = detail::lowered(input.search_query);
-    const bool do_search     = !needle.empty();
+    const bool do_search = !needle.empty();
 
     // ---- Step 0b : pre-compute dropTextInBriefTurns mask for default mode.
     //              Only needed when NOT in transcript mode AND NOT in brief mode.
@@ -631,15 +615,14 @@ auto build_visible_rows(const MessagesListInput& input) -> std::vector<VisibleRo
     //                            (dropTextInBriefTurns), keep everything else.
     std::vector<bool> row_passes(N, false);
     for (std::size_t i = 0; i < N; ++i) {
-        if (i >= input.shapes.size()) break;   // malformed input → safe stop
+        if (i >= input.shapes.size()) break;  // malformed input → safe stop
         if (!detail::passes_filters(input.shapes[i], input.filters)) continue;
 
         // Tier 1: transcript mode — skip brief/dropText filters entirely.
         if (!input.is_transcript_mode) {
             if (input.is_brief_mode) {
                 // Tier 2: brief-only — filterForBriefTool.
-                if (i < input.rows.size() &&
-                    !passes_brief_filter(input.shapes[i], input.rows[i])) {
+                if (i < input.rows.size() && !passes_brief_filter(input.shapes[i], input.rows[i])) {
                     continue;
                 }
             } else if (apply_drop_text && i < drop_text_keep_mask.size()) {
@@ -653,8 +636,8 @@ auto build_visible_rows(const MessagesListInput& input) -> std::vector<VisibleRo
             // first call computes + caches lowered rich text; subsequent calls
             // (visible_rows_to_virtual scroll_search) hit the cache with zero
             // alloc.
-            const std::string hay = detail::get_cached_lowered_search_text(
-                input, i, input.shapes[i]);
+            const std::string hay =
+                detail::get_cached_lowered_search_text(input, i, input.shapes[i]);
             if (hay.find(needle) == std::string::npos) continue;
         }
         row_passes[i] = true;
@@ -665,7 +648,11 @@ auto build_visible_rows(const MessagesListInput& input) -> std::vector<VisibleRo
     // AND every row in the range is visible).  A group whose rows were all
     // filtered out is dropped (produces no visible row at all).
     std::vector<bool> consumed_by_group(N, false);
-    struct GroupInfo { std::size_t gidx, start, end, tool_turns, add, del, visible_rows; };
+
+    struct GroupInfo {
+        std::size_t gidx, start, end, tool_turns, add, del, visible_rows;
+    };
+
     std::vector<GroupInfo> active_groups;
     active_groups.reserve(input.compact_boundary_groups.size());
 
@@ -701,7 +688,8 @@ auto build_visible_rows(const MessagesListInput& input) -> std::vector<VisibleRo
                         auto count_needle = [&](std::string_view pat) -> std::size_t {
                             std::size_t c = 0, pos = 0;
                             while ((pos = t.find(pat, pos)) != std::string::npos) {
-                                ++c; pos += pat.size();
+                                ++c;
+                                pos += pat.size();
                             }
                             return c;
                         };
@@ -710,10 +698,11 @@ auto build_visible_rows(const MessagesListInput& input) -> std::vector<VisibleRo
                     }
                 }
             }
-            if (vcount == 0) continue;   // whole group filtered → drop it
+            if (vcount == 0) continue;  // whole group filtered → drop it
 
-            active_groups.push_back({ gi, s, e, tool_turns, add, del, vcount });
-            for (std::size_t r = s; r < e; ++r) consumed_by_group[r] = true;
+            active_groups.push_back({gi, s, e, tool_turns, add, del, vcount});
+            for (std::size_t r = s; r < e; ++r)
+                consumed_by_group[r] = true;
         }
     }
 
@@ -723,10 +712,14 @@ auto build_visible_rows(const MessagesListInput& input) -> std::vector<VisibleRo
     if (!input.is_transcript_mode && !do_search && !input.disable_chain_compression) {
         for (std::size_t i = 0; i < N;) {
             const auto* timing = chain_timings[i];
-            if (!timing || !row_passes[i] || consumed_by_group[i]) { ++i; continue; }
+            if (!timing || !row_passes[i] || consumed_by_group[i]) {
+                ++i;
+                continue;
+            }
             const auto begin = i;
             auto end = i + 1;
-            while (end < N && chain_timings[end] == timing) ++end;
+            while (end < N && chain_timings[end] == timing)
+                ++end;
             VisibleRow chain;
             chain.kind = VisibleRow::Kind::CompressedChain;
             chain.chain_uuid = timing->disclosure_id;
@@ -734,13 +727,15 @@ auto build_visible_rows(const MessagesListInput& input) -> std::vector<VisibleRo
             chain.chain_emphasize_work = input.emphasize_work;
             chain.chain_is_live = input.query_running && end == N && !timing->finished;
             chain.chain_is_expanded = !chain.chain_uuid.empty() &&
-                input.expanded_keys.contains("chain:" + chain.chain_uuid);
+                                      input.expanded_keys.contains("chain:" + chain.chain_uuid);
             for (auto r = begin; r < end; ++r) {
                 if (!row_passes[r] || consumed_by_group[r]) continue;
                 const auto shape = input.shapes[r];
                 if (shape == MessageShape::AssistantThinking ||
-                    shape == MessageShape::AssistantRedactedThinking) ++chain.group_count;
-                else chain.chain_has_tool_activity = true;
+                    shape == MessageShape::AssistantRedactedThinking)
+                    ++chain.group_count;
+                else
+                    chain.chain_has_tool_activity = true;
                 if (shape == MessageShape::AssistantToolUse ||
                     shape == MessageShape::AssistantGroupedTools) {
                     ++chain.tool_turns;
@@ -749,11 +744,12 @@ auto build_visible_rows(const MessagesListInput& input) -> std::vector<VisibleRo
                 consumed_by_chain[r] = !chain.chain_is_expanded;
             }
             if (chain.chain_is_live && chain.chain_has_tool_activity)
-                chain.chain_current_activity = current_chain_activity(
-                    input, begin, end, row_passes, consumed_by_group);
+                chain.chain_current_activity =
+                    current_chain_activity(input, begin, end, row_passes, consumed_by_group);
             if (chain.chain_is_live && chain.chain_elapsed) {
-                const auto next_second = std::chrono::duration_cast<std::chrono::seconds>(
-                    *chain.chain_elapsed) + std::chrono::seconds(1);
+                const auto next_second =
+                    std::chrono::duration_cast<std::chrono::seconds>(*chain.chain_elapsed) +
+                    std::chrono::seconds(1);
                 input.chain_update_due = timing->started_at + next_second;
             }
             start_to_chain[begin] = std::move(chain);
@@ -779,12 +775,12 @@ auto build_visible_rows(const MessagesListInput& input) -> std::vector<VisibleRo
         if (start_to_group[i].has_value()) {
             const auto& g = *start_to_group[i];
             out.push_back(VisibleRow{
-                .kind        = VisibleRow::Kind::CompactGroup,
-                .group_idx   = g.gidx,
+                .kind = VisibleRow::Kind::CompactGroup,
+                .group_idx = g.gidx,
                 .group_count = g.visible_rows,
-                .tool_turns  = g.tool_turns,
-                .additions   = g.add,
-                .deletions   = g.del,
+                .tool_turns = g.tool_turns,
+                .additions = g.add,
+                .deletions = g.del,
             });
             continue;
         }
@@ -802,7 +798,7 @@ auto build_visible_rows(const MessagesListInput& input) -> std::vector<VisibleRo
         // 3) regular payload row
         if (!row_passes[i]) continue;
         out.push_back(VisibleRow{
-            .kind    = VisibleRow::Kind::Payload,
+            .kind = VisibleRow::Kind::Payload,
             .row_idx = i,
         });
     }
@@ -812,15 +808,14 @@ auto build_visible_rows(const MessagesListInput& input) -> std::vector<VisibleRo
     //              visible rows to last kMaxMessagesInTranscriptMode (30).
     //              Prepend a TranscriptCapDivider showing how many were hidden.
     if (input.is_transcript_mode && !input.show_all_in_transcript &&
-        out.size() > kMaxMessagesInTranscriptMode)
-    {
+        out.size() > kMaxMessagesInTranscriptMode) {
         const std::size_t hidden = out.size() - kMaxMessagesInTranscriptMode;
         std::vector<VisibleRow> capped;
         capped.reserve(kMaxMessagesInTranscriptMode + 1);
         capped.push_back(VisibleRow{
-            .kind         = VisibleRow::Kind::TranscriptCapDivider,
+            .kind = VisibleRow::Kind::TranscriptCapDivider,
             .hidden_count = hidden,
-            .chain_uuid   = {},
+            .chain_uuid = {},
         });
         // Copy last kMax rows from the full output.
         const auto start = out.end() - static_cast<std::ptrdiff_t>(kMaxMessagesInTranscriptMode);
@@ -831,4 +826,4 @@ auto build_visible_rows(const MessagesListInput& input) -> std::vector<VisibleRo
     return out;
 }
 
-} // namespace loom::ui::messages_list
+}  // namespace loom::ui::messages_list

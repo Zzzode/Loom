@@ -1,7 +1,7 @@
 module;
-#include <cstdlib>
 #include <cstddef>
 #include <cstdint>
+#include <cstdlib>
 
 export module loom.bridge.work_secret;
 
@@ -29,10 +29,9 @@ struct DecodedWorkSecret {
     std::string raw_json;
 };
 
-[[nodiscard]] inline std::optional<std::string> work_secret_string_field(
-    loom::utils::json::JsonVal root,
-    std::initializer_list<std::string_view> keys
-) {
+[[nodiscard]] inline std::optional<std::string>
+work_secret_string_field(loom::utils::json::JsonVal root,
+                         std::initializer_list<std::string_view> keys) {
     if (!root.valid() || !root.is_obj()) return std::nullopt;
     for (auto key : keys) {
         auto value = root.get(key);
@@ -41,10 +40,9 @@ struct DecodedWorkSecret {
     return std::nullopt;
 }
 
-[[nodiscard]] inline std::optional<bool> work_secret_bool_field(
-    loom::utils::json::JsonVal root,
-    std::initializer_list<std::string_view> keys
-) {
+[[nodiscard]] inline std::optional<bool>
+work_secret_bool_field(loom::utils::json::JsonVal root,
+                       std::initializer_list<std::string_view> keys) {
     if (!root.valid() || !root.is_obj()) return std::nullopt;
     for (auto key : keys) {
         auto value = root.get(key);
@@ -53,10 +51,9 @@ struct DecodedWorkSecret {
     return std::nullopt;
 }
 
-[[nodiscard]] inline std::optional<std::string> work_secret_json_field(
-    loom::utils::json::JsonVal root,
-    std::initializer_list<std::string_view> keys
-) {
+[[nodiscard]] inline std::optional<std::string>
+work_secret_json_field(loom::utils::json::JsonVal root,
+                       std::initializer_list<std::string_view> keys) {
     if (!root.valid() || !root.is_obj()) return std::nullopt;
     for (auto key : keys) {
         auto value = root.get(key);
@@ -72,9 +69,8 @@ struct DecodedWorkSecret {
     return {};
 }
 
-[[nodiscard]] inline std::unordered_map<std::string, std::string> work_secret_env_vars(
-    loom::utils::json::JsonVal root
-) {
+[[nodiscard]] inline std::unordered_map<std::string, std::string>
+work_secret_env_vars(loom::utils::json::JsonVal root) {
     std::unordered_map<std::string, std::string> env;
     if (!root.valid() || !root.is_obj()) return env;
 
@@ -125,7 +121,8 @@ std::expected<DecodedWorkSecret, std::string> decode_work_secret(std::string_vie
     if (!version.is_num() || version.as_int() != 1) {
         return std::unexpected("Unsupported work secret version");
     }
-    auto session_ingress_token = work_secret_string_field(root, {"session_ingress_token", "sessionIngressToken"});
+    auto session_ingress_token =
+        work_secret_string_field(root, {"session_ingress_token", "sessionIngressToken"});
     if (!session_ingress_token || session_ingress_token->empty()) {
         return std::unexpected("Invalid work secret: missing or empty session_ingress_token");
     }
@@ -139,15 +136,20 @@ std::expected<DecodedWorkSecret, std::string> decode_work_secret(std::string_vie
         .session_ingress_token = *session_ingress_token,
         .api_base_url = *api_base_url,
         .use_code_sessions = std::nullopt,
-        .code_session_mode = work_secret_string_field(root, {"code_session_mode", "codeSessionMode"}),
+        .code_session_mode =
+            work_secret_string_field(root, {"code_session_mode", "codeSessionMode"}),
         .sources_json = work_secret_sources(root),
-        .auth_json = work_secret_json_field(root, {"auth", "auth_records", "authRecords", "credentials"}),
-        .mcp_config_json = work_secret_json_field(root, {"mcp", "mcp_config", "mcpConfig", "mcp_servers", "mcpServers"}),
-        .environment_json = work_secret_json_field(root, {"environment_variables", "environmentVariables", "env", "environment"}),
+        .auth_json =
+            work_secret_json_field(root, {"auth", "auth_records", "authRecords", "credentials"}),
+        .mcp_config_json = work_secret_json_field(
+            root, {"mcp", "mcp_config", "mcpConfig", "mcp_servers", "mcpServers"}),
+        .environment_json = work_secret_json_field(
+            root, {"environment_variables", "environmentVariables", "env", "environment"}),
         .environment_variables = work_secret_env_vars(root),
         .raw_json = root.to_string(),
     };
-    if (auto use_code_sessions = work_secret_bool_field(root, {"use_code_sessions", "useCodeSessions"})) {
+    if (auto use_code_sessions =
+            work_secret_bool_field(root, {"use_code_sessions", "useCodeSessions"})) {
         result.use_code_sessions = *use_code_sessions;
     }
     return result;
@@ -189,8 +191,8 @@ std::expected<void, std::string> store_work_secret(std::string_view secret) {
 
     // Set restrictive permissions (owner read/write only)
     std::error_code ec;
-    std::filesystem::permissions(secret_path,
-        std::filesystem::perms::owner_read | std::filesystem::perms::owner_write,
+    std::filesystem::permissions(
+        secret_path, std::filesystem::perms::owner_read | std::filesystem::perms::owner_write,
         std::filesystem::perm_options::replace, ec);
 
     if (ec) {
@@ -232,8 +234,7 @@ bool verify_work_secret(std::string_view presented, std::string_view stored) {
     // Constant-time comparison
     volatile unsigned char result = 0;
     for (size_t i = 0; i < presented.size(); ++i) {
-        result |= static_cast<unsigned char>(presented[i]) ^
-                  static_cast<unsigned char>(stored[i]);
+        result |= static_cast<unsigned char>(presented[i]) ^ static_cast<unsigned char>(stored[i]);
     }
 
     return result == 0;
@@ -248,4 +249,4 @@ inline std::string get_secret_path() {
     return "/tmp/loom-bridge-work-secret";
 }
 
-} // namespace loom::bridge
+}  // namespace loom::bridge

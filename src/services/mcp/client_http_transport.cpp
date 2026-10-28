@@ -4,14 +4,15 @@
 // nor the other transport units.
 module;
 
-#include <cctype>
-#include <cstdlib>
-#include <cstdint>
 #include <netdb.h>
 #include <sys/socket.h>
 #include <sys/time.h>
 #include <sys/types.h>
 #include <unistd.h>
+
+#include <cctype>
+#include <cstdint>
+#include <cstdlib>
 
 module loom.services.mcp.client;
 
@@ -22,8 +23,8 @@ import loom.net.http.http;
 
 namespace loom::services::mcp {
 
-StreamableHttpTransport::StreamableHttpTransport(
-    std::string url, std::map<std::string, std::string> headers)
+StreamableHttpTransport::StreamableHttpTransport(std::string url,
+                                                 std::map<std::string, std::string> headers)
     : url_(std::move(url))
     , headers_(std::move(headers)) {}
 
@@ -59,9 +60,8 @@ McpResult<void> StreamableHttpTransport::send(std::string_view message) {
 McpResult<std::string> StreamableHttpTransport::receive() {
     using namespace std::chrono_literals;
     std::unique_lock lock(recv_mutex_);
-    if (recv_cv_.wait_for(lock, 5s, [this] {
-        return !receive_queue_.empty() || !connected_.load();
-    })) {
+    if (recv_cv_.wait_for(lock, 5s,
+                          [this] { return !receive_queue_.empty() || !connected_.load(); })) {
         if (receive_queue_.empty()) {
             return std::unexpected(McpClientError::NotConnected);
         }
@@ -102,7 +102,8 @@ StreamableHttpTransport::parse_url_parts(std::string_view sv) {
     const auto colon = host_part.find(':');
     if (colon != std::string_view::npos) {
         parts.host = std::string(host_part.substr(0, colon));
-        parts.port = static_cast<uint16_t>(std::atoi(std::string(host_part.substr(colon + 1)).c_str()));
+        parts.port =
+            static_cast<uint16_t>(std::atoi(std::string(host_part.substr(colon + 1)).c_str()));
     } else {
         parts.host = std::string(host_part);
     }
@@ -111,9 +112,8 @@ StreamableHttpTransport::parse_url_parts(std::string_view sv) {
 }
 
 std::string StreamableHttpTransport::lower_ascii(std::string value) {
-    std::ranges::transform(value, value.begin(), [](unsigned char ch) {
-        return static_cast<char>(std::tolower(ch));
-    });
+    std::ranges::transform(value, value.begin(),
+                           [](unsigned char ch) { return static_cast<char>(std::tolower(ch)); });
     return value;
 }
 
@@ -149,7 +149,8 @@ StreamableHttpTransport::send_post_request(const std::string& body) {
         host += ":" + std::to_string(parts_.port);
     }
 
-    std::string req = "POST " + (parts_.path.empty() ? std::string{"/"} : parts_.path) + " HTTP/1.1\r\n";
+    std::string req =
+        "POST " + (parts_.path.empty() ? std::string{"/"} : parts_.path) + " HTTP/1.1\r\n";
     req += "Host: " + host + "\r\n";
     req += "Content-Type: application/json\r\n";
     req += "Accept: application/json, text/event-stream\r\n";
@@ -190,13 +191,13 @@ StreamableHttpTransport::send_post_request_with_http_client(const std::string& b
     auto response = client.post(url_, body, request_headers);
     if (!response) {
         switch (response.error().code) {
-            case loom::utils::HttpError::timeout:
-                return std::unexpected(McpClientError::Timeout);
-            case loom::utils::HttpError::ssl_error:
-            case loom::utils::HttpError::dns_error:
-            case loom::utils::HttpError::connection_failed:
-            case loom::utils::HttpError::cancelled:
-                return std::unexpected(McpClientError::ConnectionFailed);
+        case loom::utils::HttpError::timeout:
+            return std::unexpected(McpClientError::Timeout);
+        case loom::utils::HttpError::ssl_error:
+        case loom::utils::HttpError::dns_error:
+        case loom::utils::HttpError::connection_failed:
+        case loom::utils::HttpError::cancelled:
+            return std::unexpected(McpClientError::ConnectionFailed);
         }
         return std::unexpected(McpClientError::ConnectionFailed);
     }
@@ -249,10 +250,12 @@ StreamableHttpTransport::read_http_response(int fd) {
     std::size_t line_start = status_end == std::string::npos ? header_block.size() : status_end + 2;
     while (line_start < header_block.size()) {
         const auto line_end = header_block.find("\r\n", line_start);
-        const auto line = header_block.substr(line_start, line_end == std::string::npos ? std::string::npos : line_end - line_start);
+        const auto line = header_block.substr(
+            line_start, line_end == std::string::npos ? std::string::npos : line_end - line_start);
         const auto colon = line.find(':');
         if (colon != std::string::npos) {
-            response.headers[lower_ascii(line.substr(0, colon))] = trim(std::string_view(line).substr(colon + 1));
+            response.headers[lower_ascii(line.substr(0, colon))] =
+                trim(std::string_view(line).substr(colon + 1));
         }
         if (line_end == std::string::npos) break;
         line_start = line_end + 2;
@@ -345,12 +348,18 @@ void StreamableHttpTransport::parse_sse_field(const std::string& line, std::stri
                                               std::string& data, std::string& id) {
     if (line.empty() || line[0] == ':') return;
     auto col = line.find(':');
-    std::string_view field = (col != std::string::npos) ? std::string_view(line).substr(0, col) : std::string_view(line);
-    std::string_view val = (col != std::string::npos) ? std::string_view(line).substr(col + 1) : std::string_view{};
+    std::string_view field =
+        (col != std::string::npos) ? std::string_view(line).substr(0, col) : std::string_view(line);
+    std::string_view val =
+        (col != std::string::npos) ? std::string_view(line).substr(col + 1) : std::string_view{};
     if (!val.empty() && val[0] == ' ') val.remove_prefix(1);
-    if (field == "event") event = std::string(val);
-    else if (field == "data") { data += std::string(val); data += '\n'; }
-    else if (field == "id") id = std::string(val);
+    if (field == "event")
+        event = std::string(val);
+    else if (field == "data") {
+        data += std::string(val);
+        data += '\n';
+    } else if (field == "id")
+        id = std::string(val);
 }
 
 void StreamableHttpTransport::enqueue_message(std::string message) {
@@ -361,4 +370,4 @@ void StreamableHttpTransport::enqueue_message(std::string message) {
     recv_cv_.notify_one();
 }
 
-} // namespace loom::services::mcp
+}  // namespace loom::services::mcp

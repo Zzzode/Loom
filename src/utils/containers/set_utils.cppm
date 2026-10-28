@@ -9,8 +9,7 @@ export namespace loom::utils {
 template <typename T>
 [[nodiscard]] std::set<T> set_union(const std::set<T>& a, const std::set<T>& b) {
     std::set<T> result;
-    std::set_union(a.begin(), a.end(), b.begin(), b.end(),
-                   std::inserter(result, result.begin()));
+    std::set_union(a.begin(), a.end(), b.begin(), b.end(), std::inserter(result, result.begin()));
     return result;
 }
 
@@ -39,8 +38,7 @@ template <typename T>
 }
 
 // intersects(a, b): true when the sets share at least one element.
-template <typename T>
-[[nodiscard]] bool intersects(const std::set<T>& a, const std::set<T>& b) {
+template <typename T> [[nodiscard]] bool intersects(const std::set<T>& a, const std::set<T>& b) {
     if (a.empty() || b.empty()) return false;
     const auto& smaller = a.size() <= b.size() ? a : b;
     const auto& larger = a.size() <= b.size() ? b : a;
@@ -51,8 +49,7 @@ template <typename T>
 }
 
 // every(a, b): true when every item in a is present in b.
-template <typename T>
-[[nodiscard]] bool every(const std::set<T>& a, const std::set<T>& b) {
+template <typename T> [[nodiscard]] bool every(const std::set<T>& a, const std::set<T>& b) {
     for (const auto& item : a) {
         if (!b.contains(item)) return false;
     }
@@ -74,4 +71,4 @@ template <typename T>
     return result;
 }
 
-} // namespace loom::utils
+}  // namespace loom::utils

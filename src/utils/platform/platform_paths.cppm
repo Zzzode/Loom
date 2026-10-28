@@ -36,4 +36,4 @@ inline bool is_wsl_environment() {
     return false;
 }
 
-} // namespace loom::utils::platform_paths
+}  // namespace loom::utils::platform_paths

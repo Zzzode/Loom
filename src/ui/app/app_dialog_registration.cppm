@@ -17,20 +17,14 @@ import loom.ui.dialogs.system;
 
 export namespace loom::ui::app_dialogs {
 
-void register_default_dialog_renderers(
-    loom::ui::dialogs::system::DialogRendererRegistry& registry);
-void register_modal_dialog_renderers(
-    loom::ui::dialogs::system::DialogRendererRegistry& registry);
-void register_bottom_dialog_renderers(
-    loom::ui::dialogs::system::DialogRendererRegistry& registry);
-void register_all_dialog_renderers(
-    loom::ui::dialogs::system::DialogRendererRegistry& registry);
-void register_hooks_dialog_renderer(
-    loom::ui::dialogs::system::DialogRendererRegistry& registry);
+void register_default_dialog_renderers(loom::ui::dialogs::system::DialogRendererRegistry& registry);
+void register_modal_dialog_renderers(loom::ui::dialogs::system::DialogRendererRegistry& registry);
+void register_bottom_dialog_renderers(loom::ui::dialogs::system::DialogRendererRegistry& registry);
+void register_all_dialog_renderers(loom::ui::dialogs::system::DialogRendererRegistry& registry);
+void register_hooks_dialog_renderer(loom::ui::dialogs::system::DialogRendererRegistry& registry);
 void register_agent_instances_dialog_renderer(
     loom::ui::dialogs::system::DialogRendererRegistry& registry);
-void register_teams_dialog_renderer(
-    loom::ui::dialogs::system::DialogRendererRegistry& registry);
+void register_teams_dialog_renderer(loom::ui::dialogs::system::DialogRendererRegistry& registry);
 
 /// RFC 0002 F2 row 6: register the feature-dialog factories (agent wizard,
 /// plugin install wizard, plugin trust dialog) into the

@@ -29,24 +29,24 @@ enum class ConfigScope {
 
 // Single MCP server configuration entry
 struct ServerConfig {
-    std::string name;                // Unique server identifier
+    std::string name;  // Unique server identifier
     TransportType transport = TransportType::Stdio;
 
     // Stdio transport settings
-    std::string command;             // Executable path or command
-    std::vector<std::string> args;   // Command arguments
-    std::map<std::string, std::string> env; // Environment variables
+    std::string command;                     // Executable path or command
+    std::vector<std::string> args;           // Command arguments
+    std::map<std::string, std::string> env;  // Environment variables
 
     // SSE/HTTP transport settings
-    std::string url;                 // Server URL for SSE/HTTP
-    std::map<std::string, std::string> headers; // Custom HTTP headers
-    std::string headers_helper;      // Optional command that prints JSON headers
-    std::optional<McpOAuthConfig> oauth; // OAuth/XAA settings for remote servers
+    std::string url;                             // Server URL for SSE/HTTP
+    std::map<std::string, std::string> headers;  // Custom HTTP headers
+    std::string headers_helper;                  // Optional command that prints JSON headers
+    std::optional<McpOAuthConfig> oauth;         // OAuth/XAA settings for remote servers
 
     // Behavior settings
     std::chrono::milliseconds timeout{30000};
-    bool auto_start = true;          // Start automatically on client launch
-    bool enabled = true;             // Whether server is active
+    bool auto_start = true;  // Start automatically on client launch
+    bool enabled = true;     // Whether server is active
     ConfigScope scope = ConfigScope::Project;
 
     // Validation: check that required fields are present
@@ -62,7 +62,7 @@ struct McpConfig {
     [[nodiscard]] std::vector<const ServerConfig*> auto_start_servers() const;
 
     // Get a specific server config by name
-    [[nodiscard]] std::optional<std::reference_wrapper<const ServerConfig>> 
+    [[nodiscard]] std::optional<std::reference_wrapper<const ServerConfig>>
     get_server(std::string_view name) const;
 };
 
@@ -76,13 +76,15 @@ public:
     [[nodiscard]] static std::filesystem::path user_config();
 
     // Get project config path (relative to project root)
-    [[nodiscard]] static std::filesystem::path project_config(const std::filesystem::path& project_root);
+    [[nodiscard]] static std::filesystem::path
+    project_config(const std::filesystem::path& project_root);
 
     // Get local (gitignored) config path
-    [[nodiscard]] static std::filesystem::path local_config(const std::filesystem::path& project_root);
+    [[nodiscard]] static std::filesystem::path
+    local_config(const std::filesystem::path& project_root);
 
     // Get all config paths in priority order (lowest to highest)
-    [[nodiscard]] static std::vector<std::pair<ConfigScope, std::filesystem::path>> 
+    [[nodiscard]] static std::vector<std::pair<ConfigScope, std::filesystem::path>>
     all_config_paths(const std::filesystem::path& project_root);
 
 private:
@@ -116,4 +118,4 @@ private:
     std::filesystem::path project_root_;
 };
 
-} // namespace loom::services::mcp
+}  // namespace loom::services::mcp

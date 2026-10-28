@@ -1,6 +1,6 @@
 module;
-#include <cstddef>
 #include <cctype>
+#include <cstddef>
 
 export module loom.tools.mcp_classify;
 
@@ -8,30 +8,20 @@ import std;
 
 export namespace loom::tools {
 
-enum class McpOutputType {
-    Text,
-    Code,
-    Table,
-    Error,
-    Progress,
-    Unknown
-};
+enum class McpOutputType { Text, Code, Table, Error, Progress, Unknown };
 
 inline auto classify_mcp_output(std::string_view content) -> McpOutputType {
     if (content.empty()) {
         return McpOutputType::Unknown;
     }
 
-    if (content.starts_with("Error:") ||
-        content.starts_with("error:") ||
-        content.starts_with("ERROR") ||
-        content.starts_with("fatal:") ||
+    if (content.starts_with("Error:") || content.starts_with("error:") ||
+        content.starts_with("ERROR") || content.starts_with("fatal:") ||
         content.starts_with("Failed")) {
         return McpOutputType::Error;
     }
 
-    if (content.find("...") != std::string_view::npos &&
-        content.size() < 200) {
+    if (content.find("...") != std::string_view::npos && content.size() < 200) {
         return McpOutputType::Progress;
     }
     if (content.starts_with("[") && content.find(']') < 10) {
@@ -47,8 +37,8 @@ inline auto classify_mcp_output(std::string_view content) -> McpOutputType {
     if (content.find("import ") != std::string_view::npos) code_indicators += 1;
     if (content.find("const ") != std::string_view::npos) code_indicators += 1;
     if (content.find("return ") != std::string_view::npos) code_indicators += 1;
-    if (content.find('{') != std::string_view::npos &&
-        content.find('}') != std::string_view::npos) code_indicators += 1;
+    if (content.find('{') != std::string_view::npos && content.find('}') != std::string_view::npos)
+        code_indicators += 1;
 
     if (code_indicators >= 3) {
         return McpOutputType::Code;
@@ -70,18 +60,18 @@ inline auto classify_mcp_output(std::string_view content) -> McpOutputType {
 
 inline auto should_collapse_output(McpOutputType type, size_t length) -> bool {
     switch (type) {
-        case McpOutputType::Text:
-            return length > 2000;
-        case McpOutputType::Code:
-            return length > 5000;
-        case McpOutputType::Table:
-            return length > 3000;
-        case McpOutputType::Error:
-            return length > 1000;
-        case McpOutputType::Progress:
-            return false;
-        case McpOutputType::Unknown:
-            return length > 2000;
+    case McpOutputType::Text:
+        return length > 2000;
+    case McpOutputType::Code:
+        return length > 5000;
+    case McpOutputType::Table:
+        return length > 3000;
+    case McpOutputType::Error:
+        return length > 1000;
+    case McpOutputType::Progress:
+        return false;
+    case McpOutputType::Unknown:
+        return length > 2000;
     }
     return length > 2000;
 }
@@ -124,9 +114,9 @@ inline auto truncate_mcp_output(std::string_view content, size_t max_length) -> 
 
 /// UI collapse hint for an MCP tool-call result.
 enum class CollapseDecision {
-    AlwaysShow,     ///< Never collapse (side effects, mutations, unknown tools)
-    AutoCollapse,   ///< Collapse by default but user can expand (search/read)
-    AlwaysCollapse, ///< Always collapse (uninteresting / verbose noise)
+    AlwaysShow,      ///< Never collapse (side effects, mutations, unknown tools)
+    AutoCollapse,    ///< Collapse by default but user can expand (search/read)
+    AlwaysCollapse,  ///< Always collapse (uninteresting / verbose noise)
 };
 
 /// Forward declarations used by classify_for_collapse.
@@ -134,6 +124,7 @@ struct McpToolCallRef {
     std::string_view server_name;
     std::string_view tool_name;
 };
+
 struct McpToolResultRef {
     std::string_view content;
     bool is_error{false};
@@ -149,7 +140,7 @@ inline auto normalize_tool_name(std::string_view name) -> std::string {
     for (std::size_t i = 0; i < name.size(); ++i) {
         char c = name[i];
         if (i > 0 && std::islower(static_cast<unsigned char>(name[i - 1])) &&
-                     std::isupper(static_cast<unsigned char>(c))) {
+            std::isupper(static_cast<unsigned char>(c))) {
             out.push_back('_');
         }
         if (c == '-' || c == '.' || c == ' ') {
@@ -751,10 +742,8 @@ inline auto read_tool_names() -> const std::unordered_set<std::string>& {
 //  3. Else (mutating / unknown)                -> AlwaysShow
 //  4. Error results are always shown regardless (override)
 // ---------------------------------------------------------------------------
-inline auto classify_for_collapse(
-    const McpToolCallRef& call,
-    const McpToolResultRef& result
-) -> CollapseDecision {
+inline auto classify_for_collapse(const McpToolCallRef& call, const McpToolResultRef& result)
+    -> CollapseDecision {
     // Errors are never collapsed — the user needs to see what went wrong.
     if (result.is_error) {
         return CollapseDecision::AlwaysShow;
@@ -782,16 +771,18 @@ inline auto classify_for_collapse(
 }
 
 /// Convenience overload returning { isSearch, isRead } to mirror TS API.
-struct ClassifyFlags { bool is_search{false}; bool is_read{false}; };
-inline auto classify_mcp_tool_for_collapse(
-    std::string_view /*server_name*/,
-    std::string_view tool_name
-) -> ClassifyFlags {
+struct ClassifyFlags {
+    bool is_search{false};
+    bool is_read{false};
+};
+
+inline auto classify_mcp_tool_for_collapse(std::string_view /*server_name*/,
+                                           std::string_view tool_name) -> ClassifyFlags {
     const auto normalized = normalize_tool_name(tool_name);
     return ClassifyFlags{
         .is_search = search_tool_names().contains(normalized),
-        .is_read   = read_tool_names().contains(normalized),
+        .is_read = read_tool_names().contains(normalized),
     };
 }
 
-} // namespace loom::tools
+}  // namespace loom::tools

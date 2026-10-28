@@ -2,14 +2,14 @@
 /// @brief Dialog trigger and quick-open tests: DialogTriggers, QuickOpen.
 /// Split from test_dialog_system.cpp (SLOC budget).
 
-#include <cstdlib>
-
-#include <gtest/gtest.h>
+#include <ftxui/component/component.hpp>
+#include <ftxui/component/event.hpp>
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/dom/node.hpp>
 #include <ftxui/screen/screen.hpp>
-#include <ftxui/component/component.hpp>
-#include <ftxui/component/event.hpp>
+#include <gtest/gtest.h>
+
+#include <cstdlib>
 
 import std;
 import loom.ui.dialogs.system;
@@ -30,19 +30,19 @@ namespace {
 
 namespace dsys = loom::ui::dialogs::system;
 
-} // namespace
+}  // namespace
+
 TEST(DialogTriggers, PushToolPermissionCreatesDialog) {
     dsys::DialogQueue queue;
     namespace dtrig = loom::ui::dialogs::triggers;
 
     bool responded = false;
-    dtrig::PushToolPermission(
-        queue, "Bash", "Run ls -la",
-        [&](dsys::ToolPermissionPayload::Decision d, bool sandbox) {
-            responded = true;
-            (void)d;
-            (void)sandbox;
-        });
+    dtrig::PushToolPermission(queue, "Bash", "Run ls -la",
+                              [&](dsys::ToolPermissionPayload::Decision d, bool sandbox) {
+                                  responded = true;
+                                  (void)d;
+                                  (void)sandbox;
+                              });
 
     EXPECT_TRUE(queue.has_overlay());
     auto peek = queue.peek_overlay();
@@ -54,9 +54,8 @@ TEST(DialogTriggers, PushMessageSelectorCreatesDialog) {
     dsys::DialogQueue queue;
     namespace dtrig = loom::ui::dialogs::triggers;
 
-    dtrig::PushMessageSelector(
-        queue, {"opt1", "opt2", "opt3"}, "Choose...",
-        [](int idx) { (void)idx; });
+    dtrig::PushMessageSelector(queue, {"opt1", "opt2", "opt3"}, "Choose...",
+                               [](int idx) { (void)idx; });
 
     EXPECT_TRUE(queue.has_any_bottom());
     auto peek = queue.peek_bottom(false);
@@ -67,9 +66,7 @@ TEST(DialogTriggers, PushCostThresholdCreatesDialog) {
     dsys::DialogQueue queue;
     namespace dtrig = loom::ui::dialogs::triggers;
 
-    dtrig::PushCostThreshold(
-        queue, 5.2, std::optional<std::string>{"test-model.6"},
-        []() {});
+    dtrig::PushCostThreshold(queue, 5.2, std::optional<std::string>{"test-model.6"}, []() {});
 
     EXPECT_TRUE(queue.has_any_bottom());
 }
@@ -78,9 +75,10 @@ TEST(DialogTriggers, PushSandboxPermissionCreatesDialog) {
     dsys::DialogQueue queue;
     namespace dtrig = loom::ui::dialogs::triggers;
 
-    dtrig::PushSandboxPermission(
-        queue, "*.example.com",
-        [](bool allow, bool always) { (void)allow; (void)always; });
+    dtrig::PushSandboxPermission(queue, "*.example.com", [](bool allow, bool always) {
+        (void)allow;
+        (void)always;
+    });
 
     EXPECT_TRUE(queue.has_any_bottom());
 }
@@ -129,8 +127,7 @@ TEST(DialogTriggers, CommandMetadataPluginDialog) {
     dsys::DialogQueue queue;
     namespace dtrig = loom::ui::dialogs::triggers;
 
-    bool pushed = dtrig::PushFromCommandMetadata(
-        queue, "UI:plugins:manage-plugins");
+    bool pushed = dtrig::PushFromCommandMetadata(queue, "UI:plugins:manage-plugins");
     EXPECT_TRUE(pushed);
     EXPECT_TRUE(queue.has_modal());
 }
@@ -237,9 +234,7 @@ TEST(DialogTriggers, PushLspRecommendationCreatesDialog) {
     dsys::DialogQueue queue;
     namespace dtrig = loom::ui::dialogs::triggers;
 
-    dtrig::PushLspRecommendation(
-        queue, "clangd",
-        [](bool install) { (void)install; });
+    dtrig::PushLspRecommendation(queue, "clangd", [](bool install) { (void)install; });
 
     EXPECT_TRUE(queue.has_any_bottom());
 }
@@ -248,9 +243,7 @@ TEST(DialogTriggers, PushModelSwitchCreatesDialog) {
     dsys::DialogQueue queue;
     namespace dtrig = loom::ui::dialogs::triggers;
 
-    dtrig::PushModelSwitch(
-        queue, "sonnet", "opus",
-        [](bool confirm) { (void)confirm; });
+    dtrig::PushModelSwitch(queue, "sonnet", "opus", [](bool confirm) { (void)confirm; });
 
     EXPECT_TRUE(queue.has_any_bottom());
 }
@@ -260,11 +253,8 @@ TEST(DialogTriggers, MultipleDialogsQueueCorrectly) {
     namespace dtrig = loom::ui::dialogs::triggers;
 
     // Two bottom dialogs with different bands
-    dtrig::PushCostThreshold(
-        queue, 5.2, std::optional<std::string>{"sonnet"},
-        []() {});
-    dtrig::PushLspRecommendation(
-        queue, "clangd", [](bool) {});
+    dtrig::PushCostThreshold(queue, 5.2, std::optional<std::string>{"sonnet"}, []() {});
+    dtrig::PushLspRecommendation(queue, "clangd", [](bool) {});
 
     // Both should be in the queue
     EXPECT_TRUE(queue.has_any_bottom());
@@ -443,8 +433,7 @@ TEST(QuickOpen, RenderProducesOutput) {
     EXPECT_NE(element.get(), nullptr);
 
     // Render to screen to verify it produces text
-    auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(60),
-                                        ftxui::Dimension::Fixed(15));
+    auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(60), ftxui::Dimension::Fixed(15));
     ftxui::Render(screen, element);
 
     std::string output = screen.ToString();
@@ -477,8 +466,7 @@ TEST(DialogTriggers, PushQuickOpenCreatesDialog) {
         {"Test", "test item", "", "Test"},
     };
 
-    dtrig::PushQuickOpen(queue, std::move(items), "te",
-                         [](int, bool) {});
+    dtrig::PushQuickOpen(queue, std::move(items), "te", [](int, bool) {});
 
     EXPECT_TRUE(queue.has_modal());
     auto peek = queue.peek_modal();
@@ -534,8 +522,10 @@ TEST(DialogTriggers, PushExportDialogCreatesDialog) {
     namespace dtrig = loom::ui::dialogs::triggers;
 
     bool responded = false;
-    dtrig::PushExportDialog(queue, "markdown",
-        [&](bool ok) { responded = true; EXPECT_TRUE(ok); });
+    dtrig::PushExportDialog(queue, "markdown", [&](bool ok) {
+        responded = true;
+        EXPECT_TRUE(ok);
+    });
 
     EXPECT_TRUE(queue.has_modal());
     auto peek = queue.peek_modal();
@@ -551,8 +541,7 @@ TEST(DialogTriggers, PushDiffDialogCreatesDialog) {
     dsys::DialogQueue queue;
     namespace dtrig = loom::ui::dialogs::triggers;
 
-    dtrig::PushDiffDialog(queue, "Changes", "old", "new",
-        [](bool) {});
+    dtrig::PushDiffDialog(queue, "Changes", "old", "new", [](bool) {});
     EXPECT_TRUE(queue.has_modal());
     auto peek = queue.peek_modal();
     ASSERT_TRUE(peek.has_value());
@@ -578,8 +567,7 @@ TEST(DialogTriggers, PushHistorySearchCreatesDialog) {
     dsys::DialogQueue queue;
     namespace dtrig = loom::ui::dialogs::triggers;
 
-    dtrig::PushHistorySearch(queue, "project",
-        [](std::string_view) {});
+    dtrig::PushHistorySearch(queue, "project", [](std::string_view) {});
     EXPECT_TRUE(queue.has_modal());
     auto peek = queue.peek_modal();
     ASSERT_TRUE(peek.has_value());
@@ -623,8 +611,7 @@ TEST(DialogTriggers, PushTrustDialogCreatesDialog) {
     dsys::DialogQueue queue;
     namespace dtrig = loom::ui::dialogs::triggers;
 
-    dtrig::PushTrustDialog(queue, "example.com",
-        [](bool) {});
+    dtrig::PushTrustDialog(queue, "example.com", [](bool) {});
     // TrustDialog is a full-screen standalone dialog (M7 §3.1).
     EXPECT_TRUE(queue.has_standalone());
     EXPECT_FALSE(queue.has_modal());
@@ -711,6 +698,5 @@ TEST(DialogTriggers, MetadataManagedSecurity) {
 
     EXPECT_TRUE(dtrig::PushFromCommandMetadata(queue, "MANAGED_SETTINGS_SECURITY"));
     EXPECT_TRUE(queue.has_modal());
-    EXPECT_EQ(dsys::type_of(*queue.peek_modal()),
-              dsys::DialogType::ManagedSettingsSecurity);
+    EXPECT_EQ(dsys::type_of(*queue.peek_modal()), dsys::DialogType::ManagedSettingsSecurity);
 }

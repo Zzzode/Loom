@@ -23,13 +23,16 @@ import loom.services.compact.api_microcompact;
 
 namespace loom::core {
 
-ThinkingConfig resolve_thinking_config(
-    std::optional<bool> enabled, std::optional<std::uint32_t> budget) {
+ThinkingConfig resolve_thinking_config(std::optional<bool> enabled,
+                                       std::optional<std::uint32_t> budget) {
     ThinkingConfig result;
     result.budget_tokens = budget;
-    if (enabled == false) result.mode = ThinkingConfig::Mode::Disabled;
-    else if (budget) result.mode = ThinkingConfig::Mode::Forced;
-    else if (enabled == true) result.mode = ThinkingConfig::Mode::Adaptive;
+    if (enabled == false)
+        result.mode = ThinkingConfig::Mode::Disabled;
+    else if (budget)
+        result.mode = ThinkingConfig::Mode::Forced;
+    else if (enabled == true)
+        result.mode = ThinkingConfig::Mode::Adaptive;
     return result;
 }
 
@@ -54,13 +57,11 @@ QueryEngine::api_context_management() const {
 [[nodiscard]] bool QueryEngine::thinking_enabled_for_request() const {
     return (config_.thinking_config.mode == ThinkingConfig::Mode::Adaptive ||
             config_.thinking_config.mode == ThinkingConfig::Mode::Forced) &&
-        !loom::utils::is_env_truthy(std::getenv("LOOM_DISABLE_THINKING"));
+           !loom::utils::is_env_truthy(std::getenv("LOOM_DISABLE_THINKING"));
 }
 
-void QueryEngine::add_output_config_to_json(
-    loom::utils::json::JsonMutVal& root,
-    loom::utils::json::JsonMutDoc& doc
-) const {
+void QueryEngine::add_output_config_to_json(loom::utils::json::JsonMutVal& root,
+                                            loom::utils::json::JsonMutDoc& doc) const {
     const bool has_budget = config_.task_budget.has_value();
     const bool has_schema = config_.response_schema.has_value();
     if (!has_budget && !has_schema) return;
@@ -71,9 +72,8 @@ void QueryEngine::add_output_config_to_json(
         task_budget.add("type", doc.string("tokens"));
         task_budget.add("total", doc.number(static_cast<int64_t>(config_.task_budget->total)));
         if (config_.task_budget->remaining) {
-            task_budget.add(
-                "remaining",
-                doc.number(static_cast<int64_t>(*config_.task_budget->remaining)));
+            task_budget.add("remaining",
+                            doc.number(static_cast<int64_t>(*config_.task_budget->remaining)));
         }
         output_config.add("task_budget", task_budget);
     }
@@ -151,20 +151,18 @@ QueryEngine::make_wire_backend(bool summary) const {
     if (wire_api_ == WireApi::OpenAi) {
         std::vector<std::pair<std::string, std::string>> auth;
         if (!api_config_.auth_token.empty()) {
-            auth.emplace_back("Authorization",
-                              std::format("Bearer {}", api_config_.auth_token));
+            auth.emplace_back("Authorization", std::format("Bearer {}", api_config_.auth_token));
         } else if (!api_config_.api_key.empty()) {
-            auth.emplace_back("Authorization",
-                              std::format("Bearer {}", api_config_.api_key));
+            auth.emplace_back("Authorization", std::format("Bearer {}", api_config_.api_key));
         }
-        return std::make_unique<loom::query::wire::OpenAiWireBackend>(
-            api_config_.base_url, std::move(auth));
+        return std::make_unique<loom::query::wire::OpenAiWireBackend>(api_config_.base_url,
+                                                                      std::move(auth));
     }
     // Messages API (default): credential precedence matches the historical
     // engine behaviour — bearer token wins over x-api-key.
     std::vector<std::pair<std::string, std::string>> auth;
-    auth.push_back(loom::query::wire::messages_credential_header(
-        api_config_.api_key, api_config_.auth_token));
+    auth.push_back(
+        loom::query::wire::messages_credential_header(api_config_.api_key, api_config_.auth_token));
     loom::query::wire::MessagesWireOptions opts;
     opts.base_url = api_config_.base_url;
     opts.api_version = api_config_.api_version;
@@ -172,36 +170,35 @@ QueryEngine::make_wire_backend(bool summary) const {
     // API-side context edits / task budget / response schema ride on the
     // options struct because they are not part of the neutral input.
     if (!summary) {
-    if (auto cm = api_context_management()) {
-        for (const auto& edit : cm->edits) {
-            loom::query::wire::ContextEdit ce;
-            ce.type = edit.type;
-            ce.trigger_input_tokens = edit.trigger_input_tokens;
-            ce.clear_at_least_input_tokens = edit.clear_at_least_input_tokens;
-            ce.has_thinking_keep = edit.has_thinking_keep;
-            ce.keep_all_thinking = edit.keep_all_thinking;
-            ce.keep_thinking_turns = edit.keep_thinking_turns;
-            ce.keep_tool_uses = edit.keep_tool_uses;
-            ce.clear_tool_inputs = edit.clear_tool_inputs;
-            ce.exclude_tools = edit.exclude_tools;
-            opts.context_edits.push_back(std::move(ce));
+        if (auto cm = api_context_management()) {
+            for (const auto& edit : cm->edits) {
+                loom::query::wire::ContextEdit ce;
+                ce.type = edit.type;
+                ce.trigger_input_tokens = edit.trigger_input_tokens;
+                ce.clear_at_least_input_tokens = edit.clear_at_least_input_tokens;
+                ce.has_thinking_keep = edit.has_thinking_keep;
+                ce.keep_all_thinking = edit.keep_all_thinking;
+                ce.keep_thinking_turns = edit.keep_thinking_turns;
+                ce.keep_tool_uses = edit.keep_tool_uses;
+                ce.clear_tool_inputs = edit.clear_tool_inputs;
+                ce.exclude_tools = edit.exclude_tools;
+                opts.context_edits.push_back(std::move(ce));
+            }
+        }
+        if (config_.task_budget) {
+            loom::query::wire::TaskBudget tb;
+            tb.total = config_.task_budget->total;
+            tb.remaining = config_.task_budget->remaining;
+            opts.task_budget = std::move(tb);
+        }
+        if (config_.response_schema) {
+            loom::query::wire::ResponseSchema rs;
+            rs.name = config_.response_schema->name;
+            rs.schema_json = config_.response_schema->schema_json;
+            opts.response_schema = std::move(rs);
         }
     }
-    if (config_.task_budget) {
-        loom::query::wire::TaskBudget tb;
-        tb.total = config_.task_budget->total;
-        tb.remaining = config_.task_budget->remaining;
-        opts.task_budget = std::move(tb);
-    }
-    if (config_.response_schema) {
-        loom::query::wire::ResponseSchema rs;
-        rs.name = config_.response_schema->name;
-        rs.schema_json = config_.response_schema->schema_json;
-        opts.response_schema = std::move(rs);
-    }
-    }
-    return std::make_unique<loom::query::wire::MessagesWireBackend>(
-        std::move(opts));
+    return std::make_unique<loom::query::wire::MessagesWireBackend>(std::move(opts));
 }
 
 void QueryEngine::project_context_messages_locked(loom::query::wire::RequestInput& input) const {
@@ -209,7 +206,8 @@ void QueryEngine::project_context_messages_locked(loom::query::wire::RequestInpu
     for (const auto& msg : conversation_) {
         const auto* sys = std::get_if<SystemMessage>(&msg);
         if (!sys || !sys->snip_metadata) continue;
-        for (const auto& uuid : sys->snip_metadata->removed_uuids) snipped_message_ids.insert(uuid);
+        for (const auto& uuid : sys->snip_metadata->removed_uuids)
+            snipped_message_ids.insert(uuid);
     }
     for (const auto& msg : conversation_) {
         const auto message_id = std::visit([](const auto& value) { return value.id.value; }, msg);
@@ -218,7 +216,8 @@ void QueryEngine::project_context_messages_locked(loom::query::wire::RequestInpu
             if (sys->subtype == "compact_boundary") continue;
             if (input.system_prompt.empty()) {
                 for (const auto& block : sys->content)
-                    if (const auto* text = std::get_if<TextBlock>(&block)) input.system_prompt += text->text;
+                    if (const auto* text = std::get_if<TextBlock>(&block))
+                        input.system_prompt += text->text;
             }
             continue;
         }
@@ -226,9 +225,9 @@ void QueryEngine::project_context_messages_locked(loom::query::wire::RequestInpu
     }
 }
 
-[[nodiscard]] loom::query::wire::RequestInput QueryEngine::build_wire_input(
-    const QueryOptions& options,
-    bool stream, bool include_dynamic) const {
+[[nodiscard]] loom::query::wire::RequestInput
+QueryEngine::build_wire_input(const QueryOptions& options, bool stream,
+                              bool include_dynamic) const {
     loom::query::wire::RequestInput input;
     input.model = config_.model_params.model;
     input.max_tokens = model_context_.request_output_tokens.value_or(0);
@@ -237,10 +236,8 @@ void QueryEngine::project_context_messages_locked(loom::query::wire::RequestInpu
     input.top_p = config_.model_params.top_p;
     input.top_k = config_.model_params.top_k;
     input.thinking_enabled = thinking_enabled_for_request();
-    if (input.thinking_enabled &&
-        config_.thinking_config.mode != ThinkingConfig::Mode::Adaptive) {
-        input.thinking_budget_tokens =
-            config_.thinking_config.budget_tokens.value_or(10000);
+    if (input.thinking_enabled && config_.thinking_config.mode != ThinkingConfig::Mode::Adaptive) {
+        input.thinking_budget_tokens = config_.thinking_config.budget_tokens.value_or(10000);
     }
     input.native_computer_tool = native_computer_tool_;
     const auto env_dim = [](const char* key, int64_t fallback) {
@@ -248,22 +245,19 @@ void QueryEngine::project_context_messages_locked(loom::query::wire::RequestInpu
             try {
                 long long n = std::stoll(v);
                 if (n > 0) return static_cast<int64_t>(n);
-            } catch (...) {}
+            } catch (...) {
+            }
         }
         return fallback;
     };
-    input.computer_display_width =
-        env_dim("LOOM_COMPUTER_DISPLAY_WIDTH", 1024);
-    input.computer_display_height =
-        env_dim("LOOM_COMPUTER_DISPLAY_HEIGHT", 768);
-    input.computer_display_number =
-        env_dim("LOOM_COMPUTER_DISPLAY_NUMBER", 0);
+    input.computer_display_width = env_dim("LOOM_COMPUTER_DISPLAY_WIDTH", 1024);
+    input.computer_display_height = env_dim("LOOM_COMPUTER_DISPLAY_HEIGHT", 768);
+    input.computer_display_number = env_dim("LOOM_COMPUTER_DISPLAY_NUMBER", 0);
 
     // MCP verbatim schemas (snapshotted once per request).
     if (include_dynamic && config_.mcp_input_schema_provider) {
         for (auto& [name, schema] : config_.mcp_input_schema_provider()) {
-            input.tool_schemas.emplace_back(std::move(name),
-                                            std::move(schema));
+            input.tool_schemas.emplace_back(std::move(name), std::move(schema));
         }
     }
 
@@ -281,15 +275,15 @@ void QueryEngine::project_context_messages_locked(loom::query::wire::RequestInpu
             deny_view.mcp_server = tool.category->substr(4);
             deny_view.mcp_tool = tool.name;
         }
-        if (loom::utils::tool_deny_rules::is_tool_denied(
-                config_.always_deny_rules, deny_view)) {
+        if (loom::utils::tool_deny_rules::is_tool_denied(config_.always_deny_rules, deny_view)) {
             return;
         }
         if (!seen_names.insert(tool.name).second) return;
         if (!is_tool_enabled_for_query(tool.name, options)) return;
         input.tools.push_back(tool);
     };
-    for (const auto& tool : config_.tools) add_tool(tool);
+    for (const auto& tool : config_.tools)
+        add_tool(tool);
     if (include_dynamic && config_.dynamic_tools_provider) {
         for (const auto& tool : config_.dynamic_tools_provider()) {
             add_tool(tool);
@@ -298,9 +292,8 @@ void QueryEngine::project_context_messages_locked(loom::query::wire::RequestInpu
     return input;
 }
 
-[[nodiscard]] std::string QueryEngine::build_request_body(
-    const QueryOptions& options,
-    bool stream) const {
+[[nodiscard]] std::string QueryEngine::build_request_body(const QueryOptions& options,
+                                                          bool stream) const {
     auto backend = make_wire_backend();
     auto prepared = backend->prepare(build_wire_input(options, stream));
     if (!prepared) {
@@ -312,4 +305,4 @@ void QueryEngine::project_context_messages_locked(loom::query::wire::RequestInpu
     return prepared->body;
 }
 
-} // namespace loom::core
+}  // namespace loom::core

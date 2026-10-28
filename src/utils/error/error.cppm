@@ -30,21 +30,36 @@ enum class ErrorCode : uint32_t {
 
 constexpr std::string_view error_code_name(ErrorCode code) noexcept {
     switch (code) {
-        case ErrorCode::unknown:            return "unknown";
-        case ErrorCode::io_error:           return "io_error";
-        case ErrorCode::network_error:      return "network_error";
-        case ErrorCode::parse_error:        return "parse_error";
-        case ErrorCode::permission_denied:  return "permission_denied";
-        case ErrorCode::timeout:            return "timeout";
-        case ErrorCode::not_found:          return "not_found";
-        case ErrorCode::already_exists:     return "already_exists";
-        case ErrorCode::invalid_argument:   return "invalid_argument";
-        case ErrorCode::out_of_range:       return "out_of_range";
-        case ErrorCode::resource_exhausted: return "resource_exhausted";
-        case ErrorCode::cancelled:          return "cancelled";
-        case ErrorCode::internal_error:     return "internal_error";
-        case ErrorCode::unimplemented:      return "unimplemented";
-        case ErrorCode::unavailable:        return "unavailable";
+    case ErrorCode::unknown:
+        return "unknown";
+    case ErrorCode::io_error:
+        return "io_error";
+    case ErrorCode::network_error:
+        return "network_error";
+    case ErrorCode::parse_error:
+        return "parse_error";
+    case ErrorCode::permission_denied:
+        return "permission_denied";
+    case ErrorCode::timeout:
+        return "timeout";
+    case ErrorCode::not_found:
+        return "not_found";
+    case ErrorCode::already_exists:
+        return "already_exists";
+    case ErrorCode::invalid_argument:
+        return "invalid_argument";
+    case ErrorCode::out_of_range:
+        return "out_of_range";
+    case ErrorCode::resource_exhausted:
+        return "resource_exhausted";
+    case ErrorCode::cancelled:
+        return "cancelled";
+    case ErrorCode::internal_error:
+        return "internal_error";
+    case ErrorCode::unimplemented:
+        return "unimplemented";
+    case ErrorCode::unavailable:
+        return "unavailable";
     }
     return "unknown";
 }
@@ -79,8 +94,11 @@ public:
     }
 
     [[nodiscard]] ErrorCode code() const noexcept { return code_; }
+
     [[nodiscard]] const std::string& message() const noexcept { return message_; }
+
     [[nodiscard]] bool has_cause() const noexcept { return cause_ != nullptr; }
+
     [[nodiscard]] const Error& cause() const noexcept { return *cause_; }
 
     [[nodiscard]] std::string format() const {
@@ -89,8 +107,8 @@ public:
         const Error* current = cause_.get();
         int depth = 1;
         while (current) {
-            result += std::format("\n  caused by [{}]: {}",
-                error_code_name(current->code_), current->message_);
+            result += std::format("\n  caused by [{}]: {}", error_code_name(current->code_),
+                                  current->message_);
             current = current->cause_.get();
             if (++depth > 10) {
                 result += "\n  ... (cause chain truncated)";
@@ -117,66 +135,60 @@ private:
     std::unique_ptr<Error> cause_;
 };
 
-[[nodiscard]] inline Error make_error(
-    ErrorCode code, std::string message) {
+[[nodiscard]] inline Error make_error(ErrorCode code, std::string message) {
     return Error(code, std::move(message));
 }
 
-template<typename... Args>
-[[nodiscard]] Error make_error_fmt(
-    ErrorCode code,
-    std::format_string<Args...> fmt, Args&&... args) {
+template <typename... Args>
+[[nodiscard]] Error make_error_fmt(ErrorCode code, std::format_string<Args...> fmt,
+                                   Args&&... args) {
     return Error(code, std::format(fmt, std::forward<Args>(args)...));
 }
 
-template<typename T>
-using Result = std::expected<T, Error>;
+template <typename T> using Result = std::expected<T, Error>;
 
 using VoidResult = std::expected<void, Error>;
 
 namespace error {
-    [[nodiscard]] inline Error make(std::string message) {
-        return Error(ErrorCode::unknown, std::move(message));
-    }
-
-    [[nodiscard]] inline Error wrap(const Error& cause, std::string message) {
-        return Error(ErrorCode::unknown, std::move(message), cause);
-    }
-
-    template<typename T>
-    [[nodiscard]] inline Result<T> expected(T value) {
-        return value;
-    }
-
-    template<typename T>
-    [[nodiscard]] inline Result<T> expected(Error err) {
-        return std::unexpected(std::move(err));
-    }
+[[nodiscard]] inline Error make(std::string message) {
+    return Error(ErrorCode::unknown, std::move(message));
 }
 
-#define TRY(expr)                                                    \
-    ({                                                               \
-        auto&& _try_result = (expr);                                 \
-        if (!_try_result.has_value()) {                              \
-            return std::unexpected(std::move(_try_result.error()));   \
-        }                                                            \
-        std::move(*_try_result);                                     \
+[[nodiscard]] inline Error wrap(const Error& cause, std::string message) {
+    return Error(ErrorCode::unknown, std::move(message), cause);
+}
+
+template <typename T> [[nodiscard]] inline Result<T> expected(T value) {
+    return value;
+}
+
+template <typename T> [[nodiscard]] inline Result<T> expected(Error err) {
+    return std::unexpected(std::move(err));
+}
+}  // namespace error
+
+#define TRY(expr)                                                                                  \
+    ({                                                                                             \
+        auto&& _try_result = (expr);                                                               \
+        if (!_try_result.has_value()) {                                                            \
+            return std::unexpected(std::move(_try_result.error()));                                \
+        }                                                                                          \
+        std::move(*_try_result);                                                                   \
     })
 
-#define TRY_VOID(expr)                                               \
-    do {                                                             \
-        auto&& _try_result = (expr);                                 \
-        if (!_try_result.has_value()) {                              \
-            return std::unexpected(std::move(_try_result.error()));   \
-        }                                                            \
+#define TRY_VOID(expr)                                                                             \
+    do {                                                                                           \
+        auto&& _try_result = (expr);                                                               \
+        if (!_try_result.has_value()) {                                                            \
+            return std::unexpected(std::move(_try_result.error()));                                \
+        }                                                                                          \
     } while (0)
 
-[[nodiscard]] inline auto unexpected_error(
-    ErrorCode code, std::string message) {
+[[nodiscard]] inline auto unexpected_error(ErrorCode code, std::string message) {
     return std::unexpected(Error(code, std::move(message)));
 }
 
-template<typename T>
+template <typename T>
 concept ErrorLike = true;
 
-} // namespace loom::utils
+}  // namespace loom::utils

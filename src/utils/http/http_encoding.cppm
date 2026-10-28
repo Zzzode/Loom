@@ -24,8 +24,7 @@ export namespace loom::utils::http {
 // set is percent-encoded as %XX with UPPERCASE hex digits (AWS SigV4 spec
 // mandates uppercase). When `keep_slash` is true, forward slashes are passed
 // through unencoded (used for canonical URI path of S3-style resources).
-[[nodiscard]] inline std::string uri_encode(std::string_view s,
-                                             bool keep_slash = false) {
+[[nodiscard]] inline std::string uri_encode(std::string_view s, bool keep_slash = false) {
     std::string out;
     out.reserve(s.size() + (s.size() >> 1));
     for (unsigned char c : s) {
@@ -65,8 +64,7 @@ export namespace loom::utils::http {
 // On invalid percent-sequences, the malformed bytes are passed through
 // verbatim (lenient decoder, consistent with curl / browsers).
 // '+' is decoded as space ONLY when `plus_is_space` is true (forms mode).
-[[nodiscard]] inline std::string url_decode(std::string_view s,
-                                             bool plus_is_space = false) {
+[[nodiscard]] inline std::string url_decode(std::string_view s, bool plus_is_space = false) {
     std::string out;
     out.reserve(s.size());
     const auto xdigit = [](char c) -> int {
@@ -95,4 +93,4 @@ export namespace loom::utils::http {
     return out;
 }
 
-} // namespace loom::utils::http
+}  // namespace loom::utils::http

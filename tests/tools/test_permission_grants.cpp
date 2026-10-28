@@ -4,10 +4,11 @@
 #pragma clang diagnostic ignored "-Wmissing-designated-field-initializers"
 
 #include <gtest/gtest.h>
+#include <httplib.h>
+
 #include <cstddef>
 #include <cstdlib>
 #include <cstring>
-#include <httplib.h>
 #ifndef _WIN32
 #include <fcntl.h>
 #include <sys/file.h>
@@ -35,7 +36,7 @@ import loom.tools.web_browser;
 import loom.orchestration.tools.mcp;
 import loom.commands.mcp.core_settings_loader;
 import loom.orchestration.runtime_backends;
-import loom.tools.runtime_backends.port;  // RFC-0001 B15: set_/clear_skill_loader_executor slot API
+import loom.tools.runtime_backends.port; // RFC-0001 B15: set_/clear_skill_loader_executor slot API
 import loom.tools.image_codec.port;
 import loom.tools.worktree;
 import loom.orchestration.agent;
@@ -64,7 +65,7 @@ import loom.teams.team_helpers;
 import loom.hooks.tool_permissions;
 import loom.services.api.client;
 import loom.services.mcp.types;
-import loom.services.mcp.connection_manager;  // RFC-0001 B6: svc_mcp::McpServerSnapshot
+import loom.services.mcp.connection_manager; // RFC-0001 B6: svc_mcp::McpServerSnapshot
 import loom.tools.repl;
 import loom.tools.skill;
 import loom.orchestration.agent.utils;
@@ -75,7 +76,9 @@ namespace fs = std::filesystem;
 // The agent helpers exercised by the existing tests live in
 // loom::tools::agent::utils after the agent_tool split; re-expose them through
 // the loom::tools::agent namespace so the historical call sites still resolve.
-namespace loom::tools::agent { using namespace utils; }
+namespace loom::tools::agent {
+using namespace utils;
+}
 
 namespace {
 
@@ -83,7 +86,8 @@ struct EnvironmentGuard {
     std::string name;
     std::optional<std::string> previous;
 
-    EnvironmentGuard(std::string key, const std::string& value) : name(std::move(key)) {
+    EnvironmentGuard(std::string key, const std::string& value)
+        : name(std::move(key)) {
         if (const char* existing = std::getenv(name.c_str())) {
             previous = existing;
         }
@@ -99,7 +103,7 @@ struct EnvironmentGuard {
     }
 };
 
-} // namespace
+}  // namespace
 
 // ===========================================================================
 // RFC-0001 B followup c15 — WorkerPermissionGrants read-merge-write must be
@@ -119,30 +123,26 @@ struct C15GrantsEnv {
 
     C15GrantsEnv()
         : root(fs::temp_directory_path() /
-               ("loom_c15grants_" +
-                std::to_string(::getpid()) + "_" +
-                std::to_string(
-                    std::chrono::steady_clock::now().time_since_epoch().count()))),
-          guard("LOOM_TEAM_RUNTIME_DIR", root.string()) {
+               ("loom_c15grants_" + std::to_string(::getpid()) + "_" +
+                std::to_string(std::chrono::steady_clock::now().time_since_epoch().count())))
+        , guard("LOOM_TEAM_RUNTIME_DIR", root.string()) {
         fs::create_directories(root);
     }
+
     ~C15GrantsEnv() {
         std::error_code ec;
         fs::remove_all(root, ec);
     }
 };
 
-[[nodiscard]] fs::path c15_grants_file(std::string_view team,
-                                       std::string_view agent) {
+[[nodiscard]] fs::path c15_grants_file(std::string_view team, std::string_view agent) {
     return fs::path{loom::utils::team_dir(team)} / "permissions" /
            ("worker-allow-" + std::string(agent) + ".json");
 }
 
 // One addRules/allow batch as the leader would emit it.
-[[nodiscard]] std::string c15_updates_json(int producer, int count,
-                                           std::string_view prefix) {
-    std::string out =
-        R"([{"type":"addRules","behavior":"allow","rules":[)";
+[[nodiscard]] std::string c15_updates_json(int producer, int count, std::string_view prefix) {
+    std::string out = R"([{"type":"addRules","behavior":"allow","rules":[)";
     for (int i = 0; i < count; ++i) {
         if (i != 0) out += ',';
         out += R"({"toolName":")";
@@ -183,21 +183,17 @@ TEST(WorkerPermissionGrantsC15, CrossProcessMergeLosesNoRules) {
     C15GrantsEnv env;
 
     auto child_loop = [](int producer) {
-        const std::string updates =
-            c15_updates_json(producer, kC15RulesPerProducer, "c15xtool");
+        const std::string updates = c15_updates_json(producer, kC15RulesPerProducer, "c15xtool");
         bool settled = false;
         for (int attempt = 0; attempt < 50; ++attempt) {
             {
-                sh::WorkerPermissionGrants grants{std::string(kC15XTeam),
-                                                  std::string(kC15XAgent)};
+                sh::WorkerPermissionGrants grants{std::string(kC15XTeam), std::string(kC15XAgent)};
                 grants.apply_updates(updates);
             }
-            sh::WorkerPermissionGrants reader{std::string(kC15XTeam),
-                                              std::string(kC15XAgent)};
+            sh::WorkerPermissionGrants reader{std::string(kC15XTeam), std::string(kC15XAgent)};
             settled = true;
             for (int i = 0; i < kC15RulesPerProducer; ++i) {
-                if (!reader.allows(
-                        std::format("c15xtool-{}-{}", producer, i))) {
+                if (!reader.allows(std::format("c15xtool-{}-{}", producer, i))) {
                     settled = false;
                     break;
                 }
@@ -229,15 +225,11 @@ TEST(WorkerPermissionGrantsC15, CrossProcessMergeLosesNoRules) {
     ASSERT_TRUE(list.is_arr());
 
     const auto names = c15_read_rule_names(grants_file);
-    EXPECT_EQ(names.size(),
-              static_cast<std::size_t>(
-                  kC15Producers * kC15RulesPerProducer));
-    EXPECT_EQ(list.size(), names.size())
-        << "no duplicate rules may be persisted";
+    EXPECT_EQ(names.size(), static_cast<std::size_t>(kC15Producers * kC15RulesPerProducer));
+    EXPECT_EQ(list.size(), names.size()) << "no duplicate rules may be persisted";
     for (int c = 0; c < kC15Producers; ++c) {
         for (int i = 0; i < kC15RulesPerProducer; ++i) {
-            EXPECT_TRUE(names.contains(
-                std::format("c15xtool-{}-{}", c, i)))
+            EXPECT_TRUE(names.contains(std::format("c15xtool-{}-{}", c, i)))
                 << "missing rule from producer " << c << " index " << i;
         }
     }
@@ -258,13 +250,13 @@ TEST(WorkerPermissionGrantsC15, InProcessThreadsMergeLosesNoRules) {
     threads.reserve(kThreads);
     for (int t = 0; t < kThreads; ++t) {
         threads.emplace_back([t, &team, &agent] {
-            const std::string updates =
-                c15_updates_json(t, kPerThread, "c15ttool");
+            const std::string updates = c15_updates_json(t, kPerThread, "c15ttool");
             sh::WorkerPermissionGrants grants(team, agent);
             grants.apply_updates(updates);
         });
     }
-    for (auto& thread : threads) thread.join();
+    for (auto& thread : threads)
+        thread.join();
 
     const auto grants_file = c15_grants_file(team, agent);
     auto parsed = loom::utils::json::parse_file(grants_file);
@@ -273,14 +265,11 @@ TEST(WorkerPermissionGrantsC15, InProcessThreadsMergeLosesNoRules) {
     ASSERT_TRUE(list.is_arr());
 
     const auto names = c15_read_rule_names(grants_file);
-    EXPECT_EQ(names.size(),
-              static_cast<std::size_t>(kThreads * kPerThread));
-    EXPECT_EQ(list.size(), names.size())
-        << "no duplicate rules may be persisted";
+    EXPECT_EQ(names.size(), static_cast<std::size_t>(kThreads * kPerThread));
+    EXPECT_EQ(list.size(), names.size()) << "no duplicate rules may be persisted";
     for (int t = 0; t < kThreads; ++t) {
         for (int i = 0; i < kPerThread; ++i) {
-            EXPECT_TRUE(names.contains(
-                std::format("c15ttool-{}-{}", t, i)));
+            EXPECT_TRUE(names.contains(std::format("c15ttool-{}-{}", t, i)));
         }
     }
 }
@@ -301,17 +290,14 @@ TEST(WorkerPermissionGrantsC15, FifoLockNameRejectedWithoutBlocking) {
     sh::WorkerPermissionGrants grants(team, agent);
     const auto start = std::chrono::steady_clock::now();
     grants.apply_updates(sh::build_always_allow_updates_json("Bash"));
-    const auto elapsed = std::chrono::duration_cast<
-        std::chrono::milliseconds>(
-        std::chrono::steady_clock::now() - start).count();
-    EXPECT_LT(elapsed, 3000)
-        << "non-regular lock name must fail fast, never await the deadline";
-    EXPECT_FALSE(fs::exists(grants_file))
-        << "failed lock must bail before any grant-file write";
+    const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
+                             std::chrono::steady_clock::now() - start)
+                             .count();
+    EXPECT_LT(elapsed, 3000) << "non-regular lock name must fail fast, never await the deadline";
+    EXPECT_FALSE(fs::exists(grants_file)) << "failed lock must bail before any grant-file write";
     EXPECT_FALSE(grants.allows("Bash"));
     std::error_code ec;
-    EXPECT_TRUE(fs::is_fifo(lock_path, ec))
-        << "the FIFO itself must be left untouched";
+    EXPECT_TRUE(fs::is_fifo(lock_path, ec)) << "the FIFO itself must be left untouched";
 }
 
 // ===========================================================================
@@ -338,9 +324,13 @@ struct C16GrantsHolder {
 struct C16GrantsReaper {
     pid_t pid = -1;
     C16GrantsReaper() = default;
-    explicit C16GrantsReaper(pid_t child) : pid(child) {}
+
+    explicit C16GrantsReaper(pid_t child)
+        : pid(child) {}
+
     C16GrantsReaper(const C16GrantsReaper&) = delete;
     C16GrantsReaper& operator=(const C16GrantsReaper&) = delete;
+
     ~C16GrantsReaper() {
         if (pid > 0) {
             (void)::kill(pid, SIGKILL);
@@ -348,11 +338,11 @@ struct C16GrantsReaper {
             (void)::waitpid(pid, &status, 0);
         }
     }
+
     void release() { pid = -1; }
 };
 
-[[nodiscard]] C16GrantsHolder c16_spawn_grants_holder(
-    const std::string& lock_path, int seconds) {
+[[nodiscard]] C16GrantsHolder c16_spawn_grants_holder(const std::string& lock_path, int seconds) {
     int pipefd[2];
     if (::pipe(pipefd) != 0) return {-1, -1};
     const pid_t pid = ::fork();
@@ -363,8 +353,7 @@ struct C16GrantsReaper {
     }
     if (pid == 0) {
         ::close(pipefd[0]);
-        const int fd = ::open(lock_path.c_str(),
-                              O_RDWR | O_CREAT | O_CLOEXEC, 0600);
+        const int fd = ::open(lock_path.c_str(), O_RDWR | O_CREAT | O_CLOEXEC, 0600);
         const char fail = 'E';
         if (fd < 0 || ::flock(fd, LOCK_EX) != 0) {
             (void)::write(pipefd[1], &fail, 1);
@@ -393,10 +382,10 @@ void c16_await_grants_ready(int fd) {
     ::close(fd);
 }
 
-[[nodiscard]] long long c16_elapsed_ms(
-    const std::chrono::steady_clock::time_point& start) {
-    return std::chrono::duration_cast<std::chrono::milliseconds>(
-               std::chrono::steady_clock::now() - start).count();
+[[nodiscard]] long long c16_elapsed_ms(const std::chrono::steady_clock::time_point& start) {
+    return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() -
+                                                                 start)
+        .count();
 }
 
 }  // namespace
@@ -411,27 +400,22 @@ TEST(WorkerPermissionGrantsC16, ShardHashStableSamePathAndDistinctPairsExist) {
     const auto path_a = c16_grants_path_for("c16hash-a");
     const auto path_a2 = c16_grants_path_for("c16hash-a");
     const auto path_b = c16_grants_path_for("c16hash-b");
-    const auto i_a = sh::WorkerPermissionGrants::shard_index_for(
-        path_a.string());
+    const auto i_a = sh::WorkerPermissionGrants::shard_index_for(path_a.string());
     EXPECT_LT(i_a, sh::WorkerPermissionGrants::kShardCount);
-    EXPECT_EQ(i_a, sh::WorkerPermissionGrants::shard_index_for(
-                       path_a2.string()));
+    EXPECT_EQ(i_a, sh::WorkerPermissionGrants::shard_index_for(path_a2.string()));
 
     int distinct_pairs = 0;
     for (int i = 0; i < 64; ++i) {
         for (int j = i + 1; j < 64; ++j) {
-            const auto pi = c16_grants_path_for(
-                std::format("c16pair-{:02d}", i));
-            const auto pj = c16_grants_path_for(
-                std::format("c16pair-{:02d}", j));
+            const auto pi = c16_grants_path_for(std::format("c16pair-{:02d}", i));
+            const auto pj = c16_grants_path_for(std::format("c16pair-{:02d}", j));
             if (sh::WorkerPermissionGrants::shard_index_for(pi.string()) !=
                 sh::WorkerPermissionGrants::shard_index_for(pj.string())) {
                 ++distinct_pairs;
             }
         }
     }
-    EXPECT_GT(distinct_pairs, 100)
-        << "16 shards must spread distinct team paths";
+    EXPECT_GT(distinct_pairs, 100) << "16 shards must spread distinct team paths";
     (void)path_b;
 }
 
@@ -440,8 +424,7 @@ TEST(WorkerPermissionGrantsC16, ShardHashStableSamePathAndDistinctPairsExist) {
 // behind its bounded ~10 s flock wait, while team B's update on the other
 // shard completes immediately (it never touches A's mutex). Pre-c16 the
 // single global mutex made B wait the same ~10 s.
-TEST(WorkerPermissionGrantsC16,
-     DifferentShardGrantUpdateBypassesForeignFlockStall) {
+TEST(WorkerPermissionGrantsC16, DifferentShardGrantUpdateBypassesForeignFlockStall) {
     namespace sh = loom::utils::swarm_helpers;
     C15GrantsEnv env;
 
@@ -466,10 +449,8 @@ TEST(WorkerPermissionGrantsC16,
         }
     }
     ASSERT_TRUE(found);
-    ASSERT_NE(sh::WorkerPermissionGrants::shard_index_for(
-                  c16_grants_path_for(team_a).string()),
-              sh::WorkerPermissionGrants::shard_index_for(
-                  c16_grants_path_for(team_b).string()));
+    ASSERT_NE(sh::WorkerPermissionGrants::shard_index_for(c16_grants_path_for(team_a).string()),
+              sh::WorkerPermissionGrants::shard_index_for(c16_grants_path_for(team_b).string()));
 
     const auto grants_a = c16_grants_path_for(team_a);
     fs::create_directories(grants_a.parent_path());
@@ -485,8 +466,7 @@ TEST(WorkerPermissionGrantsC16,
     std::thread blocked_a([&] {
         sh::WorkerPermissionGrants grants_a_store(team_a, "worker");
         const auto t0 = std::chrono::steady_clock::now();
-        grants_a_store.apply_updates(
-            sh::build_always_allow_updates_json("ToolA"));
+        grants_a_store.apply_updates(sh::build_always_allow_updates_json("ToolA"));
         a_elapsed = c16_elapsed_ms(t0);
     });
 
@@ -496,22 +476,17 @@ TEST(WorkerPermissionGrantsC16,
     // Team B: different shard mutex, uncontended flock — must land fast.
     sh::WorkerPermissionGrants grants_b_store(team_b, "worker");
     const auto t0 = std::chrono::steady_clock::now();
-    grants_b_store.apply_updates(
-        sh::build_always_allow_updates_json("ToolB"));
+    grants_b_store.apply_updates(sh::build_always_allow_updates_json("ToolB"));
     const auto b_elapsed = c16_elapsed_ms(t0);
-    std::printf(
-        "[c16] grants shard isolation: blocked team A still waiting; "
-        "team B update took %lld ms (pre-c16 global mutex: ~9500 ms)\n",
-        b_elapsed);
-    EXPECT_LT(b_elapsed, 1000)
-        << "a different-shard update must not wait for team A's flock stall";
+    std::printf("[c16] grants shard isolation: blocked team A still waiting; "
+                "team B update took %lld ms (pre-c16 global mutex: ~9500 ms)\n",
+                b_elapsed);
+    EXPECT_LT(b_elapsed, 1000) << "a different-shard update must not wait for team A's flock stall";
     sh::WorkerPermissionGrants grants_b_read(team_b, "worker");
-    EXPECT_TRUE(grants_b_read.allows("ToolB"))
-        << "team B grant must have persisted";
+    EXPECT_TRUE(grants_b_read.allows("ToolB")) << "team B grant must have persisted";
 
     blocked_a.join();
-    EXPECT_GE(a_elapsed, 9000)
-        << "team A must still honor its own bounded flock wait";
+    EXPECT_GE(a_elapsed, 9000) << "team A must still honor its own bounded flock wait";
     EXPECT_LE(a_elapsed, 14000);
     sh::WorkerPermissionGrants grants_a_read(team_a, "worker");
     EXPECT_FALSE(grants_a_read.allows("ToolA"))
@@ -563,10 +538,9 @@ TEST(WorkerPermissionGrantsC16, ApplyStormWithSharedReadersLosesNoRules) {
     auto child_loop = [&](int producer) {
         ::close(signal_pipe[0]);
         ::close(go_pipe[1]);
-        const std::string updates =
-            c15_updates_json(producer, kPerWriter, "c16stormtool");
-        const auto deadline = std::chrono::steady_clock::now() +
-                              std::chrono::milliseconds(kStormMs);
+        const std::string updates = c15_updates_json(producer, kPerWriter, "c16stormtool");
+        const auto deadline =
+            std::chrono::steady_clock::now() + std::chrono::milliseconds(kStormMs);
         while (std::chrono::steady_clock::now() < deadline) {
             sh::WorkerPermissionGrants grants{team, "worker"};
             grants.apply_updates(updates);
@@ -590,8 +564,7 @@ TEST(WorkerPermissionGrantsC16, ApplyStormWithSharedReadersLosesNoRules) {
             sh::WorkerPermissionGrants reader{team, "worker"};
             settled = true;
             for (int i = 0; i < kPerWriter; ++i) {
-                if (!reader.allows(
-                        std::format("c16stormtool-{}-{}", producer, i))) {
+                if (!reader.allows(std::format("c16stormtool-{}-{}", producer, i))) {
                     settled = false;
                     break;
                 }
@@ -648,7 +621,8 @@ TEST(WorkerPermissionGrantsC16, ApplyStormWithSharedReadersLosesNoRules) {
     }
     ::close(signal_pipe[0]);
     stop.store(true, std::memory_order_relaxed);
-    for (auto& t : readers) t.join();
+    for (auto& t : readers)
+        t.join();
     // Readers are gone: release every blocked child into its settle phase.
     for (int c = 0; c < kWriters; ++c) {
         const char go = 'G';
@@ -672,10 +646,8 @@ TEST(WorkerPermissionGrantsC16, ApplyStormWithSharedReadersLosesNoRules) {
     const auto list = parsed->root().get("rules");
     ASSERT_TRUE(list.is_arr());
     const auto names = c15_read_rule_names(grants_file);
-    EXPECT_EQ(names.size(),
-              static_cast<std::size_t>(kWriters * kPerWriter));
-    EXPECT_EQ(list.size(), names.size())
-        << "no duplicate rules may be persisted";
+    EXPECT_EQ(names.size(), static_cast<std::size_t>(kWriters * kPerWriter));
+    EXPECT_EQ(list.size(), names.size()) << "no duplicate rules may be persisted";
 }
 
 // c16a: the LOCK_SH allows() reader opens the grants leaf ONCE
@@ -737,8 +709,7 @@ TEST(WorkerPermissionGrantsC16a, ReaderSwapLeavesFailFastAndRegularParses) {
         std::error_code ec;
         fs::remove(path, ec);
         sh::WorkerPermissionGrants writer("c16arules", "worker");
-        writer.apply_updates(
-            sh::build_always_allow_updates_json("ToolA"));
+        writer.apply_updates(sh::build_always_allow_updates_json("ToolA"));
         sh::WorkerPermissionGrants reader("c16arules", "worker");
         EXPECT_TRUE(reader.allows("ToolA"));
         EXPECT_FALSE(reader.allows("ToolOther"));

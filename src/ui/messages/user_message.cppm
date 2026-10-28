@@ -12,13 +12,7 @@ export namespace loom::ui::messages {
 
 // ─── Attachment types ────────────────────────────────────────────────
 
-enum class AttachmentType {
-    File,
-    Image,
-    Directory,
-    Selection,
-    URL
-};
+enum class AttachmentType { File, Image, Directory, Selection, URL };
 
 struct MessageAttachment {
     AttachmentType type;
@@ -51,11 +45,21 @@ inline std::string format_file_size(std::size_t bytes) {
 inline std::string render_attachment_badge(const MessageAttachment& attachment) {
     std::string badge = "[";
     switch (attachment.type) {
-        case AttachmentType::File:      badge += "F "; break;
-        case AttachmentType::Image:     badge += "I "; break;
-        case AttachmentType::Directory: badge += "D "; break;
-        case AttachmentType::Selection: badge += "S "; break;
-        case AttachmentType::URL:       badge += "U "; break;
+    case AttachmentType::File:
+        badge += "F ";
+        break;
+    case AttachmentType::Image:
+        badge += "I ";
+        break;
+    case AttachmentType::Directory:
+        badge += "D ";
+        break;
+    case AttachmentType::Selection:
+        badge += "S ";
+        break;
+    case AttachmentType::URL:
+        badge += "U ";
+        break;
     }
     badge += attachment.name;
     if (attachment.size_bytes.has_value()) {
@@ -90,4 +94,4 @@ inline bool is_image_attachment(const MessageAttachment& attachment) {
     return attachment.type == AttachmentType::Image;
 }
 
-} // namespace loom::ui::messages
+}  // namespace loom::ui::messages

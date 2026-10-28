@@ -1,10 +1,10 @@
 module;
 
+#include <cctype>
 #include <cmath>
+#include <cstdint>
 #include <cstdio>
 #include <cstdlib>
-#include <cctype>
-#include <cstdint>
 
 export module loom.orchestration.agent.resume;
 
@@ -29,31 +29,31 @@ export namespace loom::tools::agent::resume_ {
 namespace fs = std::filesystem;
 
 using loom::core::Tool;
+using loom::core::ToolDefinition;
 using loom::core::ToolInput;
 using loom::core::ToolResult;
-using loom::core::ToolDefinition;
-using loom::services::api::Message;
 using loom::services::api::ContentBlock;
 using loom::services::api::ContentBlockType;
+using loom::services::api::Message;
 using loom::tools::agent::utils::AgentExecutionPlan;
-using loom::tools::agent::utils::filter_incomplete_tool_calls;
-using loom::tools::agent::utils::filter_resume_unresolved_tool_use_messages;
-using loom::tools::agent::utils::filter_resume_orphaned_thinking_messages;
-using loom::tools::agent::utils::filter_resume_whitespace_assistant_messages;
-using loom::tools::agent::utils::resume_content_replacements_from_entries;
 using loom::tools::agent::utils::apply_resume_content_replacements;
+using loom::tools::agent::utils::filter_incomplete_tool_calls;
+using loom::tools::agent::utils::filter_resume_orphaned_thinking_messages;
+using loom::tools::agent::utils::filter_resume_unresolved_tool_use_messages;
+using loom::tools::agent::utils::filter_resume_whitespace_assistant_messages;
 using loom::tools::agent::utils::fork_context_messages_from_entries;
+using loom::tools::agent::utils::resume_content_replacements_from_entries;
 
-[[nodiscard]] inline std::string format_resumed_agent_context(
-    const loom::tools::agent_runtime::NativeAgentRecord& record
-) {
+[[nodiscard]] inline std::string
+format_resumed_agent_context(const loom::tools::agent_runtime::NativeAgentRecord& record) {
     constexpr std::size_t max_lines = 80;
     constexpr std::size_t max_chars = 24000;
 
     std::string context;
     context += "<resumed_agent_context>\n";
     context += std::format("<agent_id>{}</agent_id>\n", record.agent_id);
-    context += std::format("<status>{}</status>\n", loom::tools::agent_runtime::native_agent_status_name(record.status));
+    context += std::format("<status>{}</status>\n",
+                           loom::tools::agent_runtime::native_agent_status_name(record.status));
     if (record.description && !record.description->empty()) {
         context += std::format("<description>{}</description>\n", *record.description);
     }
@@ -65,9 +65,8 @@ using loom::tools::agent::utils::fork_context_messages_from_entries;
     }
 
     context += "<recent_transcript>\n";
-    const auto start = record.transcript.size() > max_lines
-        ? record.transcript.size() - max_lines
-        : std::size_t{0};
+    const auto start = record.transcript.size() > max_lines ? record.transcript.size() - max_lines
+                                                            : std::size_t{0};
     for (std::size_t i = start; i < record.transcript.size(); ++i) {
         const auto& line = record.transcript[i];
         if (context.size() + line.size() + 2 > max_chars) {
@@ -93,18 +92,25 @@ inline void hydrate_resume_plan_from_existing_record(AgentExecutionPlan& plan) {
     plan.team_name = plan.team_name.or_else([&] { return existing->team_name; });
     plan.mode = plan.mode.or_else([&] { return existing->mode; });
     plan.isolation = plan.isolation.or_else([&] { return existing->isolation; });
-    plan.working_dir = plan.working_dir
-        .or_else([&] { return existing->worktree_path; })
-        .or_else([&] { return existing->cwd; });
+    plan.working_dir =
+        plan.working_dir.or_else([&] { return existing->worktree_path; }).or_else([&] {
+            return existing->cwd;
+        });
     plan.worktree_path = plan.worktree_path.or_else([&] { return existing->worktree_path; });
     plan.worktree_branch = plan.worktree_branch.or_else([&] { return existing->worktree_branch; });
-    plan.worktree_base_commit = plan.worktree_base_commit.or_else([&] { return existing->worktree_base_commit; });
-    plan.worktree_git_root = plan.worktree_git_root.or_else([&] { return existing->worktree_git_root; });
-    plan.teammate_backend = plan.teammate_backend.or_else([&] { return existing->teammate_backend; });
-    plan.teammate_task_id = plan.teammate_task_id.or_else([&] { return existing->teammate_task_id; });
-    plan.teammate_pane_id = plan.teammate_pane_id.or_else([&] { return existing->teammate_pane_id; });
+    plan.worktree_base_commit =
+        plan.worktree_base_commit.or_else([&] { return existing->worktree_base_commit; });
+    plan.worktree_git_root =
+        plan.worktree_git_root.or_else([&] { return existing->worktree_git_root; });
+    plan.teammate_backend =
+        plan.teammate_backend.or_else([&] { return existing->teammate_backend; });
+    plan.teammate_task_id =
+        plan.teammate_task_id.or_else([&] { return existing->teammate_task_id; });
+    plan.teammate_pane_id =
+        plan.teammate_pane_id.or_else([&] { return existing->teammate_pane_id; });
     plan.teammate_color = plan.teammate_color.or_else([&] { return existing->teammate_color; });
-    plan.parent_session_id = plan.parent_session_id.or_else([&] { return existing->parent_session_id; });
+    plan.parent_session_id =
+        plan.parent_session_id.or_else([&] { return existing->parent_session_id; });
 }
 
-} // namespace loom::tools::agent::resume_
+}  // namespace loom::tools::agent::resume_

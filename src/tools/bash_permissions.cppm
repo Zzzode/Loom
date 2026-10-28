@@ -4,16 +4,12 @@ export module loom.tools.bash_permissions;
 
 import std;
 
-import loom.tools.command_semantics;  // migrated: shared classifiers
-import loom.tools.tool;  // ToolPermission for default_bash_level_for bridge
+import loom.tools.command_semantics; // migrated: shared classifiers
+import loom.tools.tool;              // ToolPermission for default_bash_level_for bridge
 
 export namespace loom::tools {
 
-enum class BashPermissionLevel {
-    Blocked,
-    NeedsApproval,
-    Allowed
-};
+enum class BashPermissionLevel { Blocked, NeedsApproval, Allowed };
 
 // Bridge between the two permission models. ToolPermission classifies a tool's
 // static capability (read/write/execute/network); BashPermissionLevel is a
@@ -22,74 +18,84 @@ enum class BashPermissionLevel {
 // BashPermissionLevel before the live permission hook (or fail-closed rule)
 // weighs in. Read-only -> Allowed; anything that mutates state or reaches the
 // network -> NeedsApproval.
-[[nodiscard]] constexpr BashPermissionLevel default_bash_level_for(
-    loom::core::ToolPermission perm) noexcept {
+[[nodiscard]] constexpr BashPermissionLevel
+default_bash_level_for(loom::core::ToolPermission perm) noexcept {
     switch (perm) {
-        case loom::core::ToolPermission::ReadOnly:
-            return BashPermissionLevel::Allowed;
-        case loom::core::ToolPermission::Network:
-        case loom::core::ToolPermission::Write:
-        case loom::core::ToolPermission::Execute:
-            return BashPermissionLevel::NeedsApproval;
+    case loom::core::ToolPermission::ReadOnly:
+        return BashPermissionLevel::Allowed;
+    case loom::core::ToolPermission::Network:
+    case loom::core::ToolPermission::Write:
+    case loom::core::ToolPermission::Execute:
+        return BashPermissionLevel::NeedsApproval;
     }
     return BashPermissionLevel::NeedsApproval;
 }
 
-enum class PermissionMode {
-    Strict,
-    Normal,
-    Permissive
-};
+enum class PermissionMode { Strict, Normal, Permissive };
 
 inline auto get_blocked_commands() -> std::vector<std::string> {
-    return {
-        "rm -rf /",
-        "rm -rf /*",
-        "mkfs",
-        "dd if=/dev/zero",
-        ":(){ :|:& };:",  // fork bomb
-        "> /dev/sda",
-        "chmod -R 777 /",
-        "chown -R",
-        "shutdown",
-        "reboot",
-        "halt",
-        "poweroff",
-        "init 0",
-        "init 6"
-    };
+    return {"rm -rf /",      "rm -rf /*",      "mkfs",     "dd if=/dev/zero",
+            ":(){ :|:& };:",  // fork bomb
+            "> /dev/sda",    "chmod -R 777 /", "chown -R", "shutdown",        "reboot",
+            "halt",          "poweroff",       "init 0",   "init 6"};
 }
 
 inline auto is_safe_read_command(std::string_view command) -> bool {
 
-    static const std::vector<std::string_view> safe_prefixes = {
-        "ls", "cat", "head", "tail", "wc", "file", "stat",
-        "which", "where", "type", "echo", "printf", "date",
-        "whoami", "pwd", "env", "printenv", "uname",
-        "git status", "git log", "git diff", "git show",
-        "git branch", "git remote -v", "git rev-parse",
-        "find", "locate", "grep", "rg", "ag", "fd",
-        "tree", "du", "df", "free", "top -l 1",
-        "ps", "id", "groups", "hostname"
-    };
+    static const std::vector<std::string_view> safe_prefixes = {"ls",
+                                                                "cat",
+                                                                "head",
+                                                                "tail",
+                                                                "wc",
+                                                                "file",
+                                                                "stat",
+                                                                "which",
+                                                                "where",
+                                                                "type",
+                                                                "echo",
+                                                                "printf",
+                                                                "date",
+                                                                "whoami",
+                                                                "pwd",
+                                                                "env",
+                                                                "printenv",
+                                                                "uname",
+                                                                "git status",
+                                                                "git log",
+                                                                "git diff",
+                                                                "git show",
+                                                                "git branch",
+                                                                "git remote -v",
+                                                                "git rev-parse",
+                                                                "find",
+                                                                "locate",
+                                                                "grep",
+                                                                "rg",
+                                                                "ag",
+                                                                "fd",
+                                                                "tree",
+                                                                "du",
+                                                                "df",
+                                                                "free",
+                                                                "top -l 1",
+                                                                "ps",
+                                                                "id",
+                                                                "groups",
+                                                                "hostname"};
 
     auto trimmed = command;
     while (!trimmed.empty() && trimmed.front() == ' ') {
         trimmed.remove_prefix(1);
     }
 
-    return std::any_of(safe_prefixes.begin(), safe_prefixes.end(),
-        [&](std::string_view prefix) {
-            return trimmed.starts_with(prefix) &&
-                   (trimmed.size() == prefix.size() ||
-                    trimmed[prefix.size()] == ' ');
-        });
+    return std::any_of(safe_prefixes.begin(), safe_prefixes.end(), [&](std::string_view prefix) {
+        return trimmed.starts_with(prefix) &&
+               (trimmed.size() == prefix.size() || trimmed[prefix.size()] == ' ');
+    });
 }
 
-inline auto is_in_allowed_directory(
-    const std::filesystem::path& cmd_cwd,
-    std::span<const std::filesystem::path> allowed_dirs
-) -> bool {
+inline auto is_in_allowed_directory(const std::filesystem::path& cmd_cwd,
+                                    std::span<const std::filesystem::path> allowed_dirs) -> bool {
     if (allowed_dirs.empty()) {
         return true;
     }
@@ -97,21 +103,18 @@ inline auto is_in_allowed_directory(
     auto normalized_cwd = std::filesystem::weakly_canonical(cmd_cwd);
 
     return std::any_of(allowed_dirs.begin(), allowed_dirs.end(),
-        [&](const std::filesystem::path& allowed) {
-            auto normalized_allowed = std::filesystem::weakly_canonical(allowed);
+                       [&](const std::filesystem::path& allowed) {
+                           auto normalized_allowed = std::filesystem::weakly_canonical(allowed);
 
-            auto [mismatch_cwd, mismatch_allowed] = std::mismatch(
-                normalized_cwd.begin(), normalized_cwd.end(),
-                normalized_allowed.begin(), normalized_allowed.end()
-            );
-            return mismatch_allowed == normalized_allowed.end();
-        });
+                           auto [mismatch_cwd, mismatch_allowed] =
+                               std::mismatch(normalized_cwd.begin(), normalized_cwd.end(),
+                                             normalized_allowed.begin(), normalized_allowed.end());
+                           return mismatch_allowed == normalized_allowed.end();
+                       });
 }
 
-inline auto check_bash_permission(
-    std::string_view command,
-    PermissionMode mode
-) -> BashPermissionLevel {
+inline auto check_bash_permission(std::string_view command, PermissionMode mode)
+    -> BashPermissionLevel {
 
     if (command.empty()) {
         return BashPermissionLevel::Blocked;
@@ -143,36 +146,36 @@ inline auto check_bash_permission(
     // classify_command happened to miss a prefix.
     if (is_git_command(command)) {
         switch (classify_git_operation(command)) {
-            case CommandType::Read:
-                return BashPermissionLevel::Allowed;
-            case CommandType::Write:
-            case CommandType::Network:
-                if (mode == PermissionMode::Strict) {
-                    return BashPermissionLevel::NeedsApproval;
-                }
-                return BashPermissionLevel::Allowed;
-            case CommandType::Destructive:
+        case CommandType::Read:
+            return BashPermissionLevel::Allowed;
+        case CommandType::Write:
+        case CommandType::Network:
+            if (mode == PermissionMode::Strict) {
                 return BashPermissionLevel::NeedsApproval;
-            default:
-                break;
+            }
+            return BashPermissionLevel::Allowed;
+        case CommandType::Destructive:
+            return BashPermissionLevel::NeedsApproval;
+        default:
+            break;
         }
     }
 
     // migrated: package-manager classification
     if (is_package_manager_command(command)) {
         switch (classify_package_manager_operation(command)) {
-            case CommandType::Destructive:
-                // uninstall / remove / purge — always approve
+        case CommandType::Destructive:
+            // uninstall / remove / purge — always approve
+            return BashPermissionLevel::NeedsApproval;
+        case CommandType::Network:
+        case CommandType::Execute:
+        case CommandType::Write:
+            if (mode == PermissionMode::Strict) {
                 return BashPermissionLevel::NeedsApproval;
-            case CommandType::Network:
-            case CommandType::Execute:
-            case CommandType::Write:
-                if (mode == PermissionMode::Strict) {
-                    return BashPermissionLevel::NeedsApproval;
-                }
-                return BashPermissionLevel::Allowed;
-            default:
-                break;
+            }
+            return BashPermissionLevel::Allowed;
+        default:
+            break;
         }
     }
 
@@ -183,20 +186,20 @@ inline auto check_bash_permission(
     // Under Normal mode, anything Destructive/Network/Write/Execute that
     // wasn't handled above needs explicit approval.
     switch (cmd_type) {
-        case CommandType::Destructive:
-        case CommandType::Network:
-            return BashPermissionLevel::NeedsApproval;
-        case CommandType::Write:
-        case CommandType::Execute:
-        case CommandType::Unknown:
-            // Allow by default; the security layer (bash_security) will still
-            // catch injections / privilege escalations.
-            return BashPermissionLevel::Allowed;
-        case CommandType::Read:
-            return BashPermissionLevel::Allowed;
+    case CommandType::Destructive:
+    case CommandType::Network:
+        return BashPermissionLevel::NeedsApproval;
+    case CommandType::Write:
+    case CommandType::Execute:
+    case CommandType::Unknown:
+        // Allow by default; the security layer (bash_security) will still
+        // catch injections / privilege escalations.
+        return BashPermissionLevel::Allowed;
+    case CommandType::Read:
+        return BashPermissionLevel::Allowed;
     }
 
     return BashPermissionLevel::Allowed;
 }
 
-} // namespace loom::tools
+}  // namespace loom::tools

@@ -10,13 +10,13 @@
 /// this closure.
 module;
 
-#include <cstddef>
-#include <cstdint>
-
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/event.hpp>
 #include <ftxui/dom/elements.hpp>
+
+#include <cstddef>
+#include <cstdint>
 
 module loom.ui.dialogs.plugin_dialog_renderer;
 
@@ -32,10 +32,10 @@ import loom.plugins.plugin_marketplace;
 namespace loom::ui::dialogs::plugin_dialog_renderer {
 
 namespace dsys = loom::ui::dialogs::system;
-namespace ui   = loom::commands::plugin_ui;
-namespace pf   = loom::commands::plugin_helpers;
-namespace pm   = loom::utils::plugin_marketplace;
-namespace pd   = loom::ui::dialogs::plugin_dialog;
+namespace ui = loom::commands::plugin_ui;
+namespace pf = loom::commands::plugin_helpers;
+namespace pm = loom::utils::plugin_marketplace;
+namespace pd = loom::ui::dialogs::plugin_dialog;
 
 using namespace ftxui;
 
@@ -49,15 +49,14 @@ using namespace ftxui;
 struct PluginDialogHolder : public ComponentBase {
     Component screen;
 
-    explicit PluginDialogHolder(Component s) : screen(std::move(s)) {
+    explicit PluginDialogHolder(Component s)
+        : screen(std::move(s)) {
         ComponentBase::Add(screen);
     }
 
     Element Render() override { return screen->Render(); }
 
-    bool InjectEvent(const Event& event) {
-        return ComponentBase::OnEvent(event);
-    }
+    bool InjectEvent(const Event& event) { return ComponentBase::OnEvent(event); }
 };
 
 // ============================================================
@@ -92,9 +91,12 @@ struct PluginDialogHolder : public ComponentBase {
     if (suffix.substr(0, kManageQ.size()) == kManageQ) {
         vs.kind = ui::ViewKind::ManagePlugins;
         auto q = suffix.substr(kManageQ.size());
-        if (q == "action=uninstall")     vs.action = ui::TargetAction::Uninstall;
-        else if (q == "action=enable")   vs.action = ui::TargetAction::Enable;
-        else if (q == "action=disable")  vs.action = ui::TargetAction::Disable;
+        if (q == "action=uninstall")
+            vs.action = ui::TargetAction::Uninstall;
+        else if (q == "action=enable")
+            vs.action = ui::TargetAction::Enable;
+        else if (q == "action=disable")
+            vs.action = ui::TargetAction::Disable;
         return vs;
     }
 
@@ -103,16 +105,30 @@ struct PluginDialogHolder : public ComponentBase {
     if (suffix.substr(0, kMarketQ.size()) == kMarketQ) {
         vs.kind = ui::ViewKind::ManageMarketplaces;
         auto q = suffix.substr(kMarketQ.size());
-        if (q == "action=remove")        vs.action = ui::TargetAction::Remove;
-        else if (q == "action=update")   vs.action = ui::TargetAction::Update;
+        if (q == "action=remove")
+            vs.action = ui::TargetAction::Remove;
+        else if (q == "action=update")
+            vs.action = ui::TargetAction::Update;
         return vs;
     }
 
     // Exact-match suffixes.
-    if (suffix == "discover-plugins")    { vs.kind = ui::ViewKind::DiscoverPlugins;  return vs; }
-    if (suffix == "manage-plugins")      { vs.kind = ui::ViewKind::ManagePlugins;    return vs; }
-    if (suffix == "manage-marketplaces") { vs.kind = ui::ViewKind::ManageMarketplaces; return vs; }
-    if (suffix == "add-marketplace")     { vs.kind = ui::ViewKind::AddMarketplace;   return vs; }
+    if (suffix == "discover-plugins") {
+        vs.kind = ui::ViewKind::DiscoverPlugins;
+        return vs;
+    }
+    if (suffix == "manage-plugins") {
+        vs.kind = ui::ViewKind::ManagePlugins;
+        return vs;
+    }
+    if (suffix == "manage-marketplaces") {
+        vs.kind = ui::ViewKind::ManageMarketplaces;
+        return vs;
+    }
+    if (suffix == "add-marketplace") {
+        vs.kind = ui::ViewKind::AddMarketplace;
+        return vs;
+    }
 
     // Fallback: no recognized suffix → Discover tab.
     vs.kind = ui::ViewKind::DiscoverPlugins;
@@ -124,8 +140,7 @@ struct PluginDialogHolder : public ComponentBase {
 // ============================================================
 
 /// Convert an installed plugin (manifest-derived) into a display-ready cell.
-[[nodiscard]] ui::InstalledCellData to_installed_cell(
-    const loom::commands::InstalledPlugin& p) {
+[[nodiscard]] ui::InstalledCellData to_installed_cell(const loom::commands::InstalledPlugin& p) {
     ui::InstalledCellData cell;
     // id may be "name@marketplace"; split for display.
     auto at = p.id.find('@');
@@ -151,9 +166,8 @@ struct PluginDialogHolder : public ComponentBase {
 
 /// Try to read a single marketplace's cached manifest (no network).  Returns
 /// nullopt when no cache exists yet (fresh install / never fetched).
-[[nodiscard]] std::optional<pm::PluginMarketplace> load_cached_marketplace(
-    std::string_view name,
-    const pm::KnownMarketplace& km) {
+[[nodiscard]] std::optional<pm::PluginMarketplace>
+load_cached_marketplace(std::string_view name, const pm::KnownMarketplace& km) {
     namespace detail = pm::detail;
     std::error_code ec;
     std::filesystem::path cache_path;
@@ -176,16 +190,11 @@ struct PluginDialogHolder : public ComponentBase {
 
 /// Human-readable source tag for a marketplace (e.g. "GitHub: owner/repo").
 [[nodiscard]] std::string source_display(const pm::MarketplaceSource& src) {
-    if (auto g = std::get_if<pm::GitHubMarketplaceSource>(&src))
-        return "GitHub: " + g->repo;
-    if (auto g = std::get_if<pm::GitMarketplaceSource>(&src))
-        return "Git: " + g->url;
-    if (auto u = std::get_if<pm::UrlMarketplaceSource>(&src))
-        return "URL: " + u->url;
-    if (auto d = std::get_if<pm::DirectoryMarketplaceSource>(&src))
-        return "Directory: " + d->path;
-    if (auto f = std::get_if<pm::FileMarketplaceSource>(&src))
-        return "File: " + f->path;
+    if (auto g = std::get_if<pm::GitHubMarketplaceSource>(&src)) return "GitHub: " + g->repo;
+    if (auto g = std::get_if<pm::GitMarketplaceSource>(&src)) return "Git: " + g->url;
+    if (auto u = std::get_if<pm::UrlMarketplaceSource>(&src)) return "URL: " + u->url;
+    if (auto d = std::get_if<pm::DirectoryMarketplaceSource>(&src)) return "Directory: " + d->path;
+    if (auto f = std::get_if<pm::FileMarketplaceSource>(&src)) return "File: " + f->path;
     return "";
 }
 
@@ -193,9 +202,8 @@ struct PluginDialogHolder : public ComponentBase {
 /// ViewState.  Installed plugins come from ~/.loom/plugins manifests;
 /// marketplaces + discover plugins come from known_marketplaces.json + the
 /// per-marketplace cache (no network is performed here).
-[[nodiscard]] pd::PluginDialogInputs build_plugin_dialog_inputs(
-    ui::ViewState initial,
-    std::function<void()> on_close) {
+[[nodiscard]] pd::PluginDialogInputs build_plugin_dialog_inputs(ui::ViewState initial,
+                                                                std::function<void()> on_close) {
     pd::PluginDialogInputs inputs;
     inputs.initial_view = std::move(initial);
 
@@ -257,7 +265,7 @@ struct PluginDialogHolder : public ComponentBase {
 
     // ── Callbacks ──────────────────────────────────────────────────────────
     inputs.on_close = std::move(on_close);
-    inputs.on_navigate = [](const ui::ViewState&) {}; // navigation is internal
+    inputs.on_navigate = [](const ui::ViewState&) {};  // navigation is internal
 
     return inputs;
 }
@@ -312,12 +320,10 @@ void register_plugin_dialog_renderer(dsys::DialogRendererRegistry& registry) {
                     evict_component(id_copy);
                     if (oc) oc();
                 };
-                auto inputs  = build_plugin_dialog_inputs(
-                    std::move(initial), std::move(on_close));
+                auto inputs = build_plugin_dialog_inputs(std::move(initial), std::move(on_close));
 
                 auto dialog = pd::MakePluginDialog(std::move(inputs));
-                auto holder = std::make_shared<PluginDialogHolder>(
-                    std::move(dialog));
+                auto holder = std::make_shared<PluginDialogHolder>(std::move(dialog));
                 it = cache.emplace(std::move(id_copy), std::move(holder)).first;
             }
 
@@ -332,8 +338,7 @@ void register_plugin_dialog_renderer(dsys::DialogRendererRegistry& registry) {
             auto it = cache.find(p->id);
             if (it == cache.end() || !it->second) return false;
             return it->second->InjectEvent(event);
-        }
-    );
+        });
 }
 
-} // namespace loom::ui::dialogs::plugin_dialog_renderer
+}  // namespace loom::ui::dialogs::plugin_dialog_renderer

@@ -2,7 +2,6 @@
 /// @brief Local agent task implementation with progress tracking and lifecycle management.
 module;
 
-
 export module loom.tasks.local_agent_task;
 
 import std;
@@ -30,27 +29,19 @@ inline constexpr auto PANEL_GRACE_MS = std::chrono::milliseconds(5000);
 // ============================================================
 
 /// Update progress tracker from an assistant message's usage data
-inline void update_progress_from_usage(
-    ProgressTracker& tracker,
-    int input_tokens,
-    int cache_creation_tokens,
-    int cache_read_tokens,
-    int output_tokens
-) {
+inline void update_progress_from_usage(ProgressTracker& tracker, int input_tokens,
+                                       int cache_creation_tokens, int cache_read_tokens,
+                                       int output_tokens) {
     // Keep latest input (it's cumulative in the API), sum outputs
     tracker.latest_input_tokens = input_tokens + cache_creation_tokens + cache_read_tokens;
     tracker.cumulative_output_tokens += output_tokens;
 }
 
 /// Record a tool use in the progress tracker
-inline void record_tool_use(
-    ProgressTracker& tracker,
-    const std::string& tool_name,
-    const std::string& input_json,
-    std::optional<std::string> activity_description = std::nullopt,
-    bool is_search = false,
-    bool is_read = false
-) {
+inline void record_tool_use(ProgressTracker& tracker, const std::string& tool_name,
+                            const std::string& input_json,
+                            std::optional<std::string> activity_description = std::nullopt,
+                            bool is_search = false, bool is_read = false) {
     tracker.tool_use_count++;
     tracker.recent_activities.push_back(ToolActivity{
         .tool_name = tool_name,
@@ -67,15 +58,13 @@ inline void record_tool_use(
 
 /// Get a snapshot of current progress from tracker
 [[nodiscard]] inline AgentProgress get_progress_update(const ProgressTracker& tracker) {
-    return AgentProgress{
-        .tool_use_count = tracker.tool_use_count,
-        .token_count = get_token_count_from_tracker(tracker),
-        .last_activity = tracker.recent_activities.empty() 
-            ? std::nullopt 
-            : std::optional{tracker.recent_activities.back()},
-        .recent_activities = tracker.recent_activities,
-        .summary = std::nullopt
-    };
+    return AgentProgress{.tool_use_count = tracker.tool_use_count,
+                         .token_count = get_token_count_from_tracker(tracker),
+                         .last_activity = tracker.recent_activities.empty()
+                                              ? std::nullopt
+                                              : std::optional{tracker.recent_activities.back()},
+                         .recent_activities = tracker.recent_activities,
+                         .summary = std::nullopt};
 }
 
 // ============================================================
@@ -98,7 +87,7 @@ public:
         resolvers_[task_id] = std::move(promise);
         return future;
     }
-    
+
     /// Resolve the background signal (task has been backgrounded)
     void resolve(const std::string& task_id) {
         std::lock_guard lock(mutex_);
@@ -107,7 +96,7 @@ public:
             resolvers_.erase(it);
         }
     }
-    
+
     /// Remove a signal (task completed without backgrounding)
     void remove(const std::string& task_id) {
         std::lock_guard lock(mutex_);
@@ -127,7 +116,8 @@ inline BackgroundSignalRegistry& background_signals() {
 // ============================================================
 
 /// Callback type for updating a specific agent task's state
-using UpdateAgentTaskFn = std::function<void(const std::string&, std::function<void(LocalAgentTaskState&)>)>;
+using UpdateAgentTaskFn =
+    std::function<void(const std::string&, std::function<void(LocalAgentTaskState&)>)>;
 
 /// Callback type for registering a task in AppState
 using RegisterTaskFn = std::function<void(LocalAgentTaskState)>;
@@ -140,34 +130,28 @@ using RemoveTaskFn = std::function<void(const std::string&)>;
 // ============================================================
 
 /// Kill an agent task. No-op if already killed/completed.
-inline void kill_async_agent(
-    const std::string& task_id,
-    UpdateAgentTaskFn update_task,
-    std::function<void()> abort_fn
-) {
+inline void kill_async_agent(const std::string& task_id, UpdateAgentTaskFn update_task,
+                             std::function<void()> abort_fn) {
     bool killed = false;
     update_task(task_id, [&](LocalAgentTaskState& task) {
         if (task.status != loom::core::TaskStatus::Running) return;
-        
+
         killed = true;
         abort_fn();  // Abort the agent's execution
-        
+
         task.status = loom::core::TaskStatus::Killed;
         task.end_time = std::chrono::system_clock::now();
-        task.evict_after = task.retain 
-            ? std::nullopt 
-            : std::optional{std::chrono::system_clock::now() + PANEL_GRACE_MS};
+        task.evict_after = task.retain
+                               ? std::nullopt
+                               : std::optional{std::chrono::system_clock::now() + PANEL_GRACE_MS};
         task.selected_agent = std::nullopt;
     });
 }
 
 /// Kill all running agent tasks (used by ESC cancellation)
 template <typename GetTasksFn>
-inline void kill_all_running_agent_tasks(
-    GetTasksFn get_tasks,
-    UpdateAgentTaskFn update_task,
-    std::function<void(const std::string&)> abort_fn
-) {
+inline void kill_all_running_agent_tasks(GetTasksFn get_tasks, UpdateAgentTaskFn update_task,
+                                         std::function<void(const std::string&)> abort_fn) {
     auto tasks = get_tasks();
     for (const auto& [task_id, task] : tasks) {
         if (task.status == loom::core::TaskStatus::Running) {
@@ -177,24 +161,16 @@ inline void kill_all_running_agent_tasks(
 }
 
 /// Mark agents as notified without sending notification
-inline void mark_agents_notified(
-    const std::string& task_id,
-    UpdateAgentTaskFn update_task
-) {
-    update_task(task_id, [](LocalAgentTaskState& task) {
-        task.notified = true;
-    });
+inline void mark_agents_notified(const std::string& task_id, UpdateAgentTaskFn update_task) {
+    update_task(task_id, [](LocalAgentTaskState& task) { task.notified = true; });
 }
 
 /// Update progress for a running agent task
-inline void update_agent_progress(
-    const std::string& task_id,
-    const AgentProgress& progress,
-    UpdateAgentTaskFn update_task
-) {
+inline void update_agent_progress(const std::string& task_id, const AgentProgress& progress,
+                                  UpdateAgentTaskFn update_task) {
     update_task(task_id, [&](LocalAgentTaskState& task) {
         if (task.status != loom::core::TaskStatus::Running) return;
-        
+
         // Preserve existing summary
         auto existing_summary = task.progress ? task.progress->summary : std::nullopt;
         task.progress = progress;
@@ -205,14 +181,11 @@ inline void update_agent_progress(
 }
 
 /// Update the background summary for an agent task
-inline void update_agent_summary(
-    const std::string& task_id,
-    const std::string& summary,
-    UpdateAgentTaskFn update_task
-) {
+inline void update_agent_summary(const std::string& task_id, const std::string& summary,
+                                 UpdateAgentTaskFn update_task) {
     update_task(task_id, [&](LocalAgentTaskState& task) {
         if (task.status != loom::core::TaskStatus::Running) return;
-        
+
         if (!task.progress) {
             task.progress = AgentProgress{};
         }
@@ -221,50 +194,41 @@ inline void update_agent_summary(
 }
 
 /// Complete an agent task with result
-inline void complete_agent_task(
-    const AgentToolResult& result,
-    UpdateAgentTaskFn update_task
-) {
+inline void complete_agent_task(const AgentToolResult& result, UpdateAgentTaskFn update_task) {
     update_task(result.agent_id, [&](LocalAgentTaskState& task) {
         if (task.status != loom::core::TaskStatus::Running) return;
-        
+
         task.status = loom::core::TaskStatus::Completed;
         task.result = result;
         task.end_time = std::chrono::system_clock::now();
         task.evict_after = task.retain
-            ? std::nullopt
-            : std::optional{std::chrono::system_clock::now() + PANEL_GRACE_MS};
+                               ? std::nullopt
+                               : std::optional{std::chrono::system_clock::now() + PANEL_GRACE_MS};
         task.selected_agent = std::nullopt;
     });
 }
 
 /// Fail an agent task with error
-inline void fail_agent_task(
-    const std::string& task_id,
-    const std::string& error,
-    UpdateAgentTaskFn update_task
-) {
+inline void fail_agent_task(const std::string& task_id, const std::string& error,
+                            UpdateAgentTaskFn update_task) {
     update_task(task_id, [&](LocalAgentTaskState& task) {
         if (task.status != loom::core::TaskStatus::Running) return;
-        
+
         task.status = loom::core::TaskStatus::Failed;
         task.error = error;
         task.end_time = std::chrono::system_clock::now();
         task.evict_after = task.retain
-            ? std::nullopt
-            : std::optional{std::chrono::system_clock::now() + PANEL_GRACE_MS};
+                               ? std::nullopt
+                               : std::optional{std::chrono::system_clock::now() + PANEL_GRACE_MS};
         task.selected_agent = std::nullopt;
     });
 }
 
 /// Register an async (immediately backgrounded) agent task
-[[nodiscard]] inline LocalAgentTaskState create_async_agent_state(
-    const std::string& agent_id,
-    const std::string& description,
-    const std::string& prompt,
-    const AgentDefinition& selected_agent,
-    std::optional<std::string> tool_use_id = std::nullopt
-) {
+[[nodiscard]] inline LocalAgentTaskState
+create_async_agent_state(const std::string& agent_id, const std::string& description,
+                         const std::string& prompt, const AgentDefinition& selected_agent,
+                         std::optional<std::string> tool_use_id = std::nullopt) {
     LocalAgentTaskState state{};
     state.id = loom::core::TaskId{agent_id};
     state.type = loom::core::TaskType::LocalAgent;
@@ -276,7 +240,8 @@ inline void fail_agent_task(
     state.agent_id = agent_id;
     state.prompt = prompt;
     state.selected_agent = selected_agent;
-    state.agent_type = selected_agent.agent_type.empty() ? "general-purpose" : selected_agent.agent_type;
+    state.agent_type =
+        selected_agent.agent_type.empty() ? "general-purpose" : selected_agent.agent_type;
     state.retrieved = false;
     state.last_reported_tool_count = 0;
     state.last_reported_token_count = 0;
@@ -292,19 +257,17 @@ struct ForegroundAgentRegistration {
     std::shared_future<void> background_signal;
 };
 
-[[nodiscard]] inline ForegroundAgentRegistration create_foreground_agent_state(
-    const std::string& agent_id,
-    const std::string& description,
-    const std::string& prompt,
-    const AgentDefinition& selected_agent,
-    std::optional<std::string> tool_use_id = std::nullopt
-) {
-    auto state = create_async_agent_state(agent_id, description, prompt, selected_agent, tool_use_id);
+[[nodiscard]] inline ForegroundAgentRegistration
+create_foreground_agent_state(const std::string& agent_id, const std::string& description,
+                              const std::string& prompt, const AgentDefinition& selected_agent,
+                              std::optional<std::string> tool_use_id = std::nullopt) {
+    auto state =
+        create_async_agent_state(agent_id, description, prompt, selected_agent, tool_use_id);
     state.is_backgrounded = false;  // Not yet backgrounded
-    
+
     // Register background signal
     auto signal = background_signals().register_signal(agent_id);
-    
+
     return ForegroundAgentRegistration{
         .task_id = agent_id,
         .background_signal = std::move(signal),
@@ -312,17 +275,15 @@ struct ForegroundAgentRegistration {
 }
 
 /// Background a specific foreground agent task
-[[nodiscard]] inline bool background_agent_task(
-    const std::string& task_id,
-    UpdateAgentTaskFn update_task
-) {
+[[nodiscard]] inline bool background_agent_task(const std::string& task_id,
+                                                UpdateAgentTaskFn update_task) {
     bool backgrounded = false;
     update_task(task_id, [&](LocalAgentTaskState& task) {
         if (task.is_backgrounded) return;
         task.is_backgrounded = true;
         backgrounded = true;
     });
-    
+
     if (backgrounded) {
         // Resolve the background signal
         background_signals().resolve(task_id);
@@ -331,40 +292,29 @@ struct ForegroundAgentRegistration {
 }
 
 /// Unregister a foreground agent task (completed without backgrounding)
-inline void unregister_agent_foreground(
-    const std::string& task_id,
-    RemoveTaskFn remove_task
-) {
+inline void unregister_agent_foreground(const std::string& task_id, RemoveTaskFn remove_task) {
     background_signals().remove(task_id);
     remove_task(task_id);
 }
 
 /// Queue a pending message for an agent task
-inline void queue_pending_message(
-    const std::string& task_id,
-    const std::string& msg,
-    UpdateAgentTaskFn update_task
-) {
-    update_task(task_id, [&](LocalAgentTaskState& task) {
-        task.pending_messages.push_back(msg);
-    });
+inline void queue_pending_message(const std::string& task_id, const std::string& msg,
+                                  UpdateAgentTaskFn update_task) {
+    update_task(task_id, [&](LocalAgentTaskState& task) { task.pending_messages.push_back(msg); });
 }
 
 /// Drain all pending messages from an agent task
 [[nodiscard]] inline std::vector<std::string> drain_pending_messages(
     const std::string& task_id,
     std::function<std::optional<LocalAgentTaskState>(const std::string&)> get_task,
-    UpdateAgentTaskFn update_task
-) {
+    UpdateAgentTaskFn update_task) {
     auto task_opt = get_task(task_id);
     if (!task_opt || task_opt->pending_messages.empty()) {
         return {};
     }
-    
+
     auto drained = task_opt->pending_messages;
-    update_task(task_id, [](LocalAgentTaskState& task) {
-        task.pending_messages.clear();
-    });
+    update_task(task_id, [](LocalAgentTaskState& task) { task.pending_messages.clear(); });
     return drained;
 }
 
@@ -377,29 +327,39 @@ inline void queue_pending_message(
     result.reserve(text.size());
     for (char ch : text) {
         switch (ch) {
-            case '&': result += "&amp;"; break;
-            case '<': result += "&lt;"; break;
-            case '>': result += "&gt;"; break;
-            case '"': result += "&quot;"; break;
-            case '\'': result += "&apos;"; break;
-            default: result.push_back(ch); break;
+        case '&':
+            result += "&amp;";
+            break;
+        case '<':
+            result += "&lt;";
+            break;
+        case '>':
+            result += "&gt;";
+            break;
+        case '"':
+            result += "&quot;";
+            break;
+        case '\'':
+            result += "&apos;";
+            break;
+        default:
+            result.push_back(ch);
+            break;
         }
     }
     return result;
 }
 
 /// Generate XML notification for an agent task completion
-[[nodiscard]] inline std::string generate_agent_notification(
-    const std::string& task_id,
-    const std::string& description,
-    const std::string& status,  // "completed" | "failed" | "stopped"
-    std::optional<std::string> error = std::nullopt,
-    std::optional<std::string> final_message = std::nullopt,
-    std::optional<std::string> tool_use_id = std::nullopt,
-    std::optional<std::string> worktree_path = std::nullopt,
-    std::optional<std::string> worktree_branch = std::nullopt,
-    std::optional<std::string> output_file = std::nullopt
-) {
+[[nodiscard]] inline std::string
+generate_agent_notification(const std::string& task_id, const std::string& description,
+                            const std::string& status,  // "completed" | "failed" | "stopped"
+                            std::optional<std::string> error = std::nullopt,
+                            std::optional<std::string> final_message = std::nullopt,
+                            std::optional<std::string> tool_use_id = std::nullopt,
+                            std::optional<std::string> worktree_path = std::nullopt,
+                            std::optional<std::string> worktree_branch = std::nullopt,
+                            std::optional<std::string> output_file = std::nullopt) {
     const auto escaped_task_id = escape_xml_text(task_id);
     const auto escaped_description = escape_xml_text(description);
     const auto escaped_status = escape_xml_text(status);
@@ -407,34 +367,37 @@ inline void queue_pending_message(
     if (status == "completed") {
         summary = std::format("Agent \"{}\" completed", escaped_description);
     } else if (status == "failed") {
-        summary = std::format("Agent \"{}\" failed: {}", escaped_description, escape_xml_text(error.value_or("Unknown error")));
+        summary = std::format("Agent \"{}\" failed: {}", escaped_description,
+                              escape_xml_text(error.value_or("Unknown error")));
     } else {
         summary = std::format("Agent \"{}\" was stopped", escaped_description);
     }
-    
-    std::string tool_use_line = tool_use_id 
-        ? std::format("\n<{}>{}</{}>", xml::TOOL_USE_ID_TAG, escape_xml_text(*tool_use_id), xml::TOOL_USE_ID_TAG)
-        : "";
-    std::string result_section = final_message 
-        ? std::format("\n<{}>{}</{}>", xml::RESULT_TAG, escape_xml_text(*final_message), xml::RESULT_TAG)
-        : "";
-    std::string worktree_section = worktree_path
-        ? std::format("\n<{}><{}>{}</{}>{}</{}>",
-            xml::WORKTREE_TAG,
-            xml::WORKTREE_PATH_TAG, escape_xml_text(*worktree_path), xml::WORKTREE_PATH_TAG,
-            worktree_branch ? std::format("<{}>{}</{}>", xml::WORKTREE_BRANCH_TAG, escape_xml_text(*worktree_branch), xml::WORKTREE_BRANCH_TAG) : "",
-            xml::WORKTREE_TAG)
-        : "";
-    
+
+    std::string tool_use_line =
+        tool_use_id ? std::format("\n<{}>{}</{}>", xml::TOOL_USE_ID_TAG,
+                                  escape_xml_text(*tool_use_id), xml::TOOL_USE_ID_TAG)
+                    : "";
+    std::string result_section = final_message
+                                     ? std::format("\n<{}>{}</{}>", xml::RESULT_TAG,
+                                                   escape_xml_text(*final_message), xml::RESULT_TAG)
+                                     : "";
+    std::string worktree_section =
+        worktree_path
+            ? std::format("\n<{}><{}>{}</{}>{}</{}>", xml::WORKTREE_TAG, xml::WORKTREE_PATH_TAG,
+                          escape_xml_text(*worktree_path), xml::WORKTREE_PATH_TAG,
+                          worktree_branch ? std::format("<{}>{}</{}>", xml::WORKTREE_BRANCH_TAG,
+                                                        escape_xml_text(*worktree_branch),
+                                                        xml::WORKTREE_BRANCH_TAG)
+                                          : "",
+                          xml::WORKTREE_TAG)
+            : "";
+
     return std::format(
         "<{}>\n<{}>{}</{}>{}\n<{}>{}</{}>\n<{}>{}</{}>\n<{}>{}</{}>{}{}\n</{}>",
-        xml::TASK_NOTIFICATION_TAG,
-        xml::TASK_ID_TAG, escaped_task_id, xml::TASK_ID_TAG, tool_use_line,
-        xml::OUTPUT_FILE_TAG, escape_xml_text(output_file.value_or("")), xml::OUTPUT_FILE_TAG,
-        xml::STATUS_TAG, escaped_status, xml::STATUS_TAG,
-        xml::SUMMARY_TAG, summary, xml::SUMMARY_TAG, result_section, worktree_section,
-        xml::TASK_NOTIFICATION_TAG
-    );
+        xml::TASK_NOTIFICATION_TAG, xml::TASK_ID_TAG, escaped_task_id, xml::TASK_ID_TAG,
+        tool_use_line, xml::OUTPUT_FILE_TAG, escape_xml_text(output_file.value_or("")),
+        xml::OUTPUT_FILE_TAG, xml::STATUS_TAG, escaped_status, xml::STATUS_TAG, xml::SUMMARY_TAG,
+        summary, xml::SUMMARY_TAG, result_section, worktree_section, xml::TASK_NOTIFICATION_TAG);
 }
 
-} // namespace loom::tasks
+}  // namespace loom::tasks

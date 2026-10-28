@@ -5,12 +5,12 @@
 /// footer button.
 module;
 
-#include <cstdint>
-
-#include <ftxui/dom/elements.hpp>
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/event.hpp>
+#include <ftxui/dom/elements.hpp>
+
+#include <cstdint>
 
 export module loom.ui.messages.local_command_output_message;
 
@@ -31,7 +31,7 @@ using namespace ftxui;
 enum class StreamKind : std::uint8_t {
     Stdout,
     Stderr,
-    StdinEcho,     // The command line itself echoed back
+    StdinEcho,  // The command line itself echoed back
 };
 
 /// One line of interleaved command output
@@ -42,19 +42,19 @@ struct OutputLine {
 
 /// The full data model for a local-command invocation
 struct LocalCommandData {
-    std::string command_line;        // "ls -la foo/"
-    std::string working_dir;         // Optional CWD banner
-    std::vector<OutputLine> lines;   // Interleaved stdout / stderr
-    std::optional<int> exit_code;    // nullopt = still running
+    std::string command_line;       // "ls -la foo/"
+    std::string working_dir;        // Optional CWD banner
+    std::vector<OutputLine> lines;  // Interleaved stdout / stderr
+    std::optional<int> exit_code;   // nullopt = still running
     std::chrono::milliseconds elapsed_ms{0};
-    std::optional<std::size_t> total_bytes; // Total bytes emitted
+    std::optional<std::size_t> total_bytes;  // Total bytes emitted
     bool is_running{false};
 
     // Collapsing state
-    bool collapsed{false};           // Top-level fold
-    int head_lines{100};             // Top kept when hiding
-    int tail_lines{100};             // Bottom kept when hiding
-    std::size_t collapse_threshold{200}; // >200 lines → show fold marker
+    bool collapsed{false};                // Top-level fold
+    int head_lines{100};                  // Top kept when hiding
+    int tail_lines{100};                  // Bottom kept when hiding
+    std::size_t collapse_threshold{200};  // >200 lines → show fold marker
 };
 
 /// Component options
@@ -76,12 +76,14 @@ struct LocalCommandOptions {
 
 [[nodiscard]] inline const char* exit_status_icon(std::optional<int> code) {
     if (!code) return loom::ui::design::figures::kCircle.data();
-    return *code == 0 ? loom::ui::design::figures::kTick.data() : loom::ui::design::figures::kCross.data();
+    return *code == 0 ? loom::ui::design::figures::kTick.data()
+                      : loom::ui::design::figures::kCross.data();
 }
 
 [[nodiscard]] inline Color exit_status_color(std::optional<int> code) {
     if (!code) return loom::ui::design::theme::current_theme().palette->info;
-    return *code == 0 ? loom::ui::design::theme::current_theme().palette->primary : loom::ui::design::theme::current_theme().palette->danger;
+    return *code == 0 ? loom::ui::design::theme::current_theme().palette->primary
+                      : loom::ui::design::theme::current_theme().palette->danger;
 }
 
 [[nodiscard]] inline std::string format_duration(std::chrono::milliseconds ms) {
@@ -107,30 +109,31 @@ struct LocalCommandOptions {
 
 [[nodiscard]] inline Element RenderCommandHeader(const LocalCommandData& d) {
     Elements left;
-    left.push_back(text(std::string{"$ "}) | color(loom::ui::design::theme::current_theme().palette->primary) | bold);
-    left.push_back(text(d.command_line) | color(loom::ui::design::theme::current_theme().palette->text) | bold);
+    left.push_back(text(std::string{"$ "}) |
+                   color(loom::ui::design::theme::current_theme().palette->primary) | bold);
+    left.push_back(text(d.command_line) |
+                   color(loom::ui::design::theme::current_theme().palette->text) | bold);
 
     Elements right;
     if (d.is_running) {
-        right.push_back(text((" " + std::string(loom::ui::design::figures::kCircle) + " running ")) | color(loom::ui::design::theme::current_theme().palette->info));
+        right.push_back(
+            text((" " + std::string(loom::ui::design::figures::kCircle) + " running ")) |
+            color(loom::ui::design::theme::current_theme().palette->info));
     }
     if (d.exit_code) {
         right.push_back(
-            text(std::format(" {} exit {}",
-                             exit_status_icon(d.exit_code),
-                             *d.exit_code))
-            | bold | color(exit_status_color(d.exit_code)));
+            text(std::format(" {} exit {}", exit_status_icon(d.exit_code), *d.exit_code)) | bold |
+            color(exit_status_color(d.exit_code)));
     }
     if (d.elapsed_ms.count() > 0) {
-        right.push_back(text(std::format(" · {} ", format_duration(d.elapsed_ms)))
-                        | dim);
+        right.push_back(text(std::format(" · {} ", format_duration(d.elapsed_ms))) | dim);
     }
     if (d.total_bytes) {
-        right.push_back(text(std::format("· {} ", format_bytes(*d.total_bytes)))
-                        | dim);
+        right.push_back(text(std::format("· {} ", format_bytes(*d.total_bytes))) | dim);
     }
     // Copy cmdline hint
-    right.push_back(text("[x] copy cmd") | dim | color(loom::ui::design::theme::current_theme().palette->muted));
+    right.push_back(text("[x] copy cmd") | dim |
+                    color(loom::ui::design::theme::current_theme().palette->muted));
 
     return hbox({
         hbox(left),
@@ -164,18 +167,21 @@ struct LocalCommandOptions {
     if (d.collapsed && total > d.collapse_threshold) {
         const auto head = std::min<std::size_t>(d.head_lines, total);
         const auto tail = std::min<std::size_t>(d.tail_lines, total - head);
-        for (std::size_t i = 0; i < head; ++i) indices.push_back(i);
+        for (std::size_t i = 0; i < head; ++i)
+            indices.push_back(i);
         if (tail > 0 && head + tail < total) {
             show_fold_marker = true;
             hidden = total - head - tail;
-            for (std::size_t i = total - tail; i < total; ++i) indices.push_back(i);
+            for (std::size_t i = total - tail; i < total; ++i)
+                indices.push_back(i);
         } else if (head < total) {
             show_fold_marker = true;
             hidden = total - head;
         }
     } else {
         indices.reserve(total);
-        for (std::size_t i = 0; i < total; ++i) indices.push_back(i);
+        for (std::size_t i = 0; i < total; ++i)
+            indices.push_back(i);
     }
 
     Elements rows;
@@ -183,34 +189,36 @@ struct LocalCommandOptions {
         const auto idx = indices[i];
 
         // If we need to insert the "…N hidden…" marker between head and tail.
-        if (show_fold_marker && i > 0 &&
-            indices[i - 1] + 1 != idx) {
-            std::string mark = std::format(
-                "  ⋮  ({} lines hidden — press [f] to unfold)", hidden);
-            rows.push_back(text(mark) | dim | color(loom::ui::design::theme::current_theme().palette->muted));
+        if (show_fold_marker && i > 0 && indices[i - 1] + 1 != idx) {
+            std::string mark = std::format("  ⋮  ({} lines hidden — press [f] to unfold)", hidden);
+            rows.push_back(text(mark) | dim |
+                           color(loom::ui::design::theme::current_theme().palette->muted));
         }
 
         const auto& line = d.lines[idx];
         Elements parts;
         if (opts.show_line_numbers) {
             auto num_str = std::format("{:>{}} │", idx + 1, gutter_w);
-            parts.push_back(text(num_str) | color(loom::ui::design::theme::current_theme().palette->muted));
+            parts.push_back(text(num_str) |
+                            color(loom::ui::design::theme::current_theme().palette->muted));
         }
 
         // Actual line content
         std::string text_body = line.text.empty() ? std::string(" ") : line.text;
         Element el = text(text_body);
         switch (line.kind) {
-            case StreamKind::Stderr:
-                el = el | color(opts.show_stderr_red ? loom::ui::design::theme::current_theme().palette->danger : loom::ui::design::theme::current_theme().palette->text);
-                break;
-            case StreamKind::StdinEcho:
-                el = el | color(loom::ui::design::theme::current_theme().palette->info) | dim;
-                break;
-            case StreamKind::Stdout:
-            default:
-                el = el | color(loom::ui::design::theme::current_theme().palette->text);
-                break;
+        case StreamKind::Stderr:
+            el = el | color(opts.show_stderr_red
+                                ? loom::ui::design::theme::current_theme().palette->danger
+                                : loom::ui::design::theme::current_theme().palette->text);
+            break;
+        case StreamKind::StdinEcho:
+            el = el | color(loom::ui::design::theme::current_theme().palette->info) | dim;
+            break;
+        case StreamKind::Stdout:
+        default:
+            el = el | color(loom::ui::design::theme::current_theme().palette->text);
+            break;
         }
         parts.push_back(std::move(el));
         rows.push_back(hbox(parts));
@@ -236,19 +244,23 @@ struct LocalCommandOptions {
     left.push_back(text(" ") | dim);
     if (total > d.collapse_threshold) {
         if (d.collapsed) {
-            left.push_back(text("[f] unfold ") | color(loom::ui::design::theme::current_theme().palette->suggestion) | dim);
+            left.push_back(text("[f] unfold ") |
+                           color(loom::ui::design::theme::current_theme().palette->suggestion) |
+                           dim);
         } else {
-            left.push_back(text("[f] fold ") | color(loom::ui::design::theme::current_theme().palette->suggestion) | dim);
+            left.push_back(text("[f] fold ") |
+                           color(loom::ui::design::theme::current_theme().palette->suggestion) |
+                           dim);
         }
     }
     left.push_back(text("[c] copy all ") | dim);
 
     Elements right;
-    right.push_back(text(std::format(" {} line{}", total, total == 1 ? "" : "s"))
-                    | dim | color(loom::ui::design::theme::current_theme().palette->muted));
+    right.push_back(text(std::format(" {} line{}", total, total == 1 ? "" : "s")) | dim |
+                    color(loom::ui::design::theme::current_theme().palette->muted));
     if (d.exit_code) {
-        right.push_back(text(std::format("  exit {}", *d.exit_code))
-                        | color(exit_status_color(d.exit_code)) | dim);
+        right.push_back(text(std::format("  exit {}", *d.exit_code)) |
+                        color(exit_status_color(d.exit_code)) | dim);
     }
 
     return hbox({hbox(left), filler(), hbox(right)});
@@ -258,8 +270,7 @@ struct LocalCommandOptions {
 // Top-level renderer
 // ============================================================
 
-[[nodiscard]] inline Element RenderLocalCommandOutput(
-    const LocalCommandOptions& opts) {
+[[nodiscard]] inline Element RenderLocalCommandOutput(const LocalCommandOptions& opts) {
     const auto& d = opts.data;
 
     Elements parts;
@@ -267,7 +278,8 @@ struct LocalCommandOptions {
     if (!d.working_dir.empty()) {
         parts.push_back(hbox({
             text("in ") | dim | color(loom::ui::design::theme::current_theme().palette->muted),
-            text(d.working_dir) | dim | color(loom::ui::design::theme::current_theme().palette->suggestion),
+            text(d.working_dir) | dim |
+                color(loom::ui::design::theme::current_theme().palette->suggestion),
         }));
     }
     parts.push_back(RenderCommandHeader(d));
@@ -277,8 +289,9 @@ struct LocalCommandOptions {
     parts.push_back(RenderOutputFooter(opts));
 
     Color border = d.exit_code && *d.exit_code != 0
-        ? loom::ui::design::theme::current_theme().palette->danger
-        : (d.is_running ? loom::ui::design::theme::current_theme().palette->info : loom::ui::design::theme::current_theme().palette->muted);
+                       ? loom::ui::design::theme::current_theme().palette->danger
+                       : (d.is_running ? loom::ui::design::theme::current_theme().palette->info
+                                       : loom::ui::design::theme::current_theme().palette->muted);
     return vbox(parts) | borderRounded | color(border);
 }
 
@@ -290,8 +303,7 @@ struct LocalCommandOptions {
 // Structure: a hidden diamond, a bold command name, an optional dim " · extra"
 // suffix, and an optional body after \n rendered as a dim "  ⎿  " prefix
 // followed by the rest text.
-[[nodiscard]] inline Element RenderCloudLaunchFaithful(
-    const std::vector<OutputLine>& lines) {
+[[nodiscard]] inline Element RenderCloudLaunchFaithful(const std::vector<OutputLine>& lines) {
     if (lines.empty()) return text("") | dim;
 
     // Parse first line: "◆ label · suffix" possibly followed by "\nrest..."
@@ -300,8 +312,7 @@ struct LocalCommandOptions {
     // Extract diamond (first UTF-8 char, ◇=U+25C7 or ◆=U+25C6, both 3 bytes in UTF-8).
     // Diamond is hidden, so we only skip its bytes.
     std::string after_diamond;
-    if (first_text.size() >= 3 &&
-        (static_cast<unsigned char>(first_text[0]) == 0xE2)) {
+    if (first_text.size() >= 3 && (static_cast<unsigned char>(first_text[0]) == 0xE2)) {
         // Valid 3-byte UTF-8 for ◇ (E2 97 87) or ◆ (E2 97 86)
         // Skip past diamond + space if present
         std::size_t pos = 3;
@@ -360,8 +371,8 @@ struct LocalCommandOptions {
 
     if (!rest_part.empty()) {
         Element rest_line = hbox({
-            text("  ⎿  ") | dim,                          // ⎿ prefix dim
-            paragraph(rest_part) | dim,                        // rest dim
+            text("  ⎿  ") | dim,         // ⎿ prefix dim
+            paragraph(rest_part) | dim,  // rest dim
         });
         return vbox({header, rest_line});
     }
@@ -369,8 +380,7 @@ struct LocalCommandOptions {
     return header;
 }
 
-[[nodiscard]] inline Element RenderLocalCommandOutputFaithful(
-    const LocalCommandOptions& opts) {
+[[nodiscard]] inline Element RenderLocalCommandOutputFaithful(const LocalCommandOptions& opts) {
     // Faithful variant: no line numbers, no borders, just ⎿ prefix + ANSI passthrough.
     // Extracts <local-command-stdout> / <local-command-stderr> blocks; each
     // non-empty trimmed block renders as indented content.
@@ -410,7 +420,7 @@ struct LocalCommandOptions {
     }
 
     return hbox({
-        text("  ⎿  ") | dim,                          // ⎿ prefix — dim only
+        text("  ⎿  ") | dim,  // ⎿ prefix — dim only
         vbox(std::move(content)) | flex,
     });
 }
@@ -423,45 +433,58 @@ struct LocalCommandOptions {
     struct State {
         LocalCommandOptions opts;
     };
+
     auto s = std::make_shared<State>();
     s->opts = std::move(options);
 
-    return Renderer([s] { return RenderLocalCommandOutput(s->opts); })
-        | CatchEvent([s](Event event) -> bool {
-              auto& o = s->opts;
-              auto& d = o.data;
+    return Renderer([s] { return RenderLocalCommandOutput(s->opts); }) |
+           CatchEvent([s](Event event) -> bool {
+               auto& o = s->opts;
+               auto& d = o.data;
 
-              // Copy all
-              if (event == Event::Character('c') || event == Event::Character('C')) {
-                  if (o.on_copy_all) { o.on_copy_all(); return true; }
-              }
-              // Copy command line
-              if (event == Event::Character('x') || event == Event::Character('X')) {
-                  if (o.on_copy_cmdline) { o.on_copy_cmdline(); return true; }
-              }
-              // Fold / unfold middle
-              if (event == Event::Character('f') || event == Event::Character('F')) {
-                  if (d.lines.size() > d.collapse_threshold) {
-                      d.collapsed = !d.collapsed;
-                      if (o.on_toggle_collapse) o.on_toggle_collapse();
-                      return true;
-                  }
-              }
-              // Scroll (pass through via callbacks; optional)
-              if (event == Event::PageDown || event == Event::Character('J')) {
-                  if (o.on_scroll_down) { o.on_scroll_down(); return true; }
-              }
-              if (event == Event::PageUp || event == Event::Character('K')) {
-                  if (o.on_scroll_up) { o.on_scroll_up(); return true; }
-              }
-              // Space → toggle top-level collapse
-              if (event == Event::Character(' ')) {
-                  d.collapsed = !d.collapsed;
-                  if (o.on_toggle_collapse) o.on_toggle_collapse();
-                  return true;
-              }
-              return false;
-          });
+               // Copy all
+               if (event == Event::Character('c') || event == Event::Character('C')) {
+                   if (o.on_copy_all) {
+                       o.on_copy_all();
+                       return true;
+                   }
+               }
+               // Copy command line
+               if (event == Event::Character('x') || event == Event::Character('X')) {
+                   if (o.on_copy_cmdline) {
+                       o.on_copy_cmdline();
+                       return true;
+                   }
+               }
+               // Fold / unfold middle
+               if (event == Event::Character('f') || event == Event::Character('F')) {
+                   if (d.lines.size() > d.collapse_threshold) {
+                       d.collapsed = !d.collapsed;
+                       if (o.on_toggle_collapse) o.on_toggle_collapse();
+                       return true;
+                   }
+               }
+               // Scroll (pass through via callbacks; optional)
+               if (event == Event::PageDown || event == Event::Character('J')) {
+                   if (o.on_scroll_down) {
+                       o.on_scroll_down();
+                       return true;
+                   }
+               }
+               if (event == Event::PageUp || event == Event::Character('K')) {
+                   if (o.on_scroll_up) {
+                       o.on_scroll_up();
+                       return true;
+                   }
+               }
+               // Space → toggle top-level collapse
+               if (event == Event::Character(' ')) {
+                   d.collapsed = !d.collapsed;
+                   if (o.on_toggle_collapse) o.on_toggle_collapse();
+                   return true;
+               }
+               return false;
+           });
 }
 
-} // namespace loom::ui::messages::local_cmd
+}  // namespace loom::ui::messages::local_cmd

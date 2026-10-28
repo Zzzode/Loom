@@ -30,16 +30,14 @@ struct PermissionRule {
     PermissionDecision decision{PermissionDecision::allow};
     std::string reason;
 
-    [[nodiscard]] auto matches(std::string_view tool_name,
-                                std::string_view path) const -> bool {
+    [[nodiscard]] auto matches(std::string_view tool_name, std::string_view path) const -> bool {
         return matches_pattern(tool_pattern, tool_name) &&
                (path_pattern.empty() || matches_pattern(path_pattern, path));
     }
 
 private:
-
-    [[nodiscard]] static auto matches_pattern(std::string_view pattern,
-                                               std::string_view value) -> bool {
+    [[nodiscard]] static auto matches_pattern(std::string_view pattern, std::string_view value)
+        -> bool {
         if (pattern == "*") return true;
         if (pattern == value) return true;
 
@@ -74,10 +72,18 @@ struct AuditEntry {
     [[nodiscard]] auto format() const -> std::string {
         std::string decision_str;
         switch (decision) {
-            case PermissionDecision::allow:      decision_str = "ALLOW"; break;
-            case PermissionDecision::deny:       decision_str = "DENY"; break;
-            case PermissionDecision::ask_user:   decision_str = "ASK"; break;
-            case PermissionDecision::allow_once: decision_str = "ONCE"; break;
+        case PermissionDecision::allow:
+            decision_str = "ALLOW";
+            break;
+        case PermissionDecision::deny:
+            decision_str = "DENY";
+            break;
+        case PermissionDecision::ask_user:
+            decision_str = "ASK";
+            break;
+        case PermissionDecision::allow_once:
+            decision_str = "ONCE";
+            break;
         }
         return std::format("[{}] {} {} - {}", decision_str, tool_name, args_summary, reason);
     }
@@ -94,8 +100,8 @@ public:
      * Check whether a tool may run in the current context.
      * Rules are matched by priority, and auto-approval mode skips prompts.
      */
-    [[nodiscard]] auto can_use_response(std::string_view tool_name,
-                                         std::string_view args = "") -> PermissionResponse {
+    [[nodiscard]] auto can_use_response(std::string_view tool_name, std::string_view args = "")
+        -> PermissionResponse {
         std::lock_guard lock{mu_};
 
         if (auto_approve_) {
@@ -146,12 +152,13 @@ public:
             response.decision = ask_user_fn_(ctx);
         }
 
-        log_decision(tool_name, args, response.decision, response.message.value_or("default policy"));
+        log_decision(tool_name, args, response.decision,
+                     response.message.value_or("default policy"));
         return response;
     }
 
-    [[nodiscard]] auto can_use(std::string_view tool_name,
-                                std::string_view args = "") -> PermissionDecision {
+    [[nodiscard]] auto can_use(std::string_view tool_name, std::string_view args = "")
+        -> PermissionDecision {
         return can_use_response(tool_name, args).decision;
     }
 
@@ -167,9 +174,7 @@ public:
         return true;
     }
 
-    [[nodiscard]] auto get_rules() const -> std::span<const PermissionRule> {
-        return rules_;
-    }
+    [[nodiscard]] auto get_rules() const -> std::span<const PermissionRule> { return rules_; }
 
     auto remember_decision(std::string_view tool_name, PermissionDecision decision) -> void {
         std::lock_guard lock{mu_};
@@ -259,13 +264,11 @@ private:
         if (audit_log_.size() >= max_audit_entries_) {
             audit_log_.erase(audit_log_.begin());
         }
-        audit_log_.push_back(AuditEntry{
-            .tool_name = std::string(tool_name),
-            .args_summary = truncate_args(args),
-            .decision = decision,
-            .reason = std::string(reason),
-            .timestamp = std::chrono::system_clock::now()
-        });
+        audit_log_.push_back(AuditEntry{.tool_name = std::string(tool_name),
+                                        .args_summary = truncate_args(args),
+                                        .decision = decision,
+                                        .reason = std::string(reason),
+                                        .timestamp = std::chrono::system_clock::now()});
     }
 
     [[nodiscard]] static auto extract_path(std::string_view args) -> std::string_view {
@@ -294,4 +297,4 @@ private:
     }
 };
 
-} // namespace loom::hooks
+}  // namespace loom::hooks

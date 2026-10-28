@@ -12,6 +12,7 @@
 module;
 
 #include <sys/wait.h>
+
 #include <cstdio>
 #include <cstdlib>
 
@@ -63,7 +64,8 @@ std::string read_shell_output(std::string_view command) {
         output += buffer.data();
     }
     (void)loom::utils::bash::pclose_spawn(pipe);
-    while (!output.empty() && (output.back() == '\n' || output.back() == '\r')) output.pop_back();
+    while (!output.empty() && (output.back() == '\n' || output.back() == '\r'))
+        output.pop_back();
     return output;
 }
 
@@ -76,8 +78,9 @@ ShellOutput read_shell_output_with_status(std::string_view command) {
         output += buffer.data();
     }
     const int raw = loom::utils::bash::pclose_spawn(pipe);
-    while (!output.empty() && (output.back() == '\n' || output.back() == '\r')) output.pop_back();
+    while (!output.empty() && (output.back() == '\n' || output.back() == '\r'))
+        output.pop_back();
     return ShellOutput{std::move(output), WIFEXITED(raw) ? WEXITSTATUS(raw) : -1};
 }
 
-} // namespace loom::utils::swarm_backends::detail
+}  // namespace loom::utils::swarm_backends::detail

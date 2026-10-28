@@ -30,13 +30,13 @@ import loom.process.bash.bash_execution;
 export namespace loom::tools::script_primitives {
 
 namespace fs = std::filesystem;
-using loom::utils::bash::execute_command;
-using loom::utils::bash::ShellSessionConfig;
-using loom::utils::bash::ExecutionResult;
-using loom::tools::script_typecheck::TypecheckOptions;
-using loom::tools::script_typecheck::TypecheckResult;
 using loom::tools::script_typecheck::run_script_typecheck;
 using loom::tools::script_typecheck::typecheck_files;
+using loom::tools::script_typecheck::TypecheckOptions;
+using loom::tools::script_typecheck::TypecheckResult;
+using loom::utils::bash::execute_command;
+using loom::utils::bash::ExecutionResult;
+using loom::utils::bash::ShellSessionConfig;
 
 // ---------------------------------------------------------------------------
 // PrimitiveResult — unified result structure used by every helper function
@@ -59,12 +59,11 @@ struct PrimitiveResult {
 struct PrimitiveTool {
     std::string name;
     std::string description;
-    std::vector<std::string> parameters;   ///< required parameter names
+    std::vector<std::string> parameters;  ///< required parameter names
     /// Execution signature: vector<string_view> of positional args in order
     /// matching `parameters`, returns result as JSON-ish text blob.
-    std::function<std::expected<std::string, std::string>(
-        const std::vector<std::string>& args
-    )> execute;
+    std::function<std::expected<std::string, std::string>(const std::vector<std::string>& args)>
+        execute;
 };
 
 // ---------------------------------------------------------------------------
@@ -90,15 +89,13 @@ auto read_text_file(const fs::path& p) -> std::expected<std::string, std::string
 }
 
 auto write_text_file(const fs::path& p, std::string_view content, bool create_parents = true)
-    -> std::expected<void, std::string>
-{
+    -> std::expected<void, std::string> {
     if (create_parents && p.has_parent_path()) {
         std::error_code ec;
         fs::create_directories(p.parent_path(), ec);
         if (ec) {
-            return std::unexpected(std::format(
-                "cannot create parent dir {}: {}",
-                p.parent_path().string(), ec.message()));
+            return std::unexpected(std::format("cannot create parent dir {}: {}",
+                                               p.parent_path().string(), ec.message()));
         }
     }
     std::ofstream out(p, std::ios::binary | std::ios::trunc);
@@ -115,12 +112,8 @@ auto write_text_file(const fs::path& p, std::string_view content, bool create_pa
 /// Minimal "edit" semantics: find an exact `old_string` substring in `content`
 /// and replace it with `new_string`.  If `replace_all` is true, every
 /// occurrence is replaced; otherwise only the first.
-auto edit_text(std::string_view content,
-               std::string_view old_string,
-               std::string_view new_string,
-               bool replace_all = false)
-    -> std::expected<std::string, std::string>
-{
+auto edit_text(std::string_view content, std::string_view old_string, std::string_view new_string,
+               bool replace_all = false) -> std::expected<std::string, std::string> {
     if (old_string.empty()) {
         return std::unexpected("edit: old_string must not be empty");
     }
@@ -144,13 +137,12 @@ auto edit_text(std::string_view content,
         }
     }
     if (count == 0) {
-        return std::unexpected(
-            "edit: old_string not found in file content");
+        return std::unexpected("edit: old_string not found in file content");
     }
     return result;
 }
 
-} // namespace detail
+}  // namespace detail
 
 // ---------------------------------------------------------------------------
 // Step-level helpers — spawn subprocesses via bash_execution
@@ -158,11 +150,8 @@ auto edit_text(std::string_view content,
 
 /// Execute a script file using the interpreter inferred from its extension.
 /// Mirrors run_file step.
-auto run_file(const fs::path& file,
-              const std::vector<std::string>& extra_args = {},
-              std::optional<std::chrono::seconds> timeout = std::nullopt)
-    -> PrimitiveResult
-{
+auto run_file(const fs::path& file, const std::vector<std::string>& extra_args = {},
+              std::optional<std::chrono::seconds> timeout = std::nullopt) -> PrimitiveResult {
     PrimitiveResult out;
     const auto start = std::chrono::steady_clock::now();
 
@@ -200,12 +189,11 @@ auto run_file(const fs::path& file,
         out.exit_code = 1;
         out.stderr_text = exec.error();
     } else {
-        out.exit_code   = exec->exit_code;
+        out.exit_code = exec->exit_code;
         out.stdout_text = std::move(exec->stdout_output);
         out.stderr_text = std::move(exec->stderr_output);
         // parse any compiler-like output
-parse_compiler_output(
-            out.stderr_text.empty() ? out.stdout_text : out.stderr_text);
+        parse_compiler_output(out.stderr_text.empty() ? out.stdout_text : out.stderr_text);
     }
     out.duration = std::chrono::duration_cast<std::chrono::milliseconds>(
         std::chrono::steady_clock::now() - start);
@@ -216,11 +204,8 @@ parse_compiler_output(
 ///   JS/TS  → bun test / npm test / pnpm test / yarn test
 ///   Python → pytest / python -m unittest
 ///   C/C++  → ctest
-auto run_test(const fs::path& project_root,
-              std::string_view extra_args = "",
-              std::optional<std::chrono::seconds> timeout = std::nullopt)
-    -> PrimitiveResult
-{
+auto run_test(const fs::path& project_root, std::string_view extra_args = "",
+              std::optional<std::chrono::seconds> timeout = std::nullopt) -> PrimitiveResult {
     PrimitiveResult out;
     const auto start = std::chrono::steady_clock::now();
 
@@ -234,19 +219,16 @@ auto run_test(const fs::path& project_root,
     } else if (fs::exists(project_root / "pyproject.toml") ||
                fs::exists(project_root / "requirements.txt") ||
                fs::exists(project_root / "setup.py")) {
-        cmd = std::format(
-            "(python3 -m pytest {} 2>&1 || python3 -m unittest {} 2>&1)",
-            extra_args, extra_args);
+        cmd = std::format("(python3 -m pytest {} 2>&1 || python3 -m unittest {} 2>&1)", extra_args,
+                          extra_args);
     } else if (fs::exists(project_root / "CMakeLists.txt")) {
         // C++ — try the build/ directory first
-        cmd = std::format(
-            "(cd build 2>/dev/null && ctest {} 2>&1) || ctest {} 2>&1",
-            extra_args, extra_args);
+        cmd = std::format("(cd build 2>/dev/null && ctest {} 2>&1) || ctest {} 2>&1", extra_args,
+                          extra_args);
     } else {
         // Fallback: try bun test, then pytest, then ctest
-        cmd = std::format(
-            "(bun test {} 2>&1 || python3 -m pytest {} 2>&1 || ctest {} 2>&1)",
-            extra_args, extra_args, extra_args);
+        cmd = std::format("(bun test {} 2>&1 || python3 -m pytest {} 2>&1 || ctest {} 2>&1)",
+                          extra_args, extra_args, extra_args);
     }
 
     ShellSessionConfig cfg;
@@ -255,14 +237,13 @@ auto run_test(const fs::path& project_root,
 
     auto exec = execute_command(cmd, cfg);
     if (!exec) {
-        out.exit_code   = 1;
+        out.exit_code = 1;
         out.stderr_text = exec.error();
     } else {
-        out.exit_code   = exec->exit_code;
+        out.exit_code = exec->exit_code;
         out.stdout_text = std::move(exec->stdout_output);
         out.stderr_text = std::move(exec->stderr_output);
-parse_compiler_output(
-            out.stderr_text.empty() ? out.stdout_text : out.stderr_text);
+        parse_compiler_output(out.stderr_text.empty() ? out.stdout_text : out.stderr_text);
     }
     out.duration = std::chrono::duration_cast<std::chrono::milliseconds>(
         std::chrono::steady_clock::now() - start);
@@ -275,29 +256,27 @@ auto run_typecheck_inline(const TypecheckOptions& opts) -> PrimitiveResult {
     const auto start = std::chrono::steady_clock::now();
 
     TypecheckResult r = run_script_typecheck(opts);
-    out.duration = r.duration.count() ? r.duration :
-        std::chrono::duration_cast<std::chrono::milliseconds>(
-            std::chrono::steady_clock::now() - start);
+    out.duration = r.duration.count() ? r.duration
+                                      : std::chrono::duration_cast<std::chrono::milliseconds>(
+                                            std::chrono::steady_clock::now() - start);
     out.exit_code = r.passed ? 0 : 1;
     for (const auto& d : r.diagnostics) {
         Diagnostic diag;
-        diag.file   = "/__script_tool__/inline.ts";
-        diag.line   = d.line;
+        diag.file = "/__script_tool__/inline.ts";
+        diag.line = d.line;
         diag.column = d.column;
         diag.message = std::format("TS{}: {}", d.code, d.message);
-        diag.level  = (d.severity == script_typecheck::Severity::Error)
-            ? DiagnosticLevel::Error
-            : (d.severity == script_typecheck::Severity::Warning
-                ? DiagnosticLevel::Warning
-                : DiagnosticLevel::Info);
+        diag.level =
+            (d.severity == script_typecheck::Severity::Error)
+                ? DiagnosticLevel::Error
+                : (d.severity == script_typecheck::Severity::Warning ? DiagnosticLevel::Warning
+                                                                     : DiagnosticLevel::Info);
         out.diagnostics.push_back(std::move(diag));
     }
     // Stdout: concise summary line
-    out.stdout_text = std::format(
-        "{} — {} error(s), {} warning(s), {} diagnostic(s) total{}",
-        r.passed ? "PASS" : "FAIL",
-        r.error_count, r.warning_count, r.total_diagnostic_count,
-        r.truncated ? " (truncated)" : "");
+    out.stdout_text = std::format("{} — {} error(s), {} warning(s), {} diagnostic(s) total{}",
+                                  r.passed ? "PASS" : "FAIL", r.error_count, r.warning_count,
+                                  r.total_diagnostic_count, r.truncated ? " (truncated)" : "");
     if (!r.runner_error.empty()) {
         out.stderr_text = r.runner_error;
     }
@@ -305,46 +284,40 @@ auto run_typecheck_inline(const TypecheckOptions& opts) -> PrimitiveResult {
 }
 
 /// Type-check one or more on-disk files.
-auto run_typecheck_files(const std::vector<fs::path>& files,
-                         const TypecheckOptions& opts) -> PrimitiveResult
-{
+auto run_typecheck_files(const std::vector<fs::path>& files, const TypecheckOptions& opts)
+    -> PrimitiveResult {
     PrimitiveResult out;
     const auto start = std::chrono::steady_clock::now();
     TypecheckResult r = typecheck_files(files, opts);
-    out.duration = r.duration.count() ? r.duration :
-        std::chrono::duration_cast<std::chrono::milliseconds>(
-            std::chrono::steady_clock::now() - start);
+    out.duration = r.duration.count() ? r.duration
+                                      : std::chrono::duration_cast<std::chrono::milliseconds>(
+                                            std::chrono::steady_clock::now() - start);
     out.exit_code = r.passed ? 0 : 1;
     for (const auto& d : r.diagnostics) {
         Diagnostic diag;
-        diag.line   = d.line;
+        diag.line = d.line;
         diag.column = d.column;
         diag.message = std::format("TS{}: {}", d.code, d.message);
-        diag.level  = (d.severity == script_typecheck::Severity::Error)
-            ? DiagnosticLevel::Error
-            : (d.severity == script_typecheck::Severity::Warning
-                ? DiagnosticLevel::Warning
-                : DiagnosticLevel::Info);
+        diag.level =
+            (d.severity == script_typecheck::Severity::Error)
+                ? DiagnosticLevel::Error
+                : (d.severity == script_typecheck::Severity::Warning ? DiagnosticLevel::Warning
+                                                                     : DiagnosticLevel::Info);
         out.diagnostics.push_back(std::move(diag));
     }
     out.stdout_text = std::format(
-        "{} — {} error(s), {} warning(s), {} file(s){}",
-        r.passed ? "PASS" : "FAIL",
-        r.error_count, r.warning_count,
-        static_cast<int>(files.size()),
-        r.truncated ? " (truncated)" : "");
+        "{} — {} error(s), {} warning(s), {} file(s){}", r.passed ? "PASS" : "FAIL", r.error_count,
+        r.warning_count, static_cast<int>(files.size()), r.truncated ? " (truncated)" : "");
     if (!r.runner_error.empty()) out.stderr_text = r.runner_error;
     return out;
 }
 
 /// Install / add package(s) for a JS project using bun, falling back to
 /// npm/pnpm/yarn.  `packages` can include version pins, e.g. "lodash@4".
-auto install_package(const fs::path& project_root,
-                     const std::vector<std::string>& packages,
+auto install_package(const fs::path& project_root, const std::vector<std::string>& packages,
                      bool dev_dependency = false,
                      std::optional<std::chrono::seconds> timeout = std::nullopt)
-    -> PrimitiveResult
-{
+    -> PrimitiveResult {
     PrimitiveResult out;
     const auto start = std::chrono::steady_clock::now();
 
@@ -359,22 +332,17 @@ auto install_package(const fs::path& project_root,
     std::string cmd;
     if (has_package_json) {
         const std::string flag = dev_dependency ? "-d" : "";
-        cmd = std::format(
-            "(bun add {} {} 2>&1 || "
-            "npm install {} --save{} 2>&1 || "
-            "pnpm add {} {} 2>&1 || "
-            "yarn add {} {} 2>&1)",
-            flag, pkg_args,
-            pkg_args, dev_dependency ? "-dev" : "",
-            flag, pkg_args,
-            flag, pkg_args);
+        cmd = std::format("(bun add {} {} 2>&1 || "
+                          "npm install {} --save{} 2>&1 || "
+                          "pnpm add {} {} 2>&1 || "
+                          "yarn add {} {} 2>&1)",
+                          flag, pkg_args, pkg_args, dev_dependency ? "-dev" : "", flag, pkg_args,
+                          flag, pkg_args);
     } else if (!pkg_args.empty()) {
         // No project — just globally; fall back to pip for Python names.
         // Detect: packages with no "/" separator and no "@" prefix that
         // contain "python" hints are treated as pip targets (heuristic).
-        cmd = std::format(
-            "(bun add -g {} 2>&1 || npm i -g {} 2>&1)",
-            pkg_args, pkg_args);
+        cmd = std::format("(bun add -g {} 2>&1 || npm i -g {} 2>&1)", pkg_args, pkg_args);
     } else {
         out.exit_code = 1;
         out.stderr_text = "install_package: no packages specified";
@@ -389,14 +357,13 @@ auto install_package(const fs::path& project_root,
     auto exec = execute_command(cmd, cfg);
 
     if (!exec) {
-        out.exit_code   = 1;
+        out.exit_code = 1;
         out.stderr_text = exec.error();
     } else {
-        out.exit_code   = exec->exit_code;
+        out.exit_code = exec->exit_code;
         out.stdout_text = std::move(exec->stdout_output);
         out.stderr_text = std::move(exec->stderr_output);
-parse_compiler_output(
-            out.stderr_text.empty() ? out.stdout_text : out.stderr_text);
+        parse_compiler_output(out.stderr_text.empty() ? out.stdout_text : out.stderr_text);
     }
     out.duration = std::chrono::duration_cast<std::chrono::milliseconds>(
         std::chrono::steady_clock::now() - start);
@@ -405,10 +372,8 @@ parse_compiler_output(
 
 /// Format a file using the project's configured formatter (prettier,
 /// clang-format, black, ruff).  Auto-detects from extension.
-auto format_file(const fs::path& file,
-                 std::optional<std::chrono::seconds> timeout = std::nullopt)
-    -> PrimitiveResult
-{
+auto format_file(const fs::path& file, std::optional<std::chrono::seconds> timeout = std::nullopt)
+    -> PrimitiveResult {
     PrimitiveResult out;
     const auto start = std::chrono::steady_clock::now();
 
@@ -423,42 +388,33 @@ auto format_file(const fs::path& file,
 
     std::string ext = file.extension().string();
     std::transform(ext.begin(), ext.end(), ext.begin(),
-        [](unsigned char c){ return static_cast<char>(std::tolower(c)); });
+                   [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
 
     std::string cmd;
 
     // TypeScript / JavaScript / JSON / CSS / HTML / YAML / Markdown
     static const std::unordered_set<std::string_view> kPrettierExts = {
-        ".ts", ".tsx", ".js", ".jsx", ".mts", ".cts", ".mjs", ".cjs",
-        ".json", ".json5", ".css", ".scss", ".sass", ".less",
-        ".html", ".htm", ".md", ".yml", ".yaml", ".vue", ".svelte"
-    };
+        ".ts",   ".tsx",  ".js",    ".jsx", ".mts",  ".cts",  ".mjs",
+        ".cjs",  ".json", ".json5", ".css", ".scss", ".sass", ".less",
+        ".html", ".htm",  ".md",    ".yml", ".yaml", ".vue",  ".svelte"};
 
     // Python
-    static const std::unordered_set<std::string_view> kPythonExts = {
-        ".py", ".pyi", ".pyw"
-    };
+    static const std::unordered_set<std::string_view> kPythonExts = {".py", ".pyi", ".pyw"};
 
     // C / C++
     static const std::unordered_set<std::string_view> kCppExts = {
-        ".c", ".h", ".cc", ".cpp", ".cxx", ".hpp", ".hh", ".hxx",
-        ".cppm", ".ixx"
-    };
+        ".c", ".h", ".cc", ".cpp", ".cxx", ".hpp", ".hh", ".hxx", ".cppm", ".ixx"};
 
     if (kPrettierExts.contains(ext)) {
-        cmd = std::format(
-            "(npx --yes prettier --write {} 2>&1 || "
-            "bunx prettier --write {} 2>&1)",
-            file.string(), file.string());
+        cmd = std::format("(npx --yes prettier --write {} 2>&1 || "
+                          "bunx prettier --write {} 2>&1)",
+                          file.string(), file.string());
     } else if (kPythonExts.contains(ext)) {
-        cmd = std::format(
-            "(python3 -m ruff format {} 2>&1 || "
-            "python3 -m black {} 2>&1)",
-            file.string(), file.string());
+        cmd = std::format("(python3 -m ruff format {} 2>&1 || "
+                          "python3 -m black {} 2>&1)",
+                          file.string(), file.string());
     } else if (kCppExts.contains(ext)) {
-        cmd = std::format(
-            "clang-format -i --style=file {} 2>&1",
-            file.string());
+        cmd = std::format("clang-format -i --style=file {} 2>&1", file.string());
     } else if (ext == ".sh" || ext == ".bash" || ext == ".zsh") {
         cmd = std::format("shfmt -w {} 2>&1", file.string());
     } else if (ext == ".rs") {
@@ -466,9 +422,7 @@ auto format_file(const fs::path& file,
     } else if (ext == ".go") {
         cmd = std::format("gofmt -w {} 2>&1", file.string());
     } else {
-        cmd = std::format(
-            "(npx --yes prettier --write {} 2>&1)",
-            file.string());
+        cmd = std::format("(npx --yes prettier --write {} 2>&1)", file.string());
     }
 
     ShellSessionConfig cfg;
@@ -476,14 +430,13 @@ auto format_file(const fs::path& file,
     auto exec = execute_command(cmd, cfg);
 
     if (!exec) {
-        out.exit_code   = 1;
+        out.exit_code = 1;
         out.stderr_text = exec.error();
     } else {
-        out.exit_code   = exec->exit_code;
+        out.exit_code = exec->exit_code;
         out.stdout_text = std::move(exec->stdout_output);
         out.stderr_text = std::move(exec->stderr_output);
-parse_compiler_output(
-            out.stderr_text.empty() ? out.stdout_text : out.stderr_text);
+        parse_compiler_output(out.stderr_text.empty() ? out.stdout_text : out.stderr_text);
     }
     out.duration = std::chrono::duration_cast<std::chrono::milliseconds>(
         std::chrono::steady_clock::now() - start);
@@ -502,12 +455,11 @@ auto get_primitive_tools() -> std::vector<PrimitiveTool> {
     return {
         // ---- FileReadTool ------------------------------------------------
         PrimitiveTool{
-            .name        = "FileRead",
+            .name = "FileRead",
             .description = "Read the entire contents of a file from disk",
-            .parameters  = {"file_path"},
+            .parameters = {"file_path"},
             .execute = [](const std::vector<std::string>& args)
-                -> std::expected<std::string, std::string>
-            {
+                -> std::expected<std::string, std::string> {
                 if (args.empty()) return std::unexpected("FileRead: missing file_path");
                 auto content = detail::read_text_file(args[0]);
                 if (!content) return std::unexpected(content.error());
@@ -517,28 +469,25 @@ auto get_primitive_tools() -> std::vector<PrimitiveTool> {
 
         // ---- FileWriteTool -----------------------------------------------
         PrimitiveTool{
-            .name        = "FileWrite",
+            .name = "FileWrite",
             .description = "Create/overwrite a file with the provided text content",
-            .parameters  = {"file_path", "content"},
+            .parameters = {"file_path", "content"},
             .execute = [](const std::vector<std::string>& args)
-                -> std::expected<std::string, std::string>
-            {
+                -> std::expected<std::string, std::string> {
                 if (args.size() < 2) return std::unexpected("FileWrite: missing args");
                 auto ok = detail::write_text_file(args[0], args.size() > 1 ? args[1] : "");
                 if (!ok) return std::unexpected(ok.error());
-                return std::format("{} bytes written to {}",
-                    args[1].size(), args[0]);
+                return std::format("{} bytes written to {}", args[1].size(), args[0]);
             },
         },
 
         // ---- FileEditTool ------------------------------------------------
         PrimitiveTool{
-            .name        = "FileEdit",
+            .name = "FileEdit",
             .description = "Replace an exact string occurrence in a file (first match by default)",
-            .parameters  = {"file_path", "old_string", "new_string"},
+            .parameters = {"file_path", "old_string", "new_string"},
             .execute = [](const std::vector<std::string>& args)
-                -> std::expected<std::string, std::string>
-            {
+                -> std::expected<std::string, std::string> {
                 if (args.size() < 3) return std::unexpected("FileEdit: missing args");
                 const fs::path path = args[0];
                 auto content = detail::read_text_file(path);
@@ -554,12 +503,11 @@ auto get_primitive_tools() -> std::vector<PrimitiveTool> {
 
         // ---- NotebookEditTool (minimal cell editor) ----------------------
         PrimitiveTool{
-            .name        = "NotebookEdit",
+            .name = "NotebookEdit",
             .description = "Read an .ipynb notebook file and replace a cell by index",
-            .parameters  = {"file_path", "cell_index", "new_source"},
+            .parameters = {"file_path", "cell_index", "new_source"},
             .execute = [](const std::vector<std::string>& args)
-                -> std::expected<std::string, std::string>
-            {
+                -> std::expected<std::string, std::string> {
                 if (args.size() < 3) return std::unexpected("NotebookEdit: missing args");
                 const fs::path path = args[0];
                 int idx = 0;
@@ -588,12 +536,11 @@ auto get_primitive_tools() -> std::vector<PrimitiveTool> {
 
         // ---- AgentTool ---------------------------------------------------
         PrimitiveTool{
-            .name        = "Agent",
+            .name = "Agent",
             .description = "Spawn a sub-agent with an instruction and context",
-            .parameters  = {"instruction", "context"},
+            .parameters = {"instruction", "context"},
             .execute = [](const std::vector<std::string>& args)
-                -> std::expected<std::string, std::string>
-            {
+                -> std::expected<std::string, std::string> {
                 if (args.empty()) return std::unexpected("Agent: missing instruction");
                 // Full agent orchestration lives in the coordinator module;
                 // this primitive only captures the "in-process" behaviour
@@ -605,20 +552,18 @@ auto get_primitive_tools() -> std::vector<PrimitiveTool> {
 
         // ---- WebFetchTool ------------------------------------------------
         PrimitiveTool{
-            .name        = "WebFetch",
+            .name = "WebFetch",
             .description = "Fetch the text contents of a URL",
-            .parameters  = {"url"},
+            .parameters = {"url"},
             .execute = [](const std::vector<std::string>& args)
-                -> std::expected<std::string, std::string>
-            {
+                -> std::expected<std::string, std::string> {
                 if (args.empty()) return std::unexpected("WebFetch: missing url");
                 const std::string& url = args[0];
                 // TS uses globalThis.fetch — pure in-process, no shelling out.
                 // In C++ the real fetch lives in the WebFetchTool module;
                 // here we only provide the primitive registry entry.  A real
                 // implementation would import loom.services.http or similar.
-                return std::format(
-                    "WebFetch: URL {} dispatch handled by WebFetchTool module", url);
+                return std::format("WebFetch: URL {} dispatch handled by WebFetchTool module", url);
             },
         },
     };
@@ -626,7 +571,8 @@ auto get_primitive_tools() -> std::vector<PrimitiveTool> {
 
 auto list_primitive_names() -> std::vector<std::string> {
     std::vector<std::string> names;
-    for (const auto& t : get_primitive_tools()) names.push_back(t.name);
+    for (const auto& t : get_primitive_tools())
+        names.push_back(t.name);
     return names;
 }
 
@@ -637,17 +583,14 @@ auto is_primitive_tool(std::string_view name) -> bool {
     return false;
 }
 
-auto execute_primitive(std::string_view tool_name,
-                       const std::vector<std::string>& args)
-    -> std::expected<std::string, std::string>
-{
+auto execute_primitive(std::string_view tool_name, const std::vector<std::string>& args)
+    -> std::expected<std::string, std::string> {
     for (const auto& t : get_primitive_tools()) {
         if (t.name == tool_name) {
             return t.execute(args);
         }
     }
-    return std::unexpected(std::format(
-        "execute_primitive: unknown tool '{}'", tool_name));
+    return std::unexpected(std::format("execute_primitive: unknown tool '{}'", tool_name));
 }
 
-} // namespace loom::tools::script_primitives
+}  // namespace loom::tools::script_primitives

@@ -16,14 +16,15 @@ namespace detail {
     return it == env.end() ? std::string_view{} : std::string_view(it->second);
 }
 
-} // namespace detail
+}  // namespace detail
 
 [[nodiscard]] inline bool is_script_tool_enabled(const EnvLike& env) {
     return loom::utils::is_env_truthy(detail::get_env_value(env, "ENABLE_SCRIPT_TOOL"));
 }
 
 [[nodiscard]] inline bool is_bash_tool_disabled(const EnvLike& env) {
-    return loom::utils::is_env_truthy(detail::get_env_value(env, "DISABLE_BASH_TOOL")) || is_script_tool_enabled(env);
+    return loom::utils::is_env_truthy(detail::get_env_value(env, "DISABLE_BASH_TOOL")) ||
+           is_script_tool_enabled(env);
 }
 
-} // namespace loom::utils::script_tool
+}  // namespace loom::utils::script_tool

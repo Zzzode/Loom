@@ -4,8 +4,8 @@
 // MCP client/tool/command + plugin selectors.
 module;
 
-#include <cstdint>
 #include <cstddef>
+#include <cstdint>
 
 module loom.state.selectors;
 
@@ -20,7 +20,8 @@ namespace loom::state::selectors {
 // ============================================================
 
 /// Get the companion reaction
-[[nodiscard]] std::optional<std::string_view> get_companion_reaction(const AppState& state) noexcept {
+[[nodiscard]] std::optional<std::string_view>
+get_companion_reaction(const AppState& state) noexcept {
     if (state.companion_reaction) {
         return *state.companion_reaction;
     }
@@ -28,7 +29,8 @@ namespace loom::state::selectors {
 }
 
 /// Get the companion pet time
-[[nodiscard]] std::optional<std::chrono::system_clock::time_point> get_companion_pet_time(const AppState& state) noexcept {
+[[nodiscard]] std::optional<std::chrono::system_clock::time_point>
+get_companion_pet_time(const AppState& state) noexcept {
     return state.companion_pet_at;
 }
 
@@ -38,8 +40,7 @@ namespace loom::state::selectors {
         return false;
     }
     auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(
-        std::chrono::system_clock::now() - *state.companion_pet_at
-    );
+        std::chrono::system_clock::now() - *state.companion_pet_at);
     return elapsed.count() < 5;
 }
 
@@ -112,4 +113,4 @@ namespace loom::state::selectors {
     return state.plugins.needs_refresh;
 }
 
-} // namespace loom::state::selectors
+}  // namespace loom::state::selectors

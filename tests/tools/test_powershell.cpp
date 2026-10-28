@@ -4,10 +4,11 @@
 #pragma clang diagnostic ignored "-Wmissing-designated-field-initializers"
 
 #include <gtest/gtest.h>
+#include <httplib.h>
+
 #include <cstddef>
 #include <cstdlib>
 #include <cstring>
-#include <httplib.h>
 #ifndef _WIN32
 #include <fcntl.h>
 #include <sys/file.h>
@@ -35,7 +36,7 @@ import loom.tools.web_browser;
 import loom.orchestration.tools.mcp;
 import loom.commands.mcp.core_settings_loader;
 import loom.orchestration.runtime_backends;
-import loom.tools.runtime_backends.port;  // RFC-0001 B15: set_/clear_skill_loader_executor slot API
+import loom.tools.runtime_backends.port; // RFC-0001 B15: set_/clear_skill_loader_executor slot API
 import loom.tools.image_codec.port;
 import loom.tools.worktree;
 import loom.orchestration.agent;
@@ -64,7 +65,7 @@ import loom.teams.team_helpers;
 import loom.hooks.tool_permissions;
 import loom.services.api.client;
 import loom.services.mcp.types;
-import loom.services.mcp.connection_manager;  // RFC-0001 B6: svc_mcp::McpServerSnapshot
+import loom.services.mcp.connection_manager; // RFC-0001 B6: svc_mcp::McpServerSnapshot
 import loom.tools.repl;
 import loom.tools.skill;
 import loom.orchestration.agent.utils;
@@ -75,7 +76,9 @@ namespace fs = std::filesystem;
 // The agent helpers exercised by the existing tests live in
 // loom::tools::agent::utils after the agent_tool split; re-expose them through
 // the loom::tools::agent namespace so the historical call sites still resolve.
-namespace loom::tools::agent { using namespace utils; }
+namespace loom::tools::agent {
+using namespace utils;
+}
 
 namespace {
 
@@ -84,16 +87,14 @@ namespace {
 // does not block them. Production paths must supply a real checker (or accept
 // fail-closed denial for write/execute/network tools).
 loom::tools::agent::AgentLivePermissionCheckFn test_allow_all_check() {
-    auto allow = []([[maybe_unused]] std::string_view,
-                    [[maybe_unused]] std::string_view,
+    auto allow = []([[maybe_unused]] std::string_view, [[maybe_unused]] std::string_view,
                     [[maybe_unused]] std::string_view) {
         return loom::tools::agent::AgentLivePermissionCheck{.allowed = true};
     };
     return loom::tools::agent::AgentLivePermissionCheckFn{std::move(allow)};
 }
 
-} // namespace
-
+}  // namespace
 
 TEST(Tools, PowerShellToolValidatesCommandAndDangerousCmdlets) {
     auto root = fs::temp_directory_path() / "loom_powershell_validation_test";
@@ -102,10 +103,8 @@ TEST(Tools, PowerShellToolValidatesCommandAndDangerousCmdlets) {
 
     loom::tools::PowerShellTool tool(root);
     EXPECT_EQ(tool.check_permission("Get-ChildItem"), loom::tools::CmdletPermission::Allowed);
-    EXPECT_EQ(
-        tool.check_permission("Remove-Item -Recurse C:\\Temp"),
-        loom::tools::CmdletPermission::NeedsApproval
-    );
+    EXPECT_EQ(tool.check_permission("Remove-Item -Recurse C:\\Temp"),
+              loom::tools::CmdletPermission::NeedsApproval);
 
     auto empty = tool.validate(loom::tools::PowerShellConfig{
         .command = "",
@@ -138,9 +137,8 @@ TEST(Tools, PowerShellToolValidatesCommandAndDangerousCmdlets) {
 }
 
 TEST(Tools, PowerShellEncodingHandlerDecodesUtf16LeAndRejectsOddBytes) {
-    const std::array<std::byte, 4> utf16_ok{
-        std::byte{0x4f}, std::byte{0x00}, std::byte{0x4b}, std::byte{0x00}
-    };
+    const std::array<std::byte, 4> utf16_ok{std::byte{0x4f}, std::byte{0x00}, std::byte{0x4b},
+                                            std::byte{0x00}};
     auto decoded = loom::tools::EncodingHandler::utf16le_to_utf8(utf16_ok);
     ASSERT_TRUE(decoded.has_value());
     EXPECT_EQ(*decoded, "OK");
@@ -162,7 +160,8 @@ TEST(Tools, PowerShellEncodedCommandUsesUtf16LeForUtf8Input) {
 
 TEST(Tools, RuntimePowerShellToolReportsUnavailableOnNonWindows) {
     loom::core::ToolRegistry registry;
-    loom::tools::register_runtime_tools(registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
+    loom::tools::register_runtime_tools(
+        registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
     auto result = registry.execute("powershell", loom::core::ToolInput::from_json(R"({
       "command": "Get-ChildItem"
     })"));
@@ -179,7 +178,8 @@ TEST(Tools, RuntimePowerShellToolReportsUnavailableOnNonWindows) {
 
 TEST(Tools, RuntimePowerShellToolValidatesDangerousCommandBeforePlatformExecution) {
     loom::core::ToolRegistry registry;
-    loom::tools::register_runtime_tools(registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
+    loom::tools::register_runtime_tools(
+        registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
     auto result = registry.execute("powershell", loom::core::ToolInput::from_json(R"({
       "command": "Remove-Item -Recurse C:\\Temp"
     })"));
@@ -195,16 +195,20 @@ TEST(Tools, RuntimePowerShellToolValidatesWorkingDirectoryBeforePlatformExecutio
     fs::remove_all(root);
 
     loom::core::ToolRegistry registry;
-    loom::tools::register_runtime_tools(registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
-    auto result = registry.execute("powershell", loom::core::ToolInput::from_json(std::format(R"({{
+    loom::tools::register_runtime_tools(
+        registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
+    auto result = registry.execute(
+        "powershell", loom::core::ToolInput::from_json(std::format(R"({{
       "command": "Get-ChildItem",
       "cwd": "{}"
-    }})", (root / "missing").string())));
+    }})",
+                                                                   (root / "missing").string())));
 
     ASSERT_TRUE(result.has_value());
     EXPECT_TRUE(result->is_error);
     ASSERT_FALSE(result->content.empty());
-    EXPECT_NE(result->content.front().text.find("Working directory does not exist"), std::string::npos);
+    EXPECT_NE(result->content.front().text.find("Working directory does not exist"),
+              std::string::npos);
 }
 
 TEST(Tools, RuntimePowerShellToolExecutesRealCommandWithWorkingDirectoryOnWindows) {
@@ -216,11 +220,15 @@ TEST(Tools, RuntimePowerShellToolExecutesRealCommandWithWorkingDirectoryOnWindow
     fs::create_directories(root);
 
     loom::core::ToolRegistry registry;
-    loom::tools::register_runtime_tools(registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
-    auto result = registry.execute("powershell", loom::core::ToolInput::from_json(std::format(R"({{
+    loom::tools::register_runtime_tools(
+        registry, loom::tools::RuntimeToolOptions{.permission_check = test_allow_all_check()});
+    auto result =
+        registry.execute("powershell", loom::core::ToolInput::from_json(std::format(
+                                           R"({{
       "command": "[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; Write-Output (Get-Location).Path",
       "cwd": "{}"
-    }})", loom::tools::agent::json_escape_string(root.string()))));
+    }})",
+                                           loom::tools::agent::json_escape_string(root.string()))));
 
     ASSERT_TRUE(result.has_value());
     EXPECT_FALSE(result->is_error) << (result->content.empty() ? "" : result->content.front().text);

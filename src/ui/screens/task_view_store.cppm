@@ -18,9 +18,9 @@ export module loom.ui.screens.task_view_store;
 
 import std;
 
-import loom.ui.features.agents.agent_cards;        // AgentCardData
+import loom.ui.features.agents.agent_cards; // AgentCardData
 import loom.ui.features.agents.runtime_agents;
-import loom.ui.features.teams.live_teammates;      // LiveTeammate
+import loom.ui.features.teams.live_teammates; // LiveTeammate
 
 export namespace loom::ui::repl_screen {
 
@@ -28,8 +28,14 @@ export namespace loom::ui::repl_screen {
 /// tool-input/tool-use + briefing/idle for KAIROS brief mode.
 /// Moved here from repl_state.cppm in RFC 0002 F3 (TaskViewStore shard).
 enum class SpinnerMode : std::uint8_t {
-    Hidden, Requesting, Thinking, Responding,
-    ToolInput, ToolUse, Briefing, IdleBrief,
+    Hidden,
+    Requesting,
+    Thinking,
+    Responding,
+    ToolInput,
+    ToolUse,
+    Briefing,
+    IdleBrief,
 };
 
 /// RFC 0002 F3 store — task-view state (spinner mode, task notifications,
@@ -87,4 +93,4 @@ inline void SetSpinner(TaskViewStore& store, SpinnerMode mode) {
     store.spinner_mode = mode;
 }
 
-}  // namespace loom::ui
+}  // namespace loom::ui::repl_screen

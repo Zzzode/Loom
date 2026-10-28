@@ -21,7 +21,7 @@ struct FileChange {
     std::string path;
     std::uint32_t additions = 0;
     std::uint32_t deletions = 0;
-    std::string diff_content;   // Unified diff text
+    std::string diff_content;  // Unified diff text
     bool is_new = false;
     bool is_deleted = false;
 };
@@ -34,13 +34,18 @@ public:
         return CommandDefinition{
             .name = "diff",
             .description = "Show file changes made in the current session",
-            .args = {
-                CommandArg{.name = "mode", .description = "full | summary | stat",
-                           .type = ArgType::Choice, .required = false,
-                           .choices = {"full", "summary", "stat"}},
-                CommandArg{.name = "file", .description = "Specific file to show diff for",
-                           .type = ArgType::FilePath, .required = false},
-            },
+            .args =
+                {
+                    CommandArg{.name = "mode",
+                               .description = "full | summary | stat",
+                               .type = ArgType::Choice,
+                               .required = false,
+                               .choices = {"full", "summary", "stat"}},
+                    CommandArg{.name = "file",
+                               .description = "Specific file to show diff for",
+                               .type = ArgType::FilePath,
+                               .required = false},
+                },
             .category = "git",
             .aliases = {},
             .hidden = false,
@@ -53,8 +58,9 @@ public:
         if (mode != "full" && mode != "summary" && mode != "stat") {
             // Might be a file path instead
             if (!mode.starts_with("-")) return {};
-            return std::unexpected(Error::make(ErrorCode::InvalidRequest,
-                std::format("Invalid mode: '{}'. Use: full|summary|stat", mode)));
+            return std::unexpected(
+                Error::make(ErrorCode::InvalidRequest,
+                            std::format("Invalid mode: '{}'. Use: full|summary|stat", mode)));
         }
         return {};
     }
@@ -100,8 +106,8 @@ public:
     /// Record a file change (called by the tool system after file writes)
     void record_change(FileChange change) {
         // Update existing entry or add new
-        auto it = std::ranges::find_if(changes_,
-            [&](const auto& c) { return c.path == change.path; });
+        auto it =
+            std::ranges::find_if(changes_, [&](const auto& c) { return c.path == change.path; });
         if (it != changes_.end()) {
             *it = std::move(change);
         } else {
@@ -150,4 +156,4 @@ private:
     }
 };
 
-} // namespace loom::commands
+}  // namespace loom::commands

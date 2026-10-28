@@ -22,7 +22,7 @@ module loom.ui.chrome.ansi_render;
 
 import std;
 
-import loom.ui.chrome.terminal_io;  // SgrAttr / ColorValue / Color16/256/TrueColor
+import loom.ui.chrome.terminal_io; // SgrAttr / ColorValue / Color16/256/TrueColor
 
 namespace loom::ui::messages {
 
@@ -42,8 +42,7 @@ using namespace ftxui;
 // strikethrough.  FTXUI has no `italic` decorator, so SGR code 3 is parsed
 // (state tracked) but produces no visual change.  Non-SGR escapes (other CSI,
 // OSC, plain ESC) are dropped, matching Text-node behavior.
-[[nodiscard]] Color sgr_color_value_to_ftxui(
-    const loom::ui::termio::ColorValue& cv) {
+[[nodiscard]] Color sgr_color_value_to_ftxui(const loom::ui::termio::ColorValue& cv) {
     using namespace loom::ui::termio;
     return std::visit(
         [&](auto&& v) -> Color {
@@ -55,7 +54,7 @@ using namespace ftxui;
             } else if constexpr (std::is_same_v<T, TrueColor>) {
                 return Color::RGB(v.r, v.g, v.b);
             } else {
-                return Color{}; // monostate / default
+                return Color{};  // monostate / default
             }
         },
         cv);
@@ -88,55 +87,115 @@ void apply_sgr_run(std::string_view params, loom::ui::termio::SgrAttr& attr) {
         int code = next_int();
         if (i == before) break;
         switch (code) {
-            case 0:  attr = SgrAttr{}; break;
-            case 1:  attr.bold = true; break;
-            case 2:  attr.dim = true; break;
-            case 3:  attr.italic = true; break;          // tracked, not rendered
-            case 4:  attr.underline = true; break;
-            case 7:  attr.inverse = true; break;
-            case 9:  attr.strikethrough = true; break;
-            case 22: attr.bold = false; attr.dim = false; break;
-            case 23: attr.italic = false; break;
-            case 24: attr.underline = false; break;
-            case 27: attr.inverse = false; break;
-            case 29: attr.strikethrough = false; break;
-            case 30: case 31: case 32: case 33:
-            case 34: case 35: case 36: case 37:
-                attr.fg = static_cast<Color16>(code - 30); break;
-            case 38: {
-                int mode = next_int();
-                if (mode == 5) attr.fg = Color256{static_cast<std::uint8_t>(next_int())};
-                else if (mode == 2) {
-                    auto r = static_cast<std::uint8_t>(next_int());
-                    auto g = static_cast<std::uint8_t>(next_int());
-                    auto b = static_cast<std::uint8_t>(next_int());
-                    attr.fg = TrueColor{r, g, b};
-                }
-                break;
+        case 0:
+            attr = SgrAttr{};
+            break;
+        case 1:
+            attr.bold = true;
+            break;
+        case 2:
+            attr.dim = true;
+            break;
+        case 3:
+            attr.italic = true;
+            break;  // tracked, not rendered
+        case 4:
+            attr.underline = true;
+            break;
+        case 7:
+            attr.inverse = true;
+            break;
+        case 9:
+            attr.strikethrough = true;
+            break;
+        case 22:
+            attr.bold = false;
+            attr.dim = false;
+            break;
+        case 23:
+            attr.italic = false;
+            break;
+        case 24:
+            attr.underline = false;
+            break;
+        case 27:
+            attr.inverse = false;
+            break;
+        case 29:
+            attr.strikethrough = false;
+            break;
+        case 30:
+        case 31:
+        case 32:
+        case 33:
+        case 34:
+        case 35:
+        case 36:
+        case 37:
+            attr.fg = static_cast<Color16>(code - 30);
+            break;
+        case 38: {
+            int mode = next_int();
+            if (mode == 5)
+                attr.fg = Color256{static_cast<std::uint8_t>(next_int())};
+            else if (mode == 2) {
+                auto r = static_cast<std::uint8_t>(next_int());
+                auto g = static_cast<std::uint8_t>(next_int());
+                auto b = static_cast<std::uint8_t>(next_int());
+                attr.fg = TrueColor{r, g, b};
             }
-            case 39: attr.fg = std::monostate{}; break;
-            case 40: case 41: case 42: case 43:
-            case 44: case 45: case 46: case 47:
-                attr.bg = static_cast<Color16>(code - 40); break;
-            case 48: {
-                int mode = next_int();
-                if (mode == 5) attr.bg = Color256{static_cast<std::uint8_t>(next_int())};
-                else if (mode == 2) {
-                    auto r = static_cast<std::uint8_t>(next_int());
-                    auto g = static_cast<std::uint8_t>(next_int());
-                    auto b = static_cast<std::uint8_t>(next_int());
-                    attr.bg = TrueColor{r, g, b};
-                }
-                break;
+            break;
+        }
+        case 39:
+            attr.fg = std::monostate{};
+            break;
+        case 40:
+        case 41:
+        case 42:
+        case 43:
+        case 44:
+        case 45:
+        case 46:
+        case 47:
+            attr.bg = static_cast<Color16>(code - 40);
+            break;
+        case 48: {
+            int mode = next_int();
+            if (mode == 5)
+                attr.bg = Color256{static_cast<std::uint8_t>(next_int())};
+            else if (mode == 2) {
+                auto r = static_cast<std::uint8_t>(next_int());
+                auto g = static_cast<std::uint8_t>(next_int());
+                auto b = static_cast<std::uint8_t>(next_int());
+                attr.bg = TrueColor{r, g, b};
             }
-            case 49: attr.bg = std::monostate{}; break;
-            case 90: case 91: case 92: case 93:
-            case 94: case 95: case 96: case 97:
-                attr.fg = static_cast<Color16>(code - 90 + 8); break;
-            case 100: case 101: case 102: case 103:
-            case 104: case 105: case 106: case 107:
-                attr.bg = static_cast<Color16>(code - 100 + 8); break;
-            default: break;
+            break;
+        }
+        case 49:
+            attr.bg = std::monostate{};
+            break;
+        case 90:
+        case 91:
+        case 92:
+        case 93:
+        case 94:
+        case 95:
+        case 96:
+        case 97:
+            attr.fg = static_cast<Color16>(code - 90 + 8);
+            break;
+        case 100:
+        case 101:
+        case 102:
+        case 103:
+        case 104:
+        case 105:
+        case 106:
+        case 107:
+            attr.bg = static_cast<Color16>(code - 100 + 8);
+            break;
+        default:
+            break;
         }
     }
 }
@@ -153,7 +212,7 @@ void apply_sgr_run(std::string_view params, loom::ui::termio::SgrAttr& attr) {
 [[nodiscard]] std::shared_ptr<void> ansi_to_ftxui_elements(std::string_view input) {
     using namespace loom::ui::termio;
 
-    SgrAttr attr{};          // running SGR state, mutated by each SGR run
+    SgrAttr attr{};  // running SGR state, mutated by each SGR run
     std::vector<Element> lines;
     std::vector<Element> current_runs;
     std::string buf;
@@ -161,12 +220,12 @@ void apply_sgr_run(std::string_view params, loom::ui::termio::SgrAttr& attr) {
     auto flush_buf = [&]() {
         if (!buf.empty()) {
             Element e = text(buf);
-            if (attr.bold)          e = std::move(e) | bold;
-            if (attr.dim)           e = std::move(e) | dim;
+            if (attr.bold) e = std::move(e) | bold;
+            if (attr.dim) e = std::move(e) | dim;
             // FTXUI exposes no `italic` decorator; code 3 is tracked only.
-            if (attr.underline)     e = std::move(e) | underlined;
+            if (attr.underline) e = std::move(e) | underlined;
             if (attr.strikethrough) e = std::move(e) | strikethrough;
-            if (attr.inverse)       e = std::move(e) | inverted;
+            if (attr.inverse) e = std::move(e) | inverted;
             if (!std::holds_alternative<std::monostate>(attr.fg)) {
                 e = std::move(e) | color(sgr_color_value_to_ftxui(attr.fg));
             }
@@ -197,13 +256,12 @@ void apply_sgr_run(std::string_view params, loom::ui::termio::SgrAttr& attr) {
             // CSI: ESC[ <params 0x20-0x3F> <final 0x40-0x7E>
             std::size_t start = i + 2;
             std::size_t p = start;
-            while (p < input.size() &&
-                   static_cast<unsigned char>(input[p]) >= 0x20 &&
+            while (p < input.size() && static_cast<unsigned char>(input[p]) >= 0x20 &&
                    static_cast<unsigned char>(input[p]) <= 0x3F) {
                 p++;
             }
             char final_byte = (p < input.size()) ? input[p] : '\0';
-            if (p < input.size()) p++; // consume final byte
+            if (p < input.size()) p++;  // consume final byte
             if (final_byte == 'm') {
                 flush_buf();
                 apply_sgr_run(input.substr(start, (p - 1) - start), attr);
@@ -216,10 +274,12 @@ void apply_sgr_run(std::string_view params, loom::ui::termio::SgrAttr& attr) {
                    !(i + 1 < input.size() && input[i] == '\033' && input[i + 1] == '\\')) {
                 i++;
             }
-            if (i < input.size() && input[i] == '\a') i++;
-            else if (i + 1 < input.size()) i += 2;
+            if (i < input.size() && input[i] == '\a')
+                i++;
+            else if (i + 1 < input.size())
+                i += 2;
         } else if (input[i] == '\033' && i + 1 < input.size()) {
-            i += 2; // other escape: skip ESC + one byte
+            i += 2;  // other escape: skip ESC + one byte
         } else {
             buf += input[i];
             i++;
@@ -233,4 +293,4 @@ void apply_sgr_run(std::string_view params, loom::ui::termio::SgrAttr& attr) {
     return std::make_shared<std::vector<Element>>(std::move(lines));
 }
 
-} // namespace loom::ui::messages
+}  // namespace loom::ui::messages

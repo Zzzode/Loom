@@ -14,12 +14,11 @@ namespace {
 /// Unique temp directory name using a timestamp suffix to avoid collisions
 /// when tests from the same binary run in parallel under ctest -jN.
 [[nodiscard]] fs::path unique_test_dir(std::string_view prefix) {
-    return fs::temp_directory_path() / (
-        std::string(prefix) +
-        std::to_string(std::chrono::steady_clock::now().time_since_epoch().count())
-    );
+    return fs::temp_directory_path() /
+           (std::string(prefix) +
+            std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
 }
-} // namespace
+}  // namespace
 
 TEST(SkillDefinition, SerializesMetadata) {
     loom::skills::SkillDefinition skill{
@@ -92,20 +91,24 @@ Read the diff and report concrete risks.
     EXPECT_NE(result->front().content.find("Read the diff"), std::string::npos);
 }
 
-
 TEST(SkillSubscriptions, UnsubscribeRemainsStableAcrossVectorGrowthAndRepeatedRemoval) {
     auto counts = std::make_shared<std::vector<int>>();
     std::vector<std::function<void()>> unsubscribe;
+
     struct UnsubscribeAll {
         std::vector<std::function<void()>>& subscriptions;
-        ~UnsubscribeAll() { for (auto& remove : subscriptions) remove(); }
+
+        ~UnsubscribeAll() {
+            for (auto& remove : subscriptions)
+                remove();
+        }
     } cleanup{unsubscribe};
+
     const auto subscribe = [&] {
         const auto index = counts->size();
         counts->push_back(0);
-        unsubscribe.push_back(loom::skills::on_dynamic_skills_loaded([counts, index] {
-            ++(*counts)[index];
-        }));
+        unsubscribe.push_back(
+            loom::skills::on_dynamic_skills_loaded([counts, index] { ++(*counts)[index]; }));
     };
     const auto capacity = [] {
         auto& state = loom::skills::detail::dynamic_state();
@@ -114,11 +117,15 @@ TEST(SkillSubscriptions, UnsubscribeRemainsStableAcrossVectorGrowthAndRepeatedRe
     };
     subscribe();
     const auto original_capacity = capacity();
-    while (capacity() == original_capacity) subscribe();
-    while (unsubscribe.size() < 3u) subscribe();
-    ASSERT_GT(capacity(), original_capacity) << "The first subscription must cross a real reallocation";
+    while (capacity() == original_capacity)
+        subscribe();
+    while (unsubscribe.size() < 3u)
+        subscribe();
+    ASSERT_GT(capacity(), original_capacity)
+        << "The first subscription must cross a real reallocation";
     loom::skills::detail::emit_skills_loaded();
-    for (const auto count : *counts) EXPECT_EQ(count, 1);
+    for (const auto count : *counts)
+        EXPECT_EQ(count, 1);
     // Remove in a different order from registration, then repeat a removal.
     unsubscribe.back()();
     unsubscribe.front()();
@@ -126,10 +133,12 @@ TEST(SkillSubscriptions, UnsubscribeRemainsStableAcrossVectorGrowthAndRepeatedRe
     loom::skills::detail::emit_skills_loaded();
     EXPECT_EQ(counts->front(), 1);
     EXPECT_EQ(counts->back(), 1);
-    for (std::size_t i = 1; i + 1 < counts->size(); ++i) EXPECT_EQ((*counts)[i], 2);
+    for (std::size_t i = 1; i + 1 < counts->size(); ++i)
+        EXPECT_EQ((*counts)[i], 2);
     unsubscribe[1]();
     unsubscribe.back()();
     loom::skills::detail::emit_skills_loaded();
     EXPECT_EQ((*counts)[1], 2);
-    for (std::size_t i = 2; i + 1 < counts->size(); ++i) EXPECT_EQ((*counts)[i], 3);
+    for (std::size_t i = 2; i + 1 < counts->size(); ++i)
+        EXPECT_EQ((*counts)[i], 3);
 }

@@ -6,7 +6,8 @@ import loom.crypto.crypto;
 
 export namespace loom::utils::plugin_versioning {
 
-[[nodiscard]] inline std::vector<std::string_view> split_non_empty(std::string_view value, char delim) {
+[[nodiscard]] inline std::vector<std::string_view> split_non_empty(std::string_view value,
+                                                                   char delim) {
     std::vector<std::string_view> out;
     std::size_t start = 0;
     while (start <= value.size()) {
@@ -19,7 +20,8 @@ export namespace loom::utils::plugin_versioning {
     return out;
 }
 
-[[nodiscard]] inline std::optional<std::string> get_version_from_path(std::string_view install_path) {
+[[nodiscard]] inline std::optional<std::string>
+get_version_from_path(std::string_view install_path) {
     const auto parts = split_non_empty(install_path, '/');
     for (std::size_t i = 1; i < parts.size(); ++i) {
         if (parts[i] == "cache" && parts[i - 1] == "plugins") {
@@ -38,21 +40,21 @@ export namespace loom::utils::plugin_versioning {
     std::string norm(path);
     std::replace(norm.begin(), norm.end(), '\\', '/');
     if (norm.starts_with("./")) norm.erase(0, 2);
-    while (!norm.empty() && norm.back() == '/') norm.pop_back();
+    while (!norm.empty() && norm.back() == '/')
+        norm.pop_back();
     return norm;
 }
 
-[[nodiscard]] inline std::string derive_plugin_version(
-    std::optional<std::string_view> manifest_version,
-    std::optional<std::string_view> provided_version,
-    std::optional<std::string_view> git_commit_sha,
-    std::string_view source_type = {},
-    std::string_view source_path = {}
-) {
+[[nodiscard]] inline std::string
+derive_plugin_version(std::optional<std::string_view> manifest_version,
+                      std::optional<std::string_view> provided_version,
+                      std::optional<std::string_view> git_commit_sha,
+                      std::string_view source_type = {}, std::string_view source_path = {}) {
     if (manifest_version && !manifest_version->empty()) return std::string(*manifest_version);
     if (provided_version && !provided_version->empty()) return std::string(*provided_version);
     if (git_commit_sha && !git_commit_sha->empty()) {
-        std::string short_sha(git_commit_sha->substr(0, std::min<std::size_t>(12, git_commit_sha->size())));
+        std::string short_sha(
+            git_commit_sha->substr(0, std::min<std::size_t>(12, git_commit_sha->size())));
         if (source_type == "git-subdir") {
             const auto normalized = normalize_git_subdir_path(source_path);
             short_sha.push_back('-');
@@ -63,4 +65,4 @@ export namespace loom::utils::plugin_versioning {
     return "unknown";
 }
 
-} // namespace loom::utils::plugin_versioning
+}  // namespace loom::utils::plugin_versioning

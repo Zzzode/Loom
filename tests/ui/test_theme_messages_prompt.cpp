@@ -1,8 +1,8 @@
 /// @file test_theme_messages_prompt.cpp
 /// @brief Theme and content invariants for message and prompt presentation.
-#include <ftxui/dom/elements.hpp>
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/event.hpp>
+#include <ftxui/dom/elements.hpp>
 #include <ftxui/screen/screen.hpp>
 #include <gtest/gtest.h>
 
@@ -35,20 +35,20 @@ constexpr std::array kVariants = {
     theme::ThemeVariant::LightDaltonized,
     theme::ThemeVariant::Monochrome,
 };
+
 struct RestoreTheme {
     theme::Theme original = theme::current_theme();
+
     ~RestoreTheme() { theme::set_theme(original); }
 };
 
 ftxui::Screen RenderElement(ftxui::Element element) {
-    auto screen = ftxui::Screen::Create(
-        ftxui::Dimension::Fixed(100), ftxui::Dimension::Fixed(30));
+    auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(100), ftxui::Dimension::Fixed(30));
     ftxui::Render(screen, std::move(element));
     return screen;
 }
 
-void ExpectWordColor(const ftxui::Screen& screen, std::string_view word,
-                     ftxui::Color expected,
+void ExpectWordColor(const ftxui::Screen& screen, std::string_view word, ftxui::Color expected,
                      std::optional<ftxui::Color> expected_background = std::nullopt) {
     bool found = false;
     for (int y = 0; y < screen.dimy(); ++y) {
@@ -56,7 +56,10 @@ void ExpectWordColor(const ftxui::Screen& screen, std::string_view word,
             bool match = true;
             for (std::size_t i = 0; i < word.size(); ++i) {
                 if (screen.PixelAt(x + static_cast<int>(i), y).character !=
-                    std::string(1, word[i])) { match = false; break; }
+                    std::string(1, word[i])) {
+                    match = false;
+                    break;
+                }
             }
             if (!match) continue;
             found = true;
@@ -70,7 +73,7 @@ void ExpectWordColor(const ftxui::Screen& screen, std::string_view word,
     }
     EXPECT_TRUE(found) << "Missing rendered label: " << word;
 }
-}
+}  // namespace
 
 TEST(MessagePromptTheme, HeldAdvisorActionFollowsCurrentSuggestionToken) {
     RestoreTheme restore;
@@ -111,8 +114,8 @@ TEST(MessagePromptTheme, HeldPlanActionsFollowCurrentThemeAndKeepCallbacks) {
     data.plan_title = "Plan";
     data.steps.push_back({"Run operation", std::nullopt, true});
     int approved = 0;
-    auto component = msg::MakePlanApprovalMessage(data, [&] { ++approved; },
-        [](std::vector<msg::PlanStep>) {}, [](std::string) {});
+    auto component = msg::MakePlanApprovalMessage(
+        data, [&] { ++approved; }, [](std::vector<msg::PlanStep>) {}, [](std::string) {});
     for (auto variant : kVariants) {
         theme::set_theme(variant);
         const auto& pal = *theme::current_theme().palette;
@@ -146,8 +149,8 @@ TEST(MessagePromptTheme, TaskStatusesRemainReadableAcrossThemes) {
     for (auto variant : kVariants) {
         theme::set_theme(variant);
         const auto& pal = *theme::current_theme().palette;
-        for (auto status : {msg::TaskAssignmentStatus::Completed,
-                            msg::TaskAssignmentStatus::Failed}) {
+        for (auto status :
+             {msg::TaskAssignmentStatus::Completed, msg::TaskAssignmentStatus::Failed}) {
             msg::TaskAssignmentOptions data;
             data.status = status;
             data.assignee = "worker";
@@ -165,8 +168,8 @@ TEST(MessagePromptTheme, UserEmojiRemainsInRenderedAndCopiedPayload) {
     msg::UserTextMessageData data;
     data.content = "User payload 🎁 🔑 🤖";
     std::string copied;
-    auto component = msg::MakeUserTextMessage(data,
-        [&](std::string_view value) { copied = value; });
+    auto component =
+        msg::MakeUserTextMessage(data, [&](std::string_view value) { copied = value; });
     const auto rendered = strip_ansi(RenderElement(component->Render()).ToString());
     EXPECT_NE(rendered.find(data.content), std::string::npos);
     EXPECT_TRUE(component->OnEvent(ftxui::Event::Special({3})));
@@ -174,8 +177,8 @@ TEST(MessagePromptTheme, UserEmojiRemainsInRenderedAndCopiedPayload) {
 }
 
 TEST(MessagePromptTheme, HookSpinnerUsesWholeCanonicalGlyph) {
-    auto component = msg::MakeHookProgressMessage({{"hook", msg::HookState::Running,
-        std::nullopt, std::nullopt}});
+    auto component = msg::MakeHookProgressMessage(
+        {{"hook", msg::HookState::Running, std::nullopt, std::nullopt}});
     const auto rendered = strip_ansi(RenderElement(component->Render()).ToString());
     EXPECT_NE(rendered.find(figs::spinner_frame_glyph(0)), std::string::npos);
 }
@@ -216,8 +219,8 @@ TEST(MessagePromptTheme, PromptHighlightUsesThemeAndPreservesExplicitMemberColor
         EXPECT_EQ(member_highlights.front().color, explicit_color);
         auto default_chip = RenderElement(loom::ui::prompt::render_image_chip("[Image #1]"));
         ExpectWordColor(default_chip, "Image", pal.text);
-        auto custom_chip = RenderElement(loom::ui::prompt::render_image_chip(
-            "[Image #1]", false, explicit_color));
+        auto custom_chip =
+            RenderElement(loom::ui::prompt::render_image_chip("[Image #1]", false, explicit_color));
         ExpectWordColor(custom_chip, "Image", explicit_color);
     }
 }
@@ -257,16 +260,17 @@ TEST(MessagePromptTheme, ActualUserAndImageHoverKeepsReadableThemeSurface) {
     EXPECT_EQ(user_clicks, 1);
     EXPECT_EQ(image_clicks, 1);
     for (auto variant : {theme::ThemeVariant::Dark, theme::ThemeVariant::Light,
-            theme::ThemeVariant::DarkDaltonized, theme::ThemeVariant::LightDaltonized,
-            theme::ThemeVariant::Monochrome, theme::ThemeVariant::DarkAnsi,
-            theme::ThemeVariant::LightAnsi}) {
+                         theme::ThemeVariant::DarkDaltonized, theme::ThemeVariant::LightDaltonized,
+                         theme::ThemeVariant::Monochrome, theme::ThemeVariant::DarkAnsi,
+                         theme::ThemeVariant::LightAnsi}) {
         theme::set_theme(variant);
         const auto& pal = *theme::current_theme().palette;
         auto user_screen = RenderElement(user->Render());
         ExpectWordColor(user_screen, "HoverBody", pal.text, pal.message_actions_background);
         EXPECT_NE(strip_ansi(user_screen.ToString()).find(user_data.content), std::string::npos);
         auto image_screen = RenderElement(image->Render());
-        ExpectWordColor(image_screen, "capture.png", pal.suggestion, pal.message_actions_background);
+        ExpectWordColor(image_screen, "capture.png", pal.suggestion,
+                        pal.message_actions_background);
     }
     EXPECT_TRUE(user->OnEvent(click));
     EXPECT_TRUE(image->OnEvent(click));

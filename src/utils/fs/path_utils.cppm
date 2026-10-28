@@ -1,7 +1,7 @@
 module;
 
-#include <cstdlib>
 #include <cstddef>
+#include <cstdlib>
 
 export module loom.fs.path_utils;
 
@@ -10,7 +10,6 @@ import std;
 namespace fs = std::filesystem;
 
 export namespace loom::utils {
-
 
 inline fs::path normalize_path(const fs::path& p) {
     fs::path result = p.lexically_normal();
@@ -25,7 +24,6 @@ inline fs::path normalize_path(const fs::path& p) {
     return result;
 }
 
-
 inline fs::path expand_tilde(std::string_view path_str) {
     if (path_str.empty() || path_str[0] != '~') {
         return fs::path{path_str};
@@ -36,7 +34,6 @@ inline fs::path expand_tilde(std::string_view path_str) {
         return fs::path{path_str};
     }
 
-
     if (path_str.size() == 1) {
         return fs::path{home};
     }
@@ -44,10 +41,8 @@ inline fs::path expand_tilde(std::string_view path_str) {
         return fs::path{home} / fs::path{path_str.substr(2)};
     }
 
-
     return fs::path{path_str};
 }
-
 
 inline std::string relative_to_home(const fs::path& p) {
     const char* home = std::getenv("HOME");
@@ -64,7 +59,6 @@ inline std::string relative_to_home(const fs::path& p) {
     return "~/" + rel.string();
 }
 
-
 inline fs::path get_common_prefix(std::span<const fs::path> paths) {
     if (paths.empty()) {
         return {};
@@ -72,7 +66,6 @@ inline fs::path get_common_prefix(std::span<const fs::path> paths) {
     if (paths.size() == 1) {
         return paths[0].parent_path();
     }
-
 
     auto decompose = [](const fs::path& p) -> std::vector<std::string> {
         std::vector<std::string> parts;
@@ -95,14 +88,12 @@ inline fs::path get_common_prefix(std::span<const fs::path> paths) {
         common.resize(match_count);
     }
 
-
     fs::path result;
     for (const auto& part : common) {
         result /= part;
     }
     return result;
 }
-
 
 inline bool is_subpath(const fs::path& child, const fs::path& parent) {
     auto child_norm = child.lexically_normal();
@@ -115,7 +106,6 @@ inline bool is_subpath(const fs::path& child, const fs::path& parent) {
     return !rel_str.starts_with("..");
 }
 
-
 inline std::string ensure_trailing_slash(std::string path_str) {
     if (path_str.empty()) {
         return "/";
@@ -127,4 +117,4 @@ inline std::string ensure_trailing_slash(std::string path_str) {
     return path_str;
 }
 
-} // namespace loom::utils
+}  // namespace loom::utils

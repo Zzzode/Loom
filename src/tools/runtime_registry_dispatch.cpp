@@ -9,7 +9,7 @@ module loom.tools.runtime_registry;
 import std;
 
 import loom.types.tool_types;
-import loom.tools.tool;  // arch-check: keep-import (ToolRegistry; raw strings blind the parser)
+import loom.tools.tool; // arch-check: keep-import (ToolRegistry; raw strings blind the parser)
 import loom.tools.runtime_backends.port;
 import loom.tools.ask_user;
 import loom.tools.plan_mode;
@@ -30,11 +30,8 @@ using loom::core::ToolInput;
 using loom::core::ToolRegistry;
 using loom::core::ToolResult;
 
-[[nodiscard]] Result<ToolResult> execute_simple_runtime_tool(
-    std::string_view name,
-    const ToolInput& input,
-    ToolRegistry* registry
-) {
+[[nodiscard]] Result<ToolResult>
+execute_simple_runtime_tool(std::string_view name, const ToolInput& input, ToolRegistry* registry) {
     auto json = input.json();
     if (name == "ask_user_question") {
         auto question = json_string(json, "question").value_or("Continue?");
@@ -54,7 +51,8 @@ using loom::core::ToolResult;
         // Fallback: stdio
         std::cout << "\n" << question << "\n> ";
         std::string answer;
-        if (!std::getline(std::cin, answer)) return ToolResult::error("No interactive input available");
+        if (!std::getline(std::cin, answer))
+            return ToolResult::error("No interactive input available");
         return ToolResult::success(answer);
     }
     if (name == "brief") return execute_brief(input);
@@ -64,20 +62,20 @@ using loom::core::ToolResult;
     // lives in loom.orchestration.runtime_backends.
     if (name == "computer_use" || name == "computer") {
         if (auto& backend = computer_use_backend(); backend) return backend(input);
-        return ToolResult::error(std::format(
-            "Runtime tool '{}' has no runtime handler", name));
+        return ToolResult::error(std::format("Runtime tool '{}' has no runtime handler", name));
     }
     // c13b: the structured config tool backend lives in
     // loom.orchestration.runtime_backends; dispatch only does the seam
     // lookup and fails closed with the standard terminal text.
     if (name == "config") {
         if (auto& backend = config_backend(); backend) return backend(input);
-        return ToolResult::error(std::format(
-            "Runtime tool '{}' has no runtime handler", name));
+        return ToolResult::error(std::format("Runtime tool '{}' has no runtime handler", name));
     }
     if (name == "enter_plan_mode") {
         EnterPlanModeTool tool;
-        auto title = json_string(json, "title").or_else([&] { return json_string(json, "goal"); }).value_or("Plan");
+        auto title = json_string(json, "title")
+                         .or_else([&] { return json_string(json, "goal"); })
+                         .value_or("Plan");
         auto summary = json_string(json, "summary").value_or("");
         auto result = tool.execute(title, summary);
         if (!result) return ToolResult::error(std::string(format_error(result.error())));
@@ -88,63 +86,65 @@ using loom::core::ToolResult;
         auto result = tool.execute();
         if (!result) return ToolResult::error(std::string(format_error(result.error())));
         return ToolResult::success(std::format("Plan mode finalized: {} ({} sections)",
-            result->title, result->total_sections()));
+                                               result->title, result->total_sections()));
     }
     if (name == "enter_worktree") {
-        auto branch = json_string(json, "branch").or_else([&] { return json_string(json, "branch_name"); });
-        if (!branch || branch->empty()) return ToolResult::error("enter_worktree requires branch_name");
-        auto target_path_text = json_string(json, "path").or_else([&] { return json_string(json, "target_path"); });
+        auto branch =
+            json_string(json, "branch").or_else([&] { return json_string(json, "branch_name"); });
+        if (!branch || branch->empty())
+            return ToolResult::error("enter_worktree requires branch_name");
+        auto target_path_text =
+            json_string(json, "path").or_else([&] { return json_string(json, "target_path"); });
         EnterWorktreeTool tool;
         auto result = tool.execute(WorktreeCreateRequest{
             .branch_name = *branch,
-            .target_path = target_path_text ? std::optional<fs::path>{fs::path{*target_path_text}} : std::nullopt,
+            .target_path = target_path_text ? std::optional<fs::path>{fs::path{*target_path_text}}
+                                            : std::nullopt,
             .base_branch = json_string(json, "base_branch"),
             .create_branch = json_bool(json, "create_branch", true),
         });
         if (!result) return ToolResult::error(std::string(format_error(result.error())));
-        return ToolResult::success(std::format("Entered worktree {} at {}",
-            result->branch_name, result->worktree_path.string()));
+        return ToolResult::success(std::format("Entered worktree {} at {}", result->branch_name,
+                                               result->worktree_path.string()));
     }
     if (name == "exit_worktree") {
         ExitWorktreeTool tool;
         auto result = tool.execute(json_bool(json, "remove_worktree", false));
         if (!result) return ToolResult::error(std::string(format_error(result.error())));
         return ToolResult::success(std::format("Exited worktree {} and returned to {}",
-            result->branch_name, result->original_path.string()));
+                                               result->branch_name,
+                                               result->original_path.string()));
     }
     // RFC-0001 B15: the LSP and four MCP branches moved to
     // loom.orchestration.runtime_backends; dispatch only does the seam lookup.
     // Every null slot returns the byte-identical terminal error literal.
     if (name == "lsp") {
         if (auto& backend = lsp_backend(); backend) return backend(input);
-        return ToolResult::error(std::format(
-            "Runtime tool '{}' has no runtime handler", name));
+        return ToolResult::error(std::format("Runtime tool '{}' has no runtime handler", name));
     }
     if (name == "list_mcp_resources") {
         if (auto& backend = list_mcp_resources_backend(); backend) return backend(input);
-        return ToolResult::error(std::format(
-            "Runtime tool '{}' has no runtime handler", name));
+        return ToolResult::error(std::format("Runtime tool '{}' has no runtime handler", name));
     }
     if (name == "read_mcp_resource") {
         if (auto& backend = read_mcp_resource_backend(); backend) return backend(input);
-        return ToolResult::error(std::format(
-            "Runtime tool '{}' has no runtime handler", name));
+        return ToolResult::error(std::format("Runtime tool '{}' has no runtime handler", name));
     }
     if (name == "mcp") {
         if (auto& backend = mcp_backend(); backend) return backend(input);
-        return ToolResult::error(std::format(
-            "Runtime tool '{}' has no runtime handler", name));
+        return ToolResult::error(std::format("Runtime tool '{}' has no runtime handler", name));
     }
     if (name == "mcp_auth") {
         if (auto& backend = mcp_auth_backend(); backend) return backend(input);
-        return ToolResult::error(std::format(
-            "Runtime tool '{}' has no runtime handler", name));
+        return ToolResult::error(std::format("Runtime tool '{}' has no runtime handler", name));
     }
     if (name == "notebook_edit") return execute_notebook_edit(input);
     if (name == "powershell") {
         auto command = json_string(json, "command");
         if (!command) return ToolResult::error("powershell requires command");
-        auto cwd = json_string(json, "cwd").or_else([&] { return json_string(json, "working_directory"); });
+        auto cwd = json_string(json, "cwd").or_else([&] {
+            return json_string(json, "working_directory");
+        });
         auto timeout = std::clamp(json_int(json, "timeout").value_or(120), 1, 300);
         PowerShellTool tool;
         auto validation = tool.validate(PowerShellConfig{
@@ -155,12 +155,14 @@ using loom::core::ToolResult;
         if (!validation) return ToolResult::error(std::string(format_error(validation.error())));
 #ifdef _WIN32
         return run_command(build_powershell_process_command(PowerShellConfig{
-            .command = *command,
-            .working_directory = cwd ? fs::path{*cwd} : fs::path{},
-            .timeout = std::chrono::seconds(timeout),
-        }) + " 2>&1");
+                               .command = *command,
+                               .working_directory = cwd ? fs::path{*cwd} : fs::path{},
+                               .timeout = std::chrono::seconds(timeout),
+                           }) +
+                           " 2>&1");
 #else
-        return ToolResult::error("PowerShell execution is only available on Windows in this runtime");
+        return ToolResult::error(
+            "PowerShell execution is only available on Windows in this runtime");
 #endif
     }
     if (name == "repl") return execute_script(input);
@@ -168,18 +170,28 @@ using loom::core::ToolResult;
         ScheduleCronTool tool;
         auto action_text = json_string(json, "action").value_or("create");
         CronAction action = CronAction::Create;
-        if (action_text == "list") action = CronAction::List;
-        else if (action_text == "get") action = CronAction::Get;
-        else if (action_text == "pause") action = CronAction::Pause;
-        else if (action_text == "resume") action = CronAction::Resume;
-        else if (action_text == "delete") action = CronAction::Delete;
-        else if (action_text == "trigger") action = CronAction::Trigger;
+        if (action_text == "list")
+            action = CronAction::List;
+        else if (action_text == "get")
+            action = CronAction::Get;
+        else if (action_text == "pause")
+            action = CronAction::Pause;
+        else if (action_text == "resume")
+            action = CronAction::Resume;
+        else if (action_text == "delete")
+            action = CronAction::Delete;
+        else if (action_text == "trigger")
+            action = CronAction::Trigger;
         auto result = tool.execute(CronRequest{
             .action = action,
-            .task_id = json_string(json, "task_id").or_else([&] { return json_string(json, "id"); }),
+            .task_id =
+                json_string(json, "task_id").or_else([&] { return json_string(json, "id"); }),
             .name = json_string(json, "name").value_or("scheduled-task"),
-            .message = json_string(json, "message").or_else([&] { return json_string(json, "command"); }),
-            .cron_expression = json_string(json, "cron").or_else([&] { return json_string(json, "cron_expression"); }).value_or("* * * * *"),
+            .message =
+                json_string(json, "message").or_else([&] { return json_string(json, "command"); }),
+            .cron_expression = json_string(json, "cron")
+                                   .or_else([&] { return json_string(json, "cron_expression"); })
+                                   .value_or("* * * * *"),
             .timezone = json_string(json, "timezone").value_or("UTC"),
         });
         if (!result) return ToolResult::error(std::string(format_error(result.error())));
@@ -188,8 +200,8 @@ using loom::core::ToolResult;
     if (name == "script") return execute_script(input);
     if (name == "send_message") {
         return runtime_message_delivery::execute_send_message(
-            json, registry, &native_agent_status_is_terminal, input.parent_model,
-            input.api_context, input.parent_session_id);
+            json, registry, &native_agent_status_is_terminal, input.parent_model, input.api_context,
+            input.parent_session_id);
     }
     if (name == "shared") {
         auto key = json_string(json, "key");
@@ -215,8 +227,7 @@ using loom::core::ToolResult;
         // cwd/skills, plugin components) is an orchestration-installed
         // executor. std::nullopt means it did not claim the skill — fall
         // through to the terminal manual SKILL.md walk in execute_skill_tool.
-        if (auto& skill_executor = skill_loader_executor_slot();
-            skill_executor) {
+        if (auto& skill_executor = skill_loader_executor_slot(); skill_executor) {
             if (auto executed = (*skill_executor)(input)) {
                 return std::move(*executed);
             }
@@ -225,7 +236,10 @@ using loom::core::ToolResult;
     }
     if (name == "sleep") {
         SleepTool tool;
-        auto seconds = std::clamp(json_int(json, "duration").or_else([&] { return json_int(json, "seconds"); }).value_or(1), 1, 300);
+        auto seconds = std::clamp(json_int(json, "duration")
+                                      .or_else([&] { return json_int(json, "seconds"); })
+                                      .value_or(1),
+                                  1, 300);
         auto result = tool.execute(SleepRequest{
             .duration = std::chrono::seconds(seconds),
             .reason = json_string(json, "reason").value_or("scheduled wait"),
@@ -235,7 +249,9 @@ using loom::core::ToolResult;
         return ToolResult::success(std::format("Slept for {} ms", result->actual_duration.count()));
     }
     if (name == "synthetic_output") {
-        return ToolResult::success(json_string(json, "content").or_else([&] { return json_string(json, "text"); }).value_or(std::string(json)));
+        return ToolResult::success(json_string(json, "content")
+                                       .or_else([&] { return json_string(json, "text"); })
+                                       .value_or(std::string(json)));
     }
     if (name.starts_with("task_")) return execute_task_tool(name, input);
     if (name == "team_create") return execute_team_create_runtime_tool(input, registry);
@@ -250,7 +266,8 @@ using loom::core::ToolResult;
     if (name == "tool_search") return execute_tool_search(input);
     if (name == "tungsten") {
         auto operation = json_string(json, "operation").value_or("");
-        auto result = tungsten::validate_request(tungsten::TungstenRequest{.operation = operation, .inputs = {}});
+        auto result = tungsten::validate_request(
+            tungsten::TungstenRequest{.operation = operation, .inputs = {}});
         return result.ok ? ToolResult::success(result.message) : ToolResult::error(result.message);
     }
     if (name == "workflow") {
@@ -265,17 +282,12 @@ using loom::core::ToolResult;
         WorkflowTool tool;
         auto result = tool.execute(std::move(*definition));
         if (!result) return ToolResult::error(std::string(format_error(result.error())));
-        std::string output = std::format(
-            "Workflow {} {}\nSteps executed: {}\nSteps skipped: {}\n",
-            result->workflow_name,
-            result->success ? "completed" : "failed",
-            result->steps_executed,
-            result->steps_skipped);
+        std::string output =
+            std::format("Workflow {} {}\nSteps executed: {}\nSteps skipped: {}\n",
+                        result->workflow_name, result->success ? "completed" : "failed",
+                        result->steps_executed, result->steps_skipped);
         for (const auto& step : result->step_results) {
-            output += std::format(
-                "- {}: {}",
-                step.step_id,
-                step.success ? "ok" : "failed");
+            output += std::format("- {}: {}", step.step_id, step.success ? "ok" : "failed");
             if (!step.output.empty()) output += " " + step.output;
             if (step.error_message) output += " " + *step.error_message;
             if (!output.ends_with('\n')) output += "\n";
@@ -292,9 +304,9 @@ using loom::core::ToolResult;
     if (name == "push_notification") {
         auto title = json_string(json, "title").value_or("Notification");
         auto body = json_string(json, "body").value_or("");
-        return ToolResult::error(std::format(
-            "push_notification stub: title=\"{}\", body=\"{}\" — not yet implemented in CPP migration",
-            title, body));
+        return ToolResult::error(std::format("push_notification stub: title=\"{}\", body=\"{}\" — "
+                                             "not yet implemented in CPP migration",
+                                             title, body));
     }
     if (name == "monitor") {
         return ToolResult::error(
@@ -309,8 +321,7 @@ using loom::core::ToolResult;
     if (name == "subscribe_pr") {
         auto pr_url = json_string(json, "pr_url").value_or("");
         return ToolResult::error(std::format(
-            "subscribe_pr stub: pr_url=\"{}\" — not yet implemented in CPP migration",
-            pr_url));
+            "subscribe_pr stub: pr_url=\"{}\" — not yet implemented in CPP migration", pr_url));
     }
     if (name == "overflow_test") {
         return ToolResult::error(
@@ -333,11 +344,11 @@ using loom::core::ToolResult;
             "list_peers stub: ListPeersTool is not yet implemented in CPP migration");
     }
     if (name == "verify_plan_execution") {
-        return ToolResult::error(
-            "verify_plan_execution stub: VerifyPlanExecutionTool is not yet implemented in CPP migration");
+        return ToolResult::error("verify_plan_execution stub: VerifyPlanExecutionTool is not yet "
+                                 "implemented in CPP migration");
     }
 
     return ToolResult::error(std::format("Runtime tool '{}' has no runtime handler", name));
 }
 
-} // namespace loom::tools::detail
+}  // namespace loom::tools::detail

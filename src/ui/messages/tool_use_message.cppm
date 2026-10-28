@@ -5,13 +5,13 @@
 /// action buttons (Retry / Copy / Open In Editor).
 module;
 
-#include <cctype>
-#include <cstdint>
-
-#include <ftxui/dom/elements.hpp>
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
+#include <ftxui/dom/elements.hpp>
+
+#include <cctype>
 #include <cstddef>
+#include <cstdint>
 
 export module loom.ui.messages.tool_use_message;
 
@@ -23,7 +23,7 @@ import loom.ui.foundation.design_figures;
 import loom.ui.visual.code_highlight;
 // Import the shared spinner via its module-interface name.  The file exports
 // `ui::components` so we alias at the bottom of this file for convenience.
-import loom.ui.widgets.spinner;  // arch-check: keep-import (spinner_ns alias)
+import loom.ui.widgets.spinner; // arch-check: keep-import (spinner_ns alias)
 // For unescape_literal_newlines() + ansi_to_ftxui_elements() used by the
 // Output: section to decode JSON-escaped newlines and render ANSI SGR codes.
 import loom.ui.messages.message_components;
@@ -58,10 +58,10 @@ struct RetryInfo {
 struct ToolUseCallData {
     std::string tool_use_id;
     std::string tool_name;
-    std::string server_name;        // MCP server or "built-in"
+    std::string server_name;  // MCP server or "built-in"
     ToolStatus status{ToolStatus::Pending};
-    std::string raw_parameters;     // JSON / YAML payload
-    std::string parameters_language;// "json" | "yaml" | "text"
+    std::string raw_parameters;       // JSON / YAML payload
+    std::string parameters_language;  // "json" | "yaml" | "text"
     std::optional<std::string> result_preview;
     std::optional<std::string> error_message;
     std::chrono::milliseconds duration{0};
@@ -86,17 +86,17 @@ struct ToolUseRenderOptions {
     std::function<void()> on_retry;
     std::function<void()> on_copy_params;
     std::function<void()> on_copy_result;
-    std::function<void()> on_open_in_editor;  // only shown for file_edit-like tools
-    std::function<void()> on_toggle_collapse; // full-card collapse
+    std::function<void()> on_open_in_editor;   // only shown for file_edit-like tools
+    std::function<void()> on_toggle_collapse;  // full-card collapse
 };
 
 /// Options for a grouped-tools stack (multiple tool_use sharing header)
 struct GroupedToolsOptions {
     std::vector<ToolUseCallData> calls;
-    std::string group_title;            // optional summary override
+    std::string group_title;  // optional summary override
     bool group_collapsed = true;
     std::size_t args_collapse_threshold = 1024;
-    int max_visible_preview = 3;         // when group collapsed, preview N entries
+    int max_visible_preview = 3;  // when group collapsed, preview N entries
     std::function<void()> on_toggle_group;
     std::function<void(std::size_t idx)> on_call_retry;
     std::function<void(std::size_t idx)> on_call_copy_params;
@@ -130,10 +130,14 @@ constexpr std::size_t kLargeContentWarnBytes = 5 * 1024 * 1024;  // 5 MB
             if (in_string) {
                 if (c == '"' && prev != '\\') in_string = false;
             } else {
-                if (c == '"') in_string = true;
-                else if (c == '{' || c == '[' || c == '(') ++depth;
-                else if (c == '}' || c == ']' || c == ')') --depth;
-                else if (c == ',' && depth == 0) ++count;
+                if (c == '"')
+                    in_string = true;
+                else if (c == '{' || c == '[' || c == '(')
+                    ++depth;
+                else if (c == '}' || c == ']' || c == ')')
+                    --depth;
+                else if (c == ',' && depth == 0)
+                    ++count;
             }
             prev = c;
         }
@@ -145,7 +149,8 @@ constexpr std::size_t kLargeContentWarnBytes = 5 * 1024 * 1024;  // 5 MB
     while (pos < payload.size()) {
         auto nl = payload.find('\n', pos);
         auto line = payload.substr(pos, nl - pos);
-        if (!line.empty() && line[0] != ' ' && line[0] != '#' && line.find(':') != std::string_view::npos) {
+        if (!line.empty() && line[0] != ' ' && line[0] != '#' &&
+            line.find(':') != std::string_view::npos) {
             ++count;
         }
         if (nl == std::string_view::npos) break;
@@ -157,11 +162,16 @@ constexpr std::size_t kLargeContentWarnBytes = 5 * 1024 * 1024;  // 5 MB
 [[nodiscard]] inline std::pair<std::string, Color> status_display(ToolStatus status) {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
     switch (status) {
-        case ToolStatus::Pending:   return {"◯ Pending",   pal.warning};
-        case ToolStatus::Running:   return {"⟳ Running",   pal.info};
-        case ToolStatus::Success:   return {(std::string(loom::ui::design::figures::kTick) + " Success"),   pal.success};
-        case ToolStatus::Error:     return {(std::string(loom::ui::design::figures::kCross) + " Failed"),    pal.danger};
-        case ToolStatus::Cancelled: return {"⊘ Cancelled", pal.muted};
+    case ToolStatus::Pending:
+        return {"◯ Pending", pal.warning};
+    case ToolStatus::Running:
+        return {"⟳ Running", pal.info};
+    case ToolStatus::Success:
+        return {(std::string(loom::ui::design::figures::kTick) + " Success"), pal.success};
+    case ToolStatus::Error:
+        return {(std::string(loom::ui::design::figures::kCross) + " Failed"), pal.danger};
+    case ToolStatus::Cancelled:
+        return {"⊘ Cancelled", pal.muted};
     }
     return {"?", pal.text};
 }
@@ -171,20 +181,17 @@ constexpr std::size_t kLargeContentWarnBytes = 5 * 1024 * 1024;  // 5 MB
 /// the renderer's ToolStatus enum.  Unknown / empty => Pending (default).
 /// G1 reads entry.tool_status (populated by G2 / app.cppm) via this helper.
 [[nodiscard]] inline ToolStatus parse_tool_status(std::string_view s) {
-    if (s == "running")          return ToolStatus::Running;
-    if (s == "success")          return ToolStatus::Success;
-    if (s == "error" || s == "failed")
-                                return ToolStatus::Error;
-    if (s == "cancelled" || s == "canceled")
-                                return ToolStatus::Cancelled;
+    if (s == "running") return ToolStatus::Running;
+    if (s == "success") return ToolStatus::Success;
+    if (s == "error" || s == "failed") return ToolStatus::Error;
+    if (s == "cancelled" || s == "canceled") return ToolStatus::Cancelled;
     return ToolStatus::Pending;  // "pending" / "" / unknown
 }
 
 [[nodiscard]] inline bool is_file_edit_tool(std::string_view tool_name) {
     using namespace std::string_view_literals;
     auto has = [&](std::string_view s) {
-        return std::search(tool_name.begin(), tool_name.end(),
-                           s.begin(), s.end(),
+        return std::search(tool_name.begin(), tool_name.end(), s.begin(), s.end(),
                            [](char a, char b) {
                                return std::tolower(static_cast<unsigned char>(a)) ==
                                       std::tolower(static_cast<unsigned char>(b));
@@ -215,8 +222,7 @@ constexpr std::size_t kLargeContentWarnBytes = 5 * 1024 * 1024;  // 5 MB
 
 /// Render parameters as highlighted JSON/YAML.  When size exceeds threshold
 /// the block is collapsed with a `{N keys, M bytes}` summary pill.
-[[nodiscard]] inline Element RenderParameterBlock(const ToolUseCallData& call,
-                                                  bool force_collapsed,
+[[nodiscard]] inline Element RenderParameterBlock(const ToolUseCallData& call, bool force_collapsed,
                                                   std::size_t collapse_threshold) {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
     const bool oversized = call.raw_parameters.size() > kLargeContentWarnBytes;
@@ -230,15 +236,14 @@ constexpr std::size_t kLargeContentWarnBytes = 5 * 1024 * 1024;  // 5 MB
     // Header row: summary pill + collapse hint
     Elements summary_row = {
         text("  Args: ") | dim | color(pal.muted),
-        text(std::format("{{{} keys, {}}}",
-                         n_keys, format_bytes(n_bytes)))
-            | color(pal.info) | dim,
+        text(std::format("{{{} keys, {}}}", n_keys, format_bytes(n_bytes))) | color(pal.info) | dim,
     };
 
     if (oversized) {
         summary_row.push_back(filler());
-        summary_row.push_back(
-            text((" " + std::string(loom::ui::design::figures::kWarning) + " Oversized — write to file to inspect")) | color(pal.warning) | dim);
+        summary_row.push_back(text((" " + std::string(loom::ui::design::figures::kWarning) +
+                                    " Oversized — write to file to inspect")) |
+                              color(pal.warning) | dim);
     } else if (collapsed) {
         summary_row.push_back(filler());
         summary_row.push_back(message_key_hint("A", "Expand args"));
@@ -268,8 +273,7 @@ constexpr std::size_t kLargeContentWarnBytes = 5 * 1024 * 1024;  // 5 MB
 // Header: tool name + status pill + spinner + duration + retry
 // ============================================================
 
-[[nodiscard]] inline Element RenderToolHeader(const ToolUseCallData& call,
-                                               int spinner_frame = 0) {
+[[nodiscard]] inline Element RenderToolHeader(const ToolUseCallData& call, int spinner_frame = 0) {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
     auto [status_text, status_color] = status_display(call.status);
     Elements left;
@@ -311,8 +315,8 @@ constexpr std::size_t kLargeContentWarnBytes = 5 * 1024 * 1024;  // 5 MB
     if (call.retry.current_attempt > 1 || call.retry.max_attempts > 1) {
         right.push_back(text(" "));
         right.push_back(
-            text(std::format("retry {}/{}", call.retry.current_attempt, call.retry.max_attempts))
-                | color(pal.warning) | dim);
+            text(std::format("retry {}/{}", call.retry.current_attempt, call.retry.max_attempts)) |
+            color(pal.warning) | dim);
     }
 
     // Duration
@@ -333,9 +337,7 @@ constexpr std::size_t kLargeContentWarnBytes = 5 * 1024 * 1024;  // 5 MB
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
     Elements buttons;
     auto pill = [&pal](std::string_view label, Color col, bool enabled = true) -> Element {
-        auto el = text(std::format("[{}]", label))
-                  | ftxui::color(enabled ? col : pal.muted)
-                  | dim;
+        auto el = text(std::format("[{}]", label)) | ftxui::color(enabled ? col : pal.muted) | dim;
         if (!enabled) el = el | dim;
         return el;
     };
@@ -385,10 +387,10 @@ constexpr std::size_t kLargeContentWarnBytes = 5 * 1024 * 1024;  // 5 MB
 
     // Parameters
     if (!call.raw_parameters.empty()) {
-        body_parts.push_back(RenderParameterBlock(
-            call,
-            /*force_collapsed*/ !opts.show_result && opts.call.args_collapsed,
-            opts.args_collapse_threshold));
+        body_parts.push_back(
+            RenderParameterBlock(call,
+                                 /*force_collapsed*/ !opts.show_result && opts.call.args_collapsed,
+                                 opts.args_collapse_threshold));
     }
 
     // Error
@@ -401,10 +403,16 @@ constexpr std::size_t kLargeContentWarnBytes = 5 * 1024 * 1024;  // 5 MB
         while (pos < msg.size() && lines < 5) {
             auto nl = msg.find('\n', pos);
             std::string line;
-            if (nl == std::string::npos) { line = msg.substr(pos); pos = msg.size(); }
-            else { line = msg.substr(pos, nl - pos); pos = nl + 1; }
+            if (nl == std::string::npos) {
+                line = msg.substr(pos);
+                pos = msg.size();
+            } else {
+                line = msg.substr(pos, nl - pos);
+                pos = nl + 1;
+            }
             body_parts.push_back(hbox({
-                text(("  " + std::string(loom::ui::design::figures::kCross) + " ")) | color(pal.danger),
+                text(("  " + std::string(loom::ui::design::figures::kCross) + " ")) |
+                    color(pal.danger),
                 text(line) | color(pal.danger),
             }));
             ++lines;
@@ -423,8 +431,13 @@ constexpr std::size_t kLargeContentWarnBytes = 5 * 1024 * 1024;  // 5 MB
         while (pos < preview.size() && lines < opts.max_result_lines) {
             auto nl = preview.find('\n', pos);
             std::string line;
-            if (nl == std::string::npos) { line = preview.substr(pos); pos = preview.size(); }
-            else { line = preview.substr(pos, nl - pos); pos = nl + 1; }
+            if (nl == std::string::npos) {
+                line = preview.substr(pos);
+                pos = preview.size();
+            } else {
+                line = preview.substr(pos, nl - pos);
+                pos = nl + 1;
+            }
             body_parts.push_back(hbox({
                 text("  │ ") | color(pal.muted),
                 text(line) | color(pal.text),
@@ -469,38 +482,55 @@ constexpr std::size_t kLargeContentWarnBytes = 5 * 1024 * 1024;  // 5 MB
     std::chrono::milliseconds total{0};
     for (const auto& c : opts.calls) {
         switch (c.status) {
-            case ToolStatus::Running:   ++running; break;
-            case ToolStatus::Success:   ++success; break;
-            case ToolStatus::Error:     ++error; break;
-            case ToolStatus::Pending:   ++pending; break;
-            case ToolStatus::Cancelled: break;
+        case ToolStatus::Running:
+            ++running;
+            break;
+        case ToolStatus::Success:
+            ++success;
+            break;
+        case ToolStatus::Error:
+            ++error;
+            break;
+        case ToolStatus::Pending:
+            ++pending;
+            break;
+        case ToolStatus::Cancelled:
+            break;
         }
         total += c.duration;
     }
     Color overall_color = pal.muted;
-    if (error > 0) overall_color = pal.danger;
-    else if (running > 0) overall_color = pal.info;
-    else if (success == static_cast<int>(opts.calls.size())) overall_color = pal.success;
-    else if (pending > 0) overall_color = pal.warning;
+    if (error > 0)
+        overall_color = pal.danger;
+    else if (running > 0)
+        overall_color = pal.info;
+    else if (success == static_cast<int>(opts.calls.size()))
+        overall_color = pal.success;
+    else if (pending > 0)
+        overall_color = pal.warning;
 
     // Header
     Elements header_parts;
-    std::string title = opts.group_title.empty()
-        ? std::format("{} tool calls", opts.calls.size())
-        : opts.group_title;
+    std::string title = opts.group_title.empty() ? std::format("{} tool calls", opts.calls.size())
+                                                 : opts.group_title;
     header_parts.push_back(text(title) | bold | color(overall_color));
 
     // Status mini-pills
     Elements pills;
     if (running > 0) pills.push_back(text(std::format(" ⟳{}", running)) | color(pal.info) | dim);
-    if (success > 0) pills.push_back(text(std::format(" {}{}", loom::ui::design::figures::kTick, success)) | color(pal.success) | dim);
-    if (error > 0)   pills.push_back(text(std::format(" {}{}", loom::ui::design::figures::kCross, error))   | color(pal.danger)   | dim);
+    if (success > 0)
+        pills.push_back(text(std::format(" {}{}", loom::ui::design::figures::kTick, success)) |
+                        color(pal.success) | dim);
+    if (error > 0)
+        pills.push_back(text(std::format(" {}{}", loom::ui::design::figures::kCross, error)) |
+                        color(pal.danger) | dim);
     if (pending > 0) pills.push_back(text(std::format(" ◯{}", pending)) | color(pal.warning) | dim);
     pills.push_back(text(" "));
     pills.push_back(text(format_duration(total)) | dim | color(pal.muted));
 
     header_parts.push_back(filler());
-    for (auto& p : pills) header_parts.push_back(std::move(p));
+    for (auto& p : pills)
+        header_parts.push_back(std::move(p));
     header_parts.push_back(message_key_hint("Enter", opts.group_collapsed ? "Expand" : "Collapse"));
 
     Elements rows = {hbox(header_parts)};
@@ -516,16 +546,15 @@ constexpr std::size_t kLargeContentWarnBytes = 5 * 1024 * 1024;  // 5 MB
                 text(" "),
                 text(c.tool_name) | color(pal.primary) | dim,
                 c.file_path ? text(std::format(" → {}", *c.file_path)) | color(pal.info) | dim
-                           : text(""),
+                            : text(""),
                 filler(),
                 text(format_duration(c.duration)) | color(pal.muted) | dim,
             }));
         }
         int hidden = static_cast<int>(opts.calls.size()) - limit;
         if (hidden > 0) {
-            rows.push_back(
-                text(std::format("   … and {} more [expand to see]", hidden))
-                    | color(pal.muted) | dim);
+            rows.push_back(text(std::format("   … and {} more [expand to see]", hidden)) |
+                           color(pal.muted) | dim);
         }
     } else {
         for (std::size_t i = 0; i < opts.calls.size(); ++i) {
@@ -551,49 +580,52 @@ constexpr std::size_t kLargeContentWarnBytes = 5 * 1024 * 1024;  // 5 MB
         int frame = 0;
         std::size_t default_args_threshold = 1024;
     };
+
     auto s = std::make_shared<State>();
     s->opts = std::move(options);
     s->default_args_threshold = s->opts.args_collapse_threshold;
     s->expanded = !s->opts.call.args_collapsed;
 
     return Renderer([s] {
-        if (s->opts.call.status == ToolStatus::Running) ++s->frame;
-        s->opts.show_result = s->expanded || s->opts.call.status == ToolStatus::Error;
-        // The size threshold is a preview default, not a veto on an explicit
-        // args expansion. The separate oversized-content guard still applies.
-        s->opts.args_collapse_threshold = s->opts.call.args_collapsed
-            ? s->default_args_threshold : std::numeric_limits<std::size_t>::max();
-        return RenderToolUseMessage(s->opts, s->frame);
-    }) | CatchEvent([s](Event e) -> bool {
-        if (e == Event::Return || e == Event::Character(' ')) {
-            s->expanded = !s->expanded;
-            s->opts.call.args_collapsed = !s->expanded;
-            if (s->opts.on_toggle_collapse) s->opts.on_toggle_collapse();
-            return true;
-        }
-        if (e == Event::Character('a')) {
-            s->opts.call.args_collapsed = !s->opts.call.args_collapsed;
-            if (s->opts.on_toggle_args) s->opts.on_toggle_args();
-            return true;
-        }
-        if (e == Event::Character('r')) {
-            if (s->opts.on_retry) s->opts.on_retry();
-            return true;
-        }
-        if (e == Event::Character('c')) {
-            if (s->opts.on_copy_params) s->opts.on_copy_params();
-            return true;
-        }
-        if (e == Event::Character('C')) {
-            if (s->opts.on_copy_result) s->opts.on_copy_result();
-            return true;
-        }
-        if (e == Event::Character('o')) {
-            if (s->opts.on_open_in_editor) s->opts.on_open_in_editor();
-            return true;
-        }
-        return false;
-    });
+               if (s->opts.call.status == ToolStatus::Running) ++s->frame;
+               s->opts.show_result = s->expanded || s->opts.call.status == ToolStatus::Error;
+               // The size threshold is a preview default, not a veto on an explicit
+               // args expansion. The separate oversized-content guard still applies.
+               s->opts.args_collapse_threshold = s->opts.call.args_collapsed
+                                                     ? s->default_args_threshold
+                                                     : std::numeric_limits<std::size_t>::max();
+               return RenderToolUseMessage(s->opts, s->frame);
+           }) |
+           CatchEvent([s](Event e) -> bool {
+               if (e == Event::Return || e == Event::Character(' ')) {
+                   s->expanded = !s->expanded;
+                   s->opts.call.args_collapsed = !s->expanded;
+                   if (s->opts.on_toggle_collapse) s->opts.on_toggle_collapse();
+                   return true;
+               }
+               if (e == Event::Character('a')) {
+                   s->opts.call.args_collapsed = !s->opts.call.args_collapsed;
+                   if (s->opts.on_toggle_args) s->opts.on_toggle_args();
+                   return true;
+               }
+               if (e == Event::Character('r')) {
+                   if (s->opts.on_retry) s->opts.on_retry();
+                   return true;
+               }
+               if (e == Event::Character('c')) {
+                   if (s->opts.on_copy_params) s->opts.on_copy_params();
+                   return true;
+               }
+               if (e == Event::Character('C')) {
+                   if (s->opts.on_copy_result) s->opts.on_copy_result();
+                   return true;
+               }
+               if (e == Event::Character('o')) {
+                   if (s->opts.on_open_in_editor) s->opts.on_open_in_editor();
+                   return true;
+               }
+               return false;
+           });
 }
 
 /// Interactive grouped-tools component
@@ -601,18 +633,18 @@ constexpr std::size_t kLargeContentWarnBytes = 5 * 1024 * 1024;  // 5 MB
     struct State {
         GroupedToolsOptions opts;
     };
+
     auto s = std::make_shared<State>();
     s->opts = std::move(options);
 
-    return Renderer([s] { return RenderGroupedTools(s->opts); })
-         | CatchEvent([s](Event e) -> bool {
-             if (e == Event::Return || e == Event::Character(' ')) {
-                 s->opts.group_collapsed = !s->opts.group_collapsed;
-                 if (s->opts.on_toggle_group) s->opts.on_toggle_group();
-                 return true;
-             }
-             return false;
-         });
+    return Renderer([s] { return RenderGroupedTools(s->opts); }) | CatchEvent([s](Event e) -> bool {
+               if (e == Event::Return || e == Event::Character(' ')) {
+                   s->opts.group_collapsed = !s->opts.group_collapsed;
+                   if (s->opts.on_toggle_group) s->opts.on_toggle_group();
+                   return true;
+               }
+               return false;
+           });
 }
 
 // ============================================================
@@ -630,30 +662,30 @@ constexpr std::size_t kLargeContentWarnBytes = 5 * 1024 * 1024;  // 5 MB
 
 /// Status of a faithful tool-use row
 enum class FaithfulToolStatus : std::uint8_t {
-    Queued,     // Not in progress, not resolved → waiting in queue
-    Running,    // In progress → show progress + blinking dot
-    Success,    // Resolved successfully → solid green dot
-    Error,      // Resolved with error → solid red dot
+    Queued,   // Not in progress, not resolved → waiting in queue
+    Running,  // In progress → show progress + blinking dot
+    Success,  // Resolved successfully → solid green dot
+    Error,    // Resolved with error → solid red dot
 };
 
 /// Data for the faithful tool-use renderer.  The caller (e.g. repl_screen
 /// projection) is responsible for computing these values from the real tool
 /// definition and execution state — this renderer only paints.
 struct FaithfulToolUseData {
-    std::string user_facing_name;    // tool.user_facing_name(input) — bold header
-    std::string message;             // tool.render_tool_use_message(...) — in parens
-    std::string tag;                 // tool.render_tool_use_tag?.(input) — optional
-    std::string progress_text;       // progress line text when Running
-    std::string queued_text;         // progress line text when Queued
-    std::string input_json;          // MCP tools only: raw JSON shown as "Input:"
-    std::string output_text;         // MCP tools only: server response preview
+    std::string user_facing_name;  // tool.user_facing_name(input) — bold header
+    std::string message;           // tool.render_tool_use_message(...) — in parens
+    std::string tag;               // tool.render_tool_use_tag?.(input) — optional
+    std::string progress_text;     // progress line text when Running
+    std::string queued_text;       // progress line text when Queued
+    std::string input_json;        // MCP tools only: raw JSON shown as "Input:"
+    std::string output_text;       // MCP tools only: server response preview
     FaithfulToolStatus status{FaithfulToolStatus::Queued};
-    bool should_show_dot = true;     // shouldShowDot prop
-    bool add_margin = true;          // add top margin = 1
+    bool should_show_dot = true;          // shouldShowDot prop
+    bool add_margin = true;               // add top margin = 1
     bool is_transparent_wrapper = false;  // tool.isTransparentWrapper
-    int spinner_frame = 0;           // drive blink animation
-    bool should_animate = true;      // shouldAnimate prop
-    bool is_mcp_tool = false;        // only MCP tools show Input:/Output: sections
+    int spinner_frame = 0;                // drive blink animation
+    bool should_animate = true;           // shouldAnimate prop
+    bool is_mcp_tool = false;             // only MCP tools show Input:/Output: sections
 };
 
 /// Render a single tool-use header line: [dot] [BoldName] (message) [tag]
@@ -669,18 +701,16 @@ struct FaithfulToolUseData {
     //   Resolved success → check mark in the success color
     //   Resolved error → cross in the danger color
     if (data.should_show_dot) {
-        const bool is_unresolved =
-            (data.status == FaithfulToolStatus::Queued ||
-             data.status == FaithfulToolStatus::Running);
+        const bool is_unresolved = (data.status == FaithfulToolStatus::Queued ||
+                                    data.status == FaithfulToolStatus::Running);
 
         // Blink logic: when animating + unresolved + not error, alternate
         // between BLACK_CIRCLE and space, toggling at ~500ms; spinner_frame
         // increments every 100ms, so a 500ms toggle means 5 frames on /
         // 5 frames off.
-        const bool blink_off =
-            data.should_animate && is_unresolved &&
-            !loom::ui::design::theme::current_theme().a11y.reduced_motion &&
-            (data.spinner_frame % 10 >= 5);  // 500ms on / 500ms off
+        const bool blink_off = data.should_animate && is_unresolved &&
+                               !loom::ui::design::theme::current_theme().a11y.reduced_motion &&
+                               (data.spinner_frame % 10 >= 5);  // 500ms on / 500ms off
 
         if (blink_off) {
             // Space placeholder — maintains 2-cell minWidth
@@ -774,8 +804,7 @@ struct FaithfulToolUseData {
     column.push_back(RenderFaithfulToolHeader(data));
 
     const bool is_resolved =
-        (data.status == FaithfulToolStatus::Success ||
-         data.status == FaithfulToolStatus::Error);
+        (data.status == FaithfulToolStatus::Success || data.status == FaithfulToolStatus::Error);
 
     // ── Input section (MCP tools only) ────────────────────────────────
     // Built-in tools (Bash, Read, Write, Edit, Glob, Grep) NEVER show
@@ -794,14 +823,16 @@ struct FaithfulToolUseData {
         std::size_t line_start = 0;
         while (line_start < input_display.size()) {
             auto nl = input_display.find('\n', line_start);
-            std::string_view line = (nl == std::string::npos)
-                ? std::string_view(input_display).substr(line_start)
-                : std::string_view(input_display).substr(line_start, nl - line_start);
+            std::string_view line =
+                (nl == std::string::npos)
+                    ? std::string_view(input_display).substr(line_start)
+                    : std::string_view(input_display).substr(line_start, nl - line_start);
             column.push_back(hbox({
-                text("  "),
-                text(std::string(line)) | dim,
-                filler(),
-            }) | flex);
+                                 text("  "),
+                                 text(std::string(line)) | dim,
+                                 filler(),
+                             }) |
+                             flex);
             if (nl == std::string::npos) break;
             line_start = nl + 1;
         }
@@ -841,4 +872,4 @@ struct FaithfulToolUseData {
     return outer;
 }
 
-} // namespace loom::ui::messages::tool_use_message
+}  // namespace loom::ui::messages::tool_use_message

@@ -43,7 +43,7 @@ import loom.types.tool_types;
 // loom::core::ToolRegistry, both `class` declarations in loom.tools.tool that
 // graph_check's textual symbol harvest does not see; the pre-C3
 // ToolDefinition evidence left with the deleted MCP provider alias.
-import loom.tools.tool;               // arch-check: keep-import
+import loom.tools.tool; // arch-check: keep-import
 import loom.tools.agent_types;
 
 export namespace loom::tools {
@@ -51,27 +51,22 @@ export namespace loom::tools {
 /// Backs the runtime 'skill' tool's directory/plugin discovery. Receives the
 /// raw ToolInput and returns the tool Result when it resolved a skill, or
 /// std::nullopt to let the tools-side terminal manual SKILL.md walk run.
-using SkillLoaderExecutor = std::function<
-    std::optional<loom::core::Result<loom::core::ToolResult>>(
-        const loom::core::ToolInput&)>;
+using SkillLoaderExecutor = std::function<std::optional<loom::core::Result<loom::core::ToolResult>>(
+    const loom::core::ToolInput&)>;
 
 /// Shape of every lifted runtime tool backend (the LSP/MCP/computer-use
 /// sextet). Nullable: an empty std::function means "no deployment installed
 /// one" and dispatch returns the terminal no-runtime-handler error.
 using RuntimeToolExecutor =
-    std::function<loom::core::Result<loom::core::ToolResult>(
-        const loom::core::ToolInput&)>;
+    std::function<loom::core::Result<loom::core::ToolResult>(const loom::core::ToolInput&)>;
 
 /// 5-arg Agent tool factory — the exact make_agent_tool shape owned by the
 /// lifted loom.orchestration.agent module:
 ///   (AgentConfig, depth, ToolRegistry*, live permission checker,
 ///    background-hook-valid flag) -> owned ITool.
 using AgentToolFactory = std::function<std::unique_ptr<loom::core::ITool>(
-    AgentConfig,
-    int depth,
-    loom::core::ToolRegistry* registry,
-    AgentLivePermissionCheckFn permission_check,
-    bool permission_hook_valid_for_background)>;
+    AgentConfig, int depth, loom::core::ToolRegistry* registry,
+    AgentLivePermissionCheckFn permission_check, bool permission_hook_valid_for_background)>;
 
 // ── SkillLoader executor (B12; storage moved into the unified slots B15) ──
 void set_skill_loader_executor(SkillLoaderExecutor executor);
@@ -114,4 +109,4 @@ void set_agent_tool_factory(AgentToolFactory factory);
 void clear_agent_tool_factory();
 [[nodiscard]] AgentToolFactory& agent_tool_factory();
 
-} // namespace loom::tools
+}  // namespace loom::tools

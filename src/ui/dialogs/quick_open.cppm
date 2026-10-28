@@ -14,10 +14,10 @@
 ///   - Scroll indicators for long lists
 module;
 
-#include <cctype>
-
-#include <ftxui/dom/elements.hpp>
 #include <ftxui/component/event.hpp>
+#include <ftxui/dom/elements.hpp>
+
+#include <cctype>
 #include <cstddef>
 
 export module loom.ui.dialogs.quick_open;
@@ -43,10 +43,8 @@ using QuickOpenItem = dsys::QuickOpenItem;
 
 /// Filter items based on a fuzzy query string (case-insensitive).
 /// Matches query characters in order within label or description.
-[[nodiscard]] inline auto filter_items(std::span<const QuickOpenItem> items,
-                                       std::string_view query)
-    -> std::vector<QuickOpenItem>
-{
+[[nodiscard]] inline auto filter_items(std::span<const QuickOpenItem> items, std::string_view query)
+    -> std::vector<QuickOpenItem> {
     if (query.empty()) {
         return std::vector<QuickOpenItem>(items.begin(), items.end());
     }
@@ -92,10 +90,8 @@ using QuickOpenItem = dsys::QuickOpenItem;
 // ============================================================
 
 /// Render the QuickOpen dialog using FTXUI + DialogFrame.
-[[nodiscard]] inline Element RenderQuickOpen(
-    const dsys::QuickOpenPayload& p,
-    const dsys::DialogRenderContext& ctx)
-{
+[[nodiscard]] inline Element RenderQuickOpen(const dsys::QuickOpenPayload& p,
+                                             const dsys::DialogRenderContext& ctx) {
     const auto& pal = *loom::ui::design::theme::current_theme().palette;
     auto filtered = filter_items(p.items, p.query);
     int count = static_cast<int>(filtered.size());
@@ -106,9 +102,8 @@ using QuickOpenItem = dsys::QuickOpenItem;
     // Max visible items (leave room for search input + divider + padding).
     // Use ModalContext dimensions when available (modal slot).  Fall back
     // to term_rows - 10 for bottom/overlay.
-    const int visible_rows = ctx.modal_available_rows > 0
-        ? ctx.modal_available_rows
-        : ctx.term_rows;
+    const int visible_rows =
+        ctx.modal_available_rows > 0 ? ctx.modal_available_rows : ctx.term_rows;
     int max_visible = std::max(3, visible_rows - 10);
 
     // Calculate scroll window
@@ -124,12 +119,10 @@ using QuickOpenItem = dsys::QuickOpenItem;
     namespace pc = loom::ui::permissions::components;
 
     if (filtered.empty()) {
-        list_els.push_back(
-            hbox({
-                text("  "),
-                text("No results") | dim,
-            })
-        );
+        list_els.push_back(hbox({
+            text("  "),
+            text("No results") | dim,
+        }));
     } else {
         for (int i = start; i < end; ++i) {
             const auto& pal = *loom::ui::design::theme::current_theme().palette;
@@ -139,26 +132,20 @@ using QuickOpenItem = dsys::QuickOpenItem;
             // Category header
             if (item.category != current_category) {
                 current_category = item.category;
-                list_els.push_back(
-                    hbox({
-                        text("── "),
-                        text(current_category) | dim,
-                        text(" ──") | dim,
-                        filler(),
-                    })
-                );
+                list_els.push_back(hbox({
+                    text("── "),
+                    text(current_category) | dim,
+                    text(" ──") | dim,
+                    filler(),
+                }));
             }
 
             // Item row
-            auto prefix = is_selected
-                ? text("❯ ") | color(pal.info)
-                : text("  ");
+            auto prefix = is_selected ? text("❯ ") | color(pal.info) : text("  ");
 
-            auto label_el = is_selected
-                ? text(item.label) | bold
-                : text(item.label);
+            auto label_el = is_selected ? text(item.label) | bold : text(item.label);
 
-            Elements row_els = { prefix, label_el };
+            Elements row_els = {prefix, label_el};
 
             // Shortcut on right
             if (item.shortcut.has_value()) {
@@ -176,43 +163,35 @@ using QuickOpenItem = dsys::QuickOpenItem;
 
             // Description (only for selected item)
             if (is_selected && !item.description.empty()) {
-                list_els.push_back(
-                    hbox({
-                        text("    "),
-                        text(item.description) | dim,
-                    })
-                );
+                list_els.push_back(hbox({
+                    text("    "),
+                    text(item.description) | dim,
+                }));
             }
         }
 
         // Scroll indicators
         if (start > 0) {
-            list_els.insert(list_els.begin(),
-                hbox({
-                    text("  ↑ "),
-                    text(std::to_string(start) + " more") | dim,
-                    filler(),
-                })
-            );
+            list_els.insert(list_els.begin(), hbox({
+                                                  text("  ↑ "),
+                                                  text(std::to_string(start) + " more") | dim,
+                                                  filler(),
+                                              }));
         }
         int remaining = count - end;
         if (remaining > 0) {
-            list_els.push_back(
-                hbox({
-                    text("  ↓ "),
-                    text(std::to_string(remaining) + " more") | dim,
-                    filler(),
-                })
-            );
+            list_els.push_back(hbox({
+                text("  ↓ "),
+                text(std::to_string(remaining) + " more") | dim,
+                filler(),
+            }));
         }
     }
 
     auto list_el = vbox(std::move(list_els));
 
     // ---- Search input row ----
-    auto query_display = p.query.empty()
-        ? text("Type to search...") | dim
-        : text(p.query) | bold;
+    auto query_display = p.query.empty() ? text("Type to search...") | dim : text(p.query) | bold;
 
     auto search_row = hbox({
         text("❯ ") | color(pal.info),
@@ -242,15 +221,12 @@ using QuickOpenItem = dsys::QuickOpenItem;
     props.pane_variant = dframe::PaneVariant::ModalMinimal;
 
     // Prefer ModalContext dimensions.
-    const int avail_cols = ctx.modal_available_cols > 0
-        ? ctx.modal_available_cols
-        : ctx.term_cols - 4;
-    const int avail_rows = ctx.modal_available_rows > 0
-        ? ctx.modal_available_rows
-        : ctx.term_rows - 4;
-    return dframe::DialogFrame(props, ctx.theme)
-        | size(WIDTH, EQUAL, std::min(60, avail_cols))
-        | size(HEIGHT, EQUAL, std::min(20, avail_rows));
+    const int avail_cols =
+        ctx.modal_available_cols > 0 ? ctx.modal_available_cols : ctx.term_cols - 4;
+    const int avail_rows =
+        ctx.modal_available_rows > 0 ? ctx.modal_available_rows : ctx.term_rows - 4;
+    return dframe::DialogFrame(props, ctx.theme) | size(WIDTH, EQUAL, std::min(60, avail_cols)) |
+           size(HEIGHT, EQUAL, std::min(20, avail_rows));
 }
 
 // ============================================================
@@ -259,17 +235,13 @@ using QuickOpenItem = dsys::QuickOpenItem;
 
 /// Handle keyboard events for the QuickOpen dialog.
 /// Returns true if the event was handled.
-inline bool HandleQuickOpenEvent(
-    dsys::QuickOpenPayload& p,
-    const Event& event)
-{
+inline bool HandleQuickOpenEvent(dsys::QuickOpenPayload& p, const Event& event) {
     auto filtered = filter_items(p.items, p.query);
     int count = static_cast<int>(filtered.size());
 
     // Navigation
     if (event == Event::ArrowUp || event == Event::Character('k') ||
-        event == Event::Character('K'))
-    {
+        event == Event::Character('K')) {
         if (p.selected_index > 0) {
             p.selected_index--;
         } else if (count > 0) {
@@ -278,8 +250,7 @@ inline bool HandleQuickOpenEvent(
         return true;
     }
     if (event == Event::ArrowDown || event == Event::Character('j') ||
-        event == Event::Character('J'))
-    {
+        event == Event::Character('J')) {
         if (p.selected_index < count - 1) {
             p.selected_index++;
         } else {
@@ -355,8 +326,7 @@ inline bool HandleQuickOpenEvent(
 // ============================================================
 
 /// Build a default set of quick open items (commands, settings, etc.).
-[[nodiscard]] inline auto BuildDefaultItems() -> std::vector<QuickOpenItem>
-{
+[[nodiscard]] inline auto BuildDefaultItems() -> std::vector<QuickOpenItem> {
     std::vector<QuickOpenItem> items;
 
     // Commands category
@@ -377,4 +347,4 @@ inline bool HandleQuickOpenEvent(
     return items;
 }
 
-} // namespace loom::ui::dialogs::quick_open
+}  // namespace loom::ui::dialogs::quick_open

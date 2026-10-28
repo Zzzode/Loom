@@ -1,5 +1,6 @@
 // repl_screen_messages.cpp - impl unit for loom.ui.screens.repl_screen
-// (RFC 0001 Phase C batch 9). RenderMessages: the single message-row projection from MessageDisplayEntry to the messages_list view input.
+// (RFC 0001 Phase C batch 9). RenderMessages: the single message-row projection from
+// MessageDisplayEntry to the messages_list view input.
 //
 // Phase A (#184957): textual FTXUI GMF headers + `import std;`
 // (the textual FTXUI includes keep the reduced-BMI writer happy).
@@ -14,11 +15,11 @@ import std;
 
 import loom.ui.screens.repl_state;
 import loom.ui.screens.messages_store;
-import loom.types.types;  // arch-check: keep-import (::loom::core::ImageBlockSource)
+import loom.types.types; // arch-check: keep-import (::loom::core::ImageBlockSource)
 import loom.ui.messages.message_row;
 import loom.ui.messages.message_image;
 import loom.ui.messages.messages_list;
-import loom.ui.visual.markdown;  // arch-check: keep-import (::loom::ui::StreamingMarkdown)
+import loom.ui.visual.markdown; // arch-check: keep-import (::loom::ui::StreamingMarkdown)
 import loom.ui.messages.user_text_message;
 import loom.ui.messages.assistant_text_message;
 import loom.ui.messages.system_text_message;
@@ -27,7 +28,7 @@ import loom.ui.messages.tool_use_message;
 import loom.ui.messages.message_tool_result;
 import loom.ui.messages.local_command_output_message;
 import loom.ui.messages.api_error_message;
-import loom.diagnostics.debug;  // debug() (filtered by namespace)
+import loom.diagnostics.debug; // debug() (filtered by namespace)
 
 namespace loom::ui::repl_screen {
 using namespace ftxui;
@@ -39,7 +40,8 @@ namespace {
 class TranscriptGeometryNode final : public Node {
 public:
     TranscriptGeometryNode(Element child, MessagesStore& store)
-        : Node({std::move(child)}), store_(store) {}
+        : Node({std::move(child)})
+        , store_(store) {}
 
     void ComputeRequirement() override {
         Node::ComputeRequirement();
@@ -59,42 +61,37 @@ private:
 
 // Exact comparisons keep in-place streaming/status changes visible without
 // relying on IDs, lengths, hashes, or append-only source rows.
-bool same_projected_source(const MessageDisplayEntry& a,
-                           const MessageDisplayEntry& b,
+bool same_projected_source(const MessageDisplayEntry& a, const MessageDisplayEntry& b,
                            bool include_timestamp = true) {
     if (include_timestamp && a.timestamp != b.timestamp) return false;
     const auto fields = [](const MessageDisplayEntry& m) {
-        return std::tie(m.id, m.role, m.content_preview, m.full_content,
-            m.is_streaming, m.is_thinking, m.is_tool_use, m.thinking_active,
-            m.is_local_command_input, m.is_local_command_output,
-            m.is_local_jsx_output, m.is_compact_boundary, m.is_error,
-            m.is_image, m.image_display_id, m.tool_name, m.tool_status,
-            m.tool_input_json, m.tool_result_preview, m.agent_display_name,
-            m.agent_color_name, m.thinking_duration,
-            m.thinking_start_time, m.tool_start_time,
-            m.estimated_height_lines, m.system_subtype, m.retry_after_ms,
-            m.retry_attempt, m.max_retries, m.session_expired,
-            m.is_model_error, m.can_retry, m.can_continue);
+        return std::tie(m.id, m.role, m.content_preview, m.full_content, m.is_streaming,
+                        m.is_thinking, m.is_tool_use, m.thinking_active, m.is_local_command_input,
+                        m.is_local_command_output, m.is_local_jsx_output, m.is_compact_boundary,
+                        m.is_error, m.is_image, m.image_display_id, m.tool_name, m.tool_status,
+                        m.tool_input_json, m.tool_result_preview, m.agent_display_name,
+                        m.agent_color_name, m.thinking_duration, m.thinking_start_time,
+                        m.tool_start_time, m.estimated_height_lines, m.system_subtype,
+                        m.retry_after_ms, m.retry_attempt, m.max_retries, m.session_expired,
+                        m.is_model_error, m.can_retry, m.can_continue);
     };
     if (fields(a) != fields(b)) return false;
     if (a.image_block.has_value() != b.image_block.has_value()) return false;
     if (a.image_block) {
         const auto image_fields = [](const ::loom::core::ImageBlock& image) {
-            return std::tie(image.media_type, image.width,
-                image.height, image.size_bytes, image.file_name,
-                image.source_path, image.source);
+            return std::tie(image.media_type, image.width, image.height, image.size_bytes,
+                            image.file_name, image.source_path, image.source);
         };
-        if (image_fields(*a.image_block) != image_fields(*b.image_block))
-            return false;
+        if (image_fields(*a.image_block) != image_fields(*b.image_block)) return false;
     }
-    if (a.tool_result_content_items.has_value() !=
-        b.tool_result_content_items.has_value()) return false;
+    if (a.tool_result_content_items.has_value() != b.tool_result_content_items.has_value())
+        return false;
     if (a.tool_result_content_items) {
-        return std::ranges::equal(*a.tool_result_content_items,
-            *b.tool_result_content_items, [](const auto& x, const auto& y) {
-                return std::tie(x.type, x.text, x.media_type, x.data) ==
-                       std::tie(y.type, y.text, y.media_type, y.data);
-            });
+        return std::ranges::equal(*a.tool_result_content_items, *b.tool_result_content_items,
+                                  [](const auto& x, const auto& y) {
+                                      return std::tie(x.type, x.text, x.media_type, x.data) ==
+                                             std::tie(y.type, y.text, y.media_type, y.data);
+                                  });
     }
     return true;
 }
@@ -105,40 +102,34 @@ bool same_projected_source(const MessageDisplayEntry& a,
 // `unseen_divider` is the optional in-transcript "N new messages" anchor
 // set by the unseen-divider tracker; nullopt when
 // pinned to bottom or the session has no scroll-away yet.
-[[nodiscard]] Element RenderMessages(
-    const std::vector<MessageDisplayEntry>& entries,
-    int sel, int vlines,
-    int offs, bool pinned,
-    int spinner_frame,
-    std::optional<loom::ui::messages_list::UnseenDivider> unseen_divider,
-    Elements leading_elements,
-    bool is_brief_mode,
-    const std::unordered_set<std::string>& expanded_keys,
-    bool is_transcript_mode,
-    bool show_all_in_transcript,
-    bool disable_chain_compression,
-    bool query_running,
-    // Model-request recovery callback. Static transcript rows have no
-    // component actions; the screen owns the request-scoped keyboard shortcut.
-    std::function<void()> on_retry,
-    // P2 gap api-error-retry: callback for "Clear session" button on
-    // session-expired error cards.  onClearSession prop — invoked when
-    // auth has expired and user chooses to clear the session to
-    // re-authenticate.
-    std::function<void()> on_clear_session,
-    // StreamingMarkdown repeated-frame cache for the streaming-text tail
-    // row.  When non-null,
-    // RenderAssistantTextMessageFaithful uses update() instead of full
-    // render_markdown() for is_streaming rows.
-    ::loom::ui::StreamingMarkdown* streaming_md,
-    // Optional mouse hit-testing tracker for click-to-expand rows.
-    loom::ui::messages_list::RowClickTracker* row_click_tracker,
-    // Optional store for virtual-list scroll bounds.
-    MessagesStore* store,
-    // Terminal column width for the virtual-path height estimator.
-    int term_cols,
-    // Dismiss callback for API error cards (ESC / q).
-    std::function<void()> on_dismiss_error, bool emphasize_work) {
+[[nodiscard]] Element
+RenderMessages(const std::vector<MessageDisplayEntry>& entries, int sel, int vlines, int offs,
+               bool pinned, int spinner_frame,
+               std::optional<loom::ui::messages_list::UnseenDivider> unseen_divider,
+               Elements leading_elements, bool is_brief_mode,
+               const std::unordered_set<std::string>& expanded_keys, bool is_transcript_mode,
+               bool show_all_in_transcript, bool disable_chain_compression, bool query_running,
+               // Model-request recovery callback. Static transcript rows have no
+               // component actions; the screen owns the request-scoped keyboard shortcut.
+               std::function<void()> on_retry,
+               // P2 gap api-error-retry: callback for "Clear session" button on
+               // session-expired error cards.  onClearSession prop — invoked when
+               // auth has expired and user chooses to clear the session to
+               // re-authenticate.
+               std::function<void()> on_clear_session,
+               // StreamingMarkdown repeated-frame cache for the streaming-text tail
+               // row.  When non-null,
+               // RenderAssistantTextMessageFaithful uses update() instead of full
+               // render_markdown() for is_streaming rows.
+               ::loom::ui::StreamingMarkdown* streaming_md,
+               // Optional mouse hit-testing tracker for click-to-expand rows.
+               loom::ui::messages_list::RowClickTracker* row_click_tracker,
+               // Optional store for virtual-list scroll bounds.
+               MessagesStore* store,
+               // Terminal column width for the virtual-path height estimator.
+               int term_cols,
+               // Dismiss callback for API error cards (ESC / q).
+               std::function<void()> on_dismiss_error, bool emphasize_work) {
     // NOTE: We no longer early-return on empty entries.  The leading_element
     // (welcome/logo card) must always be rendered inside the yframe so it
     // scrolls with messages.  The messages_list handles empty rows gracefully
@@ -148,8 +139,8 @@ bool same_projected_source(const MessageDisplayEntry& a,
     namespace image = loom::ui::messages::image;
     ml::MessagesListInput transient_input;
     auto& input = store ? store->render_input : transient_input;
-    const bool transcript_changed = store &&
-        store->render_sources_transcript_mode != is_transcript_mode;
+    const bool transcript_changed =
+        store && store->render_sources_transcript_mode != is_transcript_mode;
     const auto cached_count = store ? store->render_sources.size() : 0;
     bool projection_changed = transcript_changed || cached_count != entries.size();
     if (input.rows.size() > entries.size()) {
@@ -171,8 +162,8 @@ bool same_projected_source(const MessageDisplayEntry& a,
         if (store && index < cached_count && !transcript_changed &&
             same_projected_source(m, store->render_sources[index])) {
             // Callbacks can change independently of the source message.
-            if (auto* error = std::get_if<messages::api_error_message::APIErrorOptions>(
-                    &input.rows[index])) {
+            if (auto* error =
+                    std::get_if<messages::api_error_message::APIErrorOptions>(&input.rows[index])) {
                 error->on_retry = m.can_retry && !query_running ? on_retry : nullptr;
                 error->on_clear_session = on_clear_session;
             }
@@ -182,10 +173,11 @@ bool same_projected_source(const MessageDisplayEntry& a,
         // redraw. Its faithful REPL renderer does not display that timestamp,
         // so it must not cancel a selection in either mode. Other row shapes
         // keep the full comparison for timestamps they may display.
-        const bool include_selection_timestamp = m.role != "assistant" ||
-            m.is_thinking || m.is_tool_use || m.is_local_command_input ||
-            m.is_local_command_output || m.is_local_jsx_output;
-        projection_changed = projection_changed || !store || index >= cached_count ||
+        const bool include_selection_timestamp = m.role != "assistant" || m.is_thinking ||
+                                                 m.is_tool_use || m.is_local_command_input ||
+                                                 m.is_local_command_output || m.is_local_jsx_output;
+        projection_changed =
+            projection_changed || !store || index >= cached_count ||
             !same_projected_source(m, store->render_sources[index], include_selection_timestamp);
         ml::MessagesListInput projected;
         // uuid → 24-char prefix anchor.
@@ -194,20 +186,20 @@ bool same_projected_source(const MessageDisplayEntry& a,
         projected.uuids.push_back(m.id);
         if (m.is_local_command_input) {
             projected.shapes.push_back(messages::MessageShape::UserCommand);
-            projected.rows.push_back(messages::UserTextMessageData{
-                .content = m.content_preview,
-                .timestamp = m.timestamp,
-                .quoted_reply = std::nullopt,
-                .is_transcript_mode = is_transcript_mode,
-                .command_name = std::nullopt});
+            projected.rows.push_back(
+                messages::UserTextMessageData{.content = m.content_preview,
+                                              .timestamp = m.timestamp,
+                                              .quoted_reply = std::nullopt,
+                                              .is_transcript_mode = is_transcript_mode,
+                                              .command_name = std::nullopt});
         } else if (m.is_local_jsx_output) {
             projected.shapes.push_back(messages::MessageShape::UserLocalJsxOutput);
-            projected.rows.push_back(messages::UserTextMessageData{
-                .content = m.content_preview,
-                .timestamp = m.timestamp,
-                .quoted_reply = std::nullopt,
-                .is_transcript_mode = is_transcript_mode,
-                .command_name = std::nullopt});
+            projected.rows.push_back(
+                messages::UserTextMessageData{.content = m.content_preview,
+                                              .timestamp = m.timestamp,
+                                              .quoted_reply = std::nullopt,
+                                              .is_transcript_mode = is_transcript_mode,
+                                              .command_name = std::nullopt});
         } else if (m.is_local_command_output) {
             projected.shapes.push_back(messages::MessageShape::UserLocalCommandOutput);
             messages::local_cmd::LocalCommandOptions opts;
@@ -218,12 +210,11 @@ bool same_projected_source(const MessageDisplayEntry& a,
             while (start <= m.content_preview.size()) {
                 auto nl = m.content_preview.find('\n', start);
                 std::string line = nl == std::string::npos
-                    ? m.content_preview.substr(start)
-                    : m.content_preview.substr(start, nl - start);
+                                       ? m.content_preview.substr(start)
+                                       : m.content_preview.substr(start, nl - start);
                 opts.data.lines.push_back(messages::local_cmd::OutputLine{
-                    .kind = m.is_error
-                        ? messages::local_cmd::StreamKind::Stderr
-                        : messages::local_cmd::StreamKind::Stdout,
+                    .kind = m.is_error ? messages::local_cmd::StreamKind::Stderr
+                                       : messages::local_cmd::StreamKind::Stdout,
                     .text = std::move(line),
                 });
                 if (nl == std::string::npos) break;
@@ -249,24 +240,28 @@ bool same_projected_source(const MessageDisplayEntry& a,
                 if (m.image_display_id) {
                     d.image_id = std::to_string(*m.image_display_id);
                 }
-                if (ib.file_name)        d.file_name = *ib.file_name;
-                if (ib.source_path)      d.source = *ib.source_path;
-                if (ib.width)            d.width = *ib.width;
-                if (ib.height)           d.height = *ib.height;
-                if (ib.size_bytes)       d.file_size = *ib.size_bytes;
+                if (ib.file_name) d.file_name = *ib.file_name;
+                if (ib.source_path) d.source = *ib.source_path;
+                if (ib.width) d.width = *ib.width;
+                if (ib.height) d.height = *ib.height;
+                if (ib.size_bytes) d.file_size = *ib.size_bytes;
                 switch (ib.source) {
                     using IS = ::loom::core::ImageBlockSource;
-                    case IS::Clipboard: d.source_type = ImageSource::Clipboard; break;
-                    case IS::File:      d.source_type = ImageSource::File; break;
-                    case IS::Base64:    d.source_type = ImageSource::Base64; break;
-                    case IS::Unknown:
-                    default:
-                        // Heuristic: empty source + non-empty data means a
-                        // raw inline paste (no file path known).
-                        d.source_type = d.source.empty()
-                            ? ImageSource::Clipboard
-                            : ImageSource::File;
-                        break;
+                case IS::Clipboard:
+                    d.source_type = ImageSource::Clipboard;
+                    break;
+                case IS::File:
+                    d.source_type = ImageSource::File;
+                    break;
+                case IS::Base64:
+                    d.source_type = ImageSource::Base64;
+                    break;
+                case IS::Unknown:
+                default:
+                    // Heuristic: empty source + non-empty data means a
+                    // raw inline paste (no file path known).
+                    d.source_type = d.source.empty() ? ImageSource::Clipboard : ImageSource::File;
+                    break;
                 }
                 // NOTE: deliberately do NOT stuff ib.data into alt_text.
                 // The base64 PNG prefix "iVBORw0KGgo..." rendered as "Alt: ..."
@@ -276,19 +271,18 @@ bool same_projected_source(const MessageDisplayEntry& a,
                 projected.rows.push_back(std::move(d));
             } else {
                 projected.shapes.push_back(messages::MessageShape::UserText);
-                projected.rows.push_back(messages::UserTextMessageData{
-                    .content = m.content_preview,
-                    .timestamp = m.timestamp,
-                    .quoted_reply = std::nullopt,
-                    .is_transcript_mode = is_transcript_mode,
-                    .command_name = std::nullopt});
+                projected.rows.push_back(
+                    messages::UserTextMessageData{.content = m.content_preview,
+                                                  .timestamp = m.timestamp,
+                                                  .quoted_reply = std::nullopt,
+                                                  .is_transcript_mode = is_transcript_mode,
+                                                  .command_name = std::nullopt});
             }
         } else if (m.role == "assistant") {
             if (m.is_thinking) {
                 projected.shapes.push_back(messages::MessageShape::AssistantThinking);
                 messages::thinking_message::ThinkingMessageOptions opts;
-                opts.data.raw_text = m.full_content.empty()
-                    ? m.content_preview : m.full_content;
+                opts.data.raw_text = m.full_content.empty() ? m.content_preview : m.full_content;
                 // Thread the thinking duration so the collapsed label shows
                 // "∴ Thought for Xs" instead of a generic "Thinking".
                 opts.data.duration = m.thinking_duration;
@@ -300,8 +294,7 @@ bool same_projected_source(const MessageDisplayEntry& a,
                 // 3s collapse grace (was_recently_streaming) keeps a
                 // just-finished thinking row expanded before it collapses.
                 if (m.thinking_active) {
-                    opts.data.state =
-                        messages::thinking_message::ThinkingState::Active;
+                    opts.data.state = messages::thinking_message::ThinkingState::Active;
                 }
                 projected.rows.push_back(std::move(opts));
             } else if (m.is_tool_use) {
@@ -312,8 +305,7 @@ bool same_projected_source(const MessageDisplayEntry& a,
                 // the shared projection contract into the renderer (previously
                 // raw_parameters fell back to content_preview and status was
                 // hard-coded Pending).
-                opts.call.raw_parameters =
-                    m.tool_input_json.value_or(m.content_preview);
+                opts.call.raw_parameters = m.tool_input_json.value_or(m.content_preview);
                 // M6 result_preview: thread live streaming result preview into
                 // the call data so ToolUIRegistry.progress() can format a
                 // dynamic progress line (e.g. last output line for Bash tools).
@@ -327,19 +319,18 @@ bool same_projected_source(const MessageDisplayEntry& a,
                 projected.rows.push_back(std::move(opts));
             } else {
                 projected.shapes.push_back(messages::MessageShape::AssistantText);
-                projected.rows.push_back(messages::AssistantTextMessageData{
-                    .content = m.content_preview,
-                    .timestamp = m.timestamp,
-                    .model_name = std::nullopt,
-                    .is_streaming = m.is_streaming});
+                projected.rows.push_back(
+                    messages::AssistantTextMessageData{.content = m.content_preview,
+                                                       .timestamp = m.timestamp,
+                                                       .model_name = std::nullopt,
+                                                       .is_streaming = m.is_streaming});
             }
         } else if (m.role == "tool") {
             projected.shapes.push_back(messages::MessageShape::UserToolResult);
             projected.rows.push_back(messages::ToolResultOptions{
                 .tool_name = m.tool_name.value_or("tool"),
-                .status = m.is_error
-                    ? messages::ToolResultStatus::Error
-                    : messages::ToolResultStatus::Success,
+                .status = m.is_error ? messages::ToolResultStatus::Error
+                                     : messages::ToolResultStatus::Success,
                 .output = m.content_preview,
                 .error_message = std::nullopt,
                 .duration_ms = std::nullopt,
@@ -356,10 +347,10 @@ bool same_projected_source(const MessageDisplayEntry& a,
             // P2 gap api-error-retry: thread retry metadata from the entry.
             // retryInMs, retryAttempt,
             //   maxRetries, sessionExpired destructured from message prop.
-            err_data.retry_after_ms   = m.retry_after_ms;
-            err_data.current_attempt  = m.retry_attempt;
-            err_data.max_attempts     = m.max_retries;
-            err_data.session_expired  = m.session_expired;
+            err_data.retry_after_ms = m.retry_after_ms;
+            err_data.current_attempt = m.retry_attempt;
+            err_data.max_attempts = m.max_retries;
+            err_data.session_expired = m.session_expired;
             aem::APIErrorOptions err_opts;
             err_opts.error = std::move(err_data);
             err_opts.on_retry = m.can_retry && !query_running ? on_retry : nullptr;
@@ -382,17 +373,16 @@ bool same_projected_source(const MessageDisplayEntry& a,
             // the engine hasn't set system_subtype we derive a best-effort
             // subtype from the preview text — same labels SystemTextMessage
             // keys on (turn_duration / memory_saved / etc.).
-            auto derive_subtype = [](const std::string& s,
-                const std::optional<std::string>& hint) {
+            auto derive_subtype = [](const std::string& s, const std::optional<std::string>& hint) {
                 using ST = messages::SystemMessageSubtype;
                 if (hint) {
-                    if (*hint == "away_summary")    return ST::AwaySummary;
-                    if (*hint == "turn_duration")   return ST::TurnDuration;
-                    if (*hint == "memory_saved")    return ST::MemorySaved;
-                    if (*hint == "bridge_status")   return ST::BridgeStatus;
-                    if (*hint == "thinking_summary")return ST::ThinkingSummary;
-                    if (*hint == "hook_summary")    return ST::HookSummary;
-                    if (*hint == "model_switch")    return ST::ModelSwitch;
+                    if (*hint == "away_summary") return ST::AwaySummary;
+                    if (*hint == "turn_duration") return ST::TurnDuration;
+                    if (*hint == "memory_saved") return ST::MemorySaved;
+                    if (*hint == "bridge_status") return ST::BridgeStatus;
+                    if (*hint == "thinking_summary") return ST::ThinkingSummary;
+                    if (*hint == "hook_summary") return ST::HookSummary;
+                    if (*hint == "model_switch") return ST::ModelSwitch;
                     if (*hint == "background_task") return ST::BackgroundTask;
                 }
                 // Heuristic fallback: scan preview text for keywords.
@@ -403,11 +393,9 @@ bool same_projected_source(const MessageDisplayEntry& a,
                     s.find("duration") != std::string::npos ||
                     s.find("seconds") != std::string::npos)
                     return ST::TurnDuration;
-                if (s.find("memory") != std::string::npos ||
-                    s.find("saved") != std::string::npos)
+                if (s.find("memory") != std::string::npos || s.find("saved") != std::string::npos)
                     return ST::MemorySaved;
-                if (s.find("bridge") != std::string::npos ||
-                    s.find("IDE") != std::string::npos)
+                if (s.find("bridge") != std::string::npos || s.find("IDE") != std::string::npos)
                     return ST::BridgeStatus;
                 if (s.find("model") != std::string::npos &&
                     (s.find("switch") != std::string::npos ||
@@ -417,7 +405,7 @@ bool same_projected_source(const MessageDisplayEntry& a,
             };
             projected.rows.push_back(messages::SystemTextMessageData{
                 .subtype = m.can_continue ? messages::SystemMessageSubtype::Plain
-                    : derive_subtype(m.content_preview, m.system_subtype),
+                                          : derive_subtype(m.content_preview, m.system_subtype),
                 .summary = m.content_preview,
                 .detail = {},
                 .timestamp = m.timestamp,
@@ -433,8 +421,7 @@ bool same_projected_source(const MessageDisplayEntry& a,
             input.shapes.push_back(projected.shapes.front());
             input.uuids.push_back(std::move(projected.uuids.front()));
         }
-        if (index < input.lowered_search_cache.size())
-            input.lowered_search_cache[index].reset();
+        if (index < input.lowered_search_cache.size()) input.lowered_search_cache[index].reset();
         if (store) {
             auto& cached_source = store->render_sources[index];
             cached_source = m;
@@ -450,8 +437,7 @@ bool same_projected_source(const MessageDisplayEntry& a,
         if (projection_changed) ++store->selection_revision;
     }
 
-    if (sel >= 0)
-        input.selected_row_idx = static_cast<std::size_t>(sel);
+    if (sel >= 0) input.selected_row_idx = static_cast<std::size_t>(sel);
 
     const auto N = entries.size();
     // Streaming text + streaming thinking
@@ -460,8 +446,8 @@ bool same_projected_source(const MessageDisplayEntry& a,
     // active thinking entry (thinking_active, set while streaming or
     // within 3s grace).  The tail row drives the "Running" status badge
     // and keeps thinking rows expanded while streaming.
-    bool has_streaming = !entries.empty() &&
-        (entries.back().is_streaming || entries.back().thinking_active);
+    bool has_streaming =
+        !entries.empty() && (entries.back().is_streaming || entries.back().thinking_active);
     input.streaming_tail_row = has_streaming ? N - 1 : N;
     input.pin_to_bottom = pinned;
     input.scroll_offset = std::max(0, offs);
@@ -471,7 +457,7 @@ bool same_projected_source(const MessageDisplayEntry& a,
     // is_transcript_mode + show_all_in_transcript.
     // In transcript mode the 3-tier filter shows all message types; cap at
     // 30 unless show_all_in_transcript lifts it.
-    input.is_transcript_mode     = is_transcript_mode;
+    input.is_transcript_mode = is_transcript_mode;
     input.show_all_in_transcript = show_all_in_transcript;
     input.disable_chain_compression = disable_chain_compression;
     input.query_running = query_running;
@@ -497,8 +483,8 @@ bool same_projected_source(const MessageDisplayEntry& a,
     // bypasses the visible.size()>1 guard for single tall messages.
     if (store) {
         input.prev_virtual_mode = store->virtual_renderer_mode;
-        input.forced_repin = store->force_bottom_after_mode_switch
-                          && store->scroll_pinned_to_bottom;
+        input.forced_repin =
+            store->force_bottom_after_mode_switch && store->scroll_pinned_to_bottom;
     }
     // A flex-grow filler at the bottom of the
     // message list absorbs remaining viewport space so short content stays
@@ -508,9 +494,7 @@ bool same_projected_source(const MessageDisplayEntry& a,
     // inner vbox which is correct, but the filler ensures the scroll
     // indicator reflects "content fits" rather than "content is short".
     auto element = ml::render_messages_list_view(
-        input,
-        static_cast<std::size_t>(spinner_frame),
-        ml::kMaxRenderedLastN,
+        input, static_cast<std::size_t>(spinner_frame), ml::kMaxRenderedLastN,
         {filler()},  // trailing_elements — elastic spacer (flex-grow)
         true,        // wrap_in_yframe
         std::move(leading_elements));
@@ -527,11 +511,9 @@ bool same_projected_source(const MessageDisplayEntry& a,
         if (next_mode != prev_mode) {
             store->virtual_renderer_mode = next_mode;
             ++store->virtual_mode_switch_count;
-            loom::utils::debug("messages.virtual",
-                  "mode switch {} → {} at visible={}, count={}",
-                  static_cast<int>(prev_mode), static_cast<int>(next_mode),
-                  input.visible_count_out,
-                  store->virtual_mode_switch_count);
+            loom::utils::debug("messages.virtual", "mode switch {} → {} at visible={}, count={}",
+                               static_cast<int>(prev_mode), static_cast<int>(next_mode),
+                               input.visible_count_out, store->virtual_mode_switch_count);
         }
         // RFC 0008: persist the same-frame scroll reset. The view reset
         // to bottom before building the Element; the caller commits the
@@ -547,8 +529,7 @@ bool same_projected_source(const MessageDisplayEntry& a,
             store->virtual_jh = std::move(*input.virtual_jh_out);
         } else {
             store->virtual_list_active = false;
-            return std::make_shared<TranscriptGeometryNode>(
-                std::move(element) | flex, *store);
+            return std::make_shared<TranscriptGeometryNode>(std::move(element) | flex, *store);
         }
     }
     return std::move(element) | flex;

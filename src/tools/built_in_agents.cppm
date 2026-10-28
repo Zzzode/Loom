@@ -1,6 +1,6 @@
 module;
-#include <cstdlib>
 #include <cstdio>
+#include <cstdlib>
 
 export module loom.tools.built_in_agents;
 
@@ -38,11 +38,10 @@ Guidelines:
 // Note: absolute-path + emoji guidance is appended at runtime by
 // enhance_system_prompt_with_env_details.
 [[nodiscard]] inline std::string get_general_purpose_system_prompt() {
-    return std::format(
-        "{} When you complete the task, respond with a concise report covering what was done and any key findings — the caller will relay this to the user, so it only needs the essentials.\n\n{}",
-        kGeneralPurposeSharedPrefix,
-        kGeneralPurposeSharedGuidelines
-    );
+    return std::format("{} When you complete the task, respond with a concise report covering what "
+                       "was done and any key findings — the caller will relay this to the user, so "
+                       "it only needs the essentials.\n\n{}",
+                       kGeneralPurposeSharedPrefix, kGeneralPurposeSharedGuidelines);
 }
 
 inline constexpr std::string_view kGeneralPurposeWhenToUse =
@@ -70,15 +69,17 @@ inline constexpr bool kHasEmbeddedSearchTools = false;
 
 [[nodiscard]] inline std::string get_explore_system_prompt() {
     const bool embedded = kHasEmbeddedSearchTools;
-    const std::string glob_guidance = embedded
-        ? std::format("- Use `find` via {} for broad file pattern matching", kBashToolName)
-        : std::format("- Use {} for broad file pattern matching", kGlobToolName);
-    const std::string grep_guidance = embedded
-        ? std::format("- Use `grep` via {} for searching file contents with regex", kBashToolName)
-        : std::format("- Use {} for searching file contents with regex", kGrepToolName);
+    const std::string glob_guidance =
+        embedded ? std::format("- Use `find` via {} for broad file pattern matching", kBashToolName)
+                 : std::format("- Use {} for broad file pattern matching", kGlobToolName);
+    const std::string grep_guidance =
+        embedded ? std::format("- Use `grep` via {} for searching file contents with regex",
+                               kBashToolName)
+                 : std::format("- Use {} for searching file contents with regex", kGrepToolName);
     const std::string bash_find_grep_tail = embedded ? ", grep" : "";
 
-    return std::format(R"(You are a file search specialist for Loom, a personal AI coding assistant. You excel at thoroughly navigating and exploring codebases.
+    return std::format(
+        R"(You are a file search specialist for Loom, a personal AI coding assistant. You excel at thoroughly navigating and exploring codebases.
 
 === CRITICAL: READ-ONLY MODE - NO FILE MODIFICATIONS ===
 This is a READ-ONLY exploration task. You are STRICTLY PROHIBITED from:
@@ -111,11 +112,8 @@ NOTE: You are meant to be a fast agent that returns output as quickly as possibl
 - Wherever possible you should try to spawn multiple parallel tool calls for grepping and reading files
 
 Complete the user's search request efficiently and report your findings clearly.)",
-        glob_guidance, grep_guidance,
-        kFileReadToolName,
-        kBashToolName, bash_find_grep_tail,
-        kBashToolName
-    );
+        glob_guidance, grep_guidance, kFileReadToolName, kBashToolName, bash_find_grep_tail,
+        kBashToolName);
 }
 
 inline constexpr std::string_view kExploreWhenToUse =
@@ -125,12 +123,14 @@ inline constexpr int kExploreAgentMinQueries = 3;
 
 // --- Plan agent ---
 [[nodiscard]] inline std::string get_plan_system_prompt() {
-    const std::string search_tools_hint = kHasEmbeddedSearchTools
-        ? std::format("`find`, `grep`, and {}", kFileReadToolName)
-        : std::format("{}, {}, and {}", kGlobToolName, kGrepToolName, kFileReadToolName);
+    const std::string search_tools_hint =
+        kHasEmbeddedSearchTools
+            ? std::format("`find`, `grep`, and {}", kFileReadToolName)
+            : std::format("{}, {}, and {}", kGlobToolName, kGrepToolName, kFileReadToolName);
     const std::string bash_find_grep_tail = kHasEmbeddedSearchTools ? ", grep" : "";
 
-    return std::format(R"(You are a software architect and planning specialist for Loom. Your role is to explore the codebase and design implementation plans.
+    return std::format(
+        R"(You are a software architect and planning specialist for Loom. Your role is to explore the codebase and design implementation plans.
 
 === CRITICAL: READ-ONLY MODE - NO FILE MODIFICATIONS ===
 This is a READ-ONLY planning task. You are STRICTLY PROHIBITED from:
@@ -180,10 +180,7 @@ List 3-5 files most critical for implementing this plan:
 - path/to/file3.ts
 
 REMEMBER: You can ONLY explore and plan. You CANNOT and MUST NOT write, edit, or modify any files. You do NOT have access to file editing tools.)",
-        search_tools_hint,
-        kBashToolName, bash_find_grep_tail,
-        kBashToolName
-    );
+        search_tools_hint, kBashToolName, bash_find_grep_tail, kBashToolName);
 }
 
 inline constexpr std::string_view kPlanWhenToUse =
@@ -320,7 +317,8 @@ inline constexpr std::string_view kStatuslineSetupWhenToUse =
 
 // --- Verification agent ---
 [[nodiscard]] inline std::string get_verification_system_prompt() {
-    return std::format(R"(You are a verification specialist. Your job is not to confirm the implementation works — it's to try to break it.
+    return std::format(
+        R"(You are a verification specialist. Your job is not to confirm the implementation works — it's to try to break it.
 
 You have two documented failure patterns. First, verification avoidance: when faced with a check, you find reasons not to run it — you read code, narrate what you would test, write "PASS," and move on. Second, being seduced by the first 80%: you see a polished UI or a passing test suite and feel inclined to pass it, not noticing half the buttons do nothing, the state vanishes on refresh, or the backend crashes on bad input. The first 80% is the easy part. Your entire value is in finding the last 20%. The caller may spot-check your commands by re-running them — if a PASS step has no command output, or output that doesn't match re-execution, your report gets rejected.
 
@@ -440,9 +438,7 @@ PARTIAL is for environmental limitations only (no test framework, tool unavailab
 Use the literal string `VERDICT: ` followed by exactly one of `PASS`, `FAIL`, `PARTIAL`. No markdown bold, no punctuation, no variation.
 - **FAIL**: include what failed, exact error output, reproduction steps.
 - **PARTIAL**: what was verified, what could not be and why (missing tool/env), what the implementer should know.)",
-        kBashToolName,
-        kWebFetchToolName
-    );
+        kBashToolName, kWebFetchToolName);
 }
 
 inline constexpr std::string_view kVerificationWhenToUse =
@@ -466,11 +462,13 @@ inline constexpr bool kIsUsing3PServices = false;
 inline constexpr std::string_view kIssuesExplainer = "";
 
 [[nodiscard]] inline std::string get_loom_guide_base_prompt() {
-    const std::string local_search_hint = kHasEmbeddedSearchTools
-        ? std::format("{}, `find`, and `grep`", kFileReadToolName)
-        : std::format("{}, {}, and {}", kFileReadToolName, kGlobToolName, kGrepToolName);
+    const std::string local_search_hint =
+        kHasEmbeddedSearchTools
+            ? std::format("{}, `find`, and `grep`", kFileReadToolName)
+            : std::format("{}, {}, and {}", kFileReadToolName, kGlobToolName, kGrepToolName);
 
-    return std::format(R"(You are the Loom guide agent. Your primary responsibility is helping users understand and use Loom, the Loom Agent SDK, and the Loom API effectively.
+    return std::format(
+        R"(You are the Loom guide agent. Your primary responsibility is helping users understand and use Loom, the Loom Agent SDK, and the Loom API effectively.
 
 **Your expertise spans three domains:**
 
@@ -527,23 +525,18 @@ inline constexpr std::string_view kIssuesExplainer = "";
 - Help users discover features by proactively suggesting related commands, shortcuts, or capabilities
 
 Complete the user's request by providing accurate, documentation-based guidance.)",
-        kLoomAccentCodeDocsMapUrl,
-        kCdpDocsMapUrl,
-        kCdpDocsMapUrl,
-        kWebFetchToolName,
-        kWebSearchToolName,
-        local_search_hint
-    );
+        kLoomAccentCodeDocsMapUrl, kCdpDocsMapUrl, kCdpDocsMapUrl, kWebFetchToolName,
+        kWebSearchToolName, local_search_hint);
 }
 
 [[nodiscard]] inline std::string get_feedback_guideline() {
     if (kIsUsing3PServices) {
         return std::format(
             "- When you cannot find an answer or the feature doesn't exist, direct the user to {}",
-            kIssuesExplainer
-        );
+            kIssuesExplainer);
     }
-    return "- When you cannot find an answer or the feature doesn't exist, direct the user to use /feedback to report a feature request or bug";
+    return "- When you cannot find an answer or the feature doesn't exist, direct the user to use "
+           "/feedback to report a feature request or bug";
 }
 
 inline constexpr std::string_view kLoomAccentCodeGuideWhenToUse =
@@ -626,13 +619,14 @@ inline constexpr std::string_view kLoomAccentCodeGuideWhenToUse =
         .path = std::nullopt,
         .system_prompt = get_explore_system_prompt(),
         .tools = {"Read", "Glob", "Grep"},
-        .disallowed_tools = {
-            std::string{kAgentToolName},
-            std::string{kExitPlanModeToolName},
-            std::string{kFileEditToolName},
-            std::string{kFileWriteToolName},
-            std::string{kNotebookEditToolName},
-        },
+        .disallowed_tools =
+            {
+                std::string{kAgentToolName},
+                std::string{kExitPlanModeToolName},
+                std::string{kFileEditToolName},
+                std::string{kFileWriteToolName},
+                std::string{kNotebookEditToolName},
+            },
         .permission_mode = std::nullopt,
         .max_turns = 15,
         .initial_prompt = std::nullopt,
@@ -663,13 +657,14 @@ inline constexpr std::string_view kLoomAccentCodeGuideWhenToUse =
         .path = std::nullopt,
         .system_prompt = get_plan_system_prompt(),
         .tools = {"Read", "Glob", "Grep"},
-        .disallowed_tools = {
-            std::string{kAgentToolName},
-            std::string{kExitPlanModeToolName},
-            std::string{kFileEditToolName},
-            std::string{kFileWriteToolName},
-            std::string{kNotebookEditToolName},
-        },
+        .disallowed_tools =
+            {
+                std::string{kAgentToolName},
+                std::string{kExitPlanModeToolName},
+                std::string{kFileEditToolName},
+                std::string{kFileWriteToolName},
+                std::string{kNotebookEditToolName},
+            },
         .permission_mode = std::nullopt,
         .max_turns = 10,
         .initial_prompt = std::nullopt,
@@ -752,13 +747,14 @@ inline constexpr std::string_view kLoomAccentCodeGuideWhenToUse =
         .path = std::nullopt,
         .system_prompt = get_verification_system_prompt(),
         .tools = {"Read", "Glob", "Grep", "Bash"},
-        .disallowed_tools = {
-            std::string{kAgentToolName},
-            std::string{kExitPlanModeToolName},
-            std::string{kFileEditToolName},
-            std::string{kFileWriteToolName},
-            std::string{kNotebookEditToolName},
-        },
+        .disallowed_tools =
+            {
+                std::string{kAgentToolName},
+                std::string{kExitPlanModeToolName},
+                std::string{kFileEditToolName},
+                std::string{kFileWriteToolName},
+                std::string{kNotebookEditToolName},
+            },
         .permission_mode = std::nullopt,
         .max_turns = 20,
         .initial_prompt = std::nullopt,
@@ -857,22 +853,23 @@ inline constexpr std::string_view kCoordinatorWorkerWhenToUse =
         .filename = std::nullopt,
         .path = std::nullopt,
         .system_prompt = std::string{kCoordinatorWorkerSystemPrompt},
-        .tools = {
-            std::string{kFileReadToolName},
-            std::string{kFileEditToolName},
-            std::string{kFileWriteToolName},
-            std::string{kGlobToolName},
-            std::string{kGrepToolName},
-            std::string{kBashToolName},
-            std::string{kWebSearchToolName},
-            std::string{kWebFetchToolName},
-            std::string{kNotebookEditToolName},
-            "Skill",
-            "TodoWrite",
-            "ToolSearch",
-            "EnterWorktree",
-            "ExitWorktree",
-        },
+        .tools =
+            {
+                std::string{kFileReadToolName},
+                std::string{kFileEditToolName},
+                std::string{kFileWriteToolName},
+                std::string{kGlobToolName},
+                std::string{kGrepToolName},
+                std::string{kBashToolName},
+                std::string{kWebSearchToolName},
+                std::string{kWebFetchToolName},
+                std::string{kNotebookEditToolName},
+                "Skill",
+                "TodoWrite",
+                "ToolSearch",
+                "EnterWorktree",
+                "ExitWorktree",
+            },
         .disallowed_tools = {},
         .permission_mode = std::nullopt,
         .max_turns = std::nullopt,
@@ -936,4 +933,4 @@ inline constexpr std::string_view kCoordinatorWorkerWhenToUse =
     return agents;
 }
 
-} // namespace loom::tools::built_in_agents
+}  // namespace loom::tools::built_in_agents

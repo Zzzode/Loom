@@ -29,10 +29,10 @@ using namespace loom::core;
 struct SkillListRow {
     std::string name;
     std::string description;
-    std::string version;     // "local", "bundled", or semver
+    std::string version;  // "local", "bundled", or semver
     bool enabled = true;
     bool is_bundled = false;
-    std::string path;        // filesystem path for user skills
+    std::string path;  // filesystem path for user skills
     std::size_t trigger_count = 0;
 };
 
@@ -62,9 +62,7 @@ public:
 
     [[nodiscard]] VoidResult validate(const CommandContext& ctx) {
         if (!ctx.args.empty()) {
-            return std::unexpected(Error::make(
-                ErrorCode::InvalidRequest,
-                "Usage: /skills"));
+            return std::unexpected(Error::make(ErrorCode::InvalidRequest, "Usage: /skills"));
         }
         return {};
     }
@@ -85,17 +83,13 @@ public:
 
     /// Collect all installed skills as rows, using SkillLoader::discover_all
     /// (from loom.skills.skill) and bundled skills from loom.skills.bundled.
-    static void add_context_skill_path(
-        loom::skills::SkillLoader& loader,
-        std::string_view cwd) {
+    static void add_context_skill_path(loom::skills::SkillLoader& loader, std::string_view cwd) {
         if (!cwd.empty()) {
-            loader.add_search_path(std::filesystem::path(std::string(cwd)) /
-                                   ".loom" / "skills");
+            loader.add_search_path(std::filesystem::path(std::string(cwd)) / ".loom" / "skills");
         }
     }
 
-    [[nodiscard]] static std::vector<SkillListRow> list_skill_rows(
-        std::string_view cwd = {}) {
+    [[nodiscard]] static std::vector<SkillListRow> list_skill_rows(std::string_view cwd = {}) {
         std::vector<SkillListRow> rows;
 
         // 1. User-discovered skills via SkillLoader
@@ -105,13 +99,13 @@ public:
         if (discovered) {
             for (const auto& def : *discovered) {
                 if (std::ranges::find_if(rows, [&](const SkillListRow& r) {
-                        return r.name == def.name; }) != rows.end())
+                        return r.name == def.name;
+                    }) != rows.end())
                     continue;
                 SkillListRow r;
                 r.name = def.name;
-                r.description = def.description.empty()
-                    ? std::string("Custom skill: ") + def.name
-                    : def.description;
+                r.description = def.description.empty() ? std::string("Custom skill: ") + def.name
+                                                        : def.description;
                 r.version = def.version.value_or("local");
                 r.enabled = true;
                 r.is_bundled = def.is_builtin;
@@ -126,7 +120,8 @@ public:
             for (const auto& m : manifests) {
                 // Avoid duplicates (skill may appear in both paths)
                 if (std::ranges::find_if(rows, [&](const SkillListRow& r) {
-                        return r.name == m.name; }) != rows.end())
+                        return r.name == m.name;
+                    }) != rows.end())
                     continue;
                 SkillListRow r;
                 r.name = m.name;
@@ -145,8 +140,7 @@ public:
         for (auto& r : rows) {
             if (!r.path.empty()) {
                 std::error_code ec;
-                if (std::filesystem::exists(
-                        std::filesystem::path(r.path) / ".disabled", ec)) {
+                if (std::filesystem::exists(std::filesystem::path(r.path) / ".disabled", ec)) {
                     r.enabled = false;
                 }
             }
@@ -158,16 +152,15 @@ public:
     }
 
     /// Return the trigger pattern rows for a given skill name.
-    [[nodiscard]] static std::vector<SkillTriggerRow> list_trigger_rows(
-        std::string_view name,
-        std::string_view cwd = {}) {
+    [[nodiscard]] static std::vector<SkillTriggerRow> list_trigger_rows(std::string_view name,
+                                                                        std::string_view cwd = {}) {
         std::vector<SkillTriggerRow> rows;
         loom::skills::SkillLoader loader;
         add_context_skill_path(loader, cwd);
         auto discovered = loader.discover_all();
         if (!discovered) return rows;
-        auto it = std::ranges::find_if(*discovered,
-            [name](const auto& s) { return s.name == name; });
+        auto it =
+            std::ranges::find_if(*discovered, [name](const auto& s) { return s.name == name; });
         if (it == discovered->end()) return rows;
         rows.reserve(it->trigger_patterns.size());
         for (const auto& p : it->trigger_patterns) {
@@ -183,8 +176,8 @@ public:
         add_context_skill_path(loader, cwd);
         auto discovered = loader.discover_all();
         if (!discovered) return std::nullopt;
-        auto it = std::ranges::find_if(*discovered,
-            [name](const auto& s) { return s.name == name; });
+        auto it =
+            std::ranges::find_if(*discovered, [name](const auto& s) { return s.name == name; });
         if (it != discovered->end()) return *it;
 
         // Fallback to manifest-based search
@@ -205,8 +198,7 @@ public:
 private:
     // ---- Text-formatting helpers (not FTXUI) ------------------------------
 
-    [[nodiscard]] static std::string format_skill_list_text(
-        const std::vector<SkillListRow>& rows) {
+    [[nodiscard]] static std::string format_skill_list_text(const std::vector<SkillListRow>& rows) {
         if (rows.empty()) return "No skills installed.";
         std::string out = "Installed skills:\n";
         for (const auto& r : rows) {
@@ -224,39 +216,34 @@ private:
             out += r.description;
             out += '\n';
             if (r.trigger_count > 0) {
-                out += std::format("                        ({} trigger patterns)\n",
-                    r.trigger_count);
+                out +=
+                    std::format("                        ({} trigger patterns)\n", r.trigger_count);
             }
         }
-        auto enabled = std::ranges::count_if(rows,
-            [](const auto& r) { return r.enabled; });
+        auto enabled = std::ranges::count_if(rows, [](const auto& r) { return r.enabled; });
         out += std::format("\n{}/{} skills enabled.", enabled, rows.size());
         return out;
     }
 
     // ---- Execute subcommand helpers ---------------------------------------
 
-    [[nodiscard]] static Result<CommandResult> show_info(
-        const std::string& name,
-        std::string_view cwd = {}) {
+    [[nodiscard]] static Result<CommandResult> show_info(const std::string& name,
+                                                         std::string_view cwd = {}) {
         auto def = find_skill_definition(name, cwd);
         if (!def) {
-            return std::unexpected(Error::make(ErrorCode::ToolNotFound,
-                std::format("Skill '{}' not found.", name)));
+            return std::unexpected(
+                Error::make(ErrorCode::ToolNotFound, std::format("Skill '{}' not found.", name)));
         }
         auto triggers = list_trigger_rows(name, cwd);
 
-        std::string out = std::format(
-            "Skill: {}\n"
-            "  Version:     {}\n"
-            "  Type:        {}\n"
-            "  Description: {}\n"
-            "  Author:      {}\n",
-            def->name,
-            def->version.value_or("unspecified"),
-            def->is_builtin ? "bundled" : "user-installed",
-            def->description,
-            def->author.value_or("(unspecified)"));
+        std::string out = std::format("Skill: {}\n"
+                                      "  Version:     {}\n"
+                                      "  Type:        {}\n"
+                                      "  Description: {}\n"
+                                      "  Author:      {}\n",
+                                      def->name, def->version.value_or("unspecified"),
+                                      def->is_builtin ? "bundled" : "user-installed",
+                                      def->description, def->author.value_or("(unspecified)"));
 
         if (!triggers.empty()) {
             out += std::format("  Triggers ({}):\n", triggers.size());
@@ -275,39 +262,36 @@ private:
         return CommandResult::success(std::move(out));
     }
 
-    [[nodiscard]] static Result<CommandResult> run_skill(
-        const std::string& name,
-        std::string_view cwd = {}) {
+    [[nodiscard]] static Result<CommandResult> run_skill(const std::string& name,
+                                                         std::string_view cwd = {}) {
         auto def = find_skill_definition(name, cwd);
         if (!def) {
-            return std::unexpected(Error::make(ErrorCode::ToolNotFound,
-                std::format("Skill '{}' not found.", name)));
+            return std::unexpected(
+                Error::make(ErrorCode::ToolNotFound, std::format("Skill '{}' not found.", name)));
         }
         // NOTE: actual skill execution (inject into system prompt + trigger
         // the agent run) happens in the higher-level query engine. The /skills
         // run command here is a UI-level confirmation that queues the skill
         // for the next turn. Phase 4 hooks into the proper turn loop.
-        return CommandResult::success(std::format(
-            "Skill '{}' queued for execution.\n"
-            "The skill prompt will be injected on the next assistant turn.\n"
-            "{} trigger patterns registered.",
-            name, def->trigger_patterns.size()));
+        return CommandResult::success(
+            std::format("Skill '{}' queued for execution.\n"
+                        "The skill prompt will be injected on the next assistant turn.\n"
+                        "{} trigger patterns registered.",
+                        name, def->trigger_patterns.size()));
     }
 
-    [[nodiscard]] static Result<CommandResult> test_skill(
-        const std::string& name,
-        std::string_view cwd = {}) {
+    [[nodiscard]] static Result<CommandResult> test_skill(const std::string& name,
+                                                          std::string_view cwd = {}) {
         auto def = find_skill_definition(name, cwd);
         if (!def) {
-            return std::unexpected(Error::make(ErrorCode::ToolNotFound,
-                std::format("Skill '{}' not found.", name)));
+            return std::unexpected(
+                Error::make(ErrorCode::ToolNotFound, std::format("Skill '{}' not found.", name)));
         }
         // Perform a "dry-run" validation: check content is non-empty,
         // triggers compile as regex (if any), and frontmatter parses.
         std::vector<std::string> failures;
 
-        if (def->content.empty())
-            failures.push_back("Skill content (prompt body) is empty");
+        if (def->content.empty()) failures.push_back("Skill content (prompt body) is empty");
 
         // Try compiling each trigger pattern to check validity
         for (const auto& p : def->trigger_patterns) {
@@ -326,15 +310,13 @@ private:
             return CommandResult::success(std::move(out));
         }
 
-        return CommandResult::success(std::format(
-            "Skill '{}' PASSED validation.\n"
-            "  - Content: {} chars\n"
-            "  - Trigger patterns: {} (all compile)\n"
-            "  - Type: {}",
-            name,
-            def->content.size(),
-            def->trigger_patterns.size(),
-            def->is_builtin ? "bundled" : "user-installed"));
+        return CommandResult::success(std::format("Skill '{}' PASSED validation.\n"
+                                                  "  - Content: {} chars\n"
+                                                  "  - Trigger patterns: {} (all compile)\n"
+                                                  "  - Type: {}",
+                                                  name, def->content.size(),
+                                                  def->trigger_patterns.size(),
+                                                  def->is_builtin ? "bundled" : "user-installed"));
     }
 
     [[nodiscard]] static Result<CommandResult> reload_skills() {
@@ -350,29 +332,28 @@ private:
         // Deduplicate estimate: use set of names
         std::unordered_set<std::string> names;
         if (discovered) {
-            for (const auto& d : *discovered) names.insert(d.name);
+            for (const auto& d : *discovered)
+                names.insert(d.name);
         }
         for (const auto& path : loom::skills::get_skills_search_paths()) {
             for (const auto& m : loom::skills::load_skills_directory(path))
                 names.insert(m.name);
         }
 
-        return CommandResult::success(std::format(
-            "Reloaded skills: {} unique skills discovered.",
-            names.size()));
+        return CommandResult::success(
+            std::format("Reloaded skills: {} unique skills discovered.", names.size()));
     }
 
-    [[nodiscard]] static Result<CommandResult> import_skills_dir(
-        const std::string& dir_path) {
+    [[nodiscard]] static Result<CommandResult> import_skills_dir(const std::string& dir_path) {
         namespace fs = std::filesystem;
         std::error_code ec;
         if (!fs::exists(dir_path, ec)) {
-            return std::unexpected(Error::make(ErrorCode::InvalidRequest,
-                std::format("Directory does not exist: {}", dir_path)));
+            return std::unexpected(Error::make(
+                ErrorCode::InvalidRequest, std::format("Directory does not exist: {}", dir_path)));
         }
         if (!fs::is_directory(dir_path, ec)) {
             return std::unexpected(Error::make(ErrorCode::InvalidRequest,
-                std::format("Not a directory: {}", dir_path)));
+                                               std::format("Not a directory: {}", dir_path)));
         }
 
         // 1. Scan the import directory
@@ -389,21 +370,21 @@ private:
                     "or a manifest.json / skill.json manifest.",
                     dir_path));
             }
-            return CommandResult::success(std::format(
-                "Imported {} skill(s) from '{}' via markdown parser.\n"
-                "Skills are now discoverable by the SkillLoader.",
-                count, dir_path));
+            return CommandResult::success(
+                std::format("Imported {} skill(s) from '{}' via markdown parser.\n"
+                            "Skills are now discoverable by the SkillLoader.",
+                            count, dir_path));
         }
 
         // 2. Report found skills
-        std::string out = std::format(
-            "Imported {} skill(s) from '{}':\n", manifests.size(), dir_path);
+        std::string out =
+            std::format("Imported {} skill(s) from '{}':\n", manifests.size(), dir_path);
         for (const auto& m : manifests) {
-            out += std::format("  - {} ({} triggers, path: {})\n",
-                m.name, m.triggers.size(), m.directory.string());
+            out += std::format("  - {} ({} triggers, path: {})\n", m.name, m.triggers.size(),
+                               m.directory.string());
         }
         return CommandResult::success(std::move(out));
     }
 };
 
-} // namespace loom::commands
+}  // namespace loom::commands

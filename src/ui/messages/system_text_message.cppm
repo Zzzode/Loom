@@ -14,11 +14,10 @@
 // ────────────────────────────────────────────────────────────────────────
 module;
 
-
-#include <ftxui/dom/elements.hpp>
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/event.hpp>
+#include <ftxui/dom/elements.hpp>
 
 export module loom.ui.messages.system_text_message;
 
@@ -28,7 +27,7 @@ import loom.ui.foundation.theme_provider;
 
 import loom.ui.messages.message_components;
 import loom.ui.messages.message_timestamp;
-import loom.ui.foundation.design_figures;  // kReferenceMark, kTeardropAsterisk, kBlackCircle (single source of truth)
+import loom.ui.foundation.design_figures; // kReferenceMark, kTeardropAsterisk, kBlackCircle (single source of truth)
 
 export namespace loom::ui::messages {
 
@@ -51,10 +50,9 @@ enum class SystemMessageSubtype {
 
 struct SystemTextMessageData {
     SystemMessageSubtype subtype = SystemMessageSubtype::Plain;
-    std::string summary;            ///< Always visible, single line
-    std::string detail;             ///< Shown when expanded (multi-line ok)
-    std::chrono::system_clock::time_point timestamp =
-        std::chrono::system_clock::now();
+    std::string summary;  ///< Always visible, single line
+    std::string detail;   ///< Shown when expanded (multi-line ok)
+    std::chrono::system_clock::time_point timestamp = std::chrono::system_clock::now();
     bool start_expanded = false;
     bool is_transcript_mode = false;
 };
@@ -63,32 +61,51 @@ struct SystemTextMessageData {
 
 inline auto SubtypeIcon(SystemMessageSubtype t) -> std::string_view {
     switch (t) {
-        case SystemMessageSubtype::TurnDuration:    return loom::ui::design::figures::kCircle.data();
-        case SystemMessageSubtype::MemorySaved:     return loom::ui::design::figures::kReferenceMark.data();
-        case SystemMessageSubtype::BridgeStatus:    return loom::ui::design::figures::kCircleDouble.data();
-        case SystemMessageSubtype::ThinkingSummary: return loom::ui::design::figures::kDiamondOpen.data();
-        case SystemMessageSubtype::HookSummary:     return loom::ui::design::figures::kRefreshArrow.data();
-        case SystemMessageSubtype::ModelSwitch:     return loom::ui::design::figures::kRefreshArrow.data();
-        case SystemMessageSubtype::AwaySummary:     return loom::ui::design::figures::kPauseIcon.data();
-        case SystemMessageSubtype::BackgroundTask:  return loom::ui::design::figures::kSquare.data();
-        case SystemMessageSubtype::Plain:
-        case SystemMessageSubtype::Other:           return loom::ui::design::figures::kInfo.data();
+    case SystemMessageSubtype::TurnDuration:
+        return loom::ui::design::figures::kCircle.data();
+    case SystemMessageSubtype::MemorySaved:
+        return loom::ui::design::figures::kReferenceMark.data();
+    case SystemMessageSubtype::BridgeStatus:
+        return loom::ui::design::figures::kCircleDouble.data();
+    case SystemMessageSubtype::ThinkingSummary:
+        return loom::ui::design::figures::kDiamondOpen.data();
+    case SystemMessageSubtype::HookSummary:
+        return loom::ui::design::figures::kRefreshArrow.data();
+    case SystemMessageSubtype::ModelSwitch:
+        return loom::ui::design::figures::kRefreshArrow.data();
+    case SystemMessageSubtype::AwaySummary:
+        return loom::ui::design::figures::kPauseIcon.data();
+    case SystemMessageSubtype::BackgroundTask:
+        return loom::ui::design::figures::kSquare.data();
+    case SystemMessageSubtype::Plain:
+    case SystemMessageSubtype::Other:
+        return loom::ui::design::figures::kInfo.data();
     }
     return loom::ui::design::figures::kInfo.data();
 }
 
 inline auto SubtypeLabel(SystemMessageSubtype t) -> std::string_view {
     switch (t) {
-        case SystemMessageSubtype::TurnDuration:    return "turn_duration";
-        case SystemMessageSubtype::MemorySaved:     return "memory_saved";
-        case SystemMessageSubtype::BridgeStatus:    return "bridge_status";
-        case SystemMessageSubtype::ThinkingSummary: return "thinking_summary";
-        case SystemMessageSubtype::HookSummary:     return "hook_summary";
-        case SystemMessageSubtype::ModelSwitch:     return "model_switch";
-        case SystemMessageSubtype::AwaySummary:     return "away_summary";
-        case SystemMessageSubtype::BackgroundTask:  return "background_task";
-        case SystemMessageSubtype::Plain:           return "system";
-        case SystemMessageSubtype::Other:           return "system";
+    case SystemMessageSubtype::TurnDuration:
+        return "turn_duration";
+    case SystemMessageSubtype::MemorySaved:
+        return "memory_saved";
+    case SystemMessageSubtype::BridgeStatus:
+        return "bridge_status";
+    case SystemMessageSubtype::ThinkingSummary:
+        return "thinking_summary";
+    case SystemMessageSubtype::HookSummary:
+        return "hook_summary";
+    case SystemMessageSubtype::ModelSwitch:
+        return "model_switch";
+    case SystemMessageSubtype::AwaySummary:
+        return "away_summary";
+    case SystemMessageSubtype::BackgroundTask:
+        return "background_task";
+    case SystemMessageSubtype::Plain:
+        return "system";
+    case SystemMessageSubtype::Other:
+        return "system";
     }
     return "system";
 }
@@ -96,14 +113,13 @@ inline auto SubtypeLabel(SystemMessageSubtype t) -> std::string_view {
 // ─── Component ─────────────────────────────────────────────────────────
 
 class SystemTextMessageComponent : public ComponentBase {
-  public:
+public:
     using OnToggleFn = std::function<void(bool expanded)>;
 
-    explicit SystemTextMessageComponent(SystemTextMessageData data,
-                                        OnToggleFn on_toggle = nullptr)
-        : data_(std::move(data)),
-          on_toggle_(std::move(on_toggle)),
-          expanded_(data_.start_expanded) {}
+    explicit SystemTextMessageComponent(SystemTextMessageData data, OnToggleFn on_toggle = nullptr)
+        : data_(std::move(data))
+        , on_toggle_(std::move(on_toggle))
+        , expanded_(data_.start_expanded) {}
 
     Element Render() override {
         // Header: ⚙ System  [subtype]  ⏱ HH:MM  ▾ expand/hide button
@@ -114,32 +130,36 @@ class SystemTextMessageComponent : public ComponentBase {
         auto header = hbox({
             text(icon + " ") | color(loom::ui::design::theme::current_theme().palette->info),
             text("System") | dim | color(loom::ui::design::theme::current_theme().palette->info),
-            text("  [" + label + "]") | dim | color(loom::ui::design::theme::current_theme().palette->muted),
+            text("  [" + label + "]") | dim |
+                color(loom::ui::design::theme::current_theme().palette->muted),
             filler(),
-            text(render_timestamp(data_.timestamp)) | dim | color(loom::ui::design::theme::current_theme().palette->muted),
+            text(render_timestamp(data_.timestamp)) | dim |
+                color(loom::ui::design::theme::current_theme().palette->muted),
             text(" "),
-            has_detail
-                ? text(expanded_ ? "▾ hide" : "▸ expand")
-                    | bold | color(loom::ui::design::theme::current_theme().palette->info)
-                : text(""),
+            has_detail ? text(expanded_ ? "▾ hide" : "▸ expand") | bold |
+                             color(loom::ui::design::theme::current_theme().palette->info)
+                       : text(""),
         });
 
         // Summary (always visible)
-        auto summary = text(data_.summary) | dim | color(loom::ui::design::theme::current_theme().palette->muted);
+        auto summary = text(data_.summary) | dim |
+                       color(loom::ui::design::theme::current_theme().palette->muted);
 
         // Detail (only when expanded + present)
         Elements detail_box;
         if (expanded_ && has_detail) {
             for (auto& line : SplitLines(data_.detail)) {
-                detail_box.push_back(text(std::move(line))
-                                         | dim | color(loom::ui::design::theme::current_theme().palette->muted));
+                detail_box.push_back(
+                    text(std::move(line)) | dim |
+                    color(loom::ui::design::theme::current_theme().palette->muted));
             }
         }
 
         // Transcript: fully minimal
         if (data_.is_transcript_mode) {
             return vbox({
-                text("· " + data_.summary) | dim | color(loom::ui::design::theme::current_theme().palette->muted),
+                text("· " + data_.summary) | dim |
+                    color(loom::ui::design::theme::current_theme().palette->muted),
             });
         }
 
@@ -153,11 +173,10 @@ class SystemTextMessageComponent : public ComponentBase {
         }
 
         // Grey "pill" background to differentiate from user/assistant
-        return vbox(std::move(rows))
-             | bgcolor(loom::ui::design::theme::current_theme().palette->muted)
-             | color(loom::ui::design::theme::current_theme().palette->muted)
-             | borderEmpty
-             | padding(1);
+        return vbox(std::move(rows)) |
+               bgcolor(loom::ui::design::theme::current_theme().palette->muted) |
+               color(loom::ui::design::theme::current_theme().palette->muted) | borderEmpty |
+               padding(1);
     }
 
     bool OnEvent(Event event) override {
@@ -176,7 +195,7 @@ class SystemTextMessageComponent : public ComponentBase {
         return ComponentBase::OnEvent(event);
     }
 
-  private:
+private:
     static auto SplitLines(std::string_view text) -> std::vector<std::string> {
         std::vector<std::string> lines;
         std::size_t start = 0;
@@ -200,17 +219,17 @@ class SystemTextMessageComponent : public ComponentBase {
 
 // ─── Factories ─────────────────────────────────────────────────────────
 
-[[nodiscard]] inline Component MakeSystemTextMessage(
-    SystemTextMessageData data,
-    SystemTextMessageComponent::OnToggleFn on_toggle = nullptr)
-{
+[[nodiscard]] inline Component
+MakeSystemTextMessage(SystemTextMessageData data,
+                      SystemTextMessageComponent::OnToggleFn on_toggle = nullptr) {
     return Make<SystemTextMessageComponent>(std::move(data), std::move(on_toggle));
 }
 
 [[nodiscard]] inline Element RenderSystemTextMessageBubble(const SystemTextMessageData& data) {
     return vbox({
         hbox({
-            text(std::string(SubtypeIcon(data.subtype)) + " ") | color(loom::ui::design::theme::current_theme().palette->info),
+            text(std::string(SubtypeIcon(data.subtype)) + " ") |
+                color(loom::ui::design::theme::current_theme().palette->info),
             text(std::string(SubtypeLabel(data.subtype))) | dim,
             filler(),
             text(render_timestamp(data.timestamp)) | dim,
@@ -240,9 +259,9 @@ class SystemTextMessageComponent : public ComponentBase {
 /// Helper: build the canonical system row `[glyph(minWidth=2)] content` with
 /// the canonical margin + width semantics.  `glyph_cell` is rendered into a 2-wide
 /// column; `content` is the trimmed single-line message.
-[[nodiscard]] inline Element RenderSystemEventRow(
-    Element glyph_cell, Element content, bool add_margin,
-    std::optional<Color> bg = std::nullopt) {
+[[nodiscard]] inline Element RenderSystemEventRow(Element glyph_cell, Element content,
+                                                  bool add_margin,
+                                                  std::optional<Color> bg = std::nullopt) {
     Decorator bg_dec = bg ? bgcolor(*bg) : nothing;
     Element row = hbox({
         std::move(glyph_cell),
@@ -255,19 +274,20 @@ class SystemTextMessageComponent : public ComponentBase {
 }
 
 /// away_summary subtype:  `※ <content>` in dim.
-[[nodiscard]] inline Element RenderSystemAwaySummary(
-    const SystemTextMessageData& data, bool add_margin = true) {
-    auto glyph = hbox({text(std::string(loom::ui::design::figures::kReferenceMark)),
-                       text(" ")}) | dim | size(WIDTH, EQUAL, 2);
+[[nodiscard]] inline Element RenderSystemAwaySummary(const SystemTextMessageData& data,
+                                                     bool add_margin = true) {
+    auto glyph = hbox({text(std::string(loom::ui::design::figures::kReferenceMark)), text(" ")}) |
+                 dim | size(WIDTH, EQUAL, 2);
     auto content = text(data.summary.empty() ? data.detail : data.summary) | dim;
     return RenderSystemEventRow(std::move(glyph), std::move(content), add_margin);
 }
 
 /// scheduled_task_fire / permission_retry subtype:  `✻ <content>` in dim.
-[[nodiscard]] inline Element RenderSystemTeardropEvent(
-    const SystemTextMessageData& data, bool add_margin = true) {
-    auto glyph = hbox({text(std::string(loom::ui::design::figures::kTeardropAsterisk)),
-                       text(" ")}) | dim | size(WIDTH, EQUAL, 2);
+[[nodiscard]] inline Element RenderSystemTeardropEvent(const SystemTextMessageData& data,
+                                                       bool add_margin = true) {
+    auto glyph =
+        hbox({text(std::string(loom::ui::design::figures::kTeardropAsterisk)), text(" ")}) | dim |
+        size(WIDTH, EQUAL, 2);
     auto content = text(data.summary.empty() ? data.detail : data.summary) | dim;
     return RenderSystemEventRow(std::move(glyph), std::move(content), add_margin);
 }
@@ -275,8 +295,9 @@ class SystemTextMessageComponent : public ComponentBase {
 /// agents_killed subtype:  `⏺ All background agents stopped` (dot in error,
 /// text dim).
 [[nodiscard]] inline Element RenderSystemAgentsKilled(bool add_margin = true) {
-    auto glyph = hbox({text(std::string(loom::ui::design::figures::kBlackCircle)),
-                       text(" ")}) | color(loom::ui::design::theme::current_theme().palette->danger) | size(WIDTH, EQUAL, 2);
+    auto glyph = hbox({text(std::string(loom::ui::design::figures::kBlackCircle)), text(" ")}) |
+                 color(loom::ui::design::theme::current_theme().palette->danger) |
+                 size(WIDTH, EQUAL, 2);
     auto content = text("All background agents stopped") | dim;
     return RenderSystemEventRow(std::move(glyph), std::move(content), add_margin);
 }
@@ -284,13 +305,12 @@ class SystemTextMessageComponent : public ComponentBase {
 /// Generic info/warning fallback (SystemTextMessageInner):  `⏺ <content>`
 /// with dot colored for warning, content dim for info.  `columns` defaults to
 /// 80 (the render width); wraps at columns-10.
-[[nodiscard]] inline Element RenderSystemGenericEvent(
-    const SystemTextMessageData& data, bool add_margin = true,
-    int columns = 80) {
+[[nodiscard]] inline Element RenderSystemGenericEvent(const SystemTextMessageData& data,
+                                                      bool add_margin = true, int columns = 80) {
     const bool is_warning = false;  // info path by default
     const bool is_info = true;
-    auto glyph = hbox({text(std::string(loom::ui::design::figures::kBlackCircle)),
-                       text(" ")}) | dim | size(WIDTH, EQUAL, 2);
+    auto glyph = hbox({text(std::string(loom::ui::design::figures::kBlackCircle)), text(" ")}) |
+                 dim | size(WIDTH, EQUAL, 2);
     std::string content = data.summary.empty() ? data.detail : data.summary;
     // trim leading/trailing whitespace
     auto b = content.find_first_not_of(" \t\n\r");
@@ -300,30 +320,32 @@ class SystemTextMessageComponent : public ComponentBase {
     }
     Decorator content_dec = dim;
     Element content_el = text(content) | content_dec;
-    (void)is_warning; (void)is_info; (void)columns;
+    (void)is_warning;
+    (void)is_info;
+    (void)columns;
     return RenderSystemEventRow(std::move(glyph), std::move(content_el), add_margin);
 }
 
 /// Top-level faithful dispatcher: pick the row shape by subtype.  Returns
 /// an empty element for subtypes that are hidden (e.g. "thinking" → null).
-[[nodiscard]] inline Element RenderSystemTextMessageFaithful(
-    const SystemTextMessageData& data, bool add_margin = true) {
+[[nodiscard]] inline Element RenderSystemTextMessageFaithful(const SystemTextMessageData& data,
+                                                             bool add_margin = true) {
     switch (data.subtype) {
-        case SystemMessageSubtype::AwaySummary:
-            return RenderSystemAwaySummary(data, add_margin);
-        case SystemMessageSubtype::BackgroundTask:
-        case SystemMessageSubtype::HookSummary:
-        case SystemMessageSubtype::ModelSwitch:
-        case SystemMessageSubtype::ThinkingSummary:
-            // These reuse the teardrop-style event row (dim content).
-            return RenderSystemTeardropEvent(data, add_margin);
-        case SystemMessageSubtype::Plain:
-        case SystemMessageSubtype::Other:
-        case SystemMessageSubtype::TurnDuration:
-        case SystemMessageSubtype::MemorySaved:
-        case SystemMessageSubtype::BridgeStatus:
-        default:
-            return RenderSystemGenericEvent(data, add_margin);
+    case SystemMessageSubtype::AwaySummary:
+        return RenderSystemAwaySummary(data, add_margin);
+    case SystemMessageSubtype::BackgroundTask:
+    case SystemMessageSubtype::HookSummary:
+    case SystemMessageSubtype::ModelSwitch:
+    case SystemMessageSubtype::ThinkingSummary:
+        // These reuse the teardrop-style event row (dim content).
+        return RenderSystemTeardropEvent(data, add_margin);
+    case SystemMessageSubtype::Plain:
+    case SystemMessageSubtype::Other:
+    case SystemMessageSubtype::TurnDuration:
+    case SystemMessageSubtype::MemorySaved:
+    case SystemMessageSubtype::BridgeStatus:
+    default:
+        return RenderSystemGenericEvent(data, add_margin);
     }
 }
 

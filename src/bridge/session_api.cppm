@@ -11,7 +11,7 @@ import std;
 
 import loom.types.types;
 import loom.serdes.json;
-import loom.net.http.http;  // arch-check: keep-import (HttpError, HttpClient)
+import loom.net.http.http; // arch-check: keep-import (HttpError, HttpClient)
 
 export namespace loom::bridge {
 
@@ -38,10 +38,10 @@ struct RemoteCredentials {
 struct BridgeSession {
     std::string id;
     std::string title;
-    std::string status;          // "running", "idle", "requires_action", "pending", "archived"
+    std::string status;  // "running", "idle", "requires_action", "pending", "archived"
     std::string environment_id;
-    int64_t created_at{0};       // Unix epoch seconds
-    int64_t updated_at{0};       // Unix epoch seconds
+    int64_t created_at{0};  // Unix epoch seconds
+    int64_t updated_at{0};  // Unix epoch seconds
 
     /// Parse a BridgeSession from a JSON response body.
     /// Returns std::nullopt if required fields are missing.
@@ -128,10 +128,8 @@ struct CreateSessionRequest {
 namespace detail {
 
 /// Build the standard auth headers required by the CCR v2 sessions API.
-[[nodiscard]] auto session_api_headers(
-    std::string_view access_token,
-    std::string_view org_uuid
-) -> std::unordered_map<std::string, std::string> {
+[[nodiscard]] auto session_api_headers(std::string_view access_token, std::string_view org_uuid)
+    -> std::unordered_map<std::string, std::string> {
     std::unordered_map<std::string, std::string> headers{
         {"Content-Type", "application/json"},
         {"Accept", "application/json"},
@@ -154,11 +152,8 @@ namespace detail {
 }
 
 /// Build an Error from an HTTP response, extracting the detail message if present.
-[[nodiscard]] auto make_http_error(
-    int status,
-    std::string_view operation,
-    std::string_view body
-) -> Error {
+[[nodiscard]] auto make_http_error(int status, std::string_view operation, std::string_view body)
+    -> Error {
     std::string detail;
     auto parsed = loom::utils::json::parse(body);
     if (parsed) {
@@ -174,9 +169,10 @@ namespace detail {
         }
     }
     auto code = http_status_to_error_code(status);
-    auto message = detail.empty()
-        ? std::format("Bridge session {} failed with HTTP {}", operation, status)
-        : std::format("Bridge session {} failed with HTTP {}: {}", operation, status, detail);
+    auto message =
+        detail.empty()
+            ? std::format("Bridge session {} failed with HTTP {}", operation, status)
+            : std::format("Bridge session {} failed with HTTP {}: {}", operation, status, detail);
     return Error::make(code, std::move(message));
 }
 
@@ -184,24 +180,24 @@ namespace detail {
 [[nodiscard]] auto map_transport_error(const loom::utils::HttpError& http_err) -> Error {
     ErrorCode code = ErrorCode::ConnectionFailed;
     switch (http_err.code) {
-        case loom::utils::HttpError::timeout:
-            code = ErrorCode::NetworkTimeout;
-            break;
-        case loom::utils::HttpError::ssl_error:
-            code = ErrorCode::SSLError;
-            break;
-        case loom::utils::HttpError::dns_error:
-        case loom::utils::HttpError::connection_failed:
-            code = ErrorCode::ConnectionFailed;
-            break;
-        case loom::utils::HttpError::cancelled:
-            code = ErrorCode::NetworkTimeout;
-            break;
+    case loom::utils::HttpError::timeout:
+        code = ErrorCode::NetworkTimeout;
+        break;
+    case loom::utils::HttpError::ssl_error:
+        code = ErrorCode::SSLError;
+        break;
+    case loom::utils::HttpError::dns_error:
+    case loom::utils::HttpError::connection_failed:
+        code = ErrorCode::ConnectionFailed;
+        break;
+    case loom::utils::HttpError::cancelled:
+        code = ErrorCode::NetworkTimeout;
+        break;
     }
     return Error::make(code, http_err.message);
 }
 
-} // namespace detail
+}  // namespace detail
 
 // ============================================================
 // Session CRUD operations
@@ -211,18 +207,16 @@ namespace detail {
 ///
 /// Sends the full CreateSessionRequest payload to the bridge API and returns
 /// the created BridgeSession on success, or an Error describing the failure.
-auto create_code_session(
-    const CreateSessionRequest& request,
-    std::string_view base_url,
-    std::string_view access_token,
-    std::string_view org_uuid,
-    loom::utils::HttpClient& http_client,
-    std::chrono::milliseconds timeout = std::chrono::seconds{30}
-) -> Result<BridgeSession> {
+auto create_code_session(const CreateSessionRequest& request, std::string_view base_url,
+                         std::string_view access_token, std::string_view org_uuid,
+                         loom::utils::HttpClient& http_client,
+                         std::chrono::milliseconds timeout = std::chrono::seconds{30})
+    -> Result<BridgeSession> {
     (void)timeout;
     if (base_url.empty() || access_token.empty()) {
-        return std::unexpected(Error::make(ErrorCode::InvalidInput,
-            "Base URL and access token are required for session creation"));
+        return std::unexpected(
+            Error::make(ErrorCode::InvalidInput,
+                        "Base URL and access token are required for session creation"));
     }
 
     auto url = std::format("{}{}", base_url, SESSION_API_PATH);
@@ -235,14 +229,15 @@ auto create_code_session(
     }
 
     if (response->status != 200 && response->status != 201) {
-        return std::unexpected(detail::make_http_error(
-            response->status, "creation", response->body));
+        return std::unexpected(
+            detail::make_http_error(response->status, "creation", response->body));
     }
 
     auto session = BridgeSession::from_json(response->body);
     if (!session) {
-        return std::unexpected(Error::make(ErrorCode::SessionCorrupted,
-            "Session creation response did not contain a valid session ID"));
+        return std::unexpected(
+            Error::make(ErrorCode::SessionCorrupted,
+                        "Session creation response did not contain a valid session ID"));
     }
     return std::move(*session);
 }
@@ -251,22 +246,18 @@ auto create_code_session(
 ///
 /// Returns the session details or an Error. Handles 404 (session not found)
 /// and auth failures (401/403) with specific error codes.
-auto get_bridge_session(
-    std::string_view session_id,
-    std::string_view base_url,
-    std::string_view access_token,
-    std::string_view org_uuid,
-    loom::utils::HttpClient& http_client,
-    std::chrono::milliseconds timeout = std::chrono::seconds{10}
-) -> Result<BridgeSession> {
+auto get_bridge_session(std::string_view session_id, std::string_view base_url,
+                        std::string_view access_token, std::string_view org_uuid,
+                        loom::utils::HttpClient& http_client,
+                        std::chrono::milliseconds timeout = std::chrono::seconds{10})
+    -> Result<BridgeSession> {
     (void)timeout;
     if (session_id.empty()) {
-        return std::unexpected(Error::make(ErrorCode::InvalidInput,
-            "Session ID is required"));
+        return std::unexpected(Error::make(ErrorCode::InvalidInput, "Session ID is required"));
     }
     if (base_url.empty() || access_token.empty()) {
-        return std::unexpected(Error::make(ErrorCode::InvalidInput,
-            "Base URL and access token are required for session fetch"));
+        return std::unexpected(Error::make(
+            ErrorCode::InvalidInput, "Base URL and access token are required for session fetch"));
     }
 
     auto url = std::format("{}/v1/sessions/{}", base_url, session_id);
@@ -278,14 +269,13 @@ auto get_bridge_session(
     }
 
     if (response->status != 200) {
-        return std::unexpected(detail::make_http_error(
-            response->status, "fetch", response->body));
+        return std::unexpected(detail::make_http_error(response->status, "fetch", response->body));
     }
 
     auto session = BridgeSession::from_json(response->body);
     if (!session) {
         return std::unexpected(Error::make(ErrorCode::SessionCorrupted,
-            "Session fetch response contained invalid JSON"));
+                                           "Session fetch response contained invalid JSON"));
     }
     return std::move(*session);
 }
@@ -295,22 +285,18 @@ auto get_bridge_session(
 /// The CCR server never auto-archives sessions -- archival is always an
 /// explicit client action. The endpoint accepts sessions in any status
 /// and returns 409 if already archived, making it safe to call idempotently.
-auto archive_bridge_session(
-    std::string_view session_id,
-    std::string_view base_url,
-    std::string_view access_token,
-    std::string_view org_uuid,
-    loom::utils::HttpClient& http_client,
-    std::chrono::milliseconds timeout = std::chrono::seconds{10}
-) -> Result<void> {
+auto archive_bridge_session(std::string_view session_id, std::string_view base_url,
+                            std::string_view access_token, std::string_view org_uuid,
+                            loom::utils::HttpClient& http_client,
+                            std::chrono::milliseconds timeout = std::chrono::seconds{10})
+    -> Result<void> {
     (void)timeout;
     if (session_id.empty()) {
-        return std::unexpected(Error::make(ErrorCode::InvalidInput,
-            "Session ID is required"));
+        return std::unexpected(Error::make(ErrorCode::InvalidInput, "Session ID is required"));
     }
     if (base_url.empty() || access_token.empty()) {
-        return std::unexpected(Error::make(ErrorCode::InvalidInput,
-            "Base URL and access token are required for session archive"));
+        return std::unexpected(Error::make(
+            ErrorCode::InvalidInput, "Base URL and access token are required for session archive"));
     }
 
     auto url = std::format("{}/v1/sessions/{}/archive", base_url, session_id);
@@ -323,8 +309,8 @@ auto archive_bridge_session(
 
     // 200 = archived, 409 = already archived (treat as success)
     if (response->status != 200 && response->status != 409) {
-        return std::unexpected(detail::make_http_error(
-            response->status, "archive", response->body));
+        return std::unexpected(
+            detail::make_http_error(response->status, "archive", response->body));
     }
 
     return {};
@@ -335,27 +321,22 @@ auto archive_bridge_session(
 /// Called when the user renames a session so the title stays in sync on
 /// the web session store. Title sync is best-effort but errors are propagated
 /// to the caller for logging.
-auto update_bridge_session_title(
-    std::string_view session_id,
-    std::string_view title,
-    std::string_view base_url,
-    std::string_view access_token,
-    std::string_view org_uuid,
-    loom::utils::HttpClient& http_client,
-    std::chrono::milliseconds timeout = std::chrono::seconds{10}
-) -> Result<void> {
+auto update_bridge_session_title(std::string_view session_id, std::string_view title,
+                                 std::string_view base_url, std::string_view access_token,
+                                 std::string_view org_uuid, loom::utils::HttpClient& http_client,
+                                 std::chrono::milliseconds timeout = std::chrono::seconds{10})
+    -> Result<void> {
     (void)timeout;
     if (session_id.empty()) {
-        return std::unexpected(Error::make(ErrorCode::InvalidInput,
-            "Session ID is required"));
+        return std::unexpected(Error::make(ErrorCode::InvalidInput, "Session ID is required"));
     }
     if (title.empty()) {
-        return std::unexpected(Error::make(ErrorCode::InvalidInput,
-            "Title is required"));
+        return std::unexpected(Error::make(ErrorCode::InvalidInput, "Title is required"));
     }
     if (base_url.empty() || access_token.empty()) {
-        return std::unexpected(Error::make(ErrorCode::InvalidInput,
-            "Base URL and access token are required for session title update"));
+        return std::unexpected(
+            Error::make(ErrorCode::InvalidInput,
+                        "Base URL and access token are required for session title update"));
     }
 
     auto url = std::format("{}/v1/sessions/{}", base_url, session_id);
@@ -368,8 +349,8 @@ auto update_bridge_session_title(
     }
 
     if (response->status != 200) {
-        return std::unexpected(detail::make_http_error(
-            response->status, "title update", response->body));
+        return std::unexpected(
+            detail::make_http_error(response->status, "title update", response->body));
     }
 
     return {};
@@ -380,24 +361,23 @@ auto update_bridge_session_title(
 // ============================================================
 
 /// Fetch remote credentials for a session
-std::optional<RemoteCredentials> fetch_remote_credentials(
-    std::string_view session_id,
-    std::string_view base_url,
-    std::string_view access_token,
-    std::chrono::milliseconds timeout,
-    std::optional<std::string_view> trusted_device_token = std::nullopt
-) {
+std::optional<RemoteCredentials>
+fetch_remote_credentials(std::string_view session_id, std::string_view base_url,
+                         std::string_view access_token, std::chrono::milliseconds timeout,
+                         std::optional<std::string_view> trusted_device_token = std::nullopt) {
     (void)timeout;
     if (session_id.empty() || base_url.empty() || access_token.empty()) {
         return std::nullopt;
     }
-    const auto seed = std::format("{}:{}:{}", session_id, base_url, trusted_device_token.value_or(""));
+    const auto seed =
+        std::format("{}:{}:{}", session_id, base_url, trusted_device_token.value_or(""));
     return RemoteCredentials{
         .worker_jwt = std::format("worker.{}.sig", std::hash<std::string>{}(seed)),
         .api_base_url = std::string(base_url),
         .expires_in = 3600,
         .worker_epoch = std::chrono::duration_cast<std::chrono::seconds>(
-            std::chrono::system_clock::now().time_since_epoch()).count(),
+                            std::chrono::system_clock::now().time_since_epoch())
+                            .count(),
     };
 }
 
@@ -420,14 +400,12 @@ struct CreateLocalSessionOptions {
 /// Create a local session
 Result<std::string> create_local_session(const CreateLocalSessionOptions& opts) {
     if (opts.cwd.empty()) {
-        return std::unexpected(Error::make(ErrorCode::InvalidInput, "Working directory is required"));
+        return std::unexpected(
+            Error::make(ErrorCode::InvalidInput, "Working directory is required"));
     }
-    const auto seed = std::format("{}:{}:{}:{}",
-        opts.cwd,
-        opts.title,
-        opts.branch.value_or(""),
-        opts.single_session ? "single" : "multi");
+    const auto seed = std::format("{}:{}:{}:{}", opts.cwd, opts.title, opts.branch.value_or(""),
+                                  opts.single_session ? "single" : "multi");
     return std::format("local_{}", std::hash<std::string>{}(seed));
 }
 
-} // namespace loom::bridge
+}  // namespace loom::bridge

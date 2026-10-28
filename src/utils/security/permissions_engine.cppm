@@ -15,26 +15,11 @@ export namespace loom::utils::permissions {
 
 // --- Enums ---
 
-enum class PermissionScope : uint8_t {
-    Global,
-    Project,
-    Session,
-    Command
-};
+enum class PermissionScope : uint8_t { Global, Project, Session, Command };
 
-enum class PermissionAction : uint8_t {
-    Allow,
-    Deny,
-    Ask,
-    AskOnce
-};
+enum class PermissionAction : uint8_t { Allow, Deny, Ask, AskOnce };
 
-enum class MatchStrategy : uint8_t {
-    Exact,
-    Prefix,
-    Glob,
-    Regex
-};
+enum class MatchStrategy : uint8_t { Exact, Prefix, Glob, Regex };
 
 // --- Data Structures ---
 
@@ -79,7 +64,8 @@ namespace detail {
 
     while (ti < text.size()) {
         if (pi < pattern.size() && (pattern[pi] == '?' || pattern[pi] == text[ti])) {
-            ++pi; ++ti;
+            ++pi;
+            ++ti;
         } else if (pi < pattern.size() && pattern[pi] == '*') {
             star_p = pi++;
             star_t = ti;
@@ -90,43 +76,39 @@ namespace detail {
             return false;
         }
     }
-    while (pi < pattern.size() && pattern[pi] == '*') ++pi;
+    while (pi < pattern.size() && pattern[pi] == '*')
+        ++pi;
     return pi == pattern.size();
 }
 
-} // namespace detail
+}  // namespace detail
 
 // --- Functions ---
 
 /// Match a file path against a pattern using the specified strategy.
-[[nodiscard]] inline auto match_path_pattern(
-    std::string_view path,
-    std::string_view pattern,
-    MatchStrategy strategy) -> bool
-{
+[[nodiscard]] inline auto match_path_pattern(std::string_view path, std::string_view pattern,
+                                             MatchStrategy strategy) -> bool {
     switch (strategy) {
-        case MatchStrategy::Exact:
-            return path == pattern;
-        case MatchStrategy::Prefix:
-            return path.starts_with(pattern);
-        case MatchStrategy::Glob:
-            return detail::glob_match(pattern, path);
-        case MatchStrategy::Regex:
-            try {
-                std::regex re(pattern.begin(), pattern.end());
-                return std::regex_match(path.begin(), path.end(), re);
-            } catch (...) {
-                return false;
-            }
+    case MatchStrategy::Exact:
+        return path == pattern;
+    case MatchStrategy::Prefix:
+        return path.starts_with(pattern);
+    case MatchStrategy::Glob:
+        return detail::glob_match(pattern, path);
+    case MatchStrategy::Regex:
+        try {
+            std::regex re(pattern.begin(), pattern.end());
+            return std::regex_match(path.begin(), path.end(), re);
+        } catch (...) {
+            return false;
+        }
     }
     return false;
 }
 
 /// Check if a query matches a specific rule.
-[[nodiscard]] inline auto match_rule(
-    const PermissionQuery& query,
-    const PermissionRule& rule) -> bool
-{
+[[nodiscard]] inline auto match_rule(const PermissionQuery& query, const PermissionRule& rule)
+    -> bool {
     // Match tool_pattern against tool_name
     bool tool_matches = match_path_pattern(query.tool_name, rule.tool_pattern, rule.strategy);
     if (!tool_matches) return false;
@@ -134,9 +116,8 @@ namespace detail {
     // If rule has a path_pattern, at least one query path must match
     if (rule.path_pattern.has_value()) {
         if (query.paths.empty()) return false;
-        bool any_path_matches = std::ranges::any_of(query.paths, [&](const auto& p) {
-            return detail::glob_match(*rule.path_pattern, p);
-        });
+        bool any_path_matches = std::ranges::any_of(
+            query.paths, [&](const auto& p) { return detail::glob_match(*rule.path_pattern, p); });
         if (!any_path_matches) return false;
     }
 
@@ -145,32 +126,26 @@ namespace detail {
 
 /// Evaluate a permission query against a set of rules.
 /// Rules are evaluated in priority order (highest first); first match wins.
-[[nodiscard]] inline auto evaluate_permission(
-    const PermissionQuery& query,
-    const std::vector<PermissionRule>& rules) -> PermissionResult
-{
+[[nodiscard]] inline auto evaluate_permission(const PermissionQuery& query,
+                                              const std::vector<PermissionRule>& rules)
+    -> PermissionResult {
     // Sort a copy by descending priority
     auto sorted = rules;
-    std::ranges::sort(sorted, [](const auto& a, const auto& b) {
-        return a.priority > b.priority;
-    });
+    std::ranges::sort(sorted, [](const auto& a, const auto& b) { return a.priority > b.priority; });
 
     for (const auto& rule : sorted) {
         if (match_rule(query, rule)) {
-            return PermissionResult{
-                .action = rule.action,
-                .matched_rule_id = rule.id,
-                .explanation = std::format("matched rule '{}' (pattern='{}', priority={})",
-                    rule.id, rule.tool_pattern, rule.priority)
-            };
+            return PermissionResult{.action = rule.action,
+                                    .matched_rule_id = rule.id,
+                                    .explanation =
+                                        std::format("matched rule '{}' (pattern='{}', priority={})",
+                                                    rule.id, rule.tool_pattern, rule.priority)};
         }
     }
 
-    return PermissionResult{
-        .action = PermissionAction::Deny,
-        .matched_rule_id = "",
-        .explanation = "no matching rule found"
-    };
+    return PermissionResult{.action = PermissionAction::Deny,
+                            .matched_rule_id = "",
+                            .explanation = "no matching rule found"};
 }
 
 // --- Stateful Permission Engine ---
@@ -202,20 +177,18 @@ public:
 
     /// Get all rules, optionally filtered by scope.
     [[nodiscard]] auto get_rules(std::optional<PermissionScope> scope = {}) const
-        -> std::vector<PermissionRule>
-    {
+        -> std::vector<PermissionRule> {
         std::lock_guard lock(mutex_);
         if (!scope.has_value()) return rules_;
         std::vector<PermissionRule> filtered;
         std::ranges::copy_if(rules_, std::back_inserter(filtered),
-            [&](const auto& r) { return r.scope == *scope; });
+                             [&](const auto& r) { return r.scope == *scope; });
         return filtered;
     }
 
     /// Get effective rules for a tool name, sorted by priority (desc).
     [[nodiscard]] auto get_effective_rules(std::string_view tool_name) const
-        -> std::vector<PermissionRule>
-    {
+        -> std::vector<PermissionRule> {
         std::lock_guard lock(mutex_);
         std::vector<PermissionRule> effective;
         for (const auto& rule : rules_) {
@@ -223,9 +196,8 @@ public:
                 effective.push_back(rule);
             }
         }
-        std::ranges::sort(effective, [](const auto& a, const auto& b) {
-            return a.priority > b.priority;
-        });
+        std::ranges::sort(effective,
+                          [](const auto& a, const auto& b) { return a.priority > b.priority; });
         return effective;
     }
 
@@ -260,11 +232,8 @@ public:
             const auto& r = rules_[i];
             json += std::format(
                 R"(  {{"id":"{}","tool_pattern":"{}","strategy":{},"action":{},"scope":{},"priority":{}}})",
-                r.id, r.tool_pattern,
-                static_cast<int>(r.strategy),
-                static_cast<int>(r.action),
-                static_cast<int>(r.scope),
-                r.priority);
+                r.id, r.tool_pattern, static_cast<int>(r.strategy), static_cast<int>(r.action),
+                static_cast<int>(r.scope), r.priority);
             if (i + 1 < rules_.size()) json += ",";
             json += "\n";
         }
@@ -273,7 +242,8 @@ public:
     }
 
     /// Import rules from a JSON string. Returns the number of rules imported.
-    /// Expects a simple JSON array of objects with id, tool_pattern, strategy, action, scope, priority.
+    /// Expects a simple JSON array of objects with id, tool_pattern, strategy, action, scope,
+    /// priority.
     [[nodiscard]] auto import_rules(std::string_view json) -> std::expected<size_t, std::string> {
         if (json.empty()) {
             return std::unexpected(std::string{"empty JSON input"});
@@ -367,9 +337,7 @@ inline PermissionEngine& engine() {
 // --- Free function wrappers (delegate to global engine) ---
 
 /// Add a new permission rule to the engine.
-[[nodiscard]] inline auto add_rule(PermissionRule rule)
-    -> std::expected<void, std::string>
-{
+[[nodiscard]] inline auto add_rule(PermissionRule rule) -> std::expected<void, std::string> {
     return engine().add_rule(std::move(rule));
 }
 
@@ -380,15 +348,13 @@ inline PermissionEngine& engine() {
 
 /// Get all rules, optionally filtered by scope.
 [[nodiscard]] inline auto get_rules(std::optional<PermissionScope> scope = {})
-    -> std::vector<PermissionRule>
-{
+    -> std::vector<PermissionRule> {
     return engine().get_rules(scope);
 }
 
 /// Get the effective (applicable) rules for a given tool name, sorted by priority.
 [[nodiscard]] inline auto get_effective_rules(std::string_view tool_name)
-    -> std::vector<PermissionRule>
-{
+    -> std::vector<PermissionRule> {
     return engine().get_effective_rules(tool_name);
 }
 
@@ -404,8 +370,7 @@ inline void clear_session_rules() {
 
 /// Import rules from a JSON string. Returns the number of rules imported.
 [[nodiscard]] inline auto import_rules(std::string_view json)
-    -> std::expected<size_t, std::string>
-{
+    -> std::expected<size_t, std::string> {
     return engine().import_rules(json);
 }
 
@@ -419,4 +384,4 @@ inline void invalidate_cache() {
     engine().invalidate_cache();
 }
 
-} // namespace loom::utils::permissions
+}  // namespace loom::utils::permissions

@@ -2537,13 +2537,15 @@ void run_mermaid_case(const std::string& binary, const fs::path& root,
     terminal.input("Return the state diagram\r");
     // The state graph is tall enough to scroll the following sentinel out of
     // the visible frame, so gate on the rendered state geometry and the hidden
-    // description rather than the off-screen STATE_DONE marker.
+    // description rather than the off-screen STATE_DONE marker. The status
+    // line suppresses the interrupt hint even while the query runs; require
+    // the shared idle check before /clear, which is ignored during generation.
     require(terminal.wait([&] {
         const auto frame = terminal.latest_frame_text();
         return frame.find("State1") != std::string::npos &&
             frame.find("stateDiagram") == std::string::npos &&
             frame.find("PTY state E2a smoke") == std::string::npos &&
-            frame.find(" to interrupt") == std::string::npos;
+            terminal.idle_response_visible("");
     }), "config-free state frontmatter did not render and hide its description");
     save_attention_frame(root, "mermaid-state", terminal.latest_frame());
     terminal.input("/clear\r");

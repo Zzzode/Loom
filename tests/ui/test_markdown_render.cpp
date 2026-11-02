@@ -474,9 +474,12 @@ TEST(MarkdownRender, StreamingLongDocumentKeepsFullLayout) {
         auto screen =
             ftxui::Screen::Create(ftxui::Dimension::Fixed(80), ftxui::Dimension::Fixed(40));
         ftxui::Render(screen, streaming.update(std::string_view(document).substr(0, size)));
-        const auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(
-                                 std::chrono::steady_clock::now() - started)
-                                 .count();
+        // Declare an explicit int64_t: on Linux libc++, microseconds::rep is
+        // long long while int64_t is long, so `auto` makes std::max below
+        // fail template deduction.
+        const std::int64_t elapsed = std::chrono::duration_cast<std::chrono::microseconds>(
+                                         std::chrono::steady_clock::now() - started)
+                                         .count();
         total_us += elapsed;
         max_us = std::max(max_us, elapsed);
         ++frames;

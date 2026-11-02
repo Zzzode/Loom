@@ -22,6 +22,7 @@ import loom.crypto.crypto;
 namespace {
 namespace fs = std::filesystem;
 namespace json = loom::utils::json;
+using json::JsonDoc;
 using json::JsonVal;
 
 const fs::path kTestsDir{LOOM_TESTS_DIR};
@@ -84,10 +85,12 @@ bool drawn_native(const std::string& source) {
            text.find("gitGraph") == std::string::npos;
 }
 
-JsonVal ledger_root() {
+// The returned JsonDoc owns the yyjson document; JsonVal is a non-owning
+// view, so callers must keep this object alive while they use its root().
+JsonDoc parse_ledger() {
     auto parsed = json::parse(read_file(kLedger));
     if (!parsed) throw std::runtime_error("cannot parse ledger");
-    return parsed->root();
+    return std::move(*parsed);
 }
 
 struct Row {
@@ -133,7 +136,8 @@ std::string description_token(const std::string& source) {
 }  // namespace
 
 TEST(MermaidE2aCohort, LedgerMatchesSchemaAndReviewed) {
-    const auto root = ledger_root();
+    auto ledger = parse_ledger();
+    const auto root = ledger.root();
     EXPECT_EQ(root.get_string("schema"), "loom_mermaid_e2a_cohort/v1");
     const auto counts = root.get("counts");
     EXPECT_EQ(counts.get_int("total"), 69);
@@ -164,7 +168,8 @@ TEST(MermaidE2aCohort, RowsPinFixtureBytesAndPriorStatus) {
     manifest->root().get("fixtures").iter([&](const JsonVal fixture) {
         manifest_rows.emplace(fixture.get_string("path"), fixture);
     });
-    ledger_root().get("rows").iter([&](const JsonVal row) {
+    auto ledger = parse_ledger();
+    ledger.root().get("rows").iter([&](const JsonVal row) {
         const auto path = row.get_string("path");
         const auto found = manifest_rows.find(std::string(path));
         ASSERT_NE(found, manifest_rows.end()) << path;
@@ -176,7 +181,8 @@ TEST(MermaidE2aCohort, RowsPinFixtureBytesAndPriorStatus) {
 }
 
 TEST(MermaidE2aCohort, EveryDrawRowDrawsAndEveryBlockedRowKeepsSourceAt240) {
-    const auto rows = read_rows(ledger_root());
+    auto ledger = parse_ledger();
+    const auto rows = read_rows(ledger.root());
     int drawn = 0, blocked = 0;
     for (const auto& row : rows) {
         const auto source = read_file(kCases / row.path);
@@ -195,7 +201,8 @@ TEST(MermaidE2aCohort, EveryDrawRowDrawsAndEveryBlockedRowKeepsSourceAt240) {
 }
 
 TEST(MermaidE2aCohort, DescriptionIsNeverRendered) {
-    for (const auto& row : read_rows(ledger_root())) {
+    auto ledger = parse_ledger();
+    for (const auto& row : read_rows(ledger.root())) {
         if (row.prediction != "predicted-draw") continue;
         const auto source = read_file(kCases / row.path);
         const auto token = description_token(source);
@@ -234,7 +241,8 @@ bool has_config_or_init(const std::string& source) {
 
 TEST(MermaidE2aCohort, ConfigAndInitRowsKeepWholeSource) {
     std::set<std::string> cohort;
-    ledger_root().get("rows").iter(
+    auto ledger = parse_ledger();
+    ledger.root().get("rows").iter(
         [&](const JsonVal row) { cohort.insert(row.get_string("path")); });
     static constexpr const char* kRoots[] = {"git", "state-diagram", "state-diagram-v2"};
     int checked = 0;

@@ -2551,8 +2551,15 @@ inline std::vector<std::string> check_group_endpoint_assignment(
                             } else
                                 exact = actual == route.arms[at];
                         }
-                        if (exact) result.push_back(std::move(route));
-                        continue;
+                        if (exact) {
+                            result.push_back(std::move(route));
+                            continue;
+                        }
+                        // A geometrically admissible but inexact frame cell is
+                        // not necessarily the route terminus: a group source
+                        // that targets its own child can leave the frame and
+                        // re-cross it before the real port. Fall through to the
+                        // ordinary corridor gate so such a cell is expanded.
                     }
                     if (next == head || glyph(grid.at(next)).arrow >= 0 ||
                         !(route_bits(next) & outward))
